@@ -2,7 +2,7 @@ package com.activepieces.authentication.client.model;
 
 import com.activepieces.entity.enums.UserStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.mongodb.util.JSON;
+import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,8 +10,6 @@ import lombok.Setter;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import java.time.Instant;
-import java.util.Objects;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -21,7 +19,7 @@ import java.util.UUID;
 public class UserInformationView {
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID id;
+  private Ksuid id;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private String email;

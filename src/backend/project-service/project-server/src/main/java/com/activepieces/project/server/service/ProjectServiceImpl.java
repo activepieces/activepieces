@@ -1,6 +1,5 @@
 package com.activepieces.project.server.service;
 
-import com.activepieces.common.error.ErrorServiceHandler;
 import com.activepieces.common.error.exception.InvalidImageFormatException;
 import com.activepieces.entity.enums.Permission;
 import com.activepieces.entity.enums.ResourceType;
@@ -15,6 +14,7 @@ import com.activepieces.project.client.mapper.ProjectMapper;
 import com.activepieces.project.client.model.CreateProjectRequest;
 import com.activepieces.project.client.model.ProjectView;
 import com.activepieces.project.server.repository.ProjectRepository;
+import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -45,7 +45,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<ProjectView> listByOwnerId(UUID userId) {
+    public List<ProjectView> listByOwnerId(Ksuid userId) {
         ArrayList<ProjectView> projectViewArrayList = new ArrayList<>();
         List<Project> projectList = projectRepository.findAllByOwnerId(userId);
         for (Project project : projectList) {
@@ -55,10 +55,10 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectView create(@NonNull final UUID ownerId, @NonNull final CreateProjectRequest request) {
+    public ProjectView create(@NonNull final Ksuid ownerId, @NonNull final CreateProjectRequest request) {
         Project project =
                 Project.builder()
-                        .id(UUID.randomUUID())
+                        .id(Ksuid.newKsuid())
                         .epochCreationTime(Instant.now().getEpochSecond())
                         .epochUpdateTime(Instant.now().getEpochSecond())
                         .ownerId(ownerId)
@@ -72,7 +72,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Optional<ProjectView> getOptional(@NonNull final UUID id)
+    public Optional<ProjectView> getOptional(@NonNull final Ksuid id)
             throws PermissionDeniedException {
         Optional<Project> projectOptional = projectRepository.findById(id);
         if (projectOptional.isEmpty()) {
@@ -83,7 +83,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectView get(@NonNull final UUID id)
+    public ProjectView get(@NonNull final Ksuid id)
             throws ProjectNotFoundException, PermissionDeniedException {
         Optional<ProjectView> projectViewOptional = getOptional(id);
         if (projectViewOptional.isEmpty()) {
@@ -92,7 +92,7 @@ public class ProjectServiceImpl implements ProjectService {
         return projectViewOptional.get();
     }
     @Override
-    public ProjectView update(@NonNull final UUID id, @NonNull final ProjectView view, @NonNull Optional<MultipartFile> logo)
+    public ProjectView update(@NonNull final Ksuid id, @NonNull final ProjectView view, @NonNull Optional<MultipartFile> logo)
             throws ProjectNotFoundException, PermissionDeniedException, InvalidImageFormatException, IOException {
         permissionService.requiresPermission(id, Permission.WRITE_PROJECT);
         Optional<Project> projectOptional = projectRepository.findById(id);
@@ -101,14 +101,12 @@ public class ProjectServiceImpl implements ProjectService {
         }
         Project project = projectOptional.get();
         project.setDisplayName(view.getDisplayName());
-        // TODO
-        // project.setLogoUrl(logo.isPresent() ? imageService.upload(logo.get()) : view.getLogoUrl());
         project.setEpochUpdateTime(Instant.now().getEpochSecond());
         return projectMapper.toView(projectRepository.save(project));
     }
 
     @Override
-    public void delete(@NonNull final UUID id)
+    public void delete(@NonNull final Ksuid id)
             throws ProjectNotFoundException, PermissionDeniedException, ResourceNotFoundException {
         if (!projectRepository.existsById(id)) {
             throw new ProjectNotFoundException(id);

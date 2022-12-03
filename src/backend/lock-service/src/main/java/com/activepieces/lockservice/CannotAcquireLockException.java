@@ -1,10 +1,6 @@
 package com.activepieces.lockservice;
 
-import com.activepieces.common.error.ErrorCode;
-import com.activepieces.common.error.ErrorResponseException;
-
 import java.time.Duration;
-import java.util.UUID;
 
 public class CannotAcquireLockException extends Exception {
 

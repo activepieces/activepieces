@@ -4,6 +4,7 @@ import com.activepieces.entity.enums.EditState;
 import com.activepieces.entity.subdocuments.field.Variable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.ksuid.Ksuid;
 import lombok.*;
 
 import javax.validation.Valid;
@@ -21,20 +22,13 @@ import java.util.UUID;
 public class CollectionVersionView {
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID id;
+  private Ksuid id;
 
   @JsonProperty @NotEmpty private String displayName;
 
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private String logoUrl;
-
   @JsonProperty @NotNull private List<@Valid Variable<?>> configs;
 
-  @JsonIgnore private UUID collectionId;
-
-  @JsonProperty @NotNull private String description;
-
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY) private Set<UUID> flowsVersionId;
+  @JsonIgnore private Ksuid collectionId;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private long epochCreationTime;

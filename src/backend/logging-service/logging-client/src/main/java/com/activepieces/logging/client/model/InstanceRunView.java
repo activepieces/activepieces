@@ -6,6 +6,7 @@ import com.activepieces.entity.subdocuments.runs.ExecutionStateView;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.ksuid.Ksuid;
 import lombok.*;
 
 import javax.validation.constraints.NotNull;
@@ -19,15 +20,15 @@ import java.util.UUID;
 @ToString
 public class InstanceRunView implements EntityMetadata {
 
-  @JsonProperty private UUID id;
+  @JsonProperty private Ksuid id;
 
-  @JsonProperty private UUID projectId;
+  @JsonProperty private Ksuid projectId;
 
-  @JsonProperty private UUID instanceId;
+  @JsonProperty private Ksuid instanceId;
 
-  @JsonProperty private UUID flowVersionId;
+  @JsonProperty private Ksuid flowVersionId;
 
-  @JsonProperty private UUID collectionVersionId;
+  @JsonProperty private Ksuid collectionVersionId;
 
   @JsonProperty private String flowDisplayName;
 

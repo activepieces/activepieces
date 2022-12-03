@@ -2,13 +2,14 @@ package com.activepieces.worker;
 
 import com.activepieces.authentication.client.util.JWTUtils;
 import com.activepieces.common.identity.WorkerIdentity;
+import com.activepieces.common.utils.ArtifactUtils;
 import com.activepieces.entity.subdocuments.runs.ActionExecutionStatus;
 import com.activepieces.entity.subdocuments.runs.StepOutput;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.piece.client.model.CollectionVersionView;
-import com.activepieces.common.utils.ArtifactUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
@@ -72,7 +73,7 @@ public class Sandbox {
   public void writeEntryPoint(
           @NonNull CollectionVersionView collectionVersionView,
           @NonNull FlowVersionView flowVersionView,
-          UUID instanceId,
+          Ksuid instanceId,
           @NonNull String apiUrl,
           @NonNull ObjectMapper objectMapper)
       throws IOException {

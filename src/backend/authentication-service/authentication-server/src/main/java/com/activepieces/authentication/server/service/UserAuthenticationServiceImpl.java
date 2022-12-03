@@ -8,6 +8,7 @@ import com.activepieces.authentication.client.request.SignUpRequest;
 import com.activepieces.authentication.server.repository.UserInformationRepository;
 import com.activepieces.entity.enums.UserStatus;
 import com.activepieces.entity.sql.UserInformation;
+import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,6 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
   private final UserInformationRepository userInformationRepository;
   private final PasswordEncoder passwordEncoder;
   private final UserInformationMapper userInformationMapper;
-  private final Duration EXPIRY_DATE = Duration.ofDays(7);
   @Autowired
   public UserAuthenticationServiceImpl(
       @NonNull final UserInformationRepository userInformationRepository,
@@ -38,7 +38,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
   }
 
   @Override
-  public Optional<UserInformationView> getOptional(@NonNull final UUID userId) {
+  public Optional<UserInformationView> getOptional(@NonNull final Ksuid userId) {
     Optional<UserInformation> optional = userInformationRepository.findById(userId);
     if (optional.isEmpty()) {
       return Optional.empty();
@@ -47,7 +47,16 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
   }
 
   @Override
-  public UserInformationView getById(@NonNull final UUID userId) throws UserNotFoundException {
+  public Optional<UserInformationView> getOptional(@NonNull String name) {
+    Optional<UserInformation> optional = userInformationRepository.findByEmailIgnoreCase(name);
+    if (optional.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(userInformationMapper.toView(optional.get()));
+  }
+
+  @Override
+  public UserInformationView getById(@NonNull final Ksuid userId) throws UserNotFoundException {
     Optional<UserInformationView> optional = getOptional(userId);
     if (optional.isEmpty()) {
       throw new UserNotFoundException(userId);
@@ -77,6 +86,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             .findByEmailIgnoreCase(email)
             .orElse(
                 UserInformation.builder()
+                    .id(Ksuid.newKsuid())
                     .email(email)
                     .epochUpdateTime(Instant.now().getEpochSecond())
                     .epochCreationTime(Instant.now().getEpochSecond())
@@ -90,7 +100,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
 
   @Override
   public UserInformationView update(
-      @NonNull final UUID userId, @NonNull final UserInformationView request)
+      @NonNull final Ksuid userId, @NonNull final UserInformationView request)
       throws UserNotFoundException {
     Optional<UserInformation> userInformationOptional = userInformationRepository.findById(userId);
     if (userInformationOptional.isEmpty()) {

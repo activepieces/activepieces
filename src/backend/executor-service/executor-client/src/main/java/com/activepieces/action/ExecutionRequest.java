@@ -1,9 +1,8 @@
 package com.activepieces.action;
 
 import com.activepieces.actions.store.model.StorePath;
-import com.activepieces.entity.subdocuments.runs.ExecutionStateView;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.ksuid.Ksuid;
 import lombok.*;
 
 import java.util.Map;
@@ -17,13 +16,13 @@ import java.util.UUID;
 public class ExecutionRequest {
 
     @JsonProperty
-    private UUID runId;
+    private Ksuid runId;
 
     @JsonProperty
-    private UUID instanceId;
+    private Ksuid instanceId;
 
     @JsonProperty
-    private UUID flowVersionId;
+    private Ksuid flowVersionId;
 
     @JsonProperty
     private StorePath storePath;

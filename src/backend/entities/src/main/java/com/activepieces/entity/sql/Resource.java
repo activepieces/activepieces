@@ -1,12 +1,12 @@
 package com.activepieces.entity.sql;
 
 import com.activepieces.entity.enums.ResourceType;
+import com.github.ksuid.Ksuid;
 import lombok.*;
 
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -17,11 +17,11 @@ import java.util.UUID;
 @Table(name = "resource")
 public class Resource {
 
-  @Column(name = "resource_id") @Id private UUID resourceId;
+  @Column(name = "resource_id") @Id private Ksuid resourceId;
 
   @Column(name = "resource_type") private ResourceType resourceType;
 
-  @Column(name = "parent_resource_id") private UUID parentResourceId;
+  @Column(name = "parent_resource_id") private Ksuid parentResourceId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name="parent_resource_id", insertable = false, updatable = false)

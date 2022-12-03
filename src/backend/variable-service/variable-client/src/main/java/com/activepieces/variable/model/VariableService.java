@@ -1,15 +1,10 @@
 package com.activepieces.variable.model;
 
-import com.activepieces.common.error.exception.ConfigNotDynamicException;
 import com.activepieces.entity.subdocuments.field.Variable;
-import com.activepieces.entity.subdocuments.runs.ExecutionStateView;
 import com.activepieces.variable.model.exception.MissingConfigsException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 public interface VariableService {
 

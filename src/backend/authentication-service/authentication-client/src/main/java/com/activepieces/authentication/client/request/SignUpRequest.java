@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,7 +18,6 @@ public class SignUpRequest {
 
   @JsonProperty @NotEmpty private String lastName;
 
-  @JsonProperty @NotEmpty private String token;
-
-  @JsonProperty @NonNull @ValidPassword private String password;
+  @JsonProperty @NotNull
+  @ValidPassword private String password;
 }

@@ -10,8 +10,10 @@ import com.activepieces.common.error.exception.ConstraintsException;
 import com.activepieces.common.error.exception.flow.FlowVersionAlreadyLockedException;
 import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException;
 import com.activepieces.common.utils.TimeUtils;
-import com.activepieces.entity.enums.*;
-import com.activepieces.entity.nosql.FlowVersion;
+import com.activepieces.entity.enums.EditState;
+import com.activepieces.entity.enums.Permission;
+import com.activepieces.entity.enums.ResourceType;
+import com.activepieces.entity.sql.FlowVersion;
 import com.activepieces.flow.mapper.FlowVersionMapper;
 import com.activepieces.flow.model.FlowVersionMetaView;
 import com.activepieces.flow.model.FlowVersionView;
@@ -20,11 +22,15 @@ import com.activepieces.flow.util.FlowVersionUtil;
 import com.activepieces.guardian.client.PermissionService;
 import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.guardian.client.exception.ResourceNotFoundException;
+import com.github.ksuid.Ksuid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -36,7 +42,7 @@ public class FlowVersionServiceImpl implements FlowVersionService {
   private final PermissionService permissionService;
   private final CodeArtifactService codeArtifactsService;
   private final FlowVersionMapper flowVersionMapper;
-  private final ConditionalCache<UUID, Optional<FlowVersion>> conditionalCache;
+  private final ConditionalCache<Ksuid, Optional<FlowVersion>> conditionalCache;
 
   @Autowired
   public FlowVersionServiceImpl(
@@ -44,7 +50,7 @@ public class FlowVersionServiceImpl implements FlowVersionService {
       final PermissionService permissionService,
       final CodeArtifactService codeArtifactsService,
       final FlowVersionMapper flowVersionMapper) {
-    Function<UUID, Optional<FlowVersion>> generatorFunction = flowVersionRepository::findById;
+    Function<Ksuid, Optional<FlowVersion>> generatorFunction = flowVersionRepository::findById;
     Function<Optional<FlowVersion>, Boolean> cacheCondition =
         flowVersionOptional ->
             flowVersionOptional.isPresent()
@@ -56,9 +62,9 @@ public class FlowVersionServiceImpl implements FlowVersionService {
     this.permissionService = permissionService;
   }
 
-  public FlowVersionView createNew(UUID flowId, UUID previousVersionId, FlowVersionView newVersion)
+  public FlowVersionView createNew(Ksuid flowId, Ksuid previousVersionId, FlowVersionView newVersion)
       throws ResourceNotFoundException {
-    UUID newVersionIUd = UUID.randomUUID();
+    Ksuid newVersionIUd = Ksuid.newKsuid();
     uploadArtifacts(newVersionIUd, previousVersionId, newVersion);
     long creationTime = TimeUtils.getEpochTimeInMillis();
     FlowVersionView savedFlowVersion =
@@ -76,7 +82,7 @@ public class FlowVersionServiceImpl implements FlowVersionService {
     return savedFlowVersion;
   }
 
-  public FlowVersionView update(UUID flowVersionId, FlowVersionView newVersion)
+  public FlowVersionView update(Ksuid flowVersionId, FlowVersionView newVersion)
       throws FlowVersionAlreadyLockedException, FlowVersionNotFoundException,
           PermissionDeniedException {
     FlowVersionView currentVersion = get(flowVersionId);
@@ -100,28 +106,18 @@ public class FlowVersionServiceImpl implements FlowVersionService {
   }
 
   @Override
-  public Optional<FlowVersionView> getOptional(UUID id) throws PermissionDeniedException {
+  public Optional<FlowVersionView> getOptional(Ksuid id) throws PermissionDeniedException {
     Optional<FlowVersion> optional = conditionalCache.get(id);
     if (optional.isEmpty()) {
       return Optional.empty();
     }
     permissionService.requiresPermission(optional.get().getFlowId(), Permission.READ_FLOW);
     FlowVersionView flowVersionView = flowVersionMapper.toView(optional.get());
-    List<ArtifactMetadata> artifactMetadataList =
-        FlowVersionUtil.findAllStepsWithArtifact(flowVersionView);
-    for (ArtifactMetadata artifactMetadata : artifactMetadataList) {
-      if (Objects.nonNull(artifactMetadata.getArtifactSettings())
-          && Objects.nonNull(artifactMetadata.getArtifactSettings().getArtifact())) {
-        artifactMetadata
-            .getArtifactSettings()
-            .setArtifactUrl(codeArtifactsService.getSignedUrlForSource(id, artifactMetadata));
-      }
-    }
     return Optional.of(flowVersionView);
   }
 
   @Override
-  public List<FlowVersionMetaView> listByFlowId(UUID flowId) throws PermissionDeniedException {
+  public List<FlowVersionMetaView> listByFlowId(Ksuid flowId) throws PermissionDeniedException {
     List<FlowVersion> flowVersionMetaViews =
         flowVersionRepository.findAllByFlowIdOrderByEpochCreationTime(flowId);
     if (!flowVersionMetaViews.isEmpty()) {
@@ -135,13 +131,13 @@ public class FlowVersionServiceImpl implements FlowVersionService {
 
 
   @Override
-  public FlowVersionView get(UUID id)
+  public FlowVersionView get(Ksuid id)
       throws FlowVersionNotFoundException, PermissionDeniedException {
     return getOptional(id).orElseThrow(() -> new FlowVersionNotFoundException(id));
   }
 
   @Override
-  public void lock(UUID id)
+  public void lock(Ksuid id)
       throws FlowVersionAlreadyLockedException, FlowVersionNotFoundException,
           PermissionDeniedException {
     FlowVersionView currentVersion = get(id);
@@ -155,9 +151,10 @@ public class FlowVersionServiceImpl implements FlowVersionService {
     saveFromView(currentVersion.toBuilder().state(EditState.LOCKED).build());
   }
 
+  // TODO FIX
   private void uploadArtifacts(
-      UUID newFlowVersionId, UUID previousVersionId, FlowVersionView newVersion) {
-    List<ArtifactMetadata> codeActionsWithArtifact =
+          Ksuid newFlowVersionId, Ksuid previousVersionId, FlowVersionView newVersion) {
+/*    List<ArtifactMetadata> codeActionsWithArtifact =
         FlowVersionUtil.findAllActions(newVersion).stream()
             .filter(codeAction -> codeAction instanceof ArtifactMetadata)
             .map(action -> (ArtifactMetadata) action)
@@ -175,7 +172,7 @@ public class FlowVersionServiceImpl implements FlowVersionService {
               codeSettings.getArtifactUrl());
       codeSettings.setArtifact(reference.getArtifact());
       codeSettings.setArtifactUrl(reference.getArtifactUrl());
-    }
+    }*/
   }
 
   private FlowVersionView saveFromView(FlowVersionView FlowVersionView) {

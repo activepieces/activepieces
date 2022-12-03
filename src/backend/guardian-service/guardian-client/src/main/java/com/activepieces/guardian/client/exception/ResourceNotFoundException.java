@@ -1,17 +1,18 @@
 package com.activepieces.guardian.client.exception;
 
-import java.util.UUID;
+import com.github.ksuid.Ksuid;
+
 
 public class ResourceNotFoundException extends Exception {
 
-  private final UUID id;
+  private final Ksuid id;
 
-  public ResourceNotFoundException(UUID id) {
+  public ResourceNotFoundException(Ksuid id) {
     super(String.format("Resource with Id=%s not found", id.toString()));
     this.id = id;
   }
 
-  public UUID getId(){
+  public Ksuid getId(){
     return this.id;
   }
 

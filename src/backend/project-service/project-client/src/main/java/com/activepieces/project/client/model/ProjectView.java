@@ -1,7 +1,7 @@
 package com.activepieces.project.client.model;
 
-import com.activepieces.common.validation.constraints.CodeNameConstraints;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.ksuid.Ksuid;
 import lombok.*;
 
 import javax.validation.constraints.NotEmpty;
@@ -16,7 +16,7 @@ import java.util.UUID;
 public class ProjectView {
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID id;
+  private Ksuid id;
 
   @JsonProperty @NotNull @NotEmpty private String displayName;
 
@@ -30,5 +30,5 @@ public class ProjectView {
   private long epochUpdateTime;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID organizationId;
+  private Ksuid organizationId;
 }

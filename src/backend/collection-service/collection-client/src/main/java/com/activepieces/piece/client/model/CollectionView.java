@@ -3,6 +3,7 @@ package com.activepieces.piece.client.model;
 import com.activepieces.common.EntityMetadata;
 import com.activepieces.entity.enums.EditState;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,27 +21,20 @@ import java.util.UUID;
 @SuperBuilder(toBuilder = true)
 public class CollectionView implements EntityMetadata {
 
-  @JsonProperty(access= JsonProperty.Access.READ_ONLY) private UUID id;
+  @JsonProperty(access= JsonProperty.Access.READ_ONLY) private Ksuid id;
 
   @JsonProperty(access= JsonProperty.Access.READ_ONLY)
-  private UUID projectId;
+  private Ksuid projectId;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private CollectionVersionView lastVersion;
-
-  @JsonProperty(access= JsonProperty.Access.READ_ONLY)
-  private List<UUID> versionsList;
 
   @JsonProperty(access= JsonProperty.Access.READ_ONLY) private long epochCreationTime;
 
   @JsonProperty(access= JsonProperty.Access.READ_ONLY) private long epochUpdateTime;
 
   public void updateOrCreateDraft(CollectionVersionView newDraft) {
-    if (lastVersion.getState().equals(EditState.LOCKED)) {
-      versionsList.add(newDraft.getId());
-    } else {
-      lastVersion = newDraft;
-    }
+    lastVersion = newDraft;
     setEpochUpdateTime(Instant.now().getEpochSecond());
   }
 

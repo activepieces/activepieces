@@ -1,29 +1,18 @@
 package com.activepieces.actions.code;
 
 import com.activepieces.common.code.ArtifactFile;
+import com.activepieces.common.code.ArtifactMetadata;
 import com.activepieces.common.code.ArtifactReference;
 import com.activepieces.common.error.ErrorServiceHandler;
-import com.activepieces.common.utils.HashUtils;
-import com.activepieces.entity.enums.InputVariableType;
-import com.activepieces.common.code.ArtifactMetadata;
-import com.activepieces.entity.subdocuments.field.Variable;
-import com.activepieces.entity.subdocuments.field.dropdown.DropdownSettings;
-import com.activepieces.entity.subdocuments.field.dropdown.DropdownVariable;
-import com.activepieces.entity.subdocuments.field.dropdown.DropdownVariableType;
-import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
-import java.nio.channels.Channels;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Service
 @Log4j2

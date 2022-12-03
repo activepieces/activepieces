@@ -1,14 +1,11 @@
 package com.activepieces.instance.client.mapper;
 
-import com.activepieces.entity.nosql.Instance;
+import com.activepieces.entity.sql.Instance;
 import com.activepieces.instance.client.model.InstanceView;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mappings;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Map;
 
 import static org.mapstruct.SubclassExhaustiveStrategy.COMPILE_ERROR;
 

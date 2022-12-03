@@ -1,13 +1,13 @@
 package com.activepieces.piece.server.repository;
 
-import com.activepieces.entity.nosql.CollectionVersion;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import com.activepieces.entity.sql.CollectionVersion;
+import com.github.ksuid.Ksuid;
+import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
-import java.util.UUID;
 
-public interface CollectionVersionRepository extends MongoRepository<CollectionVersion, UUID> {
+public interface CollectionVersionRepository extends CrudRepository<CollectionVersion, Ksuid> {
 
-    List<CollectionVersion> findAllByCollectionId(UUID collectionId);
+    List<CollectionVersion> findAllByCollectionId(Ksuid collectionId);
 
 }

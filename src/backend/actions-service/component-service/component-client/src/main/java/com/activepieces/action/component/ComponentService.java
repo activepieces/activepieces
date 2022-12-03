@@ -2,7 +2,6 @@ package com.activepieces.action.component;
 
 import com.activepieces.actions.model.action.settings.ComponentSettingsView;
 import com.activepieces.common.error.exception.ManifestNotFoundException;
-import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 import java.io.InputStream;

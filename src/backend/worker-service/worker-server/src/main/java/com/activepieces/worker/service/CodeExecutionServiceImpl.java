@@ -10,6 +10,7 @@ import com.activepieces.worker.workers.CodeBuildWorker;
 import com.activepieces.worker.workers.CodeExecutionWorker;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.ksuid.Ksuid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -60,7 +61,7 @@ public class CodeExecutionServiceImpl implements CodeExecutionService {
   }
 
   public ExecutionCodeResult executeCodeWithCache(
-      JsonNode input, UUID resourceId, ArtifactMetadata artifactMetadata, String artifactFile)
+          JsonNode input, Ksuid resourceId, ArtifactMetadata artifactMetadata, String artifactFile)
       throws InterruptedException {
     try {
       int workerIndex = this.blockingQueue.take();

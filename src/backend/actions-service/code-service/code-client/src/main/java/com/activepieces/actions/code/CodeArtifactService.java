@@ -3,7 +3,6 @@ package com.activepieces.actions.code;
 import com.activepieces.common.code.ArtifactFile;
 import com.activepieces.common.code.ArtifactMetadata;
 import com.activepieces.common.code.ArtifactReference;
-import com.activepieces.entity.subdocuments.field.Variable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;

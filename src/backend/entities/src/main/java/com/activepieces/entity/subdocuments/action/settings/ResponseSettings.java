@@ -1,7 +1,5 @@
 package com.activepieces.entity.subdocuments.action.settings;
 
-import com.activepieces.entity.enums.StoreOperation;
-import com.activepieces.entity.enums.StoreScope;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

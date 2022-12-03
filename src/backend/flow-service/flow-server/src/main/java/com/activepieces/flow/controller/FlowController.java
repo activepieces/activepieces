@@ -3,16 +3,23 @@ package com.activepieces.flow.controller;
 import com.activepieces.action.FlowPublisherService;
 import com.activepieces.actions.code.CodeArtifactService;
 import com.activepieces.common.code.ArtifactFile;
-import com.activepieces.common.SeekPage;
-import com.activepieces.common.SeekPageRequest;
 import com.activepieces.common.error.exception.ConstraintsException;
-import com.activepieces.common.error.exception.flow.*;
 import com.activepieces.common.error.exception.collection.CollectionNotFoundException;
 import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
+import com.activepieces.common.error.exception.flow.FlowExecutionInternalError;
+import com.activepieces.common.error.exception.flow.FlowNotFoundException;
+import com.activepieces.common.error.exception.flow.FlowVersionAlreadyLockedException;
+import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException;
+import com.activepieces.common.pagination.Cursor;
+import com.activepieces.common.pagination.SeekPage;
+import com.activepieces.common.pagination.SeekPageRequest;
 import com.activepieces.common.utils.TimeUtils;
 import com.activepieces.flow.FlowService;
 import com.activepieces.flow.FlowVersionService;
-import com.activepieces.flow.model.*;
+import com.activepieces.flow.model.CreateFlowRequest;
+import com.activepieces.flow.model.FlowVersionView;
+import com.activepieces.flow.model.FlowView;
+import com.activepieces.flow.model.TestFlowRequest;
 import com.activepieces.flow.validator.FlowVersionValidator;
 import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.guardian.client.exception.ResourceNotFoundException;
@@ -23,6 +30,7 @@ import com.activepieces.piece.client.model.CollectionVersionView;
 import com.activepieces.piece.client.model.CollectionView;
 import com.activepieces.variable.model.VariableService;
 import com.activepieces.variable.model.exception.MissingConfigsException;
+import com.github.ksuid.Ksuid;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,30 +76,24 @@ public class FlowController {
 
   @GetMapping("/collections/{collectionId}/flows")
   public ResponseEntity<SeekPage<FlowView>> list(
-      @PathVariable UUID collectionId,
-      @RequestParam(value = "startingAfter", required = false) UUID startingAfter,
+      @PathVariable Ksuid collectionId,
+      @RequestParam(value = "cursor", required = false) Cursor cursor,
       @RequestParam(value = "limit", defaultValue = "10", required = false) int limit)
       throws CollectionNotFoundException, PermissionDeniedException, FlowNotFoundException {
     return ResponseEntity.ok(
         flowService.listByCollectionId(
-            collectionId, new SeekPageRequest(startingAfter, null, limit)));
-  }
-
-  @GetMapping("/collections/{collectionId}/flows/count")
-  public ResponseEntity<Integer> count(@PathVariable UUID collectionId)
-      throws PermissionDeniedException, FlowNotFoundException {
-    return ResponseEntity.ok(flowService.countByCollectionId(collectionId));
+            collectionId, new SeekPageRequest(cursor, limit)));
   }
 
   @GetMapping("/flows/{flowId}")
-  public ResponseEntity<FlowView> get(@PathVariable UUID flowId)
+  public ResponseEntity<FlowView> get(@PathVariable Ksuid flowId)
       throws FlowNotFoundException, PermissionDeniedException, CollectionNotFoundException {
     return ResponseEntity.ok(flowService.get(flowId));
   }
 
   @PostMapping("/collections/{collectionId}/flows")
   public ResponseEntity<FlowView> create(
-      @PathVariable UUID collectionId,
+      @PathVariable Ksuid collectionId,
       @RequestPart(value = "flow") @Valid CreateFlowRequest createFlowRequest,
       @RequestPart(value = "artifacts", required = false) MultipartFile[] files)
           throws Exception {
@@ -111,7 +113,7 @@ public class FlowController {
   }
 
   @PostMapping("/flows/{flowId}/commit")
-  public ResponseEntity<FlowView> commit(@PathVariable UUID flowId)
+  public ResponseEntity<FlowView> commit(@PathVariable Ksuid flowId)
       throws FlowNotFoundException, PermissionDeniedException, FlowVersionNotFoundException,
           FlowVersionAlreadyLockedException {
     FlowView flowView = flowService.get(flowId);
@@ -123,7 +125,7 @@ public class FlowController {
       value = "/flows/{flowId}/versions/latest",
       consumes = {"multipart/form-data"})
   public ResponseEntity<FlowView> update(
-      @PathVariable UUID flowId,
+      @PathVariable Ksuid flowId,
       @RequestPart("flow") @Valid FlowVersionView versionRequestBody,
       @RequestPart(value = "artifacts", required = false) MultipartFile[] files)
           throws Exception {
@@ -137,7 +139,7 @@ public class FlowController {
   }
 
   @DeleteMapping("/flows/{flowId}")
-  public ResponseEntity<FlowView> update(@PathVariable UUID flowId)
+  public ResponseEntity<FlowView> update(@PathVariable Ksuid flowId)
       throws FlowNotFoundException, PermissionDeniedException, ResourceNotFoundException {
     flowService.archive(flowId);
     return ResponseEntity.ok().build();
@@ -145,8 +147,8 @@ public class FlowController {
 
   @PostMapping("/collection-versions/{collectionVersionId}/flow-versions/{flowVersionId}/runs")
   public ResponseEntity<InstanceRunView> execute(
-      @PathVariable UUID collectionVersionId,
-      @PathVariable UUID flowVersionId,
+      @PathVariable Ksuid collectionVersionId,
+      @PathVariable Ksuid flowVersionId,
       @RequestBody @Valid TestFlowRequest request)
           throws PermissionDeniedException, FlowVersionNotFoundException, MissingConfigsException,
           FlowExecutionInternalError, CollectionVersionNotFoundException, ResourceNotFoundException {

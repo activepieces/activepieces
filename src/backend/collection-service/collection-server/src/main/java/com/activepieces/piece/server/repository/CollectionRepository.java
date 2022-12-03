@@ -1,15 +1,15 @@
 package com.activepieces.piece.server.repository;
 
-import com.activepieces.entity.nosql.Collection;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import com.activepieces.common.pagination.PaginationRepository;
+import com.activepieces.entity.sql.Collection;
+import com.github.ksuid.Ksuid;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Repository("CollectionRepository")
-public interface CollectionRepository extends MongoRepository<Collection, UUID> {
+public interface CollectionRepository extends CrudRepository<Collection, Ksuid>, PaginationRepository<Collection, Ksuid> {
 
 
-    Optional<Collection> findByProjectIdAndName(UUID projectId, String name);
 }

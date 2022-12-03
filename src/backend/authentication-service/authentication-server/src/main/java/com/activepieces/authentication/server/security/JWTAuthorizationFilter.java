@@ -1,8 +1,7 @@
 package com.activepieces.authentication.server.security;
 
-import com.activepieces.apikey.client.ApiKeyService;
-import com.activepieces.common.identity.PrincipleIdentity;
 import com.activepieces.authentication.client.util.JWTUtils;
+import com.activepieces.common.identity.PrincipleIdentity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,16 +20,9 @@ import java.util.Optional;
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
 
-  private final HandlerExceptionResolver resolver;
-  private final ApiKeyService apiKeyService;
-
   public JWTAuthorizationFilter(
-      ApiKeyService apiKeyService,
-      AuthenticationManager authenticationManager,
-      HandlerExceptionResolver resolver) {
+      AuthenticationManager authenticationManager) {
     super(authenticationManager);
-    this.resolver = resolver;
-    this.apiKeyService = apiKeyService;
   }
 
   @Override
@@ -55,7 +47,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     }
     Optional<PrincipleIdentity> resourceToken =
         JWTUtils.decodeIdentityFromToken(
-            token, apiKeyService);
+            token);
 
     return resourceToken
         .map(

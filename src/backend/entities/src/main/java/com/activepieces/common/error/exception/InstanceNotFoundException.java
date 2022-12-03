@@ -2,19 +2,20 @@ package com.activepieces.common.error.exception;
 
 import com.activepieces.common.error.ErrorCode;
 import com.activepieces.common.error.ErrorResponseException;
+import com.github.ksuid.Ksuid;
 
 import java.util.UUID;
 
 public class InstanceNotFoundException extends Exception implements ErrorResponseException {
 
-  private final UUID instanceId;
+  private final Ksuid instanceId;
 
-  public InstanceNotFoundException(UUID instanceId) {
+  public InstanceNotFoundException(Ksuid instanceId) {
     super(String.format("Instance with id=%s not found", instanceId.toString()));
     this.instanceId = instanceId;
   }
 
-  public UUID getInstanceId(){
+  public Ksuid getInstanceId(){
     return instanceId;
   }
 

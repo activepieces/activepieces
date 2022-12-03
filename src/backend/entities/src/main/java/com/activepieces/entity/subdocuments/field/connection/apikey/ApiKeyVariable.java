@@ -1,7 +1,6 @@
 package com.activepieces.entity.subdocuments.field.connection.apikey;
 
 import com.activepieces.entity.subdocuments.field.Variable;
-import com.activepieces.entity.subdocuments.field.VariableSettings;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -3,8 +3,8 @@ package com.activepieces.actions.store.model;
 import com.activepieces.common.identity.WorkerIdentity;
 import com.activepieces.entity.enums.StoreScope;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.ksuid.Ksuid;
 import lombok.*;
-import org.springframework.social.InternalServerErrorException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,20 +23,20 @@ public class StorePath {
     this.paths = new ArrayList<>();
   }
 
-  public static StorePath collection(@NonNull UUID collectionId) {
+  public static StorePath collection(@NonNull Ksuid collectionId) {
     return new StorePath()
             .scope("collection")
             .scope(collectionId.toString());
   }
 
-  public static StorePath instance(@NonNull UUID instanceId) {
+  public static StorePath instance(@NonNull Ksuid instanceId) {
     return new StorePath()
         .scope("instances")
         .scope(instanceId.toString());
   }
 
   public static StorePath testScope(
-      @NonNull UUID collectionId) {
+      @NonNull Ksuid collectionId) {
     return new StorePath()
         .scope("collection")
         .scope(collectionId.toString())

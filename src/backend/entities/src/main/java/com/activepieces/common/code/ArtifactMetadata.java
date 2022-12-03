@@ -1,12 +1,14 @@
 package com.activepieces.common.code;
 
+import com.github.ksuid.Ksuid;
+
 import java.util.UUID;
 
 public interface ArtifactMetadata {
 
-    String getSourcePath(UUID resourceId);
+    String getSourcePath(Ksuid resourceId);
 
-    String getPackagePath(UUID resourceId);
+    String getPackagePath(Ksuid resourceId);
 
     ArtifactMetadataSettings getArtifactSettings();
 }

@@ -3,8 +3,9 @@ package com.activepieces.authentication.server.controller;
 
 import com.activepieces.authentication.client.UserAuthenticationService;
 import com.activepieces.authentication.client.exception.UserNotFoundException;
-import com.activepieces.common.identity.UserIdentity;
 import com.activepieces.authentication.client.model.UserInformationView;
+import com.activepieces.common.identity.UserIdentity;
+import com.github.ksuid.Ksuid;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,7 @@ public class UserController {
   @PutMapping("/{userId}")
   public ResponseEntity<UserInformationView> update(
           @AuthenticationPrincipal UserIdentity userIdentity,
-          @PathVariable("userId") UUID userId,
+          @PathVariable("userId") Ksuid userId,
           @RequestBody UserInformationView requestBody)
           throws  UserNotFoundException {
     if(!userIdentity.getId().equals(userId))
@@ -42,7 +43,7 @@ public class UserController {
 
   @GetMapping("/{userId}")
   public ResponseEntity<UserInformationView> get(
-          @PathVariable("userId") UUID userId)
+          @PathVariable("userId") Ksuid userId)
           throws  UserNotFoundException {
     return ResponseEntity.ok(userAuthenticationService.getById(userId));
   }

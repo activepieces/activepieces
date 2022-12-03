@@ -1,7 +1,5 @@
 package com.activepieces.common.code;
 
-import java.util.UUID;
-
 public interface ArtifactMetadataSettings {
 
     String getArtifact();

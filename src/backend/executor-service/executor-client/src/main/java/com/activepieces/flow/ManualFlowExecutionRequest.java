@@ -1,6 +1,7 @@
 package com.activepieces.flow;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.ksuid.Ksuid;
 import lombok.*;
 
 import javax.validation.constraints.NotNull;
@@ -16,11 +17,11 @@ public class ManualFlowExecutionRequest {
 
     @JsonProperty
     @NotNull
-    private UUID flowId;
+    private Ksuid flowId;
 
     @JsonProperty
     @NotNull
-    private UUID collectionId;
+    private Ksuid collectionId;
 
     @JsonProperty
     @NotNull

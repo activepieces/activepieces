@@ -1,11 +1,12 @@
 package com.activepieces.authentication.server.controller;
 
 import com.activepieces.authentication.client.UserAuthenticationService;
-import com.activepieces.authentication.client.exception.*;
-import com.activepieces.common.identity.UserIdentity;
+import com.activepieces.authentication.client.exception.UnAuthenticationException;
+import com.activepieces.authentication.client.exception.UnAuthorizedException;
 import com.activepieces.authentication.client.model.UserInformationView;
 import com.activepieces.authentication.client.request.SignInRequest;
 import com.activepieces.authentication.client.util.JWTUtils;
+import com.activepieces.common.identity.UserIdentity;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
@@ -37,6 +38,9 @@ public class AuthenticationController {
       throws UnAuthorizedException, UnAuthenticationException {
     final Optional<UserInformationView> userInformation =
         userAuthenticationService.getByCredentials(request.getEmail(), request.getPassword());
+    if(userInformation.isEmpty()){
+      throw new UnAuthenticationException();
+    }
     return ResponseEntity.ok()
         .header(
             JWTUtils.AUTHORIZATION_HEADER_NAME,

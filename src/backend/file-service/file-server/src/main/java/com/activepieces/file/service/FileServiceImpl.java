@@ -1,14 +1,15 @@
 package com.activepieces.file.service;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-
 import com.activepieces.entity.sql.FileEntity;
 import com.activepieces.file.repository.FileRepository;
+import com.github.ksuid.Ksuid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class FileServiceImpl implements FileService {
@@ -22,7 +23,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FileEntity save(String name, MultipartFile file) throws IOException {
-        return fileRepository.save(FileEntity.builder().id(UUID.randomUUID()).name(name).contentType(file.getContentType()).data(file.getBytes()).size(file.getSize()).build());
+        return fileRepository.save(FileEntity.builder().id(Ksuid.newKsuid()).name(name).contentType(file.getContentType()).data(file.getBytes()).size(file.getSize()).build());
     }
 
     @Override
@@ -31,7 +32,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public Optional<FileEntity> getFileById(UUID id) {
+    public Optional<FileEntity> getFileById(Ksuid id) {
         return fileRepository.findById(id);
     }
 

@@ -2,12 +2,11 @@ package com.activepieces.entity.sql;
 
 import com.activepieces.common.EntityMetadata;
 import com.activepieces.entity.enums.UserStatus;
+import com.github.ksuid.Ksuid;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
-import java.util.Set;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -19,10 +18,8 @@ import java.util.UUID;
 public class UserInformation implements EntityMetadata {
 
   @Id
-  @GeneratedValue(generator = "uuid2")
-  @GenericGenerator(name = "uuid2", strategy = "uuid2")
   @Column
-  private UUID id;
+  private Ksuid id;
 
   @Column(name = "email", unique = true)
   private String email;

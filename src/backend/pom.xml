@@ -24,7 +24,6 @@
         <module>executor-service</module>
         <module>trigger-service</module>
         <module>actions-service</module>
-        <module>api-key-service</module>
         <module>backend-loader</module>
         <module>variable-service</module>
         <module>instance-service</module>
@@ -40,6 +39,11 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
             <version>1.6.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vladmihalcea</groupId>
+            <artifactId>hibernate-types-52</artifactId>
+            <version>2.2.2</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.github.ksuid/ksuid -->
         <dependency>
@@ -68,12 +72,6 @@
             <artifactId>hibernate-validator</artifactId>
             <version>6.1.2.Final</version>
         </dependency>
-        <dependency>
-            <groupId>com.bol</groupId>
-            <artifactId>spring-data-mongodb-encrypt</artifactId>
-            <version>2.8.0</version>
-        </dependency>
-
         <!-- https://mvnrepository.com/artifactFile/commons-io/commons-io -->
         <dependency>
             <groupId>commons-io</groupId>
@@ -246,43 +244,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-log4j2</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-mongodb</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongodb-driver</artifactId>
-            <version>3.0.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.data</groupId>
-            <artifactId>spring-data-mongodb</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.cloudyrock.mongock</groupId>
-            <artifactId>mongock-spring-v5</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.cloudyrock.mongock</groupId>
-            <artifactId>mongodb-springdata-v3-driver</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
     </dependencies>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.github.cloudyrock.mongock</groupId>
-                <artifactId>mongock-bom</artifactId>
-                <version>4.3.8</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
     <build>
         <plugins>
             <plugin>

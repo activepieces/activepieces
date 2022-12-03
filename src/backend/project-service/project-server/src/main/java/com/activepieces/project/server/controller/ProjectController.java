@@ -1,15 +1,14 @@
 package com.activepieces.project.server.controller;
 
-import com.activepieces.common.identity.UserIdentity;
 import com.activepieces.common.error.exception.InvalidImageFormatException;
-import com.activepieces.entity.enums.ResourceType;
-import com.activepieces.guardian.client.PermissionService;
+import com.activepieces.common.identity.UserIdentity;
 import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.guardian.client.exception.ResourceNotFoundException;
 import com.activepieces.project.client.ProjectService;
 import com.activepieces.project.client.exception.ProjectNotFoundException;
-import com.activepieces.project.client.model.ProjectView;
 import com.activepieces.project.client.model.CreateProjectRequest;
+import com.activepieces.project.client.model.ProjectView;
+import com.github.ksuid.Ksuid;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +47,7 @@ public class ProjectController {
 
   @Secured("ROLE_USER")
   @GetMapping("/projects/{projectId}")
-  public ResponseEntity<ProjectView> get(@PathVariable("projectId") UUID projectId)
+  public ResponseEntity<ProjectView> get(@PathVariable("projectId") Ksuid projectId)
       throws ProjectNotFoundException, PermissionDeniedException {
     return ResponseEntity.ok(projectService.get(projectId));
   }
@@ -65,7 +64,7 @@ public class ProjectController {
   @Secured("ROLE_USER")
   @PutMapping("/projects/{projectId}")
   public ResponseEntity<ProjectView> update(
-      @PathVariable("projectId") UUID projectId,
+      @PathVariable("projectId") Ksuid projectId,
       @RequestPart(value = "project") @Valid ProjectView view,
       @RequestPart(value = "logo", required = false) MultipartFile file)
       throws ProjectNotFoundException, PermissionDeniedException, InvalidImageFormatException,
@@ -75,7 +74,7 @@ public class ProjectController {
 
   @Secured("ROLE_USER")
   @DeleteMapping("/projects/{projectId}")
-  public void delete(@PathVariable("projectId") UUID projectId)
+  public void delete(@PathVariable("projectId") Ksuid projectId)
       throws PermissionDeniedException, ProjectNotFoundException, ResourceNotFoundException {
     projectService.delete(projectId);
   }

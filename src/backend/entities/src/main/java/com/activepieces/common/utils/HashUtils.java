@@ -3,7 +3,6 @@ package com.activepieces.common.utils;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.social.InternalServerErrorException;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 import java.io.IOException;

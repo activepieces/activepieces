@@ -1,16 +1,7 @@
 package com.activepieces.lockservice;
 
-import com.activepieces.entity.nosql.LockDocument;
-import com.mongodb.MongoCommandException;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.FindAndModifyOptions;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -21,16 +12,16 @@ import java.util.UUID;
 @Service
 @Log4j2
 public class LockServiceImpl implements LockService {
-  private final MongoTemplate mongoTemplate;
 
   @Autowired
-  public LockServiceImpl(MongoTemplate mongoTemplate) {
-    this.mongoTemplate = mongoTemplate;
+  public LockServiceImpl() {
+
   }
 
   @Override
   public String acquire(String key, Duration expiration) {
-    try {
+    return null;
+    /*    try {
       Query query = Query.query(Criteria.where("_id").is(key));
       String token = UUID.randomUUID().toString();
       Update update =
@@ -67,7 +58,7 @@ public class LockServiceImpl implements LockService {
       return locked ? token : null;
     } catch (MongoCommandException exception) {
       return null;
-    }
+    }*/
   }
 
   @Override
@@ -91,7 +82,8 @@ public class LockServiceImpl implements LockService {
 
   @Override
   public boolean release(String key, String token) {
-    Query query = Query.query(Criteria.where("_id").is(key).and("token").is(token));
+    return false;
+/*    Query query = Query.query(Criteria.where("_id").is(key).and("token").is(token));
     DeleteResult deleted = mongoTemplate.remove(query, LockDocument.class);
     boolean released = deleted.getDeletedCount() == 1;
     if (released) {
@@ -107,36 +99,9 @@ public class LockServiceImpl implements LockService {
 
       log.error("Remove query did not affect any records for key {} with token {}", key, token);
     }
-    return released;
+    return released;*/
   }
 
 
-  public boolean refresh(String key, String token, Duration expiration) {
-    Query query = Query.query(Criteria.where("_id").is(key).and("token").is(token));
-    Update update =
-        Update.update("expireAt", Instant.now().getEpochSecond() * 1000 + expiration.toMillis());
-    UpdateResult updated = mongoTemplate.updateFirst(query, update, LockDocument.class);
-    final boolean refreshed = updated.getModifiedCount() == 1;
 
-    if (refreshed) {
-      log.debug(
-          "Refresh query successfully affected 1 record for key {} " + "with token {}", key, token);
-
-    } else if (updated.getModifiedCount() > 0) {
-      log.error(
-          "Unexpected result from refresh for key {} with token {}, " + "released {}",
-          key,
-          token,
-          updated);
-
-    } else {
-      log.warn(
-          "Refresh query did not affect any records for key {} with token {}. "
-              + "This is possible when refresh interval fires for the final time "
-              + "after the lock has been released",
-          key,
-          token);
-    }
-    return refreshed;
-  }
 }

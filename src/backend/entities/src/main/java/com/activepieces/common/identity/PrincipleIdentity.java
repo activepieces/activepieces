@@ -1,6 +1,7 @@
 package com.activepieces.common.identity;
 
 
+import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -10,7 +11,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class PrincipleIdentity {
 
-  private UUID id;
+  private Ksuid id;
 
   private PrincipleType principleType;
 }

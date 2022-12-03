@@ -1,16 +1,19 @@
 package com.activepieces.flow.validator.constraints;
 
-import com.activepieces.common.code.ArtifactFile;
 import com.activepieces.actions.model.action.ActionMetadataView;
+import com.activepieces.common.code.ArtifactFile;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.flow.util.FlowVersionUtil;
 import com.activepieces.flow.validator.FlowVersionRequestBuilder;
 import com.activepieces.trigger.model.EmptyTriggerMetadataView;
 import com.activepieces.trigger.model.TriggerMetadataView;
+import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
 
 import javax.validation.Validator;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @AllArgsConstructor
 public class StepsValidator implements FlowVersionRequestBuilder {
@@ -19,8 +22,8 @@ public class StepsValidator implements FlowVersionRequestBuilder {
 
   @Override
   public FlowVersionView construct(
-          UUID projectId,
-          UUID collectionId,
+          Ksuid projectId,
+          Ksuid collectionId,
           FlowVersionView flowVersion, List<ArtifactFile> artifactFileList, FlowVersionView draftVersion) {
     if (Objects.isNull(flowVersion.getTrigger())) {
       return flowVersion;

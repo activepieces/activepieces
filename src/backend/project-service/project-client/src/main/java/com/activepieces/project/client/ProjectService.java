@@ -6,6 +6,7 @@ import com.activepieces.guardian.client.exception.ResourceNotFoundException;
 import com.activepieces.project.client.exception.ProjectNotFoundException;
 import com.activepieces.project.client.model.CreateProjectRequest;
 import com.activepieces.project.client.model.ProjectView;
+import com.github.ksuid.Ksuid;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -15,16 +16,16 @@ import java.util.UUID;
 
 public interface ProjectService {
 
-  List<ProjectView> listByOwnerId(UUID userId) ;
+  List<ProjectView> listByOwnerId(Ksuid userId) ;
 
-  ProjectView create( UUID ownerId, CreateProjectRequest view) throws PermissionDeniedException;
+  ProjectView create( Ksuid ownerId, CreateProjectRequest view) throws PermissionDeniedException;
 
-  Optional<ProjectView> getOptional(UUID id) throws PermissionDeniedException;
+  Optional<ProjectView> getOptional(Ksuid id) throws PermissionDeniedException;
 
-  ProjectView get(UUID id) throws ProjectNotFoundException, PermissionDeniedException;
+  ProjectView get(Ksuid id) throws ProjectNotFoundException, PermissionDeniedException;
 
-  ProjectView update(UUID id, ProjectView view, Optional<MultipartFile> fileOptional)
+  ProjectView update(Ksuid id, ProjectView view, Optional<MultipartFile> fileOptional)
           throws ProjectNotFoundException, PermissionDeniedException, InvalidImageFormatException, IOException;
 
-  void delete(UUID id) throws ProjectNotFoundException, PermissionDeniedException, ResourceNotFoundException;
+  void delete(Ksuid id) throws ProjectNotFoundException, PermissionDeniedException, ResourceNotFoundException;
 }

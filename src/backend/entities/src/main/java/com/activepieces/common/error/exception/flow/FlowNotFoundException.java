@@ -2,12 +2,13 @@ package com.activepieces.common.error.exception.flow;
 
 import com.activepieces.common.error.ErrorCode;
 import com.activepieces.common.error.ErrorResponseException;
+import com.github.ksuid.Ksuid;
 
 import java.util.UUID;
 
 public class FlowNotFoundException extends Exception implements ErrorResponseException {
 
-  public FlowNotFoundException(UUID id) {
+  public FlowNotFoundException(Ksuid id) {
     super(String.format("FlowNotFoundException is not found with id=%s", id.toString()));
   }
   public FlowNotFoundException(UUID pieceId, String flowName) {

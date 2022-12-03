@@ -1,12 +1,13 @@
 package com.activepieces.flow.validator.constraints;
 
-import com.activepieces.common.code.ArtifactFile;
 import com.activepieces.actions.model.action.ActionMetadataView;
+import com.activepieces.common.code.ArtifactFile;
 import com.activepieces.common.error.ErrorCode;
 import com.activepieces.common.error.ErrorResponse;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.flow.util.FlowVersionUtil;
 import com.activepieces.flow.validator.FlowVersionRequestBuilder;
+import com.github.ksuid.Ksuid;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
@@ -16,8 +17,8 @@ public class UniqueStepsNameValidator implements FlowVersionRequestBuilder {
 
   @Override
   public FlowVersionView construct(
-      UUID projectId,
-      UUID collectionId,
+          Ksuid projectId,
+          Ksuid collectionId,
       FlowVersionView flowVersion,
       List<ArtifactFile> artifactFileList,
       FlowVersionView draftVersion) {

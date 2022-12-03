@@ -1,11 +1,13 @@
 package com.activepieces.entity.subdocuments.field.dropdown;
 
 import com.activepieces.common.validation.constraints.EnumNamePattern;
-import com.activepieces.entity.enums.OAuth2UserType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotNull;

@@ -2,7 +2,6 @@ package com.activepieces.entity.enums;
 
 public enum ResourceType {
    PROJECT(true),
-   API_KEY(false),
    FLOW(false),
    FLOW_VERSION(false),
    INSTANCE(false),

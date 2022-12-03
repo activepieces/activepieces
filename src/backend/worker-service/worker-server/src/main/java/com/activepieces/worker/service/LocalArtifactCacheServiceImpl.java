@@ -1,19 +1,23 @@
 package com.activepieces.worker.service;
 
 import com.activepieces.actions.code.CodeArtifactService;
-import com.activepieces.common.error.exception.CodeArtifactBuildFailure;
 import com.activepieces.common.code.ArtifactMetadata;
 import com.activepieces.common.error.ErrorServiceHandler;
-import com.activepieces.lockservice.LockService;
+import com.activepieces.common.error.exception.CodeArtifactBuildFailure;
 import com.activepieces.common.utils.ArtifactUtils;
+import com.activepieces.lockservice.LockService;
 import com.activepieces.worker.workers.CodeBuildWorker;
+import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
@@ -46,7 +50,7 @@ public class LocalArtifactCacheServiceImpl {
   }
 
   public InputStream cacheArtifact(
-      UUID resourceId,
+      Ksuid resourceId,
       ArtifactMetadata artifactMetadata,
       String artifactFileName)
       throws CodeArtifactBuildFailure {
@@ -91,7 +95,7 @@ public class LocalArtifactCacheServiceImpl {
   }
 
   public void buildPackageAndUpload(
-      CodeBuildWorker codeBuildWorker, UUID resourceId, ArtifactMetadata artifactMetadata)
+      CodeBuildWorker codeBuildWorker, Ksuid resourceId, ArtifactMetadata artifactMetadata)
       throws CodeArtifactBuildFailure {
     final String packagedPath = artifactMetadata.getPackagePath(resourceId);
     final String sourcePath = artifactMetadata.getSourcePath(resourceId);

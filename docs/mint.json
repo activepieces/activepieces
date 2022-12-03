@@ -1,0 +1,49 @@
+{
+  "name": "Passr",
+  "logo": {
+    "light": "./resources/logo/light.svg",
+    "dark": "./resources/logo/dark.svg"
+  },
+  "favicon": "./resources/favicon.png",
+  "colors": {
+    "primary": "#5155D7",
+    "dark": "#3033A6",
+    "light": "#6D72F6",
+    "ultraLight": "#BCBCEF",
+    "ultraDark": "##070963",
+    "background": {
+      "dark": "#0C1322",
+      "light": "#ffffff"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Contact Us",
+      "url": "mailto:support@activepieces.com"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "Blogs",
+      "icon": "bookmark",
+      "url": "blogs"
+    }
+  ],
+  "versions": [],
+  "navigation": [
+    {
+      "group": "Welcome",
+      "pages": [
+        "overview",
+        "changelog"
+      ]
+    },
+    {
+      "group": "Blogs",
+      "pages": [
+        "blogs/get-started"
+      ]
+    }
+  ],
+  "classes": {}
+}

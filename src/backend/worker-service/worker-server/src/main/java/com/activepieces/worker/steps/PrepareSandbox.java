@@ -9,7 +9,7 @@ import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Map;
 
 @Log4j2
 public class PrepareSandbox extends Step {

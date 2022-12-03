@@ -13,6 +13,7 @@ import com.activepieces.guardian.client.model.ResourceEventType;
 import com.activepieces.guardian.server.ResourcePublisher;
 import com.activepieces.guardian.server.repository.ResourceAccessRepository;
 import com.activepieces.guardian.server.repository.ResourceRepository;
+import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.social.InternalServerErrorException;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,7 +48,7 @@ public class PermissionsServiceImpl implements PermissionService {
   }
 
   @Override
-  public void requiresPermission(@NonNull UUID resourceId, @NonNull Permission permission)
+  public void requiresPermission(@NonNull Ksuid resourceId, @NonNull Permission permission)
       throws PermissionDeniedException {
     if (!hasPermission(resourceId, permission)) {
       throw new PermissionDeniedException("Permission required: " + permission);
@@ -56,7 +56,7 @@ public class PermissionsServiceImpl implements PermissionService {
   }
 
   @Override
-  public boolean hasPermission(@NonNull UUID resourceId, @NonNull Permission permission) {
+  public boolean hasPermission(@NonNull Ksuid resourceId, @NonNull Permission permission) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     // Internal traffic, as its null
     // TODO REPLACE WITH SPECIAL INSIDE SECURITY
@@ -69,7 +69,7 @@ public class PermissionsServiceImpl implements PermissionService {
 
 
   private boolean recursiveLookUp(
-      @NonNull UUID resourceId, @NonNull Permission permission, @NonNull UUID roleResourceId) {
+      @NonNull Ksuid resourceId, @NonNull Permission permission, @NonNull Ksuid roleResourceId) {
     try {
       Resource resource = getResource(resourceId);
       Optional<ResourceAccess> resourceAccessOptional =
@@ -87,7 +87,7 @@ public class PermissionsServiceImpl implements PermissionService {
   }
 
   @Override
-  public void grantRole(@NonNull UUID resourceId, @NonNull UUID principleId, @NonNull Role role) {
+  public void grantRole(@NonNull Ksuid resourceId, @NonNull Ksuid principleId, @NonNull Role role) {
     ResourceAccess resourceAccess =
         ResourceAccess.builder().resourceId(resourceId).principleId(principleId).role(role).build();
     log.info(principleId + " has granted role " + role + " on resourceId=" + resourceId);
@@ -95,7 +95,7 @@ public class PermissionsServiceImpl implements PermissionService {
   }
 
   @Override
-  public Resource getFirstResourceParentWithType(UUID resourceId, ResourceType resourceType)
+  public Resource getFirstResourceParentWithType(Ksuid resourceId, ResourceType resourceType)
       throws ResourceNotFoundException {
     Resource resource = getResource(resourceId);
     if (resource.getResourceType().equals(resourceType)) {
@@ -109,7 +109,7 @@ public class PermissionsServiceImpl implements PermissionService {
   }
 
   @Override
-  public Resource createResource(UUID id, ResourceType resourceType) {
+  public Resource createResource(Ksuid id, ResourceType resourceType) {
     try {
       return createResourceWithParent(id, null, resourceType);
     } catch (ResourceNotFoundException e) {
@@ -118,7 +118,7 @@ public class PermissionsServiceImpl implements PermissionService {
   }
 
   @Override
-  public Resource createResourceWithParent(UUID id, UUID parentId, ResourceType resourceType)
+  public Resource createResourceWithParent(Ksuid id, Ksuid parentId, ResourceType resourceType)
       throws ResourceNotFoundException {
     Resource.ResourceBuilder builder = Resource.builder().resourceId(id).resourceType(resourceType);
     if (Objects.nonNull(parentId)) {
@@ -134,7 +134,7 @@ public class PermissionsServiceImpl implements PermissionService {
   }
 
   @Override
-  public void deleteOrAchiveResource(UUID resourceId) throws ResourceNotFoundException {
+  public void deleteOrAchiveResource(Ksuid resourceId) throws ResourceNotFoundException {
     Resource resource = getResource(resourceId);
     if (!skipChildren(resource.getResourceType())) {
       for (Resource child : resourceRepository.findAllByParentResourceId(resourceId)) {
@@ -164,13 +164,13 @@ public class PermissionsServiceImpl implements PermissionService {
 
   @Override
   @Async
-  public Future<Void> deleteResourceAsync(UUID resourceId) throws ResourceNotFoundException {
+  public Future<Void> deleteResourceAsync(Ksuid resourceId) throws ResourceNotFoundException {
     deleteOrAchiveResource(resourceId);
     return CompletableFuture.completedFuture(null);
   }
 
   @Override
-  public Resource getResource(UUID resourceId) throws ResourceNotFoundException {
+  public Resource getResource(Ksuid resourceId) throws ResourceNotFoundException {
     return resourceRepository
         .findById(resourceId)
         .orElseThrow(() -> new ResourceNotFoundException(resourceId));

@@ -1,15 +1,13 @@
 package com.activepieces.logging.server;
 
-import com.activepieces.common.AggregateKey;
-import com.activepieces.common.PaginationService;
-import com.activepieces.common.SeekPage;
-import com.activepieces.common.SeekPageRequest;
-import com.activepieces.common.error.ErrorServiceHandler;
 import com.activepieces.common.error.exception.InstanceNotFoundException;
 import com.activepieces.common.error.exception.InvalidImageFormatException;
+import com.activepieces.common.pagination.PageFilter;
+import com.activepieces.common.pagination.SeekPage;
+import com.activepieces.common.pagination.SeekPageRequest;
 import com.activepieces.entity.enums.Permission;
 import com.activepieces.entity.enums.ResourceType;
-import com.activepieces.entity.nosql.InstanceRun;
+import com.activepieces.entity.sql.InstanceRun;
 import com.activepieces.entity.subdocuments.runs.ExecutionStateView;
 import com.activepieces.file.service.FileService;
 import com.activepieces.guardian.client.PermissionService;
@@ -20,20 +18,18 @@ import com.activepieces.logging.client.exception.InstanceRunNotFoundException;
 import com.activepieces.logging.client.model.InstanceRunView;
 import com.activepieces.logging.server.mapper.InstanceRunMapper;
 import com.activepieces.logging.server.repository.InstanceRunRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 @Service
 @Log4j2
@@ -41,7 +37,6 @@ public class InstanceRunServiceImpl implements InstanceRunService {
 
   private final InstanceRunRepository repository;
   private final PermissionService permissionService;
-  private final PaginationService paginationService;
   private final InstanceRunMapper mapper;
   private final FileService fileService;
   private final Executor executor;
@@ -53,7 +48,6 @@ public class InstanceRunServiceImpl implements InstanceRunService {
       final FileService fileService,
       InstanceRunRepository repository,
       PermissionService permissionService,
-      PaginationService paginationService,
       InstanceRunMapper mapper)
       throws IOException {
     this.fileService = fileService;
@@ -61,12 +55,11 @@ public class InstanceRunServiceImpl implements InstanceRunService {
     this.permissionService = permissionService;
     this.repository = repository;
     this.objectMapper = objectMapper;
-    this.paginationService = paginationService;
     this.mapper = mapper;
   }
 
   @Override
-  public Optional<InstanceRunView> getOptional(@NonNull UUID id) throws PermissionDeniedException {
+  public Optional<InstanceRunView> getOptional(@NonNull Ksuid id) throws PermissionDeniedException {
     Optional<InstanceRun> eventOptional = repository.findById(id);
     if (eventOptional.isEmpty()) {
       return Optional.empty();
@@ -80,42 +73,16 @@ public class InstanceRunServiceImpl implements InstanceRunService {
 
   @Override
   public SeekPage<InstanceRunView> list(
-      @NonNull final UUID environmentId,
-      final UUID accountId,
-      final UUID instanceId,
-      SeekPageRequest request)
+      @NonNull final Ksuid projectId,
+      @NonNull final SeekPageRequest request)
       throws InstanceRunNotFoundException, PermissionDeniedException {
-    permissionService.requiresPermission(environmentId, Permission.READ_INSTANCE_RUN);
-    InstanceRun startingAfter =
-        Objects.nonNull(request.getStartingAfter())
-            ? mapper.fromView(get(request.getStartingAfter()))
-            : null;
-    InstanceRun endingBefore =
-        Objects.nonNull(request.getEndingBefore())
-            ? mapper.fromView(get(request.getEndingBefore()))
-            : null;
-    final AggregateKey aggregateKey =
-        AggregateKey.builder()
-            .aggregateKey(InstanceRun.PROJECT_ID)
-            .value(environmentId)
-            .build();
-    final List<Criteria> criteriaList = new ArrayList<>();
-    if (Objects.nonNull(instanceId)) {
-      criteriaList.add(new Criteria(InstanceRun.INSTANCE_ID).is(instanceId));
-    }
-    SeekPage<InstanceRun> environmentSeekPage =
-        paginationService.paginationTimeDesc(
-            aggregateKey,
-            startingAfter,
-            endingBefore,
-            request.getLimit(),
-            InstanceRun.class,
-            criteriaList);
-    return environmentSeekPage.convert(mapper::toView);
+    permissionService.requiresPermission(projectId, Permission.READ_INSTANCE_RUN);
+    final List<PageFilter> filters = List.of(new PageFilter(InstanceRun.PROJECT_ID, projectId));
+    return repository.findPageAsc( filters, request).convert(mapper::toView);
   }
 
   @Override
-  public InstanceRunView get(@NonNull UUID id)
+  public InstanceRunView get(@NonNull Ksuid id)
       throws InstanceRunNotFoundException, PermissionDeniedException {
     Optional<InstanceRunView> runOptional = getOptional(id);
     if (runOptional.isEmpty()) {
@@ -129,7 +96,7 @@ public class InstanceRunServiceImpl implements InstanceRunService {
       @NonNull InstanceRunView request, @NonNull ExecutionStateView executionStateView)
       throws ResourceNotFoundException, PermissionDeniedException,
           InstanceNotFoundException, InvalidImageFormatException, IOException {
-    UUID parentResourceId =
+    Ksuid parentResourceId =
         Objects.isNull(request.getInstanceId())
             ? request.getFlowVersionId()
             : request.getInstanceId();
@@ -168,9 +135,4 @@ public class InstanceRunServiceImpl implements InstanceRunService {
 
 
 
-  @Override
-  public int countByInstanceId(UUID instanceId) throws PermissionDeniedException {
-    permissionService.requiresPermission(instanceId, Permission.READ_INSTANCE_RUN);
-    return repository.countByInstanceId(instanceId);
-  }
 }

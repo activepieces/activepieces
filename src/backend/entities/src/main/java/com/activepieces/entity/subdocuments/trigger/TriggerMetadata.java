@@ -2,7 +2,6 @@ package com.activepieces.entity.subdocuments.trigger;
 
 import com.activepieces.entity.subdocuments.action.ActionMetadata;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

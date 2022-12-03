@@ -1,12 +1,13 @@
 package com.activepieces.flow.repository;
 
-import com.activepieces.entity.nosql.FlowVersion;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import com.activepieces.entity.sql.FlowVersion;
+import com.github.ksuid.Ksuid;
+import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface FlowVersionRepository extends MongoRepository<FlowVersion, UUID> {
+public interface FlowVersionRepository extends CrudRepository<FlowVersion, Ksuid> {
 
-    List<FlowVersion> findAllByFlowIdOrderByEpochCreationTime(UUID flowId);
+    List<FlowVersion> findAllByFlowIdOrderByEpochCreationTime(Ksuid flowId);
 }

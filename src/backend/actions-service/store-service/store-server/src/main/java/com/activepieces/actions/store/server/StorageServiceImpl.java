@@ -6,7 +6,7 @@ import com.activepieces.actions.store.model.StoreValueView;
 import com.activepieces.actions.store.server.mapper.StoreMapper;
 import com.activepieces.actions.store.server.repository.StoreRepository;
 import com.activepieces.common.utils.HashUtils;
-import com.activepieces.entity.nosql.StoreValue;
+import com.activepieces.entity.sql.StoreValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

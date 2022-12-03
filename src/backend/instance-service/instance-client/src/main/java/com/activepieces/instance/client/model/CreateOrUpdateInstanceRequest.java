@@ -2,6 +2,7 @@ package com.activepieces.instance.client.model;
 
 import com.activepieces.entity.enums.InstanceStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 @SuperBuilder(toBuilder = true)
 public class CreateOrUpdateInstanceRequest {
 
-  @JsonProperty @NotNull private UUID collectionVersionId;
+  @JsonProperty @NotNull private Ksuid collectionVersionId;
 
   @JsonProperty @NotNull private Map<String, Object> configs;
 

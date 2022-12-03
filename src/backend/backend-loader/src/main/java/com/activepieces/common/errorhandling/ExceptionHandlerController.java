@@ -1,19 +1,21 @@
 package com.activepieces.common.errorhandling;
 
-import com.activepieces.common.error.exception.ApiKeyNotFoundException;
-import com.activepieces.authentication.client.exception.*;
+import com.activepieces.authentication.client.exception.InvalidTokenException;
+import com.activepieces.authentication.client.exception.UnAuthenticationException;
+import com.activepieces.authentication.client.exception.UnAuthorizedException;
+import com.activepieces.authentication.client.exception.UserNotFoundException;
 import com.activepieces.common.error.ErrorCode;
 import com.activepieces.common.error.ErrorResponse;
 import com.activepieces.common.error.exception.*;
+import com.activepieces.common.error.exception.collection.CollectionInvalidStateException;
+import com.activepieces.common.error.exception.collection.CollectionNotFoundException;
+import com.activepieces.common.error.exception.collection.CollectionVersionAlreadyLockedException;
+import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowVersionAlreadyLockedException;
 import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException;
 import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.logging.client.exception.InstanceRunNotFoundException;
-import com.activepieces.common.error.exception.collection.CollectionInvalidStateException;
-import com.activepieces.common.error.exception.collection.CollectionNotFoundException;
-import com.activepieces.common.error.exception.collection.CollectionVersionAlreadyLockedException;
-import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
 import com.activepieces.project.client.exception.ProjectNotFoundException;
 import com.activepieces.security.Slf4jMDCFilterConfiguration;
 import com.activepieces.variable.model.exception.MissingConfigsException;

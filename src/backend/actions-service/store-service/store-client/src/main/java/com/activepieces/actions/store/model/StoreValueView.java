@@ -1,12 +1,10 @@
 package com.activepieces.actions.store.model;
 
-import com.activepieces.common.EntityMetadata;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import javax.validation.constraints.NotNull;
-import java.util.UUID;
 
 @Getter
 @Setter

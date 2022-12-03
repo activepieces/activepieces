@@ -1,21 +1,21 @@
 package com.activepieces.common.identity;
 
+import com.github.ksuid.Ksuid;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.List;
 import java.util.UUID;
 
 @Getter
 public class WorkerIdentity extends PrincipleIdentity {
 
-  private final UUID collectionId;
-  private final UUID flowId;
-  private final UUID instanceId;
+  private final Ksuid collectionId;
+  private final Ksuid flowId;
+  private final Ksuid instanceId;
 
   @Builder
-  public WorkerIdentity(UUID collectionId, UUID flowId, UUID instanceId) {
-    super(UUID.randomUUID(), PrincipleType.WORKER);
+  public WorkerIdentity(Ksuid collectionId, Ksuid flowId, Ksuid instanceId) {
+    super(Ksuid.newKsuid(), PrincipleType.WORKER);
     this.collectionId = collectionId;
     this.flowId = flowId;
     this.instanceId = instanceId;

@@ -3,8 +3,6 @@ package com.activepieces.common.error.exception;
 import com.activepieces.common.error.ErrorCode;
 import com.activepieces.common.error.ErrorResponseException;
 
-import java.util.UUID;
-
 public class ConfigNotDynamicException extends Exception implements ErrorResponseException {
 
   public ConfigNotDynamicException(String key) {

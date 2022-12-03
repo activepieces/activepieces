@@ -3,7 +3,6 @@ package com.activepieces.actions.model.action.settings;
 import com.activepieces.common.code.ArtifactFile;
 import com.activepieces.common.code.ArtifactMetadataSettings;
 import com.activepieces.common.utils.ManifestUtils;
-import com.activepieces.common.utils.StringUtils;
 import com.activepieces.entity.subdocuments.action.settings.ComponentInput;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;

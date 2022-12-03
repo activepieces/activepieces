@@ -1,7 +1,7 @@
 package com.activepieces.actions.store.server.mapper;
 
 import com.activepieces.actions.store.model.StoreValueView;
-import com.activepieces.entity.nosql.StoreValue;
+import com.activepieces.entity.sql.StoreValue;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mappings;
 

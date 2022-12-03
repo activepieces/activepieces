@@ -1,20 +1,13 @@
 package com.activepieces.worker.service;
 
-import com.activepieces.actions.code.CodeArtifactService;
-import com.activepieces.actions.model.action.CodeActionMetadataView;
 import com.activepieces.actions.store.model.StorePath;
-import com.activepieces.common.error.ErrorServiceHandler;
-import com.activepieces.common.error.exception.CodeArtifactBuildFailure;
 import com.activepieces.flow.FlowVersionService;
 import com.activepieces.flow.model.FlowVersionView;
-import com.activepieces.flow.util.FlowVersionUtil;
-import com.activepieces.lockservice.LockService;
 import com.activepieces.logging.client.InstanceRunService;
 import com.activepieces.logging.client.model.InstanceRunView;
 import com.activepieces.piece.client.CollectionVersionService;
 import com.activepieces.piece.client.model.CollectionVersionView;
 import com.activepieces.worker.Worker;
-import com.activepieces.worker.model.WorkerExecutionResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +15,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Service
 @Log4j2
@@ -53,9 +44,7 @@ public class WorkerServiceImpl implements WorkerService {
           new Worker(
               i + 20,
                   apiUrl,
-              flowVersionService,
               localArtifactCacheService,
-              collectionVersionService,
               instanceRunService,
               objectMapper));
     }

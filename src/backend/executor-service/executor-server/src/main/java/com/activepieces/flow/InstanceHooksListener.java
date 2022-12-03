@@ -17,6 +17,7 @@ import com.activepieces.piece.client.model.CollectionVersionView;
 import com.activepieces.trigger.model.InstanceStartedTriggerMetadataView;
 import com.activepieces.trigger.model.InstanceStoppedTriggerMetadataView;
 import com.activepieces.variable.model.exception.MissingConfigsException;
+import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,7 @@ public class InstanceHooksListener implements InstanceSubscriber {
         this.errorServiceHandler = errorServiceHandler;
     }
 
-    private List<FlowVersionView> filterFlows(Set<UUID> flowVersionIds, Class<?> triggerType) {
+    private List<FlowVersionView> filterFlows(Set<Ksuid> flowVersionIds, Class<?> triggerType) {
         return flowVersionIds.stream()
                 .map(
                         f -> {
@@ -63,8 +64,9 @@ public class InstanceHooksListener implements InstanceSubscriber {
                 .collect(Collectors.toList());
     }
 
+    // TODO FIX
     public void runFlows(InstanceView instance, Class<?> triggerType) {
-        try {
+/*        try {
             final CollectionVersionView collectionVersionView = collectionVersionService.get(instance.getCollectionVersionId());
             List<FlowVersionView> flowVersions =
                     filterFlows(collectionVersionView.getFlowsVersionId(), triggerType);
@@ -80,7 +82,7 @@ public class InstanceHooksListener implements InstanceSubscriber {
         } catch (FlowExecutionInternalError | MissingConfigsException | ResourceNotFoundException |
                  CollectionVersionNotFoundException | PermissionDeniedException e) {
             throw errorServiceHandler.createInternalError(e);
-        }
+        }*/
     }
 
     public void onStop(InstanceView entity) {

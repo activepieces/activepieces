@@ -3,8 +3,8 @@ package com.activepieces.flow.model;
 import com.activepieces.common.EntityMetadata;
 import com.activepieces.entity.enums.EditState;
 import com.activepieces.entity.subdocuments.field.Variable;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,16 +23,13 @@ import java.util.UUID;
 public class FlowVersionMetaView implements EntityMetadata {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private UUID id;
+    private Ksuid id;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private UUID flowId;
+    private Ksuid flowId;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String displayName;
-
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private String description;
 
     @JsonProperty(access= JsonProperty.Access.READ_ONLY)
     private EditState state;

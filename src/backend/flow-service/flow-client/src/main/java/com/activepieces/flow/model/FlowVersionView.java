@@ -3,19 +3,20 @@ package com.activepieces.flow.model;
 import com.activepieces.common.EntityMetadata;
 import com.activepieces.common.error.ErrorResponse;
 import com.activepieces.entity.enums.EditState;
-import com.activepieces.entity.subdocuments.field.Variable;
 import com.activepieces.trigger.model.TriggerMetadataView;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,10 +26,10 @@ import java.util.*;
 public class FlowVersionView  implements EntityMetadata {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private UUID id;
+    private Ksuid id;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private UUID flowId;
+    private Ksuid flowId;
 
     @JsonProperty
     @NotEmpty

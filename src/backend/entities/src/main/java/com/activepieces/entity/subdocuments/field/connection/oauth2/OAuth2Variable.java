@@ -2,7 +2,6 @@ package com.activepieces.entity.subdocuments.field.connection.oauth2;
 
 import com.activepieces.entity.subdocuments.field.Variable;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -1,8 +1,10 @@
 package com.activepieces.flow.model;
 
-import com.activepieces.common.validation.constraints.CodeNameConstraints;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;

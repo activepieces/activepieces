@@ -1,6 +1,6 @@
 package com.activepieces.logging.server.mapper;
 
-import com.activepieces.entity.nosql.InstanceRun;
+import com.activepieces.entity.sql.InstanceRun;
 import com.activepieces.entity.subdocuments.runs.ExecutionStateView;
 import com.activepieces.logging.client.model.InstanceRunView;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,6 +1,6 @@
 package com.activepieces.flow.mapper;
 
-import com.activepieces.entity.nosql.FlowVersion;
+import com.activepieces.entity.sql.FlowVersion;
 import com.activepieces.entity.subdocuments.trigger.TriggerMetadata;
 import com.activepieces.flow.model.FlowVersionMetaView;
 import com.activepieces.flow.model.FlowVersionView;

@@ -4,6 +4,7 @@ import com.activepieces.actions.model.action.settings.ComponentSettingsView;
 import com.activepieces.common.code.ArtifactMetadata;
 import com.activepieces.common.code.ArtifactMetadataSettings;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,13 +31,13 @@ public class ComponentActionMetadataView extends ActionMetadataView  implements 
 
     @Override
     @Transient
-    public String getSourcePath(UUID flowVersionId) {
+    public String getSourcePath(Ksuid flowVersionId) {
         return flowVersionId + "/" + getName() + "/source.zip";
     }
 
     @Override
     @Transient
-    public String getPackagePath(UUID flowVersionId) {
+    public String getPackagePath(Ksuid flowVersionId) {
         return flowVersionId + "/" + getName() + "/" + FilenameUtils.removeExtension(settings.getArtifact()) + ".js";
     }
 

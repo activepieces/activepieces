@@ -7,13 +7,13 @@ import com.activepieces.common.code.ArtifactFile;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.flow.util.FlowVersionUtil;
 import com.activepieces.flow.validator.FlowVersionRequestBuilder;
-import com.activepieces.piece.client.CollectionService;
+import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
-import org.springframework.core.io.ClassPathResource;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 
 @AllArgsConstructor
@@ -23,8 +23,8 @@ public class ComponentStepValidator implements FlowVersionRequestBuilder {
 
   @Override
   public FlowVersionView construct(
-      UUID projectId,
-      UUID collectionId,
+          Ksuid projectId,
+          Ksuid collectionId,
       FlowVersionView flowVersion,
       List<ArtifactFile> artifactFileList,
       FlowVersionView currentVersion)

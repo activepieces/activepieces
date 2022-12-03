@@ -4,9 +4,6 @@ import lombok.NonNull;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static com.activepieces.entity.enums.Permission.*;
 
 public enum Role {
   OWNER(Arrays.asList(Permission.values())),

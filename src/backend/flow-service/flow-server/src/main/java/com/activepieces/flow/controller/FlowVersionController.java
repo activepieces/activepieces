@@ -5,6 +5,7 @@ import com.activepieces.flow.FlowVersionService;
 import com.activepieces.flow.model.FlowVersionMetaView;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.guardian.client.exception.PermissionDeniedException;
+import com.github.ksuid.Ksuid;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,7 @@ public class FlowVersionController {
 
   @GetMapping("/flows/versions/{versionId}")
   public ResponseEntity<FlowVersionView> get(
-      @PathVariable("versionId") UUID versionId)
+      @PathVariable("versionId") Ksuid versionId)
           throws PermissionDeniedException, FlowVersionNotFoundException {
     FlowVersionView versionView = flowVersionService.get(versionId);
     return ResponseEntity.ok(versionView);
@@ -40,7 +41,7 @@ public class FlowVersionController {
 
   @GetMapping("/flows/{flowId}/versions")
   public ResponseEntity<List<FlowVersionMetaView>> list(
-          @PathVariable("flowId") UUID flowId)
+          @PathVariable("flowId") Ksuid flowId)
           throws PermissionDeniedException, FlowVersionNotFoundException {
     return ResponseEntity.ok(flowVersionService.listByFlowId(flowId));
   }

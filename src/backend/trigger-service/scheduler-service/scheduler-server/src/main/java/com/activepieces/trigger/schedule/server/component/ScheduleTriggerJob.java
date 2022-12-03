@@ -2,8 +2,7 @@ package com.activepieces.trigger.schedule.server.component;
 
 import com.activepieces.action.FlowPublisherService;
 import com.activepieces.common.error.ErrorServiceHandler;
-import com.activepieces.entity.enums.InstanceStatus;
-import com.activepieces.instance.client.InstanceService;
+import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -39,8 +38,8 @@ public class ScheduleTriggerJob extends QuartzJobBean {
   protected void executeInternal(JobExecutionContext jobExecutionContext)
       throws JobExecutionException {
     JobDataMap jobDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
-    UUID instanceId = (UUID) jobDataMap.get(INSTANCE_ID);
-    UUID flowVersionId = (UUID) jobDataMap.get(FLOW_VERSION_ID);
+    Ksuid instanceId = (Ksuid) jobDataMap.get(INSTANCE_ID);
+    Ksuid flowVersionId = (Ksuid) jobDataMap.get(FLOW_VERSION_ID);
     logger.debug(
         "Executing Job with key {} instance id {}",
         jobExecutionContext.getJobDetail().getKey(),

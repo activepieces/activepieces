@@ -1,7 +1,5 @@
 package com.activepieces.authentication.client.util;
 
-import com.activepieces.apikey.client.ApiKeyService;
-import com.activepieces.apikey.client.model.ApiKeyView;
 import com.activepieces.common.identity.*;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -10,11 +8,14 @@ import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.Date;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.auth0.jwt.algorithms.Algorithm.HMAC512;
 
@@ -59,48 +60,14 @@ public class JWTUtils {
         .sign(HMAC512(SECRET_KEY.getBytes()));
   }
 
-
-
   public static String createTokenWithDefaultExpiration(@NonNull final UserIdentity userIdentity) {
     return createTokenWithExpirationPeriod(userIdentity, DEFAULT_EXPIRATION_DURATION);
   }
 
-  public static String createTokenWithExpirationPeriod(
-          @NonNull final String subject, final Duration duration) {
-    return JWT.create()
-            .withSubject(subject)
-            .withExpiresAt(new Date(System.currentTimeMillis() + duration.getSeconds() * 1000L))
-            .sign(HMAC512(SECRET_KEY.getBytes()));
-  }
-
-  public static Optional<String> decodeSubjectFromToken(@NonNull final String token) {
-    try {
-      final String subject =
-              JWT.require(Algorithm.HMAC512(SECRET_KEY.getBytes())).build().verify(token).getSubject();
-      return Optional.of(subject);
-    } catch (TokenExpiredException | JWTDecodeException | SignatureVerificationException ignored) {
-    }
-    return Optional.empty();
-  }
-
-  public static Optional<PrincipleIdentity> decodeUserIdentityFromToken(@NonNull final String token)  {
-    return decodeIdentityFromToken(token, null);
-  }
-
   public static Optional<PrincipleIdentity> decodeIdentityFromToken(
-          @NonNull final String rawToken, final ApiKeyService apiKeyService)  {
+          @NonNull final String rawToken)  {
     try {
       final String strippedToken = rawToken.replace(TOKEN_PREFIX, "");
-      if (strippedToken.startsWith("ak_") && Objects.nonNull(apiKeyService)) {
-        Optional<ApiKeyView> apiKey = apiKeyService.getBySecretKeyOptional(strippedToken);
-        if (apiKey.isPresent()) {
-          return Optional.of(
-                  ApiKeyIdentity.builder()
-                          .projectId(apiKey.get().getProjectId())
-                          .id(apiKey.get().getId())
-                          .build());
-        }
-      }
       final DecodedJWT decodedJWT = JWT.decode(strippedToken);
       final Claim resourceType = decodedJWT.getClaim(RESOURCE_ROLE);
       if (!resourceType.isNull()) {
@@ -109,20 +76,18 @@ public class JWTUtils {
                         .build()
                         .verify(strippedToken)
                         .getSubject();
-        final UUID resourceId = UUID.fromString(resourceIdString);
+        final Ksuid resourceId = Ksuid.fromString(resourceIdString);
         final PrincipleType principleType = PrincipleType.valueOf(resourceType.asString());
-        if (principleType.equals(PrincipleType.API_KEY)) {
-          return Optional.of(ApiKeyIdentity.builder().id(resourceId).build());
-        } else if (principleType.equals(PrincipleType.USER)) {
+        if (principleType.equals(PrincipleType.USER)) {
           return Optional.of(UserIdentity.builder().resourceId(resourceId).build());
         } else if (principleType.equals(PrincipleType.WORKER)) {
           WorkerIdentity.WorkerIdentityBuilder builder =
               WorkerIdentity.builder()
-                  .flowId(UUID.fromString(decodedJWT.getClaim(FLOW_ID).asString()))
-                  .collectionId(UUID.fromString(decodedJWT.getClaim(COLLECTION_ID).asString()));
+                  .flowId(Ksuid.fromString(decodedJWT.getClaim(FLOW_ID).asString()))
+                  .collectionId(Ksuid.fromString(decodedJWT.getClaim(COLLECTION_ID).asString()));
           String instanceId = decodedJWT.getClaim(INSTANCE_ID).asString();
           if (Objects.nonNull(instanceId)) {
-            builder = builder.instanceId(UUID.fromString(instanceId));
+            builder = builder.instanceId(Ksuid.fromString(instanceId));
           }
           return Optional.of(builder.build());
         }

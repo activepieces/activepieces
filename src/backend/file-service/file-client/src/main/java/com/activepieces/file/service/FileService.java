@@ -1,7 +1,7 @@
 package com.activepieces.file.service;
 
 import com.activepieces.entity.sql.FileEntity;
-import lombok.NonNull;
+import com.github.ksuid.Ksuid;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -14,6 +14,6 @@ public interface FileService {
 
     Optional<FileEntity> getFile(String name);
 
-    Optional<FileEntity> getFileById(UUID id);
+    Optional<FileEntity> getFileById(Ksuid id);
 
 }

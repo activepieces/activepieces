@@ -49,19 +49,6 @@
         </dependency>
 
         <dependency>
-            <artifactId>api-key-server</artifactId>
-            <groupId>com.activepieces</groupId>
-            <scope>compile</scope>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
-            <artifactId>api-key-client</artifactId>
-            <groupId>com.activepieces</groupId>
-            <scope>compile</scope>
-            <version>1.0</version>
-        </dependency>
-
-        <dependency>
             <artifactId>guardian-server</artifactId>
             <groupId>com.activepieces</groupId>
             <scope>compile</scope>

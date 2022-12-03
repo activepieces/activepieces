@@ -1,13 +1,12 @@
 package com.activepieces.entity.sql;
 
 
+import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
-import java.util.UUID;
 
 @Entity
 @Builder
@@ -17,9 +16,7 @@ import java.util.UUID;
 public class FileEntity {
 
     @Id
-    @GeneratedValue(generator = "uuid")
-    @GenericGenerator(name = "uuid", strategy = "uuid2")
-    private UUID id;
+    private Ksuid id;
 
     @Column(name = "name")
     private String name;

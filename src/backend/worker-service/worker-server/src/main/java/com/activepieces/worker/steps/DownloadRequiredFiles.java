@@ -3,20 +3,16 @@ package com.activepieces.worker.steps;
 import com.activepieces.actions.store.model.StorePath;
 import com.activepieces.common.code.ArtifactMetadata;
 import com.activepieces.common.error.exception.CodeArtifactBuildFailure;
-import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
-import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException;
-import com.activepieces.flow.FlowVersionService;
+import com.activepieces.common.utils.ArtifactUtils;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.flow.util.FlowVersionUtil;
-import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.logging.client.model.InstanceRunView;
-import com.activepieces.piece.client.CollectionVersionService;
 import com.activepieces.piece.client.model.CollectionVersionView;
 import com.activepieces.worker.Constants;
 import com.activepieces.worker.Worker;
 import com.activepieces.worker.service.LocalArtifactCacheServiceImpl;
-import com.activepieces.common.utils.ArtifactUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -28,7 +24,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -99,7 +98,7 @@ public class DownloadRequiredFiles extends Step {
 
     private void downloadArtifacts(
             Set<ImmutablePair<CollectionVersionView, FlowVersionView>> allRequiredFiles) {
-        Set<ImmutablePair<UUID, ArtifactMetadata>> allCodeActions =
+        Set<ImmutablePair<Ksuid, ArtifactMetadata>> allCodeActions =
                 allRequiredFiles.stream()
                         .map(
                                 f ->
@@ -115,7 +114,7 @@ public class DownloadRequiredFiles extends Step {
                 .forEach(
                         codePair -> {
                             try {
-                                UUID flowVersionId = codePair.getLeft();
+                                Ksuid flowVersionId = codePair.getLeft();
                                 ArtifactMetadata actionMetadataView = codePair.getRight();
                                 String jsFileName =
                                         ArtifactUtils.bundledFileName(

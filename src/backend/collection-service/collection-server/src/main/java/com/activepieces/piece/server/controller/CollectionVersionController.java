@@ -1,23 +1,23 @@
 package com.activepieces.piece.server.controller;
 
-import com.activepieces.guardian.client.exception.PermissionDeniedException;
-import com.activepieces.piece.client.CollectionService;
-import com.activepieces.piece.client.CollectionVersionService;
 import com.activepieces.common.error.exception.collection.CollectionNotFoundException;
 import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
-import com.activepieces.piece.client.model.CollectionVersionView;
+import com.activepieces.guardian.client.exception.PermissionDeniedException;
+import com.activepieces.piece.client.CollectionVersionService;
 import com.activepieces.piece.client.model.CollectionMetaVersionView;
-import com.activepieces.project.client.ProjectService;
-import com.activepieces.project.client.exception.ProjectNotFoundException;
+import com.activepieces.piece.client.model.CollectionVersionView;
+import com.github.ksuid.Ksuid;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -34,7 +34,7 @@ public class CollectionVersionController {
   }
 
   @GetMapping( "/collection-versions/{versionId}")
-  public ResponseEntity<CollectionVersionView> get(@PathVariable("versionId") UUID versionId)
+  public ResponseEntity<CollectionVersionView> get(@PathVariable("versionId") Ksuid versionId)
       throws PermissionDeniedException, CollectionVersionNotFoundException {
     CollectionVersionView pieceView = collectionVersionService.get(versionId);
     return ResponseEntity.ok(pieceView);
@@ -42,7 +42,7 @@ public class CollectionVersionController {
 
   @Secured(value = {"ROLE_API_KEY", "ROLE_USER"})
   @GetMapping( "/collections/{collectionId}/versions")
-  public ResponseEntity<List<CollectionMetaVersionView>> list(@PathVariable("collectionId") UUID collectionId)
+  public ResponseEntity<List<CollectionMetaVersionView>> list(@PathVariable("collectionId") Ksuid collectionId)
       throws PermissionDeniedException, CollectionNotFoundException {
     return ResponseEntity.ok(collectionVersionService.listByCollectionId(collectionId));
   }

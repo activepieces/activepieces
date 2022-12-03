@@ -2,7 +2,6 @@ package com.activepieces.common.error.exception;
 
 import com.activepieces.common.error.ErrorCode;
 import com.activepieces.common.error.ErrorResponseException;
-import org.apache.maven.artifact.Artifact;
 
 public class CodeArtifactBuildFailure extends Exception implements ErrorResponseException {
 
