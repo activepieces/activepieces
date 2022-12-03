@@ -1,0 +1,26 @@
+package com.activepieces.instance.client.model;
+
+import com.activepieces.entity.enums.InstanceStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+import javax.validation.constraints.NotNull;
+import java.util.Map;
+import java.util.UUID;
+
+@NoArgsConstructor
+@Getter
+@AllArgsConstructor
+@SuperBuilder(toBuilder = true)
+public class CreateOrUpdateInstanceRequest {
+
+  @JsonProperty @NotNull private UUID collectionVersionId;
+
+  @JsonProperty @NotNull private Map<String, Object> configs;
+
+  @JsonProperty @NotNull private InstanceStatus status;
+
+}

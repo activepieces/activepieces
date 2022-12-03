@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <artifactId>authentication-client</artifactId>
+  <version>1.0</version>
+  <dependencies>
+    <dependency>
+      <artifactId>entities</artifactId>
+      <groupId>com.activepieces</groupId>
+      <scope>compile</scope>
+      <version>1.0</version>
+    </dependency>
+      <dependency>
+          <groupId>com.activepieces</groupId>
+          <artifactId>guardian-client</artifactId>
+          <version>1.0</version>
+          <scope>compile</scope>
+      </dependency>
+      <dependency>
+          <groupId>com.activepieces</groupId>
+          <artifactId>api-key-client</artifactId>
+          <version>1.0</version>
+          <scope>compile</scope>
+      </dependency>
+  </dependencies>
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <artifactId>authentication-service</artifactId>
+    <groupId>com.activepieces</groupId>
+    <version>1.0</version>
+  </parent>
+
+  <properties>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+  </properties>
+
+</project>
