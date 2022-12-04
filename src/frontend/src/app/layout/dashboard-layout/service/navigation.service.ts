@@ -54,11 +54,6 @@ export class NavigationService {
 			submenu: true,
 			color: '#5fd2b0',
 			submenuItems: [
-				{
-					id: 'authentication',
-					text: 'Authentication',
-					link: '/authentication',
-				},
 				{ id: 'settings', text: 'Events', link: '/events' },
 				{ id: 'settings', text: 'API Keys', link: '/api-keys' },
 			],
