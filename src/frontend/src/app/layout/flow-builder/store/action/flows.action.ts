@@ -5,19 +5,13 @@ import { InstanceRun } from '../../../common-layout/model/instance-run.interface
 import { LeftSideBarType } from '../../../common-layout/model/enum/left-side-bar-type.enum';
 import { RightSideBarType } from '../../../common-layout/model/enum/right-side-bar-type.enum';
 import { Flow } from '../../../common-layout/model/flow.class';
-import { Config } from 'src/app/layout/common-layout/model/fields/variable/config';
 import { FlowItem } from 'src/app/layout/common-layout/model/flow-builder/flow-item';
 
 export enum FlowsActionType {
 	SET_INITIAL = '[FLOWS] SET_INITIAL',
 	DELETE_FLOW = '[FLOWS] DELETE_FLOW',
 	ADD_FLOW = '[FLOWS] ADD_FLOW',
-	UPDATE_CONFIG = '[FLOWS] UPDATE_CONFIG',
-	ADD_CONFIG = '[FLOWS] ADD_CONFIG',
 	CHANGE_NAME = '[FLOWS] CHANGE_NAME',
-	DELETE_CONFIG = '[FLOWS] DELETE_CONFIG',
-	DELETE_CONFIG_SUCCEEDED = '[FLOWS] DELETE_CONFIG_SUCCEEDED',
-	DELETE_CONFIG_FAILED = '[FLOWS] DELETE_CONFIG_FAILED',
 	SAVED_FAILED = '[FLOWS] SAVED_FAILED',
 	SAVED_SUCCESS = '[FLOWS] SAVED_SUCCESS',
 	SELECT_FLOW = '[FLOWS] SELECT_FLOW',
@@ -41,9 +35,6 @@ export enum FlowsActionType {
 
 export const SingleFlowModifyingState = [
 	FlowsActionType.DROP_PIECE,
-	FlowsActionType.UPDATE_CONFIG,
-	FlowsActionType.ADD_CONFIG,
-	FlowsActionType.DELETE_CONFIG_SUCCEEDED,
 	FlowsActionType.CHANGE_NAME,
 	FlowsActionType.DELETE_STEP,
 	FlowsActionType.ADD_STEP,
@@ -79,25 +70,6 @@ export const deleteStep = createAction(FlowsActionType.DELETE_STEP, props<{ step
 export const deleteFlow = createAction(FlowsActionType.DELETE_FLOW, props<{ flowId: UUID }>());
 
 export const addFlow = createAction(FlowsActionType.ADD_FLOW, props<{ flow: Flow }>());
-
-export const updateConfig = createAction(
-	FlowsActionType.UPDATE_CONFIG,
-	props<{ configIndex: number; config: Config }>()
-);
-
-export const addConfig = createAction(FlowsActionType.ADD_CONFIG, props<{ config: Config }>());
-
-export const deleteConfig = createAction(FlowsActionType.DELETE_CONFIG, props<{ configIndex: number }>());
-
-export const deleteConfigSucceeded = createAction(
-	FlowsActionType.DELETE_CONFIG_SUCCEEDED,
-	props<{ configIndex: number }>()
-);
-
-export const deleteConfigFailed = createAction(
-	FlowsActionType.DELETE_CONFIG_FAILED,
-	props<{ referenceKey: string; refreshedKey: string }>()
-);
 
 export const changeName = createAction(FlowsActionType.CHANGE_NAME, props<{ flowId: UUID; displayName: string }>());
 
@@ -146,12 +118,7 @@ export const FlowsActions = {
 	deleteFlow,
 	addFlow,
 	deleteStep,
-	updateConfig,
-	addConfig,
 	replaceTrigger,
-	deleteConfig,
-	deleteConfigFailed,
-	deleteConfigSucceeded,
 	selectFlow,
 	updateStep,
 	changeName,

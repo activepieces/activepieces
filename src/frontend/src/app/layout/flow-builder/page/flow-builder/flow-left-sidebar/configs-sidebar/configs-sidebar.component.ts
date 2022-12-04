@@ -39,7 +39,6 @@ export class VariableSidebarComponent {
 			ignoreBackdropClick: true,
 			class: 'modal-dialog-centered',
 			initialState: {
-				configScopeUserSelectedInList: configScope,
 				configIndexInConfigsList: $event == undefined ? undefined : $event.index,
 				configToUpdate: $event == undefined ? undefined : $event.value,
 			},

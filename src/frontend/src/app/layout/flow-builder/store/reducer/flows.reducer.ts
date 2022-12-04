@@ -67,32 +67,6 @@ const _flowsReducer = createReducer(
 	on(FlowsActions.selectFlow, (state, { flowId }): FlowsState => {
 		return { ...state, selectedFlowId: flowId };
 	}),
-	on(FlowsActions.deleteConfigSucceeded, (state, { configIndex }): FlowsState => {
-		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
-		const clonedFlows = clonedState.flows;
-		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
-		if (flowIndex != -1) {
-			clonedFlows[flowIndex].lastVersion.configs.splice(configIndex, 1);
-		}
-		return {
-			...state,
-			flows: clonedFlows,
-			selectedFlowId: state.selectedFlowId,
-		};
-	}),
-	on(FlowsActions.updateConfig, (state, { configIndex, config }): FlowsState => {
-		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
-		const clonedFlows = clonedState.flows;
-		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
-		if (flowIndex != -1) {
-			clonedFlows[flowIndex].lastVersion.configs[configIndex] = config;
-		}
-		return {
-			...state,
-			flows: clonedFlows,
-			selectedFlowId: state.selectedFlowId,
-		};
-	}),
 	on(FlowsActions.replaceTrigger, (state, { newTrigger }): FlowsState => {
 		if (state.selectedFlowId === null) {
 			throw new Error('Selected flow id is null');
@@ -172,20 +146,6 @@ const _flowsReducer = createReducer(
 		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
 		if (flowIndex != -1) {
 			clonedFlows[flowIndex].lastVersion = FlowVersion.clone(clonedFlows[flowIndex].lastVersion).deleteStep(stepName);
-		}
-		return {
-			...state,
-			tabsState: clonedState.tabsState,
-			flows: clonedFlows,
-			selectedFlowId: state.selectedFlowId,
-		};
-	}),
-	on(FlowsActions.addConfig, (state, { config }): FlowsState => {
-		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
-		const clonedFlows = clonedState.flows;
-		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
-		if (flowIndex != -1) {
-			clonedFlows[flowIndex].lastVersion.configs.push(config);
 		}
 		return {
 			...state,

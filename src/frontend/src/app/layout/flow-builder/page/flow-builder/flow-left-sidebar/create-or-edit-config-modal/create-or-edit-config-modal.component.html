@@ -29,25 +29,6 @@
       </div>
     </div>
     <div>
-      <label>Scope</label><br>
-      <ng-select
-      [items]="scopeDropdownOptions"
-      bindLabel="label"
-      bindValue="value"
-      id="role"
-      formControlName="scope"
-      [searchable]="false"
-      [clearable]="false"
-      placeholder="Please select"
-    >
-      <ng-template ng-option-tmp let-item="item">
-      <app-ng-select-item-template [item]="item" [isSelected]="item.value === getControlValue('scope')"></app-ng-select-item-template>
-      </ng-template>
-    </ng-select>
-    </div>
-
-
-    <div>
       <label required>Display Name</label>
       <input class="form-control" formControlName="label" type="text">
       <p @fadeInUp class="invalid-input" *ngIf="submitted && configForm.get('label')!.invalid ">
