@@ -307,20 +307,6 @@ export const selectCoreFlowItemsDetails = createSelector(selectAllFlowItemsDetai
 	return state.coreFlowItemsDetails;
 });
 
-export const selectFlowItemsDetailsForConnectors = createSelector(
-	selectAllFlowItemsDetails,
-	(state: FlowItemsDetailsState) => {
-		return state.connectorsFlowItemsDetails;
-	}
-);
-
-export const selectFlowItemsDetialsForUserCollections = createSelector(
-	selectAllFlowItemsDetails,
-	(state: FlowItemsDetailsState) => {
-		return state.userCollectionsFlowItemsDetails.filter(details => !details.extra!.old);
-	}
-);
-
 export const selectFlowItemDetailsForTriggers = createSelector(
 	selectAllFlowItemsDetails,
 	(state: FlowItemsDetailsState) => {
@@ -343,34 +329,16 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
 		if (flowItem.type === ActionType.COMPONENT) {
 			return state.connectorComponentsFlowItemDetails.find(f => f.name === flowItem.settings.componentName);
 		}
-		const remoteFlowItemDetails = [...state.connectorsFlowItemsDetails, ...state.userCollectionsFlowItemsDetails].find(
-			r => r.extra?.pieceVersionId === flowItem.settings.pieceVersionId
-		);
-		if (remoteFlowItemDetails) {
-			return remoteFlowItemDetails;
-		}
+
 		let coreItemDetials;
-		if (flowItem.type === ActionType.REMOTE_FLOW) {
-			coreItemDetials = state.coreFlowItemsDetails.find(
-				c => c.type === flowItem.type && c.extra?.pieceVersionId === flowItem.settings.pieceVersionId
-			);
-		} else {
-			//Core items might contain remote flows so always have them at the end
-			coreItemDetials = state.coreFlowItemsDetails.find(c => c.type === flowItem.type);
-		}
+
+		//Core items might contain remote flows so always have them at the end
+		coreItemDetials = state.coreFlowItemsDetails.find(c => c.type === flowItem.type);
+
 		if (!coreItemDetials) {
 			console.warn(`Flow item details for ${flowItem.displayName} are not currently loaded`);
 		}
 		return coreItemDetials;
-	});
-export const selectRemoteFlowItemDetails = (collectionVersionId: UUID) =>
-	createSelector(selectAllFlowItemsDetails, (state: FlowItemsDetailsState) => {
-		const remoteFlowItemDetails = [
-			...state.connectorsFlowItemsDetails,
-			...state.userCollectionsFlowItemsDetails,
-			...state.coreFlowItemsDetails,
-		].find(r => r.extra?.pieceVersionId === collectionVersionId);
-		return remoteFlowItemDetails;
 	});
 
 export const selectConfig = (configKey: string) =>
@@ -445,11 +413,8 @@ export const BuilderSelectors = {
 	selectSavingChangeState,
 	selectAllFlowItemsDetails,
 	selectFlowItemDetails,
-	selectRemoteFlowItemDetails,
 	selectAllFlowItemsDetailsLoadedState,
 	selectCoreFlowItemsDetails,
-	selectFlowItemsDetailsForConnectors,
-	selectFlowItemsDetialsForUserCollections,
 	selectFlowItemDetailsForTriggers,
 	selectCurrentFlowValidity,
 	selectAllConfigs,

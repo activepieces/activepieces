@@ -3,8 +3,6 @@ import { FlowItemDetails } from '../../page/flow-builder/flow-right-sidebar/step
 export interface FlowItemsDetailsState {
 	coreFlowItemsDetails: FlowItemDetails[];
 	triggerFlowItemsDetails: FlowItemDetails[];
-	connectorsFlowItemsDetails: FlowItemDetails[];
-	userCollectionsFlowItemsDetails: FlowItemDetails[];
 	connectorComponentsFlowItemDetails: FlowItemDetails[];
 	loaded: boolean;
 }

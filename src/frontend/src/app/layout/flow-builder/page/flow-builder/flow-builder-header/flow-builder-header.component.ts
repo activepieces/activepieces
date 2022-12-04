@@ -5,7 +5,6 @@ import { Collection } from '../../../../common-layout/model/piece.interface';
 import { PieceBuilderService } from '../../../service/piece-builder.service';
 import { RightSideBarType } from '../../../../common-layout/model/enum/right-side-bar-type.enum';
 import { ThemeService } from 'src/app/layout/common-layout/service/theme.service';
-import { LeftSideBarType } from 'src/app/layout/common-layout/model/enum/left-side-bar-type.enum';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { PieceAction } from '../../../store/action/piece.action';
@@ -132,15 +131,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
 
 	changeEditValue(event: boolean) {
 		this.editing = event;
-	}
-
-	openSettingsSideBar() {
-		this.store.dispatch(
-			FlowsActions.setLeftSidebar({
-				sidebarType: LeftSideBarType.PIECE_SETTINGS,
-				props: {},
-			})
-		);
 	}
 
 	savePieceName(newPieceName: string) {

@@ -17,8 +17,7 @@
       IdEntityName="Collection"></app-chevron-dropdown-menu>
   </div>
 
-  <div class="d-flex align-items-center ">
-
+  <div class="d-flex align-items-center">
     <app-icon-button [color]="themeService.BODY_COLOR" [hoverColor]="themeService.PRIMARY_COLOR" [width]="32"
       [height]="32" [iconFilename]="'sidebar/activepieces-small.svg'" [tooltipText]="'Home'"
       (click)="redirectHome(false)" (auxclick)="redirectHome(true)"></app-icon-button>
@@ -26,9 +25,6 @@
     <div class="d-flex align-items-center collection-actions-buttons-section">
       <app-icon-button [color]="themeService.BODY_COLOR" [matTooltip]="'Version History'"
         [hoverColor]="themeService.PRIMARY_COLOR" [iconFilename]="'revert.svg'" (click)="openCollectionVersionsLists()"
-        *ngIf="(viewMode$ | async) === false"></app-icon-button>
-      <app-icon-button [color]="themeService.BODY_COLOR" [hoverColor]="themeService.PRIMARY_COLOR"
-        [iconFilename]="'settings.svg'" [matTooltip]="'Collection Settings'" (click)="openSettingsSideBar()"
         *ngIf="(viewMode$ | async) === false"></app-icon-button>
       <app-embed-modal *ngIf="(viewMode$ | async) === false"></app-embed-modal>
       <app-publish-popover *ngIf="(viewMode$ | async) === false"></app-publish-popover>

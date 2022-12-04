@@ -9,14 +9,12 @@ import { FlowItemComponent } from './page/flow-builder/flow-item-tree/flow-item/
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { FlowRightSidebarComponent } from './page/flow-builder/flow-right-sidebar/flow-right-sidebar.component';
 import { FlowBuilderTabsComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tabs.component';
-
 import { CommonLayoutModule } from '../common-layout/common-layout.module';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
-
 import { MatExpansionModule } from '@angular/material/expansion';
 import { BsModalService, ModalModule } from 'ngx-bootstrap/modal';
 import { ChevronDropdownMenuComponent } from './components/chevron-dropdown-menu/chevron-dropdown-menu.component';
@@ -35,7 +33,6 @@ import { StepTypItemComponent } from './page/flow-builder/flow-right-sidebar/ste
 import { StepTypeListComponent } from './page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-list/step-type-list.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
-import { PieceSettingsComponent } from './page/flow-builder/flow-left-sidebar/piece-settings/piece-settings.component';
 import { StoreModule } from '@ngrx/store';
 import { pieceReducer } from './store/reducer/piece.reducer';
 import { EffectsModule } from '@ngrx/effects';
@@ -75,7 +72,6 @@ import { StorageStepInputFormComponent } from './page/flow-builder/flow-right-si
 import { LoopStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/loop-step-input-form/loop-step-input-form.component';
 import { ResponseStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/response-step-input-form/response-step-input-form.component';
 import { ScheduleTriggerInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/schedule-trigger-input-form/schedule-trigger-input-form.component';
-import { RemoteFlowInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/remote-flow-input-form/remote-flow-input-form.component';
 import { ConfigCardComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/config-card/config-card.component';
 import { VariableListComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/configs-list/configs-list.component';
 import { CreateEditConfigModalComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/create-or-edit-config-modal.component';
@@ -84,7 +80,6 @@ import { DropdownConfigSettingsComponent } from './page/flow-builder/flow-left-s
 import { OAuth2ConfigSettingsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/o-auth2-config-settings/o-auth2-config-settings.component';
 import { StaticDropDownOptionsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/dropdown-config-settings/static-drop-down-options/static-drop-down-options.component';
 import { ComponentInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/component-input-form.component';
-import { ConnectorAuthConfigsFinder } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/remote-flow-input-form/connector-auth-config-finder.pipe';
 import { NewAuthenticationModalComponent } from './page/flow-builder/flow-right-sidebar/new-authentication-modal/new-authentication-modal.component';
 import { EmbedModalComponent } from './page/flow-builder/flow-builder-header/embed-modal/embed-modal.component';
 import { PublishPopoverComponent } from './page/flow-builder/flow-builder-header/publish-popover/publish-popover.component';
@@ -151,7 +146,6 @@ import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/cente
 		StepTypItemComponent,
 		StepTypeListComponent,
 		StepTypeSidebarComponent,
-		PieceSettingsComponent,
 		CreateEditConfigModalComponent,
 		CreateNewFlowModalComponent,
 		AddNpmPackageModalComponent,
@@ -169,13 +163,13 @@ import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/cente
 		CodeStepInputFormComponent,
 		ScheduleTriggerInputFormComponent,
 		ConfigCardComponent,
-		RemoteFlowInputFormComponent,
+
 		DefaultConfigTypeSettingsComponent,
 		DropdownConfigSettingsComponent,
 		OAuth2ConfigSettingsComponent,
 		StaticDropDownOptionsComponent,
 		ComponentInputFormComponent,
-		ConnectorAuthConfigsFinder,
+
 		NewAuthenticationModalComponent,
 		PublishPopoverComponent,
 		EmbedModalComponent,

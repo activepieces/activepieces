@@ -97,8 +97,7 @@
       <app-code-step-input-form *ngSwitchCase="StepTypes.CODE" formControlName="input" [stepCacheKey]="stepCacheKey!"
         [stepArtifact$]="codeArtifact$!">
       </app-code-step-input-form>
-      <app-remote-flow-input-form *ngSwitchCase="StepTypes.REMOTE_FLOW" formControlName="input">
-      </app-remote-flow-input-form>
+
       <app-component-input-form *ngSwitchCase="StepTypes.COMPONENT" formControlName="input">
       </app-component-input-form>
     </ng-container>
