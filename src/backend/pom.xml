@@ -28,11 +28,8 @@
         <module>variable-service</module>
         <module>instance-service</module>
         <module>logging-service</module>
-        <module>lock-service</module>
         <module>worker-service</module>
         <module>file-service</module>
-        <module>file-service/file-client</module>
-        <module>file-service/file-server</module>
     </modules>
     <dependencies>
         <dependency>
@@ -44,6 +41,10 @@
             <groupId>com.vladmihalcea</groupId>
             <artifactId>hibernate-types-52</artifactId>
             <version>2.2.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.integration</groupId>
+            <artifactId>spring-integration-jdbc</artifactId>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
         <dependency>

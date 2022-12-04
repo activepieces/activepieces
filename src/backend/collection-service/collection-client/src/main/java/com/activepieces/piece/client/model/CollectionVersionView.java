@@ -26,7 +26,7 @@ public class CollectionVersionView {
 
   @JsonProperty @NotEmpty private String displayName;
 
-  @JsonProperty @NotNull private List<@Valid Variable<?>> configs;
+  @JsonProperty @NotNull private List<@Valid Variable> configs;
 
   @JsonIgnore private Ksuid collectionId;
 

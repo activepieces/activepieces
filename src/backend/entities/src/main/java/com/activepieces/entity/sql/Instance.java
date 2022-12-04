@@ -23,19 +23,20 @@ import java.util.Map;
 public class Instance implements EntityMetadata {
 
   public static final String PROJECT_ID = "projectId";
+  public static final String COLLECTION_ID = "collectionId";
   public static final String STATUS = "status";
 
   @Id private Ksuid id;
+
+  @Column(name = "collection_id")
+  private Ksuid collectionId;
+
 
   @Column(name = "collection_version_id")
   private Ksuid collectionVersionId;
 
   @Column(name = "project_id")
   private Ksuid projectId;
-
-  @Type(type = "jsonb")
-  @Column(name = "configs", columnDefinition = "jsonb")
-  private Map<String, Object> configs;
 
   @Column(name = "status")
   private InstanceStatus status;

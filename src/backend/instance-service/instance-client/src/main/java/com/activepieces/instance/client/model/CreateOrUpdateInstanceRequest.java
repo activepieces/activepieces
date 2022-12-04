@@ -20,8 +20,6 @@ public class CreateOrUpdateInstanceRequest {
 
   @JsonProperty @NotNull private Ksuid collectionVersionId;
 
-  @JsonProperty @NotNull private Map<String, Object> configs;
-
   @JsonProperty @NotNull private InstanceStatus status;
 
 }

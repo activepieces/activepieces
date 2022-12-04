@@ -42,9 +42,7 @@ public class CascadeDeleteHandler implements ResourceSubscriber {
                     break;
                 case INSTANCE:
                      Instance instance = instanceRepository.findById(entity.getResourceId()).orElseThrow();
-                     // TODO HARD DELETE
-                     //  instance.setStatus(InstanceStatus.ARCHIVED);
-                     instanceRepository.save(instance);
+                     instanceRepository.deleteById(instance.getId());
                     break;
                 case FLOW:
                     flowRepository.deleteById(entity.getResourceId());

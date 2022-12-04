@@ -5,6 +5,7 @@ import com.activepieces.entity.sql.Flow;
 import com.activepieces.flow.FlowVersionService;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.flow.model.FlowView;
+import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.github.ksuid.Ksuid;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -21,9 +22,6 @@ public abstract class FlowMapper {
   @Autowired
   private FlowVersionService flowVersionService;
 
-  @Autowired
-  private ErrorServiceHandler errorServiceHandler;
-
   @Mappings({
           @Mapping(target = "lastVersion", expression = "java(map(entity.getId()))"),
   })
@@ -32,10 +30,12 @@ public abstract class FlowMapper {
   @Mappings({})
   public abstract Flow fromView(FlowView entity);
 
-
-  // TODO FIX
   public FlowVersionView map(Ksuid flowId) {
-   return null;
+    try {
+      return flowVersionService.getLatest(flowId);
+    } catch (PermissionDeniedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }

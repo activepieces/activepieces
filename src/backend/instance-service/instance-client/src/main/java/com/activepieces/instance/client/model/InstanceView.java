@@ -25,9 +25,9 @@ public class InstanceView implements EntityMetadata {
 
   @JsonProperty private Ksuid projectId;
 
-  @JsonProperty private Ksuid collectionVersionId;
+  @JsonProperty private Ksuid collectionId;
 
-  @JsonProperty private Map<String, Object> configs;
+  @JsonProperty private Ksuid collectionVersionId;
 
   @JsonProperty private InstanceStatus status;
 

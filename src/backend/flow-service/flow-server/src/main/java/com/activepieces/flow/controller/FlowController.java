@@ -8,7 +8,6 @@ import com.activepieces.common.error.exception.collection.CollectionNotFoundExce
 import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowExecutionInternalError;
 import com.activepieces.common.error.exception.flow.FlowNotFoundException;
-import com.activepieces.common.error.exception.flow.FlowVersionAlreadyLockedException;
 import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException;
 import com.activepieces.common.pagination.Cursor;
 import com.activepieces.common.pagination.SeekPage;
@@ -99,53 +98,42 @@ public class FlowController {
           throws Exception {
     List<MultipartFile> fileList =
         Objects.isNull(files) ? Collections.emptyList() : Arrays.asList(files);
-
     List<ArtifactFile> artifactFiles = codeArtifactService.toArtifacts(fileList);
     FlowVersionView finalRequest =
         flowVersionValidator.constructRequest(
-            collectionId, null, createFlowRequest.getVersion(), artifactFiles);
+            collectionId, null, FlowVersionView.builder().displayName(createFlowRequest.getDisplayName()).trigger(createFlowRequest.getTrigger()).build(), artifactFiles);
     CollectionView collectionView = collectionService.get(collectionId);
     return ResponseEntity.ok(
         flowService.create(
             collectionView.getProjectId(),
-            collectionId,
-            createFlowRequest.toBuilder().version(finalRequest).build()));
-  }
-
-  @PostMapping("/flows/{flowId}/commit")
-  public ResponseEntity<FlowView> commit(@PathVariable Ksuid flowId)
-      throws FlowNotFoundException, PermissionDeniedException, FlowVersionNotFoundException,
-          FlowVersionAlreadyLockedException {
-    FlowView flowView = flowService.get(flowId);
-    flowVersionService.lock(flowView.getLastVersion().getId());
-    return ResponseEntity.ok(flowService.get(flowId));
+            collectionId,finalRequest));
   }
 
   @PutMapping(
-      value = "/flows/{flowId}/versions/latest",
+      value = "/flows/{flowId}",
       consumes = {"multipart/form-data"})
   public ResponseEntity<FlowView> update(
       @PathVariable Ksuid flowId,
       @RequestPart("flow") @Valid FlowVersionView versionRequestBody,
       @RequestPart(value = "artifacts", required = false) MultipartFile[] files)
           throws Exception {
-    long updateTime = TimeUtils.getEpochTimeInMillis();
     List<MultipartFile> fileList =
         (Objects.isNull(files) ? Collections.emptyList() : Arrays.asList(files));
     List<ArtifactFile> artifactFiles = codeArtifactService.toArtifacts(fileList);
     FlowVersionView constructedRequest =
         flowVersionValidator.constructRequest(null, flowId, versionRequestBody, artifactFiles);
-    return ResponseEntity.ok(flowService.updateDraft(flowId, constructedRequest, updateTime));
+    return ResponseEntity.ok(flowService.updateDraft(flowId, constructedRequest));
   }
 
   @DeleteMapping("/flows/{flowId}")
-  public ResponseEntity<FlowView> update(@PathVariable Ksuid flowId)
+  public ResponseEntity<FlowView> delete(@PathVariable Ksuid flowId)
       throws FlowNotFoundException, PermissionDeniedException, ResourceNotFoundException {
-    flowService.archive(flowId);
+    flowService.delete(flowId);
     return ResponseEntity.ok().build();
   }
 
-  @PostMapping("/collection-versions/{collectionVersionId}/flow-versions/{flowVersionId}/runs")
+  // TODO TEST
+/*  @PostMapping("/collection-versions/{collectionVersionId}/flow-versions/{flowVersionId}/runs")
   public ResponseEntity<InstanceRunView> execute(
       @PathVariable Ksuid collectionVersionId,
       @PathVariable Ksuid flowVersionId,
@@ -158,13 +146,14 @@ public class FlowController {
     }
     CollectionVersionView collectionVersionView = collectionVersionService.get(collectionVersionId);
     Map<String, Object> variablesList =
-        variableService.validateAndGetConfigs(
-            collectionVersionView.getConfigs(), request.getConfigs());
+        variableService.flatConfigsValue(
+            collectionVersionView.getConfigs());
 
     InstanceRunView response =
         flowPublisherService.executeTest(
             collectionVersionId, flowVersionId, variablesList, request.getTrigger());
 
     return ResponseEntity.ok(response);
-  }
+  }*/
+
 }

@@ -80,12 +80,6 @@
         </dependency>
         <dependency>
             <groupId>com.activepieces</groupId>
-            <artifactId>lock-service</artifactId>
-            <version>1.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.activepieces</groupId>
             <artifactId>executor-client</artifactId>
             <version>1.0</version>
             <scope>compile</scope>

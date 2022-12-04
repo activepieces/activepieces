@@ -17,18 +17,9 @@ public abstract class CollectionVersionMapper {
 
   @Mappings({})
   public abstract CollectionMetaVersionView toMeta(CollectionVersionView entity);
-
-  public List<Variable<?>> map(List<Variable<?>> variables) {
-    return variables;
-  }
-
-  @Mappings({
-    @Mapping(target = "configs", expression = "java(map(entity.getConfigs()))"),
-  })
+  @Mappings({})
   public abstract CollectionVersion fromView(CollectionVersionView entity);
 
-  @Mappings({
-    @Mapping(target = "configs", expression = "java(map(entity.getConfigs()))"),
-  })
+  @Mappings({})
   public abstract CollectionVersionView toView(CollectionVersion entity);
 }

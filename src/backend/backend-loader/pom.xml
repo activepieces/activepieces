@@ -12,12 +12,6 @@
             <version>1.0</version>
         </dependency>
         <dependency>
-            <artifactId>lock-service</artifactId>
-            <groupId>com.activepieces</groupId>
-            <scope>compile</scope>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
             <artifactId>instance-client</artifactId>
             <groupId>com.activepieces</groupId>
             <scope>compile</scope>

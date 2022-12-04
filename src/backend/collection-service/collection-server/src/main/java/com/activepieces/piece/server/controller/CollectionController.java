@@ -81,14 +81,14 @@ public class CollectionController {
     return ResponseEntity.ok(collectionService.update(collectionId, request));
   }
 
-  @PostMapping("/collections/{collectionId}/publish")
+/*  @PostMapping("/collections/{collectionId}/publish")
   public ResponseEntity<CollectionView> commit(@PathVariable("collectionId") Ksuid collectionId)
       throws PermissionDeniedException, CollectionNotFoundException, CollectionVersionNotFoundException,
           CollectionVersionAlreadyLockedException, FlowNotFoundException, CollectionInvalidStateException {
     CollectionView collectionView = collectionService.get(collectionId);
     collectionVersionService.commit(collectionView.getLastVersion().getId());
     return ResponseEntity.ok(collectionService.get(collectionId));
-  }
+  }*/
 
   @DeleteMapping("/collections/{collectionId}")
   public void delete(@PathVariable("collectionId") Ksuid collectionId)

@@ -1,7 +1,5 @@
 package com.activepieces.entity.subdocuments.field;
 
-import com.activepieces.entity.enums.VariableSource;
-import com.activepieces.entity.subdocuments.field.settings.NormalSettings;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,11 +15,8 @@ import java.util.Objects;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PasswordVariable extends Variable<NormalSettings> {
+public class PasswordVariable extends Variable {
 
-    @JsonProperty
-    @NotNull
-    private NormalSettings settings;
 
     @JsonProperty
     private Object value;
@@ -31,9 +26,6 @@ public class PasswordVariable extends Variable<NormalSettings> {
     }
 
     public boolean validate(Object finalValue) {
-        if(getSource().equals(VariableSource.PREDEFINED)){
-            return Objects.nonNull(finalValue);
-        }
-        return Objects.nonNull(finalValue) || !settings.isRequired();
+        return Objects.nonNull(finalValue);
     }
 }

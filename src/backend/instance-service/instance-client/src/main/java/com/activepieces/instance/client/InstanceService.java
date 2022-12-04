@@ -20,9 +20,7 @@ import java.util.UUID;
 
 public interface InstanceService {
 
-  List<InstanceView> upgradeAllInstances(Ksuid collectionVersionId)  throws PermissionDeniedException, CollectionNotFoundException, CollectionVersionNotFoundException;
-
-  SeekPage<InstanceView> listByProjectId(Ksuid projectId, SeekPageRequest pageRequest) throws PermissionDeniedException, InstanceNotFoundException;
+  SeekPage<InstanceView> listByCollectionId(Ksuid collectionId, SeekPageRequest pageRequest) throws PermissionDeniedException, InstanceNotFoundException;
 
   InstanceView create(CreateOrUpdateInstanceRequest view) throws PermissionDeniedException, ResourceNotFoundException, FlowVersionNotFoundException, MissingConfigsException, CollectionVersionNotFoundException;
 

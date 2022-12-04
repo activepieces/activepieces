@@ -17,7 +17,7 @@ import java.util.Objects;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class OAuth2Variable extends Variable<OAuth2Settings> {
+public class OAuth2Variable extends Variable {
 
   @NotNull @Valid @JsonProperty private OAuth2Settings settings;
 

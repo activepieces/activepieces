@@ -15,6 +15,7 @@ import com.activepieces.entity.enums.Permission;
 import com.activepieces.entity.enums.ResourceType;
 import com.activepieces.entity.sql.FlowVersion;
 import com.activepieces.flow.mapper.FlowVersionMapper;
+import com.activepieces.flow.model.CreateFlowRequest;
 import com.activepieces.flow.model.FlowVersionMetaView;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.flow.repository.FlowVersionRepository;
@@ -66,7 +67,6 @@ public class FlowVersionServiceImpl implements FlowVersionService {
       throws ResourceNotFoundException {
     Ksuid newVersionIUd = Ksuid.newKsuid();
     uploadArtifacts(newVersionIUd, previousVersionId, newVersion);
-    long creationTime = TimeUtils.getEpochTimeInMillis();
     FlowVersionView savedFlowVersion =
         saveFromView(
             newVersion.toBuilder()
@@ -99,6 +99,12 @@ public class FlowVersionServiceImpl implements FlowVersionService {
                     ? currentVersion.getState()
                     : newVersion.getState())
             .build());
+  }
+
+  @Override
+  public FlowVersionView getLatest(Ksuid flowId) throws PermissionDeniedException {
+    permissionService.requiresPermission(flowId, Permission.READ_FLOW);
+    return flowVersionMapper.toView(flowVersionRepository.findFirstByFlowIdOrderByIdDesc(flowId));
   }
 
   @Override

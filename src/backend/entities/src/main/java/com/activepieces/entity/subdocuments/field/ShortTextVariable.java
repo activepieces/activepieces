@@ -1,7 +1,5 @@
 package com.activepieces.entity.subdocuments.field;
 
-import com.activepieces.entity.enums.VariableSource;
-import com.activepieces.entity.subdocuments.field.settings.ShortTextSettings;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,12 +15,8 @@ import java.util.Objects;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ShortTextVariable extends Variable<ShortTextSettings>{
-
-    @JsonProperty
-    @NotNull
-    private ShortTextSettings settings;
-
+public class ShortTextVariable extends Variable{
+    
     @JsonProperty
     private Object value;
 
@@ -31,10 +25,6 @@ public class ShortTextVariable extends Variable<ShortTextSettings>{
     }
 
     public boolean validate(Object finalValue) {
-        if(getSource().equals(VariableSource.PREDEFINED)){
-      return Objects.nonNull(finalValue) && ((String) finalValue).length() > 0;
-        }
-    return (Objects.nonNull(finalValue) && ((String) finalValue).length() > 0)
-        || !settings.isRequired();
+        return Objects.nonNull(finalValue) && ((String) finalValue).length() > 0;
     }
 }

@@ -14,7 +14,7 @@ import java.util.Objects;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class KeyValueVariable extends Variable<Object>  {
+public class KeyValueVariable extends Variable  {
 
     @JsonProperty
     private Object value;
@@ -23,13 +23,4 @@ public class KeyValueVariable extends Variable<Object>  {
         return Objects.nonNull(finalValue);
     }
 
-    @Override
-    public Object getSettings() {
-        return null;
-    }
-
-    @Override
-    public void setSettings(Object settings) {
-
-    }
 }

@@ -1,7 +1,5 @@
 package com.activepieces.entity.subdocuments.field;
 
-import com.activepieces.entity.enums.VariableSource;
-import com.activepieces.entity.subdocuments.field.settings.NormalSettings;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,19 +15,11 @@ import java.util.Objects;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class MultilineVariable extends Variable<NormalSettings>  {
-
-    @JsonProperty
-    @NotNull
-    private NormalSettings settings;
+public class MultilineVariable extends Variable  {
 
     private Object value;
 
     public boolean validate(Object finalValue) {
-        if(getSource().equals(VariableSource.PREDEFINED)){
-            return Objects.nonNull(finalValue) && finalValue instanceof String && ((String) finalValue).length() > 0;
-        }
-        return (Objects.nonNull(finalValue) && finalValue instanceof String && ((String) finalValue).length() > 0)
-                || !settings.isRequired();
+        return Objects.nonNull(finalValue) && finalValue instanceof String && ((String) finalValue).length() > 0;
     }
 }

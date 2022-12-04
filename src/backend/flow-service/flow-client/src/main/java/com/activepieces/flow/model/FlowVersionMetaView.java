@@ -35,7 +35,7 @@ public class FlowVersionMetaView implements EntityMetadata {
     private EditState state;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private List<@Valid Variable<?>> configs;
+    private List<@Valid Variable> configs;
 
     @JsonProperty(access= JsonProperty.Access.READ_ONLY)
     private long created;

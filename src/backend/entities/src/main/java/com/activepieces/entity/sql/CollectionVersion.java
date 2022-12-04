@@ -33,7 +33,7 @@ public class CollectionVersion implements EntityMetadata {
 
   @Type(type = "jsonb")
   @Column(name = "configs", columnDefinition = "jsonb")
-  private List<Variable<?>> configs;
+  private List<Variable> configs;
 
   @Column(name = "state")
   private EditState state;

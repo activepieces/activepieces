@@ -7,7 +7,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Getter
 @AllArgsConstructor
-public class EmptyField extends Variable<Object> {
+public class EmptyField extends Variable {
 
 
     @Override
@@ -20,13 +20,4 @@ public class EmptyField extends Variable<Object> {
         return true;
     }
 
-    @Override
-    public Object getSettings() {
-        return null;
-    }
-
-    @Override
-    public void setSettings(Object settings) {
-
-    }
 }

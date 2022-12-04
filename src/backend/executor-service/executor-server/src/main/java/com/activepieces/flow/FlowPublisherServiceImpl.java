@@ -132,7 +132,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
             FlowVersionView flowVersionView = flowVersionService.get(flowVersionId);
             Ksuid runId = Ksuid.newKsuid();
             Map<String, Object> validatedInstanceConfigs =
-                    variableService.getConfigsWithNoValidate(collectionVersionView.getConfigs(), instanceView.getConfigs());
+                    variableService.flatConfigsValue(collectionVersionView.getConfigs());
             Optional<ExecutionRequest> request =
                     constructRun(
                             runId,

@@ -2,7 +2,6 @@ package com.activepieces.instance;
 
 import com.activepieces.common.error.ErrorServiceHandler;
 import com.activepieces.common.error.exception.InstanceNotFoundException;
-import com.activepieces.common.error.exception.collection.CollectionNotFoundException;
 import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
 import com.activepieces.common.pagination.PageFilter;
 import com.activepieces.common.pagination.SeekPage;
@@ -24,7 +23,6 @@ import com.activepieces.instance.repository.InstanceRepository;
 import com.activepieces.piece.client.CollectionService;
 import com.activepieces.piece.client.CollectionVersionService;
 import com.activepieces.piece.client.model.CollectionVersionView;
-import com.activepieces.piece.client.model.CollectionView;
 import com.activepieces.variable.model.VariableService;
 import com.activepieces.variable.model.exception.MissingConfigsException;
 import com.github.ksuid.Ksuid;
@@ -33,9 +31,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Log4j2
@@ -73,28 +69,6 @@ public class InstanceServiceImpl implements InstanceService {
     this.instanceMapper = instanceMapper;
   }
 
-  // TODO USE IN PUBLISH
-  public List<InstanceView> upgradeAllInstances(Ksuid collectionVersionId)
-      throws PermissionDeniedException, CollectionNotFoundException,
-          CollectionVersionNotFoundException {
-    permissionService.requiresPermission(collectionVersionId, Permission.READ_INSTANCE);
-    CollectionVersionView collectionVersionView = collectionVersionService.get(collectionVersionId);
-    CollectionView collectionView = collectionService.get(collectionVersionView.getCollectionId());
-    List<InstanceView> instanceList =
-        listInstanceForCollectionId(collectionView).stream()
-            .map(
-                instanceView ->
-                    upgradeInstance(
-                        instanceView.toBuilder()
-                            .collectionVersionId(collectionVersionId)
-                            .build()))
-            .collect(Collectors.toList());
-    log.info(
-        "Upgraded {} instances for collection version {}",
-        instanceList.size(),
-        collectionVersionId);
-    return instanceList;
-  }
 
   private InstanceView upgradeInstance(InstanceView instanceView) {
     InstanceView savedInstance = saveFromView(instanceView);
@@ -106,44 +80,29 @@ public class InstanceServiceImpl implements InstanceService {
     return instanceMapper.toView(instanceRepository.save(instanceMapper.fromView(instanceView)));
   }
 
-  private List<InstanceView> listInstanceForCollectionId(
-      CollectionView collectionView) {
-    // TODO FIX
-    return Collections.emptyList();
-/*    return instanceRepository
-        .findAllByCollectionVersionIdIn(
-            collectionView.getVersionsList())
-        .stream()
-        .map(instanceMapper::toView)
-        .collect(Collectors.toList());*/
-  }
 
   @Override
-  public SeekPage<InstanceView> listByProjectId(
-          Ksuid projectId, SeekPageRequest request)
+  public SeekPage<InstanceView> listByCollectionId(
+          Ksuid collectionId, SeekPageRequest request)
       throws PermissionDeniedException, InstanceNotFoundException {
-    permissionService.requiresPermission(projectId, Permission.READ_INSTANCE);
-    final List<PageFilter> filters = List.of(new PageFilter(Instance.PROJECT_ID, projectId));
+    permissionService.requiresPermission(collectionId, Permission.READ_INSTANCE);
+    final List<PageFilter> filters = List.of(new PageFilter(Instance.COLLECTION_ID, collectionId));
     return instanceRepository.findPageAsc( filters, request).convert(instanceMapper::toView);
   }
 
   @Override
   public InstanceView create(CreateOrUpdateInstanceRequest request)
-      throws PermissionDeniedException, ResourceNotFoundException,
-          MissingConfigsException, CollectionVersionNotFoundException {
+      throws PermissionDeniedException, ResourceNotFoundException, CollectionVersionNotFoundException {
     permissionService.requiresPermission(request.getCollectionVersionId(), Permission.WRITE_INSTANCE);
     CollectionVersionView collectionVersion =
         collectionVersionService.get(request.getCollectionVersionId());
-    Map<String, Object> validatedPieceConfigs = getPieceConfigs(collectionVersion, request);
     Instance metadata =
         Instance.builder()
             .collectionVersionId(request.getCollectionVersionId())
-            .configs(validatedPieceConfigs)
             .status(request.getStatus())
             .build();
 
     metadata.setId(Ksuid.newKsuid());
-    metadata.setConfigs(validatedPieceConfigs);
     InstanceView savedView = instanceMapper.toView(instanceRepository.save(metadata));
     savedView = instanceMapper.toView(instanceRepository.save(instanceMapper.fromView(savedView)));
 
@@ -185,9 +144,7 @@ public class InstanceServiceImpl implements InstanceService {
     permissionService.requiresPermission(id, Permission.WRITE_INSTANCE);
     CollectionVersionView collectionVersion =
         collectionVersionService.get(request.getCollectionVersionId());
-    Map<String, Object> validatedPieceConfigs = getPieceConfigs(collectionVersion, request);
     Instance entity = optional.get();
-    entity.setConfigs(validatedPieceConfigs);
     entity.setStatus(request.getStatus());
 
     InstanceView instanceView = instanceMapper.toView(instanceRepository.save(entity));
@@ -208,10 +165,8 @@ public class InstanceServiceImpl implements InstanceService {
   }
 
   private Map<String, Object> getPieceConfigs(
-      CollectionVersionView collectionVersionView, CreateOrUpdateInstanceRequest request)
-      throws PermissionDeniedException, CollectionVersionNotFoundException,
-          MissingConfigsException {
-    return variableService.validateAndGetConfigs(
-        collectionVersionView.getConfigs(), request.getConfigs());
+      CollectionVersionView collectionVersionView)
+      throws MissingConfigsException {
+    return variableService.flatConfigsValue(collectionVersionView.getConfigs());
   }
 }

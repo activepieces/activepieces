@@ -67,29 +67,30 @@ public class InstanceController {
     return ResponseEntity.ok(instanceService.get(instanceId));
   }
 
-  @GetMapping("/projects/{projectId}/instances")
+  @GetMapping("/collections/{collectionId}/instances")
   public ResponseEntity<SeekPage<InstanceView>> listByEnvironmentId(
-      @PathVariable("projectId") Ksuid projectId,
-      @RequestParam(value = "startingAfter", required = false) Cursor cursor,
+      @PathVariable("collectionId") Ksuid projectId,
+      @RequestParam(value = "cursor", required = false) Cursor cursor,
       @RequestParam(value = "limit", defaultValue = "10", required = false) int limit)
       throws InstanceNotFoundException, PermissionDeniedException {
     return ResponseEntity.ok(
-        instanceService.listByProjectId(projectId, new SeekPageRequest(cursor, limit)));
+        instanceService.listByCollectionId(projectId, new SeekPageRequest(cursor, limit)));
   }
 
-  @PostMapping("/instances")
-  public ResponseEntity<InstanceView> create(
-      @RequestBody @Valid CreateOrUpdateInstanceRequest request)
+  @PostMapping("/collections/{collectionId}/instances")
+  public ResponseEntity<InstanceView> create(@PathVariable("collectionId") Ksuid collectionId)
       throws PermissionDeniedException, ResourceNotFoundException, FlowVersionNotFoundException,
           CollectionVersionNotFoundException, MissingConfigsException {
-    CollectionVersionView collectionVersionView =
+    // TODO FIX;
+    return ResponseEntity.ok().build();
+/*    CollectionVersionView collectionVersionView =
         collectionVersionService.get(request.getCollectionVersionId());
     if (collectionVersionView.getState().equals(EditState.DRAFT)) {
       throw new IllegalArgumentException(
           String.format(
               "The Collection version %s is not published", collectionVersionView.getId()));
     }
-    return ResponseEntity.ok(instanceService.create(request));
+    return ResponseEntity.ok(instanceService.create(request));*/
   }
 
   @PutMapping("/instances/{instanceId}")
@@ -106,12 +107,6 @@ public class InstanceController {
   public void delete(@PathVariable("instanceId") Ksuid instanceId)
       throws PermissionDeniedException, InstanceNotFoundException, ResourceNotFoundException,
           InterruptedException {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (Objects.isNull(authentication) || Objects.isNull(authentication.getPrincipal())) {
-      throw new PermissionDeniedException(
-          String.format(
-              "Permission Denied No account found, cannot delete instance id %s", instanceId));
-    }
     instanceService.delete(instanceId);
   }
 

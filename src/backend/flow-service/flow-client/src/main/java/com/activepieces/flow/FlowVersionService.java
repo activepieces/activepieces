@@ -13,6 +13,7 @@ import java.util.UUID;
 
 public interface FlowVersionService {
 
+    FlowVersionView getLatest(Ksuid flowId) throws PermissionDeniedException;
     Optional<FlowVersionView> getOptional(Ksuid id) throws PermissionDeniedException;
 
     List<FlowVersionMetaView> listByFlowId(Ksuid flowId) throws PermissionDeniedException;

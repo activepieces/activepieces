@@ -41,7 +41,7 @@ public class FlowVersionView  implements EntityMetadata {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Set<ErrorResponse> errors;
 
-    @JsonProperty
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private boolean valid;
 
     @JsonProperty(access= JsonProperty.Access.READ_ONLY)

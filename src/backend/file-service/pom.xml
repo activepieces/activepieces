@@ -15,5 +15,10 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
     </properties>
+    <packaging>pom</packaging>
+    <modules>
+        <module>file-client</module>
+        <module>file-server</module>
+    </modules>
 
 </project>
