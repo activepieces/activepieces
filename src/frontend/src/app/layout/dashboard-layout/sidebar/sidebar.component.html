@@ -44,30 +44,6 @@
       </div>
     </div>
 
-    <div class="items-bottom">
-      <div
-        class="sd-icon submenu-item support-icon-wrapper"
-        (mouseenter)="supportButtonHovered = true"
-        (mouseleave)="supportButtonHovered = false"
-        (click)="openUserback()"
-      >
-        <div
-          class="sd-icon-container support-icon-container d-flex justify-content-center align-items-center"
-          [class.sd-icon-container-hover]="supportButtonHovered"
-        >
-          <div
-            class="support-icon-circle d-flex justify-content-center align-items-center"
-          >
-            <svg-icon
-              [svgStyle]="{ width: 13, height: 13 }"
-              src="assets/img/custom/support.svg"
-              class="support-icon"
-            ></svg-icon>
-          </div>
-        </div>
-        <div class="sd-icon-text no-select">Support</div>
-      </div>
-    </div>
   </div>
   <div
     [ngStyle]="hoverContainer(submenuOpen)"

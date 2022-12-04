@@ -4,7 +4,6 @@ import { NavigationEnd, Router } from '@angular/router';
 import { NavigationService } from '../service/navigation.service';
 import { AuthenticationService } from '../../common-layout/service/authentication.service';
 import { BsDropdownConfig } from 'ngx-bootstrap/dropdown';
-import { UserbackService } from '../../common-layout/service/userback.service';
 import { map, Observable, of, tap } from 'rxjs';
 
 @Component({
@@ -36,8 +35,7 @@ export class SidebarComponent implements OnInit {
 		private themeService: ThemeService,
 		private router: Router,
 		private authenticationService: AuthenticationService,
-		public navigationService: NavigationService,
-		private userbackService: UserbackService
+		public navigationService: NavigationService
 	) {}
 
 	ngOnInit(): void {
@@ -143,10 +141,6 @@ export class SidebarComponent implements OnInit {
 			submenu: index,
 		});
 		this.router.navigate([item.link]).then(r => {});
-	}
-
-	openUserback() {
-		this.userbackService.openUserbackSubject.next(true);
 	}
 
 	get isTrialExpired() {
