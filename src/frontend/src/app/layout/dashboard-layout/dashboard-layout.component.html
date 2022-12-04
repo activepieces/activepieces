@@ -10,12 +10,12 @@
           src="/assets/img/custom/sidebar/submenu-close.svg"
         ></svg-icon>
 
-        <h5 class="m-0" *ngIf="!isOnTrialStatusComponent">
-          {{ route.text === "Flows" ? "Flow Collections" : route.text }}
+        <h5 class="m-0">
+          {{ route?.text === "Flows" ? "Flow Collections" : route?.text }}
         </h5>
         <div class="flex-grow-1"></div>
-        <app-trial-countdown *ngIf="epochExpirationTime"></app-trial-countdown>
-        <div *ngIf="epochExpirationTime" class="right-bar-separator"></div>
+
+        <div  class="right-bar-separator"></div>
         <app-user-avatar></app-user-avatar>
       </div>
       <div class="route-body">

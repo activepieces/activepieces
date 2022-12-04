@@ -1,0 +1,40 @@
+<div class=" table-responsive" *ngIf="loadState$ | async else loading">
+  <table class=" table align-items-center table-flush">
+    <thead class=" thead-light">
+    <tr>
+      <th scope="col">Environment Name</th>
+      <th scope="col" style="width: 15%;">
+        Created At
+      </th>
+      <th scope="col" style="width: 10%;">
+        <app-create-new-environment-modal></app-create-new-environment-modal>
+      </th>
+    </tr>
+    </thead>
+    <tbody class=" list" *ngIf="environments$ | async as environments">
+    <tr *ngFor="let environment of environments">
+      <th scope="row">
+        <div style="display: flex; flex-direction: row;">
+          <div>
+            <div style="  height:100%; display: flex; justify-content: center; align-items: center;">
+              <fa-icon [size]="'1x'" [icon]="faUsers" [styles]="{'color': themeService.PRIMARY_COLOR}" class="mr-2"></fa-icon>
+            </div>
+          </div>
+          <div>
+            <span>{{environment.name}}</span>
+          </div>
+        </div>
+      </th>
+      <td>
+        {{timeHelperService.formatDateTime(environment.epochCreationTime)}}
+      </td>
+      <td>
+
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+<ng-template #loading>
+  <app-loading-skeleton></app-loading-skeleton>
+</ng-template>
