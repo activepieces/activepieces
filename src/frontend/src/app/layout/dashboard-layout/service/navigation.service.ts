@@ -53,10 +53,7 @@ export class NavigationService {
 			text: 'Settings',
 			submenu: true,
 			color: '#5fd2b0',
-			submenuItems: [
-				{ id: 'settings', text: 'Events', link: '/events' },
-				{ id: 'settings', text: 'API Keys', link: '/api-keys' },
-			],
+			submenuItems: [{ id: 'settings', text: 'API Keys', link: '/api-keys' }],
 			hover: false,
 		},
 	];
