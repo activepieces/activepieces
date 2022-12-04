@@ -1,0 +1,103 @@
+<form
+  [formGroup]="eventForm"
+  [class.ng-submitted]="submitted"
+  (ngSubmit)="createEvent()"
+>
+  <div class="modal-header">
+    <h5 class="modal-title pull-left">Create app event</h5>
+    <button
+      type="button"
+      class="btn-close close pull-right"
+      aria-label="Close"
+      (click)="bsModalRef.hide()"
+    >
+      <span aria-hidden="true" class="visually-hidden close-custom"
+        >&times;</span
+      >
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="form-group">
+      <label for="displayName">Display name (can be changed later)</label>
+      <input
+        type="text"
+        class="form-control"
+        id="displayName"
+        placeholder="Event name"
+        formControlName="displayName"
+      />
+      <p
+        @fadeInUp
+        *ngIf="submitted && this.eventForm.controls['displayName'].invalid"
+        class="invalid-input"
+      >
+        Display name is required
+      </p>
+    </div>
+    <div class="form-group">
+      <label for="name">Name (can NOT be changed later)</label>
+      <input
+        type="text"
+        class="form-control"
+        id="name"
+        placeholder="event_name"
+        formControlName="name"
+        (keydown)="nameChanged()"
+      />
+      <div
+        @fadeInUp
+        *ngIf="submitted && this.eventForm.controls['name'].invalid"
+      >
+        <p
+          class="invalid-input"
+          *ngIf="
+            submitted && this.eventForm.controls['name'].hasError('required')
+          "
+        >
+          Code name is required
+        </p>
+        <p
+          class="invalid-input"
+          *ngIf="
+            submitted && this.eventForm.controls['name'].hasError('pattern')
+          "
+        >
+          Code name must only consists of a-z, 0-9, underscores
+        </p>
+        <p
+          class="invalid-input"
+          *ngIf="
+            submitted && this.eventForm.controls['name'].hasError('nameExists')
+          "
+        >
+          Code name is already exists
+        </p>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="expectedOutput">Description (Optional)</label>
+      <textarea
+        class="form-control"
+        id="expectedOutput"
+        rows="2"
+        formControlName="description"
+      ></textarea>
+    </div>
+  </div>
+  <div class="modal-footer">
+
+    <app-button
+    btnColor="basic"
+    btnStyle="basic"
+    (buttonClicked)="bsModalRef.hide()"
+  > Cancel
+  </app-button>
+
+
+    <app-button
+      type="submit"
+      [loading]="loading"
+      btnColor="primary"
+    > Create</app-button>
+  </div>
+</form>

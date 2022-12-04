@@ -1,0 +1,57 @@
+/*!
+
+=========================================================
+* {{ site.product.name }} {{ site.product.name_long }} - v{{ site.product.version }}
+=========================================================
+
+* Product Page: {{ site.product.download }}
+* Copyright {{ 'now' | date: "%Y" }} {{ site.author }} ({{ site.website.url }})
+* Licensed under MIT ({{ site.product.license }})
+
+* Coded by www.creative-tim.com
+
+=========================================================
+
+* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+*/
+
+// {{ site.product.name }} components
+
+@import "functions";
+@import "mixins";
+
+@import "reboot";
+@import "global";
+@import "utilities";
+
+@import "accordion";
+@import "alert";
+@import "avatar";
+@import "badge";
+@import "buttons";
+@import "card";
+@import "carousel";
+@import "close";
+@import "content";
+@import "custom-forms";
+@import "dropdown";
+@import "footer";
+@import "forms";
+@import "grid";
+@import "icons";
+@import "input-group";
+@import "list-group";
+@import "modal";
+@import "nav";
+@import "navbar";
+@import "pagination";
+@import "popover";
+@import "progress";
+@import "section";
+@import "separator";
+@import "type";
+
+// Vendor
+
+@import "vendors";

@@ -1,0 +1,65 @@
+.btn {
+  &.btn-round {
+    border-radius: 30px;
+  }
+
+  &.back-to-top {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    border-radius: 6px;
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    transition: background-color 0.3s, opacity 0.5s, visibility 0.5s;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 1000;
+
+    &.show {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+}
+
+@each $name, $color in $theme-colors {
+  .btn-gradient-#{$name} {
+    background: linear-gradient(
+      35deg,
+      $color 0,
+      lighten($color, 10%) 100%
+    ) !important;
+    border-left: none;
+    border-right: none;
+    color: $white;
+    @include box-shadow($btn-box-shadow);
+
+    &:hover {
+      background: linear-gradient(
+        35deg,
+        darken($color, 10%) 0,
+        lighten(darken($color, 10%), 10%) 100%
+      ) !important;
+      color: $white;
+    }
+
+    &:active {
+      box-shadow: none !important;
+    }
+  }
+}
+
+.btn-gradient-secondary {
+  background: linear-gradient(
+    35deg,
+    $secondary 0,
+    lighten($secondary, 5%) 100%
+  ) !important;
+  color: $default;
+
+  &:hover {
+    color: $default;
+  }
+}

@@ -1,0 +1,89 @@
+<div
+  class="flow-container"
+  (mouseenter)="this.hover = true"
+  (mouseleave)="this.hover = false"
+>
+  <div class="options-container" [hidden]="viewMode">
+    <button
+      *ngIf="!trigger"
+      class="btn btn-secondary btn-fab btn-icon btn-round"
+      [hidden]="!hover"
+      (click)="deleteStep()"
+    >
+      <svg-icon
+        src="assets/img/custom/trash.svg"
+        [svgStyle]="trashIconSvgStyle()"
+      ></svg-icon>
+    </button>
+    <button
+      *ngIf="trigger"
+      class="btn btn-secondary btn-fab btn-icon btn-round"
+      [hidden]="!hover"
+      (click)="changeTrigger()"
+    >
+      <svg-icon
+        src="assets/img/custom/replace.svg"
+        [svgStyle]="trashIconSvgStyle()"
+      ></svg-icon>
+    </button>
+  </div>
+
+  <div
+    class="flow-item d-flex align-items-center"
+    [class.selected]="selected"
+    [class.empty-trigger]="_flowItem.type === triggerType.EMPTY"
+    (click)="selectStep()"
+  >
+    <div
+      class="flow-icon-container d-flex justify-content-center align-items-center"
+    >
+      <ng-container *ngIf="flowItemDetails$ | async">
+        <img *ngIf="stepIconUrl" class="logo-icon" @fadeIn [src]="stepIconUrl" />
+      </ng-container>
+
+      <div *ngIf="!stepIconUrl" class="step-icon-loading-spinner-container">
+        <div class="spinner-grow text-primary">
+          <span class="sr-only">Loading...</span>
+        </div>
+      </div>
+    </div>
+    <div class="flow-content d-flex flex-column">
+      <div class="d-flex">
+        <div class="flow-title font-weight-bold flex-grow-1" #stepTitle [matTooltip]="stepTitle.clientWidth < stepTitle.scrollWidth?  _flowItem.displayName: ''">
+          {{ _flowItem.displayName }}
+        </div>
+          <div  *ngIf="selectedRun$ | async">
+            <ng-container *ngIf="stepStatus$|async as actionStatus; else stepInsideLoopStatusTemplate">
+              <div
+              class="spinner-border text-primary step-run-result-icon"
+              *ngIf="actionStatus === actionStatusEnum.RUNNING"
+              role="status"
+            >
+              <span class="sr-only">Loading...</span>
+            </div>
+            <app-state-icon
+              *ngIf="actionStatus !== actionStatusEnum.RUNNING"
+              [succeeded]="actionStatus === actionStatusEnum.SUCCEEDED"
+            ></app-state-icon>
+            </ng-container>
+            <ng-template #stepInsideLoopStatusTemplate>
+              <app-state-icon
+              *ngIf="stepInsideLoopStatus$ | async as stepInsideLoopStatus"
+                [succeeded]="stepInsideLoopStatus === actionStatusEnum.SUCCEEDED"
+              ></app-state-icon>
+          </ng-template>
+          </div>
+
+
+
+
+      </div>
+      <div class="text-description">
+        <span class="badge badge-danger float-right"  *ngIf="!_flowItem.valid"  @fadeIn
+          >Invalid Settings</span
+        >
+        <div class="code-name">{{ _flowItem.name }}</div>
+      </div>
+    </div>
+  </div>
+</div>

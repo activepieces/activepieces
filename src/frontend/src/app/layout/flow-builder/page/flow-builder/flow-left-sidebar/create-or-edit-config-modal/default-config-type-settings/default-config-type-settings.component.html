@@ -1,0 +1,4 @@
+<form [formGroup]="defaultConfigSettingsForm">
+  <app-checkbox formControlName="optional" [label]="'Optional'"></app-checkbox>
+</form>
+<ng-container *ngIf="formValueChanged$|async"></ng-container>

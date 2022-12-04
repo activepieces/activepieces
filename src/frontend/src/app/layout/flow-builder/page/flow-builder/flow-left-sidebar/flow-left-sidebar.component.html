@@ -1,0 +1,9 @@
+<ng-container [ngSwitch]="leftSideBar$ | async">
+  <app-configs-sidebar
+    *ngSwitchCase="leftSideBarType.CONFIGS"
+  ></app-configs-sidebar>
+  <app-run-details *ngSwitchCase="leftSideBarType.SHOW_RUN"></app-run-details>
+  <app-piece-settings
+    *ngSwitchCase="leftSideBarType.PIECE_SETTINGS"
+  ></app-piece-settings>
+</ng-container>

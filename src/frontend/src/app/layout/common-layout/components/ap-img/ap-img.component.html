@@ -1,0 +1,2 @@
+<img *ngIf="!src" class="m-auto" [src]="defaultSrc" [width]="width" [height]="height" class="{{rounded?'rounded-circle':''}}"/>
+<img *ngIf="src" class="m-auto" [src]="src" [width]="width" [height]="height" class="{{rounded?'rounded-circle':''}}"/>

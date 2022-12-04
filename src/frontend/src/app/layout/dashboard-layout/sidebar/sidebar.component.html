@@ -1,0 +1,102 @@
+<div class="dashboard-side-bar d-flex">
+  <div [ngStyle]="sdContainer()">
+    <app-img
+      class="sd-icon mb-2 home-icon cursor-pointer"
+      [width]="30"
+      [height]="30"
+      [src]="'/assets/img/custom/sidebar/activepieces-small.png'"
+      (click)="navigateHome()"
+    ></app-img>
+    <div class="items-top">
+      <div
+        class="sd-icon-wrapper"
+        [class.disabled-icon]="isTrialExpired"
+        *ngFor="
+          let route of this.navigationService.sidebarRoutes;
+          let i = index
+        "
+      >
+        <div
+          class="sd-icon"
+          (click)="clickSubmenu(i, route)"
+          (mouseenter)="route.hover = true && !isTrialExpired"
+          (mouseleave)="route.hover = false"
+        >
+          <div
+            class="sd-icon-container {{
+              route && route.hover ? 'sd-icon-container-hover' : ''
+            }}"
+            [ngStyle]="borderColor(i)"
+          >
+            <svg-icon
+              [svgStyle]="{ width: 23, height: 23, fill: 'grey' }"
+              [src]="isTrialExpired ? route.disabledIcon : route.icon"
+            ></svg-icon>
+          </div>
+          <div
+            class="sd-icon-text no-select {{
+              selectedIndex === i ? 'sd-icon-text-clicked' : ''
+            }}"
+          >
+            {{ route.text }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="items-bottom">
+      <div
+        class="sd-icon submenu-item support-icon-wrapper"
+        (mouseenter)="supportButtonHovered = true"
+        (mouseleave)="supportButtonHovered = false"
+        (click)="openUserback()"
+      >
+        <div
+          class="sd-icon-container support-icon-container d-flex justify-content-center align-items-center"
+          [class.sd-icon-container-hover]="supportButtonHovered"
+        >
+          <div
+            class="support-icon-circle d-flex justify-content-center align-items-center"
+          >
+            <svg-icon
+              [svgStyle]="{ width: 13, height: 13 }"
+              src="assets/img/custom/support.svg"
+              class="support-icon"
+            ></svg-icon>
+          </div>
+        </div>
+        <div class="sd-icon-text no-select">Support</div>
+      </div>
+    </div>
+  </div>
+  <div
+    [ngStyle]="hoverContainer(submenuOpen)"
+    *ngIf="this.navigationService.sidebarRoutes[selectedIndex].submenu"
+  >
+    <div class="sub-menu">
+      <div class="px-4 py-4 font-weight-600 mb-2 no-select">
+        {{ this.navigationService.sidebarRoutes[selectedIndex].text }}
+      </div>
+      <div
+        class="px-4 py-2 submenu-item no-select"
+        [class.text-primary]="
+          this.selectedSubmenuIndex &&
+          i === this.selectedSubmenuIndex.submenu &&
+          this.selectedIndex === this.selectedSubmenuIndex.menu
+        "
+        *ngFor="
+          let item of this.navigationService.sidebarRoutes[selectedIndex]
+            .submenuItems;
+          let i = index
+        "
+        (click)="selectSubMenu(i, item)"
+      >
+        {{ item.text }}
+      </div>
+    </div>
+  </div>
+</div>
+<ng-container *ngIf="updateSelectedIndex$ | async"></ng-container>
+<ng-container *ngIf="selectedIndex$ | async"></ng-container>
+<ng-container *ngIf="updateSelectedSubmenuIndex$ | async"></ng-container>
+<ng-container *ngIf="updateSubmenuOpen$ | async"></ng-container>

@@ -1,0 +1,42 @@
+<div
+  [ngStyle]="{
+    width: '175px',
+    position: 'relative'
+  }"
+  class="form-group"
+>
+  <div
+    class="form-control"
+    (click)="opened = !opened"
+    style="padding: 0.625rem 0.75rem; border: 1px solid #ced4da"
+  >
+    <span class="ml-1 text-default no-select">{{
+      selectedValue === undefined ? "Select Option" : selectedValue
+    }}</span>
+    <span style="float: right">
+      <fa-icon [icon]="faChevronDown"></fa-icon>
+    </span>
+  </div>
+  <div
+    *ngIf="environments$ | async as optionsResult"
+    class="dropdown-menu {{ opened ? 'show' : '' }}"
+    style="min-width: 100%"
+  >
+    <div *ngFor="let p of optionsResult.items">
+      <a
+        *ngIf="!!p.label"
+        class="dropdown-item"
+        (click)="refreshQueryParams(p)"
+      >
+        <span class="ml-1 text-default no-select">{{ p.label }}</span>
+        <img
+          *ngIf="selectedValue === p.label"
+          class="no-select float-right text-primary"
+          height="16"
+          width="16"
+          src="../assets/img/custom/check.svg"
+        />
+      </a>
+    </div>
+  </div>
+</div>

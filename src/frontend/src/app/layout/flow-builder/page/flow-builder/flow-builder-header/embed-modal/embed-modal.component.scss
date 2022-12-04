@@ -1,0 +1,147 @@
+@import "src/assets/scss/custom/variables";
+
+.embed-btn {
+  gap: 8px;
+
+}
+
+.embedded-popover-text-container {
+  width: 170px;
+  height: 66px;
+}
+
+.embedded-popover-btn {
+  color: #C6ADFF !important;
+}
+
+.embed-modal-body {
+  min-width: 800px;
+  max-width: 800px;
+  min-height: 665px;
+  max-height: 665px;
+  padding: 0px !important;
+  margin: 0px !important;
+  gap: 7px;
+  scrollbar-width: none;
+
+  .code-snippets {
+    min-width: 516px;
+    min-height: 665px;
+    max-height: 665px;
+    overflow-y: scroll;
+    gap: 40px;
+    padding: 1.5625rem 1.25rem 0 1.25rem;
+
+    h6 {
+      font-weight: 500;
+      font-size: 1.25rem;
+      line-height: 1.5rem;
+      color: $title;
+      margin-bottom: .625rem;
+    }
+
+    scrollbar-width: thin;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+  }
+
+  .ids-list {
+    padding: 1.5625rem 0 0rem 1.25rem;
+    margin-right: 10px;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    scrollbar-width: thin;
+    min-width: 221px;
+    min-height: 665px;
+    max-height: 665px;
+    overflow-y:scroll;
+    border-left:1px solid $dividers;
+    gap:20px;
+
+    label {
+      margin: 0px !important;
+    }
+
+    .ids {
+      .form-control {
+        height: 40px;
+        width: 133px;
+      }
+
+      gap:10px;
+
+      .id-card {
+        background-color: #FCFCFC;
+        padding: 10px;
+        gap: 5px;
+        width: 180px;
+
+        .id-owner {
+          max-width: 131px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .id-text {
+
+          color: $description;
+          max-width: 156px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .copy-icon {
+          svg {
+            width: 12px;
+            height: 12px;
+            cursor: pointer;
+          }
+        }
+
+      }
+    }
+  }
+}
+
+.modal-footer {
+  border-top: 1px solid $dividers !important;
+}
+
+.code-container {
+  position: relative;
+
+  .copy-icon {
+    svg {
+      width: 16px;
+      height: 16px;
+      ;
+      cursor: pointer;
+
+      path {
+        fill: $white;
+      }
+
+    }
+
+    position:absolute;
+    left:95%;
+    top:12px;
+    z-index:$appended-to-body-z-index ;
+  }
+}
+
+.code-description {
+  color: $description;
+  margin: .625rem 0rem 1.25rem 0rem;
+}
+
+#firstStep div {
+  margin-bottom: 10px
+}

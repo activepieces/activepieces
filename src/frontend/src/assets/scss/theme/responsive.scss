@@ -1,0 +1,93 @@
+@include media-breakpoint-down(sm) {
+  .section-nucleo-icons {
+    .icons-container {
+      overflow: hidden;
+    }
+  }
+
+  .section-footer {
+    .footer.bg-transparent {
+      .copyrights {
+        position: initial;
+        margin: 20px;
+      }
+    }
+  }
+  .index-page {
+    .pagination-area {
+      margin-top: 4rem;
+    }
+
+    .toast {
+      margin-top: 1.5rem;
+    }
+
+    .social-line-big-icons .btn,
+    .social-line-blue .btn {
+      margin-bottom: 1.5rem;
+    }
+
+    .card-rotate.card-profile {
+      .card-body {
+        width: 100%;
+      }
+    }
+  }
+}
+
+@include media-breakpoint-up(md) {
+  .index-page {
+    .pagination-area {
+      margin-left: 2rem;
+    }
+
+    .navbar {
+      .navbar-toggler {
+        .navbar-toggler-icon {
+          background-image: $navbar-light-toggler-icon-bg;
+        }
+      }
+    }
+
+    .section-hero {
+      background-size: cover;
+      background-repeat: no-repeat;
+    }
+  }
+}
+
+@include media-breakpoint-down(md) {
+  .index-page {
+    .bg-image {
+      display: none;
+    }
+    .section-hero {
+      background-image: url("../../img/ill/index_bg.svg");
+      background-position: right;
+    }
+  }
+  .navbar {
+    .navbar-brand {
+      margin-top: 10px;
+    }
+
+    .navbar-translate {
+      width: 100%;
+      position: relative;
+      display: flex;
+      justify-content: space-between !important;
+    }
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  .index-page {
+    .section-hero {
+      background-position: 90% !important;
+      padding-bottom: 0;
+    }
+    .section-components {
+      padding-top: 0;
+    }
+  }
+}

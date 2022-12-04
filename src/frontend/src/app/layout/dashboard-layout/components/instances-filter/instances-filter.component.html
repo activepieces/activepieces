@@ -1,0 +1,49 @@
+<div
+  [ngStyle]="{
+        width: '350px',
+        position: 'relative'
+     }"
+  class="form-group">
+  <div class="form-control" (click)="opened = !opened"
+       style="    padding: 0.625rem 0.75rem;     border: 1px solid #CED4DA;">
+    <span class="ml-1 text-default no-select">{{selectedValue === undefined ? 'All Instances' : selectedValue}}</span>
+    <span style="float: right;">
+      <fa-icon [icon]="faChevronDown"></fa-icon>
+  </span>
+  </div>
+  <div class="dropdown-menu {{opened?'show': ''}}" style="min-width: 100%;">
+    <a class="dropdown-item" (click)="changeInstanceId(undefined)">
+      <span class="ml-1 text-default no-select">All Instances</span>
+      <img *ngIf="selectedValue === undefined" class="no-select float-right text-primary" height="16" width="16"
+           src="../assets/img/custom/check.svg"/>
+    </a>
+    <form class="p-3" [formGroup]="searchForm">
+      <input id="accountName" class="form-control"
+             formControlName="instanceId"
+             placeholder="fcc43720-97f6-463e-b72f-2480ac0719b3" type="text">
+             <app-button
+             btnColor="primary"
+             [fullWidthOfContainer]="true"
+             class="float-right ml-3 mt-3"
+             type="submit"
+             (click)="applyFilter()"
+             btnSize="small"
+           >Apply
+           </app-button>
+
+           <app-button
+           btnColor="basic"
+           [fullWidthOfContainer]="true"
+           class="float-right mt-3"
+           type="submit"
+           (click)="changeInstanceId(undefined)"
+           btnSize="small"
+         >Clear
+         </app-button>
+
+    </form>
+
+  </div>
+
+
+</div>

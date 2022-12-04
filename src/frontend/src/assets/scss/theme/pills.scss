@@ -1,0 +1,145 @@
+.nav-pills {
+  &.nav-pills-icons {
+    .nav-link {
+      text-align: center;
+
+      i {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 16px;
+      }
+    }
+  }
+
+  &.flex-column li > a {
+    margin-bottom: 15px;
+  }
+
+  &.nav-pills:not(.flex-column) .nav-item:not(:last-child) .nav-link {
+    margin-bottom: 5px;
+  }
+
+  &.nav-pills-just-icons .nav-item .nav-link {
+    border-radius: 50%;
+    height: 80px;
+    max-width: 80px;
+    min-width: auto;
+    padding: 0;
+    width: 80px;
+  }
+
+  .nav-item {
+    .nav-link {
+      &.disabled,
+      &:disabled,
+      &[disabled] {
+        opacity: 0.5;
+      }
+    }
+  }
+
+  &.nav-pills-primary {
+    .nav-item {
+      .nav-link {
+        color: $primary;
+
+        &.active {
+          &,
+          &:focus,
+          &:hover {
+            background-color: $primary;
+            color: $white;
+          }
+        }
+      }
+    }
+  }
+
+  &.nav-pills-info {
+    .nav-item {
+      .nav-link {
+        color: $info;
+
+        &.active {
+          &,
+          &:focus,
+          &:hover {
+            background-color: $info;
+            color: $white;
+          }
+        }
+      }
+    }
+  }
+
+  &.nav-pills-success {
+    .nav-item {
+      .nav-link {
+        color: $success;
+
+        &.active {
+          &,
+          &:focus,
+          &:hover {
+            background-color: $success;
+            color: $white;
+          }
+        }
+      }
+    }
+  }
+
+  &.nav-pills-warning {
+    .nav-item {
+      .nav-link {
+        color: $warning;
+
+        &.active {
+          &,
+          &:focus,
+          &:hover {
+            background-color: $warning;
+            color: $white;
+          }
+        }
+      }
+    }
+  }
+
+  &.nav-pills-danger {
+    .nav-item {
+      .nav-link {
+        color: $danger;
+
+        &.active {
+          &,
+          &:focus,
+          &:hover {
+            background-color: $danger;
+            color: $white;
+          }
+        }
+      }
+    }
+  }
+}
+.tab-space {
+  padding: 20px 0 50px 0px;
+}
+
+.tab-content {
+  &.tab-subcategories {
+    margin-top: 20px;
+    background-color: transparent;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}
+
+.nav-align-center {
+  text-align: center;
+
+  .nav-pills {
+    display: inline-flex;
+  }
+}

@@ -1,0 +1,3 @@
+<app-filter-bar></app-filter-bar>
+<app-responsive-table [headers]="tableHeaders" [data]="tableData" (actions)="actionHandler($event)"></app-responsive-table>
+<ng-container *ngIf="initPage$ | async"></ng-container>

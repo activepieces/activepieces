@@ -1,0 +1,16 @@
+export enum ConfigType {
+	SHORT_TEXT = 'SHORT_TEXT',
+	LONG_TEXT = 'LONG_TEXT',
+	EMAIL = 'EMAIL',
+	NUMBER = 'NUMBER',
+	INTEGER = 'INTEGER',
+	DICTIONARY = 'DICTIONARY',
+	OAUTH2 = 'OAUTH2',
+	DROPDOWN = 'DROPDOWN',
+	CHECKBOX = 'CHECKBOX',
+}
+
+export enum DropdownType {
+	STATIC = 'STATIC',
+	DYNAMIC = 'DYNAMIC',
+}

@@ -1,0 +1,21 @@
+@import 'src/assets/scss/custom/variables';
+
+.variable-container{
+  padding: 20px 10px 20px 20px;
+
+  background: $white;
+  border: 1px solid $border;
+  box-sizing: border-box;
+  border-radius: 5px;
+
+  cursor: pointer;
+  display: flex;
+}
+
+.info-container{
+  flex-grow: 1;
+}
+
+.variable-container:hover{
+  background-color: $grayCard;
+}

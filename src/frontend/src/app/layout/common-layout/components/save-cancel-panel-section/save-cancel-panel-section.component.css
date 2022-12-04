@@ -1,0 +1,19 @@
+.save-cancel-buttons-container-body {
+  padding: 10px;
+}
+
+.save-cancel-buttons-container {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background-color: white
+}
+
+.border-top-separator {
+  border-top: 1px solid #F0F0F0;
+}
+
+.config-variable-form-margin {
+  margin: 20px;
+  margin-bottom: 80px;
+}

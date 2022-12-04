@@ -1,0 +1,45 @@
+<app-filter-bar [account]="true"></app-filter-bar>
+<div class=" table-responsive">
+  <table class=" table align-items-center table-flush">
+    <thead class=" thead-light">
+    <tr>
+      <th scope="col">Instance name</th>
+      <th scope="col">Status</th>
+      <th scope="col">
+        Runs
+      </th>
+      <th scope="col" style="width: 15%">
+        Created On
+      </th>
+      <th scope="col" style="width: 10%;">
+
+      </th>
+    </tr>
+    </thead>
+    <tbody class=" list">
+    <tr *ngFor="let instance of instancesPage.data; let i=index" (mouseenter)="hoverIndex = i" (mouseleave)="hoverIndex = -1">
+      <th scope="row">
+        <span>{{instance.pieceDisplayName}}</span>
+        <span class="mr-2"></span>
+        <span class="account-name text-xm">/</span>
+        <span class="ml-2 account-name text-xm">{{instance.accountDisplayName}}</span>
+        <span class="td-description">{{instance.id}}</span>
+      </th>
+      <td>
+          <span *ngIf="instance.status === instanceStatus.RUNNING"><svg-icon src="assets/img/custom/play.svg" [svgStyle]="{'fill': themeService.SUCCESS_COLOR,'width.px': 14}"></svg-icon><span class="ml-1 text-success">Running</span></span>
+          <span *ngIf="instance.status === instanceStatus.PAUSED"><svg-icon src="assets/img/custom/pause.svg" [svgStyle]="{'fill': themeService.WARNING_COLOR,'width.px': 14}"></svg-icon><span class="ml-1 text-warning">Paused</span></span>
+      </td>
+      <td>
+        <div style="width: 30px;" class="text-center {{this.hoverIndex === i ? 'hyper-number' : ''}}"
+             (click)="viewRuns(instance, i)">{{this.instance.runs}}</div>
+      </td>
+      <td>{{timeHelperService.formatDateTimeMills(instance.epochCreationTime)}}</td>
+      <td>
+        <div (click)="delete(instance, i)" [ngStyle]="{visibility: hoverIndex === i? 'visible': 'hidden', float: 'right'}" class="ml-4 btn btn-icon-white">
+          <fa-icon [icon]="faTrash"></fa-icon>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>

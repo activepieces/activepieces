@@ -1,0 +1,62 @@
+<ng-container *ngIf="getCollections$ | async as col">
+  <div class="table-responsive">
+    <table class="table align-items-center table-flush margin-zero">
+      <thead class="thead-light">
+        <tr>
+          <th scope="col">Collection Name</th>
+          <th scope="col">Latest version</th>
+          <th scope="col" style="width: 15%">Created At</th>
+          <th scope="col" style="width: 10%; text-align: center">Actions</th>
+          <th scope="col" style="width: 10%" class="text-center">
+            <app-button btnColor="primary" *ngIf="collectionsPage.data.length > 0" (buttonClicked)="createCollection()"
+              [loading]="creatingCollection" btnSize="small">New Collection
+            </app-button>
+          </th>
+        </tr>
+      </thead>
+      <tbody class="list" *ngIf="collectionsPage.data.length > 0">
+        <tr *ngFor="let collection of collectionsPage.data; let i = index" (mouseenter)="hoverIndex = i"
+          (mouseleave)="hoverIndex = -1" (click)="openBuilder(collection)" style="cursor: pointer">
+          <ng-container>
+            <th scope="row">
+              <div style="display: inline-block" class="px-2">
+                <app-img [width]="32" [height]="32" [rounded]="true" [defaultSrc]="
+                    '../assets/img/custom/connectors/default-connector.png'
+                  " [src]="collection.lastVersion.logoUrl"></app-img>
+              </div>
+              <div style="display: inline-block">
+                <div>{{ collection.lastVersion.displayName }}</div>
+                <div class="td-description">
+                  {{ collection.flowCount | async }} Flows
+                </div>
+              </div>
+            </th>
+            <td>v{{ collection.versionsList.length }}</td>
+            <td>
+              {{ timeHelperService.formatDateTime(collection.epochCreationTime) }}
+            </td>
+            <td class="text-center">
+              <app-deploy-modal [collection]="collection"></app-deploy-modal>
+            </td>
+            <td class="d-flex align-items-center justify-content-center">
+              <div (click)="
+                  deleteCollection(collection, i); $event.stopPropagation()
+                " [ngStyle]="{
+                  visibility: hoverIndex === i ? 'visible' : 'hidden',
+                  float: 'right'
+                }" class="btn btn-icon-white">
+                <fa-icon [icon]="faArchive"></fa-icon>
+              </div>
+            </td>
+          </ng-container>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div *ngIf="collectionsPage.data.length === 0"
+    class="d-column justify-content-center align-items-center empty-collections-table-height">
+    <app-empty-collections-table></app-empty-collections-table>
+  </div>
+</ng-container>
+<ng-container *ngIf="archiveCollection$ | async"></ng-container>
+<ng-container *ngIf="createCollection$ | async"> </ng-container>

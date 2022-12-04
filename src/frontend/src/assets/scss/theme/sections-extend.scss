@@ -1,0 +1,23 @@
+.sections-page {
+  [class*="features-"],
+  [class*="blogs-"],
+  [class*="team-"],
+  [class*="projects-"],
+  [class*="pricing-"],
+  [class*="testimonials-"],
+  [class*="contactus-"] {
+    padding: 80px 0;
+  }
+}
+
+@import "sections/accordion";
+@import "sections/tables";
+@import "sections/headers";
+@import "sections/features";
+@import "sections/blogs";
+@import "sections/teams";
+@import "sections/projects";
+@import "sections/pricing";
+@import "sections/testimonials";
+@import "sections/contactus";
+@import "sections/social-subscribe-lines";

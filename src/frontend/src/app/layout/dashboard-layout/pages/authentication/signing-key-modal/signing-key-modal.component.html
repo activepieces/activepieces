@@ -1,0 +1,103 @@
+<div class="modal-header">
+  <div class="modal-title pull-left">New Key for {{ environmentName }}</div>
+  <button
+    type="button"
+    class="btn-close close pull-right"
+    aria-label="Close"
+    (click)="bsModalRef.hide()"
+  >
+    <span *ngIf="!newKey" aria-hidden="true" class="visually-hidden"
+      >&times;</span
+    >
+  </button>
+</div>
+<div class="modal-body">
+  <ng-container *ngIf="!newKey; else newsigningKey">
+    <p class="sub-title">Generate a new Signing Key?</p>
+
+    <div>
+      <span>
+        You will use the generated key to sign requests from your app to
+        Activepieces.
+      </span>
+      <span class="red-text">
+        Generating a new key will dismiss your older one and it can no longer be
+        used to sign requests.
+      </span>
+    </div>
+  </ng-container>
+  <ng-template #newsigningKey>
+    <div class="sub-title">
+      Your New Signing Key <span> (Keep it with you)</span>
+    </div>
+    <div class="d-flex key-container">
+      <div class="form-control key-control">
+        <div class="key-value">
+          {{ newKey }}
+        </div>
+      </div>
+      <div class="d-flex flex-column">
+        <app-icon-button
+          [iconFilename]="keyCopied ? 'transparent-check.svg' : 'copy.svg'"
+          (click)="copyKey()"
+          [color]="'#4F4F4F'"
+          matTooltip="Copy Key"
+
+        ></app-icon-button>
+        <app-icon-button
+          [iconFilename]="'download.svg'"
+          (click)="downloadKey()"
+          matTooltip="Download Key"
+        ></app-icon-button>
+      </div>
+    </div>
+    <div class="description">
+      Read
+      <a
+        href="https://docs.activepieces.com/#activepieces-js-reference"
+        target="_blank"
+        >our docs</a
+      >
+      to see how you will use this key to sign requests sent from your app to
+      Activepieces (You will no longer find the key on Activepeices).
+    </div>
+    <div
+      class="d-flex checkbox-container"
+      [class.invalid]="closedPressed && agreementFormControl.invalid"
+    >
+      <app-checkbox
+        [formControl]="agreementFormControl"
+        [label]="
+          'I understand I will no longer be able to access this key here.'
+        "
+      ></app-checkbox>
+    </div>
+  </ng-template>
+</div>
+<div class="modal-footer">
+  <ng-container *ngIf="!newKey; else doneBtn">
+
+    <app-button
+    btnColor="basic"
+    btnStyle="basic"
+    (buttonClicked)="bsModalRef.hide()"
+  > Cancel
+  </app-button>
+    <app-button
+      type="button"
+      btnColor="primary"
+      (buttonClicked)="generate()"
+      [loading]="loading"
+    >Generate</app-button>
+  </ng-container>
+
+  <ng-template #doneBtn>
+    <app-button
+      type="button"
+      btnColor="primary"
+      (buttonClicked)="close()"
+    >Done</app-button>
+  </ng-template>
+</div>
+<ng-container *ngIf="generateSigningKeySuccessful$ | async"></ng-container>
+<ng-container *ngIf="generateSigningKeyFailed$ | async"></ng-container>

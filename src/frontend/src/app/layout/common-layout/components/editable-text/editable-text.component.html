@@ -1,0 +1,23 @@
+<div (click)="clickHandler()" (dblclick)="doubleClickHandler()">
+  <div
+    *ngIf="!this._editing"
+    class=" {{ cssClasses }} viewed-text-container"
+    #viewedText
+    [style.max-width]="viewedTextMaxWidth"
+    [matTooltip]="viewedText.scrollWidth > viewedText.clientWidth && value? value:'' "
+  >
+    {{ value }}
+  </div>
+
+  <div
+    *ngIf="this._editing"
+    contentEditable
+    class="{{ cssClasses }} text-center"
+    #editableText
+    (focusout)="saveTextOnFocusOut()"
+    (keypress)="saveTextOnEnter($event)"
+    (keydown.escape)="setEditableOff()"
+  >
+    {{ value }}
+  </div>
+</div>

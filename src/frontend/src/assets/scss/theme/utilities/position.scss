@@ -1,0 +1,19 @@
+@each $size, $value in $spacers {
+  .top-#{$size} {
+    top: $value;
+  }
+  .right-#{$size} {
+    right: $value;
+  }
+  .bottom-#{$size} {
+    bottom: $value;
+  }
+  .left-#{$size} {
+    left: $value;
+  }
+}
+
+.center {
+  left: 50%;
+  transform: translateX(-50%);
+}

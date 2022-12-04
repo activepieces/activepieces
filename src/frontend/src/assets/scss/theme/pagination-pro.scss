@@ -1,0 +1,81 @@
+// Colors
+.pagination {
+  &.pagination-info {
+    .page-item.active > .page-link {
+      &,
+      &:focus,
+      &:hover {
+        background-color: $info;
+        border-color: $info;
+      }
+    }
+  }
+
+  &.pagination-success {
+    .page-item.active > .page-link {
+      &,
+      &:focus,
+      &:hover {
+        background-color: $success;
+        border-color: $success;
+      }
+    }
+  }
+
+  &.pagination-primary {
+    .page-item.active > .page-link {
+      &,
+      &:focus,
+      &:hover {
+        background-color: $primary;
+        border-color: $primary;
+      }
+    }
+  }
+
+  &.pagination-warning {
+    .page-item.active > .page-link {
+      &,
+      &:focus,
+      &:hover {
+        background-color: $warning;
+        border-color: $warning;
+      }
+    }
+  }
+
+  &.pagination-danger {
+    .page-item.active > .page-link {
+      &,
+      &:focus,
+      &:hover {
+        background-color: $danger;
+        border-color: $danger;
+      }
+    }
+  }
+
+  &.pagination-secondary {
+    .page-item.active > .page-link {
+      &,
+      &:focus,
+      &:hover {
+        background-color: $secondary;
+        border-color: $secondary;
+        color: $default;
+      }
+    }
+  }
+
+  &.pagination-default {
+    .page-item.active > .page-link {
+      &,
+      &:focus,
+      &:hover {
+        background-color: $default;
+        border-color: $default;
+        color: $white;
+      }
+    }
+  }
+}

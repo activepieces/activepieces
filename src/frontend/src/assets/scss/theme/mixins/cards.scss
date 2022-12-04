@@ -1,0 +1,46 @@
+// Rotating cards
+
+@mixin perspective($value) {
+  -webkit-perspective: $value;
+  -moz-perspective: $value;
+  -o-perspective: $value;
+  -ms-perspective: $value;
+  perspective: $value;
+}
+
+@mixin transitions($time, $type) {
+  -webkit-transition: all $time $type;
+  -moz-transition: all $time $type;
+  -o-transition: all $time $type;
+  -ms-transition: all $time $type;
+  transition: all $time $type;
+}
+
+@mixin transform-style($type) {
+  -webkit-transform-style: $type;
+  -moz-transform-style: $type;
+  -o-transform-style: $type;
+  -ms-transform-style: $type;
+  transform-style: $type;
+}
+
+@mixin backface-visibility($type) {
+  -webkit-backface-visibility: $type;
+  -moz-backface-visibility: $type;
+  -o-backface-visibility: $type;
+  -ms-backface-visibility: $type;
+  backface-visibility: $type;
+}
+@mixin shadow-2dp() {
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, $bmd-shadow-penumbra-opacity),
+    0 3px 1px -2px rgba(0, 0, 0, $bmd-shadow-ambient-opacity),
+    0 1px 5px 0 rgba(0, 0, 0, $bmd-shadow-umbra-opacity);
+}
+
+@mixin rotateY-180() {
+  -webkit-transform: rotateY(180deg);
+  -moz-transform: rotateY(180deg);
+  -o-transform: rotateY(180deg);
+  -ms-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+}

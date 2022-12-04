@@ -1,0 +1,124 @@
+@import "src/assets/scss/custom/variables";
+
+.display-none {
+  display: none !important;
+}
+
+.tabs {
+  height: 44px;
+  background-color: $white;
+  position: relative;
+}
+
+.tab-add img {
+  color: $body;
+  font-size: 1rem;
+}
+
+.tab-add:hover img {
+  color: $primary;
+}
+
+.tab-link {
+  cursor: pointer;
+  margin-top: auto;
+  height: 36px;
+  background-color: $white;
+}
+
+.tab-link:hover {
+  background-color: $grayCard;
+}
+
+.tab-link.active {
+  box-shadow: inset 1px 0px 0px $line, inset 0px 1px 0px $line,
+    inset -1px 0px 0px $line;
+  border-radius: 5px 5px 0px 0px;
+}
+
+.overflow-x-auto {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+::-webkit-scrollbar:horizontal {
+  height: 0px;
+}
+::-webkit-scrollbar-thumb:horizontal {
+  border-radius: 10px;
+}
+
+.white-gradient-right {
+  min-width: 45px;
+  height: 27px;
+  margin-left: -45px;
+  pointer-events: none;
+  background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0) 76.47%);
+  transform: matrix(-1, 0, 0, 1, 0, 0);
+}
+
+.bottom-border {
+  border-bottom: 1px solid $line;
+}
+
+.save-status-container {
+  padding: 0rem 0.875rem;
+  padding-left: 0px;
+}
+
+.versions-button-margin {
+  margin-right: 0.75rem;
+}
+
+.save-status {
+  width: 95px;
+}
+.spacer {
+  height: 36px;
+}
+
+.margin-zero {
+  margin: 0px;
+}
+
+.scroll-arrow {
+  background-color: $white;
+  min-width: 36px;
+  height: 36px;
+  transition: all 0.5s ease;
+  cursor: pointer;
+  &:hover {
+    background-color: $hover;
+  }
+  border-radius: 3px;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.white-gradient-left {
+  min-width: 45px;
+  height: 27px;
+  pointer-events: none;
+  margin-right: -45px;
+  background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0) 76.47%);
+  transform: matrix(1, 0, 0, 1, 0, 0);
+}
+
+.add-flow-btn {
+  min-width: 36px;
+  height: 36px;
+  cursor: pointer;
+  background-color: $white;
+  &:hover {
+    background-color: $grayCard;
+  }
+}
+
+.flow-actions-buttons-section
+{
+  gap:0.5rem;
+  padding-right:0.875rem;
+  margin-top:4px;
+}
