@@ -75,7 +75,6 @@ import { StorageStepInputFormComponent } from './page/flow-builder/flow-right-si
 import { LoopStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/loop-step-input-form/loop-step-input-form.component';
 import { ResponseStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/response-step-input-form/response-step-input-form.component';
 import { ScheduleTriggerInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/schedule-trigger-input-form/schedule-trigger-input-form.component';
-import { EventTriggerInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/event-trigger-input-form/event-trigger-input-form.component';
 import { RemoteFlowInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/remote-flow-input-form/remote-flow-input-form.component';
 import { ConfigCardComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/config-card/config-card.component';
 import { VariableListComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/configs-list/configs-list.component';
@@ -169,7 +168,6 @@ import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/cente
 		StorageStepInputFormComponent,
 		CodeStepInputFormComponent,
 		ScheduleTriggerInputFormComponent,
-		EventTriggerInputFormComponent,
 		ConfigCardComponent,
 		RemoteFlowInputFormComponent,
 		DefaultConfigTypeSettingsComponent,
