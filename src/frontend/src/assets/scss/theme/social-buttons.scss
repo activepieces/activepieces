@@ -1,0 +1,140 @@
+.btn {
+  // social buttons
+  &.btn-facebook {
+    @include social-buttons-color($facebook, $facebook-states);
+  }
+  &.btn-twitter {
+    @include social-buttons-color($twitter, $twitter-states);
+  }
+  &.btn-pinterest {
+    @include social-buttons-color($pinterest, $pinterest-states);
+  }
+  &.btn-linkedin {
+    @include social-buttons-color($linkedin, $linkedin-states);
+  }
+  &.btn-dribbble {
+    @include social-buttons-color($dribbble, $dribbble-states);
+  }
+  &.btn-github {
+    @include social-buttons-color($github, $github-states);
+  }
+  &.btn-youtube {
+    @include social-buttons-color($youtube, $youtube-states);
+  }
+  &.btn-instagram {
+    @include social-buttons-color($instagram, $instagram-states);
+  }
+  &.btn-reddit {
+    @include social-buttons-color($reddit, $reddit-states);
+  }
+  &.btn-tumblr {
+    @include social-buttons-color($tumblr, $tumblr-states);
+  }
+  &.btn-behance {
+    @include social-buttons-color($behance, $behance-states);
+  }
+  &.btn-vimeo {
+    @include social-buttons-color($vimeo, $vimeo-states);
+  }
+  &.btn-slack {
+    @include social-buttons-color($slack, $slack-states);
+  }
+}
+
+// Social Gradient Button
+
+.btn-gradient-facebook {
+  background: linear-gradient(
+    35deg,
+    $facebook 0,
+    lighten($facebook, 10%) 100%
+  ) !important;
+  color: $white;
+}
+.btn-gradient-twitter {
+  background: linear-gradient(
+    35deg,
+    $twitter 0,
+    lighten($twitter, 10%) 100%
+  ) !important;
+  color: $white;
+}
+.btn-gradient-instagram {
+  background: linear-gradient(
+    35deg,
+    $instagram 0,
+    lighten($instagram, 10%) 100%
+  ) !important;
+  color: $white;
+}
+.btn-gradient-linkedin {
+  background: linear-gradient(
+    35deg,
+    $linkedin 0,
+    lighten($linkedin, 10%) 100%
+  ) !important;
+  color: $white;
+}
+.btn-gradient-pinterest {
+  background: linear-gradient(
+    35deg,
+    $pinterest 0,
+    lighten($pinterest, 10%) 100%
+  ) !important;
+  color: $white;
+}
+.btn-gradient-slack {
+  background: linear-gradient(
+    35deg,
+    $slack 0,
+    lighten($slack, 10%) 100%
+  ) !important;
+  color: $white;
+}
+.btn-gradient-youtube {
+  background: linear-gradient(
+    35deg,
+    $youtube 0,
+    lighten($youtube, 10%) 100%
+  ) !important;
+  color: $white;
+}
+.btn-gradient-dribbble {
+  background: linear-gradient(
+    35deg,
+    $dribbble 0,
+    lighten($dribbble, 10%) 100%
+  ) !important;
+  color: $white;
+}
+.btn-gradient-vimeo {
+  background: linear-gradient(
+    35deg,
+    $vimeo 0,
+    lighten($vimeo, 10%) 100%
+  ) !important;
+  color: $white;
+}
+
+.btn[class*="btn-gradient-"] {
+  &.btn-icon-only {
+    padding: 1.29rem;
+
+    .btn-inner--icon {
+      i {
+        top: -10px;
+        left: -7px;
+        font-size: 14px;
+      }
+    }
+  }
+
+  &:hover {
+    color: $white !important;
+  }
+  &:active,
+  &:focus,
+  &:active:focus {
+    box-shadow: none;
+  }
+}

@@ -1,0 +1,52 @@
+.section-hero,
+.page-header {
+  overflow: visible !important;
+}
+
+.section-hero {
+  .page-header {
+    .bg-image {
+      position: absolute;
+      width: 100%;
+      top: -7%;
+    }
+  }
+}
+
+.skew-separator {
+  overflow: hidden;
+
+  &:after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 800px;
+    -webkit-transform: skewY(-8deg);
+    transform: skewY(-8deg);
+    background: $white;
+    top: 88%;
+    z-index: 1;
+  }
+
+  &.skew-top {
+    &:after {
+      height: 370px !important;
+      top: -220px !important;
+    }
+  }
+
+  .container {
+    z-index: 2 !important;
+    position: relative !important;
+  }
+
+  &.skew-mini {
+    &:after {
+      top: 79% !important;
+    }
+  }
+}
+
+.bg-image {
+  width: 100%;
+}

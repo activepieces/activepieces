@@ -1,0 +1,30 @@
+@import 'src/assets/scss/custom/variables';
+
+.logo-icon{
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  margin-right: 0.325rem;
+}
+
+.doc-text:hover{
+  color: black;
+}
+.doc-text{
+  color: $body;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.external-link{
+  width: 12px;
+  height: 12px;
+  margin-left: 0.25rem;
+}
+
+.doc-container {
+  display: flex;
+  padding: 0.5rem;
+  background-color: $sidebar;
+  align-items: center;
+}

@@ -1,0 +1,19 @@
+.trial-count-down-container {
+  gap: 10px;
+  position: relative;
+}
+
+.trial-progress-actual {
+  position: absolute;
+  z-index: 9999;
+}
+
+.trial-progress-background {
+  position: absolute;
+  z-index: 1;
+}
+
+.spinners {
+  height: 25px;
+  width: 25px;
+}

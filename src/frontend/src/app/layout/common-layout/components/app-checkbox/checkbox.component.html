@@ -1,0 +1,13 @@
+<div class="cb-container">
+  <svg-icon
+  [svgStyle]="{ width: 16, height: 16 }"
+  [src]="state ? trueSvgSrc : falseSvgSrc"
+  class="ap-checkbox"
+  (click)="checkboxClicked($event)"
+  tabindex=0
+  (keydown.space)="checkboxClicked($event)"
+>
+</svg-icon>
+<span class="cursor-pointer" (click)="checkboxClicked($event)">{{label}}</span>
+</div>
+

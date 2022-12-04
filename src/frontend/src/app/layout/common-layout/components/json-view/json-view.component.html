@@ -1,0 +1,15 @@
+<div class="code-container">
+  <div class="code-header d-flex">
+    <div style="flex-grow: 1;">
+      <span class="font-weight-600">{{title}}</span>
+    </div>
+    <div>
+      <app-img [src]="'/assets/img/custom/maximize-black.svg'" [width]="16" [height]="16"
+              style="cursor:pointer; color: black;" (click)="openModal()"></app-img>
+    </div>
+  </div>
+  <div class="code-area">
+    <pre class="line-numbers" style="{{maxHeight !== undefined ? '': 'max-height:' + maxHeight + 'px'}}"><code class="language-js"
+                                    [innerHTML]="_content | outputLog"></code></pre>
+  </div>
+</div>

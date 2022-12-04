@@ -1,0 +1,47 @@
+<div class=" table-responsive">
+  <table class=" table align-items-center table-flush">
+    <thead class=" thead-light">
+    <tr>
+      <th scope="col">Event definition</th>
+      <th scope="col" style="width: 15%;">
+        Created At
+      </th>
+      <th scope="col" style="width: 10%;">
+        <app-button
+        btnColor="primary"
+        [fullWidthOfContainer]="true"
+        class="float-right"
+        (buttonClicked)="openCreateEvent()"
+        btnSize="small"
+      >  Create Event
+      </app-button>
+
+      </th>
+    </tr>
+    </thead>
+    <tbody class=" list">
+    <tr *ngFor="let event of (events$ | async)">
+      <th scope="row">
+        <div style="display: flex; flex-direction: row;">
+          <div>
+            <div style="  height:100%; display: flex; justify-content: center; align-items: center;">
+              <svg-icon src="assets/img/custom/lightning.svg"
+                        [svgStyle]="{width: 24, height: 24}" class="mr-2"></svg-icon>
+            </div>
+          </div>
+          <div>
+            <span>{{event.displayName}}</span>   <span class="ml-3 badge badge-default text-lowercase">{{event.name}}</span>
+            <span class="td-description mt-1">{{event.description}}</span>
+          </div>
+        </div>
+      </th>
+      <td>
+        {{timeHelperService.formatDateTime(event.epochCreationTime)}}
+      </td>
+      <td>
+
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>

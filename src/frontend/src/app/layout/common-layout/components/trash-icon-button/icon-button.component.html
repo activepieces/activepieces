@@ -1,0 +1,8 @@
+<div class="h-100 d-flex align-items-center">
+  <button type="button" mat-icon-button class="d-flex align-items-center justify-content-center"
+    (mouseenter)="hover = true" (mouseleave)="hover = false" [style.width]="buttonWidth+'px'"
+    [style.height]="buttonHeight+'px'" [style.padding]="buttonPadding">
+    <svg-icon [svgStyle]="iconSvgStyle(hover)" src="assets/img/custom/{{ iconFilename }}" [matTooltip]="tooltipText"
+      matTooltipPosition="right" class="d-flex align-items-center"></svg-icon>
+  </button>
+</div>

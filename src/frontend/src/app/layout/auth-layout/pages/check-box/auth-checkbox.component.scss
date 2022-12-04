@@ -1,0 +1,15 @@
+@import "src/assets/scss/custom/variables";
+
+.auth-form-title {
+  font-weight: 600;
+  color: $title;
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 1.563rem;
+}
+
+.card-footer {
+  text-align: center;
+  padding-top: 1.25rem;
+  padding-bottom: 0rem;;
+}

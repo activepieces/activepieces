@@ -1,0 +1,536 @@
+// Style for the AboutUs Page
+
+.about-us {
+  section {
+    padding: 80px 0;
+  }
+  .header-5 .navbar {
+    display: none;
+  }
+}
+
+// Style for the BlogPost Page
+
+.blog-post {
+  .header-1 .navbar {
+    display: none;
+  }
+
+  .glide {
+    .glide__arrow {
+      color: $default;
+    }
+  }
+
+  .floating-box {
+    .blockquote {
+      border-left: none;
+
+      .blockquote-footer {
+        bottom: auto;
+      }
+    }
+  }
+}
+
+// Style for the BlogPosts Page
+
+.blog-posts {
+  .main-raised {
+    margin-top: -100px;
+  }
+
+  .team-2 {
+    h3,
+    h4 {
+      color: $white;
+    }
+  }
+
+  .footer {
+    background: $default;
+
+    h3,
+    h4,
+    .copyright a {
+      color: $white;
+    }
+  }
+}
+
+.contact-page {
+  .skew-separator {
+    margin-top: -220px !important;
+  }
+  form.card {
+    z-index: 2;
+  }
+}
+
+// Style for the Landing Page
+
+.landing-page {
+  .header-4 .navbar {
+    display: none;
+  }
+  .section-safe {
+    .icon {
+      i {
+        font-size: 21px;
+      }
+    }
+  }
+}
+
+// Style for the Pricing Page
+
+.pricing-page {
+  .header-2 .navbar {
+    display: none;
+  }
+
+  .project-2 {
+    background-color: $default;
+
+    .display-3,
+    .lead {
+      color: $white;
+    }
+  }
+
+  .pricing-3 {
+    background: none !important;
+  }
+
+  .contactus-3 {
+    .bg-image {
+      margin-top: 5.74em !important;
+    }
+  }
+}
+
+// Style for the Ecommerce Page
+
+.main-raised {
+  margin-top: -100px;
+}
+
+.ecommerce-page {
+  .main {
+    margin-top: -150px;
+
+    .card {
+      z-index: 1;
+    }
+  }
+
+  .page-header {
+    .buttons {
+      display: inline-flex;
+
+      .btn i {
+        position: relative;
+        top: 5px;
+        right: 2px;
+        font-size: 18px;
+      }
+    }
+
+    &.skew-separator.skew-mini:after {
+      background: $white !important;
+    }
+  }
+
+  .skew-top {
+    position: relative;
+  }
+
+  .carousel-control-prev,
+  .carousel-control-next {
+    z-index: 3;
+  }
+}
+
+// Style for the Product Page
+
+.product-page {
+  .stars {
+    i {
+      cursor: pointer;
+    }
+  }
+  .input-group {
+    .input-number {
+      border: none;
+      font-size: 24px;
+      max-width: 80px;
+      padding: 0px 10px;
+      text-align: center;
+      margin-top: -10px;
+    }
+
+    .input-group-btn {
+      padding: 0;
+
+      .btn {
+        padding: 10px 13px;
+      }
+    }
+  }
+  .page-header {
+    .shape {
+      width: 70%;
+    }
+
+    &.skew-separator:after {
+      background: $white !important;
+    }
+  }
+
+  .section-item {
+    z-index: 1;
+  }
+
+  .carousel {
+    .carousel-item img {
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .carousel-control-next {
+      right: -40px;
+    }
+    .carousel-control-prev {
+      left: -40px;
+    }
+  }
+}
+
+// Style for the Error Pages
+
+.error-page > .container .title {
+  font-size: 12em;
+  color: $default;
+  letter-spacing: 14px;
+  font-weight: 700;
+}
+
+.error-page {
+  .page-500 {
+    .low {
+      position: relative;
+      bottom: -200px;
+    }
+  }
+}
+
+// Style for the Acoount Settings Page
+
+.account-settings {
+  section {
+    padding-top: 8vh;
+  }
+
+  hr {
+    width: 100%;
+    height: 0px;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .table {
+    .avatar {
+      background-color: $white;
+      border-radius: 0;
+
+      &.mastercard {
+        height: 37px;
+      }
+    }
+  }
+
+  .section .actions {
+    margin-right: -15px;
+  }
+
+  .card {
+    position: relative;
+    top: -200px;
+    z-index: 2;
+  }
+
+  .skew-separator:after {
+    background: $secondary;
+  }
+
+  .page-header {
+    .container {
+      padding-top: 0 !important;
+    }
+  }
+}
+
+// Style for the Checkout Page
+
+.checkout-page {
+  .page-header {
+    display: block;
+    max-height: initial;
+  }
+  .js-validate {
+    .nav-tabs {
+      border-bottom: none;
+    }
+  }
+}
+
+// Style for the Profile Page
+
+.profile-page {
+  .card {
+    z-index: 2;
+  }
+}
+
+// Other
+
+.login-page,
+.checkout-page,
+.invoice-page {
+  .upper {
+    margin-top: -200px;
+    z-index: 2;
+    position: relative;
+  }
+}
+
+.chat-page {
+  .upper {
+    margin-top: -300px;
+    z-index: 2;
+    position: relative;
+  }
+  .chat {
+    border-top: none;
+  }
+}
+
+.reset-page {
+  .page-header {
+    .page-header-image {
+      z-index: 1;
+    }
+  }
+
+  .footer {
+    background: $default;
+
+    h3,
+    h4,
+    .copyright a {
+      color: $white;
+    }
+  }
+}
+
+// RESPONSIVE
+
+@include media-breakpoint-down(md) {
+  .error-page > .container .title {
+    font-size: 9em;
+  }
+
+  .carousel {
+    .carousel-item {
+      .title {
+        margin: 0 !important;
+        margin-right: 30px !important;
+      }
+      .category {
+        padding-right: 5px !important;
+      }
+      .description {
+        padding: 12px 2px !important;
+      }
+    }
+  }
+
+  .blog-post,
+  .product-page {
+    .glide__arrow--left {
+      left: 40%;
+    }
+    .glide__arrow--right {
+      right: 40%;
+    }
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  .about-us,
+  .blog-post,
+  .blog-posts,
+  .landing-page,
+  .pricing-page,
+  .ecommerce-page,
+  .product-page,
+  .account-settings,
+  .checkout-page {
+    .page-header {
+      max-height: 100%;
+    }
+  }
+
+  .error-page {
+    .page-header.page-500 .page-header-image {
+      background-position: 47%;
+    }
+  }
+
+  .login-page,
+  .chat-page,
+  .invoice-page {
+    .upper {
+      margin-top: -150px;
+    }
+  }
+}
+
+@include media-breakpoint-down(xs) {
+  .navbar {
+    &.navbar-main {
+      .navbar-nav {
+        .dropdown .dropdown-menu {
+          max-height: 390px;
+          overflow-y: scroll;
+        }
+      }
+    }
+  }
+
+  .card-background[data-animation="zooming"] a:not(.btn) {
+    height: auto !important;
+  }
+
+  .blog-posts {
+    .content-center {
+      .title {
+        font-size: 20px;
+      }
+    }
+  }
+
+  .contactus-3 {
+    .bg-image {
+      height: 100%;
+      width: auto;
+    }
+  }
+
+  .ecommerce-page .main {
+    margin-top: -40px;
+  }
+
+  .checkout-page {
+    .upper .col-lg-4 .title {
+      margin-top: 50px !important;
+    }
+  }
+
+  .page-500 {
+    .low {
+      bottom: -150px !important;
+    }
+  }
+
+  .product-page {
+    .carousel {
+      .carousel-control-next {
+        right: -15px;
+      }
+      .carousel-control-prev {
+        left: -20px;
+      }
+    }
+
+    .positioned {
+      position: relative !important;
+      left: auto !important;
+      margin-top: 40px !important;
+    }
+
+    .glide__arrow--left {
+      left: 30%;
+    }
+    .glide__arrow--right {
+      right: 30%;
+    }
+  }
+
+  .testimonial-glide {
+    .info {
+      padding: 0 !important;
+    }
+  }
+}
+
+@include media-breakpoint-up(md) {
+  .blog-post {
+    .page-header {
+      .container {
+        padding-top: 30vh;
+      }
+    }
+  }
+}
+
+@include media-breakpoint-up(lg) {
+  .section-safe {
+    .card.card-stats {
+      position: absolute;
+      &:nth-of-type(1) {
+        width: 140px;
+        top: -55px;
+        left: 200px;
+      }
+      &:nth-of-type(2) {
+        width: 200px;
+        top: 150px;
+        left: -81px;
+      }
+      &:nth-of-type(3) {
+        width: 130px;
+        top: 240px;
+        left: 340px;
+      }
+
+      .numbers {
+        text-align: center;
+      }
+    }
+
+    .list-unstyled {
+      .icon {
+        width: 1rem;
+        height: 1rem;
+      }
+    }
+  }
+
+  .chat-page,
+  .login-page {
+    .page-header {
+      .container {
+        padding-top: 0 !important;
+      }
+    }
+  }
+}
+
+@media (min-width: 640px) {
+  .product-page {
+    .choices__list--dropdown .choices__item--selectable {
+      padding-right: 0;
+    }
+  }
+}

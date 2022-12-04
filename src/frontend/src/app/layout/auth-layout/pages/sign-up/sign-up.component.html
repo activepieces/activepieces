@@ -1,0 +1,60 @@
+<app-auth-checkbox *ngIf="activeStep === 1" (emailResetPressed)="sendEmailReset()"
+              [email]="email" [loading]="loading"
+              [linkName]="'complete your registration'">
+</app-auth-checkbox>
+<div class="form-margin" *ngIf="activeStep === 0">
+  <div class="auth-form-title">Let's get started!</div>
+  <form [formGroup]="signUpForm" (ngSubmit)="sendEmailReset()">
+    <div class="form-group">
+      <label class="form-text" for="email">Email</label>
+      <input
+        id="email"
+        class="form-control"
+        formControlName="email"
+        placeholder="Enter your email"
+        type="email"
+        (keydown)="emailChanged = true"
+      />
+      <p
+        @fadeInUp
+        *ngIf="
+                  submitted && signUpForm.controls['email'].hasError('required')
+                "
+        class="invalid-input"
+      >
+        Email is required
+      </p>
+      <p
+        @fadeInUp
+        *ngIf="
+                  submitted && (signUpForm.controls['email'].hasError('email') || signUpForm.controls['email'].hasError('pattern'))
+                "
+        class="invalid-input"
+      >
+        Email is invalid
+      </p>
+
+      <p
+        @fadeInUp
+        *ngIf="submitted && emailExists && !emailChanged"
+        class="invalid-input"
+      >
+        Email is used
+      </p>
+    </div>
+
+    <div class="text-center">
+      <app-button
+        [loading]="loading"
+        (buttonClicked)="sendEmailReset()"
+        btnColor="primary"
+        [fullWidthOfContainer]="true"
+      >
+      Play with activepieces
+      </app-button>
+    </div>
+  </form>
+  <div class="text-center auth-links-container">
+    <a routerLink="/sign-in">Already have an account?</a>
+  </div>
+</div>

@@ -1,0 +1,305 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+@import "~@angular/material/theming";
+
+$ap-typography: mat.define-typography-config($font-family: "Open Sans",
+    $button : mat.define-typography-level($font-family: 'Open Sans',
+      $font-weight: 600,
+      $font-size: .875rem,
+      $line-height: 1.5,
+      $letter-spacing: normal,
+    ));
+@include mat.all-component-typographies($ap-typography);
+$ap-primary-palette: (
+  50 : #eee8fc,
+  100 : #d4c6f6,
+  200 : #b7a0f1,
+  300 : #9a7aeb,
+  400 : #845ee6,
+  500 : #6e41e2,
+  600 : #663bdf,
+  700 : #5b32da,
+  800 : #512ad6,
+  900 : #3f1ccf,
+  A100 : #ffffff,
+  A200 : #d9d1ff,
+  A400 : #ae9eff,
+  A700 : #9985ff,
+  contrast: (50 : #000000,
+    100 : #000000,
+    200 : #000000,
+    300 : #000000,
+    400 : #ffffff,
+    500 : #ffffff,
+    600 : #ffffff,
+    700 : #ffffff,
+    800 : #ffffff,
+    900 : #ffffff,
+    A100 : #000000,
+    A200 : #000000,
+    A400 : #000000,
+    A700 : #000000,
+  )
+);
+$ap-danger-palette: (
+  50 : #fbe7e9,
+  100 : #f5c2c7,
+  200 : #ee9aa2,
+  300 : #e7727d,
+  400 : #e15361,
+  500 : #dc3545,
+  600 : #d8303e,
+  700 : #d32836,
+  800 : #ce222e,
+  900 : #c5161f,
+  A100 : #fff6f7,
+  A200 : #ffc3c6,
+  A400 : #ff9095,
+  A700 : #ff777c,
+  contrast: (50 : #000000,
+    100 : #000000,
+    200 : #000000,
+    300 : #000000,
+    400 : #ffffff,
+    500 : #ffffff,
+    600 : #ffffff,
+    700 : #ffffff,
+    800 : #ffffff,
+    900 : #ffffff,
+    A100 : #000000,
+    A200 : #000000,
+    A400 : #000000,
+    A700 : #000000,
+  )
+);
+
+
+
+$distanceFromTopOfScreenToMatTabBody:215px;
+
+.mat-expansion-panel-body {
+  padding: 0 !important;
+}
+
+.mat-button,
+.mat-icon-button,
+.mat-stroked-button,
+.mat-flat-button {
+  padding: 0.625rem 1.25rem !important;
+  line-height: 1.375rem !important;
+
+  &.btn-sm {
+    padding: .3125rem .625rem !important;
+  }
+}
+
+$ap-primary: mat.define-palette($ap-primary-palette);
+$ap-danger: mat.define-palette($ap-danger-palette);
+$ap-theme: mat.define-light-theme((color: (primary: $ap-primary,
+        warn: $ap-danger,
+        accent : $ap-danger )));
+@include mat.core-theme($ap-theme);
+@include mat.all-component-themes($ap-theme);
+
+.mat-tab-group {
+  font-family: inherit !important;
+}
+
+.mat-tab-label {
+  height: 46px !important;
+  padding: 0 15px !important;
+  cursor: pointer;
+  box-sizing: border-box;
+  color: #262626;
+  opacity: 0.5 !important;
+  min-width: 20px !important;
+  justify-content: unset !important;
+  align-items: unset !important;
+  font-weight: 400;
+
+  .mat-tab-label-content::before {
+    transition: all 250ms ease;
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0.9375rem;
+    height: 0.0625rem;
+    width: calc(100% - 1.875rem);
+    font-weight: 400;
+    font-size: 0.875rem;
+    box-shadow: inset 0px -2px 0px transparent;
+  }
+}
+
+.mat-tab-label-active {
+  color: $title;
+  opacity: 1 !important;
+  font-weight: 400;
+
+  .mat-tab-label-content::before {
+    box-shadow: inset 0px -2px 0px #262626;
+  }
+}
+
+.mat-ink-bar {
+  visibility: hidden !important;
+  // background-color: $title !important;
+}
+
+.mat-tab-labels::before {
+  transition: all 500ms ease;
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  width: calc(100%);
+  background: #f0f0f0;
+}
+
+.mat-tab-body-content {
+  height: unset !important;
+}
+
+.config-variables .mat-tab-body-content {
+  height: calc(100vh - $distanceFromTopOfScreenToMatTabBody) !important;
+}
+
+.mat-tab-body-wrapper {
+  flex-grow: 1;
+}
+
+.trial-progress-background.mat-progress-spinner circle,
+.trial-progress-background.mat-spinner circle {
+  stroke: $primary-light !important;
+  stroke-width: 15% !important;
+}
+
+.trial-progress-actual.mat-progress-spinner circle,
+.trial-progress-actual.mat-spinner circle {
+  stroke: $primary-hover !important;
+  stroke-width: 15% !important;
+}
+
+.mat-snack-bar-container {
+  background-color: rgba($title, 0.85);
+  color: $white;
+  border-radius: 8px !important;
+  padding: 0.8125rem 0.9375rem !important;
+  border: 1px solid $title;
+  box-shadow: unset;
+  min-width: unset !important;
+  min-height: unset !important;
+  max-width: unset !important;
+  font-weight: 500;
+  z-index: 999999;
+
+  .mat-simple-snackbar {
+    font-family: unset;
+    line-height: unset;
+  }
+
+  button {
+    color: $white;
+    font-weight: 400;
+    line-height: 1.375rem;
+    padding: 0.1875rem 0.625rem !important;
+    background-color: #5d5d5d;
+    outline: 0px !important;
+    margin-left: 50px;
+  }
+
+  &.error {
+    background-color: rgba($danger, 0.85);
+    border: 1px solid $danger;
+
+    button {
+      background-color: rgba($danger, 0.55);
+    }
+  }
+}
+
+.labels-tooltip {
+  width: 12.0625rem;
+  padding: .1875rem .375rem;
+}
+
+
+.mat-tooltip {
+  font-weight: 400;
+  font-size: .8125rem;
+  line-height: 1.125rem;
+  margin: .4375rem 0px 0px 0rem !important;
+  background-color: $title;
+  padding: 0.3125rem 0.625rem !important;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.publish-popover-mat-tooltip {
+  margin-left: 5rem !important;
+  max-width: 200px;
+  font-size: .875rem;
+  line-height: 1.25rem;
+}
+
+.mat-tab-body-content,
+.mat-drawer-inner-container {
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+
+.cdk-overlay-container {
+  z-index: calc($appended-to-body-z-index + 1);
+}
+.center-before {
+
+  &.center-above
+  {
+    transform: translate(50%,-16px);
+  }
+  &.center-below
+  {
+    transform: translate(50%,16px);
+  }
+
+}
+
+.center-after {
+
+  &.center-above
+  {
+    transform: translate(-50%,-16px);
+  }
+  &.center-below
+  {
+    transform: translate(-50%,16px);
+  }
+}
+
+.mat-menu-content:not(:empty)
+{
+  padding:8px !important;
+}
+.mat-menu-item
+{
+  padding:5px !important;
+  height: unset !important;
+  line-height: unset !important;
+  &:hover:not([disabled])
+  {
+    background-color: $grayCard !important;
+  }
+}
+
+.cdk-overlay-pane {
+  z-index: calc($appended-to-body-z-index + 1);
+}
+
+.mat-tooltip {
+  white-space: pre-line !important;
+}

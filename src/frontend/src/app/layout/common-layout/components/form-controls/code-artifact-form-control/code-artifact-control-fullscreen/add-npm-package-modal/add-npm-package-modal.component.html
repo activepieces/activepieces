@@ -1,0 +1,52 @@
+<form [formGroup]="npmForm" >
+  <div class="modal-header">
+    <h5 class="modal-title pull-left">Add npm Package</h5>
+    <button
+      type="button"
+      class="btn-close close pull-right"
+      aria-label="Close"
+      (click)="hide()"
+    >
+      <span aria-hidden="true" class="visually-hidden close-custom"
+        >&times;</span
+      >
+    </button>
+  </div>
+  <div class="modal-body">
+
+      <input type="text" class="form-control" formControlName="packageName">
+      <span  class="text-sm text-muted">
+        Please type the name of the npm package, the latest version will be fetched , and added to package.json
+      </span>
+      <ng-container *ngIf="submitted && npmForm.get('packageName')!.invalid">
+        <ng-container *ngIf="npmForm.get('packageName')!.hasError('required');else invalidName">
+          Package name is required
+        </ng-container>
+        <ng-template #invalidName>
+          <p @fadeInUp   class="invalid-input">
+            Package not found
+           </p>
+        </ng-template>
+      </ng-container>
+  </div>
+  <div class="modal-footer">
+
+    <app-button
+    btnColor="basic"
+    btnStyle="basic"
+    (buttonClicked)="hide()"
+  > Cancel
+  </app-button>
+
+
+    <app-button
+      type="submit"
+      [loading]="loading"
+      btnColor="primary"
+      (buttonClicked)="lookForNpmPackage()"
+    >Add package</app-button>
+  </div>
+</form>
+<ng-container *ngIf="npmPackage$ | async"></ng-container>
+
+<ng-container *ngIf="packageNameChanged$  | async"></ng-container>

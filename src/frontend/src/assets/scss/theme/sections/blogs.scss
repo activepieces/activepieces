@@ -1,0 +1,89 @@
+.blogs-2 {
+  .card {
+    height: 530px;
+  }
+}
+
+.blogs-3 {
+  .card {
+    &.card-blog {
+      .card-title {
+        margin-bottom: 0.5rem;
+      }
+
+      .author {
+        position: relative;
+        display: inline-block;
+        text-align: left;
+        margin: 20px auto 0;
+
+        .avatar {
+          width: 40px;
+          height: 40px;
+          position: absolute;
+        }
+
+        .text {
+          position: relative;
+          left: 55px;
+          top: 1px;
+        }
+        .name {
+          font-size: 1.1em;
+          font-weight: 700;
+          line-height: 1.15;
+          max-width: 11em;
+          overflow: hidden;
+          padding-top: 3px;
+          text-overflow: ellipsis;
+        }
+        .meta {
+          color: #a49e9e;
+          font-size: 0.8em;
+        }
+      }
+    }
+  }
+}
+
+.blogs-4 {
+  .card {
+    margin-bottom: 0px;
+    text-align: center;
+    height: 530px;
+    border-radius: 0;
+
+    .full-background {
+      border-radius: 0;
+    }
+  }
+
+  [class^="col-"] {
+    padding: 0;
+  }
+
+  .row-below {
+    .card {
+      margin-top: 0 !important;
+    }
+  }
+}
+
+.blogs-5 {
+  .card {
+    .card-footer {
+      .author,
+      .stats {
+        color: $default;
+      }
+    }
+  }
+}
+
+.blogs-7 {
+  .card {
+    &.card-blog {
+      min-height: 550px;
+    }
+  }
+}

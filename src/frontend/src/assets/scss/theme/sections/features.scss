@@ -1,0 +1,168 @@
+.phone-container {
+  img {
+    width: 100%;
+  }
+}
+
+.features-2,
+.features-3 {
+  text-align: center;
+}
+
+// FEAETURE 1
+
+.features-1 {
+  .info {
+    max-width: 450px;
+    text-align: left;
+
+    .info-title {
+      font-weight: 600;
+      padding: 0 15px 0 0;
+    }
+
+    p {
+      padding: 0 15px 0 0;
+    }
+
+    a i {
+      top: 3px;
+      position: relative;
+    }
+  }
+}
+
+// FEAETURE 2
+
+.features-2 {
+  .title {
+    line-height: 1.1;
+    margin-bottom: 30px;
+  }
+
+  .container {
+    .description {
+      margin-bottom: 20px;
+    }
+  }
+  .info {
+    padding: 30px 10px 30px;
+    margin: 30px auto 0;
+    opacity: 0.9;
+    width: 250px;
+    position: relative;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    &.info-raised {
+      margin-top: -5px;
+    }
+
+    .icon {
+      margin-left: 15px;
+    }
+
+    .info-title {
+      font-weight: bold;
+    }
+
+    .description {
+      color: $white;
+      padding: 0 15px;
+    }
+  }
+}
+
+// FEAETURE 3
+
+.features-3 {
+  .info-title {
+    .badge {
+      font-size: 10px;
+      position: relative;
+      top: -5px;
+    }
+  }
+  background-color: $default;
+}
+
+// FEAETURE 4
+
+.features-4 {
+  .title {
+    line-height: 1.1;
+    margin-bottom: 30px;
+  }
+
+  .info {
+    text-align: left;
+    padding: 30px;
+
+    .info-title {
+      padding: 0;
+    }
+
+    .description {
+      padding-left: 0;
+    }
+
+    &:hover {
+      transition: all 300ms ease 0s;
+
+      .info-title,
+      .description,
+      .icon {
+        color: $white !important;
+      }
+    }
+  }
+}
+
+// FEAETURE 5
+
+.features-5 {
+  .title,
+  .category {
+    margin-left: 25px;
+  }
+
+  h6 {
+    text-transform: uppercase;
+  }
+
+  .info {
+    text-align: left;
+    padding: 10px;
+  }
+}
+
+// FEAETURE 6
+
+.features-6 {
+  .info {
+    margin-bottom: 10px;
+
+    &:hover {
+      .icon i,
+      .title,
+      p,
+      a {
+        color: $white !important;
+      }
+    }
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  .features-2 .info {
+    margin-bottom: 25px;
+  }
+}
+
+@include media-breakpoint-down(xs) {
+  .features-6 {
+    overflow: hidden;
+  }
+}

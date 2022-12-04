@@ -1,0 +1,118 @@
+<section class="authentication-container d-flex flex-column">
+  <div class="auhtentication-type d-flex">
+    <div class="description-column">
+      <div class="description-container d-flex flex-column flex-grow-1">
+        <p class="ap-title">Authentication Type</p>
+        <p class="ap-description">
+          How do you want to authenticate your app users' accounts?
+        </p>
+      </div>
+    </div>
+
+    <div class="type-choice flex-grow-1 d-flex">
+      <div class="signing-keys w-50 choice d-flex flex-column"
+        (click)="setAuthenticationType(AuthenticationType.SIGNING_KEY)" [class.selected-choice]="
+          selectedAuthenticationType === AuthenticationType.SIGNING_KEY
+        ">
+        <div class="d-flex align-items-center">
+          <svg-icon src="assets/img/custom/key.svg" class="choice-icon staging-key-icon" [applyClass]="true"></svg-icon>
+          <p class="ap-title">Signing Keys</p>
+        </div>
+        <p class="ap-description">
+          Generate tokens with a signing key (Generate in the following
+          section).
+        </p>
+      </div>
+
+      <div class="firebase choice flex-column d-flex w-50" (click)="setAuthenticationType(AuthenticationType.FIREBASE)"
+        [class.selected-choice]="
+          selectedAuthenticationType === AuthenticationType.FIREBASE
+        ">
+        <div class="d-flex align-items-center">
+          <svg-icon src="assets/img/custom/firebase.svg" class="choice-icon" [applyClass]="true"></svg-icon>
+          <p class="ap-title">Firebase</p>
+        </div>
+        <p class="ap-description">
+          Use Firebase ID tokens (if you use Firebase Authentication).
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="authentication-values d-flex">
+    <div class="description-column">
+      <div class="description-container d-flex flex-column">
+        <ng-container *ngIf="
+            selectedAuthenticationType === AuthenticationType.SIGNING_KEY;
+            else firebase
+          ">
+          <div @fadeInUp>
+            <p class="ap-title">Signing Keys</p>
+            <p class="ap-description">
+              Generate and download your private key to sign users IDs with it.
+            </p>
+          </div>
+        </ng-container>
+
+        <ng-template #firebase>
+          <div @fadeInUp>
+            <p class="ap-title">Firebase Project ID</p>
+            <p class="ap-description">
+              Find your Firebase Project ID in Firebase Console and set it here.
+            </p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+    <div *ngIf="selectedAuthenticationType === AuthenticationType.SIGNING_KEY" @fadeInUp
+
+      class="flex-grow-1 d-flex flex-column table-and-note-container">
+
+
+      <div class="staging-key-note d-flex align-items-center">
+        <p>
+          To keep your keys safe, we don't store them on Activepieces. If you
+          lost an old signing key, generate a new one and make sure you update
+          it in your app.
+        </p>
+      </div>
+      <app-table [columnNamesAndProperties]="signingKeyTableColumns" [values]="authentications$ | async"
+        [actionButtonTemplate]="generateKeyBtn">
+      </app-table>
+    </div>
+    <div  *ngIf="selectedAuthenticationType === AuthenticationType.FIREBASE" @fadeInUp
+      class="flex-grow-1 d-flex flex-column">
+      <app-table [columnNamesAndProperties]="firebaseTableColumns" [values]="authentications$ | async"
+        [actionButtonTemplate]="updateProjectIdBtn">
+      </app-table>
+    </div>
+
+  </div>
+</section>
+
+<ng-template let-authentication #updateProjectIdBtn>
+  <app-button btnStyle="stroked" (buttonClicked)="openFireabseProjectIdModal(
+    authentication.environmentId,
+    authentication.environmentName,
+    authentication.projectId
+  )">
+<div class="d-flex generate-or-add-btn justify-content-center ">
+  <svg-icon class="generate-or-add-btn-icon" src="assets/img/custom/pencil.svg" [applyClass]="true"></svg-icon>
+  Update
+</div>
+
+</app-button>
+
+</ng-template>
+<ng-template let-authentication #generateKeyBtn>
+  <app-button btnStyle="stroked" (buttonClicked)="openGenerateKeyModal(
+    authentication.environmentId,
+    authentication.environmentName
+  )">
+<div class="d-flex generate-or-add-btn justify-content-center ">
+  <svg-icon class="generate-or-add-btn-icon" src="assets/img/custom/pencil.svg" [applyClass]="true"></svg-icon>
+  Generate
+</div>
+
+</app-button>
+
+</ng-template>

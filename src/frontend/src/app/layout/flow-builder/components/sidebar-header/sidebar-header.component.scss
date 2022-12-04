@@ -1,0 +1,13 @@
+@import "src/assets/scss/custom/variables";
+
+.title-header {
+  flex-grow: 1;
+  width: 100%;
+  margin-bottom: 0px !important;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 22px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,56 @@
+//
+// Icon action
+//
+
+.icon-actions {
+  > a {
+    display: inline-block;
+    margin-right: 0.75rem;
+    color: $gray-600;
+    font-size: 0.875rem;
+
+    &:last-of-type {
+      margin-right: 0;
+    }
+
+    span {
+      margin-left: 0.1875rem;
+      font-weight: $font-weight-bold;
+      color: $text-muted;
+    }
+
+    &:hover {
+      span {
+        color: darken($text-muted, 10%);
+      }
+    }
+  }
+
+  > a,
+  > a:hover,
+  > a.active {
+    color: $gray-800;
+  }
+
+  > .favorite:hover,
+  > .favorite.active {
+    color: $favorite-color;
+  }
+
+  > .love:hover,
+  > .love.active {
+    color: $love-color;
+  }
+
+  > .like:hover,
+  > .like.active {
+    color: $like-color;
+  }
+}
+
+.icon-actions-lg {
+  a {
+    font-size: 1.25rem;
+    margin-right: 0.875rem;
+  }
+}

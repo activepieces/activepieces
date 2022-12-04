@@ -1,0 +1,53 @@
+<div class="modal-header">
+  <h5 class="modal-title pull-left">
+    {{ archive ? "Archive" : "Delete" }} Confirmation
+  </h5>
+  <button
+    type="button"
+    class="btn-close close pull-right"
+    aria-label="Close"
+    (click)="bsModalRef?.hide()"
+  >
+    <span aria-hidden="true" class="visually-hidden close-custom">&times;</span>
+  </button>
+</div>
+<div class="modal-body">
+  <form [formGroup]="deleteForm" *ngIf="showText">
+    <div class="form-group">
+      <label for="confirmationTextControl"
+        >If you are sure that you want to
+        {{ archive ? "archive" : "delete" }} "{{ entityName }}", type
+        {{ confirmationText }} in the following field.</label
+      >
+      <input
+        type="text"
+        class="form-control"
+        id="confirmationTextControl"
+        formControlName="confirmationTextControl"
+        placeholder="{{ confirmationText }}"
+      />
+    </div>
+  </form>
+  <div class="form-group" *ngIf="!showText">
+    <label
+      >If you are sure that you want to {{ archive ? "archive" : "delete" }} "{{
+        entityName
+      }}", please press confirm.</label
+    >
+  </div>
+</div>
+<div class="modal-footer" >
+  <div class="w-100">
+    <app-button
+    [disabled]="
+      this.deleteForm.controls['confirmationTextControl'].invalid && showText
+    "
+    [loading]="loading"
+    btnColor="warn"
+    [fullWidthOfContainer]="true"
+    (buttonClicked)="confirmDelete()"
+  >
+  Confirm</app-button>
+  </div>
+
+</div>

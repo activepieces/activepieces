@@ -1,0 +1,46 @@
+<div>
+  <div class="status-section d-flex align-items-center">
+    <ng-container
+      *ngIf="ActionStatusEnum.SUCCEEDED === selectedStepResult.status"
+    >
+      <svg-icon
+        src="assets/img/custom/success-step-result.svg"
+        [svgStyle]="{ width: 21, height: 20 }"
+        matTooltip="Step succeeded"
+      ></svg-icon>
+    </ng-container>
+    <ng-container *ngIf="ActionStatusEnum.FAILED === selectedStepResult.status">
+      <svg-icon
+        src="assets/img/custom/failure-step-result.svg"
+        [svgStyle]="{ width: 21, height: 20 }"
+        matTooltip="Step succeeded"
+      ></svg-icon>
+    </ng-container>
+    {{ selectedStepName }}
+  </div>
+
+  <div class="detail-item d-flex align-items-center">
+    <svg-icon
+      src="assets/img/custom/duration.svg"
+      [svgStyle]="{ width: 12, height: 20 }"
+    ></svg-icon>
+    Duration:
+    <span class="description"> {{ selectedStepResult.duration }}ms </span>
+  </div>
+
+  <div class="mt-4" *ngIf="selectedStepResult.input">
+    <app-json-viewer
+      class="json-viewer"
+      [title]="'Input'"
+      [maxHeight]="400"
+      [content]="selectedStepResult.input"
+    ></app-json-viewer>
+  </div>
+  <div class="mt-4" >
+     <app-json-viewer
+      [title]="'Output'"
+      [content]="selectedStepResult.output"
+    ></app-json-viewer>
+
+  </div>
+</div>

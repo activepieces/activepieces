@@ -1,0 +1,28 @@
+<section class="ap-table" [ngStyle]="gridStyle">
+  <ng-container
+    *ngFor="let column of columnNamesAndProperties; let isLast = last"
+  >
+    <div class="ap-table-header">
+      {{ column.columnName }}
+    </div>
+  </ng-container>
+  <div *ngIf="actionButtonTemplate" #emptySpaceHeader></div>
+
+  <ng-container *ngFor="let val of values">
+    <ng-container
+      *ngFor="let column of columnNamesAndProperties; let isLast = last"
+    >
+      <div class="ap-table-row" #row [class.empty-value]="!val[column.propertyName]" [matTooltip]=" val[column.propertyName] && row.scrollWidth > row.clientWidth? val[column.propertyName] : ''  ">
+        {{
+          val[column.propertyName]
+            ? val[column.propertyName]
+            : column.emptyValueText
+        }}
+      </div>
+    </ng-container>
+    <ng-container
+      *ngTemplateOutlet="actionButtonTemplate; context: { $implicit: val }"
+    >
+    </ng-container>
+  </ng-container>
+</section>

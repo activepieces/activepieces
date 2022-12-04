@@ -1,0 +1,75 @@
+.card-product {
+  margin-top: 30px;
+
+  .card-image {
+    img {
+      width: 100%;
+    }
+  }
+
+  .btn {
+    margin: 0;
+  }
+
+  .image {
+    overflow: hidden;
+    border-radius: $border-radius-lg;
+  }
+
+  .card-body {
+    .card-title {
+      margin-bottom: 0px;
+    }
+  }
+  .card-footer {
+    margin-top: 10px;
+
+    .btn i {
+      margin-top: 5px;
+    }
+
+    .price {
+      h5 {
+        margin-bottom: 0;
+        margin-top: 0;
+      }
+    }
+    .stats {
+      margin-top: 5px;
+
+      .btn {
+        position: relative;
+        top: -3px;
+      }
+    }
+  }
+
+  .category {
+    margin-bottom: 0;
+  }
+  .category ~ .card-title {
+    margin-top: 0;
+  }
+
+  .price-container {
+    display: inline-block;
+  }
+
+  .price {
+    font-size: 16px;
+    color: $default;
+  }
+  .price-old {
+    text-decoration: line-through;
+    font-size: 16px;
+    color: $default;
+  }
+
+  .price-new {
+    color: $danger;
+  }
+
+  &:not(.card-plain) .card-image {
+    padding: 15px;
+  }
+}

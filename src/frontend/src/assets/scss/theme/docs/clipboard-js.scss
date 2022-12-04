@@ -1,0 +1,40 @@
+// clipboard.js
+//
+// JS-based `Copy` buttons for code snippets.
+
+.ct-clipboard {
+  position: relative;
+  display: none;
+  float: right;
+
+  + .highlight {
+    margin-top: 0;
+  }
+}
+
+.btn-clipboard {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  display: block;
+  padding: 0.25rem 0.5rem;
+  font-size: 75%;
+  cursor: pointer;
+  background-color: transparent;
+  border: 0;
+  border-radius: 0.25rem;
+  color: #fff;
+  background-color: $ct-primary;
+
+  &:hover {
+    color: #fff;
+    background-color: darken($ct-primary, 10%);
+  }
+}
+
+@media (min-width: 768px) {
+  .ct-clipboard {
+    display: block;
+  }
+}

@@ -1,0 +1,35 @@
+$colors: (
+  "GET": ("color":#156BEB, "background":rgba(69, 179, 254, 0.11)),
+  "HEAD": ("color":#9C1FFF, "background":rgba(156, 31, 255, 0.08)),
+  "POST": ("color":#14AE5C, "background": rgba(20, 174, 92, 0.08)),
+  "PUT": ("color":#C97E0F, "background": rgba(201, 126, 15, 0.08)),
+  "DELETE": ("color":#D72714, "background": rgba(201, 15, 15, 0.08)),
+  "OPTIONS": ("color":#4F46B3, "background": rgba(79, 70, 179, 0.11)),
+  "PATCH": ("color":#00BE8C, "background": rgba(0, 190, 140, 0.1)),
+  "TRACE": ("color":#FF1FDB, "background":rgba(255, 31, 219, 0.08))
+);
+
+.request-template-container {
+  width: 2.9375rem;
+  height: 1.25rem;
+  line-height: 1rem;
+  font-size: .75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @each $request-type,
+  $request-colors in $colors {
+    &.#{$request-type} {
+      color: map-get($request-colors, "color");
+      background: map-get($request-colors, "background");
+    }
+  }
+
+  &.transparent-background {
+    background: transparent !important;
+    width: unset;
+    height: unset;
+  }
+
+}

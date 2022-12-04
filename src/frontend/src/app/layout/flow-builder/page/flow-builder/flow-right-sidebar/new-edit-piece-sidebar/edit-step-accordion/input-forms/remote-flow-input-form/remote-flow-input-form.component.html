@@ -1,0 +1,176 @@
+<form *ngIf="flowItemDetails$ | async; else loading" [formGroup]="configsForm" class="ng-submitted">
+  <div class="d-flex flex-column accordion-form-controls-container">
+    <a *ngIf="_flowItemDetails.extra?.documentationUrl" [href]="_flowItemDetails.extra?.documentationUrl" [target]="'_window'">
+      <div class="mt-2 doc-container">
+        <span class="doc-text">Go to {{_flowItemDetails.name}} Docs</span>
+        <img class='external-link' src="assets/img/custom/external-website.png"/>
+      </div>
+    </a>
+    <div>
+      <label>Action</label>
+      <ng-select [formControl]="flowsDropdownControl" [items]="flowsDropdownOptions" placeholder="Please select"
+        bindLabel="label" bindValue="value" [clearable]="false" [searchable]="true"  appendTo="body">
+        <ng-template ng-option-tmp let-item="item">
+          <app-ng-select-item-template [item]="item" [isSelected]="item.value === flowsDropdownControl.value">
+          </app-ng-select-item-template>
+        </ng-template>
+      </ng-select>
+    </div>
+    <div *ngFor="let config of collectionConfigsAndRemoteFlowConfigs; let i = index" [ngSwitch]="config.type">
+      <div   *ngSwitchCase="configType.CHECKBOX" class="d-flex ">
+        <label class="flex-grow-1">{{config.label}}</label>
+        <mat-slide-toggle
+        [formControlName]="config.key"
+        color="primary"
+        ></mat-slide-toggle>
+      </div>
+
+
+      <label
+        *ngIf="configType.CHECKBOX !== config.type"
+        [attr.required]="config.type === configType.DICTIONARY? null: config.settings?.required? config.settings?.required:true" [for]="'form-input' + i">{{ config.label }}</label>
+      <div class="d-flex description-container text-break">
+        <span *ngIf="config.hintText">
+          {{
+            hintTextFullyShown[i]
+          ? config.hintText
+          : config.hintText.slice(0, descriptionLimit)
+          }}
+        </span>
+        <span *ngIf="
+          config.hintText &&
+          config.hintText.length > descriptionLimit &&
+          !   hintTextFullyShown[i]
+        ">
+          &nbsp;
+          <span>...</span>
+          <span class="ap-more-text" (click)="hintTextFullyShown[i] = true">more
+          </span>
+        </span>
+      </div>
+
+      <div [id]="'form-input' + i">
+
+        <input *ngSwitchCase="configType.SHORT_TEXT" class="form-control" type="text" [formControlName]="config.key"
+          [placeholder]="config.placeholder ? config.placeholder : ''" />
+
+          <textarea
+          *ngSwitchCase="configType.LONG_TEXT"
+          [formControlName]="config.key"
+          [placeholder]="config.placeholder ? config.placeholder : ''"
+          rows="4"
+          class="form-control"
+          type="text"
+    >
+          </textarea>
+        <input *ngSwitchCase="configType.EMAIL" class="form-control" type="email" [formControlName]="config.key"
+          [placeholder]="config.placeholder ? config.placeholder : ''" />
+        <input *ngSwitchCase="configType.INTEGER" class="form-control" type="number" [formControlName]="config.key"
+          [placeholder]="config.placeholder ? config.placeholder : ''" />
+        <ng-container *ngSwitchCase="configType.OAUTH2">
+          <app-o-auth2-connect-control
+            *ngIf="getAuthConfigSettings(config).userInputType === userInputType.LOGIN; else createDelegateConfig "
+            [formControlName]="config.key" [configSettings]="getAuthConfigSettings(config)">
+          </app-o-auth2-connect-control>
+          <ng-template #createDelegateConfig>
+            <div class="position-relative">
+              <app-button
+              btnColor="primary"
+              btnStyle="basic"
+              btnSize="extraSmall"
+              *ngIf="getControl(config.key).value && !isDisabled"
+              (buttonClicked)="editSelectedAuthConfig(config.key)"
+              class="edit-selected-auth"
+
+            > Edit
+            </app-button>
+              <ng-select [items]="config | connectorAuthConfigsFinder:(allAuthConfigs$|async)" bindLabel="label" bindValue="value"
+              id="role" [formControlName]="config.key" [searchable]="false" [clearable]="false" appendTo="body"
+              placeholder="Please select">
+              <ng-template ng-option-tmp let-item="item">
+                <app-ng-select-item-template [item]="item" [isSelected]="getControl(config.key).value===item.value">
+                </app-ng-select-item-template>
+              </ng-template>
+            </ng-select>
+
+            <app-button
+            btnColor="primary"
+            btnStyle="basic"
+            (buttonClicked)="openNewAuthenticationModal(config)"
+            type="button"
+            class="new-config-btn"
+            btnSize="medium"
+            *ngIf="!isDisabled"
+          >   + New Authentication
+          </app-button>
+
+            </div>
+
+          </ng-template>
+        </ng-container>
+
+
+        <app-dictonary-form-control *ngSwitchCase="configType.DICTIONARY" [formControlName]="config.key">
+        </app-dictonary-form-control>
+
+        <ng-container *ngSwitchCase="configType.DROPDOWN">
+          <ng-container *ngIf="
+            getDropdownSettings(config).dropdownType === dropdownType.DYNAMIC;
+            else staticDropdown
+          ">
+            <ng-select [formControlName]="config.key" [items]="
+              (getDynamicDropdownObservable(config.key) | async)?.options || []
+            " [loading]="
+              !(getDynamicDropdownObservable(config.key) | async)?.loaded ||
+              false
+            " [placeholder]="
+              !(getDynamicDropdownObservable(config.key) | async)?.loaded
+                ? 'Loading...'
+                : (getDynamicDropdownObservable(config.key) | async)
+                    ?.placeholder!
+            " bindLabel="label" bindValue="value" [clearable]="!getDropdownSettings(config).required"
+            appendTo="body"
+              [searchable]="false">
+              <ng-template ng-option-tmp let-item="item">
+                <app-ng-select-item-template [item]="item" [isSelected]="item.value === getControl(config.key)?.value">
+                </app-ng-select-item-template>
+              </ng-template>
+
+              <ng-template ng-loadingspinner-tmp>
+                <app-ng-select-loading-spinner-template></app-ng-select-loading-spinner-template>
+              </ng-template>
+            </ng-select>
+          </ng-container>
+          <ng-template #staticDropdown>
+            <ng-select [formControlName]="config.key" [items]="getStaticDropdownSettings(config).options"
+              bindLabel="label" bindValue="value" [clearable]="!getDropdownSettings(config).required"
+              appendTo="body"
+              [searchable]="false">
+              <ng-template ng-option-tmp let-item="item">
+                <app-ng-select-item-template [item]="item" [isSelected]="item.value === getControl(config.key)?.value">
+                </app-ng-select-item-template>
+              </ng-template>
+            </ng-select>
+          </ng-template>
+        </ng-container>
+
+        <ng-container *ngIf="getControl(config.key)?.invalid">
+          <p @fadeInUp class="invalid-input">{{ config.label }} is required.</p>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+</form>
+<ng-container *ngIf="valueChanged$ | async"></ng-container>
+<ng-container *ngIf="flowVersionDropdownValueChanged$ | async"></ng-container>
+<ng-container *ngFor="let refreshRefernceValueChanged$ of refreshersList$ ">
+  <ng-container *ngIf="refreshRefernceValueChanged$ | async"></ng-container>
+</ng-container>
+<ng-template #loading>
+  <div class="d-column flex-grow-1 justify-content-center align-items-center">
+    <app-loading-icon> </app-loading-icon>
+  </div>
+</ng-template>
+<ng-container *ngIf="newAuthConfigAdded$ | async"></ng-container>
+<ng-container *ngIf="updateAuthConfig$ | async"> </ng-container>

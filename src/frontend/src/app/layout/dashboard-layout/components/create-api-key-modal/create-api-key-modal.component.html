@@ -1,0 +1,69 @@
+<ng-template #template>
+  <form
+    [formGroup]="apiKeyForm"
+    [class.ng-submitted]="submitted"
+    (ngSubmit)="createApiKey()"
+  >
+    <div class="modal-header">
+      <h5 class="modal-title pull-left">Create API key</h5>
+      <button
+        type="button"
+        class="btn-close close pull-right"
+        aria-label="Close"
+        (click)="modalRef?.hide()"
+      >
+        <span aria-hidden="true" class="visually-hidden close-custom"
+          >&times;</span
+        >
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input
+          type="text"
+          class="form-control"
+          id="name"
+          placeholder="backend key"
+          formControlName="name"
+        />
+        <div
+          @fadeInUp
+          *ngIf="submitted && this.apiKeyForm.controls['name'].invalid"
+        >
+          <p
+            class="invalid-input"
+            *ngIf="
+              submitted && this.apiKeyForm.controls['name'].hasError('required')
+            "
+          >
+            Name is required
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <app-button
+      btnColor="basic"
+      btnStyle="basic"
+      (buttonClicked)="modalRef?.hide()"
+    > Cancel
+    </app-button>
+      <app-button
+        type="submit"
+        [loading]="loading"
+        btnColor="primary"
+      >Create</app-button>
+    </div>
+  </form>
+</ng-template>
+
+<app-button
+btnColor="primary"
+btnSize="small"
+(buttonClicked)="openModal(template)"
+>  Create API Key
+</app-button>
+
+<ng-container *ngIf="createApiKeySuccessful$ | async"></ng-container>
+<ng-container *ngIf="createApiKeyFailed$ | async"></ng-container>

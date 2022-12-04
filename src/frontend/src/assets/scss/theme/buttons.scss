@@ -1,0 +1,177 @@
+// General
+
+.btn {
+  position: relative;
+  text-transform: $btn-text-transform;
+  will-change: transform;
+
+  letter-spacing: $btn-letter-spacing;
+  font-size: $input-btn-font-size;
+
+  &:hover {
+    @include box-shadow($btn-hover-box-shadow);
+  }
+
+  &:not(:last-child) {
+    margin-right: 0.5rem;
+  }
+}
+
+.btn-group,
+.input-group {
+  .btn {
+    margin-right: 0;
+    transform: translateY(0);
+  }
+}
+
+// Sizes
+
+.btn-sm {
+  font-size: $input-btn-font-size-sm;
+
+  &.btn-icon-only {
+    width: 35px;
+    height: 35px;
+  }
+
+  .btn-inner--icon {
+    font-size: 0.5rem;
+  }
+}
+
+.btn-lg {
+  &.btn-icon-only {
+    width: 52px;
+    height: 52px;
+  }
+
+  .btn-inner--icon {
+    font-size: 1.2rem;
+    position: relative;
+    top: 2px;
+  }
+}
+
+// Fixes
+
+[class*="btn-outline-"] {
+  border-width: 1px;
+}
+.btn-outline-secondary {
+  color: darken(theme-color("secondary"), 50%);
+}
+
+.btn-inner--icon {
+  i:not(.fa) {
+    position: relative;
+  }
+}
+
+.btn-link {
+  font-weight: $btn-font-weight;
+  box-shadow: none;
+
+  &:hover {
+    box-shadow: none;
+    transform: none;
+  }
+
+  &.text-secondary {
+    color: darken(theme-color("secondary"), 50%) !important;
+  }
+}
+
+.btn-neutral {
+  color: theme-color("primary");
+}
+
+// Icons
+
+.btn svg:not(:first-child),
+.btn i:not(:first-child) {
+  margin-left: 0.5rem;
+}
+
+.btn svg:not(:last-child),
+.btn i:not(:last-child) {
+  margin-right: 0.5rem;
+}
+
+// Icon labels
+
+.btn-icon-label {
+  position: relative;
+
+  .btn-inner--icon {
+    position: absolute;
+    height: 100%;
+    line-height: 1;
+    border-radius: 0;
+    text-align: center;
+    margin: 0;
+    width: 3em;
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+  .btn-inner--icon:not(:first-child) {
+    right: 0;
+    top: 0;
+    border-top-right-radius: inherit;
+    border-bottom-right-radius: inherit;
+  }
+  .btn-inner--icon:not(:last-child) {
+    left: 0;
+    top: 0;
+    border-top-left-radius: inherit;
+    border-bottom-left-radius: inherit;
+  }
+  .btn-inner--icon svg {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .btn-inner--text:not(:first-child) {
+    padding-left: 3em;
+  }
+  .btn-inner--text:not(:last-child) {
+    padding-right: 3em;
+  }
+}
+
+// Icons
+
+.btn-icon {
+  .btn-inner--icon {
+    img {
+      width: 20px;
+    }
+  }
+  .btn-inner--text:not(:first-child) {
+    margin-left: 0.75em;
+  }
+  .btn-inner--text:not(:last-child) {
+    margin-right: 0.75em;
+  }
+}
+
+.btn-icon-only {
+  width: 2.375rem;
+  height: 2.375rem;
+  padding: 0;
+}
+a.btn-icon-only {
+  line-height: 2.5;
+}
+.btn-icon-only.btn-sm {
+  width: 2rem;
+  height: 2rem;
+}
+
+// Brand buttons
+
+@each $color, $value in $brand-colors {
+  .btn-#{$color} {
+    @include button-variant($value, $value);
+  }
+}

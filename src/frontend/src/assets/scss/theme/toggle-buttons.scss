@@ -1,0 +1,125 @@
+//
+// Custom toggle
+//
+
+.custom-toggle {
+  position: relative;
+  display: inherit;
+  width: $custom-toggle-width;
+  height: 1.5rem;
+  margin: 0;
+  display: inline-block;
+
+  input {
+    display: none;
+
+    &:checked {
+      + .custom-toggle-slider {
+        border: $custom-control-indicator-border-width solid
+          $custom-control-indicator-checked-border-color;
+
+        &:before {
+          background: $custom-toggle-checked-bg;
+          transform: translateX(28px);
+        }
+      }
+    }
+
+    &:disabled {
+      + .custom-toggle-slider {
+        border: $custom-control-indicator-border-width solid
+          $custom-control-indicator-disabled-bg;
+      }
+
+      &:checked {
+        + .custom-toggle-slider {
+          border: $custom-control-indicator-border-width solid
+            $custom-control-indicator-disabled-bg;
+
+          &:before {
+            background-color: lighten(
+              $custom-control-indicator-checked-bg,
+              10%
+            );
+          }
+        }
+      }
+    }
+  }
+}
+
+.custom-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: $custom-control-indicator-border-width solid
+    $custom-toggle-border-color;
+  border-radius: 34px !important;
+  background-color: transparent;
+
+  &:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    border-radius: 50% !important;
+    background-color: $custom-toggle-slider-bg;
+    transition: all 0.3s ease;
+  }
+}
+
+.custom-toggle-wrapper {
+  .custom-toggle + .custom-toggle {
+    margin-left: 1rem !important;
+  }
+}
+
+// Labeled toggles
+
+.custom-toggle {
+  input {
+    &:checked {
+      + .custom-toggle-slider {
+        &:after {
+          content: attr(data-label-on);
+          color: $custom-control-indicator-checked-border-color;
+          right: auto;
+          left: 0;
+        }
+      }
+    }
+  }
+}
+
+.custom-toggle-slider {
+  &:after {
+    color: $custom-toggle-border-color;
+    content: attr(data-label-off);
+    display: block;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 24px;
+    position: absolute;
+    right: 0;
+    margin: 0 0.21667rem;
+    top: 0;
+    text-align: center;
+    min-width: 1.66667rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+}
+
+// Color variations
+
+@each $color, $value in $theme-colors {
+  .custom-toggle-#{$color} {
+    @include custom-toggle-variant($value);
+  }
+}

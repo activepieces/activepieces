@@ -1,0 +1,90 @@
+<ng-template #modalTemplate>
+  <div class="modal-header">
+    <h5 class="modal-title pull-left">Test flow</h5>
+    <button
+      type="button"
+      class="btn-close close pull-right"
+      aria-label="Close"
+      (click)="modalRef?.hide()"
+    >
+      <span aria-hidden="true" class="visually-hidden close-custom"
+        >&times;</span
+      >
+    </button>
+  </div>
+  <ng-container
+    *ngIf="observablesNeededToBuildForm$ | async as result; else loadingSpinner"
+  >
+    <div class="modal-body">
+      <form
+        #formTemplate="ngForm"
+        [formGroup]="testFlowForm"
+        (ngSubmit)="testFlow(result.flow, result.collection)"
+      >
+        <app-configs-form
+          formControlName="configs"
+          [configs]="result.configs"
+          [submitted]="submitted"
+        ></app-configs-form>
+        <ng-container *ngIf="testFlowForm.get('trigger')">
+          <label required> Payload </label>
+          <textarea
+            formControlName="trigger"
+            class="form-control"
+            type="text"
+            rows="5"
+            [placeholder]="triggerPayloadPlaceHolder"
+          ></textarea>
+          <p
+            @fadeInUp
+            *ngIf="
+              formTemplate.submitted && testFlowForm.get('trigger')?.invalid
+            "
+            class="invalid-input"
+          >
+          Payload is not a valid JSON object, please use double quotations.
+          </p>
+        </ng-container>
+      </form>
+    </div>
+    <div class="modal-footer" top-border>
+      <app-button
+      btnColor="basic"
+      btnStyle="basic"
+      (buttonClicked)="modalRef?.hide()"
+    > Cancel
+    </app-button>
+      <app-button
+      btnColor="primary"
+      (buttonClicked)="formTemplate.onSubmit($event)"
+      >Test
+      </app-button>
+    </div>
+  </ng-container>
+
+  <ng-template #loadingSpinner> Loading </ng-template>
+
+</ng-template>
+
+<ng-container> </ng-container>
+<app-button
+  [hidden]="(instanceRunStatus$ | async) === statusEnum.RUNNING"
+  (buttonClicked)="openModal(modalTemplate)"
+  btnStyle="basic"
+  btnColor="primary"
+  [disabled]="shouldDisableTestButton$ | async"
+  [tooltip]="testFlowButtonDisabledTooltip"
+  placement="bottom"
+  btnSize="medium"
+>
+Test flow
+</app-button>
+
+<div
+  [hidden]="(instanceRunStatus$ | async) !== statusEnum.RUNNING"
+  class="btn btn-text text-center text-success"
+>
+  Running...
+</div>
+<ng-container *ngIf="executeTest$ |async"></ng-container>
+<ng-container *ngIf="instanceRunStatusChecker$ | async"></ng-container>

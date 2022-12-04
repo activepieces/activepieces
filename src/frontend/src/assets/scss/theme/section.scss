@@ -1,0 +1,609 @@
+.section {
+  position: relative;
+  padding-top: $spacer * 4;
+  padding-bottom: $spacer * 4;
+}
+
+.section-xl {
+  padding-top: $spacer * 8;
+  padding-bottom: $spacer * 8;
+}
+
+.section-lg {
+  padding-top: $spacer * 6;
+  padding-bottom: $spacer * 6;
+}
+
+.section-sm {
+  padding-top: $spacer * 2;
+  padding-bottom: $spacer * 2;
+}
+
+// Hero sections
+.section-hero {
+  @include media-breakpoint-up(md) {
+    min-height: 500px;
+  }
+}
+
+// Circle sections
+.section-shaped {
+  position: relative;
+  overflow: hidden;
+
+  &.section-hero {
+    &:before {
+      top: 680px;
+    }
+  }
+
+  .stars-and-coded {
+    margin-top: 8rem;
+  }
+
+  .shape {
+    position: absolute;
+    top: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+
+    span {
+      position: absolute;
+    }
+
+    + .container {
+      position: relative;
+      // padding-top: 6rem;
+      // padding-bottom: 0rem;
+      height: 100%;
+    }
+
+    &.shape-skew {
+      + .container {
+        padding-top: 0;
+
+        .col {
+          margin-top: -100px;
+        }
+      }
+
+      + .shape-container {
+        padding-top: 18rem;
+        padding-bottom: 19rem;
+      }
+    }
+  }
+
+  .shape-skew {
+    transform: skewY(-4deg);
+    transform-origin: 0;
+
+    span {
+      transform: skew(4deg);
+    }
+  }
+
+  // Color variations
+  .shape-primary {
+    background: linear-gradient(
+      150deg,
+      shapes-primary-color("step-1-gradient-bg") 15%,
+      shapes-primary-color("step-2-gradient-bg") 70%,
+      shapes-primary-color("step-3-gradient-bg") 94%
+    );
+
+    :nth-child(1) {
+      background: shapes-primary-color("span-1-bg");
+    }
+
+    :nth-child(2) {
+      background: shapes-primary-color("span-2-bg");
+    }
+
+    :nth-child(3) {
+      background: shapes-primary-color("span-3-bg");
+    }
+
+    :nth-child(4) {
+      background: shapes-primary-color("span-4-bg");
+    }
+
+    :nth-child(5) {
+      background: shapes-primary-color("span-5-bg");
+    }
+  }
+
+  .shape-default {
+    background: linear-gradient(
+      150deg,
+      shapes-default-color("step-1-gradient-bg") 15%,
+      shapes-default-color("step-2-gradient-bg") 70%,
+      shapes-default-color("step-3-gradient-bg") 94%
+    );
+
+    :nth-child(1) {
+      background: shapes-default-color("span-1-bg");
+    }
+
+    :nth-child(2) {
+      background: shapes-default-color("span-2-bg");
+    }
+
+    :nth-child(3) {
+      background: shapes-default-color("span-3-bg");
+    }
+
+    :nth-child(4) {
+      background: shapes-default-color("span-4-bg");
+    }
+
+    :nth-child(5) {
+      background: shapes-default-color("span-5-bg");
+    }
+  }
+
+  .shape-light {
+    background: linear-gradient(
+      150deg,
+      shapes-light-color("step-1-gradient-bg") 15%,
+      shapes-light-color("step-2-gradient-bg") 70%,
+      shapes-light-color("step-3-gradient-bg") 94%
+    );
+
+    :nth-child(1) {
+      background: shapes-light-color("span-1-bg");
+    }
+
+    :nth-child(2) {
+      background: shapes-light-color("span-2-bg");
+    }
+
+    :nth-child(3) {
+      background: shapes-light-color("span-3-bg");
+    }
+
+    :nth-child(4) {
+      background: shapes-light-color("span-4-bg");
+    }
+
+    :nth-child(5) {
+      background: shapes-light-color("span-5-bg");
+    }
+  }
+
+  .shape-dark {
+    background: linear-gradient(
+      150deg,
+      shapes-dark-color("step-1-gradient-bg") 15%,
+      shapes-dark-color("step-2-gradient-bg") 70%,
+      shapes-dark-color("step-3-gradient-bg") 94%
+    );
+
+    :nth-child(1) {
+      background: shapes-dark-color("span-1-bg");
+    }
+
+    :nth-child(2) {
+      background: shapes-dark-color("span-2-bg");
+    }
+
+    :nth-child(3) {
+      background: shapes-dark-color("span-3-bg");
+    }
+
+    :nth-child(4) {
+      background: shapes-dark-color("span-4-bg");
+    }
+
+    :nth-child(5) {
+      background: shapes-dark-color("span-5-bg");
+    }
+  }
+
+  .shape-style-1 {
+    span {
+      height: 120px;
+      width: 120px;
+      border-radius: 50%;
+    }
+
+    .span-200 {
+      height: 200px;
+      width: 200px;
+    }
+
+    .span-150 {
+      height: 150px;
+      width: 150px;
+    }
+
+    .span-100 {
+      height: 100px;
+      width: 100px;
+    }
+
+    .span-75 {
+      height: 75px;
+      width: 75px;
+    }
+
+    .span-50 {
+      height: 50px;
+      width: 50px;
+    }
+
+    :nth-child(1) {
+      left: -4%;
+      bottom: auto;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    :nth-child(2) {
+      right: 4%;
+      top: 10%;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    :nth-child(3) {
+      top: 280px;
+      right: 5.66666%;
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    :nth-child(4) {
+      top: 320px;
+      right: 7%;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    :nth-child(5) {
+      top: 38%;
+      left: 1%;
+      right: auto;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    :nth-child(6) {
+      width: 200px;
+      height: 200px;
+      top: 44%;
+      left: 10%;
+      right: auto;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    :nth-child(7) {
+      bottom: 50%;
+      right: 36%;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    :nth-child(8) {
+      bottom: 70px;
+      right: 2%;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    :nth-child(9) {
+      bottom: 1%;
+      right: 2%;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    :nth-child(10) {
+      bottom: 1%;
+      left: 1%;
+      right: auto;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    @include media-breakpoint-down(md) {
+      span {
+        height: 120px;
+      }
+    }
+
+    @include media-breakpoint-down(sm) {
+      span {
+        height: 90px;
+      }
+    }
+
+    // shape color variations
+    &.shape-primary {
+      background: linear-gradient(
+        150deg,
+        shapes-primary-color("step-1-gradient-bg") 15%,
+        shapes-primary-color("step-2-gradient-bg") 70%,
+        shapes-primary-color("step-3-gradient-bg") 94%
+      );
+    }
+
+    &.shape-default {
+      background: linear-gradient(
+        150deg,
+        shapes-default-color("step-1-gradient-bg") 15%,
+        shapes-default-color("step-2-gradient-bg") 70%,
+        shapes-default-color("step-3-gradient-bg") 94%
+      );
+    }
+
+    &.shape-light {
+      background: linear-gradient(
+        150deg,
+        shapes-light-color("step-1-gradient-bg") 15%,
+        shapes-light-color("step-2-gradient-bg") 70%,
+        shapes-light-color("step-3-gradient-bg") 94%
+      );
+    }
+
+    &.shape-dark {
+      background: linear-gradient(
+        150deg,
+        shapes-dark-color("step-1-gradient-bg") 15%,
+        shapes-dark-color("step-2-gradient-bg") 70%,
+        shapes-dark-color("step-3-gradient-bg") 94%
+      );
+    }
+  }
+
+  // Styles - works with a color variation class (e.g shapes-default)
+  .shape-style-2 {
+    span {
+      height: 190px;
+    }
+
+    .span-sm {
+      height: 100px;
+    }
+
+    :nth-child(1) {
+      width: 33.33333%;
+      top: 0;
+      left: -16.66666%;
+    }
+
+    :nth-child(2) {
+      width: 33.33333%;
+      top: 0;
+      left: 16.66666%;
+      right: auto;
+    }
+
+    :nth-child(3) {
+      width: 33.33333%;
+      left: 49.99999%;
+      bottom: auto;
+    }
+
+    :nth-child(4) {
+      width: 33.33333%;
+      top: 55%;
+      right: -16.66666%;
+    }
+
+    :nth-child(5) {
+      width: 33.33333%;
+      bottom: 0;
+    }
+
+    @include media-breakpoint-down(md) {
+      span {
+        height: 120px;
+      }
+    }
+
+    @include media-breakpoint-down(sm) {
+      span {
+        height: 90px;
+      }
+    }
+  }
+
+  .shape-style-3 {
+    span {
+      height: 140px;
+    }
+
+    .span-sm {
+      height: 100px;
+    }
+
+    :nth-child(1) {
+      width: 66%;
+      left: -16.66666%;
+      bottom: auto;
+    }
+
+    :nth-child(2) {
+      width: 40%;
+      top: 54%;
+      //height: 320px;
+      right: -16.66666%;
+    }
+
+    :nth-child(3) {
+      width: 33.33333%;
+      top: 34%;
+      left: -16.66666%;
+      right: auto;
+    }
+
+    :nth-child(4) {
+      width: 60%;
+      bottom: 0;
+      right: -16.66666%;
+      opacity: 0.6;
+    }
+
+    :nth-child(5) {
+      width: 33.33333%;
+      bottom: 0;
+    }
+
+    @include media-breakpoint-down(md) {
+      span {
+        height: 120px;
+      }
+    }
+
+    @include media-breakpoint-down(sm) {
+      span {
+        height: 90px;
+      }
+    }
+  }
+}
+
+// Device illustrations used on shape sections
+.device-ill {
+  pointer-events: none;
+  position: absolute;
+  display: flex;
+  width: 1287px;
+  left: 50%;
+  margin-left: -644px;
+  transform: scale(0.5) rotate(-12deg) translateX(50px);
+  transform-origin: 50% 20%;
+  will-change: transform;
+
+  div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: $border-radius;
+    padding: 0.875rem;
+    background: #fff;
+    box-shadow: inset 0 4px 7px 1px #fff,
+      inset 0 -5px 20px rgba(173, 186, 204, 0.25),
+      0 2px 6px rgba(0, 21, 64, 0.14), 0 10px 20px rgba(0, 21, 64, 0.05);
+  }
+
+  .tablet-landscape {
+    width: 512px;
+    height: 352px;
+    margin: 115px 50px 0;
+  }
+}
+
+@media (min-width: 670px) {
+  .device-ill {
+    flex-wrap: wrap;
+    width: 512px;
+    margin-left: -50px;
+    top: 215px;
+    transform: rotate(-12deg);
+    transform-origin: 100% 0;
+
+    [class^="tablet"] {
+      margin: 0;
+    }
+
+    .tablet-landscape {
+      width: 512px;
+      height: 352px;
+    }
+  }
+}
+
+@media (min-width: 880px) {
+  .device-ill {
+    width: 829px;
+    margin-left: -10px;
+    top: 20px;
+
+    .tablet-landscape {
+      align-self: flex-end;
+      margin-right: 50px;
+    }
+
+    .phone-big {
+      display: flex;
+      width: 267px;
+      height: 553px;
+    }
+  }
+}
+
+// Profile cover
+.section-profile-cover {
+  height: 580px;
+  background-size: cover;
+  background-position: center center;
+}
+
+@include media-breakpoint-down(md) {
+  .section-profile-cover {
+    height: 400px;
+  }
+}
+
+// Components section (for demo)
+.section-components {
+  > .form-control {
+    + .form-control {
+      margin-top: 0.5rem;
+    }
+  }
+
+  > .nav + .nav,
+  > .alert + .alert,
+  > .navbar + .navbar,
+  > .progress + .progress,
+  > .progress + .btn,
+  .badge,
+  .btn {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .btn-group {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    .btn {
+      margin: 0;
+    }
+  }
+
+  .alert {
+    margin: 0;
+
+    + .alert {
+      margin-top: 1.25rem;
+    }
+  }
+
+  .badge {
+    margin-right: 0.1rem;
+  }
+
+  .modal-footer {
+    .btn {
+      margin: 0;
+    }
+  }
+}
+
+/* .floating-cards {
+     perspective:1500px;
+     position:relative;
+     align-items:center
+}
+
+.floating-cards > div {
+     position:absolute;
+     -ms-flex-negative:0;
+     flex-shrink:0;
+     border-radius:8px;
+     overflow:hidden
+}
+.floating-cards .shine {
+     position:absolute;
+     left:0;
+     right:0;
+     top:0;
+     bottom:0;
+     pointer-events:none
+}
+*/

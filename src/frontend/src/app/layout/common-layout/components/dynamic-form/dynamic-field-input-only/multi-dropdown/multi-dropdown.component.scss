@@ -1,0 +1,25 @@
+@import "src/assets/scss/custom/variables";
+.dropdown-menu {
+  width: 100%;
+  margin-left: 0;
+}
+
+.form-control {
+  cursor: pointer;
+}
+
+.value-tag {
+  padding: 0.0625rem 0px 0.0625rem 0.5rem;
+  color: $primary-dark;
+}
+
+.clear-icon {
+  padding: 0.5156rem;
+  cursor: pointer;
+}
+
+.check-icon {
+  height: 12px;
+  width: 12px;
+  fill: $primary;
+}
