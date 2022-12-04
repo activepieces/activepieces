@@ -19,14 +19,10 @@ import { map, Observable, of, tap } from 'rxjs';
 })
 export class SidebarComponent implements OnInit {
 	selectedIndex$: Observable<number> = of(0);
-	updateSubmenuOpen$: Observable<boolean> = of(false);
 	updateSelectedIndex$: Observable<void>;
 	updateSelectedSubmenuIndex$: Observable<{ menu: number; submenu: number } | undefined> = of(undefined);
-
-	submenuOpen: boolean = false;
 	selectedIndex: number = 0;
 	selectedSubmenuIndex: { menu: number; submenu: number } | undefined = undefined;
-
 	supportButtonHovered = false;
 	DEFAULT_WIDTH = 250;
 	ICON_BAR_WIDTH = 80;
@@ -48,11 +44,7 @@ export class SidebarComponent implements OnInit {
 			}),
 			map(() => void 0)
 		);
-		this.updateSubmenuOpen$ = this.navigationService.getSubmenuState().pipe(
-			tap(value => {
-				this.submenuOpen = value;
-			})
-		);
+
 		this.updateSelectedSubmenuIndex$ = this.navigationService.getSelectedRoute().pipe(
 			tap(value => {
 				this.selectedSubmenuIndex = value;
@@ -66,25 +58,9 @@ export class SidebarComponent implements OnInit {
 	}
 
 	updateSelectedIndex(currentRoute: string) {
-		let sub: number | undefined = undefined;
-		let main: number | undefined = undefined;
-		debugger;
-		for (let i = 0; i < this.navigationService.sidebarRoutes.length; ++i) {
-			for (let j = 0; j < this.navigationService.sidebarRoutes[i].submenuItems.length; ++j) {
-				const linkPrefix = this.navigationService.sidebarRoutes[i].submenuItems[j].link;
-				if (linkPrefix && currentRoute.startsWith(linkPrefix)) {
-					main = i;
-					sub = j;
-				}
-			}
-		}
-		debugger;
-		if (main === undefined) {
-			main = this.navigationService.sidebarRoutes.findIndex(r => r.link === currentRoute);
-		}
-		this.navigationService.setSubmenuState(sub !== undefined);
-		this.navigationService.setSelectedMenuIndex(main);
-		this.navigationService.setSelectedRoute({ menu: main, submenu: sub });
+		let routeIndex: number | undefined = undefined;
+		routeIndex = this.navigationService.sidebarRoutes.findIndex(r => r.link === currentRoute);
+		this.navigationService.setSelectedMenuIndex(routeIndex);
 	}
 
 	hoverContainer(submenuOpen) {
@@ -111,21 +87,6 @@ export class SidebarComponent implements OnInit {
 		};
 	}
 
-	clickSubmenu(index: number, route: any) {
-		this.navigationService.setSubmenuState(route.submenu);
-		this.navigationService.setSelectedMenuIndex(index);
-		if (!route.submenu) {
-			this.navigationService.setSelectedRoute({
-				menu: index,
-				submenu: undefined,
-			});
-			this.router.navigate([route.link]);
-		} else {
-			this.navigationService.setSelectedRoute({ menu: index, submenu: 0 });
-			this.router.navigate([this.navigationService.sidebarRoutes[index].submenuItems[0].link]);
-		}
-	}
-
 	borderColor(index: any) {
 		if (this.isTrialExpired || index !== this.selectedIndex) return {};
 
@@ -134,10 +95,10 @@ export class SidebarComponent implements OnInit {
 		};
 	}
 
-	selectSubMenu(index: number, item: any) {
+	selectMenu(item: any) {
+		debugger;
 		this.navigationService.setSelectedRoute({
 			menu: this.selectedIndex,
-			submenu: index,
 		});
 		this.router.navigate([item.link]).then(r => {});
 	}
@@ -150,15 +111,12 @@ export class SidebarComponent implements OnInit {
 			this.authenticationService.currentUser.epochExpirationTime < now
 		);
 	}
-
 	navigateHome() {
 		const route = this.navigationService.sidebarRoutes.find(r => r.link === '/flows')!;
 		const index = this.navigationService.sidebarRoutes.findIndex(r => r.link === '/flows');
-		this.navigationService.setSubmenuState(route.submenu);
 		this.navigationService.setSelectedMenuIndex(index);
 		this.navigationService.setSelectedRoute({
 			menu: index,
-			submenu: undefined,
 		});
 		this.router.navigate([route.link]).then(r => {});
 	}

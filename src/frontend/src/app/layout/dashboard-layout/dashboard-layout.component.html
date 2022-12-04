@@ -3,13 +3,6 @@
   <div class="flex-grow-1">
     <div class="route h-100">
       <div class="d-flex route-header align-items-center">
-        <svg-icon
-          *ngIf="hasSubmenu"
-          class="submenu-close"
-          (click)="toggle()"
-          src="/assets/img/custom/sidebar/submenu-close.svg"
-        ></svg-icon>
-
         <h5 class="m-0">
           {{ route?.text === "Flows" ? "Flow Collections" : route?.text }}
         </h5>

@@ -25,20 +25,8 @@ export class DashboardLayoutComponent implements OnInit {
 		this.loading$ = this.navigationService.loading;
 	}
 
-	updateRoute(route: { menu; submenu }): void {
-		if (route === undefined) return;
-
-		if (route.submenu !== undefined) {
-			this.route = this.navigationService.sidebarRoutes[route.menu].submenuItems[route.submenu];
-		} else {
-			this.route = this.navigationService.sidebarRoutes[route.menu];
-		}
-		this.hasSubmenu = this.navigationService.sidebarRoutes[route.menu].submenu;
+	updateRoute(route: { menu }): void {
+		this.route = this.navigationService.sidebarRoutes[route.menu];
 		this.cd.detectChanges();
-	}
-
-	toggle() {
-		const state = this.navigationService.getSubmenuState().value;
-		this.navigationService.setSubmenuState(!state);
 	}
 }

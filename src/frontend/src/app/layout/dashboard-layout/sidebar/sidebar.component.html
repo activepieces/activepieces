@@ -18,7 +18,7 @@
       >
         <div
           class="sd-icon"
-          (click)="clickSubmenu(i, route)"
+          (click)="selectMenu(route)"
           (mouseenter)="route.hover = true && !isTrialExpired"
           (mouseleave)="route.hover = false"
         >
@@ -45,34 +45,8 @@
     </div>
 
   </div>
-  <div
-    [ngStyle]="hoverContainer(submenuOpen)"
-    *ngIf="this.navigationService.sidebarRoutes[selectedIndex].submenu"
-  >
-    <div class="sub-menu">
-      <div class="px-4 py-4 font-weight-600 mb-2 no-select">
-        {{ this.navigationService.sidebarRoutes[selectedIndex].text }}
-      </div>
-      <div
-        class="px-4 py-2 submenu-item no-select"
-        [class.text-primary]="
-          this.selectedSubmenuIndex &&
-          i === this.selectedSubmenuIndex.submenu &&
-          this.selectedIndex === this.selectedSubmenuIndex.menu
-        "
-        *ngFor="
-          let item of this.navigationService.sidebarRoutes[selectedIndex]
-            .submenuItems;
-          let i = index
-        "
-        (click)="selectSubMenu(i, item)"
-      >
-        {{ item.text }}
-      </div>
-    </div>
-  </div>
+
 </div>
 <ng-container *ngIf="updateSelectedIndex$ | async"></ng-container>
 <ng-container *ngIf="selectedIndex$ | async"></ng-container>
 <ng-container *ngIf="updateSelectedSubmenuIndex$ | async"></ng-container>
-<ng-container *ngIf="updateSubmenuOpen$ | async"></ng-container>
