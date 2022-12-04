@@ -1,8 +1,6 @@
 package com.activepieces.piece.server.service;
 
 
-import com.activepieces.common.error.exception.InvalidCodeArtifactException;
-import com.activepieces.common.error.exception.InvalidImageFormatException;
 import com.activepieces.common.error.exception.collection.CollectionNotFoundException;
 import com.activepieces.common.error.exception.collection.CollectionVersionAlreadyLockedException;
 import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
@@ -27,10 +25,7 @@ import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -55,7 +50,7 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     public SeekPage<CollectionView> listByProjectId(Ksuid projectId, SeekPageRequest request)
-            throws CollectionNotFoundException, PermissionDeniedException {
+            throws PermissionDeniedException {
         permissionService.requiresPermission(projectId, Permission.READ_COLLECTION);
         final List<PageFilter> filters = List.of(new PageFilter(Collection.PROJECT_ID, projectId));
         return collectionRepository.findPageAsc( filters, request).convert(collectionMapper::toView);
@@ -64,25 +59,22 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     public CollectionView create(Ksuid projectId, CreatePieceRequest view)
-            throws PermissionDeniedException, ResourceNotFoundException, InvalidImageFormatException,
-            IOException, CollectionVersionNotFoundException, InvalidCodeArtifactException {
-        permissionService.requiresPermission(projectId, Permission.READ_COLLECTION);
+            throws PermissionDeniedException, ResourceNotFoundException, CollectionVersionNotFoundException {
+        permissionService.requiresPermission(projectId, Permission.WRITE_COLLECTION);
         Ksuid collectionId = Ksuid.newKsuid();
 
-        Collection metadata = Collection.builder().id(collectionId).projectId(projectId).epochCreationTime(Instant.now().getEpochSecond()).epochUpdateTime(Instant.now().getEpochSecond()).build();
-        CollectionView result = collectionMapper.toView(collectionRepository.save(metadata));
+        Collection metadata = Collection.builder().id(collectionId).projectId(projectId).build();
+        Collection result = collectionRepository.save(metadata);
         permissionService.createResourceWithParent(result.getId(), projectId, ResourceType.COLLECTION);
 
-        // We have to save piece first, so we can attach version to the piece in permission tree
-        CollectionVersionView pieceVersion =
+        CollectionVersionView collectionVersionView =
                 collectionVersionService.create(
                         collectionId,
-                        null,
                         CollectionVersionView.builder()
-                                .configs(view.getVersion().getConfigs())
-                                .displayName(view.getVersion().getDisplayName())
+                                .configs(Collections.emptyList())
+                                .displayName(view.getDisplayName())
                                 .build());
-        return result;
+        return collectionMapper.toView(result);
     }
 
     @Override
@@ -107,36 +99,31 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     public CollectionView update(Ksuid id, CollectionVersionView view)
-            throws CollectionNotFoundException, PermissionDeniedException, ResourceNotFoundException,
-            InvalidImageFormatException, IOException, CollectionVersionNotFoundException,
-            CollectionVersionAlreadyLockedException, InvalidCodeArtifactException {
+            throws CollectionNotFoundException, PermissionDeniedException, ResourceNotFoundException, CollectionVersionNotFoundException, CollectionVersionAlreadyLockedException {
         Optional<Collection> optional = collectionRepository.findById(id);
         if (optional.isEmpty()) {
             throw new CollectionNotFoundException(id);
         }
         permissionService.requiresPermission(id, Permission.WRITE_COLLECTION);
         CollectionView collectionView = get(id);
-        CollectionVersionView draft = null;
+        CollectionVersionView draft;
         if (collectionView.getLastVersion().getState().equals(EditState.LOCKED)) {
-            draft = collectionVersionService.create(id, collectionView.getLastVersion().getId(), view);
+            draft = collectionVersionService.create(id, view);
         } else {
             draft = collectionVersionService.update(collectionView.getLastVersion().getId(), view);
         }
         collectionView.updateOrCreateDraft(draft);
-        collectionView.setEpochUpdateTime(Instant.now().getEpochSecond());
         return collectionMapper.toView(collectionRepository.save(collectionMapper.fromView(collectionView)));
     }
 
 
-    @Override
-    public void archive(Ksuid id)
-            throws CollectionNotFoundException, PermissionDeniedException, ResourceNotFoundException {
+    public void delete(Ksuid id)
+            throws CollectionNotFoundException, PermissionDeniedException {
         Optional<Collection> pieceOptional = collectionRepository.findById(id);
         if (pieceOptional.isEmpty()) {
             throw new CollectionNotFoundException(id);
         }
         permissionService.requiresPermission(id, Permission.WRITE_COLLECTION);
-        // TODO MARK IT ARCHIVED
-        collectionRepository.save(pieceOptional.get());
+        collectionRepository.delete(pieceOptional.get());
     }
 }

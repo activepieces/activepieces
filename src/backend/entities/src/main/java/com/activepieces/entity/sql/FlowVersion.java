@@ -15,10 +15,8 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.time.Instant;
 import java.util.Set;
 
 @NoArgsConstructor
@@ -44,11 +42,6 @@ public class FlowVersion implements EntityMetadata {
     @Type(type = "jsonb")
     private TriggerMetadata trigger;
 
-    @Column(name = "epoch_creation_time")
-    private long epochCreationTime;
-
-    @Column(name = "epoch_update_time")
-    private long epochUpdateTime;
 
     @Column(name = "errors", columnDefinition = "jsonb")
     @Type(type = "jsonb")
@@ -59,4 +52,24 @@ public class FlowVersion implements EntityMetadata {
 
     @JsonProperty
     private EditState state;
+
+    @Column(name = "created", nullable = false)
+    private long created;
+
+    @Column(name = "updated", nullable = false)
+    private long updated;
+
+
+    @PrePersist
+    protected void onCreate() {
+        long currentMs = Instant.now().toEpochMilli();
+        created = currentMs;
+        updated = currentMs;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updated = Instant.now().toEpochMilli();
+    }
+
 }

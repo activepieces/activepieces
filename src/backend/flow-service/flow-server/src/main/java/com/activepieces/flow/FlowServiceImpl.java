@@ -103,8 +103,6 @@ public class FlowServiceImpl implements FlowService {
         FlowView.builder()
             .id(flowId)
             .collectionId(collectionId)
-            .epochCreationTime(Instant.now().toEpochMilli())
-            .epochUpdateTime(Instant.now().toEpochMilli())
             .build();
     FlowView savedFlowView = saveFromView(flowView);
     permissionService.createResourceWithParent(flowId, collectionId, ResourceType.FLOW);
@@ -144,12 +142,12 @@ public class FlowServiceImpl implements FlowService {
       final String token = lockService.waitUntilAcquire(lockName, LOCK_EXPIRY, LOCK_TIMEOUT);
 
       FlowView flow = get(flowId);
-      if (flow.getEpochUpdateTime() > updateTimestamp) {
+      if (flow.getUpdated() > updateTimestamp) {
         log.info(
             "Ignoring update on flow {}, timestamp {} is older than {}",
             flowId,
             updateTimestamp,
-            flow.getEpochUpdateTime());
+            flow.getUpdated());
         lockService.release(lockName, token);
         return flow;
       }

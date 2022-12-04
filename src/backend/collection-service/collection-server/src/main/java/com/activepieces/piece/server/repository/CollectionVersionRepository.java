@@ -10,4 +10,6 @@ public interface CollectionVersionRepository extends CrudRepository<CollectionVe
 
     List<CollectionVersion> findAllByCollectionId(Ksuid collectionId);
 
+    CollectionVersion findFirstByCollectionIdOrderByIdDesc(Ksuid collectionId);
+
 }

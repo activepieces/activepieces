@@ -1,6 +1,6 @@
 package com.activepieces.entity.subdocuments.field.dropdown;
 
-import com.activepieces.common.validation.constraints.EnumNamePattern;
+import com.activepieces.common.validation.EnumNamePattern;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

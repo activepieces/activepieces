@@ -33,8 +33,6 @@ public class StorageServiceImpl implements StorageService {
     StoreValueView storeValueView =
         StoreValueView.builder()
             .value(value)
-            .epochCreationTime(Instant.now().toEpochMilli())
-            .epochUpdateTime(Instant.now().toEpochMilli())
             .key(path)
             .id(storeId)
             .build();

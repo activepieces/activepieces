@@ -2,7 +2,6 @@ package com.activepieces.worker.steps;
 
 import com.activepieces.actions.store.model.StorePath;
 import com.activepieces.common.error.exception.InstanceNotFoundException;
-import com.activepieces.common.error.exception.InvalidImageFormatException;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.guardian.client.exception.ResourceNotFoundException;
@@ -37,7 +36,7 @@ public class UploadRunState extends Step {
           Map<String, Object> context,
           Map<String, Object> output,
           StorePath storePath)
-      throws IOException, InvalidImageFormatException, InstanceNotFoundException,
+      throws IOException, InstanceNotFoundException,
           PermissionDeniedException, ResourceNotFoundException {
     long startTime = System.currentTimeMillis();
     WorkerExecutionResult workerExecutionResult =

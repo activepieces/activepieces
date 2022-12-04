@@ -29,13 +29,12 @@ public class CollectionView implements EntityMetadata {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private CollectionVersionView lastVersion;
 
-  @JsonProperty(access= JsonProperty.Access.READ_ONLY) private long epochCreationTime;
+  @JsonProperty(access= JsonProperty.Access.READ_ONLY) private long created;
 
-  @JsonProperty(access= JsonProperty.Access.READ_ONLY) private long epochUpdateTime;
+  @JsonProperty(access= JsonProperty.Access.READ_ONLY) private long updated;
 
   public void updateOrCreateDraft(CollectionVersionView newDraft) {
     lastVersion = newDraft;
-    setEpochUpdateTime(Instant.now().getEpochSecond());
   }
 
 }

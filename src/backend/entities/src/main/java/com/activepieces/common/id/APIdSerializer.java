@@ -1,4 +1,4 @@
-package com.activepieces.common.identity;
+package com.activepieces.common.id;
 
 
 import com.fasterxml.jackson.core.JsonGenerator;

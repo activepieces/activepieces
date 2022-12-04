@@ -60,7 +60,7 @@ public class InstanceRunView implements EntityMetadata {
   private Object errorMessage;
 
 
-  @JsonIgnore private long epochCreationTime;
+  @JsonIgnore private long created;
 
-  @JsonIgnore private long epochUpdateTime;
+  @JsonIgnore private long updated;
 }

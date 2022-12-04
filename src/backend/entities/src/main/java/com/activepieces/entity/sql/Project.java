@@ -4,10 +4,8 @@ import com.activepieces.common.EntityMetadata;
 import com.github.ksuid.Ksuid;
 import lombok.*;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -27,11 +25,24 @@ public class Project implements EntityMetadata {
   @Column(name = "display_name")
   private String displayName;
 
-  @Column(name = "creation_time")
-  private long epochCreationTime;
+  @Column(name = "created", nullable = false)
+  private long created;
 
-  @Column(name = "update_time")
-  private long epochUpdateTime;
+  @Column(name = "updated", nullable = false)
+  private long updated;
+
+
+  @PrePersist
+  protected void onCreate() {
+    long currentMs = Instant.now().toEpochMilli();
+    created = currentMs;
+    updated = currentMs;
+  }
+
+  @PreUpdate
+  protected void onUpdate() {
+    updated = Instant.now().toEpochMilli();
+  }
 
 
 }

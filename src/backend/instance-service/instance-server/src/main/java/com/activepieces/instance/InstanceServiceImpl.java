@@ -144,8 +144,6 @@ public class InstanceServiceImpl implements InstanceService {
 
     metadata.setId(Ksuid.newKsuid());
     metadata.setConfigs(validatedPieceConfigs);
-    metadata.setEpochCreationTime(Instant.now().toEpochMilli());
-    metadata.setEpochUpdateTime(Instant.now().toEpochMilli());
     InstanceView savedView = instanceMapper.toView(instanceRepository.save(metadata));
     savedView = instanceMapper.toView(instanceRepository.save(instanceMapper.fromView(savedView)));
 
@@ -191,7 +189,6 @@ public class InstanceServiceImpl implements InstanceService {
     Instance entity = optional.get();
     entity.setConfigs(validatedPieceConfigs);
     entity.setStatus(request.getStatus());
-    entity.setEpochUpdateTime(Instant.now().getEpochSecond());
 
     InstanceView instanceView = instanceMapper.toView(instanceRepository.save(entity));
     instancePublisher.notify(InstanceEventType.UPDATE, instanceView);

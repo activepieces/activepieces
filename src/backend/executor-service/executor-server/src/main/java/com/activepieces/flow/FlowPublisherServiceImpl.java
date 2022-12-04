@@ -5,7 +5,6 @@ import com.activepieces.action.FlowPublisherService;
 import com.activepieces.actions.store.model.StorePath;
 import com.activepieces.common.error.ErrorServiceHandler;
 import com.activepieces.common.error.exception.InstanceNotFoundException;
-import com.activepieces.common.error.exception.InvalidImageFormatException;
 import com.activepieces.common.error.exception.flow.FlowExecutionInternalError;
 import com.activepieces.common.error.exception.flow.FlowNotFoundException;
 import com.activepieces.entity.enums.FlowExecutionStatus;
@@ -203,8 +202,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
             @NonNull CollectionVersionView collectionVersionView,
             @NonNull FlowVersionView flowVersion,
             ExecutionRequest executionRequest)
-            throws PermissionDeniedException, InstanceNotFoundException, ResourceNotFoundException,
-            InvalidImageFormatException, IOException {
+            throws PermissionDeniedException, InstanceNotFoundException, ResourceNotFoundException, IOException {
         final StepOutput triggerOutput = StepOutput.builder().output(executionRequest.getTriggerPayload()).status(ActionExecutionStatus.SUCCEEDED).build();
         final LinkedHashMap<String, StepOutput> steps = new LinkedHashMap<>();
         steps.put(flowVersion.getTrigger().getName(), triggerOutput);

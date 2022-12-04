@@ -32,8 +32,8 @@ public class InstanceView implements EntityMetadata {
   @JsonProperty private InstanceStatus status;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private long epochCreationTime;
+  private long created;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private long epochUpdateTime;
+  private long updated;
 }

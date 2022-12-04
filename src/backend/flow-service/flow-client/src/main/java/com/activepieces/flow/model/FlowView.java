@@ -27,14 +27,13 @@ public class FlowView implements EntityMetadata {
   private FlowVersionView lastVersion;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private long epochCreationTime;
+  private long created;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private long epochUpdateTime;
+  private long updated;
 
   public void updateOrCreateDraft(FlowVersionView newDraft) {
     this.lastVersion = newDraft;
-    this.epochUpdateTime = Instant.now().toEpochMilli();
   }
 
 

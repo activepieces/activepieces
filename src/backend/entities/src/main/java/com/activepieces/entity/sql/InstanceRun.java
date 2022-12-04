@@ -8,6 +8,7 @@ import com.github.ksuid.Ksuid;
 import lombok.*;
 
 import javax.persistence.*;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -48,16 +49,29 @@ public class InstanceRun implements EntityMetadata {
   @Column(name = "logs_file_id")
   private Ksuid logsFileId;
 
-  @Column(name = "epoch_creation_time")
-  private long epochCreationTime;
-
-  @Column(name = "epoch_update_time")
-  private long epochUpdateTime;
-
   @Column(name = "epoch_finish_time")
   private long epochFinishTime;
 
   @Column(name = "epoch_start_time")
   private long epochStartTime;
+
+  @Column(name = "created", nullable = false)
+  private long created;
+
+  @Column(name = "updated", nullable = false)
+  private long updated;
+
+
+  @PrePersist
+  protected void onCreate() {
+    long currentMs = Instant.now().toEpochMilli();
+    created = currentMs;
+    updated = currentMs;
+  }
+
+  @PreUpdate
+  protected void onUpdate() {
+    updated = Instant.now().toEpochMilli();
+  }
 
 }

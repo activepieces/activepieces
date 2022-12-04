@@ -12,6 +12,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
+import java.time.Instant;
 import java.util.List;
 
 @NoArgsConstructor
@@ -34,13 +35,26 @@ public class CollectionVersion implements EntityMetadata {
   @Column(name = "configs", columnDefinition = "jsonb")
   private List<Variable<?>> configs;
 
-  @Column(name = "epoch_creation_time")
-  private long epochCreationTime;
-
-  @Column(name = "epoch_update_time")
-  private long epochUpdateTime;
-
   @Column(name = "state")
   private EditState state;
+
+  @Column(name = "created", nullable = false)
+  private long created;
+
+  @Column(name = "updated", nullable = false)
+  private long updated;
+
+
+  @PrePersist
+  protected void onCreate() {
+    long currentMs = Instant.now().toEpochMilli();
+    created = currentMs;
+    updated = currentMs;
+  }
+
+  @PreUpdate
+  protected void onUpdate() {
+    updated = Instant.now().toEpochMilli();
+  }
 
 }

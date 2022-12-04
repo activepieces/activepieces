@@ -1,4 +1,4 @@
-package com.activepieces.common.validation.constraints;
+package com.activepieces.common.validation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

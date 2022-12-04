@@ -1,6 +1,6 @@
 package com.activepieces.actions.model.action;
 
-import com.activepieces.common.validation.constraints.CodeNameConstraints;
+import com.activepieces.common.validation.CodeNameConstraints;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;

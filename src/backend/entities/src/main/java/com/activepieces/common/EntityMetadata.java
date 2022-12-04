@@ -8,9 +8,9 @@ public interface EntityMetadata {
 
     Ksuid getId();
 
-    long getEpochCreationTime();
+    long getCreated();
 
-    long getEpochUpdateTime();
+    long getUpdated();
 
 
 }

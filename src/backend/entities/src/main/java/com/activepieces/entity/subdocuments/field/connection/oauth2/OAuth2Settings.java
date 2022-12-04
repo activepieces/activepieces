@@ -1,6 +1,6 @@
 package com.activepieces.entity.subdocuments.field.connection.oauth2;
 
-import com.activepieces.common.validation.constraints.EnumNamePattern;
+import com.activepieces.common.validation.EnumNamePattern;
 import com.activepieces.entity.enums.OAuth2UserType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;

@@ -1,7 +1,6 @@
 package com.activepieces.logging.server;
 
 import com.activepieces.common.error.exception.InstanceNotFoundException;
-import com.activepieces.common.error.exception.InvalidImageFormatException;
 import com.activepieces.common.pagination.PageFilter;
 import com.activepieces.common.pagination.SeekPage;
 import com.activepieces.common.pagination.SeekPageRequest;
@@ -26,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -95,7 +93,7 @@ public class InstanceRunServiceImpl implements InstanceRunService {
   public InstanceRunView createOrUpdate(
       @NonNull InstanceRunView request, @NonNull ExecutionStateView executionStateView)
       throws ResourceNotFoundException, PermissionDeniedException,
-          InstanceNotFoundException, InvalidImageFormatException, IOException {
+          InstanceNotFoundException, IOException {
     Ksuid parentResourceId =
         Objects.isNull(request.getInstanceId())
             ? request.getFlowVersionId()
@@ -104,8 +102,6 @@ public class InstanceRunServiceImpl implements InstanceRunService {
     // permissionService.requiresPermission(parentResourceId, Permission.CREATE_INSTANCE_RUN);
 
     request.setProjectId(request.getProjectId());
-    request.setEpochUpdateTime(Instant.now().getEpochSecond());
-    request.setEpochCreationTime(Instant.now().getEpochSecond());
     request.setLogsUploaded(false);
 
     InstanceRunView savedView = mapper.toView(repository.save(mapper.fromView(request)));

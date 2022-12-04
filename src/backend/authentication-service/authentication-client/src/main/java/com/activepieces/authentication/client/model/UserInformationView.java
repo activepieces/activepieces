@@ -24,7 +24,9 @@ public class UserInformationView {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private String email;
 
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY) private Long epochCreationTime;
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY) private Long created;
+
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY) private Long updated;
 
   @JsonProperty @NotNull @NotEmpty private String firstName;
 

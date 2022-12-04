@@ -1,6 +1,5 @@
 package com.activepieces.project.server.service;
 
-import com.activepieces.common.error.exception.InvalidImageFormatException;
 import com.activepieces.entity.enums.Permission;
 import com.activepieces.entity.enums.ResourceType;
 import com.activepieces.entity.enums.Role;
@@ -21,11 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {
@@ -59,8 +56,6 @@ public class ProjectServiceImpl implements ProjectService {
         Project project =
                 Project.builder()
                         .id(Ksuid.newKsuid())
-                        .epochCreationTime(Instant.now().getEpochSecond())
-                        .epochUpdateTime(Instant.now().getEpochSecond())
                         .ownerId(ownerId)
                         .displayName(request.getDisplayName())
                         .build();
@@ -92,8 +87,8 @@ public class ProjectServiceImpl implements ProjectService {
         return projectViewOptional.get();
     }
     @Override
-    public ProjectView update(@NonNull final Ksuid id, @NonNull final ProjectView view, @NonNull Optional<MultipartFile> logo)
-            throws ProjectNotFoundException, PermissionDeniedException, InvalidImageFormatException, IOException {
+    public ProjectView update(@NonNull final Ksuid id, @NonNull final ProjectView view)
+            throws ProjectNotFoundException, PermissionDeniedException {
         permissionService.requiresPermission(id, Permission.WRITE_PROJECT);
         Optional<Project> projectOptional = projectRepository.findById(id);
         if (projectOptional.isEmpty()) {
@@ -101,7 +96,6 @@ public class ProjectServiceImpl implements ProjectService {
         }
         Project project = projectOptional.get();
         project.setDisplayName(view.getDisplayName());
-        project.setEpochUpdateTime(Instant.now().getEpochSecond());
         return projectMapper.toView(projectRepository.save(project));
     }
 

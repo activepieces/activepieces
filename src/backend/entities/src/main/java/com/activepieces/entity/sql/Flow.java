@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import javax.persistence.*;
+import java.time.Instant;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -30,13 +31,23 @@ public class Flow implements EntityMetadata {
   @Column(name = "collection_id")
   private Ksuid collectionId;
 
-  @JsonProperty
-  @Column(name = "epoch_creation_time")
-  private long epochCreationTime;
+  @Column(name = "created", nullable = false)
+  private long created;
 
-  @JsonProperty
-  @Column(name = "epoch_update_time")
-  private long epochUpdateTime;
+  @Column(name = "updated", nullable = false)
+  private long updated;
+
+  @PrePersist
+  protected void onCreate() {
+    long currentMs = Instant.now().toEpochMilli();
+    created = currentMs;
+    updated = currentMs;
+  }
+
+  @PreUpdate
+  protected void onUpdate() {
+    updated = Instant.now().toEpochMilli();
+  }
 
 
 }

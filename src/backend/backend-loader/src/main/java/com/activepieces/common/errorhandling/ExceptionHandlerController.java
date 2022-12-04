@@ -14,6 +14,7 @@ import com.activepieces.common.error.exception.collection.CollectionVersionNotFo
 import com.activepieces.common.error.exception.flow.FlowNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowVersionAlreadyLockedException;
 import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException;
+import com.activepieces.common.utils.StringUtils;
 import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.logging.client.exception.InstanceRunNotFoundException;
 import com.activepieces.project.client.exception.ProjectNotFoundException;
@@ -44,9 +45,7 @@ public class ExceptionHandlerController {
 
   @Autowired
   public ExceptionHandlerController() {
-
   }
-
   @ExceptionHandler(value = HttpRequestMethodNotSupportedException.class)
   public ResponseEntity exception(HttpRequestMethodNotSupportedException exception) {
     return new ResponseEntity<>(exception.getMessage(), HttpStatus.NOT_FOUND);
@@ -54,11 +53,6 @@ public class ExceptionHandlerController {
 
   @ExceptionHandler(value = CollectionInvalidStateException.class)
   public ResponseEntity exception(CollectionInvalidStateException exception) {
-    return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
-  }
-
-  @ExceptionHandler(value = ConfigNotDynamicException.class)
-  public ResponseEntity exception(ConfigNotDynamicException exception) {
     return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
   }
 
@@ -107,12 +101,6 @@ public class ExceptionHandlerController {
   public ResponseEntity<ErrorResponse> exception(CodeArtifactBuildFailure exception) {
     return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.BAD_REQUEST);
   }
-
-  @ExceptionHandler(value = InvalidImageFormatException.class)
-  public ResponseEntity<ErrorResponse> exception(InvalidImageFormatException exception) {
-    return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.BAD_REQUEST);
-  }
-
   @ExceptionHandler(value = ConstraintsException.class)
   public ResponseEntity<Set<ErrorResponse>> exception(ConstraintsException exception) {
     return new ResponseEntity<>(exception.getErrorResponse(), HttpStatus.BAD_REQUEST);
@@ -141,11 +129,6 @@ public class ExceptionHandlerController {
 
   @ExceptionHandler(value = CollectionVersionNotFoundException.class)
   public ResponseEntity<ErrorResponse> exception(CollectionVersionNotFoundException exception) {
-    return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.NOT_FOUND);
-  }
-
-  @ExceptionHandler(value = ApiKeyNotFoundException.class)
-  public ResponseEntity<ErrorResponse> exception(ApiKeyNotFoundException exception) {
     return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.NOT_FOUND);
   }
 
@@ -241,11 +224,11 @@ public class ExceptionHandlerController {
             error -> {
               if (errors.containsKey(error.getField())) {
                 errors.put(
-                    error.getField(),
+                    StringUtils.camelCaseToSnakeCase(error.getField()),
                     String.format(
                         "%s, %s", errors.get(error.getField()), error.getDefaultMessage()));
               } else {
-                errors.put(error.getField(), error.getDefaultMessage());
+                errors.put(StringUtils.camelCaseToSnakeCase(error.getField()), error.getDefaultMessage());
               }
             });
     return ResponseEntity.badRequest().body(errors);

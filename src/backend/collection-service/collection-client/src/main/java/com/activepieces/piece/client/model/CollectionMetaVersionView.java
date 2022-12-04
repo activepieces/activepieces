@@ -25,16 +25,13 @@ public class CollectionMetaVersionView implements EntityMetadata {
 
   @JsonIgnore private Ksuid collectionId;
 
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private String logoUrl;
-
   @JsonProperty @NotEmpty private String description;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private long epochCreationTime;
+  private long created;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private long epochUpdateTime;
+  private long updated;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private EditState state;

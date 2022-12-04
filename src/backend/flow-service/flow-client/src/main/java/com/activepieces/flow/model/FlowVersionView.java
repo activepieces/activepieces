@@ -47,9 +47,9 @@ public class FlowVersionView  implements EntityMetadata {
     @JsonProperty(access= JsonProperty.Access.READ_ONLY)
     private EditState state;
 
-    @JsonProperty(access= JsonProperty.Access.READ_ONLY) private long epochCreationTime;
+    @JsonProperty(access= JsonProperty.Access.READ_ONLY) private long created;
 
-    @JsonProperty(access= JsonProperty.Access.READ_ONLY) private long epochUpdateTime;
+    @JsonProperty(access= JsonProperty.Access.READ_ONLY) private long updated;
 
     public Set<ErrorResponse> getErrors(){
         if(Objects.isNull(errors)){

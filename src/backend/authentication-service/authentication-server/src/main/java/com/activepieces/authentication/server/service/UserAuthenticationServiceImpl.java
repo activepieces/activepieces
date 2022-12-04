@@ -88,8 +88,6 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 UserInformation.builder()
                     .id(Ksuid.newKsuid())
                     .email(email)
-                    .epochUpdateTime(Instant.now().getEpochSecond())
-                    .epochCreationTime(Instant.now().getEpochSecond())
                     .build());
     userInformation.setFirstName(request.getFirstName());
     userInformation.setLastName(request.getLastName());

@@ -73,8 +73,6 @@ public class FlowVersionServiceImpl implements FlowVersionService {
                 .flowId(flowId)
                 .id(newVersionIUd)
                 .state(EditState.DRAFT)
-                .epochCreationTime(creationTime)
-                .epochUpdateTime(creationTime)
                 .build());
 
     permissionService.createResourceWithParent(
@@ -90,7 +88,6 @@ public class FlowVersionServiceImpl implements FlowVersionService {
       throw new FlowVersionAlreadyLockedException(flowVersionId);
     }
     uploadArtifacts(flowVersionId, null, newVersion);
-    long creationTime = TimeUtils.getEpochTimeInMillis();
     return saveFromView(
         currentVersion.toBuilder()
             .trigger(newVersion.getTrigger())
@@ -101,7 +98,6 @@ public class FlowVersionServiceImpl implements FlowVersionService {
                 Objects.isNull(newVersion.getState())
                     ? currentVersion.getState()
                     : newVersion.getState())
-            .epochUpdateTime(creationTime)
             .build());
   }
 
@@ -119,7 +115,7 @@ public class FlowVersionServiceImpl implements FlowVersionService {
   @Override
   public List<FlowVersionMetaView> listByFlowId(Ksuid flowId) throws PermissionDeniedException {
     List<FlowVersion> flowVersionMetaViews =
-        flowVersionRepository.findAllByFlowIdOrderByEpochCreationTime(flowId);
+        flowVersionRepository.findAllByFlowIdOrderByCreated(flowId);
     if (!flowVersionMetaViews.isEmpty()) {
       permissionService.requiresPermission(flowVersionMetaViews.get(0).getFlowId(), Permission.READ_FLOW);
     }

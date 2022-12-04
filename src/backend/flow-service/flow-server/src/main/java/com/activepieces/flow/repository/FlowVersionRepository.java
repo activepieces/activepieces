@@ -9,5 +9,5 @@ import java.util.UUID;
 
 public interface FlowVersionRepository extends CrudRepository<FlowVersion, Ksuid> {
 
-    List<FlowVersion> findAllByFlowIdOrderByEpochCreationTime(Ksuid flowId);
+    List<FlowVersion> findAllByFlowIdOrderByCreated(Ksuid flowId);
 }

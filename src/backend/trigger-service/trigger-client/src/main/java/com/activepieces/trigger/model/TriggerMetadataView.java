@@ -1,7 +1,7 @@
 package com.activepieces.trigger.model;
 
 import com.activepieces.actions.model.action.ActionMetadataView;
-import com.activepieces.common.validation.constraints.CodeNameConstraints;
+import com.activepieces.common.validation.CodeNameConstraints;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

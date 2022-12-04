@@ -1,6 +1,6 @@
 package com.activepieces.actions.model.action.settings;
 
-import com.activepieces.common.validation.constraints.NotEmptyIfString;
+import com.activepieces.common.validation.NotEmptyIfString;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

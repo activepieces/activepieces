@@ -45,6 +45,13 @@
             <artifactId>hibernate-types-52</artifactId>
             <version>2.2.2</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>14.0</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/com.github.ksuid/ksuid -->
         <dependency>
             <groupId>com.github.ksuid</groupId>

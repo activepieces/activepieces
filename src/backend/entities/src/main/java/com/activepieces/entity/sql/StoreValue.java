@@ -35,8 +35,8 @@ public class StoreValue {
     @Column(name = "value", columnDefinition = "jsonb")
     private Object value;
 
-    @JsonProperty private long epochCreationTime;
+    @JsonProperty private long created;
 
-    @JsonProperty private long epochUpdateTime;
+    @JsonProperty private long updated;
 
 }

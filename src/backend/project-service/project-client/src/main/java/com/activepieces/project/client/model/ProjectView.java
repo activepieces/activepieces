@@ -1,5 +1,6 @@
 package com.activepieces.project.client.model;
 
+import com.activepieces.common.EntityMetadata;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.ksuid.Ksuid;
 import lombok.*;
@@ -13,7 +14,7 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 @Builder(toBuilder = true)
-public class ProjectView {
+public class ProjectView implements EntityMetadata {
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Ksuid id;
@@ -21,14 +22,9 @@ public class ProjectView {
   @JsonProperty @NotNull @NotEmpty private String displayName;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private long epochCreationTime;
+  private long created;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private String logoUrl;
+  private long updated;
 
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private long epochUpdateTime;
-
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private Ksuid organizationId;
 }

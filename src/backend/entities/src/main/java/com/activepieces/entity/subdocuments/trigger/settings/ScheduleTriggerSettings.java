@@ -1,6 +1,6 @@
 package com.activepieces.entity.subdocuments.trigger.settings;
 
-import com.activepieces.common.validation.constraints.CronExpression;
+import com.activepieces.common.validation.CronExpression;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

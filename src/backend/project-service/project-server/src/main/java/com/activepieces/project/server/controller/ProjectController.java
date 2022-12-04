@@ -1,6 +1,5 @@
 package com.activepieces.project.server.controller;
 
-import com.activepieces.common.error.exception.InvalidImageFormatException;
 import com.activepieces.common.identity.UserIdentity;
 import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.guardian.client.exception.ResourceNotFoundException;
@@ -22,7 +21,6 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @RestController
 @Hidden
@@ -39,7 +37,7 @@ public class ProjectController {
 
   @Secured("ROLE_USER")
   @GetMapping("/projects")
-  public ResponseEntity<List<ProjectView>> listForUserAndOrganization(
+  public ResponseEntity<List<ProjectView>> listForUser(
       @AuthenticationPrincipal UserIdentity userIdentity) {
     return ResponseEntity.ok(
         projectService.listByOwnerId(userIdentity.getId()));
@@ -53,29 +51,12 @@ public class ProjectController {
   }
 
   @Secured("ROLE_USER")
-  @PostMapping("/projects")
-  public ResponseEntity<ProjectView> createProject(
-      @AuthenticationPrincipal UserIdentity userIdentity,
-      @RequestBody @Valid CreateProjectRequest request)
-      throws PermissionDeniedException {
-    return ResponseEntity.ok(projectService.create(userIdentity.getId(), request));
-  }
-
-  @Secured("ROLE_USER")
   @PutMapping("/projects/{projectId}")
   public ResponseEntity<ProjectView> update(
       @PathVariable("projectId") Ksuid projectId,
-      @RequestPart(value = "project") @Valid ProjectView view,
-      @RequestPart(value = "logo", required = false) MultipartFile file)
-      throws ProjectNotFoundException, PermissionDeniedException, InvalidImageFormatException,
-          IOException {
-    return ResponseEntity.ok(projectService.update(projectId, view, Optional.ofNullable(file)));
+      @RequestBody @Valid ProjectView view)
+      throws ProjectNotFoundException, PermissionDeniedException {
+    return ResponseEntity.ok(projectService.update(projectId, view));
   }
 
-  @Secured("ROLE_USER")
-  @DeleteMapping("/projects/{projectId}")
-  public void delete(@PathVariable("projectId") Ksuid projectId)
-      throws PermissionDeniedException, ProjectNotFoundException, ResourceNotFoundException {
-    projectService.delete(projectId);
-  }
 }

@@ -24,7 +24,7 @@ public class StoreValueView {
     @NotNull
     private Object value;
 
-    @JsonIgnore private long epochCreationTime;
+    @JsonIgnore private long created;
 
-    @JsonIgnore private long epochUpdateTime;
+    @JsonIgnore private long updated;
 }

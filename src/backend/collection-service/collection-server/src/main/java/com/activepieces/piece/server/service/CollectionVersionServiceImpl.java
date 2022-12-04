@@ -2,7 +2,6 @@ package com.activepieces.piece.server.service;
 
 import com.activepieces.cache.ConditionalCache;
 import com.activepieces.common.error.ErrorServiceHandler;
-import com.activepieces.common.error.exception.InvalidImageFormatException;
 import com.activepieces.common.error.exception.collection.CollectionInvalidStateException;
 import com.activepieces.common.error.exception.collection.CollectionNotFoundException;
 import com.activepieces.common.error.exception.collection.CollectionVersionAlreadyLockedException;
@@ -32,7 +31,6 @@ import com.activepieces.piece.server.repository.CollectionVersionRepository;
 import com.github.ksuid.Ksuid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -81,10 +79,9 @@ public class CollectionVersionServiceImpl implements CollectionVersionService {
     @Override
     public CollectionVersionView create(
             Ksuid collectionId,
-            Ksuid previousVersionId,
             CollectionVersionView view)
-            throws ResourceNotFoundException, InvalidImageFormatException, IOException,
-            PermissionDeniedException, CollectionVersionNotFoundException {
+            throws ResourceNotFoundException,
+            PermissionDeniedException {
         permissionService.requiresPermission(collectionId, Permission.WRITE_COLLECTION);
         Ksuid newVersionIUd = Ksuid.newKsuid();
         CollectionVersionView savedView =
@@ -93,14 +90,16 @@ public class CollectionVersionServiceImpl implements CollectionVersionService {
                                 .collectionId(collectionId)
                                 .id(newVersionIUd)
                                 .state(EditState.DRAFT)
-                                .epochCreationTime(Instant.now().getEpochSecond())
-                                .epochUpdateTime(Instant.now().getEpochSecond())
-                                /// TODO FIX
-                                //     .logoUrl(logo.isPresent() ? imageService.upload(logo.get()) : view.getLogoUrl())
                                 .build());
         permissionService.createResourceWithParent(
                 savedView.getId(), savedView.getCollectionId(), ResourceType.COLLECTION_VERSION);
         return savedView;
+    }
+
+    @Override
+    public CollectionVersionView getLatest(Ksuid collectionId) throws PermissionDeniedException {
+        permissionService.requiresPermission(collectionId, Permission.READ_COLLECTION);
+        return collectionVersionMapper.toView(collectionVersionRepository.findFirstByCollectionIdOrderByIdDesc(collectionId));
     }
 
     @Override
@@ -109,7 +108,6 @@ public class CollectionVersionServiceImpl implements CollectionVersionService {
         if (optional.isEmpty()) {
             return Optional.empty();
         }
-        Optional<Collection> piece = collectionRepository.findById(optional.get().getCollectionId());
         permissionService.requiresPermission(optional.get().getId(), Permission.READ_COLLECTION);
         return optional.map(collectionVersionMapper::toView);
     }
@@ -123,8 +121,7 @@ public class CollectionVersionServiceImpl implements CollectionVersionService {
     @Override
     public CollectionVersionView update(
             Ksuid id, CollectionVersionView view)
-            throws PermissionDeniedException, CollectionVersionNotFoundException,
-            InvalidImageFormatException, IOException, CollectionVersionAlreadyLockedException {
+            throws PermissionDeniedException, CollectionVersionNotFoundException, CollectionVersionAlreadyLockedException {
         permissionService.requiresPermission(id, Permission.WRITE_COLLECTION);
         CollectionVersionView currentVersion = get(id);
         if (currentVersion.getState().equals(EditState.LOCKED)) {
@@ -135,7 +132,6 @@ public class CollectionVersionServiceImpl implements CollectionVersionService {
                         currentVersion.toBuilder()
                                 .displayName(view.getDisplayName())
                                 .configs(view.getConfigs())
-                                .epochUpdateTime(Instant.now().getEpochSecond())
                                 .build());
         return saveFromView(savedView);
     }

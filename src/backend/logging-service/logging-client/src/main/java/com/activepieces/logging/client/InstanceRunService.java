@@ -1,7 +1,6 @@
 package com.activepieces.logging.client;
 
 import com.activepieces.common.error.exception.InstanceNotFoundException;
-import com.activepieces.common.error.exception.InvalidImageFormatException;
 import com.activepieces.common.pagination.SeekPage;
 import com.activepieces.common.pagination.SeekPageRequest;
 import com.activepieces.entity.subdocuments.runs.ExecutionStateView;
@@ -14,7 +13,6 @@ import lombok.NonNull;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface InstanceRunService {
 
@@ -24,7 +22,7 @@ public interface InstanceRunService {
 
   InstanceRunView get(@NonNull final Ksuid id) throws InstanceRunNotFoundException, PermissionDeniedException;
 
-  InstanceRunView createOrUpdate(@NonNull InstanceRunView request, ExecutionStateView executionStateView) throws ResourceNotFoundException, PermissionDeniedException, InstanceNotFoundException, InvalidImageFormatException, IOException;
+  InstanceRunView createOrUpdate(@NonNull InstanceRunView request, ExecutionStateView executionStateView) throws ResourceNotFoundException, PermissionDeniedException, InstanceNotFoundException, IOException;
 
 
 }

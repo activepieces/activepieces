@@ -1,7 +1,7 @@
 package com.activepieces.entity.subdocuments.field;
 
-import com.activepieces.common.validation.constraints.ConditionalValidation;
-import com.activepieces.common.validation.constraints.EnumNamePattern;
+import com.activepieces.common.validation.ConditionalValidation;
+import com.activepieces.common.validation.EnumNamePattern;
 import com.activepieces.entity.enums.InputVariableType;
 import com.activepieces.entity.enums.VariableSource;
 import com.activepieces.entity.subdocuments.field.connection.apikey.ApiKeyVariable;

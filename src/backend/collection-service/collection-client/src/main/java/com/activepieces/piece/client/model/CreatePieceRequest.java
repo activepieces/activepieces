@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 
@@ -14,7 +15,8 @@ import javax.validation.constraints.NotNull;
 @Builder(toBuilder = true)
 public class CreatePieceRequest {
 
-    @JsonProperty @NotNull @Valid
-    private CollectionVersionView version;
+    @JsonProperty @NotEmpty
+    private String displayName;
+
 
 }
