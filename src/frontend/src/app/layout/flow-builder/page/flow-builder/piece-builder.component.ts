@@ -21,7 +21,6 @@ import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/selector/flow-builder.selector';
 import { lastValueFrom, map, Observable, take, tap } from 'rxjs';
 import { ViewModeEnum } from '../../store/model/enums/view-mode.enum';
-import { UserbackService } from 'src/app/layout/common-layout/service/userback.service';
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { SaveState } from '../../store/model/enums/save-state.enum';
@@ -60,7 +59,6 @@ export class PieceBuilderComponent implements OnInit, OnDestroy {
 		private navigationService: NavigationService,
 		public pieceBuilderService: PieceBuilderService,
 		private actRoute: ActivatedRoute,
-		private userbackService: UserbackService,
 		private ngZone: NgZone,
 		private snackbar: MatSnackBar,
 		private runDetailsService: RunDetailsService,
@@ -147,10 +145,6 @@ export class PieceBuilderComponent implements OnInit, OnDestroy {
 
 	public get leftSideBarType() {
 		return LeftSideBarType;
-	}
-
-	openUserback() {
-		this.userbackService.openUserbackSubject.next(true);
 	}
 
 	rightDrawerHandleDrag(dragMoveEvent: CdkDragMove, dragHandle: HTMLElement, builderContainer: MatDrawerContainer) {

@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { map, Observable, tap } from 'rxjs';
 import { AuthenticationService } from './layout/common-layout/service/authentication.service';
 import { Store } from '@ngrx/store';
-import { UserbackService } from './layout/common-layout/service/userback.service';
 import LogRocket from 'logrocket';
 import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { NavigationService } from './layout/dashboard-layout/service/navigation.service';
@@ -21,10 +20,8 @@ export class AppComponent implements OnInit {
 	routeLoader$: Observable<any>;
 	unsavedIconLoader$: Observable<void> | undefined;
 	loggedInUser$: Observable<any>;
-	userback$: Observable<any>;
 
 	constructor(
-		private userbackService: UserbackService,
 		private store: Store,
 		private authenticationService: AuthenticationService,
 		private router: Router,
@@ -64,15 +61,6 @@ export class AppComponent implements OnInit {
 				this.store.dispatch(CommonActions.loadInitial({ user: user }));
 			}),
 			map(() => void 0)
-		);
-		this.userback$ = this.userbackService.openUserbackSubject.pipe(
-			map(() => {
-				if (document.querySelector('.userback-button')) {
-					(document.querySelector('.userback-button') as HTMLElement).click();
-				} else {
-					console.error('Userback is not ready yet.');
-				}
-			})
 		);
 	}
 }
