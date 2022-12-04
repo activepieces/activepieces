@@ -9,7 +9,6 @@ import { RunsComponent } from './pages/runs/runs.component';
 import { ProgressbarModule } from 'ngx-bootstrap/progressbar';
 import { AccountsComponent } from './pages/accounts/accounts.component';
 import { InstancesComponent } from './pages/instances/instances.component';
-import { EnvironmentsComponent } from './pages/environments/environments.component';
 import { EventsComponent } from './pages/events/events.component';
 import { CommonLayoutModule } from '../common-layout/common-layout.module';
 import { EnvironmentFilterComponent } from './components/environment-filter/environment-filter.component';
@@ -57,7 +56,6 @@ const reducers: ActionReducerMap<State> = {
 		RunsComponent,
 		AccountsComponent,
 		InstancesComponent,
-		EnvironmentsComponent,
 		EventsComponent,
 		EnvironmentFilterComponent,
 		CollectionComponent,
