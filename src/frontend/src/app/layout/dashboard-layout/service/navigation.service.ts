@@ -18,7 +18,6 @@ export class NavigationService {
 	lastPageTitle = '';
 	private selectedMenuIndex: BehaviorSubject<any> = new BehaviorSubject(0);
 	private selectedRouteIndex$: BehaviorSubject<any> = new BehaviorSubject(undefined);
-	private submenuState: BehaviorSubject<any> = new BehaviorSubject(false);
 	public loading: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 	public sidebarRoutes = [
 		{
@@ -29,22 +28,9 @@ export class NavigationService {
 			link: '/flows',
 			submenu: false,
 			color: '#af6cd9',
-			submenuItems: [],
 			hover: false,
 		},
-		{
-			id: 'settings',
-			icon: '/assets/img/custom/sidebar/settings.svg',
-			disabledIcon: '/assets/img/custom/sidebar/disabled/disabled-settings.svg',
-			text: 'Settings',
-			submenu: true,
-			color: '#5fd2b0',
-			submenuItems: [
-				{ id: 'settings', text: 'Environments', link: '/environments' },
-				{ id: 'settings', text: 'API Keys', link: '/api-keys' },
-			],
-			hover: false,
-		},
+
 		{
 			id: 'instances',
 			icon: '/assets/img/custom/sidebar/instances.svg',
@@ -54,7 +40,6 @@ export class NavigationService {
 			color: '#5fd2b0',
 			hover: false,
 			link: '/instances',
-			submenuItems: [],
 		},
 		{
 			id: 'runs',
@@ -62,10 +47,9 @@ export class NavigationService {
 			disabledIcon: '/assets/img/custom/sidebar/disabled/disabled-settings.svg',
 			text: 'Runs',
 			submenu: false,
-			color: '#5fd2b0',
+			color: '#6385dc',
 			hover: false,
 			link: '/runs',
-			submenuItems: [],
 		},
 	];
 
@@ -102,15 +86,7 @@ export class NavigationService {
 		}
 	}
 
-	public setSubmenuState(open: boolean) {
-		this.submenuState.next(open);
-	}
-
-	public getSubmenuState() {
-		return this.submenuState;
-	}
-
-	public setSelectedRoute(request: { menu: number; submenu: number | undefined } | undefined) {
+	public setSelectedRoute(request: { menu: number } | undefined) {
 		this.selectedRouteIndex$.next(request);
 	}
 
