@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { AccountsComponent } from './pages/accounts/accounts.component';
 import { RunsComponent } from './pages/runs/runs.component';
 import { InstancesComponent } from './pages/instances/instances.component';
-import { EnvironmentsComponent } from './pages/environments/environments.component';
 import { EventsComponent } from './pages/events/events.component';
 import { CollectionComponent } from './pages/collections/collection-components.component';
 import { ListPiecesResolver } from './resolvers/list-pieces-resolver.service';
@@ -27,12 +26,6 @@ export const DashboardLayoutRouting: Routes = [
 				component: AccountsComponent,
 				resolve: { accounts: ListAccountsResolver },
 				runGuardsAndResolvers: 'paramsOrQueryParamsChange',
-			},
-			{
-				path: 'environments',
-				pathMatch: 'full',
-				component: EnvironmentsComponent,
-				resolve: {},
 			},
 			{
 				path: 'events',

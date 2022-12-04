@@ -59,7 +59,6 @@ export class NavigationService {
 					text: 'Authentication',
 					link: '/authentication',
 				},
-				{ id: 'settings', text: 'Environments', link: '/environments' },
 				{ id: 'settings', text: 'Events', link: '/events' },
 				{ id: 'settings', text: 'API Keys', link: '/api-keys' },
 			],
