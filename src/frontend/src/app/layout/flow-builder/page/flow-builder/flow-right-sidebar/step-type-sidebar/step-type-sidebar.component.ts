@@ -61,8 +61,6 @@ export class StepTypeSidebarComponent implements OnInit {
 
 	populateTabsAndTheirLists() {
 		const coreItemsDetails$ = this.store.select(BuilderSelectors.selectCoreFlowItemsDetails);
-		const connectersItemsDetails$ = this.store.select(BuilderSelectors.selectFlowItemsDetailsForConnectors);
-		const userCollectionsItemsDetails$ = this.store.select(BuilderSelectors.selectFlowItemsDetialsForUserCollections);
 		const connectorComponentsItemsDetails$ = this.store.select(
 			BuilderSelectors.selectFlowItemDetailsForConnectorComponents
 		);
@@ -70,15 +68,7 @@ export class StepTypeSidebarComponent implements OnInit {
 			displayName: 'Core',
 			list$: coreItemsDetails$,
 		});
-		this.tabsAndTheirLists.push({
-			displayName: 'Apps',
-			list$: connectersItemsDetails$,
-		});
-		this.tabsAndTheirLists.push({
-			displayName: 'My Collections',
-			list$: userCollectionsItemsDetails$,
-		});
-		console.log(environment.feature);
+
 		if (environment.feature.newComponents) {
 			this.tabsAndTheirLists.push({
 				displayName: 'Components',
@@ -114,10 +104,7 @@ export class StepTypeSidebarComponent implements OnInit {
 						name: stepName,
 						displayName: getDefaultDisplayNameForPiece(flowItemDetails.type as ActionType, flowItemDetails.name),
 						settings: settings,
-						valid:
-							flowItemDetails.type !== ActionType.STORAGE &&
-							flowItemDetails.type !== ActionType.LOOP_ON_ITEMS &&
-							flowItemDetails.type !== ActionType.REMOTE_FLOW,
+						valid: flowItemDetails.type !== ActionType.STORAGE && flowItemDetails.type !== ActionType.LOOP_ON_ITEMS,
 						yOffsetFromLastNode: 0,
 					};
 					if (flowItemDetails.type === ActionType.CODE) {
@@ -167,15 +154,6 @@ export class StepTypeSidebarComponent implements OnInit {
 	// TODO GET RID OF ANY AND MAKE THEM CLASSES :)
 	constructStepSettings(actionType: ActionType, flowItemDetails: FlowItemDetails) {
 		switch (actionType) {
-			case ActionType.REMOTE_FLOW: {
-				const flowVersionId =
-					flowItemDetails.extra?.flowsVersionIds.length == 0 ? undefined : flowItemDetails.extra?.flowsVersionIds[0];
-				return {
-					pieceVersionId: flowItemDetails.extra?.pieceVersionId,
-					flowVersionId: flowVersionId,
-					input: {},
-				};
-			}
 			case ActionType.CODE: {
 				return {
 					input: {},

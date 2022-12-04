@@ -43,12 +43,6 @@ export function getDefaultDisplayNameForPiece(pieceType: ActionType, pieceName: 
 		case ActionType.STORAGE: {
 			return 'Storage';
 		}
-		case ActionType.LOCAL_FLOW: {
-			return 'Local Flow';
-		}
-		case ActionType.REMOTE_FLOW: {
-			return pieceName;
-		}
 		case ActionType.LOOP_ON_ITEMS: {
 			return 'Loop on Items';
 		}

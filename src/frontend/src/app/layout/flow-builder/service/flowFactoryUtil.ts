@@ -30,9 +30,7 @@ export class FlowFactoryUtil {
 			switch (clonedContent.type) {
 				case ActionType.CODE:
 				case ActionType.STORAGE:
-				case ActionType.REMOTE_FLOW:
 				case ActionType.LOOP_ON_ITEMS:
-				case ActionType.LOCAL_FLOW:
 				case ActionType.RESPONSE:
 				case ActionType.COMPONENT:
 					const simple = this.addCordDetails(clonedContent);

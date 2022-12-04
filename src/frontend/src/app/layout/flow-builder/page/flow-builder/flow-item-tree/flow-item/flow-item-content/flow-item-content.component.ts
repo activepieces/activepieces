@@ -4,7 +4,6 @@ import { TriggerType } from '../../../../../../common-layout/model/enum/trigger-
 import { ActionStatus } from '../../../../../../common-layout/model/enum/action-status';
 import { InstanceRunStatus } from '../../../../../../common-layout/model/enum/instance-run-status';
 import { filter, map, Observable, of, Subject, switchMap, take, takeUntil, tap } from 'rxjs';
-
 import { ConfirmDeleteModalComponent } from '../../../../../../common-layout/components/confirm-delete-modal/confirm-delete-modal.component';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { FlowItem } from '../../../../../../common-layout/model/flow-builder/flow-item';
@@ -13,9 +12,6 @@ import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../../store/selector/flow-builder.selector';
 import { FlowsActions } from '../../../../../store/action/flows.action';
 import { FlowItemDetails } from '../../../flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { FlowItemDetailsActions } from 'src/app/layout/flow-builder/store/action/flow-items-details.action';
-import { ActionType } from 'src/app/layout/common-layout/model/enum/action-type.enum';
-import { RemoteFlowAction } from 'src/app/layout/common-layout/model/flow-builder/actions/remote-flow-action.interface';
 import { fadeIn400ms } from 'src/app/layout/common-layout/animation/fade-in.animations';
 import { RunDetailsService } from '../../../flow-left-sidebar/run-details/iteration-details.service';
 import { InstanceRun, StepResult } from 'src/app/layout/common-layout/model/instance-run.interface';
@@ -86,13 +82,6 @@ export class FlowItemContentComponent implements OnInit {
 									this.stepIconUrl = flowItemDetails.logoUrl!;
 									this.cd.detectChanges();
 								};
-							} else if (this._flowItem.type === ActionType.REMOTE_FLOW) {
-								const remoteFlowItem: RemoteFlowAction = this._flowItem as RemoteFlowAction;
-								this.store.dispatch(
-									FlowItemDetailsActions.loadOldRemoteFlowItemDetails({
-										collectionVersionId: remoteFlowItem.settings.pieceVersionId,
-									})
-								);
 							} else {
 								console.error(`Flow item has no details:${this._flowItem.name}`);
 							}
