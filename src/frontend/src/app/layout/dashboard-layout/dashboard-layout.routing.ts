@@ -11,8 +11,6 @@ import { ListInstancesRunResolver } from './resolvers/list-instances-runs.resolv
 import { ListAccountsResolver } from './resolvers/list-accounts.resolver';
 import { TrialExpiredGuard } from 'src/app/guards/trial-expired.guard';
 import { TrialStatusComponent } from './pages/trial-status/trial-status.component';
-import { AuthenticationComponent } from './pages/authentication/authentication.component';
-import { AuthenticationResolver } from './resolvers/authentication.resolver';
 
 export const DashboardLayoutRouting: Routes = [
 	{
@@ -59,14 +57,6 @@ export const DashboardLayoutRouting: Routes = [
 				component: CollectionComponent,
 				resolve: {
 					collections: ListPiecesResolver,
-				},
-			},
-			{
-				path: 'authentication',
-				pathMatch: 'full',
-				component: AuthenticationComponent,
-				resolve: {
-					authentications: AuthenticationResolver,
 				},
 			},
 		],

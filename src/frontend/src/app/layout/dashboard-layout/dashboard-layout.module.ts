@@ -27,9 +27,6 @@ import { UserAvatarComponent } from './components/user-avatar/user-avatar.compon
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TrialCountdownComponent } from './components/trial-countdown/trial-countdown.component';
 import { TrialStatusComponent } from './pages/trial-status/trial-status.component';
-import { AuthenticationComponent } from './pages/authentication/authentication.component';
-import { FirebaseProjectIdModalComponent } from './pages/authentication/firebase-project-id-modal/firebase-project-id-modal.component';
-import { SigningKeyModalComponent } from './pages/authentication/signing-key-modal/signing-key-modal.component';
 import { ActionReducerMap, StoreModule } from '@ngrx/store';
 import { authenticationReducer, AuthenticationState } from './store/reducer/authentication.reducer';
 import { EffectsModule } from '@ngrx/effects';
@@ -67,9 +64,6 @@ const reducers: ActionReducerMap<State> = {
 		UserAvatarComponent,
 		TrialCountdownComponent,
 		TrialStatusComponent,
-		AuthenticationComponent,
-		FirebaseProjectIdModalComponent,
-		SigningKeyModalComponent,
 		CreateApiKeyModalComponent,
 	],
 	imports: [
