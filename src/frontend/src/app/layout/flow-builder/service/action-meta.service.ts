@@ -57,12 +57,6 @@ export class ActionMetaService {
 
 	public triggerItemsDetails = [
 		{
-			type: TriggerType.EVENT,
-			name: 'Event',
-			description: 'Trigger event when specific events are received.',
-			logoUrl: '/assets/img/custom/piece/default-trigger.svg',
-		},
-		{
 			type: TriggerType.SCHEDULE,
 			name: 'Schedule',
 			description: 'Trigger flow with fixed schedule.',
