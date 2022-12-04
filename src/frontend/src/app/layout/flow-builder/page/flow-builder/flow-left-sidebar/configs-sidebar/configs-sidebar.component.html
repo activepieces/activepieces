@@ -21,7 +21,6 @@
         <mat-tab-group
           #tabGroup
           (selectedTabChange)="changeTab(tabGroup.selectedIndex)"
-          [selectedIndex]="currentTab === pieceConfigEnumType.COLLECTION ? 0 : 1"
         >
           <mat-tab>
             <ng-template mat-tab-label>
@@ -36,22 +35,6 @@
               [configsListScope]="pieceConfigEnumType.COLLECTION"
               (selectedVariable)="
                 openConfigVariableModal($event, pieceConfigEnumType.COLLECTION)
-              "
-            ></app-configs-list>
-          </mat-tab>
-          <mat-tab>
-            <ng-template mat-tab-label>
-              <div
-                class="category-label"
-                [class.category-label-active]="tabGroup.selectedIndex === 1"
-              >
-                Current Flow
-              </div>
-            </ng-template>
-            <app-configs-list
-              [configsListScope]="pieceConfigEnumType.FLOW"
-              (selectedVariable)="
-                openConfigVariableModal($event, pieceConfigEnumType.FLOW)
               "
             ></app-configs-list>
           </mat-tab>

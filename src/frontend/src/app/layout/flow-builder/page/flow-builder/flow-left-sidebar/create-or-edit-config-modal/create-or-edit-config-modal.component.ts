@@ -37,8 +37,7 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 	configIndexInConfigsList: number | undefined;
 	@Input()
 	configToUpdate: Config | undefined;
-	@Input()
-	configScopeUserSelectedInList: ConfigScope;
+
 	//used in case of creating a config for a connector.
 	@Input()
 	configParent: Config;
@@ -52,10 +51,6 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 	configTypeChanged$: Observable<ConfigType>;
 	configSourceChanged$: Observable<ConfigSource>;
 	hasViewModeListenerBeenSet = false;
-	scopeDropdownOptions: DropdownItemOption[] = [
-		{ label: 'Collection', value: ConfigScope.COLLECTION },
-		{ label: 'Flow', value: ConfigScope.FLOW },
-	];
 
 	constructor(private bsModalRef: BsModalRef, private store: Store, private formBuilder: FormBuilder) {}
 
@@ -99,7 +94,7 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 		if (!this.configToUpdate) {
 			this.configForm = this.formBuilder.group({
 				source: new FormControl(ConfigSource.USER),
-				scope: this.configScopeUserSelectedInList,
+				scope: ConfigScope.COLLECTION,
 				label: new FormControl(
 					'',
 					[Validators.required],
@@ -129,7 +124,7 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 			this.configForm = this.formBuilder.group({
 				source: new FormControl(this.configToUpdate.source),
 				scope: new FormControl({
-					value: this.configScopeUserSelectedInList,
+					value: ConfigScope.COLLECTION,
 					disabled: true,
 				}),
 				label: new FormControl(
@@ -240,23 +235,6 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 			return null;
 		}
 	}
-	saveConfigToFlow(config: Config): void {
-		if (this.configIndexInConfigsList == undefined) {
-			this.store.dispatch(
-				FlowsActions.addConfig({
-					config: config,
-				})
-			);
-		} else {
-			this.store.dispatch(
-				FlowsActions.updateConfig({
-					configIndex: this.configIndexInConfigsList,
-					config: config,
-				})
-			);
-		}
-		this.closeModal(ConfigScope.FLOW);
-	}
 
 	saveConfigToCollection(config: Config): void {
 		if (this.configIndexInConfigsList == undefined) {
@@ -323,12 +301,7 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 	submit() {
 		if (!this.savingLoading && this.configForm.valid) {
 			const config: Config = this.createConfigFromFormValue();
-			const scopeControlValue = this.getControlValue('scope');
-			if (scopeControlValue === ConfigScope.FLOW) {
-				this.saveConfigToFlow(config);
-			} else if (scopeControlValue === ConfigScope.COLLECTION) {
-				this.saveConfigToCollection(config);
-			}
+			this.saveConfigToCollection(config);
 		}
 		this.submitted = true;
 	}

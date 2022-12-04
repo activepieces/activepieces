@@ -32,7 +32,6 @@ import { BuilderActions } from '../action/builder.action';
 import { CodeService } from '../../service/code.service';
 import { StepCacheKey } from '../../service/artifact-cache-key';
 import { TabState } from '../model/tab-state';
-import { findRefreshedConfig } from './helper';
 import { VersionEditState } from 'src/app/layout/common-layout/model/enum/version-edit-state.enum';
 import { CollectionService } from 'src/app/layout/common-layout/service/collection.service';
 import { RunDetailsService } from '../../page/flow-builder/flow-left-sidebar/run-details/iteration-details.service';
@@ -147,65 +146,6 @@ export class FlowsEffects {
 			})
 		);
 	}
-
-	deleteConfig$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(FlowsActions.deleteConfig),
-			concatLatestFrom(action => [
-				this.store.select(BuilderSelectors.selectCurrentFlow),
-				this.store.select(BuilderSelectors.selectCurrentCollection),
-			]),
-			concatMap(([action, flow, collection]) => {
-				if (flow && collection) {
-					const configToDelete = flow.lastVersion.configs[action.configIndex];
-					const allConfigs = [...flow.lastVersion.configs, ...collection.lastVersion.configs];
-					const refreshedConfig = findRefreshedConfig(allConfigs, configToDelete);
-					if (refreshedConfig) {
-						return of(
-							FlowsActions.deleteConfigFailed({
-								referenceKey: configToDelete.key,
-								refreshedKey: refreshedConfig.key,
-							})
-						);
-					}
-					return of(FlowsActions.deleteConfigSucceeded({ configIndex: action.configIndex }));
-				}
-
-				return EMPTY;
-			}),
-			catchError(error => {
-				return of(FlowsActions.savedFailed(error));
-			})
-		);
-	});
-	deleteConfigFailed$ = createEffect(
-		() => {
-			return this.actions$.pipe(
-				ofType(FlowsActions.deleteConfigFailed),
-				tap(action => {
-					this.snackBar.open(`This variable can't be deleted because it's a refresher for ${action.refreshedKey}`, '', {
-						panelClass: 'error',
-						duration: 5000,
-					});
-				})
-			);
-		},
-		{ dispatch: false }
-	);
-
-	deleteFlowStarted$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(FlowsActions.deleteFlowStarted),
-			concatMap((action: { flowId: UUID; saveId: UUID }) => {
-				return this.flowService.delete(action.flowId).pipe(
-					map(() => {
-						return FlowsActions.deleteSuccess({ saveId: action.saveId });
-					})
-				);
-			}),
-			catchError(error => of(FlowsActions.savedFailed(error)))
-		);
-	});
 
 	loadInitial$ = createEffect(() => {
 		return this.actions$.pipe(

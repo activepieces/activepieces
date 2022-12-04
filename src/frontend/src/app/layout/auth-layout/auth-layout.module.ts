@@ -7,7 +7,6 @@ import { SignInComponent } from './pages/sign-in/sign-in.component';
 import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
 import { AuthCheckboxComponent } from './pages/check-box/auth-checkbox.component';
 import { EmailRegistrationComponent } from './pages/email-registration/email-registration.component';
-import { SignUpComponent } from './pages/sign-up/sign-up.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
 import { CommonLayoutModule } from '../common-layout/common-layout.module';
 import { ClosedBetaComponent } from './pages/closed-beta/closed-beta.component';
@@ -32,7 +31,6 @@ import { AuthLayoutComponent } from './auth-layout.component';
 		ForgetPasswordComponent,
 		AuthCheckboxComponent,
 		EmailRegistrationComponent,
-		SignUpComponent,
 		ResetPasswordComponent,
 		ClosedBetaComponent,
 		OnBoardingFormComponent,

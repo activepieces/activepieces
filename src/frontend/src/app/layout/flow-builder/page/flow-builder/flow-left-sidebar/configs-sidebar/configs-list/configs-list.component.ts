@@ -3,7 +3,6 @@ import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { BuilderSelectors } from '../../../../../store/selector/flow-builder.selector';
 import { PieceAction } from '../../../../../store/action/piece.action';
-import { FlowsActions } from '../../../../../store/action/flows.action';
 import { Config } from '../../../../../../common-layout/model/fields/variable/config';
 import { ConfigScope } from '../../../../../../common-layout/model/enum/config-scope-type.enum';
 
@@ -31,10 +30,6 @@ export class VariableListComponent implements OnInit {
 	}
 
 	deleteVariable(index: number) {
-		if (this.configsListScope === ConfigScope.FLOW) {
-			this.store.dispatch(FlowsActions.deleteConfig({ configIndex: index }));
-		} else if (this.configsListScope === ConfigScope.COLLECTION) {
-			this.store.dispatch(PieceAction.deleteConfig({ configIndex: index }));
-		}
+		this.store.dispatch(PieceAction.deleteConfig({ configIndex: index }));
 	}
 }
