@@ -33,6 +33,7 @@ import { AuthenticationEffects } from './store/effect/authentication.effects';
 import { CreateApiKeyModalComponent } from './components/create-api-key-modal/create-api-key-modal.component';
 import { ApiKeysEffects } from './store/effect/api-keys.effects';
 import { apiKeysReducer, ApiKeysState } from './store/reducer/api-keys.reducer';
+import { EnvironmentsComponent } from './pages/environments/environments.component';
 
 export interface State {
 	authenticationState: AuthenticationState;
@@ -63,6 +64,7 @@ const reducers: ActionReducerMap<State> = {
 		TrialCountdownComponent,
 		TrialStatusComponent,
 		CreateApiKeyModalComponent,
+		EnvironmentsComponent,
 	],
 	imports: [
 		CommonModule,

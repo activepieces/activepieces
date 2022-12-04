@@ -1,6 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { AuthenticationService } from '../common-layout/service/authentication.service';
+
 import { NavigationService } from './service/navigation.service';
 import { map, Observable, of, tap } from 'rxjs';
 
@@ -14,12 +13,7 @@ export class DashboardLayoutComponent implements OnInit {
 	loading$: Observable<boolean> = of(false);
 	updateSelectedRoute$: Observable<void> = new Observable<void>();
 	hasSubmenu = false;
-	constructor(
-		private navigationService: NavigationService,
-		private authenticationService: AuthenticationService,
-		private router: Router,
-		private cd: ChangeDetectorRef
-	) {}
+	constructor(private navigationService: NavigationService, private cd: ChangeDetectorRef) {}
 
 	ngOnInit(): void {
 		this.updateSelectedRoute$ = this.navigationService.getSelectedRoute().pipe(
@@ -33,7 +27,8 @@ export class DashboardLayoutComponent implements OnInit {
 
 	updateRoute(route: { menu; submenu }): void {
 		if (route === undefined) return;
-		if (route.submenu) {
+
+		if (route.submenu !== undefined) {
 			this.route = this.navigationService.sidebarRoutes[route.menu].submenuItems[route.submenu];
 		} else {
 			this.route = this.navigationService.sidebarRoutes[route.menu];
@@ -45,13 +40,5 @@ export class DashboardLayoutComponent implements OnInit {
 	toggle() {
 		const state = this.navigationService.getSubmenuState().value;
 		this.navigationService.setSubmenuState(!state);
-	}
-
-	get epochExpirationTime() {
-		return this.authenticationService.currentUser.epochExpirationTime;
-	}
-
-	get isOnTrialStatusComponent() {
-		return this.router.url === '/trial-status';
 	}
 }

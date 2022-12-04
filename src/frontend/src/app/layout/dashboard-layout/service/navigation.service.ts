@@ -17,7 +17,7 @@ export class NavigationService {
 	isInBuilder = false;
 	lastPageTitle = '';
 	private selectedMenuIndex: BehaviorSubject<any> = new BehaviorSubject(0);
-	private selectedRouteIndex: BehaviorSubject<any> = new BehaviorSubject(undefined);
+	private selectedRouteIndex$: BehaviorSubject<any> = new BehaviorSubject(undefined);
 	private submenuState: BehaviorSubject<any> = new BehaviorSubject(false);
 	public loading: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 	public sidebarRoutes = [
@@ -33,28 +33,39 @@ export class NavigationService {
 			hover: false,
 		},
 		{
-			id: 'accounts',
-			icon: '/assets/img/custom/sidebar/accounts.svg',
-			disabledIcon: '/assets/img/custom/sidebar/disabled/disabled-accounts.svg',
-			text: 'Accounts',
-			submenu: true,
-			color: '#6385dc',
-			submenuItems: [
-				{ id: 'accounts', text: 'All Accounts', link: '/accounts' },
-				{ id: 'accounts', text: 'Instances', link: '/instances' },
-				{ id: 'accounts', text: 'Runs', link: '/runs' },
-			],
-			hover: false,
-		},
-		{
 			id: 'settings',
 			icon: '/assets/img/custom/sidebar/settings.svg',
 			disabledIcon: '/assets/img/custom/sidebar/disabled/disabled-settings.svg',
 			text: 'Settings',
 			submenu: true,
 			color: '#5fd2b0',
-			submenuItems: [{ id: 'settings', text: 'API Keys', link: '/api-keys' }],
+			submenuItems: [
+				{ id: 'settings', text: 'Environments', link: '/environments' },
+				{ id: 'settings', text: 'API Keys', link: '/api-keys' },
+			],
 			hover: false,
+		},
+		{
+			id: 'instances',
+			icon: '/assets/img/custom/sidebar/instances.svg',
+			disabledIcon: '/assets/img/custom/sidebar/disabled/disabled-settings.svg',
+			text: 'Instances',
+			submenu: false,
+			color: '#5fd2b0',
+			hover: false,
+			link: '/instances',
+			submenuItems: [],
+		},
+		{
+			id: 'runs',
+			icon: '/assets/img/custom/sidebar/runs.svg',
+			disabledIcon: '/assets/img/custom/sidebar/disabled/disabled-settings.svg',
+			text: 'Runs',
+			submenu: false,
+			color: '#5fd2b0',
+			hover: false,
+			link: '/runs',
+			submenuItems: [],
 		},
 	];
 
@@ -100,11 +111,11 @@ export class NavigationService {
 	}
 
 	public setSelectedRoute(request: { menu: number; submenu: number | undefined } | undefined) {
-		this.selectedRouteIndex.next(request);
+		this.selectedRouteIndex$.next(request);
 	}
 
 	public getSelectedRoute() {
-		return this.selectedRouteIndex;
+		return this.selectedRouteIndex$;
 	}
 
 	public setSelectedMenuIndex(index: number | undefined) {

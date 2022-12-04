@@ -66,8 +66,9 @@ export class SidebarComponent implements OnInit {
 	}
 
 	updateSelectedIndex(currentRoute: string) {
-		let sub: any = undefined;
-		let main: any = undefined;
+		let sub: number | undefined = undefined;
+		let main: number | undefined = undefined;
+		debugger;
 		for (let i = 0; i < this.navigationService.sidebarRoutes.length; ++i) {
 			for (let j = 0; j < this.navigationService.sidebarRoutes[i].submenuItems.length; ++j) {
 				const linkPrefix = this.navigationService.sidebarRoutes[i].submenuItems[j].link;
@@ -77,9 +78,9 @@ export class SidebarComponent implements OnInit {
 				}
 			}
 		}
+		debugger;
 		if (main === undefined) {
-			main = 0;
-			sub = 0;
+			main = this.navigationService.sidebarRoutes.findIndex(r => r.link === currentRoute);
 		}
 		this.navigationService.setSubmenuState(sub !== undefined);
 		this.navigationService.setSelectedMenuIndex(main);
@@ -111,19 +112,17 @@ export class SidebarComponent implements OnInit {
 	}
 
 	clickSubmenu(index: number, route: any) {
-		if (!this.isTrialExpired) {
-			this.navigationService.setSubmenuState(route.submenu);
-			this.navigationService.setSelectedMenuIndex(index);
-			if (!route.submenu) {
-				this.navigationService.setSelectedRoute({
-					menu: index,
-					submenu: undefined,
-				});
-				this.router.navigate([route.link]).then(r => {});
-			} else {
-				this.navigationService.setSelectedRoute({ menu: index, submenu: 0 });
-				this.router.navigate([this.navigationService.sidebarRoutes[index].submenuItems[0].link]);
-			}
+		this.navigationService.setSubmenuState(route.submenu);
+		this.navigationService.setSelectedMenuIndex(index);
+		if (!route.submenu) {
+			this.navigationService.setSelectedRoute({
+				menu: index,
+				submenu: undefined,
+			});
+			this.router.navigate([route.link]);
+		} else {
+			this.navigationService.setSelectedRoute({ menu: index, submenu: 0 });
+			this.router.navigate([this.navigationService.sidebarRoutes[index].submenuItems[0].link]);
 		}
 	}
 
