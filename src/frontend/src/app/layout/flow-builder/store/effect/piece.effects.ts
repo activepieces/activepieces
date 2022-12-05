@@ -23,22 +23,18 @@ import { VersionEditState } from 'src/app/layout/common-layout/model/enum/versio
 
 @Injectable()
 export class PieceEffects {
-	createNewVersion$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(...SingleFlowModifyingState),
-			concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
-			filter(([action, collection]) => {
-				return collection.last_version.state === VersionEditState.LOCKED;
-			}),
-			map(([action, collection]) => {
-				return PieceAction.updateSettings({
-					description: collection.last_version.description,
-					logoFile: undefined,
-					logoEncodedUrl: undefined,
-				});
-			})
-		);
-	});
+	createNewVersion$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(...SingleFlowModifyingState),
+				concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
+				filter(([action, collection]) => {
+					return collection.last_version.state === VersionEditState.LOCKED;
+				})
+			);
+		},
+		{ dispatch: false }
+	);
 
 	saving$ = createEffect(() => {
 		return this.actions$.pipe(

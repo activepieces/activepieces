@@ -16,9 +16,6 @@ const initialState: CollectionState = {
 			display_name: 'dummy',
 			state: VersionEditState.DRAFT,
 			configs: [],
-			logoUrl: 'dummy',
-			access: 'string',
-			description: 'string',
 			flowsVersionId: [],
 			epochCreationTime: 0,
 			epochUpdateTime: 0,
@@ -68,15 +65,6 @@ const _pieceReducer = createReducer(
 	on(PieceAction.updateConfig, (state, { configIndex, config }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
 		clonedState.collection.last_version.configs[configIndex] = config;
-		clonedState.state = PieceStateEnum.SAVING;
-		return clonedState;
-	}),
-	on(PieceAction.updateSettings, (state, ChangeLogoProps): CollectionState => {
-		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		if (ChangeLogoProps.logoEncodedUrl != undefined) {
-			clonedState.collection.last_version.logoUrl = ChangeLogoProps.logoEncodedUrl;
-		}
-		clonedState.collection.last_version.description = ChangeLogoProps.description;
 		clonedState.state = PieceStateEnum.SAVING;
 		return clonedState;
 	})
