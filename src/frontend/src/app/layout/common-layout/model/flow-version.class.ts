@@ -6,16 +6,13 @@ import { CodeAction } from './flow-builder/actions/code-action.interface';
 import { AddButtonType } from './enum/add-button-type';
 import { LoopOnItemActionInterface } from './flow-builder/actions/loop-action.interface';
 import { FlowStructureUtil } from '../../flow-builder/service/flowStructureUtil';
-import { Config } from './fields/variable/config';
 import { FlowItem } from './flow-builder/flow-item';
 
 export class FlowVersion {
 	id: UUID;
-	flowId: UUID;
+	flow_id: UUID;
 	display_name: string;
-	description: string;
 	state: VersionEditState;
-	configs: Config[];
 	created: number;
 	epochCreationTimeFormatted?: string;
 	updated: number;
@@ -24,25 +21,22 @@ export class FlowVersion {
 	valid: boolean;
 	constructor(obj: {
 		id: UUID;
-		flowId: UUID;
-		displayName: string;
+		flow_id: UUID;
+		display_name: string;
 		description: string;
 		state: VersionEditState;
-		configs: Config[];
-		epochCreationTime: number;
-		epochUpdateTime: number;
+		created: number;
+		updated: number;
 		trigger: Trigger;
 		valid: boolean;
 	}) {
 		this.id = obj.id;
 		this.valid = obj.valid;
-		this.flowId = obj.flowId;
-		this.display_name = obj.displayName;
-		this.description = obj.description;
+		this.flow_id = obj.flow_id;
+		this.display_name = obj.display_name;
 		this.state = obj.state;
-		this.configs = obj.configs;
-		this.created = obj.epochCreationTime;
-		this.updated = obj.epochUpdateTime;
+		this.created = obj.created;
+		this.updated = obj.updated;
 		this.trigger = obj.trigger;
 	}
 

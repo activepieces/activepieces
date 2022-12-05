@@ -27,7 +27,7 @@ export class GetInstanceRunResolver
 			switchMap(run => {
 				return this.flowService.getVersion(run.flowVersionId).pipe(
 					switchMap(flowVersion => {
-						return this.flowService.get(flowVersion.flowId).pipe(
+						return this.flowService.get(flowVersion.flow_id).pipe(
 							switchMap(flow => {
 								return this.pieceService.get(flow.collection_id).pipe(
 									switchMap(piece => {

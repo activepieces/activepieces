@@ -78,7 +78,6 @@ export class StepTypeSidebarComponent implements OnInit {
 	}
 
 	closeSidebar() {
-		this.replaceTrigger;
 		this.store.dispatch(
 			FlowsActions.setRightSidebar({
 				sidebarType: RightSideBarType.NONE,
@@ -141,9 +140,7 @@ export class StepTypeSidebarComponent implements OnInit {
 		if (trigger.type === TriggerType.WEBHOOK) {
 			trigger.valid = true;
 		}
-		if (trigger.type === TriggerType.MANUAL) {
-			trigger.valid = true;
-		}
+
 		this.store.dispatch(
 			FlowsActions.replaceTrigger({
 				newTrigger: trigger,
@@ -172,7 +169,7 @@ export class StepTypeSidebarComponent implements OnInit {
 			case ActionType.STORAGE: {
 				return {
 					operation: StorageOperation.GET,
-					scope: StorageScope.INSTANCE,
+					scope: StorageScope.COLLECTION,
 					key: '',
 				};
 			}

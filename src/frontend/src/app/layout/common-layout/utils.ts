@@ -7,9 +7,6 @@ export function getDisplayNameForTrigger(triggerType: TriggerType) {
 		case TriggerType.EVENT: {
 			return 'Event Trigger';
 		}
-		case TriggerType.MANUAL: {
-			return 'Callable Trigger';
-		}
 		case TriggerType.WEBHOOK: {
 			return 'Webhook Trigger';
 			break;

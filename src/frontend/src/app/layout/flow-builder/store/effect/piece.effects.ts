@@ -91,14 +91,11 @@ export class PieceEffects {
 	deleteConfig$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(PieceAction.deleteConfig),
-			concatLatestFrom(action => [
-				this.store.select(BuilderSelectors.selectCurrentFlow),
-				this.store.select(BuilderSelectors.selectCurrentCollection),
-			]),
-			concatMap(([action, flow, collection]) => {
-				if (flow && collection) {
+			concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
+			concatMap(([action, collection]) => {
+				if (collection) {
 					const configToDelete = collection.last_version.configs[action.configIndex];
-					const allConfigs = [...flow.last_version.configs, ...collection.last_version.configs];
+					const allConfigs = [...collection.last_version.configs];
 					const refreshedConfig = findRefreshedConfig(allConfigs, configToDelete);
 					if (refreshedConfig) {
 						return of(

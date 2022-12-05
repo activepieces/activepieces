@@ -22,11 +22,8 @@ export class VariableListComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
-		if (this.configsListScope === ConfigScope.FLOW) {
-			this.variables$ = this.store.select(BuilderSelectors.selectCurrentFlowConfigs);
-		} else if (this.configsListScope === ConfigScope.COLLECTION) {
-			this.variables$ = this.store.select(BuilderSelectors.selectCurrentCollectionConfigs);
-		}
+
+		this.variables$ = this.store.select(BuilderSelectors.selectCurrentCollectionConfigs);
 	}
 
 	deleteVariable(index: number) {

@@ -51,12 +51,6 @@ export class ActionMetaService {
 			logoUrl: '/assets/img/custom/piece/schedule.svg',
 		},
 		{
-			type: TriggerType.MANUAL,
-			name: 'Callable',
-			description: 'Trigger flow when called from another flow',
-			logoUrl: '/assets/img/custom/piece/callable.svg',
-		},
-		{
 			type: TriggerType.WEBHOOK,
 			name: 'Webhook',
 			description: 'Trigger flow by calling a unique web url',

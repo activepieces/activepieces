@@ -20,10 +20,6 @@ import {
 	zipAllArtifacts,
 } from '../model/helper/artifacts-zipping-helper';
 import { CodeService } from '../../flow-builder/service/code.service';
-import { ConfigType } from '../model/enum/config-type';
-import { DropdownType } from '../model/enum/config.enum';
-import { DynamicDropdownSettings } from '../model/fields/variable/config-settings';
-
 @Injectable({
 	providedIn: 'root',
 })
@@ -79,6 +75,8 @@ export class FlowService {
 	}
 
 	create(colelctionId: UUID, flowDisplayName: string): Observable<Flow> {
+		const formData = new FormData();
+
 		const createDefaultFlowRequest = {
 			display_name: flowDisplayName,
 			trigger: {
@@ -90,10 +88,8 @@ export class FlowService {
 				},
 			},
 		};
-		const createFlow$ = this.http.post<Flow>(
-			environment.apiUrl + '/collections/' + colelctionId + '/flows',
-			createDefaultFlowRequest
-		);
+		formData.append('flow', new Blob([JSON.stringify(createDefaultFlowRequest)], { type: 'application/json' }));
+		const createFlow$ = this.http.post<Flow>(environment.apiUrl + '/collections/' + colelctionId + '/flows', formData);
 		return createFlow$;
 	}
 
@@ -129,7 +125,9 @@ export class FlowService {
 
 	update(flowId: UUID, flow: FlowVersion): Observable<Flow> {
 		const formData = new FormData();
-		const clonedFlowVersion: FlowVersion = FlowVersion.clone(flow);
+		const clonedFlowVersion: Partial<FlowVersion> = FlowVersion.clone(flow);
+		(clonedFlowVersion as any).flowId = clonedFlowVersion.flow_id;
+		delete clonedFlowVersion.flow_id;
 		formData.append(
 			'flow',
 			new Blob([JSON.stringify(clonedFlowVersion)], {
@@ -137,13 +135,10 @@ export class FlowService {
 			})
 		);
 		const dirtyStepsArtifacts = this.codeService.getDirtyArtifactsForFlowSteps(flowId);
-		const artifactsAndTheirNames: ArtifactAndItsNameInFormData[] = [
-			...this.getDynamicDropdownConfigsArtifacts(flow),
-			...dirtyStepsArtifacts,
-		];
-
-		const updateFlow$ = this.http.put<any>(environment.apiUrl + '/flows/' + flowId + '/versions/latest', formData);
+		const artifactsAndTheirNames: ArtifactAndItsNameInFormData[] = [...dirtyStepsArtifacts];
+		const updateFlow$ = this.http.put<any>(environment.apiUrl + '/flows/' + flowId, formData);
 		const artifacts$ = zipAllArtifacts(artifactsAndTheirNames);
+		debugger;
 		if (artifacts$.length == 0) {
 			return updateFlow$;
 		}
@@ -152,10 +147,7 @@ export class FlowService {
 				addArtifactsToFormData(zippedFilesAndTheirNames, formData);
 			}),
 			switchMap(() => {
-				const updateFlowWithArtifacts$ = this.http.put<any>(
-					environment.apiUrl + '/flows/' + flowId + '/versions/latest',
-					formData
-				);
+				const updateFlowWithArtifacts$ = this.http.put<any>(environment.apiUrl + '/flows/' + flowId, formData);
 				return updateFlowWithArtifacts$;
 			}),
 			tap(() => {
@@ -196,16 +188,5 @@ export class FlowService {
 
 	private logs(url: string): Observable<InstanceRunState> {
 		return this.http.get<InstanceRunState>(url);
-	}
-
-	getDynamicDropdownConfigsArtifacts(flow: FlowVersion) {
-		const artifacts: ArtifactAndItsNameInFormData[] = [];
-		flow.configs.forEach(config => {
-			const settings = config.settings as DynamicDropdownSettings;
-			if (config.type === ConfigType.DROPDOWN && settings.dropdownType == DropdownType.DYNAMIC) {
-				if (settings.artifactContent) artifacts.push({ artifact: settings.artifactContent, name: config.key });
-			}
-		});
-		return artifacts;
 	}
 }

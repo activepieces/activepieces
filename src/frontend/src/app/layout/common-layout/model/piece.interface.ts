@@ -20,6 +20,6 @@ export interface CollectionVersion {
 	state: VersionEditState;
 	configs: Config[];
 	flowsVersionId: UUID[];
-	epochCreationTime: number;
-	epochUpdateTime: number;
+	created: number;
+	updated: number;
 }

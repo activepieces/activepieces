@@ -51,6 +51,21 @@ export class FlowsEffects {
 		);
 	});
 
+	deleteFlowStarted$ = createEffect(() => {
+		debugger;
+		return this.actions$.pipe(
+			ofType(FlowsActions.deleteFlowStarted),
+			concatMap((action: { flowId: UUID; saveId: UUID }) => {
+				return this.flowService.delete(action.flowId).pipe(
+					map(() => {
+						return FlowsActions.deleteSuccess({ saveId: action.saveId });
+					})
+				);
+			}),
+			catchError(error => of(FlowsActions.savedFailed(error)))
+		);
+	});
+
 	deleteStepArtifactFromCache = createEffect(
 		() => {
 			return this.actions$.pipe(
@@ -78,6 +93,7 @@ export class FlowsEffects {
 				this.store.select(BuilderSelectors.selectCurrentCollection),
 			]),
 			concatMap(([action, flow, collection]) => {
+				debugger;
 				if (collection.last_version.state === VersionEditState.LOCKED) {
 					return this.collectionService.update(collection.id, collection.last_version).pipe(
 						map(() => {

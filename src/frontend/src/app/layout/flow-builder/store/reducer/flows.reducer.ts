@@ -44,6 +44,7 @@ const initialTabState: TabState = {
 const _flowsReducer = createReducer(
 	initialState,
 	on(FlowsActions.setInitial, (state, { flows, run }): FlowsState => {
+		debugger;
 		const clonedFlows: Flow[] = JSON.parse(JSON.stringify(flows));
 		let selectedFlowId: UUID | null = null;
 		if (clonedFlows.length > 0) {

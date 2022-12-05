@@ -44,7 +44,6 @@ export class TestFlowModalComponent implements OnInit {
 	instanceRunStatus$: Observable<undefined | InstanceRunStatus>;
 	isSaving$: Observable<boolean> = of(false);
 	modalRef?: BsModalRef;
-	selectedFlowConfigs$: Observable<Config[]>;
 	collectionConfigs$: Observable<Config[]>;
 	selectedFlow$: Observable<Flow>;
 	instanceRunStatusChecker$: Observable<InstanceRun>;
@@ -85,7 +84,6 @@ export class TestFlowModalComponent implements OnInit {
 		this.isSaving$ = this.store.select(BuilderSelectors.selectSavingChangeState);
 		this.selectedCollection$ = this.store.select(BuilderSelectors.selectCurrentCollection);
 		this.collectionConfigs$ = this.store.select(BuilderSelectors.selectUserDefinedCollectionConfigs);
-		this.selectedFlowConfigs$ = this.store.select(BuilderSelectors.selectUserDefinedFlowConfigs);
 		this.setupSelectedFlowListener();
 		this.selectedInstanceRunStatus();
 		this.shouldDisableTestButton$ = combineLatest({
@@ -129,7 +127,6 @@ export class TestFlowModalComponent implements OnInit {
 
 	createObservableNeededToCreateForm() {
 		this.observablesNeededToBuildForm$ = combineLatest({
-			flowConfigs: this.selectedFlowConfigs$,
 			flow: this.selectedFlow$,
 			collectionConfigs: this.collectionConfigs$,
 			collection: this.selectedCollection$,
@@ -141,15 +138,9 @@ export class TestFlowModalComponent implements OnInit {
 						collectionVersionId: res.collection.last_version.id,
 					};
 				});
-				const flowConfigs = res.flowConfigs.map(c => {
-					return {
-						...c,
-						flowVersionId: res.flow.last_version.id,
-					};
-				});
 
 				return {
-					configs: [...collectionConfigs, ...flowConfigs],
+					configs: [...collectionConfigs],
 					flow: res.flow,
 					collection: res.collection,
 				};
@@ -160,7 +151,6 @@ export class TestFlowModalComponent implements OnInit {
 	addOrRemoveEventTriggerFormControl(flow: Flow) {
 		if (
 			flow.last_version.trigger?.type === TriggerType.EVENT ||
-			flow.last_version.trigger?.type === TriggerType.MANUAL ||
 			flow.last_version.trigger?.type === TriggerType.WEBHOOK
 		) {
 			this.testFlowForm.addControl('trigger', this.triggerFormControl);
@@ -174,7 +164,6 @@ export class TestFlowModalComponent implements OnInit {
 			if (
 				result.configs.length === 0 &&
 				result.flow.last_version.trigger?.type !== TriggerType.EVENT &&
-				result.flow.last_version.trigger?.type !== TriggerType.MANUAL &&
 				result.flow.last_version.trigger?.type !== TriggerType.WEBHOOK
 			) {
 				this.testFlow(result.flow, result.collection);

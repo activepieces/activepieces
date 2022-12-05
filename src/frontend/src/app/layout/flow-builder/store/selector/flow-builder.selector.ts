@@ -128,49 +128,27 @@ export const selectCurrentFlowId = createSelector(
 );
 
 export const selectDynamicDropdownReference = () =>
-	createSelector(
-		selectCurrentFlowConfigs,
-		selectCurrentCollectionConfigs,
-		(flowConfigs: Config[], pieceConfigs: Config[]) => {
-			return [...flowConfigs, ...pieceConfigs]
-				.filter(f => f.type == ConfigType.OAUTH2)
-				.map(f => {
-					return { value: f.key, label: f.label } as DropdownItemOption;
-				});
-		}
-	);
+	createSelector(selectCurrentCollectionConfigs, (flowConfigs: Config[], pieceConfigs: Config[]) => {
+		return [...flowConfigs, ...pieceConfigs]
+			.filter(f => f.type == ConfigType.OAUTH2)
+			.map(f => {
+				return { value: f.key, label: f.label } as DropdownItemOption;
+			});
+	});
 
 export const selectAuth2Configs = (oauth2Variable: OAuth2Variable, flowId: UUID) =>
-	createSelector(
-		selectCurrentFlowConfigs,
-		selectCurrentCollectionConfigs,
-		(flowConfigs: Config[], pieceConfigs: Config[]) => {
-			return [...flowConfigs, ...pieceConfigs].filter(
-				f =>
-					f.type == ConfigType.OAUTH2 &&
-					(oauth2Variable.settings.userInputType === Oauth2UserInputType.EVERYTHING ||
-						oauth2Variable.settings.userInputType === Oauth2UserInputType.APP_DETAILS)
-			);
-		}
-	);
-
-export const selectCurrentFlowConfigs = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
-	const flow = state.flowsState.flows.find(f => f.id === state.flowsState.selectedFlowId);
-	if (!flow) {
-		return [];
-	}
-	return flow.last_version.configs.map(c => {
-		return { ...c, flowVersionId: flow.last_version.id };
+	createSelector(selectCurrentCollectionConfigs, (collectionConfigs: Config[]) => {
+		return [...collectionConfigs].filter(
+			f =>
+				f.type == ConfigType.OAUTH2 &&
+				(oauth2Variable.settings.userInputType === Oauth2UserInputType.EVERYTHING ||
+					oauth2Variable.settings.userInputType === Oauth2UserInputType.APP_DETAILS)
+		);
 	});
-});
 
-export const selectAllConfigs = createSelector(
-	selectCurrentFlowConfigs,
-	selectCurrentCollectionConfigs,
-	(flowConfigs: Config[], collectionConfigs: Config[]) => {
-		return [...flowConfigs, ...collectionConfigs];
-	}
-);
+export const selectAllConfigs = createSelector(selectCurrentCollectionConfigs, (collectionConfigs: Config[]) => {
+	return [...collectionConfigs];
+});
 export const selectFlowsState = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
 	return state.flowsState;
 });
@@ -192,9 +170,6 @@ export const selectCurrentFlowValidity = createSelector(selectCurrentFlow, (flow
 	if (!flow) return false;
 	return flow.last_version.valid;
 });
-export const selectUserDefinedFlowConfigs = createSelector(selectCurrentFlowConfigs, configs =>
-	configs.filter(c => c.source === ConfigSource.USER)
-);
 
 export const selectFlowSelectedId = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
 	return state.flowsState.selectedFlowId !== undefined;
@@ -342,32 +317,20 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
 	});
 
 export const selectConfig = (configKey: string) =>
-	createSelector(
-		selectCurrentFlowConfigs,
-		selectCurrentCollectionConfigs,
-		(flowConfigs: Config[], collectionConfigs: Config[]) => {
-			const indexInFlowConfigsList = flowConfigs.findIndex(c => c.key === configKey);
-			if (indexInFlowConfigsList > -1) {
-				return {
-					indexInList: indexInFlowConfigsList,
-					config: flowConfigs[indexInFlowConfigsList],
-				};
-			}
-			const indexInCollectionConfigsList = collectionConfigs.findIndex(c => c.key === configKey);
-			if (indexInCollectionConfigsList > -1) {
-				return {
-					indexInList: indexInCollectionConfigsList,
-					config: collectionConfigs[indexInCollectionConfigsList],
-				};
-			}
-			return undefined;
+	createSelector(selectCurrentCollectionConfigs, (collectionConfigs: Config[]) => {
+		const indexInCollectionConfigsList = collectionConfigs.findIndex(c => c.key === configKey);
+		if (indexInCollectionConfigsList > -1) {
+			return {
+				indexInList: indexInCollectionConfigsList,
+				config: collectionConfigs[indexInCollectionConfigsList],
+			};
 		}
-	);
+		return undefined;
+	});
 export const selectAuthConfigsDropdownOptions = createSelector(
-	selectCurrentFlowConfigs,
 	selectCurrentCollectionConfigs,
-	(flowConfigs: Config[], pieceConfigs: Config[]) => {
-		return [...flowConfigs, ...pieceConfigs]
+	(collectionConfigs: Config[]) => {
+		return [...collectionConfigs]
 			.filter(c => c.type === ConfigType.OAUTH2)
 			.map(c => {
 				return { label: c.label, value: `\${configs.${c.key}}` };
@@ -389,7 +352,6 @@ export const BuilderSelectors = {
 	selectCurrentStep,
 	selectCurrentCollectionName,
 	selectCanPublish,
-	selectCurrentFlowConfigs,
 	selectCurrentLeftSidebar,
 	selectCurrentLeftSidebarType,
 	selectFlowsCount,
@@ -402,7 +364,6 @@ export const BuilderSelectors = {
 	selectCurrentFlowRunStatus,
 	selectCurrentDisplayName,
 	selectUserDefinedCollectionConfigs,
-	selectUserDefinedFlowConfigs,
 	selectAuth2Configs,
 	selectInstanceRunView,
 	selectCollectionState,

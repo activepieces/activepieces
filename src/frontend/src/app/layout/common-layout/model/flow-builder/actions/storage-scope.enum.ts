@@ -1,4 +1,4 @@
 export enum StorageScope {
-	INSTANCE = 'INSTANCE',
+	// INSTANCE = 'INSTANCE',
 	COLLECTION = 'COLLECTION',
 }
