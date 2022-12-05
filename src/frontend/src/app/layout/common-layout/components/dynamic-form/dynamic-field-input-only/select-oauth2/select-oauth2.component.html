@@ -1,0 +1,9 @@
+<app-basic-select [dynamicControl]="dropdownFormControl"></app-basic-select>
+<button
+  class="btn btn-text text-primary new-authentication-button p-2"
+  type="button"
+  (click)="openConfigVariable()"
+  *ngIf="!dropdownFormControl.isDisabled()"
+>
+  + New Authentication
+</button>

@@ -1,0 +1,19 @@
+[contentEditable] {
+  outline: 0px solid transparent;
+  white-space: nowrap;
+  transition: none all !important;
+  max-width: 50vw;
+  overflow: hidden;
+}
+
+div {
+  line-height: 1.3;
+
+}
+
+.viewed-text-container {
+  overflow: hidden;
+  cursor: default;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

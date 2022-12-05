@@ -1,0 +1,28 @@
+<div [ngStyle]="flowGraphContainer()">
+  <div [ngStyle]="flowContentContainer()" #flowItem>
+    <app-flow-item-content
+      [trigger]="trigger"
+      [flowItem]="_flowItemData"
+      [viewMode]="viewMode$ | async | defaultTrue"
+      [selected]="selected$ | async | defaultFalse"
+      [style.opacity]="1"
+    ></app-flow-item-content>
+  </div>
+  <div
+    class="positioned-relative"
+    [ngStyle]="{ height: _flowItemData.connectionsBox!.height + 'px' }"
+  >
+    <app-flow-item-connection
+      [insideLoop]="insideLoop"
+      [colorLine]="hoverState"
+      [flowItem]="_flowItemData"
+      [viewMode]="viewMode$ | async | defaultTrue"
+    ></app-flow-item-connection>
+  </div>
+  <app-flow-item
+    *ngIf="_flowItemData.nextAction"
+    [hoverState]="hoverState"
+    [flowItemData]="_flowItemData.nextAction"
+    [insideLoop]="insideLoop"
+  ></app-flow-item>
+</div>

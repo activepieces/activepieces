@@ -1,0 +1,14 @@
+@mixin transform-translate-y-dropdown($value) {
+  -webkit-transform: translate3d(0, $value, 0) !important;
+  -moz-transform: translate3d(0, $value, 0) !important;
+  -o-transform: translate3d(0, $value, 0) !important;
+  -ms-transform: translate3d(0, $value, 0) !important;
+  transform: translate3d(0, $value, 0) !important;
+}
+
+@mixin opacity($opacity) {
+  opacity: $opacity;
+  // IE8 filter
+  $opacity-ie: ($opacity * 100);
+  filter: #{alpha(opacity=$opacity-ie)};
+}

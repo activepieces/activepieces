@@ -1,0 +1,42 @@
+@each $color, $value in $colors {
+  @include bg-variant(".bg-#{$color}", $value);
+}
+
+@each $color, $value in $theme-colors {
+  @include bg-gradient-variant(".bg-gradient-#{$color}", $value);
+}
+
+@each $color, $value in $colors {
+  @include bg-gradient-variant(".bg-gradient-#{$color}", $value);
+}
+
+// Background colors with transparency
+@each $color, $value in $theme-colors {
+  @include bg-translucent-variant(".bg-translucent-#{$color}", $value);
+}
+
+// Sections
+
+@each $color, $value in $section-colors {
+  @include bg-variant(".section-#{$color}", $value);
+}
+
+@each $color, $value in $theme-colors {
+  @include bg-gradient-variant(".bg-gradient-#{$color}", $value);
+}
+
+// Shape (svg) fill colors
+
+@each $color, $value in $theme-colors {
+  .fill-#{$color} {
+    fill: $value;
+  }
+
+  .stroke-#{$color} {
+    stroke: $value;
+  }
+}
+
+.fill-opacity-8 {
+  fill-opacity: 0.8;
+}

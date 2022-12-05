@@ -1,0 +1,29 @@
+@import "src/assets/scss/custom/variables";
+.dashboard-container {
+  height: 100%;
+}
+
+.submenu-close {
+  cursor: pointer;
+}
+
+.route-header {
+  padding: 1.25rem;
+  gap: 20px;
+  display: flex;
+  vertical-align: middle;
+}
+
+.route {
+  display: flex;
+  flex-direction: column;
+}
+
+.route-body {
+  flex-grow: 1;
+  padding: 0px 1.25rem;
+}
+.right-bar-separator {
+  border-right: 1px solid $line;
+  height: 20px;
+}

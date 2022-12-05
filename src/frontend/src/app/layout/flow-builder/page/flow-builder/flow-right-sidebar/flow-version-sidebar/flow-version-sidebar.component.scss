@@ -1,0 +1,40 @@
+@import 'src/assets/scss/custom/variables';
+
+.column {
+  height: 100%;  /* allows both columns to span the full height of the browser window */
+  display: flex;
+  flex-direction: column;  /* places the left and right headers above the bottom content */
+}
+
+.top {
+  flex-shink: 0;
+}
+
+.bottom {
+  flex-grow: 1;  /* ensures that the container will take up the full height of the parent container */
+  overflow-y: auto;  /* adds scroll to this container */
+}
+
+.piece-container{
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  border-radius: 5px;
+}
+
+.piece-container{
+  background-color: $grayCard;
+}
+
+.center-button{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-menu{
+  margin-top: -40px !important;
+  left: -150px !important;
+}
+.dropdown .dropdown-menu:before{
+  background-color: unset;
+}

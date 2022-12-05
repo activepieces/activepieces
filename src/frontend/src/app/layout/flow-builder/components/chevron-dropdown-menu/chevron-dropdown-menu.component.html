@@ -1,0 +1,28 @@
+<svg-icon src="assets/img/custom/debug-icons/caret.svg" *ngIf="!useChevron" [matMenuTriggerFor]="options"
+  class="caret-dropdown d-flex align-items-center" [applyClass]="true">
+</svg-icon>
+<svg-icon [svgStyle]="{ width: 9, height: 8 }" src="assets/img/custom/chevron.svg" *ngIf="useChevron"
+  [matMenuTriggerFor]="options" class="chevron-dropdown d-flex align-items-center">
+</svg-icon>
+
+<mat-menu #options="matMenu" ap-center>
+  <ng-container *ngFor="let option of data">
+    <ng-container *ngIf="option.type === itemType.SEPARATOR">
+      <div class="dropdown-divider"></div>
+    </ng-container>
+    <ng-container *ngIf="option.type === itemType.COPY_ID">
+      <div matTooltip="Copy" mat-menu-item class="dropdown-item d-flex flex-column " (click)="copyId(option)">
+        <label class="text-description m-0 cursor-pointer">{{IdEntityName}} ID: </label>
+        <div class="id-text-height flex-grow-1 ">
+          {{option.name!.substring(0,20)}}...
+        </div>
+
+      </div>
+    </ng-container>
+    <ng-container *ngIf="option.type === itemType.NORMAL">
+      <div mat-menu-item [class]="option.cssClasses" (click)="emitAction(option.id)">{{ option.name }}</div>
+    </ng-container>
+  </ng-container>
+
+
+</mat-menu>

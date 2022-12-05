@@ -1,0 +1,80 @@
+// Weight and italics
+
+.font-weight-300 {
+  font-weight: 300 !important;
+}
+.font-weight-400 {
+  font-weight: 400 !important;
+}
+.font-weight-500 {
+  font-weight: 500 !important;
+}
+.font-weight-600 {
+  font-weight: 600 !important;
+}
+.font-weight-700 {
+  font-weight: 700 !important;
+}
+.font-weight-800 {
+  font-weight: 800 !important;
+}
+.font-weight-900 {
+  font-weight: 900 !important;
+}
+
+// Text decorations
+
+.text-underline {
+  text-decoration: underline;
+}
+.text-through {
+  text-decoration: line-through;
+}
+
+// Line heights
+
+.lh-100 {
+  line-height: 1;
+}
+.lh-110 {
+  line-height: 1.1;
+}
+.lh-120 {
+  line-height: 1.2;
+}
+.lh-130 {
+  line-height: 1.3;
+}
+.lh-140 {
+  line-height: 1.4;
+}
+.lh-150 {
+  line-height: 1.5;
+}
+.lh-160 {
+  line-height: 1.6;
+}
+.lh-170 {
+  line-height: 1.7;
+}
+.lh-180 {
+  line-height: 1.8;
+}
+
+// Letter spacings
+
+.ls-1 {
+  letter-spacing: 0.0625rem;
+}
+.ls-15 {
+  letter-spacing: 0.09375rem;
+}
+.ls-2 {
+  letter-spacing: 0.125rem;
+}
+
+// Color variations
+
+@each $color, $value in $colors {
+  @include text-emphasis-variant(".text-#{$color}", $value);
+}

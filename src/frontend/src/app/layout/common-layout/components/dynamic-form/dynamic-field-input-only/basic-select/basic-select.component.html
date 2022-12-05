@@ -1,0 +1,66 @@
+<div *ngIf="dynamicControl">
+  <ng-container *ngIf="!dynamicControl.isDynamic; else dynamicDropdown">
+    <ng-select
+      [items]="dynamicControl.getDropdownOptions()"
+      bindLabel="label"
+      autofocus
+      bindValue="value"
+      [clearable]="clearable"
+      [searchable]="searchable"
+      [formControl]="dynamicControl.formControl()"
+      placeholder="Please select"
+      appendTo="body"
+    >
+      <ng-template ng-option-tmp let-item="item">
+        <div class="d-flex">
+          <div class="flex-grow-1">{{ item.label }}</div>
+          <svg-icon
+            *ngIf="itemSelected(item)"
+            src="assets/img/custom/check.svg"
+            class="check-icon"
+            [applyClass]="true"
+          >
+          </svg-icon>
+        </div>
+      </ng-template>
+    </ng-select>
+  </ng-container>
+  <ng-template #dynamicDropdown>
+    <ng-select
+      [formControl]="dynamicControl.formControl()"
+      [items]="(dynamicDropdownObs$ | async)?.options || []"
+      [loading]="!(dynamicDropdownObs$ | async)?.loaded || false"
+      appendTo="body"
+      [placeholder]="
+        !(dynamicDropdownObs$ | async)?.loaded
+          ? 'Loading...'
+          : (dynamicDropdownObs$ | async)?.placeholder!
+      "
+      bindLabel="label"
+      bindValue="value"
+      [clearable]="clearable"
+      [searchable]="searchable"
+    >
+      <ng-template ng-option-tmp let-item="item">
+        <div class="d-flex option-container">
+          <div class="flex-grow-1">{{ item.label }}</div>
+          <svg-icon
+            *ngIf="itemSelected(item)"
+            src="assets/img/custom/check.svg"
+            class="check-icon"
+            [applyClass]="true"
+          >
+          </svg-icon>
+        </div>
+      </ng-template>
+      <ng-template ng-loadingspinner-tmp>
+        <svg-icon
+          [svgStyle]="{ width: 14, height: 14 }"
+          src="assets/img/custom/loading.svg"
+          class="loading-spin-animation black-spinner"
+          [applyClass]="true"
+        ></svg-icon>
+      </ng-template>
+    </ng-select>
+  </ng-template>
+</div>

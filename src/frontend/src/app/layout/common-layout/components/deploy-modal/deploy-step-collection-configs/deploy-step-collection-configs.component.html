@@ -1,0 +1,36 @@
+<div class="modal-header">
+  <h5 class="modal-title pull-left">Collection Configs</h5>
+  <button
+    type="button"
+    class="btn-close close pull-right"
+    aria-label="Close"
+    (click)="this.cancelClicked.emit()"
+  >
+    <span aria-hidden="true" class="visually-hidden close-custom">&times;</span>
+  </button>
+</div>
+<div class="modal-body">
+  <form [formGroup]="collectionConfigsForm">
+    <app-configs-form
+      formControlName="collectionConfigs"
+      [configs]="collectionVersion.configs"
+      [submitted]="submitted"
+    >
+    </app-configs-form>
+  </form>
+</div>
+<div class="modal-footer" top-border>
+  <app-button
+  btnColor="basic"
+  btnStyle="basic"
+  (buttonClicked)="this.cancelClicked.emit()"
+> Cancel
+</app-button>
+
+  <app-button
+    type="button"
+    btnColor="primary"
+    [loading]="loading"
+    (click)="nextStep()"
+  >Next</app-button>
+</div>

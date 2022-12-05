@@ -1,0 +1,9 @@
+@import "src/assets/scss/custom/variables";
+.new-authentication-button {
+  background-color: transparent;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+.new-authentication-button:hover {
+  background-color: $buttonTextPrimaryHover;
+}

@@ -1,0 +1,90 @@
+<ng-container *ngIf="collectionId$ |async as collectionId">
+  <div class="modal-header">
+    <h5 class="modal-title pull-left">
+      <ng-container *ngIf="!configToUpdateWithIndex; else editConfigHeader">New Authentication</ng-container>
+      <ng-template #editConfigHeader>Edit {{configToUpdateWithIndex!.config.key}}</ng-template>
+    </h5>
+    <button type="button" class="btn-close close  pull-right" aria-label="Close" (click)="bsModalRef.hide()">
+      <span aria-hidden="true" class="close-custom visually-hidden">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="settingsForm" class="d-flex flex-column config-modal-form-controls-container"
+      [class.ng-submitted]="submitted">
+      <div>
+        <label class="dashed-underline-label" required [matTooltip]="clientIdTooltip" matTooltipClass="labels-tooltip"
+          >Client ID</label>
+        <input class="form-control" formControlName="clientId" type="text">
+        <p @fadeInUp class="invalid-input" *ngIf="submitted && settingsForm.get('clientId')!.invalid ">
+          Client ID is required
+        </p>
+      </div>
+      <div>
+        <label class="dashed-underline-label" required [matTooltip]="clientSecretTooltip" matTooltipClass="labels-tooltip"
+          >Client Secret</label>
+        <input class="form-control" formControlName="clientSecret" type="text">
+        <p @fadeInUp class="invalid-input" *ngIf="submitted && settingsForm.get('clientSecret')!.invalid ">
+          Client secret is required
+        </p>
+      </div>
+      <div>
+        <label class="dashed-underline-label" placement="bottom" [matTooltip]="redirectUrlTooltip"
+        matTooltipClass="labels-tooltip" required>Redirect URL</label>
+        <input class="form-control" formControlName="redirectUrl" type="text">
+      </div>
+      <div>
+        <label class="dashed-underline-label"  matTooltipClass="labels-tooltip"
+          [matTooltip]="scopesTooltip" required>Scopes</label>
+        <ng-select tagsOnly
+          [items]="[]"
+          [addTag]="true"
+          [multiple]="true"
+          addTagText="Adding Scope"
+          notFoundText="Type to add scope"
+          placeholder="Enter the scopes required seperated by enter" appendTo="body" formControlName="scope">
+
+
+          <ng-template ng-label-tmp let-item="item" let-clear="clear">
+            <app-ng-select-tag-value-template [item]="item" [clear]="clear"></app-ng-select-tag-value-template>
+          </ng-template>
+        </ng-select>
+        <p @fadeInUp class="invalid-input" *ngIf="submitted && settingsForm.get('scope')!.invalid">
+          <ng-container *ngIf="submitted &&  settingsForm.get('scope')!.getError('required')">
+            Scopes are required
+          </ng-container>
+
+        </p>
+      </div>
+
+      <div>
+        <label required [matTooltip]="keyTooltip" class="dashed-underline-label"
+        matTooltipClass="labels-tooltip">Key</label>
+        <input class="form-control" formControlName="key" type="text">
+        <p @fadeInUp class="invalid-input" *ngIf="submitted && settingsForm.get('key')!.invalid">
+          <ng-container *ngIf="submitted &&  settingsForm.get('key')!.getError('required'); else patternErrorOrAlreadyUsed">
+            Key is required
+          </ng-container>
+          <ng-template  #patternErrorOrAlreadyUsed>
+            <ng-container *ngIf="settingsForm.get('key')!.getError('requiredPattern');">
+              Keys can only contain letters, numbers and underscores
+            </ng-container>
+            <ng-container *ngIf="settingsForm.get('key')!.getError('keyUsed');">
+              Keys is already used
+            </ng-container>
+          </ng-template>
+        </p>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <app-button
+    btnColor="basic"
+    btnStyle="basic"
+    (buttonClicked)="bsModalRef.hide()"
+  > Cancel
+  </app-button>
+    <app-button [load]="saving" (buttonClicked)="submit(collectionId)"  btnColor="primary">Save
+    </app-button>
+  </div>
+
+</ng-container>

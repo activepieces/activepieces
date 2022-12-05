@@ -1,0 +1,168 @@
+// Nucleo icons
+
+.section-nucleo-icons .icons-container {
+  position: relative;
+  max-width: 100%;
+  height: 360px;
+  margin: 0 auto;
+  z-index: 1;
+}
+
+.section-nucleo-icons {
+  --icon-size: 5rem;
+  --icon-sm-size: 3.75rem;
+  --gutter: 7rem;
+
+  .icons-container {
+    i {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: $white;
+      z-index: 1;
+      transform: translate(-50%, -50%);
+      @include box-shadow($box-shadow);
+      transition: all 0.2s cubic-bezier(0.25, 0.65, 0.9, 0.75);
+
+      &.icon {
+        width: var(--icon-size);
+        height: var(--icon-size);
+        font-size: 1.7em;
+      }
+
+      &.icon-sm {
+        width: var(--icon-sm-size);
+        height: var(--icon-sm-size);
+        font-size: 1.5em;
+      }
+
+      &:nth-child(1) {
+        font-size: 42px;
+        color: theme-color("warning");
+        z-index: 2;
+      }
+    }
+
+    &:not(.on-screen) {
+      i {
+        transform: translate(-50%, -50%);
+        left: 50%;
+        top: 50%;
+
+        &:not(:nth-child(1)) {
+          opacity: 0;
+        }
+      }
+    }
+
+    &.on-screen {
+      i {
+        opacity: 1;
+
+        &:nth-child(1) {
+          left: 50%;
+          top: 50%;
+          font-size: 42px;
+          color: theme-color("warning");
+        }
+
+        &:nth-child(2) {
+          left: calc(50% + (var(--gutter) * 1.7));
+          top: 50%;
+        }
+
+        &:nth-child(3) {
+          left: calc(50% + var(--gutter));
+          top: calc(50% + var(--gutter));
+        }
+
+        &:nth-child(4) {
+          left: calc(50% + var(--gutter));
+          top: calc(50% - var(--gutter));
+        }
+
+        &:nth-child(5) {
+          left: calc(50% + (var(--gutter) * 3));
+          top: 50%;
+        }
+
+        &:nth-child(6) {
+          left: calc(50% + (var(--gutter) * 2.7));
+          top: calc(50% + (var(--gutter) * 1.5));
+        }
+
+        &:nth-child(7) {
+          left: calc(50% + (var(--gutter) * 2.7));
+          top: calc(50% - (var(--gutter) * 1.5));
+        }
+
+        &:nth-child(8) {
+          left: calc(50% - (var(--gutter) * 1.7));
+          top: 50%;
+        }
+
+        &:nth-child(9) {
+          left: calc(50% - var(--gutter));
+          top: calc(50% + var(--gutter));
+        }
+
+        &:nth-child(10) {
+          left: calc(50% - var(--gutter));
+          top: calc(50% - var(--gutter));
+        }
+
+        &:nth-child(11) {
+          left: calc(50% - (var(--gutter) * 4));
+          top: 50%;
+        }
+
+        &:nth-child(12) {
+          left: calc(50% - (var(--gutter) * 2.7));
+          top: calc(50% + (var(--gutter) * 1.5));
+        }
+
+        &:nth-child(13) {
+          left: calc(50% - (var(--gutter) * 2.7));
+          top: calc(50% - (var(--gutter) * 1.5));
+        }
+      }
+    }
+  }
+}
+
+// Blurable sections
+
+.blur--hover {
+  position: relative;
+
+  .blur-item {
+    transition: 1s cubic-bezier(0.19, 1, 0.22, 1);
+    will-change: transform;
+    filter: blur(0);
+    opacity: 1;
+  }
+
+  .blur-hidden {
+    position: absolute;
+    top: calc(50% + 7px);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: $transition-base;
+    z-index: 100;
+  }
+  &:hover {
+    .blur-item {
+      opacity: 0.8;
+      filter: blur(10px);
+      transform: scale(0.95);
+      z-index: 1;
+    }
+    .blur-hidden {
+      opacity: 1;
+      top: 50%;
+    }
+  }
+}

@@ -1,0 +1,149 @@
+<div
+  class="modal-content code-editor"
+  [style.background-color]="themeService.PRIMARY_COLOR"
+>
+  <div
+    class="modal-header text-center d-flex justify-content-center align-items-center"
+  >
+    <h5 class="modal-title">Code Editor</h5>
+
+    <div style="flex-grow: 1"></div>
+
+    <app-button
+      [loadingCSS]="'text-primary'"
+      btnStyle="basic"
+      (buttonClicked)="openNpmPackage()"
+    >Add npm package
+    </app-button>
+    <app-button
+      [loadingCSS]="'text-primary'"
+      [loading]="testLoading"
+      class="ml-2"
+      btnStyle="basic"
+      (buttonClicked)="openTestModal()"
+      >Test code
+    </app-button>
+    <div class="ml-3" style="display: inline-block">
+      <app-icon-button
+        [color]="'#FFFFFF'"
+        style="margin-right: 0"
+        (click)="bsModalRef.hide()"
+        [iconFilename]="'minimize.svg'"
+      ></app-icon-button>
+    </div>
+  </div>
+  <div class="modal-body">
+    <div class="d-flex code-height-auto code-container">
+      <div class="p-2">
+        <div class="p-2">
+          <div class="d-flex flex-column">
+            <div
+              class="p-2 d-flex flex-row file-container {{
+                selectedFile === 'CONTENT' ? 'file-active' : ''
+              }}"
+              (click)="selectedFile = 'CONTENT'"
+            >
+              <div>
+                <app-img
+                  style="line-height: 100%; vertical-align: middle"
+                  [width]="16"
+                  [height]="16"
+                  [src]="'/assets/img/custom/files/js.svg'"
+                ></app-img>
+              </div>
+              <div class="ml-2">index.js</div>
+            </div>
+
+            <div
+              class="p-2 d-flex flex-row file-container {{
+                selectedFile === 'PACKAGE' ? 'file-active' : ''
+              }} mt-2"
+              (click)="selectedFile = 'PACKAGE'"
+            >
+              <div>
+                <app-img
+                  style="line-height: 100%; vertical-align: middle"
+                  [width]="16"
+                  [height]="16"
+                  [src]="'/assets/img/custom/files/package.svg'"
+                ></app-img>
+              </div>
+              <div class="ml-2">package.json</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="flex: 1; overflow: auto" class="p-2">
+        <!-- formControl returns custom validation errors from monaco/ that why using ngModel / ngModelChange here-->
+        <ngx-monaco-editor
+          *ngIf="selectedFile === 'CONTENT'"
+          [ngModel]="contentFormControl().value"
+          (ngModelChange)="contentFormControl().setValue($event)"
+          [options]="{
+            minimap: { enabled: false },
+            theme: 'vs',
+            language: 'javascript',
+            readOnly: this.viewMode$ | async | defaultTrue
+          }"
+        ></ngx-monaco-editor>
+
+        <ngx-monaco-editor
+          *ngIf="selectedFile === 'PACKAGE'"
+          [ngModel]="packageFormControl().value"
+          (ngModelChange)="packageFormControl().setValue($event)"
+          [options]="{
+            minimap: { enabled: false },
+            theme: 'vs',
+            language: 'json',
+            readOnly: this.viewMode$ | async | defaultTrue
+          }"
+        ></ngx-monaco-editor>
+      </div>
+      <div class="p-2 console-container">
+        <div
+          class="console-size code-height-auto"
+          style="height: 100% !important"
+        >
+          <div class="d-flex flex-column" style="height: 100%">
+            <div>
+              <button
+                class="btn btn-sm {{
+                  selectedTab === 'OUTPUT'
+                    ? 'btn-primary'
+                    : 'btn-outline-primary'
+                }} mr-2"
+                (click)="selectedTab = 'OUTPUT'"
+              >
+                Output
+              </button>
+              <button
+                class="btn btn-sm {{
+                  selectedTab === 'CONSOLE'
+                    ? 'btn-primary'
+                    : 'btn-outline-primary'
+                }}"
+                (click)="selectedTab = 'CONSOLE'"
+              >
+                Console
+              </button>
+            </div>
+            <div class="mt-2" style="flex: 1 1 auto">
+              <ngx-codemirror
+                [(ngModel)]="selectedTab === 'CONSOLE' ? console : output"
+                [options]="{
+                  theme: 'material',
+                  lineWrapping: true,
+                  readOnly: true,
+                  mode: selectedTab === 'CONSOLE' ? 'shell' : 'javascript'
+                }"
+              ></ngx-codemirror>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-container *ngIf="addNpmPackage$ | async"></ng-container>
+<ng-container *ngIf="testCode$ | async"></ng-container>

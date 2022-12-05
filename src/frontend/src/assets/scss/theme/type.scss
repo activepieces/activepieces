@@ -1,0 +1,93 @@
+// General styles
+
+p {
+  font-size: $paragraph-font-size;
+  font-weight: $paragraph-font-weight;
+  line-height: $paragraph-line-height;
+}
+
+.lead {
+  font-size: $lead-font-size;
+  font-weight: $lead-font-weight;
+  line-height: $paragraph-line-height;
+  margin-top: 1.5rem;
+
+  + .btn-wrapper {
+    margin-top: 3rem;
+  }
+}
+
+.description {
+  font-size: $font-size-sm;
+}
+
+// Headings
+
+.heading {
+  letter-spacing: $heading-letter-spacing;
+  font-size: $heading-font-size;
+  text-transform: $heading-text-transform;
+  font-weight: $heading-font-weight;
+}
+
+.heading-title {
+  letter-spacing: $heading-title-letter-spacing;
+  font-size: $heading-title-font-size;
+  font-weight: $heading-title-font-weight;
+  text-transform: $heading-title-text-transform;
+}
+
+.heading-section {
+  letter-spacing: $heading-section-letter-spacing;
+  font-size: $heading-section-font-size;
+  font-weight: $heading-section-font-weight;
+  text-transform: $heading-section-text-transform;
+
+  img {
+    display: block;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 1.5rem;
+  }
+
+  &.text-center {
+    img {
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+}
+
+// Section titles
+
+.display-1,
+.display-2,
+.display-3,
+.display-4 {
+  span {
+    display: block;
+    font-weight: $font-weight-light;
+  }
+}
+
+// Articles
+
+article {
+  h4:not(:first-child),
+  h5:not(:first-child) {
+    margin-top: 3rem;
+  }
+
+  h4,
+  h5 {
+    margin-bottom: 1.5rem;
+  }
+
+  figure {
+    margin: 3rem 0;
+  }
+
+  h5 + figure {
+    margin-top: 0;
+  }
+}

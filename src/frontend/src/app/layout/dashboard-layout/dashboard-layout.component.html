@@ -1,0 +1,25 @@
+<div class="d-flex">
+  <app-sidebar></app-sidebar>
+  <div class="flex-grow-1">
+    <div class="route h-100">
+      <div class="d-flex route-header align-items-center">
+        <h5 class="m-0">
+          {{ route?.text === "Flows" ? "Flow Collections" : route?.text }}
+        </h5>
+        <div class="flex-grow-1"></div>
+
+        <div  class="right-bar-separator"></div>
+        <app-user-avatar></app-user-avatar>
+      </div>
+      <div class="route-body">
+        <div *ngIf="loading$ | async as loading; else loading;">
+          <app-loading-skeleton></app-loading-skeleton>
+        </div>
+        <ng-template #loading>
+          <router-outlet></router-outlet>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>
+<ng-container *ngIf="updateSelectedRoute$ | async"></ng-container>

@@ -1,0 +1,12 @@
+// Local docs variables
+$ct-primary: theme-color("primary") !default;
+$ct-primary-bright: lighten(saturate($ct-primary, 5%), 15%) !default;
+$ct-primary-light: rgba(255, 255, 255, 0.9) !default;
+$ct-dark: #2a2730 !default;
+$ct-download: #ffe484 !default;
+$ct-info: #5bc0de !default;
+$ct-warning: #f0ad4e !default;
+$ct-danger: #d9534f !default;
+
+$ct-sidebar-bg: #f5f7f9;
+$ct-sidebar-border-color: #e6ecf1;

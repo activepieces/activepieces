@@ -1,0 +1,52 @@
+<div class="dashboard-side-bar d-flex">
+  <div [ngStyle]="sdContainer()">
+    <app-img
+      class="sd-icon mb-2 home-icon cursor-pointer"
+      [width]="30"
+      [height]="30"
+      [src]="'/assets/img/custom/sidebar/activepieces-small.png'"
+      (click)="navigateHome()"
+    ></app-img>
+    <div class="items-top">
+      <div
+        class="sd-icon-wrapper"
+        [class.disabled-icon]="isTrialExpired"
+        *ngFor="
+          let route of this.navigationService.sidebarRoutes;
+          let i = index
+        "
+      >
+        <div
+          class="sd-icon"
+          (click)="selectMenu(route)"
+          (mouseenter)="route.hover = true && !isTrialExpired"
+          (mouseleave)="route.hover = false"
+        >
+          <div
+            class="sd-icon-container {{
+              route && route.hover ? 'sd-icon-container-hover' : ''
+            }}"
+            [ngStyle]="borderColor(i)"
+          >
+            <svg-icon
+              [svgStyle]="{ width: 23, height: 23, fill: 'grey' }"
+              [src]="isTrialExpired ? route.disabledIcon : route.icon"
+            ></svg-icon>
+          </div>
+          <div
+            class="sd-icon-text no-select {{
+              selectedIndex === i ? 'sd-icon-text-clicked' : ''
+            }}"
+          >
+            {{ route.text }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+<ng-container *ngIf="updateSelectedIndex$ | async"></ng-container>
+<ng-container *ngIf="selectedIndex$ | async"></ng-container>
+<ng-container *ngIf="updateSelectedSubmenuIndex$ | async"></ng-container>

@@ -1,0 +1,371 @@
+.docs {
+  background: #fff;
+
+  h6 {
+    font-size: 1rem;
+    font-weight: $font-weight-bold;
+  }
+}
+
+.ct-content {
+  order: 1;
+
+  > h2[id],
+  > h3[id],
+  > h4[id] {
+    pointer-events: none;
+
+    > div,
+    > a {
+      pointer-events: auto;
+    }
+
+    &::before {
+      display: block;
+      height: 6rem;
+      margin-top: -6rem;
+      visibility: hidden;
+      content: "";
+    }
+  }
+
+  > table {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 1rem;
+
+    @include media-breakpoint-down(md) {
+      display: block;
+      overflow-x: auto;
+      -ms-overflow-style: -ms-autohiding-scrollbar; // See https://github.com/twbs/bootstrap/pull/10057
+      &.table-bordered {
+        border: 0;
+      }
+    } // Cells
+    > thead,
+    > tbody,
+    > tfoot {
+      > tr {
+        > th,
+        > td {
+          padding: $table-cell-padding;
+          vertical-align: top;
+          border: 1px solid $table-border-color;
+
+          > p:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+    } // Prevent breaking of code (e.g., Grunt tasks list)
+    td:first-child > code {
+      white-space: nowrap;
+    }
+  }
+}
+
+//
+// Docs sections
+//
+.ct-content {
+  > h2:not(:first-child) {
+    margin-top: 3rem;
+    font-size: 1.5rem;
+    font-weight: $font-weight-bold;
+  }
+
+  > h3 {
+    margin-top: 2.5rem;
+    font-size: 1.25rem;
+    font-weight: $font-weight-bold;
+  }
+
+  > ul li,
+  > ol li {
+    margin-bottom: 0.25rem;
+  }
+
+  @include media-breakpoint-up(lg) {
+    > ul,
+    > ol,
+    > p {
+      max-width: 80%;
+    }
+  }
+}
+
+.ct-page-title {
+  padding-left: 1.25rem;
+  border-left: 2px solid $ct-primary;
+  margin-bottom: 1.5rem;
+}
+
+.ct-title {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 300;
+
+  @include media-breakpoint-up(sm) {
+    font-size: 1.5rem;
+    font-weight: $font-weight-bold;
+  }
+}
+
+.ct-lead {
+  color: rgb(59, 69, 78);
+  font-weight: 500;
+
+  @include media-breakpoint-up(sm) {
+    max-width: 80%;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+.ct-text-purple {
+  color: $ct-primary;
+}
+
+.ct-text-purple-bright {
+  color: $ct-primary-bright;
+}
+
+// Docs code example tabs
+.ct-tabs-example {
+  .nav-link i {
+    margin-right: 5px;
+  }
+}
+
+// Color swatches
+.color-swatch {
+  margin: 1rem 0;
+  border-radius: 0.25rem;
+  background-color: #f4f5f7;
+}
+
+.color-swatch:after {
+  content: " ";
+  display: table;
+  clear: both;
+}
+
+.color-swatch-header {
+  position: relative;
+  height: 0;
+  padding-bottom: 50%;
+  border-radius: 0.25rem 0.25rem 0 0;
+  border: 1px solid transparent;
+}
+
+.color-swatch-header.is-light {
+  border-color: #c1c7d0;
+}
+
+.color-swatch-header .pass-fail {
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+}
+
+.color-swatch-header .pass-fail-item-wrap {
+  position: relative;
+  float: left;
+  left: 50%;
+  -webkit-transform: translateX(-50%);
+  -ms-transform: translateX(-50%);
+  transform: translateX(-50%);
+}
+
+.color-swatch-header .pass-fail-item-group {
+  display: inline-block;
+  padding: 0 5px;
+}
+
+.color-swatch-header .pass-fail-item {
+  float: left;
+  display: inline-block;
+  text-align: center;
+  padding: 2px;
+}
+
+.color-swatch-header .pass-fail-item.white .example {
+  color: #fff;
+}
+
+.color-swatch-header .pass-fail-item.small .example {
+  font-size: 10px;
+}
+
+.color-swatch-header .pass-fail-item .lozenge {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 600;
+  background: #000;
+  color: #fff;
+  padding: 2px 4px;
+  line-height: 10px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+.color-swatch-body {
+  position: relative;
+  left: 50%;
+  float: left;
+  padding: 10px 0;
+  -webkit-transform: translateX(-50%);
+  -ms-transform: translateX(-50%);
+  transform: translateX(-50%);
+}
+
+.color-swatch-body .prop-item-wrap {
+  float: left;
+  padding: 0 15px;
+  min-width: 65px;
+}
+
+.color-swatch-body .prop-item {
+  padding: 15px 0;
+}
+
+.color-swatch-body .prop-item .label {
+  font-size: 11px;
+  color: #62748c;
+  text-transform: uppercase;
+  line-height: 16px;
+}
+
+.color-swatch-body .prop-item .value {
+  font-size: 14px;
+}
+
+.table-colors {
+  font-weight: 600;
+  font-size: 16px;
+  width: 100%;
+}
+
+.table-colors td,
+.table-colors:first-child td,
+.table-colors td:first-child,
+.table-colors:first-child td:first-child,
+.table-colors td:last-child,
+.table-colors:first-child td:last-child {
+  background: $ct-primary-light;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 10px;
+}
+
+.table-colors tr:last-child td,
+.table-colors:first-child tr:last-child td {
+  border-bottom: none;
+}
+
+.table-colors td:nth-child(1),
+.table-colors:first-child td:nth-child(1) {
+  line-height: 40px;
+}
+
+.table-colors .swatch,
+.table-colors:first-child .swatch {
+  float: left;
+  height: 40px;
+  width: 40px;
+  margin-right: 20px;
+  display: inline-block;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+.table-colors .swatch.is-light,
+.table-colors:first-child .swatch.is-light {
+  border-color: #c1c7d0;
+}
+
+.table-colors .lozenge,
+.table-colors:first-child .lozenge {
+  float: left;
+  margin: 5px 10px 0 0;
+  font-size: 10px;
+  display: inline-block;
+  text-transform: uppercase;
+  font-weight: 600;
+  background: #97a0af;
+  color: #042a53;
+  padding: 2px 4px;
+  line-height: 10px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+#tags-component.tab-pane {
+  .choices__inner {
+    height: 60px;
+  }
+}
+
+.highlight pre {
+  overflow: auto;
+  margin: 0;
+  padding: 1.25rem;
+  font-family: Consolas, Menlo, Monaco, "Andale Mono WT", "Andale Mono",
+    "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono",
+    "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L",
+    "Courier New", Courier, monospace;
+  font-size: 14px;
+  line-height: 1.375;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  hyphens: none;
+  color: #5e6687;
+  border-radius: 0.25rem;
+  background: #f5f7ff;
+  direction: ltr;
+  -ms-hyphens: none;
+
+  code {
+    font-size: 87.5%;
+    word-break: break-word;
+    color: #5e6687;
+  }
+
+  pre code {
+    font-size: inherit;
+    word-break: normal;
+    color: inherit;
+  }
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+      "Courier New", monospace;
+    font-size: 1em;
+  }
+  .nt {
+    color: #3d8fd1;
+  }
+  .na {
+    color: #c76b29;
+  }
+  .s,
+  .token.control,
+  .token.directive,
+  .token.keyword,
+  .token.unit {
+    color: #ac9739;
+  }
+  .token.punctuation {
+    color: #5e6687;
+  }
+}
+.btn-clipboard {
+  top: 3.5rem;
+}

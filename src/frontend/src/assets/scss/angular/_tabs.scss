@@ -1,0 +1,62 @@
+.tab-space .tab-content{
+  padding: 20px 0 50px 0 !important;
+}
+
+tabset:not(.vertical-pills) .tab-content {
+  padding: 20px 0 0;
+}
+.justify-content-center .nav-tabs {
+  justify-content: center !important;
+}
+.vertical-pills {
+    display: flex;
+    .nav-pills{
+      padding-right: 15px;
+      padding-left: 15px;
+    }
+    .nav-item{
+      padding: 0!important;
+    }
+}
+.checkout-btn-group .nav-tabs {
+  padding-left: 0;
+  position: relative;
+  vertical-align: middle;
+  .nav-item {
+    flex: 1 1;
+    display: flex;
+    .nav-link {
+      color: $info;
+      border-color: $info !important;
+      padding: 4px 14px;
+      position: relative;
+      flex: 1 1 auto;
+      display: inline-block;
+      font-weight: 400;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      border-radius: 0.25rem;
+      user-select: none;
+      letter-spacing: 0.025em;
+      overflow: hidden;
+      text-transform: uppercase;
+      margin: 4px 0;
+      outline: 0 !important;
+
+      &.active {
+        background-color: $info !important;
+        color: $white;
+      }
+    }
+    &:not(:first-child) .nav-link {
+      border-top-left-radius: 0 !important;
+      border-bottom-left-radius: 0 !important;
+    }
+    &:not(:last-child) .nav-link {
+      border-top-right-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+    }
+  }
+}

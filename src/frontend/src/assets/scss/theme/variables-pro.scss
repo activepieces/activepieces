@@ -1,0 +1,160 @@
+// Theme Variables
+
+@import "variables";
+
+// Toggle Buttons
+
+$custom-toggle-width: 52px !default;
+$custom-toggle-slider-bg: $gray-200 !default;
+$custom-toggle-checked-bg: theme-color("primary") !default;
+$custom-toggle-border-color: $gray-400;
+
+// Social Buttons
+
+$facebook: #3b5998 !default;
+$facebook-states: darken($facebook, 5%) !default;
+$twitter: #55acee !default;
+$twitter-states: darken($twitter, 5%) !default;
+$instagram: #125688 !default;
+$instagram-states: darken($instagram, 6%) !default;
+$linkedin: #0077b5 !default;
+$linkedin-states: darken($linkedin, 5%) !default;
+$pinterest: #cc2127 !default;
+$pinterest-states: darken($pinterest, 6%) !default;
+$youtube: #e52d27 !default;
+$youtube-states: darken($youtube, 6%) !default;
+$dribbble: #ea4c89 !default;
+$dribbble-states: darken($dribbble, 6%) !default;
+$github: #24292e !default;
+$github-states: darken($github, 6%) !default;
+$reddit: #ff4500 !default;
+$reddit-states: darken($reddit, 6%) !default;
+$tumblr: #35465c !default;
+$tumblr-states: darken($tumblr, 6%) !default;
+$behance: #1769ff !default;
+$behance-states: darken($behance, 6%) !default;
+$vimeo: #1ab7ea !default;
+$vimeo-states: darken($vimeo, 6%) !default;
+$slack: #3aaf85 !default;
+$slack-states: darken($slack, 6%) !default;
+
+// Icons
+
+$icon-size: auto !default;
+$icon-size-regular: 2.375rem !default;
+$icon-font-size-regular: 0.9375rem !default;
+$icon-font-size-sm: 0.6875rem !default;
+$icon-size-sm: 1.875rem !default;
+$icon-font-size-lg: 1.325rem !default;
+$icon-size-lg: 3.7rem !default;
+$icon-size-xl: 5rem !default;
+
+// Tables
+
+$table-cell-padding: 1rem !default;
+$table-cell-padding-sm: 0.5rem !default;
+
+$table-bg: transparent !default;
+$table-accent-bg: rgba($gray-100, 0.3) !default;
+$table-hover-bg: $gray-100 !default;
+$table-active-bg: $table-hover-bg !default;
+
+$table-border-width: $border-width !default;
+$table-border-color: $gray-200 !default;
+
+$table-head-spacer-y: 0.75rem !default;
+$table-head-spacer-x: 1rem !default;
+$table-head-font-size: 0.65rem !default;
+$table-head-font-weight: $font-weight-bold !default;
+$table-head-text-transform: uppercase !default;
+$table-head-letter-spacing: 1px !default;
+$table-head-bg: $gray-100 !default;
+$table-head-color: $gray-600 !default;
+$table-action-color: $gray-500 !default;
+
+$table-body-font-size: 0.8125rem !default;
+
+$table-dark-bg: theme-color("default") !default;
+$table-dark-accent-bg: rgba($white, 0.05) !default;
+$table-dark-hover-bg: rgba($white, 0.075) !default;
+$table-dark-border-color: lighten(theme-color("default"), 7%) !default;
+$table-dark-color: $body-bg !default;
+
+$table-dark-head-bg: lighten(theme-color("default"), 4%) !default;
+$table-dark-head-color: lighten(theme-color("default"), 35%) !default;
+$table-dark-action-color: lighten(theme-color("default"), 35%) !default;
+
+// Cards
+
+$card-spacer-y: 1.25rem !default;
+$card-spacer-x: 1.5rem !default;
+$card-border-width: $border-width !default;
+$card-border-radius: $border-radius !default;
+$card-border-color: rgba($black, 0.05) !default;
+$card-inner-border-radius: calc(
+  #{$card-border-radius} - #{$card-border-width}
+) !default;
+$card-cap-bg: $white !default;
+$card-bg: $white !default;
+$card-box-shadow: $box-shadow !default;
+
+$card-img-overlay-padding: 1.25rem !default;
+
+$card-columns-count: 3 !default;
+$card-columns-gap: 1.25rem !default;
+$card-columns-margin: $card-spacer-y !default;
+$transition-bezier-rotating-card: cubic-bezier(0.34, 1.45, 0.7, 1) !default;
+$border-radius-large: 6px !default;
+
+// Shadows (originally from mdl http://www.getmdl.io/)
+$bmd-shadow-umbra-opacity: 0.2 !default;
+$bmd-shadow-penumbra-opacity: 0.14 !default;
+$bmd-shadow-ambient-opacity: 0.12 !default;
+$info-shadow: 13px 13px 50px -24px;
+
+// opacity
+$default-opacity: rgba(182, 182, 182, 0.6) !default;
+$primary-opacity: rgba(209, 49, 193, 0.3) !default;
+$success-opacity: rgba(24, 206, 15, 0.3) !default;
+$info-opacity: rgba(44, 168, 255, 0.3) !default;
+$warning-opacity: rgba(255, 178, 54, 0.3) !default;
+$danger-opacity: rgba(255, 54, 54, 0.3) !default;
+
+// Icons
+
+$icon-size: 3rem !default;
+$icon-size-xl: 5rem !default;
+$icon-size-lg: 4rem !default;
+$icon-size-sm: 2rem !default;
+$icon-size-xs: 1.25rem !default;
+
+// Card Background
+
+$card-background-height: 330px;
+$card-background-height-sm: 380px;
+$card-background-height-lg: 550px;
+
+$margin-bottom: 10px !default;
+$margin-lg-vertical: 30px !default;
+$margin-base-vertical: 15px !default;
+
+// Local docs variables
+$ct-primary: theme-color("primary") !default;
+$ct-primary-bright: lighten(saturate($ct-primary, 5%), 15%) !default;
+$ct-primary-light: rgba(255, 255, 255, 0.9) !default;
+$ct-dark: #2a2730 !default;
+$ct-download: #ffe484 !default;
+$ct-info: #5bc0de !default;
+$ct-warning: #f0ad4e !default;
+$ct-danger: #d9534f !default;
+
+$ct-sidebar-bg: #f5f7f9;
+$ct-sidebar-border-color: #e6ecf1;
+
+// navbar
+
+$navbar-dark-toggler-icon-bg: str-replace(
+  url("data:image/svg+xml,%3csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3e%3cpath stroke='#{$navbar-dark-color}' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e"),
+  "#",
+  "%23"
+) !default;

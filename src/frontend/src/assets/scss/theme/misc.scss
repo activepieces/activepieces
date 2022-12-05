@@ -1,0 +1,225 @@
+.index-page {
+  .section-hero {
+    .badge {
+      position: relative;
+      top: -5px;
+      font-size: 14px;
+      left: 5px;
+    }
+  }
+
+  .tooltips-popovers {
+    .btn {
+      &[data-toggle="tooltip"],
+      &[data-toggle="popover"] {
+        margin-bottom: 10px;
+      }
+    }
+  }
+  .section-shaped {
+    .rounded.overflow-hidden {
+      z-index: 2;
+      position: relative;
+    }
+  }
+}
+
+.blockquote {
+  border-left: 2px solid rgba(136, 152, 170, 0.32);
+  padding-left: 1rem;
+}
+
+// Toasts
+
+.toast {
+  border: none;
+  box-shadow: $card-box-shadow;
+  opacity: 1 !important;
+
+  .toast-header {
+    background-color: transparent;
+    background-clip: initial;
+    padding: 0.45rem 0.75rem;
+
+    .close {
+      span {
+        position: relative;
+        top: 1px;
+      }
+    }
+
+    img {
+      width: 21px;
+    }
+  }
+}
+
+// Inputs
+
+.form-group.focused {
+  .input-group-append {
+    margin-left: 0px !important;
+
+    .input-group-text {
+      border-left: none;
+    }
+  }
+}
+
+// Hide navbar on scroll
+
+.nav-up {
+  top: -80px;
+}
+.nav-down {
+  position: fixed;
+  top: 0;
+  transition: top 0.5s ease-in-out;
+  width: 100%;
+  z-index: 9999;
+}
+
+// Datepicker
+
+.flatpickr-calendar {
+  &.open {
+    margin-left: -38px;
+    margin-top: 4px;
+  }
+
+  &.arrowBottom {
+    margin-top: -20px;
+  }
+
+  .flatpickr-innerContainer {
+    margin-top: 15px !important;
+  }
+
+  .numInputWrapper {
+    span {
+      border: none;
+      border-bottom: 1px solid rgba(57, 57, 57, 0.15);
+    }
+
+    &:hover {
+      .arrowUp,
+      .arrowDown {
+        margin-top: 3px;
+      }
+    }
+  }
+
+  .flatpickr-day {
+    &.selected,
+    &.startRange,
+    &.endRange {
+      background: $primary !important;
+      color: $white;
+      border: none;
+    }
+
+    &.inRange {
+      background: rgba(94, 114, 228, 0.28);
+      border: none;
+      -webkit-box-shadow: -5px 0 0 #d7dcf8, 5px 0 0 #d7dcf8;
+      box-shadow: -5px 0 0 #d7dcf8, 5px 0 0 #d7dcf8;
+    }
+
+    &:not(.selected) {
+      &:hover,
+      &:focus {
+        background: rgba(94, 114, 228, 0.28);
+        border: none;
+      }
+    }
+  }
+
+  .flatpickr-time input:hover,
+  .flatpickr-time .flatpickr-am-pm:hover,
+  .flatpickr-time input:focus,
+  .flatpickr-time .flatpickr-am-pm:focus {
+    background: rgba(94, 114, 228, 0.28);
+  }
+}
+
+.flatpickr {
+  &.form-control {
+    background: $white;
+  }
+}
+
+//  header stuff
+
+.landing-page {
+  main {
+    background: linear-gradient(150deg, #281483 15%, #8f6ed5 70%, #d782d9 94%);
+    overflow: initial;
+    height: 999px;
+
+    .cubes {
+      .row {
+        z-index: 122131;
+        position: relative;
+      }
+    }
+  }
+}
+
+.cubes {
+  .cube {
+    position: absolute;
+    height: 100px;
+    width: 100px;
+    margin: 0;
+
+    animation: cube-fade-in 2s cubic-bezier(0.165, 0.84, 0.44, 1);
+    will-change: transform;
+
+    @keyframes cube-fade-in {
+      0% {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+    }
+
+    * {
+      position: absolute;
+      height: 100%;
+      width: 100%;
+    }
+
+    .shadow {
+      background: #07427a;
+      top: 40%;
+    }
+
+    .sides {
+      transform-style: preserve-3d;
+      perspective: 600px;
+
+      div {
+        backface-visibility: hidden;
+        will-change: transform;
+      }
+
+      .front {
+        transform: rotateY(0deg) translateZ(50px);
+      }
+      .back {
+        transform: rotateY(-180deg) translateZ(50px);
+      }
+      .left {
+        transform: rotateY(-90deg) translateZ(50px);
+      }
+      .right {
+        transform: rotateY(90deg) translateZ(50px);
+      }
+      .top {
+        transform: rotateX(90deg) translateZ(50px);
+      }
+      .bottom {
+        transform: rotateX(-90deg) translateZ(50px);
+      }
+    }
+  }
+}

@@ -1,0 +1,60 @@
+<form [formGroup]="settingsForm" class="d-flex flex-column config-modal-form-controls-container">
+  <div>
+    <label>User Input Type</label>
+    <ng-select [items]="userInputDropdownOptions" bindLabel="label" bindValue="value" id="role"
+      formControlName="userInputType" [searchable]="false" [clearable]="false" placeholder="Please select">
+      <ng-template ng-option-tmp let-item="item">
+        <app-ng-select-item-template [item]="item"
+          [isSelected]="item.value === settingsForm.get('userInputType')!.value"></app-ng-select-item-template>
+      </ng-template>
+    </ng-select>
+  </div>
+  <div>
+    <label required>Redirect Url</label>
+    <input type="text" formControlName="redirectUrl" class="form-control">
+
+  </div>
+
+  <div>
+    <label required>Auth Url</label>
+    <input type="text" formControlName="authUrl" class="form-control">
+    <p @fadeInUp  class="invalid-input" *ngIf="submitted &&  settingsForm.get('authUrl')!.invalid ">
+      Auth url is required
+    </p>
+  </div>
+  <div>
+    <label required>Token Url</label>
+    <input type="text" formControlName="tokenUrl" class="form-control">
+    <p @fadeInUp  class="invalid-input" *ngIf="submitted &&  settingsForm.get('tokenUrl')!.invalid ">
+      Toekn url is required
+    </p>
+  </div>
+  <div>
+    <label>Refresh Url</label>
+    <input type="text" formControlName="refreshUrl" class="form-control">
+  </div>
+  <div>
+    <label required>Client Id</label>
+    <input type="text" formControlName="clientId" class="form-control">
+    <p @fadeInUp  class="invalid-input" *ngIf="submitted &&  settingsForm.get('clientId')!.invalid ">
+      Client id is required
+    </p>
+  </div>
+  <div>
+    <label required> Client Secret</label>
+    <input type="text" formControlName="clientSecret" class="form-control">
+    <p @fadeInUp  class="invalid-input" *ngIf="submitted &&  settingsForm.get('clientSecret')!.invalid">
+      Client secret is required
+    </p>
+  </div>
+  <div>
+    <label required> Scope</label>
+    <input type="text" formControlName="scope" class="form-control">
+    <span  class="text-sm text-muted">Enter the scope required seperated by space.</span>
+    <p @fadeInUp  class="invalid-input" *ngIf="submitted && settingsForm.get('scope')!.invalid">
+      Scope is required
+    </p>
+  </div>
+</form>
+<ng-container *ngIf="settingsFormValueChanged$|async"></ng-container>
+<ng-container *ngIf="userInputTypeChanged$|async"></ng-container>

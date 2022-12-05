@@ -1,0 +1,135 @@
+@import "src/assets/scss/custom/variables";
+
+.flow-item {
+  /* Auto Layout */
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  cursor: pointer;
+
+  position: relative;
+  width: 300px;
+  height: 92px;
+
+  background: $white;
+  mix-blend-mode: normal;
+  /* Border */
+
+  border: 1px solid $border;
+  /* Depth 4 */
+
+  box-shadow: unset;
+  border-radius: 8px;
+}
+
+.logo-icon {
+  object-fit: contain;
+  min-width: 60px;
+  min-height: 60px;
+  max-width: 60px;
+  max-height: 60px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+}
+.flow-item {
+  gap: 0.9375rem;
+  padding: 0.9375rem;
+}
+.flow-content {
+  flex-grow: 1;
+  gap: 0.25rem;
+  overflow:hidden;
+}
+
+.flow-container {
+  .flow-item {
+    transition: all 400ms cubic-bezier(0.35, 0, 0.25, 1);
+  }
+
+  &:hover {
+    .flow-item {
+      box-shadow: 0px 0px 22px rgba(186, 186, 191, 0.3),
+        inset 0px 3px 0px $primary;
+      border: 1px solid $primary;
+      border-radius: 8px;
+    }
+  }
+}
+
+.flow-item-wrapper {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.selected {
+  box-shadow: 0px 0px 22px rgba(186, 186, 191, 0.3), inset 0px 3px 0px $primary;
+  border: 1px solid $primary;
+  transition: all 400ms cubic-bezier(0.35, 0, 0.25, 1);
+  border-radius: 8px;
+}
+
+.options-container {
+  position: absolute;
+  left: -50px;
+  width: 50px;
+  height: 92px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.btn {
+  margin-right: 0.625rem;
+}
+
+.flow-icon-container {
+  position: relative;
+  min-width: 60px;
+  min-height: 60px;
+  max-width: 60px;
+  max-height: 60px;
+}
+
+.empty-trigger {
+  border: 1.5px dashed $primary !important;
+  box-shadow: 0px 0px 22px rgba(186, 186, 191, 0.4) !important;
+  border-radius: 8px !important;
+}
+
+.flow-container:hover .empty-trigger {
+  box-shadow: 0px 0px 0px 5px rgba(227, 218, 249, 0.6),
+    0px 0px 22px rgba(186, 186, 191, 0.3) !important;
+}
+
+.flow-title {
+  font-weight: 600;
+  line-height: 1.375rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.code-name {
+  font-weight: 400;
+  line-height: 22px;
+}
+
+.step-icon-loading-spinner-container {
+  min-width: 60px;
+  min-height: 60px;
+  max-width: 60px;
+  max-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.step-run-result-icon {
+  width: 16px;
+  height: 16px;
+}

@@ -1,0 +1,20 @@
+@import "src/assets/scss/custom/variables";
+.modal-body {
+  min-height: 31.25rem;
+  max-height: 70vh;
+  min-width:30rem;
+  max-width: 30rem;
+}
+
+.modal-header {
+  border: 1px solid #f0f0f0;
+}
+.check-icon {
+  height: 12px;
+  width: 12px;
+  fill: $primary;
+}
+.option-container {
+  gap: 0.625rem;
+}
+

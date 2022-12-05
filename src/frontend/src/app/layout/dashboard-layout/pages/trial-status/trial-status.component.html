@@ -1,0 +1,57 @@
+<div class="h-100 trial-status d-flex w-100 justify-content-center flex-wrap">
+  <section
+    class="text-section flex-grow-1 d-flex flex-column justify-content-center align-items-center"
+  >
+    <div>
+      <h1 class="text-section__title">
+        <ng-container *ngIf="isTrialExpired; else trialStatus">
+          Trial period Expired!
+        </ng-container>
+        <ng-template #trialStatus>
+          The free trial expires in
+          <span class="text-section__title__count-down">{{
+            countDownText
+          }}</span>
+        </ng-template>
+      </h1>
+      <p class="text-section__body">
+        <ng-container *ngIf="isTrialExpired; else contactSalesText">
+          Sorry, the trial period has expired, your data is stored in our
+          database, you can resume working on them by upgrading your account.
+        </ng-container>
+        <ng-template #contactSalesText>
+          Our team can map our ready product to your needs
+        </ng-template>
+      </p>
+    </div>
+  </section>
+
+  <section
+    class="card-section d-flex justify-content-center align-items-center"
+  >
+    <div class="card-section__features-card d-flex flex-column">
+      <div class="card-section__features-card__list-block d-flex flex-column">
+        <h1 class="card-section__features-card__title">Growth 🚀</h1>
+        <ul role="list" class="card-section__features-card__features-list">
+          <li *ngFor="let feature of featuresList" class="feature_box">
+            <svg-icon
+              src="assets/img/custom/transparent-check.svg"
+              svgClass="green-check"
+            >
+            </svg-icon>
+            <span class="ml-2">
+            {{ feature }}
+            </span>
+          </li>
+        </ul>
+      </div>
+      <app-button
+      btnColor="primary"
+      [fullWidthOfContainer]="true"
+      (buttonClicked)="contactSales()"
+    > Talk to sales, NOW!
+    </app-button>
+
+    </div>
+  </section>
+</div>

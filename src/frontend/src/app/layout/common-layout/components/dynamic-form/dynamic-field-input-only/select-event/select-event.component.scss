@@ -1,0 +1,9 @@
+@import "src/assets/scss/custom/variables";
+.new-event-btn {
+  background-color: transparent;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+.new-event-btn:hover {
+  background-color: $buttonTextPrimaryHover;
+}

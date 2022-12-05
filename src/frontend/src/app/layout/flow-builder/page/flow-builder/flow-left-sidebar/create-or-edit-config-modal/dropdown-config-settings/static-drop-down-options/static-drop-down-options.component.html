@@ -1,0 +1,70 @@
+<div class="control-container">
+  <div class="table-headers-container" [class.no-buttons]="disabled">
+    <div>
+      <label class="dashed-underline-label"  matTooltip="The actual value that will be assigned to the variable when the option is selected"  matTooltipClass="dictonary-labels-tooltip">Value</label>
+    </div>
+
+    <div class="d-flex label-header-container"  >
+      <label class="dashed-underline-label"  matTooltipClass="labels-tooltip" matTooltip="The text that is displayed to the user to understand the option on the UI">Label</label>
+      <span
+      *ngIf="!disabled"
+        class="label-customization"
+        (click)="allowCustomLabels ? setLabelsToValues() : customizeLabels()"
+        [matTooltip]="allowCustomLabels? '':'Display the values themselves to the user instead of a friendly label' "
+        matTooltipClass="labels-tooltip"
+        >{{ allowCustomLabels ? "Set to Values" : "Customize" }}</span
+      >
+    </div>
+  </div>
+  <div class="pair-form-container d-flex flex-column">
+    <ng-container *ngFor="let pair of pairs.controls; let idx = index; let isLast=last">
+      <div
+        class="d-flex pair-container align-items-center"
+        [formGroup]="getPair(idx)"
+        *ngIf="!(isLast && disabled)"
+      >
+        <span>{{ idx+1 }}.</span>
+        <input
+          name="value"
+          class="form-control"
+          formControlName="value"
+          (input)="dictionaryControlValueChanged()"
+          type="text"
+          placeholder="Value"
+        />
+        <input
+          name="label"
+          class="form-control"
+          formControlName="label"
+          type="text"
+          (input)="dictionaryControlValueChanged()"
+          placeholder="label"
+        />
+<ng-container *ngIf="!disabled">
+  <app-icon-button
+  [color]="themeService.BODY_COLOR"
+  (click)="addNewPair()"
+  [hoverColor]="themeService.PRIMARY_COLOR"
+  [iconFilename]="'plus.svg'"
+  *ngIf="isLast"
+  [disabled]="disabled"
+></app-icon-button>
+
+<app-icon-button
+  [color]="themeService.BODY_COLOR"
+  (click)="removePair(idx)"
+  [hoverColor]="themeService.DANGER_COLOR"
+  [iconFilename]="'trash.svg'"
+  [disabled]="disabled"
+></app-icon-button>
+<div  *ngIf="!isLast" class="empty-spacer-instead-of-add-btn"></div>
+</ng-container>
+
+
+        <ng-container *ngIf="valueControlsChanged$ && valueControlsChanged$[idx]|async"></ng-container>
+
+      </div>
+    </ng-container>
+  </div>
+</div>
+
