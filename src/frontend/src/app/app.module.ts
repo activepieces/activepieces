@@ -69,7 +69,6 @@ export function logrocketMiddleware(reducer): ActionReducer<any, any> {
 			config: {
 				tokenGetter,
 				allowedDomains: [environment.apiDomainUrl],
-				disallowedRoutes: [environment.apiDomainUrl + '/authentication/*'],
 			},
 		}),
 		AngularSvgIconModule,

@@ -2,9 +2,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { Project } from '../model/project.interface';
-import { map, Observable, skipWhile, take } from 'rxjs';
+import { map, Observable, of, switchMap, take, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../store/selector/project.selector';
+import { ProjectActions } from '../store/action/project.action';
 
 @Injectable({
 	providedIn: 'root',
@@ -14,13 +15,17 @@ export class ProjectService {
 
 	selectedProjectAndTakeOne(): Observable<Project> {
 		return this.store.select(ProjectSelectors.selectProject).pipe(
-			skipWhile(project => project === undefined),
 			take(1),
-			map(project => project!)
+			switchMap(project => {
+				if (project) return of(project);
+				return this.list().pipe(
+					tap(projects => {
+						this.store.dispatch(ProjectActions.setProjects({ projects: projects }));
+					}),
+					map(projects => projects[0])
+				);
+			})
 		);
-	}
-	create(organisationId: string, request: { displayName }): Observable<Project> {
-		return this.http.post<Project>(environment.apiUrl + '/organizations/' + organisationId + '/projects', request);
 	}
 
 	update(project: Project): Observable<Project> {
@@ -31,8 +36,8 @@ export class ProjectService {
 		return this.http.get<Project>(environment.apiUrl + '/projects/' + projectId);
 	}
 
-	list(organisationId: string): Observable<Project[]> {
-		return this.http.get<Project[]>(environment.apiUrl + '/organizations/' + organisationId + '/projects');
+	list(): Observable<Project[]> {
+		return this.http.get<Project[]>(environment.apiUrl + '/projects');
 	}
 
 	delete(projectId: string): Observable<void> {

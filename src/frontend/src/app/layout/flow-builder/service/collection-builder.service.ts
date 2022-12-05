@@ -8,17 +8,17 @@ import { FlowFactoryUtil } from './flowFactoryUtil';
 @Injectable({
 	providedIn: 'root',
 })
-export class PieceBuilderService {
+export class CollectionBuilderService {
 	lastSuccessfulSaveDate = '';
 
 	constructor(private flowRendererService: FlowRendererService, private store: Store) {
 		this.store
 			.select(BuilderSelectors.selectCurrentFlow)
 			.pipe(distinctUntilChanged())
-			.subscribe(value => {
-				if (value) {
-					const flow = FlowFactoryUtil.createRootPiece(value);
-					this.flowRendererService.refreshCoordinatesAndSetActivePiece(flow);
+			.subscribe(flow => {
+				if (flow) {
+					const rootStep = FlowFactoryUtil.createRootStep(flow!);
+					this.flowRendererService.refreshCoordinatesAndSetActivePiece(rootStep);
 				} else {
 					this.flowRendererService.refreshCoordinatesAndSetActivePiece(undefined);
 				}

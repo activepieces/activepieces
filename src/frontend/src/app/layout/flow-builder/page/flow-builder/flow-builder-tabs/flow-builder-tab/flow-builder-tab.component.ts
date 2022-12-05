@@ -72,7 +72,7 @@ export class FlowBuilderTabComponent {
 		} else if (actionId === 'DELETE') {
 			this.bsModalRef = this.modalService.show(ConfirmDeleteModalComponent, {
 				initialState: {
-					entityName: this.flow.lastVersion.displayName,
+					entityName: this.flow.last_version.display_name,
 				},
 			});
 			this.bsModalRef.content.confirmState.pipe(take(1)).subscribe((confirm: boolean) => {
@@ -85,7 +85,7 @@ export class FlowBuilderTabComponent {
 	}
 
 	saveNewName(newName: string) {
-		if (this.flow.lastVersion.displayName == newName) {
+		if (this.flow.last_version.display_name == newName) {
 			this.revertNewName();
 		} else {
 			this.dispatchNewName(newName);
@@ -105,7 +105,7 @@ export class FlowBuilderTabComponent {
 		this.store.dispatch(
 			FlowsActions.changeName({
 				flowId: this.flow.id,
-				displayName: this.flow.lastVersion.displayName,
+				displayName: this.flow.last_version.display_name,
 			})
 		);
 	}

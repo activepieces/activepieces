@@ -17,7 +17,7 @@ export class NavigationService {
 	isInBuilder = false;
 	lastPageTitle = '';
 	private selectedMenuIndex: BehaviorSubject<any> = new BehaviorSubject(0);
-	private selectedRouteIndex$: BehaviorSubject<any> = new BehaviorSubject(undefined);
+
 	public loading: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 	public sidebarRoutes = [
 		{
@@ -30,17 +30,6 @@ export class NavigationService {
 			color: '#af6cd9',
 			hover: false,
 		},
-
-		{
-			id: 'instances',
-			icon: '/assets/img/custom/sidebar/instances.svg',
-			disabledIcon: '/assets/img/custom/sidebar/disabled/disabled-settings.svg',
-			text: 'Instances',
-			submenu: false,
-			color: '#5fd2b0',
-			hover: false,
-			link: '/instances',
-		},
 		{
 			id: 'runs',
 			icon: '/assets/img/custom/sidebar/runs.svg',
@@ -52,7 +41,7 @@ export class NavigationService {
 			link: '/runs',
 		},
 	];
-
+	private selectedRouteIndex$: BehaviorSubject<any> = new BehaviorSubject(this.sidebarRoutes[0]);
 	constructor(private router: Router, private titleService: Title) {
 		this.router.events.pipe(filter(event => event instanceof RouterEvent)).subscribe((event: any) => {
 			this.navigationInterceptor(event);

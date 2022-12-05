@@ -7,7 +7,6 @@ import { DashboardLayoutRouting } from './dashboard-layout.routing';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { RunsComponent } from './pages/runs/runs.component';
 import { ProgressbarModule } from 'ngx-bootstrap/progressbar';
-import { InstancesComponent } from './pages/instances/instances.component';
 import { CommonLayoutModule } from '../common-layout/common-layout.module';
 import { CollectionComponent } from './pages/collections/collection-components.component';
 import { ListPiecesResolver } from './resolvers/list-pieces-resolver.service';
@@ -19,30 +18,12 @@ import { EmptyCollectionsTableComponent } from './pages/collections/empty-collec
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TrialStatusComponent } from './pages/trial-status/trial-status.component';
-import { ActionReducerMap, StoreModule } from '@ngrx/store';
-import { authenticationReducer, AuthenticationState } from './store/reducer/authentication.reducer';
-import { EffectsModule } from '@ngrx/effects';
-import { AuthenticationEffects } from './store/effect/authentication.effects';
-import { ApiKeysEffects } from './store/effect/api-keys.effects';
-import { apiKeysReducer, ApiKeysState } from './store/reducer/api-keys.reducer';
-
-export interface State {
-	authenticationState: AuthenticationState;
-	apiKeys: ApiKeysState;
-}
-const DASHBOARD_FEATURE_NAME = 'dashboard';
-
-const reducers: ActionReducerMap<State> = {
-	authenticationState: authenticationReducer,
-	apiKeys: apiKeysReducer,
-};
 
 @NgModule({
 	declarations: [
 		DashboardLayoutComponent,
 		SidebarComponent,
 		RunsComponent,
-		InstancesComponent,
 		CollectionComponent,
 		EmptyCollectionsTableComponent,
 		UserAvatarComponent,
@@ -59,8 +40,6 @@ const reducers: ActionReducerMap<State> = {
 		FontAwesomeModule,
 		TimeagoModule.forChild(),
 		NgxSkeletonLoaderModule,
-		EffectsModule.forFeature([AuthenticationEffects, ApiKeysEffects]),
-		StoreModule.forFeature(DASHBOARD_FEATURE_NAME, reducers),
 	],
 	exports: [],
 	providers: [ListPiecesResolver],

@@ -11,9 +11,9 @@ import { CollectionState } from '../model/collection-state.model';
 const initialState: CollectionState = {
 	state: PieceStateEnum.INITIALIZED,
 	collection: {
-		lastVersion: {
+		last_version: {
 			id: UUID,
-			displayName: 'dummy',
+			display_name: 'dummy',
 			state: VersionEditState.DRAFT,
 			configs: [],
 			logoUrl: 'dummy',
@@ -23,11 +23,11 @@ const initialState: CollectionState = {
 			epochCreationTime: 0,
 			epochUpdateTime: 0,
 		},
-		epochCreationTime: 0,
-		epochUpdateTime: 0,
+		created: 0,
+		updated: 0,
 		id: UUID.UUID(),
 		name: 'dummy',
-		projectId: 'dummy',
+		project_id: 'dummy',
 		versionsList: [],
 	},
 };
@@ -39,7 +39,7 @@ const _pieceReducer = createReducer(
 	}),
 	on(PieceAction.changeName, (state, { displayName }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		clonedState.collection.lastVersion.displayName = displayName;
+		clonedState.collection.last_version.display_name = displayName;
 		clonedState.state = PieceStateEnum.SAVING;
 		return clonedState;
 	}),
@@ -55,28 +55,28 @@ const _pieceReducer = createReducer(
 
 	on(PieceAction.addConfig, (state, { config }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		clonedState.collection.lastVersion.configs.push(config);
+		clonedState.collection.last_version.configs.push(config);
 		clonedState.state = PieceStateEnum.SAVING;
 		return clonedState;
 	}),
 	on(PieceAction.deleteConfigSucceeded, (state, { configIndex: index }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		clonedState.collection.lastVersion.configs.splice(index, 1);
+		clonedState.collection.last_version.configs.splice(index, 1);
 		clonedState.state = PieceStateEnum.SAVING;
 		return clonedState;
 	}),
 	on(PieceAction.updateConfig, (state, { configIndex, config }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		clonedState.collection.lastVersion.configs[configIndex] = config;
+		clonedState.collection.last_version.configs[configIndex] = config;
 		clonedState.state = PieceStateEnum.SAVING;
 		return clonedState;
 	}),
 	on(PieceAction.updateSettings, (state, ChangeLogoProps): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
 		if (ChangeLogoProps.logoEncodedUrl != undefined) {
-			clonedState.collection.lastVersion.logoUrl = ChangeLogoProps.logoEncodedUrl;
+			clonedState.collection.last_version.logoUrl = ChangeLogoProps.logoEncodedUrl;
 		}
-		clonedState.collection.lastVersion.description = ChangeLogoProps.description;
+		clonedState.collection.last_version.description = ChangeLogoProps.description;
 		clonedState.state = PieceStateEnum.SAVING;
 		return clonedState;
 	})

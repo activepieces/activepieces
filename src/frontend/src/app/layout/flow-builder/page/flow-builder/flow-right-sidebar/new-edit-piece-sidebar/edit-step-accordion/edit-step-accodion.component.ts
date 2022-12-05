@@ -95,7 +95,7 @@ export class EditStepAccordionComponent implements AfterViewInit {
 	updateFormValue(stepSelected: FlowItem) {
 		const describeControl = this.stepForm.get('describe')!;
 		describeControl.setValue({
-			displayName: stepSelected.displayName,
+			displayName: stepSelected.display_name,
 			name: stepSelected.name,
 		});
 		const inputControl = this.stepForm.get('input')!;
@@ -133,7 +133,7 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		const describeControlValue: { displayName: string; name: string } = this.stepForm.get('describe')!.value;
 		const inputControlValue = this.stepForm.get('input')!.value;
 		const stepToSave: FlowItem = JSON.parse(JSON.stringify(this._selectedStep));
-		stepToSave.displayName = describeControlValue.displayName;
+		stepToSave.display_name = describeControlValue.displayName;
 		stepToSave.settings = inputControlValue;
 		stepToSave.name = this._selectedStep.name;
 

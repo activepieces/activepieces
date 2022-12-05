@@ -44,8 +44,8 @@ export const selectCurrentCollectionName = createSelector(
 );
 
 export const selectCurrentCollectionConfigs = createSelector(selectCurrentCollection, (collection: Collection) => {
-	return collection.lastVersion.configs.map(c => {
-		return { ...c, collectionVersionId: collection.lastVersion.id };
+	return collection.last_version.configs.map(c => {
+		return { ...c, collectionVersionId: collection.last_version.id };
 	});
 });
 
@@ -106,7 +106,7 @@ export const selectReadOnly = createSelector(
 
 export const selectFlows = createSelector(selectBuilderState, (state: GlobalBuilderState) => state.flowsState.flows);
 export const selectFlowsValidity = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
-	const allFlowsValidity = state.flowsState.flows.map(f => f.lastVersion.valid);
+	const allFlowsValidity = state.flowsState.flows.map(f => f.last_version.valid);
 	return allFlowsValidity.reduce((current, previous) => current && previous, true);
 });
 
@@ -115,7 +115,7 @@ export const selectFlowsCount = createSelector(selectFlows, (flows: Flow[]) => f
 export const selectCanPublish = createSelector(selectFlows, (flows: Flow[]) => {
 	let canPublish = true;
 	for (let i = 0; i < flows.length; ++i) {
-		if (!flows[i].lastVersion?.valid) {
+		if (!flows[i].last_version?.valid) {
 			canPublish = false;
 		}
 	}
@@ -159,8 +159,8 @@ export const selectCurrentFlowConfigs = createSelector(selectBuilderState, (stat
 	if (!flow) {
 		return [];
 	}
-	return flow.lastVersion.configs.map(c => {
-		return { ...c, flowVersionId: flow.lastVersion.id };
+	return flow.last_version.configs.map(c => {
+		return { ...c, flowVersionId: flow.last_version.id };
 	});
 });
 
@@ -190,7 +190,7 @@ export const selectFlow = (flowId: UUID) =>
 	});
 export const selectCurrentFlowValidity = createSelector(selectCurrentFlow, (flow: Flow | undefined) => {
 	if (!flow) return false;
-	return flow.lastVersion.valid;
+	return flow.last_version.valid;
 });
 export const selectUserDefinedFlowConfigs = createSelector(selectCurrentFlowConfigs, configs =>
 	configs.filter(c => c.source === ConfigSource.USER)
@@ -214,7 +214,7 @@ export const selectCurrentStepName = createSelector(selectCurrentStep, selectedS
 	return null;
 });
 export const selectCurrentDisplayName = createSelector(selectCurrentStep, state => {
-	return state?.displayName;
+	return state?.display_name;
 });
 export const selectCurrentTabState = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
 	if (state.flowsState.selectedFlowId == undefined) {
@@ -336,7 +336,7 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
 		coreItemDetials = state.coreFlowItemsDetails.find(c => c.type === flowItem.type);
 
 		if (!coreItemDetials) {
-			console.warn(`Flow item details for ${flowItem.displayName} are not currently loaded`);
+			console.warn(`Flow item details for ${flowItem.display_name} are not currently loaded`);
 		}
 		return coreItemDetials;
 	});

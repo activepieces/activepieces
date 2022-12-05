@@ -1,11 +1,10 @@
 export const environment = {
 	production: false,
-	apiDomainUrl: 'stg-api.activepieces.com',
-	apiUrl: 'https://stg-api.activepieces.com',
+	apiDomainUrl: 'localhost:8000',
+	apiUrl: 'http://localhost:8000',
 	jwtTokenName: 'token',
 	stageName: 'stg',
-	redirectUrl: 'https://stg-api.activepieces/redirect',
-	appConnectors: 'https://cdn.activepieces.com/stg/connectors/app_connectors.json',
+	redirectUrl: 'http://localhost:8080/redirect',
 	userPropertyNameInLocalStorage: 'currentUser',
 	feature: {
 		newComponents: true,

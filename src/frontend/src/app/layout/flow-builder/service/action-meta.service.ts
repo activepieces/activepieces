@@ -3,8 +3,6 @@ import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-ty
 import { ActionType } from '../../common-layout/model/enum/action-type.enum';
 import { TriggerType } from '../../common-layout/model/enum/trigger-type.enum';
 import { map, Observable, shareReplay } from 'rxjs';
-import { environment } from 'src/environments/environment';
-import { AppConnector } from '../model/app-connector';
 import { HttpClient } from '@angular/common/http';
 import { ComponentItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/component-item-details';
 import { Manifest } from '../model/manifest';
@@ -85,10 +83,6 @@ export class ActionMetaService {
 	];
 
 	constructor(private http: HttpClient) {}
-
-	public loadAppConnectors(): Observable<AppConnector[]> {
-		return this.http.get<AppConnector[]>(environment.appConnectors).pipe(shareReplay());
-	}
 
 	// TODO MOVE URL TO ENVIRONMENT
 	public getConnectorsComponents() {

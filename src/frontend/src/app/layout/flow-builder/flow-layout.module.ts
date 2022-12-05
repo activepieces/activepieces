@@ -40,13 +40,10 @@ import { PieceEffects } from './store/effect/piece.effects';
 import { flowsReducer } from './store/reducer/flows.reducer';
 import { FlowsEffects } from './store/effect/flow.effects';
 import { viewModeReducer } from './store/reducer/view-mode.reducer';
-import { CreateNewFlowModalComponent } from './page/flow-builder/flow-right-sidebar/create-new-flow-modal/create-new-flow-modal.component';
 import { AddNpmPackageModalComponent } from './page/flow-builder/code-editor/add-npm-package-modal/add-npm-package-modal.component';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
 import { VariableSidebarComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/configs-sidebar.component';
-
 import { ViewModeEffects } from './store/effect/viewMode.effects';
-import { HttpClientModule } from '@angular/common/http';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { TimepickerModule } from 'ngx-bootstrap/timepicker';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -81,7 +78,6 @@ import { OAuth2ConfigSettingsComponent } from './page/flow-builder/flow-left-sid
 import { StaticDropDownOptionsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/dropdown-config-settings/static-drop-down-options/static-drop-down-options.component';
 import { ComponentInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/component-input-form.component';
 import { NewAuthenticationModalComponent } from './page/flow-builder/flow-right-sidebar/new-authentication-modal/new-authentication-modal.component';
-import { EmbedModalComponent } from './page/flow-builder/flow-builder-header/embed-modal/embed-modal.component';
 import { PublishPopoverComponent } from './page/flow-builder/flow-builder-header/publish-popover/publish-popover.component';
 import { TrackFocusDirective } from './page/flow-builder/flow-left-sidebar/run-details/steps-results-list/track-focus.directive';
 import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
@@ -89,7 +85,6 @@ import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/cente
 @NgModule({
 	imports: [
 		CommonModule,
-		HttpClientModule,
 		RouterModule.forChild(FlowLayoutRouting),
 		FormsModule,
 		ReactiveFormsModule,
@@ -147,7 +142,6 @@ import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/cente
 		StepTypeListComponent,
 		StepTypeSidebarComponent,
 		CreateEditConfigModalComponent,
-		CreateNewFlowModalComponent,
 		AddNpmPackageModalComponent,
 		VariableSidebarComponent,
 		StepResultComponent,
@@ -172,7 +166,7 @@ import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/cente
 
 		NewAuthenticationModalComponent,
 		PublishPopoverComponent,
-		EmbedModalComponent,
+
 		TrackFocusDirective,
 		CenterMatMenuDirective,
 	],

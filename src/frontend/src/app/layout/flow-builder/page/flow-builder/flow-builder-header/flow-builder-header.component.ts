@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { ConfirmDeleteModalComponent } from '../../../../common-layout/components/confirm-delete-modal/confirm-delete-modal.component';
 import { Collection } from '../../../../common-layout/model/piece.interface';
-import { PieceBuilderService } from '../../../service/piece-builder.service';
+import { CollectionBuilderService } from '../../../service/collection-builder.service';
 import { RightSideBarType } from '../../../../common-layout/model/enum/right-side-bar-type.enum';
 import { ThemeService } from 'src/app/layout/common-layout/service/theme.service';
 import { ActivatedRoute, Params, Router } from '@angular/router';
@@ -30,12 +30,12 @@ export class FlowBuilderHeaderComponent implements OnInit {
 	@ViewChild(PopoverDirective) embeddedPopover: PopoverDirective;
 	editing: boolean = false;
 	bsModalRef: BsModalRef;
-	piece$: Observable<Collection>;
+	collection$: Observable<Collection>;
 	flowsCount$: Observable<number>;
 	viewMode$: Observable<boolean>;
 	disablePublishButton$: Observable<boolean>;
 	saveState$: Observable<SaveState>;
-	pieceActions$: Observable<ChevronDropdownOption[]>;
+	collectionActions$: Observable<ChevronDropdownOption[]>;
 	publishButtonDisabledTooltip = '';
 	newCollectionCheck$: Observable<Params>;
 	collectionNameHovered = false;
@@ -44,7 +44,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 		public themeService: ThemeService,
 		private router: Router,
 		private modalService: BsModalService,
-		public pieceBuilderService: PieceBuilderService,
+		public collectionBuilderService: CollectionBuilderService,
 		private route: ActivatedRoute,
 		private navigationService: NavigationService
 	) {}
@@ -55,7 +55,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.saveState$ = this.store.select(BuilderSelectors.selectBuilderSaveState);
-		this.piece$ = this.store.select(BuilderSelectors.selectCurrentCollection);
+		this.collection$ = this.store.select(BuilderSelectors.selectCurrentCollection);
 		this.flowsCount$ = this.store.select(BuilderSelectors.selectFlowsCount);
 		this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
 		this.disablePublishButton$ = combineLatest({
@@ -75,7 +75,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 				return res.saving || !res.valid;
 			})
 		);
-		this.pieceActions$ = this.piece$.pipe(
+		this.collectionActions$ = this.collection$.pipe(
 			map(piece => [
 				{
 					id: 'RENAME',
@@ -123,7 +123,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 	openCollectionVersionsLists() {
 		this.store.dispatch(
 			FlowsActions.setRightSidebar({
-				sidebarType: RightSideBarType.PIECE_VERSIONS,
+				sidebarType: RightSideBarType.COLLECTION_VERSIONS,
 				props: {},
 			})
 		);

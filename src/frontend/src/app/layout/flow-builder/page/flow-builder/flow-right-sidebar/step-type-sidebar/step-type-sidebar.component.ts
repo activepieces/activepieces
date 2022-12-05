@@ -97,12 +97,12 @@ export class StepTypeSidebarComponent implements OnInit {
 				if (this._showTriggers) {
 					this.replaceTrigger(flowItemDetails);
 				} else {
-					const stepName = FlowVersion.clone(flow.lastVersion).findAvailableName('step');
+					const stepName = FlowVersion.clone(flow.last_version).findAvailableName('step');
 					const settings: any = this.constructStepSettings(flowItemDetails.type as ActionType, flowItemDetails);
 					const action: FlowItem = {
 						type: flowItemDetails.type as ActionType,
 						name: stepName,
-						displayName: getDefaultDisplayNameForPiece(flowItemDetails.type as ActionType, flowItemDetails.name),
+						display_name: getDefaultDisplayNameForPiece(flowItemDetails.type as ActionType, flowItemDetails.name),
 						settings: settings,
 						valid: flowItemDetails.type !== ActionType.STORAGE && flowItemDetails.type !== ActionType.LOOP_ON_ITEMS,
 						yOffsetFromLastNode: 0,
@@ -123,7 +123,7 @@ export class StepTypeSidebarComponent implements OnInit {
 		const trigger: Trigger = {
 			type: triggerDetails.type as TriggerType,
 			name: 'trigger',
-			displayName: getDisplayNameForTrigger(triggerDetails.type as TriggerType),
+			display_name: getDisplayNameForTrigger(triggerDetails.type as TriggerType),
 			settings: {},
 			yOffsetFromLastNode: 0,
 			valid: false,

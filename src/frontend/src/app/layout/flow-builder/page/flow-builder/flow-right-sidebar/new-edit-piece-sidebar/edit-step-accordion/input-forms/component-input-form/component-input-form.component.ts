@@ -447,7 +447,6 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 					};
 					//security + optionalConfigs + requiredConfigs
 					this.componentForm.patchValue(this.initiallySelectedActionValue.input.action, { emitEvent: false });
-					debugger;
 				}
 				this.loading = false;
 				this.cd.detectChanges();

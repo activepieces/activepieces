@@ -29,7 +29,7 @@ export class FlowVersionSidebarComponent implements OnInit {
 						for (let i = 0; i < newValues.length; ++i) {
 							newValues[i].versionNumber = newValues.length - i;
 							newValues[i].epochCreationTimeFormatted = this.timeHelperService.formatDateTimeMills(
-								newValues[i].epochCreationTime
+								newValues[i].created
 							);
 						}
 						return newValues;

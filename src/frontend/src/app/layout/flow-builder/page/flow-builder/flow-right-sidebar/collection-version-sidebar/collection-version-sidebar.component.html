@@ -5,7 +5,7 @@
       [title]="'Collection Versions'"
     ></app-sidebar-header>
   </div>
-  <ng-container *ngIf="publishedEnvironments$ | async as publishedEnvironments; else loading">
+
     <div
       *ngIf="collectionVersionsList$ | async as versions; else loading"
       class="px-4 bottom justify-content-center align-items-center piece-version-list-height"
@@ -40,24 +40,11 @@
               </div>
             </div>
           </div>
-          <div class="d-flex mt-2">
-            <div
-              *ngIf="publishedEnvironments[version.id.toString()] !== undefined"
-            >
-            <span
-              class="badge badge-primary mr-2"
-              *ngFor="
-                let environment of publishedEnvironments[version.id.toString()];
-                let i = index
-              "
-            >{{ environment.name }}</span
-            >
-            </div>
-          </div>
+
         </div>
       </ng-container>
     </div>
-  </ng-container>
+
 </div>
 <ng-template #loading>
   <div class="collections-versions-loading-icon-container d-flex flex-direction-column justify-content-center align-items-center">

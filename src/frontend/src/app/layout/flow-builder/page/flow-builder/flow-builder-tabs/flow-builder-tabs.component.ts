@@ -5,13 +5,11 @@ import { BsModalRef } from 'ngx-bootstrap/modal';
 import { LeftSideBarType } from 'src/app/layout/common-layout/model/enum/left-side-bar-type.enum';
 import { exhaustMap, fromEvent, map, Observable, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
-
 import { FlowsActions } from '../../../store/action/flows.action';
 import { UUID } from 'angular2-uuid';
 import { FlowService } from 'src/app/layout/common-layout/service/flow.service';
 import { ViewModeEnum } from '../../../store/model/enums/view-mode.enum';
 import { BuilderSelectors } from '../../../store/selector/flow-builder.selector';
-import { FlowTemplateService } from '../../../service/flow-template.service';
 
 @Component({
 	selector: 'app-flow-builder-tabs',
@@ -32,12 +30,7 @@ export class FlowBuilderTabsComponent implements OnInit, AfterViewInit {
 
 	addFlowButton$: Observable<void> = new Observable<void>();
 
-	constructor(
-		public themeService: ThemeService,
-		private flowTemplateService: FlowTemplateService,
-		private flowService: FlowService,
-		private store: Store
-	) {}
+	constructor(public themeService: ThemeService, private flowService: FlowService, private store: Store) {}
 
 	ngOnInit(): void {
 		this.selectedFlowId$ = this.store.select(BuilderSelectors.selectCurrentFlowId);
@@ -53,7 +46,7 @@ export class FlowBuilderTabsComponent implements OnInit, AfterViewInit {
 
 	setupAddFlowButtonListener() {
 		this.addFlowButton$ = fromEvent(this.addFlowButton.nativeElement, 'click')
-			.pipe(exhaustMap(() => this.flowService.createFlowTemplate(this.flowTemplateService.FLOW_EMPTY_TEMPLATE)))
+			.pipe(exhaustMap(() => this.flowService.createEmptyFlow()))
 			.pipe(
 				tap(response => {
 					if (response) {

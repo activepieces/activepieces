@@ -64,7 +64,7 @@ export function isOfTypeTriggerType(value: string) {
 export function findDefaultFlowDisplayName(flows: Flow[]) {
 	let defaultFlowIndex = 1;
 
-	while (flows.find(f => f.lastVersion.displayName.toLowerCase() == `flow ${defaultFlowIndex}`)) {
+	while (flows.find(f => f.last_version.display_name.toLowerCase() == `flow ${defaultFlowIndex}`)) {
 		defaultFlowIndex++;
 	}
 	return `Flow ${defaultFlowIndex}`;

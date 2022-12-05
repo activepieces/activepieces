@@ -66,10 +66,10 @@ export class FlowRenderUtil {
 			};
 		}
 		flowItem.boundingBox.height += flowItem.connectionsBox.height;
-		this.buildBoxes(flowItem.nextAction);
-		if (flowItem.nextAction !== undefined && flowItem.nextAction !== null) {
+		this.buildBoxes(flowItem.next_action);
+		if (flowItem.next_action !== undefined && flowItem.next_action !== null) {
 			flowItem.connectionsBox.height += SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
-			flowItem.boundingBox.height += SPACE_BETWEEN_ITEM_CONTENT_AND_LINE + flowItem.nextAction?.boundingBox!.height;
+			flowItem.boundingBox.height += SPACE_BETWEEN_ITEM_CONTENT_AND_LINE + flowItem.next_action?.boundingBox!.height;
 		}
 	}
 
@@ -79,10 +79,10 @@ export class FlowRenderUtil {
 		}
 
 		const simpleAction = piece;
-		if (simpleAction.nextAction) {
-			simpleAction.nextAction.xOffset = 0;
+		if (simpleAction.next_action) {
+			simpleAction.next_action.xOffset = 0;
 			/*      simpleAction.nextAction.yOffset = FlowRendererService.SPACING_VERTICAL;*/
-			this.buildCoordinates(simpleAction.nextAction);
+			this.buildCoordinates(simpleAction.next_action);
 		}
 	}
 }

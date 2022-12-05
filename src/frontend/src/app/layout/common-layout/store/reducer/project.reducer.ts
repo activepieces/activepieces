@@ -11,10 +11,10 @@ const initialState: ProjectsState = {
 const _projectReducer = createReducer(
 	initialState,
 	on(ProjectActions.setProjects, (state, { projects }): ProjectsState => {
-		return { projects: projects, loaded: true, selectedIndex: projects.length > 0 ? 0 : undefined };
+		return { projects: projects, loaded: true, selectedIndex: 0 };
 	}),
 	on(ProjectActions.clearProjects, (state, {}): ProjectsState => {
-		return { projects: [], loaded: false, selectedIndex: undefined };
+		return { projects: [], loaded: false, selectedIndex: 0 };
 	})
 );
 

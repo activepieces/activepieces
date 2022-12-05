@@ -26,21 +26,14 @@
   >
     <div class="d-flex flex-column user-info">
       <div class="main-text d-flex flex-wrap">
-        {{ username | titlecase }} &nbsp;
-        <span class="sub-text">({{ companyName }})</span>
+        {{ authenticationService.currentUser.first_name | titlecase }} &nbsp;
+        <span class="sub-text">({{ authenticationService.currentUser.last_name }})</span>
       </div>
-      <div class="sub-text">{{ email }}</div>
+      <div class="sub-text">{{ authenticationService.currentUser.email }}</div>
     </div>
     <div class="separator-line"></div>
-    <div>
-      <a
-        class="dropdown-item upgrade"
-        *ngIf="isInTrial"
-        routerLink="/trial-status"
-      >
-        Upgrade</a
-      >
-      <a (click)="logout()" class="dropdown-item log-out"> Logout</a>
-    </div>
+
+      <a (click)="logout()" class="dropdown-item log-out m-0"> Logout</a>
+
   </div>
 </div>

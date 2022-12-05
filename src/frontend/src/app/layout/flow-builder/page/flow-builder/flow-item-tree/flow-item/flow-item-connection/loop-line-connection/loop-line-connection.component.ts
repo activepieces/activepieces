@@ -188,7 +188,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
 		const topOffset =
 			this.flowItem.connectionsBox!.height -
 			SPACE_BETWEEN_ITEM_CONTENT_AND_LINE -
-			(this.flowItem.nextAction ? ARROW_HEAD_SIZE.height : 0);
+			(this.flowItem.next_action ? ARROW_HEAD_SIZE.height : 0);
 		this.afterLoopAddButtonTop = `${
 			topOffset -
 			VERTICAL_LINE_LENGTH / 2.0 -
@@ -205,7 +205,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
 	addLoopItem() {
 		this.store.dispatch(
 			FlowsActions.setRightSidebar({
-				sidebarType: RightSideBarType.PIECE_TYPE,
+				sidebarType: RightSideBarType.STEP_TYPE,
 				props: {
 					buttonType: AddButtonType.FIRST_LOOP_ACTION,
 					stepName: this.flowItem.name,
@@ -217,7 +217,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
 	add() {
 		this.store.dispatch(
 			FlowsActions.setRightSidebar({
-				sidebarType: RightSideBarType.PIECE_TYPE,
+				sidebarType: RightSideBarType.STEP_TYPE,
 				props: {
 					buttonType: AddButtonType.NEXT_ACTION,
 					stepName: this.flowItem.name,

@@ -11,7 +11,7 @@ import { AuthenticationService } from 'src/app/layout/common-layout/service/auth
 export class UserAvatarComponent {
 	showAvatarOuterCircle = false;
 
-	constructor(private authenticationService: AuthenticationService, private router: Router) {}
+	constructor(public authenticationService: AuthenticationService, private router: Router) {}
 
 	getDropDownLeftOffset(toggleElement: HTMLElement, dropDownElement: HTMLElement) {
 		const leftOffset = toggleElement.clientWidth - dropDownElement.clientWidth - 5;
@@ -23,47 +23,13 @@ export class UserAvatarComponent {
 		this.authenticationService.logout();
 	}
 
-	get username() {
-		return `${this.authenticationService.currentUser?.firstName} ${this.authenticationService.currentUser?.lastName}`;
-	}
-
 	get userFirstLetter() {
 		if (
 			this.authenticationService.currentUser == undefined ||
-			this.authenticationService.currentUser.firstName == undefined
+			this.authenticationService.currentUser.first_name == undefined
 		) {
-			return undefined;
+			return '';
 		}
-		return this.authenticationService.currentUser?.firstName[0];
-	}
-
-	get companyName() {
-		if (
-			this.authenticationService.currentUser == undefined ||
-			this.authenticationService.currentUser.company == undefined
-		) {
-			return undefined;
-		}
-		return this.authenticationService.currentUser?.company;
-	}
-
-	get email() {
-		if (
-			this.authenticationService.currentUser == undefined ||
-			this.authenticationService.currentUser.email == undefined
-		) {
-			return undefined;
-		}
-		return this.authenticationService.currentUser?.email;
-	}
-
-	get isInTrial() {
-		if (
-			this.authenticationService.currentUser == undefined ||
-			this.authenticationService.currentUser.epochExpirationTime == undefined
-		) {
-			return undefined;
-		}
-		return this.authenticationService.currentUser?.epochExpirationTime;
+		return this.authenticationService.currentUser.first_name[0];
 	}
 }

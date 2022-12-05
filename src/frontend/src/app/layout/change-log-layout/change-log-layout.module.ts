@@ -5,7 +5,7 @@ import { MarkdownModule } from 'ngx-markdown';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterModule } from '@angular/router';
 import { ChangeLogLayoutRouting } from './change-log-layout.routing';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 
 @NgModule({
 	declarations: [ChangeLogComponent],
@@ -14,7 +14,6 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 		MarkdownModule,
 		RouterModule.forChild(ChangeLogLayoutRouting),
 		MatToolbarModule,
-		HttpClientModule,
 		MarkdownModule.forRoot({
 			loader: HttpClient, // optional, only if you use [src] attribute
 		}),
