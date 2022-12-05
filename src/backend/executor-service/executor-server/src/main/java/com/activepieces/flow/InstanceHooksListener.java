@@ -49,7 +49,7 @@ public class InstanceHooksListener implements InstanceSubscriber {
         this.errorServiceHandler = errorServiceHandler;
     }
 
-    private List<FlowVersionView> filterFlows(Set<Ksuid> flowVersionIds, Class<?> triggerType) {
+    private List<FlowVersionView> filterFlows(List<Ksuid> flowVersionIds, Class<?> triggerType) {
         return flowVersionIds.stream()
                 .map(
                         f -> {
@@ -64,25 +64,21 @@ public class InstanceHooksListener implements InstanceSubscriber {
                 .collect(Collectors.toList());
     }
 
-    // TODO FIX
     public void runFlows(InstanceView instance, Class<?> triggerType) {
-/*        try {
-            final CollectionVersionView collectionVersionView = collectionVersionService.get(instance.getCollectionVersionId());
+        try {
             List<FlowVersionView> flowVersions =
-                    filterFlows(collectionVersionView.getFlowsVersionId(), triggerType);
+                    filterFlows(new ArrayList<>(instance.getFlowVersionId().values()), triggerType);
             for (FlowVersionView flowVersionView : flowVersions) {
                 InstanceRunView instanceRunView = flowPublisherService.executeInstance(
                         instance.getId(),
                         flowVersionView.getId(),
                         Collections.emptyMap(),
-                        Collections.emptyMap(),
                         true);
                 log.info("Running instance hook with run Id {}", instanceRunView.getId().toString());
             }
-        } catch (FlowExecutionInternalError | MissingConfigsException | ResourceNotFoundException |
-                 CollectionVersionNotFoundException | PermissionDeniedException e) {
+        } catch (FlowExecutionInternalError | MissingConfigsException | ResourceNotFoundException e) {
             throw errorServiceHandler.createInternalError(e);
-        }*/
+        }
     }
 
     public void onStop(InstanceView entity) {

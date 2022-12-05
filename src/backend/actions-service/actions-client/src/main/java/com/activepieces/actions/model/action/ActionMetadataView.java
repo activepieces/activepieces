@@ -13,6 +13,7 @@ import lombok.experimental.SuperBuilder;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import java.io.Serializable;
 
 @Getter
 @SuperBuilder(toBuilder = true)
@@ -32,7 +33,7 @@ import javax.validation.constraints.Pattern;
   @JsonSubTypes.Type(value = LoopOnItemsActionMetadataView.class, name = "LOOP_ON_ITEMS"),
   @JsonSubTypes.Type(value = ComponentActionMetadataView.class, name = "COMPONENT")
 })
-public abstract class ActionMetadataView {
+public abstract class ActionMetadataView implements Serializable {
 
   @Pattern(regexp = "CODE|BRANCH|STORAGE|RESPONSE|LOOP_ON_ITEMS|COMPONENT")
   @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)

@@ -41,7 +41,6 @@ import java.util.*;
 @Log4j2
 public class FlowPublisherServiceImpl implements FlowPublisherService {
 
-    private final ObjectMapper objectMapper;
 
     private final InstanceService instanceService;
     private final FlowVersionService flowVersionService;
@@ -49,32 +48,20 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
     private final CollectionVersionService collectionVersionService;
     private final InstanceRunService instanceRunService;
     private final VariableService variableService;
-    private final ErrorServiceHandler errorServiceHandler;
-    private final FlowService flowService;
-    private final PermissionService permissionService;
-    private final String apiPrefix;
+    private final FlowScheduler flowScheduler;
 
     @Autowired
     FlowPublisherServiceImpl(
             @NonNull final FlowVersionService flowVersionService,
             @NonNull final WorkerService workerService,
             @NonNull final InstanceService instanceService,
-            @NonNull final ErrorServiceHandler errorServiceHandler,
+            @NonNull final FlowScheduler flowScheduler,
             @NonNull final InstanceRunService instanceRunService,
-            @NonNull final PermissionService permissionService,
-            @NonNull final FlowService flowService,
             @NonNull final VariableService variableService,
-            @NonNull final CollectionVersionService collectionVersionService,
-            final ObjectMapper objectMapper,
-            @Value("${com.activepieces.api-prefix}") String apiPrefix)
-            throws IOException {
-        this.apiPrefix = apiPrefix;
-        this.permissionService = permissionService;
-        this.flowService = flowService;
-        this.objectMapper = objectMapper;
-        this.errorServiceHandler = errorServiceHandler;
+            @NonNull final CollectionVersionService collectionVersionService) {
         this.collectionVersionService = collectionVersionService;
         this.instanceService = instanceService;
+        this.flowScheduler = flowScheduler;
         this.variableService = variableService;
         this.workerService = workerService;
         this.instanceRunService = instanceRunService;
@@ -85,14 +72,14 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
     public InstanceRunView executeTest(
             @NonNull Ksuid collectionVersionId,
             @NonNull Ksuid flowVersionId,
-            @NonNull Map<String, Object> variables,
             @NonNull Map<String, Object> triggerPayload)
-            throws FlowExecutionInternalError, ResourceNotFoundException {
-        Ksuid projectId = permissionService.getFirstResourceParentWithType(flowVersionId, ResourceType.PROJECT).getResourceId();
+            throws FlowExecutionInternalError {
         try {
             FlowVersionView flowVersionView = flowVersionService.get(flowVersionId);
             CollectionVersionView collectionVersionView =
                     collectionVersionService.get(collectionVersionId);
+            Map<String, Object> validatedInstanceConfigs =
+                    variableService.flatConfigsValue(collectionVersionView.getConfigs());
             Ksuid runId = Ksuid.newKsuid();
             Optional<ExecutionRequest> request =
                     constructRun(
@@ -101,14 +88,13 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
                             null,
                             collectionVersionView,
                             flowVersionView,
-                            variables,
+                            validatedInstanceConfigs,
                             triggerPayload);
             if (request.isPresent()) {
                 InstanceRunView instanceRunView =
                         createInstanceRun(null, collectionVersionView, flowVersionView, request.get());
-                // TODO FIX
-                // publish(request.get());
-                return instanceRunView.toBuilder().stateUrl(null).build();
+                flowScheduler.executeFlowAsync(request.get());
+                return instanceRunView.toBuilder().build();
             }
             return InstanceRunView.builder().id(runId).build();
         } catch (Exception e) {
@@ -121,7 +107,6 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
     public InstanceRunView executeInstance(
             @NonNull Ksuid instanceId,
             @NonNull Ksuid flowVersionId,
-            @NonNull Map<String, Object> flowConfigs,
             @NonNull Map<String, Object> triggerPayload,
             boolean async)
             throws FlowExecutionInternalError {
@@ -146,9 +131,8 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
                 InstanceRunView firstInstanceRun =
                         createInstanceRun(instanceView, collectionVersionView, flowVersionView, request.get());
                 if (async) {
-                  // TODO FIX
-                    //  publish(request.get());
-                    return firstInstanceRun.toBuilder().stateUrl(null).build();
+                    flowScheduler.executeFlowAsync(request.get());
+                    return firstInstanceRun.toBuilder().build();
                 } else {
                     InstanceRunView result =
                             workerService.executeFlow(
@@ -159,7 +143,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
                                     request.get().getContext(),
                                     request.get().getTriggerPayload(),
                                     request.get().getStorePath());
-                    return result.toBuilder().stateUrl(null).build();
+                    return result.toBuilder().build();
                 }
             }
         } catch (Exception e) {
@@ -170,7 +154,6 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
     }
 
 
-
     private Optional<ExecutionRequest> constructRun(
             Ksuid runId,
             StorePath storePath,
@@ -178,8 +161,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
             @NonNull CollectionVersionView collectionVersionView,
             @NonNull FlowVersionView version,
             @NonNull Map<String, Object> variables,
-            @NonNull Map<String, Object> triggerPayload)
-            throws PermissionDeniedException, FlowNotFoundException {
+            @NonNull Map<String, Object> triggerPayload) {
         TriggerMetadataView trigger = version.getTrigger();
         if (Objects.nonNull(trigger)) {
             Ksuid instanceId = Objects.nonNull(instanceView) ? instanceView.getId() : null;
@@ -187,6 +169,8 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
                     ExecutionRequest.builder()
                             .storePath(storePath)
                             .configs(variables)
+                            .collectionVersionId(collectionVersionView.getId())
+                            .context(Collections.emptyMap())
                             .triggerPayload(triggerPayload)
                             .instanceId(instanceId)
                             .flowVersionId(version.getId())
@@ -215,13 +199,14 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
         InstanceRunView instanceRunView =
                 InstanceRunView.builder()
                         .id(executionRequest.getRunId())
-                        .instanceId(Objects.isNull(instance) ? null : instance.getId())
+                        .collectionId(collectionVersionView.getId())
                         .flowDisplayName(flowVersion.getDisplayName())
                         .collectionVersionId(collectionVersionView.getId())
                         .collectionDisplayName(collectionVersionView.getDisplayName())
                         .projectId(Objects.isNull(instance) ? null : instance.getProjectId())
                         .flowVersionId(flowVersion.getId())
-                        .epochStartTime(Instant.now().toEpochMilli())
+                        .startTime(Instant.now().toEpochMilli())
+                        .finishTime(Instant.now().toEpochMilli())
                         .status(
                                 Objects.isNull(flowVersion.getTrigger().getNextAction())
                                         ? FlowExecutionStatus.SUCCEEDED

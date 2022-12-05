@@ -12,8 +12,8 @@ import com.activepieces.piece.client.model.CollectionMetaVersionView;
 import com.activepieces.piece.client.model.CollectionVersionView;
 import com.github.ksuid.Ksuid;
 
-import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface CollectionVersionService {
@@ -24,9 +24,9 @@ public interface CollectionVersionService {
 
     CollectionVersionView get(Ksuid id) throws CollectionVersionNotFoundException, PermissionDeniedException;
 
-    void commit(Ksuid id) throws PermissionDeniedException, CollectionVersionNotFoundException, CollectionVersionAlreadyLockedException, FlowNotFoundException, CollectionInvalidStateException;
+    Map<Ksuid, Ksuid> commit(Ksuid id) throws PermissionDeniedException, CollectionVersionNotFoundException, CollectionVersionAlreadyLockedException, FlowNotFoundException, CollectionInvalidStateException;
 
-    CollectionVersionView update(Ksuid id, CollectionVersionView view) throws PermissionDeniedException, CollectionVersionNotFoundException, CollectionVersionAlreadyLockedException;
+    CollectionVersionView update(Ksuid id, CollectionVersionView view) throws PermissionDeniedException, CollectionVersionNotFoundException, CollectionVersionAlreadyLockedException, CollectionVersionAlreadyLockedException;
 
     List<CollectionMetaVersionView> listByCollectionId(Ksuid collectionId) throws CollectionNotFoundException, PermissionDeniedException;
 

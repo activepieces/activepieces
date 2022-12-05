@@ -9,6 +9,8 @@ import com.activepieces.project.client.ProjectService;
 import com.activepieces.project.client.model.CreateProjectRequest;
 import com.activepieces.project.client.model.ProjectView;
 import lombok.NonNull;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
@@ -22,16 +24,19 @@ public class StartupHousekeeper {
 
     private final UserAuthenticationService authenticationService;
     private final ProjectService projectService;
+    private final Scheduler scheduler;
 
     @Autowired
     public StartupHousekeeper(@NonNull final UserAuthenticationService authenticationService,
+                              @NonNull final Scheduler scheduleService,
                               @NonNull final ProjectService projectService) {
         this.authenticationService = authenticationService;
         this.projectService = projectService;
+        this.scheduler = scheduleService;
     }
 
     @EventListener(ContextRefreshedEvent.class)
-    public void contextRefreshedEvent()  {
+    public void contextRefreshedEvent() throws SchedulerException {
         final UserInformationView user = authenticationService.getOptional("admin@activepieces.com")
                 .orElse(authenticationService.create("admin@activepieces.com",
                         SignUpRequest.builder().firstName("Activepieces")

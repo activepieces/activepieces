@@ -24,7 +24,7 @@ public class InstanceRunView implements EntityMetadata {
 
   @JsonProperty private Ksuid projectId;
 
-  @JsonProperty private Ksuid instanceId;
+  @JsonProperty private Ksuid collectionId;
 
   @JsonProperty private Ksuid flowVersionId;
 
@@ -34,21 +34,13 @@ public class InstanceRunView implements EntityMetadata {
 
   @JsonProperty private String collectionDisplayName;
 
-  @JsonProperty private String accountName;
-
   @JsonProperty private FlowExecutionStatus status;
 
-  @JsonProperty private boolean logsUploaded;
+  @JsonProperty private Ksuid logsFileId;
 
-  @JsonProperty private String stateUrl;
+  @JsonProperty private long finishTime;
 
-  @JsonProperty private long epochFinishTime;
-
-  @JsonProperty private long epochStartTime;
-
-
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  @JsonProperty private ExecutionStateView state;
+  @JsonProperty private long startTime;
 
   @NotNull
   @JsonProperty

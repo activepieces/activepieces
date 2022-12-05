@@ -73,7 +73,6 @@ public class Sandbox {
   public void writeEntryPoint(
           @NonNull CollectionVersionView collectionVersionView,
           @NonNull FlowVersionView flowVersionView,
-          Ksuid instanceId,
           @NonNull String apiUrl,
           @NonNull ObjectMapper objectMapper)
       throws IOException {
@@ -85,7 +84,6 @@ public class Sandbox {
     entryJson.put("workerToken", JWTUtils.createTokenWithDefaultExpiration(
             WorkerIdentity.builder()
                     .collectionId(collectionVersionView.getCollectionId())
-                    .instanceId(instanceId)
                     .flowId(flowVersionView.getFlowId())
                     .build()
     ));

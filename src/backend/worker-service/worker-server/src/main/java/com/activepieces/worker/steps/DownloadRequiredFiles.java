@@ -71,7 +71,6 @@ public class DownloadRequiredFiles extends Step {
                 .writeEntryPoint(
                         collectionVersionView,
                         flowVersionView,
-                        instanceRunView.getInstanceId(),
                         apiUrl,
                         objectMapper);
         worker.getSandbox().writeTriggerPayload(triggerPayload, objectMapper);

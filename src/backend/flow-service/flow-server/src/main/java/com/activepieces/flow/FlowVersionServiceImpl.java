@@ -104,7 +104,8 @@ public class FlowVersionServiceImpl implements FlowVersionService {
   @Override
   public FlowVersionView getLatest(Ksuid flowId) throws PermissionDeniedException {
     permissionService.requiresPermission(flowId, Permission.READ_FLOW);
-    return flowVersionMapper.toView(flowVersionRepository.findFirstByFlowIdOrderByIdDesc(flowId));
+    FlowVersion flowVersion = flowVersionRepository.findFirstByFlowIdOrderByIdDesc(flowId);
+    return flowVersionMapper.toView(flowVersion);
   }
 
   @Override

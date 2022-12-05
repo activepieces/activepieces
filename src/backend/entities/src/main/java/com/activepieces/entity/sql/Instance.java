@@ -2,6 +2,7 @@ package com.activepieces.entity.sql;
 
 import com.activepieces.common.EntityMetadata;
 import com.activepieces.entity.enums.InstanceStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.ksuid.Ksuid;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import lombok.*;
@@ -10,6 +11,7 @@ import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -34,6 +36,10 @@ public class Instance implements EntityMetadata {
 
   @Column(name = "collection_version_id")
   private Ksuid collectionVersionId;
+
+  @Column(name = "flow_versions_id", columnDefinition = "jsonb")
+  @Type(type = "jsonb")
+  private Map<String, String> flowVersionId;
 
   @Column(name = "project_id")
   private Ksuid projectId;

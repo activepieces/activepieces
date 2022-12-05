@@ -31,6 +31,9 @@ public class InstanceRun implements EntityMetadata {
   @Column(name = "project_id")
   private Ksuid projectId;
 
+  @Column(name = "collection_id")
+  private Ksuid collectionId;
+
   @Column(name = "flow_version_id")
   private Ksuid flowVersionId;
 
@@ -49,11 +52,11 @@ public class InstanceRun implements EntityMetadata {
   @Column(name = "logs_file_id")
   private Ksuid logsFileId;
 
-  @Column(name = "epoch_finish_time")
-  private long epochFinishTime;
+  @Column(name = "finish_time")
+  private long finishTime;
 
-  @Column(name = "epoch_start_time")
-  private long epochStartTime;
+  @Column(name = "start_time")
+  private long startTime;
 
   @Column(name = "created", nullable = false)
   private long created;

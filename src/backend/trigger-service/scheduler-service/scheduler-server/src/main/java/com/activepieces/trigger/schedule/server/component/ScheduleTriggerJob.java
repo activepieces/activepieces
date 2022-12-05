@@ -35,8 +35,7 @@ public class ScheduleTriggerJob extends QuartzJobBean {
   }
 
   @Override
-  protected void executeInternal(JobExecutionContext jobExecutionContext)
-      throws JobExecutionException {
+  protected void executeInternal(JobExecutionContext jobExecutionContext) {
     JobDataMap jobDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
     Ksuid instanceId = (Ksuid) jobDataMap.get(INSTANCE_ID);
     Ksuid flowVersionId = (Ksuid) jobDataMap.get(FLOW_VERSION_ID);
@@ -46,7 +45,7 @@ public class ScheduleTriggerJob extends QuartzJobBean {
         instanceId);
     try {
         flowExecutionPublisher.executeInstance(
-            instanceId, flowVersionId, Collections.emptyMap(), Collections.emptyMap(), true);
+            instanceId, flowVersionId, Collections.emptyMap(), true);
     } catch (Exception e) {
       throw errorServiceHandler.createInternalError(e);
     }

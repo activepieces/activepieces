@@ -23,7 +23,16 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FileEntity save(String name, MultipartFile file) throws IOException {
-        return fileRepository.save(FileEntity.builder().id(Ksuid.newKsuid()).name(name).contentType(file.getContentType()).data(file.getBytes()).size(file.getSize()).build());
+        FileEntity.FileEntityBuilder fileEntity = FileEntity.builder().id(Ksuid.newKsuid());
+        Optional<FileEntity> byName = fileRepository.findByNameIgnoreCase(name);
+        if(byName.isPresent()){
+            fileEntity = byName.get().toBuilder();
+        }
+        return fileRepository.save(fileEntity.name(name)
+                .contentType(file.getContentType())
+                .data(file.getBytes())
+                .size(file.getSize())
+                .build());
     }
 
     @Override

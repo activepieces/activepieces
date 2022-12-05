@@ -19,10 +19,6 @@ public class TestFlowRequest {
 
     @JsonProperty
     @NotNull
-    private Map<String, Object> configs;
-
-    @JsonProperty
-    @NotNull
     @Valid
     private Map<String, Object> trigger;
 

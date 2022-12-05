@@ -43,7 +43,7 @@ public class UploadRunState extends Step {
         (WorkerExecutionResult) output.get(Constants.WORKER_RESULT_IN_MAP);
     instanceRun.setStatus(workerExecutionResult.getStatus());
     instanceRun.setOutput(workerExecutionResult.getOutput());
-    instanceRun.setEpochFinishTime(Instant.now().toEpochMilli());
+    instanceRun.setFinishTime(Instant.now().toEpochMilli());
     output.put(
         Constants.RUN_RESULT_IN_MAP,
         instanceRunService.createOrUpdate(instanceRun, workerExecutionResult.getExecutionState()));

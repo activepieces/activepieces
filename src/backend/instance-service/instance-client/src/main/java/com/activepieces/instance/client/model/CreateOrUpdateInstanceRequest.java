@@ -18,8 +18,6 @@ import java.util.UUID;
 @SuperBuilder(toBuilder = true)
 public class CreateOrUpdateInstanceRequest {
 
-  @JsonProperty @NotNull private Ksuid collectionVersionId;
-
   @JsonProperty @NotNull private InstanceStatus status;
 
 }

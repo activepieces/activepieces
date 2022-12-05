@@ -21,9 +21,6 @@ public abstract class TriggerMapper {
             source = ScheduleTriggerMetadata.class,
             target = ScheduleMetadataTriggerView.class),
         @SubclassMapping(
-            source = ManualTriggerMetadata.class,
-            target = ManualTriggerMetadataView.class),
-        @SubclassMapping(
             source = InstanceStoppedTriggerMetadata.class,
             target = InstanceStoppedTriggerMetadataView.class),
         @SubclassMapping(
@@ -55,9 +52,6 @@ public abstract class TriggerMapper {
         @SubclassMapping(
             source = WebhookTriggerMetadataView.class,
             target = WebhookTriggerMetadata.class),
-        @SubclassMapping(
-            source = ManualTriggerMetadataView.class,
-            target = ManualTriggerMetadata.class),
         @SubclassMapping(
             source = EmptyTriggerMetadataView.class,
             target = EmptyTriggerMetadata.class)

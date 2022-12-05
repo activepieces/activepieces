@@ -1,7 +1,9 @@
 package com.activepieces.instance.client;
 
 import com.activepieces.common.error.exception.InstanceNotFoundException;
+import com.activepieces.common.error.exception.collection.CollectionInvalidStateException;
 import com.activepieces.common.error.exception.collection.CollectionNotFoundException;
+import com.activepieces.common.error.exception.collection.CollectionVersionAlreadyLockedException;
 import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException;
@@ -22,7 +24,7 @@ public interface InstanceService {
 
   SeekPage<InstanceView> listByCollectionId(Ksuid collectionId, SeekPageRequest pageRequest) throws PermissionDeniedException, InstanceNotFoundException;
 
-  InstanceView create(CreateOrUpdateInstanceRequest view) throws PermissionDeniedException, ResourceNotFoundException, FlowVersionNotFoundException, MissingConfigsException, CollectionVersionNotFoundException;
+  InstanceView create(Ksuid collectionId, CreateOrUpdateInstanceRequest instanceRequest) throws PermissionDeniedException, ResourceNotFoundException, FlowVersionNotFoundException, MissingConfigsException, CollectionVersionNotFoundException, CollectionNotFoundException, FlowNotFoundException, CollectionInvalidStateException, CollectionVersionAlreadyLockedException;
 
   Optional<InstanceView> getOptional(Ksuid id) throws PermissionDeniedException;
 

@@ -1,11 +1,13 @@
 package com.activepieces.logging.server;
 
+import com.activepieces.common.error.ErrorServiceHandler;
 import com.activepieces.common.error.exception.InstanceNotFoundException;
 import com.activepieces.common.pagination.PageFilter;
 import com.activepieces.common.pagination.SeekPage;
 import com.activepieces.common.pagination.SeekPageRequest;
 import com.activepieces.entity.enums.Permission;
 import com.activepieces.entity.enums.ResourceType;
+import com.activepieces.entity.sql.FileEntity;
 import com.activepieces.entity.sql.InstanceRun;
 import com.activepieces.entity.subdocuments.runs.ExecutionStateView;
 import com.activepieces.file.service.FileService;
@@ -17,14 +19,18 @@ import com.activepieces.logging.client.exception.InstanceRunNotFoundException;
 import com.activepieces.logging.client.model.InstanceRunView;
 import com.activepieces.logging.server.mapper.InstanceRunMapper;
 import com.activepieces.logging.server.repository.InstanceRunRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
+import org.h2.util.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -39,6 +45,7 @@ public class InstanceRunServiceImpl implements InstanceRunService {
   private final FileService fileService;
   private final Executor executor;
   private final ObjectMapper objectMapper;
+  private final ErrorServiceHandler errorServiceHandler;
 
   @Autowired
   public InstanceRunServiceImpl(
@@ -46,8 +53,10 @@ public class InstanceRunServiceImpl implements InstanceRunService {
       final FileService fileService,
       InstanceRunRepository repository,
       PermissionService permissionService,
+      ErrorServiceHandler errorServiceHandler,
       InstanceRunMapper mapper)
       throws IOException {
+    this.errorServiceHandler = errorServiceHandler;
     this.fileService = fileService;
     this.executor = Executors.newFixedThreadPool(8);
     this.permissionService = permissionService;
@@ -64,8 +73,6 @@ public class InstanceRunServiceImpl implements InstanceRunService {
     }
     permissionService.requiresPermission(id, Permission.READ_INSTANCE_RUN);
     InstanceRunView instanceRunView = mapper.toView(eventOptional.get());
-    // TODO FIX
-/*    instanceRunView.setStateUrl(generateUrl(id));*/
     return Optional.of(instanceRunView);
   }
 
@@ -94,37 +101,29 @@ public class InstanceRunServiceImpl implements InstanceRunService {
       @NonNull InstanceRunView request, @NonNull ExecutionStateView executionStateView)
       throws ResourceNotFoundException, PermissionDeniedException,
           InstanceNotFoundException, IOException {
-    Ksuid parentResourceId =
-        Objects.isNull(request.getInstanceId())
-            ? request.getFlowVersionId()
-            : request.getInstanceId();
     // No need for permissions as this will be used internally
     // permissionService.requiresPermission(parentResourceId, Permission.CREATE_INSTANCE_RUN);
 
     request.setProjectId(request.getProjectId());
-    request.setLogsUploaded(false);
-
     InstanceRunView savedView = mapper.toView(repository.save(mapper.fromView(request)));
     permissionService.createResourceWithParent(
-        savedView.getId(), parentResourceId, ResourceType.INSTANCE_RUN);
+        savedView.getId(), request.getCollectionId(), ResourceType.INSTANCE_RUN);
 
     // They are lost due the transitions to database model and back
-    savedView.setState(executionStateView);
-    // TODO FIX
-/*    savedView.setStateUrl(generateUrl(savedView.getId()));
     savedView.setOutput(request.getOutput());
 
     executor.execute(
         () -> {
           try {
             String json = objectMapper.writeValueAsString(executionStateView);
-            fileService.save(executionStateView)
-            savedView.setLogsUploaded(true);
+            FileEntity file = fileService.save(request.getId().toInspectString() ,
+                    new MockMultipartFile("file", request.getId().toString() + ".json", "application/json", json.getBytes(StandardCharsets.UTF_8)));
+            savedView.setLogsFileId(file.getId());
             repository.save(mapper.fromView(savedView));
-          } catch (JsonProcessingException e) {
+          } catch (IOException e) {
             throw errorServiceHandler.createInternalError(e);
           }
-        });*/
+        });
     return savedView;
   }
 

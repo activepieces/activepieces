@@ -10,27 +10,28 @@ import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
+import java.io.Serializable;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @SuperBuilder(toBuilder = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property="type", visible = true, defaultImpl = EmptyTriggerMetadataView.class)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property="type", visible = true, defaultImpl = EmptyTriggerMetadataView.class)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = ScheduleMetadataTriggerView.class, name = "SCHEDULE"),
         @JsonSubTypes.Type(value = EmptyTriggerMetadataView.class, name = "EMPTY"),
         @JsonSubTypes.Type(value = InstanceStartedTriggerMetadataView.class, name = "INSTANCE_STARTED"),
         @JsonSubTypes.Type(value = InstanceStoppedTriggerMetadataView.class, name = "INSTANCE_STOPPED"),
-        @JsonSubTypes.Type(value = WebhookTriggerMetadataView.class, name = "WEBHOOK"),
-        @JsonSubTypes.Type(value = ManualTriggerMetadataView.class, name = "MANUAL"),}
+        @JsonSubTypes.Type(value = WebhookTriggerMetadataView.class, name = "WEBHOOK")
+}
 )
 @ToString
 @EqualsAndHashCode
-public abstract class TriggerMetadataView {
+public abstract class TriggerMetadataView implements Serializable {
 
-    @Pattern(regexp = "MANUAL|EVENT|SCHEDULE|EMPTY|WEBHOOK|INSTANCE_STARTED|INSTANCE_STOPPED")
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Pattern(regexp = "SCHEDULE|EMPTY|WEBHOOK|INSTANCE_STARTED|INSTANCE_STOPPED")
+    @JsonProperty
     private String type;
 
     @JsonProperty

@@ -30,11 +30,11 @@ public class InstanceRunController {
         this.instanceRunService = instanceRunService;
     }
 
-    @GetMapping("/instance-runs/{instanceId}")
+    @GetMapping("/instance-runs/{instanceRunId}")
     public ResponseEntity<InstanceRunView> get(
-            @PathVariable("instanceId") Ksuid instanceId)
+            @PathVariable("instanceRunId") Ksuid instanceRunId)
             throws InstanceRunNotFoundException, PermissionDeniedException {
-        InstanceRunView instanceRunView = instanceRunService.get(instanceId);
+        InstanceRunView instanceRunView = instanceRunService.get(instanceRunId);
         return ResponseEntity.ok(instanceRunView);
     }
 

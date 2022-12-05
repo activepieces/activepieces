@@ -9,6 +9,8 @@ import com.activepieces.piece.client.CollectionVersionService;
 import com.activepieces.piece.client.model.CollectionVersionView;
 import com.activepieces.worker.Worker;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,11 +33,10 @@ public class WorkerServiceImpl implements WorkerService {
   @Autowired
   public WorkerServiceImpl(
           @Value("${com.activepieces.api-prefix}") final String apiUrl,
-      final FlowVersionService flowVersionService,
       final InstanceRunService instanceRunService,
-      final CollectionVersionService collectionVersionService,
       final LocalArtifactCacheServiceImpl localArtifactCacheService,
       final ObjectMapper objectMapper) {
+    final ObjectMapper lowerCamelCase = objectMapper.copy().setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE);
     this.workers = new ArrayList<>();
     this.blockingQueue = new LinkedBlockingQueue<>();
     for (int i = 0; i < NUMBER_OF_WORKERS; ++i) {
@@ -46,7 +47,7 @@ public class WorkerServiceImpl implements WorkerService {
                   apiUrl,
               localArtifactCacheService,
               instanceRunService,
-              objectMapper));
+                  lowerCamelCase));
     }
   }
 

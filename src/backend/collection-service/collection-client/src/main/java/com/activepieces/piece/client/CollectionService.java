@@ -27,7 +27,7 @@ public interface CollectionService {
   CollectionView get(Ksuid id) throws CollectionNotFoundException, PermissionDeniedException;
 
   CollectionView update(Ksuid id, CollectionVersionView view)
-          throws CollectionNotFoundException, PermissionDeniedException, ResourceNotFoundException, IOException, CollectionVersionNotFoundException, CollectionVersionAlreadyLockedException, InvalidCodeArtifactException;
+          throws CollectionNotFoundException, PermissionDeniedException, ResourceNotFoundException, IOException, CollectionVersionNotFoundException, InvalidCodeArtifactException, CollectionVersionAlreadyLockedException;
 
   void delete(Ksuid id) throws CollectionNotFoundException, PermissionDeniedException, ResourceNotFoundException;
 }

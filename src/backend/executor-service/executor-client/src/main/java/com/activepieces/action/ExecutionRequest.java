@@ -22,6 +22,9 @@ public class ExecutionRequest {
     private Ksuid instanceId;
 
     @JsonProperty
+    private Ksuid collectionVersionId;
+
+    @JsonProperty
     private Ksuid flowVersionId;
 
     @JsonProperty

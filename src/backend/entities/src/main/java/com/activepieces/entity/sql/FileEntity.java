@@ -7,16 +7,18 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.time.Instant;
 
 @Entity
-@Builder
 @Getter
 @AllArgsConstructor
+@Builder(toBuilder = true)
 @NoArgsConstructor
-@Table(name = "FILES", indexes = {@Index(name = "name_index", columnList = "name", unique = true)})
+@Table(name = "FILES", indexes = {@Index(name = "file_name_index", columnList = "name", unique = true)})
 public class FileEntity implements EntityMetadata {
 
     @Id
@@ -31,7 +33,7 @@ public class FileEntity implements EntityMetadata {
     @Column(name = "size")
     private Long size;
 
-    @Lob
+    @Column(name = "data", columnDefinition = "bytea")
     private byte[] data;
 
     @Column(name = "created", nullable = false)
@@ -39,6 +41,7 @@ public class FileEntity implements EntityMetadata {
 
     @Column(name = "updated", nullable = false)
     private long updated;
+
 
 
     @PrePersist

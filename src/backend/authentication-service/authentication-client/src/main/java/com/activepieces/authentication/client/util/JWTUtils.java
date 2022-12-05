@@ -27,7 +27,6 @@ public class JWTUtils {
   public static final Duration DEFAULT_EXPIRATION_DURATION = Duration.ofDays(7);
   private static final String RESOURCE_ROLE = "role";
   private static final String COLLECTION_ID = "collection_id";
-  private static final String INSTANCE_ID = "instance_id";
   private static final String FLOW_ID = "flow_id";
 
   // TODO MOVE TO PRIVATE
@@ -50,11 +49,6 @@ public class JWTUtils {
         .withClaim(RESOURCE_ROLE, workerIdentity.getPrincipleType().toString())
         .withClaim(COLLECTION_ID, workerIdentity.getCollectionId().toString())
         .withClaim(FLOW_ID, workerIdentity.getFlowId().toString())
-        .withClaim(
-            INSTANCE_ID,
-            Objects.isNull(workerIdentity.getInstanceId())
-                ? null
-                : workerIdentity.getInstanceId().toString())
         .withExpiresAt(
             new Date(System.currentTimeMillis() + DEFAULT_EXPIRATION_DURATION.getSeconds() * 1000L))
         .sign(HMAC512(SECRET_KEY.getBytes()));
@@ -85,10 +79,6 @@ public class JWTUtils {
               WorkerIdentity.builder()
                   .flowId(Ksuid.fromString(decodedJWT.getClaim(FLOW_ID).asString()))
                   .collectionId(Ksuid.fromString(decodedJWT.getClaim(COLLECTION_ID).asString()));
-          String instanceId = decodedJWT.getClaim(INSTANCE_ID).asString();
-          if (Objects.nonNull(instanceId)) {
-            builder = builder.instanceId(Ksuid.fromString(instanceId));
-          }
           return Optional.of(builder.build());
         }
       }

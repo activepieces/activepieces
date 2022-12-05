@@ -109,29 +109,25 @@ public class ScheduleServiceImpl implements ScheduleService, InstanceSubscriber 
   private void createIfSchedule(InstanceView entity)
           throws PermissionDeniedException, SchedulerException, JsonProcessingException,
           FlowVersionNotFoundException, CollectionVersionNotFoundException {
-  // TODO FIX
-    /*    final CollectionVersionView collectionView = collectionVersionService.get(entity.getCollectionVersionId());
-    for (UUID flowVersionId : collectionView.getFlowsVersionId()) {
+    for (Ksuid flowVersionId : entity.getFlowVersionId().values()) {
       FlowVersionView flowVersion = flowVersionService.getOptional(flowVersionId).orElseThrow();
       if (flowVersion.getTrigger() instanceof ScheduleMetadataTriggerView) {
         log.info("Creating Schedule Job binding" + entity);
         create(entity, flowVersionId, (ScheduleMetadataTriggerView) flowVersion.getTrigger());
       }
-    }*/
+    }
   }
 
   private void deleteSchedule(InstanceView entity)
           throws PermissionDeniedException, SchedulerException, FlowVersionNotFoundException, CollectionVersionNotFoundException {
-    // TODO FIX
-    /*    final CollectionVersionView collectionView = collectionVersionService.get(entity.getCollectionVersionId());
-    for (UUID flowVersionId : collectionView.getFlowsVersionId()) {
+    for (Ksuid flowVersionId : entity.getFlowVersionId().values()) {
       FlowVersionView flowVersionView = flowVersionService.get(flowVersionId);
       JobKey jobKey = new JobKey(key(entity.getId(), flowVersionView.getFlowId()));
       if (scheduler.checkExists(jobKey)) {
         log.info(String.format("Deleted Job for triggerId=%s ", entity.getId()));
         scheduler.deleteJob(jobKey);
       }
-    }*/
+    }
   }
 
   @Override
@@ -140,7 +136,6 @@ public class ScheduleServiceImpl implements ScheduleService, InstanceSubscriber 
       switch (type) {
         case CREATE:
           if (entity.getStatus().equals(InstanceStatus.RUNNING)) {
-            log.info("Creating Schedule Job binding" + entity);
             createIfSchedule(entity);
           }
           break;

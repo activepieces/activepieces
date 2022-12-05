@@ -32,8 +32,6 @@ import com.github.ksuid.Ksuid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -144,53 +142,34 @@ public class CollectionVersionServiceImpl implements CollectionVersionService {
         if (collection.isEmpty()) {
             throw new CollectionNotFoundException(collectionId);
         }
-        List<CollectionMetaVersionView> collectionVersionMetaViews =
-                collectionVersionRepository.findAllByCollectionId(collectionId).stream()
-                        .map(version -> collectionVersionMapper.toMeta(collectionVersionMapper.toView(version)))
-                        .collect(Collectors.toList());
-        // TODO FIX
-        return Collections.emptyList();
-   /* return collection.get().getVersionsList().stream()
-        .map(
-            vId ->
-                collectionVersionMetaViews.stream()
-                    .filter(f -> f.getId().equals(vId))
-                    .findFirst()
-                    .get())
-        .collect(Collectors.toList());*/
+        return collectionVersionRepository.findAllByCollectionId(collectionId).stream()
+                .map(version -> collectionVersionMapper.toMeta(collectionVersionMapper.toView(version)))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public void commit(Ksuid id)
-            throws PermissionDeniedException, CollectionVersionNotFoundException,
-            CollectionVersionAlreadyLockedException, FlowNotFoundException,
+    public Map<Ksuid, Ksuid> commit(Ksuid collectionVersionId)
+            throws PermissionDeniedException, CollectionVersionNotFoundException, FlowNotFoundException,
             CollectionInvalidStateException {
-        permissionService.requiresPermission(id, Permission.WRITE_COLLECTION);
-        CollectionVersionView currentVersion = get(id);
-        if (currentVersion.getState().equals(EditState.LOCKED)) {
-            throw new CollectionVersionAlreadyLockedException(id);
-        }
-        List<FlowView> flowViews =
-                flowService
-                        .listByCollectionId(
-                                currentVersion.getCollectionId(),
-                                new SeekPageRequest(null, Integer.MAX_VALUE))
-                        .getData();
+        permissionService.requiresPermission(collectionVersionId, Permission.WRITE_COLLECTION);
+        CollectionVersionView currentVersion = get(collectionVersionId);
+        List<FlowView> flowViews = flowService.listByCollectionId(currentVersion.getCollectionId(), new SeekPageRequest(null, Integer.MAX_VALUE)).getData();
         for (FlowView flowView : flowViews) {
             if (!flowView.getLastVersion().isValid()) {
                 throw new CollectionInvalidStateException(currentVersion.getDisplayName());
             }
         }
-        Set<Ksuid> flowVersionIds =
-                flowViews.stream()
-                        .map(f -> f.getLastVersion().getId())
-                        .collect(Collectors.toSet());
-        commitFlows(flowVersionIds);
+        Map<Ksuid, Ksuid> flowVersionIds = flowViews.stream()
+                        .map(f -> Map.entry( f.getId(),  f.getLastVersion().getId()))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        commitFlows(new ArrayList<>(flowVersionIds.values()));
         saveFromView(
                 currentVersion.toBuilder().state(EditState.LOCKED).build());
+        return flowVersionIds;
     }
 
-    private void commitFlows(Set<Ksuid> versionsList) {
+    private void commitFlows(List<Ksuid> versionsList) {
         versionsList.forEach(
                 f -> {
                     try {

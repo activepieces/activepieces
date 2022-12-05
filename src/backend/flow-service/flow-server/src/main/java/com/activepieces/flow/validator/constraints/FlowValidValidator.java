@@ -24,7 +24,7 @@ public class FlowValidValidator implements FlowVersionRequestBuilder {
         FlowVersionUtil.findAllActions(flowVersion).stream()
             .map(ActionMetadataView::isValid)
             .collect(Collectors.toList());
-    boolean valid = flowVersion.isValid() && flowVersion.getErrors().size() == 0;
+    boolean valid = flowVersion.getErrors().size() == 0;
     for (boolean actionValid : actionsValidity) {
       valid = valid && actionValid;
     }

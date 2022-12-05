@@ -59,11 +59,6 @@ public class StorePath {
     switch (scope){
       case COLLECTION:
         return StorePath.collection(workerIdentity.getCollectionId());
-      case INSTANCE:
-        if (Objects.isNull(workerIdentity.getInstanceId())){
-            return StorePath.testScope(workerIdentity.getCollectionId());
-        }
-        return StorePath.instance(workerIdentity.getInstanceId());
     }
     throw new RuntimeException("Unsupported Store scope " + scope.toString());
   }

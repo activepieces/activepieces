@@ -2,6 +2,8 @@ package com.activepieces.entity.subdocuments.trigger;
 
 import com.activepieces.entity.subdocuments.action.ActionMetadata;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,10 +15,22 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property="type", visible = true, defaultImpl = EmptyTriggerMetadata.class)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = ScheduleTriggerMetadata.class, name = "SCHEDULE"),
+        @JsonSubTypes.Type(value = EmptyTriggerMetadata.class, name = "EMPTY"),
+        @JsonSubTypes.Type(value = InstanceStartedTriggerMetadata.class, name = "INSTANCE_STARTED"),
+        @JsonSubTypes.Type(value = InstanceStoppedTriggerMetadata.class, name = "INSTANCE_STOPPED"),
+        @JsonSubTypes.Type(value = WebhookTriggerMetadata.class, name = "WEBHOOK")
+}
+)
 public abstract class TriggerMetadata {
 
     @JsonProperty
     private String displayName;
+
+    @JsonProperty
+    private String type;
 
     @JsonProperty
     private String name;

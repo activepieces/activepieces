@@ -14,10 +14,9 @@ public interface FlowPublisherService {
 
     InstanceRunView executeTest(@NonNull final Ksuid collectionVersionId,
                                 @NonNull final Ksuid flowVersionID,
-                                @NonNull Map<String,Object> variables,
                                 @NonNull Map<String, Object> triggerPayload) throws FlowExecutionInternalError, ResourceNotFoundException;
 
-    InstanceRunView executeInstance(@NonNull final Ksuid instanceId, @NonNull Ksuid flowVersionId, @NonNull Map<String, Object> flowConfigs, @NonNull Map<String, Object> triggerPayload, boolean async) throws FlowExecutionInternalError, MissingConfigsException, ResourceNotFoundException;
+    InstanceRunView executeInstance(@NonNull final Ksuid instanceId, @NonNull Ksuid flowVersionId, @NonNull Map<String, Object> triggerPayload, boolean async) throws FlowExecutionInternalError, MissingConfigsException, ResourceNotFoundException;
 
 
 }

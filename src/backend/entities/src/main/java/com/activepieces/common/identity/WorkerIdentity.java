@@ -11,13 +11,11 @@ public class WorkerIdentity extends PrincipleIdentity {
 
   private final Ksuid collectionId;
   private final Ksuid flowId;
-  private final Ksuid instanceId;
 
   @Builder
-  public WorkerIdentity(Ksuid collectionId, Ksuid flowId, Ksuid instanceId) {
+  public WorkerIdentity(Ksuid collectionId, Ksuid flowId) {
     super(Ksuid.newKsuid(), PrincipleType.WORKER);
     this.collectionId = collectionId;
     this.flowId = flowId;
-    this.instanceId = instanceId;
   }
 }

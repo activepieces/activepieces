@@ -1,11 +1,9 @@
 package com.activepieces.piece.server.controller;
 
 import com.activepieces.common.error.exception.InvalidCodeArtifactException;
-import com.activepieces.common.error.exception.collection.CollectionInvalidStateException;
 import com.activepieces.common.error.exception.collection.CollectionNotFoundException;
 import com.activepieces.common.error.exception.collection.CollectionVersionAlreadyLockedException;
 import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
-import com.activepieces.common.error.exception.flow.FlowNotFoundException;
 import com.activepieces.common.pagination.Cursor;
 import com.activepieces.common.pagination.SeekPage;
 import com.activepieces.common.pagination.SeekPageRequest;
@@ -32,67 +30,59 @@ import java.io.IOException;
 @Hidden
 public class CollectionController {
 
-  private final CollectionService collectionService;
-  private final CollectionVersionService collectionVersionService;
-  @Autowired
-  public CollectionController(
-      @NonNull final CollectionService collectionService,
-      @NonNull final CollectionVersionService collectionVersionService) {
-    this.collectionService = collectionService;
-    this.collectionVersionService = collectionVersionService;
-  }
+    private final CollectionService collectionService;
+    private final CollectionVersionService collectionVersionService;
 
-  @Secured(value = {"ROLE_API_KEY", "ROLE_USER"})
-  @GetMapping( "/collections/{collectionId}")
-  public ResponseEntity<CollectionView> get(@PathVariable("collectionId") Ksuid collectionId)
-      throws CollectionNotFoundException, PermissionDeniedException {
-    CollectionView collectionView = collectionService.get(collectionId);
-    return ResponseEntity.ok(collectionView);
-  }
+    @Autowired
+    public CollectionController(
+            @NonNull final CollectionService collectionService,
+            @NonNull final CollectionVersionService collectionVersionService) {
+        this.collectionService = collectionService;
+        this.collectionVersionService = collectionVersionService;
+    }
 
-  @Secured(value = {"ROLE_API_KEY", "ROLE_USER"})
-  @GetMapping({"/projects/{projectId}/collections"})
-  public ResponseEntity<SeekPage<CollectionView>> list(
-      @PathVariable("projectId") Ksuid projectId,
-      @RequestParam(value = "cursor", required = false) Cursor cursor,
-      @RequestParam(value = "limit", defaultValue = "10", required = false) int limit)
-      throws PermissionDeniedException, CollectionNotFoundException {
-    return ResponseEntity.ok(
-        collectionService.listByProjectId(
-            projectId, new SeekPageRequest(cursor,  limit)));
-  }
+    @Secured(value = {"ROLE_API_KEY", "ROLE_USER"})
+    @GetMapping("/collections/{collectionId}")
+    public ResponseEntity<CollectionView> get(@PathVariable("collectionId") Ksuid collectionId)
+            throws CollectionNotFoundException, PermissionDeniedException {
+        CollectionView collectionView = collectionService.get(collectionId);
+        return ResponseEntity.ok(collectionView);
+    }
 
-  @PostMapping( "/projects/{projectId}/collections")
-  public ResponseEntity<CollectionView> create(
-      @PathVariable("projectId") Ksuid projectId,
-      @RequestBody @Valid CreatePieceRequest request)
-          throws PermissionDeniedException, ResourceNotFoundException,
-          IOException, CollectionVersionNotFoundException, InvalidCodeArtifactException {
-    return ResponseEntity.ok(collectionService.create(projectId, request));
-  }
+    @Secured(value = {"ROLE_API_KEY", "ROLE_USER"})
+    @GetMapping({"/projects/{projectId}/collections"})
+    public ResponseEntity<SeekPage<CollectionView>> list(
+            @PathVariable("projectId") Ksuid projectId,
+            @RequestParam(value = "cursor", required = false) Cursor cursor,
+            @RequestParam(value = "limit", defaultValue = "10", required = false) int limit)
+            throws PermissionDeniedException, CollectionNotFoundException {
+        return ResponseEntity.ok(
+                collectionService.listByProjectId(
+                        projectId, new SeekPageRequest(cursor, limit)));
+    }
 
-  @PutMapping("/collections/{collectionId}")
-  public ResponseEntity<CollectionView> update(
-      @PathVariable("collectionId") Ksuid collectionId,
-      @RequestBody @Valid CollectionVersionView request)
-          throws PermissionDeniedException, CollectionNotFoundException, ResourceNotFoundException,
-           IOException, CollectionVersionNotFoundException,
-          CollectionVersionAlreadyLockedException, InvalidCodeArtifactException {
-    return ResponseEntity.ok(collectionService.update(collectionId, request));
-  }
+    @PostMapping("/projects/{projectId}/collections")
+    public ResponseEntity<CollectionView> create(
+            @PathVariable("projectId") Ksuid projectId,
+            @RequestBody @Valid CreatePieceRequest request)
+            throws PermissionDeniedException, ResourceNotFoundException,
+            IOException, CollectionVersionNotFoundException, InvalidCodeArtifactException {
+        return ResponseEntity.ok(collectionService.create(projectId, request));
+    }
 
-/*  @PostMapping("/collections/{collectionId}/publish")
-  public ResponseEntity<CollectionView> commit(@PathVariable("collectionId") Ksuid collectionId)
-      throws PermissionDeniedException, CollectionNotFoundException, CollectionVersionNotFoundException,
-          CollectionVersionAlreadyLockedException, FlowNotFoundException, CollectionInvalidStateException {
-    CollectionView collectionView = collectionService.get(collectionId);
-    collectionVersionService.commit(collectionView.getLastVersion().getId());
-    return ResponseEntity.ok(collectionService.get(collectionId));
-  }*/
+    @PutMapping("/collections/{collectionId}")
+    public ResponseEntity<CollectionView> update(
+            @PathVariable("collectionId") Ksuid collectionId,
+            @RequestBody @Valid CollectionVersionView request)
+            throws PermissionDeniedException, CollectionNotFoundException, ResourceNotFoundException,
+            IOException, CollectionVersionNotFoundException,
+            CollectionVersionAlreadyLockedException, InvalidCodeArtifactException {
+        return ResponseEntity.ok(collectionService.update(collectionId, request));
+    }
 
-  @DeleteMapping("/collections/{collectionId}")
-  public void delete(@PathVariable("collectionId") Ksuid collectionId)
-      throws PermissionDeniedException, CollectionNotFoundException, ResourceNotFoundException {
-    collectionService.delete(collectionId);
-  }
+    @DeleteMapping("/collections/{collectionId}")
+    public void delete(@PathVariable("collectionId") Ksuid collectionId)
+            throws PermissionDeniedException, CollectionNotFoundException, ResourceNotFoundException {
+        collectionService.delete(collectionId);
+    }
 }
