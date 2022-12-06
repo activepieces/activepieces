@@ -20,6 +20,7 @@ import com.activepieces.flow.util.FlowVersionUtil;
 import com.activepieces.guardian.client.PermissionService;
 import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.guardian.client.exception.ResourceNotFoundException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ser.std.FileSerializer;
 import com.github.ksuid.Ksuid;
 import lombok.extern.log4j.Log4j2;
@@ -86,7 +87,8 @@ public class FlowVersionServiceImpl implements FlowVersionService {
       throw new FlowVersionAlreadyLockedException(flowVersionId);
     }
     newVersion = uploadArtifacts(newVersion, false);
-    return saveFromView(
+
+    FlowVersionView savedVersion = saveFromView(
         currentVersion.toBuilder()
             .trigger(newVersion.getTrigger())
             .errors(newVersion.getErrors())
@@ -97,6 +99,8 @@ public class FlowVersionServiceImpl implements FlowVersionService {
                     ? currentVersion.getState()
                     : newVersion.getState())
             .build());
+
+    return savedVersion;
   }
 
   @Override
@@ -164,7 +168,6 @@ public class FlowVersionServiceImpl implements FlowVersionService {
         FlowVersionUtil.findCodeActions(clonedVersion);
     for (CodeActionMetadataView action : codeActionsWithArtifact) {
       final CodeSettingsView codeSettings = action.getSettings();
-
       if(clone){
         if(Objects.nonNull(codeSettings.getArtifactSourceId())){
           FileEntity clonedFile = fileService.clone(codeSettings.getArtifactSourceId());

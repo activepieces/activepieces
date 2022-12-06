@@ -19,10 +19,10 @@ import java.util.Map;
 @SuperBuilder
 public class CodeSettings {
 
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  @JsonProperty
   private String artifactSourceId;
 
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  @JsonProperty
   private String artifactPackagedId;
 
   @NotNull @JsonProperty @Valid private Map<String, Object> input;
