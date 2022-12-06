@@ -13,6 +13,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -29,7 +30,7 @@ import javax.validation.constraints.NotNull;
         @JsonSubTypes.Type(value = MultilineVariable.class, name = "LONG_TEXT"),
         @JsonSubTypes.Type(value = ShortTextVariable.class, name = "SHORT_TEXT"),}
 )
-public abstract class Variable implements ValueField {
+public abstract class Variable implements ValueField, Serializable {
 
     @JsonProperty
     @NotNull

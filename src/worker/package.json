@@ -1,27 +1,31 @@
 {
   "dependencies": {
     "@types/node": "^18.7.13",
-    "exec-root": "^1.0.9",
     "fs-extra": "^10.1.0",
-    "unzip-stream": "^0.3.1",
-    "lodash.get": "^4.4.2"
+    "lodash.get": "^4.4.2",
+    "unzip-stream": "^0.3.1"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
-    "@types/node": "^14.11.2",
-    "@types/unzip": "^0.1.1",
-    "@types/unzip-stream": "^0.3.1",
     "@types/jest": "^28.0.8",
     "@types/lodash.get": "^4.4.6",
+    "@types/node": "^16.0.0",
+    "@types/unzip-stream": "^0.3.1",
+    "@types/webpack": "^4.4.6",
     "gts": "^4.0.0",
-    "typescript": "^4.0.3",
     "jest": "^28.0.8",
-    "ts-jest": "^28.0.8"
+    "ts-jest": "^28.0.8",
+    "ts-loader": "^8.3.0",
+    "typescript": "~4.7.0",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^4.5.0"
   },
   "scripts": {
+    "build:prod": "webpack --mode production",
+    "build:dev": "webpack --mode development --watch",
     "lint": "gts lint",
     "clean": "gts clean",
-    "compile": "gts clean && tsc && cp -R src/resources/ build/src/resources/ && cd build/src && node index.js",
+    "compile": "tsc",
     "fix": "gts fix",
     "prepare": "npm run compile",
     "pretest": "npm run compile",

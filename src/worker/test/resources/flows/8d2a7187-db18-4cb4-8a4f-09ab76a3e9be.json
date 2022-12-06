@@ -1,0 +1,46 @@
+{
+  "id": "8d2a7187-db18-4cb4-8a4f-09ab76a3e9be",
+  "flowId": "dbb5ed42-5ca5-4364-a6eb-7e5c16b1f57e",
+  "access": "PRIVATE",
+  "displayName": "Parent Flow",
+  "description": "Flow 2 description",
+  "configs": [],
+  "trigger": {
+    "type": "MANUAL",
+    "displayName": "Callable Trigger",
+    "name": "trigger",
+    "nextAction": {
+      "type": "CODE",
+      "displayName": "Code",
+      "name": "step_1",
+      "valid": true,
+      "nextAction": {
+        "type": "REMOTE_FLOW",
+        "displayName": "Child Collection",
+        "name": "step_2",
+        "valid": true,
+        "nextAction": null,
+        "settings": {
+          "pieceVersionId": "9e95cfbb-6ed3-4554-8060-d7180225d73c",
+          "flowVersionId": "4f831014-780a-4465-b19d-79a00863865c",
+          "input": {
+            "message": "${configs.random}"
+          }
+        }
+      },
+      "settings": {
+        "artifact": "9A81EED014C3CAE7A54D1049DDF56EA86B444BA1B20D4A772B5580C6F71F7630.zip",
+        "artifactUrl": "https://storage.googleapis.com/activepieces-code-artifacts-dev/8d2a7187-db18-4cb4-8a4f-09ab76a3e9be/step_1/source.zip?GoogleAccessId=backend@activepieces-backend.iam.gserviceaccount.com&Expires=1664155180&Signature=jjCx4sKSCCNbV5gXnY7wpd5kvgqyauf4qB3bhre%2FwrdDXyXLb34DyaD8jOxg1Ukj%2BsS567oO1YCuhOLGO3YhYEna8dHB%2FIj%2Fd7MusWqgXlSSsl8FXIvLhH82q3Sq63WXKDNDs4Qg7d%2F1dQ%2FpX7vtJ72u1MulJQZjfekTLudVRT1d4SB5feNxq0%2BlqSWt8J3iP9giwow1NCkvgeS3GEY9P10bgtx6yuJgxAPVK8qZFKoQbGP4W4D2YiU9klJxRq6tgdYxxsPpkfmLNESj13efTezN79Cy76OWEXc34avb9w%2FWqxeL6U%2FXtTGOB8ApMGuzgv2BAEyPP0Iu12Lj7ZFJSA%3D%3D",
+        "newArtifactToUploadFile": null,
+        "input": {}
+      }
+    },
+    "valid": true,
+    "settings": {}
+  },
+  "errors": [],
+  "valid": true,
+  "state": "DRAFT",
+  "epochCreationTime": 1663500298131,
+  "epochUpdateTime": 1663549894274
+}
