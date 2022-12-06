@@ -1,15 +1,15 @@
 // // import the interface
 
-import { PieceAction } from '../action/piece.action';
-import { Collection } from '../../../common-layout/model/piece.interface';
+import { collectionActions } from '../action/collection.action';
+import { Collection } from '../../../common-layout/model/collection.interface';
 import { UUID } from 'angular2-uuid';
 import { Action, createReducer, on } from '@ngrx/store';
 import { VersionEditState } from '../../../common-layout/model/enum/version-edit-state.enum';
-import { PieceStateEnum } from '../model/enums/piece-state.enum';
+import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { CollectionState } from '../model/collection-state.model';
 
 const initialState: CollectionState = {
-	state: PieceStateEnum.INITIALIZED,
+	state: CollectionStateEnum.INITIALIZED,
 	collection: {
 		last_version: {
 			id: UUID,
@@ -30,42 +30,42 @@ const initialState: CollectionState = {
 };
 const _pieceReducer = createReducer(
 	initialState,
-	on(PieceAction.setInitial, (state, { collection: piece }): CollectionState => {
-		const clonedPiece: Collection = JSON.parse(JSON.stringify(piece));
-		return { collection: clonedPiece, state: PieceStateEnum.INITIALIZED };
+	on(collectionActions.setInitial, (state, { collection }): CollectionState => {
+		const clonedPiece: Collection = JSON.parse(JSON.stringify(collection));
+		return { collection: clonedPiece, state: CollectionStateEnum.INITIALIZED };
 	}),
-	on(PieceAction.changeName, (state, { displayName }): CollectionState => {
+	on(collectionActions.changeName, (state, { displayName }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
 		clonedState.collection.last_version.display_name = displayName;
-		clonedState.state = PieceStateEnum.SAVING;
+		clonedState.state = CollectionStateEnum.SAVING;
 		return clonedState;
 	}),
-	on(PieceAction.savedSuccess, (state, { collection: piece }): CollectionState => {
-		const clonedPiece: Collection = JSON.parse(JSON.stringify(piece));
-		return { collection: clonedPiece, state: PieceStateEnum.SAVED };
+	on(collectionActions.savedSuccess, (state, { collection }): CollectionState => {
+		const clonedPiece: Collection = JSON.parse(JSON.stringify(collection));
+		return { collection: clonedPiece, state: CollectionStateEnum.SAVED };
 	}),
-	on(PieceAction.savedFailed, (state, { error }): CollectionState => {
+	on(collectionActions.savedFailed, (state, { error }): CollectionState => {
 		const clonedPiece: Collection = JSON.parse(JSON.stringify(state.collection));
 		console.error(error);
-		return { collection: clonedPiece, state: PieceStateEnum.FAILED };
+		return { collection: clonedPiece, state: CollectionStateEnum.FAILED };
 	}),
 
-	on(PieceAction.addConfig, (state, { config }): CollectionState => {
+	on(collectionActions.addConfig, (state, { config }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
 		clonedState.collection.last_version.configs.push(config);
-		clonedState.state = PieceStateEnum.SAVING;
+		clonedState.state = CollectionStateEnum.SAVING;
 		return clonedState;
 	}),
-	on(PieceAction.deleteConfigSucceeded, (state, { configIndex: index }): CollectionState => {
+	on(collectionActions.deleteConfigSucceeded, (state, { configIndex: index }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
 		clonedState.collection.last_version.configs.splice(index, 1);
-		clonedState.state = PieceStateEnum.SAVING;
+		clonedState.state = CollectionStateEnum.SAVING;
 		return clonedState;
 	}),
-	on(PieceAction.updateConfig, (state, { configIndex, config }): CollectionState => {
+	on(collectionActions.updateConfig, (state, { configIndex, config }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
 		clonedState.collection.last_version.configs[configIndex] = config;
-		clonedState.state = PieceStateEnum.SAVING;
+		clonedState.state = CollectionStateEnum.SAVING;
 		return clonedState;
 	})
 );

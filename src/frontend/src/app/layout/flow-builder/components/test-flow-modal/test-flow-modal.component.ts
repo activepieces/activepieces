@@ -27,7 +27,7 @@ import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from '../../page/flow-builder/test-run-bar/test-run-bar.component';
 import { Config } from 'src/app/layout/common-layout/model/fields/variable/config';
 import { FlowsActions } from '../../store/action/flows.action';
-import { Collection } from 'src/app/layout/common-layout/model/piece.interface';
+import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 import { initializedRun, InstanceRun } from 'src/app/layout/common-layout/model/instance-run.interface';
 import { InstanceRunService } from '../../../common-layout/service/instance-run.service';
 import { UUID } from 'angular2-uuid';
@@ -83,7 +83,6 @@ export class TestFlowModalComponent implements OnInit {
 	ngOnInit() {
 		this.isSaving$ = this.store.select(BuilderSelectors.selectSavingChangeState);
 		this.selectedCollection$ = this.store.select(BuilderSelectors.selectCurrentCollection);
-		this.collectionConfigs$ = this.store.select(BuilderSelectors.selectUserDefinedCollectionConfigs);
 		this.setupSelectedFlowListener();
 		this.selectedInstanceRunStatus();
 		this.shouldDisableTestButton$ = combineLatest({

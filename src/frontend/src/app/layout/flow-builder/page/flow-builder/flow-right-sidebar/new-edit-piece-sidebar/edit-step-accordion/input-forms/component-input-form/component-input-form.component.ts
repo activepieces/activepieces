@@ -11,11 +11,8 @@ import {
 import { RequestType } from 'src/app/layout/common-layout/components/form-controls/ng-select-connector-action-item-template/requestType.enum';
 import { fadeInUp400ms } from '../../../../../../../../common-layout/animation/fade-in-up.animation';
 import { ComponentInputFormSchema } from '../input-forms-schema';
-
 import { Config } from 'src/app/layout/common-layout/model/fields/variable/config';
 import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
-import { ConfigSource } from 'src/app/layout/common-layout/model/enum/config-source';
-import { DropdownType } from 'src/app/layout/common-layout/model/enum/config.enum';
 import { map, Observable, of, take, tap, timer } from 'rxjs';
 import { ActionMetaService } from 'src/app/layout/flow-builder/service/action-meta.service';
 import { Manifest } from 'src/app/layout/flow-builder/model/manifest';
@@ -99,74 +96,38 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 			type: ConfigType.SHORT_TEXT,
 			key: 'name',
 			label: 'Namessss',
-			hintText: 'Please enter your name.',
-			source: ConfigSource.USER,
-			settings: {
-				required: false,
-				dropdown: false,
-				dropdownOptions: [],
-			},
+			// settings: {
+			// 	// required: false,
+			// 	// dropdown: false,
+			// 	// dropdownOptions: [],
+			// },
 			value: 'test',
 		},
 		{
-			type: ConfigType.INTEGER,
+			type: ConfigType.NUMBER,
 			key: 'age',
 			label: 'Age',
-			hintText: 'Please enter your age.s',
-			source: ConfigSource.USER,
-			settings: {
-				required: false,
-			},
+			// settings: {
+			// 	required: false,
+			// },
 			value: 55,
 		},
 		{
 			type: ConfigType.DICTIONARY,
 			key: 'goals',
 			label: 'Goals',
-			hintText: 'Your goals for the year, please make sure you give each goal a name so we can process them.',
-			source: ConfigSource.USER,
 			value: {
 				s: 's',
 			},
-			settings: { required: false },
-		},
-		{
-			type: ConfigType.DROPDOWN,
-			key: 'sport',
-			label: 'Favourite Sport',
-			source: ConfigSource.USER,
-			settings: {
-				dropdownType: DropdownType.STATIC,
-				required: false,
-				options: [
-					{
-						label: 'Football',
-						value: 'Football',
-					},
-					{
-						label: 'Basket Ball',
-						value: 'Basket Ball',
-					},
-					{
-						label: 'Volley Ball',
-						value: 'Volley Ball',
-					},
-					{
-						label: 'Other',
-						value: 'Other',
-					},
-				],
-			},
-			value: 'Football',
+			// settings: { required: false },
 		},
 		{
 			type: ConfigType.CHECKBOX,
 			key: 'auto_retries',
 			label: 'Auto Retries',
-			source: ConfigSource.USER,
-			settings: {
-				required: false,
-			},
+			// settings: {
+			// 	// required: false,
+			// },
 			value: false,
 		},
 	];
@@ -311,21 +272,21 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 
 	fakeFetchActions() {
 		this.loading = true;
-		this.items = this.items.map(i => {
-			if (typeof i.label === 'object') {
-				i.value.actionName = i.label.summary || i.label.url;
-				const requiredConfigs = this.configs.map(c => {
-					const rc = { ...c, settings: { ...c.settings, required: true } };
-					return rc;
-				});
-				const allOptionalConfigs = this.configs.map(c => {
-					const rc = { ...c, settings: { ...c.settings, required: false } };
-					return rc;
-				});
-				i.value.configs = [...requiredConfigs, ...allOptionalConfigs];
-			}
-			return i;
-		});
+		// this.items = this.items.map(i => {
+		// 	if (typeof i.label === 'object') {
+		// 		i.value.actionName = i.label.summary || i.label.url;
+		// 		const requiredConfigs = this.configs.map(c => {
+		// 			const rc = { ...c, settings: { ...c.settings, required: true } };
+		// 			return rc;
+		// 		});
+		// 		const allOptionalConfigs = this.configs.map(c => {
+		// 			const rc = { ...c, settings: { ...c.settings, required: false } };
+		// 			return rc;
+		// 		});
+		// 		i.value.configs = [...requiredConfigs, ...allOptionalConfigs];
+		// 	}
+		// 	return i;
+		// });
 
 		this.actions$ = timer(3000).pipe(
 			map(() => {
@@ -357,14 +318,14 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 					);
 					this.optionalConfigsSelected = {
 						configs: selectedAction.value.configs.filter(
-							c => optionalConfigsKeys.includes(c.key) && !c.settings.required
+							c => optionalConfigsKeys.includes(c.key) //!c.settings.required
 						),
 						triggerChangeDetection: false,
 					};
-					this.allOptionalConfigs = [...selectedAction.value.configs.filter(c => !c.settings.required)];
+					// this.allOptionalConfigs = [...selectedAction.value.configs.filter(c => !c.settings.required)];
 					this.requiredConfigs = {
 						triggerChangeDetection: false,
-						configs: [...selectedAction.value.configs.filter(c => c.settings.required)],
+						configs: [...selectedAction.value.configs],
 					};
 					this.componentForm.patchValue(this.initiallySelectedActionValue.input.action, { emitEvent: false });
 				}
@@ -430,7 +391,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 					);
 					this.optionalConfigsSelected = {
 						configs: selectedAction.value.configs
-							.filter(c => optionalConfigsKeys.includes(c.key) && !c.settings.required)
+							.filter(c => optionalConfigsKeys.includes(c.key))
 							.map(c => {
 								return {
 									...c,
@@ -440,9 +401,9 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 
 						triggerChangeDetection: false,
 					};
-					this.allOptionalConfigs = [...selectedAction.value.configs.filter(c => !c.settings.required)];
+					this.allOptionalConfigs = [...selectedAction.value.configs];
 					this.requiredConfigs = {
-						configs: [...selectedAction.value.configs.filter(c => c.settings.required)],
+						configs: [...selectedAction.value.configs],
 						triggerChangeDetection: false,
 					};
 					//security + optionalConfigs + requiredConfigs
@@ -513,9 +474,9 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 	}
 
 	private actionSelected(selectedActionValue: { actionName: string; configs: Config[] }) {
-		this.allOptionalConfigs = [...selectedActionValue.configs.filter(c => !c.settings.required)];
+		this.allOptionalConfigs = [...selectedActionValue.configs];
 		this.requiredConfigs = {
-			configs: [...selectedActionValue.configs.filter(c => c.settings.required)],
+			configs: [...selectedActionValue.configs],
 			triggerChangeDetection: false,
 		};
 		this.optionalConfigsSelected = {

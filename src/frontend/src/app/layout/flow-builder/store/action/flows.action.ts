@@ -99,10 +99,7 @@ export const selectStepByName = createAction(FlowsActionType.SELECT_STEP_BY_NAME
 
 export const deleteSuccess = createAction(FlowsActionType.DELETE_SUCCESS, props<{ saveId: UUID }>());
 
-export const setLeftSidebar = createAction(
-	FlowsActionType.SET_LEFT_SIDEBAR,
-	props<{ sidebarType: LeftSideBarType; props: any }>()
-);
+export const setLeftSidebar = createAction(FlowsActionType.SET_LEFT_SIDEBAR, props<{ sidebarType: LeftSideBarType }>());
 
 export const setRightSidebar = createAction(
 	FlowsActionType.SET_RIGHT_SIDEBAR,

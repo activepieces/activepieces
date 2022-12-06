@@ -52,7 +52,6 @@ export class FlowsEffects {
 	});
 
 	deleteFlowStarted$ = createEffect(() => {
-		debugger;
 		return this.actions$.pipe(
 			ofType(FlowsActions.deleteFlowStarted),
 			concatMap((action: { flowId: UUID; saveId: UUID }) => {
@@ -93,7 +92,6 @@ export class FlowsEffects {
 				this.store.select(BuilderSelectors.selectCurrentCollection),
 			]),
 			concatMap(([action, flow, collection]) => {
-				debugger;
 				if (collection.last_version.state === VersionEditState.LOCKED) {
 					return this.collectionService.update(collection.id, collection.last_version).pipe(
 						map(() => {
@@ -270,7 +268,6 @@ export class FlowsEffects {
 					return of(
 						FlowsActions.setLeftSidebar({
 							sidebarType: LeftSideBarType.NONE,
-							props: {},
 						})
 					);
 				}
@@ -288,7 +285,6 @@ export class FlowsEffects {
 					return of(
 						FlowsActions.setLeftSidebar({
 							sidebarType: LeftSideBarType.SHOW_RUN,
-							props: {},
 						})
 					);
 				}
@@ -321,7 +317,6 @@ export class FlowsEffects {
 					actionsToDispatch.push(
 						FlowsActions.setLeftSidebar({
 							sidebarType: LeftSideBarType.SHOW_RUN,
-							props: {},
 						})
 					);
 				}

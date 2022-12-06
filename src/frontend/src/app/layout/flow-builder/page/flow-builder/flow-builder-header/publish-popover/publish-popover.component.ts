@@ -5,7 +5,7 @@ import { Observable, of, take, tap } from 'rxjs';
 import { ProjectEnvironment } from 'src/app/layout/common-layout/model/project-environment.interface';
 
 import { BuilderSelectors } from 'src/app/layout/flow-builder/store/selector/flow-builder.selector';
-import { Collection } from 'src/app/layout/common-layout/model/piece.interface';
+import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 import { SaveState } from 'src/app/layout/flow-builder/store/model/enums/save-state.enum';
 
 import { FlowsActions } from 'src/app/layout/flow-builder/store/action/flows.action';

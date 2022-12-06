@@ -1,4 +1,4 @@
-export enum PieceStateEnum {
+export enum CollectionStateEnum {
 	INITIALIZED,
 	SAVING,
 	SAVED,

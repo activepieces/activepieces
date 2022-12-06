@@ -1,10 +1,9 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { BuilderSelectors } from '../../../../../store/selector/flow-builder.selector';
-import { PieceAction } from '../../../../../store/action/piece.action';
+import { collectionActions } from '../../../../../store/action/collection.action';
 import { Config } from '../../../../../../common-layout/model/fields/variable/config';
-import { ConfigScope } from '../../../../../../common-layout/model/enum/config-scope-type.enum';
 
 @Component({
 	selector: 'app-configs-list',
@@ -13,7 +12,6 @@ import { ConfigScope } from '../../../../../../common-layout/model/enum/config-s
 })
 export class VariableListComponent implements OnInit {
 	@Output() selectedVariable: EventEmitter<{ value: Config; index: number }> = new EventEmitter<any>();
-	@Input() configsListScope: ConfigScope;
 
 	variables$: Observable<Config[]>;
 	viewMode$: Observable<boolean>;
@@ -22,11 +20,10 @@ export class VariableListComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
-
 		this.variables$ = this.store.select(BuilderSelectors.selectCurrentCollectionConfigs);
 	}
 
 	deleteVariable(index: number) {
-		this.store.dispatch(PieceAction.deleteConfig({ configIndex: index }));
+		this.store.dispatch(collectionActions.deleteConfig({ configIndex: index }));
 	}
 }

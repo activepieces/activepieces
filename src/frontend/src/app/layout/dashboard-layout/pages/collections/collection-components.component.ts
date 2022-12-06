@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { SeekPage } from '../../../common-layout/service/seek-page';
-import { Collection } from '../../../common-layout/model/piece.interface';
+import { Collection } from '../../../common-layout/model/collection.interface';
 import { TimeHelperService } from '../../../common-layout/service/time-helper.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faArchive } from '@fortawesome/free-solid-svg-icons';

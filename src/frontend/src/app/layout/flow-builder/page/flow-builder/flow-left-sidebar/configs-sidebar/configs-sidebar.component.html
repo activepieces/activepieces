@@ -10,7 +10,7 @@
     btnStyle="basic"
     btnSize="medium"
     *ngIf="!(viewMode$ | async | defaultTrue)"
-    (buttonClicked)="openConfigVariableModal(undefined, currentTab)"
+    (buttonClicked)="openConfigVariableModal(undefined)"
 
   >    + New Variable
   </app-button>
@@ -20,7 +20,6 @@
       <div>
         <mat-tab-group
           #tabGroup
-          (selectedTabChange)="changeTab(tabGroup.selectedIndex)"
         >
           <mat-tab>
             <ng-template mat-tab-label>
@@ -32,9 +31,8 @@
               </div>
             </ng-template>
             <app-configs-list
-              [configsListScope]="pieceConfigEnumType.COLLECTION"
               (selectedVariable)="
-                openConfigVariableModal($event, pieceConfigEnumType.COLLECTION)
+                openConfigVariableModal($event)
               "
             ></app-configs-list>
           </mat-tab>

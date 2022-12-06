@@ -80,7 +80,6 @@ export class RunDetailsComponent implements OnInit {
 		this.store.dispatch(
 			FlowsActions.setLeftSidebar({
 				sidebarType: LeftSideBarType.NONE,
-				props: {},
 			})
 		);
 	}

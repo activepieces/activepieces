@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
-import { CollectionVersion } from '../model/piece.interface';
+import { CollectionVersion } from '../model/collection.interface';
 import { forkJoin, map, Observable, of, skipWhile, switchMap, take, tap } from 'rxjs';
 import { Flow } from '../model/flow.class';
 import { SeekPage } from './seek-page';
@@ -138,7 +138,7 @@ export class FlowService {
 		const artifactsAndTheirNames: ArtifactAndItsNameInFormData[] = [...dirtyStepsArtifacts];
 		const updateFlow$ = this.http.put<any>(environment.apiUrl + '/flows/' + flowId, formData);
 		const artifacts$ = zipAllArtifacts(artifactsAndTheirNames);
-		debugger;
+
 		if (artifacts$.length == 0) {
 			return updateFlow$;
 		}

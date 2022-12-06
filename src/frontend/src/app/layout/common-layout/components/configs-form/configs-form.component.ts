@@ -7,20 +7,14 @@ import {
 	NG_VALIDATORS,
 	NG_VALUE_ACCESSOR,
 	ValidatorFn,
-	Validators,
 } from '@angular/forms';
-import { map, Observable, shareReplay, startWith, tap } from 'rxjs';
+import { map, Observable, shareReplay, tap } from 'rxjs';
 
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { DynamicDropdownResult } from '../../model/dynamic-controls/dynamic-dropdown-result';
-import { ConfigType, DropdownType } from '../../model/enum/config.enum';
+import { ConfigType } from '../../model/enum/config-type';
 import { Config } from '../../model/fields/variable/config';
-import {
-	DropdownSettings,
-	DynamicDropdownSettings,
-	OAuth2ConfigSettings,
-	StaticDropdownSettings,
-} from '../../model/fields/variable/config-settings';
+import { OAuth2ConfigSettings } from '../../model/fields/variable/config-settings';
 import { DynamicDropdownService } from '../../service/dynamic-dropdown.service';
 import { ThemeService } from '../../service/theme.service';
 
@@ -55,15 +49,13 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 	@Input() showSlider = false;
 	@Input() allowRemoveConfig = false;
 	@Output() configRemoved: EventEmitter<Config> = new EventEmitter();
-	@Input() showDescriptionAsTooltips = false;
 	form!: FormGroup;
-	descriptionLimit = 45;
-	hintTextShown: boolean[] = [];
 	OnChange = value => {};
 	OnTouched = () => {};
 	updateValueOnChange$: Observable<void> = new Observable<void>();
 	refreshReferencesList$: Observable<void>[] = [];
 	dynamicDropdownsObservablesMap: Map<ConfigKey, Observable<DynamicDropdownResult>> = new Map();
+	configType = ConfigType;
 	constructor(
 		private dynamicDropdownService: DynamicDropdownService,
 		private fb: FormBuilder,
@@ -72,9 +64,6 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 
 	ngOnInit(): void {
 		this.createForm();
-		this.prepareDynamicDropdowns();
-		this.hintTextShown = new Array(this._configs.length);
-		this.hintTextShown = this.hintTextShown.fill(false);
 	}
 
 	writeValue(obj: any): void {
@@ -105,9 +94,9 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 		const controls: { [key: string]: FormControl } = {};
 		this._configs.forEach(c => {
 			const validators: ValidatorFn[] = [];
-			if (c.settings?.required || c.settings?.required === undefined) {
-				validators.push(Validators.required);
-			}
+			// if (c.settings?.required || c.settings?.required === undefined) {
+			// 	validators.push(Validators.required);
+			// }
 			controls[c.key] = new FormControl(c.value, validators);
 		});
 		this.form = this.fb.group(controls);
@@ -117,21 +106,6 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 			}),
 			map(() => void 0)
 		);
-	}
-
-	prepareDynamicDropdowns() {
-		this._configs.forEach(c => {
-			const configSettings = c.settings as DynamicDropdownSettings;
-			if (c.type == ConfigType.DROPDOWN && configSettings.dropdownType === DropdownType.DYNAMIC) {
-				if (!configSettings.refreshReferences || configSettings.refreshReferences.length == 0) {
-					this.dynamicDropdownsObservablesMap.set(c.key, this.createDynamicDropdownResultObservable(c, {}));
-				} else {
-					configSettings.refreshReferences.forEach(refresherConfigKey => {
-						this.listenToRefreshReferenceValuChanges(refresherConfigKey, c);
-					});
-				}
-			}
-		});
 	}
 
 	createDynamicDropdownResultObservable(config: Config, refreshEndPointBody: any) {
@@ -191,33 +165,6 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 			throw Error(`config ${config.label} does not have a collectionVersionId nor a flowVersionId`);
 		}
 	}
-	listenToRefreshReferenceValuChanges(refresherConfigKey: string, configToRefresh: Config) {
-		const refresherConfigControl = this.getControl(refresherConfigKey);
-		this.refreshReferencesList$.push(
-			refresherConfigControl!.valueChanges
-				.pipe(
-					startWith({}),
-					tap(() => {
-						const requestBody = this.createDynamicDropdownOptionsRequest(configToRefresh);
-						this.dynamicDropdownsObservablesMap.set(
-							configToRefresh.key,
-							this.createDynamicDropdownResultObservable(configToRefresh, requestBody)
-						);
-					})
-				)
-				.pipe(map(() => void 0))
-		);
-	}
-	createDynamicDropdownOptionsRequest(configToRefresh: Config) {
-		const refreshersConfigs = this._configs.filter(c =>
-			(configToRefresh.settings as DynamicDropdownSettings).refreshReferences?.find(key => key == c.key)
-		);
-		const requestBody = {};
-		refreshersConfigs.forEach(c => {
-			requestBody[c.key] = this.getControl(c.key)?.value;
-		});
-		return requestBody;
-	}
 
 	getControl(configKey: string) {
 		return this.form.get(configKey);
@@ -226,21 +173,10 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 		return this.dynamicDropdownsObservablesMap.get(configKey) as Observable<DynamicDropdownResult>;
 	}
 
-	getDropdownSettings(config: Config) {
-		return config.settings as DropdownSettings;
-	}
-	getStaticDropdownSettings(config: Config) {
-		return config.settings as StaticDropdownSettings;
-	}
 	getAuthConfigSettings(config: Config) {
 		return config.settings as OAuth2ConfigSettings;
 	}
-	get configType() {
-		return ConfigType;
-	}
-	get dropdownType() {
-		return DropdownType;
-	}
+
 	removeConfig(config: Config) {
 		this.form.removeControl(config.key);
 		this.configRemoved.emit(config);

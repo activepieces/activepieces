@@ -9,37 +9,12 @@
     </ng-template>
   </h5>
   <button type="button" class="btn-close close pull-right" aria-label="Close">
-    <span aria-hidden="true" class="close-custom visually-hidden" (click)="closeModal(undefined)">&times;</span>
+    <span aria-hidden="true" class="close-custom visually-hidden" (click)="closeModal()">&times;</span>
   </button>
 </div>
 <div class="modal-body">
   <form [formGroup]="configForm" class="d-flex flex-column config-modal-form-controls-container"
     [class.ng-submitted]="submitted">
-    <div>
-      <label>Source</label> <br>
-      <div class="custom-control custom-radio custom-control-inline" (click)="setConfigSource(ConfigSource.USER)">
-        <input formControlName="source" [disabled]="viewMode$ | async | defaultFalse" type="radio"
-          [value]="ConfigSource.USER" class="custom-control-input"/>
-        <label class="custom-control-label">User Input</label>
-      </div>
-      <div class="custom-control custom-radio custom-control-inline" (click)="setConfigSource(ConfigSource.PREDEFINED)">
-        <input formControlName="source" [disabled]="viewMode$ | async | defaultFalse" type="radio"
-          [value]="ConfigSource.PREDEFINED" class="custom-control-input" />
-        <label class="custom-control-label">Predefined</label>
-      </div>
-    </div>
-    <div>
-      <label required>Display Name</label>
-      <input class="form-control" formControlName="label" type="text">
-      <p @fadeInUp class="invalid-input" *ngIf="submitted && configForm.get('label')!.invalid ">
-       <ng-container *ngIf="configForm.get('label')!.getError('required')">
-        Display name is required
-       </ng-container>
-       <ng-container *ngIf="configForm.get('label')!.getError('labelUsed')">
-        Display name is already used
-       </ng-container>
-      </p>
-    </div>
 
     <div>
       <label [attr.required]="configForm.get('key')!.enabled">Key</label>
@@ -58,10 +33,6 @@
         </ng-template>
       </p>
 
-    </div>
-    <div>
-      <label>Hint Text</label>
-      <input class="form-control" formControlName="hintText" type="text">
     </div>
     <div>
       <label>Type</label>
@@ -87,20 +58,15 @@
       </ng-select>
 
     </div>
-    <div *ngIf="shouldShowSettingsSection()">
+    <div *ngIf="getControlValue('type') === configType.OAUTH2">
       <label>Settings</label>
-      <ng-container [ngSwitch]="getControlValue('type')">
-        <app-o-auth2-config-settings [submitted]="submitted" *ngSwitchCase="ConfigType.OAUTH2"  formControlName="settings"></app-o-auth2-config-settings>
-        <app-dropdown-config-settings  [currentConfigScope]="getControlValue('scope')" [submitted]="submitted"  [currentConfigSource]="getControlValue('source')"  [configToUpdate]="configToUpdate" *ngSwitchCase="ConfigType.DROPDOWN" formControlName="settings"></app-dropdown-config-settings>
-        <app-default-config-type-settings *ngSwitchDefault formControlName="settings"></app-default-config-type-settings>
-      </ng-container>
-
+      <app-o-auth2-config-settings [submitted]="submitted" formControlName="settings"></app-o-auth2-config-settings>
     </div>
 
-    <div *ngIf="shouldShowValueFormControl; else predefinedDynamicDropdownError">
+    <div>
       <label
         *ngIf="getControlValue('type') !== ConfigType.CHECKBOX"
-        [attr.required]="getControlValue('source') === ConfigSource.PREDEFINED?true:null">{{getControlValue('source') === ConfigSource.PREDEFINED? 'Value': 'Default Value'}}</label>
+        required >Value</label>
       <ng-container [ngSwitch]="getControlValue('type')">
         <input *ngSwitchCase="ConfigType.SHORT_TEXT" type="text" class="form-control" formControlName="value">
         <textarea
@@ -109,10 +75,9 @@
         class="form-control" formControlName="value"
         type="text">
         </textarea>
-        <input type="number"   *ngSwitchCase="ConfigType.INTEGER"  class="form-control" formControlName="value">
+        <input type="number"   *ngSwitchCase="ConfigType.NUMBER"  class="form-control" formControlName="value">
         <app-dictonary-form-control *ngSwitchCase="ConfigType.DICTIONARY"  formControlName="value"></app-dictonary-form-control>
-        <app-checkbox *ngSwitchCase="ConfigType.CHECKBOX"  formControlName="value" [label]="'Default Value'"></app-checkbox>
-        <ng-select [items]="staticDropdownOptions$|async" formControlName= "value" [searchable]="false" [clearable]="getControlValue('source') === ConfigSource.USER" appendTo="body" *ngSwitchCase="ConfigType.DROPDOWN"  bindLabel="label" bindValue="value" ></ng-select>
+        <app-checkbox *ngSwitchCase="ConfigType.CHECKBOX"  formControlName="value" [label]="'Value'"></app-checkbox>
         <app-o-auth2-connect-control [configSettings]="getControlValue('settings')"  formControlName= "value"   *ngSwitchCase="ConfigType.OAUTH2" ></app-o-auth2-connect-control>
 
       </ng-container>
@@ -120,11 +85,7 @@
         Value is required
       </p>
     </div>
-    <ng-template #predefinedDynamicDropdownError>
-      <p @fadeInUp class="invalid-input" *ngIf="getControlValue('source')===ConfigSource.PREDEFINED && getControlValue('settings').dropdownType === DropdownType.DYNAMIC">
-        Dynamic dropdowns can't be predefined.
-      </p>
-    </ng-template>
+
   </form>
 </div>
 
@@ -132,12 +93,11 @@
   <app-button
   btnColor="basic"
   btnStyle="basic"
-  (buttonClicked)="closeModal(undefined)"
+  (buttonClicked)="closeModal()"
 > Cancel
 </app-button>
-  <app-button [loading]="savingLoading" (buttonClicked)="submit()"     btnColor="primary"   >Save</app-button>
+  <app-button [loading]="savingLoading" (buttonClicked)="submit()" btnColor="primary">Save</app-button>
 </div>
 
 <ng-container *ngIf="configTypeChanged$ | async"></ng-container>
-<ng-container *ngIf="configSourceChanged$ | async"></ng-container>
 <ng-container *ngIf="viewMode$ | async"></ng-container>

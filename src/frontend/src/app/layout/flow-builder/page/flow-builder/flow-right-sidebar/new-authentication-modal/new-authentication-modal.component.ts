@@ -6,13 +6,11 @@ import { UUID } from 'angular2-uuid';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Observable, take } from 'rxjs';
 import { fadeInUp400ms } from 'src/app/layout/common-layout/animation/fade-in-up.animation';
-
-import { ConfigSource } from 'src/app/layout/common-layout/model/enum/config-source';
 import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
 import { Config } from 'src/app/layout/common-layout/model/fields/variable/config';
 import { OAuth2ConfigSettings } from 'src/app/layout/common-layout/model/fields/variable/config-settings';
 import { Oauth2UserInputType } from 'src/app/layout/common-layout/model/fields/variable/subfields/oauth2-user-input.type';
-import { PieceAction } from 'src/app/layout/flow-builder/store/action/piece.action';
+import { collectionActions } from 'src/app/layout/flow-builder/store/action/collection.action';
 import { BuilderSelectors } from 'src/app/layout/flow-builder/store/selector/flow-builder.selector';
 import { environment } from 'src/environments/environment';
 import { ConfigKeyValidator } from '../../validators/configKeyValidator';
@@ -69,7 +67,7 @@ export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
 		if (!this.configToUpdateWithIndex) {
 			this.settingsForm.patchValue(this.connectorAuthConfig.settings || {});
 		} else {
-			this.settingsForm.patchValue(this.configToUpdateWithIndex.config.settings);
+			// this.settingsForm.patchValue(this.configToUpdateWithIndex.config.settings);
 			this.settingsForm.get('key')?.setValue(this.configToUpdateWithIndex.config.key);
 			this.settingsForm
 				.get('scope')!
@@ -105,7 +103,6 @@ export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
 		const newConfig: Config = {
 			key: configKey,
 			label: configLabel,
-			source: ConfigSource.USER,
 			type: ConfigType.OAUTH2,
 			collectionVersionId: currentCollectionId,
 			settings: {
@@ -121,10 +118,10 @@ export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
 
 	saveConfigToCollection(config: Config): void {
 		if (!this.configToUpdateWithIndex) {
-			this.store.dispatch(PieceAction.addConfig({ config: config }));
+			this.store.dispatch(collectionActions.addConfig({ config: config }));
 		} else {
 			this.store.dispatch(
-				PieceAction.updateConfig({ config: config, configIndex: this.configToUpdateWithIndex.indexInList })
+				collectionActions.updateConfig({ config: config, configIndex: this.configToUpdateWithIndex.indexInList })
 			);
 		}
 	}

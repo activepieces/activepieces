@@ -1,6 +1,5 @@
 import { RequestType } from '../../common-layout/components/form-controls/ng-select-connector-action-item-template/requestType.enum';
-import { ConfigSource } from '../../common-layout/model/enum/config-source';
-import { ConfigType } from '../../common-layout/model/enum/config.enum';
+import { ConfigType } from '../../common-layout/model/enum/config-type';
 import { Config } from '../../common-layout/model/fields/variable/config';
 import { OAuth2ConfigSettings } from '../../common-layout/model/fields/variable/config-settings';
 
@@ -44,12 +43,7 @@ export class Manifest {
 		const config: Config = {
 			key: actionInput.name,
 			label: actionInput.displayName,
-			hintText: actionInput.description,
 			type: actionInput.uiType,
-			settings: {
-				required: actionInput.required,
-			},
-			source: ConfigSource.USER,
 			value: null,
 		};
 		return config;

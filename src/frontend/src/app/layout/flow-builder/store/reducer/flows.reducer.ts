@@ -31,7 +31,6 @@ const initialTabState: TabState = {
 	selectedRun: undefined,
 	leftSidebar: {
 		type: LeftSideBarType.NONE,
-		props: {},
 	},
 	rightSidebar: {
 		type: RightSideBarType.NONE,
@@ -44,7 +43,6 @@ const initialTabState: TabState = {
 const _flowsReducer = createReducer(
 	initialState,
 	on(FlowsActions.setInitial, (state, { flows, run }): FlowsState => {
-		debugger;
 		const clonedFlows: Flow[] = JSON.parse(JSON.stringify(flows));
 		let selectedFlowId: UUID | null = null;
 		if (clonedFlows.length > 0) {
@@ -217,7 +215,7 @@ const _flowsReducer = createReducer(
 	on(FlowsActions.savedFailed, (state, {}): FlowsState => {
 		return { ...state, state: FlowsStateEnum.FAILED };
 	}),
-	on(FlowsActions.setLeftSidebar, (state, { sidebarType, props }): FlowsState => {
+	on(FlowsActions.setLeftSidebar, (state, { sidebarType }): FlowsState => {
 		if (state.selectedFlowId === null) {
 			throw new Error('Flow id is not selected');
 		}
@@ -225,7 +223,6 @@ const _flowsReducer = createReducer(
 		const tabState: TabState = clonedState.tabsState[state.selectedFlowId.toString()];
 		tabState.leftSidebar = {
 			type: sidebarType,
-			props: props,
 		};
 		return clonedState;
 	}),

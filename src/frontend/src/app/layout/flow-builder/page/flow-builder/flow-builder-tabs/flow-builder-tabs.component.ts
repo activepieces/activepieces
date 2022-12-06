@@ -65,7 +65,6 @@ export class FlowBuilderTabsComponent implements OnInit, AfterViewInit {
 		this.store.dispatch(
 			FlowsActions.setLeftSidebar({
 				sidebarType: LeftSideBarType.CONFIGS,
-				props: {},
 			})
 		);
 	}

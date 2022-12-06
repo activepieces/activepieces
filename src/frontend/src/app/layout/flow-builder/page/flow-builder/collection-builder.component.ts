@@ -16,7 +16,7 @@ import { BsModalRef } from 'ngx-bootstrap/modal';
 
 import { RightSideBarType } from '../../../common-layout/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from 'src/app/layout/common-layout/model/enum/left-side-bar-type.enum';
-import { Collection } from '../../../common-layout/model/piece.interface';
+import { Collection } from '../../../common-layout/model/collection.interface';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/selector/flow-builder.selector';
 import { lastValueFrom, map, Observable, take, tap } from 'rxjs';
@@ -34,12 +34,11 @@ import { RunDetailsService } from './flow-left-sidebar/run-details/iteration-det
 import { FlowsActions } from '../../store/action/flows.action';
 
 @Component({
-	selector: 'app-piece-builder',
-	templateUrl: './piece-builder.component.html',
-	styleUrls: ['./piece-builder.component.scss'],
+	templateUrl: './collection-builder.component.html',
+	styleUrls: ['./collection-builder.component.scss'],
 	encapsulation: ViewEncapsulation.None,
 })
-export class PieceBuilderComponent implements OnInit, OnDestroy {
+export class CollectionBuilderComponent implements OnInit, OnDestroy {
 	@ViewChild('canvasWrapper') canvasWrapper: ElementRef;
 	@ViewChild('rightSideDrawer', { read: ElementRef }) rightSideBar: ElementRef;
 	@ViewChild('leftSideDrawer', { read: ElementRef }) leftSideBar: ElementRef;
@@ -71,12 +70,12 @@ export class PieceBuilderComponent implements OnInit, OnDestroy {
 				const runInformation = value['runInformation'];
 				if (runInformation !== undefined) {
 					this.navigationService.setTitle('View Run');
-					const piece = runInformation.piece;
+					const collection = runInformation.piece;
 					const flow: Flow = runInformation.flow;
 					const run: InstanceRun = runInformation.run;
 					this.store.dispatch(
 						BuilderActions.loadInitial({
-							piece: piece,
+							collection: collection,
 							flows: [flow],
 							viewMode: ViewModeEnum.VIEW_INSTANCE_RUN,
 							run: run,
@@ -87,13 +86,13 @@ export class PieceBuilderComponent implements OnInit, OnDestroy {
 						duration: undefined,
 					});
 				} else {
-					const piece: Collection = value['piece'];
+					const collection: Collection = value['piece'];
 					const flows = value['flows'];
 
-					this.navigationService.setTitle(piece.last_version.display_name);
+					this.navigationService.setTitle(collection.last_version.display_name);
 					this.store.dispatch(
 						BuilderActions.loadInitial({
-							piece: piece,
+							collection: collection,
 							flows: flows.data,
 							viewMode: ViewModeEnum.BUILDING,
 							run: undefined,

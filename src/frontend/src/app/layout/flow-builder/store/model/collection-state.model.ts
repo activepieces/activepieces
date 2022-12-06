@@ -1,7 +1,7 @@
-import { Collection } from 'src/app/layout/common-layout/model/piece.interface';
-import { PieceStateEnum } from './enums/piece-state.enum';
+import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
+import { CollectionStateEnum } from './enums/collection-state.enum';
 
 export interface CollectionState {
 	collection: Collection;
-	state: PieceStateEnum;
+	state: CollectionStateEnum;
 }

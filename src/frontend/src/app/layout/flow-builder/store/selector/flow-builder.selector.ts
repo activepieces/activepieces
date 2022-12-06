@@ -6,8 +6,8 @@ import { Flow } from '../../../common-layout/model/flow.class';
 
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
-import { Collection } from 'src/app/layout/common-layout/model/piece.interface';
-import { PieceStateEnum } from '../model/enums/piece-state.enum';
+import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
+import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { FlowsStateEnum } from '../model/enums/flows-state.enum';
 import { UUID } from 'angular2-uuid';
 import { Oauth2UserInputType } from '../../../common-layout/model/fields/variable/subfields/oauth2-user-input.type';
@@ -16,13 +16,12 @@ import { SaveState } from '../model/enums/save-state.enum';
 import { DropdownItemOption } from '../../../common-layout/model/fields/variable/subfields/dropdown-item-option';
 import { FlowItem } from '../../../common-layout/model/flow-builder/flow-item';
 import { Config } from '../../../common-layout/model/fields/variable/config';
-import { ConfigType } from '../../../common-layout/model/enum/config.enum';
 import { OAuth2Variable } from '../../../common-layout/model/fields/variable/oauth2-variable.class';
-import { ConfigSource } from '../../../common-layout/model/enum/config-source';
 import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
 import { FlowsState } from '../model/flows-state.model';
 import { TriggerType } from 'src/app/layout/common-layout/model/enum/trigger-type.enum';
 import { ActionType } from '../../../common-layout/model/enum/action-type.enum';
+import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -49,14 +48,10 @@ export const selectCurrentCollectionConfigs = createSelector(selectCurrentCollec
 	});
 });
 
-export const selectUserDefinedCollectionConfigs = createSelector(selectCurrentCollectionConfigs, configs =>
-	configs.filter(c => c.source === ConfigSource.USER)
-);
-
 export const selectSavingChangeState = createSelector(
 	selectBuilderState,
 	(state: GlobalBuilderState) =>
-		state.pieceState.state == PieceStateEnum.SAVING || state.flowsState.state == FlowsStateEnum.SAVING
+		state.pieceState.state == CollectionStateEnum.SAVING || state.flowsState.state == FlowsStateEnum.SAVING
 );
 
 export const selectCurrentFlowSaved = createSelector(
@@ -78,14 +73,14 @@ export const selectCollectionState = createSelector(
 export const selectBuilderSaveState = createSelector(
 	selectFlowState,
 	selectCollectionState,
-	(flowState: FlowsStateEnum, pieceState: PieceStateEnum) => {
-		if (pieceState === PieceStateEnum.FAILED || flowState === FlowsStateEnum.FAILED) {
+	(flowState: FlowsStateEnum, pieceState: CollectionStateEnum) => {
+		if (pieceState === CollectionStateEnum.FAILED || flowState === FlowsStateEnum.FAILED) {
 			return SaveState.FAILED;
 		}
-		if (pieceState === PieceStateEnum.INITIALIZED && flowState === FlowsStateEnum.INITIALIZED) {
+		if (pieceState === CollectionStateEnum.INITIALIZED && flowState === FlowsStateEnum.INITIALIZED) {
 			return SaveState.INITIALIZED;
 		}
-		if (pieceState === PieceStateEnum.SAVING || flowState === FlowsStateEnum.SAVING) {
+		if (pieceState === CollectionStateEnum.SAVING || flowState === FlowsStateEnum.SAVING) {
 			return SaveState.SAVING;
 		}
 		return SaveState.SAVED;
@@ -240,10 +235,6 @@ export const selectCurrentLeftSidebarType = createSelector(
 	}
 );
 
-export const selectConfigTabTypeFromProps = createSelector(selectCurrentLeftSidebar, (state: { props: any }) => {
-	return state.props.selectedTab;
-});
-
 export const selectCurrentRightSideBar = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
 	if (state.flowsState.selectedFlowId == undefined) {
 		return {
@@ -355,7 +346,6 @@ export const BuilderSelectors = {
 	selectCurrentLeftSidebar,
 	selectCurrentLeftSidebarType,
 	selectFlowsCount,
-	selectConfigTabTypeFromProps,
 	selectBuilderSaveState,
 	selectCurrentStepName,
 	selectCurrentCollectionConfigs,
@@ -363,7 +353,6 @@ export const BuilderSelectors = {
 	selectDynamicDropdownReference,
 	selectCurrentFlowRunStatus,
 	selectCurrentDisplayName,
-	selectUserDefinedCollectionConfigs,
 	selectAuth2Configs,
 	selectInstanceRunView,
 	selectCollectionState,

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, of, switchMap } from 'rxjs';
-import { Collection } from '../../common-layout/model/piece.interface';
+import { Collection } from '../../common-layout/model/collection.interface';
 import { CollectionService } from '../../common-layout/service/collection.service';
 import { FlowService } from '../../common-layout/service/flow.service';
 import { UUID } from 'angular2-uuid';

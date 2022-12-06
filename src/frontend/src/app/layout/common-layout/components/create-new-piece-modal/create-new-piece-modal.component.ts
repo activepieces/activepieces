@@ -5,7 +5,7 @@ import { BsModalRef } from 'ngx-bootstrap/modal';
 import { CollectionService } from '../../service/collection.service';
 import { Router } from '@angular/router';
 import { switchMap, take } from 'rxjs';
-import { Collection } from '../../model/piece.interface';
+import { Collection } from '../../model/collection.interface';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StatusCodes } from 'http-status-codes';
 import { Store } from '@ngrx/store';
