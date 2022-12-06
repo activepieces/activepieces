@@ -1,10 +1,7 @@
 package com.activepieces.config;
 
 import com.activepieces.common.id.APIdSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.ksuid.Ksuid;
 import org.springframework.context.annotation.Bean;
@@ -28,6 +25,7 @@ public class SerializationConfiguration implements WebMvcConfigurer {
         simpleModule.addSerializer(Ksuid.class, new APIdSerializer());
         return new ObjectMapper().registerModule(simpleModule)
                 .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
     }
 
