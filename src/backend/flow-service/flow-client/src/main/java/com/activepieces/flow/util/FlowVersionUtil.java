@@ -4,7 +4,6 @@ import com.activepieces.actions.model.action.ActionMetadataView;
 import com.activepieces.actions.model.action.CodeActionMetadataView;
 import com.activepieces.actions.model.action.ComponentActionMetadataView;
 import com.activepieces.actions.model.action.LoopOnItemsActionMetadataView;
-import com.activepieces.common.code.ArtifactMetadata;
 import com.activepieces.flow.model.FlowVersionView;
 import lombok.experimental.UtilityClass;
 
@@ -17,12 +16,13 @@ import java.util.stream.Collectors;
 @UtilityClass
 public class FlowVersionUtil {
 
-    public static List<ArtifactMetadata> findAllStepsWithArtifact(FlowVersionView flowVersionView) {
+    public static List<CodeActionMetadataView> findAllStepsWithArtifact(FlowVersionView flowVersionView) {
         return findAllActions(flowVersionView).stream()
-                .filter(f -> f instanceof ArtifactMetadata)
-                .map(f -> (ArtifactMetadata) f)
+                .filter(f -> f instanceof CodeActionMetadataView)
+                .map(f -> (CodeActionMetadataView) f)
                 .collect(Collectors.toList());
     }
+
     public static List<ComponentActionMetadataView> findComponentActions(FlowVersionView flowVersionView) {
         return findAllActions(flowVersionView).stream()
                 .filter(f -> f instanceof ComponentActionMetadataView)

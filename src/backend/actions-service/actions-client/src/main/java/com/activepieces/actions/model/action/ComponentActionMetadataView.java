@@ -1,8 +1,6 @@
 package com.activepieces.actions.model.action;
 
 import com.activepieces.actions.model.action.settings.ComponentSettingsView;
-import com.activepieces.common.code.ArtifactMetadata;
-import com.activepieces.common.code.ArtifactMetadataSettings;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
@@ -15,34 +13,18 @@ import org.springframework.data.annotation.Transient;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.util.UUID;
 
 @Getter
 @Setter
 @SuperBuilder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class ComponentActionMetadataView extends ActionMetadataView  implements ArtifactMetadata {
+public class ComponentActionMetadataView extends ActionMetadataView   {
 
     @JsonProperty
     @NotNull
     @Valid
     private ComponentSettingsView settings;
 
-    @Override
-    @Transient
-    public String getSourcePath(Ksuid flowVersionId) {
-        return flowVersionId + "/" + getName() + "/source.zip";
-    }
 
-    @Override
-    @Transient
-    public String getPackagePath(Ksuid flowVersionId) {
-        return flowVersionId + "/" + getName() + "/" + FilenameUtils.removeExtension(settings.getArtifact()) + ".js";
-    }
-
-    @Override
-    public ArtifactMetadataSettings getArtifactSettings() {
-        return settings;
-    }
 }

@@ -1,6 +1,7 @@
 package com.activepieces.entity.subdocuments.action.settings;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,10 +20,10 @@ import java.util.Map;
 public class CodeSettings {
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private String artifact;
+  private String artifactSourceId;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private String artifactUrl;
+  private String artifactPackagedId;
 
   @NotNull @JsonProperty @Valid private Map<String, Object> input;
 

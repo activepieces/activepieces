@@ -1,7 +1,6 @@
 package com.activepieces.flow.controller;
 
 import com.activepieces.action.FlowPublisherService;
-import com.activepieces.actions.code.CodeArtifactService;
 import com.activepieces.common.code.ArtifactFile;
 import com.activepieces.common.error.exception.ConstraintsException;
 import com.activepieces.common.error.exception.collection.CollectionNotFoundException;
@@ -12,6 +11,7 @@ import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException
 import com.activepieces.common.pagination.Cursor;
 import com.activepieces.common.pagination.SeekPage;
 import com.activepieces.common.pagination.SeekPageRequest;
+import com.activepieces.common.utils.ArtifactUtils;
 import com.activepieces.common.utils.TimeUtils;
 import com.activepieces.flow.FlowService;
 import com.activepieces.flow.FlowVersionService;
@@ -48,26 +48,17 @@ public class FlowController {
     private final FlowVersionService flowVersionService;
     private final CollectionService collectionService;
     private final FlowVersionValidator flowVersionValidator;
-    private final CodeArtifactService codeArtifactService;
-    private final VariableService variableService;
     private final FlowPublisherService flowPublisherService;
-    private final CollectionVersionService collectionVersionService;
 
     @Autowired
     public FlowController(
             @NonNull final FlowService flowService,
             @NonNull final FlowVersionService flowVersionService,
-            @NonNull final CodeArtifactService codeArtifactService,
-            @NonNull final VariableService variableService,
             @NonNull final CollectionService collectionService,
             @NonNull final FlowPublisherService flowPublisherService,
-            @NonNull final CollectionVersionService collectionVersionService,
             @NonNull final FlowVersionValidator flowVersionValidator) {
         this.flowService = flowService;
         this.flowPublisherService = flowPublisherService;
-        this.collectionVersionService = collectionVersionService;
-        this.codeArtifactService = codeArtifactService;
-        this.variableService = variableService;
         this.flowVersionService = flowVersionService;
         this.collectionService = collectionService;
         this.flowVersionValidator = flowVersionValidator;
@@ -98,7 +89,7 @@ public class FlowController {
             throws Exception {
         List<MultipartFile> fileList =
                 Objects.isNull(files) ? Collections.emptyList() : Arrays.asList(files);
-        List<ArtifactFile> artifactFiles = codeArtifactService.toArtifacts(fileList);
+        List<ArtifactFile> artifactFiles = ArtifactUtils.toArtifacts(fileList);
         FlowVersionView finalRequest =
                 flowVersionValidator.constructRequest(
                         collectionId, null, FlowVersionView.builder().displayName(createFlowRequest.getDisplayName()).trigger(createFlowRequest.getTrigger()).build(), artifactFiles);
@@ -119,7 +110,7 @@ public class FlowController {
             throws Exception {
         List<MultipartFile> fileList =
                 (Objects.isNull(files) ? Collections.emptyList() : Arrays.asList(files));
-        List<ArtifactFile> artifactFiles = codeArtifactService.toArtifacts(fileList);
+        List<ArtifactFile> artifactFiles = ArtifactUtils.toArtifacts(fileList);
         FlowVersionView constructedRequest =
                 flowVersionValidator.constructRequest(null, flowId, versionRequestBody, artifactFiles);
         return ResponseEntity.ok(flowService.updateDraft(flowId, constructedRequest));

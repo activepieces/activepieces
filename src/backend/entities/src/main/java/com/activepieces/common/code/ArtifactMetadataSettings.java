@@ -1,14 +1,16 @@
 package com.activepieces.common.code;
 
+import com.github.ksuid.Ksuid;
+
 public interface ArtifactMetadataSettings {
 
-    String getArtifact();
+    Ksuid getArtifactSourceId();
 
-    void setArtifact(String artifact);
+    void setArtifactSourceId(Ksuid artifact);
 
-    String getArtifactUrl();
+    Ksuid getArtifactPackagedId();
 
-    void setArtifactUrl(String artifactUrl);
+    void setArtifactPackagedId(Ksuid artifactPackagedId);
 
     ArtifactFile getNewArtifactToUploadFile();
 

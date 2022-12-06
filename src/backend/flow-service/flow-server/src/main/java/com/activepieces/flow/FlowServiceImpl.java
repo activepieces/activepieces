@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -67,7 +68,7 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public FlowView create(Ksuid projectId, Ksuid collectionId, FlowVersionView flowVersionView)
-            throws PermissionDeniedException, ResourceNotFoundException {
+            throws PermissionDeniedException, ResourceNotFoundException, IOException {
         permissionService.requiresPermission(collectionId, Permission.WRITE_FLOW);
         Ksuid flowId = Ksuid.newKsuid();
 
@@ -81,7 +82,7 @@ public class FlowServiceImpl implements FlowService {
 
         // We need to save the flow then the version in order to attach it to the parent as resource
         FlowVersionView versionView =
-                flowVersionService.createNew(flowId, null, flowVersionView);
+                flowVersionService.createNew(flowId, flowVersionView);
         return flowMapper.toView(savedFlowView);
     }
 
@@ -107,7 +108,7 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public FlowView updateDraft(Ksuid flowId, FlowVersionView request)
             throws FlowNotFoundException, FlowVersionNotFoundException, PermissionDeniedException, ResourceNotFoundException,
-            FlowVersionAlreadyLockedException {
+            FlowVersionAlreadyLockedException, IOException {
         permissionService.requiresPermission(flowId, Permission.WRITE_FLOW);
         FlowView flow = get(flowId);
         FlowVersionView draft = flow.getLastVersion();
@@ -121,10 +122,10 @@ public class FlowServiceImpl implements FlowService {
 
     private FlowView cloneVersion(Ksuid flowId, FlowVersionView draftVersion)
             throws FlowNotFoundException, PermissionDeniedException,
-            ResourceNotFoundException {
+            ResourceNotFoundException, IOException {
         FlowView flow = get(flowId);
         FlowVersionView clonedVersion =
-                flowVersionService.createNew(flowId, draftVersion.getId(), draftVersion);
+                flowVersionService.createNew(flowId, draftVersion);
         flow.updateOrCreateDraft(clonedVersion);
         return saveFromView(flow);
     }

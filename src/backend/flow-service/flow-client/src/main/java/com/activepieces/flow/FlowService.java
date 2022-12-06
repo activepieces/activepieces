@@ -13,20 +13,21 @@ import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.guardian.client.exception.ResourceNotFoundException;
 import com.github.ksuid.Ksuid;
 
+import java.io.IOException;
 import java.util.Optional;
 
 public interface FlowService {
 
     SeekPage<FlowView> listByCollectionId(Ksuid integrationId, SeekPageRequest pageRequest) throws FlowNotFoundException, PermissionDeniedException;
 
-    FlowView create(Ksuid projectId, Ksuid integrationId, FlowVersionView view) throws FlowVersionNotFoundException, PermissionDeniedException, ResourceNotFoundException, CodeArtifactBuildFailure;
+    FlowView create(Ksuid projectId, Ksuid integrationId, FlowVersionView view) throws FlowVersionNotFoundException, PermissionDeniedException, ResourceNotFoundException, CodeArtifactBuildFailure, IOException;
 
     Optional<FlowView> getOptional(Ksuid id) throws PermissionDeniedException;
 
     FlowView get(Ksuid id) throws FlowNotFoundException, PermissionDeniedException;
 
     FlowView updateDraft(Ksuid flowId, FlowVersionView view)
-            throws FlowNotFoundException,  FlowVersionNotFoundException, PermissionDeniedException, ResourceNotFoundException, FlowVersionAlreadyLockedException, CodeArtifactBuildFailure;
+            throws FlowNotFoundException, FlowVersionNotFoundException, PermissionDeniedException, ResourceNotFoundException, FlowVersionAlreadyLockedException, CodeArtifactBuildFailure, IOException;
 
     void delete(Ksuid id) throws FlowNotFoundException, ResourceNotFoundException, PermissionDeniedException;
 }

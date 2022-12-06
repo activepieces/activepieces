@@ -4,6 +4,7 @@ import com.activepieces.actions.model.action.*;
 import com.activepieces.actions.model.action.settings.CodeSettingsView;
 import com.activepieces.entity.subdocuments.action.*;
 import com.activepieces.entity.subdocuments.action.settings.CodeSettings;
+import com.github.ksuid.Ksuid;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mappings;
 import org.mapstruct.SubclassMapping;
@@ -55,4 +56,15 @@ public abstract class ActionMapper {
 
   @Mappings(value = {})
   public abstract CodeSettingsView map(CodeSettings entity);
+
+  @Mappings({})
+  public String map(Ksuid ksuid){
+    return ksuid.toString();
+  }
+
+  @Mappings({})
+  public Ksuid map(String ksuid){
+    return Ksuid.fromString(ksuid);
+  }
+
 }

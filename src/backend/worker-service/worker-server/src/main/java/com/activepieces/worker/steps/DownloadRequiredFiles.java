@@ -1,24 +1,26 @@
 package com.activepieces.worker.steps;
 
+import com.activepieces.actions.model.action.CodeActionMetadataView;
 import com.activepieces.actions.store.model.StorePath;
-import com.activepieces.common.code.ArtifactMetadata;
 import com.activepieces.common.error.exception.CodeArtifactBuildFailure;
 import com.activepieces.common.utils.ArtifactUtils;
+import com.activepieces.entity.sql.FileEntity;
+import com.activepieces.file.service.FileService;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.flow.util.FlowVersionUtil;
 import com.activepieces.logging.client.model.InstanceRunView;
 import com.activepieces.piece.client.model.CollectionVersionView;
 import com.activepieces.worker.Constants;
 import com.activepieces.worker.Worker;
-import com.activepieces.worker.service.LocalArtifactCacheServiceImpl;
+import com.activepieces.worker.service.FlowArtifactBuilderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,26 +28,26 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Log4j2
 public class DownloadRequiredFiles extends Step {
 
     private final ObjectMapper objectMapper;
-    private final LocalArtifactCacheServiceImpl localCacheService;
+    private final FlowArtifactBuilderService flowBuilderService;
+    private final FileService fileService;
     private final Worker worker;
     private final String apiUrl;
 
     public DownloadRequiredFiles(
             @NonNull final Worker worker,
             @NonNull final String apiUrl,
-            @NonNull final LocalArtifactCacheServiceImpl localCacheService,
+            @NonNull final FileService fileService,
+            @NonNull final FlowArtifactBuilderService flowBuilderService,
             @NonNull final ObjectMapper objectMapper) {
         this.apiUrl = apiUrl;
         this.objectMapper = objectMapper;
-        this.localCacheService = localCacheService;
+        this.fileService = fileService;
+        this.flowBuilderService = flowBuilderService;
         this.worker = worker;
     }
 
@@ -59,12 +61,10 @@ public class DownloadRequiredFiles extends Step {
             Map<String, Object> context,
             Map<String, Object> output,
             StorePath storePath)
-            throws IOException {
-        Set<ImmutablePair<CollectionVersionView, FlowVersionView>> allRequiredFiles =
-                Set.of(ImmutablePair.of(collectionVersionView, flowVersionView));
-
+            throws Exception {
         long startTime = System.currentTimeMillis();
-        downloadArtifacts(allRequiredFiles);
+        flowVersionView = flowBuilderService.buildAllSteps(flowVersionView);
+        downloadArtifacts(flowVersionView);
         worker.getSandbox().writeContext(context, objectMapper);
         worker.getSandbox().writeConfigs(configs, objectMapper);
         worker.getSandbox()
@@ -74,16 +74,8 @@ public class DownloadRequiredFiles extends Step {
                         apiUrl,
                         objectMapper);
         worker.getSandbox().writeTriggerPayload(triggerPayload, objectMapper);
-        allRequiredFiles.parallelStream()
-                .forEach(
-                        dependency -> {
-                            try {
-                                worker.getSandbox().writeFlow(dependency.getRight(), objectMapper);
-                                worker.getSandbox().writeCollection(dependency.getLeft(), objectMapper);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
+        worker.getSandbox().writeFlow(flowVersionView, objectMapper);
+        worker.getSandbox().writeCollection(collectionVersionView, objectMapper);
 
         final Resource workerExecutor = new ClassPathResource(Constants.ACTIVEPIECES_WORKER_JS);
         final File workerExecutorDest =
@@ -95,36 +87,20 @@ public class DownloadRequiredFiles extends Step {
         log.info("Downloading artifacts took {}ms", System.currentTimeMillis() - startTime);
     }
 
-    private void downloadArtifacts(
-            Set<ImmutablePair<CollectionVersionView, FlowVersionView>> allRequiredFiles) {
-        Set<ImmutablePair<Ksuid, ArtifactMetadata>> allCodeActions =
-                allRequiredFiles.stream()
-                        .map(
-                                f ->
-                                        FlowVersionUtil.findAllActions(f.getRight()).stream()
-                                                .filter(action -> action instanceof ArtifactMetadata)
-                                                .map(action -> (ArtifactMetadata) action)
-                                                .map(codeAction -> ImmutablePair.of(f.getRight().getId(), codeAction))
-                                                .collect(Collectors.toList()))
-                        .flatMap(List::stream)
-                        .collect(Collectors.toSet());
+    private void downloadArtifacts(FlowVersionView flowVersionView) {
+        final List<CodeActionMetadataView> allCodeActions = FlowVersionUtil.findCodeActions(flowVersionView);
 
         allCodeActions.parallelStream()
                 .forEach(
-                        codePair -> {
+                        codeSettings -> {
                             try {
-                                Ksuid flowVersionId = codePair.getLeft();
-                                ArtifactMetadata actionMetadataView = codePair.getRight();
+                                FileEntity fileEntity = fileService.getFileById(codeSettings.getSettings().getArtifactPackagedId()).get();
                                 String jsFileName =
                                         ArtifactUtils.bundledFileName(
-                                                actionMetadataView.getArtifactSettings().getArtifact());
-                                InputStream inputStream =
-                                        this.localCacheService.cacheArtifact(
-                                                flowVersionId,
-                                                actionMetadataView,
-                                                actionMetadataView.getArtifactSettings().getArtifact());
+                                                codeSettings.getSettings().getArtifactPackagedId().toString());
+                                InputStream inputStream = new ByteArrayInputStream(fileEntity.getData());
                                 worker.getSandbox().writeCode(jsFileName, inputStream);
-                            } catch (CodeArtifactBuildFailure | IOException e) {
+                            } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         });

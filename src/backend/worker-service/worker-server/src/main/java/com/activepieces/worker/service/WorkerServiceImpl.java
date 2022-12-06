@@ -1,6 +1,7 @@
 package com.activepieces.worker.service;
 
 import com.activepieces.actions.store.model.StorePath;
+import com.activepieces.file.service.FileService;
 import com.activepieces.flow.FlowVersionService;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.logging.client.InstanceRunService;
@@ -33,28 +34,26 @@ public class WorkerServiceImpl implements WorkerService {
   @Autowired
   public WorkerServiceImpl(
           @Value("${com.activepieces.api-prefix}") final String apiUrl,
-      final InstanceRunService instanceRunService,
-      final LocalArtifactCacheServiceImpl localArtifactCacheService,
-      final ObjectMapper objectMapper) {
-    final ObjectMapper lowerCamelCase = objectMapper.copy().setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE);
+          final InstanceRunService instanceRunService,
+          final FileService fileService,
+          final FlowArtifactBuilderService flowArtifactBuilderService,
+          final ObjectMapper objectMapper) {
+    final ObjectMapper lowerCamelCaseMapper = objectMapper.copy().setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE);
     this.workers = new ArrayList<>();
     this.blockingQueue = new LinkedBlockingQueue<>();
     for (int i = 0; i < NUMBER_OF_WORKERS; ++i) {
       this.blockingQueue.add(i);
       this.workers.add(
-          new Worker(
-              i + 20,
-                  apiUrl,
-              localArtifactCacheService,
-              instanceRunService,
-                  lowerCamelCase));
+              new Worker(i + 20, apiUrl, flowArtifactBuilderService, instanceRunService, fileService, lowerCamelCaseMapper));
     }
   }
 
   /**
-   * Step 1: Parse All code Actions. Step 2: Make sure all code actions are built and exists on
-   * Google Cloud. Step 3: Download these files locally (If they don't exist already). Step 4:
-   * Create Sandbox. Step 5: Bind these directories to Sandbox. Step 6: Execution flow with
+   * Step 1: Parse All code Actions.
+   * Step 2: Make sure all code actions are built.
+   * Step 3: Create Sandbox.
+   * Step 4: Bind these directories to Sandbox.
+   * Step 6: Execution flow with
    * Typescript worker.
    */
   public InstanceRunView executeFlow(

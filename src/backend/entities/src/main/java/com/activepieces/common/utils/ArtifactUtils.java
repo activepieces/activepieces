@@ -1,21 +1,48 @@
 package com.activepieces.common.utils;
 
+import com.activepieces.common.code.ArtifactFile;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 @Log4j2
 public class ArtifactUtils {
+
+  public static List<ArtifactFile> toArtifacts(List<MultipartFile> files) {
+    return files.stream()
+            .map(
+                    f -> {
+                      try {
+                        ArtifactFile artifactFile =
+                                ArtifactFile.builder()
+                                        .contentType(f.getContentType())
+                                        .originalFileName(f.getOriginalFilename())
+                                        .inputStream(f.getInputStream())
+                                        .build();
+                        artifactFile.setHashWithExtension(
+                                HashUtils.getFileNameAfterUpload(
+                                        artifactFile.getOriginalFileName(), artifactFile.getInputStream()));
+                        return artifactFile;
+                      } catch (IOException e) {
+                        e.printStackTrace();
+                      }
+                      return null;
+                    })
+            .collect(Collectors.toList());
+  }
 
   public static String readOutputFromStream(Reader reader) throws IOException {
     try (BufferedReader br = new BufferedReader(reader)) {
