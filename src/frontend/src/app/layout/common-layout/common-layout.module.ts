@@ -36,7 +36,6 @@ import { OutputLogPipe } from './pipe/output-log';
 import { DefaultZeroPipe } from './pipe/default-zero.pipe';
 import { CodeEmbeddedEditorComponent } from './components/dynamic-form/dynamic-field-input-only/code-embeddedEditor/code-embedded-editor.component';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
-import { SelectOauth2Component } from './components/dynamic-form/dynamic-field-input-only/select-oauth2/select-oauth2.component';
 import { StoreModule } from '@ngrx/store';
 import { MatButtonModule } from '@angular/material/button';
 import { BsDropdownConfig, BsDropdownModule } from 'ngx-bootstrap/dropdown';
@@ -109,7 +108,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		OutputLogPipe,
 		RawOutputLogPipe,
 		DefaultZeroPipe,
-		SelectOauth2Component,
 		DocumentationLinkComponent,
 		JsonViewModalComponent,
 		LongTextFormControlComponent,

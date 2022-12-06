@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { DropdownOption } from '../../../model/fields/variable/config-settings';
 
 @Component({
 	templateUrl: './ng-select-item-template.component.html',
@@ -7,7 +6,7 @@ import { DropdownOption } from '../../../model/fields/variable/config-settings';
 	selector: 'app-ng-select-item-template',
 })
 export class NgSelectItemTemplateComponent {
-	@Input() item: DropdownOption;
+	@Input() item: { label: string; value: any };
 	@Input() isSelected: boolean = false;
 	constructor() {}
 }

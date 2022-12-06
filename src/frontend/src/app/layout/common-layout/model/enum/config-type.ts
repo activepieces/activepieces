@@ -1,13 +1,10 @@
 export enum ConfigType {
 	SHORT_TEXT = 'SHORT_TEXT',
 	LONG_TEXT = 'LONG_TEXT',
-	EMAIL = 'EMAIL',
 	NUMBER = 'NUMBER',
-	INTEGER = 'INTEGER',
 	CHECKBOX = 'CHECKBOX',
 	DICTIONARY = 'DICTIONARY',
 	OAUTH2 = 'OAUTH2',
-	DROPDOWN = 'DROPDOWN',
 }
 
 export const configTypesDropdownOptions = [
@@ -31,7 +28,7 @@ export const configTypesDropdownOptions = [
 		group: 'Authentication',
 	},
 
-	{ label: 'Integer', value: ConfigType.INTEGER, icon: 'number.svg', group: 'Number' },
+	{ label: 'Number', value: ConfigType.NUMBER, icon: 'number.svg', group: 'Number' },
 	{
 		label: 'Checkbox',
 		value: ConfigType.CHECKBOX,
@@ -42,12 +39,6 @@ export const configTypesDropdownOptions = [
 		label: 'Dictionary',
 		value: ConfigType.DICTIONARY,
 		icon: 'key-value.svg',
-		group: 'Others',
-	},
-	{
-		label: 'Dropdown',
-		value: ConfigType.DROPDOWN,
-		icon: 'dropdown.svg',
 		group: 'Others',
 	},
 ];

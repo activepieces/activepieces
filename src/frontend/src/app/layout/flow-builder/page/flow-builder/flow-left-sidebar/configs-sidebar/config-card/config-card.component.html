@@ -1,9 +1,7 @@
 <div class="variable-container mb-3">
   <div class="info-container text-break" *ngIf="variable">
-    <div>{{variable.label}}</div>
-    <div class="text-description">Key: {{variable.key}}</div>
+    <div>{{variable.key}}</div>
     <div class="text-description">Type: {{variable.type}}</div>
-    <div class="text-description">Hint: {{variable.hintText}}</div>
   </div>
   <app-icon-button [hidden]="viewMode" [color]="themeService.BODY_COLOR"
                    (click)="deleteEvent.emit(); $event.stopPropagation();"

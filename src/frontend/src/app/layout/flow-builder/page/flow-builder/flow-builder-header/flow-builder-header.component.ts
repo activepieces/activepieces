@@ -1,13 +1,13 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { ConfirmDeleteModalComponent } from '../../../../common-layout/components/confirm-delete-modal/confirm-delete-modal.component';
-import { Collection } from '../../../../common-layout/model/piece.interface';
+import { Collection } from '../../../../common-layout/model/collection.interface';
 import { CollectionBuilderService } from '../../../service/collection-builder.service';
 import { RightSideBarType } from '../../../../common-layout/model/enum/right-side-bar-type.enum';
 import { ThemeService } from 'src/app/layout/common-layout/service/theme.service';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { PieceAction } from '../../../store/action/piece.action';
+import { collectionActions } from '../../../store/action/collection.action';
 import { combineLatest, map, Observable, tap } from 'rxjs';
 import { BuilderSelectors } from '../../../store/selector/flow-builder.selector';
 import { SaveState } from '../../../store/model/enums/save-state.enum';
@@ -134,7 +134,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 	}
 
 	savePieceName(newPieceName: string) {
-		this.store.dispatch(PieceAction.changeName({ displayName: newPieceName }));
+		this.store.dispatch(collectionActions.changeName({ displayName: newPieceName }));
 		this.navigationService.setTitle(newPieceName);
 	}
 

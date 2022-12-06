@@ -1,25 +1,19 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
-import { Collection, CollectionVersion } from '../model/piece.interface';
-import { forkJoin, Observable, switchMap, tap } from 'rxjs';
+import { Collection, CollectionVersion } from '../model/collection.interface';
+import { Observable } from 'rxjs';
 import { SeekPage } from './seek-page';
 import { UUID } from 'angular2-uuid';
-
-import {
-	addArtifactsToFormData,
-	ArtifactAndItsNameInFormData,
-	zipAllArtifacts,
-} from '../model/helper/artifacts-zipping-helper';
 import { CodeService } from '../../flow-builder/service/code.service';
-import { ConfigType, DropdownType } from '../model/enum/config.enum';
-import { DynamicDropdownSettings } from '../model/fields/variable/config-settings';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class CollectionService {
-	constructor(private http: HttpClient, private codeService: CodeService) {}
+	constructor(private http: HttpClient, private codeService: CodeService) {
+		this.codeService;
+	}
 
 	create(
 		projectId: UUID,
@@ -30,30 +24,29 @@ export class CollectionService {
 		return this.http.post<Collection>(environment.apiUrl + '/projects/' + projectId + '/collections', collection);
 	}
 
-	update(collectionId: UUID, collection: CollectionVersion, logo?: File): Observable<Collection> {
-		const formData = new FormData();
-		if (logo != undefined) {
-			formData.append('logo', logo);
-		}
-		formData.append('collection', new Blob([JSON.stringify(collection)], { type: 'application/json' }));
-		const artifactsAndTheirNames: ArtifactAndItsNameInFormData[] = [
-			...this.getDynamicDropdownConfigsArtifacts(collection),
-		];
+	update(collectionId: UUID, collection: CollectionVersion): Observable<Collection> {
+		// const artifactsAndTheirNames: ArtifactAndItsNameInFormData[] = [
+		// 	...this.getDynamicDropdownConfigsArtifacts(collection),
+		// ];
 
-		const updatePiece$ = this.http.put<Collection>(environment.apiUrl + '/collections/' + collectionId, formData);
-		const artifacts$ = zipAllArtifacts(artifactsAndTheirNames);
-		if (artifacts$.length == 0) return updatePiece$;
-		return forkJoin(artifacts$).pipe(
-			tap(zippedFilesAndTheirNames => {
-				addArtifactsToFormData(zippedFilesAndTheirNames, formData);
-			}),
-			switchMap(() => {
-				return updatePiece$;
-			}),
-			tap(() => {
-				this.codeService.unmarkDirtyArtifactsInCollectionConfigsCache(collectionId);
-			})
-		);
+		const updatePiece$ = this.http.put<Collection>(environment.apiUrl + '/collections/' + collectionId, {
+			display_name: collection.display_name,
+			configs: collection.configs,
+		});
+		return updatePiece$;
+		// const artifacts$ = zipAllArtifacts(artifactsAndTheirNames);
+		// if (artifacts$.length == 0) return updatePiece$;
+		// return forkJoin(artifacts$).pipe(
+		// 	tap(zippedFilesAndTheirNames => {
+		// 		addArtifactsToFormData(zippedFilesAndTheirNames, formData);
+		// 	}),
+		// 	switchMap(() => {
+		// 		return updatePiece$;
+		// 	}),
+		// 	tap(() => {
+		// 		this.codeService.unmarkDirtyArtifactsInCollectionConfigsCache(collectionId);
+		// 	})
+		// );
 	}
 
 	getVersion(versionId: UUID): Observable<CollectionVersion> {
@@ -80,16 +73,5 @@ export class CollectionService {
 
 	archive(pieceId: UUID): Observable<void> {
 		return this.http.delete<void>(environment.apiUrl + '/collections/' + pieceId);
-	}
-
-	getDynamicDropdownConfigsArtifacts(collection: CollectionVersion) {
-		const artifacts: ArtifactAndItsNameInFormData[] = [];
-		collection.configs.forEach(config => {
-			const settings = config.settings as DynamicDropdownSettings;
-			if (config.type === ConfigType.DROPDOWN && settings.dropdownType == DropdownType.DYNAMIC) {
-				if (settings.artifactContent) artifacts.push({ artifact: settings.artifactContent, name: config.key });
-			}
-		});
-		return artifacts;
 	}
 }

@@ -26,7 +26,6 @@ export class DashboardLayoutComponent implements OnInit {
 	}
 
 	updateRoute(route: { menu }): void {
-		debugger;
 		this.route = this.navigationService.sidebarRoutes[route.menu];
 		this.cd.detectChanges();
 	}

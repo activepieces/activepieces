@@ -1,14 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType, concatLatestFrom } from '@ngrx/effects';
-import { catchError, debounceTime, EMPTY, of, tap } from 'rxjs';
+import { catchError, debounceTime, of, tap } from 'rxjs';
 import { concatMap, filter, map } from 'rxjs/operators';
-import {
-	PieceAction,
-	CollectionActionType,
-	CollectionModifyingState,
-	savedFailed,
-	savedSuccess,
-} from '../action/piece.action';
+import { collectionActions, CollectionModifyingState, savedFailed, savedSuccess } from '../action/collection.action';
 import { CollectionService } from '../../../common-layout/service/collection.service';
 import { Store } from '@ngrx/store';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
@@ -16,10 +10,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuilderSelectors } from '../selector/flow-builder.selector';
 import { SingleFlowModifyingState } from '../action/flows.action';
 import { BuilderActions } from '../action/builder.action';
-import { Collection } from '../../../common-layout/model/piece.interface';
+
 import { autoSaveDebounceTime } from 'src/app/layout/common-layout/utils';
-import { findRefreshedConfig } from './helper';
 import { VersionEditState } from 'src/app/layout/common-layout/model/enum/version-edit-state.enum';
+import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 
 @Injectable()
 export class PieceEffects {
@@ -42,11 +36,8 @@ export class PieceEffects {
 			concatLatestFrom(() => this.store.select(BuilderSelectors.selectCurrentCollection)),
 			debounceTime(autoSaveDebounceTime),
 			concatMap(([action, collection]) => {
-				let fileLogo = undefined;
-				if (action.type === CollectionActionType.UPDATE_SETTINGS) {
-					fileLogo = action['logoFile'];
-				}
-				return this.pieceService.update(collection.id, collection.last_version, fileLogo).pipe(
+				debugger;
+				return this.collectionService.update(collection.id, collection.last_version).pipe(
 					tap(() => {
 						const now = new Date();
 						const nowDate = now.toLocaleDateString('en-us', {
@@ -58,10 +49,10 @@ export class PieceEffects {
 							.getMinutes()
 							.toString()
 							.padStart(2, '0')}`;
-						this.pieceBuilderService.lastSuccessfulSaveDate = `Last saved on ${nowDate} at ${nowTime}.`;
+						this.collectionBuilderService.lastSuccessfulSaveDate = `Last saved on ${nowDate} at ${nowTime}.`;
 					}),
-					concatMap(piece => {
-						return of(savedSuccess({ collection: piece }));
+					concatMap(collection => {
+						return of(savedSuccess({ collection: collection }));
 					}),
 					catchError(error => {
 						const shownBar = this.snackBar.open(
@@ -80,9 +71,9 @@ export class PieceEffects {
 	loadInitial$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(BuilderActions.loadInitial),
-			map(({ piece }: { piece: Collection }) => {
-				return PieceAction.setInitial({
-					collection: piece,
+			map(({ collection }: { collection: Collection }) => {
+				return collectionActions.setInitial({
+					collection: collection,
 				});
 			})
 		);
@@ -90,24 +81,10 @@ export class PieceEffects {
 
 	deleteConfig$ = createEffect(() => {
 		return this.actions$.pipe(
-			ofType(PieceAction.deleteConfig),
+			ofType(collectionActions.deleteConfig),
 			concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
 			concatMap(([action, collection]) => {
-				if (collection) {
-					const configToDelete = collection.last_version.configs[action.configIndex];
-					const allConfigs = [...collection.last_version.configs];
-					const refreshedConfig = findRefreshedConfig(allConfigs, configToDelete);
-					if (refreshedConfig) {
-						return of(
-							PieceAction.deleteConfigFailed({
-								referenceKey: configToDelete.key,
-								refreshedKey: refreshedConfig.key,
-							})
-						);
-					}
-					return of(PieceAction.deleteConfigSucceeded({ configIndex: action.configIndex }));
-				}
-				return EMPTY;
+				return of(collectionActions.deleteConfigSucceeded({ configIndex: action.configIndex }));
 			})
 		);
 	});
@@ -115,7 +92,7 @@ export class PieceEffects {
 	deleteConfigFailed$ = createEffect(
 		() => {
 			return this.actions$.pipe(
-				ofType(PieceAction.deleteConfigFailed),
+				ofType(collectionActions.deleteConfigFailed),
 				tap(action => {
 					this.snackBar.open(`This variable can't be deleted because it's a refresher for ${action.refreshedKey}`, '', {
 						panelClass: 'error',
@@ -128,8 +105,8 @@ export class PieceEffects {
 	);
 
 	constructor(
-		private pieceBuilderService: CollectionBuilderService,
-		private pieceService: CollectionService,
+		private collectionBuilderService: CollectionBuilderService,
+		private collectionService: CollectionService,
 		private store: Store,
 		private actions$: Actions,
 		private snackBar: MatSnackBar

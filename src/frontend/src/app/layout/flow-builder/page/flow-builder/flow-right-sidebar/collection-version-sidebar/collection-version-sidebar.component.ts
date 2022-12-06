@@ -3,7 +3,7 @@ import { ThemeService } from '../../../../../common-layout/service/theme.service
 import { TimeHelperService } from '../../../../../common-layout/service/time-helper.service';
 import { VersionEditState } from '../../../../../common-layout/model/enum/version-edit-state.enum';
 import { CollectionService } from '../../../../../common-layout/service/collection.service';
-import { CollectionVersion } from '../../../../../common-layout/model/piece.interface';
+import { CollectionVersion } from '../../../../../common-layout/model/collection.interface';
 import { RightSideBarType } from '../../../../../common-layout/model/enum/right-side-bar-type.enum';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../store/selector/flow-builder.selector';

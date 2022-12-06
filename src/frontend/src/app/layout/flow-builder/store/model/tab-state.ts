@@ -6,7 +6,6 @@ import { InstanceRun } from '../../../common-layout/model/instance-run.interface
 export interface TabState {
 	leftSidebar: {
 		type: LeftSideBarType;
-		props: any;
 	};
 	rightSidebar: {
 		type: RightSideBarType;

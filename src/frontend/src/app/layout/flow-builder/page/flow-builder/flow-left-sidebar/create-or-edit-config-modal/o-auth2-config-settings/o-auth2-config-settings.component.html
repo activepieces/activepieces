@@ -1,15 +1,5 @@
 <form [formGroup]="settingsForm" class="d-flex flex-column config-modal-form-controls-container">
   <div>
-    <label>User Input Type</label>
-    <ng-select [items]="userInputDropdownOptions" bindLabel="label" bindValue="value" id="role"
-      formControlName="userInputType" [searchable]="false" [clearable]="false" placeholder="Please select">
-      <ng-template ng-option-tmp let-item="item">
-        <app-ng-select-item-template [item]="item"
-          [isSelected]="item.value === settingsForm.get('userInputType')!.value"></app-ng-select-item-template>
-      </ng-template>
-    </ng-select>
-  </div>
-  <div>
     <label required>Redirect Url</label>
     <input type="text" formControlName="redirectUrl" class="form-control">
 
@@ -57,4 +47,4 @@
   </div>
 </form>
 <ng-container *ngIf="settingsFormValueChanged$|async"></ng-container>
-<ng-container *ngIf="userInputTypeChanged$|async"></ng-container>
+

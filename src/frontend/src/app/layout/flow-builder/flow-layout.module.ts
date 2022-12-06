@@ -3,7 +3,7 @@ import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FlowLayoutRouting } from './flow-layout.routing';
-import { PieceBuilderComponent } from './page/flow-builder/piece-builder.component';
+import { CollectionBuilderComponent } from './page/flow-builder/collection-builder.component';
 import { FlowBuilderHeaderComponent } from './page/flow-builder/flow-builder-header/flow-builder-header.component';
 import { FlowItemComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item.component';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -34,9 +34,9 @@ import { StepTypeListComponent } from './page/flow-builder/flow-right-sidebar/st
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { StoreModule } from '@ngrx/store';
-import { pieceReducer } from './store/reducer/piece.reducer';
+import { pieceReducer } from './store/reducer/collection.reducer';
 import { EffectsModule } from '@ngrx/effects';
-import { PieceEffects } from './store/effect/piece.effects';
+import { PieceEffects } from './store/effect/collection.effects';
 import { flowsReducer } from './store/reducer/flows.reducer';
 import { FlowsEffects } from './store/effect/flow.effects';
 import { viewModeReducer } from './store/reducer/view-mode.reducer';
@@ -73,9 +73,7 @@ import { ConfigCardComponent } from './page/flow-builder/flow-left-sidebar/confi
 import { VariableListComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/configs-list/configs-list.component';
 import { CreateEditConfigModalComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/create-or-edit-config-modal.component';
 import { DefaultConfigTypeSettingsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/default-config-type-settings/default-config-type-settings.component';
-import { DropdownConfigSettingsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/dropdown-config-settings/dropdown-config-settings.component';
 import { OAuth2ConfigSettingsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/o-auth2-config-settings/o-auth2-config-settings.component';
-import { StaticDropDownOptionsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/dropdown-config-settings/static-drop-down-options/static-drop-down-options.component';
 import { ComponentInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/component-input-form.component';
 import { NewAuthenticationModalComponent } from './page/flow-builder/flow-right-sidebar/new-authentication-modal/new-authentication-modal.component';
 import { PublishPopoverComponent } from './page/flow-builder/flow-builder-header/publish-popover/publish-popover.component';
@@ -117,7 +115,7 @@ import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/cente
 	],
 	providers: [BsModalService],
 	declarations: [
-		PieceBuilderComponent,
+		CollectionBuilderComponent,
 		FlowBuilderHeaderComponent,
 		FlowItemComponent,
 		ChevronDropdownMenuComponent,
@@ -157,16 +155,11 @@ import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/cente
 		CodeStepInputFormComponent,
 		ScheduleTriggerInputFormComponent,
 		ConfigCardComponent,
-
 		DefaultConfigTypeSettingsComponent,
-		DropdownConfigSettingsComponent,
 		OAuth2ConfigSettingsComponent,
-		StaticDropDownOptionsComponent,
 		ComponentInputFormComponent,
-
 		NewAuthenticationModalComponent,
 		PublishPopoverComponent,
-
 		TrackFocusDirective,
 		CenterMatMenuDirective,
 	],

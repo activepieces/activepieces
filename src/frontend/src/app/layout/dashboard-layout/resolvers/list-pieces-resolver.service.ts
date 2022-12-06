@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Resolve } from '@angular/router';
 import { map, Observable, switchMap } from 'rxjs';
-import { Collection } from '../../common-layout/model/piece.interface';
+import { Collection } from '../../common-layout/model/collection.interface';
 import { CollectionService } from '../../common-layout/service/collection.service';
 import { ProjectService } from '../../common-layout/service/project.service';
 import { SeekPage } from '../../common-layout/service/seek-page';

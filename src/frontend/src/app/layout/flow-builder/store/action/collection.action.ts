@@ -1,17 +1,16 @@
 import { createAction, props } from '@ngrx/store';
-import { Collection } from '../../../common-layout/model/piece.interface';
+import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 import { Config } from '../../../common-layout/model/fields/variable/config';
 export enum CollectionActionType {
-	CHANGE_NAME = '[PIECE] CHANGE_NAME',
-	SET_INITIAL = '[PIECE] SET_INITIAL',
-	UPDATE_CONFIG = '[PIECE] UPDATE_CONFIG',
-	ADD_CONFIG = '[PIECE] ADD_CONFIG',
-	DELETE_CONFIG = '[PIECE] DELETE_CONFIG',
-	DELETE_CONFIG_FAILED = '[PIECE] DELETE_CONFIG_FAILED',
-	DELETE_CONFIG_SUCCEEDED = '[PIECE] DELETE_CONFIG_SUCCEEDED',
-	UPDATE_SETTINGS = '[PIECE] UPDATE_SETTINGS',
-	PIECE_SAVED_SUCCESS = '[PIECE] SAVED_SUCCESS',
-	PIECE_SAVED_FAILED = '[PIECE] SAVED_FAILED',
+	CHANGE_NAME = '[COLLECTION] CHANGE_NAME',
+	SET_INITIAL = '[COLLECTION] SET_INITIAL',
+	UPDATE_CONFIG = '[COLLECTION] UPDATE_CONFIG',
+	ADD_CONFIG = '[COLLECTION] ADD_CONFIG',
+	DELETE_CONFIG = '[COLLECTION] DELETE_CONFIG',
+	DELETE_CONFIG_FAILED = '[COLLECTION] DELETE_CONFIG_FAILED',
+	DELETE_CONFIG_SUCCEEDED = '[COLLECTION] DELETE_CONFIG_SUCCEEDED',
+	COLLECTION_SAVED_SUCCESS = '[COLLECTION] SAVED_SUCCESS',
+	COLLECTION_SAVED_FAILED = '[COLLECTION] SAVED_FAILED',
 }
 
 export const CollectionModifyingState = [
@@ -19,7 +18,6 @@ export const CollectionModifyingState = [
 	CollectionActionType.UPDATE_CONFIG,
 	CollectionActionType.ADD_CONFIG,
 	CollectionActionType.DELETE_CONFIG_SUCCEEDED,
-	CollectionActionType.UPDATE_SETTINGS,
 ];
 
 export const changeName = createAction(CollectionActionType.CHANGE_NAME, props<{ displayName: string }>());
@@ -43,28 +41,21 @@ export const deleteConfigFailed = createAction(
 	props<{ referenceKey: string; refreshedKey: string }>()
 );
 
-export const updateSettings = createAction(
-	CollectionActionType.UPDATE_SETTINGS,
-	props<{
-		logoFile: File | undefined;
-		logoEncodedUrl: string | undefined;
-		description: string;
-	}>()
+export const savedSuccess = createAction(
+	CollectionActionType.COLLECTION_SAVED_SUCCESS,
+	props<{ collection: Collection }>()
 );
 
-export const savedSuccess = createAction(CollectionActionType.PIECE_SAVED_SUCCESS, props<{ collection: Collection }>());
-
-export const savedFailed = createAction(CollectionActionType.PIECE_SAVED_FAILED, props<{ error: any }>());
+export const savedFailed = createAction(CollectionActionType.COLLECTION_SAVED_FAILED, props<{ error: any }>());
 
 export const setInitial = createAction(CollectionActionType.SET_INITIAL, props<{ collection: Collection }>());
 
-export const PieceAction = {
+export const collectionActions = {
 	changeName,
 	setInitial,
 	updateConfig,
 	addConfig,
 	deleteConfigSucceeded,
-	updateSettings,
 	savedSuccess,
 	savedFailed,
 	deleteConfigFailed,
