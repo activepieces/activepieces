@@ -32,6 +32,11 @@ public class CodeArtifactsValidator implements FlowVersionRequestBuilder {
         continue;
       }
       CodeSettingsView codeSettings = codeAction.getSettings();
+      CodeSettingsView oldCodeSettings = getArtifactFromCurrentVersion(currentVersion, codeAction.getName());
+      if(Objects.nonNull(oldCodeSettings)){
+        codeSettings.setArtifactSourceId(oldCodeSettings.getArtifactSourceId());
+        codeSettings.setArtifactPackagedId(oldCodeSettings.getArtifactPackagedId());
+      }
       Optional<ArtifactFile> file =
           artifactFileList.stream()
               .filter(
@@ -56,4 +61,22 @@ public class CodeArtifactsValidator implements FlowVersionRequestBuilder {
     return flowVersion.toBuilder().errors(errorResponses).build();
   }
 
+
+  private CodeSettingsView getArtifactFromCurrentVersion(FlowVersionView currentVersion, String stepName) {
+    if (Objects.isNull(currentVersion)) {
+      return null;
+    }
+    Optional<CodeActionMetadataView> codeActionViewMetadataView =
+            FlowVersionUtil.findCodeActions(currentVersion).stream()
+                    .filter(f -> f.getName().equals(stepName))
+                    .findFirst();
+    if (codeActionViewMetadataView.isEmpty()) {
+      return null;
+    }
+    CodeSettingsView codeSettings = codeActionViewMetadataView.get().getSettings();
+    if (Objects.isNull(codeSettings)) {
+      return null;
+    }
+    return codeSettings;
+  }
 }

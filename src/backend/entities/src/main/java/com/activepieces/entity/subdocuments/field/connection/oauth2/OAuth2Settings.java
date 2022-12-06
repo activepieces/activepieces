@@ -18,7 +18,7 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,
         property = "userInputType",
         visible = true,
         defaultImpl = OAuth2EmptySettings.class)
@@ -30,7 +30,7 @@ import javax.validation.constraints.NotNull;
 public abstract class OAuth2Settings {
 
   @EnumNamePattern(regexp = "CONNECTION")
-  @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+  @JsonProperty
   @NotNull
   private OAuth2UserType userInputType;
 

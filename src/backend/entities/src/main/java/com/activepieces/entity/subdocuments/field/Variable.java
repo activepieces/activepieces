@@ -35,8 +35,8 @@ public abstract class Variable implements ValueField {
     @NotNull
     private String key;
 
-    @EnumNamePattern(regexp = "CHECKBOX|PASSWORD|INTEGER|DICTIONARY|LONG_TEXT|SHORT_TEXT|OAUTH2")
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @EnumNamePattern(regexp = "CHECKBOX|PASSWORD|NUMBER|DICTIONARY|LONG_TEXT|SHORT_TEXT|OAUTH2")
+    @JsonProperty
     private InputVariableType type;
 
 }
