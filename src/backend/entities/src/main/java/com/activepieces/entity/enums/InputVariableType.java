@@ -3,7 +3,7 @@ package com.activepieces.entity.enums;
 public enum InputVariableType {
     CHECKBOX,
     PASSWORD,
-    INTEGER,
+    NUMBER,
     DICTIONARY,
     LONG_TEXT,
     SHORT_TEXT,
