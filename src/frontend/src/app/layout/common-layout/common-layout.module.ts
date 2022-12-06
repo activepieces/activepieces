@@ -5,18 +5,12 @@ import { ConfirmDeleteModalComponent } from './components/confirm-delete-modal/c
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BasicSelectComponent } from './components/dynamic-form/dynamic-field-input-only/basic-select/basic-select.component';
 import { IconButtonComponent } from './components/trash-icon-button/icon-button.component';
-import { CreateNewEventModalComponent } from './components/create-new-event-modal/create-new-event-modal.component';
-import { CreateNewEnvironmentModalComponent } from './components/create-new-environment-modal/create-new-environment-modal.component';
-import { CreateAccountModalComponent } from './components/create-account-modal/create-account-modal.component';
 import { TimeagoModule } from 'ngx-timeago';
 import { HighlightService } from './service/highlightservice';
-import { DeployModalComponent } from './components/deploy-modal/deploy-modal.component';
 import { StateIconComponent } from './components/status-icon/state-icon.component';
 import { JsonViewComponent } from './components/json-view/json-view.component';
 import { PaginationComponent } from './components/pagination/pagination.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { SelectDeploymentEnvironmentStepComponent } from './components/deploy-modal/select-targeted-environment-step/select-deployment-environment-step.component';
-import { DeployStepGlobalConfigComponent } from './components/deploy-modal/deploy-step-collection-configs/deploy-step-collection-configs.component';
 import { AccordionModule } from 'ngx-bootstrap/accordion';
 import { ClickStopPropagationDirective } from './click-stop-propgation.directive';
 import { ApButtonComponent } from './components/ap-button/ap-button.component';
@@ -43,11 +37,7 @@ import { DefaultZeroPipe } from './pipe/default-zero.pipe';
 import { CodeEmbeddedEditorComponent } from './components/dynamic-form/dynamic-field-input-only/code-embeddedEditor/code-embedded-editor.component';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { SelectOauth2Component } from './components/dynamic-form/dynamic-field-input-only/select-oauth2/select-oauth2.component';
-import { SelectEventComponent } from './components/dynamic-form/dynamic-field-input-only/select-event/select-event.component';
-import { EffectsModule } from '@ngrx/effects';
 import { StoreModule } from '@ngrx/store';
-import { EventsEffect } from './store/effect/events.effect';
-import { eventsReducer } from './store/reducer/events.reducer';
 import { MatButtonModule } from '@angular/material/button';
 import { BsDropdownConfig, BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -71,12 +61,7 @@ import { CodeArtifactControlFullscreenComponent } from './components/form-contro
 import { TestCodeFormModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/test-code-form-modal/test-code-form-modal.component';
 import { NewAddNpmPackageModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component';
 import { NgSelectTagValueTemplateComponent } from './components/form-controls/ng-select-tag-value-template/ng-select-tag-value-template.component';
-import { organizationReducer } from './store/reducer/organization.reducer';
 import { projectReducer } from './store/reducer/project.reducer';
-import { OrganizationsEffect } from './store/effect/organizations.effect';
-import { ProjectsEffect } from './store/effect/projects.effect';
-import { environmentReducer } from './store/reducer/environments.reducer';
-import { EnvironmentsEffect } from './store/effect/environments.effect';
 import { ItemTextPipe } from './components/form-controls/ng-select-tag-value-template/item-text.pipe';
 import { PopoverModule } from 'ngx-bootstrap/popover';
 import { TrackHoverDirective } from './components/form-controls/dictionary-form-control/track-hover.directive';
@@ -102,15 +87,9 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		BasicSelectComponent,
 		IconButtonComponent,
 		DictionaryFormComponent,
-		CreateNewEventModalComponent,
-		CreateNewEnvironmentModalComponent,
-		CreateAccountModalComponent,
-		DeployModalComponent,
 		StateIconComponent,
 		JsonViewComponent,
 		PaginationComponent,
-		SelectDeploymentEnvironmentStepComponent,
-		DeployStepGlobalConfigComponent,
 		ClickStopPropagationDirective,
 		ApButtonComponent,
 		ApImgComponent,
@@ -131,7 +110,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		RawOutputLogPipe,
 		DefaultZeroPipe,
 		SelectOauth2Component,
-		SelectEventComponent,
 		DocumentationLinkComponent,
 		JsonViewModalComponent,
 		LongTextFormControlComponent,
@@ -171,12 +149,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		CodemirrorModule,
 		FormsModule,
 		MatMenuModule,
-		EffectsModule.forFeature([EventsEffect, OrganizationsEffect, ProjectsEffect, EnvironmentsEffect]),
 		StoreModule.forFeature('commonState', {
-			eventsState: eventsReducer,
-			organizationsState: organizationReducer,
 			projectsState: projectReducer,
-			environmentsState: environmentReducer,
 		}),
 		AngularSvgIconModule,
 		MatTooltipModule,
@@ -194,11 +168,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		ConfirmDeleteModalComponent,
 		BasicSelectComponent,
 		IconButtonComponent,
-		CreateNewEnvironmentModalComponent,
-		CreateAccountModalComponent,
-		CreateNewEventModalComponent,
 		DictionaryFormComponent,
-		DeployModalComponent,
 		StateIconComponent,
 		JsonViewComponent,
 		PaginationComponent,

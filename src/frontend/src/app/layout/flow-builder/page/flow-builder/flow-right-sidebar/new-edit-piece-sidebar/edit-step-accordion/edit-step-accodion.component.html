@@ -3,8 +3,7 @@
     <mat-accordion [hideToggle]="true">
       <mat-expansion-panel #descriptionPanel (closed)="closed(0)" (opened)="setOpenedIndex(0)"
         class="expansion-panel-transition"
-        [expanded]="_selectedStep.type === TriggerTypes.MANUAL ||
-                    _selectedStep.type === TriggerTypes.WEBHOOK ||
+        [expanded]="_selectedStep.type === TriggerTypes.WEBHOOK ||
                      _selectedStep.type === TriggerTypes.INSTANCE_STARTED ||
                       _selectedStep.type === TriggerTypes.INSTANCE_STOPPED "
         [class.expansion-panel-opened]="openedIndex === 0">
@@ -21,7 +20,7 @@
 
 
         <ng-container
-          *ngIf="_selectedStep.type !== TriggerTypes.MANUAL &&
+          *ngIf="
                   _selectedStep.type !==TriggerTypes.WEBHOOK &&
                    _selectedStep.type !== TriggerTypes.INSTANCE_STOPPED &&
                     _selectedStep.type !== TriggerTypes.INSTANCE_STARTED; else noDelayInExpansion">
@@ -48,7 +47,7 @@
       </mat-expansion-panel>
       <mat-expansion-panel #InputPanel (closed)="closed(1)" (opened)="setOpenedIndex(1)"
         class="expansion-panel-transition" [class.expansion-panel-opened]="openedIndex === 1" [expanded]="true"
-        *ngIf="_selectedStep.type !== TriggerTypes.MANUAL &&
+        *ngIf="
         _selectedStep.type !==TriggerTypes.WEBHOOK &&
          _selectedStep.type !== TriggerTypes.INSTANCE_STOPPED &&
           _selectedStep.type !== TriggerTypes.INSTANCE_STARTED">

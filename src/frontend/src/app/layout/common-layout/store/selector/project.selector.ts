@@ -12,9 +12,6 @@ export const selectProjectState = createSelector(
 );
 
 export const selectProject = createSelector(selectProjectState, (state: ProjectsState) => {
-	if (state.selectedIndex === undefined) {
-		return undefined;
-	}
 	return state.projects[state.selectedIndex];
 });
 

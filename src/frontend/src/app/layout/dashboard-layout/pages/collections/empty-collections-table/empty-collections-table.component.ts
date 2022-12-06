@@ -1,12 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { UUID } from 'angular2-uuid';
-import { PieceAccess } from 'src/app/layout/common-layout/model/enum/piece-access';
 import { CollectionService } from 'src/app/layout/common-layout/service/collection.service';
 import { ProjectService } from 'src/app/layout/common-layout/service/project.service';
 import { Observable, switchMap, tap } from 'rxjs';
 import { FlowService } from 'src/app/layout/common-layout/service/flow.service';
-import { FlowTemplateService } from 'src/app/layout/flow-builder/service/flow-template.service';
 import { Flow } from 'src/app/layout/common-layout/model/flow.class';
 
 @Component({
@@ -23,35 +20,24 @@ export class EmptyCollectionsTableComponent {
 		private router: Router,
 		private collectionService: CollectionService,
 		private projectService: ProjectService,
-		private flowService: FlowService,
-		private flowTemplateService: FlowTemplateService
+		private flowService: FlowService
 	) {}
 
 	createCollection() {
 		if (!this.creatingCollection) {
 			this.creatingCollection = true;
 			const collectionDiplayName = 'Untitled';
-			const collectionName = UUID.UUID().replaceAll('-', '_');
 			this.createCollection$ = this.projectService.selectedProjectAndTakeOne().pipe(
 				switchMap(project => {
 					return this.collectionService.create(project.id, {
-						name: collectionName,
-						version: {
-							displayName: collectionDiplayName,
-							description: 'Collection Description',
-							configs: [],
-							access: PieceAccess.PRIVATE,
-						},
+						display_name: collectionDiplayName,
 					});
 				}),
 				switchMap(collection => {
-					return this.flowService.create(collection.id, {
-						flowDisplayName: 'Flow 1',
-						template: this.flowTemplateService.FLOW_EMPTY_TEMPLATE,
-					});
+					return this.flowService.create(collection.id, 'Flow 1');
 				}),
 				tap(flow => {
-					this.router.navigate(['/flows/', flow.collectionId], { queryParams: { newCollection: true } });
+					this.router.navigate(['/flows/', flow.collection_id], { queryParams: { newCollection: true } });
 				})
 			);
 		}

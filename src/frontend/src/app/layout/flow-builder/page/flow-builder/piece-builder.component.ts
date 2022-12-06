@@ -9,7 +9,7 @@ import {
 	ViewEncapsulation,
 } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { PieceBuilderService } from '../../service/piece-builder.service';
+import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { InstanceRunStatus } from '../../../common-layout/model/enum/instance-run-status';
 import { NavigationService } from '../../../dashboard-layout/service/navigation.service';
 import { BsModalRef } from 'ngx-bootstrap/modal';
@@ -57,7 +57,7 @@ export class PieceBuilderComponent implements OnInit, OnDestroy {
 	constructor(
 		private store: Store,
 		private navigationService: NavigationService,
-		public pieceBuilderService: PieceBuilderService,
+		public pieceBuilderService: CollectionBuilderService,
 		private actRoute: ActivatedRoute,
 		private ngZone: NgZone,
 		private snackbar: MatSnackBar,
@@ -90,7 +90,7 @@ export class PieceBuilderComponent implements OnInit, OnDestroy {
 					const piece: Collection = value['piece'];
 					const flows = value['flows'];
 
-					this.navigationService.setTitle(piece.lastVersion.displayName);
+					this.navigationService.setTitle(piece.last_version.display_name);
 					this.store.dispatch(
 						BuilderActions.loadInitial({
 							piece: piece,

@@ -12,8 +12,8 @@ import { LoopOnItemActionInterface } from '../../common-layout/model/flow-builde
 export class FlowFactoryUtil {
 	constructor() {}
 
-	public static createRootPiece(flow: Flow): FlowItem | undefined {
-		const latestVersion = flow.lastVersion;
+	public static createRootStep(flow: Flow): FlowItem | undefined {
+		const latestVersion = flow.last_version;
 		if (latestVersion.trigger) {
 			const newFlow = FlowFactoryUtil.addCordDetails(latestVersion.trigger);
 			FlowFactoryUtil.buildHelper(newFlow);
@@ -60,13 +60,13 @@ export class FlowFactoryUtil {
 		}
 		if (FlowStructureUtil.isTrigger(flowItemData)) {
 			const trigger = flowItemData as Trigger;
-			if (trigger.nextAction) {
-				flowItemData.nextAction = FlowFactoryUtil.createStepFromAction(trigger.nextAction)!;
+			if (trigger.next_action) {
+				flowItemData.next_action = FlowFactoryUtil.createStepFromAction(trigger.next_action)!;
 			}
 		} else {
 			const action = flowItemData;
-			if (action.nextAction) {
-				flowItemData.nextAction = FlowFactoryUtil.createStepFromAction(action.nextAction);
+			if (action.next_action) {
+				flowItemData.next_action = FlowFactoryUtil.createStepFromAction(action.next_action);
 			}
 			if (action.type === ActionType.LOOP_ON_ITEMS) {
 				const loopAction = action as LoopOnItemActionInterface;

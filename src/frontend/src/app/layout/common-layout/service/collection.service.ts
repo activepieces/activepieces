@@ -5,8 +5,6 @@ import { Collection, CollectionVersion } from '../model/piece.interface';
 import { forkJoin, Observable, switchMap, tap } from 'rxjs';
 import { SeekPage } from './seek-page';
 import { UUID } from 'angular2-uuid';
-import { PieceAccess } from '../model/enum/piece-access';
-import { Config } from '../model/fields/variable/config';
 
 import {
 	addArtifactsToFormData,
@@ -25,19 +23,11 @@ export class CollectionService {
 
 	create(
 		projectId: UUID,
-		piece: {
-			name: string;
-			version: {
-				displayName: string;
-				description: string;
-				configs: Config[];
-				access: PieceAccess;
-			};
+		collection: {
+			display_name: string;
 		}
 	): Observable<Collection> {
-		const formData = new FormData();
-		formData.append('collection', new Blob([JSON.stringify(piece)], { type: 'application/json' }));
-		return this.http.post<Collection>(environment.apiUrl + '/projects/' + projectId + '/collections', formData);
+		return this.http.post<Collection>(environment.apiUrl + '/projects/' + projectId + '/collections', collection);
 	}
 
 	update(collectionId: UUID, collection: CollectionVersion, logo?: File): Observable<Collection> {

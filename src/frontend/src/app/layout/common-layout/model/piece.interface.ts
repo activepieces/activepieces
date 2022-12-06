@@ -6,24 +6,20 @@ import { Config } from './fields/variable/config';
 export interface Collection {
 	id: UUID;
 	name: string;
-	projectId: string;
-	lastVersion: CollectionVersion;
+	project_id: string;
+	last_version: CollectionVersion;
 	versionsList: UUID[];
-	epochCreationTime: number;
-	epochUpdateTime: number;
+	created: number;
+	updated: number;
 	flowCount?: Observable<number>;
 }
 
 export interface CollectionVersion {
 	id: UUID;
-	displayName: string;
+	display_name: string;
 	state: VersionEditState;
 	configs: Config[];
-	// Locally uploaded file
-	logoUrl: string;
-	access: string;
-	description: string;
 	flowsVersionId: UUID[];
-	epochCreationTime: number;
-	epochUpdateTime: number;
+	created: number;
+	updated: number;
 }

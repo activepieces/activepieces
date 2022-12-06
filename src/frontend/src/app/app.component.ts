@@ -55,7 +55,7 @@ export class AppComponent implements OnInit {
 					return;
 				}
 				LogRocket.identify(user.id.toString(), {
-					name: user.firstName + ' ' + user.lastName,
+					name: user.first_name + ' ' + user.last_name,
 					email: user.email,
 				});
 				this.store.dispatch(CommonActions.loadInitial({ user: user }));

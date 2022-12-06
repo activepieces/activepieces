@@ -5,7 +5,7 @@
   (click)="containerClicked()"
 >
 <svg-icon
-*ngIf="!flow?.lastVersion?.valid"
+*ngIf="!flow.last_version.valid"
 src="assets/img/custom/error.svg"
 matTooltip="There is an invalid step"
 class="d-flex"
@@ -15,7 +15,7 @@ class="d-flex"
     [allowClick]="false"
     [allowDoubleClick]="true"
     [disableEditing]="readonlyMode"
-    [value]="flow?.lastVersion?.displayName"
+    [value]="flow.last_version.display_name"
     class="no-select flow-name-color"
     [editing]="editing"
     (valueChanges)="saveNewName($event)"

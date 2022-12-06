@@ -5,7 +5,6 @@ import { BsModalRef } from 'ngx-bootstrap/modal';
 import { CollectionService } from '../../service/collection.service';
 import { Router } from '@angular/router';
 import { switchMap, take } from 'rxjs';
-import { PieceAccess } from '../../model/enum/piece-access';
 import { Collection } from '../../model/piece.interface';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StatusCodes } from 'http-status-codes';
@@ -51,13 +50,7 @@ export class CreateNewPieceModalComponent {
 				switchMap(project => {
 					const request = this.pieceForm.value;
 					return this.pieceService.create(project!.id, {
-						name: request.name,
-						version: {
-							displayName: request.name,
-							description: 'Piece Description',
-							configs: [],
-							access: PieceAccess.PRIVATE,
-						},
+						display_name: request.name,
 					});
 				})
 			)

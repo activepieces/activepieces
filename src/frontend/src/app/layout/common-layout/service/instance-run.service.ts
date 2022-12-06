@@ -28,11 +28,8 @@ export class InstanceRunService {
 		);
 	}
 
-	list(environmentId: UUID, params: any): Observable<SeekPage<InstanceRun>> {
-		return this.http.get<SeekPage<InstanceRun>>(
-			environment.apiUrl + '/environments/' + environmentId + '/instance-runs',
-			{ params: params }
-		);
+	list(projectId: UUID): Observable<SeekPage<InstanceRun>> {
+		return this.http.get<SeekPage<InstanceRun>>(environment.apiUrl + `/projects/${projectId}/instance-runs`);
 	}
 
 	private logs(url: string): Observable<InstanceRunState> {

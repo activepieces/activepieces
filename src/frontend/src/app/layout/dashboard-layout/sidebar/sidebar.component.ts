@@ -96,7 +96,6 @@ export class SidebarComponent implements OnInit {
 	}
 
 	selectMenu(item: any) {
-		debugger;
 		this.navigationService.setSelectedRoute({
 			menu: this.selectedIndex,
 		});

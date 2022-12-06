@@ -31,7 +31,7 @@ export class ConfigsFormForConnectorsComponent extends ConfigsFormComponent {
 	}
 	@Input() override set configs(value: { configs: Config[]; triggerChangeDetection: boolean }) {
 		this._configs = value.configs;
-		debugger;
+
 		const controlUpdateSettings = !value.triggerChangeDetection ? { emitEvent: false } : {};
 		if (this.form) {
 			const configKeys = this._configs.map(c => c.key);

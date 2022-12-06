@@ -27,13 +27,10 @@ export class GetInstanceRunResolver
 			switchMap(run => {
 				return this.flowService.getVersion(run.flowVersionId).pipe(
 					switchMap(flowVersion => {
-						return this.flowService.get(flowVersion.flowId).pipe(
+						return this.flowService.get(flowVersion.flow_id).pipe(
 							switchMap(flow => {
-								return this.pieceService.get(flow.collectionId).pipe(
+								return this.pieceService.get(flow.collection_id).pipe(
 									switchMap(piece => {
-										// TODO(abuaboud) the builder always show last version, this is hacky way to show correct flow the run
-										flow.versionsList = flow.versionsList.slice(flow.versionsList.indexOf(flowVersion.id));
-										flow.lastVersion = flowVersion;
 										return of({ piece: piece, flow: flow, run: run });
 									})
 								);

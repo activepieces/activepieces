@@ -6,48 +6,38 @@ import { CodeAction } from './flow-builder/actions/code-action.interface';
 import { AddButtonType } from './enum/add-button-type';
 import { LoopOnItemActionInterface } from './flow-builder/actions/loop-action.interface';
 import { FlowStructureUtil } from '../../flow-builder/service/flowStructureUtil';
-import { Config } from './fields/variable/config';
 import { FlowItem } from './flow-builder/flow-item';
 
 export class FlowVersion {
 	id: UUID;
-	flowId: UUID;
-	displayName: string;
-	description: string;
+	flow_id: UUID;
+	display_name: string;
 	state: VersionEditState;
-	configs: Config[];
-	epochCreationTime: number;
+	created: number;
 	epochCreationTimeFormatted?: string;
-	epochUpdateTime: number;
+	updated: number;
 	trigger?: Trigger;
 	versionNumber?: number;
-	access: any;
 	valid: boolean;
-
 	constructor(obj: {
 		id: UUID;
-		flowId: UUID;
-		displayName: string;
+		flow_id: UUID;
+		display_name: string;
 		description: string;
 		state: VersionEditState;
-		configs: Config[];
-		epochCreationTime: number;
-		epochUpdateTime: number;
+		created: number;
+		updated: number;
 		trigger: Trigger;
-		access: any;
 		valid: boolean;
 	}) {
 		this.id = obj.id;
 		this.valid = obj.valid;
-		this.flowId = obj.flowId;
-		this.displayName = obj.displayName;
-		this.description = obj.description;
+		this.flow_id = obj.flow_id;
+		this.display_name = obj.display_name;
 		this.state = obj.state;
-		this.configs = obj.configs;
-		this.epochCreationTime = obj.epochCreationTime;
-		this.epochUpdateTime = obj.epochUpdateTime;
+		this.created = obj.created;
+		this.updated = obj.updated;
 		this.trigger = obj.trigger;
-		this.access = obj.access;
 	}
 
 	public static clone(flow: FlowVersion): FlowVersion {
@@ -57,7 +47,7 @@ export class FlowVersion {
 	public updateStep(targetStepName: string, updatedValue: FlowItem | Trigger): FlowVersion {
 		const step = FlowStructureUtil.findStep(this.trigger, targetStepName);
 		if (step !== undefined) {
-			step.displayName = updatedValue.displayName;
+			step.display_name = updatedValue.display_name;
 			step.type = updatedValue.type;
 			step.name = updatedValue.name;
 			step.valid = updatedValue.valid;
@@ -76,15 +66,15 @@ export class FlowVersion {
 		const parentDraggedPiece = FlowStructureUtil.findParent(this.trigger, draggedPieceName);
 		const newParentPiece = FlowStructureUtil.findStep(this.trigger, newParentName);
 		if (draggedPiece && newParentPiece && parentDraggedPiece) {
-			parentDraggedPiece.nextAction = draggedPiece.nextAction;
-			draggedPiece.nextAction = newParentPiece.nextAction;
-			newParentPiece.nextAction = draggedPiece as FlowItem;
+			parentDraggedPiece.next_action = draggedPiece.next_action;
+			draggedPiece.next_action = newParentPiece.next_action;
+			newParentPiece.next_action = draggedPiece as FlowItem;
 		}
 	}
 
 	public replaceTrigger(trigger: Trigger): FlowVersion {
 		this.trigger!.type = trigger.type;
-		this.trigger!.displayName = trigger.displayName;
+		this.trigger!.display_name = trigger.display_name;
 		this.trigger!.name = trigger.name;
 		this.trigger!.settings = trigger.settings;
 		this.trigger!.valid = trigger.valid;
@@ -102,11 +92,11 @@ export class FlowVersion {
 		if (step) {
 			if (step.type === ActionType.LOOP_ON_ITEMS && buttonType === AddButtonType.FIRST_LOOP_ACTION) {
 				const loop: LoopOnItemActionInterface = step as LoopOnItemActionInterface;
-				cloneNewStep.nextAction = loop.firstLoopAction;
+				cloneNewStep.next_action = loop.firstLoopAction;
 				loop.firstLoopAction = cloneNewStep;
 			} else {
-				cloneNewStep.nextAction = step?.nextAction;
-				step.nextAction = cloneNewStep;
+				cloneNewStep.next_action = step?.next_action;
+				step.next_action = cloneNewStep;
 			}
 		}
 		this.valid = this.isValid();
@@ -124,11 +114,15 @@ export class FlowVersion {
 					loopItem.firstLoopAction !== null &&
 					loopItem.firstLoopAction.name === targetStepName
 				) {
-					loopItem.firstLoopAction = step?.nextAction;
+					loopItem.firstLoopAction = step?.next_action;
 				}
 			}
-			if (parent.nextAction !== undefined && parent.nextAction !== null && parent.nextAction.name === targetStepName) {
-				parent.nextAction = step?.nextAction;
+			if (
+				parent.next_action !== undefined &&
+				parent.next_action !== null &&
+				parent.next_action.name === targetStepName
+			) {
+				parent.next_action = step?.next_action;
 			}
 		}
 		this.valid = this.isValid();

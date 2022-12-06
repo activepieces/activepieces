@@ -17,7 +17,7 @@ import { map } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { FlowsActions, SingleFlowModifyingState } from '../action/flows.action';
 import { FlowService } from '../../../common-layout/service/flow.service';
-import { PieceBuilderService } from '../../service/piece-builder.service';
+import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuilderSelectors } from '../selector/flow-builder.selector';
 import { RightSideBarType } from '../../../common-layout/model/enum/right-side-bar-type.enum';
@@ -51,6 +51,21 @@ export class FlowsEffects {
 		);
 	});
 
+	deleteFlowStarted$ = createEffect(() => {
+		debugger;
+		return this.actions$.pipe(
+			ofType(FlowsActions.deleteFlowStarted),
+			concatMap((action: { flowId: UUID; saveId: UUID }) => {
+				return this.flowService.delete(action.flowId).pipe(
+					map(() => {
+						return FlowsActions.deleteSuccess({ saveId: action.saveId });
+					})
+				);
+			}),
+			catchError(error => of(FlowsActions.savedFailed(error)))
+		);
+	});
+
 	deleteStepArtifactFromCache = createEffect(
 		() => {
 			return this.actions$.pipe(
@@ -78,8 +93,9 @@ export class FlowsEffects {
 				this.store.select(BuilderSelectors.selectCurrentCollection),
 			]),
 			concatMap(([action, flow, collection]) => {
-				if (collection.lastVersion.state === VersionEditState.LOCKED) {
-					return this.collectionService.update(collection.id, collection.lastVersion).pipe(
+				debugger;
+				if (collection.last_version.state === VersionEditState.LOCKED) {
+					return this.collectionService.update(collection.id, collection.last_version).pipe(
 						map(() => {
 							const genSavedId = UUID.UUID();
 							return FlowsActions.saveFlowStarted({ flow: flow!, saveId: genSavedId });
@@ -132,7 +148,7 @@ export class FlowsEffects {
 	);
 
 	private processFlowUpdate(request: { flow: Flow; tabState: TabState; saveId: UUID }): Observable<Flow> {
-		return this.flowService.update(request.flow.id, request.flow.lastVersion).pipe(
+		return this.flowService.update(request.flow.id, request.flow.last_version).pipe(
 			tap(updatedFlow => {
 				this.store.dispatch(FlowsActions.savedSuccess({ saveId: request.saveId, flow: updatedFlow }));
 				const now = new Date();
@@ -174,7 +190,7 @@ export class FlowsEffects {
 			concatLatestFrom(() => this.store.select(BuilderSelectors.selectCurrentStepName)),
 			switchMap(
 				([{ sidebarType }, stepName]: [request: { sidebarType: RightSideBarType }, stepName: string | null]) => {
-					if (sidebarType !== RightSideBarType.EDIT_PIECE && stepName) {
+					if (sidebarType !== RightSideBarType.EDIT_STEP && stepName) {
 						return of(FlowsActions.deselectStep());
 					}
 					return EMPTY;
@@ -200,7 +216,7 @@ export class FlowsEffects {
 				this.store.select(BuilderSelectors.selectCurrentStepName),
 			]),
 			switchMap(([{ stepName: stepToDeleteName }, state, currentStepName]) => {
-				if (state && currentStepName === stepToDeleteName && state.rightSidebar.type === RightSideBarType.EDIT_PIECE) {
+				if (state && currentStepName === stepToDeleteName && state.rightSidebar.type === RightSideBarType.EDIT_STEP) {
 					return of(
 						FlowsActions.setRightSidebar({
 							sidebarType: RightSideBarType.NONE,
@@ -297,7 +313,7 @@ export class FlowsEffects {
 				}
 				const actionsToDispatch: Array<any> = [
 					FlowsActions.setRightSidebar({
-						sidebarType: RightSideBarType.EDIT_PIECE,
+						sidebarType: RightSideBarType.EDIT_STEP,
 						props: {},
 					}),
 				];
@@ -315,7 +331,7 @@ export class FlowsEffects {
 	});
 
 	constructor(
-		private pieceBuilderService: PieceBuilderService,
+		private pieceBuilderService: CollectionBuilderService,
 		private flowService: FlowService,
 		private store: Store,
 		private actions$: Actions,

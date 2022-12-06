@@ -4,7 +4,7 @@ import { TriggerType } from '../enum/trigger-type.enum';
 export interface FlowItem {
 	name: string;
 	type?: ActionType | TriggerType;
-	displayName: string;
+	display_name: string;
 	settings: any;
 	valid?: boolean;
 
@@ -16,7 +16,7 @@ export interface FlowItem {
 	yOffsetFromLastNode: number;
 	width?: number;
 	height?: number;
-	nextAction?: FlowItem;
+	next_action?: FlowItem;
 }
 
 export interface BoundingBox {

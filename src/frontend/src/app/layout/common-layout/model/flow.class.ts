@@ -3,9 +3,8 @@ import { UUID } from 'angular2-uuid';
 
 export class Flow {
 	id: UUID;
-	collectionId: string;
-	epochCreationTime?: number;
-	epochUpdateTime?: number;
-	lastVersion: FlowVersion;
-	versionsList: UUID[];
+	collection_id: string;
+	created: number;
+	updated: number;
+	last_version: FlowVersion;
 }

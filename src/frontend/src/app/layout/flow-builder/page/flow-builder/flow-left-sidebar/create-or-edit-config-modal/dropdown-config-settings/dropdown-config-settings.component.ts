@@ -92,14 +92,10 @@ export class DropdownConfigSettingsComponent implements ControlValueAccessor, On
 	}
 	getRefreshReferences() {
 		this.refreshReferences$ = combineLatest({
-			flowConfigs: this.store.select(BuilderSelectors.selectCurrentFlowConfigs),
 			collectionConfigs: this.store.select(BuilderSelectors.selectCurrentCollectionConfigs),
 		}).pipe(
 			map(res => {
 				const allConfigs: Config[] = [...res.collectionConfigs];
-				if (this._currentConfigScope === ConfigScope.FLOW) {
-					allConfigs.push(...res.flowConfigs);
-				}
 				return allConfigs
 					.filter(
 						c => c.type === ConfigType.OAUTH2 || (c.type === ConfigType.DROPDOWN && c.key !== this.configToUpdate?.key)

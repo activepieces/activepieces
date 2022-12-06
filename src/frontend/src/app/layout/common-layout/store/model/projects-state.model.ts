@@ -2,6 +2,6 @@ import { Project } from '../../model/project.interface';
 
 export interface ProjectsState {
 	loaded: boolean;
-	selectedIndex: undefined | number;
+	selectedIndex: number;
 	projects: Project[];
 }

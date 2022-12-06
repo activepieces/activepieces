@@ -44,7 +44,6 @@ export class TestFlowModalComponent implements OnInit {
 	instanceRunStatus$: Observable<undefined | InstanceRunStatus>;
 	isSaving$: Observable<boolean> = of(false);
 	modalRef?: BsModalRef;
-	selectedFlowConfigs$: Observable<Config[]>;
 	collectionConfigs$: Observable<Config[]>;
 	selectedFlow$: Observable<Flow>;
 	instanceRunStatusChecker$: Observable<InstanceRun>;
@@ -85,7 +84,6 @@ export class TestFlowModalComponent implements OnInit {
 		this.isSaving$ = this.store.select(BuilderSelectors.selectSavingChangeState);
 		this.selectedCollection$ = this.store.select(BuilderSelectors.selectCurrentCollection);
 		this.collectionConfigs$ = this.store.select(BuilderSelectors.selectUserDefinedCollectionConfigs);
-		this.selectedFlowConfigs$ = this.store.select(BuilderSelectors.selectUserDefinedFlowConfigs);
 		this.setupSelectedFlowListener();
 		this.selectedInstanceRunStatus();
 		this.shouldDisableTestButton$ = combineLatest({
@@ -129,7 +127,6 @@ export class TestFlowModalComponent implements OnInit {
 
 	createObservableNeededToCreateForm() {
 		this.observablesNeededToBuildForm$ = combineLatest({
-			flowConfigs: this.selectedFlowConfigs$,
 			flow: this.selectedFlow$,
 			collectionConfigs: this.collectionConfigs$,
 			collection: this.selectedCollection$,
@@ -138,18 +135,12 @@ export class TestFlowModalComponent implements OnInit {
 				const collectionConfigs = res.collectionConfigs.map(c => {
 					return {
 						...c,
-						collectionVersionId: res.collection.lastVersion.id,
-					};
-				});
-				const flowConfigs = res.flowConfigs.map(c => {
-					return {
-						...c,
-						flowVersionId: res.flow.lastVersion.id,
+						collectionVersionId: res.collection.last_version.id,
 					};
 				});
 
 				return {
-					configs: [...collectionConfigs, ...flowConfigs],
+					configs: [...collectionConfigs],
 					flow: res.flow,
 					collection: res.collection,
 				};
@@ -159,9 +150,8 @@ export class TestFlowModalComponent implements OnInit {
 
 	addOrRemoveEventTriggerFormControl(flow: Flow) {
 		if (
-			flow.lastVersion.trigger?.type === TriggerType.EVENT ||
-			flow.lastVersion.trigger?.type === TriggerType.MANUAL ||
-			flow.lastVersion.trigger?.type === TriggerType.WEBHOOK
+			flow.last_version.trigger?.type === TriggerType.EVENT ||
+			flow.last_version.trigger?.type === TriggerType.WEBHOOK
 		) {
 			this.testFlowForm.addControl('trigger', this.triggerFormControl);
 		} else {
@@ -173,9 +163,8 @@ export class TestFlowModalComponent implements OnInit {
 		this.observablesNeededToBuildForm$.pipe(take(1)).subscribe(result => {
 			if (
 				result.configs.length === 0 &&
-				result.flow.lastVersion.trigger?.type !== TriggerType.EVENT &&
-				result.flow.lastVersion.trigger?.type !== TriggerType.MANUAL &&
-				result.flow.lastVersion.trigger?.type !== TriggerType.WEBHOOK
+				result.flow.last_version.trigger?.type !== TriggerType.EVENT &&
+				result.flow.last_version.trigger?.type !== TriggerType.WEBHOOK
 			) {
 				this.testFlow(result.flow, result.collection);
 			} else {
@@ -197,7 +186,7 @@ export class TestFlowModalComponent implements OnInit {
 			trigger: triggerControlValue ? JSON.parse(triggerControlValue) : {},
 		};
 
-		this.executeTest$ = this.flowService.execute(collection.lastVersion.id, flow.lastVersion.id, request).pipe(
+		this.executeTest$ = this.flowService.execute(collection.last_version.id, flow.last_version.id, request).pipe(
 			tap({
 				next: (instanceRun: InstanceRun | null) => {
 					this.testRunSnackbar = this.snackbar.openFromComponent(TestRunBarComponent, {

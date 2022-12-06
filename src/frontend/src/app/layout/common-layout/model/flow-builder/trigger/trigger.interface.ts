@@ -3,9 +3,9 @@ import { FlowItem } from '../flow-item';
 
 export interface Trigger extends FlowItem {
 	type?: TriggerType;
-	displayName: string;
+	display_name: string;
 	name: string;
-	nextAction?: FlowItem;
+	next_action?: FlowItem;
 	epochCreationTime?: number;
 	epochUpdateTime?: number;
 }

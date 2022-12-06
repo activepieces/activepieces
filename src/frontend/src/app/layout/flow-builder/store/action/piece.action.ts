@@ -1,8 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 import { Collection } from '../../../common-layout/model/piece.interface';
 import { Config } from '../../../common-layout/model/fields/variable/config';
-import { UUID } from 'angular2-uuid';
-
 export enum CollectionActionType {
 	CHANGE_NAME = '[PIECE] CHANGE_NAME',
 	SET_INITIAL = '[PIECE] SET_INITIAL',
@@ -14,9 +12,6 @@ export enum CollectionActionType {
 	UPDATE_SETTINGS = '[PIECE] UPDATE_SETTINGS',
 	PIECE_SAVED_SUCCESS = '[PIECE] SAVED_SUCCESS',
 	PIECE_SAVED_FAILED = '[PIECE] SAVED_FAILED',
-	PUBLISH_COLLECTION = '[PIECE] PUBLISH_COLLECTION',
-	PUBLISH_COLLECTION_SUCCESS = '[PIECE] PUBLISH_COLLECTION_SUCCESS',
-	PUBLISH_COLLECTION_FAILED = '[PIECE] PUBLISH_COLLECTION_FAILED',
 }
 
 export const CollectionModifyingState = [
@@ -63,21 +58,6 @@ export const savedFailed = createAction(CollectionActionType.PIECE_SAVED_FAILED,
 
 export const setInitial = createAction(CollectionActionType.SET_INITIAL, props<{ collection: Collection }>());
 
-export const publishCollection = createAction(
-	CollectionActionType.PUBLISH_COLLECTION,
-	props<{ environmentIds: UUID[]; collection: Collection }>()
-);
-
-export const publishCollectionSuccess = createAction(
-	CollectionActionType.PUBLISH_COLLECTION_SUCCESS,
-	props<{ environmentIds: UUID[]; collection: Collection }>()
-);
-
-export const publishCollectionFailed = createAction(
-	CollectionActionType.PUBLISH_COLLECTION_FAILED,
-	props<{ error: Error }>()
-);
-
 export const PieceAction = {
 	changeName,
 	setInitial,
@@ -87,9 +67,6 @@ export const PieceAction = {
 	updateSettings,
 	savedSuccess,
 	savedFailed,
-	publishCollection,
-	publishCollectionSuccess,
 	deleteConfigFailed,
 	deleteConfig,
-	publishCollectionFailed,
 };

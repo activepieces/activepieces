@@ -49,8 +49,8 @@
     </div>
     <div class="flow-content d-flex flex-column">
       <div class="d-flex">
-        <div class="flow-title font-weight-bold flex-grow-1" #stepTitle [matTooltip]="stepTitle.clientWidth < stepTitle.scrollWidth?  _flowItem.displayName: ''">
-          {{ _flowItem.displayName }}
+        <div class="flow-title font-weight-bold flex-grow-1" #stepTitle [matTooltip]="stepTitle.clientWidth < stepTitle.scrollWidth?  _flowItem.display_name: ''">
+          {{ _flowItem.display_name }}
         </div>
           <div  *ngIf="selectedRun$ | async">
             <ng-container *ngIf="stepStatus$|async as actionStatus; else stepInsideLoopStatusTemplate">

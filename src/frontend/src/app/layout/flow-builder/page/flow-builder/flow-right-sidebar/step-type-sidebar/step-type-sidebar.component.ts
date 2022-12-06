@@ -78,7 +78,6 @@ export class StepTypeSidebarComponent implements OnInit {
 	}
 
 	closeSidebar() {
-		this.replaceTrigger;
 		this.store.dispatch(
 			FlowsActions.setRightSidebar({
 				sidebarType: RightSideBarType.NONE,
@@ -97,12 +96,12 @@ export class StepTypeSidebarComponent implements OnInit {
 				if (this._showTriggers) {
 					this.replaceTrigger(flowItemDetails);
 				} else {
-					const stepName = FlowVersion.clone(flow.lastVersion).findAvailableName('step');
+					const stepName = FlowVersion.clone(flow.last_version).findAvailableName('step');
 					const settings: any = this.constructStepSettings(flowItemDetails.type as ActionType, flowItemDetails);
 					const action: FlowItem = {
 						type: flowItemDetails.type as ActionType,
 						name: stepName,
-						displayName: getDefaultDisplayNameForPiece(flowItemDetails.type as ActionType, flowItemDetails.name),
+						display_name: getDefaultDisplayNameForPiece(flowItemDetails.type as ActionType, flowItemDetails.name),
 						settings: settings,
 						valid: flowItemDetails.type !== ActionType.STORAGE && flowItemDetails.type !== ActionType.LOOP_ON_ITEMS,
 						yOffsetFromLastNode: 0,
@@ -123,7 +122,7 @@ export class StepTypeSidebarComponent implements OnInit {
 		const trigger: Trigger = {
 			type: triggerDetails.type as TriggerType,
 			name: 'trigger',
-			displayName: getDisplayNameForTrigger(triggerDetails.type as TriggerType),
+			display_name: getDisplayNameForTrigger(triggerDetails.type as TriggerType),
 			settings: {},
 			yOffsetFromLastNode: 0,
 			valid: false,
@@ -141,9 +140,7 @@ export class StepTypeSidebarComponent implements OnInit {
 		if (trigger.type === TriggerType.WEBHOOK) {
 			trigger.valid = true;
 		}
-		if (trigger.type === TriggerType.MANUAL) {
-			trigger.valid = true;
-		}
+
 		this.store.dispatch(
 			FlowsActions.replaceTrigger({
 				newTrigger: trigger,
@@ -172,7 +169,7 @@ export class StepTypeSidebarComponent implements OnInit {
 			case ActionType.STORAGE: {
 				return {
 					operation: StorageOperation.GET,
-					scope: StorageScope.INSTANCE,
+					scope: StorageScope.COLLECTION,
 					key: '',
 				};
 			}

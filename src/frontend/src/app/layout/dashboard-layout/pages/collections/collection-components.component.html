@@ -4,9 +4,7 @@
       <thead class="thead-light">
         <tr>
           <th scope="col">Collection Name</th>
-          <th scope="col">Latest version</th>
           <th scope="col" style="width: 15%">Created At</th>
-          <th scope="col" style="width: 10%; text-align: center">Actions</th>
           <th scope="col" style="width: 10%" class="text-center">
             <app-button btnColor="primary" *ngIf="collectionsPage.data.length > 0" (buttonClicked)="createCollection()"
               [loading]="creatingCollection" btnSize="small">New Collection
@@ -19,24 +17,15 @@
           (mouseleave)="hoverIndex = -1" (click)="openBuilder(collection)" style="cursor: pointer">
           <ng-container>
             <th scope="row">
-              <div style="display: inline-block" class="px-2">
-                <app-img [width]="32" [height]="32" [rounded]="true" [defaultSrc]="
-                    '../assets/img/custom/connectors/default-connector.png'
-                  " [src]="collection.lastVersion.logoUrl"></app-img>
-              </div>
               <div style="display: inline-block">
-                <div>{{ collection.lastVersion.displayName }}</div>
+                <div>{{ collection.last_version.display_name }}</div>
                 <div class="td-description">
                   {{ collection.flowCount | async }} Flows
                 </div>
               </div>
             </th>
-            <td>v{{ collection.versionsList.length }}</td>
             <td>
-              {{ timeHelperService.formatDateTime(collection.epochCreationTime) }}
-            </td>
-            <td class="text-center">
-              <app-deploy-modal [collection]="collection"></app-deploy-modal>
+              {{ timeHelperService.formatDateTimeMills(collection.created) }}
             </td>
             <td class="d-flex align-items-center justify-content-center">
               <div (click)="

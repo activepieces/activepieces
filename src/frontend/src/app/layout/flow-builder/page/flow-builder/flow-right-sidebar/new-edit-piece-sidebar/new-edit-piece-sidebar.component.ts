@@ -35,7 +35,7 @@ export class NewEditPieceSidebarComponent implements OnInit {
 			}),
 			tap(result => {
 				if (result.step) {
-					this.displayNameChanged$.next(result.step.displayName);
+					this.displayNameChanged$.next(result.step.display_name);
 					this.selectedFlowItemDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetails(result.step));
 					this.cd.detectChanges();
 					if (result.step.type === ActionType.CODE) {

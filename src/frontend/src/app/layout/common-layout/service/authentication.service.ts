@@ -51,6 +51,7 @@ export class AuthenticationService {
 	}
 
 	saveToken(response: HttpResponse<any>) {
+		console.log(response.headers.get('Authorization'));
 		localStorage.setItem(environment.jwtTokenName, <string>response.headers.get('Authorization'));
 	}
 	saveUser(response: HttpResponse<any>) {

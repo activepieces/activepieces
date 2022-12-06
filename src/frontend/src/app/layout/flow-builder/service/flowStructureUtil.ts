@@ -95,7 +95,7 @@ export class FlowStructureUtil {
 				branches.push(loopAction.firstLoopAction);
 			}
 		}
-		const nextAction = mainPiece.nextAction;
+		const nextAction = mainPiece.next_action;
 		if (nextAction) {
 			branches.push(nextAction);
 		}

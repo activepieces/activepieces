@@ -86,7 +86,7 @@ export class SimpleLineConnectionComponent implements OnInit, AfterViewInit, OnC
 	add() {
 		this.store.dispatch(
 			FlowsActions.setRightSidebar({
-				sidebarType: RightSideBarType.PIECE_TYPE,
+				sidebarType: RightSideBarType.STEP_TYPE,
 				props: {
 					buttonType: AddButtonType.NEXT_ACTION,
 					stepName: this.flowItem.name,
@@ -113,6 +113,6 @@ export class SimpleLineConnectionComponent implements OnInit, AfterViewInit, OnC
 	}
 
 	hasNextAction() {
-		return this.flowItem.nextAction !== undefined && this.flowItem.nextAction !== null;
+		return this.flowItem.next_action !== undefined && this.flowItem.next_action !== null;
 	}
 }

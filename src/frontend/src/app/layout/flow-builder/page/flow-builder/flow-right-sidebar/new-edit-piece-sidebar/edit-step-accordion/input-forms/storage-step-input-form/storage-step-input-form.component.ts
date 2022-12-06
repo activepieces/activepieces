@@ -38,10 +38,7 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 		{ label: 'GET', value: StorageOperation.GET },
 		{ label: 'PUT', value: StorageOperation.PUT },
 	];
-	scopeOptions: DropdownOption[] = [
-		{ label: 'Instance', value: StorageScope.INSTANCE },
-		{ label: 'Collection', value: StorageScope.COLLECTION },
-	];
+	scopeOptions: DropdownOption[] = [{ label: 'Collection', value: StorageScope.COLLECTION }];
 	operationChanged$: Observable<StorageOperation>;
 	storageStepForm: FormGroup;
 	onChange = (value: InputFormsSchema) => {};
@@ -52,7 +49,7 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 			operation: new FormControl('', Validators.required),
 			key: new FormControl('', Validators.required),
 			value: new FormControl('', Validators.required),
-			scope: new FormControl(StorageScope.INSTANCE, Validators.required),
+			scope: new FormControl(StorageScope.COLLECTION, Validators.required),
 		});
 
 		this.setUpListenerToOperationControl();
@@ -64,7 +61,7 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 	}
 	writeValue(obj: InputFormsSchema): void {
 		if (obj.type === ActionType.STORAGE) {
-			this.storageStepForm.setValue({ operation: '', key: '', value: '', scope: StorageScope.INSTANCE });
+			this.storageStepForm.setValue({ operation: '', key: '', value: '', scope: StorageScope.COLLECTION });
 			this.storageStepForm.patchValue(obj);
 			this.operationControlChecker((obj as StorageStepInputFormSchema).operation);
 		}

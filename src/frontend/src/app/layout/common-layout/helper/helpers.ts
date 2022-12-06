@@ -2,6 +2,7 @@ import { environment } from 'src/environments/environment';
 
 export function tokenGetter() {
 	const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
+
 	return jwtToken;
 }
 export function download(filename, text) {
