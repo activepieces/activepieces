@@ -116,8 +116,7 @@ public class InstanceRunServiceImpl implements InstanceRunService {
         () -> {
           try {
             String json = objectMapper.writeValueAsString(executionStateView);
-            FileEntity file = fileService.save(request.getId().toInspectString() ,
-                    new MockMultipartFile("file", request.getId().toString() + ".json", "application/json", json.getBytes(StandardCharsets.UTF_8)));
+            FileEntity file = fileService.save(null, new MockMultipartFile("file", request.getId().toString() + ".json", "application/json", json.getBytes(StandardCharsets.UTF_8)));
             savedView.setLogsFileId(file.getId());
             repository.save(mapper.fromView(savedView));
           } catch (IOException e) {

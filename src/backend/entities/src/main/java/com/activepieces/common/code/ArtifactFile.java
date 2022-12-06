@@ -1,7 +1,9 @@
 package com.activepieces.common.code;
 
 import lombok.*;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.social.InternalServerErrorException;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -20,6 +22,10 @@ public class ArtifactFile {
   private String contentType;
   private InputStream inputStream;
   private String hashWithExtension;
+
+  public MultipartFile toMultiFile() throws IOException {
+    return new MockMultipartFile("file", originalFileName, contentType, getInputStream());
+  }
 
   public InputStream getInputStream() {
     try {

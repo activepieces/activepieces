@@ -1,4 +1,4 @@
-package com.activepieces.actions.code.controller;
+package com.activepieces.worker.controller;
 
 import com.activepieces.worker.service.CodeExecutionService;
 import com.fasterxml.jackson.databind.JsonNode;

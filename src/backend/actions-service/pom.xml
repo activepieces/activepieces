@@ -6,7 +6,6 @@
     <modelVersion>4.0.0</modelVersion>
     <modules>
         <module>actions-client</module>
-        <module>code-service</module>
         <module>store-service</module>
         <module>component-service</module>
     </modules>

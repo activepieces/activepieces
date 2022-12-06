@@ -3,12 +3,14 @@ package com.activepieces.common.error;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
+import java.io.Serializable;
+
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ErrorResponse {
+public class ErrorResponse implements Serializable {
 
     @JsonProperty
     private String message;

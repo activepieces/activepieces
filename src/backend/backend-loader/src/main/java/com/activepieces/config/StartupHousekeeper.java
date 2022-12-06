@@ -49,6 +49,7 @@ public class StartupHousekeeper {
                     .displayName("Project")
                     .build());
         }
+        scheduler.clear();
     }
 
 }

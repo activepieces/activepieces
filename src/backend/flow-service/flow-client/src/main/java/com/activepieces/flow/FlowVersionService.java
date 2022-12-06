@@ -20,6 +20,8 @@ public interface FlowVersionService {
 
     FlowVersionView get(Ksuid id) throws FlowVersionNotFoundException, PermissionDeniedException;
 
+    FlowVersionView persistPackagedFlow(FlowVersionView id);
+
     void lock(Ksuid id) throws FlowVersionAlreadyLockedException, FlowVersionNotFoundException, PermissionDeniedException;
 
 }

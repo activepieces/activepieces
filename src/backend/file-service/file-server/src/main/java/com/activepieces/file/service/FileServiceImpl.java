@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,13 +23,21 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public FileEntity save(String name, MultipartFile file) throws IOException {
+    public FileEntity clone(Ksuid id) {
+        Optional<FileEntity> file = fileRepository.findById(id);
+        return file.map(fileEntity -> fileRepository.save(fileEntity.toBuilder().id(Ksuid.newKsuid()).build())).orElse(null);
+    }
+
+    @Override
+    public FileEntity save(Ksuid fileId, MultipartFile file) throws IOException {
         FileEntity.FileEntityBuilder fileEntity = FileEntity.builder().id(Ksuid.newKsuid());
-        Optional<FileEntity> byName = fileRepository.findByNameIgnoreCase(name);
-        if(byName.isPresent()){
-            fileEntity = byName.get().toBuilder();
+        if(Objects.nonNull(fileId)) {
+            Optional<FileEntity> fn = fileRepository.findById(fileId);
+            if (fn.isPresent()) {
+                fileEntity = fn.get().toBuilder();
+            }
         }
-        return fileRepository.save(fileEntity.name(name)
+        return fileRepository.save(fileEntity
                 .contentType(file.getContentType())
                 .data(file.getBytes())
                 .size(file.getSize())
@@ -36,13 +45,13 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public Optional<FileEntity> getFile(String name) {
-        return fileRepository.findByNameIgnoreCase(name);
+    public Optional<FileEntity> getFileById(Ksuid id) {
+        return fileRepository.findById(id);
     }
 
     @Override
-    public Optional<FileEntity> getFileById(Ksuid id) {
-        return fileRepository.findById(id);
+    public void delete(Ksuid id) {
+        fileRepository.deleteById(id);
     }
 
 }

@@ -21,32 +21,39 @@ import java.io.Serializable;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type",
-    defaultImpl = EmptyActionMetadataView.class,
-    visible = true)
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,
+        property = "type",
+        defaultImpl = EmptyActionMetadataView.class,
+        visible = true)
 @JsonSubTypes({
   @JsonSubTypes.Type(value = CodeActionMetadataView.class, name = "CODE"),
   @JsonSubTypes.Type(value = StorageActionMetadataView.class, name = "STORAGE"),
   @JsonSubTypes.Type(value = ResponseActionMetadataView.class, name = "RESPONSE"),
   @JsonSubTypes.Type(value = LoopOnItemsActionMetadataView.class, name = "LOOP_ON_ITEMS"),
-  @JsonSubTypes.Type(value = ComponentActionMetadataView.class, name = "COMPONENT")
+        @JsonSubTypes.Type(value = ComponentActionMetadataView.class, name = "COMPONENT")
 })
 public abstract class ActionMetadataView implements Serializable {
 
   @Pattern(regexp = "CODE|BRANCH|STORAGE|RESPONSE|LOOP_ON_ITEMS|COMPONENT")
-  @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+  @JsonProperty
   private String type;
 
-  @JsonProperty @NotEmpty @NotNull private String displayName;
+  @JsonProperty
+  @NotEmpty
+  @NotNull
+  private String displayName;
 
-  @JsonProperty @CodeNameConstraints private String name;
+  @JsonProperty
+  @CodeNameConstraints
+  private String name;
+  ;
+
+  @JsonProperty
+  private ActionMetadataView nextAction;
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private boolean valid;
-
-  @JsonProperty private ActionMetadataView nextAction;
 
   public abstract ActionMetadataViewBuilder<?, ?> toBuilder();
 

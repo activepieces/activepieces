@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.jdbc.lock.DefaultLockRepository;
 import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.integration.jdbc.lock.LockRepository;
@@ -33,6 +34,7 @@ import java.util.List;
 @EnableScheduling
 @EnableAsync
 @Log4j2
+@EnableIntegration
 public class BackendApplication implements CommandLineRunner {
 
   private final JdbcTemplate jdbcTemplate;
@@ -65,7 +67,6 @@ public class BackendApplication implements CommandLineRunner {
   public ResourcePublisher resourcePublisher(CascadeDeleteHandler cascadeDeleteHandler) {
     return new ResourcePublisher(List.of(cascadeDeleteHandler));
   }
-
 
   @Bean
   public DefaultLockRepository DefaultLockRepository(DataSource dataSource){

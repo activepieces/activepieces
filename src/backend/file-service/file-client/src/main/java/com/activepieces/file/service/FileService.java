@@ -10,10 +10,12 @@ import java.util.UUID;
 
 public interface FileService {
 
-    FileEntity save(String name, MultipartFile file) throws IOException;
+    FileEntity clone(Ksuid id);
 
-    Optional<FileEntity> getFile(String name);
+    FileEntity save(Ksuid fileId, MultipartFile file) throws IOException;
 
     Optional<FileEntity> getFileById(Ksuid id);
+
+    void delete(Ksuid id);
 
 }

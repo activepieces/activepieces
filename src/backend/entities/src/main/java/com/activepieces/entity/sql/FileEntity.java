@@ -18,14 +18,11 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @NoArgsConstructor
-@Table(name = "FILES", indexes = {@Index(name = "file_name_index", columnList = "name", unique = true)})
+@Table(name = "FILES")
 public class FileEntity implements EntityMetadata {
 
     @Id
     private Ksuid id;
-
-    @Column(name = "name")
-    private String name;
 
     @Column(name = "content_type")
     private String contentType;

@@ -1,6 +1,5 @@
 package com.activepieces.worker.service;
 
-import com.activepieces.common.code.ArtifactMetadata;
 import com.activepieces.common.error.exception.CodeArtifactBuildFailure;
 import com.activepieces.entity.subdocuments.runs.ActionExecutionStatus;
 import com.activepieces.worker.Sandbox;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -30,7 +28,6 @@ public class CodeExecutionServiceImpl implements CodeExecutionService {
 
   private final ArrayList<CodeExecutionWorker> workers;
   private final BlockingQueue<Integer> blockingQueue;
-  private final LocalArtifactCacheServiceImpl localArtifactCacheService;
 
   private final ArrayList<CodeExecutionWorker> testWorkers;
   private final BlockingQueue<Integer> testBlockingQueue;
@@ -38,11 +35,9 @@ public class CodeExecutionServiceImpl implements CodeExecutionService {
 
   @Autowired
   public CodeExecutionServiceImpl(
-      final LocalArtifactCacheServiceImpl localArtifactCacheService,
       final CodeBuildService codeBuildService,
       final ObjectMapper objectMapper) {
     this.codeBuildService = codeBuildService;
-    this.localArtifactCacheService = localArtifactCacheService;
     this.blockingQueue = new LinkedBlockingQueue<>();
     this.workers = new ArrayList<>();
     for (int i = 0; i < NUMBER_OF_WORKERS; ++i) {
@@ -60,26 +55,6 @@ public class CodeExecutionServiceImpl implements CodeExecutionService {
     }
   }
 
-  public ExecutionCodeResult executeCodeWithCache(
-          JsonNode input, Ksuid resourceId, ArtifactMetadata artifactMetadata, String artifactFile)
-      throws InterruptedException {
-    try {
-      int workerIndex = this.blockingQueue.take();
-      CodeExecutionWorker codeExecutionWorker = this.workers.get(workerIndex);
-      InputStream inputStream =
-          localArtifactCacheService.cacheArtifact(resourceId, artifactMetadata, artifactFile);
-      ExecutionCodeResult result = codeExecutionWorker.executeSync(input, inputStream);
-      this.blockingQueue.add(workerIndex);
-      return result;
-    } catch (CodeArtifactBuildFailure e) {
-      return ExecutionCodeResult.builder()
-          .input(input)
-          .verdict(CodeExecutionStatusEnum.INVALID_ARTIFACT)
-          .status(ActionExecutionStatus.FAILED)
-          .errorMessage(CodeExecutionStatusEnum.INVALID_ARTIFACT.getMessage())
-          .build();
-    }
-  }
 
   public ExecutionCodeResult executeCode(JsonNode input, InputStream artifact) throws Exception {
     int workerIndex = this.testBlockingQueue.take();

@@ -11,5 +11,4 @@ import java.util.UUID;
 @Repository
 public interface FileRepository extends JpaRepository<FileEntity, Ksuid> {
 
-    Optional<FileEntity> findByNameIgnoreCase(String name);
 }

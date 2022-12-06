@@ -4,10 +4,13 @@ import com.activepieces.actions.model.action.*;
 import com.activepieces.actions.model.action.settings.CodeSettingsView;
 import com.activepieces.entity.subdocuments.action.*;
 import com.activepieces.entity.subdocuments.action.settings.CodeSettings;
+import com.github.ksuid.Ksuid;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mappings;
 import org.mapstruct.SubclassMapping;
 import org.mapstruct.SubclassMappings;
+
+import java.util.Objects;
 
 import static org.mapstruct.SubclassExhaustiveStrategy.RUNTIME_EXCEPTION;
 
@@ -55,4 +58,21 @@ public abstract class ActionMapper {
 
   @Mappings(value = {})
   public abstract CodeSettingsView map(CodeSettings entity);
+
+  @Mappings({})
+  public String map(Ksuid ksuid){
+    if(Objects.isNull(ksuid)){
+      return null;
+    }
+    return ksuid.toString();
+  }
+
+  @Mappings({})
+  public Ksuid map(String ksuid){
+    if(Objects.isNull(ksuid)){
+      return null;
+    }
+    return Ksuid.fromString(ksuid);
+  }
+
 }
