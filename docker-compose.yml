@@ -1,0 +1,43 @@
+version: '3.0'
+
+services:
+  backend:
+    image: europe-west1-docker.pkg.dev/activepieces/activepieces/backend:0.0.5
+    container_name: activepieces-backend
+    restart: unless-stopped
+    depends_on: [ db ]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
+    ports:
+      - 8000:8000
+    networks:
+      - activepieces
+
+  frontend:
+    image: europe-west1-docker.pkg.dev/activepieces/activepieces/frontend:0.0.4
+    container_name: activepieces-frontend
+    restart: unless-stopped
+    depends_on: [ backend ]
+    ports:
+      - 8080:80
+    networks:
+      - activepieces
+
+  db:
+    image: postgres:14.4
+    container_name: activepieces-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Ig0x7Fn3rDP9w5MY
+    volumes:
+      - db:/var/lib/postgresql/data
+    networks:
+      - activepieces
+
+volumes:
+  db:
+
+networks:
+  activepieces:
