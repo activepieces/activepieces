@@ -19,7 +19,7 @@ import javax.validation.constraints.NotNull;
 @SuperBuilder
 @Getter
 @Setter
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true, defaultImpl = EmptyField.class)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true, defaultImpl = EmptyField.class)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = CheckboxVariable.class, name = "CHECKBOX"),
         @JsonSubTypes.Type(value = PasswordVariable.class, name = "PASSWORD"),
