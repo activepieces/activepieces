@@ -38,6 +38,8 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
         .csrf()
         .disable()
         .authorizeRequests()
+        .antMatchers(HttpMethod.GET, "/files/*")
+        .permitAll()
         .antMatchers(HttpMethod.GET, "/api-docs")
         .permitAll()
         .antMatchers(HttpMethod.GET, "/health")

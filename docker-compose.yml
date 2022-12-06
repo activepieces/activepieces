@@ -2,7 +2,7 @@ version: '3.0'
 
 services:
   backend:
-    image: europe-west1-docker.pkg.dev/activepieces/activepieces/backend:0.0.5
+    image: docker-active-pieces-backend:1.0
     container_name: activepieces-backend
     restart: unless-stopped
     depends_on: [ db ]
@@ -14,7 +14,7 @@ services:
       - activepieces
 
   frontend:
-    image: europe-west1-docker.pkg.dev/activepieces/activepieces/frontend:0.0.4
+    image: activepieces/frontend:latest
     container_name: activepieces-frontend
     restart: unless-stopped
     depends_on: [ backend ]
@@ -30,7 +30,7 @@ services:
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Ig0x7Fn3rDP9w5MY
+      POSTGRES_PASSWORD: A79Vm5D4p2VQHOp2gd5
     volumes:
       - db:/var/lib/postgresql/data
     networks:

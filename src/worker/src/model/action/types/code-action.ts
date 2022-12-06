@@ -6,31 +6,25 @@ import {CodeExecutor} from '../../../executors/code-executer';
 
 export class CodeActionSettings {
   input: any;
-  artifact: string;
-  artifactUrl: string;
+  artifactPackagedId: string;
 
-  constructor(input: any, artifact: string, artifactUrl: string) {
-    this.validate(artifact, artifactUrl);
+  constructor(input: any, artifactPackagedId: string) {
+    this.validate(artifactPackagedId);
     this.input = input;
-    this.artifact = artifact;
-    this.artifactUrl = artifactUrl;
+    this.artifactPackagedId = artifactPackagedId;
   }
 
-  validate(artifact: string, artifactUrl: string) {
-    if (!artifact) {
-      throw Error('Settings "artifact" attribute is undefined.');
+  validate(artifactPackagedId: string) {
+    if (!artifactPackagedId) {
+      throw Error('Settings "artifactPackagedId" attribute is undefined.');
     }
 
-    if (!artifactUrl) {
-      throw Error('Settings "artifactUrl" attribute is undefined.');
-    }
   }
 
   static deserialize(jsonData: any): CodeActionSettings {
     return new CodeActionSettings(
       jsonData['input'],
-      jsonData['artifact'],
-      jsonData['artifactUrl']
+      jsonData['artifact']
     );
   }
 }

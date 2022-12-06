@@ -2,6 +2,7 @@ package com.activepieces.config;
 
 import com.activepieces.common.pagination.Cursor;
 import com.github.ksuid.Ksuid;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -11,11 +12,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.util.Objects;
 
 @Configuration
-@ComponentScan
+@Log4j2
 public class WebConfigConverter implements WebMvcConfigurer {
 
     @Override
     public void addFormatters(FormatterRegistry registry) {
+        log.info("Added formatter packages");
         registry.addConverter(new StringToCursorConverter());
         registry.addConverter(new StringToKsuidConvertor());
     }
