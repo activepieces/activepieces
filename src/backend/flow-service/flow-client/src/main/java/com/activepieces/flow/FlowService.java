@@ -2,6 +2,7 @@ package com.activepieces.flow;
 
 
 import com.activepieces.common.error.exception.CodeArtifactBuildFailure;
+import com.activepieces.common.error.exception.FailedToObtainLockException;
 import com.activepieces.common.error.exception.flow.FlowNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowVersionAlreadyLockedException;
 import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException;
@@ -27,7 +28,7 @@ public interface FlowService {
     FlowView get(Ksuid id) throws FlowNotFoundException, PermissionDeniedException;
 
     FlowView updateDraft(Ksuid flowId, FlowVersionView view)
-            throws FlowNotFoundException, FlowVersionNotFoundException, PermissionDeniedException, ResourceNotFoundException, FlowVersionAlreadyLockedException, CodeArtifactBuildFailure, IOException;
+            throws FlowNotFoundException, FlowVersionNotFoundException, PermissionDeniedException, ResourceNotFoundException, FlowVersionAlreadyLockedException, CodeArtifactBuildFailure, IOException, FailedToObtainLockException;
 
     void delete(Ksuid id) throws FlowNotFoundException, ResourceNotFoundException, PermissionDeniedException;
 }

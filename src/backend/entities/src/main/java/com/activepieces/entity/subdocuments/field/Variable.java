@@ -1,6 +1,5 @@
 package com.activepieces.entity.subdocuments.field;
 
-import com.activepieces.common.validation.ConditionalValidation;
 import com.activepieces.common.validation.EnumNamePattern;
 import com.activepieces.entity.enums.InputVariableType;
 import com.activepieces.entity.subdocuments.field.connection.oauth2.OAuth2Variable;
@@ -25,20 +24,11 @@ import javax.validation.constraints.NotNull;
         @JsonSubTypes.Type(value = CheckboxVariable.class, name = "CHECKBOX"),
         @JsonSubTypes.Type(value = PasswordVariable.class, name = "PASSWORD"),
         @JsonSubTypes.Type(value = OAuth2Variable.class, name = "OAUTH2"),
-        @JsonSubTypes.Type(value = IntegerVariable.class, name = "INTEGER"),
         @JsonSubTypes.Type(value = NumberVariable.class, name = "NUMBER"),
         @JsonSubTypes.Type(value = KeyValueVariable.class, name = "DICTIONARY"),
         @JsonSubTypes.Type(value = MultilineVariable.class, name = "LONG_TEXT"),
         @JsonSubTypes.Type(value = ShortTextVariable.class, name = "SHORT_TEXT"),}
 )
-@ConditionalValidation(
-        conditionalProperty = "source", values = {"USER"},
-        requiredProperties = {"label"},
-        message = "label and hintText are required for user variable.")
-@ConditionalValidation(
-        conditionalProperty = "source", values = {"PREDEFINED"},
-        requiredProperties = {"value"},
-        message = "value are required for predefined variable.")
 public abstract class Variable implements ValueField {
 
     @JsonProperty

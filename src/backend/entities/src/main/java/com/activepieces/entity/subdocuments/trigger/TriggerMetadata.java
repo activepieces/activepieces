@@ -1,6 +1,7 @@
 package com.activepieces.entity.subdocuments.trigger;
 
 import com.activepieces.entity.subdocuments.action.ActionMetadata;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -15,7 +16,8 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property="type", visible = true, defaultImpl = EmptyTriggerMetadata.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true, defaultImpl = EmptyTriggerMetadata.class)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = ScheduleTriggerMetadata.class, name = "SCHEDULE"),
         @JsonSubTypes.Type(value = EmptyTriggerMetadata.class, name = "EMPTY"),

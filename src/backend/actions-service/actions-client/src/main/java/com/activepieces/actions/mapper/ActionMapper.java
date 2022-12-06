@@ -10,6 +10,8 @@ import org.mapstruct.Mappings;
 import org.mapstruct.SubclassMapping;
 import org.mapstruct.SubclassMappings;
 
+import java.util.Objects;
+
 import static org.mapstruct.SubclassExhaustiveStrategy.RUNTIME_EXCEPTION;
 
 @Mapper(subclassExhaustiveStrategy = RUNTIME_EXCEPTION, componentModel = "spring")
@@ -59,11 +61,17 @@ public abstract class ActionMapper {
 
   @Mappings({})
   public String map(Ksuid ksuid){
+    if(Objects.isNull(ksuid)){
+      return null;
+    }
     return ksuid.toString();
   }
 
   @Mappings({})
   public Ksuid map(String ksuid){
+    if(Objects.isNull(ksuid)){
+      return null;
+    }
     return Ksuid.fromString(ksuid);
   }
 

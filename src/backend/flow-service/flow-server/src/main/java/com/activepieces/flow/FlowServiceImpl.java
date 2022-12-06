@@ -1,6 +1,7 @@
 package com.activepieces.flow;
 
 import com.activepieces.common.error.ErrorServiceHandler;
+import com.activepieces.common.error.exception.FailedToObtainLockException;
 import com.activepieces.common.error.exception.flow.FlowNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowVersionAlreadyLockedException;
 import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException;
@@ -21,6 +22,7 @@ import com.activepieces.flow.repository.FlowRepository;
 import com.activepieces.guardian.client.PermissionService;
 import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.guardian.client.exception.ResourceNotFoundException;
+import com.activepieces.lock.LockService;
 import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
@@ -43,15 +45,18 @@ public class FlowServiceImpl implements FlowService {
     private final FlowRepository repository;
     private final FlowVersionServiceImpl flowVersionService;
     private final FlowMapper flowMapper;
+    private final LockService lockService;
     private final PermissionService permissionService;
 
     @Autowired
     public FlowServiceImpl(
             final FlowRepository repository,
+            final LockService lockService,
             final FlowVersionServiceImpl flowVersionService,
             final FlowMapper flowMapper,
             final PermissionService permissionService) {
         this.repository = repository;
+        this.lockService = lockService;
         this.flowVersionService = flowVersionService;
         this.flowMapper = flowMapper;
         this.permissionService = permissionService;
@@ -108,16 +113,21 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public FlowView updateDraft(Ksuid flowId, FlowVersionView request)
             throws FlowNotFoundException, FlowVersionNotFoundException, PermissionDeniedException, ResourceNotFoundException,
-            FlowVersionAlreadyLockedException, IOException {
-        permissionService.requiresPermission(flowId, Permission.WRITE_FLOW);
-        FlowView flow = get(flowId);
-        FlowVersionView draft = flow.getLastVersion();
-        if (flow.getLastVersion().getState().equals(EditState.LOCKED)) {
-            draft = cloneVersion(flowId, draft).getLastVersion();
+            FlowVersionAlreadyLockedException, IOException, FailedToObtainLockException {
+        Lock lock = lockService.tryLock(flowId.toInspectString(), Duration.ofMinutes(5));
+        try {
+            permissionService.requiresPermission(flowId, Permission.WRITE_FLOW);
+            FlowView flow = get(flowId);
+            FlowVersionView draft = flow.getLastVersion();
+            if (flow.getLastVersion().getState().equals(EditState.LOCKED)) {
+                draft = cloneVersion(flowId, draft).getLastVersion();
+            }
+            FlowVersionView updatedVersion = flowVersionService.update(draft.getId(), request);
+            flow.updateOrCreateDraft(updatedVersion);
+            return saveFromView(flow);
+        }finally {
+            lock.unlock();;
         }
-        FlowVersionView updatedVersion = flowVersionService.update(draft.getId(), request);
-        flow.updateOrCreateDraft(updatedVersion);
-        return saveFromView(flow);
     }
 
     private FlowView cloneVersion(Ksuid flowId, FlowVersionView draftVersion)

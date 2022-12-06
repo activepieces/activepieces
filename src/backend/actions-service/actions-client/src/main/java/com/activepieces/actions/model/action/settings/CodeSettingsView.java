@@ -2,6 +2,7 @@ package com.activepieces.actions.model.action.settings;
 
 import com.activepieces.common.code.ArtifactFile;
 import com.activepieces.common.code.ArtifactMetadataSettings;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
@@ -27,7 +28,7 @@ public class CodeSettingsView implements ArtifactMetadataSettings {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Ksuid artifactPackagedId;
 
-  @JsonProperty
+  @JsonIgnore
   private ArtifactFile newArtifactToUploadFile;
 
   @NotNull @JsonProperty @Valid private Map<String, Object> input;
