@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { Collection } from '../../../common-layout/model/collection.interface';
+import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 import { Config } from '../../../common-layout/model/fields/variable/config';
 export enum CollectionActionType {
 	CHANGE_NAME = '[COLLECTION] CHANGE_NAME',

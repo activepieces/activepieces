@@ -3,25 +3,22 @@ import { GlobalBuilderState } from '../model/builder-state.model';
 import { RightSideBarType } from '../../../common-layout/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../../common-layout/model/enum/left-side-bar-type.enum';
 import { Flow } from '../../../common-layout/model/flow.class';
-
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
-import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { FlowsStateEnum } from '../model/enums/flows-state.enum';
 import { UUID } from 'angular2-uuid';
-import { Oauth2UserInputType } from '../../../common-layout/model/fields/variable/subfields/oauth2-user-input.type';
 import { InstanceRun } from '../../../common-layout/model/instance-run.interface';
 import { SaveState } from '../model/enums/save-state.enum';
 import { DropdownItemOption } from '../../../common-layout/model/fields/variable/subfields/dropdown-item-option';
 import { FlowItem } from '../../../common-layout/model/flow-builder/flow-item';
 import { Config } from '../../../common-layout/model/fields/variable/config';
-import { OAuth2Variable } from '../../../common-layout/model/fields/variable/oauth2-variable.class';
 import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
 import { FlowsState } from '../model/flows-state.model';
 import { TriggerType } from 'src/app/layout/common-layout/model/enum/trigger-type.enum';
 import { ActionType } from '../../../common-layout/model/enum/action-type.enum';
 import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
+import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -131,15 +128,9 @@ export const selectDynamicDropdownReference = () =>
 			});
 	});
 
-export const selectAuth2Configs = (oauth2Variable: OAuth2Variable, flowId: UUID) =>
-	createSelector(selectCurrentCollectionConfigs, (collectionConfigs: Config[]) => {
-		return [...collectionConfigs].filter(
-			f =>
-				f.type == ConfigType.OAUTH2 &&
-				(oauth2Variable.settings.userInputType === Oauth2UserInputType.EVERYTHING ||
-					oauth2Variable.settings.userInputType === Oauth2UserInputType.APP_DETAILS)
-		);
-	});
+export const selectAuth2Configs = createSelector(selectCurrentCollectionConfigs, (collectionConfigs: Config[]) => {
+	return [...collectionConfigs].filter(f => f.type == ConfigType.OAUTH2);
+});
 
 export const selectAllConfigs = createSelector(selectCurrentCollectionConfigs, (collectionConfigs: Config[]) => {
 	return [...collectionConfigs];

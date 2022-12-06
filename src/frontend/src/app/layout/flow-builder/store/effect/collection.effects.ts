@@ -10,9 +10,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuilderSelectors } from '../selector/flow-builder.selector';
 import { SingleFlowModifyingState } from '../action/flows.action';
 import { BuilderActions } from '../action/builder.action';
-import { Collection } from '../../../common-layout/model/collection.interface';
+
 import { autoSaveDebounceTime } from 'src/app/layout/common-layout/utils';
 import { VersionEditState } from 'src/app/layout/common-layout/model/enum/version-edit-state.enum';
+import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 
 @Injectable()
 export class PieceEffects {
@@ -35,6 +36,7 @@ export class PieceEffects {
 			concatLatestFrom(() => this.store.select(BuilderSelectors.selectCurrentCollection)),
 			debounceTime(autoSaveDebounceTime),
 			concatMap(([action, collection]) => {
+				debugger;
 				return this.collectionService.update(collection.id, collection.last_version).pipe(
 					tap(() => {
 						const now = new Date();

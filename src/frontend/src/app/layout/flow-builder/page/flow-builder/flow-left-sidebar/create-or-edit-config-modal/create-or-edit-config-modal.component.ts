@@ -26,11 +26,6 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 	configIndexInConfigsList: number | undefined;
 	@Input()
 	configToUpdate: Config | undefined;
-
-	//used in case of creating a config for a connector.
-	@Input()
-	configParent: Config;
-
 	viewMode$: Observable<boolean> = of(false);
 	configForm: FormGroup;
 	submitted = false;
@@ -51,19 +46,11 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 			})
 		);
 		this.buildConfigForm();
-		this.checkIfWeAreCreatingChildConfig();
 		this.setupConfigTypeListener();
 	}
 	ngAfterViewChecked(): void {
 		if (!this.hasViewModeListenerBeenSet) {
 			this.hasViewModeListenerBeenSet = true;
-		}
-	}
-	private checkIfWeAreCreatingChildConfig() {
-		if (this.configParent) {
-			this.configForm.get('type')!.setValue(ConfigType.OAUTH2);
-			this.configForm.get('type')!.disable();
-			this.configForm.get('settings')!.setValue(this.configParent.settings);
 		}
 	}
 
@@ -81,7 +68,7 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 					]
 				),
 				type: new FormControl(ConfigType.SHORT_TEXT, [Validators.required]),
-				settings: new FormControl({ optional: false }),
+				settings: new FormControl(undefined),
 				value: new FormControl(),
 			});
 		} else {
@@ -112,14 +99,10 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 					const valueControl = this.configForm.get('value')!;
 					valueControl.setValue(defaultValue);
 					const settingsControl = this.configForm.get('settings')!;
-					if (settingsControl.value?.optional && newType !== ConfigType.OAUTH2) {
-						settingsControl.setValue({ optional: true });
+					if (newType !== ConfigType.OAUTH2) {
+						settingsControl.setValue(undefined);
 					} else {
-						if (newType === ConfigType.OAUTH2) {
-							settingsControl.setValue({ ...new OAuth2ConfigSettings(), optional: false });
-						} else {
-							settingsControl.setValue({ optional: false });
-						}
+						settingsControl.setValue({ ...new OAuth2ConfigSettings() });
 					}
 				}
 			})
@@ -173,26 +156,12 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 
 	submit() {
 		if (!this.savingLoading && this.configForm.valid) {
-			const config: Config = this.createConfigFromFormValue();
+			const config: Config = this.configForm.getRawValue();
 			this.saveConfig(config);
 		}
 		this.submitted = true;
 	}
 	isConfigOfTypeText(configType: ConfigType) {
 		return configType === ConfigType.SHORT_TEXT || configType === ConfigType.LONG_TEXT;
-	}
-	createConfigFromFormValue() {
-		const config = this.configForm.getRawValue();
-		let required = true;
-		if (config && config.settings) {
-			required = !config.settings.optional;
-			delete config.settings.optional;
-			delete config.scope;
-			config.settings.required = required;
-			if (this.configParent) {
-				config.settings.configParent = { configKey: this.configParent.key };
-			}
-		}
-		return config;
 	}
 }

@@ -1,12 +1,12 @@
 // // import the interface
 
 import { collectionActions } from '../action/collection.action';
-import { Collection } from '../../../common-layout/model/collection.interface';
 import { UUID } from 'angular2-uuid';
 import { Action, createReducer, on } from '@ngrx/store';
 import { VersionEditState } from '../../../common-layout/model/enum/version-edit-state.enum';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { CollectionState } from '../model/collection-state.model';
+import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 
 const initialState: CollectionState = {
 	state: CollectionStateEnum.INITIALIZED,

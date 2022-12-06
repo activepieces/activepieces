@@ -13,10 +13,8 @@ import { CollectionBuilderService } from '../../service/collection-builder.servi
 import { InstanceRunStatus } from '../../../common-layout/model/enum/instance-run-status';
 import { NavigationService } from '../../../dashboard-layout/service/navigation.service';
 import { BsModalRef } from 'ngx-bootstrap/modal';
-
 import { RightSideBarType } from '../../../common-layout/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from 'src/app/layout/common-layout/model/enum/left-side-bar-type.enum';
-import { Collection } from '../../../common-layout/model/collection.interface';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/selector/flow-builder.selector';
 import { lastValueFrom, map, Observable, take, tap } from 'rxjs';
@@ -32,6 +30,7 @@ import { InstanceRun } from '../../../common-layout/model/instance-run.interface
 import { Flow } from '../../../common-layout/model/flow.class';
 import { RunDetailsService } from './flow-left-sidebar/run-details/iteration-details.service';
 import { FlowsActions } from '../../store/action/flows.action';
+import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 
 @Component({
 	templateUrl: './collection-builder.component.html',
