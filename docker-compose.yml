@@ -2,7 +2,7 @@ version: '3.0'
 
 services:
   backend:
-    image: docker-active-pieces-backend:1.0
+    image: activepieces/backend:latest
     container_name: activepieces-backend
     restart: unless-stopped
     depends_on: [ db ]
