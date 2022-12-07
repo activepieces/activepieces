@@ -49,38 +49,21 @@ Design your flow visually or write Node.js code if you feel like it. There are n
 We're building no-code connectors to make your connectivity life easier. Here is our list of connectors:
 * Slack
 * Google Sheets [Soon]
+* GitHub [Soon]
+* MailChimp [Soon]
+* HubSpot [Soon]
+* Trello [Soon]
+* Shopify [Soon]
+* DropBox [Soon]
+* Facebook Lead Ads [Soon]
+* Google Calendar [Soon]
+
+> :warning: This is a dynamic list, join [our Discord Server](https://discord.com/channels/966798490984382485/997611516989816862) to shape the connectors roadmap.
 
 
+## Contributions
 
-## Getting the most of PostHog
-
-See [PostHog Docs](https://posthog.com/docs/) for in-depth walk-throughs on functionality.
-
-Join our [Slack community](https://posthog.com/slack) if you need help, want to chat, or are thinking of a new feature. We're here to help - and to make PostHog even better.
-
-## Philosophy
-
-We help you understand user behavior and build better products without losing control of your data. 
-
-In our view, third-party analytics tools do not work in a world of cookie deprecation, GDPR, HIPAA, CCPA, and many other four-letter acronyms. PostHog is the alternative to sending all of your customers' personal information and usage data to third-parties.
-
-PostHog is designed to give you every tool you need to understand user behavior, create hypothesis and release changes to make your product more successful.
-
-## What's cool about this?
-
-PostHog is the only **product-focused** open-source analytics suite, with an event, user and group architecture that **you can host in any infrastructure**. 
-
-We are an open-source alternative to products such as Mixpanel, Amplitude, Heap, HotJar, Pendo or Full Story. We're designed to be more developer-friendly, with the broadest range of features like session recording, heatmaps, feature flags, and plugins.
-
-We play nicely with data warehouses and other services - you can _import_ event or user data by writing a plugin to create transformations, or you can _export_ data by using our existing data exports to BigQuery, Redshift, Snowflake, etc. All without losing control of your data.
-
-## Developing locally & Contributing
-
-See our Docs for instructions on [developing PostHog locally](https://posthog.com/docs/developing-locally).
-
-We <3 contributions big or small, check out our [guide on how to get started](https://posthog.com/docs/contributing).
-
-Not sure where to start? [Book a free, no-pressure pairing session](mailto:tim@posthog.com?subject=Pairing%20session&body=I'd%20like%20to%20do%20a%20pairing%20session!) with one of the team.
+We welcome contributions big or small and in different directions. The best way to do this is to talk to us on [our Discord Server](https://discord.com/channels/966798490984382485/997611516989816862).
 
 ## Open-source
 
