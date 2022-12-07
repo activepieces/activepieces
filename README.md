@@ -34,9 +34,23 @@ We're planning to launch a cloud version of Activepieces and instructions to dis
 ## Features
 
 ### Intuitive Flow Designer
+Automate your daily tasks or your entire business with clicks on the UI without interrupting your IT team.
 <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201.png" width="100%">
 
-Automate your daily tasks or your entire business with clicks on the UI without interrupting your IT team.
+### Powerful Logging
+Gain full visibility over your flow runs and easily fix what doesn't work with detailed step-by-step debugging tools.
+<img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201.png" width="100%">
+
+### Writing Node.js for Full Flexibility
+Design your flow visually or write Node.js code if you feel like it. There are no limits to what you can build.
+<img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201.png" width="100%">
+
+### Pre-built Connectors
+We're building no-code connectors to make your connectivity life easier. Here is our list of connectors:
+* Slack
+* Google Sheets [Soon]
+
+
 
 ## Getting the most of PostHog
 
