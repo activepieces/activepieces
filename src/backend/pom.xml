@@ -122,7 +122,7 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>
-            <version>5.5.1</version>
+            <version>5.5.7</version>
             <scope>compile</scope>
         </dependency>
 
