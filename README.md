@@ -54,6 +54,7 @@ Design your flow visually or write Node.js code if you feel like it. There are n
 ## Connectors
 We're building no-code connectors to make flow building a frictionless process. Here is our list of connectors:
 * Slack
+* Gmail [Soon]
 * Google Sheets [Soon]
 * GitHub [Soon]
 * MailChimp [Soon]
