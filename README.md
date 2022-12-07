@@ -3,7 +3,7 @@
 </p>
 <p align="center">
   <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-<a href="/LICENSE" target="_blank"><img src="https://img.shields.io/github/license/activepieces/activepieces?style=for-the-badge&" alt="Activepieces Licence" /></a>&nbsp;<a href='https://discord.com/channels/966798490984382485/997611516989816862'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
+<a href="/LICENSE" target="_blank"><img src="https://img.shields.io/github/license/activepieces/activepieces?style=for-the-badge&" alt="Activepieces Licence" /></a>&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
 </p>
 
 ## Activepieces is an open-source business automation tool
@@ -64,12 +64,12 @@ We're building no-code connectors to make flow building a frictionless process. 
 * Facebook Lead Ads [Soon]
 * Google Calendar [Soon]
 
-> :warning: The list of connectors will keep chagning as we hear from our users, join [our Discord Server](https://discord.com/channels/966798490984382485/997611516989816862) to shape the connectors roadmap.
+> :warning: The list of connectors will keep chagning as we hear from our users, join [our Discord Server](https://discord.gg/2jUXBKDdP8) to shape the connectors roadmap.
 
 
 ## Contributions
 
-We welcome contributions big or small and in different directions. The best way to do this is to talk to us on [our Discord Server](https://discord.com/channels/966798490984382485/997611516989816862).
+We welcome contributions big or small and in different directions. The best way to do this is to talk to us on [our Discord Server](https://discord.gg/2jUXBKDdP8).
 
 ## Open-source
 
