@@ -48,8 +48,8 @@ Design your flow visually or write Node.js code if you feel like it. There are n
 
 <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201.png" width="100%">
 
-### Pre-built Connectors
-We're building no-code connectors to make your connectivity life easier. Here is our list of connectors:
+## Connectors
+We're building no-code connectors to make flow building a frictionless process. Here is our list of connectors:
 * Slack
 * Google Sheets [Soon]
 * GitHub [Soon]
@@ -79,6 +79,6 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
- <a href="https://github.com/timgl"><img src="https://avatars.githubusercontent.com/u/1727427?v=4" width="50" height="50" alt=""/></a> 
+<a href="https://github.com/moabuaboud"><img src="https://avatars.githubusercontent.com/u/106551704?s=60&v=4" width="50" height="50" alt=""/></a> <a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?s=60&v=4" width="50" height="50" alt=""/></a> <a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?s=60&v=4" width="50" height="50" alt=""/></a>
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
