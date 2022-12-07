@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { map, Observable, tap } from 'rxjs';
 import { AuthenticationService } from './layout/common-layout/service/authentication.service';
 import { Store } from '@ngrx/store';
-import LogRocket from 'logrocket';
 import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { NavigationService } from './layout/dashboard-layout/service/navigation.service';
 import { SvgIconRegistryService } from 'angular-svg-icon';
@@ -46,7 +45,6 @@ export class AppComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		LogRocket.init('sz7toh/activepieces');
 
 		this.loggedInUser$ = this.authenticationService.currentUserSubject.pipe(
 			tap(user => {
@@ -54,10 +52,6 @@ export class AppComponent implements OnInit {
 					this.store.dispatch(CommonActions.clearState());
 					return;
 				}
-				LogRocket.identify(user.id.toString(), {
-					name: user.first_name + ' ' + user.last_name,
-					email: user.email,
-				});
 				this.store.dispatch(CommonActions.loadInitial({ user: user }));
 			}),
 			map(() => void 0)

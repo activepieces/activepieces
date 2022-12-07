@@ -16,9 +16,7 @@
     "prettier": "prettier 'src/**/*.ts'",
     "prettier:fix": "prettier --write 'src/**/*.ts'",
     "prepare": "",
-    "docs:json": "compodoc -p ./tsconfig.json -e json -d .",
-    "storybook": "npm run docs:json && start-storybook -p 6006",
-    "build-storybook": "npm run docs:json && build-storybook"
+    "docs:json": "compodoc -p ./tsconfig.json -e json -d ."
   },
   "husky": {
     "hooks": {
@@ -60,14 +58,12 @@
     "jsonlint-mod": "^1.7.6",
     "jszip": "^3.9.1",
     "kl-angular-mentions": "^1.2.3",
-    "logrocket": "^3.0.1",
     "monaco-editor": "^0.33.0",
     "ngx-bootstrap": "6.2.0",
     "ngx-markdown": "^13.0.1",
     "ngx-skeleton-loader": "^5.0.0",
     "ngx-timeago": "^2.0.0",
     "prismjs": "^1.28.0",
-    "rollbar": "^2.25.2",
     "rxjs": "~7.4.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.11.4"
