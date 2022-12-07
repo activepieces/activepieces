@@ -49,11 +49,13 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
     private final InstanceRunService instanceRunService;
     private final VariableService variableService;
     private final FlowScheduler flowScheduler;
+    private final PermissionService permissionService;
 
     @Autowired
     FlowPublisherServiceImpl(
             @NonNull final FlowVersionService flowVersionService,
             @NonNull final WorkerService workerService,
+            @NonNull final PermissionService permissionService,
             @NonNull final InstanceService instanceService,
             @NonNull final FlowScheduler flowScheduler,
             @NonNull final InstanceRunService instanceRunService,
@@ -64,6 +66,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
         this.flowScheduler = flowScheduler;
         this.variableService = variableService;
         this.workerService = workerService;
+        this.permissionService = permissionService;
         this.instanceRunService = instanceRunService;
         this.flowVersionService = flowVersionService;
     }
@@ -91,8 +94,9 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
                             validatedInstanceConfigs,
                             triggerPayload);
             if (request.isPresent()) {
+                Ksuid projectID = permissionService.getFirstResourceParentWithType(collectionVersionView.getCollectionId(), ResourceType.PROJECT).getResourceId();
                 InstanceRunView instanceRunView =
-                        createInstanceRun(null, collectionVersionView, flowVersionView, request.get());
+                        createInstanceRun(projectID, collectionVersionView, flowVersionView, request.get());
                 flowScheduler.executeFlowAsync(request.get());
                 return instanceRunView.toBuilder().build();
             }
@@ -129,7 +133,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
                             triggerPayload);
             if (request.isPresent()) {
                 InstanceRunView firstInstanceRun =
-                        createInstanceRun(instanceView, collectionVersionView, flowVersionView, request.get());
+                        createInstanceRun(instanceView.getProjectId(), collectionVersionView, flowVersionView, request.get());
                 if (async) {
                     flowScheduler.executeFlowAsync(request.get());
                     return firstInstanceRun.toBuilder().build();
@@ -180,7 +184,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
     }
 
     private InstanceRunView createInstanceRun(
-            final InstanceView instance,
+            @NonNull final Ksuid projectId,
             @NonNull CollectionVersionView collectionVersionView,
             @NonNull FlowVersionView flowVersion,
             ExecutionRequest executionRequest)
@@ -200,7 +204,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
                         .flowDisplayName(flowVersion.getDisplayName())
                         .collectionVersionId(collectionVersionView.getId())
                         .collectionDisplayName(collectionVersionView.getDisplayName())
-                        .projectId(Objects.isNull(instance) ? null : instance.getProjectId())
+                        .projectId(projectId)
                         .flowVersionId(flowVersion.getId())
                         .startTime(Instant.now().toEpochMilli())
                         .finishTime(Instant.now().toEpochMilli())

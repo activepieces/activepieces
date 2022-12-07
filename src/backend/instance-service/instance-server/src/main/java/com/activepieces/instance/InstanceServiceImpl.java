@@ -71,7 +71,7 @@ public class InstanceServiceImpl implements InstanceService {
     public SeekPage<InstanceView> listByCollectionId(
             Ksuid collectionId, SeekPageRequest request)
             throws PermissionDeniedException {
-      //  permissionService.requiresPermission(collectionId, Permission.READ_INSTANCE);
+        permissionService.requiresPermission(collectionId, Permission.READ_INSTANCE);
         final List<PageFilter> filters = List.of(new PageFilter(Instance.COLLECTION_ID, collectionId));
         return instanceRepository.findPageAsc(filters, request).convert(instanceMapper::toView);
     }

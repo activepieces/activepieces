@@ -37,9 +37,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @Hidden
@@ -47,10 +45,16 @@ import java.util.UUID;
 public class InstanceController {
 
     private final InstanceService instanceService;
+    private final FlowService flowService;
+    private final FlowPublisherService publisherService;
 
     @Autowired
-    public InstanceController(@NonNull final InstanceService instanceService) {
+    public InstanceController(@NonNull final InstanceService instanceService,
+                              @NonNull final FlowPublisherService publisherService,
+                              @NonNull final FlowService flowService) {
         this.instanceService = instanceService;
+        this.flowService = flowService;
+        this.publisherService = publisherService;
     }
 
     @GetMapping("/instances/{instanceId}")
@@ -94,22 +98,23 @@ public class InstanceController {
         instanceService.delete(instanceId);
     }
 
-    // TODO FIX WEBHOOK
-/*    @PostMapping({"/flows/{flowId}/runs"})
+    @PostMapping({"/flows/{flowId}/webhook"})
     public ResponseEntity<InstanceRunView> execute(
             @PathVariable("flowId") Ksuid flowId,
             @RequestBody @Valid Map<String, Object> payload)
-            throws PermissionDeniedException, FlowNotFoundException, FlowExecutionInternalError, MissingConfigsException, ResourceNotFoundException {
+            throws PermissionDeniedException, FlowNotFoundException, FlowExecutionInternalError, MissingConfigsException, ResourceNotFoundException, InstanceNotFoundException {
         SecurityContextHolder.getContext().setAuthentication(null);
-        InstanceView instanceView = instanceService.get();
-*//*
-    InstanceRunView manualFlowExecutionResponse =
-        flowPublisherService.executeInstance(
-            instanceView.getId(),
-            flowVersionId.get(),
-            Collections.emptyMap(),
-                payload,
-            true);*//*
+        final FlowView flowView = flowService.get(flowId);
+        final SeekPage<InstanceView> instanceViewSeekPage = instanceService.listByCollectionId(flowView.getCollectionId(), new SeekPageRequest(null, 1));
+        if (instanceViewSeekPage.getData().isEmpty()) {
+            throw new InstanceNotFoundException(flowId);
+        }
+        final InstanceView instanceView = instanceViewSeekPage.getData().get(0);
+        InstanceRunView manualFlowExecutionResponse =
+                publisherService.executeInstance(
+                        instanceView.getId(),
+                        instanceView.getFlowVersionId().get(flowId),
+                        payload, true);
         return ResponseEntity.noContent().build();
-    }*/
+    }
 }
