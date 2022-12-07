@@ -35,14 +35,17 @@ We're planning to launch a cloud version of Activepieces and instructions to dis
 
 ### Intuitive Flow Designer
 Automate your daily tasks or your entire business with clicks on the UI without interrupting your IT team.
+
 <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201.png" width="100%">
 
 ### Powerful Logging
 Gain full visibility over your flow runs and easily fix what doesn't work with detailed step-by-step debugging tools.
+
 <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201.png" width="100%">
 
 ### Writing Node.js for Full Flexibility
 Design your flow visually or write Node.js code if you feel like it. There are no limits to what you can build.
+
 <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201.png" width="100%">
 
 ### Pre-built Connectors
@@ -58,7 +61,7 @@ We're building no-code connectors to make your connectivity life easier. Here is
 * Facebook Lead Ads [Soon]
 * Google Calendar [Soon]
 
-> :warning: This is a dynamic list, join [our Discord Server](https://discord.com/channels/966798490984382485/997611516989816862) to shape the connectors roadmap.
+> :warning: The list of connectors will keep chagning as we hear from our users, join [our Discord Server](https://discord.com/channels/966798490984382485/997611516989816862) to shape the connectors roadmap.
 
 
 ## Contributions
