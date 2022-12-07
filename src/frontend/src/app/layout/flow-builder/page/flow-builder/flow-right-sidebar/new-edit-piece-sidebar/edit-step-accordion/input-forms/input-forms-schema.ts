@@ -1,4 +1,3 @@
-import { UUID } from 'angular2-uuid';
 import { ActionType } from 'src/app/layout/common-layout/model/enum/action-type.enum';
 import { TriggerType } from 'src/app/layout/common-layout/model/enum/trigger-type.enum';
 import { StorageOperation } from 'src/app/layout/common-layout/model/flow-builder/actions/storage-operation.enum';
@@ -25,17 +24,12 @@ export interface StorageStepInputFormSchema extends InputFormsSchemaBase {
 }
 
 export interface ScheduledTriggerInputFormSchema extends InputFormsSchemaBase {
-	cronExpression: string;
+	cron_expression: string;
 }
 export interface EventTriggerInputFormSchema extends InputFormsSchemaBase {
 	eventsName: string[];
 }
 
-export interface RemoteFlowInputFormSchema extends InputFormsSchemaBase {
-	input: ConfigsAndTheirValues;
-	flowVersionId: UUID;
-	pieceVersionId: UUID;
-}
 //TODO figure out a way to check the type of the (input form schema) because right now they are interfaces and instance of won't work since these are json objects from the server
 export interface ComponentInputFormSchema extends InputFormsSchemaBase {
 	componentName: string;
@@ -60,5 +54,4 @@ export type InputFormsSchema =
 	| CodeStepInputFormSchema
 	| ScheduledTriggerInputFormSchema
 	| EventTriggerInputFormSchema
-	| RemoteFlowInputFormSchema
 	| ComponentInputFormSchema;

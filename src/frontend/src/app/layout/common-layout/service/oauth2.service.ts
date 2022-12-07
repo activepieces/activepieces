@@ -49,6 +49,7 @@ export class Oauth2Service {
 		const popup = window.open(url, winTarget, winFeatures);
 		this.currentlyOpenPopUp = popup;
 		const codeObs$ = new Observable<any>(observer => {
+			debugger;
 			window.addEventListener('message', function (event) {
 				if (environment.redirectUrl.startsWith(event.origin)) {
 					if (event.data != undefined) {

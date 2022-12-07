@@ -11,6 +11,9 @@ export enum CollectionActionType {
 	DELETE_CONFIG_SUCCEEDED = '[COLLECTION] DELETE_CONFIG_SUCCEEDED',
 	COLLECTION_SAVED_SUCCESS = '[COLLECTION] SAVED_SUCCESS',
 	COLLECTION_SAVED_FAILED = '[COLLECTION] SAVED_FAILED',
+	DEPLOY_COLLECTION = '[COLLECTION] DEPLOY_COLLECTION',
+	DEPLOY_COLLECTION_FAILED = '[COLLECTION] DEPLOY_COLLECTION_FAILED',
+	DEPLOY_COLLECTION_SUCCESS = '[COLLECTION] DEPLOY_COLLECTION_SUCCESS',
 }
 
 export const CollectionModifyingState = [
@@ -46,11 +49,14 @@ export const savedSuccess = createAction(
 	props<{ collection: Collection }>()
 );
 
+export const deploy = createAction(CollectionActionType.DEPLOY_COLLECTION);
+export const deployFailed = createAction(CollectionActionType.DEPLOY_COLLECTION_FAILED);
+export const deploySuccess = createAction(CollectionActionType.DEPLOY_COLLECTION_SUCCESS);
 export const savedFailed = createAction(CollectionActionType.COLLECTION_SAVED_FAILED, props<{ error: any }>());
 
 export const setInitial = createAction(CollectionActionType.SET_INITIAL, props<{ collection: Collection }>());
 
-export const collectionActions = {
+export const CollectionActions = {
 	changeName,
 	setInitial,
 	updateConfig,
@@ -60,4 +66,7 @@ export const collectionActions = {
 	savedFailed,
 	deleteConfigFailed,
 	deleteConfig,
+	deploy,
+	deploySuccess,
+	deployFailed,
 };

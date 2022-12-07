@@ -2,10 +2,10 @@
 <label required for="expression">
   Cron Expression
 </label>
-<input id="expression" type="text" class="form-control" formControlName="cronExpression">
-<ng-container *ngIf="getControl('cronExpression')!.invalid; else cronExpressionInterpretation">
+<input id="expression" type="text" class="form-control" formControlName="cron_expression">
+<ng-container *ngIf="getControl('cron_expression')!.invalid; else cronExpressionInterpretation">
   <p @fadeInUp  class="invalid-input">
-    <ng-container *ngIf="getControl('cronExpression')!.getError('required'); else invalidCronExpression">
+    <ng-container *ngIf="getControl('cron_expression')!.getError('required'); else invalidCronExpression">
       Key is required.
     </ng-container>
     <ng-template #invalidCronExpression>

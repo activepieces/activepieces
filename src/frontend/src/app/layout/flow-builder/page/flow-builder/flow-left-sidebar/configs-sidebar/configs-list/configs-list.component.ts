@@ -2,7 +2,7 @@ import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { BuilderSelectors } from '../../../../../store/selector/flow-builder.selector';
-import { collectionActions } from '../../../../../store/action/collection.action';
+import { CollectionActions } from '../../../../../store/action/collection.action';
 import { Config } from '../../../../../../common-layout/model/fields/variable/config';
 
 @Component({
@@ -24,6 +24,6 @@ export class VariableListComponent implements OnInit {
 	}
 
 	deleteVariable(index: number) {
-		this.store.dispatch(collectionActions.deleteConfig({ configIndex: index }));
+		this.store.dispatch(CollectionActions.deleteConfig({ configIndex: index }));
 	}
 }

@@ -42,7 +42,7 @@ export const SingleFlowModifyingState = [
 	FlowsActionType.UPDATE_STEP,
 ];
 
-export const savedSuccess = createAction(FlowsActionType.SAVED_SUCCESS, props<{ saveId: UUID; flow: Flow }>());
+export const savedSuccess = createAction(FlowsActionType.SAVED_SUCCESS, props<{ saveRequestId: UUID; flow: Flow }>());
 
 export const savedFailed = createAction(FlowsActionType.SAVED_FAILED, props<{ error: any }>());
 
@@ -78,11 +78,14 @@ export const setInitial = createAction(
 	props<{ flows: Flow[]; run: InstanceRun | undefined }>()
 );
 
-export const saveFlowStarted = createAction(FlowsActionType.SAVE_FLOW_STARTED, props<{ flow: Flow; saveId: UUID }>());
+export const saveFlowStarted = createAction(
+	FlowsActionType.SAVE_FLOW_STARTED,
+	props<{ flow: Flow; saveRequestId: UUID }>()
+);
 
 export const deleteFlowStarted = createAction(
 	FlowsActionType.DELETE_FLOW_STARTED,
-	props<{ flowId: UUID; saveId: UUID }>()
+	props<{ flowId: UUID; saveRequestId: UUID }>()
 );
 
 export const selectFlow = createAction(FlowsActionType.SELECT_FLOW, props<{ flowId: UUID }>());
@@ -97,7 +100,7 @@ export const deselectStep = createAction(FlowsActionType.DESELECT_STEP);
 
 export const selectStepByName = createAction(FlowsActionType.SELECT_STEP_BY_NAME, props<{ stepName: string }>());
 
-export const deleteSuccess = createAction(FlowsActionType.DELETE_SUCCESS, props<{ saveId: UUID }>());
+export const deleteSuccess = createAction(FlowsActionType.DELETE_SUCCESS, props<{ saveRequestId: UUID }>());
 
 export const setLeftSidebar = createAction(FlowsActionType.SET_LEFT_SIDEBAR, props<{ sidebarType: LeftSideBarType }>());
 
