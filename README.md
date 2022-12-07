@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="300" alt="posthoglogo" src="https://user-images.githubusercontent.com/85295485/144591858-cb39e04a-7bf4-4a4d-a1fd-5d05a3ff693f.png">
+  <img width="300" alt="activepieceslogo" src="https://github.com/activepieces/activepieces/raw/main/ap-logo.png">
 </p>
 <p align="center">
   <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
@@ -12,10 +12,10 @@
   <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed/posthog/posthog"/>
 </p>
 
-## PostHog is an open-source product analytics suite, built for engineers
-* Automatically track every event on your website or app
-* Understand your users and how to improve your product
-* Deploy on your own infrastructure to keep control of your data.
+## Activepieces is an open-source business automation tool
+* Built for no-code users and citizen developers
+* Self-host with a simple docker command
+* An alternative to Zapier, Make.com and Tray
 
 
 
