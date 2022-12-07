@@ -74,7 +74,7 @@ We welcome contributions big or small and in different directions. The best way 
 
 ## Open-source
 
-This repo is entirely [MIT licensed](/LICENSE). You have the permission to use or distribute 
+This repo is entirely [MIT licensed](/LICENSE). You have the permission to use or distribute our source code freely in your projects.
 
 ## Contributors 🦸
 
