@@ -46,7 +46,7 @@ export class FlowsEffects {
 			ofType(FlowsActions.deleteFlow),
 			concatMap(action => {
 				const genSavedId = UUID.UUID();
-				return of(FlowsActions.deleteFlowStarted({ flowId: action.flowId, saveId: genSavedId }));
+				return of(FlowsActions.deleteFlowStarted({ flowId: action.flowId, saveRequestId: genSavedId }));
 			})
 		);
 	});
@@ -54,10 +54,10 @@ export class FlowsEffects {
 	deleteFlowStarted$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(FlowsActions.deleteFlowStarted),
-			concatMap((action: { flowId: UUID; saveId: UUID }) => {
+			concatMap((action: { flowId: UUID; saveRequestId: UUID }) => {
 				return this.flowService.delete(action.flowId).pipe(
 					map(() => {
-						return FlowsActions.deleteSuccess({ saveId: action.saveId });
+						return FlowsActions.deleteSuccess({ saveRequestId: action.saveRequestId });
 					})
 				);
 			}),
@@ -96,12 +96,12 @@ export class FlowsEffects {
 					return this.collectionService.update(collection.id, collection.last_version).pipe(
 						map(() => {
 							const genSavedId = UUID.UUID();
-							return FlowsActions.saveFlowStarted({ flow: flow!, saveId: genSavedId });
+							return FlowsActions.saveFlowStarted({ flow: flow!, saveRequestId: genSavedId });
 						})
 					);
 				} else {
 					const genSavedId = UUID.UUID();
-					return of(FlowsActions.saveFlowStarted({ flow: flow!, saveId: genSavedId }));
+					return of(FlowsActions.saveFlowStarted({ flow: flow!, saveRequestId: genSavedId }));
 				}
 			})
 		);
@@ -123,8 +123,7 @@ export class FlowsEffects {
 								if (flow === undefined || tabState === undefined) {
 									return throwError(() => new Error('Flow is not selected'));
 								}
-
-								return this.processFlowUpdate({ flow: flow, tabState: tabState, saveId: action.saveId });
+								return this.processFlowUpdate({ flow: flow, tabState: tabState, saveRequestId: action.saveRequestId });
 							},
 							{ trailing: true, leading: true }
 						),
@@ -145,10 +144,10 @@ export class FlowsEffects {
 		{ dispatch: false }
 	);
 
-	private processFlowUpdate(request: { flow: Flow; tabState: TabState; saveId: UUID }): Observable<Flow> {
+	private processFlowUpdate(request: { flow: Flow; tabState: TabState; saveRequestId: UUID }): Observable<Flow> {
 		return this.flowService.update(request.flow.id, request.flow.last_version).pipe(
 			tap(updatedFlow => {
-				this.store.dispatch(FlowsActions.savedSuccess({ saveId: request.saveId, flow: updatedFlow }));
+				this.store.dispatch(FlowsActions.savedSuccess({ saveRequestId: request.saveRequestId, flow: updatedFlow }));
 				const now = new Date();
 				const nowDate = now.toLocaleDateString('en-us', {
 					month: 'long',

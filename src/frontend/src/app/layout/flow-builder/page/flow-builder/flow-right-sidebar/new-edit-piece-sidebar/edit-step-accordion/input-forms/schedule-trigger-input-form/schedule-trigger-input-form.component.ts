@@ -37,7 +37,7 @@ export class ScheduleTriggerInputFormComponent implements ControlValueAccessor {
 	onTouch = () => {};
 	updateComponentValue$: Observable<any>;
 	constructor(private formBuilder: FormBuilder) {
-		this.scheduledFrom = this.formBuilder.group({ cronExpression: new FormControl('', cronJobValidator) });
+		this.scheduledFrom = this.formBuilder.group({ cron_expression: new FormControl('', cronJobValidator) });
 		this.updateComponentValue$ = this.scheduledFrom.valueChanges.pipe(
 			tap(() => {
 				this.onChange(this.scheduledFrom.value);
@@ -65,7 +65,7 @@ export class ScheduleTriggerInputFormComponent implements ControlValueAccessor {
 		return null;
 	}
 	interpretCronExpression() {
-		return cronstrue.toString(this.getControl('cronExpression')!.value);
+		return cronstrue.toString(this.getControl('cron_expression')!.value);
 	}
 	setDisabledState?(isDisabled: boolean): void {
 		if (isDisabled) {

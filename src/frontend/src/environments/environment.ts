@@ -4,7 +4,7 @@ export const environment = {
 	apiUrl: 'http://localhost:8000',
 	jwtTokenName: 'token',
 	stageName: 'stg',
-	redirectUrl: 'http://localhost:8080/redirect',
+	redirectUrl: 'https://app.passr.dev/redirect',
 	userPropertyNameInLocalStorage: 'currentUser',
 	feature: {
 		newComponents: true,

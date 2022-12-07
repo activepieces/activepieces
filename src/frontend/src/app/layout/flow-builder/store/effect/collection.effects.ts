@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType, concatLatestFrom } from '@ngrx/effects';
 import { catchError, debounceTime, of, tap } from 'rxjs';
-import { concatMap, filter, map } from 'rxjs/operators';
-import { collectionActions, CollectionModifyingState, savedFailed, savedSuccess } from '../action/collection.action';
+import { concatMap, filter, map, switchMap } from 'rxjs/operators';
+import { CollectionActions, CollectionModifyingState, savedFailed, savedSuccess } from '../action/collection.action';
 import { CollectionService } from '../../../common-layout/service/collection.service';
 import { Store } from '@ngrx/store';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
@@ -72,7 +72,7 @@ export class PieceEffects {
 		return this.actions$.pipe(
 			ofType(BuilderActions.loadInitial),
 			map(({ collection }: { collection: Collection }) => {
-				return collectionActions.setInitial({
+				return CollectionActions.setInitial({
 					collection: collection,
 				});
 			})
@@ -81,10 +81,10 @@ export class PieceEffects {
 
 	deleteConfig$ = createEffect(() => {
 		return this.actions$.pipe(
-			ofType(collectionActions.deleteConfig),
+			ofType(CollectionActions.deleteConfig),
 			concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
 			concatMap(([action, collection]) => {
-				return of(collectionActions.deleteConfigSucceeded({ configIndex: action.configIndex }));
+				return of(CollectionActions.deleteConfigSucceeded({ configIndex: action.configIndex }));
 			})
 		);
 	});
@@ -92,7 +92,7 @@ export class PieceEffects {
 	deleteConfigFailed$ = createEffect(
 		() => {
 			return this.actions$.pipe(
-				ofType(collectionActions.deleteConfigFailed),
+				ofType(CollectionActions.deleteConfigFailed),
 				tap(action => {
 					this.snackBar.open(`This variable can't be deleted because it's a refresher for ${action.refreshedKey}`, '', {
 						panelClass: 'error',
@@ -103,6 +103,48 @@ export class PieceEffects {
 		},
 		{ dispatch: false }
 	);
+
+	deployFailed$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(CollectionActions.deployFailed),
+				tap(action => {
+					this.snackBar.open(`Deployment failed`, '', {
+						panelClass: 'error',
+						duration: 5000,
+					});
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+	deploySuccess$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(CollectionActions.deployFailed),
+				tap(action => {
+					this.snackBar.open(`Deployment finished`);
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	deploy$ = createEffect(() => {
+		return this.actions$.pipe(
+			ofType(CollectionActions.deploy),
+			concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
+			tap(([action, collection]) => {
+				return this.collectionService.deploy(collection.id);
+			}),
+			catchError(err => {
+				return of(CollectionActions.deployFailed());
+			}),
+			switchMap(() => {
+				return of(CollectionActions.deploySuccess());
+			})
+		);
+	});
 
 	constructor(
 		private collectionBuilderService: CollectionBuilderService,

@@ -9,7 +9,7 @@ import { fadeInUp400ms } from 'src/app/layout/common-layout/animation/fade-in-up
 import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
 import { Config } from 'src/app/layout/common-layout/model/fields/variable/config';
 import { OAuth2ConfigSettings } from 'src/app/layout/common-layout/model/fields/variable/config-settings';
-import { collectionActions } from 'src/app/layout/flow-builder/store/action/collection.action';
+import { CollectionActions } from 'src/app/layout/flow-builder/store/action/collection.action';
 import { BuilderSelectors } from 'src/app/layout/flow-builder/store/selector/flow-builder.selector';
 import { environment } from 'src/environments/environment';
 import { ConfigKeyValidator } from '../../validators/configKeyValidator';
@@ -114,10 +114,10 @@ export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
 
 	saveConfigToCollection(config: Config): void {
 		if (!this.configToUpdateWithIndex) {
-			this.store.dispatch(collectionActions.addConfig({ config: config }));
+			this.store.dispatch(CollectionActions.addConfig({ config: config }));
 		} else {
 			this.store.dispatch(
-				collectionActions.updateConfig({ config: config, configIndex: this.configToUpdateWithIndex.indexInList })
+				CollectionActions.updateConfig({ config: config, configIndex: this.configToUpdateWithIndex.indexInList })
 			);
 		}
 	}

@@ -1,7 +1,6 @@
 // // import the interface
 
 import { Action, createReducer, on } from '@ngrx/store';
-import { FlowsStateEnum } from '../model/enums/flows-state.enum';
 import { Flow } from '../../../common-layout/model/flow.class';
 import { FlowsActions } from '../action/flows.action';
 import { UUID } from 'angular2-uuid';
@@ -12,19 +11,15 @@ import { RightSideBarType } from '../../../common-layout/model/enum/right-side-b
 import { FlowStructureUtil } from '../../service/flowStructureUtil';
 
 type FlowsState = {
-	state: FlowsStateEnum;
-	lastSaveId: UUID;
 	flows: Flow[];
 	tabsState: { [key: string]: TabState };
-	selectedFlowId: UUID | null;
+	selectedFlowId?: UUID;
 };
 
 const initialState: FlowsState = {
-	state: FlowsStateEnum.INITIALIZED,
 	flows: [],
-	lastSaveId: UUID.UUID(),
 	tabsState: {},
-	selectedFlowId: null,
+	selectedFlowId: undefined,
 };
 
 const initialTabState: TabState = {
@@ -44,7 +39,7 @@ const _flowsReducer = createReducer(
 	initialState,
 	on(FlowsActions.setInitial, (state, { flows, run }): FlowsState => {
 		const clonedFlows: Flow[] = JSON.parse(JSON.stringify(flows));
-		let selectedFlowId: UUID | null = null;
+		let selectedFlowId: UUID | undefined = undefined;
 		if (clonedFlows.length > 0) {
 			selectedFlowId = clonedFlows[0].id;
 		}
@@ -57,8 +52,6 @@ const _flowsReducer = createReducer(
 		}
 		return {
 			flows: clonedFlows,
-			lastSaveId: UUID.UUID(),
-			state: FlowsStateEnum.INITIALIZED,
 			tabsState: tabsState,
 			selectedFlowId: selectedFlowId,
 		};
@@ -78,7 +71,7 @@ const _flowsReducer = createReducer(
 				newTrigger
 			);
 		}
-		clonedState.tabsState[state.selectedFlowId.toString()].focusedStep = newTrigger;
+		clonedState.tabsState[state.selectedFlowId!.toString()].focusedStep = newTrigger;
 		return {
 			...state,
 			flows: clonedFlows,
@@ -106,7 +99,7 @@ const _flowsReducer = createReducer(
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
 		const clonedFlows = clonedState.flows;
 		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
-		const tabeState = state.tabsState[state.selectedFlowId.toString()];
+		const tabeState = state.tabsState[state.selectedFlowId!.toString()];
 
 		if (flowIndex != -1) {
 			clonedFlows[flowIndex].last_version = FlowVersion.clone(clonedFlows[flowIndex].last_version).addNewChild(
@@ -181,7 +174,7 @@ const _flowsReducer = createReducer(
 			if (notEmpty) {
 				clonedState.selectedFlowId = clonedState.flows[clonedState.flows.length - 1].id;
 			} else {
-				clonedState.selectedFlowId = null;
+				clonedState.selectedFlowId = undefined;
 			}
 		}
 		return clonedState;
@@ -193,30 +186,16 @@ const _flowsReducer = createReducer(
 		clonedState.tabsState[clonedState.selectedFlowId.toString()] = JSON.parse(JSON.stringify(initialTabState));
 		return clonedState;
 	}),
-	on(FlowsActions.deleteSuccess, (state, { saveId }): FlowsState => {
-		return { ...state, state: state.lastSaveId === saveId ? FlowsStateEnum.SAVED : FlowsStateEnum.SAVING };
-	}),
-	on(FlowsActions.savedSuccess, (state, { saveId, flow }): FlowsState => {
+	on(FlowsActions.savedSuccess, (state, { saveRequestId, flow }): FlowsState => {
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
 		//in case a new version was created after the former one was locked.
 		const flowSaved = clonedState.flows.find(f => f.id == flow.id)!;
 		flowSaved.last_version.id = flow.last_version.id;
 		flowSaved.last_version.state = flow.last_version.state;
-		return { ...clonedState, state: state.lastSaveId === saveId ? FlowsStateEnum.SAVED : FlowsStateEnum.SAVING };
-	}),
-	on(FlowsActions.saveFlowStarted, (state, { flow, saveId }): FlowsState => {
-		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
-		return { ...clonedState, state: FlowsStateEnum.SAVING, lastSaveId: saveId };
-	}),
-	on(FlowsActions.deleteFlowStarted, (state, { flowId, saveId }): FlowsState => {
-		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
-		return { ...clonedState, state: FlowsStateEnum.SAVING, lastSaveId: saveId };
-	}),
-	on(FlowsActions.savedFailed, (state, {}): FlowsState => {
-		return { ...state, state: FlowsStateEnum.FAILED };
+		return { ...clonedState };
 	}),
 	on(FlowsActions.setLeftSidebar, (state, { sidebarType }): FlowsState => {
-		if (state.selectedFlowId === null) {
+		if (!state.selectedFlowId) {
 			throw new Error('Flow id is not selected');
 		}
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));

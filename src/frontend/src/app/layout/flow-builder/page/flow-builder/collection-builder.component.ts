@@ -1,13 +1,4 @@
-import {
-	Component,
-	ElementRef,
-	HostListener,
-	NgZone,
-	OnDestroy,
-	OnInit,
-	ViewChild,
-	ViewEncapsulation,
-} from '@angular/core';
+import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { InstanceRunStatus } from '../../../common-layout/model/enum/instance-run-status';
@@ -17,11 +8,10 @@ import { RightSideBarType } from '../../../common-layout/model/enum/right-side-b
 import { LeftSideBarType } from 'src/app/layout/common-layout/model/enum/left-side-bar-type.enum';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/selector/flow-builder.selector';
-import { lastValueFrom, map, Observable, take, tap } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 import { ViewModeEnum } from '../../store/model/enums/view-mode.enum';
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
-import { SaveState } from '../../store/model/enums/save-state.enum';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from './test-run-bar/test-run-bar.component';
 import { BuilderActions } from '../../store/action/builder.action';
@@ -181,16 +171,5 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 
 	leftDrawerHandleDragEnded() {
 		this.leftSidebarDragging = false;
-	}
-
-	@HostListener('window:beforeunload', ['$event'])
-	async canCloseWindow($event: Event) {
-		const saveState = await lastValueFrom(this.store.select(BuilderSelectors.selectBuilderSaveState).pipe(take(1)));
-
-		if (saveState == SaveState.SAVING) {
-			$event.preventDefault();
-			$event.returnValue = false;
-		}
-		return $event;
 	}
 }

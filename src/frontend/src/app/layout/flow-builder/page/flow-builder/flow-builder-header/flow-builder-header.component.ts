@@ -7,10 +7,9 @@ import { RightSideBarType } from '../../../../common-layout/model/enum/right-sid
 import { ThemeService } from 'src/app/layout/common-layout/service/theme.service';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { collectionActions } from '../../../store/action/collection.action';
-import { combineLatest, map, Observable, tap } from 'rxjs';
+import { CollectionActions } from '../../../store/action/collection.action';
+import { map, Observable, tap } from 'rxjs';
 import { BuilderSelectors } from '../../../store/selector/flow-builder.selector';
-import { SaveState } from '../../../store/model/enums/save-state.enum';
 import { fadeIn400ms } from 'src/app/layout/common-layout/animation/fade-in.animations';
 import { FlowsActions } from '../../../store/action/flows.action';
 import {
@@ -34,7 +33,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
 	flowsCount$: Observable<number>;
 	viewMode$: Observable<boolean>;
 	disablePublishButton$: Observable<boolean>;
-	saveState$: Observable<SaveState>;
 	collectionActions$: Observable<ChevronDropdownOption[]>;
 	publishButtonDisabledTooltip = '';
 	newCollectionCheck$: Observable<Params>;
@@ -49,34 +47,12 @@ export class FlowBuilderHeaderComponent implements OnInit {
 		private navigationService: NavigationService
 	) {}
 
-	get saveState() {
-		return SaveState;
-	}
-
 	ngOnInit(): void {
-		this.saveState$ = this.store.select(BuilderSelectors.selectBuilderSaveState);
 		this.collection$ = this.store.select(BuilderSelectors.selectCurrentCollection);
 		this.flowsCount$ = this.store.select(BuilderSelectors.selectFlowsCount);
 		this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
-		this.disablePublishButton$ = combineLatest({
-			saving: this.store.select(BuilderSelectors.selectSavingChangeState),
-			valid: this.store.select(BuilderSelectors.selectCurrentFlowValidity),
-		}).pipe(
-			tap(res => {
-				if (res.saving) {
-					this.publishButtonDisabledTooltip = 'Please wait until saving is complete';
-				} else if (!res.valid) {
-					this.publishButtonDisabledTooltip = 'Please make sure all flows are valid';
-				} else {
-					this.publishButtonDisabledTooltip = '';
-				}
-			}),
-			map(res => {
-				return res.saving || !res.valid;
-			})
-		);
 		this.collectionActions$ = this.collection$.pipe(
-			map(piece => [
+			map(collection => [
 				{
 					id: 'RENAME',
 					name: 'Rename',
@@ -96,7 +72,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 				},
 				{
 					id: 'COPY_ID',
-					name: piece.id.toString(),
+					name: collection.id.toString(),
 					cssClasses: '',
 					type: ChevronDropdownOptionType.COPY_ID,
 				},
@@ -134,7 +110,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 	}
 
 	savePieceName(newPieceName: string) {
-		this.store.dispatch(collectionActions.changeName({ displayName: newPieceName }));
+		this.store.dispatch(CollectionActions.changeName({ displayName: newPieceName }));
 		this.navigationService.setTitle(newPieceName);
 	}
 

@@ -34,7 +34,7 @@ import { StepTypeListComponent } from './page/flow-builder/flow-right-sidebar/st
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { StoreModule } from '@ngrx/store';
-import { pieceReducer } from './store/reducer/collection.reducer';
+import { collectionReducer } from './store/reducer/collection.reducer';
 import { EffectsModule } from '@ngrx/effects';
 import { PieceEffects } from './store/effect/collection.effects';
 import { flowsReducer } from './store/reducer/flows.reducer';
@@ -76,7 +76,7 @@ import { DefaultConfigTypeSettingsComponent } from './page/flow-builder/flow-lef
 import { OAuth2ConfigSettingsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/o-auth2-config-settings/o-auth2-config-settings.component';
 import { ComponentInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/component-input-form.component';
 import { NewAuthenticationModalComponent } from './page/flow-builder/flow-right-sidebar/new-authentication-modal/new-authentication-modal.component';
-import { PublishPopoverComponent } from './page/flow-builder/flow-builder-header/publish-popover/publish-popover.component';
+import { DeployButtonComponent } from './page/flow-builder/flow-builder-header/publish-popover/deploy-button.component';
 import { TrackFocusDirective } from './page/flow-builder/flow-left-sidebar/run-details/steps-results-list/track-focus.directive';
 import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
 
@@ -100,7 +100,7 @@ import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/cente
 		AngularSvgIconModule.forRoot(),
 		EffectsModule.forFeature([PieceEffects, FlowsEffects, ViewModeEffects, FlowItemsDetailsEffects]),
 		StoreModule.forFeature('builderState', {
-			pieceState: pieceReducer,
+			collectionState: collectionReducer,
 			flowsState: flowsReducer,
 			viewMode: viewModeReducer,
 			flowItemsDetailsState: flowItemsDetailsReducer,
@@ -159,7 +159,7 @@ import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/cente
 		OAuth2ConfigSettingsComponent,
 		ComponentInputFormComponent,
 		NewAuthenticationModalComponent,
-		PublishPopoverComponent,
+		DeployButtonComponent,
 		TrackFocusDirective,
 		CenterMatMenuDirective,
 	],

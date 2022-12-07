@@ -5,11 +5,8 @@ import { LeftSideBarType } from '../../../common-layout/model/enum/left-side-bar
 import { Flow } from '../../../common-layout/model/flow.class';
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
-import { CollectionStateEnum } from '../model/enums/collection-state.enum';
-import { FlowsStateEnum } from '../model/enums/flows-state.enum';
 import { UUID } from 'angular2-uuid';
 import { InstanceRun } from '../../../common-layout/model/instance-run.interface';
-import { SaveState } from '../model/enums/save-state.enum';
 import { DropdownItemOption } from '../../../common-layout/model/fields/variable/subfields/dropdown-item-option';
 import { FlowItem } from '../../../common-layout/model/flow-builder/flow-item';
 import { Config } from '../../../common-layout/model/fields/variable/config';
@@ -19,6 +16,7 @@ import { TriggerType } from 'src/app/layout/common-layout/model/enum/trigger-typ
 import { ActionType } from '../../../common-layout/model/enum/action-type.enum';
 import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
 import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
+import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -26,7 +24,7 @@ export const selectBuilderState = createFeatureSelector<GlobalBuilderState>(BUIL
 
 export const selectCurrentCollection = createSelector(
 	selectBuilderState,
-	(state: GlobalBuilderState) => state.pieceState.collection
+	(state: GlobalBuilderState) => state.collectionState.collection
 );
 
 export const selectCurrentCollectionId = createSelector(
@@ -45,45 +43,16 @@ export const selectCurrentCollectionConfigs = createSelector(selectCurrentCollec
 	});
 });
 
-export const selectSavingChangeState = createSelector(
-	selectBuilderState,
-	(state: GlobalBuilderState) =>
-		state.pieceState.state == CollectionStateEnum.SAVING || state.flowsState.state == FlowsStateEnum.SAVING
-);
-
-export const selectCurrentFlowSaved = createSelector(
-	selectBuilderState,
-	(state: GlobalBuilderState) =>
-		state.flowsState.state === FlowsStateEnum.SAVED || state.flowsState.state === FlowsStateEnum.INITIALIZED
-);
-
-export const selectFlowState = createSelector(
-	selectBuilderState,
-	(state: GlobalBuilderState) => state.flowsState.state
-);
-
 export const selectCollectionState = createSelector(
 	selectBuilderState,
-	(state: GlobalBuilderState) => state.pieceState.state
+	(state: GlobalBuilderState) => state.collectionState.state
 );
-
-export const selectBuilderSaveState = createSelector(
-	selectFlowState,
-	selectCollectionState,
-	(flowState: FlowsStateEnum, pieceState: CollectionStateEnum) => {
-		if (pieceState === CollectionStateEnum.FAILED || flowState === FlowsStateEnum.FAILED) {
-			return SaveState.FAILED;
-		}
-		if (pieceState === CollectionStateEnum.INITIALIZED && flowState === FlowsStateEnum.INITIALIZED) {
-			return SaveState.INITIALIZED;
-		}
-		if (pieceState === CollectionStateEnum.SAVING || flowState === FlowsStateEnum.SAVING) {
-			return SaveState.SAVING;
-		}
-		return SaveState.SAVED;
-	}
+export const selectIsSaving = createSelector(
+	selectBuilderState,
+	(state: GlobalBuilderState) =>
+		(state.collectionState.state & CollectionStateEnum.SAVING_COLLECTION) === CollectionStateEnum.SAVING_COLLECTION ||
+		(state.collectionState.state & CollectionStateEnum.SAVING_FLOW) === CollectionStateEnum.SAVING_FLOW
 );
-
 export const selectViewMode = createSelector(selectBuilderState, (state: GlobalBuilderState) => state.viewMode);
 
 export const selectInstanceRunView = createSelector(
@@ -337,7 +306,6 @@ export const BuilderSelectors = {
 	selectCurrentLeftSidebar,
 	selectCurrentLeftSidebarType,
 	selectFlowsCount,
-	selectBuilderSaveState,
 	selectCurrentStepName,
 	selectCurrentCollectionConfigs,
 	selectCurrentRightSideBarType,
@@ -347,11 +315,9 @@ export const BuilderSelectors = {
 	selectAuth2Configs,
 	selectInstanceRunView,
 	selectCollectionState,
+	selectIsSaving,
 	selectFlow,
 	selectTabState,
-	selectFlowState,
-	selectCurrentFlowSaved,
-	selectSavingChangeState,
 	selectAllFlowItemsDetails,
 	selectFlowItemDetails,
 	selectAllFlowItemsDetailsLoadedState,

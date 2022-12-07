@@ -11,7 +11,7 @@ import { BsModalRef } from 'ngx-bootstrap/modal';
 import { fadeInUp400ms } from '../../../../../common-layout/animation/fade-in-up.animation';
 import { DropdownItemOption } from 'src/app/layout/common-layout/model/fields/variable/subfields/dropdown-item-option';
 import { OAuth2ConfigSettings } from 'src/app/layout/common-layout/model/fields/variable/config-settings';
-import { collectionActions } from 'src/app/layout/flow-builder/store/action/collection.action';
+import { CollectionActions } from 'src/app/layout/flow-builder/store/action/collection.action';
 
 import { ConfigKeyValidator } from '../../validators/configKeyValidator';
 
@@ -35,6 +35,8 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 	configTypeChanged$: Observable<ConfigType>;
 	hasViewModeListenerBeenSet = false;
 	configType = ConfigType;
+	configTypesDropdownOptions = configTypesDropdownOptions;
+	ConfigType = ConfigType;
 	constructor(private bsModalRef: BsModalRef, private store: Store, private formBuilder: FormBuilder) {}
 
 	ngOnInit(): void {
@@ -69,7 +71,7 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 				),
 				type: new FormControl(ConfigType.SHORT_TEXT, [Validators.required]),
 				settings: new FormControl(undefined),
-				value: new FormControl(),
+				value: new FormControl(undefined, Validators.required),
 			});
 		} else {
 			this.configForm = this.formBuilder.group({
@@ -85,7 +87,7 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 				),
 				type: new FormControl(this.configToUpdate.type, [Validators.required]),
 				settings: new FormControl(this.configToUpdate.settings),
-				value: new FormControl(this.configToUpdate.value),
+				value: new FormControl(this.configToUpdate.value, Validators.required),
 			});
 		}
 	}
@@ -121,10 +123,10 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 
 	saveConfig(config: Config): void {
 		if (this.configIndexInConfigsList == undefined) {
-			this.store.dispatch(collectionActions.addConfig({ config: config }));
+			this.store.dispatch(CollectionActions.addConfig({ config: config }));
 		} else {
 			this.store.dispatch(
-				collectionActions.updateConfig({
+				CollectionActions.updateConfig({
 					configIndex: this.configIndexInConfigsList,
 					config: config,
 				})
@@ -143,13 +145,6 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 		this.bsModalRef.hide();
 	}
 
-	get ConfigType() {
-		return ConfigType;
-	}
-
-	get configTypesDropdownOptions() {
-		return configTypesDropdownOptions;
-	}
 	getControlValue(name: string) {
 		return this.configForm.get(name)!.value;
 	}

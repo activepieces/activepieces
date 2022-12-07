@@ -8,7 +8,7 @@ import { FlowItemsDetailsState } from './flow-items-details-state.model';
 import { FlowsState } from './flows-state.model';
 
 export class GlobalBuilderState {
-	readonly pieceState: {
+	readonly collectionState: {
 		collection: Collection;
 		state: CollectionStateEnum;
 	};

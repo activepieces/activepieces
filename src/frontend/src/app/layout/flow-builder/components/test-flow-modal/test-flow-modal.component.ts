@@ -81,7 +81,7 @@ export class TestFlowModalComponent implements OnInit {
 	}
 
 	ngOnInit() {
-		this.isSaving$ = this.store.select(BuilderSelectors.selectSavingChangeState);
+		this.isSaving$ = this.store.select(BuilderSelectors.selectIsSaving);
 		this.selectedCollection$ = this.store.select(BuilderSelectors.selectCurrentCollection);
 		this.setupSelectedFlowListener();
 		this.selectedInstanceRunStatus();

@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { SeekPage } from './seek-page';
 import { UUID } from 'angular2-uuid';
 import { CodeService } from '../../flow-builder/service/code.service';
+import { InstanceStatus } from '../model/enum/instance-status';
 
 @Injectable({
 	providedIn: 'root',
@@ -25,28 +26,11 @@ export class CollectionService {
 	}
 
 	update(collectionId: UUID, collection: CollectionVersion): Observable<Collection> {
-		// const artifactsAndTheirNames: ArtifactAndItsNameInFormData[] = [
-		// 	...this.getDynamicDropdownConfigsArtifacts(collection),
-		// ];
-
-		const updatePiece$ = this.http.put<Collection>(environment.apiUrl + '/collections/' + collectionId, {
+		const updateCollection$ = this.http.put<Collection>(environment.apiUrl + '/collections/' + collectionId, {
 			display_name: collection.display_name,
 			configs: collection.configs,
 		});
-		return updatePiece$;
-		// const artifacts$ = zipAllArtifacts(artifactsAndTheirNames);
-		// if (artifacts$.length == 0) return updatePiece$;
-		// return forkJoin(artifacts$).pipe(
-		// 	tap(zippedFilesAndTheirNames => {
-		// 		addArtifactsToFormData(zippedFilesAndTheirNames, formData);
-		// 	}),
-		// 	switchMap(() => {
-		// 		return updatePiece$;
-		// 	}),
-		// 	tap(() => {
-		// 		this.codeService.unmarkDirtyArtifactsInCollectionConfigsCache(collectionId);
-		// 	})
-		// );
+		return updateCollection$;
 	}
 
 	getVersion(versionId: UUID): Observable<CollectionVersion> {
@@ -73,5 +57,10 @@ export class CollectionService {
 
 	archive(pieceId: UUID): Observable<void> {
 		return this.http.delete<void>(environment.apiUrl + '/collections/' + pieceId);
+	}
+	deploy(collection_id: UUID): Observable<void> {
+		return this.http.post<void>(environment.apiUrl + `collections/${collection_id}/instances`, {
+			status: InstanceStatus.RUNNING,
+		});
 	}
 }

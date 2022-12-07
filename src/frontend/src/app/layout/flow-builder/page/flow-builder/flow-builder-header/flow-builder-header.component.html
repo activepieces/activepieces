@@ -27,7 +27,7 @@
         [hoverColor]="themeService.PRIMARY_COLOR" [iconFilename]="'revert.svg'" (click)="openCollectionVersionsLists()"
         *ngIf="(viewMode$ | async) === false"></app-icon-button>
       <app-embed-modal *ngIf="(viewMode$ | async) === false"></app-embed-modal>
-      <app-publish-popover *ngIf="(viewMode$ | async) === false"></app-publish-popover>
+      <app-deploy-button *ngIf="(viewMode$ | async) === false"></app-deploy-button>
     </div>
   </div>
 </nav>
