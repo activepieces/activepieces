@@ -6,7 +6,6 @@ import {LoopOnItemsStepOutput} from '../../output/loop-on-items-step-output';
 import {VariableService} from '../../../services/variable-service';
 import {StoreScope} from '../../util/store-scope';
 import * as webpack from 'webpack';
-import Record = webpack.compilation.Record;
 
 export class LoopOnItemActionSettings {
   items: string;
