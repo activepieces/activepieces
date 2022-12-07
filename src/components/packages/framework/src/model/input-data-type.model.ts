@@ -1,0 +1,8 @@
+export enum InputDataType {
+	ARRAY = 'ARRAY',
+	BOOLEAN = 'BOOLEAN',
+	INTEGER = 'INTEGER',
+	NUMBER = 'NUMBER',
+	OBJECT = 'OBJECT',
+	STRING = 'STRING',
+}

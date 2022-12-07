@@ -1,0 +1,30 @@
+{
+  "name": "@activepieces/slack",
+  "version": "0.0.2",
+  "description": "activepieces slack component",
+  "dependencies": {
+    "@activepieces/components-common": "^0.0.2",
+    "@activepieces/components-framework": "^0.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rm -rf dist && tsc",
+    "lint": "eslint .",
+    "prepack": "npm run-script build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/activepieces/components.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/activepieces/components/issues"
+  },
+  "homepage": "https://github.com/activepieces/components#readme",
+  "files": [
+    "dist"
+  ],
+  "private": false,
+  "exports": "./dist/main.js",
+  "types": "./dist/main.d.ts"
+}

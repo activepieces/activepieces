@@ -1,0 +1,37 @@
+{
+  "name": "@activepieces/components-src",
+  "version": "0.0.0",
+  "description": "activepieces components",
+  "private": true,
+  "homepage": "https://github.com/activepieces/components",
+  "license": "MIT",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/activepieces/components.git"
+  },
+  "bugs": {
+    "url": "https://github.com/activepieces/components/issues"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "type": "module",
+  "devDependencies": {
+    "@types/superagent": "^4.1.15",
+    "@typescript-eslint/eslint-plugin": "^5.39.0",
+    "@typescript-eslint/parser": "^5.39.0",
+    "eslint": "^8.24.0",
+    "eslint-config-xo": "^0.42.0",
+    "eslint-config-xo-typescript": "^0.53.0",
+    "husky": "^8.0.0",
+    "typescript": "^4.8.4"
+  },
+  "engines": {
+    "node": "16.x",
+    "npm": "8.x"
+  }
+}
