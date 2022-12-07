@@ -1,8 +1,10 @@
 import {ExecutionState} from '../execution/execution-state';
 import {StepOutput} from '../output/step-output';
+import {StoreScope} from '../util/store-scope';
 
 export enum ActionType {
   CODE = 'CODE',
+  COMPONENT = 'COMPONENT',
   STORAGE = 'STORAGE',
   REMOTE_FLOW = 'REMOTE_FLOW',
   RESPONSE = 'RESPONSE',
@@ -33,6 +35,7 @@ export abstract class Action {
 
   abstract execute(
     executionState: ExecutionState,
-    ancestors: [string, number][]
+    ancestors: [string, number][],
+    storeScope: StoreScope
   ): Promise<StepOutput>;
 }

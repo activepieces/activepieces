@@ -1,6 +1,11 @@
 import {Action, ActionType} from '../action';
 import {ExecutionState} from '../../execution/execution-state';
 import {StepOutput, StepOutputStatus} from '../../output/step-output';
+import {StoreScope} from '../../util/store-scope';
+import {globals} from '../../../globals';
+import {VariableService} from '../../../services/variable-service';
+
+const axios = require('axios').default;
 
 export enum StorageOperation {
   GET = 'GET',
@@ -9,6 +14,18 @@ export enum StorageOperation {
 
 export enum StorageScope {
   INSTANCE = 'INSTANCE',
+  COLLECTION = 'COLLECTION',
+}
+
+export interface GetStorageRequest {
+  storePath: string[];
+  scope: StorageScope;
+}
+
+export interface PutStorageRequest {
+  storePath: string[];
+  scope: StorageScope;
+  value: any;
 }
 
 export class StorageActionSettings {
@@ -41,6 +58,7 @@ export class StorageActionSettings {
 
 export class StorageAction extends Action {
   settings: StorageActionSettings;
+  variableService: VariableService;
 
   constructor(
     type: ActionType,
@@ -50,14 +68,67 @@ export class StorageAction extends Action {
   ) {
     super(type, name, nextAction);
     this.settings = settings;
+    this.variableService = new VariableService();
   }
 
-  execute(
+  async execute(
     executionState: ExecutionState,
-    ancestors: [string, number][]
+    ancestors: [string, number][],
+    storeScope: StoreScope
   ): Promise<StepOutput> {
     const stepOutput = new StepOutput();
-    stepOutput.status = StepOutputStatus.SUCCEEDED;
+    try {
+      let data = undefined;
+      const headers = {
+        Authorization: 'Bearer ' + globals.workerToken,
+      };
+      const key = this.variableService.resolve(
+        this.settings.key,
+        executionState
+      );
+      switch (this.settings.operation) {
+        case StorageOperation.GET:
+          const getRequest: GetStorageRequest = {
+            storePath: storeScope.key(key),
+            scope: this.settings.scope,
+          };
+          data = (
+            await axios({
+              method: 'GET',
+              url: globals.apiUrl + '/storage',
+              data: getRequest,
+              headers: headers,
+            })
+          ).data;
+          break;
+        case StorageOperation.PUT:
+          const value = this.variableService.resolve(
+            this.settings.value,
+            executionState
+          );
+          const putRequest: PutStorageRequest = {
+            value: value,
+            storePath: storeScope.key(key),
+            scope: this.settings.scope,
+          };
+          data = (
+            await axios({
+              method: 'POST',
+              url: globals.apiUrl + '/storage',
+              data: putRequest,
+              headers: headers,
+            })
+          ).data;
+          break;
+      }
+      stepOutput.output = {
+        value: data,
+      };
+      stepOutput.status = StepOutputStatus.SUCCEEDED;
+    } catch (e) {
+      console.error(e);
+      stepOutput.status = StepOutputStatus.FAILED;
+    }
     return Promise.resolve(stepOutput);
   }
 }

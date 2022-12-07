@@ -63,9 +63,10 @@ public class FlowArtifactBuilderService {
                                     "application/zip", buildStream.readAllBytes()));
                     codeSettingsView.setArtifactPackagedId(outputEntity.getId());
                     changed = true;
+                    log.info("Built an package for an action {} with id {}", codeAction.getDisplayName(), outputEntity.getId());
                 }
             }
-            if (changed) {
+            if (!changed) {
                 return flowVersionView;
             }
             return flowVersionService.persistPackagedFlow(flowVersionView);

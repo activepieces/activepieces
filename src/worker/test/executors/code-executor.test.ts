@@ -8,6 +8,9 @@ describe('Code Executor', () => {
     jest
       .spyOn(globals, 'codeDirectory', 'get')
       .mockReturnValue(`${rootDir}/test/resources/codes`);
+    jest
+      .spyOn(globals, 'executorFile', 'get')
+      .mockReturnValue(`${rootDir}/test/resources/executor.js`);
   });
 
   test('Artifact is executed and output is returned', async () => {

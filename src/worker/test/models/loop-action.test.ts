@@ -1,6 +1,6 @@
 import {ActionType} from '../../src/model/action/action';
 import {ExecutionState} from '../../src/model/execution/execution-state';
-import {StepOutputStatus} from '../../src/model/output/step-output';
+import {StepOutput, StepOutputStatus} from '../../src/model/output/step-output';
 import {FlowExecutor} from '../../src/executors/flow-executor';
 import {
   LoopOnItemAction,
@@ -10,23 +10,30 @@ import {
   CodeAction,
   CodeActionSettings,
 } from '../../src/model/action/types/code-action';
+import {StoreScope} from "../../src/model/util/store-scope";
 
 let executionState: ExecutionState;
 
 describe('Loop Action', () => {
   beforeEach(() => {
     executionState = new ExecutionState();
+    executionState.insertStep({
+      output: {
+        items: ["one", "two"]
+      }
+    }, 'trigger', []);
+
   });
 
   test('Loop action is executed', async () => {
     const loopAction = new LoopOnItemAction(
       ActionType.LOOP_ON_ITEMS,
       'LOOP_ON_ITEMS_ACTION',
-      new LoopOnItemActionSettings([1, 2]),
+      new LoopOnItemActionSettings("${trigger.items}"),
       new CodeAction(
         ActionType.CODE,
         'CODE_ACTION',
-        new CodeActionSettings({}, 'artifact.zip', 'artifact.com')
+        new CodeActionSettings({}, 'artifact.zip')
       )
     );
 
@@ -34,10 +41,17 @@ describe('Loop Action', () => {
       .spyOn(FlowExecutor.prototype, 'iterateFlow')
       .mockImplementation(() => Promise.resolve(true));
 
-    const stepOutput = await loopAction.execute(executionState, []);
+    const stepOutput = await loopAction.execute(executionState, [], new StoreScope([]));
 
     expect(stepOutput.status).toEqual(StepOutputStatus.SUCCEEDED);
-    expect(stepOutput.output).toBeUndefined();
+    expect(stepOutput.output).toEqual({
+      current_item: "two",
+      current_iteration: 2,
+      iterations: [
+        {},
+        {}
+      ]
+    });
     expect(stepOutput.errorMessage).toBeUndefined();
   });
 
@@ -45,11 +59,11 @@ describe('Loop Action', () => {
     const loopAction = new LoopOnItemAction(
       ActionType.LOOP_ON_ITEMS,
       'LOOP_ON_ITEMS_ACTION',
-      new LoopOnItemActionSettings([1, 2]),
+      new LoopOnItemActionSettings("${trigger.items}"),
       new CodeAction(
         ActionType.CODE,
         'CODE_ACTION',
-        new CodeActionSettings({}, 'artifact.zip', 'artifact.com')
+        new CodeActionSettings({}, 'artifact.zip')
       )
     );
 
@@ -57,9 +71,19 @@ describe('Loop Action', () => {
       .spyOn(FlowExecutor.prototype, 'iterateFlow')
       .mockImplementation(() => Promise.resolve(false));
 
-    const stepOutput = await loopAction.execute(executionState, []);
 
+    const stepOutput = await loopAction.execute(executionState, [], new StoreScope([]));
+
+    expect(stepOutput.input).toEqual({
+      items: ["one", "two"]
+    })
     expect(stepOutput.status).toEqual(StepOutputStatus.FAILED);
-    expect(stepOutput.output).toBeUndefined();
+    expect(stepOutput.output).toEqual({
+      current_item: "one",
+      current_iteration: 1,
+      iterations: [
+        {}
+      ]
+    });
   });
 });

@@ -11,6 +11,7 @@ import {
   ExecutionOutputStatus,
 } from '../../src/model/execution/execution-output';
 import {ExecutionError} from '../../src/model/execution/execution-error';
+import {StoreScope} from "../../src/model/util/store-scope";
 
 let executionState: ExecutionState;
 
@@ -39,7 +40,7 @@ describe('Remote Flow Action', () => {
         )
       );
 
-    const stepOutput = await remoteFlowAction.execute(executionState, []);
+    const stepOutput = await remoteFlowAction.execute(executionState, [], new StoreScope([]));
 
     expect(stepOutput.status).toEqual(StepOutputStatus.SUCCEEDED);
     expect(stepOutput.output).toEqual('flow executed!');
@@ -57,7 +58,7 @@ describe('Remote Flow Action', () => {
       .spyOn(FlowExecutor.prototype, 'executeFlow')
       .mockRejectedValue(new Error('Error'));
 
-    const stepOutput = await remoteFlowAction.execute(executionState, []);
+    const stepOutput = await remoteFlowAction.execute(executionState, [], new StoreScope([]));
 
     expect(stepOutput.status).toEqual(StepOutputStatus.FAILED);
     expect(stepOutput.output).toBeUndefined();
@@ -85,7 +86,7 @@ describe('Remote Flow Action', () => {
         )
       );
 
-    const stepOutput = await remoteFlowAction.execute(executionState, []);
+    const stepOutput = await remoteFlowAction.execute(executionState, [], new StoreScope([]));
 
     expect(stepOutput.status).toEqual(StepOutputStatus.FAILED);
     expect(stepOutput.output).toBeUndefined();

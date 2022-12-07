@@ -6,6 +6,7 @@ import {
 import {ExecutionState} from '../../src/model/execution/execution-state';
 import {StepOutputStatus} from '../../src/model/output/step-output';
 import {CodeExecutor} from '../../src/executors/code-executer';
+import {StoreScope} from "../../src/model/util/store-scope";
 
 let executionState: ExecutionState;
 
@@ -18,14 +19,14 @@ describe('Code Action', () => {
     const codeAction = new CodeAction(
       ActionType.CODE,
       'CODE_ACTION',
-      new CodeActionSettings({}, 'artifact.zip', 'artifact.com')
+      new CodeActionSettings({}, 'artifact.zip')
     );
 
     jest
       .spyOn(CodeExecutor.prototype, 'executeCode')
       .mockImplementation(() => Promise.resolve('code executed!'));
 
-    const stepOutput = await codeAction.execute(executionState, []);
+    const stepOutput = await codeAction.execute(executionState, [], new StoreScope([]));
 
     expect(stepOutput.status).toEqual(StepOutputStatus.SUCCEEDED);
     expect(stepOutput.output).toEqual('code executed!');
@@ -36,14 +37,14 @@ describe('Code Action', () => {
     const codeAction = new CodeAction(
       ActionType.CODE,
       'CODE_ACTION',
-      new CodeActionSettings({}, 'artifact.zip', 'artifact.com')
+      new CodeActionSettings({}, 'artifact.zip')
     );
 
     jest
       .spyOn(CodeExecutor.prototype, 'executeCode')
       .mockRejectedValue(new Error('Error'));
 
-    const stepOutput = await codeAction.execute(executionState, []);
+    const stepOutput = await codeAction.execute(executionState, [], new StoreScope([]));
 
     expect(stepOutput.status).toEqual(StepOutputStatus.FAILED);
     expect(stepOutput.output).toBeUndefined();

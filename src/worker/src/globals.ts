@@ -3,10 +3,29 @@ class Globals {
   private _flowDirectory = './flows';
   private _codeDirectory = './codes';
   private _configsFile = './configs.json';
+  private _contextFile = './context.json';
   private _triggerPayloadFile = './triggerPayload.json';
   private _inputFile = './input.json';
   private _outputFile = './output.json';
   private _executorFile = './executor.js';
+  private _workerToken = '';
+  private _apiUrl = '';
+
+  set apiUrl(_apiUrl: string) {
+    this._apiUrl = _apiUrl;
+  }
+
+  get apiUrl() {
+    return this._apiUrl;
+  }
+
+  set workerToken(_workerToken: string) {
+    this._workerToken = _workerToken;
+  }
+
+  get workerToken() {
+    return this._workerToken;
+  }
 
   get collectionDirectory() {
     return this._collectionDirectory;
@@ -18,6 +37,10 @@ class Globals {
 
   get codeDirectory() {
     return this._codeDirectory;
+  }
+
+  get contextFile() {
+    return this._contextFile;
   }
 
   get configsFile() {

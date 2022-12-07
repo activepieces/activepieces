@@ -15,3 +15,4 @@ out/
 
 ### VS Code ###
 .vscode/
+/src/worker/dist/

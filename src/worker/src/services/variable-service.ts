@@ -1,12 +1,12 @@
 import {get} from 'lodash';
 import {ExecutionState} from '../model/execution/execution-state';
-import {isString} from "lodash";
+import {isString} from 'lodash';
+import {StepOutput} from '../model/output/step-output';
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\$\\{(.*?)\\}', 'g');
   private CONFIGS = 'configs';
   private CONTEXT = 'context';
-  private OUTPUT = 'output';
   private STEPS = 'steps';
 
   private findPath(path: string) {
@@ -16,7 +16,6 @@ export class VariableService {
       paths[0] !== this.CONFIGS &&
       paths[0] !== this.CONTEXT
     ) {
-      paths.splice(1, 0, this.OUTPUT);
       paths.splice(0, 0, this.STEPS);
     }
     return paths.join('.');
@@ -29,22 +28,22 @@ export class VariableService {
       input.match(this.VARIABLE_TOKEN)!.length === 1 &&
       input.match(this.VARIABLE_TOKEN)![0] === input
     ) {
-      const resolvedInput = get(
+      const resolvedInput = VariableService.copyFromMap(
         valuesMap,
         this.findPath(input.substring(2, input.length - 1))
       );
-      if (resolvedInput === undefined) {
-        return '';
-      }
       return resolvedInput;
     }
 
     // If input contains other text, replace the variable with its value as a string.
     return input.replace(this.VARIABLE_TOKEN, (_, matchedKey) => {
-      const resolvedInput = get(valuesMap, this.findPath(matchedKey));
+      const resolvedInput = VariableService.copyFromMap(
+        valuesMap,
+        this.findPath(matchedKey)
+      );
       if (resolvedInput === undefined) {
         return '';
-      } else if ( isString(resolvedInput)) {
+      } else if (isString(resolvedInput)) {
         return resolvedInput;
       } else {
         return JSON.stringify(resolvedInput);
@@ -52,8 +51,18 @@ export class VariableService {
     });
   }
 
+  private static copyFromMap(valuesMap: any, path: string) {
+    const value = get(valuesMap, path);
+    if (value === undefined) {
+      return '';
+    }
+    return value;
+  }
+
   private resolveInternally(unresolvedInput: any, valuesMap: any) {
-    if (isString(unresolvedInput)) {
+    if (unresolvedInput === undefined || unresolvedInput === null) {
+      return unresolvedInput;
+    } else if (isString(unresolvedInput)) {
       return this.resolveInput(unresolvedInput, valuesMap);
     } else if (Array.isArray(unresolvedInput)) {
       unresolvedInput.forEach(
@@ -71,16 +80,21 @@ export class VariableService {
 
   private getExecutionStateObject(executionState: ExecutionState): object {
     type ValuesMap = {
-      configs: {[key: string]: any};
-      steps: {[key: string]: any};
+      configs: {[key: string]: unknown};
+      steps: {[key: string]: unknown};
+      context: {[key: string]: unknown};
     };
-    const valuesMap: ValuesMap = {configs: {}, steps: {}};
+    const valuesMap: ValuesMap = {context: {}, configs: {}, steps: {}};
 
-    executionState.configs.forEach((value, key) => {
+    Object.entries(executionState.context).forEach(([key, value]) => {
+      valuesMap.context[key] = value;
+    });
+
+    Object.entries(executionState.configs).forEach(([key, value]) => {
       valuesMap.configs[key] = value;
     });
 
-    executionState.steps.forEach((value, key) => {
+    Object.entries(executionState.lastStepState).forEach(([key, value]) => {
       valuesMap.steps[key] = value;
     });
 
@@ -89,7 +103,7 @@ export class VariableService {
 
   resolve(unresolvedInput: any, executionState: ExecutionState) {
     return this.resolveInternally(
-      unresolvedInput,
+      JSON.parse(JSON.stringify(unresolvedInput)),
       this.getExecutionStateObject(executionState)
     );
   }

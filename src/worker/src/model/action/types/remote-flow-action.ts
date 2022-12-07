@@ -4,6 +4,7 @@ import {StepOutput, StepOutputStatus} from '../../output/step-output';
 import {FlowExecutor} from '../../../executors/flow-executor';
 import {VariableService} from '../../../services/variable-service';
 import {ExecutionOutputStatus} from '../../execution/execution-output';
+import {StoreScope} from '../../util/store-scope';
 
 export class RemoteFlowActionSettings {
   input: any;
@@ -53,7 +54,8 @@ export class RemoteFlowAction extends Action {
 
   async execute(
     executionState: ExecutionState,
-    ancestors: [string, number][]
+    ancestors: [string, number][],
+    storeScope: StoreScope
   ): Promise<StepOutput> {
     const stepOutput = new StepOutput();
 
@@ -65,12 +67,16 @@ export class RemoteFlowAction extends Action {
       stepOutput.input = resolvedInput;
 
       const childExecutionState = new ExecutionState();
-      childExecutionState.insertConfigs(resolvedInput);
 
       const childFlowExecutor = new FlowExecutor(childExecutionState);
       const executionOutput = await childFlowExecutor.executeFlow(
         this.settings.pieceVersionId,
-        this.settings.flowVersionId
+        this.settings.flowVersionId,
+        storeScope.remoteFlow(
+          this.settings.pieceVersionId,
+          this.settings.flowVersionId
+        ),
+        resolvedInput
       );
 
       if (executionOutput.status === ExecutionOutputStatus.SUCCEEDED) {
