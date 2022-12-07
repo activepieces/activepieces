@@ -3,34 +3,28 @@ import {ExecutionState} from '../../execution/execution-state';
 import {StepOutput, StepOutputStatus} from '../../output/step-output';
 import {VariableService} from '../../../services/variable-service';
 import {CodeExecutor} from '../../../executors/code-executer';
+import {StoreScope} from '../../util/store-scope';
 
 export class CodeActionSettings {
   input: any;
-  artifact: string;
-  artifactUrl: string;
+  artifactPackagedId: string;
 
-  constructor(input: any, artifact: string, artifactUrl: string) {
-    this.validate(artifact, artifactUrl);
+  constructor(input: any, artifactPackagedId: string) {
+    this.validate(artifactPackagedId);
     this.input = input;
-    this.artifact = artifact;
-    this.artifactUrl = artifactUrl;
+    this.artifactPackagedId = artifactPackagedId;
   }
 
-  validate(artifact: string, artifactUrl: string) {
+  validate(artifact: string) {
     if (!artifact) {
       throw Error('Settings "artifact" attribute is undefined.');
-    }
-
-    if (!artifactUrl) {
-      throw Error('Settings "artifactUrl" attribute is undefined.');
     }
   }
 
   static deserialize(jsonData: any): CodeActionSettings {
     return new CodeActionSettings(
       jsonData['input'],
-      jsonData['artifact'],
-      jsonData['artifactUrl']
+      jsonData['artifactPackagedId']
     );
   }
 }
@@ -52,18 +46,19 @@ export class CodeAction extends Action {
 
   async execute(
     executionState: ExecutionState,
-    ancestors: [string, number][]
+    ancestors: [string, number][],
+    storeScope: StoreScope
   ): Promise<StepOutput> {
     const stepOutput = new StepOutput();
+    const params = this.variableService.resolve(
+      this.settings.input,
+      executionState
+    );
+    stepOutput.input = params;
     try {
-      const params = this.variableService.resolve(
-        this.settings.input,
-        executionState
-      );
       const codeExecutor = new CodeExecutor();
-
       stepOutput.output = await codeExecutor.executeCode(
-        this.settings.artifact,
+        this.settings.artifactPackagedId,
         params
       );
       stepOutput.status = StepOutputStatus.SUCCEEDED;

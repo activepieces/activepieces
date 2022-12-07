@@ -2,6 +2,7 @@ import {Action, ActionType} from '../action';
 import {ExecutionState} from '../../execution/execution-state';
 import {StepOutput, StepOutputStatus} from '../../output/step-output';
 import {VariableService} from '../../../services/variable-service';
+import {StoreScope} from '../../util/store-scope';
 
 export class ResponseActionSettings {
   output: any;
@@ -32,7 +33,8 @@ export class ResponseAction extends Action {
 
   execute(
     executionState: ExecutionState,
-    ancestors: [string, number][]
+    ancestors: [string, number][],
+    storeScope: StoreScope
   ): Promise<StepOutput> {
     const stepOutput = new StepOutput();
     stepOutput.output = this.variableService.resolve(

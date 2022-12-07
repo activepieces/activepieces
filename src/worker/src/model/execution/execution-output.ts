@@ -10,14 +10,14 @@ export class ExecutionOutput {
   status: ExecutionOutputStatus;
   executionState: ExecutionState;
   duration: number;
-  output?: any;
+  output?: unknown;
   errorMessage?: ExecutionError;
 
   constructor(
     status: ExecutionOutputStatus,
     executionState: ExecutionState,
     duration: number,
-    output?: any,
+    output?: unknown,
     errorMessage?: ExecutionError
   ) {
     this.status = status;

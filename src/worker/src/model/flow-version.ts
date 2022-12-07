@@ -11,15 +11,14 @@ export class FlowVersion {
   }
 
   static deserialize(jsonData: any): FlowVersion {
-    const configsArray = jsonData['configs'] as Array<any>;
+    const configsArray = jsonData['configs'] as Array<unknown>;
     const configs = configsArray.map(variableJson =>
       Variable.deserialize(variableJson)
     );
 
-    const trigger =
-      !jsonData['trigger']
-        ? undefined
-        : Trigger.deserialize(jsonData['trigger']);
+    const trigger = !jsonData['trigger']
+      ? undefined
+      : Trigger.deserialize(jsonData['trigger']);
 
     return new FlowVersion(configs, trigger);
   }

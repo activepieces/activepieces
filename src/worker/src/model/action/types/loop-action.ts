@@ -3,29 +3,34 @@ import {FlowExecutor} from '../../../executors/flow-executor';
 import {ExecutionState} from '../../execution/execution-state';
 import {StepOutput, StepOutputStatus} from '../../output/step-output';
 import {LoopOnItemsStepOutput} from '../../output/loop-on-items-step-output';
+import {VariableService} from '../../../services/variable-service';
+import {StoreScope} from '../../util/store-scope';
+import * as webpack from 'webpack';
+import Record = webpack.compilation.Record;
 
 export class LoopOnItemActionSettings {
-  items: any[];
+  items: string;
 
-  constructor(items: any[]) {
+  constructor(items: string) {
     this.validate(items);
     this.items = items;
   }
 
-  validate(items: any[]) {
+  validate(items: string) {
     if (!items) {
       throw Error('Settings "items" attribute is undefined.');
     }
   }
 
   static deserialize(jsonData: any): LoopOnItemActionSettings {
-    return new LoopOnItemActionSettings(jsonData['items'] as Array<any>);
+    return new LoopOnItemActionSettings(jsonData['items'] as string);
   }
 }
 
 export class LoopOnItemAction extends Action {
   firstLoopAction?: Action;
   settings: LoopOnItemActionSettings;
+  variableService: VariableService;
 
   constructor(
     type: ActionType,
@@ -36,12 +41,16 @@ export class LoopOnItemAction extends Action {
   ) {
     super(type, name, nextAction);
     this.settings = settings;
+    this.variableService = new VariableService();
     this.firstLoopAction = firstLoopAction;
   }
 
   private getError(stepOutput: LoopOnItemsStepOutput) {
-    for (const iteration of stepOutput.iterations) {
-      for (const stepOutput of iteration.values()) {
+    if (stepOutput.output?.iterations === undefined) {
+      throw new Error("Iteration can't be undefined");
+    }
+    for (const iteration of stepOutput.output?.iterations) {
+      for (const stepOutput of Object.values(iteration.values)) {
         if (stepOutput.status === StepOutputStatus.FAILED) {
           return stepOutput.errorMessage;
         }
@@ -52,15 +61,32 @@ export class LoopOnItemAction extends Action {
 
   async execute(
     executionState: ExecutionState,
-    ancestors: [string, number][]
+    ancestors: [string, number][],
+    storeScope: StoreScope
   ): Promise<StepOutput> {
-    const stepOutput = new LoopOnItemsStepOutput();
-    executionState.insertStep(stepOutput, this.name, ancestors);
+    const resolvedInput = this.variableService.resolve(
+      this.settings,
+      executionState
+    );
 
+    const stepOutput = new LoopOnItemsStepOutput();
+    stepOutput.input = resolvedInput;
+
+    stepOutput.output = {
+      current_iteration: 1,
+      current_item: undefined,
+      iterations: [],
+    };
+    executionState.insertStep(stepOutput, this.name, ancestors);
+    const loopOutput = stepOutput.output;
     try {
-      for (let i = 0; i < this.settings.items.length; ++i) {
+      for (let i = 0; i < resolvedInput.items.length; ++i) {
         ancestors.push([this.name, i]);
-        stepOutput.iterations.push(new Map<string, StepOutput>());
+
+        loopOutput.current_iteration = i + 1;
+        loopOutput.current_item = resolvedInput.items[i];
+        loopOutput.iterations.push({});
+        this.updateExecutionStateWithLoopDetails(executionState, loopOutput);
 
         if (this.firstLoopAction === undefined) {
           continue;
@@ -69,7 +95,8 @@ export class LoopOnItemAction extends Action {
         const executor = new FlowExecutor(executionState);
         const loopStatus = await executor.iterateFlow(
           this.firstLoopAction,
-          ancestors
+          ancestors,
+          storeScope
         );
 
         ancestors.pop();
@@ -82,11 +109,28 @@ export class LoopOnItemAction extends Action {
       }
 
       stepOutput.status = StepOutputStatus.SUCCEEDED;
+      executionState.insertStep(stepOutput, this.name, ancestors);
       return Promise.resolve(stepOutput);
     } catch (e) {
       stepOutput.errorMessage = (e as Error).message;
       stepOutput.status = StepOutputStatus.FAILED;
       return Promise.resolve(stepOutput);
     }
+  }
+
+  // We should remove iterations during the inner calls, to avoid huge overhead for logs.
+  // Example if there are two nested loop contains code that reference to the first loop.
+  // The iteration object will always contain all previous iterations.
+  updateExecutionStateWithLoopDetails(
+    executionState: ExecutionState,
+    loopOutput: any
+  ) {
+    executionState.updateLastStep(
+      {
+        ...loopOutput,
+        iterations: undefined,
+      },
+      this.name
+    );
   }
 }

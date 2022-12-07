@@ -11,6 +11,15 @@ import {Action, ActionType} from './action';
 export function createAction(jsonData: any): Action {
   try {
     switch (jsonData['type']) {
+      case 'COMPONENT':
+        return new CodeAction(
+          ActionType.COMPONENT,
+          jsonData['name'],
+          CodeActionSettings.deserialize(jsonData['settings']),
+          !jsonData['nextAction']
+            ? undefined
+            : createAction(jsonData['nextAction'])
+        );
       case 'CODE':
         return new CodeAction(
           ActionType.CODE,

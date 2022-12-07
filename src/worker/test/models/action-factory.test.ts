@@ -18,6 +18,36 @@ import {
 } from '../../src/model/action/types/remote-flow-action';
 
 describe('Action Factory', () => {
+
+  test('Component action is created', async () => {
+    const jsonData = {
+      type: 'COMPONENT',
+      name: 'COMPONENT_ACTION',
+      nextAction: null,
+      settings: {
+        input: {
+          component: {},
+          action: {}
+        },
+        artifactPackagedId: 'artifact.zip'
+      },
+    };
+
+    const action = createAction(jsonData);
+
+    expect(action).toBeInstanceOf(CodeAction);
+    expect(action.type as ActionType).toEqual(ActionType.COMPONENT);
+    expect(action.name).toEqual('COMPONENT_ACTION');
+    expect(action.nextAction).toBeUndefined();
+
+    expect((action as CodeAction).settings).toBeInstanceOf(CodeActionSettings);
+    expect((action as CodeAction).settings.input).toEqual({
+      component: {},
+      action: {}
+    });
+    expect((action as CodeAction).settings.artifactPackagedId).toEqual('artifact.zip');
+  });
+
   test('CODE action is created', async () => {
     const jsonData = {
       type: 'CODE',
@@ -25,8 +55,7 @@ describe('Action Factory', () => {
       nextAction: null,
       settings: {
         input: {},
-        artifact: 'artifact.zip',
-        artifactUrl: 'artifact.com',
+        artifactPackagedId: 'artifact.zip'
       },
     };
 
@@ -39,8 +68,7 @@ describe('Action Factory', () => {
 
     expect((action as CodeAction).settings).toBeInstanceOf(CodeActionSettings);
     expect((action as CodeAction).settings.input).toEqual({});
-    expect((action as CodeAction).settings.artifact).toEqual('artifact.zip');
-    expect((action as CodeAction).settings.artifactUrl).toEqual('artifact.com');
+    expect((action as CodeAction).settings.artifactPackagedId).toEqual('artifact.zip');
   });
 
   test('LOOP_ON_ITEMS action is created', async () => {
@@ -138,14 +166,12 @@ describe('Action Factory', () => {
         },
         settings: {
           input: {},
-          artifact: 'artifact.zip',
-          artifactUrl: 'artifact.com',
+          artifactPackagedId: 'artifact.zip'
         },
       },
       settings: {
         input: {},
-        artifact: 'artifact.zip',
-        artifactUrl: 'artifact.com',
+        artifactPackagedId: 'artifact.zip'
       },
     };
 

@@ -11,12 +11,16 @@ export class Utils {
   }
 
   public static writeToJsonFile(filePath: string, obj: any) {
-    writeFileSync(filePath, JSON.stringify(obj, (key: string, value: any) => {
-      if(value instanceof Map) {
-        return Object.fromEntries(value);
-      } else {
-        return value;
-      }
-    }), 'utf-8');
+    writeFileSync(
+      filePath,
+      JSON.stringify(obj, (key: string, value: any) => {
+        if (value instanceof Map) {
+          return Object.fromEntries(value);
+        } else {
+          return value;
+        }
+      }),
+      'utf-8'
+    );
   }
 }

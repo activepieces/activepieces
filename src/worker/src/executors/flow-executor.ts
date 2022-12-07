@@ -10,6 +10,7 @@ import {
 } from '../model/execution/execution-output';
 import {Utils} from '../utils';
 import {globals} from '../globals';
+import {StoreScope} from '../model/util/store-scope';
 
 export class FlowExecutor {
   private readonly executionState: ExecutionState;
@@ -18,14 +19,24 @@ export class FlowExecutor {
     this.executionState = executionState;
   }
 
-  public async executeFlow(collectionId: string, flowId: string) {
+  public async executeFlow(
+    collectionId: string,
+    flowId: string,
+    storeScope: StoreScope,
+    configsValue: Record<string, any>
+  ) {
     try {
       const startTime = new Date().getTime();
 
-      const flowVersion: FlowVersion = this.prepareFlow(collectionId, flowId);
+      const flowVersion: FlowVersion = this.prepareFlow(
+        collectionId,
+        flowId,
+        configsValue
+      );
       const flowStatus = await this.iterateFlow(
         flowVersion.trigger?.nextAction,
-        []
+        [],
+        storeScope
       );
 
       const endTime = new Date().getTime();
@@ -67,7 +78,7 @@ export class FlowExecutor {
   }
 
   private getError() {
-    for (const [key, value] of this.executionState.steps) {
+    for (const [key, value] of Object.entries(this.executionState.steps)) {
       if (value.status === StepOutputStatus.FAILED) {
         return new ExecutionError(key, value.errorMessage);
       }
@@ -80,7 +91,7 @@ export class FlowExecutor {
     let action: Action | undefined = flowVersion.trigger?.nextAction;
     while (action !== undefined) {
       if (action.type === ActionType.RESPONSE) {
-        return this.executionState.steps.get(action.name)!.output;
+        return this.executionState.steps[action.name]!.output;
       }
       action = action.nextAction;
     }
@@ -89,7 +100,8 @@ export class FlowExecutor {
 
   public async iterateFlow(
     action: Action | undefined,
-    ancestors: [string, number][]
+    ancestors: [string, number][],
+    storeScope: StoreScope
   ): Promise<boolean> {
     if (action === undefined) {
       return true;
@@ -97,7 +109,11 @@ export class FlowExecutor {
 
     const startTime = new Date().getTime();
 
-    const output = await action.execute(this.executionState, ancestors);
+    const output = await action.execute(
+      this.executionState,
+      ancestors,
+      storeScope
+    );
 
     const endTime = new Date().getTime();
     output.duration = endTime - startTime;
@@ -112,10 +128,14 @@ export class FlowExecutor {
       return true;
     }
 
-    return await this.iterateFlow(action.nextAction, ancestors);
+    return await this.iterateFlow(action.nextAction, ancestors, storeScope);
   }
 
-  private prepareFlow(collectionId: string, flowId: string) {
+  private prepareFlow(
+    collectionId: string,
+    flowId: string,
+    configs: Record<string, any>
+  ) {
     try {
       // Parse all required files.
       const collectionVersion: CollectionVersion =
@@ -131,6 +151,7 @@ export class FlowExecutor {
       // Add predefined configs to Execution State.
       this.executionState.insertConfigs(collectionVersion.getConfigsMap());
       this.executionState.insertConfigs(flowVersion.getConfigsMap());
+      this.executionState.insertConfigs(configs);
 
       return flowVersion;
     } catch (e) {

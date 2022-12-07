@@ -57,7 +57,6 @@
             <artifactId>guava</artifactId>
             <version>14.0</version>
         </dependency>
-
         <!-- https://mvnrepository.com/artifact/com.github.ksuid/ksuid -->
         <dependency>
             <groupId>com.github.ksuid</groupId>

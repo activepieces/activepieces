@@ -1,11 +1,14 @@
 {
   "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
+    "lib" : ["es2019"],
+    "module": "commonjs",
+    "moduleResolution": "Node",
+    "sourceMap": true,
     "rootDir": ".",
-    "outDir": "build"
+    "outDir": "dist"
   },
   "include": [
-    "src/**/*.ts",
-    "test/**/*.ts"
+    "src/**/*.ts"
   ]
 }

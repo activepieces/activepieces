@@ -1,0 +1,1 @@
+module.exports={code:async e=>({response:"hello"})};

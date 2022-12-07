@@ -5,6 +5,7 @@ import {
   ResponseAction,
   ResponseActionSettings,
 } from '../../src/model/action/types/response-action';
+import {StoreScope} from "../../src/model/util/store-scope";
 
 let executionState: ExecutionState;
 
@@ -20,7 +21,7 @@ describe('Response Action', () => {
       new ResponseActionSettings('done!')
     );
 
-    const stepOutput = await responseAction.execute(executionState, []);
+    const stepOutput = await responseAction.execute(executionState, [], new StoreScope([]));
 
     expect(stepOutput.status).toEqual(StepOutputStatus.SUCCEEDED);
     expect(stepOutput.output).toEqual('done!');
