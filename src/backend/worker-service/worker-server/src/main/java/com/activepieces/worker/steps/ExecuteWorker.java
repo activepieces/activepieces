@@ -35,7 +35,6 @@ public class ExecuteWorker extends Step {
           FlowVersionView flowVersionView,
           Map<String, Object> input,
           Map<String, Object> triggerPayload,
-          Map<String, Object> context,
           Map<String, Object> output,
           StorePath storePath) throws IOException, InterruptedException {
     long startTime = System.currentTimeMillis();

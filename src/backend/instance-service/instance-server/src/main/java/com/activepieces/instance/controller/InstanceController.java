@@ -47,27 +47,10 @@ import java.util.UUID;
 public class InstanceController {
 
     private final InstanceService instanceService;
-    private final FlowService flowService;
-    private final FlowVersionService flowVersionService;
-    private final FlowPublisherService flowPublisherService;
-
-    private final CollectionService collectionService;
-    private final CollectionVersionService collectionVersionService;
 
     @Autowired
-    public InstanceController(
-            @NonNull FlowPublisherService flowPublisherService,
-            @NonNull final InstanceService instanceService,
-            @NonNull final CollectionService collectionService,
-            @NonNull final FlowVersionService flowVersionService,
-            @NonNull final FlowService flowService,
-            @NonNull final CollectionVersionService collectionVersionService) {
+    public InstanceController(@NonNull final InstanceService instanceService) {
         this.instanceService = instanceService;
-        this.collectionService = collectionService;
-        this.flowVersionService = flowVersionService;
-        this.flowPublisherService = flowPublisherService;
-        this.flowService = flowService;
-        this.collectionVersionService = collectionVersionService;
     }
 
     @GetMapping("/instances/{instanceId}")
@@ -78,12 +61,12 @@ public class InstanceController {
 
     @GetMapping("/collections/{collectionId}/instances")
     public ResponseEntity<SeekPage<InstanceView>> listByEnvironmentId(
-            @PathVariable("collectionId") Ksuid projectId,
+            @PathVariable("collectionId") Ksuid collectionId,
             @RequestParam(value = "cursor", required = false) Cursor cursor,
             @RequestParam(value = "limit", defaultValue = "10", required = false) int limit)
             throws InstanceNotFoundException, PermissionDeniedException {
         return ResponseEntity.ok(
-                instanceService.listByCollectionId(projectId, new SeekPageRequest(cursor, limit)));
+                instanceService.listByCollectionId(collectionId, new SeekPageRequest(cursor, limit)));
     }
 
     @PostMapping("/collections/{collectionId}/instances")

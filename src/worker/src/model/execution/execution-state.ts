@@ -4,30 +4,15 @@ import * as webpack from 'webpack';
 
 export class ExecutionState {
   configs: Record<string, unknown>;
-  context: Record<string, unknown>;
   steps: Record<string, StepOutput>;
   lastStepState: Record<string, unknown>;
 
   constructor() {
     this.configs = {};
-    this.context = {};
     this.steps = {};
     this.lastStepState = {};
   }
 
-  insertContext(context: any) {
-    if (context instanceof Map) {
-      context.forEach((value: any, key: string) => {
-        this.context[key] = value;
-      });
-    } else if (typeof context === 'object' && !Array.isArray(context)) {
-      Object.entries(context).forEach(([key, value]) => {
-        this.context[key] = value;
-      });
-    } else {
-      throw Error(`Invalid context type: ${typeof context}`);
-    }
-  }
 
   insertConfigs(configs: any) {
     if (configs instanceof Map) {

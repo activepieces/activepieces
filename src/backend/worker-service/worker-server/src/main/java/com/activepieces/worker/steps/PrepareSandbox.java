@@ -26,7 +26,6 @@ public class PrepareSandbox extends Step {
           FlowVersionView flowVersionView,
           Map<String, Object> configInput,
           Map<String, Object> triggerPayload,
-          Map<String, Object> context,
           Map<String, Object> output,
           StorePath storePath)
       throws IOException, InterruptedException {

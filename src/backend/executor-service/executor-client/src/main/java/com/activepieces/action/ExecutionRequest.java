@@ -31,9 +31,6 @@ public class ExecutionRequest {
     private StorePath storePath;
 
     @JsonProperty
-    private Map<String, Object> context;
-
-    @JsonProperty
     private Map<String, Object> configs;
 
     @JsonProperty

@@ -3,7 +3,6 @@ class Globals {
   private _flowDirectory = './flows';
   private _codeDirectory = './codes';
   private _configsFile = './configs.json';
-  private _contextFile = './context.json';
   private _triggerPayloadFile = './triggerPayload.json';
   private _inputFile = './input.json';
   private _outputFile = './output.json';
@@ -37,10 +36,6 @@ class Globals {
 
   get codeDirectory() {
     return this._codeDirectory;
-  }
-
-  get contextFile() {
-    return this._contextFile;
   }
 
   get configsFile() {

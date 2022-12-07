@@ -14,7 +14,6 @@ public interface WorkerService {
              CollectionVersionView collectionVersionView,
              FlowVersionView flowVersionView,
              Map<String, Object> configsInput,
-             Map<String, Object> context,
              Map<String, Object> triggerPayload,
              StorePath storePath) throws Exception;
 

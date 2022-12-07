@@ -140,7 +140,6 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
                                     collectionVersionView,
                                     flowVersionView,
                                     request.get().getConfigs(),
-                                    request.get().getContext(),
                                     request.get().getTriggerPayload(),
                                     request.get().getStorePath());
                     return result.toBuilder().build();
@@ -170,7 +169,6 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
                             .storePath(storePath)
                             .configs(variables)
                             .collectionVersionId(collectionVersionView.getId())
-                            .context(Collections.emptyMap())
                             .triggerPayload(triggerPayload)
                             .instanceId(instanceId)
                             .flowVersionId(version.getId())
@@ -194,7 +192,6 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
         ExecutionStateView environmentView =
                 ExecutionStateView.builder().configs(executionRequest.getConfigs())
                         .steps(steps)
-                        .context(executionRequest.getContext())
                         .build();
         InstanceRunView instanceRunView =
                 InstanceRunView.builder()

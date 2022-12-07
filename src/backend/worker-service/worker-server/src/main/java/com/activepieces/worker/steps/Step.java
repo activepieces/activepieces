@@ -15,7 +15,6 @@ public abstract class Step {
           FlowVersionView flowVersion,
           Map<String, Object> configInput,
           Map<String, Object> triggerPayload,
-          Map<String, Object> context,
           Map<String, Object> output,
           StorePath storePath)
       throws Exception;

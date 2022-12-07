@@ -5,11 +5,6 @@ const variableService = new VariableService();
 
 const executionState = new ExecutionState();
 
-executionState.insertContext({
-  account_name: 'Shahed'
-});
-
-
 executionState.insertConfigs({
   price: 6.4,
   msg: 'Hello World',
@@ -51,12 +46,6 @@ describe('Variable Service', () => {
           items: [5, 'a'],
           name: 'John',
         },
-    );
-  });
-
-  test('Test resolve context variables', () => {
-    expect(variableService.resolve('${context.account_name}', executionState)).toEqual(
-        'Shahed'
     );
   });
 

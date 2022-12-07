@@ -54,14 +54,13 @@ public class Worker {
             CollectionVersionView collectionVersion,
             FlowVersionView flowVersion,
             Map<String, Object> configs,
-            Map<String, Object> context,
             Map<String, Object> triggerPayload,
             StorePath storePath)
             throws Exception {
         long startTimeMs = System.currentTimeMillis();
         HashMap<String, Object> output = new HashMap<>();
         for (Step step : steps) {
-            step.next(instanceRunView, collectionVersion, flowVersion, configs, triggerPayload, context, output, storePath);
+            step.next(instanceRunView, collectionVersion, flowVersion, configs, triggerPayload, output, storePath);
         }
         log.info("Preparing Sandbox {} took {}ms", sandbox.getBoxId(), System.currentTimeMillis() - startTimeMs);
         return (InstanceRunView) output.get(Constants.RUN_RESULT_IN_MAP);

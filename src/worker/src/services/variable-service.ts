@@ -82,13 +82,8 @@ export class VariableService {
     type ValuesMap = {
       configs: {[key: string]: unknown};
       steps: {[key: string]: unknown};
-      context: {[key: string]: unknown};
     };
-    const valuesMap: ValuesMap = {context: {}, configs: {}, steps: {}};
-
-    Object.entries(executionState.context).forEach(([key, value]) => {
-      valuesMap.context[key] = value;
-    });
+    const valuesMap: ValuesMap = {configs: {}, steps: {}};
 
     Object.entries(executionState.configs).forEach(([key, value]) => {
       valuesMap.configs[key] = value;

@@ -63,7 +63,6 @@ public class FlowScheduler {
               collectionVersionView,
               flowVersionView,
               request.getConfigs(),
-              request.getContext(),
               request.getTriggerPayload(),
               request.getStorePath());
       log.info(

@@ -33,7 +33,6 @@ public class UploadRunState extends Step {
           FlowVersionView flowVersionView,
           Map<String, Object> input,
           Map<String, Object> triggerPayload,
-          Map<String, Object> context,
           Map<String, Object> output,
           StorePath storePath)
       throws IOException, InstanceNotFoundException,

@@ -28,21 +28,6 @@ describe('Execution State', () => {
     expect(executionState.configs['arr']).toEqual([1, 2, 3]);
   });
 
-  test('Map is inserted to Context', () => {
-    const contextMap = new Map([
-      ['foo', 'bar'],
-      ['message', 'test'],
-    ]);
-
-    executionState.insertContext(contextMap);
-
-    expect(Object.keys(executionState.context).length).toEqual(2);
-
-    expect(executionState.context['foo']).toEqual('bar');
-    expect(executionState.context['message']).toEqual('test');
-  });
-
-
   test('Map is inserted to configs', () => {
     const configsMap = new Map([
       ['foo', 'bar'],

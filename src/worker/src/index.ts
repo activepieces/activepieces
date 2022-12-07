@@ -17,13 +17,11 @@ function main() {
     globals.workerToken = input.workerToken;
     globals.apiUrl = input.apiUrl;
     const executionState = new ExecutionState();
-    const context = Utils.parseJsonFile(globals.contextFile);
     const configs = Utils.parseJsonFile(globals.configsFile);
     const triggerPayload: StepOutput = StepOutput.deserialize(
       Utils.parseJsonFile(globals.triggerPayloadFile)
     );
 
-    executionState.insertContext(context);
     executionState.insertStep(triggerPayload, 'trigger', []);
 
     const executor = new FlowExecutor(executionState);

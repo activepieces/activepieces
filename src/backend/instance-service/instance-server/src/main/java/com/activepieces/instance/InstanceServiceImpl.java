@@ -70,8 +70,8 @@ public class InstanceServiceImpl implements InstanceService {
     @Override
     public SeekPage<InstanceView> listByCollectionId(
             Ksuid collectionId, SeekPageRequest request)
-            throws PermissionDeniedException, InstanceNotFoundException {
-        permissionService.requiresPermission(collectionId, Permission.READ_INSTANCE);
+            throws PermissionDeniedException {
+      //  permissionService.requiresPermission(collectionId, Permission.READ_INSTANCE);
         final List<PageFilter> filters = List.of(new PageFilter(Instance.COLLECTION_ID, collectionId));
         return instanceRepository.findPageAsc(filters, request).convert(instanceMapper::toView);
     }

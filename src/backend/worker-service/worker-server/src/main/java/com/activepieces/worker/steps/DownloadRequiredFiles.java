@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -58,14 +59,13 @@ public class DownloadRequiredFiles extends Step {
             FlowVersionView flowVersionView,
             Map<String, Object> configs,
             Map<String, Object> triggerPayload,
-            Map<String, Object> context,
             Map<String, Object> output,
             StorePath storePath)
             throws Exception {
         long startTime = System.currentTimeMillis();
         flowVersionView = flowBuilderService.buildAllSteps(flowVersionView);
         downloadArtifacts(flowVersionView);
-        worker.getSandbox().writeContext(context, objectMapper);
+        worker.getSandbox().writeContext(Collections.emptyMap(), objectMapper);
         worker.getSandbox().writeConfigs(configs, objectMapper);
         worker.getSandbox()
                 .writeEntryPoint(

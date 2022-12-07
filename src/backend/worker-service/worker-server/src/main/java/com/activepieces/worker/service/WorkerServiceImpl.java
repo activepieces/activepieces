@@ -61,7 +61,6 @@ public class WorkerServiceImpl implements WorkerService {
           CollectionVersionView collectionVersionView,
           FlowVersionView flowVersionView,
           Map<String, Object> configs,
-          Map<String, Object> context,
           Map<String, Object> triggerPayload,
           StorePath storePath)
       throws Exception {
@@ -72,7 +71,7 @@ public class WorkerServiceImpl implements WorkerService {
     resultRun =
         this.workers
             .get(workerIndex)
-            .run(instanceRunView, collectionVersionView, flowVersionView, configs, context, triggerPayload, storePath);
+            .run(instanceRunView, collectionVersionView, flowVersionView, configs, triggerPayload, storePath);
 
     this.blockingQueue.add(workerIndex);
     log.debug(
