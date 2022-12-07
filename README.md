@@ -79,6 +79,6 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
-<a href="https://github.com/moabuaboud"><img src="https://avatars.githubusercontent.com/u/106551704?s=60&v=4" width="50" height="50" alt=""/></a> <a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?s=60&v=4" width="50" height="50" alt=""/></a> <a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?s=60&v=4" width="50" height="50" alt=""/></a>
+<a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/106551704?s=60&v=4" width="50" height="50" alt=""/></a> <a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?s=60&v=4" width="50" height="50" alt=""/></a> <a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?s=60&v=4" width="50" height="50" alt=""/></a>
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
