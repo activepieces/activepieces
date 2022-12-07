@@ -3,7 +3,7 @@
 </p>
 <p align="center">
   <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-<a href="https://github.com/activepieces/activepieces" target="_blank"><img src="https://img.shields.io/github/license/activepieces/activepieces?style=for-the-badge" alt="Activepieces Licence" /></a>&nbsp;<a href='https://discord.com/channels/966798490984382485/997611516989816862'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
+<a href="/LICENSE" target="_blank"><img src="https://img.shields.io/github/license/activepieces/activepieces?style=for-the-badge" alt="Activepieces Licence" /></a>&nbsp;<a href='https://discord.com/channels/966798490984382485/997611516989816862'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
 </p>
 
 ## Activepieces is an open-source business automation tool
