@@ -71,12 +71,15 @@ const _collectionReducer = createReducer(
 		return clonedState;
 	}),
 	on(CollectionActions.deploy, (state): CollectionState => {
+		debugger;
 		return { ...state, state: CollectionStateEnum.DEPLOYING | state.state };
 	}),
 	on(CollectionActions.deployFailed, (state): CollectionState => {
+		debugger;
 		return { ...state, state: CollectionStateEnum.FAILED_SAVING_OR_DEPLOYING };
 	}),
 	on(CollectionActions.deploySuccess, (state): CollectionState => {
+		debugger;
 		return { ...state, state: state.state & ~CollectionStateEnum.DEPLOYING };
 	}),
 	on(FlowsActions.saveFlowStarted, (state, { flow, saveRequestId }): CollectionState => {

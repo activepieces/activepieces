@@ -36,7 +36,7 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { StoreModule } from '@ngrx/store';
 import { collectionReducer } from './store/reducer/collection.reducer';
 import { EffectsModule } from '@ngrx/effects';
-import { PieceEffects } from './store/effect/collection.effects';
+import { CollectionEffects } from './store/effect/collection.effects';
 import { flowsReducer } from './store/reducer/flows.reducer';
 import { FlowsEffects } from './store/effect/flow.effects';
 import { viewModeReducer } from './store/reducer/view-mode.reducer';
@@ -98,7 +98,7 @@ import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/cente
 		ModalModule.forRoot(),
 		TimepickerModule.forRoot(),
 		AngularSvgIconModule.forRoot(),
-		EffectsModule.forFeature([PieceEffects, FlowsEffects, ViewModeEffects, FlowItemsDetailsEffects]),
+		EffectsModule.forFeature([CollectionEffects, FlowsEffects, ViewModeEffects, FlowItemsDetailsEffects]),
 		StoreModule.forFeature('builderState', {
 			collectionState: collectionReducer,
 			flowsState: flowsReducer,

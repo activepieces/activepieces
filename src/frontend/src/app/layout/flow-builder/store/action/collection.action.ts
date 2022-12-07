@@ -21,9 +21,6 @@ export const CollectionModifyingState = [
 	CollectionActionType.UPDATE_CONFIG,
 	CollectionActionType.ADD_CONFIG,
 	CollectionActionType.DELETE_CONFIG_SUCCEEDED,
-	CollectionActionType.DEPLOY_COLLECTION,
-	CollectionActionType.DEPLOY_COLLECTION_FAILED,
-	CollectionActionType.DEPLOY_COLLECTION_SUCCESS,
 ];
 
 export const changeName = createAction(CollectionActionType.CHANGE_NAME, props<{ displayName: string }>());

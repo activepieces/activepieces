@@ -16,7 +16,7 @@ import { VersionEditState } from 'src/app/layout/common-layout/model/enum/versio
 import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 
 @Injectable()
-export class PieceEffects {
+export class CollectionEffects {
 	createNewVersion$ = createEffect(
 		() => {
 			return this.actions$.pipe(
@@ -121,7 +121,7 @@ export class PieceEffects {
 	deploySuccess$ = createEffect(
 		() => {
 			return this.actions$.pipe(
-				ofType(CollectionActions.deployFailed),
+				ofType(CollectionActions.deploySuccess),
 				tap(action => {
 					this.snackBar.open(`Deployment finished`);
 				})
@@ -134,14 +134,16 @@ export class PieceEffects {
 		return this.actions$.pipe(
 			ofType(CollectionActions.deploy),
 			concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
-			tap(([action, collection]) => {
-				return this.collectionService.deploy(collection.id);
-			}),
-			catchError(err => {
-				return of(CollectionActions.deployFailed());
-			}),
-			switchMap(() => {
-				return of(CollectionActions.deploySuccess());
+			switchMap(([action, collection]) => {
+				return this.collectionService.deploy(collection.id).pipe(
+					switchMap(() => {
+						return of(CollectionActions.deploySuccess());
+					}),
+					catchError(err => {
+						console.error(err);
+						return of(CollectionActions.deployFailed());
+					})
+				);
 			})
 		);
 	});
