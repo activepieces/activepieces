@@ -136,7 +136,7 @@ public class FlowController {
         }
         InstanceRunView response =
                 flowPublisherService.executeTest(
-                        collectionVersionId, flowVersionId, request.getTrigger());
+                        collectionVersionId, flowVersionId, request.getPayload());
         return ResponseEntity.ok(response);
     }
 

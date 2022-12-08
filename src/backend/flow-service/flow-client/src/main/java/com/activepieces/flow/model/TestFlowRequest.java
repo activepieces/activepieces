@@ -20,6 +20,6 @@ public class TestFlowRequest {
     @JsonProperty
     @NotNull
     @Valid
-    private Map<String, Object> trigger;
+    private Map<String, Object> payload;
 
 }
