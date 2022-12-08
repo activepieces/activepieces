@@ -4,8 +4,8 @@
       <mat-expansion-panel #descriptionPanel (closed)="closed(0)" (opened)="setOpenedIndex(0)"
         class="expansion-panel-transition"
         [expanded]="_selectedStep.type === TriggerTypes.WEBHOOK ||
-                     _selectedStep.type === TriggerTypes.INSTANCE_STARTED ||
-                      _selectedStep.type === TriggerTypes.INSTANCE_STOPPED "
+                     _selectedStep.type === TriggerTypes.COLLECTION_DEPLOYED ||
+                      _selectedStep.type === TriggerTypes.COLLECTION_STOPPED "
         [class.expansion-panel-opened]="openedIndex === 0">
         <mat-expansion-panel-header class="panel-padding">
           <mat-panel-title>
@@ -22,8 +22,8 @@
         <ng-container
           *ngIf="
                   _selectedStep.type !==TriggerTypes.WEBHOOK &&
-                   _selectedStep.type !== TriggerTypes.INSTANCE_STOPPED &&
-                    _selectedStep.type !== TriggerTypes.INSTANCE_STARTED; else noDelayInExpansion">
+                   _selectedStep.type !== TriggerTypes.COLLECTION_STOPPED &&
+                    _selectedStep.type !== TriggerTypes.COLLECTION_DEPLOYED; else noDelayInExpansion">
           <div class="panel-padding" *ngIf="delayExpansionPanelRendering$ | async">
             <app-describe-form formControlName="describe"></app-describe-form>
           </div>
@@ -49,8 +49,8 @@
         class="expansion-panel-transition" [class.expansion-panel-opened]="openedIndex === 1" [expanded]="true"
         *ngIf="
         _selectedStep.type !==TriggerTypes.WEBHOOK &&
-         _selectedStep.type !== TriggerTypes.INSTANCE_STOPPED &&
-          _selectedStep.type !== TriggerTypes.INSTANCE_STARTED">
+         _selectedStep.type !== TriggerTypes.COLLECTION_STOPPED &&
+          _selectedStep.type !== TriggerTypes.COLLECTION_DEPLOYED">
         <mat-expansion-panel-header class="panel-padding">
           <mat-panel-title>
             <label class="expansion-panel-label">Input </label>

@@ -10,6 +10,7 @@ import { FlowItem } from 'src/app/layout/common-layout/model/flow-builder/flow-i
 import { StepCacheKey } from 'src/app/layout/flow-builder/service/artifact-cache-key';
 import { CodeAction } from 'src/app/layout/common-layout/model/flow-builder/actions/code-action.interface';
 import { ActionType } from 'src/app/layout/common-layout/model/enum/action-type.enum';
+import { environment } from 'src/environments/environment';
 
 @Component({
 	selector: 'app-new-edit-piece-sidebar',
@@ -39,9 +40,10 @@ export class NewEditPieceSidebarComponent implements OnInit {
 					this.selectedFlowItemDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetails(result.step));
 					this.cd.detectChanges();
 					if (result.step.type === ActionType.CODE) {
+						debugger;
 						this.stepCacheKeyAndArtifactUrl = {
 							cacheKey: new StepCacheKey(result.flowId!, result.step.name),
-							url: (result.step as CodeAction).settings.artifactUrl,
+							url: environment.apiUrl+`/files/${(result.step as CodeAction).settings.artifact_source_id}`,
 						};
 					} else {
 						this.stepCacheKeyAndArtifactUrl = null;

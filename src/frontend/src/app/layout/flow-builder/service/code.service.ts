@@ -5,7 +5,7 @@ import * as JSZip from 'jszip';
 import { catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { Artifact } from '../model/artifact.interface';
 import { UUID } from 'angular2-uuid';
-import { ArtifactCacheKey, CollectionConfigsCacheKey, FlowConfigsCacheKey, StepCacheKey } from './artifact-cache-key';
+import { ArtifactCacheKey,  StepCacheKey } from './artifact-cache-key';
 import { CodeTestExecutionResult } from '../../common-layout/model/flow-builder/code-test-execution-result';
 import { ArtifactAndItsNameInFormData } from '../../common-layout/model/helper/artifacts-zipping-helper';
 
@@ -60,16 +60,10 @@ export class CodeService {
 		);
 	}
 
-	public dynamicDropdownDefaultArtifact(): Artifact {
-		return {
-			content:
-				'exports.codePiece = async (params) => {\n    // You can use params.key to refer to another config variable\n    // Please check the following Slack `Select Channel` example:\n    // https://docs.activepieces.com/guides/create-an-integration/create-flow#add-config-variable\n    \n    return {\n        disabled: false,\n        placeholder: "Select an options",\n        options: [\n            { value: "1", option: "Option 1" },\n            { value: "2", option: "Option 2" }\n        ]\n    };\n};',
-			package: '{\n' + '  "dependencies": {\n' + '  }\n' + '}\n',
-		};
-	}
+
 	public helloWorld(): Artifact {
 		return {
-			content: 'exports.codePiece = async (params) => {\n' + '    return true;\n' + '};\n',
+			content: 'exports.code = async (params) => {\n' + '    return true;\n' + '};\n',
 			package: '{\n' + '  "dependencies": {\n' + '  }\n' + '}\n',
 		};
 	}
@@ -136,6 +130,7 @@ export class CodeService {
 		artifactUrl: string,
 		uploadNewArtifacts: boolean = true
 	) {
+		debugger;
 		const artifactCacheResult = artifactsCache.get(artifactKey);
 		if (artifactCacheResult) {
 			return of(artifactCacheResult.artifact);
@@ -152,6 +147,7 @@ export class CodeService {
 	}
 
 	getOrCreateStepArtifact(stepCacheKey: StepCacheKey, artifactUrl: string) {
+		debugger;
 		return this.getArtifactFromCache(this.artifactsCacheForSteps, stepCacheKey.toString(), artifactUrl);
 	}
 
@@ -175,12 +171,8 @@ export class CodeService {
 	updateArtifactInFlowStepsCache(artifactKey: StepCacheKey, artifact: Artifact) {
 		this.updateArtifactInCache(this.artifactsCacheForSteps, artifactKey.toString(), artifact);
 	}
-	updateArtifactInFlowConfigsCache(artifactKey: FlowConfigsCacheKey, artifact: Artifact) {
-		this.updateArtifactInCache(this.artifactsCacheForFlowConfigs, artifactKey.toString(), artifact);
-	}
-	updateArtifactInCollectionConfigsCache(artifactKey: CollectionConfigsCacheKey, artifact: Artifact) {
-		this.updateArtifactInCache(this.artifactsCacheForSteps, artifactKey.toString(), artifact);
-	}
+	
+
 	private getDirtyArtifactsFromCache(cache: ArtifactsCache, incompleteArtifactKey: ArtifactCacheKey) {
 		const dirtyArtifacts: ArtifactAndItsNameInFormData[] = [];
 		const getArtifactNameMethod = CodeService.getArtifactNameMethod(incompleteArtifactKey);
@@ -195,11 +187,7 @@ export class CodeService {
 	private static getArtifactNameMethod(artifactCacheKey: ArtifactCacheKey) {
 		if (artifactCacheKey instanceof StepCacheKey) {
 			return StepCacheKey.getStepName;
-		} else if (artifactCacheKey instanceof FlowConfigsCacheKey) {
-			return FlowConfigsCacheKey.getConfigKey;
-		} else if (artifactCacheKey instanceof CollectionConfigsCacheKey) {
-			return CollectionConfigsCacheKey.getConfigKey;
-		}
+		} 
 		throw new Error('Aritfact cache key type has no method to get artifact name');
 	}
 
@@ -212,10 +200,6 @@ export class CodeService {
 				result.needsToBeUploadedToServer = false;
 			}
 		});
-	}
-
-	unmarkDirtyArtifactsInCollectionConfigsCache(collectionId: UUID) {
-		this.unmarkDirtyArtifacts(this.artifactsCacheForCollectionConfigs, new CollectionConfigsCacheKey(collectionId, ''));
 	}
 	unmarkDirtyArtifactsInFlowStepsCache(flowId: UUID) {
 		this.unmarkDirtyArtifacts(this.artifactsCacheForCollectionConfigs, new StepCacheKey(flowId, ''));

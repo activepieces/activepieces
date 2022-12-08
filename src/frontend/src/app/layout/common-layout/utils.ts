@@ -11,12 +11,12 @@ export function getDisplayNameForTrigger(triggerType: TriggerType) {
 			return 'Webhook Trigger';
 			break;
 		}
-		case TriggerType.INSTANCE_STARTED: {
-			return 'Instance Started';
+		case TriggerType.COLLECTION_DEPLOYED: {
+			return 'Collection Deployed';
 			break;
 		}
-		case TriggerType.INSTANCE_STOPPED: {
-			return 'Instance Stopped';
+		case TriggerType.COLLECTION_STOPPED: {
+			return 'Collection Stopped';
 			break;
 		}
 		case TriggerType.SCHEDULE: {

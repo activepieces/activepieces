@@ -5,8 +5,7 @@ import { debounceTime, distinctUntilChanged, Observable, Subject, takeUntil, tap
 import { Artifact } from 'src/app/layout/flow-builder/model/artifact.interface';
 import {
 	ArtifactCacheKey,
-	CollectionConfigsCacheKey,
-	FlowConfigsCacheKey,
+
 	StepCacheKey,
 } from 'src/app/layout/flow-builder/service/artifact-cache-key';
 import { CodeService } from 'src/app/layout/flow-builder/service/code.service';
@@ -105,11 +104,7 @@ export class CodeArtifactFormControlComponent implements ControlValueAccessor, O
 	updateArtifactCache() {
 		//The only valid case in this is the step cache key
 		if (this._artifactCacheKey) {
-			if (this._artifactCacheKey instanceof CollectionConfigsCacheKey) {
-				this.codeService.updateArtifactInCollectionConfigsCache(this._artifactCacheKey, this.codeArtifactForm.value);
-			} else if (this._artifactCacheKey instanceof FlowConfigsCacheKey) {
-				this.codeService.updateArtifactInFlowConfigsCache(this._artifactCacheKey, this.codeArtifactForm.value);
-			} else if (this._artifactCacheKey instanceof StepCacheKey) {
+			if (this._artifactCacheKey instanceof StepCacheKey) {
 				this.codeService.updateArtifactInFlowStepsCache(this._artifactCacheKey, this.codeArtifactForm.value);
 			} else {
 				throw new Error('Cache key type has no corresponding cache');

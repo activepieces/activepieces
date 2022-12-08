@@ -119,6 +119,7 @@ export class StepTypeSidebarComponent implements OnInit {
 	}
 
 	private replaceTrigger(triggerDetails: FlowItemDetails) {
+		debugger;
 		const trigger: Trigger = {
 			type: triggerDetails.type as TriggerType,
 			name: 'trigger',
@@ -128,13 +129,13 @@ export class StepTypeSidebarComponent implements OnInit {
 			valid: false,
 		};
 		if (trigger.type == TriggerType.SCHEDULE) {
-			trigger.settings.cronExpression = defaultCronJobForScheduleTrigger;
+			trigger.settings.cron_expression = defaultCronJobForScheduleTrigger;
 			trigger.valid = true;
 		}
-		if (trigger.type === TriggerType.INSTANCE_STOPPED) {
+		if (trigger.type === TriggerType.COLLECTION_STOPPED) {
 			trigger.valid = true;
 		}
-		if (trigger.type === TriggerType.INSTANCE_STARTED) {
+		if (trigger.type === TriggerType.COLLECTION_DEPLOYED) {
 			trigger.valid = true;
 		}
 		if (trigger.type === TriggerType.WEBHOOK) {

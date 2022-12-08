@@ -5,14 +5,14 @@
     >
       <svg-icon
         src="assets/img/custom/success-step-result.svg"
-        [svgStyle]="{ width: 21, height: 20 }"
+        [svgStyle]="{ width: '21px', height: '20px' }"
         matTooltip="Step succeeded"
       ></svg-icon>
     </ng-container>
     <ng-container *ngIf="ActionStatusEnum.FAILED === selectedStepResult.status">
       <svg-icon
         src="assets/img/custom/failure-step-result.svg"
-        [svgStyle]="{ width: 21, height: 20 }"
+        [svgStyle]="{ width: '21px', height: '20px' }"
         matTooltip="Step succeeded"
       ></svg-icon>
     </ng-container>
@@ -22,7 +22,7 @@
   <div class="detail-item d-flex align-items-center">
     <svg-icon
       src="assets/img/custom/duration.svg"
-      [svgStyle]="{ width: 12, height: 20 }"
+      [svgStyle]="{ width: '12px', height: '20px' }"
     ></svg-icon>
     Duration:
     <span class="description"> {{ selectedStepResult.duration }}ms </span>

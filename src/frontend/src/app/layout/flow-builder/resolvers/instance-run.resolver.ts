@@ -9,19 +9,25 @@ import { InstanceRunService } from '../../common-layout/service/instance-run.ser
 import { InstanceRun } from '../../common-layout/model/instance-run.interface';
 import { Flow } from '../../common-layout/model/flow.class';
 
+export type InstanceRunInfo = {
+	collection: Collection;
+	flow: Flow;
+	run: InstanceRun;
+};
+
 @Injectable({
 	providedIn: 'root',
 })
 export class GetInstanceRunResolver
-	implements Resolve<Observable<{ piece: Collection; flow: Flow; run: InstanceRun }>>
+	implements Resolve<Observable<InstanceRunInfo>>
 {
 	constructor(
 		private instanceRunService: InstanceRunService,
 		private flowService: FlowService,
-		private pieceService: CollectionService
+		private collectionService: CollectionService
 	) {}
 
-	resolve(snapshot: ActivatedRouteSnapshot): Observable<{ piece: Collection; flow: Flow; run: InstanceRun }> {
+	resolve(snapshot: ActivatedRouteSnapshot): Observable<InstanceRunInfo> {
 		const runId = snapshot.paramMap.get('runId') as UUID;
 		return this.instanceRunService.get(runId).pipe(
 			switchMap(run => {
@@ -29,9 +35,9 @@ export class GetInstanceRunResolver
 					switchMap(flowVersion => {
 						return this.flowService.get(flowVersion.flow_id).pipe(
 							switchMap(flow => {
-								return this.pieceService.get(flow.collection_id).pipe(
-									switchMap(piece => {
-										return of({ piece: piece, flow: flow, run: run });
+								return this.collectionService.get(flow.collection_id).pipe(
+									switchMap(collection => {
+										return of({ collection: collection, flow: {...flow, last_version:flowVersion}, run: run });
 									})
 								);
 							})

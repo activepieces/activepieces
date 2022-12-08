@@ -9,31 +9,31 @@ export class ArtifactCacheKey {
 	};
 }
 
-export class FlowConfigsCacheKey extends ArtifactCacheKey {
-	constructor(flowId: UUID, configKey: string) {
-		super(`${flowId.toString()}.${configKey}`);
-		this._prefix = ArtifactCachKeyPrefix.FLOW_CONFIG;
-	}
-	static getConfigKey(flowConfigCacheKey: string) {
-		const splitPrefixAndValue = flowConfigCacheKey.split('|');
-		const value = splitPrefixAndValue[1];
-		const configKey = value.split('.')[1];
-		return configKey;
-	}
-}
-export class CollectionConfigsCacheKey extends ArtifactCacheKey {
-	constructor(collectionId: UUID, configKey: string) {
-		super(`${collectionId.toString()}.${configKey}`);
-		this._prefix = ArtifactCachKeyPrefix.COLLECTION_CONFIG;
-	}
+// export class FlowConfigsCacheKey extends ArtifactCacheKey {
+// 	constructor(flowId: UUID, configKey: string) {
+// 		super(`${flowId.toString()}.${configKey}`);
+// 		this._prefix = ArtifactCachKeyPrefix.FLOW_CONFIG;
+// 	}
+// 	static getConfigKey(flowConfigCacheKey: string) {
+// 		const splitPrefixAndValue = flowConfigCacheKey.split('|');
+// 		const value = splitPrefixAndValue[1];
+// 		const configKey = value.split('.')[1];
+// 		return configKey;
+// 	}
+// }
+// export class CollectionConfigsCacheKey extends ArtifactCacheKey {
+// 	constructor(collectionId: UUID, configKey: string) {
+// 		super(`${collectionId.toString()}.${configKey}`);
+// 		this._prefix = ArtifactCachKeyPrefix.COLLECTION_CONFIG;
+// 	}
 
-	static getConfigKey(flowConfigCacheKey: string) {
-		const splitPrefixAndValue = flowConfigCacheKey.split('|');
-		const value = splitPrefixAndValue[1];
-		const configKey = value.split('.')[1];
-		return configKey;
-	}
-}
+// 	static getConfigKey(flowConfigCacheKey: string) {
+// 		const splitPrefixAndValue = flowConfigCacheKey.split('|');
+// 		const value = splitPrefixAndValue[1];
+// 		const configKey = value.split('.')[1];
+// 		return configKey;
+// 	}
+// }
 export class StepCacheKey extends ArtifactCacheKey {
 	constructor(flowId: UUID, stepName: string) {
 		super(`${flowId.toString()}.${stepName}`);

@@ -40,7 +40,6 @@ import { CollectionEffects } from './store/effect/collection.effects';
 import { flowsReducer } from './store/reducer/flows.reducer';
 import { FlowsEffects } from './store/effect/flow.effects';
 import { viewModeReducer } from './store/reducer/view-mode.reducer';
-import { AddNpmPackageModalComponent } from './page/flow-builder/code-editor/add-npm-package-modal/add-npm-package-modal.component';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
 import { VariableSidebarComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/configs-sidebar.component';
 import { ViewModeEffects } from './store/effect/viewMode.effects';
@@ -56,9 +55,7 @@ import { TestFlowModalComponent } from './components/test-flow-modal/test-flow-m
 import { FlowLeftSidebarComponent } from './page/flow-builder/flow-left-sidebar/flow-left-sidebar.component';
 import { TestRunBarComponent } from './page/flow-builder/test-run-bar/test-run-bar.component';
 import { SidebarHeaderComponent } from './components/sidebar-header/sidebar-header.component';
-import { CodeEditorComponent } from './page/flow-builder/code-editor/code-editor.component';
 import { CollectionVersionSidebarComponent } from './page/flow-builder/flow-right-sidebar/collection-version-sidebar/collection-version-sidebar.component';
-import { TestCodeModalComponent } from './page/flow-builder/code-editor/test-code-modal/test-code-modal.component';
 import { FlowVersionSidebarComponent } from './page/flow-builder/flow-right-sidebar/flow-version-sidebar/flow-version-sidebar.component';
 import { flowItemsDetailsReducer } from './store/reducer/flow-items-details.reducer';
 import { FlowItemsDetailsEffects } from './store/effect/flow-items-details.effects';
@@ -132,15 +129,12 @@ import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/cente
 		TestRunBarComponent,
 		SidebarHeaderComponent,
 		FlowVersionSidebarComponent,
-		CodeEditorComponent,
-		TestCodeModalComponent,
 		CollectionVersionSidebarComponent,
 		NewEditPieceSidebarComponent,
 		StepTypItemComponent,
 		StepTypeListComponent,
 		StepTypeSidebarComponent,
 		CreateEditConfigModalComponent,
-		AddNpmPackageModalComponent,
 		VariableSidebarComponent,
 		StepResultComponent,
 		SimpleLineConnectionComponent,

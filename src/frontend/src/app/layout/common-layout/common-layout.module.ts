@@ -34,7 +34,6 @@ import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
 import { OutputLogPipe } from './pipe/output-log';
 import { DefaultZeroPipe } from './pipe/default-zero.pipe';
-import { CodeEmbeddedEditorComponent } from './components/dynamic-form/dynamic-field-input-only/code-embeddedEditor/code-embedded-editor.component';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { StoreModule } from '@ngrx/store';
 import { MatButtonModule } from '@angular/material/button';
@@ -99,7 +98,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MultiDropdownComponent,
 		ConnectOauth2Component,
 		LoadingIconComponent,
-		CodeEmbeddedEditorComponent,
 		SaveCancelPanelSectionComponent,
 		UploadImageControlComponent,
 		DragDropDirective,
@@ -195,7 +193,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		LongTextFormControlComponent,
 		CheckboxComponent,
 		TableComponent,
-		CodeEmbeddedEditorComponent,
 		OAuth2ConnectControlComponent,
 		DictionaryFormControlComponent,
 		ConfigsFormComponent,

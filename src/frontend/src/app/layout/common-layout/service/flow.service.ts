@@ -174,7 +174,6 @@ export class FlowService {
 			)
 			.pipe(
 				switchMap(instanceRun => {
-					
 					if(instanceRun.status !== InstanceRunStatus.RUNNING && instanceRun.logs_file_id )
 					{
 						return this.logs(instanceRun.logs_file_id).pipe(

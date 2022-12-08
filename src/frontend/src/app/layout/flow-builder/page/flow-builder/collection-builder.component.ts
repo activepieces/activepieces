@@ -21,6 +21,7 @@ import { Flow } from '../../../common-layout/model/flow.class';
 import { RunDetailsService } from './flow-left-sidebar/run-details/iteration-details.service';
 import { FlowsActions } from '../../store/action/flows.action';
 import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
+import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
 
 @Component({
 	templateUrl: './collection-builder.component.html',
@@ -56,12 +57,13 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 
 		this.loadInitialData$ = this.actRoute.data.pipe(
 			tap(value => {
-				const runInformation = value['runInformation'];
+				const runInformation: InstanceRunInfo = value['runInformation'];
 				if (runInformation !== undefined) {
 					this.navigationService.setTitle('View Run');
-					const collection = runInformation.piece;
+					const collection = runInformation.collection;
 					const flow: Flow = runInformation.flow;
 					const run: InstanceRun = runInformation.run;
+					
 					this.store.dispatch(
 						BuilderActions.loadInitial({
 							collection: collection,
