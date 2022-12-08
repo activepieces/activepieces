@@ -1,6 +1,5 @@
-import { Component, OnInit, TemplateRef } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
+import { Component, OnInit } from '@angular/core';
+import { BsModalRef } from 'ngx-bootstrap/modal';
 import { FlowService } from '../../../common-layout/service/flow.service';
 import { InstanceRunStatus } from '../../../common-layout/model/enum/instance-run-status';
 import {
@@ -11,18 +10,15 @@ import {
 	Observable,
 	of,
 	switchMap,
-	take,
 	takeUntil,
 	takeWhile,
 	tap,
-	throwError,
 } from 'rxjs';
 import { fadeInUp400ms } from '../../../common-layout/animation/fade-in-up.animation';
 import { Flow } from '../../../common-layout/model/flow.class';
 import { TriggerType } from '../../../common-layout/model/enum/trigger-type.enum';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/selector/flow-builder.selector';
-import { jsonValidator } from '../../../common-layout/validators/json-validator';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from '../../page/flow-builder/test-run-bar/test-run-bar.component';
 import { Config } from 'src/app/layout/common-layout/model/fields/variable/config';
@@ -45,39 +41,21 @@ export class TestFlowModalComponent implements OnInit {
 	isSaving$: Observable<boolean> = of(false);
 	modalRef?: BsModalRef;
 	collectionConfigs$: Observable<Config[]>;
-	selectedFlow$: Observable<Flow>;
+	selectedFlow$: Observable<Flow|undefined>;
 	instanceRunStatusChecker$: Observable<InstanceRun>;
-	observablesNeededToBuildForm$: Observable<{
-		configs: Config[];
-		flow: Flow;
-		collection: Collection;
-	}>;
 	executeTest$: Observable<InstanceRun | null>;
 	selectedCollection$: Observable<Collection>;
 	shouldDisableTestButton$: Observable<boolean>;
-	testFlowForm: FormGroup;
-	triggerFormControl: FormControl;
 	testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
 	testFlowButtonDisabledTooltip = '';
-	triggerPayloadPlaceHolder =
-		'{\n' +
-		'"name":"Spongebob",\n' +
-		'"email":"spongebob@gmail.com",\n' +
-		'"description":"A user has signed up"\n' +
-		'}';
 
 	constructor(
-		private formBuilder: FormBuilder,
 		private flowService: FlowService,
 		private store: Store,
-		private modalService: BsModalService,
 		private instanceRunService: InstanceRunService,
 		private snackbar: MatSnackBar
 	) {
-		this.testFlowForm = this.formBuilder.group({
-			configs: new FormControl(),
-		});
-		this.triggerFormControl = new FormControl('', [jsonValidator]);
+
 	}
 
 	ngOnInit() {
@@ -102,92 +80,21 @@ export class TestFlowModalComponent implements OnInit {
 				return res.saving || !res.valid;
 			})
 		);
-		this.createObservableNeededToCreateForm();
 	}
 
 	private setupSelectedFlowListener() {
-		this.selectedFlow$ = this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
-			tap(flow => {
-				if (flow) this.addOrRemoveEventTriggerFormControl(flow);
-			}),
-			switchMap(flow => {
-				if (flow) {
-					return of(flow);
-				} else {
-					return throwError(() => 'selected flow is null');
-				}
-			})
-		);
+		this.selectedFlow$ = this.store.select(BuilderSelectors.selectCurrentFlow);
 	}
 
 	selectedInstanceRunStatus() {
 		this.instanceRunStatus$ = this.store.select(BuilderSelectors.selectCurrentFlowRunStatus);
 	}
 
-	createObservableNeededToCreateForm() {
-		this.observablesNeededToBuildForm$ = combineLatest({
-			flow: this.selectedFlow$,
-			collectionConfigs: this.collectionConfigs$,
-			collection: this.selectedCollection$,
-		}).pipe(
-			map(res => {
-				const collectionConfigs = res.collectionConfigs.map(c => {
-					return {
-						...c,
-						collectionVersionId: res.collection.last_version.id,
-					};
-				});
-
-				return {
-					configs: [...collectionConfigs],
-					flow: res.flow,
-					collection: res.collection,
-				};
-			})
-		);
-	}
-
-	addOrRemoveEventTriggerFormControl(flow: Flow) {
-		if (
-			flow.last_version.trigger?.type === TriggerType.EVENT ||
-			flow.last_version.trigger?.type === TriggerType.WEBHOOK
-		) {
-			this.testFlowForm.addControl('trigger', this.triggerFormControl);
-		} else {
-			this.testFlowForm.removeControl('trigger');
-		}
-	}
-
-	openModal(template: TemplateRef<any>) {
-		this.observablesNeededToBuildForm$.pipe(take(1)).subscribe(result => {
-			if (
-				result.configs.length === 0 &&
-				result.flow.last_version.trigger?.type !== TriggerType.EVENT &&
-				result.flow.last_version.trigger?.type !== TriggerType.WEBHOOK
-			) {
-				this.testFlow(result.flow, result.collection);
-			} else {
-				this.modalRef = this.modalService.show(template);
-			}
-		});
-	}
-
 	testFlow(flow: Flow, collection: Collection) {
 		this.submitted = true;
-		if (!this.testFlowForm.valid) {
-			return;
-		}
-		const triggerControlValue = this.testFlowForm.get('trigger')?.value;
-		const request = {
-			configs: {
-				...this.testFlowForm.get('configs')?.value,
-			},
-			trigger: triggerControlValue ? JSON.parse(triggerControlValue) : {},
-		};
-
-		this.executeTest$ = this.flowService.execute(collection.last_version.id, flow.last_version.id, request).pipe(
+		this.executeTest$ = this.flowService.execute(collection.last_version.id, flow.last_version.id, {}).pipe(
 			tap({
-				next: (instanceRun: InstanceRun | null) => {
+				next: (instanceRun: InstanceRun) => {
 					this.testRunSnackbar = this.snackbar.openFromComponent(TestRunBarComponent, {
 						duration: undefined,
 						data: {
@@ -199,10 +106,9 @@ export class TestFlowModalComponent implements OnInit {
 							flowId: flow.id,
 							run: instanceRun !== null ? instanceRun : initializedRun,
 						})
-					);
-					if (instanceRun && instanceRun.status === InstanceRunStatus.RUNNING) {
-						this.setStatusChecker(flow.id, instanceRun.id);
-					}
+					);					
+					this.setStatusChecker(flow.id, instanceRun.id);
+				
 				},
 				error: err => {
 					console.error(err);
@@ -229,13 +135,25 @@ export class TestFlowModalComponent implements OnInit {
 	}
 
 	setStatusChecker(flowId: UUID, runId: UUID) {
+		
 		this.instanceRunStatusChecker$ = interval(1500).pipe(
 			takeUntil(this.testRunSnackbar.instance.exitButtonClicked),
 			switchMap(() => this.instanceRunService.get(runId)),
-			tap(instanceRun => {
-				// TODO SIMPLIFY after next backend release TO (instanceRun.logsUploaded === true) and !instanceRun.logsUploaded
-				console.log(instanceRun.logsUploaded + ' ' + (instanceRun.logsUploaded !== false) + ' ' + instanceRun.status);
-				if (instanceRun.status !== InstanceRunStatus.RUNNING && instanceRun.logsUploaded !== false) {
+			switchMap((instanceRun)=>{
+				
+				if(instanceRun.status!==InstanceRunStatus.RUNNING && instanceRun.logs_file_id)
+				{
+					
+					return this.flowService.logs(instanceRun.logs_file_id).pipe(map(state=>{
+						return {...instanceRun,state:state};
+					}))
+				}
+				return of(instanceRun);
+			}),
+			tap(instanceRun => {		
+						
+				if (instanceRun.status !== InstanceRunStatus.RUNNING && instanceRun.logs_file_id){
+					
 					this.store.dispatch(
 						FlowsActions.setRun({
 							flowId: flowId,
@@ -245,7 +163,7 @@ export class TestFlowModalComponent implements OnInit {
 				}
 			}),
 			takeWhile(instanceRun => {
-				return instanceRun.status === InstanceRunStatus.RUNNING || !(instanceRun.logsUploaded !== false);
+				return instanceRun.status === InstanceRunStatus.RUNNING;
 			})
 		);
 	}

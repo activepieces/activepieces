@@ -97,7 +97,7 @@ export class FlowItemContentComponent implements OnInit {
 		return this.selectedRun$.pipe(
 			map(selectedRun => {
 				if (selectedRun) {
-					if (selectedRun.status !== InstanceRunStatus.RUNNING) {
+					if (selectedRun.status !== InstanceRunStatus.RUNNING && selectedRun.state) {
 						const stepName = this._flowItem.name;
 						const result = selectedRun.state.steps[stepName.toString()];
 						if (result) {

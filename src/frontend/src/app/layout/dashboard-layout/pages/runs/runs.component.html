@@ -1,4 +1,4 @@
-<div class=" table-responsive" *ngIf="runsPage$ | async as runsPage; else fuckup">
+<div class=" table-responsive" *ngIf="runsPage$ | async as runsPage;">
   <table class=" table align-items-center table-flush">
     <thead class=" thead-light">
     <tr>
@@ -11,13 +11,12 @@
     <tbody class=" list">
     <tr *ngFor="let run of runsPage.data; let i=index"  style="cursor:pointer;" (click)="openInstanceRun(run)">
       <th scope="row">
-        <span>{{run.pieceDisplayName}}</span>
+        <span>{{run.collection_display_name}}</span>
         <span class="mr-2"></span>
         <span class="account-name text-xm">/</span>
-        <span class="ml-2 account-name text-xm">{{run.accountName}}</span>
         <span class="td-description">{{run.id}}</span>
       </th>
-      <td>{{run.flowDisplayName}}</td>
+      <td>{{run.flow_display_name}}</td>
       <td>
         <span *ngIf="run.status === instanceRunEnum().SUCCEEDED" ><app-state-icon [succeeded]="true"></app-state-icon><span class="ml-1 text-success">Succeeded</span></span>
         <span *ngIf="run.status === instanceRunEnum().FAILED" ><app-state-icon [succeeded]="false"></app-state-icon><span class="ml-1 text-danger">Failed</span></span>
@@ -25,13 +24,11 @@
 
       </td>
       <td>
-        <div *ngIf="run.epochStartTime">{{run.epochStartTime | timeago}}</div>
+        <div *ngIf="run.start_time">{{run.start_time | timeago}}</div>
       </td>
     </tr>
     </tbody>
   </table>
   <app-pagination [page]="runsPage"></app-pagination>
 </div>
-<ng-template #fuckup>
-nothing
-</ng-template>
+

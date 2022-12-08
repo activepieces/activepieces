@@ -36,7 +36,7 @@ export class CollectionEffects {
 			concatLatestFrom(() => this.store.select(BuilderSelectors.selectCurrentCollection)),
 			debounceTime(autoSaveDebounceTime),
 			concatMap(([action, collection]) => {
-				debugger;
+				
 				return this.collectionService.update(collection.id, collection.last_version).pipe(
 					tap(() => {
 						const now = new Date();

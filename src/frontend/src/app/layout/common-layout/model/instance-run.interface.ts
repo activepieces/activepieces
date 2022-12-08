@@ -4,23 +4,18 @@ import { InstanceRunStatus } from './enum/instance-run-status';
 
 export interface InstanceRun {
 	id: UUID;
-	environmentId: UUID;
-	accountId: UUID;
-	instanceId: UUID;
-	flowVersionId: UUID;
+	flow_version_id: UUID;
 	status: InstanceRunStatus;
-	state: InstanceRunState;
-	stateUrl?: string;
-	logsUploaded: boolean;
-	epochFinishTime: number;
-	epochStartTime: number;
-	pieceDisplayName?: string;
-	accountName?: string;
-	flowDisplayName: string;
+	logs_file_id: UUID;
+	start_time: number;
+	finish_time: number;
+	collection_display_name: string;
+	flow_display_name: string;
+	state:InstanceRunState
 }
 
 export interface InstanceRunState {
-	variables: any;
+	configs: any;
 	steps: { [key: string]: StepResult };
 }
 
@@ -44,14 +39,12 @@ export interface StepResult {
 
 export const initializedRun: InstanceRun = {
 	id: '',
-	environmentId: '',
-	accountId: '',
-	flowVersionId: '',
-	logsUploaded: false,
+	flow_version_id: '',
 	status: InstanceRunStatus.RUNNING,
-	epochFinishTime: 0,
-	epochStartTime: 0,
-	flowDisplayName: '',
-	instanceId: '',
-	state: { steps: {}, variables: null },
+	logs_file_id: '',
+	start_time: 0,
+	finish_time: 0,
+	collection_display_name: '',
+	flow_display_name: '',
+	state:{configs:{},steps:{}}
 };

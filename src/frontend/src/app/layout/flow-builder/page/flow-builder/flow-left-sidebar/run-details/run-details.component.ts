@@ -49,10 +49,11 @@ export class RunDetailsComponent implements OnInit {
 		const run$ = this.store.select(BuilderSelectors.selectCurrentFlowRun);
 		this.logs$ = run$.pipe(
 			distinctUntilChanged((prev, curr) => {
-				return prev?.id === curr?.id && prev?.status === curr?.status;
+				return prev?.id === curr?.id && prev?.status === curr?.status && prev?.logs_file_id ===curr?.logs_file_id;
 			}),
 			map(selectedFlowRun => {
-				if (selectedFlowRun && selectedFlowRun.status !== InstanceRunStatus.RUNNING) {
+				
+				if (selectedFlowRun && selectedFlowRun.status !== InstanceRunStatus.RUNNING && selectedFlowRun.logs_file_id) {
 					this.runResults = this.createStepResultsForDetailsAccordion(selectedFlowRun);
 					return {
 						selectedRun: selectedFlowRun,
@@ -96,9 +97,9 @@ export class RunDetailsComponent implements OnInit {
 		result: StepResult;
 		stepName: string;
 	}[] {
-		const stepNames = Object.keys(run.state.steps);
+		const stepNames = Object.keys(run.state!.steps);
 		return stepNames.map(name => {
-			const result = run.state.steps[name];
+			const result = run.state!.steps[name];
 			return {
 				result: result,
 				stepName: name,

@@ -59,7 +59,7 @@ export class CollectionService {
 		return this.http.delete<void>(environment.apiUrl + '/collections/' + pieceId);
 	}
 	deploy(collection_id: UUID): Observable<void> {
-		debugger;
+		
 		return this.http.post<void>(environment.apiUrl + `/collections/${collection_id}/instances`, {
 			status: InstanceStatus.RUNNING,
 		});

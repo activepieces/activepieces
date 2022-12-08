@@ -25,7 +25,7 @@ export class GetInstanceRunResolver
 		const runId = snapshot.paramMap.get('runId') as UUID;
 		return this.instanceRunService.get(runId).pipe(
 			switchMap(run => {
-				return this.flowService.getVersion(run.flowVersionId).pipe(
+				return this.flowService.getVersion(run.flow_version_id).pipe(
 					switchMap(flowVersion => {
 						return this.flowService.get(flowVersion.flow_id).pipe(
 							switchMap(flow => {

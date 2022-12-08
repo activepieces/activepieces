@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { CollectionVersion } from '../model/collection.interface';
-import { forkJoin, map, Observable, of, skipWhile, switchMap, take, tap } from 'rxjs';
+import { forkJoin, map, Observable,  of,  skipWhile, switchMap, take, tap } from 'rxjs';
 import { Flow } from '../model/flow.class';
 import { SeekPage } from './seek-page';
 import { UUID } from 'angular2-uuid';
@@ -20,6 +20,7 @@ import {
 	zipAllArtifacts,
 } from '../model/helper/artifacts-zipping-helper';
 import { CodeService } from '../../flow-builder/service/code.service';
+import { InstanceRunStatus } from '../model/enum/instance-run-status';
 @Injectable({
 	providedIn: 'root',
 })
@@ -84,7 +85,7 @@ export class FlowService {
 				display_name: 'Schedule Trigger',
 				type: 'SCHEDULE',
 				settings: {
-					cron_expression: '0 1 0 ? * *',
+					cron_expression: '0/30 * * ? * *',
 				},
 			},
 		};
@@ -159,7 +160,7 @@ export class FlowService {
 	execute(
 		collectionVersionId: UUID,
 		flowVersionId,
-		request: { configs: Map<String, Object>; trigger: any }
+		payload: any
 	): Observable<InstanceRun> {
 		return this.http
 			.post<InstanceRun>(
@@ -169,24 +170,25 @@ export class FlowService {
 					'/flow-versions/' +
 					flowVersionId +
 					'/runs',
-				request
+				{payload:payload}
 			)
 			.pipe(
 				switchMap(instanceRun => {
-					if (instanceRun.state === undefined && instanceRun.stateUrl !== undefined) {
-						return this.logs(instanceRun.stateUrl).pipe(
-							map(st => {
-								instanceRun.state = st;
-								return instanceRun;
+					
+					if(instanceRun.status !== InstanceRunStatus.RUNNING && instanceRun.logs_file_id )
+					{
+						return this.logs(instanceRun.logs_file_id).pipe(
+							map(state => {
+								return {...instanceRun, state:state};
 							})
-						);
+						);					
 					}
-					return of(instanceRun);
+				return of(instanceRun);
 				})
 			);
 	}
 
-	private logs(url: string): Observable<InstanceRunState> {
-		return this.http.get<InstanceRunState>(url);
+	 logs( fileId:UUID): Observable<InstanceRunState> {
+		return this.http.get<InstanceRunState>(environment.apiUrl +  `/files/${fileId}`);
 	}
 }
