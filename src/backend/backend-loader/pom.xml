@@ -259,28 +259,6 @@
                     </excludes>
                 </configuration>
             </plugin>
-            <plugin>
-                <artifactId>dockerfile-maven-plugin</artifactId>
-                <configuration>
-                    <buildArgs>
-                        <JAR_FILE>target/${project.build.finalName}.jar</JAR_FILE>
-                    </buildArgs>
-                    <pullNewerImage>false</pullNewerImage>
-                    <repository>docker-active-pieces-backend</repository>
-                    <tag>${project.version}</tag>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>build</goal>
-                            <goal>push</goal>
-                        </goals>
-                        <id>default</id>
-                    </execution>
-                </executions>
-                <groupId>com.spotify</groupId>
-                <version>1.4.13</version>
-            </plugin>
         </plugins>
     </build>
 

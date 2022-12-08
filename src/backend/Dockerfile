@@ -1,3 +1,13 @@
+#
+# Build stage
+#
+FROM maven:3.8.6-openjdk-18 AS build
+COPY . /home/app
+RUN mvn -f /home/app/pom.xml clean package
+
+#
+# Package stage
+#
 FROM debian:bullseye
 RUN apt-get update
 RUN apt-get install -y default-jre
@@ -13,12 +23,12 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 RUN apt-get install -y libcap-dev
-COPY default.cf /usr/local/etc/isolate
-COPY isolate /isolate
+COPY backend-loader/default.cf /usr/local/etc/isolate
+COPY backend-loader/isolate /isolate
 ARG JAR_FILE
 RUN npm install --global --unsafe-perm webpack@5.74.0
 RUN npm install --global --unsafe-perm webpack-cli@^4.10.0
 RUN npm install --global --unsafe-perm webpack-node-externals@^3.0.0
 EXPOSE 8000
-COPY target/backend-loader-*.jar /app.jar
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar /app.jar"]
+COPY --from=build /home/app/backend-loader/target/backend-loader-1.0.jar /usr/local/lib/demo.jar
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar /usr/local/lib/demo.jar"]
