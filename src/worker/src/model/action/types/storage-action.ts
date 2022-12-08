@@ -18,12 +18,12 @@ export enum StorageScope {
 }
 
 export interface GetStorageRequest {
-  storePath: string[];
+  store_path: string[];
   scope: StorageScope;
 }
 
 export interface PutStorageRequest {
-  storePath: string[];
+  store_path: string[];
   scope: StorageScope;
   value: any;
 }
@@ -89,7 +89,7 @@ export class StorageAction extends Action {
       switch (this.settings.operation) {
         case StorageOperation.GET:
           const getRequest: GetStorageRequest = {
-            storePath: storeScope.key(key),
+            store_path: storeScope.key(key),
             scope: this.settings.scope,
           };
           data = (
@@ -108,7 +108,7 @@ export class StorageAction extends Action {
           );
           const putRequest: PutStorageRequest = {
             value: value,
-            storePath: storeScope.key(key),
+            store_path: storeScope.key(key),
             scope: this.settings.scope,
           };
           data = (
