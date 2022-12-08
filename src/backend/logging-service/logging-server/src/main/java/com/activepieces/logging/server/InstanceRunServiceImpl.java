@@ -82,7 +82,7 @@ public class InstanceRunServiceImpl implements InstanceRunService {
       throws InstanceRunNotFoundException, PermissionDeniedException {
     permissionService.requiresPermission(projectId, Permission.READ_INSTANCE_RUN);
     final List<PageFilter> filters = List.of(new PageFilter(InstanceRun.PROJECT_ID, projectId));
-    return repository.findPageAsc( filters, request).convert(mapper::toView);
+    return repository.findPageDesc( filters, request).convert(mapper::toView);
   }
 
   @Override
