@@ -44,6 +44,7 @@ export class FlowExecutor {
 
       return this.getExecutionOutput(flowVersion, flowStatus, duration);
     } catch (e) {
+      console.error(e);
       return new ExecutionOutput(
         ExecutionOutputStatus.FAILED,
         this.executionState,
@@ -150,7 +151,6 @@ export class FlowExecutor {
 
       // Add predefined configs to Execution State.
       this.executionState.insertConfigs(collectionVersion.getConfigsMap());
-      this.executionState.insertConfigs(flowVersion.getConfigsMap());
       this.executionState.insertConfigs(configs);
 
       return flowVersion;

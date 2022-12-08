@@ -3,8 +3,7 @@ import {globals} from '../globals';
 export class CodeExecutor {
   public async executeCode(artifact: string, params: any) {
     try {
-      const artifactJs =
-        artifact.substring(0, artifact.lastIndexOf('.')) + '.js';
+      const artifactJs = artifact + '.js';
       const artifactPath = `${globals.codeDirectory}/${artifactJs}`;
 
       return await this.runCode(artifactPath, params);

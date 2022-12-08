@@ -50,6 +50,7 @@ public class Sandbox {
   public String runIsolate(String command) throws IOException, InterruptedException {
     String ISOLATE_BINARY = "./isolate";
     final String commandLine = String.format("%s %s", ISOLATE_BINARY, command);
+    log.info(commandLine);
     return ArtifactUtils.runCommandAsRoot(commandLine);
   }
 
