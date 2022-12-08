@@ -5,7 +5,6 @@ import { DashboardLayoutComponent } from './layout/dashboard-layout/dashboard-la
 import { NotFoundComponent } from './layout/not-found/not-found.component';
 import { RedirectUrlComponent } from './layout/redirect-url/redirect-url.component';
 import { AuthLayoutComponent } from './layout/auth-layout/auth-layout.component';
-import { ChangeLogComponent } from './layout/change-log-layout/change-log/change-log.component';
 
 const routes: Routes = [
 	{
@@ -36,17 +35,6 @@ const routes: Routes = [
 			{
 				path: '',
 				loadChildren: () => import('./layout/auth-layout/auth-layout.module').then(m => m.AuthLayoutModule),
-			},
-		],
-	},
-	{
-		path: '',
-		component: ChangeLogComponent,
-		children: [
-			{
-				path: '',
-				loadChildren: () =>
-					import('./layout/change-log-layout/change-log-layout.module').then(m => m.ChangeLogLayoutModule),
 			},
 		],
 	},

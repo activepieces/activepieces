@@ -17,7 +17,6 @@ import { HttpInterceptorProvider } from './service/http-interceptor.service';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { CommonModule } from '@angular/common';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import { ChangeLogLayoutModule } from './layout/change-log-layout/change-log-layout.module';
 
 @NgModule({
 	declarations: [AppComponent, NotFoundComponent, RedirectUrlComponent],
@@ -26,7 +25,6 @@ import { ChangeLogLayoutModule } from './layout/change-log-layout/change-log-lay
 		BrowserModule,
 		FlowLayoutModule,
 		AppRoutingModule,
-		ChangeLogLayoutModule,
 		BrowserAnimationsModule,
 		StoreModule.forRoot({}),
 		StoreDevtoolsModule.instrument({
