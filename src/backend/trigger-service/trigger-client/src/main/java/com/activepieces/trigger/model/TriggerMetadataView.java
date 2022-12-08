@@ -21,7 +21,7 @@ import java.io.Serializable;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = ScheduleMetadataTriggerView.class, name = "SCHEDULE"),
         @JsonSubTypes.Type(value = EmptyTriggerMetadataView.class, name = "EMPTY"),
-        @JsonSubTypes.Type(value = InstanceStartedTriggerMetadataView.class, name = "COLLECTION_STARTED"),
+        @JsonSubTypes.Type(value = InstanceStartedTriggerMetadataView.class, name = "COLLECTED_DEPLOYED"),
         @JsonSubTypes.Type(value = InstanceStoppedTriggerMetadataView.class, name = "COLLECTION_STOPPED"),
         @JsonSubTypes.Type(value = WebhookTriggerMetadataView.class, name = "WEBHOOK")
 }
@@ -30,7 +30,7 @@ import java.io.Serializable;
 @EqualsAndHashCode
 public abstract class TriggerMetadataView implements Serializable {
 
-    @Pattern(regexp = "SCHEDULE|EMPTY|WEBHOOK|COLLECTION_STARTED|COLLECTION_STOPPED")
+    @Pattern(regexp = "SCHEDULE|EMPTY|WEBHOOK|COLLECTED_DEPLOYED|COLLECTION_STOPPED")
     @JsonProperty
     private String type;
 
