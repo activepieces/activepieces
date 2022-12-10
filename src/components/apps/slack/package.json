@@ -2,10 +2,7 @@
   "name": "@activepieces/slack",
   "version": "0.0.2",
   "description": "activepieces slack component",
-  "dependencies": {
-    "@activepieces/components-common": "^0.0.2",
-    "@activepieces/components-framework": "^0.0.1"
-  },
+  "dependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rm -rf dist && tsc",

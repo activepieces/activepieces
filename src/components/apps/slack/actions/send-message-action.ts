@@ -1,10 +1,12 @@
-import type {Configuration} from '@activepieces/components-framework';
-import {InputDataType} from '@activepieces/components-framework';
-import {InputRequestLocation} from '@activepieces/components-framework';
-import {InputUiType} from '@activepieces/components-framework';
 
-export const slackSendMessageConfig: Configuration = {
-	inputs: [
+import {createAction} from '../../../framework/src/action';
+import { InputDataType } from '../../../framework/src/model/input-data-type.model';
+import { InputRequestLocation } from '../../../framework/src/model/input-request-location.model';
+import { InputUiType } from '../../../framework/src/model/input-ui-type.model';
+
+export default createAction({
+	name: "Send Slack Message",
+	configs: [
 		{
 			name: 'as_user',
 			displayName: 'as_user',
@@ -141,4 +143,25 @@ export const slackSendMessageConfig: Configuration = {
 			required: false,
 		},
 	],
-};
+	runner: (async configuration => {
+		// TODO FIX
+		return configuration;
+		/*		let httpClient: HttpClient = new SuperAgentHttpClient('https://slack.com/api')
+		const request: HttpRequest<Record<string, string>> = {
+			method: HttpMethod.POST,
+			url: '/chat.postMessage',
+			body: configValue.inputs,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: configValue.authentication.accessToken,
+			},
+			queryParams: {},
+		};
+
+		await httpClient.sendRequest(request);
+
+		return {
+			success: true,
+		};*/
+	})
+})
