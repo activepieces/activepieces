@@ -6,8 +6,8 @@ import {SuperAgentHttpClient} from './http/superagent/superagent-http-client';
 
 export {
 	AuthenticationType,
-	type HttpClient,
+	HttpClient,
 	HttpMethod,
-	type HttpRequest,
+	HttpRequest,
 	SuperAgentHttpClient,
 };
