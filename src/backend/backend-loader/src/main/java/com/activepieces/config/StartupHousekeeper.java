@@ -4,11 +4,13 @@ import com.activepieces.authentication.client.UserAuthenticationService;
 import com.activepieces.authentication.client.model.UserInformationView;
 import com.activepieces.authentication.client.request.SignUpRequest;
 import com.activepieces.entity.sql.Project;
+import com.activepieces.flag.service.FlagService;
 import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.project.client.ProjectService;
 import com.activepieces.project.client.model.CreateProjectRequest;
 import com.activepieces.project.client.model.ProjectView;
 import lombok.NonNull;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,8 +50,8 @@ public class StartupHousekeeper {
             final ProjectView projectView = projectService.create(user.getId(), CreateProjectRequest.builder()
                     .displayName("Project")
                     .build());
+            scheduler.clear();
         }
-        scheduler.clear();
     }
 
 }

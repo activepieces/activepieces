@@ -1,6 +1,7 @@
-package com.activepieces.authentication.client.util;
+package com.activepieces.authentication.client;
 
 import com.activepieces.common.identity.*;
+import com.activepieces.flag.service.FlagService;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
@@ -10,7 +11,8 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.github.ksuid.Ksuid;
 import lombok.NonNull;
-import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.Date;
@@ -19,8 +21,8 @@ import java.util.Optional;
 
 import static com.auth0.jwt.algorithms.Algorithm.HMAC512;
 
-@UtilityClass
-public class JWTUtils {
+@Service
+public class JWTService {
 
   public static final String AUTHORIZATION_HEADER_NAME = "Authorization";
   public static final String TOKEN_PREFIX = "Bearer ";
@@ -29,20 +31,28 @@ public class JWTUtils {
   private static final String COLLECTION_ID = "collection_id";
   private static final String FLOW_ID = "flow_id";
 
-  // TODO MOVE TO PRIVATE
-  private static final String SECRET_KEY = "a4f5wx27nsmlnrrxJvBL137Neb1aG096xdJ";
+  private String secretKey;
 
-  public static String createTokenWithExpirationPeriod(
+  public JWTService(@NonNull final FlagService flagService){
+    if(!flagService.exists(FlagService.BEARER_ENCRYPTION_KEY)){
+      secretKey = RandomStringUtils.randomAlphanumeric(35);
+      flagService.save(FlagService.BEARER_ENCRYPTION_KEY, secretKey);
+    }else{
+      secretKey = (String) flagService.getValue(FlagService.BEARER_ENCRYPTION_KEY);
+    }
+  }
+
+  public String createTokenWithExpirationPeriod(
           @NonNull final UserIdentity userIdentity, final Duration duration) {
     return JWT.create()
             .withSubject(userIdentity.getId().toString())
             .withClaim(RESOURCE_ROLE, userIdentity.getPrincipleType().toString())
             .withExpiresAt(new Date(System.currentTimeMillis() + duration.getSeconds() * 1000L))
-            .sign(HMAC512(SECRET_KEY.getBytes()));
+            .sign(HMAC512(secretKey.getBytes()));
   }
 
 
-  public static String createTokenWithDefaultExpiration(
+  public String createTokenWithDefaultExpiration(
           @NonNull final WorkerIdentity workerIdentity) {
     return JWT.create()
         .withSubject(workerIdentity.getId().toString())
@@ -51,14 +61,14 @@ public class JWTUtils {
         .withClaim(FLOW_ID, workerIdentity.getFlowId().toString())
         .withExpiresAt(
             new Date(System.currentTimeMillis() + DEFAULT_EXPIRATION_DURATION.getSeconds() * 1000L))
-        .sign(HMAC512(SECRET_KEY.getBytes()));
+        .sign(HMAC512(secretKey.getBytes()));
   }
 
-  public static String createTokenWithDefaultExpiration(@NonNull final UserIdentity userIdentity) {
+  public String createTokenWithDefaultExpiration(@NonNull final UserIdentity userIdentity) {
     return createTokenWithExpirationPeriod(userIdentity, DEFAULT_EXPIRATION_DURATION);
   }
 
-  public static Optional<PrincipleIdentity> decodeIdentityFromToken(
+  public Optional<PrincipleIdentity> decodeIdentityFromToken(
           @NonNull final String rawToken)  {
     try {
       final String strippedToken = rawToken.replace(TOKEN_PREFIX, "");
@@ -66,7 +76,7 @@ public class JWTUtils {
       final Claim resourceType = decodedJWT.getClaim(RESOURCE_ROLE);
       if (!resourceType.isNull()) {
         final String resourceIdString =
-                JWT.require(Algorithm.HMAC512(SECRET_KEY.getBytes()))
+                JWT.require(Algorithm.HMAC512(secretKey.getBytes()))
                         .build()
                         .verify(strippedToken)
                         .getSubject();

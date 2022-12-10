@@ -1,6 +1,6 @@
 package com.activepieces.worker;
 
-import com.activepieces.authentication.client.util.JWTUtils;
+import com.activepieces.authentication.client.JWTService;
 import com.activepieces.common.identity.WorkerIdentity;
 import com.activepieces.common.utils.ArtifactUtils;
 import com.activepieces.entity.subdocuments.runs.ActionExecutionStatus;
@@ -9,7 +9,6 @@ import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.piece.client.model.CollectionVersionView;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
@@ -20,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Map;
-import java.util.UUID;
 
 @Log4j2
 public class Sandbox {
@@ -30,9 +28,12 @@ public class Sandbox {
   private final String META_FILENAME = "meta.txt";
   private final String STANDARD_OUTPUT = "_standardOutput.txt";
   private final String STANDARD_ERROR = "_standardError.txt";
+  private final JWTService jwtService;
 
-  public Sandbox(final int boxId) {
+  public Sandbox(@NonNull final JWTService jwtService,
+                 final int boxId) {
     this.boxId = boxId;
+    this.jwtService = jwtService;
   }
 
   public int getBoxId() {
@@ -82,7 +83,7 @@ public class Sandbox {
     entryJson.put("flowVersionId", flowVersionView.getId().toString());
     entryJson.put("collectionVersionId", collectionVersionView.getId().toString());
     entryJson.put("apiUrl", apiUrl);
-    entryJson.put("workerToken", JWTUtils.createTokenWithDefaultExpiration(
+    entryJson.put("workerToken", jwtService.createTokenWithDefaultExpiration(
             WorkerIdentity.builder()
                     .collectionId(collectionVersionView.getCollectionId())
                     .flowId(flowVersionView.getFlowId())

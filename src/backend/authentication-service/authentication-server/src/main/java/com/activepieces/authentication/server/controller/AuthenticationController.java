@@ -5,7 +5,7 @@ import com.activepieces.authentication.client.exception.UnAuthenticationExceptio
 import com.activepieces.authentication.client.exception.UnAuthorizedException;
 import com.activepieces.authentication.client.model.UserInformationView;
 import com.activepieces.authentication.client.request.SignInRequest;
-import com.activepieces.authentication.client.util.JWTUtils;
+import com.activepieces.authentication.client.JWTService;
 import com.activepieces.common.identity.UserIdentity;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.NonNull;
@@ -25,10 +25,13 @@ import java.util.Optional;
 public class AuthenticationController {
 
   private final UserAuthenticationService userAuthenticationService;
+  private final JWTService jwtService;
 
   @Autowired
   public AuthenticationController(
-      @NonNull final UserAuthenticationService userAuthenticationService) {
+      @NonNull final UserAuthenticationService userAuthenticationService,
+      @NonNull final JWTService jwtService) {
+    this.jwtService = jwtService;
     this.userAuthenticationService = userAuthenticationService;
   }
 
@@ -43,8 +46,8 @@ public class AuthenticationController {
     }
     return ResponseEntity.ok()
         .header(
-            JWTUtils.AUTHORIZATION_HEADER_NAME,
-            JWTUtils.createTokenWithDefaultExpiration(
+            JWTService.AUTHORIZATION_HEADER_NAME,
+            jwtService.createTokenWithDefaultExpiration(
                 UserIdentity.builder().resourceId(userInformation.get().getId()).build()))
         .body(userInformation.get());
   }

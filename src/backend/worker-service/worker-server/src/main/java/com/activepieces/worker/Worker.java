@@ -1,6 +1,7 @@
 package com.activepieces.worker;
 
 import com.activepieces.actions.store.model.StorePath;
+import com.activepieces.authentication.client.JWTService;
 import com.activepieces.file.service.FileService;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.logging.client.InstanceRunService;
@@ -30,12 +31,13 @@ public class Worker {
     public Worker(
             int workerId,
             @NonNull final String apiUrl,
+            @NonNull final JWTService jwtService,
             @NonNull FlowArtifactBuilderService builderService,
             @NonNull InstanceRunService instanceRunService,
             @NonNull FileService fileService,
             @NonNull ObjectMapper objectMapper) {
         this.workerId = workerId;
-        this.sandbox = new Sandbox(workerId);
+        this.sandbox = new Sandbox(jwtService, workerId);
         this.apiUrl = apiUrl;
         steps.add(new PrepareSandbox(this));
         steps.add(
