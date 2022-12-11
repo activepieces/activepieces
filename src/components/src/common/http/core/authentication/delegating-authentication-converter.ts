@@ -1,5 +1,5 @@
-import type {Authentication} from '../../../authentication/core/authentication';
-import {AuthenticationType} from '../../../authentication/core/authentication-type';
+import type {Authentication} from '../../../../authentication/core/authentication';
+import {AuthenticationType} from '../../../../authentication/core/authentication-type';
 import type {RequestHeaders} from '../request-headers';
 import type {AuthenticationConverter} from './authentication-converter';
 import {BearerTokenAuthenticationConverter} from './bearer-authentication-converter';
