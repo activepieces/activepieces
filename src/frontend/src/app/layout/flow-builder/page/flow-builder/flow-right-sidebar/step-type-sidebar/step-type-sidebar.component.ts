@@ -119,7 +119,6 @@ export class StepTypeSidebarComponent implements OnInit {
 	}
 
 	private replaceTrigger(triggerDetails: FlowItemDetails) {
-		debugger;
 		const trigger: Trigger = {
 			type: triggerDetails.type as TriggerType,
 			name: 'trigger',

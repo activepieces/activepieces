@@ -40,10 +40,9 @@ export class NewEditPieceSidebarComponent implements OnInit {
 					this.selectedFlowItemDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetails(result.step));
 					this.cd.detectChanges();
 					if (result.step.type === ActionType.CODE) {
-						debugger;
 						this.stepCacheKeyAndArtifactUrl = {
 							cacheKey: new StepCacheKey(result.flowId!, result.step.name),
-							url: environment.apiUrl+`/files/${(result.step as CodeAction).settings.artifact_source_id}`,
+							url: environment.apiUrl + `/files/${(result.step as CodeAction).settings.artifact_source_id}`,
 						};
 					} else {
 						this.stepCacheKeyAndArtifactUrl = null;

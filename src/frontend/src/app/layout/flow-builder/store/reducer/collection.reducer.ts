@@ -29,12 +29,13 @@ const initialState: CollectionState = {
 		project_id: 'dummy',
 		versionsList: [],
 	},
+	instance: undefined,
 };
 const _collectionReducer = createReducer(
 	initialState,
-	on(CollectionActions.setInitial, (state, { collection }): CollectionState => {
+	on(CollectionActions.setInitial, (state, { collection, instance }): CollectionState => {
 		const clonedPiece: Collection = JSON.parse(JSON.stringify(collection));
-		return { collection: clonedPiece, state: CollectionStateEnum.NONE };
+		return { collection: clonedPiece, state: CollectionStateEnum.NONE, instance: instance };
 	}),
 	on(CollectionActions.changeName, (state, { displayName }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
@@ -71,20 +72,17 @@ const _collectionReducer = createReducer(
 		return clonedState;
 	}),
 	on(CollectionActions.deploy, (state): CollectionState => {
-		
 		return { ...state, state: CollectionStateEnum.DEPLOYING | state.state };
 	}),
 	on(CollectionActions.deployFailed, (state): CollectionState => {
-		
 		return { ...state, state: CollectionStateEnum.FAILED_SAVING_OR_DEPLOYING };
 	}),
-	on(CollectionActions.deploySuccess, (state): CollectionState => {
-		
-		return { ...state, state: state.state & ~CollectionStateEnum.DEPLOYING };
+	on(CollectionActions.deploySuccess, (state, props): CollectionState => {
+		return { ...state, state: state.state & ~CollectionStateEnum.DEPLOYING, instance: props.instance };
 	}),
 	on(FlowsActions.saveFlowStarted, (state, { flow, saveRequestId }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		
+
 		return {
 			...clonedState,
 			state: clonedState.state | CollectionStateEnum.SAVING_FLOW,
@@ -110,6 +108,9 @@ const _collectionReducer = createReducer(
 				? clonedState.state & ~CollectionStateEnum.SAVING_FLOW
 				: clonedState.state;
 		return { ...clonedState, state: saving_deploying_state };
+	}),
+	on(CollectionActions.removeInstance, (state): CollectionState => {
+		return { ...state, instance: undefined };
 	})
 );
 

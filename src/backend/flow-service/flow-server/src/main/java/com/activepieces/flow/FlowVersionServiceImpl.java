@@ -192,6 +192,7 @@ public class FlowVersionServiceImpl implements FlowVersionService {
   private FlowVersionView saveFromView(FlowVersionView FlowVersionView) {
     FlowVersion savedVersion =
         flowVersionRepository.save(flowVersionMapper.fromView(FlowVersionView));
+
     return flowVersionMapper.toView(savedVersion);
   }
 }

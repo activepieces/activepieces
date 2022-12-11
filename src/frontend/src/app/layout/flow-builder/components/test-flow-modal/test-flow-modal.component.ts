@@ -2,18 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { FlowService } from '../../../common-layout/service/flow.service';
 import { InstanceRunStatus } from '../../../common-layout/model/enum/instance-run-status';
-import {
-	catchError,
-	combineLatest,
-	interval,
-	map,
-	Observable,
-	of,
-	switchMap,
-	takeUntil,
-	takeWhile,
-	tap,
-} from 'rxjs';
+import { catchError, combineLatest, interval, map, Observable, of, switchMap, takeUntil, takeWhile, tap } from 'rxjs';
 import { fadeInUp400ms } from '../../../common-layout/animation/fade-in-up.animation';
 import { Flow } from '../../../common-layout/model/flow.class';
 import { TriggerType } from '../../../common-layout/model/enum/trigger-type.enum';
@@ -41,7 +30,7 @@ export class TestFlowModalComponent implements OnInit {
 	isSaving$: Observable<boolean> = of(false);
 	modalRef?: BsModalRef;
 	collectionConfigs$: Observable<Config[]>;
-	selectedFlow$: Observable<Flow|undefined>;
+	selectedFlow$: Observable<Flow | undefined>;
 	instanceRunStatusChecker$: Observable<InstanceRun>;
 	executeTest$: Observable<InstanceRun | null>;
 	selectedCollection$: Observable<Collection>;
@@ -54,9 +43,7 @@ export class TestFlowModalComponent implements OnInit {
 		private store: Store,
 		private instanceRunService: InstanceRunService,
 		private snackbar: MatSnackBar
-	) {
-
-	}
+	) {}
 
 	ngOnInit() {
 		this.isSaving$ = this.store.select(BuilderSelectors.selectIsSaving);
@@ -106,9 +93,8 @@ export class TestFlowModalComponent implements OnInit {
 							flowId: flow.id,
 							run: instanceRun !== null ? instanceRun : initializedRun,
 						})
-					);					
+					);
 					this.setStatusChecker(flow.id, instanceRun.id);
-				
 				},
 				error: err => {
 					console.error(err);
@@ -135,25 +121,21 @@ export class TestFlowModalComponent implements OnInit {
 	}
 
 	setStatusChecker(flowId: UUID, runId: UUID) {
-		
 		this.instanceRunStatusChecker$ = interval(1500).pipe(
 			takeUntil(this.testRunSnackbar.instance.exitButtonClicked),
 			switchMap(() => this.instanceRunService.get(runId)),
-			switchMap((instanceRun)=>{
-				
-				if(instanceRun.status!==InstanceRunStatus.RUNNING && instanceRun.logs_file_id)
-				{
-					
-					return this.flowService.logs(instanceRun.logs_file_id).pipe(map(state=>{
-						return {...instanceRun,state:state};
-					}))
+			switchMap(instanceRun => {
+				if (instanceRun.status !== InstanceRunStatus.RUNNING && instanceRun.logs_file_id) {
+					return this.flowService.logs(instanceRun.logs_file_id).pipe(
+						map(state => {
+							return { ...instanceRun, state: state };
+						})
+					);
 				}
 				return of(instanceRun);
 			}),
-			tap(instanceRun => {		
-						
-				if (instanceRun.status !== InstanceRunStatus.RUNNING && instanceRun.logs_file_id){
-					
+			tap(instanceRun => {
+				if (instanceRun.status !== InstanceRunStatus.RUNNING && instanceRun.logs_file_id) {
 					this.store.dispatch(
 						FlowsActions.setRun({
 							flowId: flowId,

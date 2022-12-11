@@ -23,10 +23,12 @@
       (click)="redirectHome(false)" (auxclick)="redirectHome(true)"></app-icon-button>
     <div class="flex-grow-1" #spacer></div>
     <div class="d-flex align-items-center collection-actions-buttons-section">
-      <app-icon-button [color]="themeService.BODY_COLOR" [matTooltip]="'Version History'"
+
+        <app-icon-button [color]="themeService.BODY_COLOR" [matTooltip]="'Version History'"
         [hoverColor]="themeService.PRIMARY_COLOR" [iconFilename]="'revert.svg'" (click)="openCollectionVersionsLists()"
         *ngIf="(viewMode$ | async) === false"></app-icon-button>
-      <app-embed-modal *ngIf="(viewMode$ | async) === false"></app-embed-modal>
+        <app-instance-settings *ngIf="(viewMode$ | async) === false"></app-instance-settings>
+
       <app-deploy-button *ngIf="(viewMode$ | async) === false"></app-deploy-button>
     </div>
   </div>

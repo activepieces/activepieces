@@ -47,7 +47,6 @@ export class DeployButtonComponent implements OnInit {
 	private setCollectionStateListener() {
 		this.collectionState$ = this.store.select(BuilderSelectors.selectCollectionState).pipe(
 			tap(state => {
-				
 				this.isSaving =
 					(state & CollectionStateEnum.SAVING_COLLECTION) === CollectionStateEnum.SAVING_COLLECTION ||
 					(state & CollectionStateEnum.SAVING_FLOW) === CollectionStateEnum.SAVING_FLOW;

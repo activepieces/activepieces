@@ -31,6 +31,9 @@ export const selectCurrentCollectionId = createSelector(
 	selectCurrentCollection,
 	(collection: Collection) => collection.id
 );
+export const selectCurrentCollectionInstance = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
+	return state.collectionState.instance;
+});
 
 export const selectCurrentCollectionName = createSelector(
 	selectCurrentCollection,
@@ -123,6 +126,7 @@ export const selectFlow = (flowId: UUID) =>
 	});
 export const selectCurrentFlowValidity = createSelector(selectCurrentFlow, (flow: Flow | undefined) => {
 	if (!flow) return false;
+
 	return flow.last_version.valid;
 });
 
@@ -329,4 +333,5 @@ export const BuilderSelectors = {
 	selectFlowsValidity,
 	selectFlowItemDetailsForConnectorComponents,
 	selectAuthConfigsDropdownOptions,
+	selectCurrentCollectionInstance,
 };

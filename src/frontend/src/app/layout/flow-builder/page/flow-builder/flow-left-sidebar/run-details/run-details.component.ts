@@ -49,10 +49,9 @@ export class RunDetailsComponent implements OnInit {
 		const run$ = this.store.select(BuilderSelectors.selectCurrentFlowRun);
 		this.logs$ = run$.pipe(
 			distinctUntilChanged((prev, curr) => {
-				return prev?.id === curr?.id && prev?.status === curr?.status && prev?.logs_file_id ===curr?.logs_file_id;
+				return prev?.id === curr?.id && prev?.status === curr?.status && prev?.logs_file_id === curr?.logs_file_id;
 			}),
 			map(selectedFlowRun => {
-				
 				if (selectedFlowRun && selectedFlowRun.status !== InstanceRunStatus.RUNNING && selectedFlowRun.logs_file_id) {
 					this.runResults = this.createStepResultsForDetailsAccordion(selectedFlowRun);
 					return {

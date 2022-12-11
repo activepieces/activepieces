@@ -8,11 +8,11 @@ import { UUID } from 'angular2-uuid';
 @Injectable({
 	providedIn: 'root',
 })
-export class GetPieceResolver implements Resolve<Observable<Collection>> {
-	constructor(private pieceService: CollectionService) {}
+export class CollectionResolver implements Resolve<Observable<Collection>> {
+	constructor(private collectionService: CollectionService) {}
 
 	resolve(snapshot: ActivatedRouteSnapshot): Observable<Collection> {
 		const pieceId = snapshot.paramMap.get('id') as UUID;
-		return this.pieceService.get(pieceId);
+		return this.collectionService.get(pieceId);
 	}
 }

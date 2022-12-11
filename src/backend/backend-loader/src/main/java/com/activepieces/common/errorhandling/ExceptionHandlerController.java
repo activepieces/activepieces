@@ -7,10 +7,7 @@ import com.activepieces.authentication.client.exception.UserNotFoundException;
 import com.activepieces.common.error.ErrorCode;
 import com.activepieces.common.error.ErrorResponse;
 import com.activepieces.common.error.exception.*;
-import com.activepieces.common.error.exception.collection.CollectionInvalidStateException;
-import com.activepieces.common.error.exception.collection.CollectionNotFoundException;
-import com.activepieces.common.error.exception.collection.CollectionVersionAlreadyLockedException;
-import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
+import com.activepieces.common.error.exception.collection.*;
 import com.activepieces.common.error.exception.flow.FlowNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowVersionAlreadyLockedException;
 import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException;
@@ -214,6 +211,12 @@ public class ExceptionHandlerController {
             .build(),
         HttpStatus.INTERNAL_SERVER_ERROR);
   }
+
+  @ExceptionHandler(value = CollectionInstanceNotFoundException.class)
+  public ResponseEntity<ErrorResponse> exception(CollectionInstanceNotFoundException exception) {
+    return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.NOT_FOUND);
+  }
+
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<Object> handleValidationExceptions(MethodArgumentNotValidException ex) {

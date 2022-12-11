@@ -13,7 +13,6 @@ import { BuilderActions } from '../action/builder.action';
 
 import { autoSaveDebounceTime } from 'src/app/layout/common-layout/utils';
 import { VersionEditState } from 'src/app/layout/common-layout/model/enum/version-edit-state.enum';
-import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 
 @Injectable()
 export class CollectionEffects {
@@ -36,7 +35,6 @@ export class CollectionEffects {
 			concatLatestFrom(() => this.store.select(BuilderSelectors.selectCurrentCollection)),
 			debounceTime(autoSaveDebounceTime),
 			concatMap(([action, collection]) => {
-				
 				return this.collectionService.update(collection.id, collection.last_version).pipe(
 					tap(() => {
 						const now = new Date();
@@ -71,9 +69,10 @@ export class CollectionEffects {
 	loadInitial$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(BuilderActions.loadInitial),
-			map(({ collection }: { collection: Collection }) => {
+			map(({ collection, instance }) => {
 				return CollectionActions.setInitial({
 					collection: collection,
+					instance: instance,
 				});
 			})
 		);
@@ -136,8 +135,8 @@ export class CollectionEffects {
 			concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
 			switchMap(([action, collection]) => {
 				return this.collectionService.deploy(collection.id).pipe(
-					switchMap(() => {
-						return of(CollectionActions.deploySuccess());
+					switchMap(instance => {
+						return of(CollectionActions.deploySuccess({ instance: instance }));
 					}),
 					catchError(err => {
 						console.error(err);

@@ -1,5 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
+import { Instance } from 'src/app/layout/common-layout/model/instance.interface';
 import { Config } from '../../../common-layout/model/fields/variable/config';
 export enum CollectionActionType {
 	CHANGE_NAME = '[COLLECTION] CHANGE_NAME',
@@ -14,6 +15,7 @@ export enum CollectionActionType {
 	DEPLOY_COLLECTION = '[COLLECTION] DEPLOY_COLLECTION',
 	DEPLOY_COLLECTION_FAILED = '[COLLECTION] DEPLOY_COLLECTION_FAILED',
 	DEPLOY_COLLECTION_SUCCESS = '[COLLECTION] DEPLOY_COLLECTION_SUCCESS',
+	REMOVE_INSTANCE = `[COLLECTION] REMOVE_INSTANCE`,
 }
 
 export const CollectionModifyingState = [
@@ -25,6 +27,7 @@ export const CollectionModifyingState = [
 
 export const changeName = createAction(CollectionActionType.CHANGE_NAME, props<{ displayName: string }>());
 
+export const removeInstance = createAction(CollectionActionType.REMOVE_INSTANCE);
 export const changeDescription = createAction(CollectionActionType.CHANGE_NAME, props<{ description: string }>());
 export const updateConfig = createAction(
 	CollectionActionType.UPDATE_CONFIG,
@@ -51,10 +54,16 @@ export const savedSuccess = createAction(
 
 export const deploy = createAction(CollectionActionType.DEPLOY_COLLECTION);
 export const deployFailed = createAction(CollectionActionType.DEPLOY_COLLECTION_FAILED);
-export const deploySuccess = createAction(CollectionActionType.DEPLOY_COLLECTION_SUCCESS);
+export const deploySuccess = createAction(
+	CollectionActionType.DEPLOY_COLLECTION_SUCCESS,
+	props<{ instance: Instance }>()
+);
 export const savedFailed = createAction(CollectionActionType.COLLECTION_SAVED_FAILED, props<{ error: any }>());
 
-export const setInitial = createAction(CollectionActionType.SET_INITIAL, props<{ collection: Collection }>());
+export const setInitial = createAction(
+	CollectionActionType.SET_INITIAL,
+	props<{ collection: Collection; instance?: Instance }>()
+);
 
 export const CollectionActions = {
 	changeName,
@@ -69,4 +78,5 @@ export const CollectionActions = {
 	deploy,
 	deploySuccess,
 	deployFailed,
+	removeInstance,
 };

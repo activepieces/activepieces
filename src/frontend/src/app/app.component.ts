@@ -45,7 +45,6 @@ export class AppComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-
 		this.loggedInUser$ = this.authenticationService.currentUserSubject.pipe(
 			tap(user => {
 				if (user == undefined || Object.keys(user).length == 0) {

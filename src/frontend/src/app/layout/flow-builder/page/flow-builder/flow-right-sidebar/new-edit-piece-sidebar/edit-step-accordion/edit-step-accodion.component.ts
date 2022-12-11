@@ -41,7 +41,6 @@ export class EditStepAccordionComponent implements AfterViewInit {
 
 	@Input() set stepArtifactCacheKeyAndUrl(urlAndCacheKey: { cacheKey: StepCacheKey; url: string } | null) {
 		if (urlAndCacheKey) {
-			debugger;
 			this.codeArtifact$ = this.codeService.getOrCreateStepArtifact(urlAndCacheKey.cacheKey, urlAndCacheKey.url);
 			this.stepCacheKey = urlAndCacheKey.cacheKey;
 		} else {

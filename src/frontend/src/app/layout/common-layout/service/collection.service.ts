@@ -7,7 +7,7 @@ import { SeekPage } from './seek-page';
 import { UUID } from 'angular2-uuid';
 import { CodeService } from '../../flow-builder/service/code.service';
 import { InstanceStatus } from '../model/enum/instance-status';
-
+import { Instance } from '../model/instance.interface';
 @Injectable({
 	providedIn: 'root',
 })
@@ -58,9 +58,8 @@ export class CollectionService {
 	archive(pieceId: UUID): Observable<void> {
 		return this.http.delete<void>(environment.apiUrl + '/collections/' + pieceId);
 	}
-	deploy(collection_id: UUID): Observable<void> {
-		
-		return this.http.post<void>(environment.apiUrl + `/collections/${collection_id}/instances`, {
+	deploy(collection_id: UUID): Observable<Instance> {
+		return this.http.post<Instance>(environment.apiUrl + `/collections/${collection_id}/instance`, {
 			status: InstanceStatus.RUNNING,
 		});
 	}

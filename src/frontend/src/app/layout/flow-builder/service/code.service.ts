@@ -5,7 +5,7 @@ import * as JSZip from 'jszip';
 import { catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { Artifact } from '../model/artifact.interface';
 import { UUID } from 'angular2-uuid';
-import { ArtifactCacheKey,  StepCacheKey } from './artifact-cache-key';
+import { ArtifactCacheKey, StepCacheKey } from './artifact-cache-key';
 import { CodeTestExecutionResult } from '../../common-layout/model/flow-builder/code-test-execution-result';
 import { ArtifactAndItsNameInFormData } from '../../common-layout/model/helper/artifacts-zipping-helper';
 
@@ -59,7 +59,6 @@ export class CodeService {
 			})
 		);
 	}
-
 
 	public helloWorld(): Artifact {
 		return {
@@ -130,7 +129,6 @@ export class CodeService {
 		artifactUrl: string,
 		uploadNewArtifacts: boolean = true
 	) {
-		debugger;
 		const artifactCacheResult = artifactsCache.get(artifactKey);
 		if (artifactCacheResult) {
 			return of(artifactCacheResult.artifact);
@@ -147,7 +145,6 @@ export class CodeService {
 	}
 
 	getOrCreateStepArtifact(stepCacheKey: StepCacheKey, artifactUrl: string) {
-		debugger;
 		return this.getArtifactFromCache(this.artifactsCacheForSteps, stepCacheKey.toString(), artifactUrl);
 	}
 
@@ -171,7 +168,6 @@ export class CodeService {
 	updateArtifactInFlowStepsCache(artifactKey: StepCacheKey, artifact: Artifact) {
 		this.updateArtifactInCache(this.artifactsCacheForSteps, artifactKey.toString(), artifact);
 	}
-	
 
 	private getDirtyArtifactsFromCache(cache: ArtifactsCache, incompleteArtifactKey: ArtifactCacheKey) {
 		const dirtyArtifacts: ArtifactAndItsNameInFormData[] = [];
@@ -187,7 +183,7 @@ export class CodeService {
 	private static getArtifactNameMethod(artifactCacheKey: ArtifactCacheKey) {
 		if (artifactCacheKey instanceof StepCacheKey) {
 			return StepCacheKey.getStepName;
-		} 
+		}
 		throw new Error('Aritfact cache key type has no method to get artifact name');
 	}
 

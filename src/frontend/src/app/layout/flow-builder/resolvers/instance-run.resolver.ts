@@ -18,9 +18,7 @@ export type InstanceRunInfo = {
 @Injectable({
 	providedIn: 'root',
 })
-export class GetInstanceRunResolver
-	implements Resolve<Observable<InstanceRunInfo>>
-{
+export class GetInstanceRunResolver implements Resolve<Observable<InstanceRunInfo>> {
 	constructor(
 		private instanceRunService: InstanceRunService,
 		private flowService: FlowService,
@@ -37,7 +35,7 @@ export class GetInstanceRunResolver
 							switchMap(flow => {
 								return this.collectionService.get(flow.collection_id).pipe(
 									switchMap(collection => {
-										return of({ collection: collection, flow: {...flow, last_version:flowVersion}, run: run });
+										return of({ collection: collection, flow: { ...flow, last_version: flowVersion }, run: run });
 									})
 								);
 							})

@@ -22,6 +22,7 @@ import { RunDetailsService } from './flow-left-sidebar/run-details/iteration-det
 import { FlowsActions } from '../../store/action/flows.action';
 import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
+import { Instance } from 'src/app/layout/common-layout/model/instance.interface';
 
 @Component({
 	templateUrl: './collection-builder.component.html',
@@ -63,7 +64,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 					const collection = runInformation.collection;
 					const flow: Flow = runInformation.flow;
 					const run: InstanceRun = runInformation.run;
-					
+
 					this.store.dispatch(
 						BuilderActions.loadInitial({
 							collection: collection,
@@ -77,9 +78,10 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 						duration: undefined,
 					});
 				} else {
-					const collection: Collection = value['piece'];
+					const collection: Collection = value['collection'];
 					const flows = value['flows'];
-
+					const instance: Instance | undefined = value['instance'];
+					debugger;
 					this.navigationService.setTitle(collection.last_version.display_name);
 					this.store.dispatch(
 						BuilderActions.loadInitial({
@@ -87,6 +89,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 							flows: flows.data,
 							viewMode: ViewModeEnum.BUILDING,
 							run: undefined,
+							instance: instance,
 						})
 					);
 				}

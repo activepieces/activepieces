@@ -73,9 +73,10 @@ import { DefaultConfigTypeSettingsComponent } from './page/flow-builder/flow-lef
 import { OAuth2ConfigSettingsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/o-auth2-config-settings/o-auth2-config-settings.component';
 import { ComponentInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/component-input-form.component';
 import { NewAuthenticationModalComponent } from './page/flow-builder/flow-right-sidebar/new-authentication-modal/new-authentication-modal.component';
-import { DeployButtonComponent } from './page/flow-builder/flow-builder-header/publish-popover/deploy-button.component';
+import { DeployButtonComponent } from './page/flow-builder/flow-builder-header/deploy-button/deploy-button.component';
 import { TrackFocusDirective } from './page/flow-builder/flow-left-sidebar/run-details/steps-results-list/track-focus.directive';
 import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
+import { InstanceSettingsComponent } from './page/flow-builder/flow-builder-header/instance-settings/instance-settings.component';
 
 @NgModule({
 	imports: [
@@ -156,6 +157,7 @@ import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/cente
 		DeployButtonComponent,
 		TrackFocusDirective,
 		CenterMatMenuDirective,
+		InstanceSettingsComponent,
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 	exports: [FlowBuilderHeaderComponent],

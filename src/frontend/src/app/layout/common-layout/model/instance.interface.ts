@@ -3,15 +3,8 @@ import { InstanceStatus } from './enum/instance-status';
 
 export interface Instance {
 	id: UUID;
-	accountId: UUID;
-	collectionVersionId: UUID;
-	variables: any;
+	collection_version_id: UUID;
 	status: InstanceStatus;
-	epochCreationTime: number;
-	epochUpdateTime: number;
-
-	// Optional
-	runs?: number;
-	accountDisplayName?: string;
-	pieceDisplayName?: string;
+	created: number;
+	updated: number;
 }

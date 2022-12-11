@@ -3,11 +3,7 @@ import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACC
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { debounceTime, distinctUntilChanged, Observable, Subject, takeUntil, tap } from 'rxjs';
 import { Artifact } from 'src/app/layout/flow-builder/model/artifact.interface';
-import {
-	ArtifactCacheKey,
-
-	StepCacheKey,
-} from 'src/app/layout/flow-builder/service/artifact-cache-key';
+import { ArtifactCacheKey, StepCacheKey } from 'src/app/layout/flow-builder/service/artifact-cache-key';
 import { CodeService } from 'src/app/layout/flow-builder/service/code.service';
 import { cacheArtifactDebounceTime } from '../../../utils';
 import { CodeArtifactControlFullscreenComponent } from './code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';

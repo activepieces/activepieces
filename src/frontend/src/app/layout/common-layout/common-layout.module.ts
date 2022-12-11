@@ -4,7 +4,7 @@ import { EditableTextComponent } from './components/editable-text/editable-text.
 import { ConfirmDeleteModalComponent } from './components/confirm-delete-modal/confirm-delete-modal.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BasicSelectComponent } from './components/dynamic-form/dynamic-field-input-only/basic-select/basic-select.component';
-import { IconButtonComponent } from './components/trash-icon-button/icon-button.component';
+import { IconButtonComponent } from './components/icon-button/icon-button.component';
 import { TimeagoModule } from 'ngx-timeago';
 import { HighlightService } from './service/highlightservice';
 import { StateIconComponent } from './components/status-icon/state-icon.component';

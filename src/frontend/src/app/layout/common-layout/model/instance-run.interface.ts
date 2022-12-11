@@ -11,7 +11,7 @@ export interface InstanceRun {
 	finish_time: number;
 	collection_display_name: string;
 	flow_display_name: string;
-	state:InstanceRunState
+	state: InstanceRunState;
 }
 
 export interface InstanceRunState {
@@ -46,5 +46,5 @@ export const initializedRun: InstanceRun = {
 	finish_time: 0,
 	collection_display_name: '',
 	flow_display_name: '',
-	state:{configs:{},steps:{}}
+	state: { configs: {}, steps: {} },
 };

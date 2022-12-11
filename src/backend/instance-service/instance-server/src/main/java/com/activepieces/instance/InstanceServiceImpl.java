@@ -1,11 +1,7 @@
 package com.activepieces.instance;
 
-import com.activepieces.common.error.ErrorServiceHandler;
 import com.activepieces.common.error.exception.InstanceNotFoundException;
-import com.activepieces.common.error.exception.collection.CollectionInvalidStateException;
-import com.activepieces.common.error.exception.collection.CollectionNotFoundException;
-import com.activepieces.common.error.exception.collection.CollectionVersionAlreadyLockedException;
-import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
+import com.activepieces.common.error.exception.collection.*;
 import com.activepieces.common.error.exception.flow.FlowNotFoundException;
 import com.activepieces.common.pagination.PageFilter;
 import com.activepieces.common.pagination.PageOperator;
@@ -14,7 +10,6 @@ import com.activepieces.common.pagination.SeekPageRequest;
 import com.activepieces.entity.enums.Permission;
 import com.activepieces.entity.enums.ResourceType;
 import com.activepieces.entity.sql.Instance;
-import com.activepieces.flow.FlowVersionService;
 import com.activepieces.guardian.client.PermissionService;
 import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.guardian.client.exception.ResourceNotFoundException;
@@ -27,19 +22,14 @@ import com.activepieces.instance.client.model.InstanceView;
 import com.activepieces.instance.repository.InstanceRepository;
 import com.activepieces.piece.client.CollectionService;
 import com.activepieces.piece.client.CollectionVersionService;
-import com.activepieces.piece.client.model.CollectionVersionView;
 import com.activepieces.piece.client.model.CollectionView;
-import com.activepieces.variable.model.VariableService;
-import com.activepieces.variable.model.exception.MissingConfigsException;
 import com.github.ksuid.Ksuid;
-import com.mchange.v2.collection.MapEntry;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Log4j2
@@ -136,22 +126,6 @@ public class InstanceServiceImpl implements InstanceService {
 
 
     @Override
-    public InstanceView update(Ksuid id, CreateOrUpdateInstanceRequest request)
-            throws PermissionDeniedException, InstanceNotFoundException {
-        Optional<Instance> optional = instanceRepository.findById(id);
-        if (optional.isEmpty()) {
-            throw new InstanceNotFoundException(id);
-        }
-        permissionService.requiresPermission(id, Permission.WRITE_INSTANCE);
-        Instance entity = optional.get();
-        entity.setStatus(request.getStatus());
-
-        InstanceView instanceView = instanceMapper.toView(instanceRepository.save(entity));
-        instancePublisher.notify(InstanceEventType.UPDATE, instanceView);
-        return instanceView;
-    }
-
-    @Override
     public void delete(Ksuid id)
             throws PermissionDeniedException, ResourceNotFoundException, InstanceNotFoundException {
         if (!instanceRepository.existsById(id)) {
@@ -161,6 +135,16 @@ public class InstanceServiceImpl implements InstanceService {
         InstanceView view = get(id);
         instancePublisher.notify(InstanceEventType.DELETE, view);
         permissionService.deleteResourceAsync(id);
+    }
+
+    @Override
+    public InstanceView getByCollectionId(Ksuid collectionId) throws PermissionDeniedException, CollectionInstanceNotFoundException {
+        permissionService.requiresPermission(collectionId, Permission.READ_COLLECTION);
+        Optional <Instance> instance =instanceRepository.findFirstByCollectionId(collectionId);
+        if(instance.isPresent())
+        return instanceMapper.toView(instance.get());
+        throw new CollectionInstanceNotFoundException(collectionId);
+
     }
 
 }

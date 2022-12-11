@@ -27,7 +27,6 @@ import { TestRunBarComponent } from '../../page/flow-builder/test-run-bar/test-r
 import { UUID } from 'angular2-uuid';
 import { Flow } from 'src/app/layout/common-layout/model/flow.class';
 import { Trigger } from 'src/app/layout/common-layout/model/flow-builder/trigger/trigger.interface';
-import { InstanceRun } from 'src/app/layout/common-layout/model/instance-run.interface';
 import { BuilderActions } from '../action/builder.action';
 import { CodeService } from '../../service/code.service';
 import { StepCacheKey } from '../../service/artifact-cache-key';
@@ -163,7 +162,7 @@ export class FlowsEffects {
 	loadInitial$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(BuilderActions.loadInitial),
-			map(({ flows, run }: { flows: Flow[]; run: InstanceRun | undefined }) => {
+			map(({ flows, run }) => {
 				return FlowsActions.setInitial({
 					flows: flows,
 					run: run,
@@ -175,7 +174,7 @@ export class FlowsEffects {
 	addFlow$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(FlowsActions.addFlow),
-			switchMap((action: { flow: Flow }) => {
+			switchMap(action => {
 				return of(FlowsActions.selectFlow({ flowId: action.flow.id }));
 			})
 		);

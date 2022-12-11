@@ -17,6 +17,8 @@ export class IconButtonComponent {
 	@Input() buttonHeight = 40;
 	@Input() buttonWidth = 40;
 	@Input() buttonPadding = '';
+	@Input() disabled = false;
+
 	constructor() {}
 
 	iconSvgStyle(hover: boolean) {
@@ -25,6 +27,7 @@ export class IconButtonComponent {
 			// stroke: hover ? this.hoverColor : this.color,
 			'width.px': this.width,
 			'height.px': this.height,
+			opacity: this.disabled ? '0.3' : '1',
 		};
 	}
 }
