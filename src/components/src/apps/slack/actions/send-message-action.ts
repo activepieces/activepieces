@@ -49,16 +49,16 @@ export default createAction({
 				console.log(auth);
 				return [
 					{
-						name: 'random',
-						displayName: 'random',
+						label: 'random',
+						value: 'random',
 					},
 					{
-						name: 'general',
-						displayName: 'general',
+						label: 'general',
+						value: 'general',
 					},
 					{
-						name: 'technology',
-						displayName: 'technology',
+						label: 'technology',
+						value: 'technology',
 					},
 				];
 			},

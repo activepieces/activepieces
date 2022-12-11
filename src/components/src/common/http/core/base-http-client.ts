@@ -1,5 +1,5 @@
 import type querystring from 'node:querystring';
-import type {Authentication} from '../../../authentication/core/authentication';
+import type {Authentication} from '../../authentication/core/authentication';
 import type {AuthenticationConverter} from './authentication/authentication-converter';
 import type {HttpClient} from './http-client';
 import {HttpHeader} from './http-header';
