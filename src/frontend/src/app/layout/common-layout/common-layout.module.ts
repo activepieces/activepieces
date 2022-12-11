@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { EditableTextComponent } from './components/editable-text/editable-text.component';
 import { ConfirmDeleteModalComponent } from './components/confirm-delete-modal/confirm-delete-modal.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { BasicSelectComponent } from './components/dynamic-form/dynamic-field-input-only/basic-select/basic-select.component';
 import { IconButtonComponent } from './components/icon-button/icon-button.component';
 import { TimeagoModule } from 'ngx-timeago';
 import { HighlightService } from './service/highlightservice';
@@ -18,11 +17,8 @@ import { ApImgComponent } from './components/ap-img/ap-img.component';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { ResponsiveTableComponent } from './components/responsive-table/responsive-table.component';
 import { LoadingSkeletonComponent } from './components/loading-skeleton/loading-skeleton.component';
-import { DictionaryFormComponent } from './components/dynamic-form/dynamic-field-input-only/dictionary-form/dictionary-form.component';
 import { CreateNewPieceModalComponent } from './components/create-new-piece-modal/create-new-piece-modal.component';
-import { MultiDropdownComponent } from './components/dynamic-form/dynamic-field-input-only/multi-dropdown/multi-dropdown.component';
 import { ApInputComponent } from './components/ap-input/ap-input.component';
-import { ConnectOauth2Component } from './components/dynamic-form/dynamic-field-input-only/connect-oauth2/connect-oauth2.component';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { LoadingIconComponent } from './components/loading-icon/loading-icon.component';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -39,7 +35,6 @@ import { StoreModule } from '@ngrx/store';
 import { MatButtonModule } from '@angular/material/button';
 import { BsDropdownConfig, BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { AngularSvgIconModule } from 'angular-svg-icon';
-import { DocumentationLinkComponent } from './components/dynamic-form/dynamic-field-input-only/documentation-link/documentation-link.component';
 import { JsonViewModalComponent } from './components/json-view-modal/json-view-modal.component';
 import { MatTooltipDefaultOptions, MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
@@ -82,9 +77,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	declarations: [
 		EditableTextComponent,
 		ConfirmDeleteModalComponent,
-		BasicSelectComponent,
 		IconButtonComponent,
-		DictionaryFormComponent,
 		StateIconComponent,
 		JsonViewComponent,
 		PaginationComponent,
@@ -95,8 +88,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		LoadingSkeletonComponent,
 		CreateNewPieceModalComponent,
 		ApInputComponent,
-		MultiDropdownComponent,
-		ConnectOauth2Component,
 		LoadingIconComponent,
 		SaveCancelPanelSectionComponent,
 		UploadImageControlComponent,
@@ -106,7 +97,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		OutputLogPipe,
 		RawOutputLogPipe,
 		DefaultZeroPipe,
-		DocumentationLinkComponent,
 		JsonViewModalComponent,
 		LongTextFormControlComponent,
 		CheckboxComponent,
@@ -162,9 +152,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		EditableTextComponent,
 		PopoverModule,
 		ConfirmDeleteModalComponent,
-		BasicSelectComponent,
 		IconButtonComponent,
-		DictionaryFormComponent,
 		StateIconComponent,
 		JsonViewComponent,
 		PaginationComponent,
@@ -173,7 +161,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		ResponsiveTableComponent,
 		LoadingSkeletonComponent,
 		CreateNewPieceModalComponent,
-		MultiDropdownComponent,
 		ApInputComponent,
 		LoadingIconComponent,
 		DragDropDirective,
