@@ -70,13 +70,24 @@ public class PaginationRepositoryImpl<T extends EntityMetadata, ID> extends Simp
         boolean reverse = false;
         if (Objects.nonNull(request.getCursor())) {
             Expression<Ksuid> expression = root.get(ID).as(Ksuid.class);
-            if (request.getCursor().getPrefix().equals(PagePrefix.PREV)) {
-                reverse = true;
-                criteriaQuery.where(criteriaBuilder.lessThan(expression, request.getCursor().getId()));
-                criteriaQuery.orderBy(toOrders(direction.equals(Sort.Direction.ASC) ? sort.descending() : sort.ascending(), root, criteriaBuilder));
+            if (direction.isDescending()) {
+                if (request.getCursor().getPrefix().equals(PagePrefix.PREV)) {
+                    reverse = true;
+                    criteriaQuery.where(criteriaBuilder.greaterThan(expression, request.getCursor().getId()));
+                    criteriaQuery.orderBy(toOrders(sort.ascending(), root, criteriaBuilder));
+                } else {
+                    criteriaQuery.where(criteriaBuilder.lessThan(expression, request.getCursor().getId()));
+                    criteriaQuery.orderBy(toOrders(sort, root, criteriaBuilder));
+                }
             } else {
-                criteriaQuery.where(criteriaBuilder.greaterThan(expression, request.getCursor().getId()));
-                criteriaQuery.orderBy(toOrders(sort, root, criteriaBuilder));
+                if (request.getCursor().getPrefix().equals(PagePrefix.PREV)) {
+                    reverse = true;
+                    criteriaQuery.where(criteriaBuilder.lessThan(expression, request.getCursor().getId()));
+                    criteriaQuery.orderBy(toOrders(sort.descending(), root, criteriaBuilder));
+                } else {
+                    criteriaQuery.where(criteriaBuilder.greaterThan(expression, request.getCursor().getId()));
+                    criteriaQuery.orderBy(toOrders(sort, root, criteriaBuilder));
+                }
             }
         }
         TypedQuery<T> typedQuery = entityManager.createQuery(criteriaQuery);
