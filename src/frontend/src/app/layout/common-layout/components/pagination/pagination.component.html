@@ -1,12 +1,12 @@
 <nav aria-label="Page navigation example">
   <ul class="pagination justify-content-center">
-    <li class="page-item {{hasPrevious() ? '': 'disabled'}}" (click)="previous()">
+    <li class="page-item" (click)="previous()" [class.disabled]="!page.previous">
       <a class="page-link" tabindex="-1">
         <fa-icon [icon]="faAngleLeft"></fa-icon>
         <span class="sr-only">Previous</span>
       </a>
     </li>
-    <li class="page-item {{hasNext() ? '': 'disabled'}}" (click)="next()">
+    <li class="page-item" (click)="next()" [class.disabled]="!page.next">
       <a class="page-link">
         <fa-icon [icon]="faAngleRight"></fa-icon>
         <span class="sr-only">Next</span>

@@ -34,10 +34,8 @@ export class RunsComponent implements OnInit {
 	}
 
 	openInstanceRun(run: InstanceRun) {
-		// const url = this.router.serializeUrl(this.router.createUrlTree(['/runs'])) + '/' + run.id;
-		// window.open(url, '_blank');
-		console.log(run);
-		this.router.navigate([`/runs/${run.id}`]);
+		const url = this.router.serializeUrl(this.router.createUrlTree(['/runs'])) + '/' + run.id;
+		window.open(url, '_blank');
 	}
 
 	instanceRunEnum() {

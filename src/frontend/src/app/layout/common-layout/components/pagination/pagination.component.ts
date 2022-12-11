@@ -15,26 +15,18 @@ export class PaginationComponent {
 
 	constructor(private router: Router) {}
 
-	hasPrevious() {
-		return (this.page.endingBefore !== null && this.page.hasMore) || this.page.startingAfter !== null;
-	}
-
-	hasNext() {
-		return (this.page.endingBefore === null && this.page.hasMore) || this.page.endingBefore !== null;
-	}
-
 	previous() {
-		if (this.hasPrevious()) {
+		if (this.page.previous) {
 			this.router.navigate([], {
-				queryParams: { endingBefore: this.page.data[0].id },
+				queryParams: { cursor: this.page.previous },
 			});
 		}
 	}
 
 	next() {
-		if (this.hasNext()) {
+		if (this.page.next) {
 			this.router.navigate([], {
-				queryParams: { startingAfter: this.page.data[this.page.data.length - 1].id },
+				queryParams: { cursor: this.page.next },
 			});
 		}
 	}
