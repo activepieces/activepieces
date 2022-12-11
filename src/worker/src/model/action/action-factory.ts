@@ -2,10 +2,6 @@ import {CodeAction, CodeActionSettings} from './types/code-action';
 import {StorageAction, StorageActionSettings} from './types/storage-action';
 import {ResponseAction, ResponseActionSettings} from './types/response-action';
 import {LoopOnItemAction, LoopOnItemActionSettings} from './types/loop-action';
-import {
-  RemoteFlowAction,
-  RemoteFlowActionSettings,
-} from './types/remote-flow-action';
 import {Action, ActionType} from './action';
 
 export function createAction(jsonData: any): Action {
@@ -55,15 +51,6 @@ export function createAction(jsonData: any): Action {
           !jsonData['firstLoopAction']
             ? undefined
             : createAction(jsonData['firstLoopAction']),
-          !jsonData['nextAction']
-            ? undefined
-            : createAction(jsonData['nextAction'])
-        );
-      case 'REMOTE_FLOW':
-        return new RemoteFlowAction(
-          ActionType.REMOTE_FLOW,
-          jsonData['name'],
-          RemoteFlowActionSettings.deserialize(jsonData['settings']),
           !jsonData['nextAction']
             ? undefined
             : createAction(jsonData['nextAction'])

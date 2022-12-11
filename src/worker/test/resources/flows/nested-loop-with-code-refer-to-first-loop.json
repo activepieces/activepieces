@@ -35,7 +35,7 @@
                   "valid":true,
                   "nextAction":null,
                   "settings":{
-                     "artifactPackagedId":"22AF6C21994F89CEA5F4E1482F92551CA532D94261E4179F7360CC08A8046AA9.zip",
+                     "artifactPackagedId":"22AF6C21994F89CEA5F4E1482F92551CA532D94261E4179F7360CC08A8046AA9",
                      "input":{
                         "x":"${FIRST_LOOP}"
                      }
@@ -50,7 +50,7 @@
             }
          },
          "settings":{
-            "artifactPackagedId":"1D66F8650ACCBB5AFC05AAB5445C61107C3F19AD7E35B2B4CA03119C786A06DA.zip",
+            "artifactPackagedId":"1D66F8650ACCBB5AFC05AAB5445C61107C3F19AD7E35B2B4CA03119C786A06DA",
             "input":{
                
             }

@@ -64,7 +64,7 @@ export class CodeAction extends Action {
       stepOutput.status = StepOutputStatus.SUCCEEDED;
       return stepOutput;
     } catch (e) {
-      console.error(e);
+     // console.error(e);
       stepOutput.errorMessage = (e as Error).message;
       stepOutput.status = StepOutputStatus.FAILED;
       return stepOutput;

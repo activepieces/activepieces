@@ -12,10 +12,6 @@ import {
   ResponseAction,
   ResponseActionSettings,
 } from '../../src/model/action/types/response-action';
-import {
-  RemoteFlowAction,
-  RemoteFlowActionSettings,
-} from '../../src/model/action/types/remote-flow-action';
 
 describe('Action Factory', () => {
 
@@ -116,37 +112,6 @@ describe('Action Factory', () => {
       ResponseActionSettings
     );
     expect((action as ResponseAction).settings.output).toEqual('foo');
-  });
-
-  test('REMOTE_FLOW action is created', async () => {
-    const jsonData = {
-      type: 'REMOTE_FLOW',
-      name: 'REMOTE_FLOW_ACTION',
-      nextAction: null,
-      settings: {
-        input: 'message',
-        pieceVersionId: 'collection-id',
-        flowVersionId: 'flow-id',
-      },
-    };
-
-    const action = createAction(jsonData);
-
-    expect(action).toBeInstanceOf(RemoteFlowAction);
-    expect(action.type as ActionType).toEqual(ActionType.REMOTE_FLOW);
-    expect(action.name).toEqual('REMOTE_FLOW_ACTION');
-    expect(action.nextAction).toBeUndefined();
-
-    expect((action as RemoteFlowAction).settings).toBeInstanceOf(
-      RemoteFlowActionSettings
-    );
-    expect((action as RemoteFlowAction).settings.input).toEqual('message');
-    expect((action as RemoteFlowAction).settings.pieceVersionId).toEqual(
-      'collection-id'
-    );
-    expect((action as RemoteFlowAction).settings.flowVersionId).toEqual(
-      'flow-id'
-    );
   });
 
   test('Nested actions are created', async () => {
