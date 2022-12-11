@@ -1,4 +1,4 @@
-import type {ConfigurationValue} from './config/configuration-value.model';
+import type {ConfigurationValue} from '../config/configuration-value.model';
 
 export type RunnerStatus = {
 	success: boolean;

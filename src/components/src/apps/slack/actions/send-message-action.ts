@@ -2,12 +2,12 @@ import {AuthenticationType} from '../../../common/authentication/core/authentica
 import {httpClient} from '../../../common/http/core/http-client';
 import {HttpMethod} from '../../../common/http/core/http-method';
 import type {HttpRequest} from '../../../common/http/core/http-request';
-import {createAction} from '../../../framework/action';
+import {createAction} from '../../../framework/action/action';
 import {InputDataType} from '../../../framework/config/input-data-type.model';
 import {InputRequestLocation} from '../../../framework/config/input-request-location.model';
 import {InputUiType} from '../../../framework/config/input-ui-type.model';
 
-export default createAction({
+export const slackSendMessageAction = createAction({
 	name: 'Send Slack Message',
 	configs: [
 		{

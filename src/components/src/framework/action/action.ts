@@ -1,5 +1,5 @@
-import type {ConfigurationValue} from './config/configuration-value.model';
-import type {Input} from './config/input.model';
+import type {ConfigurationValue} from '../config/configuration-value.model';
+import type {Input} from '../config/input.model';
 import type {Runner, RunnerStatus} from './runner';
 
 export class Action {
