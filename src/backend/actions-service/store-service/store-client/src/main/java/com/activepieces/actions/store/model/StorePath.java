@@ -29,12 +29,6 @@ public class StorePath {
             .scope(collectionId.toString());
   }
 
-  public static StorePath instance(@NonNull Ksuid instanceId) {
-    return new StorePath()
-        .scope("instances")
-        .scope(instanceId.toString());
-  }
-
   public static StorePath testScope(
       @NonNull Ksuid collectionId) {
     return new StorePath()

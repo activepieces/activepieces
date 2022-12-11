@@ -47,8 +47,17 @@ public class PaginationRepositoryImpl<T extends EntityMetadata, ID> extends Simp
         var root = criteriaQuery.from(domainClass);
         criteriaQuery.select(root);
         for (PageFilter filter : filters) {
-            final Predicate predicateCondition
-                    = criteriaBuilder.equal(root.get(filter.getKey()), filter.getValue());
+            Predicate predicateCondition = null;
+            switch (filter.getOperator()) {
+                case EQUAL:
+                    predicateCondition
+                            = criteriaBuilder.equal(root.get(filter.getKey()), filter.getValue());
+                    break;
+                case NOT_NULL:
+                    predicateCondition
+                            = criteriaBuilder.isNotNull(root.get(filter.getKey()));
+                    break;
+            }
             criteriaQuery.where(predicateCondition);
         }
 
@@ -73,18 +82,18 @@ public class PaginationRepositoryImpl<T extends EntityMetadata, ID> extends Simp
         TypedQuery<T> typedQuery = entityManager.createQuery(criteriaQuery);
         typedQuery.setMaxResults(request.getLimit());
         List<T> results = typedQuery.getResultList();
-        if(reverse){
+        if (reverse) {
             Collections.reverse(results);
         }
         Cursor nextId = null;
         Cursor previousId = null;
         if (results.size() > 0) {
-            if(firstResult.isPresent() &&
+            if (firstResult.isPresent() &&
                     !firstResult.get().getId().equals(results.get(0).getId())) {
                 previousId = new Cursor(PagePrefix.PREV,
                         results.get(0).getId());
             }
-            if(lastResult.isPresent() && !lastResult.get().getId().equals(
+            if (lastResult.isPresent() && !lastResult.get().getId().equals(
                     results.get(results.size() - 1).getId())) {
                 nextId = new Cursor(PagePrefix.NEXT,
                         results.get(results.size() - 1).getId());
@@ -93,7 +102,7 @@ public class PaginationRepositoryImpl<T extends EntityMetadata, ID> extends Simp
         return new SeekPage<T>(results, previousId, nextId);
     }
 
-    private Optional<T> getFirstResult(CriteriaQuery<T> q){
+    private Optional<T> getFirstResult(CriteriaQuery<T> q) {
         TypedQuery<T> firstQuery = entityManager.createQuery(q);
         firstQuery.setMaxResults(1);
         List<T> firstQueryResultList = firstQuery.getResultList();
@@ -107,7 +116,7 @@ public class PaginationRepositoryImpl<T extends EntityMetadata, ID> extends Simp
     }
 
     @Override
-    public SeekPage<T> findPageAsc( @NonNull List<PageFilter> filters, @NonNull SeekPageRequest request) {
-        return findPage( Sort.Direction.ASC, filters, request);
+    public SeekPage<T> findPageAsc(@NonNull List<PageFilter> filters, @NonNull SeekPageRequest request) {
+        return findPage(Sort.Direction.ASC, filters, request);
     }
 }

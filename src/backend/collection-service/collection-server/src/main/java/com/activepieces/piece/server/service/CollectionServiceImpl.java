@@ -5,6 +5,7 @@ import com.activepieces.common.error.exception.collection.CollectionNotFoundExce
 import com.activepieces.common.error.exception.collection.CollectionVersionAlreadyLockedException;
 import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
 import com.activepieces.common.pagination.PageFilter;
+import com.activepieces.common.pagination.PageOperator;
 import com.activepieces.common.pagination.SeekPage;
 import com.activepieces.common.pagination.SeekPageRequest;
 import com.activepieces.entity.enums.EditState;
@@ -52,7 +53,7 @@ public class CollectionServiceImpl implements CollectionService {
     public SeekPage<CollectionView> listByProjectId(Ksuid projectId, SeekPageRequest request)
             throws PermissionDeniedException {
         permissionService.requiresPermission(projectId, Permission.READ_COLLECTION);
-        final List<PageFilter> filters = List.of(new PageFilter(Collection.PROJECT_ID, projectId));
+        final List<PageFilter> filters = List.of(new PageFilter(Collection.PROJECT_ID, PageOperator.EQUAL, projectId));
         return collectionRepository.findPageAsc( filters, request).convert(collectionMapper::toView);
     }
 

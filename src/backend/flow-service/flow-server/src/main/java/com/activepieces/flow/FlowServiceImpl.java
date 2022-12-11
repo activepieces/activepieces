@@ -6,6 +6,7 @@ import com.activepieces.common.error.exception.flow.FlowNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowVersionAlreadyLockedException;
 import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException;
 import com.activepieces.common.pagination.PageFilter;
+import com.activepieces.common.pagination.PageOperator;
 import com.activepieces.common.pagination.SeekPage;
 import com.activepieces.common.pagination.SeekPageRequest;
 import com.activepieces.entity.enums.EditState;
@@ -66,7 +67,7 @@ public class FlowServiceImpl implements FlowService {
     public SeekPage<FlowView> listByCollectionId(Ksuid integrationId, SeekPageRequest request)
             throws PermissionDeniedException {
         permissionService.requiresPermission(integrationId, Permission.READ_FLOW);
-        final List<PageFilter> filters = List.of(new PageFilter(Flow.COLLECTION_ID, integrationId));
+        final List<PageFilter> filters = List.of(new PageFilter(Flow.COLLECTION_ID, PageOperator.EQUAL, integrationId));
         return repository.findPageAsc(filters, request).convert(flowMapper::toView);
 
     }

@@ -13,6 +13,7 @@ import java.util.UUID;
 public class PageFilter {
 
     private String key;
+    private PageOperator operator;
     private Ksuid value;
 
 }

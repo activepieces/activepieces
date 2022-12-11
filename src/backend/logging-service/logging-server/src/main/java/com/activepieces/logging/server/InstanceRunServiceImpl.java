@@ -3,6 +3,7 @@ package com.activepieces.logging.server;
 import com.activepieces.common.error.ErrorServiceHandler;
 import com.activepieces.common.error.exception.InstanceNotFoundException;
 import com.activepieces.common.pagination.PageFilter;
+import com.activepieces.common.pagination.PageOperator;
 import com.activepieces.common.pagination.SeekPage;
 import com.activepieces.common.pagination.SeekPageRequest;
 import com.activepieces.entity.enums.Permission;
@@ -81,7 +82,8 @@ public class InstanceRunServiceImpl implements InstanceRunService {
       @NonNull final SeekPageRequest request)
       throws InstanceRunNotFoundException, PermissionDeniedException {
     permissionService.requiresPermission(projectId, Permission.READ_INSTANCE_RUN);
-    final List<PageFilter> filters = List.of(new PageFilter(InstanceRun.PROJECT_ID, projectId));
+    final List<PageFilter> filters = List.of(new PageFilter(InstanceRun.PROJECT_ID, PageOperator.EQUAL, projectId),
+            new PageFilter(InstanceRun.INSTANCE_ID, PageOperator.NOT_NULL,  null));
     return repository.findPageDesc( filters, request).convert(mapper::toView);
   }
 

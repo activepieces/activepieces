@@ -3,10 +3,8 @@ package com.activepieces.flow;
 import com.activepieces.action.ExecutionRequest;
 import com.activepieces.action.FlowPublisherService;
 import com.activepieces.actions.store.model.StorePath;
-import com.activepieces.common.error.ErrorServiceHandler;
 import com.activepieces.common.error.exception.InstanceNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowExecutionInternalError;
-import com.activepieces.common.error.exception.flow.FlowNotFoundException;
 import com.activepieces.entity.enums.FlowExecutionStatus;
 import com.activepieces.entity.enums.ResourceType;
 import com.activepieces.entity.subdocuments.runs.ActionExecutionStatus;
@@ -25,12 +23,10 @@ import com.activepieces.piece.client.model.CollectionVersionView;
 import com.activepieces.trigger.model.TriggerMetadataView;
 import com.activepieces.variable.model.VariableService;
 import com.activepieces.worker.service.WorkerService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -96,7 +92,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
             if (request.isPresent()) {
                 Ksuid projectID = permissionService.getFirstResourceParentWithType(collectionVersionView.getCollectionId(), ResourceType.PROJECT).getResourceId();
                 InstanceRunView instanceRunView =
-                        createInstanceRun(projectID, collectionVersionView, flowVersionView, request.get());
+                        createInstanceRun(projectID, null, collectionVersionView, flowVersionView, request.get());
                 flowScheduler.executeFlowAsync(request.get());
                 return instanceRunView.toBuilder().build();
             }
@@ -125,7 +121,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
             Optional<ExecutionRequest> request =
                     constructRun(
                             runId,
-                            StorePath.instance(instanceId),
+                            StorePath.builder().build(),
                             instanceView,
                             collectionVersionView,
                             flowVersionView,
@@ -133,7 +129,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
                             triggerPayload);
             if (request.isPresent()) {
                 InstanceRunView firstInstanceRun =
-                        createInstanceRun(instanceView.getProjectId(), collectionVersionView, flowVersionView, request.get());
+                        createInstanceRun(instanceView.getProjectId(), instanceId, collectionVersionView, flowVersionView, request.get());
                 if (async) {
                     flowScheduler.executeFlowAsync(request.get());
                     return firstInstanceRun.toBuilder().build();
@@ -185,6 +181,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
 
     private InstanceRunView createInstanceRun(
             @NonNull final Ksuid projectId,
+            final Ksuid instanceId,
             @NonNull CollectionVersionView collectionVersionView,
             @NonNull FlowVersionView flowVersion,
             ExecutionRequest executionRequest)
@@ -200,6 +197,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
         InstanceRunView instanceRunView =
                 InstanceRunView.builder()
                         .id(executionRequest.getRunId())
+                        .instanceId(instanceId)
                         .collectionId(collectionVersionView.getId())
                         .flowDisplayName(flowVersion.getDisplayName())
                         .collectionVersionId(collectionVersionView.getId())

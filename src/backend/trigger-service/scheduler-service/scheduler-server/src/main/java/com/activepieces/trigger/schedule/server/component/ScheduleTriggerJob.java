@@ -39,7 +39,7 @@ public class ScheduleTriggerJob extends QuartzJobBean {
     JobDataMap jobDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
     Ksuid instanceId = (Ksuid) jobDataMap.get(INSTANCE_ID);
     Ksuid flowVersionId = (Ksuid) jobDataMap.get(FLOW_VERSION_ID);
-    logger.debug(
+    logger.info(
         "Executing Job with key {} instance id {}",
         jobExecutionContext.getJobDetail().getKey(),
         instanceId);

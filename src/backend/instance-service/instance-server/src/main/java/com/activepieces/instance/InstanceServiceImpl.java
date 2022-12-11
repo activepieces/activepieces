@@ -8,6 +8,7 @@ import com.activepieces.common.error.exception.collection.CollectionVersionAlrea
 import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowNotFoundException;
 import com.activepieces.common.pagination.PageFilter;
+import com.activepieces.common.pagination.PageOperator;
 import com.activepieces.common.pagination.SeekPage;
 import com.activepieces.common.pagination.SeekPageRequest;
 import com.activepieces.entity.enums.Permission;
@@ -72,7 +73,7 @@ public class InstanceServiceImpl implements InstanceService {
             Ksuid collectionId, SeekPageRequest request)
             throws PermissionDeniedException {
         permissionService.requiresPermission(collectionId, Permission.READ_INSTANCE);
-        final List<PageFilter> filters = List.of(new PageFilter(Instance.COLLECTION_ID, collectionId));
+        final List<PageFilter> filters = List.of(new PageFilter(Instance.COLLECTION_ID, PageOperator.EQUAL, collectionId));
         return instanceRepository.findPageAsc(filters, request).convert(instanceMapper::toView);
     }
 
