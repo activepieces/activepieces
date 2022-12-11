@@ -35,7 +35,7 @@ import java.io.Serializable;
 })
 public abstract class ActionMetadataView implements Serializable {
 
-  @Pattern(regexp = "CODE|BRANCH|STORAGE|RESPONSE|LOOP_ON_ITEMS|COMPONENT")
+  @Pattern(regexp = "CODE|STORAGE|RESPONSE|LOOP_ON_ITEMS|COMPONENT")
   @JsonProperty
   private String type;
 

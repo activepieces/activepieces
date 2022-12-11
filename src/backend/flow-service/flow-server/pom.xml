@@ -86,12 +86,6 @@
         </dependency>
         <dependency>
             <groupId>com.activepieces</groupId>
-            <artifactId>component-client</artifactId>
-            <version>1.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.activepieces</groupId>
             <artifactId>file-client</artifactId>
             <version>1.0</version>
             <scope>compile</scope>

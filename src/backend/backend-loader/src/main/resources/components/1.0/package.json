@@ -1,5 +1,0 @@
-{
-  "dependencies": {
-    "${PACKAGE_NAME}": "${PACKAGE_VERSION}"
-  }
-}

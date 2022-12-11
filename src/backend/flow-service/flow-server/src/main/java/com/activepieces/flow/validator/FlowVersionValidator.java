@@ -1,6 +1,5 @@
 package com.activepieces.flow.validator;
 
-import com.activepieces.action.component.ComponentService;
 import com.activepieces.common.code.ArtifactFile;
 import com.activepieces.common.error.ErrorServiceHandler;
 import com.activepieces.common.error.exception.flow.FlowNotFoundException;
@@ -30,15 +29,12 @@ public class FlowVersionValidator {
   private final FlowValidValidator flowValidValidator;
   private final FlowService flowService;
   private final ErrorServiceHandler errorServiceHandler;
-  private final ComponentStepValidator componentHandler;
 
   @Autowired
   public FlowVersionValidator(
       PermissionService permissionService,
       Validator validator,
       ErrorServiceHandler errorServiceHandler,
-      CollectionService collectionService,
-      ComponentService componentService,
       FlowService flowService) {
     this.errorServiceHandler = errorServiceHandler;
     this.flowService = flowService;
@@ -47,7 +43,6 @@ public class FlowVersionValidator {
     this.flowValidValidator = new FlowValidValidator();
     this.stepsValidator = new StepsValidator(validator);
     this.requiredCodeArtifactsValidator = new CodeArtifactsValidator();
-    this.componentHandler = new ComponentStepValidator(componentService);
   }
 
   public FlowVersionView constructRequest(
@@ -70,7 +65,6 @@ public class FlowVersionValidator {
             uniqueStepsNameValidator,
             requiredCodeArtifactsValidator,
             stepsValidator,
-            componentHandler,
             flowValidValidator);
     FlowVersionView finalVersion = request.toBuilder().build();
     for (FlowVersionRequestBuilder flowVersionRequestBuilder : flowVersionRequestBuilders) {

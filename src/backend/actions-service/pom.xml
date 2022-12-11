@@ -7,7 +7,6 @@
     <modules>
         <module>actions-client</module>
         <module>store-service</module>
-        <module>component-service</module>
     </modules>
     <packaging>pom</packaging>
     <parent>

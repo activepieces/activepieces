@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.util.Map;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -13,15 +15,9 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class ComponentSettings {
 
-    private String artifact;
-
-    private String artifactUrl;
-
-    private ComponentInput input;
+    private Map<String, Object> input;
 
     private String componentName;
-
-    private String componentVersion;
 
     private String actionName;
 
