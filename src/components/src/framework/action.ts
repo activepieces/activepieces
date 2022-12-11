@@ -1,5 +1,6 @@
-import type {ConfigurationValue} from './model/configuration-value.model';
-import {Input} from "./model/input.model";
+import type {ConfigurationValue} from './config/configuration-value.model';
+import type {Input} from './config/input.model';
+import type {Runner} from './runner';
 
 export class Action {
 	constructor(
@@ -13,9 +14,9 @@ export class Action {
 }
 
 export function createAction(request: {
-	name: string,
-	configs: Input[],
-	runner: (configuration: ConfigurationValue) => unknown
+	name: string;
+	configs: Input[];
+	runner: Runner;
 }): Action {
-	return new Action(request. configs, request.runner);
+	return new Action(request.configs, request.runner);
 }

@@ -1,11 +1,14 @@
-
-import {createAction} from '../../../framework/src/action';
-import { InputDataType } from '../../../framework/src/model/input-data-type.model';
-import { InputRequestLocation } from '../../../framework/src/model/input-request-location.model';
-import { InputUiType } from '../../../framework/src/model/input-ui-type.model';
+import {AuthenticationType} from '../../../common/authentication/core/authentication-type';
+import {httpClient} from '../../../common/http/core/http-client';
+import {HttpMethod} from '../../../common/http/core/http-method';
+import type {HttpRequest} from '../../../common/http/core/http-request';
+import {createAction} from '../../../framework/action';
+import {InputDataType} from '../../../framework/config/input-data-type.model';
+import {InputRequestLocation} from '../../../framework/config/input-request-location.model';
+import {InputUiType} from '../../../framework/config/input-ui-type.model';
 
 export default createAction({
-	name: "Send Slack Message",
+	name: 'Send Slack Message',
 	configs: [
 		{
 			name: 'as_user',
@@ -38,10 +41,27 @@ export default createAction({
 			name: 'channel',
 			displayName: 'channel',
 			description: 'Channel, private group, or IM channel to send message to. Can be an encoded ID, or a name. See [below](#channels) for more details.',
-			uiType: InputUiType.SHORT_TEXT,
+			uiType: InputUiType.SELECT,
 			type: InputDataType.STRING,
 			in: InputRequestLocation.BODY,
 			required: true,
+			async options(auth) {
+				console.log(auth);
+				return [
+					{
+						name: 'random',
+						displayName: 'random',
+					},
+					{
+						name: 'general',
+						displayName: 'general',
+					},
+					{
+						name: 'technology',
+						displayName: 'technology',
+					},
+				];
+			},
 		},
 		{
 			name: 'icon_emoji',
@@ -143,13 +163,10 @@ export default createAction({
 			required: false,
 		},
 	],
-	runner: (async configuration => {
-		// TODO FIX
-		return configuration;
-		/*		let httpClient: HttpClient = new SuperAgentHttpClient('https://slack.com/api')
+	async runner(configValue) {
 		const request: HttpRequest<Record<string, string>> = {
 			method: HttpMethod.POST,
-			url: '/chat.postMessage',
+			url: 'https://slack.com/api/chat.postMessage',
 			body: configValue.inputs,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
@@ -162,6 +179,6 @@ export default createAction({
 
 		return {
 			success: true,
-		};*/
-	})
-})
+		};
+	},
+});
