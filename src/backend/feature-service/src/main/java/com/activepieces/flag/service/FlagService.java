@@ -34,6 +34,6 @@ public class FlagService {
 
     public void save(@NonNull final String key,
                      @NonNull final Object value){
-
+        flagRepository.save(FlagValue.builder().key(key).value(value).build());
     }
 }

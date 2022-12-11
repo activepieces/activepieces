@@ -5,7 +5,7 @@ async function main(){
    let rawdata = fs.readFileSync('_input.txt');
    let input = JSON.parse(rawdata);
    try{
-      let output = await handler.codePiece(input);
+      let output = await handler.code(input);
       fs.writeFileSync('_functionOutput.txt', output == undefined ? "" : JSON.stringify(output));
    }catch (exception){
       throw exception
