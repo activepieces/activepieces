@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="300" alt="activepieceslogo" src="https://github.com/activepieces/activepieces/raw/main/ap-logo.png">
+  <img width="300" alt="activepieceslogo" src="https://github.com/activepieces/activepieces/raw/main/assets/ap-logo.png">
 </p>
 <p align="center">
   <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
@@ -10,7 +10,6 @@
 * Built for no-code users and citizen developers
 * Self-host with a simple docker command
 * An alternative to Zapier, Make.com and Tray
-
 
 
 ## Get started for free

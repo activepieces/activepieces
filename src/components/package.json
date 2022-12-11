@@ -7,7 +7,8 @@
   "license": "MIT",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "husky install"
+    "lint": "eslint .",
+    "build": "rm -rf dist && tsc"
   },
   "repository": {
     "type": "git",
@@ -27,7 +28,6 @@
     "eslint": "^8.24.0",
     "eslint-config-xo": "^0.42.0",
     "eslint-config-xo-typescript": "^0.53.0",
-    "husky": "^8.0.0",
     "typescript": "^4.8.4"
   },
   "engines": {
