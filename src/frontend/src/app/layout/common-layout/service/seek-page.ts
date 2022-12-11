@@ -1,8 +1,7 @@
 import { UUID } from 'angular2-uuid';
 
 export interface SeekPage<T> {
-	hasMore: boolean;
-	startingAfter?: UUID;
-	endingBefore?: UUID;
+	next?: UUID;
+	previous?: UUID;
 	data: T[];
 }

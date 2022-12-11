@@ -32,7 +32,6 @@ export class InstanceSettingsComponent {
 	) {
 		this.collectionInstance$ = this.store.select(BuilderSelectors.selectCurrentCollectionInstance).pipe(
 			tap(inst => {
-        debugger;
 				if (!inst) {
 					this.tooltipText = 'No instance deployed';
 				} else {

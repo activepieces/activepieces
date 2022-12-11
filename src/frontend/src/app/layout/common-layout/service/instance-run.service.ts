@@ -24,7 +24,13 @@ export class InstanceRunService {
 		);
 	}
 
-	list(projectId: UUID): Observable<SeekPage<InstanceRun>> {
+	list(projectId: UUID, cursor: string): Observable<SeekPage<InstanceRun>> {
+		if (cursor) {
+			const params = { cursor: cursor };
+			return this.http.get<SeekPage<InstanceRun>>(environment.apiUrl + `/projects/${projectId}/instance-runs`, {
+				params: params,
+			});
+		}
 		return this.http.get<SeekPage<InstanceRun>>(environment.apiUrl + `/projects/${projectId}/instance-runs`);
 	}
 
