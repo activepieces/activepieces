@@ -32,12 +32,12 @@ export class Component {
 		return this.actions[actionName].run(config);
 	}
 
-	async onTrigger(triggerName: string, request: Record<string, any>): Promise<Record<string, any>> {
+	getTrigger(triggerName: string): Trigger {
 		if (!(triggerName in this.triggers)) {
 			throw new TriggerNotFoundError(this.name, triggerName);
 		}
 
-		return this.triggers[triggerName].callback(request);
+		return this.triggers[triggerName];
 	}
 }
 
