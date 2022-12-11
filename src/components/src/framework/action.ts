@@ -1,14 +1,15 @@
 import type {ConfigurationValue} from './config/configuration-value.model';
 import type {Input} from './config/input.model';
-import type {Runner} from './runner';
+import type {Runner, RunnerStatus} from './runner';
 
 export class Action {
 	constructor(
-		protected readonly configs: Input[],
-		protected readonly runner: (configuration: ConfigurationValue) => unknown,
+		public readonly name: string,
+		public readonly configs: Input[],
+		private readonly runner: Runner,
 	) {}
 
-	async run(configValue: ConfigurationValue): Promise<unknown> {
+	async run(configValue: ConfigurationValue): Promise<RunnerStatus> {
 		return this.runner(configValue);
 	}
 }
@@ -18,5 +19,5 @@ export function createAction(request: {
 	configs: Input[];
 	runner: Runner;
 }): Action {
-	return new Action(request.configs, request.runner);
+	return new Action(request.name, request.configs, request.runner);
 }
