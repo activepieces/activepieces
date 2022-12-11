@@ -28,7 +28,7 @@
           "valid":true,
           "nextAction":null,
           "settings":{
-            "artifactPackagedId":"B2DA82707953CFF402EEAF5142C523360271CB9489CE5CAC638427D6E8D144C0.zip",
+            "artifactPackagedId":"B2DA82707953CFF402EEAF5142C523360271CB9489CE5CAC638427D6E8D144C0",
             "newArtifactToUploadFile":null,
             "input":{
               "loop":"${step_2}"
@@ -47,7 +47,7 @@
             "valid":true,
             "nextAction":null,
             "settings":{
-              "artifactPackagedId":"F131F468FB4C1BC7F55634833F8A141711B8DF763CA015717324D8A2737A4D41.zip",
+              "artifactPackagedId":"F131F468FB4C1BC7F55634833F8A141711B8DF763CA015717324D8A2737A4D41",
               "newArtifactToUploadFile":null,
               "input":{
 
@@ -55,7 +55,7 @@
             }
           },
           "settings":{
-            "artifactPackagedId":"0FAE443357F3627777D9DED5BE084951692FDE3AF036A5BF0FCAE1FF8A3D3124.zip",
+            "artifactPackagedId":"0FAE443357F3627777D9DED5BE084951692FDE3AF036A5BF0FCAE1FF8A3D3124",
             "newArtifactToUploadFile":null,
             "input":{
               "current_iteration":"${step_2.current_iteration}"
@@ -67,7 +67,7 @@
         }
       },
       "settings":{
-        "artifactPackagedId":"EAFD10EFFA30075A941CAAEFE73E2F55F9F435F3150FF481E6EB89C262E98DF0.zip",
+        "artifactPackagedId":"EAFD10EFFA30075A941CAAEFE73E2F55F9F435F3150FF481E6EB89C262E98DF0",
         "newArtifactToUploadFile":null,
         "input":{
 

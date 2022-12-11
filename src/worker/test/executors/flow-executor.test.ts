@@ -115,28 +115,6 @@ describe('Flow Executor', () => {
     expect(Object.keys(executionOutput.executionState.steps).length).toEqual(3);
   });*/
 
-  test('Flow execution fails with invalid collection and flow id', async () => {
-    const collectionId = 'invalid-collection';
-    const flowId = 'invalid-flow';
-
-    const configs = Utils.parseJsonFile(globals.configsFile);
-    const executionOutput = await flowExecutor.executeFlow(
-      collectionId,
-      flowId,
-        new StoreScope([]),
-        configs
-    );
-
-    expect(executionOutput.status).toEqual(ExecutionOutputStatus.FAILED);
-    expect(executionOutput.output).toBeUndefined();
-    expect(executionOutput.errorMessage).not.toBeUndefined();
-
-    expect(Object.keys(executionOutput.executionState.configs).length).toEqual(
-      0
-    );
-    expect(Object.keys(executionOutput.executionState.steps).length).toEqual(1);
-  });
-
   test('Flow execution stops and returns output from RESPONSE Action', async () => {
     const collectionId = '9e95cfbb-6ed3-4554-8060-d7180225d73c';
     const flowId = 'flow-with-response';
@@ -154,7 +132,7 @@ describe('Flow Executor', () => {
     expect(executionOutput.errorMessage).toBeUndefined();
 
     expect(Object.keys(executionOutput.executionState.configs).length).toEqual(
-      3
+      2
     );
     expect(Object.keys(executionOutput.executionState.steps).length).toEqual(3);
   });
@@ -288,47 +266,4 @@ describe('Flow Executor', () => {
     expect(Object.keys(executionOutput.executionState.steps).length).toEqual(3);
   });
 
-  test('Flow execution with remote flow succeeds', async () => {
-    const collectionId = 'e1ccfb05-8601-459d-845d-31b449c0ae1a';
-    const flowId = '8d2a7187-db18-4cb4-8a4f-09ab76a3e9be';
-
-    const configs = Utils.parseJsonFile(globals.configsFile);
-    const executionOutput = await flowExecutor.executeFlow(
-      collectionId,
-      flowId,
-        new StoreScope([]),
-        configs
-    );
-
-    expect(executionOutput.status).toEqual(ExecutionOutputStatus.SUCCEEDED);
-    expect(executionOutput.output).toBeUndefined();
-    expect(executionOutput.errorMessage).toBeUndefined();
-
-    expect(Object.keys(executionOutput.executionState.configs).length).toEqual(
-      1
-    );
-    expect(Object.keys(executionOutput.executionState.steps).length).toEqual(3);
-  });
-
-  test('Flow stops with error in remote flow and returns error', async () => {
-    const collectionId = '9e95cfbb-6ed3-4554-8060-d7180225d73c';
-    const flowId = 'flow-with-remote-flow-with-error';
-
-    const configs = Utils.parseJsonFile(globals.configsFile);
-    const executionOutput = await flowExecutor.executeFlow(
-      collectionId,
-      flowId,
-        new StoreScope([]),
-        configs
-    );
-
-    expect(executionOutput.status).toEqual(ExecutionOutputStatus.FAILED);
-    expect(executionOutput.output).toBeUndefined();
-    expect(executionOutput.errorMessage).not.toBeUndefined();
-
-    expect(Object.keys(executionOutput.executionState.configs).length).toEqual(
-      2
-    );
-    expect(Object.keys(executionOutput.executionState.steps).length).toEqual(3);
-  });
 });

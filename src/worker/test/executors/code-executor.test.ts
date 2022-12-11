@@ -15,7 +15,7 @@ describe('Code Executor', () => {
 
   test('Artifact is executed and output is returned', async () => {
     const artifactId =
-      '9A81EED014C3CAE7A54D1049DDF56EA86B444BA1B20D4A772B5580C6F71F7630.zip';
+      '9A81EED014C3CAE7A54D1049DDF56EA86B444BA1B20D4A772B5580C6F71F7630';
     const params = {};
 
     const codeExecutor = new CodeExecutor();
@@ -37,7 +37,7 @@ describe('Code Executor', () => {
   });
 
   test('Executor throws on invalid code', async () => {
-    const artifactId = 'invalid-code.zip';
+    const artifactId = 'invalid-code';
     const params = {};
 
     const codeExecutor = new CodeExecutor();
