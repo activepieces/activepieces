@@ -8,6 +8,7 @@ import com.activepieces.flow.validator.FlowVersionRequestBuilder;
 import com.github.ksuid.Ksuid;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,9 @@ public class FlowValidValidator implements FlowVersionRequestBuilder {
     boolean valid = flowVersion.getErrors().size() == 0;
     for (boolean actionValid : actionsValidity) {
       valid = valid && actionValid;
+    }
+    if(Objects.nonNull(flowVersion.getTrigger())){
+      valid = valid && flowVersion.getTrigger().isValid();
     }
     return flowVersion.toBuilder().valid(valid).build();
   }

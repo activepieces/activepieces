@@ -19,7 +19,9 @@ public class Resource {
 
   @Column(name = "resource_id") @Id private Ksuid resourceId;
 
-  @Column(name = "resource_type") private ResourceType resourceType;
+  @Column(name = "resource_type")
+  @Enumerated(EnumType.STRING)
+  private ResourceType resourceType;
 
   @Column(name = "parent_resource_id") private Ksuid parentResourceId;
 

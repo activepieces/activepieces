@@ -12,13 +12,11 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Getter
-@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "flag")
-@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 public class FlagValue {
 
     @JsonProperty
@@ -27,8 +25,7 @@ public class FlagValue {
     private String key;
 
     @JsonProperty
-    @Type(type = "jsonb")
-    @Column(name = "value", columnDefinition = "jsonb")
-    private Object value;
+    @Column(name = "value")
+    private String value;
 
 }

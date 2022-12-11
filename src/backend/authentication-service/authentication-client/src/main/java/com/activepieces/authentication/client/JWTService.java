@@ -38,7 +38,7 @@ public class JWTService {
       secretKey = RandomStringUtils.randomAlphanumeric(35);
       flagService.save(FlagService.BEARER_ENCRYPTION_KEY, secretKey);
     }else{
-      secretKey = (String) flagService.getValue(FlagService.BEARER_ENCRYPTION_KEY);
+      secretKey = flagService.getValue(FlagService.BEARER_ENCRYPTION_KEY).get();
     }
   }
 

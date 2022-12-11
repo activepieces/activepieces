@@ -6,6 +6,7 @@ import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.Option;
 import java.util.Optional;
 
 @Service
@@ -20,12 +21,12 @@ public class FlagService {
         this.flagRepository = flagRepository;
     }
 
-    public Object getValue(@NonNull final String key){
+    public Optional<String> getValue(@NonNull final String key){
         Optional<FlagValue> result = flagRepository.findById(key);
         if(result.isEmpty()){
             return Optional.empty();
         }
-        return result.get();
+        return Optional.of(result.get().getValue());
     }
 
     public boolean exists(@NonNull final String key){
@@ -33,7 +34,7 @@ public class FlagService {
     }
 
     public void save(@NonNull final String key,
-                     @NonNull final Object value){
+                     @NonNull final String value){
         flagRepository.save(FlagValue.builder().key(key).value(value).build());
     }
 }

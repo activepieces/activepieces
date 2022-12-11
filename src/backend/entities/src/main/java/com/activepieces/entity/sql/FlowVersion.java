@@ -51,6 +51,7 @@ public class FlowVersion implements EntityMetadata {
     private boolean valid;
 
     @JsonProperty
+    @Enumerated(EnumType.STRING)
     private EditState state;
 
     @Column(name = "created", nullable = false)

@@ -45,6 +45,7 @@ public class Instance implements EntityMetadata {
   private Ksuid projectId;
 
   @Column(name = "status")
+  @Enumerated(EnumType.STRING)
   private InstanceStatus status;
 
   @Column(name = "created", nullable = false)

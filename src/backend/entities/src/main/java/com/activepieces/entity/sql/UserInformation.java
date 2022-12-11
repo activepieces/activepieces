@@ -35,6 +35,7 @@ public class UserInformation implements EntityMetadata {
   private String password;
 
   @Column(name = "user_status", nullable = false)
+  @Enumerated(EnumType.STRING)
   private UserStatus status;
 
   @Column(name = "created", nullable = false)

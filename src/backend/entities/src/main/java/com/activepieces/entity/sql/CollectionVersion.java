@@ -36,6 +36,7 @@ public class CollectionVersion implements EntityMetadata {
   private List<Variable> configs;
 
   @Column(name = "state")
+  @Enumerated(EnumType.STRING)
   private EditState state;
 
   @Column(name = "created", nullable = false)

@@ -2,6 +2,7 @@ package com.activepieces.entity.sql;
 
 import com.activepieces.common.EntityMetadata;
 import com.activepieces.entity.enums.FlowExecutionStatus;
+import com.activepieces.entity.enums.InstanceRunType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.ksuid.Ksuid;
@@ -41,6 +42,7 @@ public class InstanceRun implements EntityMetadata {
   private Ksuid collectionVersionId;
 
   @Column(name = "status")
+  @Enumerated(EnumType.STRING)
   private FlowExecutionStatus status;
 
   @Column(name = "flow_display_name")
@@ -63,6 +65,10 @@ public class InstanceRun implements EntityMetadata {
 
   @Column(name = "updated", nullable = false)
   private long updated;
+
+  @Column(name = "type")
+  @Enumerated(EnumType.STRING)
+  private InstanceRunType type;
 
 
   @PrePersist
