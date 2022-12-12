@@ -11,4 +11,5 @@ export class Config {
 	collectionVersionId?: UUID;
 	flowVersionId?: UUID;
 	placeholder?: string;
+	description?: string;
 }

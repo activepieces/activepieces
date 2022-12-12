@@ -1,10 +1,10 @@
 import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
-import { RequestType } from '../ng-select-connector-action-item-template/requestType.enum';
+import { HttpMethod } from '../../configs-form/configs-form-for-connectors/connector-action-or-config';
 
 type EndpointFormData = {
-	method: RequestType;
+	method: HttpMethod;
 	path: string;
 };
 
@@ -28,19 +28,19 @@ export class EndpointFormControlComponent implements ControlValueAccessor {
 	onChange = (value: EndpointFormData) => {};
 	valueChanges$: Observable<EndpointFormData>;
 	methods = [
-		RequestType.GET,
-		RequestType.HEAD,
-		RequestType.POST,
-		RequestType.PUT,
-		RequestType.DELETE,
-		RequestType.OPTIONS,
-		RequestType.PATCH,
-		RequestType.TRACE,
+		HttpMethod.GET,
+		HttpMethod.HEAD,
+		HttpMethod.POST,
+		HttpMethod.PUT,
+		HttpMethod.DELETE,
+		HttpMethod.OPTIONS,
+		HttpMethod.PATCH,
+		HttpMethod.TRACE,
 	];
 	constructor(private fb: FormBuilder) {
 		this.endpointForm = this.fb.group({
 			path: new FormControl(''),
-			method: new FormControl(RequestType.GET),
+			method: new FormControl(HttpMethod.GET),
 		});
 		this.valueChanges$ = this.endpointForm.valueChanges.pipe(
 			tap(value => {
