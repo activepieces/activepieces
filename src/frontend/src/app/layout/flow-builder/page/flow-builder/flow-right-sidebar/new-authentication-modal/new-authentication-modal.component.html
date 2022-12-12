@@ -14,23 +14,23 @@
       <div>
         <label class="dashed-underline-label" required [matTooltip]="clientIdTooltip" matTooltipClass="labels-tooltip"
           >Client ID</label>
-        <input class="form-control" formControlName="clientId" type="text">
-        <p @fadeInUp class="invalid-input" *ngIf="submitted && settingsForm.get('clientId')!.invalid ">
+        <input class="form-control" formControlName="client_id" type="text">
+        <p @fadeInUp class="invalid-input" *ngIf="submitted && settingsForm.get('client_id')!.invalid ">
           Client ID is required
         </p>
       </div>
       <div>
         <label class="dashed-underline-label" required [matTooltip]="clientSecretTooltip" matTooltipClass="labels-tooltip"
           >Client Secret</label>
-        <input class="form-control" formControlName="clientSecret" type="text">
-        <p @fadeInUp class="invalid-input" *ngIf="submitted && settingsForm.get('clientSecret')!.invalid ">
+        <input class="form-control" formControlName="client_secret" type="text">
+        <p @fadeInUp class="invalid-input" *ngIf="submitted && settingsForm.get('client_secret')!.invalid ">
           Client secret is required
         </p>
       </div>
       <div>
         <label class="dashed-underline-label" placement="bottom" [matTooltip]="redirectUrlTooltip"
         matTooltipClass="labels-tooltip" required>Redirect URL</label>
-        <input class="form-control" formControlName="redirectUrl" type="text">
+        <input class="form-control" formControlName="redirect_url" type="text">
       </div>
       <div>
         <label class="dashed-underline-label"  matTooltipClass="labels-tooltip"

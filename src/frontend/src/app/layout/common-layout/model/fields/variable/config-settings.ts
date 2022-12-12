@@ -1,12 +1,9 @@
 export class OAuth2ConfigSettings {
-	authUrl: string = '';
-	tokenUrl: string = '';
-	refreshUrl: string = '';
-	clientId: string = '';
+	auth_url: string = '';
+	token_url: string = '';
+	refresh_url: string = '';
+	client_id: string = '';
 	scope: string = '';
-	clientSecret: string = '';
-	configParent?: {
-		configKey: string;
-	};
-	responseType: string = 'code';
+	client_secret: string = '';
+	response_type: string = 'code';
 }

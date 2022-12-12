@@ -39,8 +39,5 @@ export class ProjectService {
 	list(): Observable<Project[]> {
 		return this.http.get<Project[]>(environment.apiUrl + '/projects');
 	}
-
-	delete(projectId: string): Observable<void> {
-		return this.http.delete<void>(environment.apiUrl + '/projects/' + projectId);
-	}
+  
 }
