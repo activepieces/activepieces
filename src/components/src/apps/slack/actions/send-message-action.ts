@@ -9,6 +9,9 @@ import {InputUiType} from '../../../framework/config/input-ui-type.model';
 
 export const slackSendMessageAction = createAction({
 	name: 'Send Slack Message',
+	description: 'Send Slack Message',
+	url: '/chat.postMessage',
+	httpMethod: HttpMethod.POST,
 	configs: [
 		{
 			name: 'as_user',
