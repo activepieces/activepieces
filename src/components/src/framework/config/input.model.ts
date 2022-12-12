@@ -1,4 +1,4 @@
-import type {BooleanInput} from './boolean-input.model';
+import type {CheckboxInput} from './checkbox-input.model';
 import type {NumberInput} from './number-input.model';
 import type {LongTextInput} from './long-text-input.model';
 import type {SelectInput} from './select-input.model';
@@ -9,4 +9,4 @@ export type Input =
     | LongTextInput
     | SelectInput
     | NumberInput
-    | BooleanInput;
+    | CheckboxInput;

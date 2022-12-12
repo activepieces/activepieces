@@ -3,5 +3,6 @@ export enum InputUiType {
 	LONG_TEXT = 'LONG_TEXT',
 	SELECT = 'SELECT',
 	NUMBER = 'NUMBER',
-	BOOLEAN = 'BOOLEAN',
+	CHECKBOX = 'CHECKBOX',
+	JSON = 'JSON',
 }
