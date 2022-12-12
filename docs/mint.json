@@ -33,16 +33,11 @@
   "navigation": [
     {
       "group": "Welcome",
-      "pages": [
-        "overview",
-        "changelog"
-      ]
+      "pages": ["overview", "change-log"]
     },
     {
       "group": "Blogs",
-      "pages": [
-        "blogs/get-started"
-      ]
+      "pages": ["blogs/get-started"]
     }
   ],
   "classes": {}
