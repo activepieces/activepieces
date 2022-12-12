@@ -2,6 +2,6 @@ export enum InputUiType {
 	SHORT_TEXT = 'SHORT_TEXT',
 	LONG_TEXT = 'LONG_TEXT',
 	SELECT = 'SELECT',
-	INTEGER = 'INTEGER',
+	NUMBER = 'NUMBER',
 	BOOLEAN = 'BOOLEAN',
 }
