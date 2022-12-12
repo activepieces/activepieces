@@ -6,7 +6,6 @@ import { map, Observable, shareReplay } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { ComponentItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/component-item-details';
 import { Manifest } from '../model/manifest';
-import { apps} from '../../../../../../components/apps';
 
 @Injectable({
 	providedIn: 'root',
@@ -73,13 +72,7 @@ export class ActionMetaService {
 		},
 	];
 
-
-	constructor(private http: HttpClient) {
-    // TODO YOU CAN READ COMPONENTS HERE
-    apps.forEach(f => {
-      console.log(f);
-    })
-  }
+	constructor(private http: HttpClient) {}
 
 	// TODO MOVE URL TO ENVIRONMENT
 	public getConnectorsComponents() {

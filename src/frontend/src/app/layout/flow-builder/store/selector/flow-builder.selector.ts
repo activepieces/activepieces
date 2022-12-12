@@ -50,6 +50,11 @@ export const selectCollectionState = createSelector(
 	selectBuilderState,
 	(state: GlobalBuilderState) => state.collectionState.state
 );
+export const selectIsDeploying = createSelector(
+	selectBuilderState,
+	(state: GlobalBuilderState) =>
+		(state.collectionState.state & CollectionStateEnum.DEPLOYING) === CollectionStateEnum.DEPLOYING
+);
 export const selectIsSaving = createSelector(
 	selectBuilderState,
 	(state: GlobalBuilderState) =>
@@ -135,6 +140,7 @@ export const selectFlowSelectedId = createSelector(selectBuilderState, (state: G
 });
 
 export const selectCurrentStep = createSelector(selectFlowsState, (flowsState: FlowsState) => {
+	debugger;
 	const selectedFlowTabsState = flowsState.tabsState[flowsState.selectedFlowId!.toString()];
 	if (!selectedFlowTabsState) {
 		return undefined;
@@ -334,4 +340,5 @@ export const BuilderSelectors = {
 	selectFlowItemDetailsForConnectorComponents,
 	selectAuthConfigsDropdownOptions,
 	selectCurrentCollectionInstance,
+	selectIsDeploying,
 };
