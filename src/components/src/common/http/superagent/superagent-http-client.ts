@@ -1,4 +1,3 @@
-import querystring from 'node:querystring';
 import type {SuperAgentStatic} from 'superagent';
 import superagent from 'superagent';
 import type {AuthenticationConverter} from '../core/authentication/authentication-converter';
@@ -13,11 +12,10 @@ import type {SuperAgentRequestMethod} from './superagent-request-method';
 export class SuperAgentHttpClient extends BaseHttpClient {
 	constructor(
 		baseUrl = '',
-		qs: typeof querystring = querystring,
 		authenticationConverter: AuthenticationConverter = new DelegatingAuthenticationConverter(),
 		private readonly client: SuperAgentStatic = superagent,
 	) {
-		super(baseUrl, qs, authenticationConverter);
+		super(baseUrl, authenticationConverter);
 	}
 
 	async sendRequest<RequestBody extends HttpMessageBody, ResponseBody extends HttpMessageBody>(

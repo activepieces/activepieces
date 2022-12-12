@@ -1,4 +1,3 @@
-import type querystring from 'node:querystring';
 import type {Authentication} from '../../authentication/core/authentication';
 import type {AuthenticationConverter} from './authentication/authentication-converter';
 import type {HttpClient} from './http-client';
@@ -11,7 +10,6 @@ import type {RequestHeaders} from './request-headers';
 export abstract class BaseHttpClient implements HttpClient {
 	constructor(
 		private readonly baseUrl: string,
-		private readonly qs: typeof querystring,
 		private readonly authenticationConverter: AuthenticationConverter,
 	) {}
 
@@ -22,7 +20,7 @@ export abstract class BaseHttpClient implements HttpClient {
 	protected getUrl<RequestBody extends HttpMessageBody>(request: HttpRequest<RequestBody>): string {
 		const base = this.baseUrl;
 		const path = request.url;
-		const query = this.qs.encode(request.queryParams);
+		const query = new URLSearchParams(request.queryParams).toString();
 		return `${base}${path}?${query}`;
 	}
 
