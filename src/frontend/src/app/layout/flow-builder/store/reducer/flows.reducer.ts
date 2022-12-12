@@ -230,7 +230,7 @@ const _flowsReducer = createReducer(
 		}
 
 		const clonedState = { ...state };
-		debugger;
+
 		const updatedTabState = {
 			...clonedState.tabsState[state.selectedFlowId.toString()],
 			focusedStep: { ...step },
