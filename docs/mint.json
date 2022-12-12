@@ -29,7 +29,6 @@
       "url": "blogs"
     }
   ],
-  "versions": [],
   "navigation": [
     {
       "group": "Welcome",
@@ -39,6 +38,5 @@
       "group": "Blogs",
       "pages": ["blogs/get-started"]
     }
-  ],
-  "classes": {}
+  ]
 }
