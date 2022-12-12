@@ -50,10 +50,10 @@ export class Manifest {
 	}
 	static convertManifestSecurityToAuthConfigSettings(security: ManifestSecurity) {
 		const authConfigSettings = {
-			tokenUrl: security.oauth2.tokenUrl,
+			token_url: security.oauth2.tokenUrl,
 			scope: security.oauth2.scopes.join(' '),
-			authUrl: security.oauth2.authUrl,
-			responseType: security.oauth2.responseType,
+			auth_url: security.oauth2.authUrl,
+			response_type: security.oauth2.responseType,
 		} as OAuth2ConfigSettings;
 		return authConfigSettings;
 	}

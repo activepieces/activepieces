@@ -43,13 +43,13 @@ export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
 	ngOnInit(): void {
 		this.collectionId$ = this.store.select(BuilderSelectors.selectCurrentCollectionId);
 		this.settingsForm = this.fb.group({
-			redirectUrl: new FormControl({ value: environment.redirectUrl, disabled: true }),
-			clientSecret: new FormControl('', Validators.required),
-			clientId: new FormControl('', Validators.required),
-			authUrl: new FormControl('', Validators.required),
-			refreshUrl: new FormControl(''),
-			tokenUrl: new FormControl('', Validators.required),
-			responseType: new FormControl('code', Validators.required),
+			redirect_url: new FormControl({ value: environment.redirectUrl, disabled: true }),
+			client_secret: new FormControl('', Validators.required),
+			client_id: new FormControl('', Validators.required),
+			auth_url: new FormControl('', Validators.required),
+			refresh_url: new FormControl(''),
+			token_url: new FormControl('', Validators.required),
+			response_type: new FormControl('code', Validators.required),
 			scope: new FormControl([], Validators.required),
 			key: new FormControl(
 				this.appName.replace(/[^A-Za-z0-9_]/g, '_'),
@@ -93,9 +93,6 @@ export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
 			: this.settingsForm.get('key')!.value;
 		const settingsFormValue = this.settingsForm.getRawValue();
 		delete settingsFormValue.key;
-		const configParent = this.connectorAuthConfig
-			? { configKey: this.connectorAuthConfig.key }
-			: (this.configToUpdateWithIndex?.config.settings as OAuth2ConfigSettings).configParent;
 		const newConfig: Config = {
 			key: configKey,
 			label: configLabel,
@@ -104,7 +101,6 @@ export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
 			settings: {
 				...settingsFormValue,
 				required: true,
-				configParent: configParent,
 				scope: scopes,
 			},
 			value: null,

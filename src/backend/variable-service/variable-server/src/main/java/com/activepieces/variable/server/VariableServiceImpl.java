@@ -2,11 +2,9 @@ package com.activepieces.variable.server;
 
 import com.activepieces.entity.enums.InputVariableType;
 import com.activepieces.entity.subdocuments.field.Variable;
-import com.activepieces.entity.subdocuments.field.connection.oauth2.OAuth2LoginSettings;
 import com.activepieces.entity.subdocuments.field.connection.oauth2.OAuth2Variable;
 import com.activepieces.variable.model.OAuth2Service;
 import com.activepieces.variable.model.VariableService;
-import com.activepieces.variable.model.exception.MissingConfigsException;
 import com.activepieces.worker.service.CodeExecutionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.java.Log;
@@ -48,12 +46,9 @@ public class VariableServiceImpl implements VariableService {
 
   private Object refreshVariable(Variable variable, Object value) {
     if (variable.getType().equals(InputVariableType.OAUTH2) && Objects.nonNull(value)) {
-      OAuth2Variable oAuth2Variable = (OAuth2Variable) variable;
 
-      if (oAuth2Variable.getSettings() instanceof OAuth2LoginSettings) {
-        return oAuth2Service.refreshAndGetAccessToken(
-                oAuth2Variable, (Map<String, Object>) value);
-      }
+      return oAuth2Service.refreshAndGetAccessToken(
+              (OAuth2Variable) variable, (Map<String, Object>) value);
     }
     return value;
   }

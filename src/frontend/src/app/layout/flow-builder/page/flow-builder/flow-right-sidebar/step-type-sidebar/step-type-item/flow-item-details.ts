@@ -13,7 +13,6 @@ export class FlowItemDetails {
 			flowsVersionIds: UUID[];
 			pieceVersionId: UUID;
 			documentationUrl: string;
-			clientId: string;
 			scope: string;
 			collectionConfigs: Config[];
 			flowVersionIdToConfig: { id: UUID; configs: Config[]; displayName: string }[];

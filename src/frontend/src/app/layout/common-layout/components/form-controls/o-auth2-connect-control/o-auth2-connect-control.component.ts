@@ -28,10 +28,10 @@ export class OAuth2ConnectControlComponent implements ControlValueAccessor, OnCh
 	ngOnChanges(changes: SimpleChanges): void {
 		const settings = this.configSettings;
 		this.emptySettings = !(
-			settings.clientSecret &&
-			settings.clientId &&
-			settings.authUrl &&
-			settings.responseType &&
+			settings.client_secret &&
+			settings.client_id &&
+			settings.auth_url &&
+			settings.response_type &&
 			settings.scope
 		);
 	}
