@@ -1,6 +1,6 @@
 package com.activepieces.variable.server;
 
-import com.activepieces.entity.subdocuments.field.connection.oauth2.OAuth2LoginSettings;
+import com.activepieces.entity.subdocuments.field.connection.oauth2.OAuth2Settings;
 import com.activepieces.entity.subdocuments.field.connection.oauth2.OAuth2Variable;
 import com.activepieces.variable.model.OAuth2Service;
 import com.activepieces.variable.server.strategy.Auth2BodyStrategy;
@@ -70,15 +70,12 @@ public class OAuth2ServiceImpl implements OAuth2Service {
   @Override
   public Map<String, Object> refreshAndGetAccessToken(
       @NotNull final OAuth2Variable variable, @NotNull final Map<String, Object> oAuth2Response) {
-    if (!(variable.getSettings() instanceof OAuth2LoginSettings)) {
-      return oAuth2Response;
-    }
     final String refreshToken = getRefreshToken(oAuth2Response);
     if (Objects.isNull(refreshToken)) {
       return oAuth2Response;
     }
     List<Exception> exceptions = new ArrayList<>();
-    OAuth2LoginSettings settings = (OAuth2LoginSettings) variable.getSettings();
+    OAuth2Settings settings = variable.getSettings();
     String clientSecret = settings.getClientSecret();
     Map<String, Object> refreshedResponse = oAuth2Response;
     for (Auth2Strategy auth2Strategy : auth2Strategies) {

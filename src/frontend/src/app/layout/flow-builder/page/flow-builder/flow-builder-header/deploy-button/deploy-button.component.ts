@@ -33,7 +33,7 @@ export class DeployButtonComponent implements OnInit {
 			AllFlowsValidty: this.store.select(BuilderSelectors.selectFlowsValidity),
 		}).pipe(
 			map(res => {
-				debugger;
+
 				return !res.AllFlowsValidty || res.deploymentAndSaving.isDeploying || res.deploymentAndSaving.isSaving;
 			})
 		);

@@ -72,7 +72,13 @@ export class ActionMetaService {
 		},
 	];
 
-	constructor(private http: HttpClient) {}
+
+	constructor(private http: HttpClient) {
+    // TODO YOU CAN READ COMPONENTS HERE
+/*    apps.forEach(f => {
+      console.log(f);
+    })*/
+  }
 
 	// TODO MOVE URL TO ENVIRONMENT
 	public getConnectorsComponents() {

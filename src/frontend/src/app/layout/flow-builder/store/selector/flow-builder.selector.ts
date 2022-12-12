@@ -140,7 +140,7 @@ export const selectFlowSelectedId = createSelector(selectBuilderState, (state: G
 });
 
 export const selectCurrentStep = createSelector(selectFlowsState, (flowsState: FlowsState) => {
-	debugger;
+
 	const selectedFlowTabsState = flowsState.tabsState[flowsState.selectedFlowId!.toString()];
 	if (!selectedFlowTabsState) {
 		return undefined;
