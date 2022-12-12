@@ -25,8 +25,8 @@ export class IconButtonComponent {
 		return {
 			fill: hover ? this.hoverColor : this.color,
 			// stroke: hover ? this.hoverColor : this.color,
-			'width.px': this.width,
-			'height.px': this.height,
+			width: `${this.width}px`,
+			height: `${this.height}px`,
 			opacity: this.disabled ? '0.3' : '1',
 		};
 	}

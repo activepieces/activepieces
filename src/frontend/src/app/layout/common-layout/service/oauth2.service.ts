@@ -75,8 +75,6 @@ export class Oauth2Service {
 						tokenUrl: request.tokenUrl,
 					}).pipe(
 						map(value => {
-							delete params['code'];
-							value.auth_response = params;
 							return value;
 						})
 					);
