@@ -1,6 +1,5 @@
 package com.activepieces.entity.subdocuments.field.connection.oauth2;
 
-import com.activepieces.common.validation.EnumNamePattern;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

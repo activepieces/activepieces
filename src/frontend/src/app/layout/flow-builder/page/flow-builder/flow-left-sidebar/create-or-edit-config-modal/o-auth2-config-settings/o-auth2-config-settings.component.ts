@@ -47,7 +47,7 @@ export class OAuth2ConfigSettingsComponent implements ControlValueAccessor {
 			scope: ['', [Validators.required]],
 		});
 		this.settingsFormValueChanged$ = this.settingsForm.valueChanges.pipe(
-			tap(() => this.onChange(this.settingsForm.getRawValue()))
+			tap(() => this.onChange({ ...this.settingsForm.getRawValue(), user_input_type: 'LOGIN' }))
 		);
 	}
 	writeValue(obj: any): void {

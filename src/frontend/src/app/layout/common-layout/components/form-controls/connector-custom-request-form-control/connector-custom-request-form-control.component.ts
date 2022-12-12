@@ -3,10 +3,10 @@ import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACC
 import { BodyType } from './body-type.enum';
 import jsonlint from 'jsonlint-mod';
 import { Observable, tap } from 'rxjs';
-import { RequestType } from '../ng-select-connector-action-item-template/requestType.enum';
 import { CodeService } from 'src/app/layout/flow-builder/service/code.service';
+import { HttpMethod } from '@activepieces/components/dist/src/common/http/core/http-method';
 interface CustomRequestFormSchema {
-	endpoint: { url: string; method: RequestType };
+	endpoint: { url: string; method: HttpMethod };
 	parameters: { [key: string]: any };
 	headers: { [key: string]: any };
 	body: { [key: string]: any } | string;

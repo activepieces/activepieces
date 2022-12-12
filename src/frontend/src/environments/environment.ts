@@ -4,7 +4,7 @@ export const environment = {
 	apiUrl: 'http://localhost:8000',
 	jwtTokenName: 'token',
 	stageName: 'stg',
-	redirectUrl: 'https://stg-app.activepieces.com/redirect',
+	redirectUrl: 'https://app.activepieces.com/redirect',
 	userPropertyNameInLocalStorage: 'currentUser',
 	feature: {
 		newComponents: true,

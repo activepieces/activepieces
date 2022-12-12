@@ -1,3 +1,4 @@
+import { InputUiType } from '@activepieces/components';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import {
 	ControlValueAccessor,
@@ -7,17 +8,13 @@ import {
 	NG_VALIDATORS,
 	NG_VALUE_ACCESSOR,
 	ValidatorFn,
+	Validators,
 } from '@angular/forms';
-import { map, Observable, shareReplay, tap } from 'rxjs';
-
+import { catchError, map, Observable, of, shareReplay, tap } from 'rxjs';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
-import { DynamicDropdownResult } from '../../model/dynamic-controls/dynamic-dropdown-result';
-import { ConfigType } from '../../model/enum/config-type';
-import { Config } from '../../model/fields/variable/config';
-import { OAuth2ConfigSettings } from '../../model/fields/variable/config-settings';
-import { DynamicDropdownService } from '../../service/dynamic-dropdown.service';
+import { DropdownItemOption } from '../../model/fields/variable/subfields/dropdown-item-option';
 import { ThemeService } from '../../service/theme.service';
-
+import { FrontEndConnectorConfig } from './configs-form-for-connectors/connector-action-or-config';
 type ConfigKey = string;
 
 @Component({
@@ -39,28 +36,29 @@ type ConfigKey = string;
 	animations: [fadeInUp400ms],
 })
 export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
-	@Input() set configs(value: Config[] | { configs: Config[]; triggerChangeDetection: boolean }) {
+	@Input() set configs(
+		value: FrontEndConnectorConfig[] | { configs: FrontEndConnectorConfig[]; triggerChangeDetection: boolean }
+	) {
 		if (Array.isArray(value)) {
 			this._configs = value;
 		}
 	}
-	_configs: Config[] = [];
+	_configs: FrontEndConnectorConfig[] = [];
 	@Input() submitted = false;
 	@Input() showSlider = false;
 	@Input() allowRemoveConfig = false;
-	@Output() configRemoved: EventEmitter<Config> = new EventEmitter();
+	@Input() accessToken: string = '';
+	@Output() configRemoved: EventEmitter<FrontEndConnectorConfig> = new EventEmitter();
+
 	form!: FormGroup;
 	OnChange = value => {};
 	OnTouched = () => {};
 	updateValueOnChange$: Observable<void> = new Observable<void>();
 	refreshReferencesList$: Observable<void>[] = [];
-	dynamicDropdownsObservablesMap: Map<ConfigKey, Observable<DynamicDropdownResult>> = new Map();
-	configType = ConfigType;
-	constructor(
-		private dynamicDropdownService: DynamicDropdownService,
-		private fb: FormBuilder,
-		public themeService: ThemeService
-	) {}
+	configType = InputUiType;
+	optionsObservables$: { [key: ConfigKey]: Observable<DropdownItemOption[]> } = {};
+	dropdownsLoadingFlags$: { [key: ConfigKey]: Observable<boolean> } = {};
+	constructor(private fb: FormBuilder, public themeService: ThemeService) {}
 
 	ngOnInit(): void {
 		this.createForm();
@@ -94,10 +92,12 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 		const controls: { [key: string]: FormControl } = {};
 		this._configs.forEach(c => {
 			const validators: ValidatorFn[] = [];
-			// if (c.settings?.required || c.settings?.required === undefined) {
-			// 	validators.push(Validators.required);
-			// }
+			if (c.required) {
+				validators.push(Validators.required);
+			}
 			controls[c.key] = new FormControl(c.value, validators);
+
+			this.contructDropdownObservables(c);
 		});
 		this.form = this.fb.group(controls);
 		this.updateValueOnChange$ = this.form.valueChanges.pipe(
@@ -108,76 +108,31 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 		);
 	}
 
-	createDynamicDropdownResultObservable(config: Config, refreshEndPointBody: any) {
-		let dropdownResult$: Observable<DynamicDropdownResult> = this.createDynamicDropdownObservableBasedOnConfigScope(
-			config,
-			refreshEndPointBody
-		);
-
-		dropdownResult$ = dropdownResult$.pipe(
-			map(res => {
-				if (!res) {
-					console.warn(`Activepieces-response for config:${config.label} was null`);
-					res = new DynamicDropdownResult();
-					res.loaded = true;
-					res.options = [];
-					res.placeholder = 'No options';
-				} else {
-					res.loaded = true;
-				}
-				if (!res.options) {
-					res.options = [];
-				}
-				return res;
-			}),
-			tap(res => {
-				const configControl = this.form.get(config.key);
-
-				if (!res.options.find(o => JSON.stringify(o.value) === JSON.stringify(configControl?.value))) {
-					configControl?.setValue(null);
-				}
-				if (res?.disabled) {
-					configControl?.disable();
-				} else {
-					configControl?.enable();
-				}
-			}),
-			shareReplay()
-		);
-
-		return dropdownResult$;
-	}
-
-	createDynamicDropdownObservableBasedOnConfigScope(config: Config, refreshEndPointBody) {
-		if (config.collectionVersionId) {
-			return this.dynamicDropdownService.refreshCollectionDynamicDropdownConfig(
-				config.collectionVersionId,
-				config.key,
-				refreshEndPointBody
+	private contructDropdownObservables(c: FrontEndConnectorConfig) {
+		if (c.options) {
+			this.optionsObservables$[c.key] = c.options.pipe(
+				shareReplay(1),
+				catchError(err => {
+					console.error(err);
+					return of([]);
+				})
 			);
-		} else if (config.flowVersionId) {
-			return this.dynamicDropdownService.refreshFlowDynamicDropdownConfig(
-				config.flowVersionId,
-				config.key,
-				refreshEndPointBody
+			this.dropdownsLoadingFlags$[c.key] = this.optionsObservables$[c.key].pipe(
+				map(val => {
+					if (Array.isArray(val)) {
+						console.error(`Activepieces- Config ${c.label} options are not returned in array form--> ${val}`);
+					}
+					return true;
+				})
 			);
-		} else {
-			throw Error(`config ${config.label} does not have a collectionVersionId nor a flowVersionId`);
 		}
 	}
 
 	getControl(configKey: string) {
 		return this.form.get(configKey);
 	}
-	getDynamicDropdownObservable(configKey: string) {
-		return this.dynamicDropdownsObservablesMap.get(configKey) as Observable<DynamicDropdownResult>;
-	}
 
-	getAuthConfigSettings(config: Config) {
-		return config.settings as OAuth2ConfigSettings;
-	}
-
-	removeConfig(config: Config) {
+	removeConfig(config: FrontEndConnectorConfig) {
 		this.form.removeControl(config.key);
 		this.configRemoved.emit(config);
 	}

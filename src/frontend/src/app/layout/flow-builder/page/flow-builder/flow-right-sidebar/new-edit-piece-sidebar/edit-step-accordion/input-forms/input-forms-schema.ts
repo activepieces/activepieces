@@ -38,7 +38,6 @@ export interface ComponentInputFormSchema extends InputFormsSchemaBase {
 	input: {
 		action: ConfigsAndTheirValues | CustomRequestForComponentFormSchema;
 	};
-	manifestUrl: string;
 }
 interface CustomRequestForComponentFormSchema {
 	endpoint: string;

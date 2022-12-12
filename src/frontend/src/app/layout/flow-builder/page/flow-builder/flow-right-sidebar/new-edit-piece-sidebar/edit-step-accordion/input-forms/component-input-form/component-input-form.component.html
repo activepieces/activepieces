@@ -4,8 +4,8 @@
     <div>
       <label required>What do you want to do?</label>
       <ng-select formControlName="action" [items]="actions$ | async" bindLabel="label" bindValue="value" appendTo="body"
-        [placeholder]="loading? 'Loading...':''"
-        [clearable]="false" [searchFn]="customSearchFn" #select class="connector-actions-dropdown" [loading]="loading"  loadingText="Loading..."  [compareWith]="compareFn" >
+
+        [clearable]="false" [searchFn]="customSearchFn" #select class="connector-actions-dropdown"   loadingText="Loading..."  [compareWith]="compareFn" >
         <ng-template ng-notfound-tmp let-searchTerm="searchTerm">
           <app-ng-select-no-items-found-template [searchTerm]="searchTerm">
           </app-ng-select-no-items-found-template>
@@ -29,10 +29,10 @@
           <app-ng-select-custom-request (click)="select.close();customRequestChosen();"></app-ng-select-custom-request>
         </ng-template>
       </ng-select>
-      <p @fadeInUp  class="invalid-input" *ngIf="componentForm.get('action')!.invalid && !loading">
+      <p @fadeInUp  class="invalid-input" *ngIf="componentForm.get('action')!.invalid ">
         Please select an action.
       </p>
-      <div *ngIf="!loading" class="authentication-section" >
+      <div class="authentication-section" >
         <label required>Authentication</label>
         <div class="position-relative">
           <app-button
@@ -73,11 +73,11 @@
 
     <ng-container *ngIf="componentForm.get('action')!.value === customRequestItem.value  ;else definedActionTemplate">
 
-      <app-connector-custom-request-form-control *ngIf="!loading"  formControlName="customRequest">
+      <app-connector-custom-request-form-control formControlName="customRequest">
       </app-connector-custom-request-form-control>
     </ng-container>
     <ng-template #definedActionTemplate>
-      <div *ngIf="componentForm.get('action')!.value && !loading">
+      <div *ngIf="componentForm.get('action')!.value">
           <div>
             <app-configs-form-for-connectors [showDescriptionAsTooltips]="true"  formControlName="requiredConfigs" [configs]=" requiredConfigs"
               [showSlider]="true" [submitted]="true">

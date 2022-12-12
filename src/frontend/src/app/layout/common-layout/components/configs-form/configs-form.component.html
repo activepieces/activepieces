@@ -1,8 +1,8 @@
 <form *ngIf="form" [formGroup]="form" [class.ng-submitted]="submitted">
   <div class="form-group d-flex flex-column" *ngFor="let config of _configs; let i = index" [ngSwitch]="config.type">
-    <ng-container *ngSwitchCase="configType.CHECKBOX">
+    <ng-container *ngSwitchCase="configType.BOOLEAN">
       <div *ngIf="showSlider" class="d-flex align-items-center label-container " >
-        <label >{{config.label}}</label>
+        <label [class.dashed-underline-label]="config.required" >{{config.label}}</label>
         <app-icon-button *ngIf="allowRemoveConfig" [color]="themeService.BODY_COLOR" [width]="9" [height]="9"
           iconFilename="delete.svg" matTooltip="Remove Item" [buttonHeight]="16" [buttonWidth]="16"
           buttonPadding="8px !important" class="delete-btn" appTrackHover #deleteButton="hoverTrackerDirective"
@@ -13,7 +13,7 @@
       <app-checkbox *ngIf="!showSlider" [formControlName]="config.key" [label]="config.label">
       </app-checkbox>
     </ng-container>
-    <div *ngIf="config.type !== configType.CHECKBOX" class="d-flex align-items-center label-container">
+    <div *ngIf="config.type !== configType.BOOLEAN" class="d-flex align-items-center label-container">
       <label required
         [for]="'form-input' + i">{{ config.label }}</label>
       <app-icon-button *ngIf="allowRemoveConfig && form.enabled" [color]="themeService.BODY_COLOR" [width]="9" [height]="9"
@@ -26,20 +26,35 @@
 
 
     <div [id]="'form-input' + i">
-      <input *ngSwitchCase="configType.SHORT_TEXT" class="form-control" type="text" [formControlName]="config.key"
-        [placeholder]="config.placeholder ? config.placeholder : ''" />
+      <input *ngSwitchCase="configType.SHORT_TEXT" class="form-control" type="text" [formControlName]="config.key"/>
 
       <textarea *ngSwitchCase="configType.LONG_TEXT" [formControlName]="config.key"
-        [placeholder]="config.placeholder ? config.placeholder : ''" rows="4" class="form-control" type="text">
+     rows="4" class="form-control" type="text">
       </textarea>
-      <input *ngSwitchCase="configType.NUMBER" class="form-control" type="number" [formControlName]="config.key"
-        [placeholder]="config.placeholder ? config.placeholder : ''" />
-      <app-o-auth2-connect-control *ngSwitchCase="configType.OAUTH2" [formControlName]="config.key"
-        [configSettings]="getAuthConfigSettings(config)"></app-o-auth2-connect-control>
-
+      <input *ngSwitchCase="configType.INTEGER" class="form-control" type="number" [formControlName]="config.key"
+     />
+<!--
       <app-dictonary-form-control *ngSwitchCase="configType.DICTIONARY" [formControlName]="config.key">
-      </app-dictonary-form-control>
+      </app-dictonary-form-control> -->
 
+
+      <ng-container *ngSwitchCase="configType.SELECT">
+          <ng-select [formControlName]="config.key" [items]="optionsObservables$[config.key]| async" [loading]="(dropdownsLoadingFlags$[config.key] | async)!" [placeholder]="
+          (dropdownsLoadingFlags$[config.key] | async)!
+                ? 'Loading...'
+                :'Please select'
+            " bindLabel="label" bindValue="value" [clearable]="config.required"
+            [searchable]="false" appendTo="body">
+            <ng-template ng-option-tmp let-item="item">
+              <app-ng-select-item-template [item]="item" [isSelected]="item.value === getControl(config.key)?.value">
+              </app-ng-select-item-template>
+            </ng-template>
+
+            <ng-template ng-loadingspinner-tmp>
+              <app-ng-select-loading-spinner-template></app-ng-select-loading-spinner-template>
+            </ng-template>
+          </ng-select>
+        </ng-container>
 
 
       <ng-container *ngIf="submitted && getControl(config.key)?.invalid">

@@ -2,9 +2,7 @@ import { Injectable } from '@angular/core';
 import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionType } from '../../common-layout/model/enum/action-type.enum';
 import { TriggerType } from '../../common-layout/model/enum/trigger-type.enum';
-import { map, Observable, shareReplay } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
-import { ComponentItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/component-item-details';
+import { Observable } from 'rxjs';
 import { Manifest } from '../model/manifest';
 
 @Injectable({
@@ -71,57 +69,4 @@ export class ActionMetaService {
 			logoUrl: '/assets/img/custom/piece/empty-trigger.svg',
 		},
 	];
-
-
-	constructor(private http: HttpClient) {
-    // TODO YOU CAN READ COMPONENTS HERE
-/*    apps.forEach(f => {
-      console.log(f);
-    })*/
-  }
-
-	// TODO MOVE URL TO ENVIRONMENT
-	public getConnectorsComponents() {
-		return this.http
-			.get<{
-				components: {
-					package: {
-						name: string;
-						version: string;
-						entryClass: string;
-					};
-					name: string;
-					description: string;
-					version: string;
-					logo: string;
-					manifest: string;
-				}[];
-			}>('https://cdn.activepieces.com/components/list.json')
-			.pipe(
-				map(res => {
-					const components = [...res.components];
-					return components.map(c => {
-						return new ComponentItemDetails({
-							logoUrl: c.logo,
-							type: ActionType.COMPONENT,
-							name: c.name,
-							version: c.version,
-							description: c.description,
-							manifest: c.manifest,
-							package: c.package,
-						});
-					});
-				})
-			);
-	}
-	public getManifest(url: string) {
-		if (!url) console.error('get manifest url is empty');
-		const manifest$ = this.manifests$.get(url);
-		if (manifest$) {
-			return manifest$;
-		}
-		const newManifest$ = this.http.get<Manifest>(url).pipe(shareReplay(1));
-		this.manifests$.set(url, newManifest$);
-		return newManifest$;
-	}
 }

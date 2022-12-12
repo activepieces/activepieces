@@ -1,10 +1,9 @@
 import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
 import { FormBuilder, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { fadeInUp400ms } from '../../../animation/fade-in-up.animation';
-import { Config } from '../../../model/fields/variable/config';
-import { DynamicDropdownService } from '../../../service/dynamic-dropdown.service';
 import { ThemeService } from '../../../service/theme.service';
 import { ConfigsFormComponent } from '../configs-form.component';
+import { FrontEndConnectorConfig } from './connector-action-or-config';
 
 @Component({
 	selector: 'app-configs-form-for-connectors',
@@ -26,10 +25,10 @@ import { ConfigsFormComponent } from '../configs-form.component';
 	animations: [fadeInUp400ms],
 })
 export class ConfigsFormForConnectorsComponent extends ConfigsFormComponent {
-	constructor(dynamicDropdownService: DynamicDropdownService, fb: FormBuilder, themeService: ThemeService) {
-		super(dynamicDropdownService, fb, themeService);
+	constructor(fb: FormBuilder, themeService: ThemeService) {
+		super(fb, themeService);
 	}
-	@Input() override set configs(value: { configs: Config[]; triggerChangeDetection: boolean }) {
+	@Input() override set configs(value: { configs: FrontEndConnectorConfig[]; triggerChangeDetection: boolean }) {
 		this._configs = value.configs;
 		const controlUpdateSettings = !value.triggerChangeDetection ? { emitEvent: false } : {};
 		if (this.form) {

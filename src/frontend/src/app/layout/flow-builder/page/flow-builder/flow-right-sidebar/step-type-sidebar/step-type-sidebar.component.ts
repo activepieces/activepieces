@@ -177,8 +177,6 @@ export class StepTypeSidebarComponent implements OnInit {
 				const componentDetails = flowItemDetails as ComponentItemDetails;
 				return {
 					componentName: componentDetails.name,
-					componentVersion: componentDetails.version,
-					manifestUrl: componentDetails.manifestUrl,
 				};
 			}
 		}

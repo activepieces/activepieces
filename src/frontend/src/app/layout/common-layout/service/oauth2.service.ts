@@ -46,6 +46,7 @@ export class Oauth2Service {
 			'&prompt=consent' +
 			'&scope=' +
 			request.scope;
+		debugger;
 		const popup = window.open(url, winTarget, winFeatures);
 		this.currentlyOpenPopUp = popup;
 		const codeObs$ = new Observable<any>(observer => {
@@ -67,6 +68,7 @@ export class Oauth2Service {
 
 		return codeObs$.pipe(
 			switchMap(params => {
+				debugger;
 				if (params != undefined && params.code != undefined) {
 					return this.claimWithSecret({
 						code: decodeURIComponent(params.code),
@@ -75,6 +77,9 @@ export class Oauth2Service {
 						token_url: request.token_url,
 					}).pipe(
 						map(value => {
+							if (value['error']) {
+								throw Error(value['error']);
+							}
 							return value;
 						})
 					);
