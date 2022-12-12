@@ -1,14 +1,14 @@
 {
-  "name": "@activepieces/components-src",
-  "version": "0.0.0",
+  "name": "@activepieces/components",
+  "version": "0.0.2",
   "description": "activepieces components",
-  "private": true,
   "homepage": "https://github.com/activepieces/components",
   "license": "MIT",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
-    "build": "rm -rf dist && tsc"
+    "build": "rm -rf dist && tsc",
+    "prepack": "npm run-script build"
   },
   "repository": {
     "type": "git",
@@ -17,10 +17,10 @@
   "bugs": {
     "url": "https://github.com/activepieces/components/issues"
   },
-  "workspaces": [
-    "packages/*"
-  ],
   "type": "module",
+  "dependencies": {
+    "superagent": "^8.0.6"
+  },
   "devDependencies": {
     "@types/superagent": "^4.1.15",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
@@ -33,5 +33,9 @@
   "engines": {
     "node": "16.x",
     "npm": "8.x"
-  }
+  },
+  "files": ["dist"],
+  "private": false,
+  "exports": "./dist/main.js",
+  "types": "./dist/main.d.ts"
 }
