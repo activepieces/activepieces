@@ -111,6 +111,12 @@ const _collectionReducer = createReducer(
 	}),
 	on(CollectionActions.removeInstance, (state): CollectionState => {
 		return { ...state, instance: undefined };
+	}),
+	on(FlowsActions.deleteSuccess, (state, { saveRequestId }): CollectionState => {
+		return {
+			...state,
+			state: state.lastSaveRequestId === saveRequestId ? state.state & ~CollectionStateEnum.SAVING_FLOW : state.state,
+		};
 	})
 );
 
