@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/components",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "activepieces components",
   "homepage": "https://github.com/activepieces/components",
   "license": "MIT",
@@ -36,6 +36,6 @@
   },
   "files": ["dist"],
   "private": false,
-  "exports": "./dist/main.js",
-  "types": "./dist/main.d.ts"
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts"
 }
