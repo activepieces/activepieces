@@ -10,7 +10,7 @@ import {
 } from '@angular/forms';
 import { fadeInUp400ms } from '../../../../../../../../common-layout/animation/fade-in-up.animation';
 import { ComponentInputFormSchema } from '../input-forms-schema';
-import { map, Observable, of, tap } from 'rxjs';
+import { map, mapTo, Observable, of, take, tap } from 'rxjs';
 import { BuilderSelectors } from 'src/app/layout/flow-builder/store/selector/flow-builder.selector';
 import { Store } from '@ngrx/store';
 import { BsModalService } from 'ngx-bootstrap/modal';
@@ -23,6 +23,9 @@ import {
 	HttpMethod,
 } from 'src/app/layout/common-layout/components/configs-form/configs-form-for-connectors/connector-action-or-config';
 import { apps } from '@activepieces/components';
+import { CreateEditConfigModalComponent } from '../../../../../flow-left-sidebar/create-or-edit-config-modal/create-or-edit-config-modal.component';
+import { Config } from 'src/app/layout/common-layout/model/fields/variable/config';
+import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
 declare type ActionDropdownOption = {
 	label:
 		| {
@@ -34,6 +37,11 @@ declare type ActionDropdownOption = {
 		| string;
 	value: { actionName: string; configs: FrontEndConnectorConfig[]; separator?: boolean };
 	disabled?: boolean;
+};
+
+export declare type AuthConfigDropdownValue = {
+	configInterpolation: string;
+	accessToken: string;
 };
 const CUSTOM_REQUEST_FORM_CONTROL_NAME = 'customRequest';
 const OPTIONAL_CONFIGS_FORM_CONTROL_NAME = 'optionalConfigs';
@@ -73,7 +81,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 	};
 	allOptionalConfigs: FrontEndConnectorConfig[] = [];
 	componentName: string;
-	initiallySelectedActionValue: { actionName: string; input: { action: { [key: string]: any } } } | null;
+	intialComponentInputFormValue: { action_name: string; input: { action: { [key: string]: any } } } | null;
 	customRequestItem = {
 		value: { actionName: 'CUSTOM_REQUEST', configs: [] as FrontEndConnectorConfig[] },
 		label: 'Custom Request',
@@ -97,9 +105,16 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 	valueChanges$: Observable<void>;
 	actionDropdownValueChanged$: Observable<{ actionName: string; configs: FrontEndConnectorConfig[] }>;
 	updateAuthConfig$: Observable<{ indexInList: number; config: FrontEndConnectorConfig } | undefined>;
+	setInitiallySelectedAuthConfig$: Observable<void>;
 	onChange = (value: any) => {};
 	onTouch = () => {};
-	newAuthConfigAdded$: Observable<FrontEndConnectorConfig>;
+	authenticationDropdownCompareWithFunction = (
+		a: { label: string; value: AuthConfigDropdownValue },
+		formControlValue: AuthConfigDropdownValue
+	) => {
+		return JSON.stringify(formControlValue) === JSON.stringify(a.value);
+	};
+	newAuthConfigAdded$: Observable<Config>;
 	allAuthConfigs$: Observable<DropdownOption[]>;
 	constructor(
 		private fb: FormBuilder,
@@ -114,28 +129,29 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 				this.actionSelectValueChanged(val);
 			})
 		);
-		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions);
+		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions).pipe(tap(console.log));
 		this.modalService;
 	}
 
 	editSelectedAuthConfig() {
-		// const selectedValue: string = this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value;
-		// const configKey = selectedValue.split('.')[1].replace('}', '');
-		// this.updateAuthConfig$ = this.store.select(BuilderSelectors.selectConfig(configKey)).pipe(
-		// 	take(1),
-		// 	tap(configAndIndex => {
-		// 		if (configAndIndex) {
-		// 			this.modalService.show(NewAuthenticationModalComponent, {
-		// 				ignoreBackdropClick: true,
-		// 				class: 'modal-dialog-centered',
-		// 				initialState: {
-		// 					configToUpdateWithIndex: configAndIndex,
-		// 					appName: this.componentName,
-		// 				},
-		// 			});
-		// 		}
-		// 	})
-		// );
+		const selectedValue: AuthConfigDropdownValue = this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value;
+		const configKey = selectedValue.configInterpolation.split('.')[1].replace('}', '');
+		this.updateAuthConfig$ = this.store.select(BuilderSelectors.selectConfig(configKey)).pipe(
+			take(1),
+			tap(configAndIndex => {
+				if (configAndIndex) {
+					this.modalService.show(CreateEditConfigModalComponent, {
+						ignoreBackdropClick: true,
+						class: 'modal-dialog-centered',
+						initialState: {
+							configIndexInConfigsList: configAndIndex.indexInList,
+							configToUpdate: configAndIndex.config,
+						},
+					});
+				}
+			}),
+			mapTo(void 0)
+		);
 	}
 	customSearchFn(term: string, item: any) {
 		const termLowerCase = term.toLowerCase();
@@ -163,17 +179,22 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 	}
 
 	fetchActions(componentName: string, accessToken: string) {
-		of(apps[componentName]).pipe(
+		const component = apps.find(app => app.name === componentName);
+		if (!component) throw new Error(`Activepieces- component with name ${componentName} is not found`);
+		this.actions$ = of(component).pipe(
 			map(component => {
-				return component.actions.map(a => {
+				const actionsKeys = Object.keys(component.actions);
+
+				return actionsKeys.map(actionName => {
+					const action = component.actions[actionName];
 					return {
 						value: {
-							actionName: a.name,
-							configs: a.configs.map(c =>
+							actionName: action.name,
+							configs: action.configs.map(c =>
 								ComponnentConfigsForActionsOrTriggers.convertToFrontEndConfig(c, accessToken)
 							),
 						},
-						label: { requestType: a.httpMethod, url: a.url, description: a.description },
+						label: { requestType: action.httpMethod, url: action.url, description: action.description },
 					};
 				});
 			}),
@@ -191,32 +212,34 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 		);
 		this.initialSetup$ = this.actions$.pipe(
 			tap(items => {
-				if (this.initiallySelectedActionValue?.actionName === this.customRequestItem.value.actionName) {
+				if (this.intialComponentInputFormValue?.action_name === this.customRequestItem.value.actionName) {
 					this.componentForm
 						.get(ACTION_FORM_CONTROL_NAME)!
 						.setValue(this.customRequestItem.value, { emitEvent: false });
 					this.componentForm
 						.get(CUSTOM_REQUEST_FORM_CONTROL_NAME)!
-						.setValue(this.initiallySelectedActionValue.input.action, { emitEvent: false });
-				} else if (this.initiallySelectedActionValue) {
+						.setValue(this.intialComponentInputFormValue.input.action, { emitEvent: false });
+				} else if (this.intialComponentInputFormValue) {
 					this.componentForm
 						.get(ACTION_FORM_CONTROL_NAME)!
-						.setValue(items.find(i => i.value.actionName === this.initiallySelectedActionValue?.actionName)!.value, {
+						.setValue(items.find(i => i.value.actionName === this.intialComponentInputFormValue?.action_name)?.value, {
 							emitEvent: false,
 						});
 
 					this.selectedAction$ = of(
-						items.find(it => it.value.actionName === this.initiallySelectedActionValue?.actionName)
+						items.find(it => it.value.actionName === this.intialComponentInputFormValue?.action_name)
 					);
 				}
 			}),
 			tap(items => {
 				const optionalConfigsControl = this.componentForm.get(OPTIONAL_CONFIGS_FORM_CONTROL_NAME);
 				const requiredConfigs = this.componentForm.get(REQUIRED_CONFIGS_FORM_CONTROL_NAME);
-				if (requiredConfigs && optionalConfigsControl && this.initiallySelectedActionValue) {
-					const selectedAction = items.find(i => i.value.actionName === this.initiallySelectedActionValue?.actionName)!;
+				if (requiredConfigs && optionalConfigsControl && this.intialComponentInputFormValue?.action_name) {
+					const selectedAction = items.find(
+						i => i.value?.actionName === this.intialComponentInputFormValue?.action_name
+					)!;
 					const optionalConfigsKeys = Object.keys(
-						this.initiallySelectedActionValue.input.action[OPTIONAL_CONFIGS_FORM_CONTROL_NAME]
+						this.intialComponentInputFormValue.input.action[OPTIONAL_CONFIGS_FORM_CONTROL_NAME]
 					);
 					this.optionalConfigsSelected = {
 						configs: selectedAction.value.configs
@@ -224,35 +247,49 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 							.map(c => {
 								return {
 									...c,
-									value: this.initiallySelectedActionValue?.input.action[OPTIONAL_CONFIGS_FORM_CONTROL_NAME][c.key],
+									value: this.intialComponentInputFormValue?.input.action[OPTIONAL_CONFIGS_FORM_CONTROL_NAME][c.key],
 								};
 							}),
 
 						triggerChangeDetection: false,
 					};
-					this.allOptionalConfigs = [...selectedAction.value.configs];
+					this.allOptionalConfigs = [...selectedAction.value.configs.filter(c => !c.required)];
 					this.requiredConfigs = {
-						configs: [...selectedAction.value.configs],
+						configs: [...selectedAction.value.configs.filter(c => c.required)],
 						triggerChangeDetection: false,
 					};
 					//security + optionalConfigs + requiredConfigs
-					this.componentForm.patchValue(this.initiallySelectedActionValue.input.action, { emitEvent: false });
+					this.componentForm.patchValue(this.intialComponentInputFormValue.input.action, { emitEvent: false });
 				}
+				this.setInitiallySelectedAuthConfig$ = this.store
+					.select(BuilderSelectors.selectAuthConfigsDropdownOptions)
+					.pipe(
+						take(1),
+						tap(res => {
+							debugger;
+							const selectedAuthConfig = res.find(
+								c =>
+									c.value.configInterpolation ===
+									this.intialComponentInputFormValue?.input.action[SECURITY_FORM_CONTROL_NAME]
+							);
+							this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(selectedAuthConfig?.value);
+						}),
+						mapTo(void 0)
+					);
 				this.cd.detectChanges();
 			})
 		);
 	}
 	writeValue(obj: ComponentInputFormSchema): void {
-		if (obj.input && obj.input.action) {
+		this.intialComponentInputFormValue = obj;
+		if (obj.input && obj.action_name) {
 			this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.setValue(undefined, { emitEvent: false });
-			this.initiallySelectedActionValue = obj;
 			this.initialActionDropdownSetup(obj);
-			this.fetchActions(obj.componentName, obj.input.action[SECURITY_FORM_CONTROL_NAME]);
-		} else if (obj.componentName) {
-			this.initiallySelectedActionValue = null;
+			this.fetchActions(obj.component_name, obj.input.action[SECURITY_FORM_CONTROL_NAME]);
+		} else if (obj.component_name) {
 			this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.setValue(undefined, { emitEvent: false });
 			this.removeDataControls();
-			this.fetchActions(obj.componentName, '');
+			this.fetchActions(obj.component_name, '');
 		}
 		this.selectedAction$ = of(null);
 	}
@@ -302,9 +339,9 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 	}
 
 	private actionSelected(selectedActionValue: { actionName: string; configs: FrontEndConnectorConfig[] }) {
-		this.allOptionalConfigs = [...selectedActionValue.configs];
+		this.allOptionalConfigs = [...selectedActionValue.configs.filter(c => !c.required)];
 		this.requiredConfigs = {
-			configs: [...selectedActionValue.configs],
+			configs: [...selectedActionValue.configs.filter(c => c.required)],
 			triggerChangeDetection: false,
 		};
 		this.optionalConfigsSelected = {
@@ -344,7 +381,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 
 	initialActionDropdownSetup(selectedAction: ComponentInputFormSchema) {
 		const silentControlUpdatesSettings = { emitEvent: false };
-		if (selectedAction.actionName === this.customRequestItem.value.actionName) {
+		if (selectedAction.action_name === this.customRequestItem.value.actionName) {
 			const customRequestControl = this.componentForm.get(CUSTOM_REQUEST_FORM_CONTROL_NAME);
 			if (!customRequestControl) {
 				this.componentForm.addControl(
@@ -380,7 +417,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 				optionalConfigsControl!.setValue({}, silentControlUpdatesSettings);
 				requiredConfigsControl!.setValue({}, silentControlUpdatesSettings);
 			}
-			this.initiallySelectedActionValue = selectedAction;
+			this.intialComponentInputFormValue = selectedAction;
 		}
 	}
 
@@ -400,9 +437,10 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 		};
 	}
 
-	getFormattedFormData(): { actionName: string; input: { action: ComponentFormOutput } } {
+	getFormattedFormData(): { action_name: string; input: { action: ComponentFormOutput } } {
 		const action = this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.value;
-		const security = this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value;
+		const security: AuthConfigDropdownValue | undefined = this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value;
+		debugger;
 		if (action === this.customRequestItem.value) {
 			const customRequestData = this.componentForm.get(CUSTOM_REQUEST_FORM_CONTROL_NAME)?.value || {
 				body: {},
@@ -412,17 +450,23 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 			};
 
 			return {
-				actionName: this.customRequestItem.value.actionName,
+				action_name: this.customRequestItem.value.actionName,
 				input: {
-					action: { ...customRequestData, security: security },
+					action: { ...customRequestData, security: security?.configInterpolation },
 				},
 			};
 		} else {
 			const optionalConfigs = this.componentForm.get(OPTIONAL_CONFIGS_FORM_CONTROL_NAME)?.value || {};
 			const requiredConfigs = this.componentForm.get(REQUIRED_CONFIGS_FORM_CONTROL_NAME)?.value || {};
 			return {
-				actionName: action?.actionName,
-				input: { action: { requiredConfigs: requiredConfigs, optionalConfigs: optionalConfigs, security: security } },
+				action_name: action?.actionName,
+				input: {
+					action: {
+						requiredConfigs: requiredConfigs,
+						optionalConfigs: optionalConfigs,
+						security: security?.configInterpolation || '',
+					},
+				},
 			};
 		}
 	}
@@ -438,20 +482,23 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 	}
 
 	openNewAuthenticationModal() {
-		// const modalRef = this.modalService.show(NewAuthenticationModalComponent, {
-		// 	ignoreBackdropClick: true,
-		// 	class: 'modal-dialog-centered',
-		// 	initialState: {
-		// 		connectorAuthConfig: {
-		// 			settings: this.manifestSecurity,
-		// 		},
-		// 		appName: this.componentName,
-		// 	},
-		// });
-		// this.newAuthConfigAdded$ = modalRef.content!.saveClicked.pipe(
-		// 	tap(newAuthConfig => {
-		// 		this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(`\${configs.${newAuthConfig.key}}`);
-		// 	})
-		// );
+		const modalRef = this.modalService.show(CreateEditConfigModalComponent, {
+			ignoreBackdropClick: true,
+			class: 'modal-dialog-centered',
+			initialState: {},
+		});
+		modalRef.content?.configForm.get('type')?.setValue(ConfigType.OAUTH2);
+		this.newAuthConfigAdded$ = modalRef.onHidden.pipe(
+			tap((newAuthConfig: Config) => {
+				debugger;
+				if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
+					const authConfigOptionValue: AuthConfigDropdownValue = {
+						configInterpolation: `\${configs.${newAuthConfig.key}}`,
+						accessToken: newAuthConfig.value,
+					};
+					this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(authConfigOptionValue);
+				}
+			})
+		);
 	}
 }

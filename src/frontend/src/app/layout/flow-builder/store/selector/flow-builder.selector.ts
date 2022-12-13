@@ -17,6 +17,7 @@ import { ActionType } from '../../../common-layout/model/enum/action-type.enum';
 import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
 import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
+import { AuthConfigDropdownValue } from '../../page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/component-input-form.component';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -140,7 +141,6 @@ export const selectFlowSelectedId = createSelector(selectBuilderState, (state: G
 });
 
 export const selectCurrentStep = createSelector(selectFlowsState, (flowsState: FlowsState) => {
-
 	const selectedFlowTabsState = flowsState.tabsState[flowsState.selectedFlowId!.toString()];
 	if (!selectedFlowTabsState) {
 		return undefined;
@@ -263,13 +263,11 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
 			return triggerItemDetails;
 		}
 		if (flowItem.type === ActionType.COMPONENT) {
-			return state.connectorComponentsFlowItemDetails.find(f => f.name === flowItem.settings.componentName);
+			return state.connectorComponentsFlowItemDetails.find(f => f.name === flowItem.settings.component_name);
 		}
 
-		let coreItemDetials;
-
 		//Core items might contain remote flows so always have them at the end
-		coreItemDetials = state.coreFlowItemsDetails.find(c => c.type === flowItem.type);
+		let coreItemDetials = state.coreFlowItemsDetails.find(c => c.type === flowItem.type);
 
 		if (!coreItemDetials) {
 			console.warn(`Flow item details for ${flowItem.display_name} are not currently loaded`);
@@ -294,7 +292,11 @@ export const selectAuthConfigsDropdownOptions = createSelector(
 		return [...collectionConfigs]
 			.filter(c => c.type === ConfigType.OAUTH2)
 			.map(c => {
-				return { label: c.label, value: `\${configs.${c.key}}` };
+				const result: { label: string; value: AuthConfigDropdownValue } = {
+					label: c.key,
+					value: { configInterpolation: `\${configs.${c.key}}`, accessToken: c.value['access_token'] },
+				};
+				return result;
 			});
 	}
 );
