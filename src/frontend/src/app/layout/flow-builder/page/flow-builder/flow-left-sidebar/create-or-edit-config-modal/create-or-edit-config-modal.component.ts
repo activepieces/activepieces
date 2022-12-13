@@ -9,10 +9,8 @@ import { ConfigType, configTypesDropdownOptions } from '../../../../../common-la
 import { FlowsActions } from '../../../../store/action/flows.action';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { fadeInUp400ms } from '../../../../../common-layout/animation/fade-in-up.animation';
-import { DropdownItemOption } from 'src/app/layout/common-layout/model/fields/variable/subfields/dropdown-item-option';
 import { OAuth2ConfigSettings } from 'src/app/layout/common-layout/model/fields/variable/config-settings';
 import { CollectionActions } from 'src/app/layout/flow-builder/store/action/collection.action';
-
 import { ConfigKeyValidator } from '../../validators/configKeyValidator';
 
 @Component({
@@ -30,7 +28,6 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 	configForm: FormGroup;
 	submitted = false;
 	savingLoading = false;
-	staticDropdownOptions$: Observable<DropdownItemOption[]>;
 	newConfigLabel$: Observable<string | undefined> = of(undefined);
 	configTypeChanged$: Observable<ConfigType>;
 	hasViewModeListenerBeenSet = false;
@@ -132,6 +129,7 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 				})
 			);
 		}
+		this.bsModalRef.onHidden.emit(config);
 		this.closeModal();
 	}
 

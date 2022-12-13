@@ -5,6 +5,7 @@ export enum ConfigType {
 	CHECKBOX = 'CHECKBOX',
 	DICTIONARY = 'DICTIONARY',
 	OAUTH2 = 'OAUTH2',
+	SELECT = 'SELECT',
 }
 
 export const configTypesDropdownOptions = [

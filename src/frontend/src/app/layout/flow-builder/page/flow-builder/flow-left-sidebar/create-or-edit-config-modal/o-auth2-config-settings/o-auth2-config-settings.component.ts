@@ -37,17 +37,17 @@ export class OAuth2ConfigSettingsComponent implements ControlValueAccessor {
 	onChange = val => {};
 	constructor(private formBuilder: FormBuilder) {
 		this.settingsForm = this.formBuilder.group({
-			redirectUrl: new FormControl({ value: environment.redirectUrl, disabled: true }),
-			clientSecret: new FormControl('', Validators.required),
-			clientId: new FormControl('', Validators.required),
-			authUrl: new FormControl('', Validators.required),
-			refreshUrl: new FormControl(''),
-			tokenUrl: new FormControl('', Validators.required),
-			responseType: new FormControl('code', Validators.required),
+			redirect_url: new FormControl({ value: environment.redirectUrl, disabled: true }),
+			client_secret: new FormControl('', Validators.required),
+			client_id: new FormControl('', Validators.required),
+			auth_url: new FormControl('', Validators.required),
+			refresh_url: new FormControl(''),
+			token_url: new FormControl('', Validators.required),
+			response_type: new FormControl('code', Validators.required),
 			scope: ['', [Validators.required]],
 		});
 		this.settingsFormValueChanged$ = this.settingsForm.valueChanges.pipe(
-			tap(() => this.onChange(this.settingsForm.getRawValue()))
+			tap(() => this.onChange({ ...this.settingsForm.getRawValue(), user_input_type: 'LOGIN' }))
 		);
 	}
 	writeValue(obj: any): void {

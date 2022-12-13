@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
-import { RequestType } from '../ng-select-connector-action-item-template/requestType.enum';
+import { HttpMethod } from '../../configs-form/configs-form-for-connectors/connector-action-or-config';
 
 @Component({
 	selector: 'app-request-type-template',
@@ -8,17 +8,17 @@ import { RequestType } from '../ng-select-connector-action-item-template/request
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RequestTypeTemplateComponent {
-	@Input() requestType: RequestType;
+	@Input() requestType: HttpMethod;
 	@Input() transparentBackground = false;
-	requestTypesAcronyms: Map<RequestType, string> = new Map();
+	requestTypesAcronyms: Map<HttpMethod, string> = new Map();
 	constructor() {
-		this.requestTypesAcronyms.set(RequestType.GET, 'GET');
-		this.requestTypesAcronyms.set(RequestType.PUT, 'PUT');
-		this.requestTypesAcronyms.set(RequestType.POST, 'POST');
-		this.requestTypesAcronyms.set(RequestType.HEAD, 'HEAD');
-		this.requestTypesAcronyms.set(RequestType.OPTIONS, 'OPT');
-		this.requestTypesAcronyms.set(RequestType.PATCH, 'PATCH');
-		this.requestTypesAcronyms.set(RequestType.TRACE, 'TRACE');
-		this.requestTypesAcronyms.set(RequestType.DELETE, 'DEL');
+		this.requestTypesAcronyms.set(HttpMethod.GET, 'GET');
+		this.requestTypesAcronyms.set(HttpMethod.PUT, 'PUT');
+		this.requestTypesAcronyms.set(HttpMethod.POST, 'POST');
+		this.requestTypesAcronyms.set(HttpMethod.HEAD, 'HEAD');
+		this.requestTypesAcronyms.set(HttpMethod.OPTIONS, 'OPT');
+		this.requestTypesAcronyms.set(HttpMethod.PATCH, 'PATCH');
+		this.requestTypesAcronyms.set(HttpMethod.TRACE, 'TRACE');
+		this.requestTypesAcronyms.set(HttpMethod.DELETE, 'DEL');
 	}
 }

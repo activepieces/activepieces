@@ -25,6 +25,7 @@
   },
   "private": true,
   "dependencies": {
+    "@activepieces/components": "0.0.9",
     "@angular/animations": "~13.0.0",
     "@angular/cdk": "^13.0.2",
     "@angular/common": "~13.0.0",

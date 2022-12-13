@@ -13,17 +13,17 @@ export class Oauth2Service {
 
 	constructor(private httpClient: HttpClient) {}
 
-	public claimWithSecret(request: { code: string; clientId: string; tokenUrl: string; clientSecret: string }) {
+	public claimWithSecret(request: { code: string; client_id: string; token_url: string; client_secret: string }) {
 		return this.httpClient.post<OAuth2Response>(environment.apiUrl + '/oauth2/claim-with-secret', request);
 	}
 
 	public openPopup(request: {
-		authUrl: string;
-		clientId: string;
-		clientSecret: string;
+		auth_url: string;
+		client_id: string;
+		client_secret: string;
 		scope: string;
-		tokenUrl: string;
-		responseType: string;
+		token_url: string;
+		response_type: string;
 	}): Observable<any> {
 		this.currentlyOpenPopUp?.close();
 		const winTarget = '_blank';
@@ -31,11 +31,11 @@ export class Oauth2Service {
 			'resizable=no, toolbar=no,left=100, top=100, scrollbars=no, menubar=no, status=no, directories=no, location=no, width=600, height=800';
 		const redirect_uri = environment.redirectUrl;
 		const url =
-			request.authUrl +
+			request.auth_url +
 			'?response_type=' +
-			request.responseType +
+			request.response_type +
 			'&client_id=' +
-			request.clientId +
+			request.client_id +
 			'&redirect_uri=' +
 			redirect_uri +
 			'&access_type=offline' +
@@ -46,6 +46,7 @@ export class Oauth2Service {
 			'&prompt=consent' +
 			'&scope=' +
 			request.scope;
+
 		const popup = window.open(url, winTarget, winFeatures);
 		this.currentlyOpenPopUp = popup;
 		const codeObs$ = new Observable<any>(observer => {
@@ -70,13 +71,14 @@ export class Oauth2Service {
 				if (params != undefined && params.code != undefined) {
 					return this.claimWithSecret({
 						code: decodeURIComponent(params.code),
-						clientId: request.clientId,
-						clientSecret: request.clientSecret,
-						tokenUrl: request.tokenUrl,
+						client_id: request.client_id,
+						client_secret: request.client_secret,
+						token_url: request.token_url,
 					}).pipe(
 						map(value => {
-							delete params['code'];
-							value.auth_response = params;
+							if (value['error']) {
+								throw Error(value['error']);
+							}
 							return value;
 						})
 					);

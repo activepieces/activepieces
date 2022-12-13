@@ -8,33 +8,40 @@ import {
 	NG_VALUE_ACCESSOR,
 	Validators,
 } from '@angular/forms';
-import { RequestType } from 'src/app/layout/common-layout/components/form-controls/ng-select-connector-action-item-template/requestType.enum';
 import { fadeInUp400ms } from '../../../../../../../../common-layout/animation/fade-in-up.animation';
 import { ComponentInputFormSchema } from '../input-forms-schema';
-import { Config } from 'src/app/layout/common-layout/model/fields/variable/config';
-import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
-import { map, Observable, of, take, tap, timer } from 'rxjs';
-import { ActionMetaService } from 'src/app/layout/flow-builder/service/action-meta.service';
-import { Manifest } from 'src/app/layout/flow-builder/model/manifest';
+import { map, mapTo, Observable, of, take, tap } from 'rxjs';
 import { BuilderSelectors } from 'src/app/layout/flow-builder/store/selector/flow-builder.selector';
 import { Store } from '@ngrx/store';
 import { BsModalService } from 'ngx-bootstrap/modal';
-import { NewAuthenticationModalComponent } from '../../../../new-authentication-modal/new-authentication-modal.component';
-import { OAuth2ConfigSettings } from 'src/app/layout/common-layout/model/fields/variable/config-settings';
 import { DropdownOption } from 'src/app/layout/common-layout/model/dynamic-controls/dropdown-options';
 import { ComponentFormOutput } from './component-input-form-output';
 import { environment } from 'src/environments/environment';
+import {
+	ComponnentConfigsForActionsOrTriggers,
+	FrontEndConnectorConfig,
+	HttpMethod,
+} from 'src/app/layout/common-layout/components/configs-form/configs-form-for-connectors/connector-action-or-config';
+import { apps } from '@activepieces/components';
+import { CreateEditConfigModalComponent } from '../../../../../flow-left-sidebar/create-or-edit-config-modal/create-or-edit-config-modal.component';
+import { Config } from 'src/app/layout/common-layout/model/fields/variable/config';
+import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
 declare type ActionDropdownOption = {
 	label:
 		| {
-				requestType: RequestType;
+				requestType: HttpMethod;
 				url: string;
-				summary: string;
+				summary?: string;
 				description: string;
 		  }
 		| string;
-	value: { actionName: string; configs: Config[]; separator?: boolean };
+	value: { actionName: string; configs: FrontEndConnectorConfig[]; separator?: boolean };
 	disabled?: boolean;
+};
+
+export declare type AuthConfigDropdownValue = {
+	configInterpolation: string;
+	accessToken: string;
 };
 const CUSTOM_REQUEST_FORM_CONTROL_NAME = 'customRequest';
 const OPTIONAL_CONFIGS_FORM_CONTROL_NAME = 'optionalConfigs';
@@ -64,154 +71,53 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 	customRequestFeatureFlag = false;
 	initialSetup$: Observable<ActionDropdownOption[]>;
 	optionalConfigsMenuOpened = false;
-	requiredConfigs: { configs: Config[]; triggerChangeDetection: boolean } = {
+	requiredConfigs: { configs: FrontEndConnectorConfig[]; triggerChangeDetection: boolean } = {
 		configs: [],
 		triggerChangeDetection: false,
 	};
-	optionalConfigsSelected: { configs: Config[]; triggerChangeDetection: boolean } = {
+	optionalConfigsSelected: { configs: FrontEndConnectorConfig[]; triggerChangeDetection: boolean } = {
 		configs: [],
 		triggerChangeDetection: false,
 	};
-	allOptionalConfigs: Config[] = [];
+	allOptionalConfigs: FrontEndConnectorConfig[] = [];
 	componentName: string;
-	initiallySelectedActionValue: { actionName: string; input: { action: { [key: string]: any } } } | null;
+	intialComponentInputFormValue: { action_name: string; input: { action: { [key: string]: any } } } | null;
 	customRequestItem = {
-		value: { actionName: 'CUSTOM_REQUEST', configs: [] as Config[] },
+		value: { actionName: 'CUSTOM_REQUEST', configs: [] as FrontEndConnectorConfig[] },
 		label: 'Custom Request',
 		disabled: true,
 	};
 	separatorItem = {
 		label: {
-			requestType: RequestType.HEAD,
+			requestType: HttpMethod.HEAD,
 			url: '',
 			summary: '',
 			description: '',
 		},
-		value: { actionName: '', configs: [] as Config[], separator: true },
+		value: { actionName: '', configs: [] as FrontEndConnectorConfig[], separator: true },
 		disabled: true,
 	};
 	selectedAction$: Observable<any>;
-	configs: Config[] = [
-		{
-			type: ConfigType.SHORT_TEXT,
-			key: 'name',
-			label: 'Namessss',
-			// settings: {
-			// 	// required: false,
-			// 	// dropdown: false,
-			// 	// dropdownOptions: [],
-			// },
-			value: 'test',
-		},
-		{
-			type: ConfigType.NUMBER,
-			key: 'age',
-			label: 'Age',
-			// settings: {
-			// 	required: false,
-			// },
-			value: 55,
-		},
-		{
-			type: ConfigType.DICTIONARY,
-			key: 'goals',
-			label: 'Goals',
-			value: {
-				s: 's',
-			},
-			// settings: { required: false },
-		},
-		{
-			type: ConfigType.CHECKBOX,
-			key: 'auto_retries',
-			label: 'Auto Retries',
-			// settings: {
-			// 	// required: false,
-			// },
-			value: false,
-		},
-	];
-	items = [
-		this.customRequestItem,
-		{
-			label: {
-				requestType: RequestType.GET,
-				url: '/attachements',
-				summary: 'get attachments',
-				description: 'Lorem Ipsum is simply dummy textLorem Ipsum is simply dummy text',
-			},
-			value: { actionName: '', configs: [] as Config[] },
-		},
-		{
-			label: {
-				requestType: RequestType.DELETE,
-				url: '/enit/sadf/rwe',
-				summary: '',
-				description: 'Lorem Ipsum is simply dummy textLorem Ipsum is simply dummy text',
-			},
-			value: { actionName: '', configs: [] as Config[] },
-		},
-		{
-			label: {
-				requestType: RequestType.HEAD,
-				url: '/enit/sadf/vvvvv',
-				summary: '',
-				description: 'Lorem Ipsum is simply dummy textLorem Ipsum is simply dummy text',
-			},
-			value: { actionName: '', configs: [] as Config[] },
-		},
-		this.separatorItem,
-		{
-			label: {
-				requestType: RequestType.OPTIONS,
-				url: '/enit/sadf/www',
-				summary: '',
-				description: 'Lorem Ipsum is simply dummy textLorem Ipsum is simply dummy text',
-			},
-			value: { actionName: '', configs: [] as Config[] },
-		},
-		{
-			label: {
-				requestType: RequestType.PATCH,
-				url: '/enit/sadwwqef/cccc',
-				summary: '',
-				description: 'Lorem Ipsum is simply dummy textLorem Ipsum is simply dummy text',
-			},
-			value: { actionName: '', configs: [] as Config[] },
-		},
-		{
-			label: {
-				requestType: RequestType.PUT,
-				url: '/enit/sadwwqef/cdasdasdasdasdasdasdasdasdccc',
-				summary: '',
-				description: 'Lorem Ipsum is simply dummy textLorem Ipsum is simply dummy text',
-			},
-			value: { actionName: '', configs: [] as Config[] },
-		},
-		{
-			label: {
-				requestType: RequestType.TRACE,
-				url: '/enit/sadwwqef/xxxxx',
-				summary: '',
-				description: 'Lorem Ipsum is simply dummy textLorem Ipsum is simply dummy text',
-			},
-			value: { actionName: '', configs: [] as Config[] },
-		},
-	];
-	loading = true;
+	configs: FrontEndConnectorConfig[] = [];
+	items = [];
 	actions$: Observable<ActionDropdownOption[]>;
 	componentForm: FormGroup;
 	valueChanges$: Observable<void>;
-	actionDropdownValueChanged$: Observable<{ actionName: string; configs: Config[] }>;
-	updateAuthConfig$: Observable<{ indexInList: number; config: Config } | undefined>;
+	actionDropdownValueChanged$: Observable<{ actionName: string; configs: FrontEndConnectorConfig[] }>;
+	updateAuthConfig$: Observable<{ indexInList: number; config: FrontEndConnectorConfig } | undefined>;
+	setInitiallySelectedAuthConfig$: Observable<void>;
 	onChange = (value: any) => {};
 	onTouch = () => {};
+	authenticationDropdownCompareWithFunction = (
+		a: { label: string; value: AuthConfigDropdownValue },
+		formControlValue: AuthConfigDropdownValue
+	) => {
+		return JSON.stringify(formControlValue) === JSON.stringify(a.value);
+	};
 	newAuthConfigAdded$: Observable<Config>;
 	allAuthConfigs$: Observable<DropdownOption[]>;
-	manifestSecurity: OAuth2ConfigSettings;
 	constructor(
 		private fb: FormBuilder,
-		private actionMetaService: ActionMetaService,
 		private store: Store,
 		private modalService: BsModalService,
 		private cd: ChangeDetectorRef
@@ -223,26 +129,28 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 				this.actionSelectValueChanged(val);
 			})
 		);
-		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions);
+		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions).pipe(tap(console.log));
+		this.modalService;
 	}
 
 	editSelectedAuthConfig() {
-		const selectedValue: string = this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value;
-		const configKey = selectedValue.split('.')[1].replace('}', '');
+		const selectedValue: AuthConfigDropdownValue = this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value;
+		const configKey = selectedValue.configInterpolation.split('.')[1].replace('}', '');
 		this.updateAuthConfig$ = this.store.select(BuilderSelectors.selectConfig(configKey)).pipe(
 			take(1),
 			tap(configAndIndex => {
 				if (configAndIndex) {
-					this.modalService.show(NewAuthenticationModalComponent, {
+					this.modalService.show(CreateEditConfigModalComponent, {
 						ignoreBackdropClick: true,
 						class: 'modal-dialog-centered',
 						initialState: {
-							configToUpdateWithIndex: configAndIndex,
-							appName: this.componentName,
+							configIndexInConfigsList: configAndIndex.indexInList,
+							configToUpdate: configAndIndex.config,
 						},
 					});
 				}
-			})
+			}),
+			mapTo(void 0)
 		);
 	}
 	customSearchFn(term: string, item: any) {
@@ -270,81 +178,23 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 		);
 	}
 
-	fakeFetchActions() {
-		this.loading = true;
-		// this.items = this.items.map(i => {
-		// 	if (typeof i.label === 'object') {
-		// 		i.value.actionName = i.label.summary || i.label.url;
-		// 		const requiredConfigs = this.configs.map(c => {
-		// 			const rc = { ...c, settings: { ...c.settings, required: true } };
-		// 			return rc;
-		// 		});
-		// 		const allOptionalConfigs = this.configs.map(c => {
-		// 			const rc = { ...c, settings: { ...c.settings, required: false } };
-		// 			return rc;
-		// 		});
-		// 		i.value.configs = [...requiredConfigs, ...allOptionalConfigs];
-		// 	}
-		// 	return i;
-		// });
+	fetchActions(componentName: string, accessToken: string) {
+		const component = apps.find(app => app.name === componentName);
+		if (!component) throw new Error(`Activepieces- component with name ${componentName} is not found`);
+		this.actions$ = of(component).pipe(
+			map(component => {
+				const actionsKeys = Object.keys(component.actions);
 
-		this.actions$ = timer(3000).pipe(
-			map(() => {
-				return this.items;
-			}),
-			tap(items => {
-				if (this.initiallySelectedActionValue?.actionName === this.customRequestItem.value.actionName) {
-					this.componentForm
-						.get(ACTION_FORM_CONTROL_NAME)!
-						.setValue(this.customRequestItem.value, { emitEvent: false });
-				} else if (this.initiallySelectedActionValue) {
-					this.componentForm
-						.get(ACTION_FORM_CONTROL_NAME)!
-						.setValue(items.find(i => i.value.actionName === this.initiallySelectedActionValue?.actionName)!.value, {
-							emitEvent: false,
-						});
-					this.selectedAction$ = of(
-						items.find(it => it.value.actionName === this.initiallySelectedActionValue?.actionName)
-					);
-				}
-			}),
-			tap(items => {
-				const optionalConfigsControl = this.componentForm.get(OPTIONAL_CONFIGS_FORM_CONTROL_NAME);
-				const requiredConfigs = this.componentForm.get(REQUIRED_CONFIGS_FORM_CONTROL_NAME);
-				if (requiredConfigs && optionalConfigsControl && this.initiallySelectedActionValue) {
-					const selectedAction = items.find(i => i.value.actionName === this.initiallySelectedActionValue?.actionName)!;
-					const optionalConfigsKeys = Object.keys(
-						this.initiallySelectedActionValue.input.action[OPTIONAL_CONFIGS_FORM_CONTROL_NAME]
-					);
-					this.optionalConfigsSelected = {
-						configs: selectedAction.value.configs.filter(
-							c => optionalConfigsKeys.includes(c.key) //!c.settings.required
-						),
-						triggerChangeDetection: false,
-					};
-					// this.allOptionalConfigs = [...selectedAction.value.configs.filter(c => !c.settings.required)];
-					this.requiredConfigs = {
-						triggerChangeDetection: false,
-						configs: [...selectedAction.value.configs],
-					};
-					this.componentForm.patchValue(this.initiallySelectedActionValue.input.action, { emitEvent: false });
-				}
-				this.loading = false;
-			})
-		);
-	}
-	fetchActions(manifestUrl: string) {
-		this.loading = true;
-		this.actions$ = this.actionMetaService.getManifest(manifestUrl).pipe(
-			tap(manifest => {
-				this.componentName = manifest.name;
-				this.manifestSecurity = Manifest.convertManifestSecurityToAuthConfigSettings(manifest.security);
-			}),
-			map(manifest => {
-				return manifest.actions.map(a => {
+				return actionsKeys.map(actionName => {
+					const action = component.actions[actionName];
 					return {
-						value: { actionName: a.name, configs: Manifest.getConfigsForAction(a.inputs) },
-						label: { requestType: a.method, url: a.url, description: a.description, summary: a.summary },
+						value: {
+							actionName: action.name,
+							configs: action.configs.map(c =>
+								ComponnentConfigsForActionsOrTriggers.convertToFrontEndConfig(c, accessToken)
+							),
+						},
+						label: { requestType: action.httpMethod, url: action.url, description: action.description },
 					};
 				});
 			}),
@@ -362,32 +212,34 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 		);
 		this.initialSetup$ = this.actions$.pipe(
 			tap(items => {
-				if (this.initiallySelectedActionValue?.actionName === this.customRequestItem.value.actionName) {
+				if (this.intialComponentInputFormValue?.action_name === this.customRequestItem.value.actionName) {
 					this.componentForm
 						.get(ACTION_FORM_CONTROL_NAME)!
 						.setValue(this.customRequestItem.value, { emitEvent: false });
 					this.componentForm
 						.get(CUSTOM_REQUEST_FORM_CONTROL_NAME)!
-						.setValue(this.initiallySelectedActionValue.input.action, { emitEvent: false });
-				} else if (this.initiallySelectedActionValue) {
+						.setValue(this.intialComponentInputFormValue.input.action, { emitEvent: false });
+				} else if (this.intialComponentInputFormValue) {
 					this.componentForm
 						.get(ACTION_FORM_CONTROL_NAME)!
-						.setValue(items.find(i => i.value.actionName === this.initiallySelectedActionValue?.actionName)!.value, {
+						.setValue(items.find(i => i.value.actionName === this.intialComponentInputFormValue?.action_name)?.value, {
 							emitEvent: false,
 						});
 
 					this.selectedAction$ = of(
-						items.find(it => it.value.actionName === this.initiallySelectedActionValue?.actionName)
+						items.find(it => it.value.actionName === this.intialComponentInputFormValue?.action_name)
 					);
 				}
 			}),
 			tap(items => {
 				const optionalConfigsControl = this.componentForm.get(OPTIONAL_CONFIGS_FORM_CONTROL_NAME);
 				const requiredConfigs = this.componentForm.get(REQUIRED_CONFIGS_FORM_CONTROL_NAME);
-				if (requiredConfigs && optionalConfigsControl && this.initiallySelectedActionValue) {
-					const selectedAction = items.find(i => i.value.actionName === this.initiallySelectedActionValue?.actionName)!;
+				if (requiredConfigs && optionalConfigsControl && this.intialComponentInputFormValue?.action_name) {
+					const selectedAction = items.find(
+						i => i.value?.actionName === this.intialComponentInputFormValue?.action_name
+					)!;
 					const optionalConfigsKeys = Object.keys(
-						this.initiallySelectedActionValue.input.action[OPTIONAL_CONFIGS_FORM_CONTROL_NAME]
+						this.intialComponentInputFormValue.input.action[OPTIONAL_CONFIGS_FORM_CONTROL_NAME]
 					);
 					this.optionalConfigsSelected = {
 						configs: selectedAction.value.configs
@@ -395,36 +247,49 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 							.map(c => {
 								return {
 									...c,
-									value: this.initiallySelectedActionValue?.input.action[OPTIONAL_CONFIGS_FORM_CONTROL_NAME][c.key],
+									value: this.intialComponentInputFormValue?.input.action[OPTIONAL_CONFIGS_FORM_CONTROL_NAME][c.key],
 								};
 							}),
 
 						triggerChangeDetection: false,
 					};
-					this.allOptionalConfigs = [...selectedAction.value.configs];
+					this.allOptionalConfigs = [...selectedAction.value.configs.filter(c => !c.required)];
 					this.requiredConfigs = {
-						configs: [...selectedAction.value.configs],
+						configs: [...selectedAction.value.configs.filter(c => c.required)],
 						triggerChangeDetection: false,
 					};
 					//security + optionalConfigs + requiredConfigs
-					this.componentForm.patchValue(this.initiallySelectedActionValue.input.action, { emitEvent: false });
+					this.componentForm.patchValue(this.intialComponentInputFormValue.input.action, { emitEvent: false });
 				}
-				this.loading = false;
+				this.setInitiallySelectedAuthConfig$ = this.store
+					.select(BuilderSelectors.selectAuthConfigsDropdownOptions)
+					.pipe(
+						take(1),
+						tap(res => {
+							debugger;
+							const selectedAuthConfig = res.find(
+								c =>
+									c.value.configInterpolation ===
+									this.intialComponentInputFormValue?.input.action[SECURITY_FORM_CONTROL_NAME]
+							);
+							this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(selectedAuthConfig?.value);
+						}),
+						mapTo(void 0)
+					);
 				this.cd.detectChanges();
 			})
 		);
 	}
 	writeValue(obj: ComponentInputFormSchema): void {
-		if (obj.input && obj.input.action) {
+		this.intialComponentInputFormValue = obj;
+		if (obj.input && obj.action_name) {
 			this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.setValue(undefined, { emitEvent: false });
-			this.initiallySelectedActionValue = obj;
 			this.initialActionDropdownSetup(obj);
-			this.fetchActions(obj.manifestUrl);
-		} else if (obj.componentName) {
-			this.initiallySelectedActionValue = null;
+			this.fetchActions(obj.component_name, obj.input.action[SECURITY_FORM_CONTROL_NAME]);
+		} else if (obj.component_name) {
 			this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.setValue(undefined, { emitEvent: false });
 			this.removeDataControls();
-			this.fetchActions(obj.manifestUrl);
+			this.fetchActions(obj.component_name, '');
 		}
 		this.selectedAction$ = of(null);
 	}
@@ -457,7 +322,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 		this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.setValue(this.customRequestItem.value);
 	}
 
-	actionSelectValueChanged(selectedActionValue: { actionName: string; configs: Config[] } | null) {
+	actionSelectValueChanged(selectedActionValue: { actionName: string; configs: FrontEndConnectorConfig[] } | null) {
 		if (selectedActionValue) {
 			if (selectedActionValue.actionName === this.customRequestItem.value.actionName) {
 				this.customRequestSelected();
@@ -473,10 +338,10 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 		}
 	}
 
-	private actionSelected(selectedActionValue: { actionName: string; configs: Config[] }) {
-		this.allOptionalConfigs = [...selectedActionValue.configs];
+	private actionSelected(selectedActionValue: { actionName: string; configs: FrontEndConnectorConfig[] }) {
+		this.allOptionalConfigs = [...selectedActionValue.configs.filter(c => !c.required)];
 		this.requiredConfigs = {
-			configs: [...selectedActionValue.configs],
+			configs: [...selectedActionValue.configs.filter(c => c.required)],
 			triggerChangeDetection: false,
 		};
 		this.optionalConfigsSelected = {
@@ -516,7 +381,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 
 	initialActionDropdownSetup(selectedAction: ComponentInputFormSchema) {
 		const silentControlUpdatesSettings = { emitEvent: false };
-		if (selectedAction.actionName === this.customRequestItem.value.actionName) {
+		if (selectedAction.action_name === this.customRequestItem.value.actionName) {
 			const customRequestControl = this.componentForm.get(CUSTOM_REQUEST_FORM_CONTROL_NAME);
 			if (!customRequestControl) {
 				this.componentForm.addControl(
@@ -552,18 +417,18 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 				optionalConfigsControl!.setValue({}, silentControlUpdatesSettings);
 				requiredConfigsControl!.setValue({}, silentControlUpdatesSettings);
 			}
-			this.initiallySelectedActionValue = selectedAction;
+			this.intialComponentInputFormValue = selectedAction;
 		}
 	}
 
-	addOptionalConfig(config: Config) {
+	addOptionalConfig(config: FrontEndConnectorConfig) {
 		this.optionalConfigsSelected = {
 			configs: [...this.optionalConfigsSelected.configs, config],
 			triggerChangeDetection: true,
 		};
 	}
 
-	configRemoved(config: Config) {
+	configRemoved(config: FrontEndConnectorConfig) {
 		const configIndex = this.optionalConfigsSelected.configs.indexOf(config);
 		this.optionalConfigsSelected.configs.splice(configIndex, 1);
 		this.optionalConfigsSelected = {
@@ -572,9 +437,10 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 		};
 	}
 
-	getFormattedFormData(): { actionName: string; input: { action: ComponentFormOutput } } {
+	getFormattedFormData(): { action_name: string; input: { action: ComponentFormOutput } } {
 		const action = this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.value;
-		const security = this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value;
+		const security: AuthConfigDropdownValue | undefined = this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value;
+		debugger;
 		if (action === this.customRequestItem.value) {
 			const customRequestData = this.componentForm.get(CUSTOM_REQUEST_FORM_CONTROL_NAME)?.value || {
 				body: {},
@@ -584,17 +450,23 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 			};
 
 			return {
-				actionName: this.customRequestItem.value.actionName,
+				action_name: this.customRequestItem.value.actionName,
 				input: {
-					action: { ...customRequestData, security: security },
+					action: { ...customRequestData, security: security?.configInterpolation },
 				},
 			};
 		} else {
 			const optionalConfigs = this.componentForm.get(OPTIONAL_CONFIGS_FORM_CONTROL_NAME)?.value || {};
 			const requiredConfigs = this.componentForm.get(REQUIRED_CONFIGS_FORM_CONTROL_NAME)?.value || {};
 			return {
-				actionName: action?.actionName,
-				input: { action: { requiredConfigs: requiredConfigs, optionalConfigs: optionalConfigs, security: security } },
+				action_name: action?.actionName,
+				input: {
+					action: {
+						requiredConfigs: requiredConfigs,
+						optionalConfigs: optionalConfigs,
+						security: security?.configInterpolation || '',
+					},
+				},
 			};
 		}
 	}
@@ -610,19 +482,22 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 	}
 
 	openNewAuthenticationModal() {
-		const modalRef = this.modalService.show(NewAuthenticationModalComponent, {
+		const modalRef = this.modalService.show(CreateEditConfigModalComponent, {
 			ignoreBackdropClick: true,
 			class: 'modal-dialog-centered',
-			initialState: {
-				connectorAuthConfig: {
-					settings: this.manifestSecurity,
-				},
-				appName: this.componentName,
-			},
+			initialState: {},
 		});
-		this.newAuthConfigAdded$ = modalRef.content!.saveClicked.pipe(
-			tap(newAuthConfig => {
-				this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(`\${configs.${newAuthConfig.key}}`);
+		modalRef.content?.configForm.get('type')?.setValue(ConfigType.OAUTH2);
+		this.newAuthConfigAdded$ = modalRef.onHidden.pipe(
+			tap((newAuthConfig: Config) => {
+				debugger;
+				if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
+					const authConfigOptionValue: AuthConfigDropdownValue = {
+						configInterpolation: `\${configs.${newAuthConfig.key}}`,
+						accessToken: newAuthConfig.value,
+					};
+					this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(authConfigOptionValue);
+				}
 			})
 		);
 	}

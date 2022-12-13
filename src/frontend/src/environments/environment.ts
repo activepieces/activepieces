@@ -4,11 +4,11 @@ export const environment = {
 	apiUrl: 'http://localhost:8000',
 	jwtTokenName: 'token',
 	stageName: 'stg',
-	redirectUrl: 'https://app.passr.dev/redirect',
+	redirectUrl: 'https://app.activepieces.com/redirect',
 	userPropertyNameInLocalStorage: 'currentUser',
 	feature: {
 		newComponents: true,
-		customRequest: true,
+		customRequest: false,
 	},
 };
 

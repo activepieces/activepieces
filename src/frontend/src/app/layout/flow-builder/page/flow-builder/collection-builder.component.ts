@@ -81,7 +81,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 					const collection: Collection = value['collection'];
 					const flows = value['flows'];
 					const instance: Instance | undefined = value['instance'];
-					debugger;
+
 					this.navigationService.setTitle(collection.last_version.display_name);
 					this.store.dispatch(
 						BuilderActions.loadInitial({

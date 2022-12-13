@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { UUID } from 'angular2-uuid';
-import { RequestType } from './requestType.enum';
+import { HttpMethod } from '../../configs-form/configs-form-for-connectors/connector-action-or-config';
 
 @Component({
 	selector: 'app-ng-select-connector-action-item-template',
@@ -9,9 +9,9 @@ import { RequestType } from './requestType.enum';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NgSelectConnectorActionItemTemplateComponent implements OnInit {
-	RequestType = RequestType;
+	RequestType = HttpMethod;
 	@Input() item: {
-		label: { requestType: RequestType; url: string; summary: string; description: string };
+		label: { requestType: HttpMethod; url: string; summary: string; description: string };
 		value: { actionName: UUID; configs: any[] };
 		disabled: boolean; // disabled item is a separator
 	} | null;
@@ -22,7 +22,6 @@ export class NgSelectConnectorActionItemTemplateComponent implements OnInit {
 		if (this.item) {
 			if (!this.item.disabled && !this.hideDescription) {
 				this.tooltipText = `${this.item.label.summary ? this.item.label.summary : this.item.label.url}
-
         ${this.item.label.description}`;
 			}
 		}

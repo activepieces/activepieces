@@ -32,13 +32,11 @@ export interface EventTriggerInputFormSchema extends InputFormsSchemaBase {
 
 //TODO figure out a way to check the type of the (input form schema) because right now they are interfaces and instance of won't work since these are json objects from the server
 export interface ComponentInputFormSchema extends InputFormsSchemaBase {
-	componentName: string;
-	actionName: string;
-	componentVersion: string;
+	component_name: string;
+	action_name: string;
 	input: {
 		action: ConfigsAndTheirValues | CustomRequestForComponentFormSchema;
 	};
-	manifestUrl: string;
 }
 interface CustomRequestForComponentFormSchema {
 	endpoint: string;

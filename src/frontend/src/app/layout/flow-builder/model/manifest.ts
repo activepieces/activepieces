@@ -1,4 +1,4 @@
-import { RequestType } from '../../common-layout/components/form-controls/ng-select-connector-action-item-template/requestType.enum';
+import { HttpMethod } from '@activepieces/components/dist/src/common/http/core/http-method';
 import { ConfigType } from '../../common-layout/model/enum/config-type';
 import { Config } from '../../common-layout/model/fields/variable/config';
 import { OAuth2ConfigSettings } from '../../common-layout/model/fields/variable/config-settings';
@@ -29,7 +29,7 @@ export class Manifest {
 	actions: {
 		name: string;
 		description: string;
-		method: RequestType;
+		method: HttpMethod;
 		inputs: ActionInput[];
 		url: string;
 		summary: string;
@@ -50,10 +50,10 @@ export class Manifest {
 	}
 	static convertManifestSecurityToAuthConfigSettings(security: ManifestSecurity) {
 		const authConfigSettings = {
-			tokenUrl: security.oauth2.tokenUrl,
+			token_url: security.oauth2.tokenUrl,
 			scope: security.oauth2.scopes.join(' '),
-			authUrl: security.oauth2.authUrl,
-			responseType: security.oauth2.responseType,
+			auth_url: security.oauth2.authUrl,
+			response_type: security.oauth2.responseType,
 		} as OAuth2ConfigSettings;
 		return authConfigSettings;
 	}

@@ -117,7 +117,13 @@ const _flowsReducer = createReducer(
 	on(FlowsActions.updateStep, (state, { stepName, newStep }): FlowsState => {
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
 		const clonedFlows = clonedState.flows;
-
+		const clonedTabsState = {
+			...clonedState.tabsState,
+		};
+		clonedTabsState[state.selectedFlowId!.toString()] = {
+			...clonedState.tabsState[state.selectedFlowId!.toString()],
+			focusedStep: { ...newStep },
+		};
 		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
 		if (flowIndex != -1) {
 			clonedFlows[flowIndex].last_version = FlowVersion.clone(clonedFlows[flowIndex].last_version).updateStep(
@@ -127,7 +133,7 @@ const _flowsReducer = createReducer(
 		}
 		return {
 			...state,
-			tabsState: clonedState.tabsState,
+			tabsState: clonedTabsState,
 			flows: clonedFlows,
 			selectedFlowId: state.selectedFlowId,
 		};
@@ -186,6 +192,7 @@ const _flowsReducer = createReducer(
 		clonedState.tabsState[clonedState.selectedFlowId.toString()] = JSON.parse(JSON.stringify(initialTabState));
 		return clonedState;
 	}),
+
 	on(FlowsActions.savedSuccess, (state, { saveRequestId, flow }): FlowsState => {
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
 		//in case a new version was created after the former one was locked.
@@ -223,6 +230,7 @@ const _flowsReducer = createReducer(
 		}
 
 		const clonedState = { ...state };
+
 		const updatedTabState = {
 			...clonedState.tabsState[state.selectedFlowId.toString()],
 			focusedStep: { ...step },
