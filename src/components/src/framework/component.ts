@@ -6,8 +6,8 @@ import type {Trigger} from './trigger/trigger';
 import {TriggerNotFoundError} from './trigger/trigger-not-found-error';
 
 export class Component {
-	private readonly actions: Record<string, Action>;
-	private readonly triggers: Record<string, Trigger>;
+	private readonly _actions: Record<string, Action>;
+	private readonly _triggers: Record<string, Trigger>;
 
 	constructor(
 		public readonly name: string,
@@ -15,29 +15,37 @@ export class Component {
 		actions: Action[],
 		triggers: Trigger[],
 	) {
-		this.actions = Object.fromEntries(
+		this._actions = Object.fromEntries(
 			actions.map(action => [action.name, action]),
 		);
 
-		this.triggers = Object.fromEntries(
+		this._triggers = Object.fromEntries(
 			triggers.map(trigger => [trigger.name, trigger]),
 		);
 	}
 
+	get actions(): Action[] {
+		return Object.values(this._actions);
+	}
+
+	get triggers(): Trigger[] {
+		return Object.values(this._triggers);
+	}
+
 	async runAction(actionName: string, config: ConfigurationValue): Promise<RunnerStatus> {
-		if (!(actionName in this.actions)) {
+		if (!(actionName in this._actions)) {
 			throw new ActionNotFoundError(this.name, actionName);
 		}
 
-		return this.actions[actionName].run(config);
+		return this._actions[actionName].run(config);
 	}
 
 	getTrigger(triggerName: string): Trigger {
-		if (!(triggerName in this.triggers)) {
+		if (!(triggerName in this._triggers)) {
 			throw new TriggerNotFoundError(this.name, triggerName);
 		}
 
-		return this.triggers[triggerName];
+		return this._triggers[triggerName];
 	}
 }
 
