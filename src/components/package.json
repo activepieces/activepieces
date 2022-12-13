@@ -6,13 +6,9 @@
   "license": "MIT",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-<<<<<<< HEAD
     "lint": "eslint .",
     "build": "rm -rf dist && tsc",
     "prepack": "npm run-script build"
-=======
-    "lint": "eslint ."
->>>>>>> 20fa34b53dd559074baa1153d391b2f70b772889
   },
   "repository": {
     "type": "git",
