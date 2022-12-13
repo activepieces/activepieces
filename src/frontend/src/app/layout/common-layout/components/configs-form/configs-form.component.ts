@@ -119,10 +119,10 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 			);
 			this.dropdownsLoadingFlags$[c.key] = this.optionsObservables$[c.key].pipe(
 				map(val => {
-					if (Array.isArray(val)) {
+					if (!Array.isArray(val)) {
 						console.error(`Activepieces- Config ${c.label} options are not returned in array form--> ${val}`);
 					}
-					return true;
+					return false;
 				})
 			);
 		}

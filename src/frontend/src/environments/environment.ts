@@ -8,7 +8,7 @@ export const environment = {
 	userPropertyNameInLocalStorage: 'currentUser',
 	feature: {
 		newComponents: true,
-		customRequest: true,
+		customRequest: false,
 	},
 };
 

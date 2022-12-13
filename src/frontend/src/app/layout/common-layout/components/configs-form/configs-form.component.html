@@ -1,8 +1,8 @@
 <form *ngIf="form" [formGroup]="form" [class.ng-submitted]="submitted">
   <div class="form-group d-flex flex-column" *ngFor="let config of _configs; let i = index" [ngSwitch]="config.type">
-    <ng-container *ngSwitchCase="configType.BOOLEAN">
+    <ng-container *ngSwitchCase="configType.CHECKBOX">
       <div *ngIf="showSlider" class="d-flex align-items-center label-container " >
-        <label [class.dashed-underline-label]="config.required" >{{config.label}}</label>
+        <label [class.dashed-underline-label]="config.description" [matTooltip]="config.description!">{{config.label}}</label>
         <app-icon-button *ngIf="allowRemoveConfig" [color]="themeService.BODY_COLOR" [width]="9" [height]="9"
           iconFilename="delete.svg" matTooltip="Remove Item" [buttonHeight]="16" [buttonWidth]="16"
           buttonPadding="8px !important" class="delete-btn" appTrackHover #deleteButton="hoverTrackerDirective"
@@ -13,8 +13,8 @@
       <app-checkbox *ngIf="!showSlider" [formControlName]="config.key" [label]="config.label">
       </app-checkbox>
     </ng-container>
-    <div *ngIf="config.type !== configType.BOOLEAN" class="d-flex align-items-center label-container">
-      <label required
+    <div *ngIf="config.type !== configType.CHECKBOX" class="d-flex align-items-center label-container">
+      <label [class.dashed-underline-label]="config.description" [matTooltip]="config.description!"
         [for]="'form-input' + i">{{ config.label }}</label>
       <app-icon-button *ngIf="allowRemoveConfig && form.enabled" [color]="themeService.BODY_COLOR" [width]="9" [height]="9"
         iconFilename="delete.svg" matTooltip="Remove Item" [buttonHeight]="16" [buttonWidth]="16" class=" delete-btn"
@@ -31,11 +31,9 @@
       <textarea *ngSwitchCase="configType.LONG_TEXT" [formControlName]="config.key"
      rows="4" class="form-control" type="text">
       </textarea>
-      <input *ngSwitchCase="configType.INTEGER" class="form-control" type="number" [formControlName]="config.key"
+      <input *ngSwitchCase="configType.NUMBER" class="form-control" type="number" [formControlName]="config.key"
      />
-<!--
-      <app-dictonary-form-control *ngSwitchCase="configType.DICTIONARY" [formControlName]="config.key">
-      </app-dictonary-form-control> -->
+
 
 
       <ng-container *ngSwitchCase="configType.SELECT">

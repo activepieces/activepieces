@@ -11,7 +11,6 @@ import { BsModalRef } from 'ngx-bootstrap/modal';
 import { fadeInUp400ms } from '../../../../../common-layout/animation/fade-in-up.animation';
 import { OAuth2ConfigSettings } from 'src/app/layout/common-layout/model/fields/variable/config-settings';
 import { CollectionActions } from 'src/app/layout/flow-builder/store/action/collection.action';
-
 import { ConfigKeyValidator } from '../../validators/configKeyValidator';
 
 @Component({
@@ -130,6 +129,7 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 				})
 			);
 		}
+		this.bsModalRef.onHidden.emit(config);
 		this.closeModal();
 	}
 

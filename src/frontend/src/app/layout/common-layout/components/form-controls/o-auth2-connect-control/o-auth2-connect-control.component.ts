@@ -59,7 +59,6 @@ export class OAuth2ConnectControlComponent implements ControlValueAccessor, OnCh
 				this.onChange(value);
 			}),
 			catchError(err => {
-				debugger;
 				this.responseData = null;
 				this.onChange(null);
 				this.popUpError = true;
