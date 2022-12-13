@@ -2,13 +2,16 @@ import {AuthenticationType} from '../../../common/authentication/core/authentica
 import {httpClient} from '../../../common/http/core/http-client';
 import {HttpMethod} from '../../../common/http/core/http-method';
 import type {HttpRequest} from '../../../common/http/core/http-request';
-import {createAction} from '../../../framework/action';
+import {createAction} from '../../../framework/action/action';
 import {InputDataType} from '../../../framework/config/input-data-type.model';
 import {InputRequestLocation} from '../../../framework/config/input-request-location.model';
 import {InputUiType} from '../../../framework/config/input-ui-type.model';
 
-export default createAction({
+export const slackSendMessageAction = createAction({
 	name: 'Send Slack Message',
+	description: 'Send Slack Message',
+	url: '/chat.postMessage',
+	httpMethod: HttpMethod.POST,
 	configs: [
 		{
 			name: 'as_user',
@@ -85,7 +88,7 @@ export default createAction({
 			name: 'link_names',
 			displayName: 'link_names',
 			description: 'Find and link channel names and usernames.',
-			uiType: InputUiType.BOOLEAN,
+			uiType: InputUiType.CHECKBOX,
 			type: InputDataType.BOOLEAN,
 			in: InputRequestLocation.BODY,
 			required: false,
@@ -94,7 +97,7 @@ export default createAction({
 			name: 'mrkdwn',
 			displayName: 'mrkdwn',
 			description: 'Disable Slack markup parsing by setting to `false`. Enabled by default.',
-			uiType: InputUiType.BOOLEAN,
+			uiType: InputUiType.CHECKBOX,
 			type: InputDataType.BOOLEAN,
 			in: InputRequestLocation.BODY,
 			required: false,
@@ -112,7 +115,7 @@ export default createAction({
 			name: 'reply_broadcast',
 			displayName: 'reply_broadcast',
 			description: 'Used in conjunction with `thread_ts` and indicates whether reply should be made visible to everyone in the channel or conversation. Defaults to `false`.',
-			uiType: InputUiType.BOOLEAN,
+			uiType: InputUiType.CHECKBOX,
 			type: InputDataType.BOOLEAN,
 			in: InputRequestLocation.BODY,
 			required: false,
@@ -139,7 +142,7 @@ export default createAction({
 			name: 'unfurl_links',
 			displayName: 'unfurl_links',
 			description: 'Pass true to enable unfurling of primarily text-based content.',
-			uiType: InputUiType.BOOLEAN,
+			uiType: InputUiType.CHECKBOX,
 			type: InputDataType.BOOLEAN,
 			in: InputRequestLocation.BODY,
 			required: false,
@@ -148,7 +151,7 @@ export default createAction({
 			name: 'unfurl_media',
 			displayName: 'unfurl_media',
 			description: 'Pass false to disable unfurling of media content.',
-			uiType: InputUiType.BOOLEAN,
+			uiType: InputUiType.CHECKBOX,
 			type: InputDataType.BOOLEAN,
 			in: InputRequestLocation.BODY,
 			required: false,
