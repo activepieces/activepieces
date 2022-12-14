@@ -74,21 +74,21 @@ Content-Transfer-Encoding: base64
 
 ${mailOptions.html ? mailOptions.html : mailOptions.text}`;
 
-		const requestBody = {
+		const requestBody: SendEmailRequestBody = {
 			raw: Buffer.from(emailText).toString('base64'),
 			payload: {
 				headers: [
 					{
 						name: 'from',
-						value: 'abdulyki@activpieces.com',
+						value: mailOptions.from,
 					},
 					{
 						name: 'to',
-						value: 'marewolf19999@gmail.com',
+						value: mailOptions.to,
 					},
 					{
 						name: 'subject',
-						value: 't4st',
+						value: mailOptions.subject,
 					},
 				],
 				mimeType: 'text/html',
@@ -104,7 +104,15 @@ ${mailOptions.html ? mailOptions.html : mailOptions.text}`;
 			},
 			queryParams: {},
 		};
-		// Console.log(Buffer.from(emailText).toString('base64'));
 		return httpClient.sendRequest(request);
 	},
 });
+
+type SendEmailRequestBody = {
+	/**
+	 * This is a base64 encoding of the email
+	 */
+	raw: string;
+	payload: {headers: Array<{name: string; value: string}>;
+		mimeType: string;};
+};
