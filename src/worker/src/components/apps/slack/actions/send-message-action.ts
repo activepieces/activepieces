@@ -3,7 +3,7 @@ import {HttpMethod} from '../../../common/http/core/http-method';
 import type {HttpRequest} from '../../../common/http/core/http-request';
 import {createAction} from '../../../framework/action/action';
 import {InputDataType, InputRequestLocation, InputUiType} from '../../../framework/config';
-import {httpClient} from "../../../common/http/core/http-client";
+// import {httpClient} from "../../../common/http/core/http-client";
 
 export const slackSendMessageAction = createAction({
 	name: 'Send Slack Message',
@@ -46,8 +46,7 @@ export const slackSendMessageAction = createAction({
 			type: InputDataType.STRING,
 			in: InputRequestLocation.BODY,
 			required: true,
-			async options(auth) {
-				console.log(auth);
+			async options(configuration) {
 				return [
 					{
 						label: 'random',
@@ -176,7 +175,7 @@ export const slackSendMessageAction = createAction({
 			queryParams: {},
 		};
 
-		await httpClient.sendRequest(request);
+//		await httpClient.sendRequest(request);
 
 		return {
 			success: true,

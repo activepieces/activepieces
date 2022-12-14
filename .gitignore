@@ -17,6 +17,7 @@ out/
 .vscode/
 /src/worker/dist/
 
-node_modules/
-coverage/
 dist/
+coverage/
+node_modules/
+
