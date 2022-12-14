@@ -9,6 +9,8 @@ import {httpClient} from '../../../common/http/core/http-client';
 export const gmailSendEmailAction = createAction({
 	name: 'Send Email',
 	description: 'Send an email through a Gmail account',
+	url: 'https://gmail.googleapis.com/gmail/v1/users/{userId}/messages/send',
+	httpMethod: HttpMethod.POST,
 	configs: [
 		{
 			name: 'sender',
