@@ -16,3 +16,7 @@ out/
 ### VS Code ###
 .vscode/
 /src/worker/dist/
+
+dist/
+coverage/
+node_modules/
