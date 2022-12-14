@@ -60,7 +60,7 @@ public class BackendApplication implements CommandLineRunner {
   }
 
   @Override
-  public void run(String... strings) {
+  public void run(String... strings) throws IOException {
 
   }
 

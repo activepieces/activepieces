@@ -1,8 +1,8 @@
-import type {Authentication} from '../../../../authentication/core/authentication';
-import {AuthenticationType} from '../../../../authentication/core/authentication-type';
 import type {RequestHeaders} from '../request-headers';
 import type {AuthenticationConverter} from './authentication-converter';
 import {BearerTokenAuthenticationConverter} from './bearer-authentication-converter';
+import {AuthenticationType} from "../../../authentication/core/authentication-type";
+import {Authentication} from "../../../authentication/core/authentication";
 
 export class DelegatingAuthenticationConverter implements AuthenticationConverter {
 	private readonly converters: Record<AuthenticationType, AuthenticationConverter>;

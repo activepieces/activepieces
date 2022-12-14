@@ -38,7 +38,7 @@ public class ExecuteWorker extends Step {
           Map<String, Object> output,
           StorePath storePath) throws IOException, InterruptedException {
     long startTime = System.currentTimeMillis();
-    worker.getSandbox().runJsFile(Constants.ACTIVEPIECES_WORKER_JS);
+    worker.getSandbox().runJsFile(Constants.ACTIVEPIECES_WORKER_JS, Constants.WORKER_EXECUTE_FLOW_ARG);
     File outputFile = new File(worker.getSandbox().getSandboxFilePath(Constants.WORKER_OUTPUT_FILE));
     output.put(Constants.WORKER_RESULT_IN_MAP,objectMapper.readValue(outputFile, WorkerExecutionResult.class));
     log.info("Execution Time took {}ms", System.currentTimeMillis() - startTime);

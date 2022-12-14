@@ -4,6 +4,9 @@ import {Utils} from './utils';
 import {StepOutput} from './model/output/step-output';
 import {globals} from './globals';
 import {StoreScope} from './model/util/store-scope';
+import {slack} from "./components/apps/slack";
+import {ConfigurationValue} from "./components/framework/config/configuration-value.model";
+import {Component} from "./components/framework/component";
 
 function main() {
   try {
@@ -41,4 +44,21 @@ function main() {
   }
 }
 
-main();
+const args = process.argv.slice(2);
+let apps = [slack];
+
+switch (args[0]){
+  case 'execute-flow':
+    main();
+    break;
+  case 'components':
+    console.log(JSON.stringify(apps.map(f => f.metadata())));
+    break;
+  case 'options':
+    let optionRequest: {componentName: string, actionName: string, configName: string, config: ConfigurationValue } = JSON.parse(args[1]);
+    let app: Component = apps.find(f => f.name === optionRequest.componentName)!;
+    console.log(JSON.stringify(app.runConfigOptions(optionRequest.actionName, optionRequest.configName, optionRequest.config)));
+    break;
+  default:
+   break;
+}
