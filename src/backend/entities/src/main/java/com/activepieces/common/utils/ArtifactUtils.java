@@ -57,6 +57,20 @@ public class ArtifactUtils {
     }
   }
 
+  public static String escapeShellDoubleQuoteString(String s, boolean addOuterQuote) {
+    final List<String> targets = Arrays.asList("\"", "$", "`");
+    String escape = escape(s, "\\", targets);
+    return addOuterQuote ? '"' + escape + '"' : escape;
+  }
+
+  private static String escape(String s, String escaper, List<String> targets) {
+    s = s.replace(escaper, escaper + escaper);
+    for (String t : targets) {
+      s = s.replace(t, escaper + t);
+    }
+    return s;
+  }
+
   public static String bundledFileName(String artifact) {
     return FilenameUtils.removeExtension(artifact) + ".js";
   }
@@ -91,6 +105,7 @@ public class ArtifactUtils {
     Process pb = ps.start();
     String output = readOutputFromStream(new InputStreamReader(pb.getInputStream()));
     pb.waitFor();
+    System.out.println(command);
     return output;
   }
 
