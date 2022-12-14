@@ -3,13 +3,11 @@ import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-ty
 import { ActionType } from '../../common-layout/model/enum/action-type.enum';
 import { TriggerType } from '../../common-layout/model/enum/trigger-type.enum';
 import { Observable } from 'rxjs';
-import { Manifest } from '../model/manifest';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class ActionMetaService {
-	manifests$: Map<string, Observable<Manifest>> = new Map();
 	public coreFlowItemsDetails: FlowItemDetails[] = [
 		{
 			type: ActionType.CODE,

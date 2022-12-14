@@ -1,6 +1,1 @@
-export type ConfigurationValue = {
-	inputs: Record<string, string>;
-	authentication: {
-		accessToken: string;
-	};
-};
+export type ConfigurationValue = Record<string, any>;
