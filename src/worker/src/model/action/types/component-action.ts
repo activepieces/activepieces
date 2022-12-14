@@ -63,6 +63,8 @@ export class ComponentAction extends Action {
       executionState
     );
 
+    stepOutput.input = config;
+
     try {
       const executer = new ComponentExecuter();
 
