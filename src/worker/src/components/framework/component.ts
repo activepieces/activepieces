@@ -47,6 +47,15 @@ export class Component {
 
 		return this._triggers[triggerName];
 	}
+
+	metadata(){
+		return {
+			name: this.name,
+			logoUrl: this.logoUrl,
+			actions: this._actions,
+			triggers: this._triggers
+		}
+	}
 }
 
 export const createComponent = (request: {

@@ -48,8 +48,9 @@ switch (args[0]){
   case 'execute-flow':
     main();
     break;
-  case 'apps':
-    console.log([slack]);
+  case 'components':
+    let apps = [slack.metadata()];
+    console.log(JSON.stringify(apps));
     break;
   case 'options':
     let options = [
