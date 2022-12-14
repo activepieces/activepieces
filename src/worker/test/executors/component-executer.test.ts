@@ -1,11 +1,11 @@
 import { apps } from '@activepieces/components';
 import { ConfigurationValue } from '@activepieces/components/dist/src/framework/config/configuration-value.model';
-import { ComponentExecuter } from '../../src/executors/component-executer';
+import { ComponentExecutor } from '../../src/executors/component-executor';
 
 describe('Component Executor', () => {
   test('Invokes given action', async () => {
     // arrange
-    const executer = new ComponentExecuter();
+    const executer = new ComponentExecutor();
     const config: ConfigurationValue = {
         inputs: {},
         authentication: {
@@ -26,7 +26,7 @@ describe('Component Executor', () => {
 
   test('throws when component is not found', async () => {
     // arrange
-    const executer = new ComponentExecuter();
+    const executer = new ComponentExecutor();
     const config: ConfigurationValue = {
         inputs: {},
         authentication: {

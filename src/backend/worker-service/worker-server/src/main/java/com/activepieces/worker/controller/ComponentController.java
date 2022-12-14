@@ -47,7 +47,7 @@ public class ComponentController {
   }
 
   @PostMapping("/components/{componentName}/options")
-  public ResponseEntity<Object> getOptions(@PathVariable("componentName") String componentName,
+  public ResponseEntity<List<ObjectNode>> getOptions(@PathVariable("componentName") String componentName,
                                            @RequestBody @Valid ConfigOptionsRequest configs)
           throws Exception {
     return ResponseEntity.ok(componentService.getOptions(componentName, configs.getActionName(), configs.getConfigName(), configs.getConfig()));

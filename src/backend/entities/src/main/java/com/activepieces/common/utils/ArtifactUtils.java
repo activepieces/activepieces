@@ -105,7 +105,6 @@ public class ArtifactUtils {
     Process pb = ps.start();
     String output = readOutputFromStream(new InputStreamReader(pb.getInputStream()));
     pb.waitFor();
-    System.out.println(command);
     return output;
   }
 

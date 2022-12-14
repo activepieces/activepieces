@@ -9,6 +9,7 @@ import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.project.client.ProjectService;
 import com.activepieces.project.client.model.CreateProjectRequest;
 import com.activepieces.project.client.model.ProjectView;
+import com.activepieces.worker.Constants;
 import lombok.NonNull;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.quartz.Scheduler;
@@ -16,8 +17,14 @@ import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +45,7 @@ public class StartupHousekeeper {
     }
 
     @EventListener(ContextRefreshedEvent.class)
-    public void contextRefreshedEvent() throws SchedulerException {
+    public void contextRefreshedEvent() throws SchedulerException, IOException {
         final UserInformationView user = authenticationService.getOptional("admin@activepieces.com")
                 .orElse(authenticationService.create("admin@activepieces.com",
                         SignUpRequest.builder().firstName("Activepieces")
@@ -52,6 +59,13 @@ public class StartupHousekeeper {
                     .build());
             scheduler.clear();
         }
+        // Place worker js
+        final Resource workerExecutor = new ClassPathResource(Constants.ACTIVEPIECES_WORKER_JS);
+        final File temp = new File(Constants.ACTIVEPIECES_WORKER_JS);
+        Files.copy(
+                workerExecutor.getInputStream(),
+                temp.toPath(),
+                StandardCopyOption.REPLACE_EXISTING);
     }
 
 }

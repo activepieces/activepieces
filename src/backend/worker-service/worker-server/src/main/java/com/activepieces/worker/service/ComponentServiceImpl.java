@@ -49,14 +49,6 @@ public class ComponentServiceImpl {
     }
 
     private String runJs(final String args, final String secondArgs) throws IOException, InterruptedException {
-        final Resource workerExecutor = new ClassPathResource(Constants.ACTIVEPIECES_WORKER_JS);
-        final File temp = new File(Constants.ACTIVEPIECES_WORKER_JS);
-        if(!temp.exists()) {
-            Files.copy(
-                    workerExecutor.getInputStream(),
-                    temp.toPath(),
-                    StandardCopyOption.REPLACE_EXISTING);
-        }
         if(Objects.isNull(secondArgs)){
             return ArtifactUtils.runCommandAsRoot(String.format("node %s %s", Constants.ACTIVEPIECES_WORKER_JS, args));
         }

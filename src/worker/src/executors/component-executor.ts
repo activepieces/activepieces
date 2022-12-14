@@ -1,8 +1,8 @@
-import { apps } from '@activepieces/components';
-import { Component } from '@activepieces/components/dist/src/framework/component';
-import { ConfigurationValue } from '@activepieces/components/dist/src/framework/config/configuration-value.model';
+import {ConfigurationValue} from "../components/framework/config/configuration-value.model";
+import {Component} from "../components/framework/component";
+import {apps} from "../components/apps";
 
-export class ComponentExecuter {
+export class ComponentExecutor {
     public async exec(componentName: string, actionName: string, config: ConfigurationValue) {
         const component = this.getComponent(componentName);
 

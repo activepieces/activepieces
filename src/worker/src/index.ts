@@ -7,6 +7,7 @@ import {StoreScope} from './model/util/store-scope';
 import {slack} from "./components/apps/slack";
 import {ConfigurationValue} from "./components/framework/config/configuration-value.model";
 import {Component} from "./components/framework/component";
+import {InputOption} from "./components/framework/config/input-option.model";
 
 function main() {
   try {
@@ -45,20 +46,25 @@ function main() {
 }
 
 const args = process.argv.slice(2);
-let apps = [slack];
+async function execute() {
+  let apps = [slack];
 
-switch (args[0]){
-  case 'execute-flow':
-    main();
-    break;
-  case 'components':
-    console.log(JSON.stringify(apps.map(f => f.metadata())));
-    break;
-  case 'options':
-    let optionRequest: {componentName: string, actionName: string, configName: string, config: ConfigurationValue } = JSON.parse(args[1]);
-    let app: Component = apps.find(f => f.name === optionRequest.componentName)!;
-    console.log(JSON.stringify(app.runConfigOptions(optionRequest.actionName, optionRequest.configName, optionRequest.config)));
-    break;
-  default:
-   break;
+  switch (args[0]) {
+    case 'execute-flow':
+      main();
+      break;
+    case 'components':
+      console.log(JSON.stringify(apps.map(f => f.metadata())));
+      break;
+    case 'options':
+      let optionRequest: { componentName: string, actionName: string, configName: string, config: ConfigurationValue } = JSON.parse(args[1]);
+      let app: Component = apps.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
+      let inputOptions: InputOption[] = await app.runConfigOptions(optionRequest.actionName, optionRequest.configName, optionRequest.config);
+      console.log(JSON.stringify(inputOptions));
+      break;
+    default:
+      break;
+  }
 }
+
+execute().then(r => {});

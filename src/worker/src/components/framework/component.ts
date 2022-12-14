@@ -51,7 +51,7 @@ export class Component {
 		if(configIndex === -1){
 			throw new ConfigNotFoundError(this.name, actionName, configName);
 		}
-		return (action.configs[configIndex] as SelectInput).options(config);
+		return await (action.configs[configIndex] as SelectInput).options(config);
 	}
 
 	getTrigger(triggerName: string): Trigger {

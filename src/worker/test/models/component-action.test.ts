@@ -1,5 +1,5 @@
 import { ConfigurationValue } from '@activepieces/components/dist/src/framework/config/configuration-value.model';
-import { ComponentExecuter } from '../../src/executors/component-executer';
+import { ComponentExecutor } from '../../src/executors/component-executor';
 import { ActionType } from '../../src/model/action/action';
 import { ComponentAction, ComponentActionSettings } from '../../src/model/action/types/component-action';
 import { ExecutionState } from '../../src/model/execution/execution-state';
@@ -30,7 +30,7 @@ describe('Component Action', () => {
     );
 
     jest
-      .spyOn(ComponentExecuter.prototype, 'exec')
+      .spyOn(ComponentExecutor.prototype, 'exec')
       .mockResolvedValue({ success: true });
 
     const stepOutput = await action.execute(new ExecutionState(), [], new StoreScope([]));
@@ -62,7 +62,7 @@ describe('Component Action', () => {
     );
 
     jest
-      .spyOn(ComponentExecuter.prototype, 'exec')
+      .spyOn(ComponentExecutor.prototype, 'exec')
       .mockRejectedValue(new Error('component execution failure'));
 
     const stepOutput = await action.execute(new ExecutionState(), [], new StoreScope([]));

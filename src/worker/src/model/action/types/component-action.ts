@@ -1,4 +1,4 @@
-import { ComponentExecuter } from "../../../executors/component-executer";
+import { ComponentExecutor } from "../../../executors/component-executor";
 import { VariableService } from "../../../services/variable-service";
 import { ExecutionState } from "../../execution/execution-state";
 import { StepOutput, StepOutputStatus } from "../../output/step-output";
@@ -66,7 +66,7 @@ export class ComponentAction extends Action {
     stepOutput.input = config;
 
     try {
-      const executer = new ComponentExecuter();
+      const executer = new ComponentExecutor();
 
       stepOutput.output = await executer.exec(
         this.settings.componentName,
