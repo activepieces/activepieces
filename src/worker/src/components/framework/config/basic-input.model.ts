@@ -1,4 +1,4 @@
-import type {InputType} from './input-ui-type.model';
+import {InputType} from "./input-type.model";
 
 export type BasicInput<U extends InputType> = {
 	name: string;

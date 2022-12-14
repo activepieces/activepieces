@@ -4,6 +4,8 @@ import type {HttpRequest} from '../../../common/http/core/http-request';
 import {createAction} from '../../../framework/action/action';
 import { InputType} from '../../../framework/config';
 import {httpClient} from "../../../common/http/core/http-client";
+import {Worker} from "../../../framework/worker";
+import {ConfigurationValue} from "../../../framework/config/configuration-value.model";
 
 export const slackSendMessageAction = createAction({
 	name: 'Send Slack Message',
@@ -19,6 +21,7 @@ export const slackSendMessageAction = createAction({
 			authUrl: "https://slack.com/oauth/authorize",
 			tokenUrl: "https://slack.com/api/oauth.access",
 			required: false,
+			scopes: []
 		},
 		{
 			name: 'as_user',
@@ -142,7 +145,7 @@ export const slackSendMessageAction = createAction({
 			required: false,
 		},
 	],
-	async runner(configValue) {
+	async runner(worker: Worker, configValue: ConfigurationValue) {
 		// TODO FIX
 		const request: HttpRequest<Record<string, string>> = {
 			method: HttpMethod.POST,

@@ -1,1 +1,1 @@
-export {InputType} from './input-ui-type.model';
+export {InputType} from './input-type.model';

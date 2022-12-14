@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionType } from '../../common-layout/model/enum/action-type.enum';
 import { TriggerType } from '../../common-layout/model/enum/trigger-type.enum';
-import { Observable } from 'rxjs';
 
 @Injectable({
 	providedIn: 'root',

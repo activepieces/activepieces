@@ -7,5 +7,5 @@ export type Trigger = {
 	type: TriggerType;
 	onCreate: (auth: Authentication) => Promise<Record<string, any>>;
 	onDestroy: (auth: Authentication, triggerId: string) => Promise<Record<string, any>>;
-	onEvent: (event: Record<string, any>) => Promise<Record<string, any>>;
+	run: (event: Record<string, any>) => Promise<Record<string, any>>;
 };
