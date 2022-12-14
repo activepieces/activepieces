@@ -3,15 +3,16 @@ import {StorageAction, StorageActionSettings} from './types/storage-action';
 import {ResponseAction, ResponseActionSettings} from './types/response-action';
 import {LoopOnItemAction, LoopOnItemActionSettings} from './types/loop-action';
 import {Action, ActionType} from './action';
+import { ComponentAction, ComponentActionSettings } from './types/component-action';
 
 export function createAction(jsonData: any): Action {
   try {
     switch (jsonData['type']) {
       case 'COMPONENT':
-        return new CodeAction(
+        return new ComponentAction(
           ActionType.COMPONENT,
           jsonData['name'],
-          CodeActionSettings.deserialize(jsonData['settings']),
+          ComponentActionSettings.deserialize(jsonData['settings']),
           !jsonData['nextAction']
             ? undefined
             : createAction(jsonData['nextAction'])

@@ -12,6 +12,7 @@ import {
   ResponseAction,
   ResponseActionSettings,
 } from '../../src/model/action/types/response-action';
+import { ComponentAction, ComponentActionSettings } from '../../src/model/action/types/component-action';
 
 describe('Action Factory', () => {
 
@@ -21,27 +22,29 @@ describe('Action Factory', () => {
       name: 'COMPONENT_ACTION',
       nextAction: null,
       settings: {
+        componentName: 'slack',
+        actionName: 'sendMessage',
         input: {
-          component: {},
-          action: {}
+          channel: 'channel',
+          text: 'text',
         },
-        artifactPackagedId: 'artifact.zip'
       },
     };
 
     const action = createAction(jsonData);
 
-    expect(action).toBeInstanceOf(CodeAction);
+    expect(action).toBeInstanceOf(ComponentAction);
     expect(action.type as ActionType).toEqual(ActionType.COMPONENT);
     expect(action.name).toEqual('COMPONENT_ACTION');
     expect(action.nextAction).toBeUndefined();
 
-    expect((action as CodeAction).settings).toBeInstanceOf(CodeActionSettings);
-    expect((action as CodeAction).settings.input).toEqual({
-      component: {},
-      action: {}
+    expect((action as ComponentAction).settings).toBeInstanceOf(ComponentActionSettings);
+    expect((action as ComponentAction).settings.input).toEqual({
+      channel: 'channel',
+      text: 'text',
     });
-    expect((action as CodeAction).settings.artifactPackagedId).toEqual('artifact.zip');
+    expect((action as ComponentAction).settings.componentName).toEqual('slack');
+    expect((action as ComponentAction).settings.actionName).toEqual('sendMessage');
   });
 
   test('CODE action is created', async () => {

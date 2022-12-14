@@ -184,7 +184,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 		this.actions$ = of(component).pipe(
 			map(component => {
 				const actionsKeys = Object.keys(component.actions);
-
+				debugger;
 				return actionsKeys.map(actionName => {
 					const action = component.actions[actionName];
 					return {
@@ -266,13 +266,17 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 					.pipe(
 						take(1),
 						tap(res => {
-							debugger;
-							const selectedAuthConfig = res.find(
-								c =>
-									c.value.configInterpolation ===
-									this.intialComponentInputFormValue?.input.action[SECURITY_FORM_CONTROL_NAME]
-							);
-							this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(selectedAuthConfig?.value);
+							if (
+								this.intialComponentInputFormValue &&
+								this.intialComponentInputFormValue.input &&
+								this.intialComponentInputFormValue.input.action
+							) {
+								const cofigInterpolation = this.intialComponentInputFormValue.input.action
+									? this.intialComponentInputFormValue?.input.action[SECURITY_FORM_CONTROL_NAME]
+									: '';
+								const selectedAuthConfig = res.find(c => c.value.configInterpolation === cofigInterpolation);
+								this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(selectedAuthConfig?.value);
+							}
 						}),
 						mapTo(void 0)
 					);

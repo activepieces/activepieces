@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@activepieces/components": "^0.0.9",
     "@types/node": "^18.7.13",
     "axios": "^1.0.0",
     "fs-extra": "^10.1.0",
