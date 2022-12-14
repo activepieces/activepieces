@@ -18,10 +18,12 @@
     "url": "https://github.com/activepieces/components/issues"
   },
   "dependencies": {
+    "@types/nodemailer": "^6.4.6",
+    "nodemailer": "^6.8.0",
     "superagent": "^8.0.6"
   },
   "devDependencies": {
-    "@types/superagent": "^4.1.15",
+    "@types/superagent": "^4.1.16",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.39.0",
     "eslint": "^8.24.0",
@@ -34,7 +36,9 @@
     "npm": "8.x"
   },
   "type": "commonjs",
-  "files": ["dist/**"],
+  "files": [
+    "dist/**"
+  ],
   "private": false,
   "exports": "./dist/index.js",
   "types": "./dist/index.d.ts"

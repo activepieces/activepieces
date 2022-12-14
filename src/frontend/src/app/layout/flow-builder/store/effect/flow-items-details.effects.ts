@@ -14,6 +14,7 @@ export class FlowItemsDetailsEffects {
 			ofType(FlowItemDetailsActions.loadFlowItemsDetails),
 			switchMap(() => {
 				const triggerFlowItemsDetails$ = of(this.flowItemsDetailsService.triggerItemsDetails);
+				debugger;
 				const connectorComponents$ = of(
 					apps.map(app => {
 						return new FlowItemDetails(

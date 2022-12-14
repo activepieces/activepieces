@@ -8,10 +8,10 @@ export class Action {
 	constructor(
 		public readonly name: string,
 		public readonly description: string,
-		public readonly url: string,
-		public readonly httpMethod: HttpMethod,
 		public readonly configs: Input[],
 		private readonly runner: Runner,
+		public readonly url?: string,
+		public readonly httpMethod?: HttpMethod,
 	) {}
 
 	async run(configValue: ConfigurationValue): Promise<RunnerStatus> {
@@ -22,17 +22,17 @@ export class Action {
 export function createAction(request: {
 	name: string;
 	description: string;
-	url: string;
-	httpMethod: HttpMethod;
+	url?: string;
+	httpMethod?: HttpMethod;
 	configs: Input[];
 	runner: Runner;
 }): Action {
 	return new Action(
 		request.name,
 		request.description,
-		request.url,
-		request.httpMethod,
 		request.configs,
 		request.runner,
+		request.url,
+		request.httpMethod,
 	);
 }
