@@ -59,12 +59,6 @@ async function printOptions() {
     console.log(JSON.stringify(inputOptions));
 }
 
-async function executeTrigger() {
-    let triggerRequest: { componentName: string, triggerName: string, config: ConfigurationValue } = JSON.parse(args[1]);
-    let appTrigger: Component = apps.find(f => f.name.toLowerCase() === triggerRequest.componentName.toLowerCase())!;
-    let trigger = appTrigger.getTrigger(triggerRequest.triggerName).run(triggerRequest.config);
-}
-
 async function execute() {
     switch (args[0]) {
         case 'execute-flow':
@@ -75,9 +69,6 @@ async function execute() {
             break;
         case 'options':
             await printOptions()
-            break;
-        case 'execute-trigger':
-            await executeTrigger();
             break;
         default:
             break;
