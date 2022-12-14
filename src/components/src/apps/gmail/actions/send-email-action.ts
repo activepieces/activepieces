@@ -2,7 +2,10 @@ import {createAction} from '../../../framework/action/action';
 import {InputDataType} from '../../../framework/config/input-data-type.model';
 import {InputRequestLocation} from '../../../framework/config/input-request-location.model';
 import {InputUiType} from '../../../framework/config/input-ui-type.model';
-import * as nodemailer from 'nodemailer';
+import type {HttpRequest} from '../../../common/http/core/http-request';
+import {HttpMethod} from '../../../common/http/core/http-method';
+import {AuthenticationType} from '../../../common/authentication/core/authentication-type';
+import {httpClient} from '../../../common/http/core/http-client';
 export const gmailSendEmailAction = createAction({
 	name: 'Send Email',
 	description: 'Send an email through a Gmail account',
@@ -54,25 +57,6 @@ export const gmailSendEmailAction = createAction({
 		},
 	],
 	async runner(configValue) {
-		if (!configValue.authentication.clientSecret) {
-			throw new Error('Client Secret is empty');
-		}
-
-		if (!configValue.authentication.clientId) {
-			throw new Error('Client Id is empty');
-		}
-
-		const transport = nodemailer.createTransport({
-			service: 'gmail',
-			auth: {
-				type: 'OAuth2',
-				user: configValue.inputs.sender,
-				clientId: configValue.authentication.clientId,
-				clientSecret: configValue.authentication.clientSecret,
-				refreshToken: configValue.authentication.refreshToken,
-				accessToken: configValue.authentication.accessToken,
-			},
-		});
 		const mailOptions = {
 			from: configValue.inputs.sender,
 			to: configValue.inputs.reciever,
@@ -80,11 +64,45 @@ export const gmailSendEmailAction = createAction({
 			text: configValue.inputs.bodyText,
 			html: configValue.inputs.bodyHtml,
 		};
+		const emailText = `From: ${mailOptions.from}
+To: ${mailOptions.to}
+Subject: ${mailOptions.subject}
+Content-Type: text/html
+Content-Transfer-Encoding: base64
 
-		const result = await transport.sendMail(mailOptions);
-		console.log(result);
-		return {
-			success: true,
+${mailOptions.html ? mailOptions.html : mailOptions.text}`;
+
+		const requestBody = {
+			raw: Buffer.from(emailText).toString('base64'),
+			payload: {
+				headers: [
+					{
+						name: 'from',
+						value: 'abdulyki@activpieces.com',
+					},
+					{
+						name: 'to',
+						value: 'marewolf19999@gmail.com',
+					},
+					{
+						name: 'subject',
+						value: 't4st',
+					},
+				],
+				mimeType: 'text/html',
+			},
 		};
+		const request: HttpRequest<Record<string, unknown>> = {
+			method: HttpMethod.POST,
+			url: `https://gmail.googleapis.com/gmail/v1/users/${mailOptions.from}/messages/send`,
+			body: requestBody,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: configValue.authentication.accessToken,
+			},
+			queryParams: {},
+		};
+		// Console.log(Buffer.from(emailText).toString('base64'));
+		return httpClient.sendRequest(request);
 	},
 });

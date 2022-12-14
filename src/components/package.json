@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@types/nodemailer": "^6.4.6",
-    "nodemailer": "^6.8.0",
     "superagent": "^8.0.6"
   },
   "devDependencies": {
