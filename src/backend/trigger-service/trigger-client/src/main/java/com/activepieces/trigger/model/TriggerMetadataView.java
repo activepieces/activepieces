@@ -23,14 +23,15 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = EmptyTriggerMetadataView.class, name = "EMPTY"),
         @JsonSubTypes.Type(value = InstanceStartedTriggerMetadataView.class, name = "COLLECTED_DEPLOYED"),
         @JsonSubTypes.Type(value = InstanceStoppedTriggerMetadataView.class, name = "COLLECTION_STOPPED"),
-        @JsonSubTypes.Type(value = WebhookTriggerMetadataView.class, name = "WEBHOOK")
+        @JsonSubTypes.Type(value = WebhookTriggerMetadataView.class, name = "WEBHOOK"),
+        @JsonSubTypes.Type(value = ComponentTriggerMetadataView.class, name = "COMPONENT")
 }
 )
 @ToString
 @EqualsAndHashCode
 public abstract class TriggerMetadataView implements Serializable {
 
-    @Pattern(regexp = "SCHEDULE|EMPTY|WEBHOOK|COLLECTED_DEPLOYED|COLLECTION_STOPPED")
+    @Pattern(regexp = "SCHEDULE|EMPTY|WEBHOOK|COLLECTED_DEPLOYED|COLLECTION_STOPPED|COMPONENT")
     @JsonProperty
     private String type;
 

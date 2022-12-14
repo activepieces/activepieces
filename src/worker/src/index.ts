@@ -8,6 +8,7 @@ import {slack} from "./components/apps/slack";
 import {ConfigurationValue} from "./components/framework/config/configuration-value.model";
 import {Component} from "./components/framework/component";
 import {InputOption} from "./components/framework/config/input-option.model";
+import {Trigger} from "./components/framework/trigger/trigger";
 
 function executeFlow() {
     try {
@@ -52,17 +53,18 @@ function printMetadata() {
     console.log(JSON.stringify(apps.map(f => f.metadata())));
 }
 
+async function printTriggerType(){
+    let optionRequest: { componentName: string, triggerName: string } = JSON.parse(args[1]);
+    let app: Component = apps.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
+    let trigger: Trigger = app.getTrigger(optionRequest.triggerName);
+    console.log(trigger.type);
+}
+
 async function printOptions() {
     let optionRequest: { componentName: string, actionName: string, configName: string, config: ConfigurationValue } = JSON.parse(args[1]);
     let app: Component = apps.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
     let inputOptions: InputOption[] = await app.runConfigOptions(optionRequest.actionName, optionRequest.configName, optionRequest.config);
     console.log(JSON.stringify(inputOptions));
-}
-
-async function executeTrigger() {
-    let triggerRequest: { componentName: string, triggerName: string, config: ConfigurationValue } = JSON.parse(args[1]);
-    let appTrigger: Component = apps.find(f => f.name.toLowerCase() === triggerRequest.componentName.toLowerCase())!;
-    let trigger = appTrigger.getTrigger(triggerRequest.triggerName).run(triggerRequest.config);
 }
 
 async function execute() {
@@ -76,8 +78,8 @@ async function execute() {
         case 'options':
             await printOptions()
             break;
-        case 'execute-trigger':
-            await executeTrigger();
+        case 'trigger-type':
+            await printTriggerType();
             break;
         default:
             break;

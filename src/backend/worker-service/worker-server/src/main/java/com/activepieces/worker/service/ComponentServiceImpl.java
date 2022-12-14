@@ -1,7 +1,9 @@
 package com.activepieces.worker.service;
 
 import com.activepieces.common.utils.ArtifactUtils;
+import com.activepieces.entity.enums.CustomTriggerType;
 import com.activepieces.worker.Constants;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -33,6 +35,15 @@ public class ComponentServiceImpl {
     public List<ObjectNode> getApps() throws IOException, InterruptedException {
         final String result = runJs(Constants.WORKER_APPS_ARG, null);
         return objectMapper.readValue(result, new TypeReference<>(){});
+    }
+
+    public CustomTriggerType getTriggerType(@NonNull final String componentName,
+                                            @NonNull final String triggerName) throws IOException, InterruptedException {
+        final ObjectNode objectNode = objectMapper.createObjectNode();
+        objectNode.put("componentName", componentName);
+        objectNode.put("triggerName", triggerName);
+        final String result = runJs(Constants.WORKER_TRIGGER_TYPE_ARG, objectMapper.writeValueAsString(objectNode));
+        return CustomTriggerType.valueOf(result);
     }
 
     public List<ObjectNode> getOptions(final String componentName, final String actionName, final String configName,
