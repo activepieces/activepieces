@@ -1,4 +1,4 @@
-import {SuperAgentHttpClient} from '../superagent/superagent-http-client';
+import { AxiosHttpClient } from '../axios/axios-http-client';
 import type {HttpMessageBody} from './http-message-body';
 import type {HttpRequest} from './http-request';
 
@@ -8,4 +8,4 @@ export type HttpClient = {
 	): Promise<ResponseBody>;
 };
 
-export const httpClient = new SuperAgentHttpClient();
+export const httpClient = new AxiosHttpClient();
