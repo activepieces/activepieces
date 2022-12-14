@@ -4,6 +4,7 @@ import {Utils} from './utils';
 import {StepOutput} from './model/output/step-output';
 import {globals} from './globals';
 import {StoreScope} from './model/util/store-scope';
+import {slack} from "./components/apps/slack";
 
 function main() {
   try {
@@ -41,4 +42,20 @@ function main() {
   }
 }
 
-main();
+const args = process.argv.slice(2);
+
+switch (args[0]){
+  case 'execute-flow':
+    main();
+    break;
+  case 'apps':
+    console.log([slack]);
+    break;
+  case 'options':
+    let options = [
+      {"value": '1', "label": 'Option one'}, {"value": '2', "label": 'option two'}];
+    console.log(JSON.stringify(options));
+    break;
+  default:
+   break;
+}

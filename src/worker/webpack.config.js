@@ -16,6 +16,7 @@ module.exports = {
   },
   entry: path.resolve(__dirname, 'src/index.ts'),
   output: {
+    libraryTarget: 'commonjs2',
     path: path.resolve(__dirname, 'dist'),
     filename: 'activepieces-worker.js',
     publicPath: '/dist/',

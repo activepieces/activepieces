@@ -132,7 +132,7 @@ public class CodeExecutionWorker {
     try (PrintWriter out = new PrintWriter(sandbox.getSandboxFilePath(INPUT_FILENAME))) {
       out.println(objectMapper.writeValueAsString(input));
     }
-    return sandbox.runJsFile("code-executor.js");
+    return sandbox.runJsFile("code-executor.js", "");
   }
 
 

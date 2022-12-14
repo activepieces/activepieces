@@ -145,18 +145,18 @@ public class Sandbox {
     return getSandboxFolderPath() + fileName;
   }
 
-  public String runJsFile(String fileName) throws IOException, InterruptedException {
+  public String runJsFile(String fileName, String args) throws IOException, InterruptedException {
     return runIsolate(
         String.format(
             "--dir=/usr/bin/ --dir=/etc/ --share-net --full-env --box-id=%d --processes --wall-time=%d "
                 + "--meta=%s --stdout=%s --stderr=%s "
-                + " --run /usr/bin/node %s",
+                + " --run /usr/bin/node %s %s",
             boxId,
             TIME_LIMIT_IN_SECONDS,
             getSandboxFilePath(META_FILENAME),
             STANDARD_OUTPUT,
             STANDARD_ERROR,
-            fileName));
+            fileName, args));
   }
 
   private String getSandboxFolderPath() {

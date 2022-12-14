@@ -53,6 +53,8 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
                 .permitAll()
                 .antMatchers(HttpMethod.POST, "/authentication/*")
                 .permitAll()
+                .antMatchers(HttpMethod.GET, "/options")
+                .permitAll()
                 .antMatchers(HttpMethod.POST, "/instances/*/flows/*/runs")
                 .permitAll()
                 .anyRequest()

@@ -1,11 +1,8 @@
 import {AuthenticationType} from '../../../common/authentication/core/authentication-type';
-import {httpClient} from '../../../common/http/core/http-client';
 import {HttpMethod} from '../../../common/http/core/http-method';
 import type {HttpRequest} from '../../../common/http/core/http-request';
 import {createAction} from '../../../framework/action/action';
-import {InputDataType} from '../../../framework/config/input-data-type.model';
-import {InputRequestLocation} from '../../../framework/config/input-request-location.model';
-import {InputUiType} from '../../../framework/config/input-ui-type.model';
+import {InputDataType, InputRequestLocation, InputUiType} from '../../../framework/config';
 
 export const slackSendMessageAction = createAction({
 	name: 'Send Slack Message',
@@ -178,7 +175,7 @@ export const slackSendMessageAction = createAction({
 			queryParams: {},
 		};
 
-		await httpClient.sendRequest(request);
+//		await httpClient.sendRequest(request);
 
 		return {
 			success: true,
