@@ -4,6 +4,8 @@ import type {RunnerStatus} from './action/runner';
 import type {ConfigurationValue} from './config/configuration-value.model';
 import type {Trigger} from './trigger/trigger';
 import {TriggerNotFoundError} from './trigger/trigger-not-found-error';
+import {ConfigNotFoundError} from "./config/config-not-found-error";
+import {SelectInput} from "./config/select-input.model";
 
 export class Component {
 	private readonly _actions: Record<string, Action>;
@@ -38,6 +40,18 @@ export class Component {
 		}
 
 		return this._actions[actionName].run(config);
+	}
+
+	async runConfigOptions(actionName: string, configName: string, config: ConfigurationValue){
+		if (!(actionName in this._actions)) {
+			throw new ActionNotFoundError(this.name, actionName);
+		}
+		let action = this._actions[actionName];
+		let configIndex = action.configs.findIndex(f => f.name === configName);
+		if(configIndex === -1){
+			throw new ConfigNotFoundError(this.name, actionName, configName);
+		}
+		return (action.configs[configIndex] as SelectInput).options(config);
 	}
 
 	getTrigger(triggerName: string): Trigger {

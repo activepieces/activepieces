@@ -32,6 +32,11 @@ public class ComponentServiceImpl {
         return objectMapper.readValue(result, new TypeReference<>(){});
     }
 
+    public List<ObjectNode> getOptions() throws IOException, InterruptedException {
+        final String result = runJs(Constants.WORKER_OPTIONS_ARG);
+        return objectMapper.readValue(result, new TypeReference<>(){});
+    }
+
     private String runJs(String args) throws IOException, InterruptedException {
         final Resource workerExecutor = new ClassPathResource(Constants.ACTIVEPIECES_WORKER_JS);
         final File temp = new File(Constants.ACTIVEPIECES_WORKER_JS);

@@ -46,7 +46,7 @@ export const slackSendMessageAction = createAction({
 			type: InputDataType.STRING,
 			in: InputRequestLocation.BODY,
 			required: true,
-			async options(auth) {
+			async options(configuration) {
 				return [
 					{
 						label: 'random',
