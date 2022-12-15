@@ -1,7 +1,6 @@
 import {get} from 'lodash';
 import {ExecutionState} from '../model/execution/execution-state';
 import {isString} from 'lodash';
-import {StepOutput} from '../model/output/step-output';
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\$\\{(.*?)\\}', 'g');
