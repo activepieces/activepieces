@@ -9,7 +9,7 @@ import { RunsComponent } from './pages/runs/runs.component';
 import { ProgressbarModule } from 'ngx-bootstrap/progressbar';
 import { CommonLayoutModule } from '../common-layout/common-layout.module';
 import { CollectionComponent } from './pages/collections/collection-components.component';
-import { ListPiecesResolver } from './resolvers/list-pieces-resolver.service';
+import { ListCollectionResolver } from './resolvers/list-collections-resolver.service';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TimeagoModule } from 'ngx-timeago';
@@ -42,6 +42,6 @@ import { TrialStatusComponent } from './pages/trial-status/trial-status.componen
 		NgxSkeletonLoaderModule,
 	],
 	exports: [],
-	providers: [ListPiecesResolver],
+	providers: [ListCollectionResolver],
 })
 export class DashboardLayoutModule {}

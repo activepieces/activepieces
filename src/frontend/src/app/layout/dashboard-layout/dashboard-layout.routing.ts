@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { RunsComponent } from './pages/runs/runs.component';
 import { CollectionComponent } from './pages/collections/collection-components.component';
-import { ListPiecesResolver } from './resolvers/list-pieces-resolver.service';
+import { ListCollectionResolver } from './resolvers/list-collections-resolver.service';
 import { ListInstancesRunResolver } from './resolvers/list-instances-runs.resolver';
 import { TrialExpiredGuard } from 'src/app/guards/trial-expired.guard';
 import { TrialStatusComponent } from './pages/trial-status/trial-status.component';
@@ -25,7 +25,7 @@ export const DashboardLayoutRouting: Routes = [
 				pathMatch: 'full',
 				component: CollectionComponent,
 				resolve: {
-					collections: ListPiecesResolver,
+					collections: ListCollectionResolver,
 				},
 			},
 		],

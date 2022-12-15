@@ -14,6 +14,6 @@ export class ListFlowsResolver implements Resolve<Observable<SeekPage<Flow>>> {
 
 	resolve(snapshot: ActivatedRouteSnapshot): Observable<SeekPage<Flow>> {
 		const pieceId = snapshot.paramMap.get('id') as UUID;
-		return this.flowService.listByPiece(pieceId, 9999);
+		return this.flowService.listByCollection(pieceId, 9999);
 	}
 }
