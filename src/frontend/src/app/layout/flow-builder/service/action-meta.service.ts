@@ -48,14 +48,14 @@ export class ActionMetaService {
 			logoUrl: '/assets/img/custom/piece/webhook.svg',
 		},
 		{
-			type: TriggerType.COLLECTION_STOPPED,
-			name: 'Collection Stopped',
+			type: TriggerType.COLLECTION_DISABLED,
+			name: 'Collection Disabled',
 			description: 'Trigger flow when collection is stopped and on old deployments if a new deployment occurs',
 			logoUrl: '/assets/img/custom/piece/instance-stopped.svg',
 		},
 		{
-			type: TriggerType.COLLECTION_DEPLOYED,
-			name: 'Instance Started',
+			type: TriggerType.COLLECTION_ENABLED,
+			name: 'Instance Enabled',
 			description: 'Trigger flow when collection is deployed',
 			logoUrl: '/assets/img/custom/piece/instance-started.svg',
 		},

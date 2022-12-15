@@ -131,10 +131,10 @@ export class StepTypeSidebarComponent implements OnInit {
 			trigger.settings.cron_expression = defaultCronJobForScheduleTrigger;
 			trigger.valid = true;
 		}
-		if (trigger.type === TriggerType.COLLECTION_STOPPED) {
+		if (trigger.type === TriggerType.COLLECTION_DISABLED) {
 			trigger.valid = true;
 		}
-		if (trigger.type === TriggerType.COLLECTION_DEPLOYED) {
+		if (trigger.type === TriggerType.COLLECTION_ENABLED) {
 			trigger.valid = true;
 		}
 		if (trigger.type === TriggerType.WEBHOOK) {
