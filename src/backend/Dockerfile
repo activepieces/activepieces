@@ -1,7 +1,7 @@
 #
 # Build stage
 #
-FROM maven:3.8.6-openjdk-18 AS build
+FROM maven:3.8.6-openjdk-11 AS build
 COPY . /home/app
 RUN mvn -f /home/app/pom.xml clean package
 

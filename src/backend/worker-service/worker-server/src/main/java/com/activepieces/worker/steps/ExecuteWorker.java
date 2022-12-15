@@ -4,7 +4,7 @@ import com.activepieces.actions.store.model.StorePath;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.logging.client.model.InstanceRunView;
 import com.activepieces.piece.client.model.CollectionVersionView;
-import com.activepieces.worker.Constants;
+import com.activepieces.common.Constants;
 import com.activepieces.worker.Worker;
 import com.activepieces.worker.model.WorkerExecutionResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
