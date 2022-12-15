@@ -17,7 +17,6 @@ import { ActionType } from '../../../common-layout/model/enum/action-type.enum';
 import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
 import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
-import { AuthConfigDropdownValue } from '../../page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/component-input-form.component';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -292,9 +291,9 @@ export const selectAuthConfigsDropdownOptions = createSelector(
 		return [...collectionConfigs]
 			.filter(c => c.type === ConfigType.OAUTH2)
 			.map(c => {
-				const result: { label: string; value: AuthConfigDropdownValue } = {
+				const result: { label: string; value: any } = {
 					label: c.key,
-					value: { configInterpolation: `\${configs.${c.key}}`, configValue: c.value },
+					value: c.value,
 				};
 				return result;
 			});

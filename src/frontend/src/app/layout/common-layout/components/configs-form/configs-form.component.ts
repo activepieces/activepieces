@@ -10,7 +10,6 @@ import {
 	Validators,
 } from '@angular/forms';
 import { catchError, map, mapTo, Observable, of, shareReplay, startWith, Subject, tap } from 'rxjs';
-import { AuthConfigDropdownValue } from 'src/app/layout/flow-builder/page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/component-input-form.component';
 import { ActionMetaService } from 'src/app/layout/flow-builder/service/action-meta.service';
 
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
@@ -65,7 +64,7 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 	@Input() accessToken: string = '';
 	@Output() configRemoved: EventEmitter<FrontEndConnectorConfig> = new EventEmitter();
 	@Input() newAuthConfigValue$: Subject<{
-		authConfig: AuthConfigDropdownValue;
+		authConfig: any;
 		actionName: string;
 		componentName: string;
 	}> = new Subject();
@@ -149,7 +148,7 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 	}
 	contructDropdownObservable(
 		dropdownConfig: FrontEndConnectorConfig,
-		authConfig: AuthConfigDropdownValue,
+		authConfig: any,
 		actionName: string,
 		componentName: string
 	) {

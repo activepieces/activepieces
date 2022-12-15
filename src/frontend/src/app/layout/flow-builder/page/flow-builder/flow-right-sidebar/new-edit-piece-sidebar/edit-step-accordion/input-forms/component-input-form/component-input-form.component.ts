@@ -1,5 +1,6 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import {
+	AbstractControl,
 	ControlValueAccessor,
 	FormBuilder,
 	FormControl,
@@ -15,9 +16,7 @@ import { BuilderSelectors } from 'src/app/layout/flow-builder/store/selector/flo
 import { Store } from '@ngrx/store';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { DropdownOption } from 'src/app/layout/common-layout/model/dynamic-controls/dropdown-options';
-import { ComponentFormOutput } from './component-input-form-output';
 import { environment } from 'src/environments/environment';
-
 import { CreateEditConfigModalComponent } from '../../../../../flow-left-sidebar/create-or-edit-config-modal/create-or-edit-config-modal.component';
 import { Config } from 'src/app/layout/common-layout/model/fields/variable/config';
 import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
@@ -40,15 +39,11 @@ declare type ActionDropdownOption = {
 	disabled?: boolean;
 };
 
-export declare type AuthConfigDropdownValue = {
-	configInterpolation: string;
-	configValue: any;
-};
 const CUSTOM_REQUEST_FORM_CONTROL_NAME = 'customRequest';
 const OPTIONAL_CONFIGS_FORM_CONTROL_NAME = 'optionalConfigs';
 const REQUIRED_CONFIGS_FORM_CONTROL_NAME = 'requiredConfigs';
 const ACTION_FORM_CONTROL_NAME = 'action';
-const SECURITY_FORM_CONTROL_NAME = 'security';
+const SECURITY_FORM_CONTROL_NAME = 'authentication';
 @Component({
 	selector: 'app-component-input-form',
 	templateUrl: './component-input-form.component.html',
@@ -69,6 +64,11 @@ const SECURITY_FORM_CONTROL_NAME = 'security';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ComponentInputFormComponent implements ControlValueAccessor, AfterViewInit {
+	readonly ACTION_FORM_CONTROL_NAME = ACTION_FORM_CONTROL_NAME;
+	readonly SECURITY_FORM_CONTROL_NAME = SECURITY_FORM_CONTROL_NAME;
+	readonly CUSTOM_REQUEST_FORM_CONTROL_NAME = CUSTOM_REQUEST_FORM_CONTROL_NAME;
+	readonly OPTIONAL_CONFIGS_FORM_CONTROL_NAME = OPTIONAL_CONFIGS_FORM_CONTROL_NAME;
+	readonly REQUIRED_CONFIGS_FORM_CONTROL_NAME = REQUIRED_CONFIGS_FORM_CONTROL_NAME;
 	customRequestFeatureFlag = false;
 	initialSetup$: Observable<ActionDropdownOption[]>;
 	optionalConfigsMenuOpened = false;
@@ -82,7 +82,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 	};
 	allOptionalConfigs: FrontEndConnectorConfig[] = [];
 	componentName: string;
-	intialComponentInputFormValue: { action_name: string; input: { action: { [key: string]: any } } } | null;
+	intialComponentInputFormValue: { action_name: string; input: { [key: string]: any } } | null;
 	customRequestItem = {
 		value: { actionName: 'CUSTOM_REQUEST', configs: [] as FrontEndConnectorConfig[] },
 		label: 'Custom Request',
@@ -105,20 +105,17 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 	componentForm: FormGroup;
 	valueChanges$: Observable<void>;
 	actionDropdownValueChanged$: Observable<{ actionName: string; configs: FrontEndConnectorConfig[] }>;
-	authDropdownValueChanged$: Observable<AuthConfigDropdownValue>;
+	authDropdownValueChanged$: Observable<any>;
 	updateAuthConfig$: Observable<{ indexInList: number; config: FrontEndConnectorConfig } | undefined>;
 	newAuthConfigValue$: Subject<{
-		authConfig: AuthConfigDropdownValue;
+		authConfig: any;
 		actionName: string;
 		componentName: string;
 	}> = new Subject();
 	setInitiallySelectedAuthConfig$: Observable<void>;
 	onChange = (value: any) => {};
 	onTouch = () => {};
-	authenticationDropdownCompareWithFunction = (
-		a: { label: string; value: AuthConfigDropdownValue },
-		formControlValue: AuthConfigDropdownValue
-	) => {
+	authenticationDropdownCompareWithFunction = (a: { label: string; value: any }, formControlValue: any) => {
 		return JSON.stringify(formControlValue) === JSON.stringify(a.value);
 	};
 	updateOrAddConfigModalClosed$: Observable<Config>;
@@ -147,33 +144,21 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 			})
 		);
 		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions).pipe(tap(console.log));
-		this.modalService;
 	}
 	ngAfterViewInit(): void {
-		this.setInitiallySelectedAuthConfig$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions).pipe(
-			take(1),
-			tap(res => {
-				if (
-					this.intialComponentInputFormValue &&
-					this.intialComponentInputFormValue.input &&
-					this.intialComponentInputFormValue.input.action
-				) {
-					const cofigInterpolation = this.intialComponentInputFormValue.input.action
-						? this.intialComponentInputFormValue?.input.action[SECURITY_FORM_CONTROL_NAME]
-						: '';
-					const selectedAuthConfig = res.find(c => c.value.configInterpolation === cofigInterpolation);
-					this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(selectedAuthConfig?.value);
-					if (selectedAuthConfig) {
-						this.newAuthConfigValue$.next({
-							authConfig: selectedAuthConfig.value.configValue,
-							actionName: this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.value.actionName,
-							componentName: this.componentName,
-						});
-					}
-				}
-			}),
-			mapTo(void 0)
-		);
+		if (this.intialComponentInputFormValue && this.intialComponentInputFormValue.input) {
+			const authConfigValue = this.intialComponentInputFormValue.input
+				? this.intialComponentInputFormValue?.input[SECURITY_FORM_CONTROL_NAME]
+				: null;
+			this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(authConfigValue, { emitEvent: false });
+			if (authConfigValue) {
+				this.newAuthConfigValue$.next({
+					authConfig: authConfigValue,
+					actionName: this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.value.actionName,
+					componentName: this.componentName,
+				});
+			}
+		}
 	}
 
 	customSearchFn(term: string, item: any) {
@@ -191,8 +176,8 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 
 	private buildForm() {
 		this.componentForm = this.fb.group({
-			action: new FormControl(null, Validators.required),
-			security: new FormControl(null, Validators.required),
+			[ACTION_FORM_CONTROL_NAME]: new FormControl(null, Validators.required),
+			[SECURITY_FORM_CONTROL_NAME]: new FormControl(null, Validators.required),
 		});
 		this.valueChanges$ = this.componentForm.valueChanges.pipe(
 			tap(() => {
@@ -246,7 +231,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 						.setValue(this.customRequestItem.value, { emitEvent: false });
 					this.componentForm
 						.get(CUSTOM_REQUEST_FORM_CONTROL_NAME)!
-						.setValue(this.intialComponentInputFormValue.input.action, { emitEvent: false });
+						.setValue(this.intialComponentInputFormValue.input, { emitEvent: false });
 				} else if (this.intialComponentInputFormValue) {
 					this.componentForm
 						.get(ACTION_FORM_CONTROL_NAME)!
@@ -261,21 +246,28 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 			}),
 			tap(items => {
 				const optionalConfigsControl = this.componentForm.get(OPTIONAL_CONFIGS_FORM_CONTROL_NAME);
-				const requiredConfigs = this.componentForm.get(REQUIRED_CONFIGS_FORM_CONTROL_NAME);
-				if (requiredConfigs && optionalConfigsControl && this.intialComponentInputFormValue?.action_name) {
+				const requiredConfigsControl = this.componentForm.get(REQUIRED_CONFIGS_FORM_CONTROL_NAME);
+				if (
+					requiredConfigsControl &&
+					optionalConfigsControl &&
+					this.intialComponentInputFormValue &&
+					this.intialComponentInputFormValue.action_name
+				) {
 					const selectedAction = items.find(
 						i => i.value?.actionName === this.intialComponentInputFormValue?.action_name
 					)!;
-					const optionalConfigsKeys = Object.keys(
-						this.intialComponentInputFormValue.input.action[OPTIONAL_CONFIGS_FORM_CONTROL_NAME]
-					);
+					const optionalConfigsKeys = selectedAction.value.configs.filter(c => !c.required).map(c => c.key);
+					const requiredConfigsKeys = selectedAction.value.configs.filter(c => c.required).map(c => c.key);
 					this.optionalConfigsSelected = {
 						configs: selectedAction.value.configs
-							.filter(c => optionalConfigsKeys.includes(c.key))
+							.filter(
+								c =>
+									optionalConfigsKeys.includes(c.key) && this.intialComponentInputFormValue!.input[c.key] !== undefined
+							)
 							.map(c => {
 								return {
 									...c,
-									value: this.intialComponentInputFormValue?.input.action[OPTIONAL_CONFIGS_FORM_CONTROL_NAME][c.key],
+									value: this.intialComponentInputFormValue?.input[c.key],
 								};
 							}),
 
@@ -286,35 +278,50 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 						configs: [...selectedAction.value.configs.filter(c => c.required)],
 						triggerChangeDetection: false,
 					};
+
+					this.cd.detectChanges();
 					//security + optionalConfigs + requiredConfigs
-					this.componentForm.patchValue(this.intialComponentInputFormValue.input.action, { emitEvent: false });
-				}
-				this.setInitiallySelectedAuthConfig$ = this.store
-					.select(BuilderSelectors.selectAuthConfigsDropdownOptions)
-					.pipe(
-						take(1),
-						tap(res => {
-							if (
-								this.intialComponentInputFormValue &&
-								this.intialComponentInputFormValue.input &&
-								this.intialComponentInputFormValue.input.action
-							) {
-								const cofigInterpolation = this.intialComponentInputFormValue.input.action
-									? this.intialComponentInputFormValue?.input.action[SECURITY_FORM_CONTROL_NAME]
-									: '';
-								const selectedAuthConfig = res.find(c => c.value.configInterpolation === cofigInterpolation);
-								this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(selectedAuthConfig?.value);
-								if (selectedAuthConfig) {
-									this.newAuthConfigValue$.next({
-										authConfig: selectedAuthConfig.value.configValue,
-										actionName: this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.value.actionName,
-										componentName: this.componentName,
-									});
-								}
-							}
-						}),
-						mapTo(void 0)
+
+					const requiredConfigsValues = {};
+					const optionalConfigsValues = {};
+					const authenticationConfigValue = this.intialComponentInputFormValue.input['authentication'];
+					requiredConfigsKeys.forEach(key => {
+						const configValue = this.intialComponentInputFormValue!.input[key];
+						if (configValue) {
+							requiredConfigsValues[key] = configValue;
+						}
+					});
+
+					optionalConfigsKeys.forEach(key => {
+						const configValue = this.intialComponentInputFormValue!.input[key];
+						if (configValue) {
+							optionalConfigsValues[key] = configValue;
+						}
+					});
+
+					this.componentForm.patchValue(
+						{
+							[REQUIRED_CONFIGS_FORM_CONTROL_NAME]: { ...requiredConfigsValues },
+							[OPTIONAL_CONFIGS_FORM_CONTROL_NAME]: { ...optionalConfigsValues },
+							[SECURITY_FORM_CONTROL_NAME]: authenticationConfigValue,
+						},
+						{ emitEvent: false }
 					);
+				}
+				if (this.intialComponentInputFormValue && this.intialComponentInputFormValue.input) {
+					const authConfigValue = this.intialComponentInputFormValue.input
+						? this.intialComponentInputFormValue?.input[SECURITY_FORM_CONTROL_NAME]
+						: null;
+					this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(authConfigValue, { emitEvent: false });
+
+					if (authConfigValue) {
+						this.newAuthConfigValue$.next({
+							authConfig: authConfigValue,
+							actionName: this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.value.actionName,
+							componentName: this.componentName,
+						});
+					}
+				}
 				this.cd.detectChanges();
 			})
 		);
@@ -322,11 +329,11 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 	writeValue(obj: ComponentInputFormSchema): void {
 		this.intialComponentInputFormValue = obj;
 
+		this.componentForm.get(ACTION_FORM_CONTROL_NAME)?.setValue(undefined, { emitEvent: false });
+		this.componentForm.get(SECURITY_FORM_CONTROL_NAME)?.setValue(undefined, { emitEvent: false });
 		if (obj.input && obj.action_name) {
-			this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.setValue(undefined, { emitEvent: false });
 			this.initialActionDropdownSetup(obj);
 		} else if (obj.component_name) {
-			this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.setValue(undefined, { emitEvent: false });
 			this.removeDataControls();
 		}
 		this.fetchActions(obj.component_name);
@@ -403,6 +410,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 			this.requiredConfigs.configs.forEach(c => {
 				requiredConfigsInitialValue[c.key] = c.value;
 			});
+
 			this.componentForm.get(REQUIRED_CONFIGS_FORM_CONTROL_NAME)?.setValue(requiredConfigsInitialValue);
 		}
 	}
@@ -454,13 +462,23 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 				);
 				this.componentForm.removeControl(CUSTOM_REQUEST_FORM_CONTROL_NAME, silentControlUpdatesSettings);
 			} else {
-				optionalConfigsControl!.setValue({}, silentControlUpdatesSettings);
-				requiredConfigsControl!.setValue({}, silentControlUpdatesSettings);
+				this.clearConfigsControl(optionalConfigsControl!);
+				this.clearConfigsControl(requiredConfigsControl!);
 			}
 			this.intialComponentInputFormValue = selectedAction;
 		}
 	}
-
+	clearConfigsControl(configsControl: AbstractControl) {
+		const values = configsControl.value;
+		if (values) {
+			const valuesKeys = Object.keys(values);
+			const clearedValues = {};
+			valuesKeys.forEach(k => {
+				clearedValues[k] = '';
+			});
+			configsControl.setValue(clearedValues);
+		}
+	}
 	addOptionalConfig(config: FrontEndConnectorConfig) {
 		this.optionalConfigsSelected = {
 			configs: [...this.optionalConfigsSelected.configs, config],
@@ -477,9 +495,9 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 		};
 	}
 
-	getFormattedFormData(): { action_name: string; input: { action: ComponentFormOutput } } {
+	getFormattedFormData(): { action_name: string; input: { [configKey: string]: any } } {
 		const action = this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.value;
-		const security: AuthConfigDropdownValue | undefined = this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value;
+		const authentication: any = this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value;
 
 		if (action === this.customRequestItem.value) {
 			const customRequestData = this.componentForm.get(CUSTOM_REQUEST_FORM_CONTROL_NAME)?.value || {
@@ -491,23 +509,22 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 
 			return {
 				action_name: this.customRequestItem.value.actionName,
-				input: {
-					action: { ...customRequestData, security: security?.configInterpolation },
-				},
+				...customRequestData,
+				authentication: authentication,
 			};
 		} else {
 			const optionalConfigs = this.componentForm.get(OPTIONAL_CONFIGS_FORM_CONTROL_NAME)?.value || {};
 			const requiredConfigs = this.componentForm.get(REQUIRED_CONFIGS_FORM_CONTROL_NAME)?.value || {};
-			return {
+			const res = {
 				action_name: action?.actionName,
 				input: {
-					action: {
-						requiredConfigs: requiredConfigs,
-						optionalConfigs: optionalConfigs,
-						security: security?.configInterpolation || '',
-					},
+					[SECURITY_FORM_CONTROL_NAME]: authentication,
+					...optionalConfigs,
+					...requiredConfigs,
 				},
 			};
+			console.log(res);
+			return res;
 		}
 	}
 	compareFn(item, selected) {
@@ -531,10 +548,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 		this.updateOrAddConfigModalClosed$ = modalRef.onHidden.pipe(
 			tap((newAuthConfig: Config) => {
 				if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
-					const authConfigOptionValue: AuthConfigDropdownValue = {
-						configInterpolation: `\${configs.${newAuthConfig.key}}`,
-						configValue: newAuthConfig.value,
-					};
+					const authConfigOptionValue = newAuthConfig.value;
 					this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(authConfigOptionValue);
 					this.newAuthConfigValue$.next({
 						authConfig: newAuthConfig.value,
@@ -546,10 +560,14 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 		);
 	}
 	editSelectedAuthConfig() {
-		const selectedValue: AuthConfigDropdownValue = this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value;
-		const configKey = selectedValue.configInterpolation.split('.')[1].replace('}', '');
-		this.updateAuthConfig$ = this.store.select(BuilderSelectors.selectConfig(configKey)).pipe(
+		const selectedValue: any = this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value;
+		const allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuth2Configs);
+		this.updateAuthConfig$ = allAuthConfigs$.pipe(
 			take(1),
+			map(configs => {
+				const updatedConfigIndex = configs.findIndex(c => JSON.stringify(selectedValue) === JSON.stringify(c.value));
+				return { config: configs[updatedConfigIndex], indexInList: updatedConfigIndex };
+			}),
 			tap(configAndIndex => {
 				if (configAndIndex) {
 					const modalRef = this.modalService.show(CreateEditConfigModalComponent, {
@@ -563,10 +581,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 					this.updateOrAddConfigModalClosed$ = modalRef.onHidden.pipe(
 						tap((newAuthConfig: Config) => {
 							if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
-								const authConfigOptionValue: AuthConfigDropdownValue = {
-									configInterpolation: `\${configs.${newAuthConfig.key}}`,
-									configValue: newAuthConfig.value,
-								};
+								const authConfigOptionValue = newAuthConfig.value;
 								this.componentForm.get(SECURITY_FORM_CONTROL_NAME)!.setValue(authConfigOptionValue);
 								this.newAuthConfigValue$.next({
 									authConfig: newAuthConfig.value,

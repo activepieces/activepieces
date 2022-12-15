@@ -6,7 +6,6 @@ import { HttpClient } from '@angular/common/http';
 import { ConnectorComponent } from '../../common-layout/components/configs-form/connector-action-or-config';
 import { environment } from 'src/environments/environment';
 import { Observable, shareReplay } from 'rxjs';
-import { AuthConfigDropdownValue } from '../page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/component-input-form.component';
 import { DropdownItemOption } from '../../common-layout/model/fields/variable/subfields/dropdown-item-option';
 
 @Injectable({
@@ -84,7 +83,7 @@ export class ActionMetaService {
 		return this.connectorComponents$;
 	}
 	getConnectorActionConfigOptions(
-		req: { config_name: string; action_name: string; config: AuthConfigDropdownValue },
+		req: { config_name: string; action_name: string; config: any },
 		componentName: string
 	) {
 		return this.http.post<DropdownItemOption[]>(environment.apiUrl + `/components/${componentName}/options`, req);

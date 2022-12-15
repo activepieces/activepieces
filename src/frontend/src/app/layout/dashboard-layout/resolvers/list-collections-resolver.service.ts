@@ -20,10 +20,10 @@ export class ListCollectionResolver implements Resolve<Observable<SeekPage<Colle
 	resolve(): Observable<SeekPage<Collection>> {
 		return this.projectService.selectedProjectAndTakeOne().pipe(
 			switchMap(project => {
-				debugger;
+
 				return this.collectionService.list(project.id, 9999).pipe(
 					map(f => {
-						debugger;
+
 						for (let i = 0; i < f.data.length; ++i) {
 							f.data[i].flowCount = this.flowService.listByCollection(f.data[i].id, 9999).pipe(
 								map(value => {

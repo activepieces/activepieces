@@ -3,14 +3,14 @@
 
     <div>
       <label required>What do you want to do?</label>
-      <ng-select formControlName="action" [items]="actions$ | async" bindLabel="label" bindValue="value" appendTo="body"
+      <ng-select [formControlName]="ACTION_FORM_CONTROL_NAME" [items]="actions$ | async" bindLabel="label" bindValue="value" appendTo="body"
         [clearable]="false" [searchFn]="customSearchFn" #select class="connector-actions-dropdown"   loadingText="Loading..."  [compareWith]="compareFn" >
         <ng-template ng-notfound-tmp let-searchTerm="searchTerm">
           <app-ng-select-no-items-found-template [searchTerm]="searchTerm">
           </app-ng-select-no-items-found-template>
         </ng-template>
         <ng-template ng-label-tmp let-item="item">
-          <ng-container *ngIf="componentForm.get('action')!.value !== customRequestItem.value; else customRequestLabel">
+          <ng-container *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value !== customRequestItem.value; else customRequestLabel">
             <app-ng-select-connector-action-item-template [item]="selectedAction$ |async" [hideDescription]="true">
             </app-ng-select-connector-action-item-template>
           </ng-container>
@@ -28,7 +28,7 @@
           <app-ng-select-custom-request (click)="select.close();customRequestChosen();"></app-ng-select-custom-request>
         </ng-template>
       </ng-select>
-      <p @fadeInUp  class="invalid-input" *ngIf="componentForm.get('action')!.invalid ">
+      <p @fadeInUp  class="invalid-input" *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.invalid ">
         Please select an action.
       </p>
       <div class="authentication-section" >
@@ -38,18 +38,18 @@
           btnColor="primary"
           btnStyle="basic"
           btnSize="extraSmall"
-          *ngIf="componentForm.enabled && componentForm.get('security')!.value"
+          *ngIf="componentForm.enabled && componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value"
           (buttonClicked)="editSelectedAuthConfig()"
           class="edit-selected-auth"
         > Edit
         </app-button>
           <ng-select [items]="allAuthConfigs$|async" bindLabel="label" bindValue="value"
-          formControlName="security" [searchable]="false" [clearable]="false" appendTo="body"
+          [formControlName]="SECURITY_FORM_CONTROL_NAME" [searchable]="false" [clearable]="false" appendTo="body"
           [compareWith]="authenticationDropdownCompareWithFunction"
           class="security-dropdown"
           placeholder="Please select">
           <ng-template ng-option-tmp let-item="item">
-            <app-ng-select-item-template [item]="item" [isSelected]="componentForm.get('security')!.value?.configInterpolation===item.value.configInterpolation">
+            <app-ng-select-item-template [item]="item" [isSelected]="componentForm.get(SECURITY_FORM_CONTROL_NAME)!.value?.configInterpolation===item.value.configInterpolation">
             </app-ng-select-item-template>
           </ng-template>
         </ng-select>
@@ -65,7 +65,7 @@
       >   + New Authentication
       </app-button>
         </div>
-        <p @fadeInUp  class="invalid-input" *ngIf="componentForm.get('security')!.invalid ">
+        <p @fadeInUp  class="invalid-input" *ngIf="componentForm.get(SECURITY_FORM_CONTROL_NAME)!.invalid ">
           Please select an authentication config or add one.
         </p>
 
@@ -73,14 +73,14 @@
     </div>
 
 
-    <ng-container *ngIf="componentForm.get('action')!.value === customRequestItem.value  ;else definedActionTemplate">
-      <app-connector-custom-request-form-control formControlName="customRequest">
+    <ng-container *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value === customRequestItem.value  ;else definedActionTemplate">
+      <app-connector-custom-request-form-control [formControlName]="CUSTOM_REQUEST_FORM_CONTROL_NAME">
       </app-connector-custom-request-form-control>
     </ng-container>
     <ng-template #definedActionTemplate>
-      <div *ngIf="componentForm.get('action')!.value">
+      <div *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value">
           <div>
-            <app-configs-form [newAuthConfigValue$]="newAuthConfigValue$" [showDescriptionAsTooltips]="true"  formControlName="requiredConfigs" [configs]=" requiredConfigs"
+            <app-configs-form [newAuthConfigValue$]="newAuthConfigValue$" [showDescriptionAsTooltips]="true"  [formControlName]="REQUIRED_CONFIGS_FORM_CONTROL_NAME" [configs]=" requiredConfigs"
               [showSlider]="true" [submitted]="true">
             </app-configs-form>
           </div>
@@ -105,7 +105,7 @@
               </mat-menu>
             </div>
             <app-configs-form  [newAuthConfigValue$]="newAuthConfigValue$" [showDescriptionAsTooltips]="true"  (configRemoved)="configRemoved($event)" [allowRemoveConfig]="true"
-              formControlName="optionalConfigs" [configs]="optionalConfigsSelected" [showSlider]="true">
+              [formControlName]="OPTIONAL_CONFIGS_FORM_CONTROL_NAME" [configs]="optionalConfigsSelected" [showSlider]="true">
             </app-configs-form>
           </div>
       </div>
