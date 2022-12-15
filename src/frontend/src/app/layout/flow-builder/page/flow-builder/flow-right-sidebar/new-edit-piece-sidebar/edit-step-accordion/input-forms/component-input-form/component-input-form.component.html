@@ -4,7 +4,6 @@
     <div>
       <label required>What do you want to do?</label>
       <ng-select formControlName="action" [items]="actions$ | async" bindLabel="label" bindValue="value" appendTo="body"
-
         [clearable]="false" [searchFn]="customSearchFn" #select class="connector-actions-dropdown"   loadingText="Loading..."  [compareWith]="compareFn" >
         <ng-template ng-notfound-tmp let-searchTerm="searchTerm">
           <app-ng-select-no-items-found-template [searchTerm]="searchTerm">
@@ -75,16 +74,15 @@
 
 
     <ng-container *ngIf="componentForm.get('action')!.value === customRequestItem.value  ;else definedActionTemplate">
-
       <app-connector-custom-request-form-control formControlName="customRequest">
       </app-connector-custom-request-form-control>
     </ng-container>
     <ng-template #definedActionTemplate>
       <div *ngIf="componentForm.get('action')!.value">
           <div>
-            <app-configs-form-for-connectors [showDescriptionAsTooltips]="true"  formControlName="requiredConfigs" [configs]=" requiredConfigs"
+            <app-configs-form [newAuthConfigValue$]="newAuthConfigValue$" [showDescriptionAsTooltips]="true"  formControlName="requiredConfigs" [configs]=" requiredConfigs"
               [showSlider]="true" [submitted]="true">
-            </app-configs-form-for-connectors>
+            </app-configs-form>
           </div>
           <div>
             <div *ngIf=" !(componentForm.disabled && allOptionalConfigs.length===0)" class="d-flex align-items-center optional-input-label-container">
@@ -104,25 +102,22 @@
                     </div>
                   </ng-container>
                 </ng-container>
-
               </mat-menu>
             </div>
-            <app-configs-form-for-connectors  [showDescriptionAsTooltips]="true"  (configRemoved)="configRemoved($event)" [allowRemoveConfig]="true"
+            <app-configs-form  [newAuthConfigValue$]="newAuthConfigValue$" [showDescriptionAsTooltips]="true"  (configRemoved)="configRemoved($event)" [allowRemoveConfig]="true"
               formControlName="optionalConfigs" [configs]="optionalConfigsSelected" [showSlider]="true">
-            </app-configs-form-for-connectors>
+            </app-configs-form>
           </div>
       </div>
     </ng-template>
-
-
-
   </div>
 
 </form>
 
 <ng-container *ngIf="valueChanges$ | async"></ng-container>
 <ng-container *ngIf="actionDropdownValueChanged$ | async"></ng-container>
-<ng-container *ngIf="newAuthConfigAdded$ | async"></ng-container>
+<ng-container *ngIf="updateOrAddConfigModalClosed$ | async"></ng-container>
 <ng-container *ngIf="updateAuthConfig$ | async"> </ng-container>
 <ng-container *ngIf="initialSetup$ | async"> </ng-container>
 <ng-container *ngIf="setInitiallySelectedAuthConfig$|async"></ng-container>
+<ng-container *ngIf="authDropdownValueChanged$ | async"> </ng-container>

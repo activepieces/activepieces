@@ -20,9 +20,10 @@ export class ListPiecesResolver implements Resolve<Observable<SeekPage<Collectio
 	resolve(): Observable<SeekPage<Collection>> {
 		return this.projectService.selectedProjectAndTakeOne().pipe(
 			switchMap(project => {
+
 				return this.pieceService.list(project.id, 9999).pipe(
 					map(f => {
-						// f.data[i].flowCount = this.flowService.li
+
 						for (let i = 0; i < f.data.length; ++i) {
 							f.data[i].flowCount = this.flowService.listByPiece(f.data[i].id, 9999).pipe(
 								map(value => {

@@ -1,7 +1,3 @@
-import { InputUiType } from '@activepieces/components';
-
-import { from, Observable } from 'rxjs';
-import { DropdownItemOption } from '../../../model/fields/variable/subfields/dropdown-item-option';
 export enum HttpMethod {
 	CONNECT = 'CONNECT',
 	DELETE = 'DELETE',
@@ -16,33 +12,27 @@ export enum HttpMethod {
 
 export class FrontEndConnectorConfig {
 	key: string;
-	type: InputUiType;
+	type: InputType;
 	label: string;
 	value: any;
 	description?: string;
 	required: boolean;
-	options?: Observable<DropdownItemOption[]>;
 }
 export class ComponnentConfigsForActionsOrTriggers {
 	name: string;
 	description: string;
 	url: string;
 	httpMethod: HttpMethod;
-	uiType: InputUiType;
+	type: InputType;
 	required: boolean;
 	displayName: string;
-	options?: (accessToken: string) => Promise<DropdownItemOption[]>;
-	static convertToFrontEndConfig(componentConfig: ComponnentConfigsForActionsOrTriggers, accessToken: string) {
+	static convertToFrontEndConfig(componentConfig: ComponnentConfigsForActionsOrTriggers) {
 		const frontEndConfig = new FrontEndConnectorConfig();
 		frontEndConfig.description = componentConfig.description;
 		frontEndConfig.key = componentConfig.name;
 		frontEndConfig.label = componentConfig.displayName;
 		frontEndConfig.required = componentConfig.required;
-
-		frontEndConfig.type = componentConfig.uiType as any;
-		if (componentConfig.options) {
-			frontEndConfig.options = from(componentConfig.options(accessToken));
-		}
+		frontEndConfig.type = componentConfig.type;
 		return frontEndConfig;
 	}
 }
@@ -57,4 +47,13 @@ export class ConnectorComponent {
 		httpMethod: HttpMethod;
 		configs: ComponnentConfigsForActionsOrTriggers[];
 	}[];
+}
+export enum InputType {
+	SHORT_TEXT = 'SHORT_TEXT',
+	LONG_TEXT = 'LONG_TEXT',
+	SELECT = 'SELECT',
+	NUMBER = 'NUMBER',
+	CHECKBOX = 'CHECKBOX',
+	JSON = 'JSON',
+	OAUTH2 = 'OAUTH2',
 }

@@ -294,7 +294,7 @@ export const selectAuthConfigsDropdownOptions = createSelector(
 			.map(c => {
 				const result: { label: string; value: AuthConfigDropdownValue } = {
 					label: c.key,
-					value: { configInterpolation: `\${configs.${c.key}}`, accessToken: c.value['access_token'] },
+					value: { configInterpolation: `\${configs.${c.key}}`, configValue: c.value },
 				};
 				return result;
 			});

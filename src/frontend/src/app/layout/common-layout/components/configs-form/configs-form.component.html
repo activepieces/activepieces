@@ -62,6 +62,4 @@
   </div>
 </form>
 <ng-container *ngIf="updateValueOnChange$ | async"></ng-container>
-<ng-container *ngFor="let refreshRefernceValueChanged$ of refreshReferencesList$">
-  <ng-container *ngIf="refreshRefernceValueChanged$|async"></ng-container>
-</ng-container>
+<ng-container *ngIf="refreshDropwdowns$ | async"></ng-container>

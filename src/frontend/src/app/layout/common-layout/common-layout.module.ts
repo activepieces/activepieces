@@ -66,7 +66,6 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { EndpointFormControlComponent } from './components/form-controls/endpoint-form-control/endpoint-form-control.component';
 import { ConnectorCustomRequestFormControlComponent } from './components/form-controls/connector-custom-request-form-control/connector-custom-request-form-control.component';
 import { MatMenuModule } from '@angular/material/menu';
-import { ConfigsFormForConnectorsComponent } from './components/configs-form/configs-form-for-connectors/configs-form-for-connectors.component';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 500,
 	hideDelay: 0,
@@ -119,7 +118,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		NgSelectNoItemsFoundTemplateComponent,
 		EndpointFormControlComponent,
 		ConnectorCustomRequestFormControlComponent,
-		ConfigsFormForConnectorsComponent,
 	],
 	imports: [
 		TimeagoModule,
@@ -196,7 +194,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		EndpointFormControlComponent,
 		ConnectorCustomRequestFormControlComponent,
 		MatMenuModule,
-		ConfigsFormForConnectorsComponent,
 	],
 	providers: [
 		HighlightService,

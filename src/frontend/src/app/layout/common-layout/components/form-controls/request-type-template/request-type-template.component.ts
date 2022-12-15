@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
-import { HttpMethod } from '../../configs-form/configs-form-for-connectors/connector-action-or-config';
+import { HttpMethod } from '../../configs-form/connector-action-or-config';
 
 @Component({
 	selector: 'app-request-type-template',

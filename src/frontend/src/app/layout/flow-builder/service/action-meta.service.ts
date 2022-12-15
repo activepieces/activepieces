@@ -2,11 +2,18 @@ import { Injectable } from '@angular/core';
 import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionType } from '../../common-layout/model/enum/action-type.enum';
 import { TriggerType } from '../../common-layout/model/enum/trigger-type.enum';
+import { HttpClient } from '@angular/common/http';
+import { ConnectorComponent } from '../../common-layout/components/configs-form/connector-action-or-config';
+import { environment } from 'src/environments/environment';
+import { Observable, shareReplay } from 'rxjs';
+import { AuthConfigDropdownValue } from '../page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/component-input-form.component';
+import { DropdownItemOption } from '../../common-layout/model/fields/variable/subfields/dropdown-item-option';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class ActionMetaService {
+	private connectorComponents$: Observable<ConnectorComponent[]>;
 	public coreFlowItemsDetails: FlowItemDetails[] = [
 		{
 			type: ActionType.CODE,
@@ -66,4 +73,20 @@ export class ActionMetaService {
 			logoUrl: '/assets/img/custom/piece/empty-trigger.svg',
 		},
 	];
+	constructor(private http: HttpClient) {}
+	private getComponents() {
+		return this.http.get<ConnectorComponent[]>(environment.apiUrl + '/components');
+	}
+	public connectorComponents() {
+		if (!this.connectorComponents$) {
+			this.connectorComponents$ = this.getComponents().pipe(shareReplay(1));
+		}
+		return this.connectorComponents$;
+	}
+	getConnectorActionConfigOptions(
+		req: { config_name: string; action_name: string; config: AuthConfigDropdownValue },
+		componentName: string
+	) {
+		return this.http.post<DropdownItemOption[]>(environment.apiUrl + `/components/${componentName}/options`, req);
+	}
 }
