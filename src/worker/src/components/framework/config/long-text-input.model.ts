@@ -1,5 +1,4 @@
 import type {BasicInput} from './basic-input.model';
-import type {InputDataType} from './input-data-type.model';
-import type {InputUiType} from './input-ui-type.model';
+import {InputType} from "./input-type.model";
 
-export type LongTextInput = BasicInput<InputUiType.LONG_TEXT, InputDataType.STRING>;
+export type LongTextInput = BasicInput<InputType.LONG_TEXT>;

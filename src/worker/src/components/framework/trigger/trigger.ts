@@ -1,11 +1,11 @@
-import type {Authentication} from '../../common/authentication/core/authentication';
 import type {TriggerType} from './trigger-type';
+import {ConfigurationValue} from "../config/configuration-value.model";
 
 export type Trigger = {
 	name: string;
 	description: string;
 	type: TriggerType;
-	onCreate: (auth: Authentication) => Promise<Record<string, any>>;
-	onDestroy: (auth: Authentication, triggerId: string) => Promise<Record<string, any>>;
-	onEvent: (event: Record<string, any>) => Promise<Record<string, any>>;
+	onCreate: (config: ConfigurationValue) => Promise<Record<string, any>>;
+	onDestroy: (config: ConfigurationValue) => Promise<Record<string, any>>;
+	run: (config: ConfigurationValue) => Promise<Record<string, any>>;
 };

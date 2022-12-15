@@ -2,6 +2,7 @@ import type {HttpMethod} from '../../common/http/core/http-method';
 import type {ConfigurationValue} from '../config/configuration-value.model';
 import type {Input} from '../config/input.model';
 import type {Runner, RunnerStatus} from './runner';
+import {Worker} from "../worker";
 
 export class Action {
 	// eslint-disable-next-line max-params
@@ -14,8 +15,8 @@ export class Action {
 		private readonly runner: Runner,
 	) {}
 
-	async run(configValue: ConfigurationValue): Promise<RunnerStatus> {
-		return this.runner(configValue);
+	async run(worker: Worker, configValue: ConfigurationValue): Promise<RunnerStatus> {
+		return this.runner(worker, configValue);
 	}
 }
 

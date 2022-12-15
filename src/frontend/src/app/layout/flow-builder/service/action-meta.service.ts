@@ -2,14 +2,11 @@ import { Injectable } from '@angular/core';
 import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionType } from '../../common-layout/model/enum/action-type.enum';
 import { TriggerType } from '../../common-layout/model/enum/trigger-type.enum';
-import { Observable } from 'rxjs';
-import { Manifest } from '../model/manifest';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class ActionMetaService {
-	manifests$: Map<string, Observable<Manifest>> = new Map();
 	public coreFlowItemsDetails: FlowItemDetails[] = [
 		{
 			type: ActionType.CODE,
@@ -51,14 +48,14 @@ export class ActionMetaService {
 			logoUrl: '/assets/img/custom/piece/webhook.svg',
 		},
 		{
-			type: TriggerType.COLLECTION_STOPPED,
-			name: 'Collection Stopped',
+			type: TriggerType.COLLECTION_DISABLED,
+			name: 'Collection Disabled',
 			description: 'Trigger flow when collection is stopped and on old deployments if a new deployment occurs',
 			logoUrl: '/assets/img/custom/piece/instance-stopped.svg',
 		},
 		{
-			type: TriggerType.COLLECTION_DEPLOYED,
-			name: 'Instance Started',
+			type: TriggerType.COLLECTION_ENABLED,
+			name: 'Instance Enabled',
 			description: 'Trigger flow when collection is deployed',
 			logoUrl: '/assets/img/custom/piece/instance-started.svg',
 		},
