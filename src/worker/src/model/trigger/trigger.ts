@@ -1,5 +1,13 @@
-import {Action} from './action';
-import {createAction} from './action-factory';
+import {Action} from '../action/action';
+import {createAction} from '../action/action-factory';
+
+export enum TriggerType {
+  COMPONENT = 'COMPONENT',
+  SCHEDULE = 'SCHEDULE',
+  WEBHOOK = 'WEBHOOK',
+  COLLECTION_ENABLED = 'COLLECTION_ENABLED',
+  COLLECTION_DISABLED = 'COLLECTION_DISABLED',
+}
 
 export class Trigger {
   nextAction?: Action;
