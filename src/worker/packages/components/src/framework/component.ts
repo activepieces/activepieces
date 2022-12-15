@@ -1,4 +1,3 @@
-import type {Action} from './action/action';
 import {ActionNotFoundError} from './action/action-not-found-error';
 import type {RunnerStatus} from './action/runner';
 import type {ConfigurationValue} from './config/configuration-value.model';
@@ -7,6 +6,7 @@ import {TriggerNotFoundError} from './trigger/trigger-not-found-error';
 import {ConfigNotFoundError} from "./config/config-not-found-error";
 import {SelectInput} from "./config/select-input.model";
 import {Worker} from "./worker";
+import {Action} from "./action/action";
 
 export class Component {
 	private readonly _actions: Record<string, Action>;
