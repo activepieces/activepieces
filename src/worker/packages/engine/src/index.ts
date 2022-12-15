@@ -4,11 +4,13 @@ import {Utils} from './utils';
 import {StepOutput} from './model/output/step-output';
 import {globals} from './globals';
 import {StoreScope} from './model/util/store-scope';
-import {slack} from "./components/apps/slack";
-import {ConfigurationValue} from "./components/framework/config/configuration-value.model";
-import {Component} from "./components/framework/component";
-import {InputOption} from "./components/framework/config/input-option.model";
-import {Trigger} from "./components/framework/trigger/trigger";
+import {slack} from "components/dist/src/apps/slack";
+import {Component} from "components/dist/src/framework/component";
+import {ConfigurationValue} from "components/dist/src/framework/config/configuration-value.model";
+
+import {InputOption} from "components/dist/src/framework/config/input-option.model";
+import { Trigger } from 'components/dist/src/framework/trigger/trigger';
+
 
 function executeFlow() {
     try {
