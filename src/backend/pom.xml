@@ -32,6 +32,7 @@
         <module>file-service</module>
         <module>lock-service</module>
         <module>feature-service</module>
+        <module>component-service</module>
     </modules>
     <dependencies>
         <dependency>
