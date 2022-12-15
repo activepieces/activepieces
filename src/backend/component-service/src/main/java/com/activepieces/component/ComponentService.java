@@ -1,34 +1,27 @@
-package com.activepieces.worker.service;
+package com.activepieces.component;
 
+import com.activepieces.common.Constants;
 import com.activepieces.common.utils.ArtifactUtils;
 import com.activepieces.entity.enums.CustomTriggerType;
-import com.activepieces.worker.Constants;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.NonNull;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 @Service
-public class ComponentServiceImpl {
+public class ComponentService {
 
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public ComponentServiceImpl(@NonNull final ObjectMapper objectMapper){
+    public ComponentService(@NonNull final ObjectMapper objectMapper){
         this.objectMapper = objectMapper;
     }
 

@@ -1,5 +1,5 @@
 import {Variable} from './variable/variable';
-import {Trigger} from './action/trigger';
+import {Trigger} from './trigger/trigger';
 
 export class FlowVersion {
   trigger?: Trigger;

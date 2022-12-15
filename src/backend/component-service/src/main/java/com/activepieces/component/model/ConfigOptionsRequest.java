@@ -1,4 +1,4 @@
-package com.activepieces.worker.model;
+package com.activepieces.component.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
