@@ -9,15 +9,7 @@ import {Component} from "components/dist/src/framework/component";
 import {ConfigurationValue} from "components/dist/src/framework/config/configuration-value.model";
 
 import {InputOption} from "components/dist/src/framework/config/input-option.model";
-import {ComponentTrigger, ComponentTriggerSettings} from "./model/trigger/types/component-trigger";
-import {Trigger} from "components/dist/src/framework/trigger/trigger";
-import {TriggerMetadata, TriggerStepType} from "./model/trigger/trigger-metadata";
-import {FlowVersion} from "./model/flow-version";
-import {VariableService} from "./services/variable-service";
-
-
-const apps = [slack];
-const args = process.argv.slice(2);
+import { Trigger } from 'components/dist/src/framework/trigger/trigger';
 
 
 function executeFlow() {
@@ -31,14 +23,16 @@ function executeFlow() {
 
         globals.workerToken = input.workerToken;
         globals.apiUrl = input.apiUrl;
+        const executionState = new ExecutionState();
         const configs = Utils.parseJsonFile(globals.configsFile);
         const triggerPayload: StepOutput = StepOutput.deserialize(
             Utils.parseJsonFile(globals.triggerPayloadFile)
         );
 
-        const executionState = new ExecutionState();
         executionState.insertStep(triggerPayload, 'trigger', []);
+
         const executor = new FlowExecutor(executionState);
+
         executor
             .executeFlow(
                 input.collectionVersionId,
@@ -54,40 +48,25 @@ function executeFlow() {
     }
 }
 
-async function executeTrigger(): Promise<unknown[]> {
-    let optionRequest: { flowVersion: FlowVersion, configs: ConfigurationValue } = JSON.parse(args[1]);
-    if (optionRequest.flowVersion.trigger === undefined || optionRequest.flowVersion.trigger === null
-        || optionRequest.flowVersion.trigger.type !== TriggerStepType.COMPONENT) {
-        return [];
-    }
-    let componentSettings = (optionRequest.flowVersion.trigger as ComponentTrigger).settings;
-    let application = apps.find(f => f.name === componentSettings.componentName);
-    if (application === undefined) {
-        throw new Error("Component " + componentSettings.componentName + " is not found");
-    }
-    let trigger = application.getTrigger(componentSettings.componentName);
-    let executionState = new ExecutionState();
-    executionState.insertConfigs(optionRequest.configs);
-    let variableService = new VariableService();
-    return trigger.run(variableService.resolve(componentSettings.input, executionState));
+const apps = [slack];
+const args = process.argv.slice(2);
+
+function printMetadata() {
+    console.log(JSON.stringify(apps.map(f => f.metadata())));
 }
 
-function getMetadata() {
-    return apps.map(f => f.metadata());
-}
-
-async function getTriggerType() {
+async function printTriggerType(){
     let optionRequest: { componentName: string, triggerName: string } = JSON.parse(args[1]);
     let app: Component = apps.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
     let trigger: Trigger = app.getTrigger(optionRequest.triggerName);
-    return trigger.type;
+    console.log(trigger.type);
 }
 
-async function getOptions() {
+async function printOptions() {
     let optionRequest: { componentName: string, actionName: string, configName: string, config: ConfigurationValue } = JSON.parse(args[1]);
     let app: Component = apps.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
     let inputOptions: InputOption[] = await app.runConfigOptions(optionRequest.actionName, optionRequest.configName, optionRequest.config);
-    return inputOptions;
+    console.log(JSON.stringify(inputOptions));
 }
 
 async function execute() {
@@ -95,17 +74,14 @@ async function execute() {
         case 'execute-flow':
             executeFlow();
             break;
-        case 'execute-trigger':
-            console.log(JSON.stringify(await executeTrigger()));
-            break;
         case 'components':
-            console.log(JSON.stringify(getMetadata()));
+            printMetadata();
             break;
         case 'options':
-            console.log(JSON.stringify(await getOptions()));
+            await printOptions()
             break;
         case 'trigger-type':
-            console.log(JSON.stringify(await getTriggerType()));
+            await printTriggerType();
             break;
         default:
             break;
