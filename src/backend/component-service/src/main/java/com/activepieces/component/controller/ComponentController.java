@@ -1,30 +1,16 @@
-package com.activepieces.worker.controller;
+package com.activepieces.component.controller;
 
-import com.activepieces.common.utils.ArtifactUtils;
-import com.activepieces.worker.Constants;
-import com.activepieces.worker.model.ConfigOptionsRequest;
-import com.activepieces.worker.service.CodeExecutionService;
-import com.activepieces.worker.service.ComponentServiceImpl;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.activepieces.component.ComponentService;
+import com.activepieces.component.model.ConfigOptionsRequest;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.Map;
 
 @CrossOrigin
 @RestController
@@ -33,10 +19,10 @@ import java.util.Map;
 public class ComponentController {
 
 
-  private final ComponentServiceImpl componentService;
+  private final ComponentService componentService;
 
   @Autowired
-  public ComponentController(@NonNull final ComponentServiceImpl componentService) {
+  public ComponentController(@NonNull final ComponentService componentService) {
     this.componentService = componentService;
   }
 
