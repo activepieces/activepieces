@@ -1,7 +1,7 @@
-package com.activepieces.worker.controller;
+package com.activepieces.component.controller;
 
-import com.activepieces.worker.model.ConfigOptionsRequest;
-import com.activepieces.worker.service.ComponentServiceImpl;
+import com.activepieces.component.ComponentService;
+import com.activepieces.component.model.ConfigOptionsRequest;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.NonNull;
@@ -19,10 +19,10 @@ import java.util.List;
 public class ComponentController {
 
 
-  private final ComponentServiceImpl componentService;
+  private final ComponentService componentService;
 
   @Autowired
-  public ComponentController(@NonNull final ComponentServiceImpl componentService) {
+  public ComponentController(@NonNull final ComponentService componentService) {
     this.componentService = componentService;
   }
 

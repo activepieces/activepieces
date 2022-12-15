@@ -5,7 +5,7 @@ export type Trigger = {
 	name: string;
 	description: string;
 	type: TriggerType;
-	onCreate: (config: ConfigurationValue) => Promise<Record<string, any>>;
-	onDestroy: (config: ConfigurationValue) => Promise<Record<string, any>>;
+	onEnable: (config: ConfigurationValue) => Promise<Record<string, any>>;
+	onDisable: (config: ConfigurationValue) => Promise<Record<string, any>>;
 	run: (config: ConfigurationValue) => Promise<Record<string, any>>;
 };
