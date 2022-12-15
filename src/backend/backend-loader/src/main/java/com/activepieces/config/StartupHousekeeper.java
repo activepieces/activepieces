@@ -11,6 +11,8 @@ import com.activepieces.project.client.model.CreateProjectRequest;
 import com.activepieces.project.client.model.ProjectView;
 import com.activepieces.worker.Constants;
 import lombok.NonNull;
+import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
+@Log4j2
 public class StartupHousekeeper {
 
     private final UserAuthenticationService authenticationService;
@@ -46,6 +49,7 @@ public class StartupHousekeeper {
 
     @EventListener(ContextRefreshedEvent.class)
     public void contextRefreshedEvent() throws SchedulerException, IOException {
+        log.info("Running Startup configuration");
         final UserInformationView user = authenticationService.getOptional("admin@activepieces.com")
                 .orElse(authenticationService.create("admin@activepieces.com",
                         SignUpRequest.builder().firstName("Activepieces")
