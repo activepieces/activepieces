@@ -66,9 +66,9 @@ public class ComponentService {
 
     private String runJs(final String args, final String secondArgs) throws IOException, InterruptedException {
         if(Objects.isNull(secondArgs)){
-            return ArtifactUtils.runCommandAsRoot(String.format("node %s %s", Constants.ACTIVEPIECES_WORKER_JS, args));
+            return ArtifactUtils.runCommandAsRoot(String.format("node %s %s", Constants.ACTIVEPIECES_WORKER_ABS_PATH_JS, args));
         }
-        return ArtifactUtils.runCommandAsRoot(String.format("node %s %s %s", Constants.ACTIVEPIECES_WORKER_JS,
+        return ArtifactUtils.runCommandAsRoot(String.format("node %s %s %s", Constants.ACTIVEPIECES_WORKER_ABS_PATH_JS,
                 args,
                 ArtifactUtils.escapeShellDoubleQuoteString(secondArgs, true)));
     }

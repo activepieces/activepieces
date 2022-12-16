@@ -28,7 +28,6 @@ import java.util.List;
 @Log4j2
 public class StartupHousekeeper {
 
-    public static final String HOME_PATH = (new File(System.getProperty("user.home")).exists() ? System.getProperty("user.home") : "/root") + File.separator + "activepieces";
 
     private final UserAuthenticationService authenticationService;
     private final ProjectService projectService;
@@ -60,7 +59,7 @@ public class StartupHousekeeper {
         }
         // Place worker js
         final Resource workerExecutor = new ClassPathResource(Constants.ACTIVEPIECES_WORKER_JS);
-        final File temp = new File(HOME_PATH).toPath().resolve(Constants.ACTIVEPIECES_WORKER_JS).toFile();
+        final File temp = new File(Constants.ACTIVEPIECES_WORKER_ABS_PATH_JS);
         temp.getParentFile().mkdirs();
         Files.copy(
                 workerExecutor.getInputStream(),

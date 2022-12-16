@@ -4,7 +4,6 @@ import {Utils} from './utils';
 import {StepOutput} from './model/output/step-output';
 import {globals} from './globals';
 import {StoreScope} from './model/util/store-scope';
-import {slack} from "components/dist/src/apps/slack";
 import {Component} from "components/dist/src/framework/component";
 import {ConfigurationValue} from "components/dist/src/framework/config/configuration-value.model";
 
@@ -14,9 +13,9 @@ import {Trigger} from "components/dist/src/framework/trigger/trigger";
 import {TriggerMetadata, TriggerStepType} from "./model/trigger/trigger-metadata";
 import {FlowVersion} from "./model/flow-version";
 import {VariableService} from "./services/variable-service";
+import {apps} from "components/dist/src/apps";
 
 
-const apps = [slack];
 const args = process.argv.slice(2);
 
 
