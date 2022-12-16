@@ -8,7 +8,7 @@ import com.activepieces.guardian.client.exception.ResourceNotFoundException;
 import com.activepieces.logging.client.InstanceRunService;
 import com.activepieces.logging.client.model.InstanceRunView;
 import com.activepieces.piece.client.model.CollectionVersionView;
-import com.activepieces.worker.Constants;
+import com.activepieces.common.Constants;
 import com.activepieces.worker.model.WorkerExecutionResult;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
@@ -32,7 +32,7 @@ public class UploadRunState extends Step {
           CollectionVersionView collectionVersionView,
           FlowVersionView flowVersionView,
           Map<String, Object> input,
-          Map<String, Object> triggerPayload,
+          Object triggerPayload,
           Map<String, Object> output,
           StorePath storePath)
       throws IOException, InstanceNotFoundException,

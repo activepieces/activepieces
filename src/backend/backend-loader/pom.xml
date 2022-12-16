@@ -4,7 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <artifactId>backend-loader</artifactId>
     <dependencies>
-
+        <dependency>
+            <artifactId>component-service</artifactId>
+            <groupId>com.activepieces</groupId>
+            <scope>compile</scope>
+            <version>1.0</version>
+        </dependency>
         <dependency>
             <artifactId>project-server</artifactId>
             <groupId>com.activepieces</groupId>

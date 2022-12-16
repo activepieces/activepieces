@@ -26,8 +26,7 @@
     "webpack-cli": "^4.10.0"
   },
   "scripts": {
-    "build": "webpack --mode production",
-    "build:dev": "webpack --mode development --watch",
+    "build": "webpack --mode production && cp dist/activepieces-worker.js ../../../backend/backend-loader/src/main/resources/activepieces-worker.js",
     "lint": "gts lint",
     "clean": "gts clean",
     "compile": "gts clean && tsc && cd dist/src && node index.js",

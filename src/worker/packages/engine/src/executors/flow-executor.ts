@@ -1,6 +1,5 @@
 import {ExecutionState} from '../model/execution/execution-state';
 import {FlowVersion} from '../model/flow-version';
-import {Action, ActionType} from '../model/action/action';
 import {CollectionVersion} from '../model/collection-version';
 import {StepOutputStatus} from '../model/output/step-output';
 import {ExecutionError} from '../model/execution/execution-error';
@@ -11,6 +10,7 @@ import {
 import {Utils} from '../utils';
 import {globals} from '../globals';
 import {StoreScope} from '../model/util/store-scope';
+import {ActionMetadata, ActionType} from "../model/action/action-metadata";
 
 export class FlowExecutor {
   private readonly executionState: ExecutionState;
@@ -89,7 +89,7 @@ export class FlowExecutor {
   }
 
   private getOutput(flowVersion: FlowVersion) {
-    let action: Action | undefined = flowVersion.trigger?.nextAction;
+    let action: ActionMetadata | undefined = flowVersion.trigger?.nextAction;
     while (action !== undefined) {
       if (action.type === ActionType.RESPONSE) {
         return this.executionState.steps[action.name]!.output;
@@ -100,7 +100,7 @@ export class FlowExecutor {
   }
 
   public async iterateFlow(
-    action: Action | undefined,
+    action: ActionMetadata | undefined,
     ancestors: [string, number][],
     storeScope: StoreScope
   ): Promise<boolean> {

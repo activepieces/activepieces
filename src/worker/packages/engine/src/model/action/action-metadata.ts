@@ -11,12 +11,12 @@ export enum ActionType {
   LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
 }
 
-export abstract class Action {
+export abstract class ActionMetadata {
   type: ActionType;
   name: string;
-  nextAction?: Action;
+  nextAction?: ActionMetadata;
 
-  protected constructor(type: ActionType, name: string, nextAction?: Action) {
+  protected constructor(type: ActionType, name: string, nextAction?: ActionMetadata) {
     this.validate(type, name);
     this.type = type;
     this.name = name;

@@ -63,7 +63,7 @@ public class WorkerServiceImpl implements WorkerService {
             CollectionVersionView collectionVersionView,
             FlowVersionView flowVersionView,
             Map<String, Object> configs,
-            Map<String, Object> triggerPayload,
+            Object triggerPayload,
             StorePath storePath)
             throws Exception {
         InstanceRunView resultRun;

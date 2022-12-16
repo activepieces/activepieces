@@ -1,8 +1,12 @@
 package com.activepieces.trigger.schedule.server.component;
 
+import com.activepieces.actions.model.action.ComponentActionMetadataView;
+import com.activepieces.actions.model.action.settings.ComponentSettingsView;
 import com.activepieces.common.error.ErrorServiceHandler;
 import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException;
+import com.activepieces.component.ComponentService;
+import com.activepieces.entity.enums.CustomTriggerType;
 import com.activepieces.entity.enums.InstanceStatus;
 import com.activepieces.flow.FlowVersionService;
 import com.activepieces.flow.model.FlowVersionView;
@@ -13,7 +17,9 @@ import com.activepieces.instance.client.model.InstanceEventType;
 import com.activepieces.instance.client.model.InstanceView;
 import com.activepieces.piece.client.CollectionVersionService;
 import com.activepieces.piece.client.model.CollectionVersionView;
+import com.activepieces.trigger.model.ComponentTriggerMetadataView;
 import com.activepieces.trigger.model.ScheduleMetadataTriggerView;
+import com.activepieces.trigger.model.TriggerMetadataView;
 import com.activepieces.trigger.schedule.client.Job;
 import com.activepieces.trigger.schedule.client.ScheduleService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,6 +30,8 @@ import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.quartz.CronScheduleBuilder.cronSchedule;
@@ -35,31 +43,30 @@ public class ScheduleServiceImpl implements ScheduleService, InstanceSubscriber 
   private final Scheduler scheduler;
   private final FlowVersionService flowVersionService;
   private final ErrorServiceHandler errorServiceHandler;
-
-  private final CollectionVersionService collectionVersionService;
+  private final ComponentService componentService;
 
   @Autowired
   public ScheduleServiceImpl(
           @NonNull final Scheduler scheduler,
           @NonNull final FlowVersionService flowVersionService,
           @NonNull final InstancePublisher instancePublisher,
-          @NonNull final CollectionVersionService collectionVersionService,
+          @NonNull final ComponentService componentService,
           @NonNull final ErrorServiceHandler errorServiceHandler) {
     instancePublisher.addSubscriber(this);
     this.scheduler = scheduler;
+    this.componentService = componentService;
     this.errorServiceHandler = errorServiceHandler;
-    this.collectionVersionService = collectionVersionService;
     this.flowVersionService = flowVersionService;
   }
 
-  public Job create(InstanceView view, Ksuid flowVersionId, ScheduleMetadataTriggerView triggerView)
+  public Job create(InstanceView view, Ksuid flowVersionId, final String cronExpression)
       throws SchedulerException, FlowVersionNotFoundException,
           PermissionDeniedException {
     FlowVersionView flowVersionView = flowVersionService.get(flowVersionId);
     JobDetail jobDetail =
         basicJobDetails(
             view.getId(), flowVersionView.getFlowId(), buildJobDataMap(view, flowVersionId));
-    Trigger trigger = buildJobTrigger(jobDetail, triggerView);
+    Trigger trigger = buildJobTrigger(jobDetail, cronExpression);
     scheduler.scheduleJob(jobDetail, trigger);
     log.info(
         String.format(
@@ -96,24 +103,42 @@ public class ScheduleServiceImpl implements ScheduleService, InstanceSubscriber 
         .build();
   }
 
-  private Trigger buildJobTrigger(JobDetail jobDetail, ScheduleMetadataTriggerView trigger) {
+  private Trigger buildJobTrigger(final JobDetail jobDetail,
+                                  final String cronExpression) {
     return TriggerBuilder.newTrigger()
         .forJob(jobDetail)
         .withIdentity(jobDetail.getKey().getName())
         .withSchedule(
-            cronSchedule(trigger.getSettings().getCronExpression())
+            cronSchedule(cronExpression)
                 .withMisfireHandlingInstructionDoNothing())
         .build();
   }
 
+  private String getCronExpression(final TriggerMetadataView triggerMetadataView) throws IOException, InterruptedException {
+    if(triggerMetadataView instanceof ScheduleMetadataTriggerView){
+      return ((ScheduleMetadataTriggerView) triggerMetadataView).getSettings().getCronExpression();
+    }
+    if(triggerMetadataView instanceof ComponentTriggerMetadataView){
+      ComponentTriggerMetadataView componentTrigger = (ComponentTriggerMetadataView) triggerMetadataView;
+      final CustomTriggerType triggerType = componentService.getTriggerType(
+              componentTrigger.getSettings().getComponentName(), componentTrigger.getSettings().getTriggerName()
+      );
+      if(triggerType.equals(CustomTriggerType.POLLING)){
+        final String fifteenMinutes = "0 */15 * ? * *";
+        return fifteenMinutes;
+      }
+    }
+    return null;
+  }
   private void createIfSchedule(InstanceView entity)
-          throws PermissionDeniedException, SchedulerException, JsonProcessingException,
-          FlowVersionNotFoundException, CollectionVersionNotFoundException {
+          throws PermissionDeniedException, SchedulerException, IOException,
+          FlowVersionNotFoundException, CollectionVersionNotFoundException, InterruptedException {
     for (Ksuid flowVersionId : entity.getFlowVersionId().values()) {
-      FlowVersionView flowVersion = flowVersionService.getOptional(flowVersionId).orElseThrow();
-      if (flowVersion.getTrigger() instanceof ScheduleMetadataTriggerView) {
+      final FlowVersionView flowVersion = flowVersionService.getOptional(flowVersionId).orElseThrow();
+      final String cronExpression = getCronExpression(flowVersion.getTrigger());
+      if (Objects.nonNull(cronExpression)){
         log.info("Creating Schedule Job binding" + entity);
-        create(entity, flowVersionId, (ScheduleMetadataTriggerView) flowVersion.getTrigger());
+        create(entity, flowVersionId, cronExpression);
       }
     }
   }
@@ -152,8 +177,7 @@ public class ScheduleServiceImpl implements ScheduleService, InstanceSubscriber 
         default:
           break;
       }
-    } catch (SchedulerException | PermissionDeniedException | JsonProcessingException | FlowVersionNotFoundException |
-             CollectionVersionNotFoundException e) {
+    } catch (SchedulerException | PermissionDeniedException | FlowVersionNotFoundException | CollectionVersionNotFoundException | IOException | InterruptedException e) {
       throw errorServiceHandler.createInternalError(e);
     }
   }

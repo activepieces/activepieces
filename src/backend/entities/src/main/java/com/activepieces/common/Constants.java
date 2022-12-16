@@ -1,4 +1,4 @@
-package com.activepieces.worker;
+package com.activepieces.common;
 
 public class Constants {
 

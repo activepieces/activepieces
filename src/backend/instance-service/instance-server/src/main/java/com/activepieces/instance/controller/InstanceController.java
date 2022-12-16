@@ -84,11 +84,10 @@ public class InstanceController {
             throw new InstanceNotFoundException(flowId);
         }
         final InstanceView instanceView = instanceViewSeekPage.getData().get(0);
-        InstanceRunView manualFlowExecutionResponse =
-                publisherService.executeInstance(
+        publisherService.executeInstance(
                         instanceView.getId(),
                         instanceView.getFlowVersionId().get(flowId),
-                        payload, true);
+                        payload);
         return ResponseEntity.noContent().build();
     }
 }

@@ -45,7 +45,7 @@ public class ScheduleTriggerJob extends QuartzJobBean {
         instanceId);
     try {
         flowExecutionPublisher.executeInstance(
-            instanceId, flowVersionId, Collections.emptyMap(), true);
+            instanceId, flowVersionId, Collections.emptyMap());
     } catch (Exception e) {
       throw errorServiceHandler.createInternalError(e);
     }
