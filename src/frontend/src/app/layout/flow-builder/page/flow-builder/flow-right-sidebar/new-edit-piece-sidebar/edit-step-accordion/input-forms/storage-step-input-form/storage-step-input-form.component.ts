@@ -10,7 +10,7 @@ import {
 } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
 import { fadeInUp400ms } from 'src/app/layout/common-layout/animation/fade-in-up.animation';
-import { DropdownOption } from 'src/app/layout/common-layout/model/dynamic-controls/dropdown-options';
+import { DropdownOption } from 'src/app/layout/common-layout/model/dropdown-options';
 import { ActionType } from 'src/app/layout/common-layout/model/enum/action-type.enum';
 import { StorageOperation } from 'src/app/layout/common-layout/model/flow-builder/actions/storage-operation.enum';
 import { StorageScope } from 'src/app/layout/common-layout/model/flow-builder/actions/storage-scope.enum';

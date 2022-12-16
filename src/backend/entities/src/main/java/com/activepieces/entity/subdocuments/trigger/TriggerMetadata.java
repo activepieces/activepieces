@@ -21,8 +21,8 @@ import lombok.experimental.SuperBuilder;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = ScheduleTriggerMetadata.class, name = "SCHEDULE"),
         @JsonSubTypes.Type(value = EmptyTriggerMetadata.class, name = "EMPTY"),
-        @JsonSubTypes.Type(value = InstanceStartedTriggerMetadata.class, name = "COLLECTED_DEPLOYED"),
-        @JsonSubTypes.Type(value = InstanceStoppedTriggerMetadata.class, name = "COLLECTION_STOPPED"),
+        @JsonSubTypes.Type(value = InstanceStartedTriggerMetadata.class, name = "COLLECTION_ENABLED"),
+        @JsonSubTypes.Type(value = InstanceStoppedTriggerMetadata.class, name = "COLLECTION_DISABLED"),
         @JsonSubTypes.Type(value = WebhookTriggerMetadata.class, name = "WEBHOOK"),
         @JsonSubTypes.Type(value = ComponentTriggerMetadata.class, name = "COMPONENT")
 }

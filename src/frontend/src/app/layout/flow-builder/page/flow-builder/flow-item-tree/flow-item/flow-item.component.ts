@@ -1,6 +1,5 @@
 import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { FlowRendererService } from '../../../../service/flow-renderer.service';
-import { FlowItemTypeEnum } from '../../../../../common-layout/model/enum/flow-item-type.enum';
 import { CdkDragEnd, CdkDragMove, CdkDragStart } from '@angular/cdk/drag-drop';
 import { Point } from '../../../../../common-layout/model/helper/point';
 import { FlowItem } from '../../../../../common-layout/model/flow-builder/flow-item';
@@ -22,7 +21,6 @@ import {
 	styleUrls: [],
 })
 export class FlowItemComponent implements OnInit {
-	public FlowItemTypeEnum = FlowItemTypeEnum;
 	@Input() insideLoop = false;
 	@Input() hoverState: boolean = false;
 	@Input() trigger = false;

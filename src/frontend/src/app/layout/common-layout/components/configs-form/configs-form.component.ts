@@ -13,9 +13,9 @@ import { catchError, map, mapTo, Observable, of, shareReplay, startWith, Subject
 import { ActionMetaService } from 'src/app/layout/flow-builder/service/action-meta.service';
 
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
-import { DropdownItemOption } from '../../model/fields/variable/subfields/dropdown-item-option';
 import { ThemeService } from '../../service/theme.service';
 import { FrontEndConnectorConfig, InputType } from './connector-action-or-config';
+import { DropdownItemOption } from '../../model/dropdown-item-option';
 type ConfigKey = string;
 
 @Component({

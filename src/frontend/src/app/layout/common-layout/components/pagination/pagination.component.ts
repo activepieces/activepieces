@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { SeekPage } from '../../service/seek-page';
+import { SeekPage } from '../../model/seek-page';
 import { Router } from '@angular/router';
 import { faAngleLeft, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 

@@ -4,7 +4,7 @@ import { map, Observable, switchMap } from 'rxjs';
 import { Collection } from '../../common-layout/model/collection.interface';
 import { CollectionService } from '../../common-layout/service/collection.service';
 import { ProjectService } from '../../common-layout/service/project.service';
-import { SeekPage } from '../../common-layout/service/seek-page';
+import { SeekPage } from '../../common-layout/model/seek-page';
 import { FlowService } from '../../common-layout/service/flow.service';
 
 @Injectable({

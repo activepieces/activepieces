@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { DropdownOption } from '../../../model/dynamic-controls/dropdown-options';
+import { DropdownOption } from '../../../model/dropdown-options';
 
 @Pipe({
 	name: 'itemText',

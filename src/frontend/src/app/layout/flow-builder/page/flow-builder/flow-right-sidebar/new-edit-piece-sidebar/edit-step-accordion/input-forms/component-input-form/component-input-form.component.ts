@@ -15,7 +15,7 @@ import { map, mapTo, Observable, of, Subject, take, tap } from 'rxjs';
 import { BuilderSelectors } from 'src/app/layout/flow-builder/store/selector/flow-builder.selector';
 import { Store } from '@ngrx/store';
 import { BsModalService } from 'ngx-bootstrap/modal';
-import { DropdownOption } from 'src/app/layout/common-layout/model/dynamic-controls/dropdown-options';
+import { DropdownOption } from 'src/app/layout/common-layout/model/dropdown-options';
 import { environment } from 'src/environments/environment';
 import { CreateEditConfigModalComponent } from '../../../../../flow-left-sidebar/create-or-edit-config-modal/create-or-edit-config-modal.component';
 import { Config } from 'src/app/layout/common-layout/model/fields/variable/config';

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { map, Observable, switchMap } from 'rxjs';
 import { UUID } from 'angular2-uuid';
-import { SeekPage } from './seek-page';
+import { SeekPage } from '../model/seek-page';
 import { InstanceRun, InstanceRunState } from '../model/instance-run.interface';
 
 @Injectable({

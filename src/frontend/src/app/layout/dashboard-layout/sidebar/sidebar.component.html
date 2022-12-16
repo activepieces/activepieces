@@ -10,7 +10,6 @@
     <div class="items-top">
       <div
         class="sd-icon-wrapper"
-        [class.disabled-icon]="isTrialExpired"
         *ngFor="
           let route of this.navigationService.sidebarRoutes;
           let i = index
@@ -19,7 +18,7 @@
         <div
           class="sd-icon"
           (click)="selectMenu(route)"
-          (mouseenter)="route.hover = true && !isTrialExpired"
+          (mouseenter)="route.hover = true"
           (mouseleave)="route.hover = false"
         >
           <div
@@ -30,7 +29,7 @@
           >
             <svg-icon
               [svgStyle]="{ width: 23, height: 23, fill: 'grey' }"
-              [src]="isTrialExpired ? route.disabledIcon : route.icon"
+              [src]="route.icon"
             ></svg-icon>
           </div>
           <div
