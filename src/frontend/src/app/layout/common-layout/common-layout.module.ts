@@ -15,17 +15,12 @@ import { ClickStopPropagationDirective } from './click-stop-propgation.directive
 import { ApButtonComponent } from './components/ap-button/ap-button.component';
 import { ApImgComponent } from './components/ap-img/ap-img.component';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
-import { ResponsiveTableComponent } from './components/responsive-table/responsive-table.component';
 import { LoadingSkeletonComponent } from './components/loading-skeleton/loading-skeleton.component';
-import { CreateNewPieceModalComponent } from './components/create-new-piece-modal/create-new-piece-modal.component';
 import { ApInputComponent } from './components/ap-input/ap-input.component';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { LoadingIconComponent } from './components/loading-icon/loading-icon.component';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTabsModule } from '@angular/material/tabs';
-import { UploadImageControlComponent } from './components/upload-image-control/upload-image-control.component';
-import { DragDropDirective } from './components/upload-image-control/drag-drop.directive';
-import { SaveCancelPanelSectionComponent } from './components/save-cancel-panel-section/save-cancel-panel-section.component';
 import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
 import { OutputLogPipe } from './pipe/output-log';
@@ -42,7 +37,6 @@ import { RawOutputLogPipe } from './pipe/raw-output-log';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { MatSnackBarModule, MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { CheckboxComponent } from './components/app-checkbox/checkbox.component';
-import { TableComponent } from './components/table/table.component';
 import { LongTextFormControlComponent } from './components/form-controls/long-text-form-control/long-text-form-control.component';
 import { DictionaryFormControlComponent } from './components/form-controls/dictionary-form-control/dictionary-form-control.component';
 import { OAuth2ConnectControlComponent } from './components/form-controls/o-auth2-connect-control/o-auth2-connect-control.component';
@@ -83,14 +77,9 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		ClickStopPropagationDirective,
 		ApButtonComponent,
 		ApImgComponent,
-		ResponsiveTableComponent,
 		LoadingSkeletonComponent,
-		CreateNewPieceModalComponent,
 		ApInputComponent,
 		LoadingIconComponent,
-		SaveCancelPanelSectionComponent,
-		UploadImageControlComponent,
-		DragDropDirective,
 		DefaultFalsePipe,
 		DefaultTruePipe,
 		OutputLogPipe,
@@ -99,7 +88,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		JsonViewModalComponent,
 		LongTextFormControlComponent,
 		CheckboxComponent,
-		TableComponent,
 		DictionaryFormControlComponent,
 		OAuth2ConnectControlComponent,
 		ConfigsFormComponent,
@@ -156,14 +144,9 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		PaginationComponent,
 		ApButtonComponent,
 		ApImgComponent,
-		ResponsiveTableComponent,
 		LoadingSkeletonComponent,
-		CreateNewPieceModalComponent,
 		ApInputComponent,
 		LoadingIconComponent,
-		DragDropDirective,
-		UploadImageControlComponent,
-		SaveCancelPanelSectionComponent,
 		DefaultFalsePipe,
 		DefaultTruePipe,
 		DefaultZeroPipe,
@@ -177,7 +160,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		NgSelectModule,
 		LongTextFormControlComponent,
 		CheckboxComponent,
-		TableComponent,
 		OAuth2ConnectControlComponent,
 		DictionaryFormControlComponent,
 		ConfigsFormComponent,
