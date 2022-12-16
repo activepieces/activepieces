@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { ThemeService } from '../../common-layout/service/theme.service';
 import { NavigationEnd, Router } from '@angular/router';
 import { NavigationService } from '../service/navigation.service';
-import { AuthenticationService } from '../../common-layout/service/authentication.service';
 import { BsDropdownConfig } from 'ngx-bootstrap/dropdown';
 import { map, Observable, of, tap } from 'rxjs';
 
@@ -23,14 +22,12 @@ export class SidebarComponent implements OnInit {
 	updateSelectedSubmenuIndex$: Observable<{ menu: number; submenu: number } | undefined> = of(undefined);
 	selectedIndex: number = 0;
 	selectedSubmenuIndex: { menu: number; submenu: number } | undefined = undefined;
-	supportButtonHovered = false;
 	DEFAULT_WIDTH = 250;
 	ICON_BAR_WIDTH = 80;
 
 	constructor(
 		private themeService: ThemeService,
 		private router: Router,
-		private authenticationService: AuthenticationService,
 		public navigationService: NavigationService
 	) {}
 
@@ -88,7 +85,7 @@ export class SidebarComponent implements OnInit {
 	}
 
 	borderColor(index: any) {
-		if (this.isTrialExpired || index !== this.selectedIndex) return {};
+		if (index !== this.selectedIndex) return {};
 
 		return {
 			border: '1px solid ' + this.navigationService.sidebarRoutes[index].color,
@@ -102,14 +99,6 @@ export class SidebarComponent implements OnInit {
 		this.router.navigate([item.link]).then(r => {});
 	}
 
-	get isTrialExpired() {
-		const now = new Date().getTime() / 1000;
-
-		return (
-			this.authenticationService.currentUser.epochExpirationTime &&
-			this.authenticationService.currentUser.epochExpirationTime < now
-		);
-	}
 	navigateHome() {
 		const route = this.navigationService.sidebarRoutes.find(r => r.link === '/flows')!;
 		const index = this.navigationService.sidebarRoutes.findIndex(r => r.link === '/flows');

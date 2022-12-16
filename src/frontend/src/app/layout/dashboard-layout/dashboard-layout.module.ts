@@ -17,7 +17,6 @@ import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { EmptyCollectionsTableComponent } from './pages/collections/empty-collections-table/empty-collections-table.component';
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { TrialStatusComponent } from './pages/trial-status/trial-status.component';
 
 @NgModule({
 	declarations: [
@@ -27,7 +26,6 @@ import { TrialStatusComponent } from './pages/trial-status/trial-status.componen
 		CollectionComponent,
 		EmptyCollectionsTableComponent,
 		UserAvatarComponent,
-		TrialStatusComponent,
 	],
 	imports: [
 		CommonModule,

@@ -1,6 +1,6 @@
-import { Action } from './action.interface';
+import { FlowItem } from '../flow-item';
 
-export interface ResponseAction extends Action {
+export interface ResponseAction extends FlowItem {
 	settings: {
 		//this is a dictionary
 		output: { [key: string]: any };
