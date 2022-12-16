@@ -1,17 +1,17 @@
 import {Variable} from './variable/variable';
-import {Trigger} from './trigger/trigger';
+import {TriggerMetadata} from "./trigger/trigger-metadata";
 
 export class FlowVersion {
-  trigger?: Trigger;
+  trigger?: TriggerMetadata;
 
-  constructor(trigger?: Trigger) {
+  constructor(trigger?: TriggerMetadata) {
     this.trigger = trigger;
   }
 
   static deserialize(jsonData: any): FlowVersion {
     const trigger = !jsonData['trigger']
       ? undefined
-      : Trigger.deserialize(jsonData['trigger']);
+      : TriggerMetadata.deserialize(jsonData['trigger']);
 
     return new FlowVersion(trigger);
   }

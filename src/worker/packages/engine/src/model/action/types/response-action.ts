@@ -1,8 +1,8 @@
-import {Action, ActionType} from '../action';
 import {ExecutionState} from '../../execution/execution-state';
 import {StepOutput, StepOutputStatus} from '../../output/step-output';
 import {VariableService} from '../../../services/variable-service';
 import {StoreScope} from '../../util/store-scope';
+import {ActionMetadata, ActionType} from "../action-metadata";
 
 export class ResponseActionSettings {
   output: any;
@@ -16,7 +16,7 @@ export class ResponseActionSettings {
   }
 }
 
-export class ResponseAction extends Action {
+export class ResponseAction extends ActionMetadata {
   variableService: VariableService;
   settings: ResponseActionSettings;
 
@@ -24,7 +24,7 @@ export class ResponseAction extends Action {
     type: ActionType,
     name: string,
     settings: ResponseActionSettings,
-    nextAction?: Action
+    nextAction?: ActionMetadata
   ) {
     super(type, name, nextAction);
     this.settings = settings;

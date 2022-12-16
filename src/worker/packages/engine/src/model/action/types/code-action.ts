@@ -1,9 +1,9 @@
-import {Action, ActionType} from '../action';
 import {ExecutionState} from '../../execution/execution-state';
 import {StepOutput, StepOutputStatus} from '../../output/step-output';
 import {VariableService} from '../../../services/variable-service';
 import {CodeExecutor} from '../../../executors/code-executer';
 import {StoreScope} from '../../util/store-scope';
+import {ActionMetadata, ActionType} from "../action-metadata";
 
 export class CodeActionSettings {
   input: any;
@@ -29,7 +29,7 @@ export class CodeActionSettings {
   }
 }
 
-export class CodeAction extends Action {
+export class CodeAction extends ActionMetadata {
   variableService: VariableService;
   settings: CodeActionSettings;
 
@@ -37,7 +37,7 @@ export class CodeAction extends Action {
     type: ActionType,
     name: string,
     settings: CodeActionSettings,
-    nextAction?: Action
+    nextAction?: ActionMetadata
   ) {
     super(type, name, nextAction);
     this.settings = settings;

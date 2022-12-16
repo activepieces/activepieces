@@ -1,10 +1,10 @@
-import { ConfigurationValue } from '@activepieces/components/dist/src/framework/config/configuration-value.model';
 import { ComponentExecutor } from '../../src/executors/component-executor';
-import { ActionType } from '../../src/model/action/action';
 import { ComponentAction, ComponentActionSettings } from '../../src/model/action/types/component-action';
 import { ExecutionState } from '../../src/model/execution/execution-state';
 import { StepOutputStatus } from '../../src/model/output/step-output';
 import { StoreScope } from '../../src/model/util/store-scope';
+import {ConfigurationValue} from "components/dist/src/framework/config/configuration-value.model";
+import {ActionType} from "../../src/model/action/action-metadata";
 
 
 describe('Component Action', () => {

@@ -5,7 +5,6 @@ import type {Trigger} from './trigger/trigger';
 import {TriggerNotFoundError} from './trigger/trigger-not-found-error';
 import {ConfigNotFoundError} from "./config/config-not-found-error";
 import {SelectInput} from "./config/select-input.model";
-import {Worker} from "./worker";
 import {Action} from "./action/action";
 
 export class Component {
@@ -35,12 +34,12 @@ export class Component {
 		return Object.values(this._triggers);
 	}
 
-	async runAction(worker: Worker, actionName: string, config: ConfigurationValue): Promise<RunnerStatus> {
+	async runAction(actionName: string, config: ConfigurationValue): Promise<RunnerStatus> {
 		if (!(actionName in this._actions)) {
 			throw new ActionNotFoundError(this.name, actionName);
 		}
 
-		return this._actions[actionName].run(worker, config);
+		return this._actions[actionName].run(config);
 	}
 
 	async runConfigOptions(actionName: string, configName: string, config: ConfigurationValue){

@@ -56,7 +56,7 @@ public class DownloadRequiredFiles extends Step {
             CollectionVersionView collectionVersionView,
             FlowVersionView flowVersionView,
             Map<String, Object> configs,
-            Map<String, Object> triggerPayload,
+            Object triggerPayload,
             Map<String, Object> output,
             StorePath storePath)
             throws Exception {

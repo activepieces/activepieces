@@ -1,4 +1,3 @@
-import {ActionType} from '../../src/model/action/action';
 import {ExecutionState} from '../../src/model/execution/execution-state';
 import {StepOutputStatus} from '../../src/model/output/step-output';
 import {
@@ -6,6 +5,7 @@ import {
   ResponseActionSettings,
 } from '../../src/model/action/types/response-action';
 import {StoreScope} from "../../src/model/util/store-scope";
+import {ActionType} from "../../src/model/action/action-metadata";
 
 let executionState: ExecutionState;
 

@@ -57,7 +57,7 @@ public class Worker {
             CollectionVersionView collectionVersion,
             FlowVersionView flowVersion,
             Map<String, Object> configs,
-            Map<String, Object> triggerPayload,
+            Object triggerPayload,
             StorePath storePath)
             throws Exception {
         long startTimeMs = System.currentTimeMillis();

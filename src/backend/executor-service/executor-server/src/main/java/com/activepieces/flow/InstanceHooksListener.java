@@ -2,6 +2,7 @@ package com.activepieces.flow;
 
 import com.activepieces.action.FlowPublisherService;
 import com.activepieces.common.error.ErrorServiceHandler;
+import com.activepieces.common.error.exception.InstanceNotFoundException;
 import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowExecutionInternalError;
 import com.activepieces.flow.model.FlowVersionView;
@@ -72,11 +73,10 @@ public class InstanceHooksListener implements InstanceSubscriber {
                 InstanceRunView instanceRunView = flowPublisherService.executeInstance(
                         instance.getId(),
                         flowVersionView.getId(),
-                        Collections.emptyMap(),
-                        true);
+                        Collections.emptyMap());
                 log.info("Running instance hook with run Id {}", instanceRunView.getId().toString());
             }
-        } catch (FlowExecutionInternalError | MissingConfigsException | ResourceNotFoundException e) {
+        } catch (FlowExecutionInternalError | MissingConfigsException | ResourceNotFoundException | InstanceNotFoundException | PermissionDeniedException e) {
             throw errorServiceHandler.createInternalError(e);
         }
     }

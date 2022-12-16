@@ -40,7 +40,6 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
 
     private final InstanceService instanceService;
     private final FlowVersionService flowVersionService;
-    private final WorkerService workerService;
     private final CollectionVersionService collectionVersionService;
     private final InstanceRunService instanceRunService;
     private final VariableService variableService;
@@ -50,7 +49,6 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
     @Autowired
     FlowPublisherServiceImpl(
             @NonNull final FlowVersionService flowVersionService,
-            @NonNull final WorkerService workerService,
             @NonNull final PermissionService permissionService,
             @NonNull final InstanceService instanceService,
             @NonNull final FlowScheduler flowScheduler,
@@ -61,7 +59,6 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
         this.instanceService = instanceService;
         this.flowScheduler = flowScheduler;
         this.variableService = variableService;
-        this.workerService = workerService;
         this.permissionService = permissionService;
         this.instanceRunService = instanceRunService;
         this.flowVersionService = flowVersionService;
@@ -69,6 +66,25 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
 
     @Override
     public InstanceRunView executeTest(
+            @NonNull Ksuid collectionVersionId,
+            @NonNull Ksuid flowVersionId,
+            @NonNull Map<String, Object> triggerPayload)
+            throws FlowExecutionInternalError {
+        return execute(null, collectionVersionId, flowVersionId, triggerPayload);
+    }
+
+    @Override
+    public InstanceRunView executeInstance(
+            @NonNull Ksuid instanceId,
+            @NonNull Ksuid flowVersionId,
+            @NonNull Map<String, Object> triggerPayload)
+            throws FlowExecutionInternalError, InstanceNotFoundException, PermissionDeniedException {
+        final InstanceView instanceView = instanceService.get(instanceId);
+        return execute(instanceView, instanceView.getCollectionVersionId(), flowVersionId, triggerPayload);
+    }
+
+    public InstanceRunView execute(
+            InstanceView instanceView,
             @NonNull Ksuid collectionVersionId,
             @NonNull Ksuid flowVersionId,
             @NonNull Map<String, Object> triggerPayload)
@@ -84,7 +100,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
                     constructRun(
                             runId,
                             StorePath.testScope(collectionVersionId),
-                            null,
+                            instanceView,
                             collectionVersionView,
                             flowVersionView,
                             validatedInstanceConfigs,
@@ -92,7 +108,7 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
             if (request.isPresent()) {
                 Ksuid projectID = permissionService.getFirstResourceParentWithType(collectionVersionView.getCollectionId(), ResourceType.PROJECT).getResourceId();
                 InstanceRunView instanceRunView =
-                        createInstanceRun(projectID, null, collectionVersionView, flowVersionView, request.get());
+                        createInstanceRun(projectID, Objects.isNull(instanceView) ? null : instanceView.getId(), collectionVersionView, flowVersionView, request.get());
                 flowScheduler.executeFlowAsync(request.get());
                 return instanceRunView.toBuilder().build();
             }
@@ -102,56 +118,6 @@ public class FlowPublisherServiceImpl implements FlowPublisherService {
             throw new FlowExecutionInternalError(e);
         }
     }
-
-    @Override
-    public InstanceRunView executeInstance(
-            @NonNull Ksuid instanceId,
-            @NonNull Ksuid flowVersionId,
-            @NonNull Map<String, Object> triggerPayload,
-            boolean async)
-            throws FlowExecutionInternalError {
-        try {
-            InstanceView instanceView = instanceService.get(instanceId);
-            CollectionVersionView collectionVersionView =
-                    collectionVersionService.get(instanceView.getCollectionVersionId());
-            FlowVersionView flowVersionView = flowVersionService.get(flowVersionId);
-            Ksuid runId = Ksuid.newKsuid();
-            Map<String, Object> validatedInstanceConfigs =
-                    variableService.flatConfigsValue(collectionVersionView.getConfigs());
-            Optional<ExecutionRequest> request =
-                    constructRun(
-                            runId,
-                            StorePath.builder().build(),
-                            instanceView,
-                            collectionVersionView,
-                            flowVersionView,
-                            validatedInstanceConfigs,
-                            triggerPayload);
-            if (request.isPresent()) {
-                InstanceRunView firstInstanceRun =
-                        createInstanceRun(instanceView.getProjectId(), instanceId, collectionVersionView, flowVersionView, request.get());
-                if (async) {
-                    flowScheduler.executeFlowAsync(request.get());
-                    return firstInstanceRun.toBuilder().build();
-                } else {
-                    InstanceRunView result =
-                            workerService.executeFlow(
-                                    firstInstanceRun,
-                                    collectionVersionView,
-                                    flowVersionView,
-                                    request.get().getConfigs(),
-                                    request.get().getTriggerPayload(),
-                                    request.get().getStorePath());
-                    return result.toBuilder().build();
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new FlowExecutionInternalError(e);
-        }
-        return null;
-    }
-
 
     private Optional<ExecutionRequest> constructRun(
             Ksuid runId,

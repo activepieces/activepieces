@@ -1,11 +1,10 @@
-import {Action, ActionType} from '../action';
 import {FlowExecutor} from '../../../executors/flow-executor';
 import {ExecutionState} from '../../execution/execution-state';
 import {StepOutput, StepOutputStatus} from '../../output/step-output';
 import {LoopOnItemsStepOutput} from '../../output/loop-on-items-step-output';
 import {VariableService} from '../../../services/variable-service';
 import {StoreScope} from '../../util/store-scope';
-import * as webpack from 'webpack';
+import {ActionMetadata, ActionType} from "../action-metadata";
 
 export class LoopOnItemActionSettings {
   items: string;
@@ -26,8 +25,8 @@ export class LoopOnItemActionSettings {
   }
 }
 
-export class LoopOnItemAction extends Action {
-  firstLoopAction?: Action;
+export class LoopOnItemAction extends ActionMetadata {
+  firstLoopAction?: ActionMetadata;
   settings: LoopOnItemActionSettings;
   variableService: VariableService;
 
@@ -35,8 +34,8 @@ export class LoopOnItemAction extends Action {
     type: ActionType,
     name: string,
     settings: LoopOnItemActionSettings,
-    firstLoopAction?: Action,
-    nextAction?: Action
+    firstLoopAction?: ActionMetadata,
+    nextAction?: ActionMetadata
   ) {
     super(type, name, nextAction);
     this.settings = settings;

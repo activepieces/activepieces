@@ -1,4 +1,3 @@
-import {ActionType} from '../../src/model/action/action';
 import {
   CodeAction,
   CodeActionSettings,
@@ -7,6 +6,7 @@ import {ExecutionState} from '../../src/model/execution/execution-state';
 import {StepOutputStatus} from '../../src/model/output/step-output';
 import {CodeExecutor} from '../../src/executors/code-executer';
 import {StoreScope} from "../../src/model/util/store-scope";
+import {ActionType} from "../../src/model/action/action-metadata";
 
 let executionState: ExecutionState;
 
