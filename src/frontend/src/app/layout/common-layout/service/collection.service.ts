@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { Collection, CollectionVersion } from '../model/collection.interface';
 import { Observable } from 'rxjs';
-import { SeekPage } from './seek-page';
+import { SeekPage } from '../model/seek-page';
 import { UUID } from 'angular2-uuid';
 import { CodeService } from '../../flow-builder/service/code.service';
 import { InstanceStatus } from '../model/enum/instance-status';

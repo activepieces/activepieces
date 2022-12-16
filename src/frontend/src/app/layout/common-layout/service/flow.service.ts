@@ -4,7 +4,7 @@ import { environment } from '../../../../environments/environment';
 import { CollectionVersion } from '../model/collection.interface';
 import { forkJoin, map, Observable, of, skipWhile, switchMap, take, tap } from 'rxjs';
 import { Flow } from '../model/flow.class';
-import { SeekPage } from './seek-page';
+import { SeekPage } from '../model/seek-page';
 import { UUID } from 'angular2-uuid';
 import { FlowVersion } from '../model/flow-version.class';
 import { InstanceRun, InstanceRunState } from '../model/instance-run.interface';

@@ -11,7 +11,6 @@ import { JsonViewComponent } from './components/json-view/json-view.component';
 import { PaginationComponent } from './components/pagination/pagination.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { AccordionModule } from 'ngx-bootstrap/accordion';
-import { ClickStopPropagationDirective } from './click-stop-propgation.directive';
 import { ApButtonComponent } from './components/ap-button/ap-button.component';
 import { ApImgComponent } from './components/ap-img/ap-img.component';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
@@ -74,7 +73,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		StateIconComponent,
 		JsonViewComponent,
 		PaginationComponent,
-		ClickStopPropagationDirective,
 		ApButtonComponent,
 		ApImgComponent,
 		LoadingSkeletonComponent,
@@ -154,7 +152,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		TooltipModule,
 		AngularSvgIconModule,
 		FontAwesomeModule,
-		ClickStopPropagationDirective,
 		MatSnackBarModule,
 		MatButtonModule,
 		NgSelectModule,

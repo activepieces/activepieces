@@ -15,7 +15,7 @@ import { ActionMetaService } from 'src/app/layout/flow-builder/service/action-me
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
 import { FrontEndConnectorConfig, InputType } from './connector-action-or-config';
-import {DropdownItemOption} from "../../model/dropdown-item-option";
+import { DropdownItemOption } from '../../model/dropdown-item-option';
 type ConfigKey = string;
 
 @Component({
