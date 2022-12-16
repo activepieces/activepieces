@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { FlowItemTypeEnum } from '../../../../../../common-layout/model/enum/flow-item-type.enum';
 import { ThemeService } from '../../../../../../common-layout/service/theme.service';
 import { FlowItem } from '../../../../../../common-layout/model/flow-builder/flow-item';
 import { ActionType } from 'src/app/layout/common-layout/model/enum/action-type.enum';
@@ -12,7 +11,6 @@ import { LoopOnItemActionInterface } from '../../../../../../common-layout/model
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlowItemConnectionComponent {
-	public FlowItemTypeEnum = FlowItemTypeEnum;
 	@Input() flowItem: FlowItem;
 	@Input() colorLine = false;
 	@Input() viewMode: boolean;

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
-import { SeekPage } from '../../common-layout/service/seek-page';
+import { SeekPage } from '../../common-layout/model/seek-page';
 import { Flow } from '../../common-layout/model/flow.class';
 import { FlowService } from '../../common-layout/service/flow.service';
 import { UUID } from 'angular2-uuid';

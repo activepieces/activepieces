@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, switchMap } from 'rxjs';
-import { SeekPage } from '../../common-layout/service/seek-page';
+import { SeekPage } from '../../common-layout/model/seek-page';
 import { InstanceRun } from '../../common-layout/model/instance-run.interface';
 import { InstanceRunService } from '../../common-layout/service/instance-run.service';
 import { ProjectService } from '../../common-layout/service/project.service';

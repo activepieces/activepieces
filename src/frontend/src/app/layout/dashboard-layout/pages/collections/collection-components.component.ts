@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { SeekPage } from '../../../common-layout/service/seek-page';
+import { SeekPage } from '../../../common-layout/model/seek-page';
 import { Collection } from '../../../common-layout/model/collection.interface';
 import { TimeHelperService } from '../../../common-layout/service/time-helper.service';
 import { ActivatedRoute, Router } from '@angular/router';
