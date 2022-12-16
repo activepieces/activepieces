@@ -16,7 +16,7 @@ import { ActionType } from '../../../common-layout/model/enum/action-type.enum';
 import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
 import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
-import {DropdownItemOption} from "../../../common-layout/model/dropdown-item-option";
+import { DropdownItemOption } from 'src/app/layout/common-layout/model/dropdown-item-option';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
