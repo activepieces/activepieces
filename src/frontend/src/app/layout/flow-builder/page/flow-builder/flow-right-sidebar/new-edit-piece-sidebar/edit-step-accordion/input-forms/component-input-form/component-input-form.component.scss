@@ -1,29 +1,7 @@
-@import "src/assets/scss/custom/variables";
+
 
 .connector-input-form-container {
   gap: 30px;
 }
 
 
-.optional-input-label-container {
-  margin-bottom: .625rem;
-}
-.edit-selected-auth
-{
-  position: absolute;
-  top:8px;
-  right:24px;
-  z-index: $appended-to-body-z-index;
-  color:$primary;
-
-  margin:0px;
-}
-
-.security-dropdown
-{
-  margin-bottom: 5px;
-}
-.authentication-section
-{
-  margin-top:0.9375rem;
-}

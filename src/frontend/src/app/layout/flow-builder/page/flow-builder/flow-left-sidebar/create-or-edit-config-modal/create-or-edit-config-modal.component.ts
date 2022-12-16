@@ -129,7 +129,7 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 				})
 			);
 		}
-		this.bsModalRef.onHidden.emit(config);
+
 		this.closeModal();
 	}
 

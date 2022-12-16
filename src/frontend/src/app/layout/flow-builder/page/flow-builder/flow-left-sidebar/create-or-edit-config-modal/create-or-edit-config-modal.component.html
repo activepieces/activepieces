@@ -82,7 +82,12 @@
 
       </ng-container>
       <p @fadeInUp class="invalid-input" *ngIf="submitted && configForm.get('value')!.invalid ">
+       <ng-container *ngIf="getControlValue('type') === ConfigType.OAUTH2; else valueError">
+        You have to connect an account to continue
+       </ng-container>
+       <ng-template #valueError>
         Value is required
+       </ng-template>
       </p>
     </div>
 

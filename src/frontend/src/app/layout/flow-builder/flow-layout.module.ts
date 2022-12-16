@@ -32,7 +32,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { StepTypItemComponent } from './page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/step-type-item.component';
 import { StepTypeListComponent } from './page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-list/step-type-list.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { StoreModule } from '@ngrx/store';
 import { collectionReducer } from './store/reducer/collection.reducer';
 import { EffectsModule } from '@ngrx/effects';
@@ -71,11 +70,11 @@ import { CreateEditConfigModalComponent } from './page/flow-builder/flow-left-si
 import { DefaultConfigTypeSettingsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/default-config-type-settings/default-config-type-settings.component';
 import { OAuth2ConfigSettingsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/o-auth2-config-settings/o-auth2-config-settings.component';
 import { ComponentInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/component-input-form.component';
-import { NewAuthenticationModalComponent } from './page/flow-builder/flow-right-sidebar/new-authentication-modal/new-authentication-modal.component';
 import { DeployButtonComponent } from './page/flow-builder/flow-builder-header/deploy-button/deploy-button.component';
 import { TrackFocusDirective } from './page/flow-builder/flow-left-sidebar/run-details/steps-results-list/track-focus.directive';
 import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
 import { InstanceSettingsComponent } from './page/flow-builder/flow-builder-header/instance-settings/instance-settings.component';
+import { NewAuthenticationModalComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/new-authentication-modal/new-authentication-modal.component';
 
 @NgModule({
 	imports: [
@@ -107,7 +106,6 @@ import { InstanceSettingsComponent } from './page/flow-builder/flow-builder-head
 		MatExpansionModule,
 		MatTabsModule,
 		MatTooltipModule,
-		TooltipModule,
 		MonacoEditorModule,
 	],
 	providers: [BsModalService],

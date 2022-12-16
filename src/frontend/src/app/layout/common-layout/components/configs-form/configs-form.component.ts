@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import {
 	ControlValueAccessor,
 	FormBuilder,
@@ -9,13 +9,18 @@ import {
 	ValidatorFn,
 	Validators,
 } from '@angular/forms';
-import { catchError, map, mapTo, Observable, of, shareReplay, startWith, Subject, tap } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { BsModalService } from 'ngx-bootstrap/modal';
+import { catchError, map, mapTo, Observable, of, shareReplay, startWith, take, tap } from 'rxjs';
 import { ActionMetaService } from 'src/app/layout/flow-builder/service/action-meta.service';
-
+import { BuilderSelectors } from 'src/app/layout/flow-builder/store/selector/flow-builder.selector';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
+import { ConfigType } from '../../model/enum/config-type';
+import { Config } from '../../model/fields/variable/config';
 import { ThemeService } from '../../service/theme.service';
 import { FrontEndConnectorConfig, InputType } from './connector-action-or-config';
 import { DropdownItemOption } from '../../model/dropdown-item-option';
+import { NewAuthenticationModalComponent } from 'src/app/layout/flow-builder/page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/new-authentication-modal/new-authentication-modal.component';
 type ConfigKey = string;
 
 @Component({
@@ -37,69 +42,39 @@ type ConfigKey = string;
 	animations: [fadeInUp400ms],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
-	@Input() set configs(value: { configs: FrontEndConnectorConfig[]; triggerChangeDetection: boolean }) {
-		this._configs = value.configs;
-		const controlUpdateSettings = !value.triggerChangeDetection ? { emitEvent: false } : {};
-		if (this.form) {
-			const configKeys = this._configs.map(c => c.key);
-			const currentControlsNames = Object.keys(this.form.controls);
-			const newConfigs = this._configs.filter(c => !currentControlsNames.find(cn => cn === c.key));
-			const namesOfControlsToRemove = currentControlsNames.filter(cn => !configKeys.includes(cn));
-			newConfigs.forEach(c => {
-				this.form.addControl(c.key, new FormControl(c.value), controlUpdateSettings);
-			});
-			namesOfControlsToRemove.forEach(cn => {
-				this.form.removeControl(cn, controlUpdateSettings);
-			});
-			if (value.triggerChangeDetection) {
-				this.OnChange(this.form.value);
-			}
-		}
-	}
-	_configs: FrontEndConnectorConfig[] = [];
-	@Input() submitted = false;
-	@Input() showSlider = false;
-	@Input() allowRemoveConfig = false;
-	@Input() accessToken: string = '';
-	@Output() configRemoved: EventEmitter<FrontEndConnectorConfig> = new EventEmitter();
-	@Input() newAuthConfigValue$: Subject<{
-		authConfig: any;
-		actionName: string;
-		componentName: string;
-	}> = new Subject();
+export class ConfigsFormComponent implements ControlValueAccessor {
+	configs: FrontEndConnectorConfig[] = [];
+	requiredConfigs: FrontEndConnectorConfig[] = [];
+	allOptionalConfigs: FrontEndConnectorConfig[] = [];
+	selectedOptionalConfigs: FrontEndConnectorConfig[] = [];
+	optionalConfigsMenuOpened = false;
+	@Input() actionName: string;
+	@Input() componentName: string;
 	form!: FormGroup;
 	OnChange = value => {};
 	OnTouched = () => {};
-	refreshDropwdowns$: Observable<void>;
 	updateValueOnChange$: Observable<void> = new Observable<void>();
+	updateAuthConfig$: Observable<void>;
 	configType = InputType;
 	optionsObservables$: { [key: ConfigKey]: Observable<DropdownItemOption[]> } = {};
 	dropdownsLoadingFlags$: { [key: ConfigKey]: Observable<boolean> } = {};
+	allAuthConfigs$: Observable<DropdownItemOption[]>;
+	updateOrAddConfigModalClosed$: Observable<void>;
+	authConfigDropdownChanged$: Observable<any>;
 	constructor(
 		private fb: FormBuilder,
 		public themeService: ThemeService,
-		private actionMetaDataService: ActionMetaService
-	) {}
-
-	ngOnInit(): void {
-		this.createForm();
-		this.refreshDropwdowns$ = this.newAuthConfigValue$?.pipe(
-			tap(req => {
-				this._configs.forEach(c => {
-					if (c.type === InputType.SELECT) {
-						this.contructDropdownObservable(c, req.authConfig, req.actionName, req.componentName);
-					}
-				});
-			}),
-			mapTo(void 0)
-		);
+		private actionMetaDataService: ActionMetaService,
+		private modalService: BsModalService,
+		private store: Store
+	) {
+		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions);
 	}
 
-	writeValue(obj: any): void {
-		if (obj) {
-			this.form.patchValue(obj, { emitEvent: false });
-		}
+	writeValue(obj: FrontEndConnectorConfig[]): void {
+		this.configs = obj;
+
+		this.createForm();
 	}
 	registerOnChange(fn: any): void {
 		this.OnChange = fn;
@@ -121,15 +96,26 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 		return null;
 	}
 	createForm() {
-		const controls: { [key: string]: FormControl } = {};
-		this._configs.forEach(c => {
-			const validators: ValidatorFn[] = [];
-			if (c.required) {
-				validators.push(Validators.required);
-			}
-			controls[c.key] = new FormControl(c.value, validators);
-		});
-		this.form = this.fb.group(controls);
+		this.requiredConfigs = this.configs.filter(c => c.required);
+		this.allOptionalConfigs = this.configs.filter(c => !c.required);
+		this.selectedOptionalConfigs = this.allOptionalConfigs.filter(c => c.value !== undefined);
+		const requiredConfigsControls = this.createConfigsFormControls(this.requiredConfigs);
+		const optionalConfigsControls = this.createConfigsFormControls(this.selectedOptionalConfigs);
+		this.form = this.fb.group({ ...requiredConfigsControls, ...optionalConfigsControls });
+		const authConfigs = this.configs.filter(c => c.type === InputType.OAUTH2);
+		if (authConfigs.length > 1) {
+			console.error(
+				'You have set more than one auth config in your connector, this case is not supported only your first auth config will be used'
+			);
+		}
+		if (authConfigs[0]) {
+			this.authConfigDropdownChanged$ = this.form.get(authConfigs[0].key)!.valueChanges.pipe(
+				startWith(authConfigs[0].value),
+				tap(val => {
+					this.refreshDropdowns(val);
+				})
+			);
+		}
 		this.updateValueOnChange$ = this.form.valueChanges.pipe(
 			tap(value => {
 				this.OnChange(value);
@@ -138,13 +124,25 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 		);
 	}
 
+	private createConfigsFormControls(configs: FrontEndConnectorConfig[]) {
+		const controls: { [key: string]: FormControl } = {};
+		configs.forEach(c => {
+			const validators: ValidatorFn[] = [];
+			if (c.required) {
+				validators.push(Validators.required);
+			}
+			controls[c.key] = new FormControl(c.value, validators);
+		});
+		return controls;
+	}
 	getControl(configKey: string) {
 		return this.form.get(configKey);
 	}
 
 	removeConfig(config: FrontEndConnectorConfig) {
 		this.form.removeControl(config.key);
-		this.configRemoved.emit(config);
+		const configIndex = this.allOptionalConfigs.findIndex(c => c === config);
+		this.selectedOptionalConfigs.splice(configIndex, 1);
 	}
 	contructDropdownObservable(
 		dropdownConfig: FrontEndConnectorConfig,
@@ -159,7 +157,6 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 
 		this.optionsObservables$[dropdownConfig.key] = options$.pipe(
 			shareReplay(1),
-
 			catchError(err => {
 				console.error(err);
 				return of([]);
@@ -178,4 +175,74 @@ export class ConfigsFormComponent implements OnInit, ControlValueAccessor {
 			})
 		);
 	}
+	addOptionalConfig(config: FrontEndConnectorConfig) {
+		this.form.addControl(config.key, new FormControl());
+		this.selectedOptionalConfigs.push(config);
+	}
+	openNewAuthenticationModal(authConfigName: string) {
+		debugger;
+		const modalRef = this.modalService.show(NewAuthenticationModalComponent, {
+			ignoreBackdropClick: true,
+			class: 'modal-dialog-centered',
+			initialState: {
+				connectorAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
+				appName: this.componentName,
+			},
+		});
+
+		this.updateOrAddConfigModalClosed$ = modalRef.onHidden.pipe(
+			tap((newAuthConfig: Config) => {
+				if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
+					const authConfigOptionValue = newAuthConfig.value;
+					this.form.get(authConfigName)!.setValue(authConfigOptionValue);
+				}
+			}),
+			mapTo(void 0)
+		);
+	}
+	editSelectedAuthConfig(authConfigKey: string) {
+		debugger;
+		const selectedValue: any = this.form.get(authConfigKey)!.value;
+		const allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuth2Configs);
+		this.updateAuthConfig$ = allAuthConfigs$.pipe(
+			take(1),
+			map(configs => {
+				const updatedConfigIndex = configs.findIndex(c => JSON.stringify(selectedValue) === JSON.stringify(c.value));
+				return { config: configs[updatedConfigIndex], indexInList: updatedConfigIndex };
+			}),
+			tap(configAndIndex => {
+				if (configAndIndex) {
+					const modalRef = this.modalService.show(NewAuthenticationModalComponent, {
+						ignoreBackdropClick: true,
+						class: 'modal-dialog-centered',
+						initialState: {
+							configToUpdateWithIndex: configAndIndex,
+							connectorAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
+							appName: this.componentName,
+						},
+					});
+					this.updateOrAddConfigModalClosed$ = modalRef.onHidden.pipe(
+						tap((newAuthConfig: Config) => {
+							if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
+								const authConfigOptionValue = newAuthConfig.value;
+								this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
+							}
+						}),
+						mapTo(void 0)
+					);
+				}
+			}),
+			mapTo(void 0)
+		);
+	}
+	refreshDropdowns(authConfigValue: any) {
+		this.configs.forEach(c => {
+			if (c.type === InputType.SELECT) {
+				this.contructDropdownObservable(c, authConfigValue, this.actionName, this.componentName);
+			}
+		});
+	}
+	authenticationDropdownCompareWithFunction = (a: { label: string; value: any }, formControlValue: any) => {
+		return JSON.stringify(formControlValue) === JSON.stringify(a.value);
+	};
 }

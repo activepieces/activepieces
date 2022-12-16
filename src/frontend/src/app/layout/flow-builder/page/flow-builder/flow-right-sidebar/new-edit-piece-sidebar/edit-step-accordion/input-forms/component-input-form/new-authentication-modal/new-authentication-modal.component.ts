@@ -1,18 +1,17 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { NgSelectComponent } from '@ng-select/ng-select';
 import { Store } from '@ngrx/store';
 import { UUID } from 'angular2-uuid';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Observable, take } from 'rxjs';
 import { fadeInUp400ms } from 'src/app/layout/common-layout/animation/fade-in-up.animation';
+import { FrontEndConnectorConfig } from 'src/app/layout/common-layout/components/configs-form/connector-action-or-config';
 import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
 import { Config } from 'src/app/layout/common-layout/model/fields/variable/config';
-import { OAuth2ConfigSettings } from 'src/app/layout/common-layout/model/fields/variable/config-settings';
+import { ConfigKeyValidator } from 'src/app/layout/flow-builder/page/flow-builder/validators/configKeyValidator';
 import { CollectionActions } from 'src/app/layout/flow-builder/store/action/collection.action';
 import { BuilderSelectors } from 'src/app/layout/flow-builder/store/selector/flow-builder.selector';
 import { environment } from 'src/environments/environment';
-import { ConfigKeyValidator } from '../../validators/configKeyValidator';
 
 @Component({
 	selector: 'app-new-authentication-modal',
@@ -20,12 +19,10 @@ import { ConfigKeyValidator } from '../../validators/configKeyValidator';
 	styleUrls: ['./new-authentication-modal.component.scss'],
 	animations: [fadeInUp400ms],
 })
-export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
-	@ViewChild(NgSelectComponent) ngSelect!: NgSelectComponent;
-	@Input() connectorAuthConfig: Partial<Config>;
+export class NewAuthenticationModalComponent implements OnInit {
+	@Input() connectorAuthConfig: FrontEndConnectorConfig;
 	@Input() appName: string;
 	@Input() configToUpdateWithIndex: { config: Config; indexInList: number } | undefined;
-	@Output() saveClicked = new EventEmitter();
 	settingsForm: FormGroup;
 	saving = false;
 	collectionId$: Observable<UUID>;
@@ -41,16 +38,17 @@ export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
 	constructor(private fb: FormBuilder, private store: Store, public bsModalRef: BsModalRef) {}
 
 	ngOnInit(): void {
+		debugger;
 		this.collectionId$ = this.store.select(BuilderSelectors.selectCurrentCollectionId);
+		console.log(environment.redirectUrl);
 		this.settingsForm = this.fb.group({
-			redirect_url: new FormControl({ value: environment.redirectUrl, disabled: true }),
+			redirect_url: new FormControl(environment.redirectUrl),
 			client_secret: new FormControl('', Validators.required),
 			client_id: new FormControl('', Validators.required),
-			auth_url: new FormControl('', Validators.required),
-			refresh_url: new FormControl(''),
-			token_url: new FormControl('', Validators.required),
+			auth_url: new FormControl(this.connectorAuthConfig.authUrl, Validators.required),
+			token_url: new FormControl(this.connectorAuthConfig.tokenUrl, Validators.required),
 			response_type: new FormControl('code', Validators.required),
-			scope: new FormControl([], Validators.required),
+			scope: [this.connectorAuthConfig.scopes, [Validators.required]],
 			key: new FormControl(
 				this.appName.replace(/[^A-Za-z0-9_]/g, '_'),
 				[Validators.required, Validators.pattern('[A-Za-z0-9_]*')],
@@ -61,15 +59,15 @@ export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
 					),
 				]
 			),
+			value: new FormControl(null, Validators.required),
 		});
-		if (!this.configToUpdateWithIndex) {
-			this.settingsForm.patchValue(this.connectorAuthConfig.settings || {});
-		} else {
-			this.settingsForm.patchValue(this.configToUpdateWithIndex.config.settings!);
-			this.settingsForm.get('key')?.setValue(this.configToUpdateWithIndex.config.key);
-			this.settingsForm
-				.get('scope')!
-				.setValue((this.configToUpdateWithIndex.config.settings as OAuth2ConfigSettings).scope?.split(' '));
+
+		if (this.configToUpdateWithIndex) {
+			this.settingsForm.patchValue({
+				...this.configToUpdateWithIndex.config.settings!,
+				value: this.configToUpdateWithIndex.config.value,
+			});
+			this.settingsForm.get('key')!.setValue(this.configToUpdateWithIndex.config.key);
 			this.settingsForm.get('key')!.disable();
 		}
 	}
@@ -79,12 +77,11 @@ export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
 		if (this.settingsForm.valid) {
 			const config = this.constructConfig(currentCollectionId);
 			this.saveConfigToCollection(config);
-			this.saveClicked.next(config);
+			this.bsModalRef.onHidden.emit(config);
 			this.bsModalRef.hide();
 		}
 	}
 	constructConfig(currentCollectionId: UUID) {
-		const scopes: string = (this.settingsForm.get('scope')!.value as string[]).map(str => str.trim()).join(' ');
 		const configKey = this.configToUpdateWithIndex
 			? this.configToUpdateWithIndex.config.key
 			: this.settingsForm.get('key')!.value;
@@ -92,6 +89,8 @@ export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
 			? this.configToUpdateWithIndex.config.label
 			: this.settingsForm.get('key')!.value;
 		const settingsFormValue = this.settingsForm.getRawValue();
+		const value = settingsFormValue['value'];
+		delete settingsFormValue['value'];
 		delete settingsFormValue.key;
 		const newConfig: Config = {
 			key: configKey,
@@ -101,9 +100,8 @@ export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
 			settings: {
 				...settingsFormValue,
 				required: true,
-				scope: scopes,
 			},
-			value: null,
+			value: value,
 		};
 		return newConfig;
 	}
@@ -116,11 +114,5 @@ export class NewAuthenticationModalComponent implements OnInit, AfterViewInit {
 				CollectionActions.updateConfig({ config: config, configIndex: this.configToUpdateWithIndex.indexInList })
 			);
 		}
-	}
-
-	ngAfterViewInit() {
-		this.ngSelect.onInputBlur = () => {
-			this.ngSelect.searchTerm = '';
-		};
 	}
 }

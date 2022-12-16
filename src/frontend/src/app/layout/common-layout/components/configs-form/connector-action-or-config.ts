@@ -16,6 +16,9 @@ export class FrontEndConnectorConfig {
 	label: string;
 	value: any;
 	description?: string;
+	authUrl?: string;
+	tokenUrl?: string;
+	scopes?: string;
 	required: boolean;
 }
 export class ComponnentConfigsForActionsOrTriggers {
@@ -26,6 +29,9 @@ export class ComponnentConfigsForActionsOrTriggers {
 	type: InputType;
 	required: boolean;
 	displayName: string;
+	authUrl?: string;
+	tokenUrl?: string;
+	scopes?: string[];
 	static convertToFrontEndConfig(componentConfig: ComponnentConfigsForActionsOrTriggers) {
 		const frontEndConfig = new FrontEndConnectorConfig();
 		frontEndConfig.description = componentConfig.description;
@@ -33,6 +39,9 @@ export class ComponnentConfigsForActionsOrTriggers {
 		frontEndConfig.label = componentConfig.displayName;
 		frontEndConfig.required = componentConfig.required;
 		frontEndConfig.type = componentConfig.type;
+		frontEndConfig.authUrl = componentConfig.authUrl;
+		frontEndConfig.tokenUrl = componentConfig.tokenUrl;
+		frontEndConfig.scopes = componentConfig.scopes?.join(' ') || '';
 		return frontEndConfig;
 	}
 }
