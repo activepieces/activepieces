@@ -13,7 +13,6 @@ import { NotFoundComponent } from './layout/not-found/not-found.component';
 import { RedirectUrlComponent } from './layout/redirect-url/redirect-url.component';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
-import { HttpInterceptorProvider } from './service/http-interceptor.service';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { CommonModule } from '@angular/common';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
@@ -42,7 +41,7 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 		}),
 		AngularSvgIconModule,
 	],
-	providers: [HttpInterceptorProvider],
+	providers: [],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 	exports: [],
 	bootstrap: [AppComponent],
