@@ -1,9 +1,9 @@
-import {Action, ActionType} from '../action';
 import {ExecutionState} from '../../execution/execution-state';
 import {StepOutput, StepOutputStatus} from '../../output/step-output';
 import {StoreScope} from '../../util/store-scope';
 import {globals} from '../../../globals';
 import {VariableService} from '../../../services/variable-service';
+import {ActionMetadata, ActionType} from "../action-metadata";
 
 const axios = require('axios').default;
 
@@ -56,7 +56,7 @@ export class StorageActionSettings {
   }
 }
 
-export class StorageAction extends Action {
+export class StorageAction extends ActionMetadata {
   settings: StorageActionSettings;
   variableService: VariableService;
 
@@ -64,7 +64,7 @@ export class StorageAction extends Action {
     type: ActionType,
     name: string,
     settings: StorageActionSettings,
-    nextAction?: Action
+    nextAction?: ActionMetadata
   ) {
     super(type, name, nextAction);
     this.settings = settings;

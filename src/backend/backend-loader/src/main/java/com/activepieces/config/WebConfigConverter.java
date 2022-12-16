@@ -35,7 +35,6 @@ class StringToKsuidConvertor implements Converter<String, Ksuid> {
 }
 
 
-
 class StringToCursorConverter implements Converter<String, Cursor> {
     @Override
     public Cursor convert(String param) {

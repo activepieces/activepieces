@@ -1,6 +1,6 @@
-import { apps } from '@activepieces/components';
-import { ConfigurationValue } from '@activepieces/components/dist/src/framework/config/configuration-value.model';
 import { ComponentExecutor } from '../../src/executors/component-executor';
+import {ConfigurationValue} from "components/dist/src/framework/config/configuration-value.model";
+import {apps} from "components/dist/src/apps";
 
 describe('Component Executor', () => {
   test('Invokes given action', async () => {

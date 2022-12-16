@@ -2,10 +2,10 @@ import {CodeAction, CodeActionSettings} from './types/code-action';
 import {StorageAction, StorageActionSettings} from './types/storage-action';
 import {ResponseAction, ResponseActionSettings} from './types/response-action';
 import {LoopOnItemAction, LoopOnItemActionSettings} from './types/loop-action';
-import {Action, ActionType} from './action';
 import { ComponentAction, ComponentActionSettings } from './types/component-action';
+import {ActionMetadata, ActionType} from "./action-metadata";
 
-export function createAction(jsonData: any): Action {
+export function createAction(jsonData: any): ActionMetadata {
   try {
     switch (jsonData['type']) {
       case 'COMPONENT':

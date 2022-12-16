@@ -3,6 +3,9 @@ package com.activepieces.component;
 import com.activepieces.common.Constants;
 import com.activepieces.common.utils.ArtifactUtils;
 import com.activepieces.entity.enums.CustomTriggerType;
+import com.activepieces.entity.sql.Collection;
+import com.activepieces.entity.sql.FlowVersion;
+import com.activepieces.flow.model.FlowVersionView;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -11,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +32,14 @@ public class ComponentService {
     public List<ObjectNode> getApps() throws IOException, InterruptedException {
         final String result = runJs(Constants.WORKER_APPS_ARG, null);
         return objectMapper.readValue(result, new TypeReference<>(){});
+    }
+
+    public List<Object> getTriggersPayload(
+            @NonNull final Object object,
+            @NonNull final FlowVersionView flowVersionView,
+                                               @NonNull final Map<String, Object> configs){
+        // TODO FIX
+        return Collections.emptyList();
     }
 
     public CustomTriggerType getTriggerType(@NonNull final String componentName,
