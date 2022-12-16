@@ -1,6 +1,4 @@
 <ng-container *ngIf="rightSidebarType$ | async as rightSidebarType">
-
-  <app-flow-version-sidebar *ngIf="rightSidebarType === sidebarType.FLOW_VERSIONS"></app-flow-version-sidebar>
   <app-piece-version-sidebar *ngIf="rightSidebarType === sidebarType.COLLECTION_VERSIONS"></app-piece-version-sidebar>
   <app-step-type-sidebar [showTriggers]="rightSidebarType === sidebarType.TRIGGER_TYPE" *ngIf="
     rightSidebarType === sidebarType.STEP_TYPE ||

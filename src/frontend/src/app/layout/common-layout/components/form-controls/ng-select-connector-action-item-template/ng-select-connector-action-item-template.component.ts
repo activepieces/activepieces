@@ -11,7 +11,7 @@ import { HttpMethod } from '../../configs-form/connector-action-or-config';
 export class NgSelectConnectorActionItemTemplateComponent implements OnInit {
 	RequestType = HttpMethod;
 	@Input() item: {
-		label: { requestType: HttpMethod; url: string; summary: string; description: string };
+		label: { name: string; description: string };
 		value: { actionName: UUID; configs: any[] };
 		disabled: boolean; // disabled item is a separator
 	} | null;
@@ -21,8 +21,7 @@ export class NgSelectConnectorActionItemTemplateComponent implements OnInit {
 	ngOnInit(): void {
 		if (this.item) {
 			if (!this.item.disabled && !this.hideDescription) {
-				this.tooltipText = `${this.item.label.summary ? this.item.label.summary : this.item.label.url}
-        ${this.item.label.description}`;
+				this.tooltipText = `${this.item.label.description}`;
 			}
 		}
 	}

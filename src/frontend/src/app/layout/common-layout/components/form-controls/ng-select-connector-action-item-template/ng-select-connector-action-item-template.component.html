@@ -2,10 +2,7 @@
   <div class="item-container" [matTooltip]="tooltipText" [matTooltipShowDelay]="500" [class.flex-grow-1]="item.disabled">
     <ng-container *ngIf="!item.disabled; else separatorTemplate">
       <div class="request-and-title">
-        <app-request-type-template
-          [requestType]="item.label.requestType">
-        </app-request-type-template>
-        <div class="item-title"> {{item.label.summary? item.label.summary:item.label.url}} </div>
+        <div class="item-title"> {{item.label.name}} </div>
       </div>
       <div *ngIf="!hideDescription" class="description">{{item.label.description}}</div>
     </ng-container>
