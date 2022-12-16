@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { UUID } from 'angular2-uuid';
-import { HttpMethod } from '../../configs-form/configs-form-for-connectors/connector-action-or-config';
+import { HttpMethod } from '../../configs-form/connector-action-or-config';
 
 @Component({
 	selector: 'app-ng-select-connector-action-item-template',

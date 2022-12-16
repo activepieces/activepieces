@@ -100,7 +100,7 @@ export class FlowService {
 		return this.http.get<FlowVersion>(environment.apiUrl + '/flows/versions/' + flowVersionId);
 	}
 
-	listByPiece(integrationId: UUID, limit: number): Observable<SeekPage<Flow>> {
+	listByCollection(integrationId: UUID, limit: number): Observable<SeekPage<Flow>> {
 		return this.http.get<SeekPage<Flow>>(
 			environment.apiUrl + '/collections/' + integrationId + '/flows?limit=' + limit
 		);

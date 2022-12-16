@@ -13,16 +13,7 @@ export const slackSendMessageAction = createAction({
 	url: '/chat.postMessage',
 	httpMethod: HttpMethod.POST,
 	configs: [
-		{
-			name: 'authentication',
-			description: "",
-			displayName: 'Authentication',
-			type: InputType.OAUTH2,
-			authUrl: "https://slack.com/oauth/authorize",
-			tokenUrl: "https://slack.com/api/oauth.access",
-			required: false,
-			scopes: []
-		},
+
 		{
 			name: 'as_user',
 			displayName: 'as_user',
