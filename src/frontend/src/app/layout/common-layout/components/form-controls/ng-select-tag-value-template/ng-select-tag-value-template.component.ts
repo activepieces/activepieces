@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { DropdownOption } from '../../../model/dynamic-controls/dropdown-options';
+import { DropdownOption } from '../../../model/dropdown-options';
 
 @Component({
 	selector: 'app-ng-select-tag-value-template',
