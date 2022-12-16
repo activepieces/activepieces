@@ -7,7 +7,6 @@ import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
 import { UUID } from 'angular2-uuid';
 import { InstanceRun } from '../../../common-layout/model/instance-run.interface';
-import { DropdownItemOption } from '../../../common-layout/model/fields/variable/subfields/dropdown-item-option';
 import { FlowItem } from '../../../common-layout/model/flow-builder/flow-item';
 import { Config } from '../../../common-layout/model/fields/variable/config';
 import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
@@ -17,6 +16,7 @@ import { ActionType } from '../../../common-layout/model/enum/action-type.enum';
 import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type';
 import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
+import {DropdownItemOption} from "../../../common-layout/model/dropdown-item-option";
 
 export const BUILDER_STATE_NAME = 'builderState';
 
