@@ -2,6 +2,7 @@ package com.activepieces.worker;
 
 import com.activepieces.actions.store.model.StorePath;
 import com.activepieces.authentication.client.JWTService;
+import com.activepieces.common.Constants;
 import com.activepieces.file.service.FileService;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.logging.client.InstanceRunService;
@@ -56,7 +57,7 @@ public class Worker {
             CollectionVersionView collectionVersion,
             FlowVersionView flowVersion,
             Map<String, Object> configs,
-            Map<String, Object> triggerPayload,
+            Object triggerPayload,
             StorePath storePath)
             throws Exception {
         long startTimeMs = System.currentTimeMillis();

@@ -3,16 +3,12 @@ package com.activepieces.config;
 import com.activepieces.authentication.client.UserAuthenticationService;
 import com.activepieces.authentication.client.model.UserInformationView;
 import com.activepieces.authentication.client.request.SignUpRequest;
-import com.activepieces.entity.sql.Project;
-import com.activepieces.flag.service.FlagService;
-import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.project.client.ProjectService;
 import com.activepieces.project.client.model.CreateProjectRequest;
 import com.activepieces.project.client.model.ProjectView;
-import com.activepieces.worker.Constants;
+import com.activepieces.common.Constants;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,16 +21,13 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 @Log4j2
 public class StartupHousekeeper {
 
-    public static final String HOME_PATH = (new File(System.getProperty("user.home")).exists() ? System.getProperty("user.home") : "/root") + File.separator + "Activepieces";
 
     private final UserAuthenticationService authenticationService;
     private final ProjectService projectService;
@@ -66,7 +59,7 @@ public class StartupHousekeeper {
         }
         // Place worker js
         final Resource workerExecutor = new ClassPathResource(Constants.ACTIVEPIECES_WORKER_JS);
-        final File temp = new File(HOME_PATH).toPath().resolve(Constants.ACTIVEPIECES_WORKER_JS).toFile();
+        final File temp = new File(Constants.ACTIVEPIECES_WORKER_ABS_PATH_JS);
         temp.getParentFile().mkdirs();
         Files.copy(
                 workerExecutor.getInputStream(),

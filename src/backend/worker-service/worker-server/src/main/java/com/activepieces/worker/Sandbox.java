@@ -116,7 +116,7 @@ public class Sandbox {
   }
 
   public void writeTriggerPayload(
-      @NotNull Map<String, Object> userInput, @NonNull ObjectMapper objectMapper)
+      @NotNull Object userInput, @NonNull ObjectMapper objectMapper)
       throws IOException {
     String targetFilePath = getSandboxFilePath("triggerPayload.json");
     StepOutput stepOutput =
