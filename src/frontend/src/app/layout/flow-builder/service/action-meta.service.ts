@@ -61,8 +61,8 @@ export class ActionMetaService {
 		},
 		{
 			type: TriggerType.COLLECTION_ENABLED,
-			name: 'Instance Enabled',
-			description: 'Trigger flow when collection is deployed',
+			name: 'Collection Enabled',
+			description: 'Trigger flow when collection is enabled or deployed',
 			logoUrl: '/assets/img/custom/piece/instance-started.svg',
 		},
 		{
