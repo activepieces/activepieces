@@ -4,14 +4,11 @@ import type {HttpRequest} from '../../../common/http/core/http-request';
 import {createAction} from '../../../framework/action/action';
 import { InputType} from '../../../framework/config';
 import {httpClient} from "../../../common/http/core/http-client";
-import {Worker} from "../../../framework/worker";
 import {ConfigurationValue} from "../../../framework/config/configuration-value.model";
 
 export const slackSendMessageAction = createAction({
 	name: 'Send Slack Message',
 	description: 'Send Slack Message',
-	url: '/chat.postMessage',
-	httpMethod: HttpMethod.POST,
 	configs: [
 
 		{
@@ -136,8 +133,7 @@ export const slackSendMessageAction = createAction({
 			required: false,
 		},
 	],
-	async runner(worker: Worker, configValue: ConfigurationValue) {
-		// TODO FIX
+	async runner(configValue: ConfigurationValue) {
 		const request: HttpRequest<Record<string, string>> = {
 			method: HttpMethod.POST,
 			url: 'https://slack.com/api/chat.postMessage',

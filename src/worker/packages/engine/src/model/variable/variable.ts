@@ -1,4 +1,3 @@
-import {ActionType} from '../action/action';
 
 export class Variable {
   key: string;

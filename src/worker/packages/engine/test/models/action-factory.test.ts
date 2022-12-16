@@ -1,5 +1,4 @@
 import {createAction} from '../../src/model/action/action-factory';
-import {ActionType} from '../../src/model/action/action';
 import {
   CodeAction,
   CodeActionSettings,
@@ -13,6 +12,7 @@ import {
   ResponseActionSettings,
 } from '../../src/model/action/types/response-action';
 import { ComponentAction, ComponentActionSettings } from '../../src/model/action/types/component-action';
+import {ActionType} from "../../src/model/action/action-metadata";
 
 describe('Action Factory', () => {
 

@@ -3,7 +3,7 @@ import { VariableService } from "../../../services/variable-service";
 import { ExecutionState } from "../../execution/execution-state";
 import { StepOutput, StepOutputStatus } from "../../output/step-output";
 import { StoreScope } from "../../util/store-scope";
-import { Action, ActionType } from "../action";
+import {ActionMetadata, ActionType} from "../action-metadata";
 
 export class ComponentActionSettings {
   componentName: string;
@@ -36,7 +36,7 @@ export class ComponentActionSettings {
   }
 }
 
-export class ComponentAction extends Action {
+export class ComponentAction extends ActionMetadata {
   variableService: VariableService;
   settings: ComponentActionSettings;
 
@@ -44,7 +44,7 @@ export class ComponentAction extends Action {
     type: ActionType,
     name: string,
     settings: ComponentActionSettings,
-    nextAction?: Action
+    nextAction?: ActionMetadata
   ) {
     super(type, name, nextAction);
     this.settings = settings;
