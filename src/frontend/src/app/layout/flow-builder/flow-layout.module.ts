@@ -56,7 +56,6 @@ import { FlowLeftSidebarComponent } from './page/flow-builder/flow-left-sidebar/
 import { TestRunBarComponent } from './page/flow-builder/test-run-bar/test-run-bar.component';
 import { SidebarHeaderComponent } from './components/sidebar-header/sidebar-header.component';
 import { CollectionVersionSidebarComponent } from './page/flow-builder/flow-right-sidebar/collection-version-sidebar/collection-version-sidebar.component';
-import { FlowVersionSidebarComponent } from './page/flow-builder/flow-right-sidebar/flow-version-sidebar/flow-version-sidebar.component';
 import { flowItemsDetailsReducer } from './store/reducer/flow-items-details.reducer';
 import { FlowItemsDetailsEffects } from './store/effect/flow-items-details.effects';
 import { EditStepAccordionComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/edit-step-accodion.component';
@@ -129,7 +128,6 @@ import { InstanceSettingsComponent } from './page/flow-builder/flow-builder-head
 		RunDetailsComponent,
 		TestRunBarComponent,
 		SidebarHeaderComponent,
-		FlowVersionSidebarComponent,
 		CollectionVersionSidebarComponent,
 		NewEditPieceSidebarComponent,
 		StepTypItemComponent,

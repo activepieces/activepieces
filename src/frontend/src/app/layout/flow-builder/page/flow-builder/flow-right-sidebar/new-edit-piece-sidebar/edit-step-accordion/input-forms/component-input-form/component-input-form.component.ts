@@ -24,17 +24,12 @@ import { ActionMetaService } from 'src/app/layout/flow-builder/service/action-me
 import {
 	ComponnentConfigsForActionsOrTriggers,
 	FrontEndConnectorConfig,
-	HttpMethod,
 } from 'src/app/layout/common-layout/components/configs-form/connector-action-or-config';
 declare type ActionDropdownOption = {
-	label:
-		| {
-				requestType: HttpMethod;
-				url: string;
-				summary?: string;
-				description: string;
-		  }
-		| string;
+	label: {
+		name: string;
+		description: string;
+	};
 	value: { actionName: string; configs: FrontEndConnectorConfig[]; separator?: boolean };
 	disabled?: boolean;
 };
@@ -85,14 +80,12 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 	intialComponentInputFormValue: { action_name: string; input: { [key: string]: any } } | null;
 	customRequestItem = {
 		value: { actionName: 'CUSTOM_REQUEST', configs: [] as FrontEndConnectorConfig[] },
-		label: 'Custom Request',
+		label: { name: 'Custom Request', description: 'Sends authenticated request' },
 		disabled: true,
 	};
-	separatorItem = {
+	separatorItem: ActionDropdownOption = {
 		label: {
-			requestType: HttpMethod.HEAD,
-			url: '',
-			summary: '',
+			name: '',
 			description: '',
 		},
 		value: { actionName: '', configs: [] as FrontEndConnectorConfig[], separator: true },
@@ -207,7 +200,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor, AfterV
 							actionName: action.name,
 							configs: action.configs.map(c => ComponnentConfigsForActionsOrTriggers.convertToFrontEndConfig(c)),
 						},
-						label: { requestType: action.httpMethod, url: action.url, description: action.description },
+						label: { name: action.name, description: action.description },
 					};
 				});
 			}),

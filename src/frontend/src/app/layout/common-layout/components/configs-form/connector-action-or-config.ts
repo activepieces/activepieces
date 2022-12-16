@@ -40,13 +40,14 @@ export class ComponnentConfigsForActionsOrTriggers {
 export class ConnectorComponent {
 	name: string;
 	logoUrl: string;
-	actions: {
-		name: string;
-		description: string;
-		url: string;
-		httpMethod: HttpMethod;
-		configs: ComponnentConfigsForActionsOrTriggers[];
-	}[];
+	actions: Record<
+		string,
+		{
+			name: string;
+			description: string;
+			configs: ComponnentConfigsForActionsOrTriggers[];
+		}
+	>;
 }
 export enum InputType {
 	SHORT_TEXT = 'SHORT_TEXT',
