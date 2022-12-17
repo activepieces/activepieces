@@ -75,12 +75,12 @@ Automate your daily tasks or your entire business with clicks on the UI without 
 ### Powerful Logging
 Gain full visibility over your flow runs and easily fix what doesn't work with detailed step-by-step debugging tools.
 
-<img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201.png" width="100%">
+<img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f8e093a493043dc8ed633_Screenshot%202022-12-06%20at%2021.44%201.png" width="100%">
 
 ### Writing Node.js for Full Flexibility
 Design your flow visually or write Node.js code if you feel like it. There are no limits to what you can build.
 
-<img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201.png" width="100%">
+<img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f902e016e13f712543baf_Screenshot%202022-12-06%20at%2021.54%201.png" width="100%">
 
 ## Connectors
 We're building no-code connectors to make flow building a frictionless process. Here is our list of connectors:
