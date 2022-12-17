@@ -30,4 +30,8 @@ public class ClaimOAuth2RequestWithSecret {
     @JsonProperty
     @NotNull
     private String clientSecret;
+
+    @JsonProperty
+    @NotNull
+    private String redirectUrl;
 }

@@ -3,10 +3,7 @@ package com.activepieces.variable.server;
 import com.activepieces.entity.enums.InputVariableType;
 import com.activepieces.entity.subdocuments.field.Variable;
 import com.activepieces.entity.subdocuments.field.connection.oauth2.OAuth2Variable;
-import com.activepieces.variable.model.OAuth2Service;
 import com.activepieces.variable.model.VariableService;
-import com.activepieces.worker.service.CodeExecutionService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,19 +14,13 @@ import java.util.*;
 @Service
 public class VariableServiceImpl implements VariableService {
 
-  private final ObjectMapper mapper;
 
-  private final OAuth2Service oAuth2Service;
-  private final CodeExecutionService codeExecutionService;
+  private final OAuth2ServiceImpl oAuth2Service;
 
   @Autowired
   public VariableServiceImpl(
-          ObjectMapper mapper,
-          CodeExecutionService codeExecutionService,
-          OAuth2Service oAuth2Service) {
-    this.codeExecutionService = codeExecutionService;
+          OAuth2ServiceImpl oAuth2Service) {
     this.oAuth2Service = oAuth2Service;
-    this.mapper = mapper;
   }
 
   @Override
@@ -46,8 +37,7 @@ public class VariableServiceImpl implements VariableService {
 
   private Object refreshVariable(Variable variable, Object value) {
     if (variable.getType().equals(InputVariableType.OAUTH2) && Objects.nonNull(value)) {
-
-      return oAuth2Service.refreshAndGetAccessToken(
+      return oAuth2Service.refreshToken(
               (OAuth2Variable) variable, (Map<String, Object>) value);
     }
     return value;
