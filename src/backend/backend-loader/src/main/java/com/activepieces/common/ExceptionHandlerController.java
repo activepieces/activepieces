@@ -16,7 +16,6 @@ import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.logging.client.exception.InstanceRunNotFoundException;
 import com.activepieces.project.client.exception.ProjectNotFoundException;
 import com.activepieces.security.Slf4jMDCFilterConfiguration;
-import com.activepieces.variable.model.exception.MissingConfigsException;
 import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -112,11 +111,6 @@ public class ExceptionHandlerController {
   @ExceptionHandler(value = InvalidTokenException.class)
   public ResponseEntity<ErrorResponse> exception(InvalidTokenException exception) {
     return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.UNAUTHORIZED);
-  }
-
-  @ExceptionHandler(value = MissingConfigsException.class)
-  public ResponseEntity<ErrorResponse> exception(MissingConfigsException exception) {
-    return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler(value = InstanceRunNotFoundException.class)

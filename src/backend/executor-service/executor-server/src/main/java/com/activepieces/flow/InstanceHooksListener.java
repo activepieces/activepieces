@@ -21,7 +21,6 @@ import com.activepieces.piece.client.model.CollectionView;
 import com.activepieces.trigger.model.InstanceStartedTriggerMetadataView;
 import com.activepieces.trigger.model.InstanceStoppedTriggerMetadataView;
 import com.activepieces.variable.model.VariableService;
-import com.activepieces.variable.model.exception.MissingConfigsException;
 import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
@@ -88,7 +87,7 @@ public class InstanceHooksListener implements InstanceSubscriber {
                 componentService.executeTriggerHook(hook, flowVersionView, variableService.flatConfigsValue(collectionVersionView.getConfigs()));
                 log.info("Running Trigger hook {} for flow {}", hook, flowVersionView.getId().toString());
             }
-        } catch (MissingConfigsException | PermissionDeniedException | CollectionVersionNotFoundException | IOException | InterruptedException e) {
+        } catch (PermissionDeniedException | CollectionVersionNotFoundException | IOException | InterruptedException e) {
             throw errorServiceHandler.createInternalError(e);
         }
     }
@@ -104,7 +103,7 @@ public class InstanceHooksListener implements InstanceSubscriber {
                         Collections.emptyMap());
                 log.info("Running instance hook with run Id {}", instanceRunView.getId().toString());
             }
-        } catch (FlowExecutionInternalError | MissingConfigsException | ResourceNotFoundException | InstanceNotFoundException | PermissionDeniedException e) {
+        } catch (FlowExecutionInternalError | ResourceNotFoundException | InstanceNotFoundException | PermissionDeniedException e) {
             throw errorServiceHandler.createInternalError(e);
         }
     }

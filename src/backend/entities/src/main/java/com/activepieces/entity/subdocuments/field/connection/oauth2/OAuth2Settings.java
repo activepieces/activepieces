@@ -48,5 +48,10 @@ public class OAuth2Settings implements Serializable {
   @JsonProperty
   @NotNull
   @NotEmpty
+  private String redirectUrl;
+
+  @JsonProperty
+  @NotNull
+  @NotEmpty
   private String responseType;
 }

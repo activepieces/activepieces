@@ -10,7 +10,6 @@ import com.activepieces.guardian.client.exception.PermissionDeniedException;
 import com.activepieces.guardian.client.exception.ResourceNotFoundException;
 import com.activepieces.instance.client.model.CreateOrUpdateInstanceRequest;
 import com.activepieces.instance.client.model.InstanceView;
-import com.activepieces.variable.model.exception.MissingConfigsException;
 import com.github.ksuid.Ksuid;
 
 import java.util.Optional;
@@ -19,7 +18,7 @@ public interface InstanceService {
 
   SeekPage<InstanceView> listByCollectionId(Ksuid collectionId, SeekPageRequest pageRequest) throws PermissionDeniedException, InstanceNotFoundException;
 
-  InstanceView create(Ksuid collectionId, CreateOrUpdateInstanceRequest instanceRequest) throws PermissionDeniedException, ResourceNotFoundException, FlowVersionNotFoundException, MissingConfigsException, CollectionVersionNotFoundException, CollectionNotFoundException, FlowNotFoundException, CollectionInvalidStateException, CollectionVersionAlreadyLockedException;
+  InstanceView create(Ksuid collectionId, CreateOrUpdateInstanceRequest instanceRequest) throws PermissionDeniedException, ResourceNotFoundException, FlowVersionNotFoundException, CollectionVersionNotFoundException, CollectionNotFoundException, FlowNotFoundException, CollectionInvalidStateException, CollectionVersionAlreadyLockedException;
 
   Optional<InstanceView> getOptional(Ksuid id) throws PermissionDeniedException;
 
