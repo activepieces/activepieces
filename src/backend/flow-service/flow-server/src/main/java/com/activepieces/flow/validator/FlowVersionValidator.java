@@ -1,17 +1,15 @@
 package com.activepieces.flow.validator;
 
-import com.activepieces.common.code.ArtifactFile;
+import com.activepieces.common.model.ArtifactFile;
 import com.activepieces.common.error.ErrorServiceHandler;
 import com.activepieces.common.error.exception.flow.FlowNotFoundException;
 import com.activepieces.component.ComponentService;
 import com.activepieces.entity.enums.ResourceType;
-import com.activepieces.entity.subdocuments.action.settings.ComponentSettings;
 import com.activepieces.flow.FlowService;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.flow.validator.constraints.*;
 import com.activepieces.guardian.client.PermissionService;
 import com.activepieces.guardian.client.exception.PermissionDeniedException;
-import com.activepieces.piece.client.CollectionService;
 import com.github.ksuid.Ksuid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,7 +17,6 @@ import org.springframework.stereotype.Service;
 import javax.validation.Validator;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 @Service
 public class FlowVersionValidator {

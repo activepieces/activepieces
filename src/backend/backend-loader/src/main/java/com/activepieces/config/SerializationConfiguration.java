@@ -1,6 +1,6 @@
 package com.activepieces.config;
 
-import com.activepieces.common.id.APIdSerializer;
+import com.activepieces.common.utils.APIdSerializer;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.ksuid.Ksuid;

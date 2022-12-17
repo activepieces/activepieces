@@ -1,4 +1,4 @@
-package com.activepieces.common.code;
+package com.activepieces.common.model;
 
 import com.github.ksuid.Ksuid;
 

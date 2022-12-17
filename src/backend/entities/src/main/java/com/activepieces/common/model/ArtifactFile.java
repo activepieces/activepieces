@@ -1,4 +1,4 @@
-package com.activepieces.common.code;
+package com.activepieces.common.model;
 
 import lombok.*;
 import org.springframework.mock.web.MockMultipartFile;

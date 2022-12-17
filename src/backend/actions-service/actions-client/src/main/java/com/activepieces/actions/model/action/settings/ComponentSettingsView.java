@@ -1,8 +1,5 @@
 package com.activepieces.actions.model.action.settings;
 
-import com.activepieces.common.code.ArtifactFile;
-import com.activepieces.common.utils.ManifestUtils;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
