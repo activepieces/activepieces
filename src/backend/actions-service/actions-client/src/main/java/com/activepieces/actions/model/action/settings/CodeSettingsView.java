@@ -1,7 +1,7 @@
 package com.activepieces.actions.model.action.settings;
 
-import com.activepieces.common.code.ArtifactFile;
-import com.activepieces.common.code.ArtifactMetadataSettings;
+import com.activepieces.common.model.ArtifactFile;
+import com.activepieces.common.model.ArtifactMetadataSettings;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.ksuid.Ksuid;

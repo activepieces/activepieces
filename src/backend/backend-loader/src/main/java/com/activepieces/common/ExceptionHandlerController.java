@@ -1,4 +1,4 @@
-package com.activepieces.common.errorhandling;
+package com.activepieces.common;
 
 import com.activepieces.authentication.client.exception.InvalidTokenException;
 import com.activepieces.authentication.client.exception.UnAuthenticationException;

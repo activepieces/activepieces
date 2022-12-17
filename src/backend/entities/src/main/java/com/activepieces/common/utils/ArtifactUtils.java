@@ -1,6 +1,6 @@
 package com.activepieces.common.utils;
 
-import com.activepieces.common.code.ArtifactFile;
+import com.activepieces.common.model.ArtifactFile;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;

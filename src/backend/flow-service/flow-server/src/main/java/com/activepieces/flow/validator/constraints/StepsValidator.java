@@ -2,10 +2,8 @@ package com.activepieces.flow.validator.constraints;
 
 import com.activepieces.actions.model.action.ActionMetadataView;
 import com.activepieces.actions.model.action.ComponentActionMetadataView;
-import com.activepieces.common.code.ArtifactFile;
+import com.activepieces.common.model.ArtifactFile;
 import com.activepieces.component.ComponentService;
-import com.activepieces.entity.subdocuments.action.settings.ComponentSettings;
-import com.activepieces.entity.subdocuments.trigger.settings.ComponentTriggerSettings;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.flow.util.FlowVersionUtil;
 import com.activepieces.flow.validator.FlowVersionRequestBuilder;
@@ -16,10 +14,8 @@ import com.github.ksuid.Ksuid;
 import lombok.AllArgsConstructor;
 
 import javax.validation.Validator;
-import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 @AllArgsConstructor
 public class StepsValidator implements FlowVersionRequestBuilder {

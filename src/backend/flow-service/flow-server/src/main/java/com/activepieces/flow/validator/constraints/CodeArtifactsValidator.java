@@ -2,7 +2,7 @@ package com.activepieces.flow.validator.constraints;
 
 import com.activepieces.actions.model.action.CodeActionMetadataView;
 import com.activepieces.actions.model.action.settings.CodeSettingsView;
-import com.activepieces.common.code.ArtifactFile;
+import com.activepieces.common.model.ArtifactFile;
 import com.activepieces.common.error.ErrorCode;
 import com.activepieces.common.error.ErrorResponse;
 import com.activepieces.flow.model.FlowVersionView;
