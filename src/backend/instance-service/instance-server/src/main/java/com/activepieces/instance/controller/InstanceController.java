@@ -15,7 +15,6 @@ import com.activepieces.instance.client.InstanceService;
 import com.activepieces.instance.client.model.CreateOrUpdateInstanceRequest;
 import com.activepieces.instance.client.model.InstanceView;
 import com.activepieces.logging.client.model.InstanceRunView;
-import com.activepieces.variable.model.exception.MissingConfigsException;
 import com.github.ksuid.Ksuid;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.NonNull;
@@ -61,7 +60,7 @@ public class InstanceController {
     @PostMapping("/collections/{collectionId}/instance")
     public ResponseEntity<InstanceView> create(@PathVariable("collectionId") Ksuid collectionId, @RequestBody @Valid CreateOrUpdateInstanceRequest request)
             throws PermissionDeniedException, ResourceNotFoundException, FlowVersionNotFoundException,
-            CollectionVersionNotFoundException, MissingConfigsException, CollectionNotFoundException, FlowNotFoundException, CollectionInvalidStateException, CollectionVersionAlreadyLockedException {
+            CollectionVersionNotFoundException, CollectionNotFoundException, FlowNotFoundException, CollectionInvalidStateException, CollectionVersionAlreadyLockedException {
 
         return ResponseEntity.ok(instanceService.create(collectionId, request));
     }
@@ -76,7 +75,7 @@ public class InstanceController {
     public ResponseEntity<InstanceRunView> execute(
             @PathVariable("flowId") Ksuid flowId,
             @RequestBody @Valid Map<String, Object> payload)
-            throws PermissionDeniedException, FlowNotFoundException, FlowExecutionInternalError, MissingConfigsException, ResourceNotFoundException, InstanceNotFoundException {
+            throws PermissionDeniedException, FlowNotFoundException, FlowExecutionInternalError, ResourceNotFoundException, InstanceNotFoundException {
         SecurityContextHolder.getContext().setAuthentication(null);
         final FlowView flowView = flowService.get(flowId);
         final SeekPage<InstanceView> instanceViewSeekPage = instanceService.listByCollectionId(flowView.getCollectionId(), new SeekPageRequest(null, 1));
