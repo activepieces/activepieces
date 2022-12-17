@@ -59,7 +59,7 @@ public class InstanceController {
     }
 
     @PostMapping("/collections/{collectionId}/instance")
-    public ResponseEntity<InstanceView> create(@PathVariable("collectionId") Ksuid collectionId, @RequestBody CreateOrUpdateInstanceRequest request)
+    public ResponseEntity<InstanceView> create(@PathVariable("collectionId") Ksuid collectionId, @RequestBody @Valid CreateOrUpdateInstanceRequest request)
             throws PermissionDeniedException, ResourceNotFoundException, FlowVersionNotFoundException,
             CollectionVersionNotFoundException, MissingConfigsException, CollectionNotFoundException, FlowNotFoundException, CollectionInvalidStateException, CollectionVersionAlreadyLockedException {
 

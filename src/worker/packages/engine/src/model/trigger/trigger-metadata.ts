@@ -15,12 +15,4 @@ export class TriggerMetadata {
     this.nextAction = nextAction;
     this.type = type;
   }
-
-  static deserialize(jsonData: any): TriggerMetadata {
-    const nextAction = !jsonData['nextAction']
-      ? undefined
-      : createAction(jsonData['nextAction']);
-
-    return new TriggerMetadata(jsonData['type'], nextAction);
-  }
 }

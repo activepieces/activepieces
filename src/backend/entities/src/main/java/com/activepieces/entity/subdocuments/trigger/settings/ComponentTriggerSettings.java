@@ -21,7 +21,6 @@ public class ComponentTriggerSettings {
 
     @JsonProperty
     @NotEmpty
-    @CronExpression
     private String componentName;
 
     @JsonProperty

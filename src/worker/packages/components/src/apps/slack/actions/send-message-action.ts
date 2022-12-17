@@ -7,7 +7,8 @@ import {httpClient} from "../../../common/http/core/http-client";
 import {ConfigurationValue} from "../../../framework/config/configuration-value.model";
 
 export const slackSendMessageAction = createAction({
-	name: 'Send Slack Message',
+	name: 'send_channel_message',
+	displayName: "Send Slack Message",
 	description: 'Send Slack Message',
 	configs: [
 		{

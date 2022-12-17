@@ -1,12 +1,10 @@
 package com.activepieces.trigger.schedule.server.component;
 
-import com.activepieces.actions.model.action.ComponentActionMetadataView;
-import com.activepieces.actions.model.action.settings.ComponentSettingsView;
 import com.activepieces.common.error.ErrorServiceHandler;
 import com.activepieces.common.error.exception.collection.CollectionVersionNotFoundException;
 import com.activepieces.common.error.exception.flow.FlowVersionNotFoundException;
 import com.activepieces.component.ComponentService;
-import com.activepieces.entity.enums.CustomTriggerType;
+import com.activepieces.entity.enums.ComponentTriggerType;
 import com.activepieces.entity.enums.InstanceStatus;
 import com.activepieces.flow.FlowVersionService;
 import com.activepieces.flow.model.FlowVersionView;
@@ -15,14 +13,11 @@ import com.activepieces.instance.client.InstancePublisher;
 import com.activepieces.instance.client.InstanceSubscriber;
 import com.activepieces.instance.client.model.InstanceEventType;
 import com.activepieces.instance.client.model.InstanceView;
-import com.activepieces.piece.client.CollectionVersionService;
-import com.activepieces.piece.client.model.CollectionVersionView;
 import com.activepieces.trigger.model.ComponentTriggerMetadataView;
 import com.activepieces.trigger.model.ScheduleMetadataTriggerView;
 import com.activepieces.trigger.model.TriggerMetadataView;
 import com.activepieces.trigger.schedule.client.Job;
 import com.activepieces.trigger.schedule.client.ScheduleService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.ksuid.Ksuid;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
@@ -32,7 +27,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.UUID;
 
 import static org.quartz.CronScheduleBuilder.cronSchedule;
 
@@ -120,10 +114,10 @@ public class ScheduleServiceImpl implements ScheduleService, InstanceSubscriber 
     }
     if(triggerMetadataView instanceof ComponentTriggerMetadataView){
       ComponentTriggerMetadataView componentTrigger = (ComponentTriggerMetadataView) triggerMetadataView;
-      final CustomTriggerType triggerType = componentService.getTriggerType(
+      final ComponentTriggerType triggerType = componentService.getTriggerType(
               componentTrigger.getSettings().getComponentName(), componentTrigger.getSettings().getTriggerName()
       );
-      if(triggerType.equals(CustomTriggerType.POLLING)){
+      if(triggerType.equals(ComponentTriggerType.POLLING)){
         final String fifteenMinutes = "0 */15 * ? * *";
         return fifteenMinutes;
       }
@@ -160,7 +154,7 @@ public class ScheduleServiceImpl implements ScheduleService, InstanceSubscriber 
     try {
       switch (type) {
         case CREATE:
-          if (entity.getStatus().equals(InstanceStatus.RUNNING)) {
+          if (entity.getStatus().equals(InstanceStatus.ENABLED)) {
             createIfSchedule(entity);
           }
           break;
@@ -170,7 +164,7 @@ public class ScheduleServiceImpl implements ScheduleService, InstanceSubscriber 
         case UPDATE:
           log.info("Updating Schedule Job binding" + entity.toString());
           deleteSchedule(entity);
-          if (entity.getStatus().equals(InstanceStatus.RUNNING)) {
+          if (entity.getStatus().equals(InstanceStatus.ENABLED)) {
             createIfSchedule(entity);
           }
           break;

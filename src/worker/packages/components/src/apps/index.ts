@@ -1,8 +1,8 @@
 import {slack} from './slack';
 import type {Component} from '../framework/component';
-import {facebook} from "./facebook";
+import {github} from "./github";
 
 export const apps: Component[] = [
 	slack,
-	facebook
+	github
 ];

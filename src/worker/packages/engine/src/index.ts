@@ -10,10 +10,11 @@ import {ConfigurationValue} from "components/dist/src/framework/config/configura
 import {InputOption} from "components/dist/src/framework/config/input-option.model";
 import {ComponentTrigger, ComponentTriggerSettings} from "./model/trigger/types/component-trigger";
 import {Trigger} from "components/dist/src/framework/trigger/trigger";
-import {TriggerMetadata, TriggerStepType} from "./model/trigger/trigger-metadata";
+import {TriggerStepType} from "./model/trigger/trigger-metadata";
 import {FlowVersion} from "./model/flow-version";
 import {VariableService} from "./services/variable-service";
 import {apps} from "components/dist/src/apps";
+import {Context} from "components/dist/src/framework/context";
 
 
 const args = process.argv.slice(2);
@@ -54,7 +55,7 @@ function executeFlow() {
 }
 
 async function executeTrigger(): Promise<unknown[]> {
-    let optionRequest: { flowVersion: FlowVersion, configs: ConfigurationValue } = JSON.parse(args[1]);
+    let optionRequest: { flowVersion: FlowVersion, configs: ConfigurationValue, payload: unknown, webhookUrl: string, method: string} = JSON.parse(args[1]);
     if (optionRequest.flowVersion.trigger === undefined || optionRequest.flowVersion.trigger === null
         || optionRequest.flowVersion.trigger.type !== TriggerStepType.COMPONENT) {
         return [];
@@ -64,11 +65,25 @@ async function executeTrigger(): Promise<unknown[]> {
     if (application === undefined) {
         throw new Error("Component " + componentSettings.componentName + " is not found");
     }
-    let trigger = application.getTrigger(componentSettings.componentName);
+    let trigger = application.getTrigger(componentSettings.triggerName);
     let executionState = new ExecutionState();
     executionState.insertConfigs(optionRequest.configs);
     let variableService = new VariableService();
-    return trigger.run(variableService.resolve(componentSettings.input, executionState));
+    let context = new Context(optionRequest.payload,
+        optionRequest.webhookUrl,
+        variableService.resolve(componentSettings.input, executionState));
+    switch (optionRequest.method){
+        case 'run':
+            return trigger.run(context);
+        case 'on-enable':
+            trigger.onEnable(context);
+            return [];
+        case 'on-disable':
+            trigger.onDisable(context);
+            return [];
+        default:
+            throw new Error("Method " + optionRequest.method + " is not supported");
+    }
 }
 
 function getMetadata() {
@@ -104,7 +119,7 @@ async function execute() {
             console.log(JSON.stringify(await getOptions()));
             break;
         case 'trigger-type':
-            console.log(JSON.stringify(await getTriggerType()));
+            console.log(await getTriggerType());
             break;
         default:
             break;

@@ -60,7 +60,7 @@ export class CollectionService {
 	}
 	deploy(collection_id: UUID): Observable<Instance> {
 		return this.http.post<Instance>(environment.apiUrl + `/collections/${collection_id}/instance`, {
-			status: InstanceStatus.RUNNING,
+			status: InstanceStatus.ENABLED,
 		});
 	}
 }

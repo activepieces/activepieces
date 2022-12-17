@@ -10,51 +10,54 @@ import org.mapstruct.SubclassMappings;
 import static org.mapstruct.SubclassExhaustiveStrategy.RUNTIME_EXCEPTION;
 
 @Mapper(
-    subclassExhaustiveStrategy = RUNTIME_EXCEPTION,
-    componentModel = "spring",
-    uses = {ActionMapper.class})
+        subclassExhaustiveStrategy = RUNTIME_EXCEPTION,
+        componentModel = "spring",
+        uses = {ActionMapper.class})
 public abstract class TriggerMapper {
 
-  @SubclassMappings(
-      value = {
-        @SubclassMapping(
-            source = ScheduleTriggerMetadata.class,
-            target = ScheduleMetadataTriggerView.class),
-        @SubclassMapping(
-            source = InstanceStoppedTriggerMetadata.class,
-            target = InstanceStoppedTriggerMetadataView.class),
-        @SubclassMapping(
-            source = InstanceStartedTriggerMetadata.class,
-            target = InstanceStartedTriggerMetadataView.class),
-        @SubclassMapping(
-            source = WebhookTriggerMetadata.class,
-            target = WebhookTriggerMetadataView.class),
-        @SubclassMapping(
-            source = WebhookTriggerMetadata.class,
-            target = WebhookTriggerMetadataView.class),
-        @SubclassMapping(
-            source = EmptyTriggerMetadata.class,
-            target = EmptyTriggerMetadataView.class)
-      })
-  public abstract TriggerMetadataView toView(TriggerMetadata entity);
+    @SubclassMappings(
+            value = {
+                    @SubclassMapping(
+                            source = ScheduleTriggerMetadata.class,
+                            target = ScheduleMetadataTriggerView.class),
+                    @SubclassMapping(
+                            source = InstanceStoppedTriggerMetadata.class,
+                            target = InstanceStoppedTriggerMetadataView.class),
+                    @SubclassMapping(
+                            source = InstanceStartedTriggerMetadata.class,
+                            target = InstanceStartedTriggerMetadataView.class),
+                    @SubclassMapping(
+                            source = WebhookTriggerMetadata.class,
+                            target = WebhookTriggerMetadataView.class),
+                    @SubclassMapping(
+                            source = ComponentTriggerMetadata.class,
+                            target = ComponentTriggerMetadataView.class),
+                    @SubclassMapping(
+                            source = EmptyTriggerMetadata.class,
+                            target = EmptyTriggerMetadataView.class)
+            })
+    public abstract TriggerMetadataView toView(TriggerMetadata entity);
 
-  @SubclassMappings(
-      value = {
-        @SubclassMapping(
-            source = ScheduleMetadataTriggerView.class,
-            target = ScheduleTriggerMetadata.class),
-        @SubclassMapping(
-            source = InstanceStoppedTriggerMetadataView.class,
-            target = InstanceStoppedTriggerMetadata.class),
-        @SubclassMapping(
-            source = InstanceStartedTriggerMetadataView.class,
-            target = InstanceStartedTriggerMetadata.class),
-        @SubclassMapping(
-            source = WebhookTriggerMetadataView.class,
-            target = WebhookTriggerMetadata.class),
-        @SubclassMapping(
-            source = EmptyTriggerMetadataView.class,
-            target = EmptyTriggerMetadata.class)
-      })
-  public abstract TriggerMetadata fromView(TriggerMetadataView entity);
+    @SubclassMappings(
+            value = {
+                    @SubclassMapping(
+                            source = ScheduleMetadataTriggerView.class,
+                            target = ScheduleTriggerMetadata.class),
+                    @SubclassMapping(
+                            source = InstanceStoppedTriggerMetadataView.class,
+                            target = InstanceStoppedTriggerMetadata.class),
+                    @SubclassMapping(
+                            source = InstanceStartedTriggerMetadataView.class,
+                            target = InstanceStartedTriggerMetadata.class),
+                    @SubclassMapping(
+                            source = WebhookTriggerMetadataView.class,
+                            target = WebhookTriggerMetadata.class),
+                    @SubclassMapping(
+                            source = ComponentTriggerMetadataView.class,
+                            target = ComponentTriggerMetadata.class),
+                    @SubclassMapping(
+                            source = EmptyTriggerMetadataView.class,
+                            target = EmptyTriggerMetadata.class)
+            })
+    public abstract TriggerMetadata fromView(TriggerMetadataView entity);
 }
