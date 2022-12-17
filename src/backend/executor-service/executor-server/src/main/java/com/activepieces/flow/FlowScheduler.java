@@ -73,6 +73,7 @@ public class FlowScheduler {
             InstanceRunView instanceRunView = instanceRunService.get(request.getRunId());
 
             List<Object> triggers = getTriggersPayload(flowVersionView, request.getConfigs(), request.getTriggerPayload());
+            log.info("There are {} events payload", triggers.size());
             for (Object trigger : triggers) {
                 workerService.executeFlow(
                         instanceRunView,
@@ -102,8 +103,7 @@ public class FlowScheduler {
             return Collections.singletonList(payload);
         }
         if (triggerMetadataView instanceof ComponentTriggerMetadataView) {
-            ComponentTriggerMetadataView componentTrigger = (ComponentTriggerMetadataView) triggerMetadataView;
-            return componentService.getTriggersPayload(componentTrigger, flowVersionView, configs);
+            return componentService.getTriggersPayload(payload, flowVersionView, configs);
         }
         return Collections.singletonList(payload);
     }

@@ -1,4 +1,4 @@
 export enum InstanceStatus {
-	PAUSED = 'PAUSED',
-	RUNNING = 'RUNNING',
+	DISABLED = 'DISABLED',
+	ENABLED = 'ENABLED',
 }

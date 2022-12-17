@@ -13,6 +13,7 @@ export class Component {
 
 	constructor(
 		public readonly name: string,
+		public readonly displayName: string,
 		public readonly logoUrl: string,
 		actions: Action[],
 		triggers: Trigger[],
@@ -65,6 +66,7 @@ export class Component {
 	metadata(){
 		return {
 			name: this.name,
+			displayName: this.displayName,
 			logoUrl: this.logoUrl,
 			actions: this._actions,
 			triggers: this._triggers
@@ -74,7 +76,8 @@ export class Component {
 
 export const createComponent = (request: {
 	name: string;
+	displayName: string;
 	logoUrl: string;
 	actions: Action[];
 	triggers: Trigger[];
-}): Component => new Component(request.name, request.logoUrl, request.actions, request.triggers);
+}): Component => new Component(request.name, request.displayName, request.logoUrl, request.actions, request.triggers);

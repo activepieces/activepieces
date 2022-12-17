@@ -1,5 +1,6 @@
 import {Variable} from './variable/variable';
 import {TriggerMetadata} from "./trigger/trigger-metadata";
+import {createTrigger} from "./trigger/trigger-factory";
 
 export class FlowVersion {
   trigger?: TriggerMetadata;
@@ -11,7 +12,7 @@ export class FlowVersion {
   static deserialize(jsonData: any): FlowVersion {
     const trigger = !jsonData['trigger']
       ? undefined
-      : TriggerMetadata.deserialize(jsonData['trigger']);
+      : createTrigger(jsonData['trigger']);
 
     return new FlowVersion(trigger);
   }

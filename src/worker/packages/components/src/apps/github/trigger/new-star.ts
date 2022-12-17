@@ -4,7 +4,8 @@ import {TriggerType} from "../../../framework/trigger/trigger-type";
 import {Context} from "../../../framework/context";
 
 export const newGithubStar = createTrigger({
-    name: 'New Star',
+    name: 'new_star',
+    displayName: "New Star",
     description: 'Trigger when new someone starred repository',
     configs: [],
     type: TriggerType.WEBHOOK,
@@ -13,6 +14,6 @@ export const newGithubStar = createTrigger({
     async onDisable(context: Context) {
     },
     async run(context: Context) {
-        return [context.payload];
+        return [context.payload, { event: "Two"}];
     },
 });

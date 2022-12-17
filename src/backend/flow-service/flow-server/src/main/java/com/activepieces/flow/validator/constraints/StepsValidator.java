@@ -28,12 +28,15 @@ public class StepsValidator implements FlowVersionRequestBuilder {
     if (Objects.isNull(flowVersion.getTrigger())) {
       return flowVersion;
     }
+
     TriggerMetadataView triggerMetadata = flowVersion.getTrigger();
+
     triggerMetadata.setValid(
         validator.validate(triggerMetadata).size() == 0
             && !(triggerMetadata instanceof EmptyTriggerMetadataView));
     List<ActionMetadataView> actionMetadataViewList = FlowVersionUtil.findAllActions(flowVersion);
     for (ActionMetadataView actionMetadataView : actionMetadataViewList) {
+      System.out.println(validator.validate(actionMetadataView).size());
       actionMetadataView.setValid(validator.validate(actionMetadataView).size() == 0);
     }
     return flowVersion;

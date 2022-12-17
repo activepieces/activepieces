@@ -9,6 +9,7 @@ export class Trigger {
 	// eslint-disable-next-line max-params
 	constructor(
 		public readonly name: string,
+		public readonly displayName: string,
 		public readonly description: string,
 		public readonly configs: Input[],
 		public readonly type: TriggerType,
@@ -22,6 +23,7 @@ export class Trigger {
 
 export function createTrigger(request: {
 	name: string;
+	displayName: string;
 	description: string;
 	configs: Input[];
 	type: TriggerType;
@@ -31,6 +33,7 @@ export function createTrigger(request: {
 }): Trigger {
 	return new Trigger(
 		request.name,
+		request.displayName,
 		request.description,
 		request.configs,
 		request.type,
