@@ -6,11 +6,13 @@ import com.activepieces.entity.enums.CustomTriggerType;
 import com.activepieces.entity.sql.Collection;
 import com.activepieces.entity.sql.FlowVersion;
 import com.activepieces.flow.model.FlowVersionView;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -23,10 +25,13 @@ import java.util.Objects;
 public class ComponentService {
 
     private final ObjectMapper objectMapper;
+    private final String apiPrefix;
 
     @Autowired
-    public ComponentService(@NonNull final ObjectMapper objectMapper){
+    public ComponentService(@Value("${com.activepieces.api-prefix}") final String apiPrefix,
+                            @NonNull final ObjectMapper objectMapper){
         this.objectMapper = objectMapper;
+        this.apiPrefix = apiPrefix;
     }
 
     public List<ObjectNode> getApps() throws IOException, InterruptedException {
@@ -35,11 +40,16 @@ public class ComponentService {
     }
 
     public List<Object> getTriggersPayload(
-            @NonNull final Object object,
-            @NonNull final FlowVersionView flowVersionView,
-                                               @NonNull final Map<String, Object> configs){
-        // TODO FIX
-        return Collections.emptyList();
+            @NonNull final Object payload,
+            @NonNull final FlowVersionView flowVersion,
+            @NonNull final Map<String, Object> configs) throws IOException, InterruptedException {
+        final ObjectNode objectNode = objectMapper.createObjectNode();
+        objectNode.put("payload",  objectMapper.convertValue(payload, ObjectNode.class));
+        objectNode.put("flowVersion",  objectMapper.convertValue(flowVersion, ObjectNode.class));
+        objectNode.put("configs", objectMapper.convertValue(configs, ObjectNode.class));
+        objectNode.put("webhookUrl", String.format("%s/flows/%s/webhook", apiPrefix, flowVersion.getFlowId()));
+        final String result = runJs(Constants.WORKER_EXECUTE_TRIGGER_ARG, objectMapper.writeValueAsString(objectNode));
+        return objectMapper.readValue(result, new TypeReference<>(){});
     }
 
     public CustomTriggerType getTriggerType(@NonNull final String componentName,

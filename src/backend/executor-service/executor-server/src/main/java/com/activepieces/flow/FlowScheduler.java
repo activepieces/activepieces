@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -31,9 +32,7 @@ import java.util.Objects;
 public class FlowScheduler {
 
     private final ErrorServiceHandler errorServiceHandler;
-
     private final FlowVersionService flowVersionService;
-
     private final CollectionVersionService collectionVersionService;
     private final WorkerService workerService;
     private final InstanceRunService instanceRunService;
@@ -97,7 +96,7 @@ public class FlowScheduler {
 
     private List<Object> getTriggersPayload(@NonNull final FlowVersionView flowVersionView,
                                             @NonNull final Map<String, Object> configs,
-                                            @NonNull final Object payload) {
+                                            @NonNull final Object payload) throws IOException, InterruptedException {
         final TriggerMetadataView triggerMetadataView = flowVersionView.getTrigger();
         if (Objects.isNull(triggerMetadataView)) {
             return Collections.singletonList(payload);
