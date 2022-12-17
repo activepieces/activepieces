@@ -15,6 +15,8 @@ import {FlowVersion} from "./model/flow-version";
 import {VariableService} from "./services/variable-service";
 import {apps} from "components/dist/src/apps";
 import {Context} from "components/dist/src/framework/context";
+import {Action} from "components/dist/src/framework/action/action";
+import {Input} from "components/dist/src/framework/config/input.model";
 
 
 const args = process.argv.slice(2);
@@ -90,6 +92,25 @@ function getMetadata() {
     return apps.map(f => f.metadata());
 }
 
+async function validateConfigs() {
+    let optionRequest: { componentName: string, triggerName: string, actionName: string, input: Record<string, unknown> } = JSON.parse(args[1]);
+    let app: Component = apps.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
+    let inputs: Input[] = [];
+    if (optionRequest.actionName !== undefined && optionRequest.actionName !== null) {
+        let action: Action = app.getAction(optionRequest.actionName);
+        inputs = action.configs;
+    } else {
+        let trigger: Trigger = app.getTrigger(optionRequest.triggerName);
+        inputs = trigger.configs;
+    }
+    for (let i = 0; i < inputs.length; ++i) {
+        if (inputs[i].required && !(inputs[i].name in inputs)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 async function getTriggerType() {
     let optionRequest: { componentName: string, triggerName: string } = JSON.parse(args[1]);
     let app: Component = apps.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
@@ -120,6 +141,9 @@ async function execute() {
             break;
         case 'trigger-type':
             console.log(await getTriggerType());
+            break;
+        case 'validate-configs':
+            console.log(await validateConfigs());
             break;
         default:
             break;

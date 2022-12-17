@@ -27,14 +27,33 @@ public class ComponentService {
 
     @Autowired
     public ComponentService(@Value("${com.activepieces.api-prefix}") final String apiPrefix,
-                            @NonNull final ObjectMapper objectMapper){
+                            @NonNull final ObjectMapper objectMapper) {
         this.objectMapper = objectMapper.copy().setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE);
         this.apiPrefix = apiPrefix;
     }
 
     public List<ObjectNode> getApps() throws IOException, InterruptedException {
         final String result = runJs(Constants.WORKER_APPS_ARG, null);
-        return objectMapper.readValue(result, new TypeReference<>(){});
+        return objectMapper.readValue(result, new TypeReference<>() {
+        });
+    }
+
+    public boolean validateConfig(
+            @NonNull final String componentName,
+            final String actionName,
+            final String triggerName,
+            @NonNull final Map<String, Object> input)  {
+        try {
+            final ObjectNode objectNode = objectMapper.createObjectNode();
+            objectNode.put("componentName", componentName);
+            objectNode.put("actionName", actionName);
+            objectNode.put("triggerName", triggerName);
+            objectNode.put("input", objectMapper.convertValue(input, ObjectNode.class));
+            final String result = runJs(Constants.WORKER_VALIDATE_CONFIGS_ARG, objectMapper.writeValueAsString(objectNode));
+            return Boolean.parseBoolean(result);
+        }catch (IOException | InterruptedException e){
+            throw new RuntimeException(e);
+        }
     }
 
     public void executeTriggerHook(
@@ -42,7 +61,7 @@ public class ComponentService {
             @NonNull final FlowVersionView flowVersion,
             @NonNull final Map<String, Object> configs) throws IOException, InterruptedException {
         final ObjectNode objectNode = objectMapper.createObjectNode();
-        objectNode.put("flowVersion",  objectMapper.convertValue(flowVersion, ObjectNode.class));
+        objectNode.put("flowVersion", objectMapper.convertValue(flowVersion, ObjectNode.class));
         objectNode.put("method", componentTriggerHook.equals(ComponentTriggerHook.ENABLED) ? "on-enable" : "on-disable");
         objectNode.put("configs", objectMapper.convertValue(configs, ObjectNode.class));
         objectNode.put("webhookUrl", String.format("%s/flows/%s/webhook", apiPrefix, flowVersion.getFlowId()));
@@ -54,13 +73,14 @@ public class ComponentService {
             @NonNull final FlowVersionView flowVersion,
             @NonNull final Map<String, Object> configs) throws IOException, InterruptedException {
         final ObjectNode objectNode = objectMapper.createObjectNode();
-        objectNode.put("payload",  objectMapper.convertValue(payload, ObjectNode.class));
+        objectNode.put("payload", objectMapper.convertValue(payload, ObjectNode.class));
         objectNode.put("method", "run");
-        objectNode.put("flowVersion",  objectMapper.convertValue(flowVersion, ObjectNode.class));
+        objectNode.put("flowVersion", objectMapper.convertValue(flowVersion, ObjectNode.class));
         objectNode.put("configs", objectMapper.convertValue(configs, ObjectNode.class));
         objectNode.put("webhookUrl", String.format("%s/flows/%s/webhook", apiPrefix, flowVersion.getFlowId()));
         final String result = runJs(Constants.WORKER_EXECUTE_TRIGGER_ARG, objectMapper.writeValueAsString(objectNode));
-        return objectMapper.readValue(result, new TypeReference<>(){});
+        return objectMapper.readValue(result, new TypeReference<>() {
+        });
     }
 
     public ComponentTriggerType getTriggerType(@NonNull final String componentName,
@@ -81,11 +101,12 @@ public class ComponentService {
         objectNode.put("configName", configName);
         objectNode.put("configs", objectMapper.convertValue(configs, ObjectNode.class));
         final String result = runJs(Constants.WORKER_OPTIONS_ARG, objectMapper.writeValueAsString(objectNode));
-        return objectMapper.readValue(result, new TypeReference<>(){});
+        return objectMapper.readValue(result, new TypeReference<>() {
+        });
     }
 
     private String runJs(final String args, final String secondArgs) throws IOException, InterruptedException {
-        if(Objects.isNull(secondArgs)){
+        if (Objects.isNull(secondArgs)) {
             return ArtifactUtils.runCommandAsRoot(String.format("node %s %s", Constants.ACTIVEPIECES_WORKER_ABS_PATH_JS, args));
         }
         return ArtifactUtils.runCommandAsRoot(String.format("node %s %s %s", Constants.ACTIVEPIECES_WORKER_ABS_PATH_JS,
