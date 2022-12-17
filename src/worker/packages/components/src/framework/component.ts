@@ -27,14 +27,6 @@ export class Component {
 		);
 	}
 
-	get actions(): Action[] {
-		return Object.values(this._actions);
-	}
-
-	get triggers(): Trigger[] {
-		return Object.values(this._triggers);
-	}
-
 	async runAction(actionName: string, config: ConfigurationValue): Promise<RunnerStatus> {
 		if (!(actionName in this._actions)) {
 			throw new ActionNotFoundError(this.name, actionName);
@@ -55,11 +47,19 @@ export class Component {
 		return await (action.configs[configIndex] as SelectInput).options(config);
 	}
 
+
+	getAction(actionName: string): Action {
+		if (!(actionName in this._actions)) {
+			throw new ActionNotFoundError(this.name, actionName);
+		}
+		return this._actions[actionName];
+	}
+
+
 	getTrigger(triggerName: string): Trigger {
 		if (!(triggerName in this._triggers)) {
 			throw new TriggerNotFoundError(this.name, triggerName);
 		}
-
 		return this._triggers[triggerName];
 	}
 

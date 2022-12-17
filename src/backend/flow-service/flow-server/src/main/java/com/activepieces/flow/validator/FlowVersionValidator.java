@@ -3,7 +3,9 @@ package com.activepieces.flow.validator;
 import com.activepieces.common.code.ArtifactFile;
 import com.activepieces.common.error.ErrorServiceHandler;
 import com.activepieces.common.error.exception.flow.FlowNotFoundException;
+import com.activepieces.component.ComponentService;
 import com.activepieces.entity.enums.ResourceType;
+import com.activepieces.entity.subdocuments.action.settings.ComponentSettings;
 import com.activepieces.flow.FlowService;
 import com.activepieces.flow.model.FlowVersionView;
 import com.activepieces.flow.validator.constraints.*;
@@ -34,6 +36,7 @@ public class FlowVersionValidator {
   public FlowVersionValidator(
       PermissionService permissionService,
       Validator validator,
+      ComponentService componentService,
       ErrorServiceHandler errorServiceHandler,
       FlowService flowService) {
     this.errorServiceHandler = errorServiceHandler;
@@ -41,7 +44,7 @@ public class FlowVersionValidator {
     this.permissionService = permissionService;
     this.uniqueStepsNameValidator = new UniqueStepsNameValidator();
     this.flowValidValidator = new FlowValidValidator();
-    this.stepsValidator = new StepsValidator(validator);
+    this.stepsValidator = new StepsValidator(validator, componentService);
     this.requiredCodeArtifactsValidator = new CodeArtifactsValidator();
   }
 
