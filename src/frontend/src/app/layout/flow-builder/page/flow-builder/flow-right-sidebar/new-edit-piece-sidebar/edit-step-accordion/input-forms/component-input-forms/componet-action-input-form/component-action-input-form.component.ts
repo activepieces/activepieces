@@ -77,7 +77,6 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 	actions$: Observable<ActionDropdownOption[]>;
 	valueChanges$: Observable<void>;
 	actionDropdownValueChanged$: Observable<{ actionName: string; configs: FrontEndConnectorConfig[] }>;
-	setInitiallySelectedAuthConfig$: Observable<void>;
 	onChange = (value: any) => {};
 	onTouch = () => {};
 	updateOrAddConfigModalClosed$: Observable<Config>;

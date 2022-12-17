@@ -142,8 +142,10 @@ export class StepTypeSidebarComponent implements OnInit {
 		}
 		if (trigger.type === TriggerType.COMPONENT) {
 			trigger.valid = false;
-			debugger;
+
 			trigger.settings.component_name = triggerDetails.name;
+			trigger.settings.trigger_name = '';
+			trigger.settings.input = {};
 		}
 		this.store.dispatch(
 			FlowsActions.replaceTrigger({

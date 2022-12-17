@@ -48,12 +48,11 @@ export class ComponentTriggerInputFormComponent {
 	componentForm: FormGroup;
 	initialSetup$: Observable<TriggerDropdownOption[]>;
 	componentName: string;
-	intialComponentInputFormValue: { trigger_name: string; input: { [key: string]: any } } | null;
-	selectedAction$: Observable<any>;
+	intialComponentTriggerInputFormValue: { trigger_name: string; input: { [key: string]: any } } | null;
+	selectedTrigger$: Observable<any>;
 	triggers$: Observable<TriggerDropdownOption[]>;
 	valueChanges$: Observable<void>;
-	actionDropdownValueChanged$: Observable<{ actionName: string; configs: FrontEndConnectorConfig[] }>;
-	setInitiallySelectedAuthConfig$: Observable<void>;
+	triggerDropdownValueChanged$: Observable<{ triggerName: string; configs: FrontEndConnectorConfig[] }>;
 	onChange = (value: any) => {};
 	onTouch = () => {};
 	updateOrAddConfigModalClosed$: Observable<Config>;
@@ -64,18 +63,15 @@ export class ComponentTriggerInputFormComponent {
 		private cd: ChangeDetectorRef
 	) {
 		this.buildForm();
-		this.actionDropdownValueChanged$ = this.componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.valueChanges.pipe(
+		this.triggerDropdownValueChanged$ = this.componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.valueChanges.pipe(
 			tap(val => {
-				this.actionSelectValueChanged(val);
+				this.triggerSelectValueChanged(val);
 			})
 		);
 	}
 
 	customSearchFn(term: string, item: any) {
 		const termLowerCase = term.toLowerCase();
-		if (item.label === 'Custom Request') {
-			return false;
-		}
 		const result =
 			item.label.url.toLowerCase().indexOf(termLowerCase) > -1 ||
 			item.label.summary.toLowerCase().indexOf(termLowerCase) > -1 ||
@@ -122,22 +118,22 @@ export class ComponentTriggerInputFormComponent {
 		);
 		this.initialSetup$ = this.triggers$.pipe(
 			tap(items => {
-				if (this.intialComponentInputFormValue && this.intialComponentInputFormValue.trigger_name) {
+				if (this.intialComponentTriggerInputFormValue && this.intialComponentTriggerInputFormValue.trigger_name) {
 					this.componentForm
 						.get(TRIGGER_FORM_CONTROL_NAME)!
 						.setValue(
-							items.find(i => i.value.triggerName === this.intialComponentInputFormValue?.trigger_name)?.value,
+							items.find(i => i.value.triggerName === this.intialComponentTriggerInputFormValue?.trigger_name)?.value,
 							{
 								emitEvent: false,
 							}
 						);
-					this.selectedAction$ = of(
-						items.find(it => it.value.triggerName === this.intialComponentInputFormValue?.trigger_name)
+					this.selectedTrigger$ = of(
+						items.find(it => it.value.triggerName === this.intialComponentTriggerInputFormValue?.trigger_name)
 					).pipe(
-						tap(selectedAction => {
-							if (selectedAction) {
-								const configs = [...selectedAction.value.configs];
-								const configsValues = this.intialComponentInputFormValue?.input;
+						tap(selectedTrigger => {
+							if (selectedTrigger) {
+								const configs = [...selectedTrigger.value.configs];
+								const configsValues = this.intialComponentTriggerInputFormValue?.input;
 								if (configsValues) {
 									Object.keys(configsValues).forEach(key => {
 										const config = configs.find(c => c.key === key);
@@ -158,7 +154,7 @@ export class ComponentTriggerInputFormComponent {
 		);
 	}
 	writeValue(obj: ComponentTriggerInputFormSchema): void {
-		this.intialComponentInputFormValue = obj;
+		this.intialComponentTriggerInputFormValue = obj;
 		this.componentName = obj.component_name;
 		this.componentForm.get(TRIGGER_FORM_CONTROL_NAME)?.setValue(undefined, { emitEvent: false });
 		this.componentForm.removeControl(CONFIGS_FORM_CONTROL_NAME, { emitEvent: false });
@@ -174,24 +170,25 @@ export class ComponentTriggerInputFormComponent {
 	}
 
 	validate() {
+		debugger;
 		if (this.componentForm.valid) return null;
 		return { invalid: true };
 	}
 
-	actionSelectValueChanged(selectedActionValue: { actionName: string; configs: FrontEndConnectorConfig[] } | null) {
+	triggerSelectValueChanged(selectedActionValue: { triggerName: string; configs: FrontEndConnectorConfig[] } | null) {
 		if (selectedActionValue) {
-			this.actionSelected(selectedActionValue);
+			this.triggerSelected(selectedActionValue);
 
-			this.selectedAction$ = this.triggers$.pipe(
+			this.selectedTrigger$ = this.triggers$.pipe(
 				map(items => {
-					console.log(items.find(it => it.value.triggerName === selectedActionValue.actionName));
-					return items.find(it => it.value.triggerName === selectedActionValue.actionName);
+					console.log(items.find(it => it.value.triggerName === selectedActionValue.triggerName));
+					return items.find(it => it.value.triggerName === selectedActionValue.triggerName);
 				})
 			);
 		}
 	}
 
-	private actionSelected(selectedActionValue: { actionName: string; configs: FrontEndConnectorConfig[] }) {
+	private triggerSelected(selectedActionValue: { triggerName: string; configs: FrontEndConnectorConfig[] }) {
 		const configsForm = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME);
 		if (!configsForm) {
 			this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new FormControl([...selectedActionValue.configs]));
@@ -212,8 +209,8 @@ export class ComponentTriggerInputFormComponent {
 		console.log(res);
 		return res;
 	}
-	actionDropdownCompareFn(item, selected) {
-		return item.value.actionName === selected.actionName;
+	triggerDropdownCompareFn(item, selected) {
+		return item.value.triggerName === selected.triggerName;
 	}
 	setDisabledState?(isDisabled: boolean): void {
 		if (isDisabled) {

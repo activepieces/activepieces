@@ -2,7 +2,7 @@
   <div class="form-group d-flex flex-column" *ngFor="let config of requiredConfigs; let i = index" >
     <ng-container *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:config, configIndex:i,formGroup:form}"></ng-container>
   </div>
-  <div class="d-flex align-items-center optional-input-label-container">
+  <div *ngIf="allOptionalConfigs.length > 0" class="d-flex align-items-center optional-input-label-container">
     <div> Optional Inputs</div>
     <div #spacer class="flex-grow-1"></div>
     <app-button *ngIf="selectedOptionalConfigs.length !== allOptionalConfigs.length && form.enabled" btnColor="primary"

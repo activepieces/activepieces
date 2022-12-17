@@ -142,14 +142,14 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		stepToSave.settings = inputControlValue;
 		stepToSave.name = this._selectedStep.name;
 
-		if (this._selectedStep.type === ActionType.COMPONENT) {
-
+		if (this._selectedStep.type === ActionType.COMPONENT || this._selectedStep.type === TriggerType.COMPONENT) {
 			const componentSettings = {
 				...this._selectedStep.settings,
 				...inputControlValue,
 			};
 			stepToSave.settings = componentSettings;
 		}
+
 		stepToSave.valid = this.stepForm.valid;
 		delete stepToSave.settings.artifact;
 		return stepToSave;

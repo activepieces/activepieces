@@ -24,7 +24,7 @@ public class ComponentTriggerSettings {
     private String componentName;
 
     @JsonProperty
-    @NotEmpty
+
     private String triggerName;
 
     @JsonProperty

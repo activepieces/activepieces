@@ -180,7 +180,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		this.selectedOptionalConfigs.push(config);
 	}
 	openNewAuthenticationModal(authConfigName: string) {
-
 		const modalRef = this.modalService.show(NewAuthenticationModalComponent, {
 			ignoreBackdropClick: true,
 			class: 'modal-dialog-centered',
@@ -201,7 +200,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		);
 	}
 	editSelectedAuthConfig(authConfigKey: string) {
-
 		const selectedValue: any = this.form.get(authConfigKey)!.value;
 		const allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuth2Configs);
 		this.updateAuthConfig$ = allAuthConfigs$.pipe(
