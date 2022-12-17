@@ -5,6 +5,7 @@ services:
     image: activepieces/backend:0.0.22
     container_name: activepieces-backend
     restart: unless-stopped
+    privileged: true
     depends_on: [ db ]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
