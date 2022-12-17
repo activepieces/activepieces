@@ -57,6 +57,14 @@ export class ConnectorComponent {
 			configs: ComponnentConfigsForActionsOrTriggers[];
 		}
 	>;
+	triggers: Record<
+		string,
+		{
+			name: string;
+			description: string;
+			configs: ComponnentConfigsForActionsOrTriggers[];
+		}
+	>;
 }
 export enum InputType {
 	SHORT_TEXT = 'SHORT_TEXT',

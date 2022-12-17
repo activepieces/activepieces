@@ -17,6 +17,7 @@ import { ConfigType } from 'src/app/layout/common-layout/model/enum/config-type'
 import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { DropdownItemOption } from 'src/app/layout/common-layout/model/dropdown-item-option';
+import { environment } from 'src/environments/environment';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -118,6 +119,9 @@ export const selectFlowsState = createSelector(selectBuilderState, (state: Globa
 
 export const selectCurrentFlow = createSelector(selectFlowsState, (flowsState: FlowsState) => {
 	return flowsState.flows.find(f => f.id === flowsState.selectedFlowId);
+});
+export const selectCurrentFlowWebhookUrl = createSelector(selectCurrentFlow, flow => {
+	return `${environment.apiUrl}/flows/${flow?.id}/webhook`;
 });
 
 export const selectTabState = (flowId: UUID) =>
@@ -242,27 +246,36 @@ export const selectCoreFlowItemsDetails = createSelector(selectAllFlowItemsDetai
 	return state.coreFlowItemsDetails;
 });
 
-export const selectFlowItemDetailsForTriggers = createSelector(
+export const selectFlowItemDetailsForCoreTriggers = createSelector(
 	selectAllFlowItemsDetails,
 	(state: FlowItemsDetailsState) => {
-		return state.triggerFlowItemsDetails.filter(details => details.type !== TriggerType.EMPTY);
+		return state.coreTriggerFlowItemsDetails.filter(details => details.type !== TriggerType.EMPTY);
 	}
 );
 export const selectFlowItemDetailsForConnectorComponents = createSelector(
 	selectAllFlowItemsDetails,
 	(state: FlowItemsDetailsState) => {
-		return state.connectorComponentsFlowItemDetails;
+		return state.connectorComponentsActionsFlowItemDetails;
+	}
+);
+export const selectFlowItemDetailsForConnectorComponentsTriggers = createSelector(
+	selectAllFlowItemsDetails,
+	(state: FlowItemsDetailsState) => {
+		return state.connectorComponentsTriggersFlowItemDetails;
 	}
 );
 
 export const selectFlowItemDetails = (flowItem: FlowItem) =>
 	createSelector(selectAllFlowItemsDetails, (state: FlowItemsDetailsState) => {
-		const triggerItemDetails = state.triggerFlowItemsDetails.find(t => t.type === flowItem.type);
+		const triggerItemDetails = state.coreTriggerFlowItemsDetails.find(t => t.type === flowItem.type);
 		if (triggerItemDetails) {
 			return triggerItemDetails;
 		}
 		if (flowItem.type === ActionType.COMPONENT) {
-			return state.connectorComponentsFlowItemDetails.find(f => f.name === flowItem.settings.component_name);
+			return state.connectorComponentsActionsFlowItemDetails.find(f => f.name === flowItem.settings.component_name);
+		}
+		if (flowItem.type === TriggerType.COMPONENT) {
+			return state.connectorComponentsTriggersFlowItemDetails.find(f => f.name === flowItem.settings.component_name);
 		}
 
 		//Core items might contain remote flows so always have them at the end
@@ -333,7 +346,7 @@ export const BuilderSelectors = {
 	selectFlowItemDetails,
 	selectAllFlowItemsDetailsLoadedState,
 	selectCoreFlowItemsDetails,
-	selectFlowItemDetailsForTriggers,
+	selectFlowItemDetailsForCoreTriggers,
 	selectCurrentFlowValidity,
 	selectAllConfigs,
 	selectConfig,
@@ -342,4 +355,6 @@ export const BuilderSelectors = {
 	selectAuthConfigsDropdownOptions,
 	selectCurrentCollectionInstance,
 	selectIsDeploying,
+	selectCurrentFlowWebhookUrl,
+	selectFlowItemDetailsForConnectorComponentsTriggers,
 };

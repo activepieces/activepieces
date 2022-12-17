@@ -8,8 +8,7 @@ import {
 	NG_VALUE_ACCESSOR,
 	Validators,
 } from '@angular/forms';
-import { fadeInUp400ms } from '../../../../../../../../common-layout/animation/fade-in-up.animation';
-import { ComponentInputFormSchema } from '../input-forms-schema';
+
 import { map, Observable, of, tap } from 'rxjs';
 import { DropdownOption } from 'src/app/layout/common-layout/model/dropdown-options';
 import { environment } from 'src/environments/environment';
@@ -19,6 +18,8 @@ import {
 	ComponnentConfigsForActionsOrTriggers,
 	FrontEndConnectorConfig,
 } from 'src/app/layout/common-layout/components/configs-form/connector-action-or-config';
+import { fadeInUp400ms } from 'src/app/layout/common-layout/animation/fade-in-up.animation';
+import { ComponentActionInputFormSchema } from '../../input-forms-schema';
 declare type ActionDropdownOption = {
 	label: {
 		name: string;
@@ -32,25 +33,25 @@ const CUSTOM_REQUEST_FORM_CONTROL_NAME = 'customRequest';
 const ACTION_FORM_CONTROL_NAME = 'action';
 const CONFIGS_FORM_CONTROL_NAME = 'configs';
 @Component({
-	selector: 'app-component-input-form',
-	templateUrl: './component-input-form.component.html',
-	styleUrls: ['./component-input-form.component.scss'],
+	selector: 'app-component-action-input-form',
+	templateUrl: './component-action-input-form.component.html',
+	styleUrls: ['./component-action-input-form.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
 			multi: true,
-			useExisting: ComponentInputFormComponent,
+			useExisting: ComponentActionInputFormComponent,
 		},
 		{
 			provide: NG_VALIDATORS,
 			multi: true,
-			useExisting: ComponentInputFormComponent,
+			useExisting: ComponentActionInputFormComponent,
 		},
 	],
 	animations: [fadeInUp400ms],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ComponentInputFormComponent implements ControlValueAccessor {
+export class ComponentActionInputFormComponent implements ControlValueAccessor {
 	readonly ACTION_FORM_CONTROL_NAME = ACTION_FORM_CONTROL_NAME;
 	readonly CUSTOM_REQUEST_FORM_CONTROL_NAME = CUSTOM_REQUEST_FORM_CONTROL_NAME;
 	readonly CONFIGS_FORM_CONTROL_NAME = CONFIGS_FORM_CONTROL_NAME;
@@ -132,7 +133,6 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 		this.actions$ = component$.pipe(
 			map(component => {
 				const actionsKeys = Object.keys(component.actions);
-
 				return actionsKeys.map(actionName => {
 					const action = component.actions[actionName];
 					return {
@@ -199,7 +199,7 @@ export class ComponentInputFormComponent implements ControlValueAccessor {
 			})
 		);
 	}
-	writeValue(obj: ComponentInputFormSchema): void {
+	writeValue(obj: ComponentActionInputFormSchema): void {
 		this.intialComponentInputFormValue = obj;
 		this.componentName = obj.component_name;
 		this.componentForm.get(ACTION_FORM_CONTROL_NAME)?.setValue(undefined, { emitEvent: false });

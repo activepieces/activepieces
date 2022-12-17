@@ -2,9 +2,9 @@ export interface CodeTestExecutionResult {
 	duration: number;
 	input: any;
 	output: any;
-	errorMessage: string;
-	standardOutput: string;
+	error_message: string;
+	standard_output: string;
 	status: string;
-	timeInSeconds: string;
+	time_in_seconds: string;
 	verdict: string;
 }

@@ -34,9 +34,13 @@ export class EditStepAccordionComponent implements AfterViewInit {
 	openedIndex = 1;
 	faChevornDown = faChevronDown;
 	faInfoCircle = faInfoCircle;
+	webhookUrl$: Observable<string>;
+
 	//delayExpansionPanelRendering$ is an observable that fixes an issue with angular material's accordions rendering content even though they are closed
 	delayExpansionPanelRendering$: Observable<boolean>;
 	displayNameChangedListener$: Observable<string>;
+	ActionType = ActionType;
+	TriggerType = TriggerType;
 	@Input() displayNameChanged$: Subject<string>;
 
 	@Input() set stepArtifactCacheKeyAndUrl(urlAndCacheKey: { cacheKey: StepCacheKey; url: string } | null) {
@@ -62,6 +66,7 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		private store: Store,
 		private codeService: CodeService
 	) {
+		this.webhookUrl$ = this.store.select(BuilderSelectors.selectCurrentFlowWebhookUrl);
 		this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(
 			tap(readOnly => {
 				if (readOnly) {
@@ -138,23 +143,15 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		stepToSave.name = this._selectedStep.name;
 
 		if (this._selectedStep.type === ActionType.COMPONENT) {
+
 			const componentSettings = {
 				...this._selectedStep.settings,
 				...inputControlValue,
-				componentName: this._selectedStep.settings.componentName,
-				componentVersion: this._selectedStep.settings.componentVersion,
-				manifestUrl: this._selectedStep.settings.manifestUrl,
 			};
 			stepToSave.settings = componentSettings;
 		}
 		stepToSave.valid = this.stepForm.valid;
 		delete stepToSave.settings.artifact;
 		return stepToSave;
-	}
-	get StepTypes() {
-		return ActionType;
-	}
-	get TriggerTypes() {
-		return TriggerType;
 	}
 }

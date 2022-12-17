@@ -3,9 +3,9 @@
     <mat-accordion [hideToggle]="true">
       <mat-expansion-panel #descriptionPanel (closed)="closed(0)" (opened)="setOpenedIndex(0)"
         class="expansion-panel-transition"
-        [expanded]="_selectedStep.type === TriggerTypes.WEBHOOK ||
-                     _selectedStep.type === TriggerTypes.COLLECTION_ENABLED ||
-                      _selectedStep.type === TriggerTypes.COLLECTION_DISABLED "
+        [expanded]="_selectedStep.type === TriggerType.WEBHOOK ||
+                     _selectedStep.type === TriggerType.COLLECTION_ENABLED ||
+                      _selectedStep.type === TriggerType.COLLECTION_DISABLED "
         [class.expansion-panel-opened]="openedIndex === 0">
         <mat-expansion-panel-header class="panel-padding">
           <mat-panel-title>
@@ -21,9 +21,9 @@
 
         <ng-container
           *ngIf="
-                  _selectedStep.type !==TriggerTypes.WEBHOOK &&
-                   _selectedStep.type !== TriggerTypes.COLLECTION_ENABLED &&
-                    _selectedStep.type !== TriggerTypes.COLLECTION_DISABLED; else noDelayInExpansion">
+                  _selectedStep.type !==TriggerType.WEBHOOK &&
+                   _selectedStep.type !== TriggerType.COLLECTION_ENABLED &&
+                    _selectedStep.type !== TriggerType.COLLECTION_DISABLED; else noDelayInExpansion">
           <div class="panel-padding" *ngIf="delayExpansionPanelRendering$ | async">
             <app-describe-form formControlName="describe"></app-describe-form>
           </div>
@@ -31,12 +31,11 @@
         <ng-template #noDelayInExpansion>
           <div class="panel-padding">
             <app-describe-form formControlName="describe"></app-describe-form>
-            <ng-container *ngIf="_selectedStep.type ===TriggerTypes.WEBHOOK ">
+            <ng-container *ngIf="_selectedStep.type ===TriggerType.WEBHOOK ">
               <div class="webhook-note">
-                <p>A webhook link will be automatically generated on integration deployment.</p>
-                <p class="mt-1">The link will be unique per instance per flow.</p>
-                <p class="mt-1">To refer to a webhook url in a step's parameters, use it as follows :
-                  {{ '${context.webhook_urls["FLOW_ID"]}' }}</p>
+                <p>Webhook url: {{webhookUrl$ | async}} </p>
+                <p class="mt-1" >This url will only be activated if the current collection is deployed after webhook trigger has been chosen. </p>
+
               </div>
 
             </ng-container>
@@ -48,14 +47,13 @@
       <mat-expansion-panel #InputPanel (closed)="closed(1)" (opened)="setOpenedIndex(1)"
         class="expansion-panel-transition" [class.expansion-panel-opened]="openedIndex === 1" [expanded]="true"
         *ngIf="
-        _selectedStep.type !==TriggerTypes.WEBHOOK &&
-         _selectedStep.type !== TriggerTypes.COLLECTION_DISABLED &&
-          _selectedStep.type !== TriggerTypes.COLLECTION_ENABLED">
+        _selectedStep.type !==TriggerType.WEBHOOK &&
+         _selectedStep.type !== TriggerType.COLLECTION_DISABLED &&
+          _selectedStep.type !== TriggerType.COLLECTION_ENABLED">
         <mat-expansion-panel-header class="panel-padding">
           <mat-panel-title>
             <label class="expansion-panel-label">Input </label>
             <div class="ml-auto">
-              <span class="text-danger mr-3" hidden> 1 Invalid </span>
               <fa-icon [icon]="faChevornDown" class="flip-transition chevorn-margin-left"
                 [class.flip-chevorn-up]="openedIndex === 1"></fa-icon>
             </div>
@@ -82,23 +80,21 @@
 <ng-template #inputFormSelection>
   <div [formGroup]="stepForm">
     <ng-container [ngSwitch]="_selectedStep.type">
-      <app-schedule-trigger-input-form *ngSwitchCase="TriggerTypes.SCHEDULE" formControlName="input">
+      <app-schedule-trigger-input-form *ngSwitchCase="TriggerType.SCHEDULE" formControlName="input">
       </app-schedule-trigger-input-form>
-
-      <app-event-trigger-input-form *ngSwitchCase="TriggerTypes.EVENT" formControlName="input">
+      <app-event-trigger-input-form *ngSwitchCase="TriggerType.EVENT" formControlName="input">
       </app-event-trigger-input-form>
-      <app-storage-step-input-form *ngSwitchCase="StepTypes.STORAGE" formControlName="input">
+      <app-storage-step-input-form *ngSwitchCase="ActionType.STORAGE" formControlName="input">
       </app-storage-step-input-form>
-      <app-response-step-input-form *ngSwitchCase="StepTypes.RESPONSE" formControlName="input">
+      <app-response-step-input-form *ngSwitchCase="ActionType.RESPONSE" formControlName="input">
       </app-response-step-input-form>
-      <app-loop-step-input-form *ngSwitchCase="StepTypes.LOOP_ON_ITEMS" formControlName="input">
+      <app-loop-step-input-form *ngSwitchCase="ActionType.LOOP_ON_ITEMS" formControlName="input">
       </app-loop-step-input-form>
-      <app-code-step-input-form *ngSwitchCase="StepTypes.CODE" formControlName="input" [stepCacheKey]="stepCacheKey!"
+      <app-code-step-input-form *ngSwitchCase="ActionType.CODE" formControlName="input" [stepCacheKey]="stepCacheKey!"
         [stepArtifact$]="codeArtifact$!">
       </app-code-step-input-form>
-
-      <app-component-input-form *ngSwitchCase="StepTypes.COMPONENT" formControlName="input">
-      </app-component-input-form>
+      <app-component-action-input-form *ngSwitchCase="ActionType.COMPONENT" formControlName="input">
+      </app-component-action-input-form>
     </ng-container>
 
   </div>

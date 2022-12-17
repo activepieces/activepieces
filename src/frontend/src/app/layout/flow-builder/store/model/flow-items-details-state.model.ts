@@ -2,7 +2,8 @@ import { FlowItemDetails } from '../../page/flow-builder/flow-right-sidebar/step
 
 export interface FlowItemsDetailsState {
 	coreFlowItemsDetails: FlowItemDetails[];
-	triggerFlowItemsDetails: FlowItemDetails[];
-	connectorComponentsFlowItemDetails: FlowItemDetails[];
+	coreTriggerFlowItemsDetails: FlowItemDetails[];
+	connectorComponentsActionsFlowItemDetails: FlowItemDetails[];
+	connectorComponentsTriggersFlowItemDetails: FlowItemDetails[];
 	loaded: boolean;
 }

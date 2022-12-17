@@ -63,6 +63,7 @@ const _flowsReducer = createReducer(
 		if (state.selectedFlowId === null) {
 			throw new Error('Selected flow id is null');
 		}
+		debugger;
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
 		const clonedFlows = clonedState.flows;
 		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);

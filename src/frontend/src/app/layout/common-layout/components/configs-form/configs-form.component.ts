@@ -20,7 +20,7 @@ import { Config } from '../../model/fields/variable/config';
 import { ThemeService } from '../../service/theme.service';
 import { FrontEndConnectorConfig, InputType } from './connector-action-or-config';
 import { DropdownItemOption } from '../../model/dropdown-item-option';
-import { NewAuthenticationModalComponent } from 'src/app/layout/flow-builder/page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-form/new-authentication-modal/new-authentication-modal.component';
+import { NewAuthenticationModalComponent } from 'src/app/layout/flow-builder/page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 type ConfigKey = string;
 
 @Component({
@@ -180,7 +180,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		this.selectedOptionalConfigs.push(config);
 	}
 	openNewAuthenticationModal(authConfigName: string) {
-		debugger;
+
 		const modalRef = this.modalService.show(NewAuthenticationModalComponent, {
 			ignoreBackdropClick: true,
 			class: 'modal-dialog-centered',
@@ -201,7 +201,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		);
 	}
 	editSelectedAuthConfig(authConfigKey: string) {
-		debugger;
+
 		const selectedValue: any = this.form.get(authConfigKey)!.value;
 		const allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuth2Configs);
 		this.updateAuthConfig$ = allAuthConfigs$.pipe(

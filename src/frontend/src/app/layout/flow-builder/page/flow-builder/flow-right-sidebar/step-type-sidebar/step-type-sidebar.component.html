@@ -6,20 +6,6 @@
     ></app-sidebar-header>
   </div>
 
-  <ng-container *ngIf="_showTriggers; else tabsTemplate">
-    <ng-container *ngIf="triggersDetails$ | async as list; else loading">
-      <ng-container *ngIf="list.length>0; else loading">
-        <app-step-type-list
-        [typesList]="list"
-        (typeSelected)="onTypeSelected($event)"
-      >
-      </app-step-type-list>
-      </ng-container>
-    </ng-container>
-  </ng-container>
-</div>
-
-<ng-template #tabsTemplate>
   <ng-container *ngIf="flowItemDetailsLoaded$ | async; else loading">
     <mat-tab-group #tabGroup>
       <mat-tab *ngFor="let tab of tabsAndTheirLists; let i = index">
@@ -41,7 +27,7 @@
       </mat-tab>
     </mat-tab-group>
   </ng-container>
-</ng-template>
+
 <ng-template #loading>
   <div
     class="loading-container-for-flow-items-list justify-content-center align-items-center d-column"

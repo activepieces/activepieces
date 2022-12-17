@@ -3,8 +3,9 @@ import { FlowItemDetailsActions } from '../action/flow-items-details.action';
 import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
 const initialState: FlowItemsDetailsState = {
 	coreFlowItemsDetails: [],
-	triggerFlowItemsDetails: [],
-	connectorComponentsFlowItemDetails: [],
+	coreTriggerFlowItemsDetails: [],
+	connectorComponentsActionsFlowItemDetails: [],
+	connectorComponentsTriggersFlowItemDetails: [],
 	loaded: false,
 };
 export const flowItemsDetailsReducer = createReducer(

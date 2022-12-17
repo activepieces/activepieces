@@ -33,14 +33,12 @@ export class StepTypeSidebarComponent implements OnInit {
 	@Input() set showTriggers(shouldShowTriggers) {
 		this._showTriggers = shouldShowTriggers;
 		if (this._showTriggers) {
-			this.triggersDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetailsForTriggers);
+			// this.triggersDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetailsForCoreTriggers);
 			this.sideBarDisplayName = 'Triggers';
 		} else {
-			if (this.tabsAndTheirLists.length == 0) {
-				this.populateTabsAndTheirLists();
-			}
 			this.sideBarDisplayName = 'Flow Steps';
 		}
+		this.populateTabsAndTheirLists();
 	}
 
 	sideBarDisplayName = 'Flow Steps';
@@ -60,10 +58,12 @@ export class StepTypeSidebarComponent implements OnInit {
 	}
 
 	populateTabsAndTheirLists() {
-		const coreItemsDetails$ = this.store.select(BuilderSelectors.selectCoreFlowItemsDetails);
-		const connectorComponentsItemsDetails$ = this.store.select(
-			BuilderSelectors.selectFlowItemDetailsForConnectorComponents
-		);
+		const coreItemsDetails$ = this._showTriggers
+			? this.store.select(BuilderSelectors.selectFlowItemDetailsForCoreTriggers)
+			: this.store.select(BuilderSelectors.selectCoreFlowItemsDetails);
+		const connectorComponentsItemsDetails$ = this._showTriggers
+			? this.store.select(BuilderSelectors.selectFlowItemDetailsForConnectorComponentsTriggers)
+			: this.store.select(BuilderSelectors.selectFlowItemDetailsForConnectorComponents);
 		this.tabsAndTheirLists.push({
 			displayName: 'Core',
 			list$: coreItemsDetails$,
@@ -140,7 +140,11 @@ export class StepTypeSidebarComponent implements OnInit {
 		if (trigger.type === TriggerType.WEBHOOK) {
 			trigger.valid = true;
 		}
-
+		if (trigger.type === TriggerType.COMPONENT) {
+			trigger.valid = false;
+			debugger;
+			trigger.settings.component_name = triggerDetails.name;
+		}
 		this.store.dispatch(
 			FlowsActions.replaceTrigger({
 				newTrigger: trigger,

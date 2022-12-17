@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { ConnectorComponent } from '../../common-layout/components/configs-form/connector-action-or-config';
 import { environment } from 'src/environments/environment';
 import { Observable, shareReplay } from 'rxjs';
-import {DropdownItemOption} from "../../common-layout/model/dropdown-item-option";
+import { DropdownItemOption } from '../../common-layout/model/dropdown-item-option';
 
 @Injectable({
 	providedIn: 'root',
