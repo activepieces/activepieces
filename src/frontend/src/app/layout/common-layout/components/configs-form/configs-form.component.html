@@ -1,41 +1,59 @@
-<form *ngIf="form" [formGroup]="form" [class.ng-submitted]="submitted">
-  <div class="form-group d-flex flex-column" *ngFor="let config of _configs; let i = index" [ngSwitch]="config.type">
+<form *ngIf="form" [formGroup]="form" class="ng-submitted">
+  <div class="form-group d-flex flex-column" *ngFor="let config of requiredConfigs; let i = index" >
+    <ng-container *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:config, configIndex:i,formGroup:form}"></ng-container>
+  </div>
+  <div *ngIf="allOptionalConfigs.length > 0" class="d-flex align-items-center optional-input-label-container">
+    <div> Optional Inputs</div>
+    <div #spacer class="flex-grow-1"></div>
+    <app-button *ngIf="selectedOptionalConfigs.length !== allOptionalConfigs.length && form.enabled" btnColor="primary"
+      btnSize="medium" btnStyle="basic" #menuTrigger="matMenuTrigger"
+      (menuOpened)="optionalConfigsMenuOpened=true" (menuClosed)="optionalConfigsMenuOpened=false"
+      [matMenuTriggerFor]="bodyTypesMenu">
+      + Add Input
+    </app-button>
+    <mat-menu #bodyTypesMenu="matMenu">
+      <ng-container *ngFor="let config of allOptionalConfigs">
+        <ng-container *ngIf="!selectedOptionalConfigs.includes(config)">
+          <div (click)="addOptionalConfig(config)" mat-menu-item>
+            {{config.label}}
+          </div>
+        </ng-container>
+      </ng-container>
+    </mat-menu>
+  </div>
+  <div class="form-group d-flex flex-column" *ngFor="let config of selectedOptionalConfigs; let i = index" >
+    <ng-container *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:config, configIndex:i, formGroup:form}"></ng-container>
+  </div>
+</form>
+
+<ng-template let-config let-configIndex="configIndex" #formFieldsTemplate let-formGroup="formGroup">
+  <ng-container [ngSwitch]="config.type" [formGroup]="formGroup">
     <ng-container *ngSwitchCase="configType.CHECKBOX">
-      <div *ngIf="showSlider" class="d-flex align-items-center label-container " >
+      <div  class="d-flex align-items-center label-container " >
         <label [class.dashed-underline-label]="config.description" [matTooltip]="config.description!">{{config.label}}</label>
-        <app-icon-button *ngIf="allowRemoveConfig" [color]="themeService.BODY_COLOR" [width]="9" [height]="9"
+        <app-icon-button  *ngIf="!config.required && formGroup.enabled" [color]="themeService.BODY_COLOR" [width]="9" [height]="9"
           iconFilename="delete.svg" matTooltip="Remove Item" [buttonHeight]="16" [buttonWidth]="16"
           buttonPadding="8px !important" class="delete-btn" appTrackHover #deleteButton="hoverTrackerDirective"
           (click)="removeConfig(config)"></app-icon-button>
-        <div *ngIf="showSlider" #spacer class="flex-grow-1"></div>
-        <mat-slide-toggle *ngIf="showSlider" [formControlName]="config.key" color="primary"></mat-slide-toggle>
+        <div  #spacer class="flex-grow-1"></div>
+        <mat-slide-toggle  [formControlName]="config.key" color="primary"></mat-slide-toggle>
       </div>
-      <app-checkbox *ngIf="!showSlider" [formControlName]="config.key" [label]="config.label">
-      </app-checkbox>
     </ng-container>
     <div *ngIf="config.type !== configType.CHECKBOX" class="d-flex align-items-center label-container">
       <label [class.dashed-underline-label]="config.description" [matTooltip]="config.description!"
-        [for]="'form-input' + i">{{ config.label }}</label>
-      <app-icon-button *ngIf="allowRemoveConfig && form.enabled" [color]="themeService.BODY_COLOR" [width]="9" [height]="9"
+        [for]="'form-input' + configIndex">{{ config.label }}</label>
+      <app-icon-button *ngIf="formGroup.enabled && !config.required" [color]="themeService.BODY_COLOR" [width]="9" [height]="9"
         iconFilename="delete.svg" matTooltip="Remove Item" [buttonHeight]="16" [buttonWidth]="16" class=" delete-btn"
         buttonPadding="8px !important" appTrackHover #deleteButton="hoverTrackerDirective"
         (click)="removeConfig(config)"></app-icon-button>
     </div>
-
-
-
-
-    <div [id]="'form-input' + i">
+    <div [id]="'form-input' + configIndex">
       <input *ngSwitchCase="configType.SHORT_TEXT" class="form-control" type="text" [formControlName]="config.key"/>
-
       <textarea *ngSwitchCase="configType.LONG_TEXT" [formControlName]="config.key"
-     rows="4" class="form-control" type="text">
+        rows="4" class="form-control" type="text">
       </textarea>
       <input *ngSwitchCase="configType.NUMBER" class="form-control" type="number" [formControlName]="config.key"
      />
-
-
-
       <ng-container *ngSwitchCase="configType.SELECT">
           <ng-select [formControlName]="config.key" [items]="optionsObservables$[config.key]| async" [loading]="(dropdownsLoadingFlags$[config.key] | async)!" [placeholder]="
           (dropdownsLoadingFlags$[config.key] | async)!
@@ -44,7 +62,7 @@
             " bindLabel="label" bindValue="value" [clearable]="config.required"
             [searchable]="false" appendTo="body">
             <ng-template ng-option-tmp let-item="item">
-              <app-ng-select-item-template [item]="item" [isSelected]="item.value === getControl(config.key)?.value">
+              <app-ng-select-item-template [item]="item" [isSelected]="item.value === formGroup.get(config.key)?.value">
               </app-ng-select-item-template>
             </ng-template>
 
@@ -53,13 +71,51 @@
             </ng-template>
           </ng-select>
         </ng-container>
+        <ng-container *ngSwitchCase="configType.OAUTH2">
+          <div class="position-relative">
+            <app-button
+            btnColor="primary"
+            btnStyle="basic"
+            btnSize="extraSmall"
+            *ngIf="formGroup.enabled && formGroup.get(config.key)!.value"
+            (buttonClicked)="editSelectedAuthConfig(config.key)"
+            class="edit-selected-auth"
+          > Edit
+          </app-button>
+            <ng-select [items]="allAuthConfigs$|async" bindLabel="label" bindValue="value"
+            [formControlName]="config.key" [searchable]="false" [clearable]="false" appendTo="body"
+            [compareWith]="authenticationDropdownCompareWithFunction"
+            class="security-dropdown"
+            placeholder="Please select">
+            <ng-template ng-option-tmp let-item="item">
+              <app-ng-select-item-template [item]="item" [isSelected]="formGroup.get(config.key)!.value?.configInterpolation===item.value.configInterpolation">
+              </app-ng-select-item-template>
+            </ng-template>
+          </ng-select>
 
-
-      <ng-container *ngIf="submitted && getControl(config.key)?.invalid">
+          <app-button
+          btnColor="primary"
+          btnStyle="basic"
+          (buttonClicked)="openNewAuthenticationModal(config.key)"
+          type="button"
+          class="new-config-btn"
+          btnSize="medium"
+          *ngIf="formGroup.enabled"
+        >   + New Authentication
+        </app-button>
+        </div>
+        </ng-container>
+      <ng-container *ngIf="formGroup.get(config.key)?.invalid">
         <p @fadeInUp class="invalid-input">{{ config.label }} is required.</p>
       </ng-container>
     </div>
-  </div>
-</form>
+  </ng-container>
+
+</ng-template>
 <ng-container *ngIf="updateValueOnChange$ | async"></ng-container>
-<ng-container *ngIf="refreshDropwdowns$ | async"></ng-container>
+<ng-container *ngFor="let obs$  of 	optionsObservables$ | keyvalue">
+  <ng-container *ngIf=" obs$.value | async "></ng-container>
+</ng-container>
+<ng-container *ngIf="authConfigDropdownChanged$  | async"></ng-container>
+<ng-container *ngIf="updateOrAddConfigModalClosed$ | async " ></ng-container>
+<ng-container *ngIf="updateAuthConfig$ | async"> </ng-container>

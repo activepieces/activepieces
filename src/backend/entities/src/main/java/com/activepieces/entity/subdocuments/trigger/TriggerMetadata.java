@@ -24,7 +24,7 @@ import lombok.experimental.SuperBuilder;
         @JsonSubTypes.Type(value = InstanceStartedTriggerMetadata.class, name = "COLLECTION_ENABLED"),
         @JsonSubTypes.Type(value = InstanceStoppedTriggerMetadata.class, name = "COLLECTION_DISABLED"),
         @JsonSubTypes.Type(value = WebhookTriggerMetadata.class, name = "WEBHOOK"),
-        @JsonSubTypes.Type(value = ComponentTriggerMetadata.class, name = "COMPONENT")
+        @JsonSubTypes.Type(value = ComponentTriggerMetadata.class, name = "COMPONENT_TRIGGER")
 }
 )
 public abstract class TriggerMetadata {

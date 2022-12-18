@@ -117,6 +117,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 				return this.codeService.executeTest(this.codeFilesForm.value, context);
 			}),
 			tap(result => {
+
 				const outputResult = this.codeService.beautifyJson(result.output);
 				const consoleResult = this.getConsoleResult(result);
 				this.testResultForm.setValue({ outputResult: outputResult, consoleResult: consoleResult });
@@ -126,10 +127,10 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 	}
 
 	getConsoleResult(codeTestExecutionResult: CodeTestExecutionResult) {
-		if (codeTestExecutionResult.errorMessage) {
-			return `${codeTestExecutionResult.standardOutput} \n---------error-------\n ${codeTestExecutionResult.errorMessage}`;
+		if (codeTestExecutionResult.error_message) {
+			return `${codeTestExecutionResult.standard_output} \n---------error-------\n ${codeTestExecutionResult.error_message}`;
 		}
-		return codeTestExecutionResult.standardOutput;
+		return codeTestExecutionResult.standard_output;
 	}
 	hide() {
 		this.modalRef.hide();

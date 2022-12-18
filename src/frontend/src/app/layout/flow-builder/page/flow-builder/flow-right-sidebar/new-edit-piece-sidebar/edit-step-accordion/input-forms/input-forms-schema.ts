@@ -31,12 +31,15 @@ export interface EventTriggerInputFormSchema extends InputFormsSchemaBase {
 }
 
 //TODO figure out a way to check the type of the (input form schema) because right now they are interfaces and instance of won't work since these are json objects from the server
-export interface ComponentInputFormSchema extends InputFormsSchemaBase {
+export interface ComponentActionInputFormSchema extends InputFormsSchemaBase {
 	component_name: string;
 	action_name: string;
-	input: {
-		action: ConfigsAndTheirValues | CustomRequestForComponentFormSchema;
-	};
+	input: ConfigsAndTheirValues | CustomRequestForComponentFormSchema;
+}
+export interface ComponentTriggerInputFormSchema extends InputFormsSchemaBase {
+	component_name: string;
+	trigger_name: string;
+	input: ConfigsAndTheirValues;
 }
 interface CustomRequestForComponentFormSchema {
 	endpoint: string;
@@ -52,4 +55,4 @@ export type InputFormsSchema =
 	| CodeStepInputFormSchema
 	| ScheduledTriggerInputFormSchema
 	| EventTriggerInputFormSchema
-	| ComponentInputFormSchema;
+	| ComponentActionInputFormSchema;

@@ -12,8 +12,8 @@ export class SelectedStepResultComponent implements OnInit {
 	@Input() selectedStepName: string;
 	constructor() {}
 	ngOnInit(): void {
-		if (!this.selectedStepResult.output && this.selectedStepResult.errorMessage) {
-			this.selectedStepResult = { ...this.selectedStepResult, output: this.selectedStepResult.errorMessage };
+		if (!this.selectedStepResult.output && this.selectedStepResult.error_message) {
+			this.selectedStepResult = { ...this.selectedStepResult, output: this.selectedStepResult.error_message };
 		}
 	}
 

@@ -20,10 +20,6 @@
     </p>
   </div>
   <div>
-    <label>Refresh Url</label>
-    <input type="text" formControlName="refresh_url" class="form-control">
-  </div>
-  <div>
     <label required>Client Id</label>
     <input type="text" formControlName="client_id" class="form-control">
     <p @fadeInUp  class="invalid-input" *ngIf="submitted &&  settingsForm.get('client_id')!.invalid ">

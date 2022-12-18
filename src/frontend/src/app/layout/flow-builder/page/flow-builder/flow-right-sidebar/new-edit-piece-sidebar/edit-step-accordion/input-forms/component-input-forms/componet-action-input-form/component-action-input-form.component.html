@@ -1,0 +1,59 @@
+<form [formGroup]="componentForm">
+  <div class="d-flex flex-column connector-input-form-container ng-submitted">
+
+    <div>
+      <label required>What do you want to do?</label>
+      <ng-select [formControlName]="ACTION_FORM_CONTROL_NAME" [items]="actions$ | async" bindLabel="label" bindValue="value" appendTo="body"
+        [clearable]="false" [searchFn]="customSearchFn" #select class="connector-actions-dropdown"   loadingText="Loading..."  [compareWith]="actionDropdownCompareFn" >
+        <ng-template ng-notfound-tmp let-searchTerm="searchTerm">
+          <app-ng-select-no-items-found-template [searchTerm]="searchTerm">
+          </app-ng-select-no-items-found-template>
+        </ng-template>
+        <ng-template ng-label-tmp let-item="item">
+          <ng-container *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value !== customRequestItem.value; else customRequestLabel">
+            <app-ng-select-connector-action-item-template [item]="selectedAction$ |async" [hideDescription]="true">
+            </app-ng-select-connector-action-item-template>
+          </ng-container>
+          <ng-template #customRequestLabel>
+            Custom Request
+          </ng-template>
+        </ng-template>
+        <ng-template ng-option-tmp let-item="item">
+          <ng-container  *ngIf="item !== customRequestItem">
+            <app-ng-select-connector-action-item-template [item]="item">
+            </app-ng-select-connector-action-item-template>
+          </ng-container>
+        </ng-template>
+        <ng-template *ngIf="customRequestFeatureFlag" ng-footer-tmp>
+          <app-ng-select-custom-request (click)="select.close();customRequestChosen();"></app-ng-select-custom-request>
+        </ng-template>
+      </ng-select>
+      <p @fadeInUp  class="invalid-input" *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.invalid ">
+        Please select an action.
+      </p>
+
+    </div>
+
+
+    <ng-container *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value === customRequestItem.value">
+      <app-connector-custom-request-form-control [formControlName]="CUSTOM_REQUEST_FORM_CONTROL_NAME">
+      </app-connector-custom-request-form-control>
+    </ng-container>
+
+      <ng-container *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value && componentForm.get(CONFIGS_FORM_CONTROL_NAME)">
+          <div>
+            <app-configs-form  [actionName]="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value?.actionName" [componentName]="componentName"  [formControlName]="CONFIGS_FORM_CONTROL_NAME">
+            </app-configs-form>
+          </div>
+      </ng-container>
+
+  </div>
+
+</form>
+
+<ng-container *ngIf="valueChanges$ | async"></ng-container>
+<ng-container *ngIf="actionDropdownValueChanged$ | async"></ng-container>
+<ng-container *ngIf="updateOrAddConfigModalClosed$ | async"></ng-container>
+<ng-container *ngIf="initialSetup$ | async"> </ng-container>
+<ng-container *ngIf="selectedAction$ | async"></ng-container>
+

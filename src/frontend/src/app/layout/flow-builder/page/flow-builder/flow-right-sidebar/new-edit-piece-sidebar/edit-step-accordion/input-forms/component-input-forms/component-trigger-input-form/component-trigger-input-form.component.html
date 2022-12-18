@@ -1,0 +1,46 @@
+<form [formGroup]="componentForm">
+    <div class="d-flex flex-column connector-input-form-container ng-submitted">
+
+      <div>
+        <label required>Trigger</label>
+        <ng-select [formControlName]="TRIGGER_FORM_CONTROL_NAME" [items]="triggers$ | async" bindLabel="label" bindValue="value" appendTo="body"
+          [clearable]="false" [searchFn]="customSearchFn" #select class="connector-actions-dropdown"   loadingText="Loading..."  [compareWith]="triggerDropdownCompareFn" >
+          <ng-template ng-notfound-tmp let-searchTerm="searchTerm">
+            <app-ng-select-no-items-found-template [searchTerm]="searchTerm">
+            </app-ng-select-no-items-found-template>
+          </ng-template>
+          <ng-template ng-label-tmp let-item="item">
+
+              <app-ng-select-connector-action-item-template [item]="selectedTrigger$ |async" [hideDescription]="true">
+              </app-ng-select-connector-action-item-template>
+          </ng-template>
+          <ng-template ng-option-tmp let-item="item">
+            <ng-container  >
+              <app-ng-select-connector-action-item-template [item]="item">
+              </app-ng-select-connector-action-item-template>
+            </ng-container>
+          </ng-template>
+        </ng-select>
+        <p @fadeInUp  class="invalid-input" *ngIf="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.invalid ">
+          Please select a trigger.
+        </p>
+
+      </div>
+
+
+        <ng-container *ngIf="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value && componentForm.get(CONFIGS_FORM_CONTROL_NAME)">
+            <div>
+              <app-configs-form  [actionName]="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value?.actionName" [componentName]="componentName"  [formControlName]="CONFIGS_FORM_CONTROL_NAME">
+              </app-configs-form>
+            </div>
+        </ng-container>
+
+    </div>
+
+  </form>
+
+  <ng-container *ngIf="valueChanges$ | async"></ng-container>
+  <ng-container *ngIf="triggerDropdownValueChanged$ | async"></ng-container>
+  <ng-container *ngIf="updateOrAddConfigModalClosed$ | async"></ng-container>
+  <ng-container *ngIf="initialSetup$ | async"> </ng-container>
+  <ng-container *ngIf="selectedTrigger$ | async"></ng-container>

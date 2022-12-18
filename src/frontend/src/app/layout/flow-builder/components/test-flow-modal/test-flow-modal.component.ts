@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { BsModalRef } from 'ngx-bootstrap/modal';
+import { Component, OnInit, TemplateRef } from '@angular/core';
+import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { FlowService } from '../../../common-layout/service/flow.service';
 import { InstanceRunStatus } from '../../../common-layout/model/enum/instance-run-status';
 import { catchError, combineLatest, interval, map, Observable, of, switchMap, takeUntil, takeWhile, tap } from 'rxjs';
@@ -10,14 +10,15 @@ import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/selector/flow-builder.selector';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from '../../page/flow-builder/test-run-bar/test-run-bar.component';
-import { Config } from 'src/app/layout/common-layout/model/fields/variable/config';
 import { FlowsActions } from '../../store/action/flows.action';
 import { Collection } from 'src/app/layout/common-layout/model/collection.interface';
 import { initializedRun, InstanceRun } from 'src/app/layout/common-layout/model/instance-run.interface';
 import { InstanceRunService } from '../../../common-layout/service/instance-run.service';
 import { UUID } from 'angular2-uuid';
 import { HttpStatusCode } from '@angular/common/http';
-
+import { FormControl } from '@angular/forms';
+import { jsonValidator } from 'src/app/layout/common-layout/validators/json-validator';
+import jsonlint from 'jsonlint-mod';
 @Component({
 	selector: 'app-test-flow-modal',
 	templateUrl: './test-flow-modal.component.html',
@@ -29,7 +30,6 @@ export class TestFlowModalComponent implements OnInit {
 	instanceRunStatus$: Observable<undefined | InstanceRunStatus>;
 	isSaving$: Observable<boolean> = of(false);
 	modalRef?: BsModalRef;
-	collectionConfigs$: Observable<Config[]>;
 	selectedFlow$: Observable<Flow | undefined>;
 	instanceRunStatusChecker$: Observable<InstanceRun>;
 	executeTest$: Observable<InstanceRun | null>;
@@ -37,13 +37,24 @@ export class TestFlowModalComponent implements OnInit {
 	shouldDisableTestButton$: Observable<boolean>;
 	testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
 	testFlowButtonDisabledTooltip = '';
-
+	payloadControl: FormControl = new FormControl('{}', jsonValidator);
+	codeEditorOptions = {
+		lineNumbers: true,
+		lineWrapping: true,
+		theme: 'lucario',
+		mode: 'application/ld+json',
+		lint: true,
+		gutters: ['CodeMirror-lint-markers'],
+	};
 	constructor(
 		private flowService: FlowService,
 		private store: Store,
 		private instanceRunService: InstanceRunService,
-		private snackbar: MatSnackBar
-	) {}
+		private snackbar: MatSnackBar,
+		private modalService: BsModalService
+	) {
+		(<any>window).jsonlint = jsonlint;
+	}
 
 	ngOnInit() {
 		this.isSaving$ = this.store.select(BuilderSelectors.selectIsSaving);
@@ -77,9 +88,22 @@ export class TestFlowModalComponent implements OnInit {
 		this.instanceRunStatus$ = this.store.select(BuilderSelectors.selectCurrentFlowRunStatus);
 	}
 
-	testFlow(flow: Flow, collection: Collection) {
+	testFlowButtonClicked(flow: Flow, collection: Collection, testFlowTemplate: TemplateRef<any>) {
 		this.submitted = true;
-		this.executeTest$ = this.flowService.execute(collection.last_version.id, flow.last_version.id, {}).pipe(
+		if (flow.last_version.trigger?.type === TriggerType.WEBHOOK) {
+			this.modalRef = this.modalService.show(testFlowTemplate);
+		} else {
+			this.executeTest(collection, flow, {});
+		}
+	}
+	testFlowWithPayload(collection: Collection, flow: Flow) {
+		if (this.payloadControl.valid) {
+			this.executeTest(collection, flow, JSON.parse(this.payloadControl.value));
+			this.modalRef?.hide();
+		}
+	}
+	executeTest(collection: Collection, flow: Flow, payload: Object) {
+		this.executeTest$ = this.flowService.execute(collection.last_version.id, flow.last_version.id, payload).pipe(
 			tap({
 				next: (instanceRun: InstanceRun) => {
 					this.testRunSnackbar = this.snackbar.openFromComponent(TestRunBarComponent, {
@@ -116,10 +140,7 @@ export class TestFlowModalComponent implements OnInit {
 				return of(null);
 			})
 		);
-		this.modalRef?.hide();
-		this.submitted = false;
 	}
-
 	setStatusChecker(flowId: UUID, runId: UUID) {
 		this.instanceRunStatusChecker$ = interval(1500).pipe(
 			takeUntil(this.testRunSnackbar.instance.exitButtonClicked),

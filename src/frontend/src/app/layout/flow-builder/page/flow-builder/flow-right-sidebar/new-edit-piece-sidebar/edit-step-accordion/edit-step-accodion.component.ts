@@ -14,6 +14,7 @@ import { Artifact } from 'src/app/layout/flow-builder/model/artifact.interface';
 import { CodeService } from 'src/app/layout/flow-builder/service/code.service';
 import { TriggerType } from 'src/app/layout/common-layout/model/enum/trigger-type.enum';
 import { BuilderSelectors } from 'src/app/layout/flow-builder/store/selector/flow-builder.selector';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
 	selector: 'app-edit-step-accodion',
@@ -34,9 +35,13 @@ export class EditStepAccordionComponent implements AfterViewInit {
 	openedIndex = 1;
 	faChevornDown = faChevronDown;
 	faInfoCircle = faInfoCircle;
+	webhookUrl$: Observable<string>;
+
 	//delayExpansionPanelRendering$ is an observable that fixes an issue with angular material's accordions rendering content even though they are closed
 	delayExpansionPanelRendering$: Observable<boolean>;
 	displayNameChangedListener$: Observable<string>;
+	ActionType = ActionType;
+	TriggerType = TriggerType;
 	@Input() displayNameChanged$: Subject<string>;
 
 	@Input() set stepArtifactCacheKeyAndUrl(urlAndCacheKey: { cacheKey: StepCacheKey; url: string } | null) {
@@ -60,8 +65,10 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		private formBuilder: FormBuilder,
 		private cd: ChangeDetectorRef,
 		private store: Store,
-		private codeService: CodeService
+		private codeService: CodeService,
+		private snackbar: MatSnackBar
 	) {
+		this.webhookUrl$ = this.store.select(BuilderSelectors.selectCurrentFlowWebhookUrl);
 		this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(
 			tap(readOnly => {
 				if (readOnly) {
@@ -137,24 +144,20 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		stepToSave.settings = inputControlValue;
 		stepToSave.name = this._selectedStep.name;
 
-		if (this._selectedStep.type === ActionType.COMPONENT) {
+		if (this._selectedStep.type === ActionType.COMPONENT || this._selectedStep.type === TriggerType.COMPONENT) {
 			const componentSettings = {
 				...this._selectedStep.settings,
 				...inputControlValue,
-				componentName: this._selectedStep.settings.componentName,
-				componentVersion: this._selectedStep.settings.componentVersion,
-				manifestUrl: this._selectedStep.settings.manifestUrl,
 			};
 			stepToSave.settings = componentSettings;
 		}
+
 		stepToSave.valid = this.stepForm.valid;
 		delete stepToSave.settings.artifact;
 		return stepToSave;
 	}
-	get StepTypes() {
-		return ActionType;
-	}
-	get TriggerTypes() {
-		return TriggerType;
+	copyUrl(url: string) {
+		navigator.clipboard.writeText(url);
+		this.snackbar.open('Webhook url copied to clipboard');
 	}
 }

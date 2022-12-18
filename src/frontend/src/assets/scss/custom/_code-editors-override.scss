@@ -108,3 +108,8 @@ pre {
 ngx-monaco-editor {
   overflow: visible;
 }
+
+.CodeMirror-lint-tooltip
+{
+  z-index:$appended-to-body-z-index;
+}
