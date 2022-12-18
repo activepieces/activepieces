@@ -31,9 +31,6 @@
     "clean": "gts clean",
     "compile": "gts clean && tsc && cd dist/src && node index.js",
     "fix": "gts fix",
-    "prepare": "npm run compile",
-    "pretest": "npm run compile",
-    "posttest": "npm run lint",
     "test": "jest --coverage",
     "test:watch": "jest --watch"
   }

@@ -104,7 +104,7 @@ async function validateConfigs() {
         inputs = trigger.configs;
     }
     for (let i = 0; i < inputs.length; ++i) {
-        if (inputs[i].required && !(inputs[i].name in inputs)) {
+        if (inputs[i].required && !(inputs[i].name in optionRequest.input)) {
             return false;
         }
     }

@@ -39,8 +39,6 @@ export class Oauth2Service {
 			'&redirect_uri=' +
 			redirect_uri +
 			'&access_type=offline' +
-			'&code_challenge=lEMSeXaXOAKAw53YlpPK' +
-			'&code_challenge_method=plain' +
 			'&state=' +
 			UUID.UUID() +
 			'&prompt=consent' +
