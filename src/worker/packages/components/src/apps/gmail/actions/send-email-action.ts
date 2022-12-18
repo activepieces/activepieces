@@ -5,12 +5,20 @@ import {AuthenticationType} from '../../../common/authentication/core/authentica
 import {httpClient} from '../../../common/http/core/http-client';
 import { InputType } from '../../../framework/config';
 export const gmailSendEmailAction = createAction({
-	name: 'Send Email',
+	name: 'send_email',
 	description: 'Send an email through a Gmail account',
     displayName:'Send Email',
-
-
 	configs: [
+		{
+			name: 'authentication',
+			description: "",
+			displayName: 'Authentication',
+			type: InputType.OAUTH2,
+			authUrl: "https://accounts.google.com/o/oauth2/v2/auth/",
+			tokenUrl: "https://oauth2.googleapis.com",
+			required: true,
+			scopes: ["https://mail.google.com/"]
+		},
 		{
 			name: 'sender',
 			displayName: 'Sender Email (From)',
