@@ -1,0 +1,32 @@
+name: Release backend
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - feature-automate-releases-#74
+
+jobs:
+  Release-Backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Install JDK v11
+        uses: actions/setup-java@v3
+          with:
+            distribution: 'temurin'
+            java-version: '11'
+
+      - name: Package jar file
+        run: mvn --batch-mode --update-snapshots --file src/backend/pom.xml package
