@@ -28,4 +28,4 @@ jobs:
         with:
           context: src/frontend
           push: true
-          tags: "activepieces/frontend:${{ env.RELEASE }}""
+          tags: "activepieces/frontend:${{ env.RELEASE }}"
