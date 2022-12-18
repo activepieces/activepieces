@@ -14,6 +14,7 @@ import { Artifact } from 'src/app/layout/flow-builder/model/artifact.interface';
 import { CodeService } from 'src/app/layout/flow-builder/service/code.service';
 import { TriggerType } from 'src/app/layout/common-layout/model/enum/trigger-type.enum';
 import { BuilderSelectors } from 'src/app/layout/flow-builder/store/selector/flow-builder.selector';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
 	selector: 'app-edit-step-accodion',
@@ -64,7 +65,8 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		private formBuilder: FormBuilder,
 		private cd: ChangeDetectorRef,
 		private store: Store,
-		private codeService: CodeService
+		private codeService: CodeService,
+		private snackbar: MatSnackBar
 	) {
 		this.webhookUrl$ = this.store.select(BuilderSelectors.selectCurrentFlowWebhookUrl);
 		this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(
@@ -153,5 +155,9 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		stepToSave.valid = this.stepForm.valid;
 		delete stepToSave.settings.artifact;
 		return stepToSave;
+	}
+	copyUrl(url: string) {
+		navigator.clipboard.writeText(url);
+		this.snackbar.open('Webhook url copied to clipboard');
 	}
 }

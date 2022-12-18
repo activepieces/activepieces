@@ -31,11 +31,16 @@
         <ng-template #noDelayInExpansion>
           <div class="panel-padding">
             <app-describe-form formControlName="describe"></app-describe-form>
-            <ng-container *ngIf="_selectedStep.type ===TriggerType.WEBHOOK ">
+            <ng-container *ngIf="_selectedStep.type ===TriggerType.WEBHOOK">
               <div class="webhook-note">
-                <p>Webhook url: {{webhookUrl$ | async}} </p>
-                <p class="mt-1" >This url will only be activated if the current collection is deployed after webhook trigger has been chosen. </p>
-                <p class="mt-1">To access the payload object, use {{"${trigger}"}} </p>
+                <ng-container *ngIf="webhookUrl$ | async as url">
+                  <p class="mt-1">Url <svg-icon src="assets/img/custom/copy.svg" matTooltip="Copy" placement="bottom" class="copy-icon"
+                    [applyClass]="true" (click)="copyUrl(url)"></svg-icon> :  </p>
+                    <p class="mt-1 url-paragraph"> {{url}} </p>
+                  <p class="mt-1" >This url will only be activated if the current collection is deployed after webhook trigger has been chosen. </p>
+                  <p class="mt-1">To access the payload object, use {{"${trigger}"}} </p>
+
+                </ng-container>
 
               </div>
 
