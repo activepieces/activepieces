@@ -5,7 +5,6 @@ on:
     branches:
       - main
       - dev
-      - feature-automate-releases-#74
 
 jobs:
   Release-Backend:
