@@ -30,11 +30,11 @@ export interface LoopStepOutput extends StepResult {
 export interface StepResult {
 	duration: number;
 	status: ActionStatus;
-	timeInSeconds: number;
-	standardOutput: any;
+	time_in_seconds: number;
+	standard_output: any;
 	input: Object;
 	output: any;
-	errorMessage: string;
+	error_message: string;
 }
 
 export const initializedRun: InstanceRun = {
