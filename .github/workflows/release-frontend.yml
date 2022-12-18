@@ -3,9 +3,7 @@ name: Release frontend
 on:
   push:
     branches:
-      - main
       - dev
-      - feature-automate-releases-#74
 
 jobs:
   Release-Frontend:
