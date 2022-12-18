@@ -76,6 +76,8 @@ import { InstanceSettingsComponent } from './page/flow-builder/flow-builder-head
 import { NewAuthenticationModalComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 import { ComponentActionInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-forms/componet-action-input-form/component-action-input-form.component';
 import { ComponentTriggerInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-forms/component-trigger-input-form/component-trigger-input-form.component';
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HttpInterceptorService } from './service/interceptor.service';
 
 @NgModule({
 	imports: [
@@ -109,7 +111,7 @@ import { ComponentTriggerInputFormComponent } from './page/flow-builder/flow-rig
 		MatTooltipModule,
 		MonacoEditorModule,
 	],
-	providers: [BsModalService],
+	providers: [BsModalService, { provide: HTTP_INTERCEPTORS, useClass: HttpInterceptorService, multi: true }],
 	declarations: [
 		CollectionBuilderComponent,
 		FlowBuilderHeaderComponent,

@@ -2,7 +2,7 @@ import {createComponent} from '../../framework/component';
 import { createHubspotContact } from './actions/create-contact/create-contact.action';
 
 
-export const slack = createComponent({
+export const hubspot = createComponent({
 	name: 'hubspot',
 	displayName: "Hubspot",
 	logoUrl: 'https://cdn.activepieces.com/components/hubspot/logo.png',
