@@ -40,6 +40,6 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
-          context: .
+          context: src/backend
           push: true
           tags: activepieces/backend:latest
