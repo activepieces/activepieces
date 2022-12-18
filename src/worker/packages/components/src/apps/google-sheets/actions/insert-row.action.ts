@@ -13,8 +13,8 @@ export const insertRowAction = createAction({
 			description: "",
 			displayName: 'Authentication',
 			type: InputType.OAUTH2,
-			authUrl: "https://accounts.google.com/o/oauth2/v2/auth/",
-			tokenUrl: "https://oauth2.googleapis.com",
+			authUrl: "https://accounts.google.com/o/oauth2/auth",
+			tokenUrl: "https://oauth2.googleapis.com/token",
 			required: true,
 			scopes: ["https://www.googleapis.com/auth/spreadsheets"]
 		},
@@ -48,18 +48,17 @@ export const insertRowAction = createAction({
 		},
 	],
 	async runner(configValue) {
-		console.log(configValue.inputs.values);
-		const values = configValue.inputs.values;
+		const values = configValue['values'];
 		if(typeof(values)=== "string")
 		{
 			try{
 				const jsonValues= JSON.parse(values);
 				await appendGoogleSheetValues({
-					accessToken: configValue.authentication.accessToken,
+					accessToken: configValue['authentication']['access_token'],
 					majorDimension: Dimension.COLUMNS,
-					range: configValue.inputs.range,
-					spreadSheetId: configValue.inputs.spreadSheetId,
-					valueInputOption: configValue.inputs.asString
+					range: configValue['range'],
+					spreadSheetId: configValue['spreadSheetId'],
+					valueInputOption: configValue['asString']
 						? ValueInputOption.RAW
 						: ValueInputOption.USER_ENTERED,
 					values: jsonValues as string[],
@@ -74,11 +73,11 @@ export const insertRowAction = createAction({
 		else if(Array.isArray(values))
 		{			
 				await appendGoogleSheetValues({
-					accessToken: configValue.authentication.accessToken,
+					accessToken: configValue['authentication']['access_token'],
 					majorDimension: Dimension.COLUMNS,
-					range: configValue.inputs.range,
-					spreadSheetId: configValue.inputs.spreadSheetId,
-					valueInputOption: configValue.inputs.asString
+					range: configValue['range'],
+					spreadSheetId: configValue['spreadSheetId'],
+					valueInputOption: configValue['asString']
 						? ValueInputOption.RAW
 						: ValueInputOption.USER_ENTERED,
 					values: values as string[],

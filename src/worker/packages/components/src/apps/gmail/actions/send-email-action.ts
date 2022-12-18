@@ -14,8 +14,8 @@ export const gmailSendEmailAction = createAction({
 			description: "",
 			displayName: 'Authentication',
 			type: InputType.OAUTH2,
-			authUrl: "https://accounts.google.com/o/oauth2/v2/auth/",
-			tokenUrl: "https://oauth2.googleapis.com",
+			authUrl: "https://accounts.google.com/o/oauth2/auth",
+			tokenUrl: "https://oauth2.googleapis.com/token",
 			required: true,
 			scopes: ["https://mail.google.com/"]
 		},
@@ -27,8 +27,8 @@ export const gmailSendEmailAction = createAction({
 			required: true,
 		},
 		{
-			name: 'reciever',
-			displayName: 'Reciever Email (To)',
+			name: 'receiver',
+			displayName: 'receiver Email (To)',
 			description: undefined,
 			type: InputType.SHORT_TEXT,
 			required: true,
@@ -57,11 +57,11 @@ export const gmailSendEmailAction = createAction({
 	],
 	async runner(configValue) {
 		const mailOptions = {
-			from: configValue.inputs.sender,
-			to: configValue.inputs.reciever,
-			subject: configValue.inputs.subject,
-			text: configValue.inputs.bodyText,
-			html: configValue.inputs.bodyHtml,
+			from: configValue['sender'],
+			to: configValue['receiver'],
+			subject: configValue['subject'],
+			text: configValue['bodyText'],
+			html: configValue['bodyHtml'],
 		};
 		const emailText = `From: ${mailOptions.from}
 To: ${mailOptions.to}
@@ -97,11 +97,11 @@ ${mailOptions.html ? mailOptions.html : mailOptions.text}`;
 			body: requestBody,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: configValue.authentication.accessToken,
+				token: configValue['authentication']['access_token'],
 			},
 			queryParams: {},
 		};
-		return httpClient.sendRequest(request);
+		return await httpClient.sendRequest(request);
 	},
 });
 

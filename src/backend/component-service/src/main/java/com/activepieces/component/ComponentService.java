@@ -49,7 +49,7 @@ public class ComponentService {
             objectNode.put("actionName", actionName);
             objectNode.put("triggerName", triggerName);
             objectNode.put("input", objectMapper.convertValue(input, ObjectNode.class));
-            final String result = runJs(Constants.WORKER_VALIDATE_CONFIGS_ARG, objectMapper.writeValueAsString(objectNode));
+            final String result = runJs(Constants.WORKER_VALIDATE_CONFIGS_ARG, objectMapper.writeValueAsString(objectNode)).trim();
             return Boolean.parseBoolean(result);
         }catch (IOException | InterruptedException e){
             throw new RuntimeException(e);

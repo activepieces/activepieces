@@ -21,7 +21,6 @@ export class HttpInterceptorService implements HttpInterceptor {
 		return _next.handle(request).pipe(
 			tap({
 				error: res => {
-					debugger;
 					switch (res.status) {
 						case StatusCodes.UNAUTHORIZED: {
 							let errorMessage = res.error;
