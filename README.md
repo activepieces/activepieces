@@ -33,6 +33,38 @@ The username is `admin@activepieces.com` and the password is `password`.
 We're planning to launch a cloud version of Activepieces and instructions to distribute it on your own infrastructure
 
 
+## Build from source
+
+- Build frontend
+  ```sh
+  docker build src/frontend -t activepieces/frontend:x.y.z
+  ```
+- Build the TS worker
+  - Go to the `src/worker` directory
+    ```sh
+    cd src/worker
+    ```
+  - Install npm deps
+    ```sh
+    npm ci
+    ```
+  - Bundle the worker
+    ```sh
+    npm run build:prod
+    ```
+  - Copy the bundled worker to server resources
+    ```sh
+    cp dist/activepieces-worker.js ../backend/backend-loader/src/main/resources/activepieces-worker.js
+    ```
+  - Get out of the `src/worker` directory
+  ```sh
+  cd ../../
+  ```
+- Build the backend
+  ```sh
+  docker build src/backend -t activepieces/backend:x.y.z
+  ```
+
 ## Features
 
 ### Intuitive Flow Designer
@@ -43,12 +75,12 @@ Automate your daily tasks or your entire business with clicks on the UI without 
 ### Powerful Logging
 Gain full visibility over your flow runs and easily fix what doesn't work with detailed step-by-step debugging tools.
 
-<img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201.png" width="100%">
+<img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f8e093a493043dc8ed633_Screenshot%202022-12-06%20at%2021.44%201.png" width="100%">
 
 ### Writing Node.js for Full Flexibility
 Design your flow visually or write Node.js code if you feel like it. There are no limits to what you can build.
 
-<img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201.png" width="100%">
+<img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f902e016e13f712543baf_Screenshot%202022-12-06%20at%2021.54%201.png" width="100%">
 
 ## Connectors
 We're building no-code connectors to make flow building a frictionless process. Here is our list of connectors:

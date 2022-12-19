@@ -44,6 +44,7 @@ public class StartupHousekeeper {
 
     @EventListener(ContextRefreshedEvent.class)
     public void contextRefreshedEvent() throws SchedulerException, IOException {
+        log.info("Running Startup configuration");
         final UserInformationView user = authenticationService.getOptional("admin@activepieces.com")
                 .orElse(authenticationService.create("admin@activepieces.com",
                         SignUpRequest.builder().firstName("Activepieces")
