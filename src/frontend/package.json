@@ -1,6 +1,6 @@
 {
   "name": "piece-builder",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
