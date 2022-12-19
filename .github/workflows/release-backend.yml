@@ -30,7 +30,7 @@ jobs:
         run: echo RELEASE=$(mvn help:evaluate --file src/backend/backend-loader/pom.xml -Dexpression=project.version -q -DforceStdout) >> $GITHUB_ENV
 
       - name: Fail if tag already exists
-        run: docker manifest inspect activepieces/backend:${{ env.RELEASE }} && exit 1
+        run: "! docker manifest inspect activepieces/backend:${{ env.RELEASE }}"
 
       - name: Package jar file
         run: mvn --batch-mode --update-snapshots --file src/backend/pom.xml package
