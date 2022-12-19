@@ -2,9 +2,10 @@ version: '3.0'
 
 services:
   backend:
-    image: activepieces/backend:latest
+    image: activepieces/backend:0.0.22
     container_name: activepieces-backend
     restart: unless-stopped
+    privileged: true
     depends_on: [ db ]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
@@ -14,7 +15,7 @@ services:
       - activepieces
 
   frontend:
-    image: activepieces/frontend:latest
+    image: activepieces/frontend:0.0.13
     container_name: activepieces-frontend
     restart: unless-stopped
     depends_on: [ backend ]
