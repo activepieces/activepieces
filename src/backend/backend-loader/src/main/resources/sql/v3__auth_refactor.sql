@@ -1,0 +1,1 @@
+TRUNCATE public.flow_version;
