@@ -8,7 +8,7 @@ export const environment = {
 	appConnectors: 'https://cdn.activepieces.com/connectors/app_connectors.json',
 	userPropertyNameInLocalStorage: 'currentUser',
 	feature: {
-		newComponents: false,
+		newComponents: true,
 		customRequest: false,
 	},
 };
