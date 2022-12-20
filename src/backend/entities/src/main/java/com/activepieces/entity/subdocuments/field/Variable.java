@@ -2,7 +2,7 @@ package com.activepieces.entity.subdocuments.field;
 
 import com.activepieces.common.validation.EnumNamePattern;
 import com.activepieces.entity.enums.InputVariableType;
-import com.activepieces.entity.subdocuments.field.connection.oauth2.OAuth2Variable;
+import com.activepieces.entity.subdocuments.field.oauth2.OAuth2Variable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

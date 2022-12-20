@@ -1,6 +1,7 @@
 package com.activepieces.variable.server.controller;
 
-import com.activepieces.variable.model.request.ClaimOAuth2RequestWithSecret;
+import com.activepieces.variable.server.request.ClaimOAuth2PredefinedRequest;
+import com.activepieces.variable.server.request.ClaimOAuth2RequestWithSecret;
 import com.activepieces.variable.server.OAuth2ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -25,27 +26,16 @@ public class OAuthController {
         this.oAuth2Service = oAuth2Service;
     }
 
-
     @PostMapping("/claim-predefined")
-    public ResponseEntity<?> claimPredefinedAuth(@RequestBody ClaimOAuth2RequestWithSecret request)
+    public ResponseEntity<?> claimPredefinedAuth(@RequestBody ClaimOAuth2PredefinedRequest request)
             throws JsonProcessingException {
-        return oAuth2Service.claimToken(
-                request.getClientId(),
-                request.getClientSecret(),
-                request.getTokenUrl(),
-                request.getCode(),
-                request.getRedirectUrl());
+        return oAuth2Service.claimPredefinedToken(request);
     }
 
-    @PostMapping("/claim-with-secret")
+    @PostMapping("/claim-custom")
     public ResponseEntity<?> claimOAuth2(@RequestBody ClaimOAuth2RequestWithSecret request)
             throws JsonProcessingException {
-        return oAuth2Service.claimToken(
-                request.getClientId(),
-                request.getClientSecret(),
-                request.getTokenUrl(),
-                request.getCode(),
-                request.getRedirectUrl());
+        return oAuth2Service.claimCustomToken(request);
     }
   
 }

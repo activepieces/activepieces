@@ -1,4 +1,4 @@
-package com.activepieces.entity.subdocuments.field.connection.oauth2;
+package com.activepieces.entity.subdocuments.field.oauth2;
 
 import com.activepieces.common.validation.EnumNamePattern;
 import com.activepieces.entity.enums.OAuth2Type;
@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
@@ -39,12 +38,6 @@ public abstract class OAuth2Settings implements Serializable {
 
   @JsonProperty
   private String componentName;
-
-  @JsonProperty
-  @NotNull
-  @NotEmpty
-  private String responseType;
-
 
   public OAuth2Type getType(){
     return OAuth2Type.valueOf(type);

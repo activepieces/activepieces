@@ -1,4 +1,4 @@
-package com.activepieces.variable.model.request;
+package com.activepieces.variable.server.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -18,10 +18,6 @@ public class ClaimOAuth2PredefinedRequest {
     @JsonProperty
     @NotNull
     private String componentName;
-
-    @JsonProperty
-    @URL(regexp = "^(http|https).*")
-    private String tokenUrl;
 
     @JsonProperty
     @NotNull

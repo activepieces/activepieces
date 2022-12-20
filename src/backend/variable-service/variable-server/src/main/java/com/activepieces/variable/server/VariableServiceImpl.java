@@ -2,7 +2,7 @@ package com.activepieces.variable.server;
 
 import com.activepieces.entity.enums.InputVariableType;
 import com.activepieces.entity.subdocuments.field.Variable;
-import com.activepieces.entity.subdocuments.field.connection.oauth2.OAuth2Variable;
+import com.activepieces.entity.subdocuments.field.oauth2.OAuth2Variable;
 import com.activepieces.variable.model.VariableService;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;

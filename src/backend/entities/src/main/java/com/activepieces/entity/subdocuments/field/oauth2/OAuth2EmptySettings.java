@@ -1,4 +1,4 @@
-package com.activepieces.entity.subdocuments.field.connection.oauth2;
+package com.activepieces.entity.subdocuments.field.oauth2;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
