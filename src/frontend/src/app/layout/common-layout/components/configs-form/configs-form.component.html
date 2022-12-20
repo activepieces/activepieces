@@ -82,16 +82,22 @@
             class="edit-selected-auth"
           > Edit
           </app-button>
+
             <ng-select [items]="allAuthConfigs$|async" bindLabel="label" bindValue="value"
             [formControlName]="config.key" [searchable]="false" [clearable]="false" appendTo="body"
             [compareWith]="authenticationDropdownCompareWithFunction"
             class="security-dropdown"
             placeholder="Please select">
             <ng-template ng-option-tmp let-item="item">
-              <app-ng-select-item-template [item]="item" [isSelected]="formGroup.get(config.key)!.value?.configInterpolation===item.value.configInterpolation">
+              <app-ng-select-item-template [item]="item" [isSelected]="authenticationDropdownCompareWithFunction(item, formGroup.get(config.key)!.value)">
               </app-ng-select-item-template>
             </ng-template>
+            <ng-template ng-label-tmp let-item="item">
+              {{item.label? item.label: updatedAuthLabel  }}
+            </ng-template>
           </ng-select>
+
+
 
           <app-button
           btnColor="primary"

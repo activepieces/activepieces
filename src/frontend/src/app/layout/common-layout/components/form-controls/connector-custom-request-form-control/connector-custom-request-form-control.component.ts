@@ -4,7 +4,7 @@ import { BodyType } from './body-type.enum';
 import jsonlint from 'jsonlint-mod';
 import { Observable, tap } from 'rxjs';
 import { CodeService } from 'src/app/layout/flow-builder/service/code.service';
-import { HttpMethod } from '@activepieces/components/dist/src/common/http/core/http-method';
+import { HttpMethod } from '../../configs-form/connector-action-or-config';
 interface CustomRequestFormSchema {
 	endpoint: { url: string; method: HttpMethod };
 	parameters: { [key: string]: any };

@@ -41,7 +41,7 @@
         <div>
           <label class="dashed-underline-label" required [matTooltip]="clientSecretTooltip" matTooltipClass="labels-tooltip"
             >Client Secret</label>
-          <input class="form-control" formControlName="client_secret" type="text">
+          <input class="form-control" formControlName="client_secret" type="password">
           <p @fadeInUp class="invalid-input" *ngIf="submitted && settingsForm.get('client_secret')!.invalid ">
             Client secret is required
           </p>

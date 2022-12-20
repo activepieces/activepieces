@@ -28,7 +28,7 @@
   </div>
   <div>
     <label required> Client Secret</label>
-    <input type="text" formControlName="client_secret" class="form-control">
+    <input type="password" formControlName="client_secret" class="form-control">
     <p @fadeInUp  class="invalid-input" *ngIf="submitted &&  settingsForm.get('client_secret')!.invalid">
       Client secret is required
     </p>

@@ -34,6 +34,7 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 	configType = ConfigType;
 	configTypesDropdownOptions = configTypesDropdownOptions;
 	ConfigType = ConfigType;
+
 	constructor(private bsModalRef: BsModalRef, private store: Store, private formBuilder: FormBuilder) {}
 
 	ngOnInit(): void {

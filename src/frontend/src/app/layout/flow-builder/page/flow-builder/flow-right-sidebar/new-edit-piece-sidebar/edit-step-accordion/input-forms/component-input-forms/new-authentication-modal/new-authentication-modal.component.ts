@@ -38,7 +38,6 @@ export class NewAuthenticationModalComponent implements OnInit {
 	constructor(private fb: FormBuilder, private store: Store, public bsModalRef: BsModalRef) {}
 
 	ngOnInit(): void {
-
 		this.collectionId$ = this.store.select(BuilderSelectors.selectCurrentCollectionId);
 		console.log(environment.redirectUrl);
 		this.settingsForm = this.fb.group({
