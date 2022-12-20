@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - feature-automate-worker-build-#80
 
 jobs:
   Release-Backend:
