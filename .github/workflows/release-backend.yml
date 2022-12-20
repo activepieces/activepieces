@@ -20,6 +20,17 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
 
+      - name: Install Node.js v18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Download worker deps
+        run: cd src/worker && npm ci
+
+      - name: Build and copy worker to backend
+        run: cd src/worker && npx nx run-many --target=build 
+
       - name: Install JDK v11
         uses: actions/setup-java@v3
         with:
