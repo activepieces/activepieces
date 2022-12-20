@@ -21,3 +21,5 @@ dist/
 coverage/
 node_modules/
 
+# worker in backend resources
+src/backend/backend-loader/src/main/resources/activepieces-worker.js
