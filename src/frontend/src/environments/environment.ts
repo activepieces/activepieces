@@ -3,7 +3,7 @@ export const environment = {
 	apiDomainUrl: 'localhost:8000',
 	apiUrl: 'http://localhost:8000',
 	jwtTokenName: 'token',
-	redirectUrl: 'http://localhost:4200/redirect',
+	redirectUrl: 'https://secrets.activepieces.com/redirect',
 	userPropertyNameInLocalStorage: 'currentUser',
 	feature: {
 		newComponents: true,

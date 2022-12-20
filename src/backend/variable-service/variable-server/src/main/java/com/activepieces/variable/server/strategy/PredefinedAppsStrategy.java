@@ -38,21 +38,24 @@ public class PredefinedAppsStrategy {
 
     public ResponseEntity<ObjectNode> claimToken(final ClaimOAuth2PredefinedRequest request)
             throws JsonProcessingException {
+        final HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
         final String postUrl = String.format("%s/claim", secretManagerUrl);
         Map<String, String> body = Map.of("component_name", request.getComponentName(),
                 "code", request.getCode());
-        HttpEntity<String> httpRequest = new HttpEntity<>(objectMapper.writeValueAsString(body), new HttpHeaders());
+        HttpEntity<Map<String, String>> httpRequest = new HttpEntity<>(body, new HttpHeaders());
         final String result = restTemplate.postForObject(postUrl, httpRequest, String.class);
-        return objectMapper.convertValue(objectMapper.readValue(result, ObjectNode.class), new TypeReference<>() {
-        });
+        return ResponseEntity.ok(objectMapper.readValue(result, ObjectNode.class));
     }
 
     public Map<String, Object> refreshToken(@NonNull final String componentName, @NonNull final String refreshToken) {
         try {
             final String refreshUrl = String.format("%s/refresh", secretManagerUrl);
+            final HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, String> body = Map.of("component_name", componentName,
                     "refreshToken", refreshToken);
-            HttpEntity<String> httpRequest = new HttpEntity<>(objectMapper.writeValueAsString(body), new HttpHeaders());
+            HttpEntity<String> httpRequest = new HttpEntity<>(objectMapper.writeValueAsString(body), headers);
             final String result = restTemplate.postForObject(refreshUrl, httpRequest, String.class);
             return objectMapper.convertValue(objectMapper.readValue(result, ObjectNode.class), new TypeReference<>() {
             });

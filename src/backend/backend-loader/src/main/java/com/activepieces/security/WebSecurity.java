@@ -51,6 +51,8 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
                 .permitAll()
                 .antMatchers(HttpMethod.POST, "/webhook")
                 .permitAll()
+                .antMatchers(HttpMethod.POST, "/oauth2/*")
+                .permitAll()
                 .antMatchers(HttpMethod.POST, "/authentication/*")
                 .permitAll()
                 .antMatchers(HttpMethod.GET, "/components")
