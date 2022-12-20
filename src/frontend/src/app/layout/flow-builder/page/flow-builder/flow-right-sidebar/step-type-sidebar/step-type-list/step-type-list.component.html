@@ -8,9 +8,9 @@
   </div>
 </div>
 <div
-  class="flex-grow-1 d-column justify-content-center align-items-center"
+  class="flex-grow-1 d-column justify-content-center align-items-center empty-list-Text"
   *ngIf="typesList.length === 0"
 >
   <svg-icon src="assets/img/custom/variables-list.svg"></svg-icon>
-  <p class="text-description">No collections yet!</p>
+  <p class="text-description">{{emptyListText}}</p>
 </div>

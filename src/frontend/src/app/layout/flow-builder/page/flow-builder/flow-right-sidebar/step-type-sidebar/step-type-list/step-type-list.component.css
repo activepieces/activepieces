@@ -7,3 +7,8 @@
 .list-item {
   margin: 7.5px 0px;
 }
+
+.empty-list-text
+{
+  min-height: 50vh;
+}

@@ -21,6 +21,7 @@
           <app-step-type-list
             [typesList]="list"
             (typeSelected)="onTypeSelected($event)"
+            [emptyListText]="tab.emptyListText"
           >
           </app-step-type-list>
         </ng-container>

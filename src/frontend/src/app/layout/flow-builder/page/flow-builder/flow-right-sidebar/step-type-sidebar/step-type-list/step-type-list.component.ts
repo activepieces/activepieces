@@ -10,5 +10,6 @@ import { FlowItemDetails } from '../step-type-item/flow-item-details';
 export class StepTypeListComponent {
 	@Input() typesList: FlowItemDetails[];
 	@Output() typeSelected: EventEmitter<FlowItemDetails> = new EventEmitter();
+	@Input() emptyListText: string;
 	constructor() {}
 }

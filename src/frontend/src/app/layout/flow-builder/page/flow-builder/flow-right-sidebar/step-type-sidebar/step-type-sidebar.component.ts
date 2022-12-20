@@ -45,6 +45,7 @@ export class StepTypeSidebarComponent implements OnInit {
 	tabsAndTheirLists: {
 		displayName: string;
 		list$: Observable<FlowItemDetails[]>;
+		emptyListText: string;
 	}[] = [];
 	flowTypeSelected$: Observable<Flow | undefined>;
 	flowItemDetailsLoaded$: Observable<boolean>;
@@ -58,6 +59,7 @@ export class StepTypeSidebarComponent implements OnInit {
 	}
 
 	populateTabsAndTheirLists() {
+		this.tabsAndTheirLists = [];
 		const coreItemsDetails$ = this._showTriggers
 			? this.store.select(BuilderSelectors.selectFlowItemDetailsForCoreTriggers)
 			: this.store.select(BuilderSelectors.selectCoreFlowItemsDetails);
@@ -67,12 +69,14 @@ export class StepTypeSidebarComponent implements OnInit {
 		this.tabsAndTheirLists.push({
 			displayName: 'Core',
 			list$: coreItemsDetails$,
+			emptyListText: '',
 		});
 
 		if (environment.feature.newComponents) {
 			this.tabsAndTheirLists.push({
-				displayName: 'Components',
+				displayName: 'apps',
 				list$: connectorComponentsItemsDetails$,
+				emptyListText: this._showTriggers ? 'No app triggers are available' : 'No app steps are available',
 			});
 		}
 	}

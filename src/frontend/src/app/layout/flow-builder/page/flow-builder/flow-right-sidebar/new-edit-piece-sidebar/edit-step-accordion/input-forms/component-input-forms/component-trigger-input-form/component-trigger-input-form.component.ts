@@ -170,7 +170,7 @@ export class ComponentTriggerInputFormComponent {
 	}
 
 	validate() {
-		debugger;
+
 		if (this.componentForm.valid) return null;
 		return { invalid: true };
 	}

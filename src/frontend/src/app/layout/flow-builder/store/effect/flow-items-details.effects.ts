@@ -30,7 +30,6 @@ export class FlowItemsDetailsEffects {
 				});
 			}),
 			switchMap(res => {
-
 				return of(
 					FlowItemDetailsActions.flowItemsDetailsLoadedSuccessfully({
 						flowItemsDetailsLoaded: { ...res, loaded: true },
@@ -43,7 +42,6 @@ export class FlowItemsDetailsEffects {
 		return (components: ConnectorComponent[]) => {
 			return components
 				.map(c => {
-
 					if (Object.keys(c.actions).length > 0 && !forTriggers) {
 						return new FlowItemDetails(
 							ActionType.COMPONENT,
