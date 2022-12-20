@@ -59,7 +59,6 @@
 
     </div>
     <div *ngIf="getControlValue('type') === configType.OAUTH2">
-      <label>Settings</label>
       <app-o-auth2-config-settings [submitted]="submitted" formControlName="settings"></app-o-auth2-config-settings>
     </div>
 

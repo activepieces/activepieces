@@ -59,8 +59,10 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	optionsObservables$: { [key: ConfigKey]: Observable<DropdownItemOption[]> } = {};
 	dropdownsLoadingFlags$: { [key: ConfigKey]: Observable<boolean> } = {};
 	allAuthConfigs$: Observable<DropdownItemOption[]>;
+	authConfigs: DropdownItemOption[] = [];
 	updateOrAddConfigModalClosed$: Observable<void>;
 	authConfigDropdownChanged$: Observable<any>;
+	updatedAuthLabel = '';
 	constructor(
 		private fb: FormBuilder,
 		public themeService: ThemeService,
@@ -194,6 +196,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 				if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
 					const authConfigOptionValue = newAuthConfig.value;
 					this.form.get(authConfigName)!.setValue(authConfigOptionValue);
+					this.updatedAuthLabel = newAuthConfig.label;
 				}
 			}),
 			mapTo(void 0)
@@ -205,7 +208,10 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		this.updateAuthConfig$ = allAuthConfigs$.pipe(
 			take(1),
 			map(configs => {
-				const updatedConfigIndex = configs.findIndex(c => JSON.stringify(selectedValue) === JSON.stringify(c.value));
+				console.log(configs);
+				const updatedConfigIndex = configs.findIndex(
+					c => selectedValue && selectedValue['access_token'] === c.value['access_token']
+				);
 				return { config: configs[updatedConfigIndex], indexInList: updatedConfigIndex };
 			}),
 			tap(configAndIndex => {
@@ -224,6 +230,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 							if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
 								const authConfigOptionValue = newAuthConfig.value;
 								this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
+								this.updatedAuthLabel = newAuthConfig.label;
 							}
 						}),
 						mapTo(void 0)
@@ -241,6 +248,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		});
 	}
 	authenticationDropdownCompareWithFunction = (a: { label: string; value: any }, formControlValue: any) => {
-		return JSON.stringify(formControlValue) === JSON.stringify(a.value);
+		return formControlValue && formControlValue['access_token'] === a.value['access_token'];
 	};
 }
