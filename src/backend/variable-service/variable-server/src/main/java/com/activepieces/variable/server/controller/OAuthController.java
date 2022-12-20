@@ -25,6 +25,18 @@ public class OAuthController {
         this.oAuth2Service = oAuth2Service;
     }
 
+
+    @PostMapping("/claim-predefined")
+    public ResponseEntity<?> claimPredefinedAuth(@RequestBody ClaimOAuth2RequestWithSecret request)
+            throws JsonProcessingException {
+        return oAuth2Service.claimToken(
+                request.getClientId(),
+                request.getClientSecret(),
+                request.getTokenUrl(),
+                request.getCode(),
+                request.getRedirectUrl());
+    }
+
     @PostMapping("/claim-with-secret")
     public ResponseEntity<?> claimOAuth2(@RequestBody ClaimOAuth2RequestWithSecret request)
             throws JsonProcessingException {

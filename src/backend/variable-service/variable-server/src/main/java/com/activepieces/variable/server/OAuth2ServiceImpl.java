@@ -1,5 +1,6 @@
 package com.activepieces.variable.server;
 
+import com.activepieces.entity.subdocuments.field.connection.oauth2.OAuth2CustomSettings;
 import com.activepieces.entity.subdocuments.field.connection.oauth2.OAuth2Settings;
 import com.activepieces.entity.subdocuments.field.connection.oauth2.OAuth2Variable;
 import com.activepieces.variable.server.strategy.DirectClaimStrategy;
@@ -41,16 +42,24 @@ public class OAuth2ServiceImpl {
     if (Objects.isNull(refreshToken)) {
       return oAuth2Response;
     }
+    Map<String, Object>  refreshedResponse = null;
     OAuth2Settings settings = variable.getSettings();
-    String clientSecret = settings.getClientSecret();
-    Map<String, Object>  refreshedResponse =
+    switch (settings.getType()){
+      case CUSTOM:
+        OAuth2CustomSettings customSettings = (OAuth2CustomSettings) settings;
+        refreshedResponse =
                 directClaimStrategy.refreshToken(
-                        settings.getClientId(),
-                        clientSecret,
-                        settings.getTokenUrl(),
-                        settings.getRefreshUrl(),
+                        customSettings.getClientId(),
+                        customSettings.getClientSecret(),
+                        customSettings.getTokenUrl(),
+                        customSettings.getRefreshUrl(),
                         refreshToken,
-                        variable.getSettings().getRedirectUrl());
+                        customSettings.getRedirectUrl());
+        break;
+      case PREDEFINED:
+        // TODO IMPLEMENT
+        break;
+    }
     refreshedResponse.put("auth_response", oAuth2Response.get("auth_response"));
     return refreshedResponse;
   }
