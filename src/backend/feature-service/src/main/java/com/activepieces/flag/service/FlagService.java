@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.swing.text.html.Option;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -36,5 +38,14 @@ public class FlagService {
     public void save(@NonNull final String key,
                      @NonNull final String value){
         flagRepository.save(FlagValue.builder().key(key).value(value).build());
+    }
+
+    public boolean getIsFirstSignIn()
+    {
+        return getValue(FlagsEnum.FIRST_SIGN_IN.name()).isEmpty();
+    }
+    public boolean getIsTrackingEventsAllowed()
+    {
+        return !getValue(FlagsEnum.TRACK_USER_EVENTS.name()).isEmpty();
     }
 }
