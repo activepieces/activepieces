@@ -22,21 +22,15 @@
       "url": "mailto:support@activepieces.com"
     }
   ],
-  "anchors": [
-    {
-      "name": "Blogs",
-      "icon": "bookmark",
-      "url": "blogs"
-    }
-  ],
   "navigation": [
     {
-      "group": "Welcome",
-      "pages": ["overview", "change-log"]
+      "group": "Getting Started",
+      "pages": ["getting-started/installation",
+        "getting-started/key-concepts"]
     },
     {
-      "group": "Blogs",
-      "pages": ["blogs/get-started"]
+      "group": "Contributing",
+      "pages": ["contributing/architecture", "contributing/worker"]
     }
   ]
 }
