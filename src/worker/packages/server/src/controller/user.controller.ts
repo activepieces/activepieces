@@ -1,9 +1,7 @@
-import * as Router from 'koa-router';
+import { FastifyInstance, FastifyPluginOptions } from "fastify"
 
-const routerOpts: Router.IRouterOptions = {
-    prefix: '/authentication',
+export const userController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
+    fastify.get('/', async (_request, _reply) => {
+        return { hello: 'world' }
+    })
 };
-
-const router: Router = new Router(routerOpts);
-
-export default router;

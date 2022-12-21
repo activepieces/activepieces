@@ -1,26 +1,19 @@
-import * as Koa from 'koa';
-import {StatusCodes} from "http-status-codes";
+import Fastify from 'fastify';
+import { userController } from '../controller/user.controller';
 
-const app:Koa = new Koa();
-
-// Generic error handling middleware.
-app.use(async (ctx: Koa.Context, next: () => Promise<any>) => {
-  try {
-    await next();
-  } catch (error) {
-    ctx.status = error.statusCode || error.status || StatusCodes.INTERNAL_SERVER_ERROR;
-    error.status = ctx.status;
-    ctx.body = { error };
-    ctx.app.emit('error', error, ctx);
-  }
+const fastify = Fastify({
+    logger: true
 });
 
-// Initial route
-app.use(async (ctx:Koa.Context) => {
-  ctx.body = 'Hello world';
-});
+fastify.register(userController);
 
-// Application error logging.
-app.on('error', console.error);
+const start = async () => {
+    try {
+        await fastify.listen({ port: 3000 });
+    } catch (err) {
+        fastify.log.error(err);
+        process.exit(1);
+    }
+}
 
-export default app;
+start();
