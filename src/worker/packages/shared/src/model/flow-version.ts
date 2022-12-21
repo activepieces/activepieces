@@ -6,7 +6,7 @@ import {Trigger} from "./trigger";
 
 export type FlowVersionId = KSUID;
 
-export class FlowVersion extends BaseModel<FlowVersionId> {
+export interface FlowVersion extends BaseModel<FlowVersionId> {
 
   flowId: FlowId;
   displayName: string;

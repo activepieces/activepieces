@@ -5,7 +5,7 @@ import {ProjectId} from "./project";
 
 export type CollectionId = KSUID;
 
-export class Collection extends BaseModel<CollectionId> {
+export interface Collection extends BaseModel<CollectionId> {
 
   projectId: ProjectId;
 

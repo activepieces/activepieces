@@ -6,6 +6,4 @@ const routerOpts: Router.IRouterOptions = {
 
 const router: Router = new Router(routerOpts);
 
-
-
 export default router;

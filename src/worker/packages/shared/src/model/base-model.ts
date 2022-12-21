@@ -1,5 +1,5 @@
 
-export class BaseModel<T> {
+export interface BaseModel<T> {
   id: T;
   created: number;
   updated: number;

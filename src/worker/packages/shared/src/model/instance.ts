@@ -7,7 +7,7 @@ import {ProjectId} from "./project";
 
 export type InstanceId = KSUID;
 
-export class Instance extends BaseModel<InstanceId> {
+export interface Instance extends BaseModel<InstanceId> {
 
   collectionId: CollectionId;
   collectionVersionId: CollectionVersionId;

@@ -3,7 +3,7 @@ import {BaseModel} from "./base-model";
 
 export type UserId = KSUID;
 
-export class User extends BaseModel<UserId> {
+export interface User extends BaseModel<UserId> {
 
   email: string;
   firstName: string;

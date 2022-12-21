@@ -4,7 +4,7 @@ import {UserId} from "./user";
 
 export type FlowId = KSUID;
 
-export class Flow extends BaseModel<FlowId> {
+export interface Flow extends BaseModel<FlowId> {
 
 
 }

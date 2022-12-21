@@ -5,7 +5,7 @@ import {Config} from "./config";
 
 export type CollectionVersionId = KSUID;
 
-export class CollectionVersion extends BaseModel<CollectionVersionId> {
+export interface CollectionVersion extends BaseModel<CollectionVersionId> {
 
     displayName: string;
     collectionId: CollectionId;

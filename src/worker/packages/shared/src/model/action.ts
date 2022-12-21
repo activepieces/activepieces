@@ -1,6 +1,6 @@
 import {Step} from "./step";
 
-export abstract class Action<T, V> extends Step<T, V> {
+export interface Action<T, V> extends Step<T, V> {
 }
 
 export type CodeActionSettings = {
@@ -9,7 +9,7 @@ export type CodeActionSettings = {
   input: Record<string, unknown>;
 }
 
-export class CodeAction extends Action<ActionType.CODE, CodeActionSettings> {
+export interface CodeAction extends Action<ActionType.CODE, CodeActionSettings> {
 }
 
 export type ComponentActionSettings = {
@@ -18,14 +18,14 @@ export type ComponentActionSettings = {
   input: Record<string, unknown>;
 }
 
-export class ComponentAction extends Action<ActionType.COMPONENT, ComponentActionSettings> {
+export interface ComponentAction extends Action<ActionType.COMPONENT, ComponentActionSettings> {
 };
 
 export type ResponseActionSettings = {
   output: Record<string, unknown>;
 }
 
-export class ResponseAction extends Action<ActionType.RESPONSE, ResponseActionSettings> {
+export interface ResponseAction extends Action<ActionType.RESPONSE, ResponseActionSettings> {
 }
 
 export enum StoreOperation {
@@ -39,7 +39,7 @@ export type StorageActionSettings = {
   value: unknown;
 }
 
-export class StorageAction extends Action<ActionType.STORAGE, StorageActionSettings> {
+export interface StorageAction extends Action<ActionType.STORAGE, StorageActionSettings> {
 }
 
 
@@ -47,7 +47,7 @@ export type LoopOnItemsActionSettings = {
   items: unknown;
 }
 
-export class LoopOnItemsAction extends Action<ActionType.LOOP_ON_ITEMS, LoopOnItemsActionSettings> {
+export interface LoopOnItemsAction extends Action<ActionType.LOOP_ON_ITEMS, LoopOnItemsActionSettings> {
 }
 
 

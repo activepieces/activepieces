@@ -1,6 +1,6 @@
 import {Action} from "./action";
 
-export abstract class Step<T, V>{
+export interface Step<T, V>{
   type: T;
   settings: V;
   displayName: string;

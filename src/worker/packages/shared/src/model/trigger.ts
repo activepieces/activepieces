@@ -1,22 +1,22 @@
 import {Step} from "./step";
 
-export abstract class Trigger<T extends TriggerType, V> extends Step<T, V> {
+export interface Trigger<T extends TriggerType, V> extends Step<T, V> {
 }
 
-export class CollectionEnabledTrigger extends Trigger<TriggerType.COLLECTION_ENABLED, {}> {
+export interface CollectionEnabledTrigger extends Trigger<TriggerType.COLLECTION_ENABLED, {}> {
 }
 
-export class CollectionDisabledTrigger extends Trigger<TriggerType.COLLECTION_DISABLED, {}> {
+export interface CollectionDisabledTrigger extends Trigger<TriggerType.COLLECTION_DISABLED, {}> {
 }
 
-export class WebhookTrigger extends Trigger<TriggerType.WEBHOOK, {}> {
+export interface WebhookTrigger extends Trigger<TriggerType.WEBHOOK, {}> {
 }
 
 export type ScheduleTriggerSettings = {
   cronExpression: string;
 }
 
-export class ScheduleTrigger extends Trigger<TriggerType.SCHEDULE, ScheduleTriggerSettings> {
+export interface ScheduleTrigger extends Trigger<TriggerType.SCHEDULE, ScheduleTriggerSettings> {
 }
 
 export type ComponentTriggerSettings = {
@@ -25,7 +25,7 @@ export type ComponentTriggerSettings = {
   input: Record<string, unknown>;
 };
 
-export class ComponentTrigger extends Trigger<TriggerType.COMPONENT, ComponentTriggerSettings> {
+export interface ComponentTrigger extends Trigger<TriggerType.COMPONENT, ComponentTriggerSettings> {
 }
 
 export enum TriggerType {

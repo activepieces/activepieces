@@ -1,22 +1,22 @@
-export abstract class Config<T extends ConfigType, V> {
+export interface Config<T extends ConfigType, V> {
   key: string;
   type: T;
   value: V;
 }
 
-export class ShortTextConfig extends Config<ConfigType.SHORT_TEXT, string> {
+export interface ShortTextConfig extends Config<ConfigType.SHORT_TEXT, string> {
 }
 
-export class LongTextConfig extends Config<ConfigType.LONG_TEXT, string> {
+export interface LongTextConfig extends Config<ConfigType.LONG_TEXT, string> {
 }
 
-export class CheckboxConfig extends Config<ConfigType.CHECKBOX, boolean> {
+export interface CheckboxConfig extends Config<ConfigType.CHECKBOX, boolean> {
 }
 
-export class DictionaryConfig extends Config<ConfigType.DICTIONARY, Record<string, unknown>> {
+export interface DictionaryConfig extends Config<ConfigType.DICTIONARY, Record<string, unknown>> {
 }
 
-export class NumberConfig extends Config<ConfigType.NUMBER, number> {
+export interface NumberConfig extends Config<ConfigType.NUMBER, number> {
 }
 
 
