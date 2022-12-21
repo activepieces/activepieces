@@ -1,0 +1,28 @@
+---
+title: "Architecture"
+description: ""
+---
+
+TODO Add Diagram
+
+# Code Structure
+
+The repository is `nx` with `package-based` to manage different packages.
+
+```
+.
+├── packages
+│   ├── frontend
+│   ├── server
+│   ├── engine
+│   ├── components
+│   ├── worker
+│   ├── shared
+
+```
+* `frontend`: based on `angular` framework to implement the user interface.
+* `server`: based on `fastify` framework for api implementations.
+* `engine`: contains the logic for flow execution inside the sandbox.
+* `components`: contains the third party app implementations for trigger and actions.
+* `worker`: contains the logic for bundling code actions, scheduling and execute the flows in sandbox.
+* `shared`: contains data models and helper functions that's shared between all other packages.
