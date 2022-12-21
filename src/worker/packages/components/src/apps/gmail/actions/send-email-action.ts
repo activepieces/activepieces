@@ -17,14 +17,7 @@ export const gmailSendEmailAction = createAction({
 			authUrl: "https://accounts.google.com/o/oauth2/auth",
 			tokenUrl: "https://oauth2.googleapis.com/token",
 			required: true,
-			scopes: ["https://mail.google.com/"]
-		},
-		{
-			name: 'sender',
-			displayName: 'Sender Email (From)',
-			description: undefined,
-			type: InputType.SHORT_TEXT,
-			required: true,
+			scopes: ["https://mail.google.com/", "https://www.googleapis.com/auth/userinfo.email","https://www.googleapis.com/auth/userinfo.profile"]
 		},
 		{
 			name: 'receiver',
@@ -56,8 +49,19 @@ export const gmailSendEmailAction = createAction({
 		},
 	],
 	async runner(configValue) {
+		const getSenderEmail: HttpRequest<{email:string}> = {
+			method: HttpMethod.GET,
+			url: `https://www.googleapis.com/oauth2/v1/userinfo`,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: configValue['authentication']['access_token'],
+			},
+			body:undefined,
+			queryParams: {},
+		};
+		const from= (await httpClient.sendRequest(getSenderEmail))['email'] as string;
 		const mailOptions = {
-			from: configValue['sender'],
+			from: from,
 			to: configValue['receiver'],
 			subject: configValue['subject'],
 			text: configValue['bodyText'],
