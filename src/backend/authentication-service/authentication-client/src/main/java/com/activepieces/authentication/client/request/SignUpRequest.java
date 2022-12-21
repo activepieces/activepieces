@@ -25,4 +25,7 @@ public class SignUpRequest {
   @JsonProperty(required = true)
   @NotEmpty
   private String lastName;
+  @JsonProperty(required = false)
+  @NotNull
+  private Boolean trackEvents;
 }

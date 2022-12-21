@@ -215,11 +215,11 @@ public class ExceptionHandlerController {
   }
   @ExceptionHandler(value = AnAccountAlreadyExists.class)
   public ResponseEntity<ErrorResponse> exception(AnAccountAlreadyExists exception) {
-    return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.UNAUTHORIZED);
+    return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.CONFLICT);
   }
   @ExceptionHandler(value = EmailExists.class)
   public ResponseEntity<ErrorResponse> exception(EmailExists exception) {
-    return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.UNAUTHORIZED);
+    return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.CONFLICT);
   }
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<Object> handleValidationExceptions(MethodArgumentNotValidException ex) {

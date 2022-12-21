@@ -87,4 +87,7 @@ export class AuthenticationService {
 		this.currentUserSubject.next(undefined);
 		this.router.navigate(['sign-in']);
 	}
+	isFirstSignIn() {
+		return this.http.get<boolean>(environment.apiUrl + '/first-sign-in');
+	}
 }
