@@ -1,11 +1,14 @@
 package com.activepieces.authentication.server.controller;
 
 import com.activepieces.authentication.client.UserAuthenticationService;
+import com.activepieces.authentication.client.exception.AnAccountAlreadyExists;
+import com.activepieces.authentication.client.exception.EmailExists;
 import com.activepieces.authentication.client.exception.UnAuthenticationException;
 import com.activepieces.authentication.client.exception.UnAuthorizedException;
 import com.activepieces.authentication.client.model.UserInformationView;
 import com.activepieces.authentication.client.request.SignInRequest;
 import com.activepieces.authentication.client.JWTService;
+import com.activepieces.authentication.client.request.SignUpRequest;
 import com.activepieces.common.identity.UserIdentity;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.NonNull;
@@ -50,6 +53,18 @@ public class AuthenticationController {
             jwtService.createTokenWithDefaultExpiration(
                 UserIdentity.builder().resourceId(userInformation.get().getId()).build()))
         .body(userInformation.get());
+  }
+  @ResponseBody
+  @PostMapping(value = "/sign-up")
+  public ResponseEntity<Object> signUp(@RequestBody @Valid final SignUpRequest request)
+          throws AnAccountAlreadyExists, EmailExists {
+    final UserInformationView userInformation = userAuthenticationService.create(request);
+    return ResponseEntity.ok()
+            .header(
+                    JWTService.AUTHORIZATION_HEADER_NAME,
+                    jwtService.createTokenWithDefaultExpiration(
+                            UserIdentity.builder().resourceId(userInformation.getId()).build()))
+            .body(userInformation);
   }
 
 }

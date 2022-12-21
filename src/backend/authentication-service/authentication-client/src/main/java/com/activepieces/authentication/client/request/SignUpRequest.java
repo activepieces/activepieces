@@ -14,10 +14,15 @@ import javax.validation.constraints.NotNull;
 @Builder
 public class SignUpRequest {
 
-  @JsonProperty @NotEmpty private String firstName;
 
-  @JsonProperty @NotEmpty private String lastName;
+  @JsonProperty @NotEmpty private String email;
 
   @JsonProperty @NotNull
   @ValidPassword private String password;
+  @JsonProperty(required = true)
+  @NotEmpty
+  private String firstName;
+  @JsonProperty(required = true)
+  @NotEmpty
+  private String lastName;
 }

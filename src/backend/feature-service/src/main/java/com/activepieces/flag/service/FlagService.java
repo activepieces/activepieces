@@ -18,6 +18,7 @@ public class FlagService {
 
     private final FlagRepository flagRepository;
 
+
     @Autowired
     public FlagService(@NonNull final FlagRepository flagRepository){
         this.flagRepository = flagRepository;
@@ -40,10 +41,6 @@ public class FlagService {
         flagRepository.save(FlagValue.builder().key(key).value(value).build());
     }
 
-    public boolean getIsFirstSignIn()
-    {
-        return getValue(FlagsEnum.FIRST_SIGN_IN.name()).isEmpty();
-    }
     public boolean getIsTrackingEventsAllowed()
     {
         return !getValue(FlagsEnum.TRACK_USER_EVENTS.name()).isEmpty();

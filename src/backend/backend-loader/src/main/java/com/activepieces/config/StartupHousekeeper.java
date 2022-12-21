@@ -45,19 +45,6 @@ public class StartupHousekeeper {
     @EventListener(ContextRefreshedEvent.class)
     public void contextRefreshedEvent() throws SchedulerException, IOException {
         log.info("Running Startup configuration");
-        final UserInformationView user = authenticationService.getOptional("admin@activepieces.com")
-                .orElse(authenticationService.create("admin@activepieces.com",
-                        SignUpRequest.builder().firstName("Activepieces")
-                                .lastName("Admin")
-                                .password("password")
-                                .build()));
-        final List<ProjectView> projectViewList = projectService.listByOwnerId(user.getId());
-        if (projectViewList.isEmpty()) {
-            final ProjectView projectView = projectService.create(user.getId(), CreateProjectRequest.builder()
-                    .displayName("Project")
-                    .build());
-            scheduler.clear();
-        }
         // Place worker js
         final Resource workerExecutor = new ClassPathResource(Constants.ACTIVEPIECES_WORKER_JS);
         final File temp = new File(Constants.ACTIVEPIECES_WORKER_ABS_PATH_JS);

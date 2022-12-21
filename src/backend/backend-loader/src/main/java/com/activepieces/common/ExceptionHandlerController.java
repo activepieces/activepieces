@@ -1,9 +1,6 @@
 package com.activepieces.common;
 
-import com.activepieces.authentication.client.exception.InvalidTokenException;
-import com.activepieces.authentication.client.exception.UnAuthenticationException;
-import com.activepieces.authentication.client.exception.UnAuthorizedException;
-import com.activepieces.authentication.client.exception.UserNotFoundException;
+import com.activepieces.authentication.client.exception.*;
 import com.activepieces.common.error.ErrorCode;
 import com.activepieces.common.error.ErrorResponse;
 import com.activepieces.common.error.exception.*;
@@ -216,8 +213,14 @@ public class ExceptionHandlerController {
   public ResponseEntity<ErrorResponse> exception(CollectionInstanceNotFoundException exception) {
     return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.NOT_FOUND);
   }
-
-
+  @ExceptionHandler(value = AnAccountAlreadyExists.class)
+  public ResponseEntity<ErrorResponse> exception(AnAccountAlreadyExists exception) {
+    return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.UNAUTHORIZED);
+  }
+  @ExceptionHandler(value = EmailExists.class)
+  public ResponseEntity<ErrorResponse> exception(EmailExists exception) {
+    return new ResponseEntity<>(new ErrorResponse(exception), HttpStatus.UNAUTHORIZED);
+  }
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<Object> handleValidationExceptions(MethodArgumentNotValidException ex) {
     Map<String, String> errors = new HashMap<>();
