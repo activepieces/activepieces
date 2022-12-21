@@ -1,0 +1,94 @@
+@import "src/assets/scss/custom/variables";
+
+$multiplier-height: 1.2;
+
+.auth-form-title {
+  font-weight: 600;
+  color: $title;
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 1.563rem;
+}
+
+
+.auth-button {
+  padding: 0.5rem 0rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  border: 0px;
+  &:focus {
+    outline: 1px;
+  }
+  font-size: 0.875rem;
+}
+
+.auth-links-container {
+  margin-top: 1.875rem;
+  color: $description;
+  font-size: 0.875rem;
+}
+
+.auth-single-row-controls-gap {
+  gap: 0.938rem;
+}
+
+.require-astrisk {
+  color: $danger;
+}
+
+.password-control-group {
+  position: relative;
+}
+
+.password-validation-dropdown-menu {
+  min-width: 133px;
+  padding: 10px;
+  left: -166px !important;
+  top: 6px !important;
+}
+
+.password-validation-list {
+  gap: 5px;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 22px;
+  .grey-check {
+    display: none;
+  }
+  color: $body;
+
+  .invalid-password-condition {
+    .grey-check {
+      display: unset;
+    }
+    .green-check {
+      display: none;
+    }
+    color: $description;
+  }
+}
+
+.card {
+  border: 1px solid $dividers;
+}
+.form-margin {
+  margin: 0px 5px;
+}
+.email-registration {
+  .mat-tab-body-wrapper {
+    overflow: visible !important;
+  }
+  .mat-tab-body {
+    overflow: visible !important;
+  }
+
+  .mat-tab-body-content {
+    overflow: visible !important;
+  }
+}
+
+
+.check-icon{
+  margin-right: 0.25rem;
+}
