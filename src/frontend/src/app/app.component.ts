@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { map, Observable, tap } from 'rxjs';
-import { AuthenticationService } from './layout/common-layout/service/authentication.service';
+import { AuthenticationService } from './modules/common/service/authentication.service';
 import { Store } from '@ngrx/store';
 import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
-import { NavigationService } from './layout/dashboard-layout/service/navigation.service';
+import { NavigationService } from './modules/dashboard/service/navigation.service';
 import { SvgIconRegistryService } from 'angular-svg-icon';
-import { CommonActions } from './layout/common-layout/store/action/common.action';
-import { PosthogService } from './layout/common-layout/service/posthog.service';
+import { CommonActions } from './modules/common/store/action/common.action';
+import { PosthogService } from './modules/common/service/posthog.service';
 
 @Component({
 	selector: 'app-root',

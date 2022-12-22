@@ -1,0 +1,22 @@
+@import "src/assets/scss/variables.scss";
+.ap-checkbox {
+  cursor: pointer;
+  display:flex;
+  &:focus
+  {
+    outline: transparent;
+    box-shadow: 0 0 0 0.25rem  $focused-form-control-shadow;
+  }
+}
+
+
+.cb-container
+{
+  display: flex;
+  align-items: center;
+  gap:.5rem;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}

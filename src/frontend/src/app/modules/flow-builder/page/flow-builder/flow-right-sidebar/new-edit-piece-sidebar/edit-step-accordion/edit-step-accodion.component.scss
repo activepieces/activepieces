@@ -1,0 +1,137 @@
+@import "src/assets/scss/variables.scss";
+
+.edit-step-accordion-container {
+  margin-bottom: 4.375rem;
+  margin-left: 0.3125rem;
+  margin-right: 0.3125rem;
+  border-radius: 4px;
+
+  .inside-panel-item-title {
+    padding-top: 1.5625rem;
+    font-weight: 400;
+    font-size: 0.875rem;
+    line-height: 1.375rem;
+    color: $formLabel;
+    -webkit-touch-callout: none;
+    /* iOS Safari */
+    -webkit-user-select: none;
+    /* Safari */
+    -khtml-user-select: none;
+    /* Konqueror HTML */
+    -moz-user-select: none;
+    /* Old versions of Firefox */
+    -ms-user-select: none;
+    /* Internet Explorer/Edge */
+    user-select: none;
+    /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
+  }
+
+  .learn-variable-text {
+    color: $body;
+  }
+
+  .expansion-panel-label {
+    margin-bottom: 0px !important;
+    font-family: "Open Sans", sans-serif;
+  }
+
+  .flip-chevorn-up {
+    transform: rotate(180deg);
+  }
+
+  // Learn how to variable
+
+  .doc-text:hover {
+    color: black;
+  }
+
+  .doc-text {
+    color: $body;
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  .doc-container {
+    display: flex;
+    padding: 0.5rem;
+    background-color: $sidebar;
+    align-items: center;
+  }
+
+  .flip-transition {
+    transition: transform 0.5s ease;
+    display: inline-block;
+  }
+
+  .expansion-panel-transition {
+    transition: background-color 1s ease;
+  }
+
+  .expansion-panel-opened {
+    background-color: #fafafa;
+  }
+
+  .chevorn-margin-left {
+    margin-left: auto;
+    margin-right: -6px;
+  }
+
+  mat-expansion-panel-header {
+    padding-top: 15px;
+  }
+
+  .expansion-panel-body {
+    padding-bottom: 25px;
+    margin-top: -5px;
+  }
+
+  .mat-expansion-panel-spacing {
+    margin: 0px;
+  }
+
+  .panel-padding {
+    padding: 0.9375rem;
+  }
+}
+
+.take-remaining-height-in-flex-column {
+  flex: 1;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin-animation {
+  animation-name: spin;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.mat-expansion-panel {
+  border-radius: 0px;
+  box-shadow: unset;
+}
+
+::ng-deep .tooltip-300 ~ .tooltip .tooltip-inner {
+  max-width: 300px;
+  min-width: 300px;
+}
+
+.webhook-note
+{
+  margin-top:0.9375rem;
+}
+
+.url-paragraph{
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

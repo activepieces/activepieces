@@ -1,5 +1,5 @@
-import { GlobalBuilderState } from '../layout/flow-builder/store/model/builder-state.model';
-import { CommonStateModel } from '../layout/common-layout/store/model/common-state.model';
+import { GlobalBuilderState } from '../modules/flow-builder/store/model/builder-state.model';
+import { CommonStateModel } from '../modules/common/store/model/common-state.model';
 
 export interface AppState {
 	readonly builderState: GlobalBuilderState;

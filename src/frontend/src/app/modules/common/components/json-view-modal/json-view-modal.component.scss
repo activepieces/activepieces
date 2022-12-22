@@ -1,0 +1,22 @@
+@import 'src/assets/scss/variables';
+
+.code-area{
+  background: $white;
+  border: 1px solid $dividers;
+  box-sizing: border-box;
+  border-radius: 0px 0px 4px 4px;
+}
+
+
+.max-height{
+  max-height: 800px;
+}
+
+.space-wrap{
+  white-space: pre-wrap !important;;
+}
+
+.close-custom{
+  font-size: 2rem !important;
+  color: $body !important;
+}
