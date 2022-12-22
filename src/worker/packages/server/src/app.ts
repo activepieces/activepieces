@@ -1,5 +1,6 @@
 import fastify from 'fastify';
 import { User } from 'shared';
+import { databaseModule } from './database/database-module';
 import { authenticationModule } from './authentication/authentication.module';
 
 declare module 'fastify' {
@@ -12,6 +13,7 @@ const app = fastify({
     logger: true
 });
 
+app.register(databaseModule);
 app.register(authenticationModule);
 
 const start = async () => {
