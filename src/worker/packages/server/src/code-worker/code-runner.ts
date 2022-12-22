@@ -1,25 +1,9 @@
 import {sandboxManager} from "../helper/sandbox";
 import {CodeBuilder} from "./code-builder";
+import {CodeRunStatus} from "shared/dist/model/code-worker/code-run-status";
+import {CodeExecutionResult} from "shared/dist/model/code-worker/code-execution-result";
 
 const fs = require("fs");
-
-export interface CodeExecutionResult {
-    verdict: CodeRunStatus,
-    timeInSeconds: number,
-    standardOutput: string
-    standardError: string,
-    output: unknown,
-}
-
-export enum CodeRunStatus {
-    OK = "OK",
-    RUNTIME_ERROR = "RUNTIME_ERROR",
-    CRASHED = "CRASHED",
-    TIMEOUT = "TIMEOUT",
-    INTERNAL_ERROR = "INTERNAL_ERROR",
-    UNKNOWN_ERROR = "UNKNOWN_ERROR"
-}
-
 
 function fromStatus(code: string): CodeRunStatus {
     if(code === undefined){
