@@ -1,5 +1,5 @@
-import {createComponent} from '../../framework/component';
 import {slackSendMessageAction} from './actions/send-message-action';
+import {createComponent} from "../../framework/component";
 
 export const slack = createComponent({
 	name: 'slack',

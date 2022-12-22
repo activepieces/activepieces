@@ -13,10 +13,10 @@ import {Trigger} from "components/dist/src/framework/trigger/trigger";
 import {TriggerStepType} from "./model/trigger/trigger-metadata";
 import {FlowVersion} from "./model/flow-version";
 import {VariableService} from "./services/variable-service";
-import {apps} from "components/dist/src/apps";
 import {Context} from "components/dist/src/framework/context";
 import {Action} from "components/dist/src/framework/action/action";
 import {Input} from "components/dist/src/framework/config/input.model";
+import {components} from "components/dist/src/apps";
 
 
 const args = process.argv.slice(2);
@@ -63,11 +63,11 @@ async function executeTrigger(): Promise<unknown[]> {
         return [];
     }
     let componentSettings = (optionRequest.flowVersion.trigger as ComponentTrigger).settings;
-    let application = apps.find(f => f.name === componentSettings.componentName);
+    let application = components.find(f => f.name === componentSettings.componentName);
     if (application === undefined) {
         throw new Error("Component " + componentSettings.componentName + " is not found");
     }
-    let trigger = application.getTrigger(componentSettings.triggerName);
+    let trigger = application.getTrigger(componentSettings.triggerName)!;
     let executionState = new ExecutionState();
     executionState.insertConfigs(optionRequest.configs);
     let variableService = new VariableService();
@@ -88,19 +88,15 @@ async function executeTrigger(): Promise<unknown[]> {
     }
 }
 
-function getMetadata() {
-    return apps.map(f => f.metadata());
-}
-
 async function validateConfigs() {
     let optionRequest: { componentName: string, triggerName: string, actionName: string, input: Record<string, unknown> } = JSON.parse(args[1]);
-    let app: Component = apps.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
+    let app: Component = components.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
     let inputs: Input[] = [];
     if (optionRequest.actionName !== undefined && optionRequest.actionName !== null) {
-        let action: Action = app.getAction(optionRequest.actionName);
+        let action: Action = app.getAction(optionRequest.actionName)!;
         inputs = action.configs;
     } else {
-        let trigger: Trigger = app.getTrigger(optionRequest.triggerName);
+        let trigger: Trigger = app.getTrigger(optionRequest.triggerName)!;
         inputs = trigger.configs;
     }
     for (let i = 0; i < inputs.length; ++i) {
@@ -113,16 +109,9 @@ async function validateConfigs() {
 
 async function getTriggerType() {
     let optionRequest: { componentName: string, triggerName: string } = JSON.parse(args[1]);
-    let app: Component = apps.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
-    let trigger: Trigger = app.getTrigger(optionRequest.triggerName);
+    let app: Component = components.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
+    let trigger: Trigger = app.getTrigger(optionRequest.triggerName)!;
     return trigger.type;
-}
-
-async function getOptions() {
-    let optionRequest: { componentName: string, actionName: string, configName: string, config: ConfigurationValue } = JSON.parse(args[1]);
-    let app: Component = apps.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
-    let inputOptions: InputOption[] = await app.runConfigOptions(optionRequest.actionName, optionRequest.configName, optionRequest.config);
-    return inputOptions;
 }
 
 async function execute() {
@@ -132,12 +121,6 @@ async function execute() {
             break;
         case 'execute-trigger':
             console.log(JSON.stringify(await executeTrigger()));
-            break;
-        case 'components':
-            console.log(JSON.stringify(getMetadata()));
-            break;
-        case 'options':
-            console.log(JSON.stringify(await getOptions()));
             break;
         case 'trigger-type':
             console.log(await getTriggerType());
