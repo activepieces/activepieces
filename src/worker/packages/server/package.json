@@ -21,6 +21,7 @@
         "decompress": "^4.2.1",
         "fastify": "^4.10.2",
         "http-status-codes": "^2.2.0",
+        "jsonwebtoken": "^9.0.0",
         "koa": "^2.14.1",
         "koa-bodyparser": "^4.3.0",
         "koa-json": "^2.0.2",
@@ -34,6 +35,7 @@
     "devDependencies": {
         "@types/bcrypt": "^5.0.0",
         "@types/decompress": "^4.2.4",
+        "@types/jsonwebtoken": "^8.5.9",
         "@types/node": "^17.0.21",
         "nodemon": "^2.0.20",
         "ts-node": "^10.9.1",
