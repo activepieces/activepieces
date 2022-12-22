@@ -6,5 +6,7 @@
   },
   "dependencies": {
     "ksuid": "^3.0.0"
-  }
+  },
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts"
 }
