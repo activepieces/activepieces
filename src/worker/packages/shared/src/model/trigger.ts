@@ -1,22 +1,30 @@
-import {Step} from "./step";
+import {Action} from "./action";
 
-export interface Trigger<T extends TriggerType, V> extends Step<T, V> {
+export type Trigger = CollectionEnabledTrigger | CollectionDisabledTrigger | WebhookTrigger | ScheduleTrigger | ComponentTrigger;
+
+interface BaseTrigger<T extends TriggerType, V> {
+  type: T;
+  settings: V;
+  displayName: string;
+  name: string;
+  valid: boolean;
+  nextAction: Action | undefined;
 }
 
-export interface CollectionEnabledTrigger extends Trigger<TriggerType.COLLECTION_ENABLED, {}> {
+export interface CollectionEnabledTrigger extends BaseTrigger<TriggerType.COLLECTION_ENABLED, {}> {
 }
 
-export interface CollectionDisabledTrigger extends Trigger<TriggerType.COLLECTION_DISABLED, {}> {
+export interface CollectionDisabledTrigger extends BaseTrigger<TriggerType.COLLECTION_DISABLED, {}> {
 }
 
-export interface WebhookTrigger extends Trigger<TriggerType.WEBHOOK, {}> {
+export interface WebhookTrigger extends BaseTrigger<TriggerType.WEBHOOK, {}> {
 }
 
 export type ScheduleTriggerSettings = {
   cronExpression: string;
 }
 
-export interface ScheduleTrigger extends Trigger<TriggerType.SCHEDULE, ScheduleTriggerSettings> {
+export interface ScheduleTrigger extends BaseTrigger<TriggerType.SCHEDULE, ScheduleTriggerSettings> {
 }
 
 export type ComponentTriggerSettings = {
@@ -25,7 +33,7 @@ export type ComponentTriggerSettings = {
   input: Record<string, unknown>;
 };
 
-export interface ComponentTrigger extends Trigger<TriggerType.COMPONENT, ComponentTriggerSettings> {
+export interface ComponentTrigger extends BaseTrigger<TriggerType.COMPONENT, ComponentTriggerSettings> {
 }
 
 export enum TriggerType {
