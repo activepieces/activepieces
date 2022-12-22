@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 
@@ -11,7 +11,7 @@ import { jsonValidator } from 'src/app/modules/common/validators/json-validator'
 	animations: [fadeInUp400ms],
 })
 export class TestCodeFormModalComponent {
-	testCodeForm: FormGroup;
+	testCodeForm: UntypedFormGroup;
 	editorOptions = {
 		lineNumbers: true,
 		theme: 'lucario',
@@ -19,7 +19,7 @@ export class TestCodeFormModalComponent {
 	};
 	@Output() contextSubmitted: EventEmitter<Object> = new EventEmitter();
 	submitted = false;
-	constructor(private formBuilder: FormBuilder, private modalRef: BsModalRef) {
+	constructor(private formBuilder: UntypedFormBuilder, private modalRef: BsModalRef) {
 		this.testCodeForm = this.formBuilder.group({ context: ['{\n\n}', [Validators.required, jsonValidator]] });
 	}
 

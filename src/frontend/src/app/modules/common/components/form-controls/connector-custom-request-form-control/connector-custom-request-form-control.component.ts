@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { BodyType } from './body-type.enum';
 import jsonlint from 'jsonlint-mod';
 import { Observable, tap } from 'rxjs';
@@ -25,7 +25,7 @@ interface CustomRequestFormSchema {
 	],
 })
 export class ConnectorCustomRequestFormControlComponent implements ControlValueAccessor {
-	customRequestFormGroup: FormGroup;
+	customRequestFormGroup: UntypedFormGroup;
 	bodyTypeMenuOpened = false;
 	valueChanges$: Observable<CustomRequestFormSchema>;
 	codeEditorOptions = {
@@ -42,12 +42,12 @@ export class ConnectorCustomRequestFormControlComponent implements ControlValueA
 		[BodyType.RAW, 'Raw'],
 	]);
 	onChange = (value: CustomRequestFormSchema) => {};
-	constructor(private fb: FormBuilder, private codeService: CodeService, private cd: ChangeDetectorRef) {
+	constructor(private fb: UntypedFormBuilder, private codeService: CodeService, private cd: ChangeDetectorRef) {
 		this.customRequestFormGroup = this.fb.group({
-			endpoint: new FormControl({}),
-			parameters: new FormControl(),
-			headers: new FormControl(),
-			body: new FormControl(),
+			endpoint: new UntypedFormControl({}),
+			parameters: new UntypedFormControl(),
+			headers: new UntypedFormControl(),
+			body: new UntypedFormControl(),
 		});
 		this.valueChanges$ = this.customRequestFormGroup.valueChanges.pipe(
 			tap(value => {

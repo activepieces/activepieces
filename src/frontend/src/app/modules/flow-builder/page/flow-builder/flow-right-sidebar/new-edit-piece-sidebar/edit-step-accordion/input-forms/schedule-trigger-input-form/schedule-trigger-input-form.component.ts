@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import {
 	ControlValueAccessor,
-	FormBuilder,
-	FormControl,
-	FormGroup,
+	UntypedFormBuilder,
+	UntypedFormControl,
+	UntypedFormGroup,
 	NG_VALIDATORS,
 	NG_VALUE_ACCESSOR,
 } from '@angular/forms';
@@ -32,12 +32,12 @@ import { TriggerType } from 'src/app/modules/common/model/enum/trigger-type.enum
 	animations: [fadeInUp400ms],
 })
 export class ScheduleTriggerInputFormComponent implements ControlValueAccessor {
-	scheduledFrom: FormGroup;
+	scheduledFrom: UntypedFormGroup;
 	onChange = (value: InputFormsSchema) => {};
 	onTouch = () => {};
 	updateComponentValue$: Observable<any>;
-	constructor(private formBuilder: FormBuilder) {
-		this.scheduledFrom = this.formBuilder.group({ cron_expression: new FormControl('', cronJobValidator) });
+	constructor(private formBuilder: UntypedFormBuilder) {
+		this.scheduledFrom = this.formBuilder.group({ cron_expression: new UntypedFormControl('', cronJobValidator) });
 		this.updateComponentValue$ = this.scheduledFrom.valueChanges.pipe(
 			tap(() => {
 				this.onChange(this.scheduledFrom.value);

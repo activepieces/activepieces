@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import {
 	ControlValueAccessor,
-	FormBuilder,
-	FormControl,
-	FormGroup,
+	UntypedFormBuilder,
+	UntypedFormControl,
+	UntypedFormGroup,
 	NG_VALIDATORS,
 	NG_VALUE_ACCESSOR,
 } from '@angular/forms';
@@ -28,13 +28,13 @@ import { InputFormsSchema, ResponseStepInputFormSchema } from '../input-forms-sc
 	],
 })
 export class ResponseStepInputFormComponent implements ControlValueAccessor {
-	responseStepForm: FormGroup;
+	responseStepForm: UntypedFormGroup;
 	onChange = (value: InputFormsSchema) => {};
 	onTouch = () => {};
 	updateComponentValue$: Observable<any>;
-	constructor(private formBuilder: FormBuilder) {
+	constructor(private formBuilder: UntypedFormBuilder) {
 		this.responseStepForm = this.formBuilder.group({
-			output: new FormControl(''),
+			output: new UntypedFormControl(''),
 		});
 		this.updateComponentValue$ = this.responseStepForm.valueChanges.pipe(
 			tap(() => {

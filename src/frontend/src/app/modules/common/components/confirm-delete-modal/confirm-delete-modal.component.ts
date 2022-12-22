@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 
 @Component({
@@ -15,9 +15,9 @@ export class ConfirmDeleteModalComponent implements OnInit {
 	@Input() loading = false;
 	@Input() instantClose = true;
 	confirmationText;
-	deleteForm: FormGroup;
+	deleteForm: UntypedFormGroup;
 
-	constructor(public bsModalRef: BsModalRef, private formBuilder: FormBuilder) {}
+	constructor(public bsModalRef: BsModalRef, private formBuilder: UntypedFormBuilder) {}
 
 	ngOnInit(): void {
 		if (this.archive) {

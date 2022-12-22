@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
 
 @Component({
@@ -15,12 +15,12 @@ import { Observable, tap } from 'rxjs';
 	],
 })
 export class DefaultConfigTypeSettingsComponent implements ControlValueAccessor {
-	defaultConfigSettingsForm: FormGroup;
+	defaultConfigSettingsForm: UntypedFormGroup;
 	onTouch = () => {};
 	onChange = val => {};
 	formValueChanged$: Observable<void>;
-	constructor(private formBuilder: FormBuilder) {
-		this.defaultConfigSettingsForm = this.formBuilder.group({ optional: new FormControl() });
+	constructor(private formBuilder: UntypedFormBuilder) {
+		this.defaultConfigSettingsForm = this.formBuilder.group({ optional: new UntypedFormControl() });
 		this.formValueChanged$ = this.defaultConfigSettingsForm.valueChanges.pipe(
 			tap(() => {
 				this.onChange(this.defaultConfigSettingsForm.value);

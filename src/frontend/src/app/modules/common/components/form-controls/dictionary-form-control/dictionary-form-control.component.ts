@@ -1,10 +1,10 @@
 import { Component, ElementRef, OnInit, QueryList, ViewChildren } from '@angular/core';
 import {
 	ControlValueAccessor,
-	FormArray,
-	FormBuilder,
-	FormControl,
-	FormGroup,
+	UntypedFormArray,
+	UntypedFormBuilder,
+	UntypedFormControl,
+	UntypedFormGroup,
 	NG_VALUE_ACCESSOR,
 } from '@angular/forms';
 import { Observable, tap, timer } from 'rxjs';
@@ -23,13 +23,13 @@ import { ThemeService } from '../../../service/theme.service';
 	],
 })
 export class DictionaryFormControlComponent implements ControlValueAccessor, OnInit {
-	form!: FormGroup;
+	form!: UntypedFormGroup;
 	disabled = false;
 	onChange = val => {};
 	onTouched = () => {};
 	focusOnLastKeyInput$: Observable<0>;
 	@ViewChildren('key') inputs: QueryList<ElementRef>;
-	constructor(private fb: FormBuilder, public themeService: ThemeService) {
+	constructor(private fb: UntypedFormBuilder, public themeService: ThemeService) {
 		this.form = this.fb.group({ pairs: this.fb.array([]) });
 	}
 	ngOnInit(): void {
@@ -57,7 +57,7 @@ export class DictionaryFormControlComponent implements ControlValueAccessor, OnI
 	}
 
 	get pairs() {
-		return this.form.get('pairs') as FormArray;
+		return this.form.get('pairs') as UntypedFormArray;
 	}
 	addNewPair(withFocus = false) {
 		this.addPair({ key: '', value: '' });
@@ -75,8 +75,8 @@ export class DictionaryFormControlComponent implements ControlValueAccessor, OnI
 
 	addPair(pair: { key: string; value: string }) {
 		const pairGroup = this.fb.group({
-			key: new FormControl(pair.key),
-			value: new FormControl(pair.value),
+			key: new UntypedFormControl(pair.key),
+			value: new UntypedFormControl(pair.value),
 		});
 		this.pairs.push(pairGroup);
 	}
@@ -88,7 +88,7 @@ export class DictionaryFormControlComponent implements ControlValueAccessor, OnI
 		}
 	}
 	getPair(indexOfPair: number) {
-		return this.pairs.at(indexOfPair) as FormGroup;
+		return this.pairs.at(indexOfPair) as UntypedFormGroup;
 	}
 
 	dictionaryControlValueChanged() {

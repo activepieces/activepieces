@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { StatusCodes } from 'http-status-codes';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthenticationService } from '../../../common/service/authentication.service';
@@ -15,7 +15,7 @@ import { catchError, mapTo, Observable, tap } from 'rxjs';
 	animations: [fadeInUp400ms],
 })
 export class SignInComponent implements OnInit {
-	loginForm: FormGroup;
+	loginForm: UntypedFormGroup;
 	submitted = false;
 	showErrorMessage = false;
 	loading = false;
@@ -23,7 +23,7 @@ export class SignInComponent implements OnInit {
 	constructor(
 		private router: Router,
 
-		private formBuilder: FormBuilder,
+		private formBuilder: UntypedFormBuilder,
 		private navigationService: NavigationService,
 		private authenticationService: AuthenticationService
 	) {

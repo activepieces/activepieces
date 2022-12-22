@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import {
 	ControlValueAccessor,
-	FormBuilder,
-	FormControl,
-	FormGroup,
+	UntypedFormBuilder,
+	UntypedFormControl,
+	UntypedFormGroup,
 	NG_VALIDATORS,
 	NG_VALUE_ACCESSOR,
 	Validators,
@@ -55,7 +55,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 	readonly ACTION_FORM_CONTROL_NAME = ACTION_FORM_CONTROL_NAME;
 	readonly CUSTOM_REQUEST_FORM_CONTROL_NAME = CUSTOM_REQUEST_FORM_CONTROL_NAME;
 	readonly CONFIGS_FORM_CONTROL_NAME = CONFIGS_FORM_CONTROL_NAME;
-	componentForm: FormGroup;
+	componentForm: UntypedFormGroup;
 	customRequestFeatureFlag = false;
 	initialSetup$: Observable<ActionDropdownOption[]>;
 	componentName: string;
@@ -82,7 +82,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 	updateOrAddConfigModalClosed$: Observable<Config>;
 	allAuthConfigs$: Observable<DropdownOption[]>;
 	constructor(
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private actionMetaDataService: ActionMetaService,
 		private cd: ChangeDetectorRef
 	) {
@@ -110,7 +110,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 
 	private buildForm() {
 		this.componentForm = this.fb.group({
-			[ACTION_FORM_CONTROL_NAME]: new FormControl(null, Validators.required),
+			[ACTION_FORM_CONTROL_NAME]: new UntypedFormControl(null, Validators.required),
 		});
 		this.valueChanges$ = this.componentForm.valueChanges.pipe(
 			tap(() => {
@@ -163,7 +163,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 						.setValue(this.customRequestItem.value, { emitEvent: false });
 					this.componentForm.addControl(
 						CUSTOM_REQUEST_FORM_CONTROL_NAME,
-						new FormControl(this.intialComponentInputFormValue.input),
+						new UntypedFormControl(this.intialComponentInputFormValue.input),
 						{ emitEvent: false }
 					);
 				} else if (this.intialComponentInputFormValue && this.intialComponentInputFormValue.action_name) {
@@ -187,7 +187,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 										}
 									});
 								}
-								this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new FormControl([...configs]), {
+								this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new UntypedFormControl([...configs]), {
 									emitEvent: false,
 								});
 								this.cd.detectChanges();
@@ -250,7 +250,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 	private actionSelected(selectedActionValue: { actionName: string; configs: FrontEndConnectorConfig[] }) {
 		const configsForm = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME);
 		if (!configsForm) {
-			this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new FormControl([...selectedActionValue.configs]));
+			this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new UntypedFormControl([...selectedActionValue.configs]));
 		} else {
 			configsForm.setValue([...selectedActionValue.configs]);
 		}
@@ -265,7 +265,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 		}
 		const customRequestControl = this.componentForm.get(CUSTOM_REQUEST_FORM_CONTROL_NAME);
 		if (!customRequestControl) {
-			this.componentForm.addControl(CUSTOM_REQUEST_FORM_CONTROL_NAME, new FormControl({}));
+			this.componentForm.addControl(CUSTOM_REQUEST_FORM_CONTROL_NAME, new UntypedFormControl({}));
 		} else {
 			customRequestControl.setValue({});
 		}

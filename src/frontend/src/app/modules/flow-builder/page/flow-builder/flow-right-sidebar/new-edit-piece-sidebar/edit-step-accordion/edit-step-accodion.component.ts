@@ -3,7 +3,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, Input } from '@angular/cor
 import { delay, map, Observable, of, skipWhile, Subject, takeUntil, tap } from 'rxjs';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
-import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { Store } from '@ngrx/store';
 import { FlowsActions } from 'src/app/modules/flow-builder/store/action/flows.action';
@@ -31,7 +31,7 @@ export class EditStepAccordionComponent implements AfterViewInit {
 	readOnly$: Observable<boolean> = of(false);
 	cancelAutoSaveListener$: Subject<boolean> = new Subject();
 	_selectedStep: FlowItem;
-	stepForm: FormGroup;
+	stepForm: UntypedFormGroup;
 	openedIndex = 1;
 	faChevornDown = faChevronDown;
 	faInfoCircle = faInfoCircle;
@@ -62,7 +62,7 @@ export class EditStepAccordionComponent implements AfterViewInit {
 	}
 
 	constructor(
-		private formBuilder: FormBuilder,
+		private formBuilder: UntypedFormBuilder,
 		private cd: ChangeDetectorRef,
 		private store: Store,
 		private codeService: CodeService,
@@ -80,8 +80,8 @@ export class EditStepAccordionComponent implements AfterViewInit {
 			})
 		);
 		this.stepForm = this.formBuilder.group({
-			describe: new FormControl({ value: { name: '', displayName: '' } }),
-			input: new FormControl({}),
+			describe: new UntypedFormControl({ value: { name: '', displayName: '' } }),
+			input: new UntypedFormControl({}),
 		});
 	}
 	ngAfterViewInit(): void {

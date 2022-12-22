@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { UUID } from 'angular2-uuid';
 import { BsModalRef } from 'ngx-bootstrap/modal';
@@ -23,7 +23,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 	@Input() connectorAuthConfig: FrontEndConnectorConfig;
 	@Input() appName: string;
 	@Input() configToUpdateWithIndex: { config: Config; indexInList: number } | undefined;
-	settingsForm: FormGroup;
+	settingsForm: UntypedFormGroup;
 	saving = false;
 	collectionId$: Observable<UUID>;
 	submitted = false;
@@ -35,20 +35,20 @@ export class NewAuthenticationModalComponent implements OnInit {
 	scopesTooltip = 'The permissions needed to access the endpoints you plan to work with on the 3rd party service.';
 	keyTooltip =
 		'The ID of this authentication definition. You will need to select this key whenever you want to reuse this authentication.';
-	constructor(private fb: FormBuilder, private store: Store, public bsModalRef: BsModalRef) {}
+	constructor(private fb: UntypedFormBuilder, private store: Store, public bsModalRef: BsModalRef) {}
 
 	ngOnInit(): void {
 		this.collectionId$ = this.store.select(BuilderSelectors.selectCurrentCollectionId);
 		console.log(environment.redirectUrl);
 		this.settingsForm = this.fb.group({
-			redirect_url: new FormControl(environment.redirectUrl),
-			client_secret: new FormControl('', Validators.required),
-			client_id: new FormControl('', Validators.required),
-			auth_url: new FormControl(this.connectorAuthConfig.authUrl, Validators.required),
-			token_url: new FormControl(this.connectorAuthConfig.tokenUrl, Validators.required),
-			response_type: new FormControl('code', Validators.required),
+			redirect_url: new UntypedFormControl(environment.redirectUrl),
+			client_secret: new UntypedFormControl('', Validators.required),
+			client_id: new UntypedFormControl('', Validators.required),
+			auth_url: new UntypedFormControl(this.connectorAuthConfig.authUrl, Validators.required),
+			token_url: new UntypedFormControl(this.connectorAuthConfig.tokenUrl, Validators.required),
+			response_type: new UntypedFormControl('code', Validators.required),
 			scope: [this.connectorAuthConfig.scopes, [Validators.required]],
-			key: new FormControl(
+			key: new UntypedFormControl(
 				this.appName.replace(/[^A-Za-z0-9_]/g, '_'),
 				[Validators.required, Validators.pattern('[A-Za-z0-9_]*')],
 				[
@@ -58,7 +58,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 					),
 				]
 			),
-			value: new FormControl(null, Validators.required),
+			value: new UntypedFormControl(null, Validators.required),
 		});
 
 		if (this.configToUpdateWithIndex) {

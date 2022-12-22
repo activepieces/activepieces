@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Config } from '@fortawesome/fontawesome-svg-core';
 import { map, Observable, of, tap } from 'rxjs';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
@@ -45,7 +45,7 @@ const CONFIGS_FORM_CONTROL_NAME = 'configs';
 export class ComponentTriggerInputFormComponent {
 	readonly TRIGGER_FORM_CONTROL_NAME = TRIGGER_FORM_CONTROL_NAME;
 	readonly CONFIGS_FORM_CONTROL_NAME = CONFIGS_FORM_CONTROL_NAME;
-	componentForm: FormGroup;
+	componentForm: UntypedFormGroup;
 	initialSetup$: Observable<TriggerDropdownOption[]>;
 	componentName: string;
 	intialComponentTriggerInputFormValue: { trigger_name: string; input: { [key: string]: any } } | null;
@@ -58,7 +58,7 @@ export class ComponentTriggerInputFormComponent {
 	updateOrAddConfigModalClosed$: Observable<Config>;
 	allAuthConfigs$: Observable<DropdownOption[]>;
 	constructor(
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private actionMetaDataService: ActionMetaService,
 		private cd: ChangeDetectorRef
 	) {
@@ -82,7 +82,7 @@ export class ComponentTriggerInputFormComponent {
 
 	private buildForm() {
 		this.componentForm = this.fb.group({
-			[TRIGGER_FORM_CONTROL_NAME]: new FormControl(null, Validators.required),
+			[TRIGGER_FORM_CONTROL_NAME]: new UntypedFormControl(null, Validators.required),
 		});
 		this.valueChanges$ = this.componentForm.valueChanges.pipe(
 			tap(() => {
@@ -142,7 +142,7 @@ export class ComponentTriggerInputFormComponent {
 										}
 									});
 								}
-								this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new FormControl([...configs]), {
+								this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new UntypedFormControl([...configs]), {
 									emitEvent: false,
 								});
 								this.cd.detectChanges();
@@ -190,7 +190,7 @@ export class ComponentTriggerInputFormComponent {
 	private triggerSelected(selectedActionValue: { triggerName: string; configs: FrontEndConnectorConfig[] }) {
 		const configsForm = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME);
 		if (!configsForm) {
-			this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new FormControl([...selectedActionValue.configs]));
+			this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new UntypedFormControl([...selectedActionValue.configs]));
 		} else {
 			configsForm.setValue([...selectedActionValue.configs]);
 		}

@@ -16,7 +16,7 @@ import { initializedRun, InstanceRun } from 'src/app/modules/common/model/instan
 import { InstanceRunService } from '../../../common/service/instance-run.service';
 import { UUID } from 'angular2-uuid';
 import { HttpStatusCode } from '@angular/common/http';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { jsonValidator } from 'src/app/modules/common/validators/json-validator';
 import jsonlint from 'jsonlint-mod';
 import { PosthogService } from 'src/app/modules/common/service/posthog.service';
@@ -39,7 +39,7 @@ export class TestFlowModalComponent implements OnInit {
 	shouldDisableTestButton$: Observable<boolean>;
 	testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
 	testFlowButtonDisabledTooltip = '';
-	payloadControl: FormControl = new FormControl('{}', jsonValidator);
+	payloadControl: UntypedFormControl = new UntypedFormControl('{}', jsonValidator);
 	codeEditorOptions = {
 		lineNumbers: true,
 		lineWrapping: true,

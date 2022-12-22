@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import {
 	ControlValueAccessor,
-	FormBuilder,
-	FormControl,
-	FormGroup,
+	UntypedFormBuilder,
+	UntypedFormControl,
+	UntypedFormGroup,
 	NG_VALIDATORS,
 	NG_VALUE_ACCESSOR,
 	Validators,
@@ -30,14 +30,14 @@ import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.anima
 	animations: [fadeInUp400ms],
 })
 export class DescribeFormComponent implements ControlValueAccessor {
-	describeForm: FormGroup;
+	describeForm: UntypedFormGroup;
 	OnChange = value => {};
 	onTouched = () => {};
 	updateComponentValue$: Observable<any>;
-	constructor(private formBuilder: FormBuilder) {
+	constructor(private formBuilder: UntypedFormBuilder) {
 		this.describeForm = this.formBuilder.group({
-			displayName: new FormControl('', Validators.required),
-			name: new FormControl({ value: '', disabled: true }),
+			displayName: new UntypedFormControl('', Validators.required),
+			name: new UntypedFormControl({ value: '', disabled: true }),
 		});
 		this.updateComponentValue$ = this.describeForm.valueChanges.pipe(
 			tap(value => {

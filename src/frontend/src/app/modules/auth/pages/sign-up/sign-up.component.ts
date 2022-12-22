@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../../common/service/authentication.service';
 import { fadeInUp400ms } from '../../../common/animation/fade-in-up.animation';
@@ -20,7 +20,7 @@ import { catchError, mapTo, Observable, of, switchMap, tap } from 'rxjs';
 	encapsulation: ViewEncapsulation.None,
 })
 export class SignUpComponent implements OnInit {
-	registrationForm: FormGroup;
+	registrationForm: UntypedFormGroup;
 	submitted = false;
 	loading = false;
 	tokenError = false;
@@ -28,7 +28,7 @@ export class SignUpComponent implements OnInit {
 	emailChanged = false;
 	signUp$: Observable<void>;
 	constructor(
-		private formBuilder: FormBuilder,
+		private formBuilder: UntypedFormBuilder,
 		private router: Router,
 		private navigationService: NavigationService,
 		public authenticationService: AuthenticationService

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Observable, tap } from 'rxjs';
@@ -13,15 +13,15 @@ type PackageVersion = string;
 	animations: [fadeInUp400ms],
 })
 export class NewAddNpmPackageModalComponent implements OnInit {
-	npmForm: FormGroup;
+	npmForm: UntypedFormGroup;
 	@Output()
 	packageFound$: EventEmitter<{ [key: PackageName]: PackageVersion }> = new EventEmitter();
 	loading = false;
 	npmPackage$: Observable<{ [key: PackageName]: PackageVersion } | null>;
 	submitted = false;
 	packageNameChanged$: Observable<void>;
-	constructor(private formBuilder: FormBuilder, private modalRef: BsModalRef, private codeService: CodeService) {
-		this.npmForm = this.formBuilder.group({ packageName: new FormControl('', Validators.required) });
+	constructor(private formBuilder: UntypedFormBuilder, private modalRef: BsModalRef, private codeService: CodeService) {
+		this.npmForm = this.formBuilder.group({ packageName: new UntypedFormControl('', Validators.required) });
 	}
 
 	ngOnInit(): void {

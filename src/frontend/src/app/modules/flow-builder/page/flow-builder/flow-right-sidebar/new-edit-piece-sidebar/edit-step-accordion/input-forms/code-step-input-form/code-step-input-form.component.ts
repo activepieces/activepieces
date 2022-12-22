@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, Subject, takeUntil, tap } from 'rxjs';
 import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
 import { Artifact } from 'src/app/modules/flow-builder/model/artifact.interface';
@@ -19,7 +19,7 @@ import { CodeStepInputFormSchema, InputFormsSchema } from '../input-forms-schema
 	],
 })
 export class CodeStepInputFormComponent implements ControlValueAccessor {
-	codeStepForm: FormGroup;
+	codeStepForm: UntypedFormGroup;
 	_stepArtifact$: Observable<Artifact>;
 	inputControlValueChanged$: Observable<any>;
 	artifactControlValueChanged$: Observable<any>;
@@ -47,10 +47,10 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
 	onChange = (value: CodeStepInputFormSchema) => {};
 	onTouch = () => {};
 
-	constructor(private formBuilder: FormBuilder) {
+	constructor(private formBuilder: UntypedFormBuilder) {
 		this.codeStepForm = this.formBuilder.group({
-			input: new FormControl(''),
-			artifact: new FormControl(),
+			input: new UntypedFormControl(''),
+			artifact: new UntypedFormControl(),
 		});
 		this.inputControlValueChanged$ = this.codeStepForm.get('input')!.valueChanges.pipe(
 			tap(parametersControlValue => {

@@ -1,9 +1,9 @@
 import { Component, Input } from '@angular/core';
 import {
 	ControlValueAccessor,
-	FormBuilder,
-	FormControl,
-	FormGroup,
+	UntypedFormBuilder,
+	UntypedFormControl,
+	UntypedFormGroup,
 	NG_VALIDATORS,
 	NG_VALUE_ACCESSOR,
 	Validators,
@@ -31,19 +31,19 @@ import { environment } from 'src/environments/environment';
 	animations: [fadeInUp400ms],
 })
 export class OAuth2ConfigSettingsComponent implements ControlValueAccessor {
-	settingsForm: FormGroup;
+	settingsForm: UntypedFormGroup;
 	settingsFormValueChanged$: Observable<void>;
 	@Input() submitted: boolean = false;
 	onChange = val => {};
-	constructor(private formBuilder: FormBuilder) {
+	constructor(private formBuilder: UntypedFormBuilder) {
 		this.settingsForm = this.formBuilder.group({
-			redirect_url: new FormControl({ value: environment.redirectUrl, disabled: true }),
-			client_secret: new FormControl('', Validators.required),
-			client_id: new FormControl('', Validators.required),
-			auth_url: new FormControl('', Validators.required),
-			refresh_url: new FormControl(''),
-			token_url: new FormControl('', Validators.required),
-			response_type: new FormControl('code', Validators.required),
+			redirect_url: new UntypedFormControl({ value: environment.redirectUrl, disabled: true }),
+			client_secret: new UntypedFormControl('', Validators.required),
+			client_id: new UntypedFormControl('', Validators.required),
+			auth_url: new UntypedFormControl('', Validators.required),
+			refresh_url: new UntypedFormControl(''),
+			token_url: new UntypedFormControl('', Validators.required),
+			response_type: new UntypedFormControl('code', Validators.required),
 			scope: ['', [Validators.required]],
 		});
 		this.settingsFormValueChanged$ = this.settingsForm.valueChanges.pipe(

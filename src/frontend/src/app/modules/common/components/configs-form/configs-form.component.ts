@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import {
 	ControlValueAccessor,
-	FormBuilder,
-	FormControl,
-	FormGroup,
+	UntypedFormBuilder,
+	UntypedFormControl,
+	UntypedFormGroup,
 	NG_VALIDATORS,
 	NG_VALUE_ACCESSOR,
 	ValidatorFn,
@@ -50,7 +50,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	optionalConfigsMenuOpened = false;
 	@Input() actionName: string;
 	@Input() componentName: string;
-	form!: FormGroup;
+	form!: UntypedFormGroup;
 	OnChange = value => {};
 	OnTouched = () => {};
 	updateValueOnChange$: Observable<void> = new Observable<void>();
@@ -64,7 +64,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	authConfigDropdownChanged$: Observable<any>;
 	updatedAuthLabel = '';
 	constructor(
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		public themeService: ThemeService,
 		private actionMetaDataService: ActionMetaService,
 		private modalService: BsModalService,
@@ -127,13 +127,13 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	}
 
 	private createConfigsFormControls(configs: FrontEndConnectorConfig[]) {
-		const controls: { [key: string]: FormControl } = {};
+		const controls: { [key: string]: UntypedFormControl } = {};
 		configs.forEach(c => {
 			const validators: ValidatorFn[] = [];
 			if (c.required) {
 				validators.push(Validators.required);
 			}
-			controls[c.key] = new FormControl(c.value, validators);
+			controls[c.key] = new UntypedFormControl(c.value, validators);
 		});
 		return controls;
 	}
@@ -178,7 +178,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		);
 	}
 	addOptionalConfig(config: FrontEndConnectorConfig) {
-		this.form.addControl(config.key, new FormControl());
+		this.form.addControl(config.key, new UntypedFormControl());
 		this.selectedOptionalConfigs.push(config);
 	}
 	openNewAuthenticationModal(authConfigName: string) {

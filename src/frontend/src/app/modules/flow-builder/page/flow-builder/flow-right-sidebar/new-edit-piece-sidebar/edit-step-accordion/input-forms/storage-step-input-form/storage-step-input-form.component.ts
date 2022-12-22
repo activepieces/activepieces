@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import {
 	ControlValueAccessor,
-	FormBuilder,
-	FormControl,
-	FormGroup,
+	UntypedFormBuilder,
+	UntypedFormControl,
+	UntypedFormGroup,
 	NG_VALIDATORS,
 	NG_VALUE_ACCESSOR,
 	Validators,
@@ -40,16 +40,16 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 	];
 	scopeOptions: DropdownOption[] = [{ label: 'Collection', value: StorageScope.COLLECTION }];
 	operationChanged$: Observable<StorageOperation>;
-	storageStepForm: FormGroup;
+	storageStepForm: UntypedFormGroup;
 	onChange = (value: InputFormsSchema) => {};
 	onTouch = () => {};
 	updateComponentValue$: Observable<any>;
-	constructor(private formBuilder: FormBuilder) {
+	constructor(private formBuilder: UntypedFormBuilder) {
 		this.storageStepForm = this.formBuilder.group({
-			operation: new FormControl('', Validators.required),
-			key: new FormControl('', Validators.required),
-			value: new FormControl('', Validators.required),
-			scope: new FormControl(StorageScope.COLLECTION, Validators.required),
+			operation: new UntypedFormControl('', Validators.required),
+			key: new UntypedFormControl('', Validators.required),
+			value: new UntypedFormControl('', Validators.required),
+			scope: new UntypedFormControl(StorageScope.COLLECTION, Validators.required),
 		});
 
 		this.setUpListenerToOperationControl();

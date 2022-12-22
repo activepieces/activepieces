@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MatExpansionPanel } from '@angular/material/expansion';
 
 import { Store } from '@ngrx/store';
@@ -32,7 +32,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
 	isLoopStep = false;
 	nestingLevelPadding: string = '0px';
 	finishedBuilding = false;
-	iterationIndexControl = new FormControl(1);
+	iterationIndexControl = new UntypedFormControl(1);
 	iteration$: Observable<{ stepName: string; result: StepResult }[]>;
 	iterationsAccordionList: { stepName: string; result: StepResult }[][] = [];
 	hideIterationInput$: Observable<boolean>;

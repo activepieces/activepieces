@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { debounceTime, distinctUntilChanged, Observable, Subject, takeUntil, tap } from 'rxjs';
 import { Artifact } from 'src/app/modules/flow-builder/model/artifact.interface';
@@ -28,14 +28,14 @@ export class CodeArtifactFormControlComponent implements ControlValueAccessor, O
 		if (key) this.setupCachingAndAutoSaveListener();
 	}
 	@Input() artifactChanged$: Subject<boolean> = new Subject();
-	codeArtifactForm: FormGroup;
+	codeArtifactForm: UntypedFormGroup;
 	codeEditorOptions = { lineNumbers: true, lineWrapping: true, theme: 'lucario', readOnly: '', mode: 'javascript' };
 	constructor(
-		private formBuilder: FormBuilder,
+		private formBuilder: UntypedFormBuilder,
 		private modalService: BsModalService,
 		private codeService: CodeService
 	) {
-		this.codeArtifactForm = this.formBuilder.group({ content: new FormControl(''), package: new FormControl('') });
+		this.codeArtifactForm = this.formBuilder.group({ content: new UntypedFormControl(''), package: new UntypedFormControl('') });
 	}
 	ngOnInit(): void {
 		if (!this.autosave) {

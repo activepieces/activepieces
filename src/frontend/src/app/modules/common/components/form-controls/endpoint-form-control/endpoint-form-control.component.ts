@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
 import { HttpMethod } from '../../configs-form/connector-action-or-config';
 
@@ -22,7 +22,7 @@ type EndpointFormData = {
 	],
 })
 export class EndpointFormControlComponent implements ControlValueAccessor {
-	endpointForm: FormGroup;
+	endpointForm: UntypedFormGroup;
 	@Input()
 	url = 'testurl.com/';
 	onChange = (value: EndpointFormData) => {};
@@ -37,10 +37,10 @@ export class EndpointFormControlComponent implements ControlValueAccessor {
 		HttpMethod.PATCH,
 		HttpMethod.TRACE,
 	];
-	constructor(private fb: FormBuilder) {
+	constructor(private fb: UntypedFormBuilder) {
 		this.endpointForm = this.fb.group({
-			path: new FormControl(''),
-			method: new FormControl(HttpMethod.GET),
+			path: new UntypedFormControl(''),
+			method: new UntypedFormControl(HttpMethod.GET),
 		});
 		this.valueChanges$ = this.endpointForm.valueChanges.pipe(
 			tap(value => {

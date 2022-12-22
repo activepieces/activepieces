@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { Observable, switchMap, take, tap } from 'rxjs';
@@ -18,7 +18,7 @@ type PackageVersion = string;
 	styleUrls: ['./code-artifact-control-fullscreen.component.scss'],
 })
 export class CodeArtifactControlFullscreenComponent implements OnInit {
-	@Input() codeFilesForm: FormGroup;
+	@Input() codeFilesForm: UntypedFormGroup;
 	@Input() readOnly: boolean;
 	selectedFile = SelectedFileInFullscreenCodeEditor.CONTENT;
 	executeCodeTest$: Observable<CodeTestExecutionResult>;
@@ -34,7 +34,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 		language: 'json',
 		readOnly: false,
 	};
-	testResultForm: FormGroup;
+	testResultForm: UntypedFormGroup;
 	addNpmPackage$: Observable<Object>;
 	selectedTab = SelectedTabInFullscreenCodeEditor.OUTPUT;
 	consoleResultEditoroptions = {
@@ -53,11 +53,11 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 	constructor(
 		public themeService: ThemeService,
 		private modalRef: BsModalRef,
-		private formBuilder: FormBuilder,
+		private formBuilder: UntypedFormBuilder,
 		private modalService: BsModalService,
 		private codeService: CodeService
 	) {
-		this.testResultForm = this.formBuilder.group({ outputResult: new FormControl(), consoleResult: new FormControl() });
+		this.testResultForm = this.formBuilder.group({ outputResult: new UntypedFormControl(), consoleResult: new UntypedFormControl() });
 	}
 	ngOnInit(): void {
 		if (this.readOnly) {
