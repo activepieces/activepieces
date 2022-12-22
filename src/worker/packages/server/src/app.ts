@@ -1,33 +1,18 @@
 import fastify from 'fastify';
+import { User } from 'shared';
+import { authenticationModule } from './authentication/authentication.module';
+
+declare module 'fastify' {
+    export interface FastifyRequest {
+        user: User;
+    }
+}
 
 const app = fastify({
     logger: true
 });
 
-app.register(jwt, {
-    secret: 'supersecret',
-    verify: {
-        allowedIss: 'activepieces',
-    },
-    sign: {
-        iss: 'activepieces',
-        expiresIn: 3600,
-    },
-    formatUser(payload) {
-        return {
-            name: 'khaled',
-            email: 'khaled@activepieces.com',
-            username: '5aled',
-            userType: 'GANGSTER',
-        };
-    }
-});
-
-app.addHook('onRequest', async (request, reply) => {
-    await request.jwtVerify()
-})
-
-app.register(userController);
+app.register(authenticationModule);
 
 const start = async () => {
     try {
