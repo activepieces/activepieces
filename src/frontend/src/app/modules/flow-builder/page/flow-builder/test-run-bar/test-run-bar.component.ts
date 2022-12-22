@@ -4,7 +4,7 @@ import { InstanceRun } from '../../../../common/model/instance-run.interface';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../store/selector/flow-builder.selector';
 import { Observable, of, tap } from 'rxjs';
-import { MatSnackBarRef, MAT_SNACK_BAR_DATA } from '@angular/material/snack-bar';
+import { MatLegacySnackBarRef as MatSnackBarRef, MAT_LEGACY_SNACK_BAR_DATA as MAT_SNACK_BAR_DATA } from '@angular/material/legacy-snack-bar';
 import { FlowsActions } from '../../../store/action/flows.action';
 import { UUID } from 'angular2-uuid';
 

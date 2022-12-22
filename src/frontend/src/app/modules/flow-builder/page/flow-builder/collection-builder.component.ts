@@ -12,7 +12,7 @@ import { map, Observable, tap } from 'rxjs';
 import { ViewModeEnum } from '../../store/model/enums/view-mode.enum';
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatLegacySnackBar as MatSnackBar } from '@angular/material/legacy-snack-bar';
 import { TestRunBarComponent } from './test-run-bar/test-run-bar.component';
 import { BuilderActions } from '../../store/action/builder.action';
 import { FlowItemDetailsActions } from '../../store/action/flow-items-details.action';

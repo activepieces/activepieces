@@ -1,5 +1,5 @@
 import { AfterViewInit, Directive } from '@angular/core';
-import { MatMenu } from '@angular/material/menu';
+import { MatLegacyMenu as MatMenu } from '@angular/material/legacy-menu';
 
 @Directive({
 	selector: 'mat-menu[ap-center]',

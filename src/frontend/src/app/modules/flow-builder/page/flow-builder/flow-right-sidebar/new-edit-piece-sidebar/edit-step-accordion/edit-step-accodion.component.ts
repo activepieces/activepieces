@@ -14,7 +14,7 @@ import { Artifact } from 'src/app/modules/flow-builder/model/artifact.interface'
 import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
 import { TriggerType } from 'src/app/modules/common/model/enum/trigger-type.enum';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatLegacySnackBar as MatSnackBar } from '@angular/material/legacy-snack-bar';
 
 @Component({
 	selector: 'app-edit-step-accodion',

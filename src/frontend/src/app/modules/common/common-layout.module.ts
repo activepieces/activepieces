@@ -19,22 +19,22 @@ import { ApInputComponent } from './components/ap-input/ap-input.component';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { LoadingIconComponent } from './components/loading-icon/loading-icon.component';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatLegacyTabsModule as MatTabsModule } from '@angular/material/legacy-tabs';
 import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
 import { OutputLogPipe } from './pipe/output-log';
 import { DefaultZeroPipe } from './pipe/default-zero.pipe';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { StoreModule } from '@ngrx/store';
-import { MatButtonModule } from '@angular/material/button';
+import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
 import { BsDropdownConfig, BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { JsonViewModalComponent } from './components/json-view-modal/json-view-modal.component';
-import { MatTooltipDefaultOptions, MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
+import { MatLegacyTooltipDefaultOptions as MatTooltipDefaultOptions, MatLegacyTooltipModule as MatTooltipModule, MAT_LEGACY_TOOLTIP_DEFAULT_OPTIONS as MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/legacy-tooltip';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
 import { RawOutputLogPipe } from './pipe/raw-output-log';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { MatSnackBarModule, MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
+import { MatLegacySnackBarModule as MatSnackBarModule, MAT_LEGACY_SNACK_BAR_DEFAULT_OPTIONS as MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/legacy-snack-bar';
 import { CheckboxComponent } from './components/app-checkbox/checkbox.component';
 import { LongTextFormControlComponent } from './components/form-controls/long-text-form-control/long-text-form-control.component';
 import { DictionaryFormControlComponent } from './components/form-controls/dictionary-form-control/dictionary-form-control.component';
@@ -55,10 +55,10 @@ import { NgSelectConnectorActionItemTemplateComponent } from './components/form-
 import { RequestTypeTemplateComponent } from './components/form-controls/request-type-template/request-type-template.component';
 import { NgSelectCustomRequestComponent } from './components/form-controls/ng-select-custom-request/ng-select-custom-request.component';
 import { NgSelectNoItemsFoundTemplateComponent } from './components/form-controls/ng-select-no-items-found-template/ng-select-no-items-found-template.component';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatLegacySlideToggleModule as MatSlideToggleModule } from '@angular/material/legacy-slide-toggle';
 import { EndpointFormControlComponent } from './components/form-controls/endpoint-form-control/endpoint-form-control.component';
 import { ConnectorCustomRequestFormControlComponent } from './components/form-controls/connector-custom-request-form-control/connector-custom-request-form-control.component';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatLegacyMenuModule as MatMenuModule } from '@angular/material/legacy-menu';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 500,
 	hideDelay: 0,

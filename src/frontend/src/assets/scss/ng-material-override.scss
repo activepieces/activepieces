@@ -1,9 +1,18 @@
 @use '@angular/material' as mat;
 @use 'material-theme-helper.scss';
-@include mat.core();
+// TODO(v15): As of v15 mat.legacy-core no longer includes default typography styles.
+//  The following line adds:
+//    1. Default typography styles for all components
+//    2. Styles for typography hierarchy classes (e.g. .mat-headline-1)
+//  If you specify typography styles for the components you use elsewhere, you should delete this line.
+//  If you don't need the default component typographies but still want the hierarchy styles,
+//  you can delete this line and instead use:
+//    `@include mat.legacy-typography-hierarchy(mat.define-legacy-typography-config());`
+@include mat.all-legacy-component-typographies();
+@include mat.legacy-core();
 @import '@angular/material/theming';
 
-$ap-typography: mat.define-typography-config(
+$ap-typography: mat.define-legacy-typography-config(
 	$font-family: 'Open Sans',
 	$display-4:
 		mat.define-typography-level(
@@ -94,7 +103,16 @@ $ap-typography: mat.define-typography-config(
 		),
 );
 
-@include mat.core($ap-typography);
+// TODO(v15): As of v15 mat.legacy-core no longer includes default typography styles.
+//  The following line adds:
+//    1. Default typography styles for all components
+//    2. Styles for typography hierarchy classes (e.g. .mat-headline-1)
+//  If you specify typography styles for the components you use elsewhere, you should delete this line.
+//  If you don't need the default component typographies but still want the hierarchy styles,
+//  you can delete this line and instead use:
+//    `@include mat.legacy-typography-hierarchy($ap-typography);`
+@include mat.all-legacy-component-typographies($ap-typography);
+@include mat.legacy-core();
 
 .ap-typography-display-4 {
 	@include mat.typography-level($ap-typography, 'display-4');
@@ -306,8 +324,8 @@ $ap-theme-dark: mat.define-dark-theme(
 	)
 );
 $my-theme: material-theme-helper.modify-background($ap-theme-light, $white, $sidebar, $dividers, $body, $body);
-@include mat.core-theme($my-theme);
-@include mat.all-component-themes($my-theme);
+@include mat.legacy-core-theme($my-theme);
+@include mat.all-legacy-component-themes($my-theme);
 
 .mat-tab-group {
 	font-family: inherit !important;

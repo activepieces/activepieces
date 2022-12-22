@@ -8,7 +8,7 @@ import { Flow } from '../../../common/model/flow.class';
 import { TriggerType } from '../../../common/model/enum/trigger-type.enum';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/selector/flow-builder.selector';
-import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
+import { MatLegacySnackBar as MatSnackBar, MatLegacySnackBarRef as MatSnackBarRef } from '@angular/material/legacy-snack-bar';
 import { TestRunBarComponent } from '../../page/flow-builder/test-run-bar/test-run-bar.component';
 import { FlowsActions } from '../../store/action/flows.action';
 import { Collection } from 'src/app/modules/common/model/collection.interface';

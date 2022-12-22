@@ -12,7 +12,7 @@ import { AuthenticationService } from '../../../common/service/authentication.se
 import { ProjectService } from 'src/app/modules/common/service/project.service';
 import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
 import { FlowService } from 'src/app/modules/common/service/flow.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatLegacySnackBar as MatSnackBar } from '@angular/material/legacy-snack-bar';
 import { Flow } from 'src/app/modules/common/model/flow.class';
 import { PosthogService } from 'src/app/modules/common/service/posthog.service';
 
