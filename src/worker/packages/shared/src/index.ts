@@ -1,5 +1,4 @@
 export {User} from './model/user';
-export {Step} from './model/step';
 export {Action} from './model/action';
 export {Trigger} from './model/trigger';
 export {Collection} from './model/collection';
