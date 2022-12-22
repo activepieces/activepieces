@@ -14,23 +14,42 @@ function apply(flowVersion: FlowVersion,
     const clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion));
     switch (operation.type) {
         case FlowOperation.ADD_ACTION:
-            const addActionRequest =  operation.request;
-
+            addAction(flowVersion, operation.request);
             break;
         case FlowOperation.UPDATE_ACTION:
-
+            updateAction(flowVersion, operation.request);
             break;
         case FlowOperation.UPDATE_TRIGGER:
-            flowVersion.trigger = createTrigger(clonedVersion.trigger.name, clonedVersion.trigger.nextAction, operation.request);
+            flowVersion.trigger = createTrigger(clonedVersion.trigger.name, operation.request, clonedVersion.trigger.nextAction);
             break;
     }
     return flowVersion;
 }
 
-function createAction(name: string, nextAction: Action | undefined, request: UpdateActionRequest): Action {
+function updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): void {
+    let parentStep: Trigger | Action = flowVersion.trigger;
+    while (parentStep.nextAction !== undefined && parentStep.nextAction.name !== request.name) {
+        parentStep = parentStep.nextAction;
+    }
+    if (parentStep.nextAction !== undefined) {
+        let stepToUpdate: Action = parentStep.nextAction;
+        parentStep.nextAction = createAction(request, stepToUpdate.nextAction,);
+    }
+}
+
+
+function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
+    let currentStep: Trigger | Action = flowVersion.trigger;
+    while (currentStep?.nextAction !== undefined && currentStep.name !== request.parentAction) {
+        currentStep = currentStep.nextAction;
+    }
+    currentStep.nextAction = createAction(request.action, currentStep.nextAction);
+}
+
+function createAction(request: UpdateActionRequest, nextAction: Action | undefined): Action {
     const baseProperties = {
         displayName: request.displayName,
-        name: name,
+        name: request.name,
         valid: false,
         nextAction: nextAction
     };
@@ -62,7 +81,7 @@ function createAction(name: string, nextAction: Action | undefined, request: Upd
     }
 }
 
-function createTrigger(name: string, nextAction: Action | undefined, request: UpdateTriggerRequest): Trigger {
+function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: Action | undefined): Trigger {
     const baseProperties = {
         displayName: request.displayName,
         name: name,
@@ -101,4 +120,8 @@ function createTrigger(name: string, nextAction: Action | undefined, request: Up
                 settings: request.settings
             };
     }
+}
+
+export const FlowHelper = {
+    apply: apply
 }
