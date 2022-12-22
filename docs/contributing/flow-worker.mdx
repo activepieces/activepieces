@@ -35,7 +35,10 @@ Consumes the flow queue and do the following in this order:
 
 **1. Create Sandbox:**
 
-First we obtain an available sandbox number from queue, we will call isolate binary file to clean and initialize this sandbox number.
+First we need to decide which sandbox number to use locally, We have a singleton predefined queue contains all numbers from 1 to 20 (randomly picked),
+We will pick the first element and remove it from queue and return it once we are done.
+
+Next we will call isolate binary file to clean and initialize sandbox directory with picked number from the queue.
 
 After that Isolate should creates an folder in the following path: `/var/local/lib/isolate/BOX_ID`.
 
