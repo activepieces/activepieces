@@ -1,7 +1,7 @@
 
-import {apps} from "components/dist/src/apps";
 import {ConfigurationValue} from "components/dist/src/framework/config/configuration-value.model";
 import {Component} from "components/dist/src/framework/component";
+import {components} from "components/dist/src/apps";
 
 export class ComponentExecutor {
     public async exec(componentName: string, actionName: string, config: ConfigurationValue) {
@@ -11,7 +11,7 @@ export class ComponentExecutor {
     }
 
     private getComponent(componentName: string): Component {
-        const component = apps.find(app => app.name === componentName);
+        const component = components.find(app => app.name === componentName);
 
         if (!component) {
             throw new Error(`error=component_not_found component=${componentName}`);
