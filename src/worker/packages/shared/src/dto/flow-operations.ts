@@ -17,7 +17,6 @@ export type OperationRequest = BasicOperationRequest<FlowOperation.UPDATE_TRIGGE
 
 export type AddActionRequest = {
     parentAction: string,
-    name: string,
     action: UpdateActionRequest
 }
 
@@ -40,5 +39,6 @@ interface BasicOperationRequest<T extends FlowOperation, V> {
 interface BasicStepRequest<A, V> {
     type: A;
     settings: V;
+    name: string,
     displayName: string;
 }
