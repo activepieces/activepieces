@@ -27,6 +27,7 @@
         "koa-json": "^2.0.2",
         "koa-logger": "^3.2.1",
         "koa-router": "^10.1.1",
+        "ksuid": "^3.0.0",
         "pg": "^8.8.0",
         "shared": "*",
         "typeorm": "^0.3.11",
