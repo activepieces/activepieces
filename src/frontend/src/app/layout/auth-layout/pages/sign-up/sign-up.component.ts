@@ -11,7 +11,7 @@ import {
 	containsSpecialCharacter,
 	containsUppercaseCharacter,
 } from 'src/app/layout/common-layout/validators';
-import { mapTo, Observable, switchMap, tap } from 'rxjs';
+import { catchError, mapTo, Observable, of, switchMap, tap } from 'rxjs';
 
 @Component({
 	templateUrl: './sign-up.component.html',
@@ -59,7 +59,6 @@ export class SignUpComponent implements OnInit {
 	}
 
 	signUp() {
-		//WTF
 		this.submitted = true;
 		if (this.registrationForm.valid && !this.loading) {
 			this.loading = true;
@@ -68,6 +67,15 @@ export class SignUpComponent implements OnInit {
 				tap(response => {
 					this.authenticationService.saveToken(response);
 					this.authenticationService.saveUser(response);
+				}),
+				switchMap(() => {
+					return this.authenticationService.saveNewsLetterSubscriber(request.email);
+				}),
+				catchError(err => {
+					console.error(err);
+					return of(void 0);
+				}),
+				tap(() => {
 					this.router.navigate(['/flows']);
 				}),
 				mapTo(void 0)

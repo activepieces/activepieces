@@ -20,6 +20,7 @@ export class ProjectService {
 				if (project) return of(project);
 				return this.list().pipe(
 					tap(projects => {
+						debugger;
 						this.store.dispatch(ProjectActions.setProjects({ projects: projects }));
 					}),
 					map(projects => projects[0])
@@ -39,5 +40,4 @@ export class ProjectService {
 	list(): Observable<Project[]> {
 		return this.http.get<Project[]>(environment.apiUrl + '/projects');
 	}
-  
 }
