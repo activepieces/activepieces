@@ -30,7 +30,7 @@
     },
     {
       "group": "Contributing",
-      "pages": ["contributing/architecture"]
+      "pages": ["contributing/architecture", "contributing/worker"]
     }
   ]
 }

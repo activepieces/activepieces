@@ -1,13 +1,11 @@
-import { DataSource } from 'typeorm';
+import {DataSource} from 'typeorm';
 
-const AppDataSource = new DataSource({
+export const DatabaseSource = new DataSource({
     type: 'postgres',
     host: 'localhost',
-    port: 52313,
+    port: 7432,
     username: 'postgres',
-    password: 'mysecretpassword',
-    database: 'test-typescript-example',
+    password: 'A79Vm5D4p2VQHOp2gd5',
+    database: 'activepieces',
     synchronize: true,
 });
-
-export default AppDataSource;
