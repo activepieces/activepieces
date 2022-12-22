@@ -64,6 +64,7 @@
     "ngx-markdown": "^13.0.1",
     "ngx-skeleton-loader": "^5.0.0",
     "ngx-timeago": "^2.0.0",
+    "posthog-js": "^1.38.1",
     "prismjs": "^1.28.0",
     "rxjs": "~7.4.0",
     "tslib": "^2.3.0",

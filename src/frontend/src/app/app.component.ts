@@ -6,6 +6,7 @@ import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Rout
 import { NavigationService } from './layout/dashboard-layout/service/navigation.service';
 import { SvgIconRegistryService } from 'angular-svg-icon';
 import { CommonActions } from './layout/common-layout/store/action/common.action';
+import { PosthogService } from './layout/common-layout/service/posthog.service';
 
 @Component({
 	selector: 'app-root',
@@ -13,7 +14,7 @@ import { CommonActions } from './layout/common-layout/store/action/common.action
 	styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
-	title = 'piece-builder';
+	title = 'activepieces';
 	routeLoader = true;
 
 	routeLoader$: Observable<any>;
@@ -25,7 +26,8 @@ export class AppComponent implements OnInit {
 		private authenticationService: AuthenticationService,
 		private router: Router,
 		private navigationService: NavigationService,
-		private iconReg: SvgIconRegistryService
+		private iconReg: SvgIconRegistryService,
+		private posthogService: PosthogService
 	) {
 		this.unsavedIconLoader$ = this.iconReg.loadSvg('assets/img/custom/unsaved.svg')?.pipe(map(value => void 0));
 
@@ -45,6 +47,7 @@ export class AppComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
+		this.posthogService.init();
 		this.loggedInUser$ = this.authenticationService.currentUserSubject.pipe(
 			tap(user => {
 				if (user == undefined || Object.keys(user).length == 0) {
