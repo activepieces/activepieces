@@ -2,9 +2,11 @@
   "name": "shared",
   "version": "0.0.0",
   "scripts": {
-    "build": "tsc -p tsconfig.json --outDir dist"
+    "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "ksuid": "^3.0.0"
-  }
+  },
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts"
 }

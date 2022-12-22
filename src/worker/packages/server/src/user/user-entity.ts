@@ -1,8 +1,12 @@
 import {EntitySchema} from "typeorm"
-import {User} from "shared/dist";
-import {BaseColumnSchemaPart} from "./base-entity";
+import {Project, User} from "shared";
+import {BaseColumnSchemaPart} from "../entity/base-entity";
 
-export const UserEntity = new EntitySchema<User>({
+export interface UserSchema extends User {
+    projects: Project[];
+}
+
+export const UserEntity = new EntitySchema<UserSchema>({
     name: "user",
     columns: {
         ...BaseColumnSchemaPart,
@@ -23,4 +27,11 @@ export const UserEntity = new EntitySchema<User>({
             type: String
         }
     },
+    relations: {
+        projects: {
+            type: "one-to-many",
+            target: "user",
+            inverseSide: 'owner'
+        },
+    }
 })

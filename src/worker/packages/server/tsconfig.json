@@ -7,6 +7,7 @@
     "rootDir": "src",
     "noImplicitAny": true,
     "experimentalDecorators": true,
+    "esModuleInterop": true,
     "emitDecoratorMetadata": true,
   },
   "include": [
@@ -14,5 +15,5 @@
   ],
   "exclude": [
     "tests/**/*.ts"
-  ]
+  ]  
 }
