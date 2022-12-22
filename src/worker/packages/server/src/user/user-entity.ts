@@ -1,8 +1,8 @@
 import {EntitySchema} from "typeorm"
-import {Project, User} from "shared/dist";
-import {BaseColumnSchemaPart} from "./base-entity";
+import {Project, User} from "shared";
+import {BaseColumnSchemaPart} from "../entity/base-entity";
 
-interface UserSchema extends User {
+export interface UserSchema extends User {
     projects: Project[];
 }
 
