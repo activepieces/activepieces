@@ -1,73 +1,68 @@
 .loading-spinner-size-and-position {
-  width: 1rem;
-  height: 1rem;
-  position: absolute;
-  left: calc(50% - 0.5rem);
-  top: calc(50% - 0.5rem);
+	width: 1rem;
+	height: 1rem;
+	position: absolute;
+	left: calc(50% - 0.5rem);
+	top: calc(50% - 0.5rem);
 }
 
 .zero-opacity {
-  opacity: 0;
+	opacity: 0;
 }
-.ap-btn-sm
-{
-  font-size:0.75rem !important;
-  padding:.25rem .5rem !important;
-  line-height: 1.5 !important;
-}
-
-
-.ap-btn-xs
-{
-  padding:0 0 0 0  !important;
-  line-height: 1.5 !important;
-}
-.ap-btn-m
-{
-  padding:.3125rem .625rem !important;
-  line-height: 1.5 !important;
+.ap-btn-sm {
+	font-size: 0.75rem !important;
+	padding: 0.25rem 0.5rem !important;
+	line-height: 1.5 !important;
 }
 
-.ap-btn-l
-{
-  padding:.625rem 1.25rem !important;
-  line-height: 1.5 !important;
+.ap-btn-xs {
+	padding: 0 0 0 0 !important;
+	line-height: 1.5 !important;
+}
+.ap-btn-m {
+	padding: 0.3125rem 0.625rem !important;
+	line-height: 1.5 !important;
 }
 
+.ap-btn-l {
+	padding: 0.825rem 1.25rem !important;
+	line-height: 1.5 !important;
+}
+.mat-button-base.mat-basic {
+	background-color: transparent;
+}
 .mat-button.mat-success,
 .mat-stroked-button.mat-success:not([disabled]) {
-  &:not([disabled]){
-    color: #14AE5C;
-  }
-
+	&:not([disabled]) {
+		color: #14ae5c;
+	}
 }
 .mat-button.mat-success:hover,
 .mat-stroked-button.mat-success:hover:not([disabled]) {
-  &:not([disabled]){
-    background-color: #cae7d8;
-  }
-
+	&:not([disabled]) {
+		background-color: #cae7d8;
+	}
 }
 
 .mat-raised-button.mat-success,
 .mat-flat-button.mat-success,
 .mat-fab.mat-success,
-.mat-mini-fab.mat-success  {
-  &:not([disabled]){
-    color: white;
-    background-color: #14AE5C;
-  }
-
+.mat-mini-fab.mat-success {
+	&:not([disabled]) {
+		color: white;
+		background-color: #14ae5c;
+	}
 }
 
 .mat-icon-button.mat-success {
-  &:not([disabled]){
-    color:#14AE5C;
-  }
-
+	&:not([disabled]) {
+		color: #14ae5c;
+	}
 }
 
-.mat-button, .mat-icon-button, .mat-stroked-button, .mat-flat-button
-{
-  min-width: 45px !important
+.mat-button,
+.mat-icon-button,
+.mat-stroked-button,
+.mat-flat-button {
+	min-width: 45px !important;
 }

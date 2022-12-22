@@ -30,11 +30,18 @@ import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/lega
 import { BsDropdownConfig, BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { JsonViewModalComponent } from './components/json-view-modal/json-view-modal.component';
-import { MatLegacyTooltipDefaultOptions as MatTooltipDefaultOptions, MatLegacyTooltipModule as MatTooltipModule, MAT_LEGACY_TOOLTIP_DEFAULT_OPTIONS as MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/legacy-tooltip';
+import {
+	MatLegacyTooltipDefaultOptions as MatTooltipDefaultOptions,
+	MatLegacyTooltipModule as MatTooltipModule,
+	MAT_LEGACY_TOOLTIP_DEFAULT_OPTIONS as MAT_TOOLTIP_DEFAULT_OPTIONS,
+} from '@angular/material/legacy-tooltip';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
 import { RawOutputLogPipe } from './pipe/raw-output-log';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { MatLegacySnackBarModule as MatSnackBarModule, MAT_LEGACY_SNACK_BAR_DEFAULT_OPTIONS as MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/legacy-snack-bar';
+import {
+	MatLegacySnackBarModule as MatSnackBarModule,
+	MAT_LEGACY_SNACK_BAR_DEFAULT_OPTIONS as MAT_SNACK_BAR_DEFAULT_OPTIONS,
+} from '@angular/material/legacy-snack-bar';
 import { CheckboxComponent } from './components/app-checkbox/checkbox.component';
 import { LongTextFormControlComponent } from './components/form-controls/long-text-form-control/long-text-form-control.component';
 import { DictionaryFormControlComponent } from './components/form-controls/dictionary-form-control/dictionary-form-control.component';
@@ -59,6 +66,9 @@ import { MatLegacySlideToggleModule as MatSlideToggleModule } from '@angular/mat
 import { EndpointFormControlComponent } from './components/form-controls/endpoint-form-control/endpoint-form-control.component';
 import { ConnectorCustomRequestFormControlComponent } from './components/form-controls/connector-custom-request-form-control/connector-custom-request-form-control.component';
 import { MatLegacyMenuModule as MatMenuModule } from '@angular/material/legacy-menu';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatCardModule } from '@angular/material/card';
+import { MatInputModule } from '@angular/material/input';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 500,
 	hideDelay: 0,
@@ -131,6 +141,9 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		PopoverModule,
 		MatSlideToggleModule,
 		MatMenuModule,
+		MatCardModule,
+		MatFormFieldModule,
+		MatInputModule,
 	],
 	exports: [
 		EditableTextComponent,
@@ -172,7 +185,9 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		NgSelectNoItemsFoundTemplateComponent,
 		EndpointFormControlComponent,
 		ConnectorCustomRequestFormControlComponent,
-		MatMenuModule,
+		MatCardModule,
+		MatFormFieldModule,
+		MatInputModule,
 	],
 	providers: [
 		HighlightService,

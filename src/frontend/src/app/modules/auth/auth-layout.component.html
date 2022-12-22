@@ -1,18 +1,11 @@
 <div
-  class="d-column justify-content-center align-items-center auth-form-background"
->
-  <div
-    class="auth-logo-section d-flex justify-content-center align-items-center"
-  >
-    <svg-icon
-      [svgStyle]="{ width: 210, height: 32 }"
-      src="assets/img/custom/full-logo.svg"
-      class="auth-logo"
-    >
-    </svg-icon>
-  </div>
-
-  <div class="card auth-form-container">
-    <router-outlet></router-outlet>
-  </div>
+	class="ap-h-screen ap-w-full ap-flex ap-items-center ap-justify-center ap-bg-center ap-bg-cover ap-bg-authBg ap-flex-col">
+	<svg-icon
+		[svgStyle]="{ width: '130px', height: '32px' }"
+		src="assets/img/custom/logo/full-logo.svg"
+		class="ap-mb-4 ap-bg-white">
+	</svg-icon>
+	<mat-card class="md:ap-min-w-[480px] md:ap-max-w-initial ap-min-w-[350px] ap-max-w-[350px] auth-card">
+		<router-outlet></router-outlet>
+	</mat-card>
 </div>

@@ -146,7 +146,12 @@
               }
             ],
             "styles": [
+              "./node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css",
+              "./node_modules/codemirror/addon/lint/lint.css",
+              "./node_modules/codemirror/lib/codemirror.css",
+              "./node_modules/codemirror/theme/lucario.css",
               "src/styles.scss"
+
             ],
             "scripts": []
           }

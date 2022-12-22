@@ -4,15 +4,15 @@
 
     <div class="flex-grow-1"></div>
 
-    <app-button   *ngIf="!readOnly" [loadingCSS]="'text-primary'"
+    <app-button   *ngIf="!readOnly"
     btnStyle="flat" btnColor="basic" (buttonClicked)="openNpmPackageModal()" btnSize="small">
     Add npm package
     </app-button>
 
-    <app-button  [loadingCSS]="'text-primary'" [loading]="testLoading"
+    <app-button   [loading]="testLoading"
     btnStyle="flat" btnColor="basic" class="ml-1"  btnSize="small"  (buttonClicked)="openTestCodeModal()">Test code
     </app-button>
-      <app-icon-button [color]="'#FFFFFF'" (click)="hide()" 
+      <app-icon-button [color]="'#FFFFFF'" (click)="hide()"
         [iconFilename]="'minimize.svg'"></app-icon-button>
 
   </div>

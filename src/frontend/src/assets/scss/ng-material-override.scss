@@ -326,7 +326,7 @@ $ap-theme-dark: mat.define-dark-theme(
 $my-theme: material-theme-helper.modify-background($ap-theme-light, $white, $sidebar, $dividers, $body, $body);
 @include mat.legacy-core-theme($my-theme);
 @include mat.all-legacy-component-themes($my-theme);
-
+@include mat.all-component-themes($my-theme);
 .mat-tab-group {
 	font-family: inherit !important;
 }

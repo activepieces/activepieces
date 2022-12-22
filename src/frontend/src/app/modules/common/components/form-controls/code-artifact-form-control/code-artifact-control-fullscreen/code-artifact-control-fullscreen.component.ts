@@ -57,7 +57,10 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 		private modalService: BsModalService,
 		private codeService: CodeService
 	) {
-		this.testResultForm = this.formBuilder.group({ outputResult: new UntypedFormControl(), consoleResult: new UntypedFormControl() });
+		this.testResultForm = this.formBuilder.group({
+			outputResult: new UntypedFormControl(),
+			consoleResult: new UntypedFormControl(),
+		});
 	}
 	ngOnInit(): void {
 		if (this.readOnly) {
