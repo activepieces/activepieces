@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.swing.text.html.Option;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -15,6 +17,7 @@ public class FlagService {
     public static final String BEARER_ENCRYPTION_KEY = "BEARER_ENCRYPTION_KEY";
 
     private final FlagRepository flagRepository;
+
 
     @Autowired
     public FlagService(@NonNull final FlagRepository flagRepository){
@@ -36,5 +39,10 @@ public class FlagService {
     public void save(@NonNull final String key,
                      @NonNull final String value){
         flagRepository.save(FlagValue.builder().key(key).value(value).build());
+    }
+
+    public boolean getIsTrackingEventsAllowed()
+    {
+        return !getValue(FlagsEnum.TRACK_USER_EVENTS.name()).isEmpty();
     }
 }

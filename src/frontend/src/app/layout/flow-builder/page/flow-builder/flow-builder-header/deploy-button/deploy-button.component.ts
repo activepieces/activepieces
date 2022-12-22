@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { combineLatest, map, Observable, of } from 'rxjs';
+import { combineLatest, delay, map, Observable, of } from 'rxjs';
 import { CollectionActions } from 'src/app/layout/flow-builder/store/action/collection.action';
 import { BuilderSelectors } from 'src/app/layout/flow-builder/store/selector/flow-builder.selector';
 
@@ -33,11 +33,11 @@ export class DeployButtonComponent implements OnInit {
 			AllFlowsValidty: this.store.select(BuilderSelectors.selectFlowsValidity),
 		}).pipe(
 			map(res => {
-
 				return !res.AllFlowsValidty || res.deploymentAndSaving.isDeploying || res.deploymentAndSaving.isSaving;
 			})
 		);
 		this.buttonTooltipText$ = this.disableDeployButton$.pipe(
+			delay(100),
 			map(res => {
 				if (res) {
 					return 'Please make sure all flows are valid';
@@ -47,6 +47,7 @@ export class DeployButtonComponent implements OnInit {
 			})
 		);
 		this.buttonText$ = this.collectionState$.pipe(
+			delay(100),
 			map(res => {
 				if (res.isSaving) {
 					return 'Saving';

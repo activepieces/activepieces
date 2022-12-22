@@ -35,4 +35,6 @@ public class UserInformationView {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private UserStatus status;
 
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private boolean trackEvents;
 }

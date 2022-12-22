@@ -39,5 +39,4 @@ export class ProjectService {
 	list(): Observable<Project[]> {
 		return this.http.get<Project[]>(environment.apiUrl + '/projects');
 	}
-  
 }

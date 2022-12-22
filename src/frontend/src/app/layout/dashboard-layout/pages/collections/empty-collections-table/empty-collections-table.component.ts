@@ -5,6 +5,8 @@ import { ProjectService } from 'src/app/layout/common-layout/service/project.ser
 import { Observable, switchMap, tap } from 'rxjs';
 import { FlowService } from 'src/app/layout/common-layout/service/flow.service';
 import { Flow } from 'src/app/layout/common-layout/model/flow.class';
+import { PosthogService } from 'src/app/layout/common-layout/service/posthog.service';
+import { AuthenticationService } from 'src/app/layout/common-layout/service/authentication.service';
 
 @Component({
 	selector: 'app-empty-collections-table',
@@ -20,7 +22,9 @@ export class EmptyCollectionsTableComponent {
 		private router: Router,
 		private collectionService: CollectionService,
 		private projectService: ProjectService,
-		private flowService: FlowService
+		private flowService: FlowService,
+		private posthogService: PosthogService,
+		private authenticationService: AuthenticationService
 	) {}
 
 	createCollection() {
@@ -34,9 +38,15 @@ export class EmptyCollectionsTableComponent {
 					});
 				}),
 				switchMap(collection => {
+					if (this.authenticationService.currentUserSubject.value?.track_events) {
+						this.posthogService.captureEvent('collection.created [Start building]', collection);
+					}
 					return this.flowService.create(collection.id, 'Flow 1');
 				}),
 				tap(flow => {
+					if (this.authenticationService.currentUserSubject.value?.track_events) {
+						this.posthogService.captureEvent('flow.created [Start building]', flow);
+					}
 					this.router.navigate(['/flows/', flow.collection_id], { queryParams: { newCollection: true } });
 				})
 			);

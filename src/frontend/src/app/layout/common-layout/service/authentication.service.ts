@@ -87,4 +87,14 @@ export class AuthenticationService {
 		this.currentUserSubject.next(undefined);
 		this.router.navigate(['sign-in']);
 	}
+	isFirstSignIn() {
+		return this.http.get<boolean>(environment.apiUrl + '/flags/first-sign-in');
+	}
+	saveNewsLetterSubscriber(email: string) {
+		return this.http.post(
+			'https://us-central1-activepieces-b3803.cloudfunctions.net/addContact',
+			{ email: email },
+			{ responseType: 'text' }
+		);
+	}
 }

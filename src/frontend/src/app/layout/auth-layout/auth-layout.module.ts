@@ -8,6 +8,7 @@ import { CommonLayoutModule } from '../common-layout/common-layout.module';
 import { MatTabsModule } from '@angular/material/tabs';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { AuthLayoutComponent } from './auth-layout.component';
+import { SignUpComponent } from './pages/sign-up/sign-up.component';
 
 @NgModule({
 	imports: [
@@ -19,6 +20,6 @@ import { AuthLayoutComponent } from './auth-layout.component';
 		MatTabsModule,
 		NgSelectModule,
 	],
-	declarations: [AuthLayoutComponent, SignInComponent],
+	declarations: [AuthLayoutComponent, SignInComponent, SignUpComponent],
 })
 export class AuthLayoutModule {}
