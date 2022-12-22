@@ -55,7 +55,6 @@ export class AppComponent implements OnInit {
 				}
 				this.store.dispatch(CommonActions.loadInitial({ user: user }));
 				if (user.track_events) {
-					debugger;
 					this.posthogService.init();
 				}
 			}),
