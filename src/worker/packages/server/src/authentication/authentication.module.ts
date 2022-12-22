@@ -1,6 +1,8 @@
 import { FastifyInstance, FastifyPluginOptions } from 'fastify';
-import { tokenMiddleware } from './middleware/token.middleware';
+import { tokenVerifyMiddleware } from './token-verify-middleware';
+import { authenticationController } from './authentication.controller';
 
 export const authenticationModule = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
-    app.register(tokenMiddleware);
+    app.addHook('onRequest', tokenVerifyMiddleware);
+    app.register(authenticationController, { prefix: '/v1/authentication' });
 };
