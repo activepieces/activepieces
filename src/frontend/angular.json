@@ -49,10 +49,6 @@
               }
             ],
             "styles": [
-              "src/assets/css/nucleo-svg.css",
-              "src/assets/css/nucleo-icons.css",
-              "src/assets/css/font-awesome.css",
-              "src/assets/scss/argon-design-system.scss",
               "src/styles.scss"
             ],
             "scripts": [
