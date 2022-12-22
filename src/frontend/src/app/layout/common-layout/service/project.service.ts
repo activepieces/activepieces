@@ -20,7 +20,6 @@ export class ProjectService {
 				if (project) return of(project);
 				return this.list().pipe(
 					tap(projects => {
-						debugger;
 						this.store.dispatch(ProjectActions.setProjects({ projects: projects }));
 					}),
 					map(projects => projects[0])

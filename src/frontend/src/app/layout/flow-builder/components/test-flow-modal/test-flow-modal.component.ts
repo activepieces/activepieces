@@ -19,6 +19,8 @@ import { HttpStatusCode } from '@angular/common/http';
 import { FormControl } from '@angular/forms';
 import { jsonValidator } from 'src/app/layout/common-layout/validators/json-validator';
 import jsonlint from 'jsonlint-mod';
+import { PosthogService } from 'src/app/layout/common-layout/service/posthog.service';
+import { AuthenticationService } from 'src/app/layout/common-layout/service/authentication.service';
 @Component({
 	selector: 'app-test-flow-modal',
 	templateUrl: './test-flow-modal.component.html',
@@ -51,7 +53,9 @@ export class TestFlowModalComponent implements OnInit {
 		private store: Store,
 		private instanceRunService: InstanceRunService,
 		private snackbar: MatSnackBar,
-		private modalService: BsModalService
+		private modalService: BsModalService,
+		private posthogService: PosthogService,
+		private authenticationService: AuthenticationService
 	) {
 		(<any>window).jsonlint = jsonlint;
 	}
@@ -147,6 +151,9 @@ export class TestFlowModalComponent implements OnInit {
 			switchMap(() => this.instanceRunService.get(runId)),
 			switchMap(instanceRun => {
 				if (instanceRun.status !== InstanceRunStatus.RUNNING && instanceRun.logs_file_id) {
+					if (this.authenticationService.currentUserSubject.value?.track_events) {
+						this.posthogService.captureEvent('flow.tested', instanceRun);
+					}
 					return this.flowService.logs(instanceRun.logs_file_id).pipe(
 						map(state => {
 							return { ...instanceRun, state: state };

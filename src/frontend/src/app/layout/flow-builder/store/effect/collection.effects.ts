@@ -13,6 +13,8 @@ import { BuilderActions } from '../action/builder.action';
 
 import { autoSaveDebounceTime } from 'src/app/layout/common-layout/utils';
 import { VersionEditState } from 'src/app/layout/common-layout/model/enum/version-edit-state.enum';
+import { AuthenticationService } from 'src/app/layout/common-layout/service/authentication.service';
+import { PosthogService } from 'src/app/layout/common-layout/service/posthog.service';
 
 @Injectable()
 export class CollectionEffects {
@@ -122,6 +124,9 @@ export class CollectionEffects {
 			return this.actions$.pipe(
 				ofType(CollectionActions.deploySuccess),
 				tap(action => {
+					if (this.authenticationService.currentUserSubject.value?.track_events) {
+						this.posthogService.captureEvent('collection.enable', action.instance);
+					}
 					this.snackBar.open(`Deployment finished`);
 				})
 			);
@@ -152,6 +157,8 @@ export class CollectionEffects {
 		private collectionService: CollectionService,
 		private store: Store,
 		private actions$: Actions,
-		private snackBar: MatSnackBar
+		private snackBar: MatSnackBar,
+		private authenticationService: AuthenticationService,
+		private posthogService: PosthogService
 	) {}
 }

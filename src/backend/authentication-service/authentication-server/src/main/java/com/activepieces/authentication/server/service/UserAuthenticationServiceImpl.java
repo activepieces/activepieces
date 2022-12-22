@@ -85,7 +85,9 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     if (!passwordEncoder.matches(password, userInformation.get().getPassword())) {
       return Optional.empty();
     }
-    return Optional.of(userInformationMapper.toView(userInformation.get()));
+    UserInformationView userInformAtionView= userInformationMapper.toView(userInformation.get());
+    userInformAtionView.setTrackEvents(flagService.getValue(FlagsEnum.TRACK_USER_EVENTS.name()).isPresent());
+    return Optional.of(userInformAtionView);
   }
 
   @Override

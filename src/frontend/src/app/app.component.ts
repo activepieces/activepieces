@@ -47,7 +47,6 @@ export class AppComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		this.posthogService.init();
 		this.loggedInUser$ = this.authenticationService.currentUserSubject.pipe(
 			tap(user => {
 				if (user == undefined || Object.keys(user).length == 0) {
@@ -55,6 +54,10 @@ export class AppComponent implements OnInit {
 					return;
 				}
 				this.store.dispatch(CommonActions.loadInitial({ user: user }));
+				if (user.track_events) {
+					debugger;
+					this.posthogService.init();
+				}
 			}),
 			map(() => void 0)
 		);

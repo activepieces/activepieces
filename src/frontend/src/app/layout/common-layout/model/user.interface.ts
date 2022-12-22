@@ -8,4 +8,5 @@ export interface User {
 	status: UserStatus;
 	epochExpirationTime: number;
 	epochCreationTime: number;
+	track_events: boolean;
 }

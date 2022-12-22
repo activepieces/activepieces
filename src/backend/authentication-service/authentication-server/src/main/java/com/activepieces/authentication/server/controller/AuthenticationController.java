@@ -44,9 +44,11 @@ public class AuthenticationController {
       throws UnAuthorizedException, UnAuthenticationException {
     final Optional<UserInformationView> userInformation =
         userAuthenticationService.getByCredentials(request.getEmail(), request.getPassword());
+
     if(userInformation.isEmpty()){
       throw new UnAuthenticationException();
     }
+
     return ResponseEntity.ok()
         .header(
             JWTService.AUTHORIZATION_HEADER_NAME,
@@ -59,6 +61,7 @@ public class AuthenticationController {
   public ResponseEntity<Object> signUp(@RequestBody @Valid final SignUpRequest request)
           throws AnAccountAlreadyExists, EmailExists {
     final UserInformationView userInformation = userAuthenticationService.create(request);
+         userInformation.setTrackEvents(request.getTrackEvents());
     return ResponseEntity.ok()
             .header(
                     JWTService.AUTHORIZATION_HEADER_NAME,
