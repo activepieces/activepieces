@@ -45,12 +45,14 @@ export const collectionService = {
             });
             const queryBuilder = collectionRepo.createQueryBuilder("collection").where({projectId: projectId});
             const {data, cursor} = await paginator.paginate(queryBuilder.where({projectId: projectId}));
-            // TODO REPLACE WITH ASYNC OPTIMIZED QUERY
+            // TODO REPLACE WITH SQL QUERY
+            let collectionVersionsPromises: Promise<CollectionVersion>[] = [];
+            data.forEach(collection => {
+                collectionVersionsPromises.push(collectionVersionService.getCollectionVersionId(collection.id, undefined));
+            });
+            let versions: CollectionVersion[] = await Promise.all(collectionVersionsPromises)
             for (let i = 0; i < data.length; ++i) {
-                data[i] = {
-                    ...data[i],
-                    version: await collectionVersionService.getCollectionVersionId(data[i].id, undefined)
-                }
+                data[i] = {...data[i], version: versions[i]};
             }
             return paginationHelper.createPage<Collection>(data, cursor);
         } catch (e) {
