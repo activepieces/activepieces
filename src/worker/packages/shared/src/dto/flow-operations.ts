@@ -7,13 +7,18 @@ import {ComponentTriggerSettings, ScheduleTriggerSettings, TriggerType} from "..
 export enum FlowOperation {
     UPDATE_TRIGGER = "UPDATE_TRIGGER",
     ADD_ACTION = "ADD_ACTION",
-    UPDATE_ACTION = "UPDATE_ACTION"
+    UPDATE_ACTION = "UPDATE_ACTION",
+    DELETE_ACTION = "DELETE_ACTION"
 }
 
 export type OperationRequest = BasicOperationRequest<FlowOperation.UPDATE_TRIGGER, UpdateTriggerRequest>
     | BasicOperationRequest<FlowOperation.ADD_ACTION, AddActionRequest>
-    | BasicOperationRequest<FlowOperation.UPDATE_ACTION, UpdateActionRequest>;
+    | BasicOperationRequest<FlowOperation.UPDATE_ACTION, UpdateActionRequest>
+    | BasicOperationRequest<FlowOperation.DELETE_ACTION, DeleteActionRequest>;
 
+export type DeleteActionRequest = {
+    name: string
+}
 
 export type AddActionRequest = {
     parentAction: string,

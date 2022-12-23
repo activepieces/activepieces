@@ -1,6 +1,6 @@
 import {FlowVersion} from "../model/flow-version";
 import {
-    AddActionRequest,
+    AddActionRequest, DeleteActionRequest,
     FlowOperation,
     OperationRequest,
     UpdateActionRequest,
@@ -13,6 +13,9 @@ function apply(flowVersion: FlowVersion,
                operation: OperationRequest): FlowVersion {
     const clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion));
     switch (operation.type) {
+        case FlowOperation.DELETE_ACTION:
+            deleteAction(flowVersion, operation.request);
+            break;
         case FlowOperation.ADD_ACTION:
             addAction(flowVersion, operation.request);
             break;
@@ -25,6 +28,18 @@ function apply(flowVersion: FlowVersion,
     }
     return flowVersion;
 }
+
+function deleteAction(flowVersion: FlowVersion, request: DeleteActionRequest): void {
+    let parentStep: Trigger | Action = flowVersion.trigger;
+    while (parentStep.nextAction !== undefined && parentStep.nextAction.name !== request.name) {
+        parentStep = parentStep.nextAction;
+    }
+    if (parentStep.nextAction !== undefined) {
+        let stepToUpdate: Action = parentStep.nextAction;
+        parentStep.nextAction = stepToUpdate.nextAction;
+    }
+}
+
 
 function updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): void {
     let parentStep: Trigger | Action = flowVersion.trigger;
