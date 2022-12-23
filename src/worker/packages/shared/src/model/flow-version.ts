@@ -9,7 +9,7 @@ export interface FlowVersion extends BaseModel<FlowVersionId> {
 
   flowId: FlowId;
   displayName: string;
-  trigger: Trigger<any, any>;
+  trigger: Trigger;
   valid: boolean;
   state: FlowVersionState;
 

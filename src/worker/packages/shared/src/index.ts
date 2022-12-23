@@ -2,7 +2,6 @@ export {AuthenticationRequest} from './authentication/dto/authentication-request
 export {AuthenticationResponse} from './authentication/dto/authentication-response';
 export {UserStatus} from './model/user'
 export {User} from './model/user';
-export {Step} from './model/step';
 export {Action} from './model/action';
 export {Trigger} from './model/trigger';
 export {Collection, CollectionId} from './collection/collection';

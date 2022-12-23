@@ -1,7 +1,14 @@
-import {Step} from "./step";
 
-export interface Action<T, V> extends Step<T, V> {
+interface BaseAction<T, V> {
+  type: T;
+  settings: V;
+  displayName: string;
+  name: string;
+  valid: boolean;
+  nextAction: BaseAction<any, any>;
 }
+
+export type Action = CodeAction | ComponentAction | StorageAction | LoopOnItemsAction;
 
 export type CodeActionSettings = {
   artifactSourceId: string;
@@ -9,7 +16,7 @@ export type CodeActionSettings = {
   input: Record<string, unknown>;
 }
 
-export interface CodeAction extends Action<ActionType.CODE, CodeActionSettings> {
+export interface CodeAction extends BaseAction<ActionType.CODE, CodeActionSettings> {
 }
 
 export type ComponentActionSettings = {
@@ -18,15 +25,8 @@ export type ComponentActionSettings = {
   input: Record<string, unknown>;
 }
 
-export interface ComponentAction extends Action<ActionType.COMPONENT, ComponentActionSettings> {
+export interface ComponentAction extends BaseAction<ActionType.COMPONENT, ComponentActionSettings> {
 };
-
-export type ResponseActionSettings = {
-  output: Record<string, unknown>;
-}
-
-export interface ResponseAction extends Action<ActionType.RESPONSE, ResponseActionSettings> {
-}
 
 export enum StoreOperation {
   PUT = "PUT",
@@ -39,7 +39,7 @@ export type StorageActionSettings = {
   value: unknown;
 }
 
-export interface StorageAction extends Action<ActionType.STORAGE, StorageActionSettings> {
+export interface StorageAction extends BaseAction<ActionType.STORAGE, StorageActionSettings> {
 }
 
 
@@ -47,14 +47,13 @@ export type LoopOnItemsActionSettings = {
   items: unknown;
 }
 
-export interface LoopOnItemsAction extends Action<ActionType.LOOP_ON_ITEMS, LoopOnItemsActionSettings> {
+export interface LoopOnItemsAction extends BaseAction<ActionType.LOOP_ON_ITEMS, LoopOnItemsActionSettings> {
 }
 
 
 export enum ActionType {
   CODE = "CODE",
   STORAGE = "STORAGE",
-  RESPONSE = "RESPONSE",
   COMPONENT = "COMPONENT",
   LOOP_ON_ITEMS = "LOOP_ON_ITEMS"
 }
