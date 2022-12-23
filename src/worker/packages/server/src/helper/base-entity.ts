@@ -1,10 +1,15 @@
 import {EntitySchema, EntitySchemaColumnOptions} from "typeorm"
-import {User} from "shared/dist";
+import {User} from "shared";
 
+
+export const ApIdSchema = {
+    type: String,
+    length: 21
+} as EntitySchemaColumnOptions;
 
 export const BaseColumnSchemaPart = {
     id: {
-        type: "bytea",
+        ...ApIdSchema,
         primary: true,
     } as EntitySchemaColumnOptions,
     created: {

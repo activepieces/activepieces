@@ -5,7 +5,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "ksuid": "^3.0.0"
+    "nanoid": "^3.3.4"
   },
   "exports": "./dist/index.js",
   "types": "./dist/index.d.ts"

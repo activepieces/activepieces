@@ -1,6 +1,6 @@
 import {EntitySchema} from "typeorm"
 import {Collection, CollectionVersion, Instance, Project, User} from "shared/dist";
-import {BaseColumnSchemaPart} from "./base-entity";
+import {ApIdSchema, BaseColumnSchemaPart} from "../helper/base-entity";
 
 interface InstanceSchema extends Instance {
     collection: Collection;
@@ -11,18 +11,10 @@ export const InstanceEntity = new EntitySchema<InstanceSchema>({
     name: "instance",
     columns: {
         ...BaseColumnSchemaPart,
-        projectId: {
-            type: 'bytea'
-        },
-        collectionId: {
-            type: 'bytea'
-        },
-        collectionVersionId: {
-            type: 'bytea'
-        },
-        flowVersionId: {
-            type: 'jsonb'
-        },
+        projectId: ApIdSchema,
+        collectionId: ApIdSchema,
+        collectionVersionId: ApIdSchema,
+        flowVersionId: ApIdSchema,
         status: {
             type: String
         }
@@ -52,6 +44,8 @@ export const InstanceEntity = new EntitySchema<InstanceSchema>({
         collection: {
             type: "one-to-one",
             target: "collection",
+            cascade: true,
+            onDelete: 'CASCADE',
             joinColumn: {
                 name: "collectionId",
                 referencedColumnName: "id",

@@ -1,5 +1,8 @@
-import { DataSource } from 'typeorm';
-import { UserEntity } from '../user/user-entity';
+import {DataSource} from 'typeorm';
+import {UserEntity} from '../user/user-entity';
+import {ProjectEntity} from "../project/project-entity";
+import {CollectionVersionEntity} from "../collection/collection-version/collection-version-entity";
+import {CollectionEntity} from "../collection/collection-entity";
 
 export const databaseConnection = new DataSource({
     type: 'postgres',
@@ -9,5 +12,8 @@ export const databaseConnection = new DataSource({
     password: 'A79Vm5D4p2VQHOp2gd5',
     database: 'activepieces',
     synchronize: true,
-    entities: [UserEntity],
+    entities: [UserEntity,
+        CollectionEntity,
+        ProjectEntity,
+        CollectionVersionEntity],
 });

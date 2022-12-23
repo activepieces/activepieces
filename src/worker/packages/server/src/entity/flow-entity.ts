@@ -1,6 +1,6 @@
 import {EntitySchema} from "typeorm"
 import {Flow, FlowVersion} from "shared/dist";
-import {BaseColumnSchemaPart} from "./base-entity";
+import {ApIdSchema, BaseColumnSchemaPart} from "../helper/base-entity";
 
 interface FlowSchema extends Flow {
     versions: FlowVersion[];
@@ -13,9 +13,7 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
         displayName: {
             type: String
         },
-        collectionId: {
-            type: 'bytea',
-        }
+        collectionId: ApIdSchema
     },
     indices: [
         {

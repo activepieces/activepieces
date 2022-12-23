@@ -1,8 +1,8 @@
-import KSUID = require("ksuid");
 import {BaseModel} from "./base-model";
 import {UserId} from "./user";
+import {ApId} from "../helper/id-generator";
 
-export type ProjectId = KSUID;
+export type ProjectId = ApId;
 
 export interface Project extends BaseModel<ProjectId> {
 
