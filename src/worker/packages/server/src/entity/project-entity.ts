@@ -1,6 +1,6 @@
 import {EntitySchema} from "typeorm"
 import {Collection, Project, User} from "shared/dist";
-import {BaseColumnSchemaPart} from "./base-entity";
+import {BaseColumnSchemaPart} from "../helper/base-entity";
 
 interface ProjectSchema extends Project {
     owner: User;

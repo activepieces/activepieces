@@ -1,5 +1,5 @@
 import {EntitySchema, EntitySchemaColumnOptions} from "typeorm"
-import {User} from "shared/dist";
+import {User} from "shared";
 
 
 export const BaseColumnSchemaPart = {

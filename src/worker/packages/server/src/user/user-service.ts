@@ -1,7 +1,11 @@
 import KSUID from 'ksuid';
 import { User } from 'shared';
-import { userRepo } from './user-repo';
 import { passwordHasher } from '../authentication/lib/password-hasher';
+import {databaseConnection} from "../database/database-connection";
+import {UserEntity} from "./user-entity";
+
+const userRepo = databaseConnection.getRepository(UserEntity);
+
 
 type GetOneQuery = {
     email?: string;

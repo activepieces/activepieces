@@ -2,7 +2,7 @@ import {FastifyInstance, FastifyPluginOptions, FastifyRequest} from "fastify"
 import {collectionService} from "./collection.service";
 import KSUID from "ksuid";
 import {CreateCollectionSchema, CreateCollectionRequest, UpdateCollectionRequest, UpdateCollectionSchema} from "shared";
-import {CollectionId} from "shared/dist/model/collection";
+import {CollectionId} from "shared";
 
 
 export const collectionController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {

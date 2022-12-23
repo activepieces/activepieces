@@ -2,7 +2,7 @@ import {DataSource} from 'typeorm';
 import {UserEntity} from '../user/user-entity';
 import {CollectionEntity} from "../collection/collection-entity";
 import {ProjectEntity} from "../entity/project-entity";
-import {CollectionVersionEntity} from "../entity/collection-version";
+import {CollectionVersionEntity} from "../collection/collection-version/collection-version";
 
 export const databaseConnection = new DataSource({
     type: 'postgres',

@@ -1,6 +1,6 @@
 import {EntitySchema} from "typeorm"
 import {Collection, CollectionVersion, Project} from "shared";
-import {BaseColumnSchemaPart} from "../entity/base-entity";
+import {BaseColumnSchemaPart} from "../helper/base-entity";
 
 interface CollectionSchema extends Collection {
     project: Project;

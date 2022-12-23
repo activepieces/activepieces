@@ -1,9 +1,18 @@
-import {CollectionId} from "shared/dist/model/collection";
-import {collectionRepo, collectionVersionRepo} from "./collection-repo";
-import {Collection, CollectionVersion, Config, UpdateCollectionRequest, User} from "shared";
+import {
+    Collection,
+    CreateCollectionRequest,
+    CollectionId,
+    CollectionVersion,
+    CollectionVersionState,
+    UpdateCollectionRequest
+} from "shared";
 import KSUID from "ksuid";
-import {CreateCollectionRequest} from "shared/dist/collection/dto/create-collection-request";
-import {CollectionVersionState} from "shared/dist/collection/collection-version";
+import {databaseConnection} from "../database/database-connection";
+import {CollectionEntity} from "./collection-entity";
+import {collectionVersionService} from "./collection-version/collection-version.service";
+
+const collectionRepo = databaseConnection.getRepository<Collection>(CollectionEntity);
+
 
 export const collectionService = {
 
@@ -13,13 +22,14 @@ export const collectionService = {
         });
     },
 
-    async update(collectionId: CollectionId, request: UpdateCollectionRequest): Promise<Collection> {
-        const collection: Partial<Collection> = {
-            id: KSUID.randomSync()
+    async update(collectionId: CollectionId, request: UpdateCollectionRequest): Promise<CollectionVersion> {
+        let lastVersion = await collectionVersionService.getLastVersion(collectionId);
+        if (lastVersion.state === CollectionVersionState.LOCKED) {
+            lastVersion = await collectionVersionService.createVersion(collectionId, request);
+        } else {
+            await collectionVersionService.updateVersion(lastVersion, request);
         }
-        return collectionRepo.findOneBy({
-            id: Object(collectionId)
-        });
+        return collectionVersionService.getLastVersion(collectionId);
     },
 
     async create(request: CreateCollectionRequest): Promise<Collection> {
@@ -27,18 +37,7 @@ export const collectionService = {
             id: KSUID.randomSync(),
             projectId: request.projectId
         }
-        await createVersion(collection.id, request);
+        await collectionVersionService.createVersion(collection.id, {displayName: request.displayName, configs: []});
         return collectionRepo.save(collection);
     },
 };
-
-async function createVersion(collectionId: CollectionId, request: { displayName: string }): Promise<CollectionVersion> {
-    const collectionVersion: Partial<CollectionVersion> = {
-        id: KSUID.randomSync(),
-        displayName: request.displayName,
-        collectionId: collectionId,
-        configs: [],
-        state: CollectionVersionState.DRAFT
-    }
-    return collectionVersionRepo.save(collectionVersion)
-}

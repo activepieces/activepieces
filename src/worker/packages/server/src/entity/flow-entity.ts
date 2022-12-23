@@ -1,6 +1,6 @@
 import {EntitySchema} from "typeorm"
 import {Flow, FlowVersion} from "shared/dist";
-import {BaseColumnSchemaPart} from "./base-entity";
+import {BaseColumnSchemaPart} from "../helper/base-entity";
 
 interface FlowSchema extends Flow {
     versions: FlowVersion[];
