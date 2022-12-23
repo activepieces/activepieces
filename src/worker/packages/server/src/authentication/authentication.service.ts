@@ -1,17 +1,15 @@
-import { AuthenticationRequest, AuthenticationResponse } from 'shared';
-import { SignUpError } from './sign-up-error';
-import { userService } from '../user/user-service';
-import { SignInError } from './sign-in-error';
-import { passwordHasher } from './lib/password-hasher';
-import { UserStatus } from 'shared';
-import { tokenUtils } from './lib/token-utils';
+import {AuthenticationRequest, AuthenticationResponse, UserStatus} from 'shared';
+import {userService} from '../user/user-service';
+import {passwordHasher} from './lib/password-hasher';
+import {tokenUtils} from './lib/token-utils';
+import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
 
 export const authenticationService = {
     signUp: async (request: AuthenticationRequest): Promise<AuthenticationResponse> => {
         const existingUser = await userService.getOne();
 
         if (existingUser !== null) {
-            throw new SignUpError('error=user_already_exists');
+            throw new ActivepiecesError({code: ErrorCode.EXISTING_USER, params: {}});
         }
 
         const user = await userService.create({
@@ -35,7 +33,11 @@ export const authenticationService = {
         });
 
         if (user === null) {
-            throw new SignInError(`error=user_not_found email=${request.email}`);
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_CREDENTIALS, params: {
+                    email: request.email
+                }
+            });
         }
 
         const passwordMatches = await passwordHasher.compare(
@@ -44,7 +46,11 @@ export const authenticationService = {
         );
 
         if (!passwordMatches) {
-            throw new SignInError(`error=password_mismatch email=${request.email}`);
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_CREDENTIALS, params: {
+                    email: request.email
+                }
+            });
         }
 
         const token = await tokenUtils.encode(user);
