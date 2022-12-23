@@ -1,10 +1,9 @@
-import KSUID = require("ksuid");
 import {BaseModel} from "./base-model";
-import {UserId} from "./user";
 import {FlowId} from "./flow";
 import {Trigger} from "./trigger";
+import {ApId} from "../helper/id-generator";
 
-export type FlowVersionId = KSUID;
+export type FlowVersionId = ApId;
 
 export interface FlowVersion extends BaseModel<FlowVersionId> {
 

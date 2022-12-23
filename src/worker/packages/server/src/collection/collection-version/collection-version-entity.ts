@@ -1,6 +1,6 @@
 import {EntitySchema} from "typeorm"
 import {Collection, CollectionVersion, Project} from "shared";
-import {BaseColumnSchemaPart} from "../../helper/base-entity";
+import {ApIdSchema, BaseColumnSchemaPart} from "../../helper/base-entity";
 
 interface CollectionVersionSchema extends CollectionVersion {
     collection: Collection;
@@ -13,9 +13,7 @@ export const CollectionVersionEntity = new EntitySchema<CollectionVersionSchema>
         displayName: {
             type: String,
         },
-        collectionId: {
-            type: 'bytea',
-        },
+        collectionId: ApIdSchema,
         configs: {
             type: 'jsonb',
         },
@@ -32,6 +30,8 @@ export const CollectionVersionEntity = new EntitySchema<CollectionVersionSchema>
     ],
     relations: {
         collection: {
+            cascade: true,
+            onDelete: 'CASCADE',
             type: 'many-to-one',
             target: 'collection',
             joinColumn: {

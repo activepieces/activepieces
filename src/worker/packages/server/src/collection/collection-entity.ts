@@ -1,19 +1,22 @@
-import {EntitySchema} from "typeorm"
-import {Collection, CollectionVersion, Project} from "shared";
-import {BaseColumnSchemaPart} from "../helper/base-entity";
+import { Entity, EntitySchema} from "typeorm"
+import {ApIdSchema, BaseColumnSchemaPart} from "../helper/base-entity";
+import {ProjectId} from "shared/dist/model/project";
+import {Collection, CollectionId, CollectionVersion, Project} from "shared";
 
-interface CollectionSchema extends Collection {
+export class CollectionSchema implements Collection {
+    id: CollectionId;
     project: Project;
     versions: CollectionVersion[];
+    created: number;
+    projectId: ProjectId;
+    updated: number;
 }
 
 export const CollectionEntity = new EntitySchema<CollectionSchema>({
     name: "collection",
     columns: {
         ...BaseColumnSchemaPart,
-        projectId: {
-            type: 'bytea',
-        },
+        projectId: ApIdSchema,
     },
     indices: [
         {
@@ -26,6 +29,8 @@ export const CollectionEntity = new EntitySchema<CollectionSchema>({
         project: {
             type: 'many-to-one',
             target: 'project',
+            cascade: true,
+            onDelete: 'CASCADE',
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: "fk_collection_project_id",

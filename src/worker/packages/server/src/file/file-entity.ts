@@ -1,6 +1,6 @@
 import {EntitySchema} from "typeorm"
-import {BaseColumnSchemaPart} from "./base-entity";
-import {File} from "shared/dist/model/file";
+import {ApIdSchema, BaseColumnSchemaPart} from "../helper/base-entity";
+import {File} from "shared";
 
 interface FileSchema extends File {
 
@@ -13,9 +13,7 @@ export const FileEntity = new EntitySchema<FileSchema>({
         contentType: {
             type: String,
         },
-        data: {
-            type: 'bytea',
-        },
+        data: ApIdSchema,
         size: {
             type: Number,
         },

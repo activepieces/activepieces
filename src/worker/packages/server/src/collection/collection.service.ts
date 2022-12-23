@@ -1,26 +1,44 @@
 import {
-    Collection,
     CreateCollectionRequest,
     CollectionId,
     CollectionVersion,
     CollectionVersionState,
-    UpdateCollectionRequest
+    UpdateCollectionRequest, Collection, SeekPage, Cursor, apId
 } from "shared";
-import KSUID from "ksuid";
 import {databaseConnection} from "../database/database-connection";
-import {CollectionEntity} from "./collection-entity";
 import {collectionVersionService} from "./collection-version/collection-version.service";
+import {ProjectId} from "shared/dist/model/project";
+import {CollectionEntity, CollectionSchema} from "./collection-entity";
+import {paginationHelper} from "../helper/pagination/pagination-utils";
+import {buildPaginator} from "../helper/pagination/build-paginator";
 
-const collectionRepo = databaseConnection.getRepository<Collection>(CollectionEntity);
+const collectionRepo = databaseConnection.getRepository(CollectionEntity);
 
 
 export const collectionService = {
 
     async getOne(id: CollectionId): Promise<Collection | null> {
         return collectionRepo.findOneBy({
-            id: Object(id)
+            id: id
         });
     },
+    async list(projectId: ProjectId, cursorRequest: Cursor | undefined, limit: number): Promise<SeekPage<Collection>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
+        const paginator = buildPaginator({
+            entity: CollectionEntity,
+            paginationKeys: ["created"],
+            query: {
+                limit: limit,
+                order: 'ASC',
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor
+            },
+        });
+        const queryBuilder = collectionRepo.createQueryBuilder().where({projectId: projectId});
+        const {data, cursor} = await paginator.paginate(queryBuilder.where({projectId: projectId}));
+        return paginationHelper.createPage<Collection>(data, cursor);
+    },
+
 
     async update(collectionId: CollectionId, request: UpdateCollectionRequest): Promise<CollectionVersion> {
         let lastVersion = await collectionVersionService.getLastVersion(collectionId);
@@ -34,10 +52,16 @@ export const collectionService = {
 
     async create(request: CreateCollectionRequest): Promise<Collection> {
         const collection: Partial<Collection> = {
-            id: KSUID.randomSync(),
+            id: apId(),
             projectId: request.projectId
         }
-        await collectionVersionService.createVersion(collection.id, {displayName: request.displayName, configs: []});
-        return collectionRepo.save(collection);
+
+        let savedCollection = await collectionRepo.save(collection);
+        await collectionVersionService.createVersion(savedCollection.id, {displayName: request.displayName, configs: []});
+        return savedCollection;
     },
+
+    async delete(collectionId: CollectionId) : Promise<void> {
+        await collectionRepo.delete({id: collectionId})
+    }
 };

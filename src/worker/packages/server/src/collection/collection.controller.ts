@@ -1,24 +1,38 @@
 import {FastifyInstance, FastifyPluginOptions, FastifyRequest} from "fastify"
 import {collectionService} from "./collection.service";
-import KSUID from "ksuid";
-import {CreateCollectionSchema, CreateCollectionRequest, UpdateCollectionRequest, UpdateCollectionSchema} from "shared";
+import {
+    CreateCollectionSchema,
+    CreateCollectionRequest,
+    UpdateCollectionRequest,
+    UpdateCollectionSchema,
+    ListCollectionsSchema
+} from "shared";
 import {CollectionId} from "shared";
-
+import {StatusCodes} from "http-status-codes";
+import {ProjectId} from "shared/dist/model/project";
 
 export const collectionController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
 
-    fastify.get('/collections/:collectionId', async (_request: FastifyRequest<
+    fastify.delete('/:collectionId', async (_request: FastifyRequest<
         {
             Params: {
-                collectionId: KSUID
+                collectionId: CollectionId
             }
         }>, _reply) => {
-        return {
-            hello: _request.params.collectionId
-        };
+        await collectionService.delete(_request.params.collectionId);
+        _reply.status(StatusCodes.OK).send();
     })
 
-    fastify.post('/collections/:collectionId', {
+    fastify.get('/:collectionId', async (_request: FastifyRequest<
+        {
+            Params: {
+                collectionId: CollectionId
+            }
+        }>, _reply) => {
+        return collectionService.getOne(_request.params.collectionId);
+    })
+
+    fastify.post('/:collectionId', {
         schema: UpdateCollectionSchema
     }, async (_request: FastifyRequest<
         {
@@ -27,10 +41,31 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
             },
             Body: UpdateCollectionRequest
         }>, _reply) => {
-        return await collectionService.update(_request.params.collectionId, _request.body);
+        try {
+            return await collectionService.update(_request.params.collectionId, _request.body);
+        }catch (e){
+            console.error(e);
+        }
     })
 
-    fastify.post('/collections', {
+    fastify.get('/', {
+        schema: ListCollectionsSchema
+    }, async (_request: FastifyRequest<
+        {
+            Querystring: {
+                projectId: ProjectId
+                limit: number;
+                cursor: string;
+            }
+        }>, _reply) => {
+        try{
+         return await collectionService.list(_request.query.projectId, _request.query.cursor, _request.query.limit);
+        }catch (e){
+            console.error(e);
+        }
+    })
+
+    fastify.post('/', {
         schema: CreateCollectionSchema
     }, async (_request: FastifyRequest<
         {

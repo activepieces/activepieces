@@ -1,6 +1,6 @@
 import {EntitySchema} from "typeorm"
 import {Flow, FlowVersion} from "shared/dist";
-import {BaseColumnSchemaPart} from "../helper/base-entity";
+import {ApIdSchema, BaseColumnSchemaPart} from "../helper/base-entity";
 
 interface FlowVersionSchema extends FlowVersion {
     flow: Flow;
@@ -10,9 +10,7 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
     name: "flow_version",
     columns: {
         ...BaseColumnSchemaPart,
-        flowId: {
-            type: 'bytea',
-        },
+        flowId: ApIdSchema,
         displayName: {
             type: String,
         },
@@ -37,6 +35,8 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
         flow: {
             type: 'many-to-one',
             target: 'flow',
+            cascade: true,
+            onDelete: 'CASCADE',
             joinColumn: {
                 name: 'flowId',
                 foreignKeyConstraintName: "fk_flow_version_flow"

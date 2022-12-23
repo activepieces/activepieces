@@ -1,11 +1,11 @@
 import {BaseModel} from "./base-model";
-import KSUID = require("ksuid");
 import {CollectionId} from "../collection/collection";
 import {CollectionVersionId} from "../collection/collection-version";
 import {FlowVersionId} from "./flow-version";
 import {ProjectId} from "./project";
+import {ApId} from "../helper/id-generator";
 
-export type InstanceId = KSUID;
+export type InstanceId = ApId;
 
 export interface Instance extends BaseModel<InstanceId> {
 

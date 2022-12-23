@@ -1,7 +1,6 @@
-import {CollectionVersion, CollectionVersionState, UpdateCollectionRequest, CollectionId} from "shared";
-import KSUID from "ksuid";
+import {CollectionVersion, CollectionVersionState, UpdateCollectionRequest, CollectionId, apId} from "shared";
 import {databaseConnection} from "../../database/database-connection";
-import {CollectionVersionEntity} from "./collection-version";
+import {CollectionVersionEntity} from "./collection-version-entity";
 
 const collectionVersionRepo = databaseConnection.getRepository<CollectionVersion>(CollectionVersionEntity);
 
@@ -9,9 +8,9 @@ const collectionVersionRepo = databaseConnection.getRepository<CollectionVersion
 export const collectionVersionService = {
 
     async updateVersion(collectionVersion: CollectionVersion, request: UpdateCollectionRequest): Promise<CollectionVersion> {
-        await collectionVersionRepo.update(Object(collectionVersion.id), request);
+        await collectionVersionRepo.update(collectionVersion.id, request);
         return collectionVersionRepo.findOneBy({
-            id: Object(collectionVersion.id)
+            id: collectionVersion.id
         });
     },
 
@@ -19,17 +18,17 @@ export const collectionVersionService = {
     async getLastVersion(collectionId: CollectionId): Promise<CollectionVersion> {
         return collectionVersionRepo.findOne({
             where: {
-                collectionId: Object(collectionId),
+                collectionId: collectionId,
             },
             order: {
-                id: 'DESC'
+                created: 'DESC',
             }
         });
     },
 
     async createVersion(collectionId: CollectionId, request: UpdateCollectionRequest): Promise<CollectionVersion> {
         const collectionVersion: Partial<CollectionVersion> = {
-            id: KSUID.randomSync(),
+            id: apId(),
             displayName: request.displayName,
             collectionId: collectionId,
             configs: request.configs,
