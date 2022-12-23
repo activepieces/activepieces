@@ -2,6 +2,8 @@ import fastify from 'fastify';
 import { User } from 'shared';
 import { databaseModule } from './database/database-module';
 import { authenticationModule } from './authentication/authentication.module';
+import {collectionModule} from "./collection/collection.module";
+import {collectionController} from "./collection/collection.controller";
 
 declare module 'fastify' {
     export interface FastifyRequest {
@@ -13,7 +15,10 @@ const app = fastify({
     logger: true
 });
 
+
+app.register(collectionController);
 app.register(databaseModule);
+app.register(collectionModule);
 app.register(authenticationModule);
 
 const start = async () => {

@@ -6,7 +6,7 @@
     "scripts": {
         "lint": "tslint --project tsconfig.json --format stylish",
         "build": "tsc",
-        "serve": "ts-node src/server.ts",
+        "serve": "ts-node src/app.ts",
         "start": "nodemon"
     },
     "keywords": [],

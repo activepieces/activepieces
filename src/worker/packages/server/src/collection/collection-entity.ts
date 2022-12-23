@@ -1,6 +1,6 @@
 import {EntitySchema} from "typeorm"
-import {Collection, CollectionVersion, Project} from "shared/dist";
-import {BaseColumnSchemaPart} from "./base-entity";
+import {Collection, CollectionVersion, Project} from "shared";
+import {BaseColumnSchemaPart} from "../entity/base-entity";
 
 interface CollectionSchema extends Collection {
     project: Project;
@@ -33,7 +33,7 @@ export const CollectionEntity = new EntitySchema<CollectionSchema>({
         },
         versions: {
             type: "one-to-many",
-            target: "collection-version",
+            target: "collection_version",
             inverseSide: 'collection'
         },
     }

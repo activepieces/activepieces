@@ -7,7 +7,7 @@ interface CollectionVersionSchema extends CollectionVersion {
 }
 
 export const CollectionVersionEntity = new EntitySchema<CollectionVersionSchema>({
-    name: "collection",
+    name: "collection_version",
     columns: {
         ...BaseColumnSchemaPart,
         displayName: {

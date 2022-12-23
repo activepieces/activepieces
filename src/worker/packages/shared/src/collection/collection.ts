@@ -1,7 +1,7 @@
 import KSUID = require("ksuid");
-import {BaseModel} from "./base-model";
-import {UserId} from "./user";
-import {ProjectId} from "./project";
+import {BaseModel} from "../model/base-model";
+import {UserId} from "../model/user";
+import {ProjectId} from "../model/project";
 
 export type CollectionId = KSUID;
 
