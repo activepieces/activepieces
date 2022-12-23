@@ -1,43 +1,44 @@
-import {EntitySchema} from "typeorm"
-import {Collection, CollectionVersion, Project} from "shared/dist";
-import {BaseColumnSchemaPart} from "./base-entity";
+import { EntitySchema } from 'typeorm';
+import { Collection, CollectionVersion, Project } from 'shared/dist';
+import { BaseColumnSchemaPart } from './base-entity';
 
 interface CollectionVersionSchema extends CollectionVersion {
-    collection: Collection;
+  collection: Collection;
 }
 
-export const CollectionVersionEntity = new EntitySchema<CollectionVersionSchema>({
-    name: "collection",
+export const CollectionVersionEntity =
+  new EntitySchema<CollectionVersionSchema>({
+    name: 'collection-version',
     columns: {
-        ...BaseColumnSchemaPart,
-        displayName: {
-            type: String,
-        },
-        collectionId: {
-            type: 'bytea',
-        },
-        configs: {
-            type: 'jsonb',
-        },
-        state: {
-            type: String,
-        },
+      ...BaseColumnSchemaPart,
+      displayName: {
+        type: String,
+      },
+      collectionId: {
+        type: 'bytea',
+      },
+      configs: {
+        type: 'jsonb',
+      },
+      state: {
+        type: String,
+      },
     },
     indices: [
-        {
-            name: 'idx_collection_version_collection_id',
-            columns: ['collectionId'],
-            unique: false
-        }
+      {
+        name: 'idx_collection_version_collection_id',
+        columns: ['collectionId'],
+        unique: false,
+      },
     ],
     relations: {
-        collection: {
-            type: 'many-to-one',
-            target: 'collection',
-            joinColumn: {
-                name: 'collectionId',
-                foreignKeyConstraintName: "fk_collection_version_collection_id"
-            },
+      collection: {
+        type: 'many-to-one',
+        target: 'collection',
+        joinColumn: {
+          name: 'collectionId',
+          foreignKeyConstraintName: 'fk_collection_version_collection_id',
         },
-    }
-})
+      },
+    },
+  });
