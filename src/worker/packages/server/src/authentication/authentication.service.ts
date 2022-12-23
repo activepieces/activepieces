@@ -3,6 +3,7 @@ import {userService} from '../user/user-service';
 import {passwordHasher} from './lib/password-hasher';
 import {tokenUtils} from './lib/token-utils';
 import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
+import {projectService} from "../project/project.service";
 
 export const authenticationService = {
     signUp: async (request: AuthenticationRequest): Promise<AuthenticationResponse> => {
@@ -19,6 +20,11 @@ export const authenticationService = {
             lastName: '',
             status: UserStatus.VERIFIED
         });
+
+        const project = await projectService.create({
+            displayName: "Project",
+            ownerId: user.id
+        })
 
         const token = await tokenUtils.encode(user);
 

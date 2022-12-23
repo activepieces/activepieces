@@ -1,15 +1,14 @@
-import KSUID = require("ksuid");
-import {BaseModel} from "./base-model";
+import {BaseModel} from "../model/base-model";
 import {CollectionId} from "./collection";
 import {Config} from "./config";
 
-export type CollectionVersionId = KSUID;
+export type CollectionVersionId = string;
 
 export interface CollectionVersion extends BaseModel<CollectionVersionId> {
 
     displayName: string;
     collectionId: CollectionId;
-    configs: Config<any, any>[];
+    configs: Config[];
     state: CollectionVersionState;
 }
 

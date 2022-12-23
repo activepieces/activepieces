@@ -3,10 +3,8 @@ import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
 import {SelectInput} from "components/dist/src/framework/config/select-input.model";
 import {InputType} from "components/dist/src/framework/config";
 import {components, getComponent} from "components/dist/src/apps";
-import {
-    ComponentOptionRequest,
-    ComponentOptionRequestSchema
-} from "shared/dist/dto/components/component-option-request";
+import {ComponentOptionRequest, ComponentOptionRequestSchema} from "shared";
+
 
 export const componentsController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
     fastify.get('/components', async (_request, _reply) => {

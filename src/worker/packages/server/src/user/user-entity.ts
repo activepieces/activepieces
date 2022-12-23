@@ -1,6 +1,6 @@
 import {EntitySchema} from "typeorm"
 import {Project, User} from "shared";
-import {BaseColumnSchemaPart} from "../entity/base-entity";
+import {BaseColumnSchemaPart} from "../helper/base-entity";
 
 export interface UserSchema extends User {
     projects: Project[];
