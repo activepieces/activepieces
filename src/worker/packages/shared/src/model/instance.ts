@@ -1,7 +1,7 @@
 import {BaseModel} from "./base-model";
 import KSUID = require("ksuid");
-import {CollectionId} from "./collection";
-import {CollectionVersionId} from "./collection-version";
+import {CollectionId} from "../collection/collection";
+import {CollectionVersionId} from "../collection/collection-version";
 import {FlowVersionId} from "./flow-version";
 import {ProjectId} from "./project";
 

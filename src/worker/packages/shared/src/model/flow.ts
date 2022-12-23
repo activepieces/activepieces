@@ -1,6 +1,6 @@
 import KSUID = require("ksuid");
 import {BaseModel} from "./base-model";
-import {CollectionId} from "./collection";
+import {CollectionId} from "../collection/collection";
 
 export type FlowId = KSUID;
 
