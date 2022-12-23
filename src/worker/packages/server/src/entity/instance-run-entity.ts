@@ -1,6 +1,8 @@
 import {EntitySchema} from "typeorm"
 import {ApIdSchema, BaseColumnSchemaPart} from "../helper/base-entity";
 import {InstanceRun} from "shared";
+import {BaseColumnSchemaPart} from "./base-entity";
+import {File} from "shared/dist/model/file";
 
 interface InstanceRunSchema extends InstanceRun {
 
@@ -22,6 +24,9 @@ export const InstanceRunEntity = new EntitySchema<InstanceRunSchema>({
             type: String,
         },
         logsFileId: ApIdSchema,
+        logsFileId: {
+            type: 'bytea',
+        },
         status: {
             type: String,
         },
