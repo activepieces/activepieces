@@ -7,7 +7,7 @@
         "lint": "tslint --project tsconfig.json --format stylish",
         "build": "tsc",
         "test": "jest --coverage",
-        "test:watch": "jest --watch"
+        "test:watch": "jest --watch",
         "serve": "ts-node src/app.ts",
         "start": "nodemon"
     },

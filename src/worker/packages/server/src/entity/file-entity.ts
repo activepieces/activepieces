@@ -1,6 +1,6 @@
 import {EntitySchema} from "typeorm"
-import {BaseColumnSchemaPart} from "./base-entity";
 import {File} from "shared/dist/model/file";
+import {BaseColumnSchemaPart} from "../helper/base-entity";
 
 interface FileSchema extends File {
 
