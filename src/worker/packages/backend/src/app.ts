@@ -2,7 +2,7 @@ import fastify from 'fastify';
 import { User } from 'shared';
 import { databaseModule } from './database/database-module';
 import { authenticationModule } from './authentication/authentication.module';
-import {collectionModule} from "./collection/collection.module";
+import {collectionModule} from "./collections/collection.module";
 import {StatusCodes} from "http-status-codes";
 import {ActivepiecesError} from "./helper/activepieces-error";
 import {projectModule} from "./project/project.module";

@@ -1,5 +1,5 @@
 import decompress = require("decompress");
-import {sandboxManager} from "../helper/sandbox";
+import {sandboxManager} from "../sandbox";
 
 const {execSync} = require("child_process");
 const fs = require("fs");

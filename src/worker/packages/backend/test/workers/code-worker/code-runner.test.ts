@@ -1,5 +1,5 @@
-import {CodeRunner} from "../../src/code-worker/code-runner";
-import SandboxManager, {Sandbox} from "../../src/helper/sandbox";
+import {CodeRunner} from "../../../src/workers/code-worker/code-runner";
+import SandboxManager, {Sandbox} from "../../../src/workers/sandbox";
 
 const fs = require("fs");
 
