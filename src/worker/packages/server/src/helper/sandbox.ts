@@ -1,4 +1,5 @@
 const {execSync} = require("child_process");
+const fs = require("fs");
 
 export class Sandbox {
 
@@ -12,16 +13,45 @@ export class Sandbox {
         Sandbox.runIsolate("--box-id=" + this.boxId + " --init");
     }
 
-    executeFlow(args: string[]) {
+    runCommandLine(commandLine: string): string {
         let metaFile = this.getSandboxFilePath("meta.txt");
         return Sandbox.runIsolate(
             "--dir=/usr/bin/ --dir=/etc/ --share-net --full-env --box-id=" + this.boxId +
-            " --processes --wall-time=600 --meta=" + metaFile + " --stdout=__standardOutput.txt" +
-            " --stderr=_standardError.txt --run /usr/bin/node activepieces-worker.js execute-flow");
+            " --processes --wall-time=600 --meta=" + metaFile + " --stdout=_standardOutput.txt" +
+            " --stderr=_standardError.txt --run " + commandLine);
+    }
+
+    parseFunctionOutput(): string {
+        let outputFile = this.getSandboxFilePath("_functionOutput.txt");
+        if(!fs.existsSync(outputFile)){
+            return undefined;
+        }
+        return fs.readFileSync(outputFile).toString("utf-8");
+    }
+
+    parseStandardOutput(): string {
+        return fs.readFileSync(this.getSandboxFilePath("_standardOutput.txt")).toString("utf-8");
+    }
+
+    parseStandardError(): string {
+        return fs.readFileSync(this.getSandboxFilePath("_standardError.txt")).toString("utf-8");
+    }
+
+    parseMetaFile(): Record<string, unknown> {
+        let metaFile = this.getSandboxFilePath("meta.txt");
+        let lines = fs.readFileSync(metaFile).toString("utf-8").split("\n");
+        let result: Record<string, unknown> = {};
+
+        lines.forEach((line: string) => {
+            let parts = line.split(":");
+            result[parts[0]] = parts[1];
+
+        })
+        return result;
     }
 
     getSandboxFilePath(subFile: string) {
-        return this.getSandboxFolderPath() + subFile;
+        return this.getSandboxFolderPath() + "/" + subFile;
     }
 
     getSandboxFolderPath(): string {
@@ -34,21 +64,32 @@ export class Sandbox {
 
 }
 
-const queue: number[] = [];
-for (let boxId = 0; boxId < 20; ++boxId) {
-    queue.push(boxId);
+export default class SandboxManager {
+    private static _instance?: SandboxManager;
+
+    private queue: number[] = [];
+
+    private constructor() {
+        if (SandboxManager._instance)
+            throw new Error("Use Singleton.instance instead of new.");
+        for (let boxId = 0; boxId < 20; ++boxId) {
+            this.queue.push(boxId);
+        }
+        SandboxManager._instance = this;
+    }
+
+    obtainSandbox(): Sandbox {
+        let sandboxId = this.queue.pop();
+        return new Sandbox(sandboxId);
+    }
+
+    returnSandbox(sandboxId: number) {
+        this.queue.push(sandboxId);
+    }
+
+    static get instance() {
+        return SandboxManager._instance ?? (SandboxManager._instance = new SandboxManager());
+    }
 }
 
-function obtainSandbox(): Sandbox {
-    let sandboxId = queue.pop();
-    return new Sandbox(sandboxId);
-}
-
-function returnSandbox(sandboxId: number) {
-    queue.push(sandboxId);
-}
-
-export const sandboxManager = {
-    obtainSandbox: obtainSandbox,
-    returnSandbox: returnSandbox
-}
+export const sandboxManager = SandboxManager.instance;

@@ -32,33 +32,37 @@ async function build(artifact: Buffer): Promise<Buffer> {
 
         sandbox.cleanAndInit();
 
-        await decompress(artifact, buildPath, {});
-        await prepareSandbox(buildPath);
+        await downloadFiles(artifact, buildPath);
 
-        const installResult = await execSync("npm --prefix " + buildPath + " install");
-        const buildResult = await execSync("npm --prefix " + buildPath + " run build");
+        await execSync("npm --prefix " + buildPath + " install");
+        await execSync("npm --prefix " + buildPath + " run build");
 
         let bundledFilePath = buildPath + "/dist/index.js";
-        if (fs.existsSync(bundledFilePath)) {
-            bundledFile = fs.readFileSync(bundledFilePath);
-        } else {
-            let invalidArtifactFile = fs.readFileSync("resources/invalid-code.js").toString("utf-8")
-                .replace("${ERROR_MESSAGE}", buildResult);
-            bundledFile = Buffer.from(invalidArtifactFile, "utf-8");
-        }
+        bundledFile = fs.readFileSync(bundledFilePath);
         console.log("Finished Building in sandbox " + buildPath);
+    } catch (error) {
+        let invalidArtifactFile = fs.readFileSync("./resources/invalid-code.js")
+            .toString("utf-8")
+            .replace("${ERROR_MESSAGE}", JSON.stringify(error.stdout.toString()).replace(/\"/g, '\\"'));
+        bundledFile = Buffer.from(invalidArtifactFile, "utf-8");
     } finally {
         sandboxManager.returnSandbox(sandbox.boxId);
     }
     return bundledFile;
 }
 
-async function prepareSandbox(buildPath: string){
+async function downloadFiles(artifact: Buffer, buildPath: string) {
+    await decompress(artifact, buildPath, {});
+
     const packageJson = JSON.parse(fs.readFileSync(buildPath + '/package.json', {encoding: 'utf8', flag: 'r'}));
+    if (packageJson['scripts'] === undefined) {
+        packageJson['scripts'] = {};
+    }
     packageJson.scripts['build'] = 'webpack --mode production';
     fs.writeFileSync(buildPath + "/package.json", JSON.stringify(packageJson));
     fs.writeFileSync(buildPath + "/webpack.config.js", webpackConfig);
 }
+
 
 export const CodeBuilder = {
     build: build
