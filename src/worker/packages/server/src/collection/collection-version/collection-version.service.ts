@@ -1,4 +1,11 @@
-import {CollectionVersion, CollectionVersionState, UpdateCollectionRequest, CollectionId, apId} from "shared";
+import {
+    CollectionVersion,
+    CollectionVersionState,
+    UpdateCollectionRequest,
+    CollectionId,
+    apId,
+    CollectionVersionId
+} from "shared";
 import {databaseConnection} from "../../database/database-connection";
 import {CollectionVersionEntity} from "./collection-version-entity";
 
@@ -15,10 +22,11 @@ export const collectionVersionService = {
     },
 
 
-    async getLastVersion(collectionId: CollectionId): Promise<CollectionVersion> {
+    async getCollectionVersionId(collectionId: CollectionId, versionId: CollectionVersionId): Promise<CollectionVersion> {
         return collectionVersionRepo.findOne({
             where: {
                 collectionId: collectionId,
+                id: versionId,
             },
             order: {
                 created: 'DESC',

@@ -3,13 +3,9 @@ import {ApIdSchema, BaseColumnSchemaPart} from "../helper/base-entity";
 import {ProjectId} from "shared/dist/model/project";
 import {Collection, CollectionId, CollectionVersion, Project} from "shared";
 
-export class CollectionSchema implements Collection {
-    id: CollectionId;
+export interface CollectionSchema extends Collection {
     project: Project;
     versions: CollectionVersion[];
-    created: number;
-    projectId: ProjectId;
-    updated: number;
 }
 
 export const CollectionEntity = new EntitySchema<CollectionSchema>({

@@ -5,11 +5,12 @@ import {
     CreateCollectionRequest,
     UpdateCollectionRequest,
     UpdateCollectionSchema,
-    ListCollectionsSchema
+    ListCollectionsSchema, CollectionVersionId
 } from "shared";
 import {CollectionId} from "shared";
 import {StatusCodes} from "http-status-codes";
 import {ProjectId} from "shared/dist/model/project";
+import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
 
 export const collectionController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
 
@@ -27,9 +28,17 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
         {
             Params: {
                 collectionId: CollectionId
+            },
+            Querystring: {
+                versionId: CollectionVersionId | undefined
             }
         }>, _reply) => {
-        return collectionService.getOne(_request.params.collectionId);
+        const versionId: CollectionVersionId = _request.query.versionId;
+        let collection = await collectionService.getOne(_request.params.collectionId, versionId);
+        if(collection === null){
+            throw new ActivepiecesError({ code: ErrorCode.COLLECTION_NOT_FOUND, params: {id: _request.params.collectionId}});
+        }
+        return collection;
     })
 
     fastify.post('/:collectionId', {
@@ -41,11 +50,11 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
             },
             Body: UpdateCollectionRequest
         }>, _reply) => {
-        try {
-            return await collectionService.update(_request.params.collectionId, _request.body);
-        }catch (e){
-            console.error(e);
+        let collection = await collectionService.getOne(_request.params.collectionId, undefined);
+        if(collection === null){
+            throw new ActivepiecesError({ code: ErrorCode.COLLECTION_NOT_FOUND, params: {id: _request.params.collectionId}});
         }
+        return await collectionService.update(_request.params.collectionId, _request.body);
     })
 
     fastify.get('/', {
@@ -58,11 +67,7 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
                 cursor: string;
             }
         }>, _reply) => {
-        try{
          return await collectionService.list(_request.query.projectId, _request.query.cursor, _request.query.limit);
-        }catch (e){
-            console.error(e);
-        }
     })
 
     fastify.post('/', {

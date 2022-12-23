@@ -6,7 +6,7 @@ export {Step} from './model/step';
 export {Action} from './model/action';
 export {Trigger} from './model/trigger';
 export {Collection, CollectionId} from './collection/collection';
-export {CollectionVersion, CollectionVersionState} from './collection/collection-version';
+export {CollectionVersion, CollectionVersionState, CollectionVersionId} from './collection/collection-version';
 export {ComponentOptionRequest, ComponentOptionRequestSchema} from './components/dto/component-option-request';
 export {FlowVersion} from './model/flow-version';
 export {Flow} from './model/flow';
