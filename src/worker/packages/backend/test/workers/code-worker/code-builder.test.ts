@@ -1,5 +1,4 @@
 import {CodeBuilder} from "../../../src/workers/code-worker/code-builder";
-import {CodeExecutor} from "engine/dist/src/executors/code-executer";
 import SandboxManager, {Sandbox} from "../../../src/workers/sandbox";
 
 const fs = require("fs");

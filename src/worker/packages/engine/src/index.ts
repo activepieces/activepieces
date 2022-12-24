@@ -29,24 +29,20 @@ function executeFlow() {
             collectionVersionId: string;
             workerToken: string;
             apiUrl: string;
+            triggerPayload: StepOutput
         } = Utils.parseJsonFile(globals.inputFile);
 
         globals.workerToken = input.workerToken;
         globals.apiUrl = input.apiUrl;
-        const configs = Utils.parseJsonFile(globals.configsFile);
-        const triggerPayload: StepOutput = StepOutput.deserialize(
-            Utils.parseJsonFile(globals.triggerPayloadFile)
-        );
 
         const executionState = new ExecutionState();
-        executionState.insertStep(triggerPayload, 'trigger', []);
+        executionState.insertStep(input.triggerPayload, 'trigger', []);
         const executor = new FlowExecutor(executionState);
         executor
             .executeFlow(
                 input.collectionVersionId,
                 input.flowVersionId,
-                new StoreScope([]),
-                configs
+                new StoreScope([])
             )
             .then(output => {
                 Utils.writeToJsonFile(globals.outputFile, output);

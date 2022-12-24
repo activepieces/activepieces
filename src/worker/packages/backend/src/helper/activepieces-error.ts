@@ -1,9 +1,9 @@
-import {CollectionId} from "shared";
+import {CollectionId, FileId, FlowId} from "shared";
 
 export class ActivepiecesError extends Error {
 
     constructor(public error: StepNotFoundErrorParams | ComponentNotFoundErrorParams | ConfigNotFoundErrorParams
-        | ExistingUserErrorParams | InvalidCredentialsErrorParams | CollectionNotFoundErrorParams) {
+        | ExistingUserErrorParams | InvalidCredentialsErrorParams | CollectionNotFoundErrorParams | FlowNotFoundErrorParams | FileNotFoundErrorParams) {
         super(error.code);
     }
 
@@ -12,6 +12,16 @@ export class ActivepiecesError extends Error {
 export interface ErrorParams<T, V> {
     code: T,
     params: V
+}
+
+export interface FileNotFoundErrorParams extends ErrorParams<ErrorCode.FILE_NOT_FOUND, {
+    id: FileId
+}> {
+}
+
+export interface FlowNotFoundErrorParams extends ErrorParams<ErrorCode.FLOW_NOT_FOUND, {
+    id: FlowId
+}> {
 }
 
 export interface CollectionNotFoundErrorParams extends ErrorParams<ErrorCode.COLLECTION_NOT_FOUND, {
@@ -49,6 +59,8 @@ export interface ConfigNotFoundErrorParams extends ErrorParams<ErrorCode.CONFIG_
 export enum ErrorCode {
     COMPONENT_NOT_FOUND = "COMPONENT_NOT_FOUND",
     STEP_NOT_FOUND = "STEP_NOT_FOUND",
+    FILE_NOT_FOUND = "FILE_NOT_FOUND",
+    FLOW_NOT_FOUND = "FLOW_NOT_FOUND",
     COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
     EXISTING_USER = "EXISTING_USER",
     INVALID_CREDENTIALS = "INVALID_CREDENTIALS",

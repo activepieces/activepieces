@@ -21,6 +21,11 @@ export const collectionVersionService = {
         });
     },
 
+    async getOne(id: CollectionVersionId) : Promise<CollectionVersion>{
+        return collectionVersionRepo.findOneBy({
+            id: id
+        })
+    },
 
     async getCollectionVersionId(collectionId: CollectionId, versionId: CollectionVersionId): Promise<CollectionVersion> {
         return collectionVersionRepo.findOne({

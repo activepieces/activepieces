@@ -17,11 +17,5 @@ export const projectService = {
                 ownerId: ownerId
             }
         })
-    },
-
-    async getOne(id: ProjectId): Promise<Project | null> {
-        return projectRepo.findOneBy({
-            id: Object(id)
-        });
     }
 };

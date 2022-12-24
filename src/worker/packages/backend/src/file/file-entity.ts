@@ -10,12 +10,9 @@ export const FileEntity = new EntitySchema<FileSchema>({
     name: "file",
     columns: {
         ...BaseColumnSchemaPart,
-        contentType: {
-            type: String,
-        },
-        data: ApIdSchema,
-        size: {
-            type: Number,
-        },
+        data: {
+            type: 'bytea',
+            nullable: false
+        }
     }
 })
