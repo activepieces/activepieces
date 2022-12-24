@@ -1,4 +1,4 @@
-import {CodeBuilder} from "../../../src/workers/code-worker/code-builder";
+import {codeBuilder} from "../../../src/workers/code-worker/code-builder";
 import SandboxManager, {Sandbox} from "../../../src/workers/sandbox";
 
 const fs = require("fs");
@@ -10,7 +10,7 @@ describe('Code Builder', () => {
             .spyOn(SandboxManager.prototype, 'obtainSandbox')
             .mockImplementation(() => new Sandbox(1));
         let resourceFile = fs.readFileSync('test/resources/simple-code.zip');
-        let bundledJs = await CodeBuilder.build(resourceFile);
+        let bundledJs = await codeBuilder.build(resourceFile);
         expect(bundledJs.toString("utf-8")).toEqual('module.exports={code:async e=>!0};');
     });
 
@@ -19,7 +19,7 @@ describe('Code Builder', () => {
             .spyOn(SandboxManager.prototype, 'obtainSandbox')
             .mockImplementation(() => new Sandbox(2));
         let resourceFile = fs.readFileSync('test/resources/compilation-error.zip');
-        let bundledJs = await CodeBuilder.build(resourceFile);
+        let bundledJs = await codeBuilder.build(resourceFile);
         expect(bundledJs.toString("utf-8")).toMatch(/(1 error)/);
     });
 

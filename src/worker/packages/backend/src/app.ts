@@ -9,7 +9,7 @@ import {projectModule} from "./project/project.module";
 import {componentsController} from "./components/components.controller";
 import {flowModule} from "./flows/flow.module";
 import {fileModule} from "./file/file.module";
-import {redisClient} from "./database/redis-database";
+import {redisClient} from "./database/redis-connection";
 
 declare module 'fastify' {
     export interface FastifyRequest {

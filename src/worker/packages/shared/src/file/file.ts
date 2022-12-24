@@ -5,5 +5,5 @@ export type FileId = ApId;
 
 
 export interface File extends BaseModel<FileId> {
-    data: ArrayBuffer;
+    data: Buffer;
 }

@@ -21,7 +21,13 @@ const flowVersionRepo = databaseConnection.getRepository<FlowVersion>(FlowVersio
 
 export const flowVersionService = {
 
-    async updateVersion(flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowVersion> {
+    async overwriteVersion(flowVersionId: FlowVersionId, mutatedFlowVersion: FlowVersion){
+        await flowVersionRepo.update(flowVersionId, mutatedFlowVersion);
+        return flowVersionRepo.findOneBy({
+            id: flowVersionId
+        })
+    },
+    async applyOperation(flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowVersion> {
         if (request.type === FlowOperationType.UPDATE_ACTION) {
             request = await prepareRequest(flowVersion, request);
         }
@@ -110,7 +116,8 @@ async function deleteArtifact(codeSettings: CodeActionSettings): Promise<CodeAct
 
 async function uploadArtifact(codeSettings: CodeActionSettings): Promise<CodeActionSettings>{
     if(codeSettings.artifact !== undefined) {
-        const savedFile = await fileService.save(codeSettings.artifact);
+        const bufferFromBase64 = Buffer.from(codeSettings.artifact, 'base64');
+        const savedFile = await fileService.save(bufferFromBase64);
         codeSettings.artifact = undefined;
         codeSettings.artifactSourceId = savedFile.id;
         codeSettings.artifactPackagedId = undefined;
