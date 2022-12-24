@@ -1,6 +1,6 @@
 import {sandboxManager} from "../sandbox";
-import {CodeBuilder} from "./code-builder";
 import {CodeExecutionResult, CodeRunStatus} from "shared";
+import {codeBuilder} from "./code-builder";
 
 const fs = require("fs");
 
@@ -30,7 +30,7 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
         console.log("Started Executing Code in sandbox " + buildPath);
         sandbox.cleanAndInit();
 
-        let bundledCode = await CodeBuilder.build(artifact);
+        let bundledCode = await codeBuilder.build(artifact);
         let codeExecutor = fs.readFileSync("resources/code-executor.js");
         fs.writeFileSync(buildPath + "/index.js", bundledCode);
         fs.writeFileSync(buildPath + "/_input.txt", JSON.stringify(input));

@@ -64,6 +64,6 @@ async function downloadFiles(artifact: Buffer, buildPath: string) {
 }
 
 
-export const CodeBuilder = {
+export const codeBuilder = {
     build: build
 }

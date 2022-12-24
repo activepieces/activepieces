@@ -14,6 +14,7 @@ import {
 import {flowVersionService} from "./flow-version/flow-version.service";
 import {paginationHelper} from "../helper/pagination/pagination-utils";
 import {buildPaginator} from "../helper/pagination/build-paginator";
+import {redisLock} from "../database/redis-connection";
 
 const flowRepo = databaseConnection.getRepository(FlowEntity);
 
@@ -81,17 +82,14 @@ export const flowService = {
         }
     },
     async update(flowId: FlowId, request: FlowOperationRequest): Promise<FlowVersion> {
-        try {
-            let lastVersion = await flowVersionService.getFlowVersion(flowId, undefined);
-            if (lastVersion.state === FlowVersionState.LOCKED) {
-                lastVersion = await flowVersionService.createVersion(flowId, lastVersion);
-            }
-            await flowVersionService.updateVersion(lastVersion, request);
-            return flowVersionService.getFlowVersion(flowId, undefined);
-        }catch (e){
-            // TODO REMOVE
-            console.error(e);
+        let flowLock = await redisLock(flowId);
+        let lastVersion = await flowVersionService.getFlowVersion(flowId, undefined);
+        if (lastVersion.state === FlowVersionState.LOCKED) {
+            lastVersion = await flowVersionService.createVersion(flowId, lastVersion);
         }
+        await flowVersionService.applyOperation(lastVersion, request);
+        await flowLock();
+        return flowVersionService.getFlowVersion(flowId, undefined);
     },
     async delete(flowId: FlowId): Promise<void> {
         await flowRepo.delete({id: flowId})

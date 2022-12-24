@@ -32,6 +32,8 @@
         "ksuid": "^3.0.0",
         "nanoid": "^3.3.4",
         "pg": "^8.8.0",
+        "redis": "^4.5.1",
+        "redis-lock": "^1.0.0",
         "shared": "*",
         "typeorm": "^0.3.11",
         "typeorm-extension": "^2.4.0"
