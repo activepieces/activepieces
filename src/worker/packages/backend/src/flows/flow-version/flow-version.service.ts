@@ -1,13 +1,15 @@
 import {
     ActionType,
     apId,
-    CloneFlowVersionRequest, CodeActionSettings, File,
+    CloneFlowVersionRequest,
+    CodeActionSettings,
     flowHelper,
     FlowId,
     FlowOperationType,
     FlowVersion,
     FlowVersionId,
-    FlowVersionState, getStep,
+    FlowVersionState,
+    getStep,
 } from "shared";
 import {databaseConnection} from "../../database/database-connection";
 import {FlowVersionEntity} from "./flow-version-entity";
@@ -74,6 +76,13 @@ async function prepareRequest(flowVersion: FlowVersion, request: FlowOperationRe
                 if(previousStep.type === ActionType.CODE){
                     await deleteArtifact(previousStep.settings);
                 }
+            }
+            break;
+
+        case FlowOperationType.DELETE_ACTION:
+            let previousStep = getStep(flowVersion, clonedRequest.request.name);
+            if(previousStep.type === ActionType.CODE){
+                await deleteArtifact(previousStep.settings);
             }
             break;
         default:
