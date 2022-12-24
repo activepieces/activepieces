@@ -46,8 +46,7 @@ interface BasicActionStep<A, V> {
 
 export type UpdateTriggerRequest = BasicTriggerRequest<TriggerType.WEBHOOK, {}>
     | BasicTriggerRequest<TriggerType.SCHEDULE, ScheduleTriggerSettings>
-    | BasicTriggerRequest<TriggerType.COLLECTION_DISABLED, {}>
-    | BasicTriggerRequest<TriggerType.COLLECTION_ENABLED, {}>
+    | BasicTriggerRequest<TriggerType.EMPTY, {}>
     | BasicTriggerRequest<TriggerType.COMPONENT, ComponentTriggerSettings>
 
 

@@ -1,6 +1,6 @@
 import {Action} from "../actions/action";
 
-export type Trigger = CollectionEnabledTrigger | CollectionDisabledTrigger | WebhookTrigger | ScheduleTrigger | ComponentTrigger | EmptyTrigger;
+export type Trigger =  WebhookTrigger | ScheduleTrigger | ComponentTrigger | EmptyTrigger;
 
 interface BaseTrigger<T extends TriggerType, V> {
   type: T;

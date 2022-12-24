@@ -6,8 +6,8 @@ import {
     UpdateActionRequest,
     UpdateTriggerRequest
 } from "./flow-operations";
-import {Trigger, TriggerType} from "./triggers/trigger";
 import {Action, ActionType, CodeAction, ComponentAction, LoopOnItemsAction, StorageAction} from "./actions/action";
+import {Trigger, TriggerType} from "./triggers/trigger";
 
 
 
@@ -105,34 +105,28 @@ function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: 
         nextAction: nextAction
     };
     switch (request.type) {
-        case TriggerType.COLLECTION_ENABLED:
+        case TriggerType.EMPTY:
             return {
                 ...baseProperties,
-                type: TriggerType.COLLECTION_DISABLED,
-                settings: request.settings,
+                type: TriggerType.EMPTY,
+                settings: request.settings
             };
         case TriggerType.SCHEDULE:
             return {
                 ...baseProperties,
-                type: TriggerType.COLLECTION_DISABLED,
+                type: TriggerType.SCHEDULE,
                 settings: request.settings
             };
         case TriggerType.COMPONENT:
             return {
                 ...baseProperties,
-                type: TriggerType.COLLECTION_DISABLED,
+                type: TriggerType.COMPONENT,
                 settings: request.settings
             };
         case TriggerType.WEBHOOK:
             return {
                 ...baseProperties,
-                type: TriggerType.COLLECTION_DISABLED,
-                settings: request.settings
-            };
-        case TriggerType.COLLECTION_DISABLED:
-            return {
-                ...baseProperties,
-                type: TriggerType.COLLECTION_DISABLED,
+                type: TriggerType.WEBHOOK,
                 settings: request.settings
             };
     }
