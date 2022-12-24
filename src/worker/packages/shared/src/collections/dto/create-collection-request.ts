@@ -1,4 +1,4 @@
-import {ProjectId} from "../../model/project";
+import {ProjectId} from "../../project/project";
 
 export interface CreateCollectionRequest {
     displayName: string;

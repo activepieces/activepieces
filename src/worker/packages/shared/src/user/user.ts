@@ -1,5 +1,5 @@
-import {BaseModel} from "./base-model";
-import {ApId} from "../helper/id-generator";
+import {BaseModel} from "../common/base-model";
+import {ApId} from "../common/id-generator";
 
 export type UserId = ApId;
 

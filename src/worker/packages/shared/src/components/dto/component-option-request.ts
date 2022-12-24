@@ -1,7 +1,7 @@
 export interface ComponentOptionRequest {
     stepName: string;
     configName: string;
-    config: Record<string, unknown>;
+    configs: Record<string, unknown>;
 }
 
 export const ComponentOptionRequestSchema = {
@@ -10,8 +10,8 @@ export const ComponentOptionRequestSchema = {
         properties: {
             stepName: {type: 'string'},
             configName: {type: 'string'},
-            config: {type: 'object'}
+            configs: {type: 'object'}
         },
-        required: ['stepName', 'configName', 'config']
+        required: ['stepName', 'configName', 'configs']
     }
 }

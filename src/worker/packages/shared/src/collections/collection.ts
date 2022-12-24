@@ -1,5 +1,5 @@
-import {BaseModel} from "../model/base-model";
-import {ProjectId} from "../model/project";
+import {BaseModel} from "../common/base-model";
+import {ProjectId} from "../project/project";
 import {CollectionVersion} from "./collection-version";
 
 export type CollectionId = string;

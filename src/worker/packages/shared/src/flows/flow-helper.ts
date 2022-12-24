@@ -1,32 +1,24 @@
-import {FlowVersion} from "../model/flow-version";
+import {FlowVersion} from "./flow-version";
 import {
     AddActionRequest, DeleteActionRequest,
-    FlowOperation,
-    OperationRequest,
+    FlowOperationType,
+    FlowOperationRequest,
     UpdateActionRequest,
     UpdateTriggerRequest
-} from "../dto/flow-operations";
-import {Trigger, TriggerType} from "../model/trigger";
-import {Action, ActionType, CodeAction, ComponentAction, LoopOnItemsAction, StorageAction} from "../model/action";
+} from "./flow-operations";
+import {Trigger, TriggerType} from "./triggers/trigger";
+import {Action, ActionType, CodeAction, ComponentAction, LoopOnItemsAction, StorageAction} from "./actions/action";
 
-function apply(flowVersion: FlowVersion,
-               operation: OperationRequest): FlowVersion {
-    const clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion));
-    switch (operation.type) {
-        case FlowOperation.DELETE_ACTION:
-            deleteAction(flowVersion, operation.request);
-            break;
-        case FlowOperation.ADD_ACTION:
-            addAction(flowVersion, operation.request);
-            break;
-        case FlowOperation.UPDATE_ACTION:
-            updateAction(flowVersion, operation.request);
-            break;
-        case FlowOperation.UPDATE_TRIGGER:
-            flowVersion.trigger = createTrigger(clonedVersion.trigger.name, operation.request, clonedVersion.trigger.nextAction);
-            break;
+
+
+function isValid(flowVersion: FlowVersion){
+    let valid = false;
+    let step : Action | Trigger | undefined = flowVersion.trigger;
+    while(step !== undefined){
+        valid = valid && step.valid;
+        step = step.nextAction;
     }
-    return flowVersion;
+    return valid;
 }
 
 function deleteAction(flowVersion: FlowVersion, request: DeleteActionRequest): void {
@@ -38,6 +30,15 @@ function deleteAction(flowVersion: FlowVersion, request: DeleteActionRequest): v
         let stepToUpdate: Action = parentStep.nextAction;
         parentStep.nextAction = stepToUpdate.nextAction;
     }
+}
+
+
+export function getStep(flowVersion: FlowVersion, stepName: string): Action | Trigger | undefined {
+    let currentStep: Trigger | Action | undefined = flowVersion.trigger;
+    while (currentStep !== undefined && currentStep.name !== stepName) {
+        currentStep = currentStep.nextAction;
+    }
+    return currentStep;
 }
 
 
@@ -137,6 +138,28 @@ function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: 
     }
 }
 
-export const FlowHelper = {
-    apply: apply
+export const flowHelper = {
+    apply(flowVersion: FlowVersion, operation: FlowOperationRequest): FlowVersion {
+        const clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion));
+        switch (operation.type) {
+            case FlowOperationType.CHANGE_NAME:
+                flowVersion.displayName = operation.request.displayName;
+                break;
+            case FlowOperationType.DELETE_ACTION:
+                deleteAction(flowVersion, operation.request);
+                break;
+            case FlowOperationType.ADD_ACTION:
+                addAction(flowVersion, operation.request);
+                break;
+            case FlowOperationType.UPDATE_ACTION:
+                updateAction(flowVersion, operation.request);
+                break;
+            case FlowOperationType.UPDATE_TRIGGER:
+                flowVersion.trigger = createTrigger(clonedVersion.trigger.name, operation.request, clonedVersion.trigger.nextAction);
+                break;
+        }
+        clonedVersion.valid = isValid(clonedVersion);
+        return flowVersion;
+    },
+    getStep: getStep
 }

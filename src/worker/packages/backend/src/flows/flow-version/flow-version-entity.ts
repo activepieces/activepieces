@@ -1,6 +1,6 @@
 import {EntitySchema} from "typeorm"
-import {Flow, FlowVersion} from "shared/dist";
-import {ApIdSchema, BaseColumnSchemaPart} from "../helper/base-entity";
+import {Flow, FlowVersion} from "shared";
+import {ApIdSchema, BaseColumnSchemaPart} from "../../helper/base-entity";
 
 interface FlowVersionSchema extends FlowVersion {
     flow: Flow;
@@ -16,6 +16,7 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
         },
         trigger: {
             type: 'jsonb',
+            nullable: true
         },
         valid: {
           type: Boolean

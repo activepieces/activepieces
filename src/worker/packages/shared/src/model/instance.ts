@@ -1,9 +1,9 @@
-import {BaseModel} from "./base-model";
-import {CollectionId} from "../collection/collection";
-import {CollectionVersionId} from "../collection/collection-version";
-import {FlowVersionId} from "./flow-version";
-import {ProjectId} from "./project";
-import {ApId} from "../helper/id-generator";
+import {BaseModel} from "../common/base-model";
+import {CollectionId} from "../collections/collection";
+import {CollectionVersionId} from "../collections/collection-version";
+import {FlowVersionId} from "../flows/flow-version";
+import {ProjectId} from "../project/project";
+import {ApId} from "../common/id-generator";
 
 export type InstanceId = ApId;
 

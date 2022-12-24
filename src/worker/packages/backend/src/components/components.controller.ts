@@ -7,11 +7,11 @@ import {ComponentOptionRequest, ComponentOptionRequestSchema} from "shared";
 
 
 export const componentsController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
-    fastify.get('/components', async (_request, _reply) => {
+    fastify.get('/v1/components', async (_request, _reply) => {
         return components.map(f => f.metadata());
     })
 
-    fastify.post('/components/:componentName/options', {
+    fastify.post('/v1/components/:componentName/options', {
         schema: ComponentOptionRequestSchema
     }, async (_request: FastifyRequest<{
         Params: { componentName: string },
@@ -49,7 +49,7 @@ export const componentsController = async (fastify: FastifyInstance, options: Fa
                 }
             });
         }
-        return await (config as SelectInput).options(_request.body.config);
+        return await (config as SelectInput).options(_request.body.configs);
     })
 };
 

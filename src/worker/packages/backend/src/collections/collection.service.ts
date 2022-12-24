@@ -31,7 +31,6 @@ export const collectionService = {
         }
     },
     async list(projectId: ProjectId, cursorRequest: Cursor | undefined, limit: number): Promise<SeekPage<Collection>> {
-        try {
             const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
             const paginator = buildPaginator({
                 entity: CollectionEntity,
@@ -55,9 +54,6 @@ export const collectionService = {
                 data[i] = {...data[i], version: versions[i]};
             }
             return paginationHelper.createPage<Collection>(data, cursor);
-        } catch (e) {
-            console.error(e);
-        }
     },
 
 

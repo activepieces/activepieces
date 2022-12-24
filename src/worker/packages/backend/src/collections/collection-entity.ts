@@ -1,10 +1,11 @@
 import { Entity, EntitySchema} from "typeorm"
 import {ApIdSchema, BaseColumnSchemaPart} from "../helper/base-entity";
 import {ProjectId} from "shared/dist/model/project";
-import {Collection, CollectionId, CollectionVersion, Project} from "shared";
+import {Collection, CollectionId, CollectionVersion, Flow, Project} from "shared";
 
 export interface CollectionSchema extends Collection {
     project: Project;
+    flows: Flow[];
     versions: CollectionVersion[];
 }
 
@@ -35,6 +36,11 @@ export const CollectionEntity = new EntitySchema<CollectionSchema>({
         versions: {
             type: "one-to-many",
             target: "collection_version",
+            inverseSide: 'collection'
+        },
+        flows: {
+            type: "one-to-many",
+            target: "flow",
             inverseSide: 'collection'
         },
     }

@@ -1,4 +1,4 @@
-import {BaseModel} from "../model/base-model";
+import {BaseModel} from "../common/base-model";
 import {CollectionId} from "./collection";
 import {Config} from "./config";
 

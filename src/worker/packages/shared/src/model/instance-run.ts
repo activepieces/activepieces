@@ -1,10 +1,10 @@
-import {BaseModel} from "./base-model";
-import {ProjectId} from "./project";
-import {FlowVersionId} from "./flow-version";
-import {FileId} from "./file";
-import {CollectionVersionId} from "../collection/collection-version";
-import {CollectionId} from "../collection/collection";
-import {ApId} from "../helper/id-generator";
+import {BaseModel} from "../common/base-model";
+import {ProjectId} from "../project/project";
+import {FlowVersionId} from "../flows/flow-version";
+import {FileId} from "../file/file";
+import {CollectionVersionId} from "../collections/collection-version";
+import {CollectionId} from "../collections/collection";
+import {ApId} from "../common/id-generator";
 
 export type InstanceRunId = ApId;
 

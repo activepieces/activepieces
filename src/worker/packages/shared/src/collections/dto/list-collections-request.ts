@@ -1,5 +1,5 @@
-import {ProjectId} from "../../model/project";
-import {Cursor} from "../../model/seek-page";
+import {ProjectId} from "../../project/project";
+import {Cursor} from "../../common/seek-page";
 
 export interface ListCollectionsRequest {
     projectId: ProjectId;
