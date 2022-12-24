@@ -14,6 +14,8 @@
 
 ## Get started for free
 
+* Activepieces is still a prototype, an offical release coming soon*
+
 Clone Activepieces to your machine and run it with 1 command
 
  ```bash 
@@ -31,39 +33,6 @@ The username is `admin@activepieces.com` and the password is `password`.
  
 ### Other Options
 We're planning to launch a cloud version of Activepieces and instructions to distribute it on your own infrastructure
-
-
-## Build from source
-
-- Build frontend
-  ```sh
-  docker build src/frontend -t activepieces/frontend:x.y.z
-  ```
-- Build the TS worker
-  - Go to the `src/worker` directory
-    ```sh
-    cd src/worker
-    ```
-  - Install npm deps
-    ```sh
-    npm ci
-    ```
-  - Bundle the worker
-    ```sh
-    npm run build:prod
-    ```
-  - Copy the bundled worker to server resources
-    ```sh
-    cp dist/activepieces-worker.js ../backend/backend-loader/src/main/resources/activepieces-worker.js
-    ```
-  - Get out of the `src/worker` directory
-  ```sh
-  cd ../../
-  ```
-- Build the backend
-  ```sh
-  docker build src/backend -t activepieces/backend:x.y.z
-  ```
 
 ## Features
 
