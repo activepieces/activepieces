@@ -32,6 +32,12 @@ export const flowVersionService = {
         });
     },
 
+    async getOne(id: FlowVersionId) : Promise<FlowVersion>{
+        return flowVersionRepo.findOneBy({
+            id: id
+        })
+    },
+
     async getFlowVersion(flowId: FlowId, versionId: FlowVersionId): Promise<FlowVersion> {
         return flowVersionRepo.findOne({
             where: {
@@ -71,7 +77,6 @@ async function prepareRequest(flowVersion: FlowVersion, request: FlowOperationRe
             if (clonedRequest.request.type === ActionType.CODE) {
                 const codeSettings: CodeActionSettings = clonedRequest.request.settings;
                 await uploadArtifact(codeSettings);
-
                 let previousStep = getStep(flowVersion, clonedRequest.request.name);
                 if(previousStep.type === ActionType.CODE){
                     await deleteArtifact(previousStep.settings);

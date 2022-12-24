@@ -1,7 +1,6 @@
 import {sandboxManager} from "../sandbox";
 import {CodeBuilder} from "./code-builder";
-import {CodeRunStatus} from "shared/dist/model/code-worker/code-run-status";
-import {CodeExecutionResult} from "shared/dist/model/code-worker/code-execution-result";
+import {CodeExecutionResult, CodeRunStatus} from "shared";
 
 const fs = require("fs");
 

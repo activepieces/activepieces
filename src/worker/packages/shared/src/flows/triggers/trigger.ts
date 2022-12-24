@@ -14,12 +14,6 @@ interface BaseTrigger<T extends TriggerType, V> {
 export interface EmptyTrigger extends BaseTrigger<TriggerType.EMPTY, {}> {
 }
 
-export interface CollectionEnabledTrigger extends BaseTrigger<TriggerType.COLLECTION_ENABLED, {}> {
-}
-
-export interface CollectionDisabledTrigger extends BaseTrigger<TriggerType.COLLECTION_DISABLED, {}> {
-}
-
 export interface WebhookTrigger extends BaseTrigger<TriggerType.WEBHOOK, {}> {
 }
 

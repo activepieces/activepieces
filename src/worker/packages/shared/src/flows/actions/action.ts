@@ -1,4 +1,8 @@
 
+
+export type Action = CodeAction | ComponentAction | StorageAction | LoopOnItemsAction;
+
+
 interface BaseAction<T, V> {
   type: T;
   settings: V;
@@ -7,8 +11,6 @@ interface BaseAction<T, V> {
   valid: boolean;
   nextAction: BaseAction<any, any>;
 }
-
-export type Action = CodeAction | ComponentAction | StorageAction | LoopOnItemsAction;
 
 export type CodeActionSettings = {
   artifact?: string;

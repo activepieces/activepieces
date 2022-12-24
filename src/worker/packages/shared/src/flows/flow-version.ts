@@ -1,7 +1,7 @@
 import {BaseModel} from "../common/base-model";
 import {FlowId} from "./flow";
-import {Trigger} from "./triggers/trigger";
 import {ApId} from "../common/id-generator";
+import {Trigger} from "./triggers/trigger";
 
 export type FlowVersionId = ApId;
 

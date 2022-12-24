@@ -22,16 +22,14 @@ export class FlowExecutor {
   public async executeFlow(
     collectionId: string,
     flowId: string,
-    storeScope: StoreScope,
-    configsValue: Record<string, any>
+    storeScope: StoreScope
   ) {
     try {
       const startTime = new Date().getTime();
 
       const flowVersion: FlowVersion = this.prepareFlow(
         collectionId,
-        flowId,
-        configsValue
+        flowId
       );
       const flowStatus = await this.iterateFlow(
         flowVersion.trigger?.nextAction,
@@ -134,8 +132,7 @@ export class FlowExecutor {
 
   private prepareFlow(
     collectionId: string,
-    flowId: string,
-    configs: Record<string, any>
+    flowId: string
   ) {
     try {
       // Parse all required files.
@@ -151,7 +148,6 @@ export class FlowExecutor {
 
       // Add predefined configs to Execution State.
       this.executionState.insertConfigs(collectionVersion.getConfigsMap());
-      this.executionState.insertConfigs(configs);
 
       return flowVersion;
     } catch (e) {
