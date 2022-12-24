@@ -5,6 +5,7 @@ export interface UpdateCollectionRequest {
     configs: Config[];
 }
 
+// TODO ADD VALIDATION FOR CONFIGS
 export const UpdateCollectionSchema = {
     body: {
         type: 'object',

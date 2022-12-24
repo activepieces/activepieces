@@ -11,6 +11,7 @@ interface BaseAction<T, V> {
 export type Action = CodeAction | ComponentAction | StorageAction | LoopOnItemsAction;
 
 export type CodeActionSettings = {
+  artifact?: string;
   artifactSourceId: string;
   artifactPackagedId: string;
   input: Record<string, unknown>;
