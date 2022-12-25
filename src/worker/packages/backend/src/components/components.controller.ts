@@ -1,8 +1,8 @@
 import {FastifyInstance, FastifyPluginOptions, FastifyRequest} from "fastify"
 import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
 import {SelectInput} from "components/dist/src/framework/config/select-input.model";
-import {InputType} from "components/dist/src/framework/config";
-import {components, getComponent} from "components/dist/src/apps";
+import {InputType} from "components";
+import {components, getComponent} from "components";
 import {ComponentOptionRequest, ComponentOptionRequestSchema} from "shared";
 
 

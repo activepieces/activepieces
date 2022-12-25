@@ -9,7 +9,7 @@ import {
     Instance,
     Trigger
 } from "shared";
-import {InstanceId} from "shared/dist/model/instance";
+import {InstanceId} from "shared";
 import {sandboxManager} from "../sandbox";
 import {flowVersionService} from "../../flows/flow-version/flow-version.service";
 import {collectionVersionService} from "../../collections/collection-version/collection-version.service";

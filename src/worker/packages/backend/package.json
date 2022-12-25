@@ -20,6 +20,7 @@
         "@types/koa": "^2.13.4",
         "@types/koa-router": "^7.4.4",
         "bcrypt": "^5.1.0",
+        "components": "*",
         "decompress": "^4.2.1",
         "fastify": "^4.10.2",
         "http-status-codes": "^2.2.0",

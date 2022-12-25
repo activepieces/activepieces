@@ -7,7 +7,7 @@ import {
 } from "shared";
 import {databaseConnection} from "../database/database-connection";
 import {collectionVersionService} from "./collection-version/collection-version.service";
-import {ProjectId} from "shared/dist/model/project";
+import {ProjectId} from "shared";
 import {CollectionEntity} from "./collection-entity";
 import {paginationHelper} from "../helper/pagination/pagination-utils";
 import {buildPaginator} from "../helper/pagination/build-paginator";
