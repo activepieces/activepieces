@@ -9,7 +9,7 @@ import {
 } from "shared";
 import {CollectionId} from "shared";
 import {StatusCodes} from "http-status-codes";
-import {ProjectId} from "shared/dist/model/project";
+import {ProjectId} from "shared";
 import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
 
 export const collectionController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {

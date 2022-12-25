@@ -1,8 +1,7 @@
 import {databaseConnection} from "../database/database-connection";
 import {ProjectEntity} from "./project-entity";
 import {apId, Project} from "shared";
-import {UserId} from "shared/dist/model/user";
-import {ProjectId} from "shared/dist/model/project";
+import {UserId} from "shared";
 
 const projectRepo = databaseConnection.getRepository(ProjectEntity);
 

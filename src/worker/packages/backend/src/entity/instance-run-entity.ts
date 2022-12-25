@@ -1,7 +1,6 @@
 import {EntitySchema} from "typeorm"
 import {ApIdSchema, BaseColumnSchemaPart} from "../helper/base-entity";
 import {InstanceRun} from "shared";
-import {File} from "shared/dist/model/file";
 
 interface InstanceRunSchema extends InstanceRun {
 
