@@ -19,7 +19,7 @@ declare module 'fastify' {
 
 const app = fastify({
     logger: true
-});
+}).withTypeProvider<TypeBoxTypeProvider>();
 
 app.register(projectModule);
 app.register(componentsController);
