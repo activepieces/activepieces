@@ -1,5 +1,5 @@
 import jwt, { SignOptions, VerifyOptions } from 'jsonwebtoken';
-import { User } from 'shared';
+import { Principal, PrincipalType, User } from 'shared';
 
 const SECRET = 'SUPER_SECRET';
 const ALGORITHM = 'HS256';
@@ -8,7 +8,12 @@ const EXPIRES_IN_SECONDS = 3600;
 const ISSUER = 'activepieces';
 
 export const tokenUtils = {
-    encode: async (payload: User): Promise<string> => {
+    encode: async (user: User): Promise<string> => {
+        const principal: Principal = {
+            id: user.id,
+            type: PrincipalType.USER,
+        };
+
         const signOptions: SignOptions = {
             algorithm: ALGORITHM,
             keyid: KEY_ID,
@@ -17,7 +22,7 @@ export const tokenUtils = {
         };
 
         return new Promise((resolve, reject) => {
-            jwt.sign(payload, SECRET, signOptions, (err, token) => {
+            jwt.sign(principal, SECRET, signOptions, (err, token) => {
                 if (err) {
                     return reject(err);
                 }
@@ -27,7 +32,7 @@ export const tokenUtils = {
         });
     },
 
-    decode: async (token: string): Promise<User> => {
+    decode: async (token: string): Promise<Principal> => {
         const verifyOptions: VerifyOptions = {
             algorithms: [ALGORITHM],
             issuer: ISSUER,
@@ -39,7 +44,7 @@ export const tokenUtils = {
                     return reject(err);
                 }
 
-                resolve(payload as User);
+                resolve(payload as Principal);
             });
         });
     }

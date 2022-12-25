@@ -1,6 +1,6 @@
 import fastify from 'fastify';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import { User } from 'shared';
+import { Principal, User } from 'shared';
 import { databaseModule } from './database/database-module';
 import { authenticationModule } from './authentication/authentication.module';
 import {collectionModule} from "./collections/collection.module";
@@ -14,7 +14,7 @@ import {redisClient} from "./database/redis-connection";
 
 declare module 'fastify' {
     export interface FastifyRequest {
-        user: User;
+        principal: Principal;
     }
 }
 
