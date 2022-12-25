@@ -1,0 +1,18 @@
+# Number of days of inactivity before an issue becomes stale
+daysUntilStale: 90
+# Number of days of inactivity before a stale issue is closed
+daysUntilClose: 14
+# Issues with these labels will never be considered stale
+exemptLabels:
+  - security
+  - bounty
+# Label to use when marking an issue as stale
+staleLabel: stale
+# Comment to post when marking an issue as stale. Set to `false` to disable
+markComment: >
+  This issue or PR has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs. If you would like to keep it open please let us know by replying and confirming that this is still relevant to the latest version of Activepieces and we will try to get to it as soon as we can. Thank you for your contributions.
+# Comment to post when closing a stale issue. Set to `false` to disable
+closeComment: >
+  This issue or PR has been automatically closed because it has not had recent activity. In the case of issues, if it persists in the latest version of Activepieces, please create a new issue and link back to this one for reference.  With PRs if you wish to pick up the PR and update it so that it can be considered for a future release, please comment and we will re-open it. Thank you for your contributions.
+# Limit to only `issues` or `pulls`
+only: issues
