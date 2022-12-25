@@ -10,6 +10,7 @@ export const AuthLayoutRoutes: Routes = [
 	{
 		path: 'sign-in',
 		component: SignInComponent,
+		canActivate: [UserNotLoggedIn, IsNotFirstSignIn],
 	},
 	{
 		path: 'sign-up',

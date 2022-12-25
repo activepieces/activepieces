@@ -1,8 +1,7 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
+import { FormControl, FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../../common/service/authentication.service';
-import { fadeInUp400ms } from '../../../common/animation/fade-in-up.animation';
 import { NavigationService } from '../../../dashboard/service/navigation.service';
 
 import {
@@ -12,15 +11,20 @@ import {
 	containsUppercaseCharacter,
 } from 'src/app/modules/common/validators';
 import { catchError, mapTo, Observable, of, switchMap, tap } from 'rxjs';
-
+export interface UserInfo {
+	first_name: FormControl<string>;
+	last_name: FormControl<string>;
+	email: FormControl<string>;
+	password: FormControl<string>;
+	track_events: FormControl<boolean>;
+	news_letter: FormControl<boolean>;
+}
 @Component({
 	templateUrl: './sign-up.component.html',
 	styleUrls: ['./sign-up.component.scss'],
-	animations: [fadeInUp400ms],
-	encapsulation: ViewEncapsulation.None,
 })
 export class SignUpComponent implements OnInit {
-	registrationForm: UntypedFormGroup;
+	registrationForm: FormGroup<UserInfo>;
 	submitted = false;
 	loading = false;
 	tokenError = false;
@@ -62,7 +66,7 @@ export class SignUpComponent implements OnInit {
 		this.submitted = true;
 		if (this.registrationForm.valid && !this.loading) {
 			this.loading = true;
-			const request = this.registrationForm.value;
+			const request = this.registrationForm.getRawValue();
 			this.signUp$ = this.authenticationService.signUp(request).pipe(
 				tap(response => {
 					this.authenticationService.saveToken(response);

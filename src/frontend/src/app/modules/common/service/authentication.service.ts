@@ -28,7 +28,7 @@ export class AuthenticationService {
 		});
 	}
 
-	signUp(request: { email; password; firstName; lastName }): Observable<HttpResponse<User>> {
+	signUp(request: { email; password; first_name; last_name }): Observable<HttpResponse<User>> {
 		return this.http.post<User>(environment.apiUrl + '/authentication/sign-up', request, {
 			observe: 'response',
 		});

@@ -1,273 +1,153 @@
-<div class="form-margin">
-    <div class="auth-form-title">Get Started!</div>
-    <form [formGroup]="registrationForm" (ngSubmit)="signUp()">
-      <div class="d-flex auth-single-row-controls-gap">
-        <div class="form-group">
-          <label class="form-text" for="firstName"
-            >First Name <span class="require-astrisk">*</span></label
-          >
-          <input
-            autofocus="true"
-            id="first_name"
-            class="form-control"
-            formControlName="first_name"
-            placeholder="John"
-            type="text"
-          />
-          <p
-            @fadeInUp
-            *ngIf="
-              submitted && registrationForm.get('first_name')?.hasError('required')
-            "
-            class="invalid-input"
-          >
-            First name is required
-          </p>
+
+	<div class="ap-typography-headline ap-text-center ap-mb-4">Let's Get Started!</div>
+	<form [formGroup]="registrationForm" (ngSubmit)="signUp()" class="ap-flex ap-flex-col ap-gap-2">
+		<div class="ap-flex ap-gap-1 md:ap-gap-4 ap-items-center ap-flex-col md:ap-flex-row">
+			<mat-form-field class="ap-w-full md:ap-w-initial" appearance="outline">
+				<mat-label>First Name</mat-label>
+				<input matInput placeholder="John/Jane" formControlName="first_name" />
+				<mat-error *ngIf="registrationForm.controls.first_name.invalid"> First name is required </mat-error>
+			</mat-form-field>
+			<mat-form-field class="ap-w-full md:ap-w-initial" appearance="outline">
+				<mat-label>Last Name</mat-label>
+				<input matInput placeholder="Doe" formControlName="last_name" />
+				<mat-error *ngIf="registrationForm.controls.last_name.invalid"> Last name is required </mat-error>
+			</mat-form-field>
+		</div>
+
+		<mat-form-field class="ap-w-full" appearance="outline">
+			<mat-label>Email</mat-label>
+			<input matInput placeholder="Email" formControlName="email" />
+			<mat-error *ngIf="registrationForm.controls.email.invalid">
+				<ng-container
+					*ngIf="
+						registrationForm.controls.email.getError('email') ||
+							registrationForm.controls.email.getError('invalidEmail');
+						else otherEmailErrors
+					">
+					Email is invalid
+				</ng-container>
+				<ng-template #otherEmailErrors>
+					<ng-container *ngIf="registrationForm.controls.email.getError('alreadyInUse')"
+						>Email is already used</ng-container
+					>
+					<ng-container *ngIf="registrationForm.controls.email.getError('required')"
+						>Email is required</ng-container
+					></ng-template
+				>
+			</mat-error>
+		</mat-form-field>
+		<mat-form-field class="ap-w-full" appearance="outline">
+			<mat-label>Password</mat-label>
+			<input
+				(focus)="menuTrigger.openMenu()"
+        (blur)="menuTrigger.closeMenu()"
+				type="password"
+				matInput
+				placeholder="Password"
+				formControlName="password" />
+			<mat-error *ngIf="registrationForm.controls['password'].invalid">
+				<ng-container *ngIf="getPasswordError('required'); else invalidPasswordMessage">
+					Password is required
+				</ng-container>
+				<ng-template #invalidPasswordMessage>Password is invalid</ng-template>
+			</mat-error>
+			<div #menuTrigger="matMenuTrigger" [matMenuTriggerFor]="menu" class="hidden-trigger"></div>
+		</mat-form-field>
+
+		<mat-menu #menu="matMenu" [hasBackdrop]="true">
+      <div class="ap-mx-2">
+        <div class="ap-flex ap-gap-4 ap-items-center" [class.invalid-password-condition]="getPasswordError('lowercase')">
+          <svg-icon
+            [svgStyle]="{ width: '13px', height: '13px' }"
+            src="assets/img/custom/checks/check-invalid.svg"
+            class="grey-check">
+          </svg-icon>
+          <svg-icon
+            [svgStyle]="{ width: '13px', height: '13px' }"
+            src="assets/img/custom/checks/check-correct.svg"
+            class="green-check">
+          </svg-icon>
+          Lowercase
         </div>
-        <div class="form-group flex-grow-1">
-          <label class="form-text" for="last_name"
-            >Last Name <span class="require-astrisk">*</span></label
-          >
-          <input
-            id="last_name"
-            class="form-control"
-            formControlName="last_name"
-            placeholder="Doe"
-            type="text"
-          />
-          <p
-            @fadeInUp
-            *ngIf="
-              submitted && registrationForm.get('last_name')?.hasError('required')
-            "
-            class="invalid-input"
-          >
-            Last name is required
-          </p>
+        <div class="ap-flex ap-gap-4 ap-items-center" [class.invalid-password-condition]="getPasswordError('uppercase')">
+          <svg-icon
+            [svgStyle]="{ width: '13px', height: '13px' }"
+            src="assets/img/custom/checks/check-invalid.svg"
+            class="grey-check">
+          </svg-icon>
+          <svg-icon
+            [svgStyle]="{ width: '13px', height: '13px' }"
+            src="assets/img/custom/checks/check-correct.svg"
+            class="green-check">
+          </svg-icon>
+          Uppercase
         </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-text" for="email">Email</label>
-        <input
-          id="email"
-          class="form-control"
-          formControlName="email"
-          placeholder="Enter your email"
-          type="email"
-          (keydown)="emailChanged = true"
-        />
-        <p
-          @fadeInUp
-          *ngIf="
-                    submitted && registrationForm.controls['email'].hasError('required')
-                  "
-          class="invalid-input"
-        >
-          Email is required
-        </p>
-        <p
-          @fadeInUp
-          *ngIf="
-                    submitted && (registrationForm.controls['email'].hasError('email') || registrationForm.controls['email'].hasError('pattern'))
-                  "
-          class="invalid-input"
-        >
-          Email is invalid
-        </p>
-
-        <p
-          @fadeInUp
-          *ngIf="submitted && emailExists && !emailChanged"
-          class="invalid-input"
-        >
-          Email is used
-        </p>
-      </div>
-
-
-
-      <div
-        class="form-group password-control-group"
-        dropdown
-        #dropdown="bs-dropdown"
-        triggers="mouseover"
-        (mouseout)="
-          isPasswordInputIsFocused(passwordInput)
-            ? (dropdown.isOpen = true)
-            : (dropdown.isOpen = false)
-        "
-      >
-        <label class="form-text" for="password"
-          >Password <span class="require-astrisk">*</span></label
-        >
-        <input
-          #passwordInput
-          id="password"
-          class="form-control"
-          formControlName="password"
-          placeholder="Enter your password"
-          type="password"
-          (focus)="dropdown.isOpen = true"
-          (focusout)="dropdown.isOpen = false"
-        />
         <div
-          *dropdownMenu
-          class="dropdown-menu dropdown-menu-left password-validation-dropdown-menu"
-          role="menu"
-        >
-          <div class="d-column password-validation-list">
-            <div
-              class="d-flex"
-              [class.invalid-password-condition]="getPasswordError('lowercase')"
-            >
-              <svg-icon
-                [svgStyle]="{ width: 18, height: 18 }"
-                src="assets/img/custom/check-invalid.svg"
-                class="check-icon grey-check"
-              >
-              </svg-icon>
-              <svg-icon
-                [svgStyle]="{ width: 18, height: 18 }"
-                src="assets/img/custom/check-correct.svg"
-                class="check-icon green-check"
-              >
-              </svg-icon>
-
-              Lowercase
-            </div>
-            <div
-              class="d-flex"
-              [class.invalid-password-condition]="getPasswordError('uppercase')"
-            >
-              <svg-icon
-                [svgStyle]="{ width: 18, height: 18 }"
-                src="assets/img/custom/check-invalid.svg"
-                class="check-icon grey-check"
-              >
-              </svg-icon>
-              <svg-icon
-                [svgStyle]="{ width: 18, height: 18 }"
-                src="assets/img/custom/check-correct.svg"
-                class="check-icon green-check"
-              >
-              </svg-icon>
-
-              Uppercase
-            </div>
-            <div
-              class="d-flex"
-              [class.invalid-password-condition]="
-                getPasswordError('specialCharacter')
-              "
-            >
-              <svg-icon
-                [svgStyle]="{ width: 18, height: 18 }"
-                src="assets/img/custom/check-invalid.svg"
-                class="check-icon grey-check"
-              >
-              </svg-icon>
-              <svg-icon
-                [svgStyle]="{ width: 18, height: 18 }"
-                src="assets/img/custom/check-correct.svg"
-                class="check-icon green-check"
-              >
-              </svg-icon>
-              Special Character
-            </div>
-            <div
-              class="d-flex"
-              [class.invalid-password-condition]="getPasswordError('number')"
-            >
-              <svg-icon
-                [svgStyle]="{ width: 18, height: 18 }"
-                src="assets/img/custom/check-invalid.svg"
-                class="check-icon grey-check"
-              >
-              </svg-icon>
-              <svg-icon
-                [svgStyle]="{ width: 18, height: 18 }"
-                src="assets/img/custom/check-correct.svg"
-                class="check-icon green-check"
-              >
-              </svg-icon>
-              Number
-            </div>
-            <div
-              class="d-flex"
-              [class.invalid-password-condition]="
-                getPasswordError('maxlength') ||
-                getPasswordError('minlength') ||
-                getPasswordError('required')
-              "
-            >
-              <svg-icon
-                [svgStyle]="{ width: 18, height: 18 }"
-                src="assets/img/custom/check-invalid.svg"
-                class="check-icon grey-check"
-              >
-              </svg-icon>
-              <svg-icon
-                [svgStyle]="{ width: 18, height: 18 }"
-                src="assets/img/custom/check-correct.svg"
-                class="check-icon green-check"
-              >
-              </svg-icon>
-              8-64 Characters
-            </div>
-            <div></div>
-          </div>
+          class="ap-flex ap-gap-4 ap-items-center"
+          [class.invalid-password-condition]="getPasswordError('specialCharacter')">
+          <svg-icon
+            [svgStyle]="{ width: '13px', height: '13px' }"
+            src="assets/img/custom/checks/check-invalid.svg"
+            class="grey-check">
+          </svg-icon>
+          <svg-icon
+            [svgStyle]="{ width: '13px', height: '13px' }"
+            src="assets/img/custom/checks/check-correct.svg"
+            class="green-check">
+          </svg-icon>
+          Special Character
         </div>
-        <p @fadeInUp *ngIf="submitted" class="invalid-input">
-          <ng-container
-            *ngIf="
-              registrationForm.get('password')?.getError('required');
-              else weakPasswordError
-            "
-          >
-            Password is required
-          </ng-container>
-          <ng-template #weakPasswordError>
-            <ng-container *ngIf="registrationForm.get('password')?.invalid">
-              Password is weak
-            </ng-container>
-          </ng-template>
-        </p>
-        <p @fadeInUp class="invalid-input text-center" *ngIf="emailExists">
-          You have already registered with this email.
-        </p>
+        <div class="ap-flex ap-gap-4 ap-items-center" [class.invalid-password-condition]="getPasswordError('number')">
+          <svg-icon
+            [svgStyle]="{ width: '13px', height: '13px' }"
+            src="assets/img/custom/checks/check-invalid.svg"
+            class="grey-check">
+          </svg-icon>
+          <svg-icon
+            [svgStyle]="{ width: '13px', height: '13px' }"
+            src="assets/img/custom/checks/check-correct.svg"
+            class="green-check">
+          </svg-icon>
+          Number
+        </div>
+        <div
+          class="ap-flex ap-gap-4 ap-items-center"
+          [class.invalid-password-condition]="
+            getPasswordError('maxlength') || getPasswordError('minlength') || getPasswordError('required')
+          ">
+          <svg-icon
+            [svgStyle]="{ width: '13px', height: '13px' }"
+            src="assets/img/custom/checks/check-invalid.svg"
+            class="grey-check">
+          </svg-icon>
+          <svg-icon
+            [svgStyle]="{ width: '13px', height: '13px' }"
+            src="assets/img/custom/checks/check-correct.svg"
+            class="green-check">
+          </svg-icon>
+          8-64 Characters
+        </div>
       </div>
 
 
-<div class="form-group">
-  <app-checkbox
-      formControlName="news_letter"
-      label="Recieve updates and newsletters from activepieces"
-    >
-    </app-checkbox>
-</div>
+		</mat-menu>
 
-<div class="form-group">
-  <app-checkbox
-  formControlName="track_events"
-  label="Help improve activepieces by sending data anonymously"
->
-</app-checkbox>
-</div>
+		<p @fadeInUp class="ap-text-danger ap-text-center" *ngIf="emailExists">
+			You have already registered with this email.
+		</p>
+    <mat-checkbox id="news_letter" class="news_letter" color="primary"
+    formControlName="news_letter">Recieve updates and newsletters from activepieces</mat-checkbox>
 
+    <mat-checkbox id="track_events"  color="primary"
+    formControlName="track_events">Help improve activepieces by sending data anonymously</mat-checkbox>
 
-      <div class="text-center">
-        <app-button
-          [loading]="loading"
-          (buttonClicked)="signUp()"
-          btnColor="primary"
-          [fullWidthOfContainer]="true"
-        >
-        Sign up
-        </app-button>
-      </div>
-    </form>
-  </div>
+		<div class="text-center">
+			<app-button [loading]="loading" (buttonClicked)="signUp()" btnColor="primary" [fullWidthOfContainer]="true">
+				Sign up
+			</app-button>
+		</div>
+	</form>
 
 
 <ng-container *ngIf="signUp$ | async"></ng-container>
+

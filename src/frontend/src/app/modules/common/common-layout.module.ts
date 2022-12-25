@@ -26,7 +26,6 @@ import { OutputLogPipe } from './pipe/output-log';
 import { DefaultZeroPipe } from './pipe/default-zero.pipe';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { StoreModule } from '@ngrx/store';
-import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
 import { BsDropdownConfig, BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { JsonViewModalComponent } from './components/json-view-modal/json-view-modal.component';
@@ -65,10 +64,12 @@ import { NgSelectNoItemsFoundTemplateComponent } from './components/form-control
 import { MatLegacySlideToggleModule as MatSlideToggleModule } from '@angular/material/legacy-slide-toggle';
 import { EndpointFormControlComponent } from './components/form-controls/endpoint-form-control/endpoint-form-control.component';
 import { ConnectorCustomRequestFormControlComponent } from './components/form-controls/connector-custom-request-form-control/connector-custom-request-form-control.component';
-import { MatLegacyMenuModule as MatMenuModule } from '@angular/material/legacy-menu';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule, MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 500,
 	hideDelay: 0,
@@ -137,13 +138,13 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MonacoEditorModule,
 		NgSelectModule,
 		MatSnackBarModule,
-		MatButtonModule,
 		PopoverModule,
 		MatSlideToggleModule,
-		MatMenuModule,
 		MatCardModule,
 		MatFormFieldModule,
 		MatInputModule,
+		MatButtonModule,
+		MatCheckboxModule,
 	],
 	exports: [
 		EditableTextComponent,
@@ -178,7 +179,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		NgSelectTagValueTemplateComponent,
 		NgSelectLoadingSpinnerTemplateComponent,
 		MatTooltipModule,
-		MatMenuModule,
 		MatSlideToggleModule,
 		NgSelectConnectorActionItemTemplateComponent,
 		NgSelectCustomRequestComponent,
@@ -188,12 +188,18 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MatCardModule,
 		MatFormFieldModule,
 		MatInputModule,
+		MatMenuModule,
+		MatCheckboxModule,
 	],
 	providers: [
 		HighlightService,
 		BsDropdownConfig,
 		{ provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 3000 } },
 		{ provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
+		{
+			provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+			useValue: { appearance: 'outline' },
+		},
 	],
 })
 export class CommonLayoutModule {}

@@ -1,17 +1,7 @@
 @use '@angular/material' as mat;
 @use 'material-theme-helper.scss';
-// TODO(v15): As of v15 mat.legacy-core no longer includes default typography styles.
-//  The following line adds:
-//    1. Default typography styles for all components
-//    2. Styles for typography hierarchy classes (e.g. .mat-headline-1)
-//  If you specify typography styles for the components you use elsewhere, you should delete this line.
-//  If you don't need the default component typographies but still want the hierarchy styles,
-//  you can delete this line and instead use:
-//    `@include mat.legacy-typography-hierarchy(mat.define-legacy-typography-config());`
-@include mat.all-legacy-component-typographies();
-@include mat.legacy-core();
 @import '@angular/material/theming';
-
+@include mat.core();
 $ap-typography: mat.define-legacy-typography-config(
 	$font-family: 'Open Sans',
 	$display-4:
@@ -102,17 +92,6 @@ $ap-typography: mat.define-legacy-typography-config(
 			$letter-spacing: 0.5px,
 		),
 );
-
-// TODO(v15): As of v15 mat.legacy-core no longer includes default typography styles.
-//  The following line adds:
-//    1. Default typography styles for all components
-//    2. Styles for typography hierarchy classes (e.g. .mat-headline-1)
-//  If you specify typography styles for the components you use elsewhere, you should delete this line.
-//  If you don't need the default component typographies but still want the hierarchy styles,
-//  you can delete this line and instead use:
-//    `@include mat.legacy-typography-hierarchy($ap-typography);`
-@include mat.all-legacy-component-typographies($ap-typography);
-@include mat.legacy-core();
 
 .ap-typography-display-4 {
 	@include mat.typography-level($ap-typography, 'display-4');
@@ -312,6 +291,7 @@ $ap-theme-light: mat.define-light-theme(
 			warn: $ap-danger,
 			accent: $ap-danger,
 		),
+        typography:$ap-typography
 	)
 );
 $ap-theme-dark: mat.define-dark-theme(
@@ -321,12 +301,11 @@ $ap-theme-dark: mat.define-dark-theme(
 			warn: $ap-danger,
 			accent: $ap-danger,
 		),
+    typography:$ap-typography
 	)
 );
-$my-theme: material-theme-helper.modify-background($ap-theme-light, $white, $sidebar, $dividers, $body, $body);
-@include mat.legacy-core-theme($my-theme);
-@include mat.all-legacy-component-themes($my-theme);
-@include mat.all-component-themes($my-theme);
+$main-theme: material-theme-helper.modify-background($ap-theme-light, $white, $sidebar, $dividers, $body, $body);
+@include mat.all-component-themes($main-theme);
 .mat-tab-group {
 	font-family: inherit !important;
 }
@@ -510,7 +489,7 @@ $my-theme: material-theme-helper.modify-background($ap-theme-light, $white, $sid
 }
 .auth-card {
 	box-shadow: 0 15px 35px #32325d1a, 0 5px 15px #00000012 !important;
-	padding: 1.75rem !important;
+	padding: 1.5rem !important;
 }
 tr.mat-header-row {
 	height: initial;
@@ -544,4 +523,10 @@ tr.mat-header-row {
 
 .mat-menu-panel {
 	min-height: initial !important;
+}
+
+
+.mdc-notched-outline__notch
+{
+    border-right: transparent !important;
 }
