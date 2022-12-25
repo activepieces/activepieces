@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [15.x, 16.x]
+        node-version: [14.x, 16.x]
     name: NG-Test  ${{ matrix.node-version }}
     steps:
     - uses: actions/checkout@v2
