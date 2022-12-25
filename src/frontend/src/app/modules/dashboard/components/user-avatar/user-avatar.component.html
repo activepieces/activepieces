@@ -1,39 +1,12 @@
-<div
-  class="avatar-container align-items-center justify-content-center d-flex"
-  dropdown
-  #dropdown="bs-dropdown"
-  placement="bottom left"
-  (onShown)="showAvatarOuterCircle = true"
-  (onHidden)="showAvatarOuterCircle = false"
->
-  <div
-    class="avatar d-flex justify-content-center align-items-center"
-    dropdownToggle
-    #dropdownToggleElement
-  >
-    <div
-      class="avatar-outer-circle"
-      [class.avatar-outer-circle-show]="showAvatarOuterCircle"
-    ></div>
-    {{ userFirstLetter | uppercase }}
-  </div>
-  <div
-    *dropdownMenu
-    #dropdownElment
-    class="dropdown-menu user-avatar-dropdown"
-    [style.left]="getDropDownLeftOffset(dropdownToggleElement, dropdownElment)"
-    role="menu"
-  >
-    <div class="d-flex flex-column user-info">
-      <div class="main-text d-flex flex-wrap">
-        {{ authenticationService.currentUser.first_name | titlecase }} &nbsp;
-        <span class="sub-text">({{ authenticationService.currentUser.last_name }})</span>
-      </div>
-      <div class="sub-text">{{ authenticationService.currentUser.email }}</div>
-    </div>
-    <div class="separator-line"></div>
+<div class="ap-flex ap-justify-end ap-m-[25px]">
+	<div
+		class="ap-typography-body-2 !ap-font-[600] ap-text-white ap-bg-body ap-rounded-full ap-px-[12px] ap-py-[7px] ap-cursor-pointer ap-text-center ap-min-w-[36px] ap-min-h-[36px]"
+		[matMenuTriggerFor]="menu">
 
-      <a (click)="logout()" class="dropdown-item log-out m-0"> Logout</a>
-
-  </div>
+			{{ authenticationService.currentUser.email[0] | uppercase }}
+	</div>
 </div>
+<mat-menu #menu="matMenu">
+	<div mat-menu-item (click)="logout()">Sign out</div>
+</mat-menu>
+

@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { HighlightService } from '../../service/highlightservice';
+import { HighlightService } from '../../service/highlight.service';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { JsonViewModalComponent } from '../json-view-modal/json-view-modal.component';
 

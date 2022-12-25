@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../../common/service/authentication.service';
 import { NavigationService } from '../../../dashboard/service/navigation.service';
@@ -32,18 +32,21 @@ export class SignUpComponent implements OnInit {
 	emailChanged = false;
 	signUp$: Observable<void>;
 	constructor(
-		private formBuilder: UntypedFormBuilder,
+		private formBuilder: FormBuilder,
 		private router: Router,
 		private navigationService: NavigationService,
 		public authenticationService: AuthenticationService
 	) {
 		this.registrationForm = this.formBuilder.group({
-			first_name: ['', [Validators.required]],
-			last_name: ['', [Validators.required]],
-			email: [, [Validators.email, Validators.pattern('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'), Validators.required]],
-			password: [
-				'',
-				[
+			first_name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+			last_name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+			email: new FormControl<string>('', {
+				nonNullable: true,
+				validators: [Validators.email, Validators.pattern('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'), Validators.required],
+			}),
+			password: new FormControl<string>('', {
+				nonNullable: true,
+				validators: [
 					Validators.required,
 					Validators.minLength(8),
 					Validators.maxLength(64),
@@ -52,9 +55,9 @@ export class SignUpComponent implements OnInit {
 					containsLowercaseCharacter(),
 					containsNumber(),
 				],
-			],
-			track_events: [false],
-			news_letter: [false],
+			}),
+			track_events: new FormControl<boolean>(false, { nonNullable: true }),
+			news_letter: new FormControl<boolean>(false, { nonNullable: true }),
 		});
 	}
 

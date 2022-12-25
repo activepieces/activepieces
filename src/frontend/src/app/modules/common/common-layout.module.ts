@@ -5,7 +5,8 @@ import { ConfirmDeleteModalComponent } from './components/confirm-delete-modal/c
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IconButtonComponent } from './components/icon-button/icon-button.component';
 import { TimeagoModule } from 'ngx-timeago';
-import { HighlightService } from './service/highlightservice';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { HighlightService } from './service/highlight.service';
 import { StateIconComponent } from './components/status-icon/state-icon.component';
 import { JsonViewComponent } from './components/json-view/json-view.component';
 import { PaginationComponent } from './components/pagination/pagination.component';
@@ -145,6 +146,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MatInputModule,
 		MatButtonModule,
 		MatCheckboxModule,
+		MatSidenavModule,
 	],
 	exports: [
 		EditableTextComponent,
@@ -190,6 +192,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MatInputModule,
 		MatMenuModule,
 		MatCheckboxModule,
+		MatSidenavModule,
 	],
 	providers: [
 		HighlightService,

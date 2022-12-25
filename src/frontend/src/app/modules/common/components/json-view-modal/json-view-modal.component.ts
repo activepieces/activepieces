@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, Input } from '@angular/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
-import { HighlightService } from '../../service/highlightservice';
+import { HighlightService } from '../../service/highlight.service';
 
 @Component({
 	selector: 'app-json-view-modal',
