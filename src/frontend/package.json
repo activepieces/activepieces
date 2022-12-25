@@ -8,6 +8,7 @@
     "build:dev": "ng build && mv dist/piece-builder _static",
     "build:stg": "ng build --configuration=staging && mv dist/piece-builder _static",
     "build:prod": "ng build --configuration=production && mv dist/piece-builder _static",
+    "test:prod": "ng test --browsers=ChromeHeadless --watch=false --code-coverage",
     "build:review": "ng build --configuration=staging",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
