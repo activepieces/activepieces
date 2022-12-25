@@ -1,0 +1,36 @@
+name: tests and validations
+on:
+  push:
+    branches:
+      - '[0-9].*'
+  pull_request:
+  schedule:
+    # Run every day at 10:45 AM UTC to discover potential issues with dependencies like NG updates etc.
+    - cron: '45 10 * * *'
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  test-frontend:
+    # We don't want the scheduled jobs to run on forks of Mautic
+    if: (github.event_name == 'schedule' && (github.repository == 'activepieces/activepieces') ) || (github.event_name != 'schedule')
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [15.x, 16.x]
+    name: NG-Test  ${{ matrix.node-version }}
+    steps:
+    - uses: actions/checkout@v2
+      # Codecov needs access to previous commits, so we add fetch-depth: 0
+      with:
+        fetch-depth: 0
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}    
+
+    - run: | 
+        cd src/frontend
+        npm ci
+        npm run build --if-present
+        npm test      
