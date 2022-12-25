@@ -1,8 +1,12 @@
 export {CodeRunStatus} from "./workers/code-worker/code-run-status";
 export {CodeExecutionResult} from "./workers/code-worker/code-execution-result";
 export {flowHelper} from "./flows/flow-helper";
+
 export {AuthenticationRequest} from './authentication/dto/authentication-request';
 export {AuthenticationResponse} from './authentication/dto/authentication-response';
+export { PrincipalType } from "./authentication/model/principal-type";
+export { Principal } from "./authentication/model/principal";
+
 export {User, UserStatus, UserId} from './user/user';
 export {Action, ActionType, CodeActionSettings} from './flows/actions/action';
 export {Trigger, EmptyTrigger, ComponentTriggerSettings, ScheduleTriggerSettings, ComponentTrigger, ScheduleTrigger, WebhookTrigger, TriggerType} from './flows/triggers/trigger';

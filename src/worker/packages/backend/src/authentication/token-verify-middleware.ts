@@ -14,6 +14,6 @@ export const tokenVerifyMiddleware = async (request: FastifyRequest, _reply: Fas
     }
 
     const token = request.headers.authorization?.substring(HEADER_PREFIX.length);
-    const user = await tokenUtils.decode(token);
-    request.user = user;
+    const principal = await tokenUtils.decode(token);
+    request.principal = principal;
 }

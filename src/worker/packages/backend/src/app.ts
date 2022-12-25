@@ -1,5 +1,6 @@
 import fastify from 'fastify';
-import { User } from 'shared';
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import { Principal, User } from 'shared';
 import { databaseModule } from './database/database-module';
 import { authenticationModule } from './authentication/authentication.module';
 import {collectionModule} from "./collections/collection.module";
@@ -13,7 +14,7 @@ import {redisClient} from "./database/redis-connection";
 
 declare module 'fastify' {
     export interface FastifyRequest {
-        user: User;
+        principal: Principal;
     }
 }
 
@@ -21,13 +22,13 @@ const app = fastify({
     logger: true
 });
 
+app.register(databaseModule);
+app.register(authenticationModule);
 app.register(projectModule);
 app.register(componentsController);
 app.register(collectionModule);
 app.register(fileModule);
 app.register(flowModule);
-app.register(databaseModule);
-app.register(authenticationModule);
 
 app.setErrorHandler(function (error, request, reply) {
     if (error instanceof ActivepiecesError) {

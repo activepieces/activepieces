@@ -1,4 +1,4 @@
-import {AuthenticationRequest, AuthenticationResponse, UserStatus} from 'shared';
+import {AuthenticationRequest, AuthenticationResponse, PrincipalType, UserStatus} from 'shared';
 import {userService} from '../user/user-service';
 import {passwordHasher} from './lib/password-hasher';
 import {tokenUtils} from './lib/token-utils';
