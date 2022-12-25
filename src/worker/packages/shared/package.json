@@ -5,6 +5,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@sinclair/typebox": "^0.25.16",
     "nanoid": "^3.3.4"
   },
   "exports": "./dist/index.js",
