@@ -1,4 +1,5 @@
-const { customAlphabet } = require('nanoid');
+import { customAlphabet } from "nanoid";
+
 const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
 export type ApId = string;
