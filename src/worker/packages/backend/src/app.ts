@@ -20,7 +20,7 @@ declare module 'fastify' {
 
 const app = fastify({
     logger: true
-}).withTypeProvider<TypeBoxTypeProvider>();
+});
 
 app.register(databaseModule);
 app.register(authenticationModule);
