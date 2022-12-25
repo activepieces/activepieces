@@ -1,4 +1,5 @@
 import fastify from 'fastify';
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { User } from 'shared';
 import { databaseModule } from './database/database-module';
 import { authenticationModule } from './authentication/authentication.module';
@@ -21,13 +22,13 @@ const app = fastify({
     logger: true
 }).withTypeProvider<TypeBoxTypeProvider>();
 
+app.register(databaseModule);
+app.register(authenticationModule);
 app.register(projectModule);
 app.register(componentsController);
 app.register(collectionModule);
 app.register(fileModule);
 app.register(flowModule);
-app.register(databaseModule);
-app.register(authenticationModule);
 
 app.setErrorHandler(function (error, request, reply) {
     if (error instanceof ActivepiecesError) {
