@@ -3,8 +3,7 @@ export {CodeExecutionResult} from "./workers/code-worker/code-execution-result";
 export {flowHelper} from "./flows/flow-helper";
 export {AuthenticationRequest} from './authentication/dto/authentication-request';
 export {AuthenticationResponse} from './authentication/dto/authentication-response';
-export {UserStatus} from './user/user'
-export {User} from './user/user';
+export {User, UserStatus, UserId} from './user/user';
 export {Action, ActionType, CodeActionSettings} from './flows/actions/action';
 export {Trigger, EmptyTrigger, ComponentTriggerSettings, ScheduleTriggerSettings, ComponentTrigger, ScheduleTrigger, WebhookTrigger, TriggerType} from './flows/triggers/trigger';
 export {Collection, CollectionId} from './collections/collection';
@@ -14,10 +13,10 @@ export {FlowVersion, FlowVersionState, FlowVersionId} from './flows/flow-version
 export {Flow, FlowId} from './flows/flow';
 export {File, FileId} from './file/file'
 export {getStep} from './flows/flow-helper';
-export {InstanceRun} from './model/instance-run'
-export {Project} from './project/project';
+export {InstanceRun, InstanceRunId} from './model/instance-run'
+export {Project, ProjectId} from './project/project';
 export {Config} from './collections/config';
-export {Instance} from './instance/instance';
+export {Instance, InstanceId} from './instance/instance';
 export {FlowOperationRequest, FlowOperationType, DeleteActionRequest, UpdateActionRequest, AddActionRequest, UpdateTriggerRequest, ChangeNameRequest} from './flows/flow-operations'
 export {ListCollectionsRequest, ListCollectionsSchema} from './collections/dto/list-collections-request';
 export {ListFlowsRequest, ListFlowsSchema} from './flows/dto/list-flows-request';
