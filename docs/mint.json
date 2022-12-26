@@ -29,6 +29,10 @@
         "getting-started/key-concepts"]
     },
     {
+      "group": "Building Pieces",
+      "pages": ["building-pieces/getting-started"]
+    },
+    {
       "group": "Contributing",
       "pages": ["contributing/architecture", "contributing/flow-worker" ,"contributing/code-worker"]
     }
