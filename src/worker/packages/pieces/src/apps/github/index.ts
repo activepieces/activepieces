@@ -1,4 +1,4 @@
-import {createComponent} from '../../framework/component';
+import {createComponent} from '../../framework/piece';
 import {newGithubStar} from "./trigger/new-star";
 
 export const github = createComponent({

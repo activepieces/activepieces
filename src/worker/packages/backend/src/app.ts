@@ -7,10 +7,10 @@ import {collectionModule} from "./collections/collection.module";
 import {StatusCodes} from "http-status-codes";
 import {ActivepiecesError} from "./helper/activepieces-error";
 import {projectModule} from "./project/project.module";
-import {componentsController} from "./components/components.controller";
 import {flowModule} from "./flows/flow.module";
 import {fileModule} from "./file/file.module";
 import {redisClient} from "./database/redis-connection";
+import {piecesController} from "./pieces/pieces.controller";
 
 declare module 'fastify' {
     export interface FastifyRequest {
@@ -25,7 +25,7 @@ const app = fastify({
 app.register(databaseModule);
 app.register(authenticationModule);
 app.register(projectModule);
-app.register(componentsController);
+app.register(piecesController);
 app.register(collectionModule);
 app.register(fileModule);
 app.register(flowModule);

@@ -52,6 +52,7 @@ async function executeFlow(instanceId: InstanceId,
             triggerPayload: payload
         }))
         sandbox.runCommandLine("/usr/bin/node activepieces-engine.js execute-flow");
+        // TODO PARSE THE INPUT AND SAVE THE RUN
     } finally {
         sandboxManager.returnSandbox(sandbox.boxId);
         await flowLock();

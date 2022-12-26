@@ -1,9 +1,9 @@
 import { ComponentExecutor } from '../../src/executors/component-executor';
-import { ComponentAction, ComponentActionSettings } from '../../src/model/action/types/component-action';
+import { PieceAction, PieceActionSettings } from '../../src/model/action/types/piece-action';
 import { ExecutionState } from '../../src/model/execution/execution-state';
 import { StepOutputStatus } from '../../src/model/output/step-output';
 import { StoreScope } from '../../src/model/util/store-scope';
-import {ConfigurationValue} from "components/dist/src/framework/config/configuration-value.model";
+import {ConfigurationValue} from "pieces/dist/src/framework/config/configuration-value.model";
 import {ActionType} from "../../src/model/action/action-metadata";
 
 
@@ -17,13 +17,13 @@ describe('Component Action', () => {
         },
     };
 
-    const settings = new ComponentActionSettings(
+    const settings = new PieceActionSettings(
         'componentName',
         'actionName',
         config,
     );
 
-    const action = new ComponentAction(
+    const action = new PieceAction(
         ActionType.COMPONENT,
         'actionName',
         settings,
@@ -49,13 +49,13 @@ describe('Component Action', () => {
         },
     };
 
-    const settings = new ComponentActionSettings(
+    const settings = new PieceActionSettings(
         'componentName',
         'actionName',
         config,
     );
 
-    const action = new ComponentAction(
+    const action = new PieceAction(
         ActionType.COMPONENT,
         'actionName',
         settings,

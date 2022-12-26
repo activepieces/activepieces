@@ -4,7 +4,7 @@ import type {ConfigurationValue} from './config/configuration-value.model';
 import type {Trigger} from './trigger/trigger';
 import {Action} from "./action/action";
 
-export class Component {
+export class Piece {
 	private readonly _actions: Record<string, Action>;
 	private readonly _triggers: Record<string, Trigger>;
 
@@ -64,4 +64,4 @@ export const createComponent = (request: {
 	logoUrl: string;
 	actions: Action[];
 	triggers: Trigger[];
-}): Component => new Component(request.name, request.displayName, request.logoUrl, request.actions, request.triggers);
+}): Piece => new Piece(request.name, request.displayName, request.logoUrl, request.actions, request.triggers);

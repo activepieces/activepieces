@@ -1,4 +1,4 @@
-import {createComponent} from '../../framework/component';
+import {createComponent} from '../../framework/piece';
 import { createHubspotContact } from './actions/create-contact/create-contact.action';
 
 

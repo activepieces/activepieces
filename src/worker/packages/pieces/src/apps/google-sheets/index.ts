@@ -1,4 +1,4 @@
-import {createComponent} from '../../framework/component';
+import {createComponent} from '../../framework/piece';
 import { insertRowAction } from './actions/insert-row.action';
 
 export const googleSheets = createComponent({

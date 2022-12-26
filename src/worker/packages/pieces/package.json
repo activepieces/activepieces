@@ -1,5 +1,5 @@
 {
-  "name": "components",
+  "name": "pieces",
   "dependencies": {
     "axios": "^1.0.0",
     "fs-extra": "^10.1.0",

@@ -1,10 +1,10 @@
-export interface ComponentOptionRequest {
+export interface PieceOptionRequest {
     stepName: string;
     configName: string;
     configs: Record<string, unknown>;
 }
 
-export const ComponentOptionRequestSchema = {
+export const PieceOptionRequestSchema = {
     body: {
         type: 'object',
         properties: {

@@ -1,28 +1,28 @@
 import {FastifyInstance, FastifyPluginOptions, FastifyRequest} from "fastify"
 import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
-import {SelectInput} from "components/dist/src/framework/config/select-input.model";
-import {InputType} from "components";
-import {components, getComponent} from "components";
-import {ComponentOptionRequest, ComponentOptionRequestSchema} from "shared";
+import {SelectInput} from "pieces/dist/src/framework/config/select-input.model";
+import {InputType} from "pieces";
+import {pieces, getPiece} from "pieces";
+import {PieceOptionRequest, PieceOptionRequestSchema} from "shared";
 
 
-export const componentsController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
-    fastify.get('/v1/components', async (_request, _reply) => {
-        return components.map(f => f.metadata());
+export const piecesController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
+    fastify.get('/v1/pieces', async (_request, _reply) => {
+        return pieces.map(f => f.metadata());
     })
 
-    fastify.post('/v1/components/:componentName/options', {
-        schema: ComponentOptionRequestSchema
+    fastify.post('/v1/pieces/:pieceName/options', {
+        schema: PieceOptionRequestSchema
     }, async (_request: FastifyRequest<{
-        Params: { componentName: string },
-        Body: ComponentOptionRequest,
+        Params: { pieceName: string },
+        Body: PieceOptionRequest,
     }>, _reply) => {
-        const component = getComponent(_request.params.componentName);
+        const component = getPiece(_request.params.pieceName);
         if (component === undefined) {
             throw new ActivepiecesError({
-                code: ErrorCode.COMPONENT_NOT_FOUND,
+                code: ErrorCode.PIECE_NOT_FOUND,
                 params: {
-                    componentName: _request.params.componentName
+                    pieceName: _request.params.pieceName
                 }
             });
         }
@@ -33,7 +33,7 @@ export const componentsController = async (fastify: FastifyInstance, options: Fa
                 code: ErrorCode.STEP_NOT_FOUND,
                 params: {
                     stepName: _request.body.stepName,
-                    componentName: _request.params.componentName
+                    pieceName: _request.params.pieceName
                 }
             });
         }
@@ -44,7 +44,7 @@ export const componentsController = async (fastify: FastifyInstance, options: Fa
                 code: ErrorCode.CONFIG_NOT_FOUND,
                 params: {
                     stepName: _request.body.stepName,
-                    componentName: _request.params.componentName,
+                    pieceName: _request.params.pieceName,
                     configName: _request.body.configName
                 }
             });

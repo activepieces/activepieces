@@ -1,4 +1,4 @@
-import {createComponent} from '../../framework/component';
+import {createComponent} from '../../framework/piece';
 import {gmailSendEmailAction} from './actions/send-email-action';
 
 export const gmail = createComponent({
