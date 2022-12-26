@@ -7,6 +7,7 @@ import {FlowEntity} from "../flows/flow-entity";
 import {FlowVersionEntity} from "../flows/flow-version/flow-version-entity";
 import {FileEntity} from "../file/file-entity";
 import {StoreEntryEntity} from "../store-entry/store-entry-entity";
+import {InstanceEntity} from '../instance/instance-entity';
 
 export const databaseConnection = new DataSource({
     type: 'postgres',
@@ -16,12 +17,17 @@ export const databaseConnection = new DataSource({
     password: 'A79Vm5D4p2VQHOp2gd5',
     database: 'activepieces',
     synchronize: true,
-    entities: [UserEntity,
+    entities: [
         CollectionEntity,
         StoreEntryEntity,
         ProjectEntity,
         FlowEntity,
+        CollectionVersionEntity,
         FileEntity,
+        FlowEntity,
         FlowVersionEntity,
-        CollectionVersionEntity],
+        InstanceEntity,
+        ProjectEntity,
+        UserEntity,
+    ],
 });

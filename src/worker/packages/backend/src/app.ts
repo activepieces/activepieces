@@ -15,6 +15,7 @@ import {oauth2Module} from "./oauth2/oauth2.module";
 import {tokenVerifyMiddleware} from "./authentication/token-verify-middleware";
 import {storeEntryModule} from "./store-entry/store-entry.module";
 import {tokenUtils} from "./authentication/lib/token-utils";
+import {instanceModule} from './instance/instance-module';
 
 declare module 'fastify' {
     export interface FastifyRequest {
@@ -36,6 +37,7 @@ app.register(flowModule);
 app.register(codeModule);
 app.register(piecesController);
 app.register(oauth2Module);
+app.register(instanceModule);
 
 app.setErrorHandler(function (error, request, reply) {
     if (error instanceof ActivepiecesError) {
@@ -44,11 +46,7 @@ app.setErrorHandler(function (error, request, reply) {
             code: apError.error.code
         })
     }else {
-        if(error.statusCode !== undefined){
-            reply.status(error.statusCode).send(error)
-        }else{
-            reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send(error);
-        }
+        reply.status(error.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR).send(error)
     }
 })
 

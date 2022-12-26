@@ -1,15 +1,26 @@
-import {CollectionId, FileId, FlowId} from "shared";
+import {CollectionId, FileId, FlowId, InstanceId} from "shared";
 
 export class ActivepiecesError extends Error {
 
-    constructor(public error: StepNotFoundErrorParams | ComponentNotFoundErrorParams | ConfigNotFoundErrorParams
-        | InvalidBearerTokenParams | ExistingUserErrorParams | InvalidCredentialsErrorParams | CollectionNotFoundErrorParams | FlowNotFoundErrorParams | FileNotFoundErrorParams) {
+    constructor(public error: ErrorParams) {
         super(error.code);
     }
 
 }
 
-export interface ErrorParams<T, V> {
+type ErrorParams =
+    | CollectionNotFoundErrorParams
+    | ComponentNotFoundErrorParams
+    | ConfigNotFoundErrorParams
+    | ExistingUserErrorParams
+    | FileNotFoundErrorParams
+    | FlowNotFoundErrorParams
+    | InstanceNotFoundErrorParams
+    | InvalidBearerTokenParams
+    | InvalidCredentialsErrorParams
+    | StepNotFoundErrorParams;
+
+export interface BaseErrorParams<T, V> {
     code: T,
     params: V
 }
@@ -23,29 +34,30 @@ export interface FileNotFoundErrorParams extends ErrorParams<ErrorCode.FILE_NOT_
 }> {
 }
 
-export interface FlowNotFoundErrorParams extends ErrorParams<ErrorCode.FLOW_NOT_FOUND, {
+export interface FlowNotFoundErrorParams extends BaseErrorParams<ErrorCode.FLOW_NOT_FOUND, {
     id: FlowId
 }> {
 }
 
-export interface CollectionNotFoundErrorParams extends ErrorParams<ErrorCode.COLLECTION_NOT_FOUND, {
+export interface CollectionNotFoundErrorParams extends BaseErrorParams<ErrorCode.COLLECTION_NOT_FOUND, {
     id: CollectionId
 }> {
 }
 
-export interface InvalidCredentialsErrorParams extends ErrorParams<ErrorCode.INVALID_CREDENTIALS, {
+export interface InstanceNotFoundErrorParams extends BaseErrorParams<ErrorCode.INSTANCE_NOT_FOUND, {
+    id: InstanceId
+}> {
+}
+
+export interface InvalidCredentialsErrorParams extends BaseErrorParams<ErrorCode.INVALID_CREDENTIALS, {
     email: string
 }> {
 }
 
-export interface ExistingUserErrorParams extends ErrorParams<ErrorCode.EXISTING_USER, {
+export interface ExistingUserErrorParams extends BaseErrorParams<ErrorCode.EXISTING_USER, {
 }> {
 }
 
-export interface ComponentNotFoundErrorParams extends ErrorParams<ErrorCode.PIECE_NOT_FOUND, {
-    pieceName: string
-}> {
-}
 
 export interface StepNotFoundErrorParams extends ErrorParams<ErrorCode.STEP_NOT_FOUND, {
     pieceName: string,
@@ -64,10 +76,13 @@ export enum ErrorCode {
     INVALID_BEARER_TOKEN = "INVALID_BEARER_TOKEN",
     PIECE_NOT_FOUND = "PIECE_NOT_FOUND",
     STEP_NOT_FOUND = "STEP_NOT_FOUND",
+    COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
+    COMPONENT_NOT_FOUND = "COMPONENT_NOT_FOUND",
+    CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
+    EXISTING_USER = "EXISTING_USER",
     FILE_NOT_FOUND = "FILE_NOT_FOUND",
     FLOW_NOT_FOUND = "FLOW_NOT_FOUND",
-    COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
-    EXISTING_USER = "EXISTING_USER",
+    INSTANCE_NOT_FOUND = "INSTANCE_NOT_FOUND",
     INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
-    CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
+    STEP_NOT_FOUND = "STEP_NOT_FOUND",
 }
