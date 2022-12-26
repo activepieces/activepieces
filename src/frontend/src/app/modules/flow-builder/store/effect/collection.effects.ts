@@ -6,7 +6,7 @@ import { CollectionActions, CollectionModifyingState, savedFailed, savedSuccess 
 import { CollectionService } from '../../../common/service/collection.service';
 import { Store } from '@ngrx/store';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
-import { MatLegacySnackBar as MatSnackBar } from '@angular/material/legacy-snack-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuilderSelectors } from '../selector/flow-builder.selector';
 import { SingleFlowModifyingState } from '../action/flows.action';
 import { BuilderActions } from '../action/builder.action';

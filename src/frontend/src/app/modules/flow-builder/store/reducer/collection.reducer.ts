@@ -14,7 +14,7 @@ const initialState: CollectionState = {
 	lastSaveRequestId: UUID.UUID(),
 	collection: {
 		last_version: {
-			id: UUID,
+			id: '',
 			display_name: 'dummy',
 			state: VersionEditState.DRAFT,
 			configs: [],
@@ -24,7 +24,7 @@ const initialState: CollectionState = {
 		},
 		created: 0,
 		updated: 0,
-		id: UUID.UUID(),
+		id: '',
 		name: 'dummy',
 		project_id: 'dummy',
 		versionsList: [],

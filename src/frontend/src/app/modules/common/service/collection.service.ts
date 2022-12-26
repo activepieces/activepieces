@@ -49,10 +49,15 @@ export class CollectionService {
 		return this.http.get<Collection>(environment.apiUrl + '/collections/' + pieceId);
 	}
 
-	list(projectId: string, limit: number): Observable<SeekPage<Collection>> {
-		return this.http.get<SeekPage<Collection>>(
-			environment.apiUrl + '/projects/' + projectId + '/collections?limit=' + limit
-		);
+	list(projectId: string, params: { pageSize: number; cursor: string }): Observable<SeekPage<Collection>> {
+		const queryParams: { [key: string]: string | number } = {};
+		queryParams['limit'] = params.pageSize;
+		if (params.cursor) {
+			queryParams['cursor'] = params.cursor;
+		}
+		return this.http.get<SeekPage<Collection>>(environment.apiUrl + '/projects/' + projectId + '/collections', {
+			params: queryParams,
+		});
 	}
 
 	archive(pieceId: UUID): Observable<void> {

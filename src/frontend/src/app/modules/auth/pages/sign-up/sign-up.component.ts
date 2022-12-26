@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../../common/service/authentication.service';
 import { NavigationService } from '../../../dashboard/service/navigation.service';
@@ -10,7 +10,7 @@ import {
 	containsSpecialCharacter,
 	containsUppercaseCharacter,
 } from 'src/app/modules/common/validators';
-import { catchError, mapTo, Observable, of, switchMap, tap } from 'rxjs';
+import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
 export interface UserInfo {
 	first_name: FormControl<string>;
 	last_name: FormControl<string>;
@@ -25,7 +25,6 @@ export interface UserInfo {
 })
 export class SignUpComponent implements OnInit {
 	registrationForm: FormGroup<UserInfo>;
-	submitted = false;
 	loading = false;
 	tokenError = false;
 	emailExists = false;
@@ -66,7 +65,6 @@ export class SignUpComponent implements OnInit {
 	}
 
 	signUp() {
-		this.submitted = true;
 		if (this.registrationForm.valid && !this.loading) {
 			this.loading = true;
 			const request = this.registrationForm.getRawValue();
@@ -85,7 +83,7 @@ export class SignUpComponent implements OnInit {
 				tap(() => {
 					this.router.navigate(['/flows']);
 				}),
-				mapTo(void 0)
+				map(() => void 0)
 			);
 		}
 	}

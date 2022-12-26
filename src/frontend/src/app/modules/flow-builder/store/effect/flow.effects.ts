@@ -18,7 +18,7 @@ import { Store } from '@ngrx/store';
 import { FlowsActions, SingleFlowModifyingState } from '../action/flows.action';
 import { FlowService } from '../../../common/service/flow.service';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
-import { MatLegacySnackBar as MatSnackBar } from '@angular/material/legacy-snack-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuilderSelectors } from '../selector/flow-builder.selector';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';

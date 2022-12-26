@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
-import { DashboardLayoutComponent } from './modules/dashboard/dashboard-layout.component';
+import { DashboardContainerComponent } from './modules/dashboard/dashboard-container.component';
 import { NotFoundComponent } from './modules/not-found/not-found.component';
 import { RedirectUrlComponent } from './modules/redirect-url/redirect-url.component';
 import { AuthLayoutComponent } from './modules/auth/auth.component';
@@ -9,7 +9,7 @@ import { AuthLayoutComponent } from './modules/auth/auth.component';
 const routes: Routes = [
 	{
 		path: '',
-		component: DashboardLayoutComponent,
+		component: DashboardContainerComponent,
 		canActivate: [UserLoggedIn],
 		children: [
 			{

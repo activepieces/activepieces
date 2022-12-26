@@ -1,0 +1,13 @@
+<mat-sidenav-container class="ap-h-full">
+    <mat-sidenav mode="side" opened>
+        <app-sidenav-routes-list></app-sidenav-routes-list>
+    </mat-sidenav>
+    <mat-sidenav-content>
+        <div class="ap-absolute  ap-w-full">
+            <app-user-avatar></app-user-avatar>
+        </div>
+        <div class="ap-container  ap-h-full ap-mx-auto ap-pt-[50px]">
+            <router-outlet></router-outlet>
+        </div>
+    </mat-sidenav-content>
+</mat-sidenav-container>

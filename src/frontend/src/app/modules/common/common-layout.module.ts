@@ -9,7 +9,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { HighlightService } from './service/highlight.service';
 import { StateIconComponent } from './components/status-icon/state-icon.component';
 import { JsonViewComponent } from './components/json-view/json-view.component';
-import { PaginationComponent } from './components/pagination/pagination.component';
+import { ApPaginatorComponent } from './components/pagination/ap-paginator.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { AccordionModule } from 'ngx-bootstrap/accordion';
 import { ApButtonComponent } from './components/ap-button/ap-button.component';
@@ -30,18 +30,11 @@ import { StoreModule } from '@ngrx/store';
 import { BsDropdownConfig, BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { JsonViewModalComponent } from './components/json-view-modal/json-view-modal.component';
-import {
-	MatLegacyTooltipDefaultOptions as MatTooltipDefaultOptions,
-	MatLegacyTooltipModule as MatTooltipModule,
-	MAT_LEGACY_TOOLTIP_DEFAULT_OPTIONS as MAT_TOOLTIP_DEFAULT_OPTIONS,
-} from '@angular/material/legacy-tooltip';
+import { MatTooltipDefaultOptions, MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
 import { RawOutputLogPipe } from './pipe/raw-output-log';
 import { NgSelectModule } from '@ng-select/ng-select';
-import {
-	MatLegacySnackBarModule as MatSnackBarModule,
-	MAT_LEGACY_SNACK_BAR_DEFAULT_OPTIONS as MAT_SNACK_BAR_DEFAULT_OPTIONS,
-} from '@angular/material/legacy-snack-bar';
+import { MatSnackBarModule, MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { CheckboxComponent } from './components/app-checkbox/checkbox.component';
 import { LongTextFormControlComponent } from './components/form-controls/long-text-form-control/long-text-form-control.component';
 import { DictionaryFormControlComponent } from './components/form-controls/dictionary-form-control/dictionary-form-control.component';
@@ -71,6 +64,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableModule } from '@angular/material/table';
+import { DialogTitleTemplateComponent } from './components/dialog-title-template/dialog-title-template.component';
+import { MatDialogModule } from '@angular/material/dialog';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 500,
 	hideDelay: 0,
@@ -84,7 +81,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		IconButtonComponent,
 		StateIconComponent,
 		JsonViewComponent,
-		PaginationComponent,
+		ApPaginatorComponent,
 		ApButtonComponent,
 		ApImgComponent,
 		LoadingSkeletonComponent,
@@ -116,6 +113,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		NgSelectNoItemsFoundTemplateComponent,
 		EndpointFormControlComponent,
 		ConnectorCustomRequestFormControlComponent,
+		DialogTitleTemplateComponent,
 	],
 	imports: [
 		TimeagoModule,
@@ -147,6 +145,9 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MatButtonModule,
 		MatCheckboxModule,
 		MatSidenavModule,
+		MatSelectModule,
+		MatTableModule,
+		MatDialogModule,
 	],
 	exports: [
 		EditableTextComponent,
@@ -155,7 +156,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		IconButtonComponent,
 		StateIconComponent,
 		JsonViewComponent,
-		PaginationComponent,
+		ApPaginatorComponent,
 		ApButtonComponent,
 		ApImgComponent,
 		LoadingSkeletonComponent,
@@ -193,11 +194,15 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MatMenuModule,
 		MatCheckboxModule,
 		MatSidenavModule,
+		MatSelectModule,
+		MatTableModule,
+		DialogTitleTemplateComponent,
+		MatDialogModule,
 	],
 	providers: [
 		HighlightService,
 		BsDropdownConfig,
-		{ provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 3000 } },
+		{ provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 3000, panelClass: 'ap-text-center' } },
 		{ provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
 		{
 			provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,

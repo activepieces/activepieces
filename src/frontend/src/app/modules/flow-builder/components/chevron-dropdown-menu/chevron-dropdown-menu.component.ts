@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { MatLegacySnackBar as MatSnackBar } from '@angular/material/legacy-snack-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { faCaretDown, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { ChevronDropdownOption, ChevronDropdownOptionType } from './chevron-dropdown-option';
 

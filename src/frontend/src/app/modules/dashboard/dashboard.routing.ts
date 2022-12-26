@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
 import { RunsComponent } from './pages/runs/runs.component';
-import { CollectionComponent } from './pages/collections/collection-components.component';
-import { ListCollectionResolver } from './resolvers/list-collections-resolver.service';
+import { CollectionsTableComponent } from './pages/collections/collections-table.component';
 import { ListInstancesRunResolver } from './resolvers/list-instances-runs.resolver';
-
+import { AreThereCollectionsResovler } from './resolvers/are-there-collections.resolver';
+export const ARE_THERE_COLLECTIONS_FLAG = 'areThereCollections';
 export const DashboardLayoutRouting: Routes = [
 	{
 		path: '',
@@ -11,6 +11,7 @@ export const DashboardLayoutRouting: Routes = [
 		children: [
 			{ path: '', pathMatch: 'full', redirectTo: '/flows' },
 			{
+				title: 'AP-Runs',
 				path: 'runs',
 				pathMatch: 'full',
 				component: RunsComponent,
@@ -19,12 +20,11 @@ export const DashboardLayoutRouting: Routes = [
 			},
 
 			{
+				title: 'AP-Flows',
 				path: 'flows',
 				pathMatch: 'full',
-				component: CollectionComponent,
-				resolve: {
-					collections: ListCollectionResolver,
-				},
+				component: CollectionsTableComponent,
+				resolve: { [ARE_THERE_COLLECTIONS_FLAG]: AreThereCollectionsResovler },
 			},
 		],
 	},

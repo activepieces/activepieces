@@ -5,7 +5,7 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthenticationService } from '../../../common/service/authentication.service';
 import { fadeInUp400ms } from '../../../common/animation/fade-in-up.animation';
-import { catchError, mapTo, Observable, tap } from 'rxjs';
+import { catchError, map, Observable, tap } from 'rxjs';
 import { StatusCodes } from 'http-status-codes';
 interface SignInForm {
 	email: FormControl<string>;
@@ -18,13 +18,11 @@ interface SignInForm {
 })
 export class SignInComponent {
 	loginForm: FormGroup<SignInForm>;
-	submitted = false;
 	showInvalidEmailOrPasswordMessage = false;
 	loading = false;
 	authenticate$: Observable<void>;
 	constructor(
 		private router: Router,
-
 		private formBuilder: FormBuilder,
 		private authenticationService: AuthenticationService
 	) {
@@ -35,7 +33,6 @@ export class SignInComponent {
 	}
 
 	signIn(): void {
-		this.submitted = true;
 		if (this.loginForm.valid && !this.loading) {
 			this.loading = true;
 			this.showInvalidEmailOrPasswordMessage = false;
@@ -52,8 +49,7 @@ export class SignInComponent {
 					this.authenticationService.saveUser(response);
 					this.router.navigate(['/']);
 				}),
-
-				mapTo(void 0)
+				map(() => void 0)
 			);
 		}
 	}
