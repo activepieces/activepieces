@@ -1,6 +1,7 @@
 import { apId, UpsertInstanceRequest, Cursor, Instance, InstanceId, ProjectId, SeekPage } from "shared";
 import { collectionService } from "../collections/collection.service";
 import { flowService } from "../flows/flow-service";
+import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { Order } from "../helper/pagination/paginator";
@@ -8,14 +9,19 @@ import { InstanceEntity } from "./instance-entity";
 import { instanceRepo as repo } from "./instance-repo";
 
 export const instanceService = {
-    async upsert({ collectionId, status }: UpsertInstanceRequest): Promise<Instance | null> {
+    async upsert({ collectionId, status }: UpsertInstanceRequest): Promise<Instance> {
         const collection = await collectionService.getOne(
             collectionId,
             undefined,
         );
 
         if (!collection) {
-            return null;
+            throw new ActivepiecesError({
+                code: ErrorCode.COLLECTION_NOT_FOUND,
+                params: {
+                    id: collectionId,
+                },
+            });
         }
 
         const flowPage = await flowService.list(collectionId, undefined, Number.MAX_VALUE);
