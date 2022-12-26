@@ -26,7 +26,10 @@ export const authenticationService = {
             ownerId: user.id
         })
 
-        const token = await tokenUtils.encode(user);
+        const token = await tokenUtils.encode({
+            id: user.id,
+            type: PrincipalType.USER
+        });
 
         return {
             token,
@@ -59,7 +62,10 @@ export const authenticationService = {
             });
         }
 
-        const token = await tokenUtils.encode(user);
+        const token = await tokenUtils.encode({
+            id: user.id,
+            type: PrincipalType.USER
+        });
 
         return {
             token,

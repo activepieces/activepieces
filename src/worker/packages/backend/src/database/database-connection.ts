@@ -6,6 +6,7 @@ import {CollectionEntity} from "../collections/collection-entity";
 import {FlowEntity} from "../flows/flow-entity";
 import {FlowVersionEntity} from "../flows/flow-version/flow-version-entity";
 import {FileEntity} from "../file/file-entity";
+import {StoreEntryEntity} from "../store-entry/store-entry-entity";
 
 export const databaseConnection = new DataSource({
     type: 'postgres',
@@ -17,6 +18,7 @@ export const databaseConnection = new DataSource({
     synchronize: true,
     entities: [UserEntity,
         CollectionEntity,
+        StoreEntryEntity,
         ProjectEntity,
         FlowEntity,
         FileEntity,

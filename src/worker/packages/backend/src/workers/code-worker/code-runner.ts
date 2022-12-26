@@ -53,6 +53,6 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
     return executionResult;
 }
 
-export const CodeRunner = {
+export const codeRunner = {
     run: run
 }

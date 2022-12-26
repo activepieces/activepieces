@@ -3,7 +3,7 @@ import {CollectionId, FileId, FlowId} from "shared";
 export class ActivepiecesError extends Error {
 
     constructor(public error: StepNotFoundErrorParams | ComponentNotFoundErrorParams | ConfigNotFoundErrorParams
-        | ExistingUserErrorParams | InvalidCredentialsErrorParams | CollectionNotFoundErrorParams | FlowNotFoundErrorParams | FileNotFoundErrorParams) {
+        | InvalidBearerTokenParams | ExistingUserErrorParams | InvalidCredentialsErrorParams | CollectionNotFoundErrorParams | FlowNotFoundErrorParams | FileNotFoundErrorParams) {
         super(error.code);
     }
 
@@ -12,6 +12,10 @@ export class ActivepiecesError extends Error {
 export interface ErrorParams<T, V> {
     code: T,
     params: V
+}
+
+export interface InvalidBearerTokenParams extends
+    ErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {}> {
 }
 
 export interface FileNotFoundErrorParams extends ErrorParams<ErrorCode.FILE_NOT_FOUND, {
@@ -57,6 +61,7 @@ export interface ConfigNotFoundErrorParams extends ErrorParams<ErrorCode.CONFIG_
 
 
 export enum ErrorCode {
+    INVALID_BEARER_TOKEN = "INVALID_BEARER_TOKEN",
     PIECE_NOT_FOUND = "PIECE_NOT_FOUND",
     STEP_NOT_FOUND = "STEP_NOT_FOUND",
     FILE_NOT_FOUND = "FILE_NOT_FOUND",

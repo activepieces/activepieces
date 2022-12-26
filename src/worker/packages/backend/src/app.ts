@@ -1,8 +1,7 @@
 import fastify from 'fastify';
-import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import { Principal, User } from 'shared';
-import { databaseModule } from './database/database-module';
-import { authenticationModule } from './authentication/authentication.module';
+import {apId, Principal, PrincipalType} from 'shared';
+import {databaseModule} from './database/database-module';
+import {authenticationModule} from './authentication/authentication.module';
 import {collectionModule} from "./collections/collection.module";
 import {StatusCodes} from "http-status-codes";
 import {ActivepiecesError} from "./helper/activepieces-error";
@@ -11,6 +10,11 @@ import {flowModule} from "./flows/flow.module";
 import {fileModule} from "./file/file.module";
 import {redisClient} from "./database/redis-connection";
 import {piecesController} from "./pieces/pieces.controller";
+import {codeModule} from "./code/code.module";
+import {oauth2Module} from "./oauth2/oauth2.module";
+import {tokenVerifyMiddleware} from "./authentication/token-verify-middleware";
+import {storeEntryModule} from "./store-entry/store-entry.module";
+import {tokenUtils} from "./authentication/lib/token-utils";
 
 declare module 'fastify' {
     export interface FastifyRequest {
@@ -21,14 +25,17 @@ declare module 'fastify' {
 const app = fastify({
     logger: true
 });
-
+app.addHook('onRequest', tokenVerifyMiddleware);
 app.register(databaseModule);
 app.register(authenticationModule);
 app.register(projectModule);
-app.register(piecesController);
 app.register(collectionModule);
 app.register(fileModule);
+app.register(storeEntryModule);
 app.register(flowModule);
+app.register(codeModule);
+app.register(piecesController);
+app.register(oauth2Module);
 
 app.setErrorHandler(function (error, request, reply) {
     if (error instanceof ActivepiecesError) {
@@ -37,7 +44,11 @@ app.setErrorHandler(function (error, request, reply) {
             code: apError.error.code
         })
     }else {
-        reply.status(error.statusCode).send(error)
+        if(error.statusCode !== undefined){
+            reply.status(error.statusCode).send(error)
+        }else{
+            reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send(error);
+        }
     }
 })
 
