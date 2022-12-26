@@ -37,7 +37,7 @@ app.setErrorHandler(function (error, request, reply) {
             code: apError.error.code
         })
     }else {
-        reply.status(error.statusCode).send(error)
+        reply.status(error.statusCode ?? StatusCodes.BAD_REQUEST).send(error)
     }
 })
 
