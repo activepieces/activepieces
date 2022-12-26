@@ -4,6 +4,7 @@ import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
 
 const ignoredRoutes = new Set([
     '/v1/authentication/sign-in',
+    '/v1/pieces',
     '/v1/authentication/sign-up',
 ]);
 

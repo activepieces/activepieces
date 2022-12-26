@@ -15,11 +15,13 @@
     "jest": "^28.0.8",
     "ts-jest": "^28.0.8",
     "ts-loader": "^8.3.0",
+    "nodemon": "^2.0.20",
     "typescript": "^4.0.3"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json --outDir dist",
     "posttest": "npm run lint",
+    "dev": "nodemon",
     "test": "jest --coverage",
     "test:watch": "jest --watch"
   }
