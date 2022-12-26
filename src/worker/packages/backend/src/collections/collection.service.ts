@@ -18,6 +18,12 @@ const collectionRepo = databaseConnection.getRepository(CollectionEntity);
 
 export const collectionService = {
 
+    /**
+     * get a collection by id and versionId
+     * @param id collection id to get
+     * @param versionId versionId of collection to get, use 'undefined' for the latest version
+     * @returns collection if it exists, else null
+     */
     async getOne(id: CollectionId, versionId: CollectionVersionId): Promise<Collection | null> {
         let collection: Collection = await collectionRepo.findOneBy({
             id: id
