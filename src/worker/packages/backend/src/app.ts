@@ -11,6 +11,7 @@ import {componentsController} from "./components/components.controller";
 import {flowModule} from "./flows/flow.module";
 import {fileModule} from "./file/file.module";
 import {redisClient} from "./database/redis-connection";
+import {instanceModule} from './instance/instance-module';
 
 declare module 'fastify' {
     export interface FastifyRequest {
@@ -29,6 +30,7 @@ app.register(componentsController);
 app.register(collectionModule);
 app.register(fileModule);
 app.register(flowModule);
+app.register(instanceModule);
 
 app.setErrorHandler(function (error, request, reply) {
     if (error instanceof ActivepiecesError) {
