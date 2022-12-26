@@ -1,8 +1,10 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
-import { tokenUtils } from './lib/token-utils';
+import {FastifyReply, FastifyRequest} from 'fastify';
+import {tokenUtils} from './lib/token-utils';
+import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
 
 const ignoredRoutes = new Set([
     '/v1/authentication/sign-in',
+    '/v1/pieces',
     '/v1/authentication/sign-up',
 ]);
 
@@ -12,8 +14,16 @@ export const tokenVerifyMiddleware = async (request: FastifyRequest, _reply: Fas
     if (ignoredRoutes.has(request.routerPath)) {
         return;
     }
-
-    const token = request.headers.authorization?.substring(HEADER_PREFIX.length);
-    const principal = await tokenUtils.decode(token);
-    request.principal = principal;
+    const rawToken = request.headers.authorization;
+    if(rawToken === undefined || rawToken === null){
+        throw new ActivepiecesError({code: ErrorCode.INVALID_BEARER_TOKEN, params: {}});
+    }else {
+        try {
+            const token = rawToken.substring(HEADER_PREFIX.length);
+            const principal = await tokenUtils.decode(token);
+            request.principal = principal;
+        } catch (e) {
+            throw new ActivepiecesError({code: ErrorCode.INVALID_BEARER_TOKEN, params: {}});
+        }
+    }
 }

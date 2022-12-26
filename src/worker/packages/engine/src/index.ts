@@ -4,19 +4,18 @@ import {Utils} from './utils';
 import {StepOutput} from './model/output/step-output';
 import {globals} from './globals';
 import {StoreScope} from './model/util/store-scope';
-import {Component} from "components/dist/src/framework/component";
-import {ConfigurationValue} from "components/dist/src/framework/config/configuration-value.model";
+import {ConfigurationValue} from "pieces/dist/src/framework/config/configuration-value.model";
 
-import {InputOption} from "components/dist/src/framework/config/input-option.model";
-import {ComponentTrigger, ComponentTriggerSettings} from "./model/trigger/types/component-trigger";
-import {Trigger} from "components/dist/src/framework/trigger/trigger";
+import {ComponentTrigger} from "./model/trigger/types/component-trigger";
+import {Trigger} from "pieces/dist/src/framework/trigger/trigger";
 import {TriggerStepType} from "./model/trigger/trigger-metadata";
 import {FlowVersion} from "./model/flow-version";
 import {VariableService} from "./services/variable-service";
-import {Context} from "components/dist/src/framework/context";
-import {Action} from "components/dist/src/framework/action/action";
-import {Input} from "components/dist/src/framework/config/input.model";
-import {components} from "components/dist/src/apps";
+import {Context} from "pieces/dist/src/framework/context";
+import {Action} from "pieces/dist/src/framework/action/action";
+import {Input} from "pieces/dist/src/framework/config/input.model";
+import {pieces} from "pieces/dist/src/apps";
+import {Piece} from "pieces/dist/src/framework/piece";
 
 
 const args = process.argv.slice(2);
@@ -59,7 +58,7 @@ async function executeTrigger(): Promise<unknown[]> {
         return [];
     }
     let componentSettings = (optionRequest.flowVersion.trigger as ComponentTrigger).settings;
-    let application = components.find(f => f.name === componentSettings.componentName);
+    let application = pieces.find(f => f.name === componentSettings.componentName);
     if (application === undefined) {
         throw new Error("Component " + componentSettings.componentName + " is not found");
     }
@@ -86,7 +85,7 @@ async function executeTrigger(): Promise<unknown[]> {
 
 async function validateConfigs() {
     let optionRequest: { componentName: string, triggerName: string, actionName: string, input: Record<string, unknown> } = JSON.parse(args[1]);
-    let app: Component = components.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
+    let app: Piece = pieces.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
     let inputs: Input[] = [];
     if (optionRequest.actionName !== undefined && optionRequest.actionName !== null) {
         let action: Action = app.getAction(optionRequest.actionName)!;
@@ -104,8 +103,8 @@ async function validateConfigs() {
 }
 
 async function getTriggerType() {
-    let optionRequest: { componentName: string, triggerName: string } = JSON.parse(args[1]);
-    let app: Component = components.find(f => f.name.toLowerCase() === optionRequest.componentName.toLowerCase())!;
+    let optionRequest: { pieceName: string, triggerName: string } = JSON.parse(args[1]);
+    let app: Piece = pieces.find(f => f.name.toLowerCase() === optionRequest.pieceName.toLowerCase())!;
     let trigger: Trigger = app.getTrigger(optionRequest.triggerName)!;
     return trigger.type;
 }

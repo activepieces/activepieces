@@ -1,5 +1,5 @@
 import { ComponentExecutor } from '../../src/executors/component-executor';
-import {ConfigurationValue} from "components/dist/src/framework/config/configuration-value.model";
+import {ConfigurationValue} from "pieces/dist/src/framework/config/configuration-value.model";
 import {apps} from "components/dist/src/apps";
 
 describe('Component Executor', () => {

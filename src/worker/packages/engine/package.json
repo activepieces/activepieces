@@ -6,7 +6,7 @@
     "fs-extra": "^10.1.0",
     "lodash.get": "^4.4.2",
     "unzip-stream": "^0.3.1",
-    "components": "*"
+    "pieces": "*"
   },
   "devDependencies": {
     "webpack-ignore-dynamic-require": "^1.0.0",

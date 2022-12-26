@@ -1,18 +1,19 @@
 export {CodeRunStatus} from "./workers/code-worker/code-run-status";
 export {CodeExecutionResult} from "./workers/code-worker/code-execution-result";
+export {ExecuteCodeRequest} from './code/dto/code-request';
 export {flowHelper} from "./flows/flow-helper";
-
-export {AuthenticationRequest} from './authentication/dto/authentication-request';
+export {PutStoreEntryRequest} from "./store-entry/dto/put-store-entry-request";
 export {AuthenticationResponse} from './authentication/dto/authentication-response';
+export {AuthenticationRequest} from './authentication/dto/authentication-request'
 export { PrincipalType } from "./authentication/model/principal-type";
 export { Principal } from "./authentication/model/principal";
-
+export {StoreEntry, StoreEntryId} from './store-entry/store-entry';
 export {User, UserStatus, UserId} from './user/user';
 export {Action, ActionType, CodeActionSettings} from './flows/actions/action';
 export {Trigger, EmptyTrigger, ComponentTriggerSettings, ScheduleTriggerSettings, ComponentTrigger, ScheduleTrigger, WebhookTrigger, TriggerType} from './flows/triggers/trigger';
 export {Collection, CollectionId} from './collections/collection';
 export {CollectionVersion, CollectionVersionState, CollectionVersionId} from './collections/collection-version';
-export {ComponentOptionRequest, ComponentOptionRequestSchema} from './components/dto/component-option-request';
+export {PieceOptionRequest, PieceOptionRequestSchema} from './pieces/dto/piece-option-request';
 export {FlowVersion, FlowVersionState, FlowVersionId} from './flows/flow-version';
 export {Flow, FlowId} from './flows/flow';
 export {File, FileId} from './file/file'

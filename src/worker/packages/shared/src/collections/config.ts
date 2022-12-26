@@ -15,13 +15,13 @@ export interface DictionaryConfig extends BasicConfig<ConfigType.DICTIONARY, Rec
 export interface NumberConfig extends BasicConfig<ConfigType.NUMBER, number> {
 }
 
+
 export enum ConfigType {
   CHECKBOX = "CHECKBOX",
   NUMBER = "NUMBER",
   DICTIONARY = "DICTIONARY",
   LONG_TEXT = "LONG_TEXT",
-  SHORT_TEXT = "SHORT_TEXT",
-  OAUTH2 = "OAUTH2"
+  SHORT_TEXT = "SHORT_TEXT"
 }
 interface BasicConfig<T extends ConfigType, V> {
   key: string;

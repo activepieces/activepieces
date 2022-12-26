@@ -11,7 +11,7 @@ import {
   ResponseAction,
   ResponseActionSettings,
 } from '../../src/model/action/types/response-action';
-import { ComponentAction, ComponentActionSettings } from '../../src/model/action/types/component-action';
+import { PieceAction, PieceActionSettings } from '../../src/model/action/types/piece-action';
 import {ActionType} from "../../src/model/action/action-metadata";
 
 describe('Action Factory', () => {
@@ -33,18 +33,18 @@ describe('Action Factory', () => {
 
     const action = createAction(jsonData);
 
-    expect(action).toBeInstanceOf(ComponentAction);
+    expect(action).toBeInstanceOf(PieceAction);
     expect(action.type as ActionType).toEqual(ActionType.COMPONENT);
     expect(action.name).toEqual('COMPONENT_ACTION');
     expect(action.nextAction).toBeUndefined();
 
-    expect((action as ComponentAction).settings).toBeInstanceOf(ComponentActionSettings);
-    expect((action as ComponentAction).settings.input).toEqual({
+    expect((action as PieceAction).settings).toBeInstanceOf(PieceActionSettings);
+    expect((action as PieceAction).settings.input).toEqual({
       channel: 'channel',
       text: 'text',
     });
-    expect((action as ComponentAction).settings.componentName).toEqual('slack');
-    expect((action as ComponentAction).settings.actionName).toEqual('sendMessage');
+    expect((action as PieceAction).settings.pieceName).toEqual('slack');
+    expect((action as PieceAction).settings.actionName).toEqual('sendMessage');
   });
 
   test('CODE action is created', async () => {

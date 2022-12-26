@@ -2,17 +2,17 @@ import {CodeAction, CodeActionSettings} from './types/code-action';
 import {StorageAction, StorageActionSettings} from './types/storage-action';
 import {ResponseAction, ResponseActionSettings} from './types/response-action';
 import {LoopOnItemAction, LoopOnItemActionSettings} from './types/loop-action';
-import { ComponentAction, ComponentActionSettings } from './types/component-action';
+import { PieceAction, PieceActionSettings } from './types/piece-action';
 import {ActionMetadata, ActionType} from "./action-metadata";
 
 export function createAction(jsonData: any): ActionMetadata {
   try {
     switch (jsonData['type']) {
       case 'COMPONENT':
-        return new ComponentAction(
+        return new PieceAction(
           ActionType.COMPONENT,
           jsonData['name'],
-          ComponentActionSettings.deserialize(jsonData['settings']),
+          PieceActionSettings.deserialize(jsonData['settings']),
           !jsonData['nextAction']
             ? undefined
             : createAction(jsonData['nextAction'])

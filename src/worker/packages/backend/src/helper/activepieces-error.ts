@@ -16,6 +16,7 @@ type ErrorParams =
     | FileNotFoundErrorParams
     | FlowNotFoundErrorParams
     | InstanceNotFoundErrorParams
+    | InvalidBearerTokenParams
     | InvalidCredentialsErrorParams
     | StepNotFoundErrorParams;
 
@@ -24,7 +25,11 @@ export interface BaseErrorParams<T, V> {
     params: V
 }
 
-export interface FileNotFoundErrorParams extends BaseErrorParams<ErrorCode.FILE_NOT_FOUND, {
+export interface InvalidBearerTokenParams extends
+    ErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {}> {
+}
+
+export interface FileNotFoundErrorParams extends ErrorParams<ErrorCode.FILE_NOT_FOUND, {
     id: FileId
 }> {
 }
@@ -53,25 +58,24 @@ export interface ExistingUserErrorParams extends BaseErrorParams<ErrorCode.EXIST
 }> {
 }
 
-export interface ComponentNotFoundErrorParams extends BaseErrorParams<ErrorCode.COMPONENT_NOT_FOUND, {
-    componentName: string
-}> {
-}
 
-export interface StepNotFoundErrorParams extends BaseErrorParams<ErrorCode.STEP_NOT_FOUND, {
-    componentName: string,
+export interface StepNotFoundErrorParams extends ErrorParams<ErrorCode.STEP_NOT_FOUND, {
+    pieceName: string,
     stepName: string
 }> {
 }
 
-export interface ConfigNotFoundErrorParams extends BaseErrorParams<ErrorCode.CONFIG_NOT_FOUND, {
-    componentName: string,
+export interface ConfigNotFoundErrorParams extends ErrorParams<ErrorCode.CONFIG_NOT_FOUND, {
+    pieceName: string,
     stepName: string,
     configName: string
 }> {}
 
 
 export enum ErrorCode {
+    INVALID_BEARER_TOKEN = "INVALID_BEARER_TOKEN",
+    PIECE_NOT_FOUND = "PIECE_NOT_FOUND",
+    STEP_NOT_FOUND = "STEP_NOT_FOUND",
     COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
     COMPONENT_NOT_FOUND = "COMPONENT_NOT_FOUND",
     CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
