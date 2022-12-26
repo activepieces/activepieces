@@ -24,7 +24,7 @@ export const instanceService = {
             });
         }
 
-        const flowPage = await flowService.list(collectionId, undefined, Number.MAX_VALUE);
+        const flowPage = await flowService.list(collectionId, undefined, Number.MAX_SAFE_INTEGER);
 
         const flowIdToVersionId = Object.fromEntries(
             flowPage.data.map(
