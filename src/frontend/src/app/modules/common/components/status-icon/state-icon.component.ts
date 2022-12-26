@@ -1,19 +1,15 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
 	selector: 'app-state-icon',
 	templateUrl: './state-icon.component.html',
-	styleUrls: ['./state-icon.component.css'],
 })
-export class StateIconComponent {
+export class StateIconComponent implements OnInit {
 	@Input() size = 16;
 	@Input() succeeded: boolean;
-	@Input() textAfter = '';
+	textAfter: string = '';
 	constructor() {}
-	textClass() {
-		if (!this.succeeded) {
-			return 'text-danger';
-		}
-		return 'text-success';
+	ngOnInit(): void {
+		this.textAfter = this.succeeded ? 'Success' : 'Failed';
 	}
 }

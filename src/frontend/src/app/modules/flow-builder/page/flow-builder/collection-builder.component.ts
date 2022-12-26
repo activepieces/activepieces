@@ -2,7 +2,6 @@ import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, ViewEncaps
 import { ActivatedRoute, Params } from '@angular/router';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { InstanceRunStatus } from '../../../common/model/enum/instance-run-status';
-import { NavigationService } from '../../../dashboard/service/navigation.service';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar-type.enum';
@@ -46,7 +45,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 	newCollectionCheck$: Observable<Params>;
 	constructor(
 		private store: Store,
-		private navigationService: NavigationService,
 		public pieceBuilderService: CollectionBuilderService,
 		private actRoute: ActivatedRoute,
 		private ngZone: NgZone,
@@ -54,13 +52,10 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 		private runDetailsService: RunDetailsService,
 		private route: ActivatedRoute
 	) {
-		this.navigationService.isInBuilder = true;
-
 		this.loadInitialData$ = this.actRoute.data.pipe(
 			tap(value => {
 				const runInformation: InstanceRunInfo = value['runInformation'];
 				if (runInformation !== undefined) {
-					this.navigationService.setTitle('View Run');
 					const collection = runInformation.collection;
 					const flow: Flow = runInformation.flow;
 					const run: InstanceRun = runInformation.run;
@@ -81,8 +76,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 					const collection: Collection = value['collection'];
 					const flows = value['flows'];
 					const instance: Instance | undefined = value['instance'];
-
-					this.navigationService.setTitle(collection.last_version.display_name);
 					this.store.dispatch(
 						BuilderActions.loadInitial({
 							collection: collection,
@@ -115,7 +108,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 
 	ngOnDestroy(): void {
 		this.snackbar.dismiss();
-		this.navigationService.isInBuilder = false;
 		this.runDetailsService.currentStepResult$.next(undefined);
 	}
 

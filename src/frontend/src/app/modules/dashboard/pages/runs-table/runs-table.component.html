@@ -1,0 +1,47 @@
+<div class="ap-h-full">
+  <app-page-title title="Runs"></app-page-title>
+  <div class="ap-min-h-[70%]">
+    <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Runs">
+      <ng-container matColumnDef="collectionName">
+        <th mat-header-cell *matHeaderCellDef>Collection</th>
+        <td mat-cell *matCellDef="let run">{{ run.collection_display_name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="flowName">
+        <th mat-header-cell *matHeaderCellDef>Flow</th>
+        <td mat-cell *matCellDef="let run">{{ run.flow_display_name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="started">
+        <th mat-header-cell *matHeaderCellDef>Started</th>
+        <td mat-cell *matCellDef="let run">{{ run.start_time | date: 'short' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="finished">
+        <th mat-header-cell *matHeaderCellDef>Finished</th>
+        <td mat-cell *matCellDef="let run">{{ run.finish_time | date: 'short' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let run"><app-state-icon
+            *ngIf="run.status === InstanceRunStatus.SUCCEEDED || run.status === InstanceRunStatus.FAILED"
+            [succeeded]="run.status === InstanceRunStatus.SUCCEEDED"></app-state-icon>
+          <ng-container *ngIf="run.status === InstanceRunStatus.RUNNING">
+            Running</ng-container>
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openInstanceRun(row)" mat-row
+        *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+    <ng-container *ngIf="dataSource.data.length===0">
+      <div class="ap-flex ap-items-center ap-justify-center ap-h-full ap-h-[500px]">
+        No Runs Instantiated Yet
+      </div>
+    </ng-container>
+  </div>
+
+  <div class="ap-flex ap-justify-end">
+    <app-ap-paginator> </app-ap-paginator>
+  </div>
+</div>

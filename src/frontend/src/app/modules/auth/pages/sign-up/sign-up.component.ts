@@ -1,8 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../../common/service/authentication.service';
-import { NavigationService } from '../../../dashboard/service/navigation.service';
 
 import {
 	containsLowercaseCharacter,
@@ -23,7 +22,7 @@ export interface UserInfo {
 	templateUrl: './sign-up.component.html',
 	styleUrls: ['./sign-up.component.scss'],
 })
-export class SignUpComponent implements OnInit {
+export class SignUpComponent {
 	registrationForm: FormGroup<UserInfo>;
 	loading = false;
 	tokenError = false;
@@ -33,7 +32,6 @@ export class SignUpComponent implements OnInit {
 	constructor(
 		private formBuilder: FormBuilder,
 		private router: Router,
-		private navigationService: NavigationService,
 		public authenticationService: AuthenticationService
 	) {
 		this.registrationForm = this.formBuilder.group({
@@ -58,10 +56,6 @@ export class SignUpComponent implements OnInit {
 			track_events: new FormControl<boolean>(false, { nonNullable: true }),
 			news_letter: new FormControl<boolean>(false, { nonNullable: true }),
 		});
-	}
-
-	ngOnInit(): void {
-		this.navigationService.setTitle('Email Registration');
 	}
 
 	signUp() {

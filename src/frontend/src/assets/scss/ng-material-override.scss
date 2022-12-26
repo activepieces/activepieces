@@ -39,9 +39,9 @@ $ap-typography: mat.define-typography-config(
   mat.define-typography-level(
 			$font-family: 'Open Sans',
 			$font-weight: 400,
-			$font-size: 2.125rem,
-			$line-height: 2.25rem,
-			$letter-spacing: normal,
+			$font-size: 1.5rem,
+			$line-height: 1.5rem,
+			$letter-spacing: 0.18px,
 		),
     $headline-6:
     mat.define-typography-level(
@@ -49,7 +49,7 @@ $ap-typography: mat.define-typography-config(
         $font-weight: 400,
         $font-size: 1.25rem,
         $line-height: 2.25rem,
-        $letter-spacing: normal,
+        $letter-spacing: 0.15px,
       ),
 	$body-1:
 		mat.define-typography-level(

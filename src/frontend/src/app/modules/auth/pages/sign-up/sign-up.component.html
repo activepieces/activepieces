@@ -1,4 +1,4 @@
-<div class="ap-typography-headline-4 ap-text-center ap-mb-4">Let's Get Started!</div>
+<div class="ap-typography-headline-5 ap-text-center ap-mb-4">Let's Get Started!</div>
 <form [formGroup]="registrationForm" (ngSubmit)="signUp()" class="ap-flex ap-flex-col ap-gap-2">
   <div class="ap-flex ap-gap-1 md:ap-gap-4 ap-items-center ap-flex-col md:ap-flex-row">
     <mat-form-field class="ap-w-full md:ap-w-initial" appearance="outline">
@@ -47,38 +47,38 @@
   <mat-menu #menu="matMenu" [hasBackdrop]="true">
     <div class="ap-mx-2">
       <div class="ap-flex ap-gap-4 ap-items-center" [class.invalid-password-condition]="getPasswordError('lowercase')">
-        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/checks/check-invalid.svg"
+        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-invalid.svg"
           class="grey-check">
         </svg-icon>
-        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/checks/check-correct.svg"
+        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-correct.svg"
           class="green-check">
         </svg-icon>
         Lowercase
       </div>
       <div class="ap-flex ap-gap-4 ap-items-center" [class.invalid-password-condition]="getPasswordError('uppercase')">
-        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/checks/check-invalid.svg"
+        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-invalid.svg"
           class="grey-check">
         </svg-icon>
-        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/checks/check-correct.svg"
+        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-correct.svg"
           class="green-check">
         </svg-icon>
         Uppercase
       </div>
       <div class="ap-flex ap-gap-4 ap-items-center"
         [class.invalid-password-condition]="getPasswordError('specialCharacter')">
-        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/checks/check-invalid.svg"
+        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-invalid.svg"
           class="grey-check">
         </svg-icon>
-        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/checks/check-correct.svg"
+        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-correct.svg"
           class="green-check">
         </svg-icon>
         Special Character
       </div>
       <div class="ap-flex ap-gap-4 ap-items-center" [class.invalid-password-condition]="getPasswordError('number')">
-        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/checks/check-invalid.svg"
+        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-invalid.svg"
           class="grey-check">
         </svg-icon>
-        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/checks/check-correct.svg"
+        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-correct.svg"
           class="green-check">
         </svg-icon>
         Number
@@ -86,10 +86,10 @@
       <div class="ap-flex ap-gap-4 ap-items-center" [class.invalid-password-condition]="
             getPasswordError('maxlength') || getPasswordError('minlength') || getPasswordError('required')
           ">
-        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/checks/check-invalid.svg"
+        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-invalid.svg"
           class="grey-check">
         </svg-icon>
-        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/checks/check-correct.svg"
+        <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-correct.svg"
           class="green-check">
         </svg-icon>
         8-64 Characters

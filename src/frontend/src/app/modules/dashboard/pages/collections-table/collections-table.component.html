@@ -1,6 +1,5 @@
-<div class="ap-h-full"
-  [class.ap-hidden]="(areThereCollections$|async)===false  && !dataSource.isLoading && !paginator.next && !paginator.previous && dataSource.data.length === 0">
-  <app-page-title title=" Flows"></app-page-title>
+<div class="ap-h-full" [class.ap-hidden]="(areThereCollections$|async)===false">
+  <app-page-title title="Flows"></app-page-title>
   <div class="ap-min-h-[70%]">
     <table mat-table [dataSource]="dataSource" class="ap-w-[100%] " aria-label="Collections">
       <ng-container matColumnDef="name">
@@ -36,7 +35,6 @@
 </div>
 
 
-<app-empty-collections-table
-  *ngIf="(areThereCollections$|async)===false  && !dataSource.isLoading && !paginator.next && !paginator.previous && dataSource.data.length === 0 "></app-empty-collections-table>
+<app-empty-collections-table *ngIf="(areThereCollections$|async)===false"></app-empty-collections-table>
 <ng-container *ngIf="archiveCollectionDialogClosed$ | async"></ng-container>
 <ng-container *ngIf="createCollection$ | async"> </ng-container>

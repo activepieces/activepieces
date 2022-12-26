@@ -24,14 +24,15 @@ export class InstanceRunService {
 		);
 	}
 
-	list(projectId: UUID, cursor: string): Observable<SeekPage<InstanceRun>> {
-		if (cursor) {
-			const params = { cursor: cursor };
-			return this.http.get<SeekPage<InstanceRun>>(environment.apiUrl + `/projects/${projectId}/instance-runs`, {
-				params: params,
-			});
+	list(projectId: UUID, params: { pageSize: number; cursor: string }): Observable<SeekPage<InstanceRun>> {
+		const queryParams: { [key: string]: string | number } = {};
+		queryParams['limit'] = params.pageSize;
+		if (params.cursor) {
+			queryParams['cursor'] = params.cursor;
 		}
-		return this.http.get<SeekPage<InstanceRun>>(environment.apiUrl + `/projects/${projectId}/instance-runs`);
+		return this.http.get<SeekPage<InstanceRun>>(environment.apiUrl + `/projects/${projectId}/instance-runs`, {
+			params: queryParams,
+		});
 	}
 
 	private logs(fileId: UUID): Observable<InstanceRunState> {

@@ -8,11 +8,13 @@ UserNotLoggedIn;
 IsNotFirstSignIn;
 export const AuthLayoutRoutes: Routes = [
 	{
+		title: 'AP-Sign In',
 		path: 'sign-in',
 		component: SignInComponent,
 		canActivate: [UserNotLoggedIn, IsNotFirstSignIn],
 	},
 	{
+		title: 'AP-Sign Up',
 		path: 'sign-up',
 		component: SignUpComponent,
 		canActivate: [FirstSignIn],

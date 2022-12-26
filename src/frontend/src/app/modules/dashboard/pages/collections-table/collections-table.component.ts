@@ -1,5 +1,4 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { SeekPage } from '../../../common/model/seek-page';
 import { Collection } from '../../../common/model/collection.interface';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CollectionService } from '../../../common/service/collection.service';
@@ -10,7 +9,7 @@ import { FlowService } from 'src/app/modules/common/service/flow.service';
 import { Flow } from 'src/app/modules/common/model/flow.class';
 import { PosthogService } from 'src/app/modules/common/service/posthog.service';
 import { ApPaginatorComponent } from 'src/app/modules/common/components/pagination/ap-paginator.component';
-import { CollectionsTableDataSource } from './collections-table-datasource';
+import { CollectionsTableDataSource } from './collections-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
 import { ArchiveCollectionDialogComponent } from './archive-collection-dialog/archive-collection-dialog.component';
 import { ARE_THERE_COLLECTIONS_FLAG } from '../../dashboard.routing';
@@ -20,7 +19,6 @@ import { DEFAULT_PAGE_SIZE } from 'src/app/modules/common/components/pagination/
 })
 export class CollectionsTableComponent implements OnInit {
 	@ViewChild(ApPaginatorComponent, { static: true }) paginator!: ApPaginatorComponent;
-	collectionsPage: SeekPage<Collection>;
 	creatingCollection = false;
 	archiveCollectionDialogClosed$: Observable<void>;
 	createCollection$: Observable<Flow>;
@@ -50,6 +48,7 @@ export class CollectionsTableComponent implements OnInit {
 		);
 		this.areThereCollections$ = this.activatedRoute.data.pipe(
 			map(res => {
+				debugger;
 				return res[ARE_THERE_COLLECTIONS_FLAG];
 			})
 		);

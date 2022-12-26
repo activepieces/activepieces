@@ -1,9 +1,8 @@
 import { DataSource } from '@angular/cdk/collections';
-
 import { Observable, combineLatest, switchMap, tap, map } from 'rxjs';
 import { ApPaginatorComponent } from 'src/app/modules/common/components/pagination/ap-paginator.component';
-import { Collection } from 'src/app/modules/common/model/collection.interface';
-import { CollectionService } from 'src/app/modules/common/service/collection.service';
+import { InstanceRun } from 'src/app/modules/common/model/instance-run.interface';
+import { InstanceRunService } from 'src/app/modules/common/service/instance-run.service';
 import { ProjectService } from 'src/app/modules/common/service/project.service';
 
 /**
@@ -11,16 +10,14 @@ import { ProjectService } from 'src/app/modules/common/service/project.service';
  * encapsulate all logic for fetching and manipulating the displayed data
  * (including sorting, pagination, and filtering).
  */
-export class CollectionsTableDataSource extends DataSource<Collection> {
-	data: Collection[] = [];
-	public isLoading = true;
+export class RunsTableDataSource extends DataSource<InstanceRun> {
+	data: InstanceRun[] = [];
 	constructor(
 		private pageSize$: Observable<number>,
 		private pageCursor$: Observable<string>,
 		private paginator: ApPaginatorComponent,
 		private projectService: ProjectService,
-		private collectionService: CollectionService,
-		private refresh$: Observable<boolean>
+		private instanceRunService: InstanceRunService
 	) {
 		super();
 	}
@@ -30,28 +27,21 @@ export class CollectionsTableDataSource extends DataSource<Collection> {
 	 * the returned stream emits new items.
 	 * @returns A stream of the items to be rendered.
 	 */
-	connect(): Observable<Collection[]> {
+	connect(): Observable<InstanceRun[]> {
 		return combineLatest({
 			pageCursor: this.pageCursor$,
 			pageSize: this.pageSize$,
 			project: this.projectService.selectedProjectAndTakeOne(),
-			refresh: this.refresh$,
 		}).pipe(
-			tap(() => {
-				this.isLoading = true;
-			}),
 			switchMap(res => {
-				return this.collectionService.list(res.project.id, { pageSize: res.pageSize, cursor: res.pageCursor });
+				return this.instanceRunService.list(res.project.id, { pageSize: res.pageSize, cursor: res.pageCursor });
 			}),
 			tap(res => {
 				this.paginator.next = res.next;
 				this.paginator.previous = res.previous;
 				this.data = res.data;
 			}),
-			map(res => res.data),
-			tap(() => {
-				this.isLoading = false;
-			})
+			map(res => res.data)
 		);
 	}
 

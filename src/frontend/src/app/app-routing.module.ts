@@ -44,6 +44,7 @@ const routes: Routes = [
 	{
 		path: '**',
 		component: NotFoundComponent,
+		title: 'AP-404',
 	},
 ];
 

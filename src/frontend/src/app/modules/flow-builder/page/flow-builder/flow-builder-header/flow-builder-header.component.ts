@@ -17,7 +17,6 @@ import {
 	ChevronDropdownOptionType,
 } from '../../../components/chevron-dropdown-menu/chevron-dropdown-option';
 import { PopoverDirective } from 'ngx-bootstrap/popover';
-import { NavigationService } from 'src/app/modules/dashboard/service/navigation.service';
 
 @Component({
 	selector: 'app-flow-builder-header',
@@ -43,8 +42,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 		private router: Router,
 		private modalService: BsModalService,
 		public collectionBuilderService: CollectionBuilderService,
-		private route: ActivatedRoute,
-		private navigationService: NavigationService
+		private route: ActivatedRoute
 	) {}
 
 	ngOnInit(): void {
@@ -111,7 +109,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
 
 	savePieceName(newPieceName: string) {
 		this.store.dispatch(CollectionActions.changeName({ displayName: newPieceName }));
-		this.navigationService.setTitle(newPieceName);
 	}
 
 	redirectHome(newWindow: boolean) {

@@ -8,7 +8,6 @@ import { Flow } from '../../../common/model/flow.class';
 import { TriggerType } from '../../../common/model/enum/trigger-type.enum';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/selector/flow-builder.selector';
-import { MatLegacySnackBar as MatSnackBar, MatLegacySnackBarRef as MatSnackBarRef } from '@angular/material/legacy-snack-bar';
 import { TestRunBarComponent } from '../../page/flow-builder/test-run-bar/test-run-bar.component';
 import { FlowsActions } from '../../store/action/flows.action';
 import { Collection } from 'src/app/modules/common/model/collection.interface';
@@ -21,6 +20,7 @@ import { jsonValidator } from 'src/app/modules/common/validators/json-validator'
 import jsonlint from 'jsonlint-mod';
 import { PosthogService } from 'src/app/modules/common/service/posthog.service';
 import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
+import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 @Component({
 	selector: 'app-test-flow-modal',
 	templateUrl: './test-flow-modal.component.html',
