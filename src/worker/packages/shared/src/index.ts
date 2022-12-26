@@ -20,7 +20,6 @@ export {getStep} from './flows/flow-helper';
 export {InstanceRun, InstanceRunId} from './model/instance-run'
 export {Project, ProjectId} from './project/project';
 export {Config} from './collections/config';
-export {Instance, InstanceId} from './instance/instance';
 export {FlowOperationRequest, FlowOperationType, DeleteActionRequest, UpdateActionRequest, AddActionRequest, UpdateTriggerRequest, ChangeNameRequest} from './flows/flow-operations'
 export {ListCollectionsRequest, ListCollectionsSchema} from './collections/dto/list-collections-request';
 export {ListFlowsRequest, ListFlowsSchema} from './flows/dto/list-flows-request';
@@ -30,3 +29,5 @@ export {CreateFlowRequest, CreateFlowRequestSchema} from './flows/dto/create-flo
 export {CloneFlowVersionRequest} from './flows/dto/clone-flow-version-request';
 export {SeekPage, Cursor} from './common/seek-page';
 export {apId} from './common/id-generator'
+
+export * from './instance';
