@@ -1,1 +1,1 @@
-export * from './create-instance-request';
+export * from './upsert-instance-request';

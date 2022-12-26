@@ -1,4 +1,4 @@
-import { apId, CreateInstanceRequest, Cursor, Instance, InstanceId, ProjectId, SeekPage } from "shared";
+import { apId, UpsertInstanceRequest, Cursor, Instance, InstanceId, ProjectId, SeekPage } from "shared";
 import { collectionService } from "../collections/collection.service";
 import { flowService } from "../flows/flow-service";
 import { buildPaginator } from "../helper/pagination/build-paginator";
@@ -8,7 +8,7 @@ import { InstanceEntity } from "./instance-entity";
 import { instanceRepo as repo } from "./instance-repo";
 
 export const instanceService = {
-    async upsert({ collectionId, status }: CreateInstanceRequest): Promise<Instance | null> {
+    async upsert({ collectionId, status }: UpsertInstanceRequest): Promise<Instance | null> {
         const collection = await collectionService.getOne(
             collectionId,
             undefined,
