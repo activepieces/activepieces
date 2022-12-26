@@ -90,7 +90,7 @@ async function buildCodes(flowVersion: FlowVersion) {
 
 export const flowWorker = {
     async executeInstance(instance: Instance, flowId: FlowId, payload: undefined) {
-        let flowVersionId: FlowVersionId = instance.flowVersionId[flowId.toString()];
+        let flowVersionId: FlowVersionId = instance.flowIdToVersionId[flowId];
         return executeFlow(instance.id, flowVersionId, instance.collectionVersionId, payload);
     },
     async executeTest(collectionVersionId: CollectionVersionId, flowVersionId: FlowVersionId, payload: unknown) {

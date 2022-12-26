@@ -14,7 +14,9 @@ export const InstanceEntity = new EntitySchema<InstanceSchema>({
         projectId: ApIdSchema,
         collectionId: ApIdSchema,
         collectionVersionId: ApIdSchema,
-        flowVersionId: ApIdSchema,
+        flowIdToVersionId: {
+            type: "jsonb",
+        },
         status: {
             type: String
         }
