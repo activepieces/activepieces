@@ -1,4 +1,4 @@
-import {CollectionId, FileId, FlowId, InstanceId} from "shared";
+import {CollectionId, FileId, FlowId, InstanceId, InstanceRunId} from "shared";
 
 export class ActivepiecesError extends Error {
 
@@ -16,6 +16,7 @@ type ErrorParams =
     | FileNotFoundErrorParams
     | FlowNotFoundErrorParams
     | InstanceNotFoundErrorParams
+    | InstanceRunNotFoundErrorParams
     | InvalidBearerTokenParams
     | InvalidCredentialsErrorParams
     | StepNotFoundErrorParams;
@@ -42,6 +43,11 @@ export interface CollectionNotFoundErrorParams extends BaseErrorParams<ErrorCode
 
 export interface InstanceNotFoundErrorParams extends BaseErrorParams<ErrorCode.INSTANCE_NOT_FOUND, {
     id: InstanceId
+}> {
+}
+
+export interface InstanceRunNotFoundErrorParams extends BaseErrorParams<ErrorCode.INSTANCE_NOT_FOUND, {
+    id: InstanceRunId
 }> {
 }
 
@@ -84,6 +90,7 @@ export enum ErrorCode {
     FILE_NOT_FOUND = "FILE_NOT_FOUND",
     FLOW_NOT_FOUND = "FLOW_NOT_FOUND",
     INSTANCE_NOT_FOUND = "INSTANCE_NOT_FOUND",
+    INSTANCE_RUN_NOT_FOUND = "INSTANCE_NOT_FOUND",
     INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
     STEP_NOT_FOUND = "STEP_NOT_FOUND",
 }
