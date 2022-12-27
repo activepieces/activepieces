@@ -1,0 +1,15 @@
+---
+title: "Piece"
+description: ""
+---
+
+This is the structure of an piece, and this should be placed inside `app_name/index.ts`
+
+```typescript
+export const pieceName = createPiece({
+	name: string, // Unique name across all pieces
+	logoUrl: string, // Logo URL
+	actions: Action[], // List of actions
+	triggers: Trigger[], // List of triggers
+});
+```

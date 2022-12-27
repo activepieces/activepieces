@@ -1,0 +1,17 @@
+---
+title: "Action"
+description: ""
+---
+
+Action structure.
+
+```typescript
+export const createNewIssue = createAction({
+    name: string, // Unique name across the piece.
+    displayName: string, // Display name on the interface.
+	description: string, // Description for the action
+	props: Property[]; // Required properties from the user.
+    // Action implementation, It takes configs value as parameter.
+    run: async run(propsValue: Record<string, unknown>) => {}
+})
+```
