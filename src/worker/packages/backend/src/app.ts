@@ -16,6 +16,7 @@ import {tokenVerifyMiddleware} from "./authentication/token-verify-middleware";
 import {storeEntryModule} from "./store-entry/store-entry.module";
 import {tokenUtils} from "./authentication/lib/token-utils";
 import {instanceModule} from './instance/instance-module';
+import {instanceRunModule} from './instance-run/instance-run-module';
 
 declare module 'fastify' {
     export interface FastifyRequest {
@@ -38,6 +39,7 @@ app.register(codeModule);
 app.register(piecesController);
 app.register(oauth2Module);
 app.register(instanceModule);
+app.register(instanceRunModule);
 
 app.setErrorHandler(function (error, request, reply) {
     if (error instanceof ActivepiecesError) {
