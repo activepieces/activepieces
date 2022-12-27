@@ -25,7 +25,7 @@ function fromStatus(code: string): CodeRunStatus {
 async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResult> {
     let sandbox = sandboxManager.obtainSandbox();
     let buildPath = sandbox.getSandboxFolderPath();
-    let executionResult: CodeExecutionResult = undefined;
+    let executionResult: CodeExecutionResult;
     try {
         console.log("Started Executing Code in sandbox " + buildPath);
         sandbox.cleanAndInit();

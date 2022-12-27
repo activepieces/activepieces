@@ -1,4 +1,4 @@
-import {apId, User} from 'shared';
+import {apId, AuthenticationRequest, User, UserStatus} from 'shared';
 import { passwordHasher } from '../authentication/lib/password-hasher';
 import {databaseConnection} from "../database/database-connection";
 import {UserEntity} from "./user-entity";
@@ -11,10 +11,16 @@ type GetOneQuery = {
 }
 
 export const userService = {
-    async create(user: Partial<User>): Promise<User> {
-        const hashedPassword = await passwordHasher.hash(user.password);
-        user.password = hashedPassword;
-        user.id = apId();
+    async create(request: AuthenticationRequest): Promise<User> {
+        const hashedPassword = await passwordHasher.hash(request.password);
+        let user = {
+            id: apId(),
+            email: request.email,
+            password: hashedPassword,
+            firstName: '',
+            lastName: '',
+            status: UserStatus.VERIFIED
+        };
         return userRepo.save(user);
     },
 

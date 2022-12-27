@@ -33,7 +33,7 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
                 versionId: CollectionVersionId | undefined
             }
         }>, _reply) => {
-        const versionId: CollectionVersionId = _request.query.versionId;
+        const versionId: CollectionVersionId | undefined = _request.query.versionId;
         let collection = await collectionService.getOne(_request.params.collectionId, versionId);
         if(collection === null){
             throw new ActivepiecesError({ code: ErrorCode.COLLECTION_NOT_FOUND, params: {id: _request.params.collectionId}});

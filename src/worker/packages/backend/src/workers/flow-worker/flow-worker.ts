@@ -19,11 +19,11 @@ import {codeBuilder} from "../code-worker/code-builder";
 
 const fs = require("fs");
 
-async function executeFlow(instanceId: InstanceId,
+async function executeFlow(instanceId: InstanceId | undefined,
                            flowVersionId: FlowVersionId,
                            collectionVersionId: CollectionVersionId,
                            payload: unknown) {
-    const flowVersion = await flowVersionService.getOne(flowVersionId);
+    const flowVersion = (await flowVersionService.getOne(flowVersionId))!;
     const collectionVersion = await collectionVersionService.getOne(collectionVersionId);
     let sandbox = sandboxManager.obtainSandbox();
     let buildPath = sandbox.getSandboxFolderPath();
@@ -68,15 +68,16 @@ async function buildCodes(flowVersion: FlowVersion) {
         if (currentStep.type === ActionType.CODE) {
             let codeActionSettings: CodeActionSettings = currentStep.settings;
             buildRequests.push(new Promise<File>(async (resolve, reject) => {
-                if (codeActionSettings.artifactPackagedId !== undefined) {
+                if (codeActionSettings.artifactPackagedId === undefined) {
                     let sourceId = codeActionSettings.artifactSourceId;
                     let fileEntity = await fileService.getOne(sourceId);
-                    let builtFile = await codeBuilder.build(fileEntity.data);
+                    let builtFile = await codeBuilder.build(fileEntity!.data);
                     let savedPackagedFile: File = await fileService.save(builtFile);
                     codeActionSettings.artifactPackagedId = savedPackagedFile.id;
                     resolve(savedPackagedFile);
                 } else {
-                    resolve(await fileService.getOne(codeActionSettings.artifactPackagedId));
+                    let file: File = (await fileService.getOne(codeActionSettings.artifactPackagedId))!;
+                    resolve(file);
                 }
             }));
         }

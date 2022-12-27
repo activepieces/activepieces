@@ -8,6 +8,6 @@ export type FlowId = ApId;
 export interface Flow extends BaseModel<FlowId> {
 
     collectionId: CollectionId;
-    version?: FlowVersion;
+    version: FlowVersion | null;
 
 }

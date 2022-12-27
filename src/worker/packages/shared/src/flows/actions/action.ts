@@ -15,7 +15,7 @@ interface BaseAction<T, V> {
 export type CodeActionSettings = {
   artifact?: string;
   artifactSourceId: string;
-  artifactPackagedId: string;
+  artifactPackagedId: string | undefined;
   input: Record<string, unknown>;
 }
 

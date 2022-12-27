@@ -8,30 +8,31 @@ import {
 } from "shared";
 import {databaseConnection} from "../../database/database-connection";
 import {CollectionVersionEntity} from "./collection-version-entity";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 const collectionVersionRepo = databaseConnection.getRepository<CollectionVersion>(CollectionVersionEntity);
 
 
 export const collectionVersionService = {
 
-    async updateVersion(collectionVersion: CollectionVersion, request: UpdateCollectionRequest): Promise<CollectionVersion> {
-        await collectionVersionRepo.update(collectionVersion.id, request);
+    async updateVersion(collectionVersion: CollectionVersion, request: UpdateCollectionRequest): Promise<CollectionVersion | null> {
+        await collectionVersionRepo.update(collectionVersion.id, request as QueryDeepPartialEntity<CollectionVersion>);
         return collectionVersionRepo.findOneBy({
             id: collectionVersion.id
         });
     },
 
-    async getOne(id: CollectionVersionId) : Promise<CollectionVersion>{
+    async getOne(id: CollectionVersionId) : Promise<CollectionVersion | null>{
         return collectionVersionRepo.findOneBy({
             id: id
         })
     },
 
-    async getCollectionVersionId(collectionId: CollectionId, versionId: CollectionVersionId): Promise<CollectionVersion> {
+    async getCollectionVersionId(collectionId: CollectionId, versionId: CollectionVersionId | null): Promise<CollectionVersion | null> {
         return collectionVersionRepo.findOne({
             where: {
                 collectionId: collectionId,
-                id: versionId,
+                id: versionId??undefined,
             },
             order: {
                 created: 'DESC',

@@ -28,7 +28,7 @@ export const instanceService = {
 
         const flowIdToVersionId = Object.fromEntries(
             flowPage.data.map(
-                flow => [flow.id, flow.version.id]
+                flow => [flow.id, flow.version!.id]
             )
         );
 
@@ -38,7 +38,7 @@ export const instanceService = {
         };
 
         instance.collectionId = collectionId;
-        instance.collectionVersionId = collection.version.id;
+        instance.collectionVersionId = collection.version!.id;
         instance.flowIdToVersionId = flowIdToVersionId;
         instance.status = status;
 

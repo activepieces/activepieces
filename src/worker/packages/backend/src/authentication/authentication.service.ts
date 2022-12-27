@@ -13,13 +13,7 @@ export const authenticationService = {
             throw new ActivepiecesError({code: ErrorCode.EXISTING_USER, params: {}});
         }
 
-        const user = await userService.create({
-            email: request.email,
-            password: request.password,
-            firstName: '',
-            lastName: '',
-            status: UserStatus.VERIFIED
-        });
+        const user = await userService.create(request);
 
         const project = await projectService.create({
             displayName: "Project",

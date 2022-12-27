@@ -58,18 +58,18 @@ export const flowService = {
         const queryBuilder = flowRepo.createQueryBuilder("flow").where({collectionId: collectionId});
         const {data, cursor} = await paginator.paginate(queryBuilder.where({collectionId: collectionId}));
         // TODO REPLACE WITH SQL QUERY
-        let flowVersionsPromises: Promise<FlowVersion>[] = [];
+        let flowVersionsPromises: Promise<FlowVersion | null>[] = [];
         data.forEach(collection => {
             flowVersionsPromises.push(flowVersionService.getFlowVersion(collection.id, undefined));
         });
-        const versions: FlowVersion[] = await Promise.all(flowVersionsPromises)
+        const versions: (FlowVersion | null)[] = await Promise.all(flowVersionsPromises)
         for (let i = 0; i < data.length; ++i) {
             data[i] = {...data[i], version: versions[i]};
         }
         return paginationHelper.createPage<Flow>(data, cursor);
     },
-    async getOne(id: FlowId, versionId: FlowVersionId): Promise<Flow | null> {
-        const flow: Flow = await flowRepo.findOneBy({
+    async getOne(id: FlowId, versionId: FlowVersionId | undefined): Promise<Flow | null> {
+        const flow: Flow | null = await flowRepo.findOneBy({
             id: id
         });
         if (flow === null) {
@@ -81,9 +81,9 @@ export const flowService = {
             version: flowVersion
         }
     },
-    async update(flowId: FlowId, request: FlowOperationRequest): Promise<FlowVersion> {
+    async update(flowId: FlowId, request: FlowOperationRequest): Promise<FlowVersion | null> {
         let flowLock = await redisLock(flowId);
-        let lastVersion = await flowVersionService.getFlowVersion(flowId, undefined);
+        let lastVersion = (await flowVersionService.getFlowVersion(flowId, undefined))!;
         if (lastVersion.state === FlowVersionState.LOCKED) {
             lastVersion = await flowVersionService.createVersion(flowId, lastVersion);
         }
