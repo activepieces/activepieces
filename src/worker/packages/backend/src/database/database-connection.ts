@@ -8,6 +8,7 @@ import {FlowVersionEntity} from "../flows/flow-version/flow-version-entity";
 import {FileEntity} from "../file/file-entity";
 import {StoreEntryEntity} from "../store-entry/store-entry-entity";
 import {InstanceEntity} from '../instance/instance-entity';
+import { InstanceRunEntity } from '../instance-run/instance-run-entity';
 
 export const databaseConnection = new DataSource({
     type: 'postgres',
@@ -27,6 +28,7 @@ export const databaseConnection = new DataSource({
         FlowEntity,
         FlowVersionEntity,
         InstanceEntity,
+        InstanceRunEntity,
         ProjectEntity,
         UserEntity,
     ],
