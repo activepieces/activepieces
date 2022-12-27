@@ -25,7 +25,7 @@ export {FlowVersion, FlowVersionState, FlowVersionId} from './flows/flow-version
 export {Flow, FlowId} from './flows/flow';
 export {File, FileId} from './file/file'
 export {getStep} from './flows/flow-helper';
-export {InstanceRun, InstanceRunId} from './model/instance-run'
+export {InstanceRun, InstanceRunId} from './instance-runs/instance-run'
 export {Project, ProjectId} from './project/project';
 export {Config} from './collections/config';
 export {FlowOperationRequest, FlowOperationType, DeleteActionRequest, UpdateActionRequest, AddActionRequest, UpdateTriggerRequest, ChangeNameRequest} from './flows/flow-operations'
