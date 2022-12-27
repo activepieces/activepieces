@@ -3,14 +3,30 @@ title: "Getting Started"
 description: ""
 ---
 
+## Key Concepts
+
 Let's explain the the terminology and structure we are going to use to build custom piece for third party api.
 
 * `Piece`:
-* `Config`:
+* `Prop`:
 * `Trigger`:
 * `Action`:
 
-All pieces are belong to the package apps
+## Folder Structure 
 
-In the following example we are going to build an piece for `GitHub`, with `New Issue Trigger` and `Create Issue Action`.
+All pieces are belong to the package `src/pieces/apps`, the piece folder structure is like this.
 
+```
+.
+├── apps
+│   ├── app_name
+|   │   ├── common
+|   │   ├── triggers
+|   │   ├── actions
+|   │   ├── index.ts
+```
+
+* `common`: contains common utils and props such as oauth2 connection.
+* `triggers`: contains triggers.
+* `actions`: contains actions.
+* `app_name/index.ts`: contains the app defintiion.

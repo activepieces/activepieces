@@ -1,5 +1,31 @@
 ---
-title: "Piece Structure"
+title: "Trigger"
 description: ""
 ---
 
+Trigger structure
+
+```typescript
+export const createNewIssue = createAction({
+    name: string, // Unique name across the piece.
+    displayName: string, // Display name on the interface.
+	description: string, // Description for the action
+    triggerType: POLLING | WEBHOOK,
+	props: Property[]; // Required properties from the user.
+    // Run when the user disable the collection or
+    // the old collection is deleted after new one is published.
+	onEnable: (context, propsValue) => {};
+    // Run when the user enable or publish the collection.
+	onDisable: (context, propsValue) => {};
+    // Trigger implementation, It takes configs value as parameter.
+    // should returns an array of payload, each payload considered
+    // a seperate flow run.
+    run: async run(context, propsValue): unknown[] => {}
+})
+```
+
+# Examples
+
+## Webhook Trigger
+
+## Polling Trigger

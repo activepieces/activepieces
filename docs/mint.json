@@ -30,7 +30,7 @@
     },
     {
       "group": "Building Pieces",
-      "pages": ["building-pieces/getting-started"]
+      "pages": ["building-pieces/getting-started", "building-pieces/quickstart", "building-pieces/piece", "building-pieces/input", "building-pieces/action", "building-pieces/trigger"]
     },
     {
       "group": "Contributing",

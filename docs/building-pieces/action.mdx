@@ -3,11 +3,15 @@ title: "Action"
 description: ""
 ---
 
+Action structure.
 
-Here is the structure for Action:
 ```typescript
-export const slackSendMessageAction = createAction({
-    name: ""
+export const createNewIssue = createAction({
+    name: string, // Unique name across the piece.
+    displayName: string, // Display name on the interface.
+	description: string, // Description for the action
+	props: Property[]; // Required properties from the user.
+    // Action implementation, It takes configs value as parameter.
+    run: async run(propsValue: Record<string, unknown>) => {}
 })
 ```
-Let's create `actions` folder and add `create-new-issue.ts` inside it.
