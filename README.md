@@ -14,7 +14,7 @@
 
 ## Get started for free
 
-**Activepieces is still a prototype, an offical release coming soon**
+**Activepieces is still a prototype, an offical release is coming soon**
 
 Clone Activepieces to your machine and run it with 1 command
 
