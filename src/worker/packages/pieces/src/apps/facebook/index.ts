@@ -1,5 +1,5 @@
 import {createComponent} from '../../framework/piece';
-import { newLeads } from './Triggers/new-leads.trigger';
+import { newLeads } from './trigger/new-leads.trigger';
 
 export const facebook = createComponent({
 	name: 'facebook',

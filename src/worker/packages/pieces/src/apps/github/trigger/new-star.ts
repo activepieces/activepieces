@@ -1,4 +1,3 @@
-import {ConfigurationValue} from "../../../framework/config/configuration-value.model";
 import {createTrigger} from "../../../framework/trigger/trigger";
 import {TriggerType} from "../../../framework/trigger/trigger-type";
 import {Context} from "../../../framework/context";
@@ -7,7 +6,7 @@ export const newGithubStar = createTrigger({
     name: 'new_star',
     displayName: "New Star",
     description: 'Trigger when new someone starred repository',
-    configs: [],
+    props: [],
     type: TriggerType.WEBHOOK,
     async onEnable(context: Context) {
     },

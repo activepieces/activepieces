@@ -1,6 +1,6 @@
-import { InputType } from "../../../framework/config";
 import { createTrigger } from "../../../framework/trigger/trigger";
 import { TriggerType } from "../../../framework/trigger/trigger-type";
+import {PropertyType} from "../../../framework/property/prop.model";
 
 export const newLeads= createTrigger(
     {
@@ -10,15 +10,15 @@ export const newLeads= createTrigger(
         onDisable:async()=>{},
         onEnable: async()=>{},
         run: async(context)=>{return Promise.resolve([])},
-        configs:[{
+        props:[{
 			name: 'authentication',
 			description: "",
 			displayName: 'Authentication',
-			type: InputType.OAUTH2,
+			type: PropertyType.OAUTH2,
 			authUrl: "https://www.facebook.com/v15.0/dialog/oauth",
 			tokenUrl: "https://graph.facebook.com/v15.0/oauth/access_token",
 			required: true,
-			scopes: ["pages_show_list","ads_management","ads_read","leads_retrieval","pages_read_engagement","pages_manage_metadata","pages_manage_ads"]
+			scope: ["pages_show_list","ads_management","ads_read","leads_retrieval","pages_read_engagement","pages_manage_metadata","pages_manage_ads"]
 		},],
         type:TriggerType.WEBHOOK
     }

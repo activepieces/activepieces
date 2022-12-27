@@ -3,7 +3,6 @@ import { Cursor, InstanceRunId, ProjectId } from 'shared';
 import { ActivepiecesError, ErrorCode } from '../helper/activepieces-error';
 import { instanceRunService as service } from './instance-run-service';
 
-const BASE_ROUTE = '';
 
 const DEFAULT_PAGING_LIMIT = 10;
 
@@ -20,7 +19,7 @@ type GetOnePathParams = {
 export const instanceRunController = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
     // list
     app.get(
-        BASE_ROUTE,
+        '/',
         async (request: FastifyRequest<{ Querystring: ListQueryParams}>, reply: FastifyReply) => {
             const instanceRunPage = await service.list({
                 projectId: request.query.projectId,
@@ -34,7 +33,7 @@ export const instanceRunController = async (app: FastifyInstance, _options: Fast
 
     // get one
     app.get(
-        `${BASE_ROUTE}/:id`,
+        `/:id`,
         async (request: FastifyRequest<{ Params: GetOnePathParams}>, reply: FastifyReply) => {
             const instanceRun = await service.getOne({
                 id: request.params.id,

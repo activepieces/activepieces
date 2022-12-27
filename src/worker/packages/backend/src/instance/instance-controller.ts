@@ -4,8 +4,6 @@ import { Cursor, InstanceId, ProjectId, UpsertInstanceRequest } from 'shared';
 import { ActivepiecesError, ErrorCode } from '../helper/activepieces-error';
 import { instanceService as service } from './instance-service';
 
-const INSTANCE_ROUTE = '/v1/instance';
-
 const DEFAULT_PAGING_LIMIT = 10;
 
 type ListQueryParams = {
@@ -21,7 +19,7 @@ type GetOnePathParams = {
 export const instanceController = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
     // upsert
     app.post(
-        INSTANCE_ROUTE,
+        '/',
         {
             schema: {
                 body: UpsertInstanceRequest,
@@ -35,7 +33,7 @@ export const instanceController = async (app: FastifyInstance, _options: Fastify
 
     // list
     app.get(
-        INSTANCE_ROUTE,
+        '/',
         async (request: FastifyRequest<{ Querystring: ListQueryParams}>, reply: FastifyReply) => {
             const instancePage = await service.list({
                 projectId: request.query.projectId,
@@ -49,7 +47,7 @@ export const instanceController = async (app: FastifyInstance, _options: Fastify
 
     // get one
     app.get(
-        `${INSTANCE_ROUTE}/:id`,
+        `/:id`,
         async (request: FastifyRequest<{ Params: GetOnePathParams}>, reply: FastifyReply) => {
             const instance = await service.getOne({
                 id: request.params.id,
@@ -70,7 +68,7 @@ export const instanceController = async (app: FastifyInstance, _options: Fastify
 
     // delete one
     app.delete(
-        `${INSTANCE_ROUTE}/:id`,
+        `/:id`,
         async (request: FastifyRequest<{ Params: GetOnePathParams}>, reply: FastifyReply) => {
             const instance = await service.deleteOne({
                 id: request.params.id,

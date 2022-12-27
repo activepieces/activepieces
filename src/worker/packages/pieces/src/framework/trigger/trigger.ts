@@ -1,9 +1,6 @@
 import type {TriggerType} from './trigger-type';
-import {ConfigurationValue} from "../config/configuration-value.model";
-import {HttpMethod} from "../../common/http/core/http-method";
-import {Input} from "../config/input.model";
-import {Runner, RunnerStatus} from "../action/runner";
 import {Context} from "../context";
+import {Property} from "../property/prop.model";
 
 export class Trigger {
 	// eslint-disable-next-line max-params
@@ -11,7 +8,7 @@ export class Trigger {
 		public readonly name: string,
 		public readonly displayName: string,
 		public readonly description: string,
-		public readonly configs: Input[],
+		public readonly props: Property[],
 		public readonly type: TriggerType,
 		public readonly onEnable: (context: Context) => Promise<void>,
 		public readonly onDisable: (context: Context) => Promise<void>,
@@ -25,7 +22,7 @@ export function createTrigger(request: {
 	name: string;
 	displayName: string;
 	description: string;
-	configs: Input[];
+	props: Property[];
 	type: TriggerType;
 	onEnable: (context: Context) => Promise<void>;
 	onDisable: (context: Context) => Promise<void>;
@@ -35,7 +32,7 @@ export function createTrigger(request: {
 		request.name,
 		request.displayName,
 		request.description,
-		request.configs,
+		request.props,
 		request.type,
 		request.onEnable,
 		request.onDisable,
