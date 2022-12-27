@@ -53,7 +53,7 @@ export const collectionService = {
             // TODO REPLACE WITH SQL QUERY
             let collectionVersionsPromises: Promise<CollectionVersion | null>[] = [];
             data.forEach(collection => {
-                collectionVersionsPromises.push(collectionVersionService.getCollectionVersionId(collection.id, undefined));
+                collectionVersionsPromises.push(collectionVersionService.getCollectionVersionId(collection.id, null));
             });
             let versions: (CollectionVersion | null)[] = await Promise.all(collectionVersionsPromises)
             for (let i = 0; i < data.length; ++i) {
@@ -64,7 +64,7 @@ export const collectionService = {
 
 
     async update(collectionId: CollectionId, request: UpdateCollectionRequest): Promise<CollectionVersion | null> {
-        let lastVersion = await collectionVersionService.getCollectionVersionId(collectionId, undefined);
+        let lastVersion = await collectionVersionService.getCollectionVersionId(collectionId, null);
         if(lastVersion === null){
             throw new Error("There is no latest version of collection id " + collectionId);
         }
@@ -73,7 +73,7 @@ export const collectionService = {
         } else {
             await collectionVersionService.updateVersion(lastVersion, request);
         }
-        return collectionVersionService.getCollectionVersionId(collectionId, undefined);
+        return collectionVersionService.getCollectionVersionId(collectionId, null);
     },
 
     async create(request: CreateCollectionRequest): Promise<Collection> {

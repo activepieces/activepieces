@@ -12,7 +12,7 @@ export const instanceService = {
     async upsert({ collectionId, status }: UpsertInstanceRequest): Promise<Instance> {
         const collection = await collectionService.getOne(
             collectionId,
-            undefined,
+            null,
         );
 
         if (!collection) {
@@ -24,7 +24,7 @@ export const instanceService = {
             });
         }
 
-        const flowPage = await flowService.list(collectionId, undefined, Number.MAX_SAFE_INTEGER);
+        const flowPage = await flowService.list(collectionId, null, Number.MAX_SAFE_INTEGER);
 
         const flowIdToVersionId = Object.fromEntries(
             flowPage.data.map(
@@ -83,7 +83,7 @@ export const instanceService = {
 
 type ListParams = {
     projectId: ProjectId,
-    cursor: Cursor | undefined,
+    cursor: Cursor | null,
     limit: number,
 };
 

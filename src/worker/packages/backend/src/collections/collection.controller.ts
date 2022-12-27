@@ -34,7 +34,7 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
             }
         }>, _reply) => {
         const versionId: CollectionVersionId | undefined = _request.query.versionId;
-        let collection = await collectionService.getOne(_request.params.collectionId, versionId);
+        let collection = await collectionService.getOne(_request.params.collectionId, versionId??null);
         if(collection === null){
             throw new ActivepiecesError({ code: ErrorCode.COLLECTION_NOT_FOUND, params: {id: _request.params.collectionId}});
         }
@@ -50,7 +50,7 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
             },
             Body: UpdateCollectionRequest
         }>, _reply) => {
-        let collection = await collectionService.getOne(_request.params.collectionId, undefined);
+        let collection = await collectionService.getOne(_request.params.collectionId, null);
         if(collection === null){
             throw new ActivepiecesError({ code: ErrorCode.COLLECTION_NOT_FOUND, params: {id: _request.params.collectionId}});
         }

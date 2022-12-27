@@ -38,7 +38,7 @@ export const instanceRunService = {
 
 type ListParams = {
     projectId: ProjectId,
-    cursor: Cursor | undefined,
+    cursor: Cursor | null,
     limit: number,
 };
 

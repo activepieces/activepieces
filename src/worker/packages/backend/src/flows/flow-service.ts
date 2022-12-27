@@ -43,7 +43,7 @@ export const flowService = {
             version: latestFlowVersion
         };
     },
-    async list(collectionId: CollectionId, cursorRequest: Cursor | undefined, limit: number): Promise<SeekPage<Flow>> {
+    async list(collectionId: CollectionId, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<Flow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
         const paginator = buildPaginator({
             entity: FlowEntity,

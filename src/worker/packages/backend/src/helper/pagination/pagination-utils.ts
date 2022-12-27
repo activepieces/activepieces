@@ -1,5 +1,6 @@
-import {Cursor} from "./paginator";
+
 import {SeekPage} from "shared";
+import { CursorResult } from "typeorm";
 
 export function atob(value: string): string {
   return Buffer.from(value, 'base64').toString();
@@ -93,15 +94,15 @@ function encodePreviousCursor(cursor: string) {
 }
 
 export const paginationHelper = {
-  createPage<T>(data: T[], cursor: Cursor): SeekPage<T> {
+  createPage<T>(data: T[], cursor: CursorResult): SeekPage<T> {
     return {
       next: encodeNextCursor(cursor.afterCursor),
       previous: encodePreviousCursor(cursor.beforeCursor),
       data: data
     }
   },
-  decodeCursor(encodedCursor: string): { nextCursor: string | undefined, previousCursor: string | undefined } {
-    if (encodedCursor === undefined) {
+  decodeCursor(encodedCursor: string | null): { nextCursor: string | undefined, previousCursor: string | undefined } {
+    if (encodedCursor === null || encodedCursor === undefined) {
       return {
         nextCursor: undefined,
         previousCursor: undefined

@@ -30,7 +30,7 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     try {
       const codeExecutor = new CodeExecutor();
       stepOutput.output = await codeExecutor.executeCode(
-        this.action.settings.artifactPackagedId,
+        this.action.settings.artifactPackagedId!,
         params
       );
       stepOutput.status = StepOutputStatus.SUCCEEDED;

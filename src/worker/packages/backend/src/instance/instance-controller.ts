@@ -39,7 +39,7 @@ export const instanceController = async (app: FastifyInstance, _options: Fastify
         async (request: FastifyRequest<{ Querystring: ListQueryParams}>, reply: FastifyReply) => {
             const instancePage = await service.list({
                 projectId: request.query.projectId,
-                cursor: request.query.cursor,
+                cursor: request.query.cursor??null,
                 limit: request.query.limit ?? DEFAULT_PAGING_LIMIT,
             })
 
