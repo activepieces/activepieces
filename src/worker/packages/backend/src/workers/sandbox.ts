@@ -21,7 +21,7 @@ export class Sandbox {
             " --stderr=_standardError.txt --run " + commandLine);
     }
 
-    parseFunctionOutput(): string {
+    parseFunctionOutput(): string | undefined {
         let outputFile = this.getSandboxFilePath("_functionOutput.txt");
         if(!fs.existsSync(outputFile)){
             return undefined;
@@ -72,7 +72,7 @@ export default class SandboxManager {
     private constructor() {
         if (SandboxManager._instance)
             throw new Error("Use Singleton.instance instead of new.");
-        for (let boxId = 0; boxId < 20; ++boxId) {
+        for (let boxId = 0; boxId < 100; ++boxId) {
             this.queue.push(boxId);
         }
         SandboxManager._instance = this;
@@ -80,6 +80,9 @@ export default class SandboxManager {
 
     obtainSandbox(): Sandbox {
         let sandboxId = this.queue.pop();
+        if(sandboxId === undefined){
+            throw new Error("Unexpected error, ran out of sandboxes");
+        }
         return new Sandbox(sandboxId);
     }
 

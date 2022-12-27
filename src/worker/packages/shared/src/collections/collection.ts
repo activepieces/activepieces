@@ -8,5 +8,5 @@ export interface Collection extends BaseModel<CollectionId> {
 
   projectId: ProjectId;
 
-  version?: CollectionVersion;
+  version: CollectionVersion | null;
 }

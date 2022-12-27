@@ -37,7 +37,7 @@ export const piecesController = async (fastify: FastifyInstance, options: Fastif
                 }
             });
         }
-        const configs = action !== undefined ? action.configs : trigger.configs;
+        const configs = action !== undefined ? action.configs : trigger!.configs;
         const config = configs.find(f => f.name === _request.body.configName);
         if (config === undefined || config.type !== InputType.SELECT) {
             throw new ActivepiecesError({

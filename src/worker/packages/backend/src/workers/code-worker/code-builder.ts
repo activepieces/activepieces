@@ -40,10 +40,11 @@ async function build(artifact: Buffer): Promise<Buffer> {
         let bundledFilePath = buildPath + "/dist/index.js";
         bundledFile = fs.readFileSync(bundledFilePath);
         console.log("Finished Building in sandbox " + buildPath);
-    } catch (error) {
+    } catch (e) {
+        const consoleError = e as {stdout: string};
         let invalidArtifactFile = fs.readFileSync("./resources/invalid-code.js")
             .toString("utf-8")
-            .replace("${ERROR_MESSAGE}", JSON.stringify(error.stdout.toString()).replace(/\"/g, '\\"'));
+            .replace("${ERROR_MESSAGE}", JSON.stringify(consoleError.stdout.toString()).replace(/\"/g, '\\"'));
         bundledFile = Buffer.from(invalidArtifactFile, "utf-8");
     } finally {
         sandboxManager.returnSandbox(sandbox.boxId);

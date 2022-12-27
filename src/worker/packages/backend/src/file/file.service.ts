@@ -6,7 +6,7 @@ const fileRepo = databaseConnection.getRepository<File>(FileEntity);
 
 export const fileService = {
 
-    async save(buffer: Buffer): Promise<File | null> {
+    async save(buffer: Buffer): Promise<File> {
         let savedFile = await fileRepo.save({
             id: apId(),
             data: buffer

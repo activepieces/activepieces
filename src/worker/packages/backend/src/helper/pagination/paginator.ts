@@ -3,6 +3,7 @@ import {
   OrderByCondition,
   SelectQueryBuilder,
   WhereExpressionBuilder,
+  ObjectLiteral
 } from 'typeorm';
 import {decodeByType, encodeByType, atob, btoa} from "./pagination-utils";
 
@@ -15,17 +16,17 @@ export interface CursorParam {
   [key: string]: any;
 }
 
-export interface Cursor {
+export interface CursorResult {
   beforeCursor: string | null;
   afterCursor: string | null;
 }
 
 export interface PagingResult<Entity> {
   data: Entity[];
-  cursor: Cursor;
+  cursor: CursorResult;
 }
 
-export default class Paginator<Entity> {
+export default class Paginator<Entity extends ObjectLiteral> {
   private afterCursor: string | null = null;
 
   private beforeCursor: string | null = null;
@@ -94,7 +95,7 @@ export default class Paginator<Entity> {
     return this.toPagingResult(entities);
   }
 
-  private getCursor(): Cursor {
+  private getCursor(): CursorResult {
     return {
       afterCursor: this.nextAfterCursor,
       beforeCursor: this.nextBeforeCursor,
@@ -197,7 +198,11 @@ export default class Paginator<Entity> {
   }
 
   private getEntityPropertyType(key: string): string {
-    return this.entity.options.columns[key].type.toString();
+    const col = this.entity.options.columns[key];
+    if(col === undefined){
+      throw new Error("entity property not found " + key);
+    }
+    return col.type.toString();
   }
 
   private flipOrder(order: Order): Order {

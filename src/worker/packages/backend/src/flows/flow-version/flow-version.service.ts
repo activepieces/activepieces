@@ -11,6 +11,7 @@ import {
     FlowVersionState,
     getStep,
 } from "shared";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import {databaseConnection} from "../../database/database-connection";
 import {FlowVersionEntity} from "./flow-version-entity";
 import {FlowOperationRequest} from "shared/dist/flows/flow-operations";
@@ -22,29 +23,29 @@ const flowVersionRepo = databaseConnection.getRepository<FlowVersion>(FlowVersio
 export const flowVersionService = {
 
     async overwriteVersion(flowVersionId: FlowVersionId, mutatedFlowVersion: FlowVersion){
-        await flowVersionRepo.update(flowVersionId, mutatedFlowVersion);
+        await flowVersionRepo.update(flowVersionId, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>);
         return flowVersionRepo.findOneBy({
             id: flowVersionId
         })
     },
-    async applyOperation(flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowVersion> {
+    async applyOperation(flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowVersion | null> {
         if (request.type === FlowOperationType.UPDATE_ACTION) {
             request = await prepareRequest(flowVersion, request);
         }
-        const mutatedFlowVersion = flowHelper.apply(flowVersion, request);
-        await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion);
+        const mutatedFlowVersion: FlowVersion = flowHelper.apply(flowVersion, request);
+        await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>);
         return flowVersionRepo.findOneBy({
             id: flowVersion.id
         });
     },
 
-    async getOne(id: FlowVersionId) : Promise<FlowVersion>{
+    async getOne(id: FlowVersionId) : Promise<FlowVersion | null>{
         return flowVersionRepo.findOneBy({
             id: id
         })
     },
 
-    async getFlowVersion(flowId: FlowId, versionId: FlowVersionId): Promise<FlowVersion> {
+    async getFlowVersion(flowId: FlowId, versionId: FlowVersionId | undefined): Promise<FlowVersion | null> {
         return flowVersionRepo.findOne({
             where: {
                 flowId: flowId,
@@ -84,7 +85,7 @@ async function prepareRequest(flowVersion: FlowVersion, request: FlowOperationRe
                 const codeSettings: CodeActionSettings = clonedRequest.request.settings;
                 await uploadArtifact(codeSettings);
                 let previousStep = getStep(flowVersion, clonedRequest.request.name);
-                if(previousStep.type === ActionType.CODE){
+                if(previousStep !== undefined && previousStep.type === ActionType.CODE){
                     await deleteArtifact(previousStep.settings);
                 }
             }
@@ -92,7 +93,7 @@ async function prepareRequest(flowVersion: FlowVersion, request: FlowOperationRe
 
         case FlowOperationType.DELETE_ACTION:
             let previousStep = getStep(flowVersion, clonedRequest.request.name);
-            if(previousStep.type === ActionType.CODE){
+            if(previousStep !== undefined && previousStep.type === ActionType.CODE){
                 await deleteArtifact(previousStep.settings);
             }
             break;

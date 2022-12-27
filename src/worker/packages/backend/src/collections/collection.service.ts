@@ -21,11 +21,11 @@ export const collectionService = {
     /**
      * get a collection by id and versionId
      * @param id collection id to get
-     * @param versionId versionId of collection to get, use 'undefined' for the latest version
+     * @param versionId versionId of collection to get, use 'null' for the latest version
      * @returns collection if it exists, else null
      */
-    async getOne(id: CollectionId, versionId: CollectionVersionId): Promise<Collection | null> {
-        let collection: Collection = await collectionRepo.findOneBy({
+    async getOne(id: CollectionId, versionId: CollectionVersionId | null): Promise<Collection | null> {
+        let collection: Collection | null = await collectionRepo.findOneBy({
             id: id
         });
         if (collection === null) {
@@ -36,7 +36,7 @@ export const collectionService = {
             version: await collectionVersionService.getCollectionVersionId(id, versionId)
         }
     },
-    async list(projectId: ProjectId, cursorRequest: Cursor | undefined, limit: number): Promise<SeekPage<Collection>> {
+    async list(projectId: ProjectId, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<Collection>> {
             const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
             const paginator = buildPaginator({
                 entity: CollectionEntity,
@@ -51,11 +51,11 @@ export const collectionService = {
             const queryBuilder = collectionRepo.createQueryBuilder("collection").where({projectId: projectId});
             const {data, cursor} = await paginator.paginate(queryBuilder.where({projectId: projectId}));
             // TODO REPLACE WITH SQL QUERY
-            let collectionVersionsPromises: Promise<CollectionVersion>[] = [];
+            let collectionVersionsPromises: Promise<CollectionVersion | null>[] = [];
             data.forEach(collection => {
                 collectionVersionsPromises.push(collectionVersionService.getCollectionVersionId(collection.id, undefined));
             });
-            let versions: CollectionVersion[] = await Promise.all(collectionVersionsPromises)
+            let versions: (CollectionVersion | null)[] = await Promise.all(collectionVersionsPromises)
             for (let i = 0; i < data.length; ++i) {
                 data[i] = {...data[i], version: versions[i]};
             }
@@ -63,8 +63,11 @@ export const collectionService = {
     },
 
 
-    async update(collectionId: CollectionId, request: UpdateCollectionRequest): Promise<CollectionVersion> {
+    async update(collectionId: CollectionId, request: UpdateCollectionRequest): Promise<CollectionVersion | null> {
         let lastVersion = await collectionVersionService.getCollectionVersionId(collectionId, undefined);
+        if(lastVersion === null){
+            throw new Error("There is no latest version of collection id " + collectionId);
+        }
         if (lastVersion.state === CollectionVersionState.LOCKED) {
             lastVersion = await collectionVersionService.createVersion(collectionId, request);
         } else {
