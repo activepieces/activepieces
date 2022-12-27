@@ -1,0 +1,59 @@
+---
+title: "Key Concepts"
+description: ""
+---
+
+It's helpful to understand the concepts Activepeices is built on before starting to use the software. Here is a quick introduction to these:
+
+## Flow
+
+A flow is an automation sequence. It always has to start with a [Trigger](#trigger) that is followed with a sequence of [Steps](#step).
+
+Changes to flows must be [published](#publishing) as a new version in order to take effect.
+
+### Trigger
+
+A trigger is the first step of any flow. It chooses **when** or **how frequently** the flow will run.
+
+There are 3 main types of triggers that you should understand, as explained in the following table:
+
+| Trigger | Description | Example |
+| - | - | - |
+| Schedule | Runs on a regular schedule that you define | Run flow once a day |
+| Webhook | Runs in reaction to an external event | Run when another app completes a process |
+| App Trigger | Runs in reaction to predefined apps events | Run when a new contact is added to MailChimp |
+
+You can read the [Triggers page](./triggers) for a detailed guide to their different types and their usage.
+
+### Step
+
+A step is the building block of the flow. Any flow will have at least one step, the Trigger.
+
+Other steps will follow the Trigger and will run consequently as per the flow design.
+
+These steps can be any variant of [Pieces](../pieces/overview).
+
+### Collection
+
+Flows are automatically organized into collections, which are groups of flows similar to folders or packages.
+
+When publishing flows, you publish the entire collection rather than a single flow.
+
+Similarly, when enabling flows, you enable the entire collection rather than a single flow.
+
+Inside a collection, you can view the flows as tabs at the top of the screen and add or remove any of them using the tab bar.
+
+### Publishing
+
+When you build your flows for the first time, you must publish them in order to enable them.
+
+If you make changes to published flows, the changes won't take effect until you publish them again under a new version.
+
+This publishing process protects your running flows from breaking while you're in the process of modifying them.
+
+The following table explains the difference between Publish and Enable:
+| Operation | Description |
+| - | - |
+| Publish | Saves collection changes under a new version |
+| Enable | Activates the collection |
+| Disable | Deactivates the collection |

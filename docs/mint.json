@@ -1,5 +1,5 @@
 {
-  "name": "Passr",
+  "name": "Activepieces Docs",
   "logo": {
     "light": "./resources/logo/light.svg",
     "dark": "./resources/logo/dark.svg"
@@ -18,19 +18,92 @@
   },
   "topbarLinks": [
     {
-      "name": "Contact Us",
-      "url": "mailto:support@activepieces.com"
+      "name": "Main Site",
+      "url": "https://www.activepieces.com"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://www.github.com/activepieces/activepieces"
+    },
+    {
+      "name": "Request Piece",
+      "icon": "bullseye-pointer",
+      "url": "https://github.com/activepieces/activepieces/discussions/categories/piece-requests"
+    },
+    {
+      "name": "Discord",
+      "icon": "discord",
+      "url": "https://discord.gg/2jUXBKDdP8"
     }
   ],
   "navigation": [
     {
-      "group": "Getting Started",
-      "pages": ["getting-started/installation",
-        "getting-started/key-concepts"]
+      "group": "Get Started",
+      "pages": [
+        "get-started/quickstart",
+        "get-started/what-is-activepieces",
+        {
+          "group": "Installation",
+          "pages": [
+            "get-started/installation/using-docker",
+            "get-started/installation/1-click-on-digitalocean",
+            "get-started/installation/cloud"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Using Activepieces",
+      "pages": [
+        "using-activepieces/concepts",
+        "using-activepieces/triggers",
+        "using-activepieces/example-flow",
+        "using-activepieces/publish-and-enable",
+        "using-activepieces/debug-flow"
+      ]
+    },
+    {
+      "group": "Pieces",
+      "pages": [
+        "pieces/overview",
+        "pieces/missing-pieces",
+        {
+          "group": "Apps",
+          "pages": [
+            "pieces/apps/slack"
+          ]
+        },
+        {
+          "group": "Helpers",
+          "pages": [
+            "pieces/helpers/http-request",
+            "pieces/helpers/code"
+          ]
+        },
+        {
+          "group": "Flow Controls",
+          "pages": [
+            "pieces/flow-controls/loop",
+            "pieces/flow-controls/if"
+          ]
+        }
+      ]
     },
     {
       "group": "Contributing",
-      "pages": ["contributing/architecture", "contributing/flow-worker" ,"contributing/code-worker"]
+      "pages": [
+        "contributing/overview",
+        "contributing/building-pieces",
+        "contributing/architecture",
+        "contributing/flow-worker",
+        "contributing/code-worker"
+      ]
+    },
+    {
+      "pages": ["license"]
     }
   ]
 }
