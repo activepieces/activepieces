@@ -7,9 +7,10 @@ export {AuthenticationResponse} from './authentication/dto/authentication-respon
 export {AuthenticationRequest} from './authentication/dto/authentication-request'
 export { PrincipalType } from "./authentication/model/principal-type";
 export { Principal } from "./authentication/model/principal";
+export {CodeAction, PieceAction, LoopOnItemsAction, StorageAction, StorageActionSettings,
+    PieceActionSettings, LoopOnItemsActionSettings ,Action, ActionType, CodeActionSettings} from './flows/actions/action'
 export {StoreEntry, StoreEntryId} from './store-entry/store-entry';
 export {User, UserStatus, UserId} from './user/user';
-export {Action, ActionType, CodeActionSettings} from './flows/actions/action';
 export {Trigger, EmptyTrigger, ComponentTriggerSettings, ScheduleTriggerSettings, ComponentTrigger, ScheduleTrigger, WebhookTrigger, TriggerType} from './flows/triggers/trigger';
 export {Collection, CollectionId} from './collections/collection';
 export {CollectionVersion, CollectionVersionState, CollectionVersionId} from './collections/collection-version';

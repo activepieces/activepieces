@@ -1,11 +1,12 @@
-import { ComponentExecutor } from '../../src/executors/component-executor';
 import {ConfigurationValue} from "pieces/dist/src/framework/config/configuration-value.model";
-import {apps} from "components/dist/src/apps";
+import {PieceExecutor} from "../../src/executors/piece-executor";
+import {pieces} from "pieces/dist/src/apps";
+
 
 describe('Component Executor', () => {
   test('Invokes given action', async () => {
     // arrange
-    const executer = new ComponentExecutor();
+    const executer = new PieceExecutor();
     const config: ConfigurationValue = {
         inputs: {},
         authentication: {
@@ -13,11 +14,11 @@ describe('Component Executor', () => {
         },
     };
     jest
-        .spyOn(apps[0], 'runAction')
+        .spyOn(pieces[0], 'runAction')
         .mockReturnValue(Promise.resolve({ success: true }));
 
     // act
-    const result = await executer.exec('Slack', 'Send Slack Message', config);
+    const result = await executer.exec('slack', 'Send Slack Message', config);
 
     // assert
     expect(result).toBeDefined();
@@ -26,7 +27,7 @@ describe('Component Executor', () => {
 
   test('throws when component is not found', async () => {
     // arrange
-    const executer = new ComponentExecutor();
+    const executer = new PieceExecutor();
     const config: ConfigurationValue = {
         inputs: {},
         authentication: {
@@ -39,7 +40,7 @@ describe('Component Executor', () => {
 
     // assert
     await expect(result).rejects.toThrow(
-        new Error('error=component_not_found component=NotFoundComponent')
+        new Error('error=piece_not_found piece_name=NotFoundComponent')
     );
   });
 });

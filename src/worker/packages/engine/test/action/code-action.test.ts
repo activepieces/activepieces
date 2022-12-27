@@ -1,12 +1,10 @@
-import {
-  CodeAction,
-  CodeActionSettings,
-} from '../../src/model/action/types/code-action';
+
 import {ExecutionState} from '../../src/model/execution/execution-state';
 import {StepOutputStatus} from '../../src/model/output/step-output';
 import {CodeExecutor} from '../../src/executors/code-executer';
-import {StoreScope} from "../../src/model/util/store-scope";
-import {ActionType} from "../../src/model/action/action-metadata";
+import {CodeActionHandler} from "../../src/action/code-action-handler";
+import {ActionType, CodeAction} from "shared";
+
 
 let executionState: ExecutionState;
 
@@ -16,17 +14,25 @@ describe('Code Action', () => {
   });
 
   test('Artifact is executed and output is returned', async () => {
-    const codeAction = new CodeAction(
-      ActionType.CODE,
-      'CODE_ACTION',
-      new CodeActionSettings({}, 'artifact.zip')
-    );
+    const codeAction: CodeAction = {
+      type: ActionType.CODE,
+      name: 'CODE_ACTION',
+      valid: false,
+      displayName: 'CODE_ACTION',
+      settings: {
+        artifactPackagedId: 'artifact.zip',
+        input: {},
+        artifactSourceId: 'artifact.zip'
+      },
+      nextAction: undefined
+    }
+    const codeActionHandler = new CodeActionHandler(codeAction, undefined);
 
     jest
       .spyOn(CodeExecutor.prototype, 'executeCode')
       .mockImplementation(() => Promise.resolve('code executed!'));
 
-    const stepOutput = await codeAction.execute(executionState, [], new StoreScope([]));
+    const stepOutput = await codeActionHandler.execute(executionState, []);
 
     expect(stepOutput.status).toEqual(StepOutputStatus.SUCCEEDED);
     expect(stepOutput.output).toEqual('code executed!');
@@ -34,17 +40,25 @@ describe('Code Action', () => {
   });
 
   test('Action fails if CodeExecutor throws', async () => {
-    const codeAction = new CodeAction(
-      ActionType.CODE,
-      'CODE_ACTION',
-      new CodeActionSettings({}, 'artifact.zip')
-    );
+    const codeAction: CodeAction = {
+      type: ActionType.CODE,
+      name: 'CODE_ACTION',
+      valid: false,
+      displayName: 'CODE_ACTION',
+      settings: {
+        artifactPackagedId: 'artifact.zip',
+        input: {},
+        artifactSourceId: 'artifact.zip'
+      },
+      nextAction: undefined
+    }
+    const codeActionHandler = new CodeActionHandler(codeAction, undefined);
 
     jest
       .spyOn(CodeExecutor.prototype, 'executeCode')
       .mockRejectedValue(new Error('Error'));
 
-    const stepOutput = await codeAction.execute(executionState, [], new StoreScope([]));
+    const stepOutput = await codeActionHandler.execute(executionState, []);
 
     expect(stepOutput.status).toEqual(StepOutputStatus.FAILED);
     expect(stepOutput.output).toBeUndefined();
