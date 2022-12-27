@@ -1,0 +1,88 @@
+---
+title: "Property"
+description: ""
+---
+
+Properties are used to collect from the user information to execute an action or an trigger, a property could be `short-text`, `long-text`, `checkbox`, `number`, `dropdown`, or `auth2`.
+
+All properties `name` should be a camel case.
+
+# Schema
+
+Here is the schema of each property type.
+
+## Short text
+
+```typescript
+{
+	name: string;
+	displayName: string;
+	description: string | undefined;
+	required: boolean;
+	type: PropType.SHORT_TEXT;
+}
+```
+
+
+## Long text
+
+```typescript
+{
+	name: string;
+	displayName: string;
+	description: string | undefined;
+	required: boolean;
+	type: PropType.LONG_TEXT;
+}
+```
+
+## Checkbox 
+
+```typescript
+{
+	name: string;
+	displayName: string;
+	description: string | undefined;
+	required: boolean;
+	type: PropType.CHECKBOX;
+}
+```
+
+## Number 
+
+```typescript
+{
+	name: string;
+	displayName: string;
+	description: string | undefined;
+	required: boolean;
+	type: PropType.NUMBER;
+}
+```
+
+## Dropdown 
+
+Options is function, so you can load options dynmiucally depends on the user props value.
+
+```typescript
+{
+    name: string;
+    displayName: string;
+    description: string | undefined;
+    required: boolean;
+    type: PropType.DROPDOWN;
+    options: async (propsValue: Record < string, unknown > ): DropdownState {
+        if (props['authentication'] === undefined) {
+            return {
+                disabled: true;
+            }
+        }
+        return {
+            options: [{
+                label: "Option One",
+                value: "1"
+            }]
+        }
+    }
+}
+```
