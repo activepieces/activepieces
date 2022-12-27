@@ -56,6 +56,7 @@ export class ExecutionState {
     ancestors: [string, number][]
   ): Record<string, StepOutput> {
     let targetMap = this.steps;
+
     ancestors.forEach(parent => {
       // get loopStepOutput
       if (targetMap[parent[0]] === undefined) {
@@ -63,7 +64,7 @@ export class ExecutionState {
       }
       const targetStepOutput = targetMap[parent[0]];
       if (!(targetStepOutput instanceof LoopOnItemsStepOutput)) {
-        throw 'Error in ancestor tree';
+        throw 'Error in ancestor tree, Not instance of Loop On Items step output';
       }
       const loopOutput = targetStepOutput as LoopOnItemsStepOutput;
       targetMap = loopOutput.output!.iterations[parent[1]];

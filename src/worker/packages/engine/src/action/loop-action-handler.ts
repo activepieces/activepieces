@@ -1,44 +1,24 @@
-import {FlowExecutor} from '../../../executors/flow-executor';
-import {ExecutionState} from '../../execution/execution-state';
-import {StepOutput, StepOutputStatus} from '../../output/step-output';
-import {LoopOnItemsStepOutput} from '../../output/loop-on-items-step-output';
-import {VariableService} from '../../../services/variable-service';
-import {StoreScope} from '../../util/store-scope';
-import {ActionMetadata, ActionType} from "../action-metadata";
+import {FlowExecutor} from '../executors/flow-executor';
+import {ExecutionState} from '../model/execution/execution-state';
+import {StepOutput, StepOutputStatus} from '../model/output/step-output';
+import {LoopOnItemsStepOutput} from '../model/output/loop-on-items-step-output';
+import {VariableService} from '../services/variable-service';
+import {LoopOnItemsAction} from "shared";
+import {BaseActionHandler} from "./action-handler";
 
-export class LoopOnItemActionSettings {
-  items: string;
 
-  constructor(items: string) {
-    this.validate(items);
-    this.items = items;
-  }
-
-  validate(items: string) {
-    if (!items) {
-      throw Error('Settings "items" attribute is undefined.');
-    }
-  }
-
-  static deserialize(jsonData: any): LoopOnItemActionSettings {
-    return new LoopOnItemActionSettings(jsonData['items'] as string);
-  }
-}
-
-export class LoopOnItemAction extends ActionMetadata {
-  firstLoopAction?: ActionMetadata;
-  settings: LoopOnItemActionSettings;
+export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction> {
+  firstLoopAction?: BaseActionHandler<any>;
+  action: LoopOnItemsAction;
   variableService: VariableService;
 
   constructor(
-    type: ActionType,
-    name: string,
-    settings: LoopOnItemActionSettings,
-    firstLoopAction?: ActionMetadata,
-    nextAction?: ActionMetadata
+      action: LoopOnItemsAction,
+    firstLoopAction: BaseActionHandler<any> | undefined,
+    nextAction: BaseActionHandler<any> | undefined
   ) {
-    super(type, name, nextAction);
-    this.settings = settings;
+    super(action, nextAction);
+    this.action = action;
     this.variableService = new VariableService();
     this.firstLoopAction = firstLoopAction;
   }
@@ -48,7 +28,7 @@ export class LoopOnItemAction extends ActionMetadata {
       throw new Error("Iteration can't be undefined");
     }
     for (const iteration of stepOutput.output?.iterations) {
-      for (const stepOutput of Object.values(iteration.values)) {
+      for (const stepOutput of Object.values(iteration)) {
         if (stepOutput.status === StepOutputStatus.FAILED) {
           return stepOutput.errorMessage;
         }
@@ -59,11 +39,10 @@ export class LoopOnItemAction extends ActionMetadata {
 
   async execute(
     executionState: ExecutionState,
-    ancestors: [string, number][],
-    storeScope: StoreScope
+    ancestors: [string, number][]
   ): Promise<StepOutput> {
     const resolvedInput = this.variableService.resolve(
-      this.settings,
+      this.action.settings,
       executionState
     );
 
@@ -75,11 +54,11 @@ export class LoopOnItemAction extends ActionMetadata {
       current_item: undefined,
       iterations: [],
     };
-    executionState.insertStep(stepOutput, this.name, ancestors);
+    executionState.insertStep(stepOutput, this.action.name, ancestors);
     const loopOutput = stepOutput.output;
     try {
       for (let i = 0; i < resolvedInput.items.length; ++i) {
-        ancestors.push([this.name, i]);
+        ancestors.push([this.action.name, i]);
 
         loopOutput.current_iteration = i + 1;
         loopOutput.current_item = resolvedInput.items[i];
@@ -87,15 +66,14 @@ export class LoopOnItemAction extends ActionMetadata {
         this.updateExecutionStateWithLoopDetails(executionState, loopOutput);
 
         if (this.firstLoopAction === undefined) {
+          ancestors.pop();
           continue;
         }
 
         const executor = new FlowExecutor(executionState);
         const loopStatus = await executor.iterateFlow(
           this.firstLoopAction,
-          ancestors,
-          storeScope
-        );
+          ancestors);
 
         ancestors.pop();
 
@@ -105,11 +83,12 @@ export class LoopOnItemAction extends ActionMetadata {
           return Promise.resolve(stepOutput);
         }
       }
-
       stepOutput.status = StepOutputStatus.SUCCEEDED;
-      executionState.insertStep(stepOutput, this.name, ancestors);
+      executionState.insertStep(stepOutput, this.action.name, ancestors);
+
       return Promise.resolve(stepOutput);
     } catch (e) {
+      console.error(e);
       stepOutput.errorMessage = (e as Error).message;
       stepOutput.status = StepOutputStatus.FAILED;
       return Promise.resolve(stepOutput);
@@ -128,7 +107,7 @@ export class LoopOnItemAction extends ActionMetadata {
         ...loopOutput,
         iterations: undefined,
       },
-      this.name
+      this.action.name
     );
   }
 }
