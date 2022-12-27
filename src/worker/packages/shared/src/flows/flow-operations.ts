@@ -1,5 +1,5 @@
 import {
-    ActionType, CodeActionSettings, ComponentActionSettings, LoopOnItemsActionSettings, StorageActionSettings,
+    ActionType, CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings, StorageActionSettings,
 } from "./actions/action";
 import {ComponentTriggerSettings, ScheduleTriggerSettings, TriggerType} from "./triggers/trigger";
 
@@ -34,7 +34,7 @@ export type AddActionRequest = {
 export type UpdateActionRequest = BasicActionStep<ActionType.STORAGE, StorageActionSettings>
     | BasicActionStep<ActionType.CODE, CodeActionSettings>
     | BasicActionStep<ActionType.LOOP_ON_ITEMS, LoopOnItemsActionSettings>
-    | BasicActionStep<ActionType.COMPONENT, ComponentActionSettings>;
+    | BasicActionStep<ActionType.PIECE, PieceActionSettings>;
 
 
 interface BasicActionStep<A, V> {

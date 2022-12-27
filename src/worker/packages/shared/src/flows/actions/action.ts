@@ -1,6 +1,6 @@
 
 
-export type Action = CodeAction | ComponentAction | StorageAction | LoopOnItemsAction;
+export type Action = CodeAction | PieceAction | StorageAction | LoopOnItemsAction;
 
 
 interface BaseAction<T, V> {
@@ -9,7 +9,7 @@ interface BaseAction<T, V> {
   displayName: string;
   name: string;
   valid: boolean;
-  nextAction: BaseAction<any, any>;
+  nextAction: BaseAction<any, any> | undefined;
 }
 
 export type CodeActionSettings = {
@@ -22,13 +22,13 @@ export type CodeActionSettings = {
 export interface CodeAction extends BaseAction<ActionType.CODE, CodeActionSettings> {
 }
 
-export type ComponentActionSettings = {
-  componentName: string;
+export type PieceActionSettings = {
+  pieceName: string;
   actionName: string;
   input: Record<string, unknown>;
 }
 
-export interface ComponentAction extends BaseAction<ActionType.COMPONENT, ComponentActionSettings> {
+export interface PieceAction extends BaseAction<ActionType.PIECE, PieceActionSettings> {
 };
 
 export enum StoreOperation {
@@ -51,12 +51,13 @@ export type LoopOnItemsActionSettings = {
 }
 
 export interface LoopOnItemsAction extends BaseAction<ActionType.LOOP_ON_ITEMS, LoopOnItemsActionSettings> {
+  firstLoopAction: BaseAction<any, any> | undefined;
 }
 
 
 export enum ActionType {
   CODE = "CODE",
   STORAGE = "STORAGE",
-  COMPONENT = "COMPONENT",
+  PIECE = "PIECE",
   LOOP_ON_ITEMS = "LOOP_ON_ITEMS"
 }

@@ -6,7 +6,7 @@ import {
     UpdateActionRequest,
     UpdateTriggerRequest
 } from "./flow-operations";
-import {Action, ActionType, CodeAction, ComponentAction, LoopOnItemsAction, StorageAction} from "./actions/action";
+import {Action, ActionType, CodeAction, PieceAction, LoopOnItemsAction, StorageAction} from "./actions/action";
 import {Trigger, TriggerType} from "./triggers/trigger";
 
 
@@ -82,12 +82,12 @@ function createAction(request: UpdateActionRequest, nextAction: Action | undefin
                 type: ActionType.LOOP_ON_ITEMS,
                 settings: request.settings,
             } as LoopOnItemsAction;
-        case ActionType.COMPONENT:
+        case ActionType.PIECE:
             return {
                 ...baseProperties,
-                type: ActionType.COMPONENT,
+                type: ActionType.PIECE,
                 settings: request.settings,
-            } as ComponentAction;
+            } as PieceAction;
         case ActionType.CODE:
             return {
                 ...baseProperties,

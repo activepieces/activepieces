@@ -48,14 +48,6 @@
               }
             }
           }
-        },
-        "nextAction": {
-          "name": "RESPONSE_ACTION",
-          "type": "RESPONSE",
-          "settings": {
-            "output": "done with loops!"
-          },
-          "nextAction": null
         }
       }
     }
