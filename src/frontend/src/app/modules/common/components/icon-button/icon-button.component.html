@@ -2,7 +2,7 @@
   <button mat-icon-button [matTooltip]="tooltipText" [color]="color" [attr.aria-label]="ariaLabel || tooltipText"
     [disabled]="buttonDisabled" (click)="buttonClicked.emit(true)">
     <svg-icon [svgStyle]="{width:width+'px',height:height+'px'}" src="assets/img/custom/{{ iconFilename }}"
-      class="ap-flex ap-items-center ap-justify-center"></svg-icon>
+      class="ap-flex ap-items-center ap-justify-center "></svg-icon>
   </button>
   <div *ngIf="buttonDisabled" class="ap-absolute ap-h-full ap-w-full ap-left-0 ap-top-0 ap-z-50"
     [matTooltip]="tooltipText">

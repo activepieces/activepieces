@@ -31,10 +31,6 @@
     color: $body;
   }
 
-  .expansion-panel-label {
-    margin-bottom: 0px !important;
-    font-family: "Open Sans", sans-serif;
-  }
 
   .flip-chevorn-up {
     transform: rotate(180deg);
@@ -77,12 +73,10 @@
     margin-right: -6px;
   }
 
-  mat-expansion-panel-header {
-    padding-top: 15px;
-  }
+
 
   .expansion-panel-body {
-    padding-bottom: 25px;
+
     margin-top: -5px;
   }
 
@@ -90,9 +84,7 @@
     margin: 0px;
   }
 
-  .panel-padding {
-    padding: 0.9375rem;
-  }
+
 }
 
 .take-remaining-height-in-flex-column {
@@ -121,15 +113,8 @@
   box-shadow: unset;
 }
 
-::ng-deep .tooltip-300 ~ .tooltip .tooltip-inner {
-  max-width: 300px;
-  min-width: 300px;
-}
 
-.webhook-note
-{
-  margin-top:0.9375rem;
-}
+
 
 .url-paragraph{
   overflow: hidden;

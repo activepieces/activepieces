@@ -1,14 +1,14 @@
-<div class="ap-bg-white ap-relative ap-flex ap-justify-center ap-items-center ">
+<div class="ap-bg-white ap-relative ap-flex ap-justify-center  ap-items-center ">
   <div [class.display-none]="readOnlyMode$ | async | defaultTrue"
-    class="ap-border-solid ap-border-b-[1px] ap-border-line ap-min-w-[36px] ap-cursor-pointer ap-self-stretch ap-bg-white ap-h-[36px] ap-mt-auto ap-z-50 ap-flex ap-justify-center ap-items-center"
-    #addFlowBtn>
+    class="ap-border-solid ap-border-b-[1px] ap-border-line ap-min-w-[36px] ap-cursor-pointer ap-self-stretch ap-bg-white ap-h-[36px] ap-mt-auto ap-z-50 ap-flex ap-justify-center  ap-items-center"
+    #addFlowBtn matTooltip="Add Flow">
     <svg-icon src="assets/img/custom/plus.svg"
       [svgStyle]="{ 'width.px':15, 'height.px':15, 'fill':themeService.BODY_COLOR}">
     </svg-icon>
   </div>
 
   <div
-    class="scroll-arrow ap-h-[36px] ap-mt-auto  ap-self-stretch ap-border-solid ap-border-b-[1px] ap-border-line ap-flex ap-justify-center ap-items-center ap-z-50"
+    class="scroll-arrow ap-h-[36px] ap-mt-auto  ap-self-stretch ap-border-solid ap-border-b-[1px] ap-border-line ap-flex ap-justify-center  ap-items-center ap-z-50"
     *ngIf="shouldShowLeftArrow(tabsContainer)" (click)="scrollFlowTabsLeft(tabsContainer)">
     <svg-icon src="assets/img/custom/right-chevron.svg" class="rotate-180"></svg-icon>
   </div>
@@ -25,13 +25,13 @@
   </div>
   <div class="white-gradient-right" *ngIf="shouldShowRightArrow(tabsContainer)"></div>
   <div
-    class="scroll-arrow ap-h-[36px] ap-mt-auto  ap-self-stretch ap-border-solid ap-border-b-[1px] ap-border-line ap-flex ap-justify-center ap-items-center ap-z-50"
+    class="scroll-arrow ap-h-[36px] ap-mt-auto  ap-self-stretch ap-border-solid ap-border-b-[1px] ap-border-line ap-flex ap-justify-center  ap-items-center ap-z-50"
     *ngIf="shouldShowRightArrow(tabsContainer)" (click)="scrollFlowTabsRight(tabsContainer)">
     <svg-icon src="assets/img/custom/right-chevron.svg"></svg-icon>
   </div>
   <div class="ap-flex-grow ap-border-solid ap-border-b-[1px] ap-border-line ap-self-stretch"></div>
   <div
-    class="ap-flex ap-justify-center ap-items-center ap-gap-2 ap-border-solid ap-border-b-[1px] ap-border-line ap-p-2 ap-self-center">
+    class="ap-flex ap-justify-center  ap-items-center ap-gap-2 ap-border-solid ap-border-b-[1px] ap-border-line ap-p-2 ap-self-center">
 
     <app-button [hidden]="!(isFlowSelected$ | async | defaultFalse)" (buttonClicked)="configsClicked()" btnStyle="basic"
       btnColor="basic" btnSize="medium">

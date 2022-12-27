@@ -1,11 +1,11 @@
 <form *ngIf="form" [formGroup]="form" class="ng-submitted">
-  <div class="form-group d-flex flex-column" *ngFor="let config of requiredConfigs; let i = index">
+  <div class="form-group ap-flex flex-column" *ngFor="let config of requiredConfigs; let i = index">
     <ng-container
       *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:config, configIndex:i,formGroup:form}"></ng-container>
   </div>
-  <div *ngIf="allOptionalConfigs.length > 0" class="d-flex align-items-center optional-input-label-container">
+  <div *ngIf="allOptionalConfigs.length > 0" class="ap-flex ap-items-center optional-input-label-container">
     <div> Optional Inputs</div>
-    <div #spacer class="flex-grow-1"></div>
+    <div #spacer class="ap-flex-grow"></div>
     <app-button *ngIf="selectedOptionalConfigs.length !== allOptionalConfigs.length && form.enabled" btnColor="primary"
       btnSize="medium" btnStyle="basic" #menuTrigger="matMenuTrigger" (menuOpened)="optionalConfigsMenuOpened=true"
       (menuClosed)="optionalConfigsMenuOpened=false" [matMenuTriggerFor]="bodyTypesMenu">
@@ -21,7 +21,7 @@
       </ng-container>
     </mat-menu>
   </div>
-  <div class="form-group d-flex flex-column" *ngFor="let config of selectedOptionalConfigs; let i = index">
+  <div class="form-group ap-flex flex-column" *ngFor="let config of selectedOptionalConfigs; let i = index">
     <ng-container
       *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:config, configIndex:i, formGroup:form}"></ng-container>
   </div>
@@ -30,17 +30,17 @@
 <ng-template let-config let-configIndex="configIndex" #formFieldsTemplate let-formGroup="formGroup">
   <ng-container [ngSwitch]="config.type" [formGroup]="formGroup">
     <ng-container *ngSwitchCase="configType.CHECKBOX">
-      <div class="d-flex align-items-center label-container ">
+      <div class="ap-flex ap-items-center label-container ">
         <label [class.dashed-underline-label]="config.description"
           [matTooltip]="config.description!">{{config.label}}</label>
         <app-icon-button *ngIf="!config.required && formGroup.enabled" [width]="9" [height]="9"
           iconFilename="delete.svg" tooltipText="Remove Item" class="delete-btn" appTrackHover
           #deleteButton="hoverTrackerDirective" (click)="removeConfig(config)"></app-icon-button>
-        <div #spacer class="flex-grow-1"></div>
+        <div #spacer class="ap-flex-grow"></div>
         <mat-slide-toggle [formControlName]="config.key" color="primary"></mat-slide-toggle>
       </div>
     </ng-container>
-    <div *ngIf="config.type !== configType.CHECKBOX" class="d-flex align-items-center label-container">
+    <div *ngIf="config.type !== configType.CHECKBOX" class="ap-flex ap-items-center label-container">
       <label [class.dashed-underline-label]="config.description" [matTooltip]="config.description!"
         [for]="'form-input' + configIndex">{{ config.label }}</label>
       <app-icon-button *ngIf="formGroup.enabled && !config.required" [width]="9" [height]="9" iconFilename="delete.svg"

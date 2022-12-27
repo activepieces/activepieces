@@ -1,53 +1,38 @@
 <div class="column">
   <div class="p-3 top">
-    <app-sidebar-header
-      (closeClicked)="closeVersionSidebar()"
-      [title]="'Collection Versions'"
-    ></app-sidebar-header>
+    <app-sidebar-header (closeClicked)="closeVersionSidebar()" [title]="'Collection Versions'"></app-sidebar-header>
   </div>
 
-    <div
-      *ngIf="collectionVersionsList$ | async as versions; else loading"
-      class="px-4 bottom justify-content-center align-items-center piece-version-list-height"
-      [class.d-column]="versions.length === 0"
-    >
-      <ng-container *ngIf="versions.length > 0; else loading">
-        <div
-          class="version-container p-4 mb-4"
-          *ngFor="let version of versions; let i = index"
-        >
-          <div class="d-flex">
-            <div class="flex-grow-1">
-              <span>Collection Version #{{ versions.length - i }}</span>
-            </div>
-            <div>
-            <span
-              class="badge badge-warning"
-              *ngIf="version.state === versionEditState.DRAFT"
-            >DRAFT</span
-            >
-              <span
-                class="badge badge-success"
-                *ngIf="version.state === versionEditState.LOCKED"
-              >LOCKED</span
-              >
-            </div>
+  <div *ngIf="collectionVersionsList$ | async as versions; else loading"
+    class="px-4 bottom ap-justify-center ap-items-center piece-version-list-height"
+    [class.d-column]="versions.length === 0">
+    <ng-container *ngIf="versions.length > 0; else loading">
+      <div class="version-container p-4 mb-4" *ngFor="let version of versions; let i = index">
+        <div class="ap-flex">
+          <div class="ap-flex-grow">
+            <span>Collection Version #{{ versions.length - i }}</span>
           </div>
-          <div class="d-flex mt-2">
-            <div>
-              <div class="text-description">
-                {{ timeHelperService.formatDateTimeMills(version.created) }}
-              </div>
-            </div>
+          <div>
+            <span class="badge badge-warning" *ngIf="version.state === versionEditState.DRAFT">DRAFT</span>
+            <span class="badge badge-success" *ngIf="version.state === versionEditState.LOCKED">LOCKED</span>
           </div>
-
         </div>
-      </ng-container>
-    </div>
+        <div class="ap-flex mt-2">
+          <div>
+            <div class="text-description">
+              {{ timeHelperService.formatDateTimeMills(version.created) }}
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </ng-container>
+  </div>
 
 </div>
 <ng-template #loading>
-  <div class="collections-versions-loading-icon-container d-flex flex-direction-column justify-content-center align-items-center">
+  <div
+    class="collections-versions-loading-icon-container ap-flex flex-direction-column ap-justify-center ap-items-center">
     <app-loading-icon></app-loading-icon>
   </div>
 

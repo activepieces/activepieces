@@ -1,21 +1,12 @@
 <form [formGroup]="storageStepForm" class="ng-submitted">
-  <div class="d-flex flex-column accordion-form-controls-container">
+  <div class="ap-flex flex-column accordion-form-controls-container">
     <div>
       <label for="operation">Operation</label>
-      <ng-select
-        id="operation"
-        formControlName="operation"
-        [items]="operationDropdownOptions"
-        bindLabel="label"
-        bindValue="value"
-        [clearable]="false"
-        [searchable]="false"
-      >
+      <ng-select id="operation" formControlName="operation" [items]="operationDropdownOptions" bindLabel="label"
+        bindValue="value" [clearable]="false" [searchable]="false">
         <ng-template ng-option-tmp let-item="item">
-          <app-ng-select-item-template
-            [item]="item"
-            [isSelected]="isOperationSelected(item)"
-          ></app-ng-select-item-template>
+          <app-ng-select-item-template [item]="item"
+            [isSelected]="isOperationSelected(item)"></app-ng-select-item-template>
         </ng-template>
       </ng-select>
     </div>
@@ -26,7 +17,7 @@
         Key is required.
       </p>
     </div>
-    <div *ngIf="getControl('operation').value === StorageOperation.PUT" >
+    <div *ngIf="getControl('operation').value === StorageOperation.PUT">
       <label [attr.required]="getControl('value').enabled? true:null" for="value">Value</label>
       <input id="value" class="form-control" type="text" formControlName="value" />
     </div>
@@ -34,15 +25,14 @@
       Value is required.
     </p>
     <div>
-      <label >Scope</label>
-      <ng-select formControlName="scope" [items]="scopeOptions"
-      bindLabel="label" bindValue="value" [clearable]="false" appendTo="body"
-      [searchable]="false">
-      <ng-template ng-option-tmp let-item="item">
-        <app-ng-select-item-template [item]="item" [isSelected]="item.value ===getControl('scope').value ">
-        </app-ng-select-item-template>
-      </ng-template>
-    </ng-select>
+      <label>Scope</label>
+      <ng-select formControlName="scope" [items]="scopeOptions" bindLabel="label" bindValue="value" [clearable]="false"
+        appendTo="body" [searchable]="false">
+        <ng-template ng-option-tmp let-item="item">
+          <app-ng-select-item-template [item]="item" [isSelected]="item.value ===getControl('scope').value ">
+          </app-ng-select-item-template>
+        </ng-template>
+      </ng-select>
     </div>
   </div>
 

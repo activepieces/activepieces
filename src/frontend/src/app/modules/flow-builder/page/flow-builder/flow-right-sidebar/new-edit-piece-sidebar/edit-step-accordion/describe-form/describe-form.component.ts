@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import {
 	ControlValueAccessor,
-	UntypedFormBuilder,
-	UntypedFormControl,
-	UntypedFormGroup,
+	FormBuilder,
+	FormControl,
+	FormGroup,
 	NG_VALIDATORS,
 	NG_VALUE_ACCESSOR,
 	Validators,
@@ -12,6 +12,10 @@ import { tap } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 
+interface DescribeForm {
+	displayName: FormControl<string>;
+	name: FormControl<string>;
+}
 @Component({
 	selector: 'app-describe-form',
 	templateUrl: './describe-form.component.html',
@@ -30,21 +34,25 @@ import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.anima
 	animations: [fadeInUp400ms],
 })
 export class DescribeFormComponent implements ControlValueAccessor {
-	describeForm: UntypedFormGroup;
+	describeForm: FormGroup<DescribeForm>;
 	OnChange = value => {};
 	onTouched = () => {};
 	updateComponentValue$: Observable<any>;
-	constructor(private formBuilder: UntypedFormBuilder) {
+	constructor(private formBuilder: FormBuilder) {
 		this.describeForm = this.formBuilder.group({
-			displayName: new UntypedFormControl('', Validators.required),
-			name: new UntypedFormControl({ value: '', disabled: true }),
+			displayName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+			name: new FormControl('', { nonNullable: true }),
 		});
+		this.describeForm.controls.name.disable();
+		this.describeForm.markAsTouched();
 		this.updateComponentValue$ = this.describeForm.valueChanges.pipe(
 			tap(value => {
 				this.OnChange(this.describeForm.getRawValue());
 			})
 		);
+		this.describeForm.controls.displayName.markAsTouched();
 	}
+
 	writeValue(value: { name: string; displayName: string }): void {
 		this.describeForm.patchValue(value);
 	}

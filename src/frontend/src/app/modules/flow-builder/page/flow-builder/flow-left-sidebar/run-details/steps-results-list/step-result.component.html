@@ -8,10 +8,10 @@
             <mat-panel-title (click)="
               selectStepOrToggleExpansionPanel($event, expansionPanelTemplate)
             " class="loop-panel">
-              <div class="d-flex align-items-center w-100">
+              <div class="ap-flex ap-items-center w-100">
                 <div class="nested-level-padding" [style.min-width]="nestingLevelPadding"></div>
-                <div class="d-flex icon-and-name-gap">
-                  <div class="d-flex icons-gap" [class.expanded]="expansionPanelTemplate.expanded">
+                <div class="ap-flex icon-and-name-gap">
+                  <div class="ap-flex icons-gap" [class.expanded]="expansionPanelTemplate.expanded">
                     <svg-icon src="assets/img/custom/debug-icons/caret.svg" *ngIf="selectedIteration.length > 0"
                       [applyClass]="true" class="loop-caret"></svg-icon>
                     <ng-container *ngTemplateOutlet="stepIcon"></ng-container>
@@ -20,9 +20,9 @@
                   {{ stepNameAndResult.stepName }}
                 </div>
 
-                <div #spacer class="flex-grow-1"></div>
+                <div #spacer class="ap-flex-grow"></div>
                 <ng-container *ngIf="showIterationInput; else allIterations">
-                  <div class="d-flex align-items-center done-iteration-container"
+                  <div class="ap-flex ap-items-center done-iteration-container"
                     [style.width]="iterationInputFocusDirective.isFocused? '100%' : 'auto'">
                     <ng-container @fadeIn *ngIf="!iterationInputFocusDirective.isFocused">
                       <label (click)="$event.stopPropagation()" [for]="stepNameAndResult.stepName" @fadeIn>Iteration:
@@ -31,16 +31,15 @@
                     <div dir="rtl" [style.width]="iterationInputFocusDirective.isFocused? '100%' : 'auto'"
                       (click)="$event.stopPropagation();">
 
-                        <div class="done-iteration-section align-items-center"
-                        #doneSec
-                          (click)="$event.stopPropagation();" dir="ltr" [hidden]="!iterationInputFocusDirective.isFocused">
-                          <span (click)="iterationInput.focus()">
-                            /{{stepNameAndResult.result.output.iterations?.length}}
-                          </span>
+                      <div class="done-iteration-section ap-items-center" #doneSec (click)="$event.stopPropagation();"
+                        dir="ltr" [hidden]="!iterationInputFocusDirective.isFocused">
+                        <span (click)="iterationInput.focus()">
+                          /{{stepNameAndResult.result.output.iterations?.length}}
+                        </span>
 
-                          <button class="btn btn-text text-center text-primary"
-                            (click)="doneClicked($event,iterationInput) ">Done</button>
-                        </div>
+                        <button class="btn btn-text text-center text-primary"
+                          (click)="doneClicked($event,iterationInput) ">Done</button>
+                      </div>
 
 
                       <input [style.min-width]="iterationInputMinWidth"
@@ -60,7 +59,7 @@
                 </ng-container>
                 <ng-template #allIterations>
                   <ng-container *ngIf="_selectedStepName === stepNameAndResult.stepName; else statusIconTemplate ">
-                    <div class="all-iterations-text" @fadeIn >   All Iterations</div>
+                    <div class="all-iterations-text" @fadeIn> All Iterations</div>
 
                   </ng-container>
                 </ng-template>
@@ -86,18 +85,18 @@
           <mat-panel-title (click)="
               selectStepOrToggleExpansionPanel($event, expansionPanelTemplate)
             ">
-            <div class="d-flex align-items-center w-100">
+            <div class="ap-flex ap-items-center w-100">
 
               <div class="nested-level-padding" [style.width]="nestingLevelPadding"></div>
 
-              <div class="d-flex icon-and-name-gap">
-                <div class="d-flex icons-gap" [class.expanded]="expansionPanelTemplate.expanded">
+              <div class="ap-flex icon-and-name-gap">
+                <div class="ap-flex icons-gap" [class.expanded]="expansionPanelTemplate.expanded">
                   <ng-container *ngTemplateOutlet="stepIcon"></ng-container>
                 </div>
                 {{ stepNameAndResult.stepName }}
               </div>
 
-              <div #spacer class="flex-grow-1"></div>
+              <div #spacer class="ap-flex-grow"></div>
               <ng-container *ngTemplateOutlet="statusIconTemplate"></ng-container>
             </div>
           </mat-panel-title>

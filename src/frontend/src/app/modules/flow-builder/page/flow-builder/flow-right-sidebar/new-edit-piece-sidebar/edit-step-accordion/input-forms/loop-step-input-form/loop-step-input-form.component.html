@@ -1,8 +1,8 @@
 <form [formGroup]="loopStepForm" class="ng-submitted">
-  <div class="d-flex flex-column accordion-form-controls-container">
+  <div class="ap-flex flex-column accordion-form-controls-container">
     <div>
       <label for="variable" required>Items Variable</label>
-      <input  for="variable" class="form-control" type="text" formControlName="items" />
+      <input for="variable" class="form-control" type="text" formControlName="items" />
       <p @fadeInUp *ngIf="getControl('items').invalid" class="invalid-input">
         Items variable is required.
       </p>

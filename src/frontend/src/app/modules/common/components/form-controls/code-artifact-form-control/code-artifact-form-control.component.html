@@ -1,19 +1,17 @@
 <form [formGroup]="codeArtifactForm">
   <div class="code-font-sm code-size-200 code-block">
-    <div class="py-2 px-4 d-flex bar-containing-expand-button">
-      <div class="flex-grow-1">
+    <div class="py-2 px-4 ap-flex bar-containing-expand-button">
+      <div class="ap-flex-grow">
         <span class="text-white">Index.js</span>
       </div>
       <div>
-        <app-img [src]="'/assets/img/custom/maximize.svg'" [width]="16" [height]="16"  class="cursor-pointer" (click)="showFullscreenEditor()"></app-img>
+        <app-img [src]="'/assets/img/custom/maximize.svg'" [width]="16" [height]="16" class="cursor-pointer"
+          (click)="showFullscreenEditor()"></app-img>
       </div>
     </div>
 
-      <ngx-codemirror
-      formControlName="content"
-      [options]="codeEditorOptions"
-    ></ngx-codemirror>
+    <ngx-codemirror formControlName="content" [options]="codeEditorOptions"></ngx-codemirror>
 
   </div>
 </form>
-<ng-container *ngIf="updateComponentValue$|async" ></ng-container>
+<ng-container *ngIf="updateComponentValue$|async"></ng-container>

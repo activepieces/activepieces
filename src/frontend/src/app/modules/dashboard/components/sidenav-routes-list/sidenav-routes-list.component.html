@@ -4,7 +4,7 @@
     </svg-icon>
 
     <a *ngFor="let r of sideNavRoutes"
-        class="ap-flex ap-justify-center sidenav-text ap-items-center ap-flex-col ap-gap-[2px] ap-cursor-pointer"
+        class="ap-flex ap-justify-center  sidenav-text ap-items-center ap-flex-col ap-gap-[2px] ap-cursor-pointer"
         [routerLink]="['/' + r.route]" routerLinkActive="active-route">
         <svg-icon
             class="ap-py-[10px] ap-px-[8px] ap-border-[1px] ap-border-hidden {{ r.borderColorInTailwind }} ap-rounded-[4px] "
@@ -12,7 +12,7 @@
         </svg-icon>
         <div>{{ r.caption }}</div>
     </a>
-    <a class="ap-flex ap-justify-center sidenav-text ap-items-center ap-flex-col ap-gap-[2px] ap-cursor-pointer"
+    <a class="ap-flex ap-justify-center  sidenav-text ap-items-center ap-flex-col ap-gap-[2px] ap-cursor-pointer"
         href="https://docs.passr.dev/introduction" target="_blank">
         <svg-icon class="ap-py-[10px] ap-px-[8px] ap-border-[1px] ap-border-hidden ap-rounded-[4px]"
             [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/dashboard/documentation.svg" t>

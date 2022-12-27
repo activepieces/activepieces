@@ -1,6 +1,6 @@
-<div [formGroup]="form" class="d-flex flex-column pairs-form-container">
+<div [formGroup]="form" class="ap-flex flex-column pairs-form-container">
   <ng-container *ngFor="let pair of pairs.controls; let idx = index; let isLast = last; let isFirst=first">
-    <div class="d-flex pair-container" *ngIf="!(isLast && disabled && idx>0)" [formGroup]="getPair(idx)">
+    <div class="ap-flex pair-container" *ngIf="!(isLast && disabled && idx>0)" [formGroup]="getPair(idx)">
       <div class="delete-btn-container">
         <app-icon-button [ [width]="9" [height]="9" iconFilename="delete.svg"
           [tooltipText]=" !deleteButton.isHovered && !keyInput.isHovered && !valueInput.isHovered ?'' :'Remove Item'"
@@ -18,11 +18,11 @@
         #valueInput="hoverTrackerDirective" />
     </div>
   </ng-container>
-  <div class="d-flex">
+  <div class="ap-flex">
     <app-button btnColor="primary" btnStyle="basic" *ngIf="form.enabled" (buttonClicked)="addNewPair(true)"
       type="button" class="add-btn" btnSize="medium"> + Add Item
     </app-button>
-    <div class="flex-grow-1" #spacer></div>
+    <div class="ap-flex-grow" #spacer></div>
   </div>
 
 </div>

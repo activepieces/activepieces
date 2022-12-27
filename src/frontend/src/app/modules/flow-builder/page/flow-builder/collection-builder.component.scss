@@ -59,20 +59,6 @@ mat-drawer[position=start]{
 
 
 
-.support-icon-activepieces
-{
-  position:absolute;
-  bottom:20px;
-  border-radius: 50%;
-  background-color:$body;
-  width: 30px;
-  height: 30px;
-  right: 20px;
-  cursor: pointer;
-  &:hover{
-    background-color:$title;
-  }
-}
 
 .side-drawer
 {
@@ -122,4 +108,9 @@ mat-drawer[position=start]{
 }
 .left-side-handle {
   right: -.625rem;
+}
+
+:host
+{
+  height: 100%;
 }

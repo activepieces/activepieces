@@ -1,42 +1,24 @@
-<div
-  class="flow-container"
-  (mouseenter)="this.hover = true"
-  (mouseleave)="this.hover = false"
->
+<div class="flow-container" (mouseenter)="hover = true" (mouseleave)="hover = false">
   <div class="options-container" [hidden]="viewMode">
-    <button
-      *ngIf="!trigger"
-      class="btn btn-secondary btn-fab btn-icon btn-round"
-      [hidden]="!hover"
-      (click)="deleteStep()"
-    >
-      <svg-icon
-        src="assets/img/custom/trash.svg"
-        [svgStyle]="trashIconSvgStyle()"
-      ></svg-icon>
-    </button>
-    <button
-      *ngIf="trigger"
-      class="btn btn-secondary btn-fab btn-icon btn-round"
-      [hidden]="!hover"
-      (click)="changeTrigger()"
-    >
-      <svg-icon
-        src="assets/img/custom/replace.svg"
-        [svgStyle]="trashIconSvgStyle()"
-      ></svg-icon>
-    </button>
+    <div [class.ap-hidden]="!hover || trigger" class="ap-rounded-full   ap-opacity-0
+      ap-cursor-pointer ap-flex ap-items-center ap-mr-5 ap-justify-center
+       ap-bg-white ap-border-solid ap-border-[1px]
+        ap-border-line ap-min-w-[50px] ap-min-h-[50px]" [class.ap-opacity-100]="hover && !trigger"
+      (click)="deleteStep()">
+      <app-icon-button [iconFilename]="'trash.svg'" color="warn" tooltipText="Delete Step"></app-icon-button>
+    </div>
+    <div class="ap-rounded-full  ap-opacity-0
+    ap-cursor-pointer ap-flex ap-items-center ap-mr-5 ap-justify-center
+     ap-bg-white ap-border-solid ap-border-[1px]
+      ap-border-line ap-min-w-[50px] ap-min-h-[50px]" [class.ap-opacity-100]="hover && trigger"
+      [class.ap-hidden]="!hover || !trigger" (click)="changeTrigger()">
+      <app-icon-button [iconFilename]="'replace.svg'" tooltipText="Change Trigger"></app-icon-button>
+    </div>
   </div>
 
-  <div
-    class="flow-item d-flex align-items-center"
-    [class.selected]="selected"
-    [class.empty-trigger]="_flowItem.type === triggerType.EMPTY"
-    (click)="selectStep()"
-  >
-    <div
-      class="flow-icon-container d-flex justify-content-center align-items-center"
-    >
+  <div class="flow-item ap-flex ap-items-center" [class.selected]="selected"
+    [class.empty-trigger]="_flowItem.type === triggerType.EMPTY" (click)="selectStep()">
+    <div class="flow-icon-container ap-flex ap-justify-center ap-items-center">
       <ng-container *ngIf="flowItemDetails$ | async">
         <img *ngIf="stepIconUrl" class="logo-icon" @fadeIn [src]="stepIconUrl" />
       </ng-container>
@@ -47,42 +29,33 @@
         </div>
       </div>
     </div>
-    <div class="flow-content d-flex flex-column">
-      <div class="d-flex">
-        <div class="flow-title font-weight-bold flex-grow-1" #stepTitle [matTooltip]="stepTitle.clientWidth < stepTitle.scrollWidth?  _flowItem.display_name: ''">
+    <div class="flow-content ap-flex ap-flex-col ap-justify-center  ap-self-stretch">
+      <div class="ap-flex">
+        <div class="ap-typography-subtitle-1 ap-font-normal flow-title ap-flex-grow" #stepTitle
+          [matTooltip]="stepTitle.clientWidth < stepTitle.scrollWidth?  _flowItem.display_name: ''">
           {{ _flowItem.display_name }}
         </div>
-          <div  *ngIf="selectedRun$ | async">
-            <ng-container *ngIf="stepStatus$|async as actionStatus; else stepInsideLoopStatusTemplate">
-              <div
-              class="spinner-border text-primary step-run-result-icon"
-              *ngIf="actionStatus === actionStatusEnum.RUNNING"
-              role="status"
-            >
+        <div *ngIf="selectedRun$ | async">
+          <ng-container *ngIf="stepStatus$|async as actionStatus; else stepInsideLoopStatusTemplate">
+            <div class="spinner-border text-primary step-run-result-icon"
+              *ngIf="actionStatus === actionStatusEnum.RUNNING" role="status">
               <span class="sr-only">Loading...</span>
             </div>
-            <app-state-icon
-              *ngIf="actionStatus !== actionStatusEnum.RUNNING"
-              [succeeded]="actionStatus === actionStatusEnum.SUCCEEDED"
-            ></app-state-icon>
-            </ng-container>
-            <ng-template #stepInsideLoopStatusTemplate>
-              <app-state-icon
-              *ngIf="stepInsideLoopStatus$ | async as stepInsideLoopStatus"
-                [succeeded]="stepInsideLoopStatus === actionStatusEnum.SUCCEEDED"
-              ></app-state-icon>
+            <app-state-icon *ngIf="actionStatus !== actionStatusEnum.RUNNING"
+              [succeeded]="actionStatus === actionStatusEnum.SUCCEEDED"></app-state-icon>
+          </ng-container>
+          <ng-template #stepInsideLoopStatusTemplate>
+            <app-state-icon *ngIf="stepInsideLoopStatus$ | async as stepInsideLoopStatus"
+              [succeeded]="stepInsideLoopStatus === actionStatusEnum.SUCCEEDED"></app-state-icon>
           </ng-template>
-          </div>
-
-
-
-
+        </div>
       </div>
-      <div class="text-description">
-        <span class="badge badge-danger float-right"  *ngIf="!_flowItem.valid"  @fadeIn
-          >Invalid Settings</span
-        >
-        <div class="code-name">{{ _flowItem.name }}</div>
+      <div class="ap-typography-caption ap-flex ap-text-description ap-items-center">
+        <div>{{ _flowItem.name }}</div>
+        <div #spacer class="ap-flex-grow"></div>
+        <div class="ap-text-danger ap-bg-danger-light ap-rounded ap-p-1 ap-justify-self-end" *ngIf="
+          !_flowItem.valid" @fadeIn>Invalid
+          Settings</div>
       </div>
     </div>
   </div>

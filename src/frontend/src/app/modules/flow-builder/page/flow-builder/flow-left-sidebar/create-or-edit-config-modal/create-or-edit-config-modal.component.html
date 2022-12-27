@@ -13,7 +13,7 @@
   </button>
 </div>
 <div class="modal-body">
-  <form [formGroup]="configForm" class="d-flex flex-column config-modal-form-controls-container"
+  <form [formGroup]="configForm" class="ap-flex flex-column config-modal-form-controls-container"
     [class.ng-submitted]="submitted">
 
     <div>
@@ -23,7 +23,7 @@
         <ng-container *ngIf="submitted &&  configForm.get('key')!.getError('required'); else patternErrorOrAlreadyUsed">
           Key is required
         </ng-container>
-        <ng-template  #patternErrorOrAlreadyUsed>
+        <ng-template #patternErrorOrAlreadyUsed>
           <ng-container *ngIf="configForm.get('key')!.getError('requiredPattern');">
             Keys can only contain letters, numbers and underscores
           </ng-container>
@@ -37,22 +37,22 @@
     <div>
       <label>Type</label>
       <ng-select [items]="configTypesDropdownOptions" groupBy="group" bindLabel="label" bindValue="value"
-        formControlName="type" [searchable]="false"
-        placeholder="Please select" [clearable]="false" appendTo="body">
+        formControlName="type" [searchable]="false" placeholder="Please select" [clearable]="false" appendTo="body">
         <ng-template ng-option-tmp let-item="item">
-          <div class="d-flex option-container">
-            <svg-icon [svgStyle]="{ width: '14px', height: '14px' }" [src]="'../assets/img/custom/' + item.icon"></svg-icon>
-            <div class="flex-grow-1">{{ item.label }}</div>
-            <svg-icon *ngIf="item.value === configForm.get('type')!.value" src="assets/img/custom/check.svg" class="check-icon"
-              [applyClass]="true">
+          <div class="ap-flex option-container">
+            <svg-icon [svgStyle]="{ width: '14px', height: '14px' }"
+              [src]="'../assets/img/custom/' + item.icon"></svg-icon>
+            <div class="ap-flex-grow">{{ item.label }}</div>
+            <svg-icon *ngIf="item.value === configForm.get('type')!.value" src="assets/img/custom/check.svg"
+              class="check-icon" [applyClass]="true">
             </svg-icon>
           </div>
         </ng-template>
 
         <ng-template ng-label-tmp let-item="item">
-          <div class="d-flex option-container">
+          <div class="ap-flex option-container">
             <svg-icon [svgStyle]="{ width: 14, height: 14 }" [src]="'../assets/img/custom/' + item.icon"></svg-icon>
-            <div class="flex-grow-1">{{ item.label }}</div>
+            <div class="ap-flex-grow">{{ item.label }}</div>
           </div>
         </ng-template>
       </ng-select>
@@ -63,30 +63,27 @@
     </div>
 
     <div>
-      <label
-        *ngIf="getControlValue('type') !== ConfigType.CHECKBOX"
-        required >Value</label>
+      <label *ngIf="getControlValue('type') !== ConfigType.CHECKBOX" required>Value</label>
       <ng-container [ngSwitch]="getControlValue('type')">
         <input *ngSwitchCase="ConfigType.SHORT_TEXT" type="text" class="form-control" formControlName="value">
-        <textarea
-        *ngSwitchCase="ConfigType.LONG_TEXT"
-        rows="4"
-        class="form-control" formControlName="value"
-        type="text">
+        <textarea *ngSwitchCase="ConfigType.LONG_TEXT" rows="4" class="form-control" formControlName="value"
+          type="text">
         </textarea>
-        <input type="number"   *ngSwitchCase="ConfigType.NUMBER"  class="form-control" formControlName="value">
-        <app-dictonary-form-control *ngSwitchCase="ConfigType.DICTIONARY"  formControlName="value"></app-dictonary-form-control>
-        <app-checkbox *ngSwitchCase="ConfigType.CHECKBOX"  formControlName="value" [label]="'Value'"></app-checkbox>
-        <app-o-auth2-connect-control [configSettings]="getControlValue('settings')"  formControlName= "value"   *ngSwitchCase="ConfigType.OAUTH2" ></app-o-auth2-connect-control>
+        <input type="number" *ngSwitchCase="ConfigType.NUMBER" class="form-control" formControlName="value">
+        <app-dictonary-form-control *ngSwitchCase="ConfigType.DICTIONARY"
+          formControlName="value"></app-dictonary-form-control>
+        <app-checkbox *ngSwitchCase="ConfigType.CHECKBOX" formControlName="value" [label]="'Value'"></app-checkbox>
+        <app-o-auth2-connect-control [configSettings]="getControlValue('settings')" formControlName="value"
+          *ngSwitchCase="ConfigType.OAUTH2"></app-o-auth2-connect-control>
 
       </ng-container>
       <p @fadeInUp class="invalid-input" *ngIf="submitted && configForm.get('value')!.invalid ">
-       <ng-container *ngIf="getControlValue('type') === ConfigType.OAUTH2; else valueError">
-        You have to connect an account to continue
-       </ng-container>
-       <ng-template #valueError>
-        Value is required
-       </ng-template>
+        <ng-container *ngIf="getControlValue('type') === ConfigType.OAUTH2; else valueError">
+          You have to connect an account to continue
+        </ng-container>
+        <ng-template #valueError>
+          Value is required
+        </ng-template>
       </p>
     </div>
 
@@ -94,12 +91,8 @@
 </div>
 
 <div *ngIf="configForm.enabled" top-border class="modal-footer">
-  <app-button
-  btnColor="basic"
-  btnStyle="basic"
-  (buttonClicked)="closeModal()"
-> Cancel
-</app-button>
+  <app-button btnColor="basic" btnStyle="basic" (buttonClicked)="closeModal()"> Cancel
+  </app-button>
   <app-button [loading]="savingLoading" (buttonClicked)="submit()" btnColor="primary">Save</app-button>
 </div>
 

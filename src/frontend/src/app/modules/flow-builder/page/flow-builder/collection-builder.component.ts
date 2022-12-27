@@ -1,4 +1,4 @@
-import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { InstanceRunStatus } from '../../../common/model/enum/instance-run-status';
@@ -24,9 +24,9 @@ import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
 import { Instance } from 'src/app/modules/common/model/instance.interface';
 
 @Component({
+	selector: 'app-collection-builder',
 	templateUrl: './collection-builder.component.html',
 	styleUrls: ['./collection-builder.component.scss'],
-	encapsulation: ViewEncapsulation.None,
 })
 export class CollectionBuilderComponent implements OnInit, OnDestroy {
 	@ViewChild('canvasWrapper') canvasWrapper: ElementRef;

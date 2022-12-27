@@ -1,8 +1,8 @@
-<div class="code-editor h-100 d-flex flex-column">
-  <div class="modal-header text-center d-flex justify-content-center align-items-center">
+<div class="code-editor h-100 ap-flex flex-column">
+  <div class="modal-header text-center ap-flex ap-justify-center ap-items-center">
     <h5 class="modal-title">Code Editor</h5>
 
-    <div class="flex-grow-1"></div>
+    <div class="ap-flex-grow"></div>
 
     <app-button *ngIf="!readOnly" btnStyle="flat" btnColor="basic" (buttonClicked)="openNpmPackageModal()"
       btnSize="small">
@@ -15,12 +15,12 @@
     <app-icon-button (click)="hide()" [iconFilename]="'minimize.svg'"></app-icon-button>
 
   </div>
-  <div class="modal-body flex-grow-1">
-    <div class="d-flex code-height-auto code-container">
+  <div class="modal-body ap-flex-grow">
+    <div class="ap-flex code-height-auto code-container">
       <div class="p-2">
         <div class="p-2">
-          <div class="d-flex flex-column">
-            <div class="p-2 align-items-center d-flex flex-row file-container"
+          <div class="ap-flex flex-column">
+            <div class="p-2 ap-items-center ap-flex flex-row file-container"
               [class.file-active]="SelectedFileInFullscreenCodeEditor.CONTENT === selectedFile"
               (click)="selectFile(SelectedFileInFullscreenCodeEditor.CONTENT)">
               <div>
@@ -30,7 +30,7 @@
               <div class="ml-2">index.js</div>
             </div>
 
-            <div class="p-2 align-items-center d-flex flex-row file-container mt-2"
+            <div class="p-2 ap-items-center ap-flex flex-row file-container mt-2"
               [class.file-active]="SelectedFileInFullscreenCodeEditor.PACKAGE === selectedFile"
               (click)="selectFile(SelectedFileInFullscreenCodeEditor.PACKAGE)">
               <div>
@@ -42,7 +42,7 @@
           </div>
         </div>
       </div>
-      <div class="p-2 flex-grow-1 overflow-auto">
+      <div class="p-2 ap-flex-grow overflow-auto">
         <div class="h-100">
           <!-- Use ngModel to update the editor outside the modal -->
           <ngx-monaco-editor *ngIf="selectedFile === SelectedFileInFullscreenCodeEditor.CONTENT"
@@ -57,8 +57,8 @@
       </div>
       <div class="p-2 console-container">
         <div class="console-size code-height-auto h-100">
-          <div class="d-flex flex-column h-100">
-            <div class="d-flex">
+          <div class="ap-flex flex-column h-100">
+            <div class="ap-flex">
               <app-button btnColor="primary"
                 [btnStyle]="selectedTab === SelectedTabInFullscreenCodeEditor.OUTPUT? 'flat':'stroked'" class="mr-2"
                 btnSize="small" (buttonClicked)="selectTab(SelectedTabInFullscreenCodeEditor.OUTPUT)"> Output
@@ -70,7 +70,7 @@
 
 
             </div>
-            <div class="mt-2 flex-grow-1 position-relative">
+            <div class="mt-2 ap-flex-grow position-relative">
               <form [formGroup]="testResultForm" class="h-100">
                 <ngx-codemirror *ngIf="selectedTab === SelectedTabInFullscreenCodeEditor.OUTPUT" class="h-100"
                   formControlName="outputResult" [options]="outputResultEditorOptions"></ngx-codemirror>

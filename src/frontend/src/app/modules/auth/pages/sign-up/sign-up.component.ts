@@ -10,6 +10,7 @@ import {
 	containsUppercaseCharacter,
 } from 'src/app/modules/common/validators';
 import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
+import { fadeIn400ms } from 'src/app/modules/common/animation/fade-in.animations';
 export interface UserInfo {
 	first_name: FormControl<string>;
 	last_name: FormControl<string>;
@@ -21,6 +22,7 @@ export interface UserInfo {
 @Component({
 	templateUrl: './sign-up.component.html',
 	styleUrls: ['./sign-up.component.scss'],
+	animations: [fadeIn400ms],
 })
 export class SignUpComponent {
 	registrationForm: FormGroup<UserInfo>;

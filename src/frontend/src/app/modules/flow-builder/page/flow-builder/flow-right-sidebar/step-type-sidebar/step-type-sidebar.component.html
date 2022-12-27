@@ -1,40 +1,26 @@
-<div class="d-column piece-type-sidebar">
-  <div class="px-3 pt-3">
-    <app-sidebar-header
-      (closeClicked)="closeSidebar()"
-      [title]="sideBarDisplayName"
-    ></app-sidebar-header>
-  </div>
-
+<div class="ap-flex-col piece-type-sidebar">
+  <app-sidebar-header (closeClicked)="closeSidebar()" [title]="sideBarDisplayName"></app-sidebar-header>
   <ng-container *ngIf="flowItemDetailsLoaded$ | async; else loading">
     <mat-tab-group #tabGroup>
       <mat-tab *ngFor="let tab of tabsAndTheirLists; let i = index">
         <ng-template mat-tab-label>
-          <div
-            class="category-label"
-            [class.category-label-active]="tabGroup.selectedIndex === i"
-          >
+          <div class="category-label" [class.category-label-active]="tabGroup.selectedIndex === i">
             {{ tab.displayName }}
           </div>
         </ng-template>
         <ng-container *ngIf="tab.list$ | async as list; else loading">
-          <app-step-type-list
-            [typesList]="list"
-            (typeSelected)="onTypeSelected($event)"
-            [emptyListText]="tab.emptyListText"
-          >
+          <app-step-type-list [typesList]="list" (typeSelected)="onTypeSelected($event)"
+            [emptyListText]="tab.emptyListText">
           </app-step-type-list>
         </ng-container>
       </mat-tab>
     </mat-tab-group>
   </ng-container>
 
-<ng-template #loading>
-  <div
-    class="loading-container-for-flow-items-list justify-content-center align-items-center d-column"
-  >
-    <app-loading-icon></app-loading-icon>
-  </div>
-</ng-template>
+  <ng-template #loading>
+    <div class="loading-container-for-flow-items-list ap-justify-center ap-items-center d-column">
+      <app-loading-icon></app-loading-icon>
+    </div>
+  </ng-template>
 
-<ng-container *ngIf="flowTypeSelected$ |async"></ng-container>
+  <ng-container *ngIf="flowTypeSelected$ |async"></ng-container>

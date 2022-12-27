@@ -13,6 +13,8 @@ import { FlowItemDetails } from '../../../flow-right-sidebar/step-type-sidebar/s
 import { fadeIn400ms } from 'src/app/modules/common/animation/fade-in.animations';
 import { RunDetailsService } from '../../../flow-left-sidebar/run-details/iteration-details.service';
 import { InstanceRun, StepResult } from 'src/app/modules/common/model/instance-run.interface';
+import { DeleteStepDialogComponent } from './delete-step-dialog/delete-step-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
 	selector: 'app-flow-item-content',
@@ -46,7 +48,8 @@ export class FlowItemContentComponent implements OnInit {
 		public themeService: ThemeService,
 		private store: Store,
 		private cd: ChangeDetectorRef,
-		private runDetailsService: RunDetailsService
+		private runDetailsService: RunDetailsService,
+		private dialogService: MatDialog
 	) {}
 
 	ngOnInit(): void {
@@ -109,19 +112,12 @@ export class FlowItemContentComponent implements OnInit {
 		);
 	}
 
-	trashIconSvgStyle() {
-		return {
-			width: '14px',
-			height: '14px',
-			fill: this.hover ? this.themeService.DANGER_COLOR : this.themeService.BODY_COLOR,
-		};
-	}
-
 	deleteStep() {
 		const stepName = this._flowItem.name;
 		if (stepName == undefined) {
 			return;
 		}
+		this.dialogService.open(DeleteStepDialogComponent, { data: stepName });
 	}
 
 	get actionStatusEnum() {

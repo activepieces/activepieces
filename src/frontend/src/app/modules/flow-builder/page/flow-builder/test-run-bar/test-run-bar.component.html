@@ -1,26 +1,22 @@
-<div class="d-flex align-items-center bar-container">
+<div class="ap-flex ap-items-center bar-container">
   <ng-container *ngIf="selectedRun$ | async as selectedRun; else InitialisingRunTemplate">
     <ng-container [ngSwitch]="selectedRun.status">
       <ng-container *ngSwitchCase="instanceRunStatus.SUCCEEDED">
         <app-state-icon [succeeded]="true"></app-state-icon>
-        <span class="text-white"
-        >Run succeeded ({{ selectedRun.id }})</span
-        >
+        <span class="text-white">Run succeeded ({{ selectedRun.id }})</span>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.FAILED">
         <app-state-icon [succeeded]="false"></app-state-icon>
-        <span class="text-white"
-        >Run failed ({{ selectedRun.id }})</span
-        >
+        <span class="text-white">Run failed ({{ selectedRun.id }})</span>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.RUNNING">
-        <span class="text-white"
-        >Flow is running</span>
+        <span class="text-white">Flow is running</span>
       </ng-container>
     </ng-container>
   </ng-container>
   <ng-template #InitialisingRunTemplate> Initialising run...</ng-template>
-  <app-button  [hidden]="hideExit$ | async" btnColor="basic"  btnStyle="basic" btnSize="medium" (buttonClicked)="exitButtonClicked.next()">     Exit Run </app-button>
+  <app-button [hidden]="hideExit$ | async" btnColor="basic" btnStyle="basic" btnSize="medium"
+    (buttonClicked)="exitButtonClicked.next()"> Exit Run </app-button>
 </div>
 
 <ng-container *ngIf="exitRun$|async"></ng-container>

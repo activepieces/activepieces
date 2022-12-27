@@ -1,8 +1,9 @@
-<div class="d-flex align-items-center">
+<div class="ap-flex ap-items-center ap-px-5 ap-pt-3">
   <div *ngIf="backArrow" class="icon-button" (click)="backArrowClicked.emit()">
     <fa-icon [fixedWidth]="true" [size]="'1x'" [icon]="faChevronLeft" style="flex-grow: 1; cursor: pointer"></fa-icon>
   </div>
-  <div class="title-header" #drawerTitle [matTooltip]="drawerTitle.clientWidth < drawerTitle.scrollWidth? title:''">
+  <div class="ap-typography-subtitle-1 ap-font-normal ap-flex-grow" #drawerTitle
+    [matTooltip]="drawerTitle.clientWidth < drawerTitle.scrollWidth? title:''">
     {{ title }}
   </div>
   <app-icon-button [iconFilename]="'close.svg'" (click)="closeClicked.emit()"></app-icon-button>

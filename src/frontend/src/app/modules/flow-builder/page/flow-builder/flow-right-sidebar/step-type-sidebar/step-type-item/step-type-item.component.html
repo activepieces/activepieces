@@ -1,29 +1,21 @@
-<div
-  class="item-container d-flex align-items-center"
-  (mouseenter)="this.hover = true"
-  (mouseleave)="this.hover = false"
+<div class="item-container ap-flex ap-items-center" (mouseenter)="this.hover = true" (mouseleave)="this.hover = false"
   [style]="
     (hover && clickable
       ? '  background: #FAFAFA; '
       : '  background: #FFFFFF; ') + (clickable ? 'cursor: pointer;' : '')
-  "
->
+  ">
   <ng-container *ngIf="flowItemDetails; else observableFlowItemDetails">
-    <ng-container
-      *ngTemplateOutlet="
+    <ng-container *ngTemplateOutlet="
         flowItemDetailsBody;
         context: { $implicit: flowItemDetails }
-      "
-    ></ng-container>
+      "></ng-container>
   </ng-container>
   <ng-template #observableFlowItemDetails>
     <ng-container *ngIf="flowItemDetails$ | async as detailsResult;else loading">
-      <ng-container
-      *ngTemplateOutlet="
+      <ng-container *ngTemplateOutlet="
         flowItemDetailsBody;
         context: { $implicit: detailsResult }
-      "
-    ></ng-container>
+      "></ng-container>
     </ng-container>
   </ng-template>
 </div>
@@ -32,14 +24,14 @@
   <div class="logo-container">
     <img class="type-logo" [src]="flowItemDetails.logoUrl" />
   </div>
-  <div class="type-text-container d-column flex-grow-1">
+  <div class="type-text-container d-column ap-flex-grow">
     <div class="type-label">{{ flowItemDetails.name }}</div>
     <div class="description">{{ flowItemDetails.description }}</div>
   </div>
 </ng-template>
 
 <ng-template #loading>
-  <div class="d-flex align-items-center justify-content-center flex-grow-1 loading-container">
+  <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow loading-container">
     <app-loading-icon></app-loading-icon>
   </div>
 </ng-template>

@@ -1,5 +1,5 @@
 <form [formGroup]="customRequestFormGroup" class="ng-submitted">
-  <div class="d-flex flex-column accordion-form-controls-container">
+  <div class="ap-flex flex-column accordion-form-controls-container">
     <div>
       <label for="endpoint">Endpoint</label>
       <app-endpoint-form-control id="endpoint" formControlName="endpoint"></app-endpoint-form-control>
@@ -16,7 +16,7 @@
     <div>
       <div class="body-label-container">
         <label class="m-0" for="body">Body</label>
-        <div class="flex-grow-1" #spacer></div>
+        <div class="ap-flex-grow" #spacer></div>
         <app-button btnColor="basic" btnSize="medium" btnStyle="basic" #menuTrigger="matMenuTrigger"
           (menuOpened)="bodyTypeMenuOpened=true" (menuClosed)="bodyTypeMenuOpened=false"
           [matMenuTriggerFor]="bodyTypesMenu">

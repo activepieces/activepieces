@@ -14,7 +14,10 @@ module.exports = {
 				white: '#ffffff',
 				grayCard: '#fafafa',
 				placeholder: '#c8c8c8',
-				danger: '#dc3545',
+				danger: {
+					DEFAULT: '#dc3545',
+					light: '#efa2a980',
+				},
 				primary: '#6e41e2',
 				warn: '#F06D0E',
 				blueLink: '#1890ff',

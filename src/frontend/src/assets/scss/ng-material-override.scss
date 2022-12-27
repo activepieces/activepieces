@@ -301,7 +301,7 @@ $ap-theme-dark: mat.define-dark-theme(
     typography:$ap-typography
 	)
 );
-$main-theme: material-theme-helper.modify-background($ap-theme-light, $white, $sidebar, $dividers, $body, $body);
+$main-theme: material-theme-helper.modify-background($ap-theme-light, $white, $white, $dividers, $body, $body);
 @include mat.all-component-themes($main-theme);
 .mat-tab-group {
 	font-family: inherit !important;
@@ -472,7 +472,7 @@ $main-theme: material-theme-helper.modify-background($ap-theme-light, $white, $s
 .mat-form-field-appearance-outline .mat-form-field-infix {
 	padding: 0.625rem 0px 0.8rem !important;
 }
-.mat-form-field-appearance-outline .mat-form-field-flex {
+.mat-form-field-appearance-outline .mat-form-fielap-flex {
 	padding: 0px 0.625rem !important;
 }
 .mat-form-field-label-wrapper {
@@ -526,4 +526,12 @@ tr.mat-header-row {
 .mdc-notched-outline__notch
 {
     border-right: transparent !important;
+}
+
+mat-form-field
+{
+    .mat-mdc-text-field-wrapper
+    {
+        background-color: $white;
+    }
 }

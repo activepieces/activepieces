@@ -72,6 +72,7 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { HttpInterceptorService } from './service/interceptor.service';
 import { MatTabsModule } from '@angular/material/tabs';
 import { DeleteFlowDialogComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tab/delete-flow-dialog/delete-flow-dialog.component';
+import { DeleteStepDialogComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
 @NgModule({
 	imports: [
 		CommonModule,
@@ -145,6 +146,7 @@ import { DeleteFlowDialogComponent } from './page/flow-builder/flow-builder-tabs
 		InstanceSettingsComponent,
 		ComponentTriggerInputFormComponent,
 		DeleteFlowDialogComponent,
+  DeleteStepDialogComponent,
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 	exports: [FlowBuilderHeaderComponent],

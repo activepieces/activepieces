@@ -1,9 +1,9 @@
 <app-dialog-title-template>
-    Delete {{flow.last_version.display_name}}
+    Delete {{stepName}}
 </app-dialog-title-template>
 <mat-dialog-content>
     <div class="ap-typography-body-1 ap-text-description ap-mb-4">
-        Please type "DELETE" to confirm deleting this flow
+        Please type "DELETE" to confirm deleting this step
     </div>
     <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" #authenticationFormTemplate="ngForm">
         <mat-form-field class="ap-w-full" appearance="outline">
@@ -16,15 +16,12 @@
 
 <mat-dialog-actions align="end">
     <div class="ap-flex ap-gap-2.5">
-        <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="!!deleteFlow$">
+        <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
             Cancel
         </app-button>
         <app-button cdkFocusInitial btnSize="default"
-            (click)="authenticationFormTemplate.onSubmit($event); deleteFlow()" [loading]="!!deleteFlow$"
-            btnColor="warn">
+            (click)="authenticationFormTemplate.onSubmit($event); deleteFlow()" btnColor="warn">
             Confirm
         </app-button>
     </div>
 </mat-dialog-actions>
-
-<ng-container *ngIf="deleteFlow$ | async"></ng-container>

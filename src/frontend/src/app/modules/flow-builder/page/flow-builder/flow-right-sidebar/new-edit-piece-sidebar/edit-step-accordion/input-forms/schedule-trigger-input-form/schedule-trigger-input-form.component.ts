@@ -1,22 +1,21 @@
 import { Component } from '@angular/core';
 import {
 	ControlValueAccessor,
-	UntypedFormBuilder,
-	UntypedFormControl,
-	UntypedFormGroup,
+	FormBuilder,
+	FormControl,
+	FormGroup,
 	NG_VALIDATORS,
 	NG_VALUE_ACCESSOR,
 } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { cronJobValidator } from 'src/app/modules/common/validators/cronjob-validator';
-import { InputFormsSchema } from '../input-forms-schema';
+import { InputFormsSchema, ScheduledTriggerInputFormSchema } from '../input-forms-schema';
 import cronstrue from 'cronstrue';
 import { TriggerType } from 'src/app/modules/common/model/enum/trigger-type.enum';
 @Component({
 	selector: 'app-schedule-trigger-input-form',
 	templateUrl: './schedule-trigger-input-form.component.html',
-	styleUrls: ['./schedule-trigger-input-form.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
@@ -32,21 +31,23 @@ import { TriggerType } from 'src/app/modules/common/model/enum/trigger-type.enum
 	animations: [fadeInUp400ms],
 })
 export class ScheduleTriggerInputFormComponent implements ControlValueAccessor {
-	scheduledFrom: UntypedFormGroup;
+	scheduledFrom: FormGroup<{ cron_expression: FormControl<string> }>;
 	onChange = (value: InputFormsSchema) => {};
 	onTouch = () => {};
 	updateComponentValue$: Observable<any>;
-	constructor(private formBuilder: UntypedFormBuilder) {
-		this.scheduledFrom = this.formBuilder.group({ cron_expression: new UntypedFormControl('', cronJobValidator) });
+	constructor(private formBuilder: FormBuilder) {
+		this.scheduledFrom = this.formBuilder.group({
+			cron_expression: new FormControl('', { nonNullable: true, validators: [cronJobValidator] }),
+		});
 		this.updateComponentValue$ = this.scheduledFrom.valueChanges.pipe(
 			tap(() => {
-				this.onChange(this.scheduledFrom.value);
+				this.onChange(this.scheduledFrom.getRawValue());
 			})
 		);
 	}
 	writeValue(obj: InputFormsSchema): void {
 		if (obj.type === TriggerType.SCHEDULE) {
-			this.scheduledFrom.patchValue(obj);
+			this.scheduledFrom.patchValue({ cron_expression: (obj as ScheduledTriggerInputFormSchema).cron_expression });
 		}
 	}
 	registerOnChange(fn: any): void {

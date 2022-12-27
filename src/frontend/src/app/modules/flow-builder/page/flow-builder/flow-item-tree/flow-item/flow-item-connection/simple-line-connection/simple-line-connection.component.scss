@@ -6,14 +6,10 @@
 }
 .add-button {
   position: absolute;
-  // left: calc(50% - 8px);
+
   height: 17px;
   width: 16px;
   z-index: 9999999;
-  svg {
-    margin-top: -11px;
-  }
-
   .drop-point-container {
     position: absolute;
     left: -4.5px;

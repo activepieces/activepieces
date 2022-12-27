@@ -1,14 +1,14 @@
 <form [formGroup]="codeStepForm" class="ng-submitted">
-  <div class="d-flex flex-column accordion-form-controls-container">
+  <div class="ap-flex flex-column accordion-form-controls-container">
     <div>
       <label for="parameters">Parameters</label>
-      <app-dictonary-form-control id="parameters"
-        formControlName="input"
-      ></app-dictonary-form-control>
+      <app-dictonary-form-control id="parameters" formControlName="input"></app-dictonary-form-control>
     </div>
     <div>
       <label for="code">Code</label>
-      <app-code-artifact-form-control id="code" [artifactChanged$]="stepArtifactChanged$" [artifactCacheKey]="stepCacheKey" *ngIf="_stepArtifact$ |async; else loading" formControlName="artifact"></app-code-artifact-form-control>
+      <app-code-artifact-form-control id="code" [artifactChanged$]="stepArtifactChanged$"
+        [artifactCacheKey]="stepCacheKey" *ngIf="_stepArtifact$ |async; else loading"
+        formControlName="artifact"></app-code-artifact-form-control>
     </div>
   </div>
 </form>
@@ -16,7 +16,7 @@
 <ng-container *ngIf="inputControlValueChanged$ | async"></ng-container>
 <ng-container *ngIf="artifactControlValueChanged$ | async"></ng-container>
 <ng-template #loading>
-  <div class="d-flex align-items-center justify-content-center artifact-loading-container" >
+  <div class="ap-flex ap-items-center ap-justify-center artifact-loading-container">
     <app-loading-icon [whiteLoader]="true"></app-loading-icon>
   </div>
 </ng-template>

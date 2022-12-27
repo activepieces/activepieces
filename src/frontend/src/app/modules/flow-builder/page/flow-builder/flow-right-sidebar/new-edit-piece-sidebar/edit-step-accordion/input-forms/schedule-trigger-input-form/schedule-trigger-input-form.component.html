@@ -1,24 +1,22 @@
-<form [formGroup]="scheduledFrom" class="ng-submitted">
-<label required for="expression">
-  Cron Expression
-</label>
-<input id="expression" type="text" class="form-control" formControlName="cron_expression">
-<ng-container *ngIf="getControl('cron_expression')!.invalid; else cronExpressionInterpretation">
-  <p @fadeInUp  class="invalid-input">
-    <ng-container *ngIf="getControl('cron_expression')!.getError('required'); else invalidCronExpression">
-      Key is required.
-    </ng-container>
-    <ng-template #invalidCronExpression>
-      Cron expression is invalid.
-    </ng-template>
-  </p>
-</ng-container>
+<form [formGroup]="scheduledFrom">
 
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Cron Expression</mat-label>
+    <input matInput placeholder="0/30 * * ? * *" class="ap-bg-white" formControlName="cron_expression" />
+    <mat-error *ngIf="scheduledFrom.controls.cron_expression.invalid">
+      <ng-container *ngIf="scheduledFrom.controls.cron_expression.getError('required'); else invalidCronExpression">
+        Expression is required.
+      </ng-container>
+      <ng-template #invalidCronExpression>
+        Expression is invalid.
+      </ng-template>
+    </mat-error>
+  </mat-form-field>
 </form>
-<ng-template #cronExpressionInterpretation >
-  <p class="cron-expression-interpretation">
+<ng-container *ngIf="!scheduledFrom.controls.cron_expression.invalid">
+  <p class="ap-typography-caption ap-text-description">
     {{interpretCronExpression()}}
   </p>
 
-</ng-template>
+</ng-container>
 <ng-container *ngIf="updateComponentValue$|async"></ng-container>
