@@ -1,12 +1,15 @@
-import {ConfigurationValue} from "pieces/dist/src/framework/config/configuration-value.model";
 import {pieces} from "pieces/dist/src/apps";
 import {Piece} from "pieces/dist/src/framework/piece";
+import {PropsValue, Context} from "pieces";
+
 
 export class PieceExecutor {
-    public async exec(pieceName: string, actionName: string, config: ConfigurationValue) {
+    public async exec(pieceName: string, actionName: string, config: PropsValue) {
         const piece = this.getPiece(pieceName);
 
-        return await piece.runAction(actionName, config);
+        return await piece.getAction(actionName)!.run({
+            propsValue: config
+        });
     }
 
     private getPiece(pieceName: string): Piece {

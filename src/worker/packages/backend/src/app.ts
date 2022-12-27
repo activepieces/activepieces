@@ -14,9 +14,9 @@ import {codeModule} from "./code/code.module";
 import {oauth2Module} from "./oauth2/oauth2.module";
 import {tokenVerifyMiddleware} from "./authentication/token-verify-middleware";
 import {storeEntryModule} from "./store-entry/store-entry.module";
-import {tokenUtils} from "./authentication/lib/token-utils";
 import {instanceModule} from './instance/instance-module';
 import {instanceRunModule} from './instance-run/instance-run-module';
+import {flagModule} from "./flags/flag.module";
 
 declare module 'fastify' {
     export interface FastifyRequest {
@@ -33,6 +33,7 @@ app.register(authenticationModule);
 app.register(projectModule);
 app.register(collectionModule);
 app.register(fileModule);
+app.register(flagModule);
 app.register(storeEntryModule);
 app.register(flowModule);
 app.register(codeModule);

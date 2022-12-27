@@ -9,6 +9,7 @@ import {FileEntity} from "../file/file-entity";
 import {StoreEntryEntity} from "../store-entry/store-entry-entity";
 import {InstanceEntity} from '../instance/instance-entity';
 import { InstanceRunEntity } from '../instance-run/instance-run-entity';
+import {FlagEntity} from "../flags/flag-entity";
 
 export const databaseConnection = new DataSource({
     type: 'postgres',
@@ -23,6 +24,7 @@ export const databaseConnection = new DataSource({
         StoreEntryEntity,
         ProjectEntity,
         FlowEntity,
+        FlagEntity,
         CollectionVersionEntity,
         FileEntity,
         FlowEntity,

@@ -1,7 +1,6 @@
 import axios, {AxiosError} from 'axios';
 import qs from 'qs';
-import {ClaimTokenWithSecretRequest} from "shared/dist/oauth2/dto/claim-token-with-secret";
-import {CloudOAuth2Config, ConfigType, OAuth2Config} from "shared/dist/collections/config";
+import {ClaimTokenWithSecretRequest, CloudOAuth2Config, ConfigType, OAuth2Config} from "shared";
 
 export const oauth2Service = {
     claim: async (request: ClaimTokenWithSecretRequest): Promise<unknown> => {

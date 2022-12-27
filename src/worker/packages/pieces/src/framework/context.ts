@@ -1,15 +1,11 @@
 import {PropsValue} from "./property/prop.model";
 
-export class Context {
 
-    constructor(
-        public readonly payload: unknown,
-        public readonly webhookUrl: string,
-        public readonly propsValue: PropsValue,
-        public readonly store: Store
-    ) {
-    }
-
+export interface Context{
+    payload?: unknown;
+    webhookUrl?: string,
+    propsValue: PropsValue,
+    store?: Store
 }
 
 export type Store = {

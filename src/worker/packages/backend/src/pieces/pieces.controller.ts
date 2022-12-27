@@ -1,8 +1,6 @@
 import {FastifyInstance, FastifyPluginOptions, FastifyRequest} from "fastify"
 import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
-import {SelectInput} from "pieces/dist/src/framework/config/select-input.model";
-import {PropertyType} from "pieces";
-import {pieces, getPiece} from "pieces";
+import {pieces, getPiece, PropertyType, DropdownProperty} from "pieces";
 import {PieceOptionRequest, PieceOptionRequestSchema} from "shared";
 
 
@@ -49,7 +47,7 @@ export const piecesController = async (fastify: FastifyInstance, options: Fastif
                 }
             });
         }
-        return await (config as SelectInput).options(_request.body.configs);
+        return await (config as DropdownProperty).options(_request.body.configs);
     })
 };
 

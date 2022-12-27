@@ -12,23 +12,23 @@ export enum PropertyType {
 
 
 export type Property =
-	| ShortTextInput
-	| LongTextInput
-	| SelectInput
-	| OAuth2Input
-	| NumberInput
-	| CheckboxInput;
+	| ShortTextProperty
+	| LongTextProperty
+	| DropdownProperty
+	| OAuth2Property
+	| NumberProperty
+	| CheckboxProperty;
 
 
-export type OAuth2Input = BasicProperty<PropertyType.OAUTH2> & {
+export type OAuth2Property = BasicProperty<PropertyType.OAUTH2> & {
 	authUrl: string;
 	tokenUrl: string;
 	scope: string[];
 };
 
-export type ShortTextInput = BasicProperty<PropertyType.SHORT_TEXT>;
+export type ShortTextProperty = BasicProperty<PropertyType.SHORT_TEXT>;
 
-export type NumberInput = BasicProperty<PropertyType.NUMBER>;
+export type NumberProperty = BasicProperty<PropertyType.NUMBER>;
 
 
 type BasicProperty<U extends PropertyType> = {
@@ -39,10 +39,10 @@ type BasicProperty<U extends PropertyType> = {
 	type: U;
 };
 
-export type CheckboxInput = BasicProperty<PropertyType.CHECKBOX>;
-export type LongTextInput = BasicProperty<PropertyType.LONG_TEXT>;
+export type CheckboxProperty = BasicProperty<PropertyType.CHECKBOX>;
+export type LongTextProperty = BasicProperty<PropertyType.LONG_TEXT>;
 
-export type SelectInput = BasicProperty<PropertyType.DROPDOWN> & {
+export type DropdownProperty = BasicProperty<PropertyType.DROPDOWN> & {
 	options: (auth: PropsValue) => Promise<DropdownState>;
 };
 
