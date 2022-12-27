@@ -1,15 +1,14 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
-import { ConfirmDeleteModalComponent } from '../../../../../common/components/confirm-delete-modal/confirm-delete-modal.component';
 import { Flow } from '../../../../../common/model/flow.class';
 import { Store } from '@ngrx/store';
 import { FlowsActions } from '../../../../store/action/flows.action';
-import { take } from 'rxjs';
-import { UUID } from 'angular2-uuid';
+
 import {
 	ChevronDropdownOption,
 	ChevronDropdownOptionType,
 } from '../../../../components/chevron-dropdown-menu/chevron-dropdown-option';
+import { DeleteFlowDialogComponent } from './delete-flow-dialog/delete-flow-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
 	selector: 'app-flow-builder-tab',
@@ -59,28 +58,16 @@ export class FlowBuilderTabComponent {
 	@Input() readonlyMode: boolean;
 	@Output() switchToFlow: EventEmitter<boolean> = new EventEmitter();
 	dropDownOpened = false;
-
 	editing = false;
 	hovered = false;
-	bsModalRef: BsModalRef;
 
-	constructor(private store: Store, private modalService: BsModalService) {}
+	constructor(private store: Store, private dialogService: MatDialog) {}
 
 	actionHandler(actionId: string) {
 		if (actionId === 'RENAME') {
 			this.editing = true;
 		} else if (actionId === 'DELETE') {
-			this.bsModalRef = this.modalService.show(ConfirmDeleteModalComponent, {
-				initialState: {
-					entityName: this.flow.last_version.display_name,
-				},
-			});
-			this.bsModalRef.content.confirmState.pipe(take(1)).subscribe((confirm: boolean) => {
-				if (confirm) {
-					const flowId: UUID = this.flow.id;
-					this.store.dispatch(FlowsActions.deleteFlow({ flowId: flowId }));
-				}
-			});
+			this.dialogService.open(DeleteFlowDialogComponent, { data: { ...this._flow } });
 		}
 	}
 

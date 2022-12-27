@@ -17,11 +17,11 @@
   </div>
   <div class="ap-flex ap-items-center">
     <app-icon-button [width]="22" [height]="20" [iconFilename]="'logo/logo.svg'" [tooltipText]="'Home'"
-      (click)="redirectHome(false)" (auxclick)="redirectHome(true)"></app-icon-button>
+      (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></app-icon-button>
     <div class="ap-flex-grow" #spacer></div>
     <div class="ap-flex ap-items-center ap-gap-2">
       <app-icon-button tooltipText="Version History" [iconFilename]="'revert.svg'"
-        (click)="openCollectionVersionsLists()" *ngIf="(viewMode$ | async) === false"></app-icon-button>
+        (buttonClicked)="openCollectionVersionsLists()" *ngIf="(viewMode$ | async) === false"></app-icon-button>
       <app-instance-settings *ngIf="(viewMode$ | async) === false"></app-instance-settings>
       <app-deploy-button *ngIf="(viewMode$ | async) === false"></app-deploy-button>
     </div>

@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EditableTextComponent } from './components/editable-text/editable-text.component';
-import { ConfirmDeleteModalComponent } from './components/confirm-delete-modal/confirm-delete-modal.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IconButtonComponent } from './components/icon-button/icon-button.component';
 import { TimeagoModule } from 'ngx-timeago';
@@ -74,7 +73,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 @NgModule({
 	declarations: [
 		EditableTextComponent,
-		ConfirmDeleteModalComponent,
 		IconButtonComponent,
 		StateIconComponent,
 		JsonViewComponent,
@@ -147,7 +145,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	exports: [
 		EditableTextComponent,
 		PopoverModule,
-		ConfirmDeleteModalComponent,
 		IconButtonComponent,
 		StateIconComponent,
 		JsonViewComponent,

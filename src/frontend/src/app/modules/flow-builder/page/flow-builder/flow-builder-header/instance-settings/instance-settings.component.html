@@ -1,6 +1,6 @@
 <app-icon-button [buttonDisabled]="(collectionInstance$ | async) === undefined" [tooltipText]="tooltipText"
   [buttonDisabled]="(collectionInstance$ | async) === undefined" [iconFilename]="'settings.svg'"
-  (click)="openModal(modalTemplate)"></app-icon-button>
+  (buttonClicked)="openModal(modalTemplate)"></app-icon-button>
 
 <ng-template #modalTemplate>
   <app-dialog-title-template>

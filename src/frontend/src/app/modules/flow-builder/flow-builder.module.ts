@@ -71,6 +71,7 @@ import { ComponentTriggerInputFormComponent } from './page/flow-builder/flow-rig
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { HttpInterceptorService } from './service/interceptor.service';
 import { MatTabsModule } from '@angular/material/tabs';
+import { DeleteFlowDialogComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tab/delete-flow-dialog/delete-flow-dialog.component';
 @NgModule({
 	imports: [
 		CommonModule,
@@ -143,6 +144,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 		CenterMatMenuDirective,
 		InstanceSettingsComponent,
 		ComponentTriggerInputFormComponent,
+		DeleteFlowDialogComponent,
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 	exports: [FlowBuilderHeaderComponent],

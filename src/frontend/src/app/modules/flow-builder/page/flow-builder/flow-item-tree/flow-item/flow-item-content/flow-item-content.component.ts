@@ -3,9 +3,7 @@ import { ThemeService } from '../../../../../../common/service/theme.service';
 import { TriggerType } from '../../../../../../common/model/enum/trigger-type.enum';
 import { ActionStatus } from '../../../../../../common/model/enum/action-status';
 import { InstanceRunStatus } from '../../../../../../common/model/enum/instance-run-status';
-import { filter, map, Observable, of, Subject, switchMap, take, takeUntil, tap } from 'rxjs';
-import { ConfirmDeleteModalComponent } from '../../../../../../common/components/confirm-delete-modal/confirm-delete-modal.component';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
+import { filter, map, Observable, of, Subject, switchMap, takeUntil, tap } from 'rxjs';
 import { FlowItem } from '../../../../../../common/model/flow-builder/flow-item';
 import { RightSideBarType } from '../../../../../../common/model/enum/right-side-bar-type.enum';
 import { Store } from '@ngrx/store';
@@ -24,7 +22,6 @@ import { InstanceRun, StepResult } from 'src/app/modules/common/model/instance-r
 	animations: [fadeIn400ms],
 })
 export class FlowItemContentComponent implements OnInit {
-	bsModalRef: BsModalRef;
 	//in case it is not reached, we return undefined
 	stepStatus$: Observable<ActionStatus | undefined>;
 	stepInsideLoopStatus$: Observable<ActionStatus | undefined>;
@@ -48,7 +45,6 @@ export class FlowItemContentComponent implements OnInit {
 	constructor(
 		public themeService: ThemeService,
 		private store: Store,
-		private bsModalService: BsModalService,
 		private cd: ChangeDetectorRef,
 		private runDetailsService: RunDetailsService
 	) {}
@@ -126,24 +122,6 @@ export class FlowItemContentComponent implements OnInit {
 		if (stepName == undefined) {
 			return;
 		}
-		this.bsModalRef = this.bsModalService.show(ConfirmDeleteModalComponent, {
-			initialState: {
-				archive: false,
-				entityName: stepName,
-				showText: false,
-				instantClose: false,
-			},
-		});
-		this.bsModalRef.content.confirmState.pipe(take(1)).subscribe(confirm => {
-			if (confirm && stepName) {
-				this.store.dispatch(
-					FlowsActions.deleteStep({
-						stepName: stepName,
-					})
-				);
-				this.bsModalRef.hide();
-			}
-		});
 	}
 
 	get actionStatusEnum() {

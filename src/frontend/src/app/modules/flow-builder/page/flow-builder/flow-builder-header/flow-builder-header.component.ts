@@ -1,6 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-
-// import { ConfirmDeleteModalComponent } from '../../../../common/components/confirm-delete-modal/confirm-delete-modal.component';
 import { Collection } from '../../../../common/model/collection.interface';
 import { CollectionBuilderService } from '../../../service/collection-builder.service';
 import { RightSideBarType } from '../../../../common/model/enum/right-side-bar-type.enum';
@@ -84,8 +82,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
 			this.openCollectionVersionsLists();
 		} else if (actionId === 'RENAME') {
 			this.editing = true;
-		} else if (actionId === 'DELETE') {
-			// this.bsModalRef = this.modalService.show(ConfirmDeleteModalComponent);
 		}
 	}
 

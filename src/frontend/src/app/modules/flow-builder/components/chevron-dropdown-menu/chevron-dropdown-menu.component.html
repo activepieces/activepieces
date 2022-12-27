@@ -8,14 +8,11 @@
 <mat-menu #options="matMenu" ap-center>
   <ng-container *ngFor="let option of data">
     <ng-container *ngIf="option.type === itemType.SEPARATOR">
-      <div class="dropdown-divider"></div>
+      <div class="ap-border-b-[1px] ap-border-solid ap-border-line"></div>
     </ng-container>
     <ng-container *ngIf="option.type === itemType.COPY_ID">
       <div matTooltip="Copy" mat-menu-item class="ap-flex ap-flex-column" (click)="copyId(option)">
-        <label class="ap-color-description ap-m-0 ap-cursor-pointer">{{IdEntityName}} ID: </label>
-        <div class="ap-flex ap-flex-grow ap-gap-2 ap-color-body  flex-grow-1">
-          {{option.name!.substring(0,10)}}...
-        </div>
+        <label class="ap-color-description ap-m-0 ap-cursor-pointer">Copy {{IdEntityName}} ID </label>
       </div>
     </ng-container>
     <ng-container *ngIf="option.type === itemType.NORMAL">
