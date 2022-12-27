@@ -40,7 +40,7 @@ export class DeployButtonComponent implements OnInit {
 			delay(100),
 			map(res => {
 				if (res) {
-					return 'Please make sure all flows are valid';
+					return 'Please fix all flows';
 				} else {
 					return 'Deploy collection';
 				}

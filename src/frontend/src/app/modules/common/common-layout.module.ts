@@ -11,13 +11,11 @@ import { StateIconComponent } from './components/status-icon/state-icon.componen
 import { JsonViewComponent } from './components/json-view/json-view.component';
 import { ApPaginatorComponent } from './components/pagination/ap-paginator.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { AccordionModule } from 'ngx-bootstrap/accordion';
 import { ApButtonComponent } from './components/ap-button/ap-button.component';
 import { ApImgComponent } from './components/ap-img/ap-img.component';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { LoadingSkeletonComponent } from './components/loading-skeleton/loading-skeleton.component';
 import { ApInputComponent } from './components/ap-input/ap-input.component';
-import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { LoadingIconComponent } from './components/loading-icon/loading-icon.component';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatLegacyTabsModule as MatTabsModule } from '@angular/material/legacy-tabs';
@@ -27,7 +25,6 @@ import { OutputLogPipe } from './pipe/output-log';
 import { DefaultZeroPipe } from './pipe/default-zero.pipe';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { StoreModule } from '@ngrx/store';
-import { BsDropdownConfig, BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { JsonViewModalComponent } from './components/json-view-modal/json-view-modal.component';
 import { MatTooltipDefaultOptions, MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
@@ -69,7 +66,7 @@ import { MatTableModule } from '@angular/material/table';
 import { DialogTitleTemplateComponent } from './components/dialog-title-template/dialog-title-template.component';
 import { MatDialogModule } from '@angular/material/dialog';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
-	showDelay: 500,
+	showDelay: 0,
 	hideDelay: 0,
 	touchendHideDelay: 0,
 };
@@ -118,12 +115,10 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	imports: [
 		TimeagoModule,
 		FontAwesomeModule,
-		BsDropdownModule.forRoot(),
 		CommonModule,
 		ReactiveFormsModule,
-		AccordionModule,
 		NgxSkeletonLoaderModule,
-		TooltipModule,
+
 		MatExpansionModule,
 		MatTabsModule,
 		CodemirrorModule,
@@ -165,8 +160,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		DefaultFalsePipe,
 		DefaultTruePipe,
 		DefaultZeroPipe,
-		BsDropdownModule,
-		TooltipModule,
 		AngularSvgIconModule,
 		FontAwesomeModule,
 		MatSnackBarModule,
@@ -201,7 +194,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	],
 	providers: [
 		HighlightService,
-		BsDropdownConfig,
 		{ provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 3000, panelClass: 'ap-text-center' } },
 		{ provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
 		{

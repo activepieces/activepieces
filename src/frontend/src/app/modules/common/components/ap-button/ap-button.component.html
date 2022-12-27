@@ -1,58 +1,31 @@
-<div [matTooltip]="tooltipDisabled ? '' : tooltipText" placement="auto" class="btn-container">
-	<ng-container [ngSwitch]="btnStyle">
-		<button
-			[type]="type"
-			[class]="btnSizeClass"
-			[class.ap-w-full]="fullWidthOfContainer"
-			*ngSwitchCase="'flat'"
-			mat-flat-button
-			[color]="btnColor"
-			[disabled]="disabled ? true : false"
-			(click)="click()">
-			<ng-container *ngTemplateOutlet="btnContent"></ng-container>
-		</button>
-		<button
-			[class]="btnSizeClass"
-			[type]="type"
-			[class.ap-w-full]="fullWidthOfContainer"
-			*ngSwitchCase="'basic'"
-			mat-button
-			[color]="btnColor"
-			[disabled]="disabled ? true : false"
-			(click)="click()">
-			<ng-container *ngTemplateOutlet="btnContent"></ng-container>
-		</button>
-		<button
-			[type]="type"
-			[class]="btnSizeClass"
-			[class.ap-w-full]="fullWidthOfContainer"
-			*ngSwitchCase="'raised'"
-			mat-raised-button
-			[color]="btnColor"
-			[disabled]="disabled ? true : false"
-			(click)="click()">
-			<ng-container *ngTemplateOutlet="btnContent"></ng-container>
-		</button>
-		<button
-			[type]="type"
-			[class]="btnSizeClass"
-			[class.ap-w-full]="fullWidthOfContainer"
-			*ngSwitchCase="'stroked'"
-			mat-stroked-button
-			[color]="btnColor"
-			[disabled]="disabled ? true : false"
-			(click)="click()">
-			<ng-container *ngTemplateOutlet="btnContent"></ng-container>
-		</button>
-	</ng-container>
+<div class="btn-container ap-relative">
+    <ng-container [ngSwitch]="btnStyle">
+        <button [type]="type" [class]="btnSizeClass" [class.ap-w-full]="fullWidthOfContainer" *ngSwitchCase="'flat'"
+            mat-flat-button [color]="btnColor" [disabled]="disabled ? true : false" (click)="click()">
+            <ng-container *ngTemplateOutlet="btnContent"></ng-container>
+        </button>
+        <button [class]="btnSizeClass" [type]="type" [class.ap-w-full]="fullWidthOfContainer" *ngSwitchCase="'basic'"
+            mat-button [color]="btnColor" [disabled]="disabled ? true : false" (click)="click()">
+            <ng-container *ngTemplateOutlet="btnContent"></ng-container>
+        </button>
+        <button [type]="type" [class]="btnSizeClass" [class.ap-w-full]="fullWidthOfContainer" *ngSwitchCase="'raised'"
+            mat-raised-button [color]="btnColor" [disabled]="disabled ? true : false" (click)="click()">
+            <ng-container *ngTemplateOutlet="btnContent"></ng-container>
+        </button>
+        <button [type]="type" [class]="btnSizeClass" [class.ap-w-full]="fullWidthOfContainer" *ngSwitchCase="'stroked'"
+            mat-stroked-button [color]="btnColor" [disabled]="disabled ? true : false" (click)="click()">
+            <ng-container *ngTemplateOutlet="btnContent"></ng-container>
+        </button>
+    </ng-container>
 </div>
 <ng-template #btnContent>
-	<div
-		[class.zero-opacity]="!loading"
-		class="spinner-border loading-spinner-size-and-position"
-		[class.dark]="darkLoadingSpinner"
-		role="status"></div>
-	<div [class.zero-opacity]="loading">
-		<ng-content></ng-content>
-	</div>
+    <div [class.ap-opacity-0]="!loading" class="spinner-border loading-spinner-size-and-position"
+        [class.dark]="darkLoadingSpinner" role="status"></div>
+    <div [class.ap-opacity-0]="loading">
+        <ng-content></ng-content>
+    </div>
+    <div class="ap-absolute ap-h-full ap-w-full ap-left-0 ap-top-0 ap-z-9999" [class.ap-cursor-pointer]=" !disabled"
+        [matTooltip]="tooltipText">
+    </div>
+
 </ng-template>

@@ -2,9 +2,9 @@
   <ng-container *ngFor="let pair of pairs.controls; let idx = index; let isLast = last; let isFirst=first">
     <div class="d-flex pair-container" *ngIf="!(isLast && disabled && idx>0)" [formGroup]="getPair(idx)">
       <div class="delete-btn-container">
-        <app-icon-button [color]="themeService.BODY_COLOR" [width]="9" [height]="9" iconFilename="delete.svg"
-          [matTooltip]=" !deleteButton.isHovered && !keyInput.isHovered && !valueInput.isHovered ?'' :'Remove Item'"
-          [buttonHeight]="8" [buttonWidth]="8" buttonPadding="8px !important" class="delete-btn"
+        <app-icon-button [ [width]="9" [height]="9" iconFilename="delete.svg"
+          [tooltipText]=" !deleteButton.isHovered && !keyInput.isHovered && !valueInput.isHovered ?'' :'Remove Item'"
+          class="delete-btn"
           [class.opacity-0]=" !deleteButton.isHovered && !keyInput.isHovered && !valueInput.isHovered" appTrackHover
           #deleteButton="hoverTrackerDirective" (click)="removePair(idx)"></app-icon-button>
         <input #key name="key" class="form-control key-control" [class.first]="isFirst && pairs.controls.length>1"
@@ -19,12 +19,11 @@
     </div>
   </ng-container>
   <div class="d-flex">
-    <app-button btnColor="primary" btnStyle="basic" *ngIf="form.enabled" (buttonClicked)="addNewPair(true)" type="button" class="add-btn"
-      btnSize="medium"> + Add Item
+    <app-button btnColor="primary" btnStyle="basic" *ngIf="form.enabled" (buttonClicked)="addNewPair(true)"
+      type="button" class="add-btn" btnSize="medium"> + Add Item
     </app-button>
     <div class="flex-grow-1" #spacer></div>
   </div>
 
 </div>
 <ng-container *ngIf="focusOnLastKeyInput$ | async"></ng-container>
-

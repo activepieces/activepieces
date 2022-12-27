@@ -6,15 +6,9 @@ import { FlowLayoutRouting } from './flow-builder.routing';
 import { CollectionBuilderComponent } from './page/flow-builder/collection-builder.component';
 import { FlowBuilderHeaderComponent } from './page/flow-builder/flow-builder-header/flow-builder-header.component';
 import { FlowItemComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item.component';
-import { MatSidenavModule } from '@angular/material/sidenav';
 import { FlowRightSidebarComponent } from './page/flow-builder/flow-right-sidebar/flow-right-sidebar.component';
 import { FlowBuilderTabsComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tabs.component';
 import { CommonLayoutModule } from '../common/common-layout.module';
-import { MatLegacyChipsModule as MatChipsModule } from '@angular/material/legacy-chips';
-import { MatLegacyAutocompleteModule as MatAutocompleteModule } from '@angular/material/legacy-autocomplete';
-import { MatLegacyFormFieldModule as MatFormFieldModule } from '@angular/material/legacy-form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatLegacySelectModule as MatSelectModule } from '@angular/material/legacy-select';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { BsModalService, ModalModule } from 'ngx-bootstrap/modal';
 import { ChevronDropdownMenuComponent } from './components/chevron-dropdown-menu/chevron-dropdown-menu.component';
@@ -28,10 +22,8 @@ import { SelectedStepResultComponent } from './page/flow-builder/flow-left-sideb
 import { IterationAccordionComponent } from './page/flow-builder/flow-left-sidebar/run-details/steps-results-list/iteration-accordion/iteration-accordion.component';
 import { NewEditPieceSidebarComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/new-edit-piece-sidebar.component';
 import { StepTypeSidebarComponent } from './page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-sidebar.component';
-import { MatLegacyTabsModule as MatTabsModule } from '@angular/material/legacy-tabs';
 import { StepTypItemComponent } from './page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/step-type-item.component';
 import { StepTypeListComponent } from './page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-list/step-type-list.component';
-import { MatLegacyTooltipModule as MatTooltipModule } from '@angular/material/legacy-tooltip';
 import { StoreModule } from '@ngrx/store';
 import { collectionReducer } from './store/reducer/collection.reducer';
 import { EffectsModule } from '@ngrx/effects';
@@ -78,21 +70,15 @@ import { ComponentActionInputFormComponent } from './page/flow-builder/flow-righ
 import { ComponentTriggerInputFormComponent } from './page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-forms/component-trigger-input-form/component-trigger-input-form.component';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { HttpInterceptorService } from './service/interceptor.service';
-
+import { MatTabsModule } from '@angular/material/tabs';
 @NgModule({
 	imports: [
 		CommonModule,
 		RouterModule.forChild(FlowLayoutRouting),
 		FormsModule,
 		ReactiveFormsModule,
-		MatSidenavModule,
 		CommonLayoutModule,
 		CodemirrorModule,
-		MatChipsModule,
-		MatAutocompleteModule,
-		MatFormFieldModule,
-		MatIconModule,
-		MatSelectModule,
 		DragDropModule,
 		ModalModule.forRoot(),
 		TimepickerModule.forRoot(),
@@ -107,9 +93,8 @@ import { HttpInterceptorService } from './service/interceptor.service';
 		TabsModule,
 		FontAwesomeModule,
 		MatExpansionModule,
-		MatTabsModule,
-		MatTooltipModule,
 		MonacoEditorModule,
+		MatTabsModule,
 	],
 	providers: [BsModalService, { provide: HTTP_INTERCEPTORS, useClass: HttpInterceptorService, multi: true }],
 	declarations: [

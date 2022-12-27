@@ -48,7 +48,6 @@ export class CollectionsTableComponent implements OnInit {
 		);
 		this.areThereCollections$ = this.activatedRoute.data.pipe(
 			map(res => {
-				debugger;
 				return res[ARE_THERE_COLLECTIONS_FLAG];
 			})
 		);

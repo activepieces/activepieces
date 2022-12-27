@@ -44,7 +44,6 @@ export class CollectionsTableDataSource extends DataSource<Collection> {
 				return this.collectionService.list(res.project.id, { pageSize: res.pageSize, cursor: res.pageCursor });
 			}),
 			catchError(err => {
-				debugger;
 				throw err;
 			}),
 			tap(res => {

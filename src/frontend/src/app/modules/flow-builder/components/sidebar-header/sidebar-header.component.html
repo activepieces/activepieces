@@ -1,20 +1,9 @@
 <div class="d-flex align-items-center">
   <div *ngIf="backArrow" class="icon-button" (click)="backArrowClicked.emit()">
-    <fa-icon
-      [fixedWidth]="true"
-      [size]="'1x'"
-      [icon]="faChevronLeft"
-      style="flex-grow: 1; cursor: pointer"
-    ></fa-icon>
+    <fa-icon [fixedWidth]="true" [size]="'1x'" [icon]="faChevronLeft" style="flex-grow: 1; cursor: pointer"></fa-icon>
   </div>
   <div class="title-header" #drawerTitle [matTooltip]="drawerTitle.clientWidth < drawerTitle.scrollWidth? title:''">
-    {{ title  }}
+    {{ title }}
   </div>
-  <app-icon-button
-    [iconFilename]="'close.svg'"
-    [hoverColor]="themeService.PRIMARY_COLOR"
-    [color]="themeService.BODY_COLOR"
-    (click)="closeClicked.emit()"
-  ></app-icon-button>
+  <app-icon-button [iconFilename]="'close.svg'" (click)="closeClicked.emit()"></app-icon-button>
 </div>
-

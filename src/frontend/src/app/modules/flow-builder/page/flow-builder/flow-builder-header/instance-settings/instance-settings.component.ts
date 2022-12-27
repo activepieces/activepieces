@@ -1,11 +1,10 @@
 import { ChangeDetectionStrategy, Component, TemplateRef } from '@angular/core';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
-import { catchError, Observable, switchMap, tap } from 'rxjs';
+import { catchError, Observable, of, switchMap, take, tap } from 'rxjs';
 import { Collection } from 'src/app/modules/common/model/collection.interface';
 import { Instance } from 'src/app/modules/common/model/instance.interface';
 import { InstanceService } from 'src/app/modules/common/service/instance.service';
-import { ThemeService } from 'src/app/modules/common/service/theme.service';
 import { TimeHelperService } from 'src/app/modules/common/service/time-helper.service';
 import { CollectionActions } from 'src/app/modules/flow-builder/store/action/collection.action';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
@@ -18,17 +17,16 @@ import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/fl
 })
 export class InstanceSettingsComponent {
 	loading = false;
-	modalRef: BsModalRef;
 	collectionInstance$: Observable<Instance | undefined>;
 	collection$: Observable<Collection>;
 	deleteInstance$: Observable<void>;
 	tooltipText = 'No instance deployed';
+	dialogRef: MatDialogRef<TemplateRef<any>>;
 	constructor(
-		public themeService: ThemeService,
-		private modalService: BsModalService,
 		private store: Store,
 		private instanceService: InstanceService,
-		public timeHelperService: TimeHelperService
+		public timeHelperService: TimeHelperService,
+		private dialogService: MatDialog
 	) {
 		this.collectionInstance$ = this.store.select(BuilderSelectors.selectCurrentCollectionInstance).pipe(
 			tap(inst => {
@@ -46,6 +44,7 @@ export class InstanceSettingsComponent {
 		if (!this.loading) {
 			this.loading = true;
 			this.deleteInstance$ = this.collectionInstance$.pipe(
+				take(1),
 				switchMap(instance => {
 					return this.instanceService.delete(instance!.id);
 				}),
@@ -55,14 +54,16 @@ export class InstanceSettingsComponent {
 					throw err;
 				}),
 				tap(() => {
+					this.loading = false;
+					this.dialogRef.close(true);
 					this.store.dispatch(CollectionActions.removeInstance());
-					this.modalRef.hide();
 				})
 			);
 		}
 	}
 
 	openModal(template: TemplateRef<any>) {
-		this.modalRef = this.modalService.show(template, { backdrop: 'static' });
+		this.deleteInstance$ = of(void 0);
+		this.dialogRef = this.dialogService.open(template);
 	}
 }

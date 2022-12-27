@@ -1,6 +1,6 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
-import { ConfirmDeleteModalComponent } from '../../../../common/components/confirm-delete-modal/confirm-delete-modal.component';
+import { Component, OnInit } from '@angular/core';
+
+// import { ConfirmDeleteModalComponent } from '../../../../common/components/confirm-delete-modal/confirm-delete-modal.component';
 import { Collection } from '../../../../common/model/collection.interface';
 import { CollectionBuilderService } from '../../../service/collection-builder.service';
 import { RightSideBarType } from '../../../../common/model/enum/right-side-bar-type.enum';
@@ -16,7 +16,6 @@ import {
 	ChevronDropdownOption,
 	ChevronDropdownOptionType,
 } from '../../../components/chevron-dropdown-menu/chevron-dropdown-option';
-import { PopoverDirective } from 'ngx-bootstrap/popover';
 
 @Component({
 	selector: 'app-flow-builder-header',
@@ -25,22 +24,18 @@ import { PopoverDirective } from 'ngx-bootstrap/popover';
 	animations: [fadeIn400ms],
 })
 export class FlowBuilderHeaderComponent implements OnInit {
-	@ViewChild(PopoverDirective) embeddedPopover: PopoverDirective;
 	editing: boolean = false;
-	bsModalRef: BsModalRef;
 	collection$: Observable<Collection>;
 	flowsCount$: Observable<number>;
 	viewMode$: Observable<boolean>;
 	disablePublishButton$: Observable<boolean>;
 	collectionActions$: Observable<ChevronDropdownOption[]>;
-	publishButtonDisabledTooltip = '';
 	newCollectionCheck$: Observable<Params>;
 	collectionNameHovered = false;
 	constructor(
 		private store: Store,
 		public themeService: ThemeService,
 		private router: Router,
-		private modalService: BsModalService,
 		public collectionBuilderService: CollectionBuilderService,
 		private route: ActivatedRoute
 	) {}
@@ -90,7 +85,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 		} else if (actionId === 'RENAME') {
 			this.editing = true;
 		} else if (actionId === 'DELETE') {
-			this.bsModalRef = this.modalService.show(ConfirmDeleteModalComponent);
+			// this.bsModalRef = this.modalService.show(ConfirmDeleteModalComponent);
 		}
 	}
 
@@ -121,13 +116,5 @@ export class FlowBuilderHeaderComponent implements OnInit {
 			const fixedUrl = urlArrays.join('/');
 			this.router.navigate([fixedUrl]);
 		}
-	}
-
-	calculateCollectionNameEditorPosition(collectionNameEditorDiv: HTMLElement) {
-		const rect = collectionNameEditorDiv.getBoundingClientRect();
-		return {
-			left: `calc(50% - ${rect.width / 2}px)`,
-			top: `calc(50% - ${rect.height / 2}px)`,
-		};
 	}
 }

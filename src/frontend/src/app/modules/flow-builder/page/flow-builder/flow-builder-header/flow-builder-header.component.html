@@ -1,38 +1,30 @@
 <nav class="navbar-container navbar-expand" *ngIf="collection$ | async as collection">
   <div #collectionNameEditor *ngIf="collectionActions$ | async as pipeActions"
-    class="text-center d-flex align-items-center justify-content-center collection-name-editor">
+    class="ap-text-center ap-flex ap-items-center ap-justify-center collection-name-editor">
 
-    <svg-icon [class.zero-opacity]="editing || !collectionNameHovered" [svgStyle]="{ width: '12px', height: '12px' }"
-      src="assets/img/custom/pencil-underline.svg" class="d-flex align-items-center">
+    <svg-icon [class.ap-opacity-0]="editing || !collectionNameHovered" [svgStyle]="{ width: '12px', height: '12px' }"
+      [applyClass]="true" src="assets/img/custom/pencil-underline.svg" class="ap-flex ap-items-center ap-fill-body">
     </svg-icon>
-
     <app-editable-text [editing]="editing" (editingChanges)="changeEditValue($event)"
       [value]="collection.last_version.display_name" (valueChanges)="savePieceName($event)"
       [disableEditing]="viewMode$ | async | defaultTrue" [allowClick]="true"
-      [cssClasses]="'heading-h5 font-weight-bold'" class="piece-name-color" (mouseenter)="collectionNameHovered=true"
-      (mouseleave)="collectionNameHovered=false"></app-editable-text>
+      [cssClasses]="'ap-typography-headline-6 ap-font-bold'" class="ap-color-title"
+      (mouseenter)="collectionNameHovered=true" (mouseleave)="collectionNameHovered=false"></app-editable-text>
     <app-chevron-dropdown-menu [hidden]="
         (viewMode$ | async | defaultFalse) || (flowsCount$ | async) === 0
       " [data]="pipeActions" (selectValueChange)="actionHandler($event)" *ngIf="!editing" [useChevron]="true"
       IdEntityName="Collection"></app-chevron-dropdown-menu>
   </div>
-
-  <div class="d-flex align-items-center">
-    <app-icon-button [color]="themeService.BODY_COLOR" [hoverColor]="themeService.PRIMARY_COLOR" [width]="32"
-      [height]="32" [iconFilename]="'sidebar/activepieces-small.svg'" [tooltipText]="'Home'"
+  <div class="ap-flex ap-items-center">
+    <app-icon-button [width]="22" [height]="20" [iconFilename]="'logo/logo.svg'" [tooltipText]="'Home'"
       (click)="redirectHome(false)" (auxclick)="redirectHome(true)"></app-icon-button>
-    <div class="flex-grow-1" #spacer></div>
-    <div class="d-flex align-items-center collection-actions-buttons-section">
-
-        <app-icon-button [color]="themeService.BODY_COLOR" [matTooltip]="'Version History'"
-        [hoverColor]="themeService.PRIMARY_COLOR" [iconFilename]="'revert.svg'" (click)="openCollectionVersionsLists()"
-        *ngIf="(viewMode$ | async) === false"></app-icon-button>
-        <app-instance-settings *ngIf="(viewMode$ | async) === false"></app-instance-settings>
-
+    <div class="ap-flex-grow" #spacer></div>
+    <div class="ap-flex ap-items-center ap-gap-2">
+      <app-icon-button tooltipText="Version History" [iconFilename]="'revert.svg'"
+        (click)="openCollectionVersionsLists()" *ngIf="(viewMode$ | async) === false"></app-icon-button>
+      <app-instance-settings *ngIf="(viewMode$ | async) === false"></app-instance-settings>
       <app-deploy-button *ngIf="(viewMode$ | async) === false"></app-deploy-button>
     </div>
   </div>
 </nav>
-
-
 <ng-container *ngIf="newCollectionCheck$ | async"></ng-container>
