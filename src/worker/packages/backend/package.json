@@ -21,6 +21,7 @@
         "@types/koa-router": "^7.4.4",
         "axios": "^1.2.1",
         "bcrypt": "^5.1.0",
+        "bullmq": "^3.5.1",
         "decompress": "^4.2.1",
         "fastify": "^4.10.2",
         "http-status-codes": "^2.2.0",
