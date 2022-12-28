@@ -8,7 +8,7 @@ export class StepOutput{
   input?: unknown;
   output?: unknown;
   errorMessage?: unknown;
-  status: StepOutputStatus;
+  status?: StepOutputStatus;
 }
 
 export class LoopOnItemsStepOutput extends StepOutput {

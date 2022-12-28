@@ -115,8 +115,13 @@ export class FlowExecutor {
             const collectionVersion: CollectionVersion = Utils.parseJsonFile(`${globals.collectionDirectory}/${collectionId}.json`)
             const flowVersion: FlowVersion = Utils.parseJsonFile(`${globals.flowDirectory}/${flowId}.json`)
 
+            let configs: Map<string, unknown> = new Map(
+                collectionVersion.configs.map(config => {
+                    return [config.key, config.value];
+                })
+            );
             // Add predefined configs to Execution State.
-            this.executionState.insertConfigs(collectionVersion.configs);
+            this.executionState.insertConfigs(configs);
 
             return flowVersion;
         } catch (e) {

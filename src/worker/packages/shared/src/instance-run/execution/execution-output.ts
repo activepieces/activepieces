@@ -3,6 +3,7 @@ import {ExecutionState} from './execution-state';
 export enum ExecutionOutputStatus {
   SUCCEEDED = 'SUCCEEDED',
   FAILED = 'FAILED',
+  RUNNING = "RUNNING"
 }
 
 export interface ExecutionOutput {
