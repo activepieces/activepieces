@@ -1,10 +1,14 @@
-import { Instance } from "shared";
+import { Instance, InstanceStatus } from "shared";
 import { In } from "typeorm";
 import { flowVersionRepo } from "../flows/flow-version/flow-version-repo";
 import { triggerUtils } from "../helper/trigger-utils";
 
 export const instanceSideEffects = {
-    async enable(instance: Instance): Promise<void> {
+    async enable(instance: Partial<Instance>): Promise<void> {
+        if (instance.status === InstanceStatus.DISABLED || !instance.flowIdToVersionId) {
+            return;
+        }
+
         const flowVersionIds = Object.values(instance.flowIdToVersionId);
 
         const flowVersions = await flowVersionRepo.findBy({
@@ -18,7 +22,11 @@ export const instanceSideEffects = {
         await Promise.all(enableTriggers);
     },
 
-    async disable(instance: Instance): Promise<void> {
+    async disable(instance: Partial<Instance>): Promise<void> {
+        if (instance.status === InstanceStatus.DISABLED || !instance.flowIdToVersionId) {
+            return;
+        }
+
         const flowVersionIds = Object.values(instance.flowIdToVersionId);
 
         const flowVersions = await flowVersionRepo.findBy({
