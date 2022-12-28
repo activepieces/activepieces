@@ -1,6 +1,4 @@
-import {ExecutionState} from '../model/execution/execution-state';
-import {StepOutput} from '../model/output/step-output';
-import {Action, ActionType} from "shared";
+import {StepOutput, Action, ActionType, ExecutionState} from "shared";
 
 export type ActionHandler = BaseActionHandler<any>;
 
