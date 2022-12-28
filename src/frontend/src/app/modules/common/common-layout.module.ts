@@ -41,7 +41,7 @@ import { NgSelectLoadingSpinnerTemplateComponent } from './components/form-contr
 import { CodeArtifactFormControlComponent } from './components/form-controls/code-artifact-form-control/code-artifact-form-control.component';
 import { CodeArtifactControlFullscreenComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { TestCodeFormModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/test-code-form-modal/test-code-form-modal.component';
-import { NewAddNpmPackageModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component';
+import { AddNpmPackageModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component';
 import { NgSelectTagValueTemplateComponent } from './components/form-controls/ng-select-tag-value-template/ng-select-tag-value-template.component';
 import { projectReducer } from './store/reducer/project.reducer';
 import { ItemTextPipe } from './components/form-controls/ng-select-tag-value-template/item-text.pipe';
@@ -98,7 +98,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		CodeArtifactFormControlComponent,
 		CodeArtifactControlFullscreenComponent,
 		TestCodeFormModalComponent,
-		NewAddNpmPackageModalComponent,
+		AddNpmPackageModalComponent,
 		NgSelectTagValueTemplateComponent,
 		ItemTextPipe,
 		TrackHoverDirective,

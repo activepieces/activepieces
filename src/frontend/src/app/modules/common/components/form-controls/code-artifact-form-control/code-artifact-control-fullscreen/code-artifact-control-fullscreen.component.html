@@ -46,11 +46,12 @@
         <div class="ap-h-full">
           <!-- Use ngModel to update the editor outside the modal -->
           <ngx-monaco-editor *ngIf="selectedFile === SelectedFileInFullscreenCodeEditor.CONTENT"
-            [options]="codeEditorOptions" [ngModel]="contentControl().value"
-            (ngModelChange)="contentControl().setValue($event)" class="ap-h-full"></ngx-monaco-editor>
+            [options]="codeEditorOptions" [ngModel]="codeFilesForm.controls.content.value"
+            (ngModelChange)="codeFilesForm.controls.content.setValue($event)" class="ap-h-full"></ngx-monaco-editor>
 
           <ngx-monaco-editor *ngIf="selectedFile ===  SelectedFileInFullscreenCodeEditor.PACKAGE" class="ap-h-full"
-            [ngModel]="packageControl().value" (ngModelChange)="packageControl().setValue($event)"
+            [ngModel]="codeFilesForm.controls.package.value"
+            (ngModelChange)="codeFilesForm.controls.package.setValue($event)"
             [options]="packageDotJsonOptions"></ngx-monaco-editor>
         </div>
 
@@ -89,5 +90,5 @@
   </div>
 </div>
 
-<ng-container *ngIf="addNpmPackage$ | async"></ng-container>
+<ng-container *ngIf="addPackageDialogClosed$ | async"></ng-container>
 <ng-container *ngIf="executeCodeTest$ | async"></ng-container>

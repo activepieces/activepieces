@@ -1,7 +1,6 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-
-import { BsModalRef } from 'ngx-bootstrap/modal';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material/dialog';
 import { Observable, tap } from 'rxjs';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
@@ -12,20 +11,25 @@ type PackageVersion = string;
 	templateUrl: './add-npm-package-modal.component.html',
 	animations: [fadeInUp400ms],
 })
-export class NewAddNpmPackageModalComponent implements OnInit {
-	npmForm: UntypedFormGroup;
+export class AddNpmPackageModalComponent implements OnInit {
+	npmForm: FormGroup<{ packageName: FormControl<string> }>;
 	@Output()
 	packageFound$: EventEmitter<{ [key: PackageName]: PackageVersion }> = new EventEmitter();
 	loading = false;
 	npmPackage$: Observable<{ [key: PackageName]: PackageVersion } | null>;
 	submitted = false;
-	packageNameChanged$: Observable<void>;
-	constructor(private formBuilder: UntypedFormBuilder, private modalRef: BsModalRef, private codeService: CodeService) {
-		this.npmForm = this.formBuilder.group({ packageName: new UntypedFormControl('', Validators.required) });
+	packageNameChanged$: Observable<string>;
+	constructor(
+		private formBuilder: FormBuilder,
+		private codeService: CodeService,
+		private dialogRef: MatDialogRef<AddNpmPackageModalComponent>
+	) {
+		this.npmForm = this.formBuilder.group({
+			packageName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+		});
 	}
-
 	ngOnInit(): void {
-		const packaageNameControl = this.npmForm.get('packageName')!;
+		const packaageNameControl = this.npmForm.controls.packageName;
 		this.packageNameChanged$ = packaageNameControl.valueChanges.pipe(
 			tap(() => {
 				packaageNameControl.setErrors(null);
@@ -33,20 +37,19 @@ export class NewAddNpmPackageModalComponent implements OnInit {
 		);
 	}
 	hide() {
-		this.modalRef.hide();
+		this.dialogRef.close();
 	}
 	lookForNpmPackage() {
 		this.submitted = true;
 		if (this.npmForm.valid && !this.loading) {
 			this.loading = true;
-			this.npmPackage$ = this.codeService.getLatestVersionOfNpmPackage(this.npmForm.get('packageName')!.value).pipe(
+			this.npmPackage$ = this.codeService.getLatestVersionOfNpmPackage(this.npmForm.controls.packageName.value).pipe(
 				tap(pkg => {
 					if (pkg) {
-						console.log(pkg);
 						this.packageFound$.emit(pkg);
-						this.modalRef.hide();
+						this.dialogRef.close(pkg);
 					} else {
-						this.npmForm.get('packageName')?.setErrors({ invalid: true });
+						this.npmForm.controls.packageName.setErrors({ invalid: true });
 					}
 					this.loading = false;
 				})

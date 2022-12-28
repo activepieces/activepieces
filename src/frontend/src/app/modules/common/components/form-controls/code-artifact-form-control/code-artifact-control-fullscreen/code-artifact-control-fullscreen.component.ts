@@ -1,17 +1,21 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormGroup, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { Observable } from 'rxjs';
+import { FormControl, FormGroup, UntypedFormBuilder } from '@angular/forms';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Observable, tap } from 'rxjs';
 import { CodeTestExecutionResult } from 'src/app/modules/common/model/flow-builder/code-test-execution-result';
-import { ThemeService } from 'src/app/modules/common/service/theme.service';
 import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
 import { CodeArtifactForm } from '../code-artifact-form-control.component';
 import { SelectedFileInFullscreenCodeEditor } from '../selected-file-in-fullscreeen-code-editor.enum';
+import { AddNpmPackageModalComponent } from './add-npm-package-modal/add-npm-package-modal.component';
 
 import { SelectedTabInFullscreenCodeEditor } from './selected-tab-in-fullscreen-code-editor.enum';
 
 type PackageName = string;
 type PackageVersion = string;
+interface PackagesMetada {
+	[key: PackageName]: PackageVersion;
+}
+
 @Component({
 	templateUrl: './code-artifact-control-fullscreen.component.html',
 	styleUrls: ['./code-artifact-control-fullscreen.component.scss'],
@@ -33,8 +37,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 		language: 'json',
 		readOnly: false,
 	};
-	testResultForm: UntypedFormGroup;
-	addNpmPackage$: Observable<Object>;
+	testResultForm: FormGroup;
 	selectedTab = SelectedTabInFullscreenCodeEditor.OUTPUT;
 	consoleResultEditoroptions = {
 		theme: 'lucario',
@@ -49,15 +52,17 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 		mode: 'javascript',
 	};
 	testLoading = false;
+	addPackageDialogClosed$: Observable<{ [key: PackageName]: PackageVersion } | undefined>;
 	constructor(
-		public themeService: ThemeService,
 		private formBuilder: UntypedFormBuilder,
 		private codeService: CodeService,
-		@Inject(MAT_DIALOG_DATA) public state: { codeFilesForm: UntypedFormGroup; readOnly: boolean }
+		@Inject(MAT_DIALOG_DATA) public state: { codeFilesForm: FormGroup; readOnly: boolean },
+		private dialogRef: MatDialogRef<CodeArtifactControlFullscreenComponent>,
+		private dialogService: MatDialog
 	) {
 		this.testResultForm = this.formBuilder.group({
-			outputResult: new UntypedFormControl(),
-			consoleResult: new UntypedFormControl(),
+			outputResult: new FormControl(),
+			consoleResult: new FormControl(),
 		});
 		this.codeFilesForm = this.state.codeFilesForm;
 		this.readOnly = this.state.readOnly;
@@ -82,21 +87,23 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 		return SelectedTabInFullscreenCodeEditor;
 	}
 	openNpmPackageModal() {
-		// const npmModal: BsModalRef<NewAddNpmPackageModalComponent> = this.modalService.show(NewAddNpmPackageModalComponent);
-		// this.addNpmPackage$ = npmModal.content!.packageFound$.pipe(
-		// 	take(1),
-		// 	tap(pkg => {
-		// 		this.addNewPackage(pkg);
-		// 		this.selectedFile = SelectedFileInFullscreenCodeEditor.PACKAGE;
-		// 	})
-		// );
+		this.addPackageDialogClosed$ = this.dialogService
+			.open(AddNpmPackageModalComponent)
+			.afterClosed()
+			.pipe(
+				tap((pkg: { [key: PackageName]: PackageVersion } | undefined) => {
+					if (pkg) {
+						this.addNewPackage(pkg);
+					}
+				})
+			);
 	}
 	addNewPackage(pkg: { [key: PackageName]: PackageVersion }) {
 		const packageDotJson = this.getPackageDotJsonObject();
 		packageDotJson.dependencies = { ...packageDotJson.dependencies, ...pkg };
-		this.codeFilesForm.get('package')!.setValue(this.codeService.beautifyJson(packageDotJson));
+		this.codeFilesForm.controls.package.setValue(this.codeService.beautifyJson(packageDotJson));
 	}
-	getPackageDotJsonObject(): { dependencies: { [key: PackageName]: PackageVersion } } {
+	getPackageDotJsonObject(): { dependencies: PackagesMetada } {
 		const packageControlValue = this.codeFilesForm.get('package')!.value;
 		try {
 			const packageDotJson = JSON.parse(packageControlValue);
@@ -135,12 +142,6 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 		return codeTestExecutionResult.standard_output;
 	}
 	hide() {
-		// this.modalRef.hide();
-	}
-	packageControl() {
-		return this.codeFilesForm.get('package')!;
-	}
-	contentControl() {
-		return this.codeFilesForm.get('content')!;
+		this.dialogRef.close(true);
 	}
 }

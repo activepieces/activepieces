@@ -34,17 +34,14 @@
       color: #14ae5c;
     }
   }
-  .mat-button.mat-success:hover,
+  .mdc-button.mat-success:hover,
   .mat-stroked-button.mat-success:hover:not([disabled]) {
     &:not([disabled]) {
-      background-color: #cae7d8;
+      background-color: #3cad71;
     }
   }
 
-  .mat-raised-button.mat-success,
-  .mat-flat-button.mat-success,
-  .mat-fab.mat-success,
-  .mat-mini-fab.mat-success {
+  .mdc-button.mat-success{
     &:not([disabled]) {
       color: white;
       background-color: #14ae5c;

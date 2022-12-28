@@ -20,7 +20,7 @@ import { Config } from '../../model/fields/variable/config';
 import { ThemeService } from '../../service/theme.service';
 import { FrontEndConnectorConfig, InputType } from './connector-action-or-config';
 import { DropdownItemOption } from '../../model/dropdown-item-option';
-import { NewAuthenticationModalComponent } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
+import { NewAuthenticationModalComponent } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/new-edit-piece-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 type ConfigKey = string;
 
 @Component({
