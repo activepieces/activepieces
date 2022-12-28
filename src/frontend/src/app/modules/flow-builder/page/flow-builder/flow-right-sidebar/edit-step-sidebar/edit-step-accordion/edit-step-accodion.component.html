@@ -70,12 +70,12 @@
             </div>
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <div class="ap-p-4 expansion-panel-body">
-          <p class="ap-my-2 doc-container ap-cursor-auto" placement="bottom">
+        <div class="ap-px-4  ap-py-2 expansion-panel-body">
+          <p class="ap-my-2 doc-container ap-cursor-default" placement="bottom">
             <fa-icon class="ap-mr-2 info-icon" matTooltipShowDelay="100" matTooltip="
             If you want to use a config variable, just write ${configs.your_config_key} in any step fields and to refer to an output from a previous step, write: ${step_name.variable_name}.
           " [icon]="faInfoCircle"></fa-icon>
-            <span matTooltipShowDelay="100" matTooltip="
+            <span matTooltipShowDelay="100" class="ap-cursor-default" matTooltip="
             If you want to use a config variable, just write ${configs.your_config_key} in any step fields and to refer to an output from a previous step, write: ${step_name.variable_name}.
           ">Learn how to use variables</span>
           </p>

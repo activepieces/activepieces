@@ -1,18 +1,18 @@
 import { Component } from '@angular/core';
 import {
 	ControlValueAccessor,
-	UntypedFormBuilder,
-	UntypedFormControl,
-	UntypedFormGroup,
 	NG_VALIDATORS,
 	NG_VALUE_ACCESSOR,
 	Validators,
+	FormControl,
+	FormGroup,
+	FormBuilder,
 } from '@angular/forms';
 
 import { Observable, tap } from 'rxjs';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
-import { InputFormsSchema } from '../input-forms-schema';
+import { LoopStepInputFormSchema } from '../input-forms-schema';
 
 @Component({
 	selector: 'app-loop-step-input-form',
@@ -32,23 +32,23 @@ import { InputFormsSchema } from '../input-forms-schema';
 	animations: [fadeInUp400ms],
 })
 export class LoopStepInputFormComponent implements ControlValueAccessor {
-	loopStepForm: UntypedFormGroup;
+	loopStepForm: FormGroup<{ items: FormControl<string> }>;
 	updateComponentValue$: Observable<any>;
-	onChange = (value: InputFormsSchema) => {};
+	onChange = (value: LoopStepInputFormSchema) => {};
 	onTouch = () => {};
 
-	constructor(private formBuilder: UntypedFormBuilder) {
+	constructor(private formBuilder: FormBuilder) {
 		this.loopStepForm = this.formBuilder.group({
-			items: new UntypedFormControl('', Validators.required),
+			items: new FormControl('', { nonNullable: true, validators: Validators.required }),
 		});
 		this.updateComponentValue$ = this.loopStepForm.valueChanges.pipe(
 			tap(() => {
-				this.onChange(this.loopStepForm.value);
+				this.onChange(this.loopStepForm.getRawValue());
 			})
 		);
 	}
 
-	writeValue(obj: InputFormsSchema): void {
+	writeValue(obj: LoopStepInputFormSchema): void {
 		if (obj.type === ActionType.LOOP_ON_ITEMS) {
 			this.loopStepForm.patchValue(obj);
 		}

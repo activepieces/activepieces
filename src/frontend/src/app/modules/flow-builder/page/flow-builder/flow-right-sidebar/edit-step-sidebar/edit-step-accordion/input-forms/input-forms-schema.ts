@@ -7,7 +7,7 @@ interface InputFormsSchemaBase {
 	type?: ActionType | TriggerType;
 }
 export interface LoopStepInputFormSchema extends InputFormsSchemaBase {
-	items: any;
+	items: string;
 }
 export interface ResponseStepInputFormSchema extends InputFormsSchemaBase {
 	output: any;

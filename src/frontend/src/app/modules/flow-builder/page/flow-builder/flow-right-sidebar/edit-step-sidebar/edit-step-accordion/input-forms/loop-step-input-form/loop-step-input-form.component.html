@@ -1,13 +1,11 @@
-<form [formGroup]="loopStepForm" class="ng-submitted">
-  <div class="ap-flex flex-column accordion-form-controls-container">
-    <div>
-      <label for="variable" required>Items Variable</label>
-      <input for="variable" class="form-control" type="text" formControlName="items" />
-      <p @fadeInUp *ngIf="getControl('items').invalid" class="invalid-input">
-        Items variable is required.
-      </p>
-    </div>
-  </div>
+<form [formGroup]="loopStepForm" class="ap-flex ap-flex-col ap-gap-2">
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Items</mat-label>
+    <input matInput placeholder="Variable or JSON array" class="ap-bg-white" formControlName="items" />
+    <mat-error *ngIf="loopStepForm.controls.items.invalid">
+      Items are required.
+    </mat-error>
+  </mat-form-field>
 </form>
 
 <ng-container *ngIf="updateComponentValue$ | async"></ng-container>

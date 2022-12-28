@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import {
 	ControlValueAccessor,
-	UntypedFormBuilder,
-	UntypedFormControl,
-	UntypedFormGroup,
+	FormBuilder,
+	FormControl,
+	FormGroup,
 	NG_VALIDATORS,
 	NG_VALUE_ACCESSOR,
 	Validators,
@@ -14,8 +14,14 @@ import { DropdownOption } from 'src/app/modules/common/model/dropdown-options';
 import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
 import { StorageOperation } from 'src/app/modules/common/model/flow-builder/actions/storage-operation.enum';
 import { StorageScope } from 'src/app/modules/common/model/flow-builder/actions/storage-scope.enum';
-import { InputFormsSchema, StorageStepInputFormSchema } from '../input-forms-schema';
+import { StorageStepInputFormSchema } from '../input-forms-schema';
 
+interface StorageStepForm {
+	operation: FormControl<StorageOperation>;
+	key: FormControl<string>;
+	value: FormControl<string>;
+	scope: FormControl<StorageScope>;
+}
 @Component({
 	selector: 'app-storage-step-input-form',
 	templateUrl: './storage-step-input-form.component.html',
@@ -38,32 +44,36 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 		{ label: 'GET', value: StorageOperation.GET },
 		{ label: 'PUT', value: StorageOperation.PUT },
 	];
-	scopeOptions: DropdownOption[] = [{ label: 'Collection', value: StorageScope.COLLECTION }];
 	operationChanged$: Observable<StorageOperation>;
-	storageStepForm: UntypedFormGroup;
-	onChange = (value: InputFormsSchema) => {};
+	storageStepForm: FormGroup<StorageStepForm>;
+	onChange = (value: StorageStepInputFormSchema) => {};
 	onTouch = () => {};
 	updateComponentValue$: Observable<any>;
-	constructor(private formBuilder: UntypedFormBuilder) {
+	constructor(private formBuilder: FormBuilder) {
 		this.storageStepForm = this.formBuilder.group({
-			operation: new UntypedFormControl('', Validators.required),
-			key: new UntypedFormControl('', Validators.required),
-			value: new UntypedFormControl('', Validators.required),
-			scope: new UntypedFormControl(StorageScope.COLLECTION, Validators.required),
+			operation: new FormControl(StorageOperation.GET, { nonNullable: true, validators: [Validators.required] }),
+			key: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+			value: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+			scope: new FormControl(StorageScope.COLLECTION, { nonNullable: true }),
 		});
-
+		this.storageStepForm.markAllAsTouched();
 		this.setUpListenerToOperationControl();
 		this.updateComponentValue$ = this.storageStepForm.valueChanges.pipe(
 			tap(() => {
-				this.onChange(this.storageStepForm.value);
+				this.onChange(this.storageStepForm.getRawValue());
 			})
 		);
 	}
-	writeValue(obj: InputFormsSchema): void {
+	writeValue(obj: StorageStepInputFormSchema): void {
 		if (obj.type === ActionType.STORAGE) {
-			this.storageStepForm.setValue({ operation: '', key: '', value: '', scope: StorageScope.COLLECTION });
+			this.storageStepForm.setValue({
+				operation: StorageOperation.GET,
+				key: '',
+				value: '',
+				scope: StorageScope.COLLECTION,
+			});
 			this.storageStepForm.patchValue(obj);
-			this.operationControlChecker((obj as StorageStepInputFormSchema).operation);
+			this.operationControlChecker(obj.operation);
 		}
 	}
 	registerOnChange(fn: any): void {
@@ -73,7 +83,7 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 		this.onTouch = fn;
 	}
 	setUpListenerToOperationControl() {
-		const operationControl = this.storageStepForm.get('operation')!;
+		const operationControl = this.storageStepForm.controls.operation;
 
 		this.operationChanged$ = operationControl.valueChanges.pipe(
 			tap(operation => {
@@ -83,8 +93,9 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 	}
 
 	operationControlChecker(operation: StorageOperation) {
-		const valueControl = this.storageStepForm.get('value')!;
+		const valueControl = this.storageStepForm.controls.value;
 		if (operation === StorageOperation.GET) {
+			valueControl.setValue('');
 			valueControl.disable();
 		} else if (operation === StorageOperation.PUT && this.storageStepForm.enabled) {
 			valueControl.enable();
@@ -98,12 +109,9 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 	}
 
 	isOperationSelected(item: DropdownOption) {
-		return this.storageStepForm.get('operation')!.value === item.value;
+		return this.storageStepForm.controls.operation.value === item.value;
 	}
 
-	getControl(name: string) {
-		return this.storageStepForm.get(name)!;
-	}
 	setDisabledState?(isDisabled: boolean): void {
 		if (isDisabled) {
 			this.storageStepForm.disable();
