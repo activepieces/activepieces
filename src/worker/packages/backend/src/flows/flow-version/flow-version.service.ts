@@ -12,13 +12,9 @@ import {
     getStep,
 } from "shared";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
-import {databaseConnection} from "../../database/database-connection";
-import {FlowVersionEntity} from "./flow-version-entity";
 import {FlowOperationRequest} from "shared/dist/flows/flow-operations";
 import {fileService} from "../../file/file.service";
-
-const flowVersionRepo = databaseConnection.getRepository<FlowVersion>(FlowVersionEntity);
-
+import { flowVersionRepo } from "./flow-version-repo";
 
 export const flowVersionService = {
 
