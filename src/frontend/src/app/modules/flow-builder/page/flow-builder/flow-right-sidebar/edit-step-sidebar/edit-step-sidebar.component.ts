@@ -13,9 +13,9 @@ import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
 import { environment } from 'src/environments/environment';
 
 @Component({
-	selector: 'app-new-edit-piece-sidebar',
-	templateUrl: './new-edit-piece-sidebar.component.html',
-	styleUrls: ['./new-edit-piece-sidebar.component.css'],
+	selector: 'app-edit-step-sidebar',
+	templateUrl: './edit-step-sidebar.component.html',
+	styleUrls: ['./edit-step-sidebar.component.css'],
 })
 export class NewEditPieceSidebarComponent implements OnInit {
 	constructor(private store: Store, private cd: ChangeDetectorRef) {}
