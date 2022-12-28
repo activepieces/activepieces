@@ -1,7 +1,0 @@
-Install Isolate (run)
-
-cp backend-loader/default.cf /usr/local/etc/isolate
-
-Install Webpack globally
-
-Check Docker Image
