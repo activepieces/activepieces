@@ -1,6 +1,6 @@
 
 export interface BaseModel<T> {
   id: T;
-  created: number;
-  updated: number;
+  created: string;
+  updated: string;
 }

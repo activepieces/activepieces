@@ -1,5 +1,5 @@
+import {ExecutionState, StepOutput} from 'shared';
 import {VariableService} from '../../src/services/variable-service';
-import {ExecutionState} from '../../src/model/execution/execution-state';
 
 const variableService = new VariableService();
 
@@ -11,13 +11,14 @@ executionState.insertConfigs({
   foo: true,
 });
 
-executionState.insertStep(
-  {
-    output: {
-      items: [5, 'a'],
-      name: 'John',
-    },
+let stepOutput: StepOutput = {
+  output: {
+    items: [5, 'a'],
+    name: 'John',
   },
+};
+executionState.insertStep(
+    stepOutput,
   'trigger',
   []
 );

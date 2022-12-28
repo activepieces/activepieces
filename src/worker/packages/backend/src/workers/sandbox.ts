@@ -59,7 +59,7 @@ export class Sandbox {
     }
 
     private static runIsolate(cmd: string): string {
-        return execSync("./resources/isolate " + cmd).toString('utf-8');
+        return execSync("sudo ./resources/isolate " + cmd).toString('utf-8');
     }
 
 }

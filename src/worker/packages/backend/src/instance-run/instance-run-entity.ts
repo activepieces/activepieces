@@ -13,7 +13,7 @@ export const InstanceRunEntity = new EntitySchema<InstanceRunSchema>({
     name: "instance_run",
     columns: {
         ...BaseColumnSchemaPart,
-        instanceId: ApIdSchema,
+        instanceId: {...ApIdSchema, nullable: true},
         projectId: ApIdSchema,
         collectionId: ApIdSchema,
         flowVersionId: ApIdSchema,
@@ -24,15 +24,16 @@ export const InstanceRunEntity = new EntitySchema<InstanceRunSchema>({
         collectionDisplayName: {
             type: String,
         },
-        logsFileId: ApIdSchema,
+        logsFileId: {...ApIdSchema, nullable: true},
         status: {
             type: String,
         },
         startTime: {
-            type: Number,
+            type: "timestamp with time zone",
         },
         finishTime: {
-            type: Number,
+            nullable: true,
+            type: "timestamp with time zone",
         },
     },
     indices: [
@@ -82,6 +83,7 @@ export const InstanceRunEntity = new EntitySchema<InstanceRunSchema>({
             type: 'many-to-one',
             target: 'instance',
             cascade: true,
+            nullable: true,
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'instanceId',

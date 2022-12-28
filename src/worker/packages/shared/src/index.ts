@@ -4,7 +4,7 @@ export * from "./flows/flow-operations";
 export * from "./collections/config";
 export * from './instance';
 
-export { ExecutionOutputStatus } from "./instance-run/execution/execution-output";
+export * from "./instance-run/execution/execution-output";
 export { StepOutputStatus } from "./instance-run/execution/step-output";
 export {ClaimTokenWithSecretRequest} from "./oauth2/dto/claim-token-with-secret";
 export {ClaimTokenFromCloudRequest} from "./oauth2/dto/claim-token-from-cloud";
@@ -22,8 +22,7 @@ export {CodeAction, PieceAction, LoopOnItemsAction, StorageAction, StorageAction
 export {StoreEntry, StoreEntryId} from './store-entry/store-entry';
 export {User, UserStatus, UserId} from './user/user';
 export { StepOutput } from "./instance-run/execution/step-output";
-
-
+export { ExecuteTestRequest} from './flow-worker/execute-test-request';
 export {Trigger, EmptyTrigger, PieceTriggerSettings, ScheduleTriggerSettings, PieceTrigger, ScheduleTrigger, WebhookTrigger, TriggerType} from './flows/triggers/trigger';
 export {Collection, CollectionId} from './collections/collection';
 export {CollectionVersion, CollectionVersionState, CollectionVersionId} from './collections/collection-version';

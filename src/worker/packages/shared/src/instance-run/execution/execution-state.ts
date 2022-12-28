@@ -12,7 +12,7 @@ export class ExecutionState {
   }
 
 
-  insertConfigs(configs: any) {
+  insertConfigs(configs: Record<string, unknown> | Map<string, unknown>) {
     if (configs instanceof Map) {
       configs.forEach((value: any, key: string) => {
         this.configs[key] = value;

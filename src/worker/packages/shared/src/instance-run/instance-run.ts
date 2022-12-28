@@ -5,12 +5,14 @@ import {FileId} from "../file/file";
 import {CollectionVersionId} from "../collections/collection-version";
 import {CollectionId} from "../collections/collection";
 import {ApId} from "../common/id-generator";
+import { ExecutionOutputStatus } from "./execution/execution-output";
+import { InstanceId } from "../instance/model";
 
 export type InstanceRunId = ApId;
 
 export interface InstanceRun extends BaseModel<InstanceRunId> {
     id: InstanceRunId,
-    instanceId: InstanceRunId,
+    instanceId: InstanceId | null,
     projectId: ProjectId,
     collectionId: CollectionId,
     flowVersionId: FlowVersionId,
@@ -18,13 +20,8 @@ export interface InstanceRun extends BaseModel<InstanceRunId> {
     flowDisplayName: string;
     collectionDisplayName: string;
     logsFileId: FileId;
-    status: FlowExecutionStatus;
-    startTime: number;
-    finishTime: number;
+    status: ExecutionOutputStatus;
+    startTime: string;
+    finishTime: string;
 }
 
-export enum FlowExecutionStatus{
-    RUNNING = "RUNNING",
-    SUCCEEDED = "SUCCEEDED",
-    FAILED = "FAILED"
-}
