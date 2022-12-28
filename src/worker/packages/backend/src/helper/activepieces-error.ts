@@ -1,4 +1,5 @@
 import {CollectionId, FileId, FlowId, InstanceId, InstanceRunId} from "shared";
+import { ApId } from "shared/dist/common/id-generator";
 
 export class ActivepiecesError extends Error {
 
@@ -18,6 +19,7 @@ type ErrorParams =
     | InstanceRunNotFoundErrorParams
     | InvalidBearerTokenParams
     | InvalidCredentialsErrorParams
+    | JobRemovalFailureErrorParams
     | PieceNotFoundErrorParams
     | PieceTriggerNotFoundErrorParams
     | StepNotFoundErrorParams;
@@ -86,6 +88,10 @@ export interface ConfigNotFoundErrorParams extends BaseErrorParams<ErrorCode.CON
 }> {
 }
 
+export interface JobRemovalFailureErrorParams extends BaseErrorParams<ErrorCode.JOB_REMOVAL_FAILURE, {
+    jobId: ApId,
+}> {
+}
 
 export enum ErrorCode {
     COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
@@ -97,6 +103,7 @@ export enum ErrorCode {
     INSTANCE_RUN_NOT_FOUND = "INSTANCE_NOT_FOUND",
     INVALID_BEARER_TOKEN = "INVALID_BEARER_TOKEN",
     INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
+    JOB_REMOVAL_FAILURE = "JOB_REMOVAL_FAILURE",
     PIECE_NOT_FOUND = "PIECE_NOT_FOUND",
     PIECE_TRIGGER_NOT_FOUND = "PIECE_TRIGGER_NOT_FOUND",
     STEP_NOT_FOUND = "STEP_NOT_FOUND",
