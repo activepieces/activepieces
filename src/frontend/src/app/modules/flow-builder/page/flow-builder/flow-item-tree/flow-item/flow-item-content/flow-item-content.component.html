@@ -20,38 +20,40 @@
       </ng-container>
 
       <div *ngIf="!stepIconUrl" class="step-icon-loading-spinner-container">
-        <div class="spinner-grow text-primary">
-          <span class="sr-only">Loading...</span>
+        <div class="spinner-grow ap-text-primary">
+          <span class="sr-only">...</span>
         </div>
       </div>
     </div>
     <div class="flow-content ap-flex ap-flex-col ap-justify-center  ap-self-stretch">
-      <div class="ap-flex">
-        <div class="ap-typography-subtitle-1 ap-font-normal flow-title ap-flex-grow" #stepTitle
-          [matTooltip]="stepTitle.clientWidth < stepTitle.scrollWidth?  _flowItem.display_name: ''">
-          {{ _flowItem.display_name }}
+      <div class="ap-flex ap-items-center ap-gap-2 ">
+        <div class="ap-flex ap-flex-col ap-gap-2">
+          <div class="ap-typography-subtitle-1 ap-font-normal flow-title ap-flex-grow ap-max-w-[150px]" #stepTitle
+            [matTooltip]="_flowItem.display_name">
+            {{ _flowItem.display_name }}
+          </div>
+          <div class="ap-typography-caption ap-flex ap-text-description ap-items-center">
+            <div>{{ _flowItem.name }}</div>
+            <div #spacer class="ap-flex-grow"></div>
+            <div class="ap-text-danger ap-bg-danger-light ap-rounded ap-p-1 ap-justify-self-end" *ngIf="
+          !_flowItem.valid" @fadeIn>Invalid
+              Settings</div>
+          </div>
         </div>
+        <div class="ap-flex-grow"></div>
         <div *ngIf="selectedRun$ | async">
           <ng-container *ngIf="stepStatus$|async as actionStatus; else stepInsideLoopStatusTemplate">
-            <div class="spinner-border text-primary step-run-result-icon"
-              *ngIf="actionStatus === actionStatusEnum.RUNNING" role="status">
-              <span class="sr-only">Loading...</span>
-            </div>
-            <app-state-icon *ngIf="actionStatus !== actionStatusEnum.RUNNING"
+            <ng-container *ngIf="actionStatus === actionStatusEnum.RUNNING">
+              <div class="spinner-border !ap-border-primary !ap-border-r-transparent " role="status"></div>
+            </ng-container>
+            <app-state-icon [showStatusText]="false" *ngIf="actionStatus !== actionStatusEnum.RUNNING"
               [succeeded]="actionStatus === actionStatusEnum.SUCCEEDED"></app-state-icon>
           </ng-container>
           <ng-template #stepInsideLoopStatusTemplate>
-            <app-state-icon *ngIf="stepInsideLoopStatus$ | async as stepInsideLoopStatus"
+            <app-state-icon *ngIf="stepInsideLoopStatus$ | async as stepInsideLoopStatus" [showStatusText]="false"
               [succeeded]="stepInsideLoopStatus === actionStatusEnum.SUCCEEDED"></app-state-icon>
           </ng-template>
         </div>
-      </div>
-      <div class="ap-typography-caption ap-flex ap-text-description ap-items-center">
-        <div>{{ _flowItem.name }}</div>
-        <div #spacer class="ap-flex-grow"></div>
-        <div class="ap-text-danger ap-bg-danger-light ap-rounded ap-p-1 ap-justify-self-end" *ngIf="
-          !_flowItem.valid" @fadeIn>Invalid
-          Settings</div>
       </div>
     </div>
   </div>

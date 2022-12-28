@@ -113,3 +113,9 @@ ngx-monaco-editor {
 {
   z-index:$appended-to-body-z-index;
 }
+
+.CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like
+{
+  padding:0px 8px !important;
+
+}

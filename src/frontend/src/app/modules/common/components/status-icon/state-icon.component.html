@@ -1,7 +1,7 @@
-<div class="ap-flex ap-gap-2">
+<div class="ap-flex ap-items-center ap-gap-2">
   <div *ngIf="!succeeded"><svg-icon src="assets/img/custom/status/error.svg"
       [svgStyle]="{'width.px': size, 'height.px': size}" [matTooltip]="textAfter"></svg-icon></div>
   <div [matTooltip]="textAfter" *ngIf="succeeded"><svg-icon src="assets/img/custom/status/success.svg"
       [svgStyle]="{'width.px': size, 'height.px': size}"></svg-icon></div>
-  <div *ngIf="textAfter">{{textAfter}}</div>
+  <div class="ap-typography-caption" *ngIf="textAfter && showStatusText">{{textAfter}}</div>
 </div>

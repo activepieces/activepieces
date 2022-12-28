@@ -1,14 +1,14 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, UntypedFormBuilder } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { Observable, tap } from 'rxjs';
+import { filter, Observable, switchMap, tap } from 'rxjs';
 import { CodeTestExecutionResult } from 'src/app/modules/common/model/flow-builder/code-test-execution-result';
 import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
 import { CodeArtifactForm } from '../code-artifact-form-control.component';
 import { SelectedFileInFullscreenCodeEditor } from '../selected-file-in-fullscreeen-code-editor.enum';
 import { AddNpmPackageModalComponent } from './add-npm-package-modal/add-npm-package-modal.component';
-
 import { SelectedTabInFullscreenCodeEditor } from './selected-tab-in-fullscreen-code-editor.enum';
+import { TestCodeFormModalComponent } from './test-code-form-modal/test-code-form-modal.component';
 
 type PackageName = string;
 type PackageVersion = string;
@@ -104,7 +104,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 		this.codeFilesForm.controls.package.setValue(this.codeService.beautifyJson(packageDotJson));
 	}
 	getPackageDotJsonObject(): { dependencies: PackagesMetada } {
-		const packageControlValue = this.codeFilesForm.get('package')!.value;
+		const packageControlValue = this.codeFilesForm.controls.package.value;
 		try {
 			const packageDotJson = JSON.parse(packageControlValue);
 			if (!packageDotJson.dependencies) {
@@ -116,23 +116,25 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 		}
 	}
 	openTestCodeModal() {
-		// const testContextModal: BsModalRef<TestCodeFormModalComponent> = this.modalService.show(TestCodeFormModalComponent);
-		// this.executeCodeTest$ = testContextModal.content!.contextSubmitted.pipe(
-		// 	take(1),
-		// 	tap(() => {
-		// 		this.testResultForm.setValue({ outputResult: '', consoleResult: '' });
-		// 		this.testLoading = true;
-		// 	}),
-		// 	switchMap(context => {
-		// 		return this.codeService.executeTest(this.codeFilesForm.getRawValue(), context);
-		// 	}),
-		// 	tap(result => {
-		// 		const outputResult = this.codeService.beautifyJson(result.output);
-		// 		const consoleResult = this.getConsoleResult(result);
-		// 		this.testResultForm.setValue({ outputResult: outputResult, consoleResult: consoleResult });
-		// 		this.testLoading = false;
-		// 	})
-		// );
+		this.executeCodeTest$ = this.dialogService
+			.open(TestCodeFormModalComponent)
+			.afterClosed()
+			.pipe(
+				filter(res => !!res),
+				tap(() => {
+					this.testResultForm.setValue({ outputResult: '', consoleResult: '' });
+					this.testLoading = true;
+				}),
+				switchMap(context => {
+					return this.codeService.executeTest(this.codeFilesForm.getRawValue(), context);
+				}),
+				tap(result => {
+					const outputResult = this.codeService.beautifyJson(result.output);
+					const consoleResult = this.getConsoleResult(result);
+					this.testResultForm.setValue({ outputResult: outputResult, consoleResult: consoleResult });
+					this.testLoading = false;
+				})
+			);
 	}
 
 	getConsoleResult(codeTestExecutionResult: CodeTestExecutionResult) {

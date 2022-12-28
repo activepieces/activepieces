@@ -1,33 +1,45 @@
-<form [formGroup]="testCodeForm" (submit)="submitContext()">
-  <div class="modal-header">
-    <h5 class="modal-title pull-left">Test Code</h5>
-    <button type="button" class="btn-close close pull-right" aria-label="Close" (click)="hide()">
-      <span aria-hidden="true" class="visually-hidden close-custom">&times;</span>
-    </button>
-  </div>
-  <div class="modal-body">
-    <div class="form-group">
-      <label for="context">Code Input (JSON)</label>
+<app-dialog-title-template>Test Code</app-dialog-title-template>
+<mat-dialog-content>
+  <form [formGroup]="testCodeForm" (submit)="submitContext()" class="ap-w-[450px]">
+    <div class="ap-mb-2 ap-pointer-events-none">Code Input (JSON)
       <p class="ap-typography-caption">Pass the following object in the first parameter of the function:</p>
-      <ngx-codemirror id="context" formControlName="context" [options]="editorOptions"></ngx-codemirror>
-      <p class="ap-typography-caption ap-mt-2">Remember that you are testing the code independently of the flow, and
-        this object will only live for the period of this testing session.</p>
-      <div @fadeInUp *ngIf="submitted && testCodeForm.get('context')!.invalid">
-        <p *ngIf="testCodeForm.get('context')!.hasError('required');else invalidJson" class="invalid-input">
-          Context is required
-        </p>
-        <ng-template #invalidJson>
-          <p class="invalid-input">
-            Context is not a valid JSON object, please use double quotations.
-          </p>
-        </ng-template>
-      </div>
     </div>
-  </div>
-  <div class="modal-footer">
+    <div class="code-font-sm code-size-200 code-block">
+      <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
+        <div class="ap-flex-grow">
+          <span class="ap-text-white">Context</span>
+        </div>
+        <div>
+          <svg-icon src="/assets/img/custom/beautify.svg" [svgStyle]="{width:'16px', height:'16px'}"
+            matTooltip="beautify" class="ap-cursor-pointer" (click)="beautify()"> </svg-icon>
+        </div>
+      </div>
+      <ngx-codemirror id="context" formControlName="context" [options]="editorOptions"></ngx-codemirror>
+    </div>
+    <p class="ap-typography-caption ap-mt-2">Remember that you are testing the code independently of the flow,<br> and
+      this object will only live for the period of this testing session.</p>
+    <div *ngIf="submitted && testCodeForm.controls.context.invalid">
+      <p @fadeInUp *ngIf="testCodeForm.controls.context.hasError('required');else invalidJson"
+        class="ap-text-danger ap-typography-caption">
+        Context is required
+      </p>
+      <ng-template #invalidJson>
+        <p @fadeInUp class="ap-text-danger ap-typography-caption">
+          Context is not a valid JSON object, please use double quotations.
+        </p>
+      </ng-template>
+    </div>
 
-    <app-button btnColor="basic" btnStyle="basic" (buttonClicked)="hide()"> Cancel
+  </form>
+
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
+      Cancel
     </app-button>
-    <app-button type="submit" btnColor="primary" (buttonClicked)="submitContext()">Test</app-button>
+    <app-button cdkFocusInitial btnSize="default" (click)="submitContext() " type="submit" btnColor="primary">
+      Test
+    </app-button>
   </div>
-</form>
+</mat-dialog-actions>

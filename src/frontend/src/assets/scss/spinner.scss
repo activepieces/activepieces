@@ -21,3 +21,17 @@ $spinner-border-width: 3px;
 		border-right-color: transparent;
 	}
 }
+
+@keyframes spinner-grow{0%{transform:scale(0)}50%{opacity:1}}
+.spinner-grow {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  vertical-align: text-bottom;
+  background-color: currentColor;
+  border-radius: 50%;
+  opacity: 0;
+  animation: spinner-grow .75s linear infinite;
+}
+
+

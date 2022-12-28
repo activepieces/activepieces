@@ -19,7 +19,8 @@
         <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
             Cancel
         </app-button>
-        <app-button cdkFocusInitial btnSize="default" (click)="deleteStep()" btnColor="warn" type="submit">
+        <app-button cdkFocusInitial btnSize="default" (click)="deleteStep()" btnColor="warn" type="submit"
+            [loading]="true">
             Confirm
         </app-button>
     </div>
