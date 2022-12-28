@@ -1,3 +1,4 @@
+export * from "./flows/flow-operations";
 
 export * from "./collections/config";
 
@@ -16,7 +17,7 @@ export {CodeAction, PieceAction, LoopOnItemsAction, StorageAction, StorageAction
     PieceActionSettings, LoopOnItemsActionSettings ,Action, ActionType, CodeActionSettings} from './flows/actions/action'
 export {StoreEntry, StoreEntryId} from './store-entry/store-entry';
 export {User, UserStatus, UserId} from './user/user';
-export {Trigger, EmptyTrigger, ComponentTriggerSettings, ScheduleTriggerSettings, ComponentTrigger, ScheduleTrigger, WebhookTrigger, TriggerType} from './flows/triggers/trigger';
+export {Trigger, EmptyTrigger, PieceTriggerSettings, ScheduleTriggerSettings, PieceTrigger, ScheduleTrigger, WebhookTrigger, TriggerType} from './flows/triggers/trigger';
 export {Collection, CollectionId} from './collections/collection';
 export {CollectionVersion, CollectionVersionState, CollectionVersionId} from './collections/collection-version';
 export {PieceOptionRequest, PieceOptionRequestSchema} from './pieces/dto/piece-option-request';

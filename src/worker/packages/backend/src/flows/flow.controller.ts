@@ -11,6 +11,7 @@ import {
 import {StatusCodes} from "http-status-codes";
 import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
 import {flowService} from "./flow-service";
+import {FlowOperationRequestSchema} from "shared";
 
 export const flowController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
 
@@ -23,8 +24,11 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
     })
 
 
-    // TODO ADD VALIDATION
-    fastify.post('/:flowId', {}, async (_request: FastifyRequest<{
+    fastify.post('/:flowId', {
+        schema: {
+            body: FlowOperationRequestSchema
+        }
+    }, async (_request: FastifyRequest<{
         Params: {
             flowId: FlowId
         },
