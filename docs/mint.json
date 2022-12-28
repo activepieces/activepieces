@@ -60,6 +60,7 @@
       "pages": [
         "using-activepieces/concepts",
         "using-activepieces/triggers",
+        "using-activepieces/refer-to-steps",
         "using-activepieces/example-flow",
         "using-activepieces/publish-and-enable",
         "using-activepieces/debug-flow"
