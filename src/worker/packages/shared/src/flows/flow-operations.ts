@@ -1,7 +1,8 @@
 import {
     ActionType, CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings, StorageActionSettings,
 } from "./actions/action";
-import {ComponentTriggerSettings, ScheduleTriggerSettings, TriggerType} from "./triggers/trigger";
+import {PieceTriggerSettings, ScheduleTriggerSettings, TriggerType} from "./triggers/trigger";
+import {Type} from "@sinclair/typebox";
 
 
 export enum FlowOperationType {
@@ -17,6 +18,34 @@ export type FlowOperationRequest = BasicOperationRequest<FlowOperationType.UPDAT
     | BasicOperationRequest<FlowOperationType.UPDATE_ACTION, UpdateActionRequest>
     | BasicOperationRequest<FlowOperationType.CHANGE_NAME, ChangeNameRequest>
     | BasicOperationRequest<FlowOperationType.DELETE_ACTION, DeleteActionRequest>;
+
+
+export const FlowOperationRequestSchema = Type.Union([
+    Type.Object({
+        type: Type.Literal(FlowOperationType.CHANGE_NAME),
+        request: Type.Object({
+            displayName: Type.String()
+        })
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.DELETE_ACTION),
+        request: Type.Object({
+            name: Type.String()
+        })
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.UPDATE_TRIGGER),
+        request: Type.Object({})
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.ADD_ACTION),
+        request: Type.Object({})
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.UPDATE_TRIGGER),
+        request: Type.Object({})
+    })
+]);
 
 export type ChangeNameRequest = {
     displayName: string;
@@ -47,7 +76,7 @@ interface BasicActionStep<A, V> {
 export type UpdateTriggerRequest = BasicTriggerRequest<TriggerType.WEBHOOK, {}>
     | BasicTriggerRequest<TriggerType.SCHEDULE, ScheduleTriggerSettings>
     | BasicTriggerRequest<TriggerType.EMPTY, {}>
-    | BasicTriggerRequest<TriggerType.COMPONENT, ComponentTriggerSettings>
+    | BasicTriggerRequest<TriggerType.PIECE, PieceTriggerSettings>
 
 
 interface BasicTriggerRequest<A, V> {

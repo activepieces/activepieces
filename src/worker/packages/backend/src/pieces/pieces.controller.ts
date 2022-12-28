@@ -1,8 +1,6 @@
 import {FastifyInstance, FastifyPluginOptions, FastifyRequest} from "fastify"
 import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
-import {SelectInput} from "pieces/dist/src/framework/config/select-input.model";
-import {InputType} from "pieces";
-import {pieces, getPiece} from "pieces";
+import {pieces, getPiece, PropertyType, DropdownProperty} from "pieces";
 import {PieceOptionRequest, PieceOptionRequestSchema} from "shared";
 
 
@@ -37,9 +35,9 @@ export const piecesController = async (fastify: FastifyInstance, options: Fastif
                 }
             });
         }
-        const configs = action !== undefined ? action.configs : trigger!.configs;
+        const configs = action !== undefined ? action.props : trigger!.props;
         const config = configs.find(f => f.name === _request.body.configName);
-        if (config === undefined || config.type !== InputType.SELECT) {
+        if (config === undefined || config.type !== PropertyType.DROPDOWN) {
             throw new ActivepiecesError({
                 code: ErrorCode.CONFIG_NOT_FOUND,
                 params: {
@@ -49,7 +47,7 @@ export const piecesController = async (fastify: FastifyInstance, options: Fastif
                 }
             });
         }
-        return await (config as SelectInput).options(_request.body.configs);
+        return await (config as DropdownProperty).options(_request.body.configs);
     })
 };
 

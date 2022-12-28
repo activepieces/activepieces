@@ -1,9 +1,10 @@
-import {AuthenticationRequest, AuthenticationResponse, PrincipalType, UserStatus} from 'shared';
+import {AuthenticationRequest, AuthenticationResponse, PrincipalType} from 'shared';
 import {userService} from '../user/user-service';
 import {passwordHasher} from './lib/password-hasher';
 import {tokenUtils} from './lib/token-utils';
 import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
 import {projectService} from "../project/project.service";
+import {FlagId, flagService} from "../flags/flag.service";
 
 export const authenticationService = {
     signUp: async (request: AuthenticationRequest): Promise<AuthenticationResponse> => {
@@ -13,9 +14,11 @@ export const authenticationService = {
             throw new ActivepiecesError({code: ErrorCode.EXISTING_USER, params: {}});
         }
 
+        await flagService.save({id: FlagId.USER_CREATED, value: true});
+
         const user = await userService.create(request);
 
-        const project = await projectService.create({
+        await projectService.create({
             displayName: "Project",
             ownerId: user.id
         })

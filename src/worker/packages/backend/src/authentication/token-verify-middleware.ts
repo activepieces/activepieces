@@ -5,6 +5,9 @@ import {ActivepiecesError, ErrorCode} from "../helper/activepieces-error";
 const ignoredRoutes = new Set([
     '/v1/authentication/sign-in',
     '/v1/pieces',
+    '/v1/oauth2/claim',
+    '/v1/flags',
+    '/v1/oauth2/claim-with-cloud',
     '/v1/authentication/sign-up',
 ]);
 

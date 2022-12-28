@@ -1,1 +1,0 @@
-export type ConfigurationValue = Record<string, any>;

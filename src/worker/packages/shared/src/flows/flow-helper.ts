@@ -6,13 +6,23 @@ import {
     UpdateActionRequest,
     UpdateTriggerRequest
 } from "./flow-operations";
-import {Action, ActionType, CodeAction, PieceAction, LoopOnItemsAction, StorageAction} from "./actions/action";
-import {Trigger, TriggerType} from "./triggers/trigger";
+import {
+    Action,
+    ActionType,
+    CodeAction,
+    PieceAction,
+    LoopOnItemsAction,
+    StorageAction,
+    ActionSchema
+} from "./actions/action";
+import {Trigger, TriggerSchema, TriggerType} from "./triggers/trigger";
+import {TypeCompiler} from "@sinclair/typebox/compiler";
 
-
+const actionSchemaValidator = TypeCompiler.Compile(ActionSchema);
+const triggerSchemaValidation = TypeCompiler.Compile(TriggerSchema);
 
 function isValid(flowVersion: FlowVersion){
-    let valid = false;
+    let valid = true;
     let step : Action | Trigger | undefined = flowVersion.trigger;
     while(step !== undefined){
         valid = valid && step.valid;
@@ -69,32 +79,39 @@ function createAction(request: UpdateActionRequest, nextAction: Action | undefin
         valid: false,
         nextAction: nextAction
     };
+    let action;
     switch (request.type) {
         case ActionType.STORAGE:
-            return {
+            action = {
                 ...baseProperties,
                 type: ActionType.STORAGE,
                 settings: request.settings,
             } as StorageAction;
+            break;
         case ActionType.LOOP_ON_ITEMS:
-            return {
+            action = {
                 ...baseProperties,
                 type: ActionType.LOOP_ON_ITEMS,
                 settings: request.settings,
             } as LoopOnItemsAction;
+            break;
         case ActionType.PIECE:
-            return {
+            action = {
                 ...baseProperties,
                 type: ActionType.PIECE,
                 settings: request.settings,
             } as PieceAction;
+            break;
         case ActionType.CODE:
-            return {
+            action =  {
                 ...baseProperties,
                 type: ActionType.CODE,
                 settings: request.settings,
             } as CodeAction;
+            break;
     }
+    action.valid = actionSchemaValidator.Check(action);
+    return action;
 }
 
 function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: Action | undefined): Trigger {
@@ -104,32 +121,39 @@ function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: 
         valid: false,
         nextAction: nextAction
     };
+    let trigger: Trigger;
     switch (request.type) {
         case TriggerType.EMPTY:
-            return {
+            trigger = {
                 ...baseProperties,
                 type: TriggerType.EMPTY,
                 settings: request.settings
             };
+            break;
         case TriggerType.SCHEDULE:
-            return {
+            trigger = {
                 ...baseProperties,
                 type: TriggerType.SCHEDULE,
                 settings: request.settings
             };
-        case TriggerType.COMPONENT:
-            return {
+            break;
+        case TriggerType.PIECE:
+            trigger = {
                 ...baseProperties,
-                type: TriggerType.COMPONENT,
+                type: TriggerType.PIECE,
                 settings: request.settings
             };
+            break;
         case TriggerType.WEBHOOK:
-            return {
+            trigger = {
                 ...baseProperties,
                 type: TriggerType.WEBHOOK,
                 settings: request.settings
             };
+            break;
     }
+    trigger.valid = triggerSchemaValidation.Check(trigger);
+    return trigger;
 }
 
 export const flowHelper = {
@@ -137,23 +161,23 @@ export const flowHelper = {
         const clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion));
         switch (operation.type) {
             case FlowOperationType.CHANGE_NAME:
-                flowVersion.displayName = operation.request.displayName;
+                clonedVersion.displayName = operation.request.displayName;
                 break;
             case FlowOperationType.DELETE_ACTION:
-                deleteAction(flowVersion, operation.request);
+                deleteAction(clonedVersion, operation.request);
                 break;
             case FlowOperationType.ADD_ACTION:
-                addAction(flowVersion, operation.request);
+                addAction(clonedVersion, operation.request);
                 break;
             case FlowOperationType.UPDATE_ACTION:
-                updateAction(flowVersion, operation.request);
+                updateAction(clonedVersion, operation.request);
                 break;
             case FlowOperationType.UPDATE_TRIGGER:
-                flowVersion.trigger = createTrigger(clonedVersion.trigger.name, operation.request, clonedVersion.trigger.nextAction);
+                clonedVersion.trigger = createTrigger(clonedVersion.trigger.name, operation.request, clonedVersion.trigger.nextAction);
                 break;
         }
         clonedVersion.valid = isValid(clonedVersion);
-        return flowVersion;
+        return clonedVersion;
     },
     getStep: getStep
 }
