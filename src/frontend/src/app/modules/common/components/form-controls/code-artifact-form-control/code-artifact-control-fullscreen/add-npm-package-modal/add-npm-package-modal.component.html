@@ -2,10 +2,8 @@
 <mat-dialog-content>
   <div class="ap-typography-body-1 ap-text-description ap-mb-4 ap-max-w-[500px]">
     Please type the name of an NPM package.<br>
-
-
   </div>
-  <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="npmForm" #authenticationFormTemplate="ngForm">
+  <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="npmForm" (submit)="lookForNpmPackage()">
     <mat-form-field class="ap-w-full" appearance="outline">
       <mat-label>Package Name</mat-label>
       <input formControlName="packageName" matInput type="text" placeholder="loadash" />
@@ -30,8 +28,8 @@
     <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
       Cancel
     </app-button>
-    <app-button cdkFocusInitial btnSize="default"
-      (click)="authenticationFormTemplate.onSubmit($event); lookForNpmPackage()" btnColor="success" [loading]="loading">
+    <app-button cdkFocusInitial btnSize="default" (click)="lookForNpmPackage() " type="submit" btnColor="success"
+      [loading]="loading">
       Add
     </app-button>
   </div>

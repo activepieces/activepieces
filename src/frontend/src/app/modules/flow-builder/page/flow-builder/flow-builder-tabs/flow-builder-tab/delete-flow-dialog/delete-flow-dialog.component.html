@@ -5,7 +5,7 @@
     <div class="ap-typography-body-1 ap-text-description ap-mb-4">
         Please type "DELETE" to confirm deleting this flow
     </div>
-    <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" #authenticationFormTemplate="ngForm">
+    <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" (submit)="deleteFlow()">
         <mat-form-field class="ap-w-full" appearance="outline">
             <input formControlName="confirmation" matInput type="text" placeholder="DELETE" />
             <mat-error *ngIf="confirmationForm.controls.confirmation.invalid">Please write the confirmation message
@@ -19,9 +19,7 @@
         <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="!!deleteFlow$">
             Cancel
         </app-button>
-        <app-button cdkFocusInitial btnSize="default"
-            (click)="authenticationFormTemplate.onSubmit($event); deleteFlow()" [loading]="!!deleteFlow$"
-            btnColor="warn">
+        <app-button cdkFocusInitial btnSize="default" (click)=" deleteFlow()" [loading]="!!deleteFlow$" btnColor="warn">
             Confirm
         </app-button>
     </div>

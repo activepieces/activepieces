@@ -5,7 +5,7 @@
     <div class="ap-typography-body-1 ap-text-description ap-mb-4">
         Please type "ARCHIVE" to confirm archiving this collection
     </div>
-    <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" #authenticationFormTemplate="ngForm">
+    <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" (submit)="archiveCollection()">
         <mat-form-field class="ap-w-full" appearance="outline">
             <input formControlName="confirmation" matInput type="text" placeholder="ARCHIVE" />
             <mat-error *ngIf="confirmationForm.controls.confirmation.invalid">Please write the confirmation message
@@ -20,9 +20,8 @@
             [disabled]="!!archiveCollection$">
             Cancel
         </app-button>
-        <app-button cdkFocusInitial btnSize="default"
-            (click)="authenticationFormTemplate.onSubmit($event); archiveCollection()" [loading]="!!archiveCollection$"
-            btnColor="warn">
+        <app-button cdkFocusInitial btnSize="default" type="submit" (click)="archiveCollection();"
+            [loading]="!!archiveCollection$" btnColor="warn">
             Confirm
         </app-button>
     </div>
