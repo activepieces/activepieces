@@ -12,7 +12,8 @@
     "strict": true
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "types/**/*.d.ts"
   ],
   "exclude": [
     "tests/**/*.ts"
