@@ -6,11 +6,8 @@ import {
     apId,
     CollectionVersionId
 } from "shared";
-import {databaseConnection} from "../../database/database-connection";
-import {CollectionVersionEntity} from "./collection-version-entity";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
-
-const collectionVersionRepo = databaseConnection.getRepository<CollectionVersion>(CollectionVersionEntity);
+import { collectionVersionRepo } from "./collection-version-repo";
 
 
 export const collectionVersionService = {

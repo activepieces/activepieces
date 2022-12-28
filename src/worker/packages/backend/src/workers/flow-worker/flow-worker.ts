@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import {
     Action,
     ActionType, CodeActionSettings,
@@ -16,8 +17,6 @@ import {collectionVersionService} from "../../collections/collection-version/col
 import {redisLock} from "../../database/redis-connection";
 import {fileService} from "../../file/file.service";
 import {codeBuilder} from "../code-worker/code-builder";
-
-const fs = require("fs");
 
 async function executeFlow(instanceId: InstanceId | undefined,
                            flowVersionId: FlowVersionId,

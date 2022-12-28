@@ -5,16 +5,12 @@ import {
     CollectionVersionState,
     UpdateCollectionRequest, Collection, SeekPage, Cursor, apId, CollectionVersionId
 } from "shared";
-import {databaseConnection} from "../database/database-connection";
 import {collectionVersionService} from "./collection-version/collection-version.service";
 import {ProjectId} from "shared";
 import {CollectionEntity} from "./collection-entity";
 import {paginationHelper} from "../helper/pagination/pagination-utils";
 import {buildPaginator} from "../helper/pagination/build-paginator";
-import {CollectionVersionEntity} from "./collection-version/collection-version-entity";
-
-const collectionRepo = databaseConnection.getRepository(CollectionEntity);
-
+import { collectionRepo } from "./collection-repo";
 
 export const collectionService = {
 

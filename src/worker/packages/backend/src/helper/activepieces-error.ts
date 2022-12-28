@@ -1,4 +1,5 @@
 import {CollectionId, FileId, FlowId, InstanceId, InstanceRunId} from "shared";
+import { ApId } from "shared/dist/common/id-generator";
 
 export class ActivepiecesError extends Error {
 
@@ -10,7 +11,6 @@ export class ActivepiecesError extends Error {
 
 type ErrorParams =
     | CollectionNotFoundErrorParams
-    | PieceNotFoundErrorParams
     | ConfigNotFoundErrorParams
     | ExistingUserErrorParams
     | FileNotFoundErrorParams
@@ -19,6 +19,9 @@ type ErrorParams =
     | InstanceRunNotFoundErrorParams
     | InvalidBearerTokenParams
     | InvalidCredentialsErrorParams
+    | JobRemovalFailureErrorParams
+    | PieceNotFoundErrorParams
+    | PieceTriggerNotFoundErrorParams
     | StepNotFoundErrorParams;
 
 export interface BaseErrorParams<T, V> {
@@ -71,6 +74,12 @@ export interface PieceNotFoundErrorParams extends BaseErrorParams<ErrorCode.PIEC
 }> {
 }
 
+export interface PieceTriggerNotFoundErrorParams extends BaseErrorParams<ErrorCode.PIECE_TRIGGER_NOT_FOUND, {
+    pieceName: string,
+    triggerName: string,
+}> {
+}
+
 
 export interface ConfigNotFoundErrorParams extends BaseErrorParams<ErrorCode.CONFIG_NOT_FOUND, {
     pieceName: string,
@@ -79,18 +88,23 @@ export interface ConfigNotFoundErrorParams extends BaseErrorParams<ErrorCode.CON
 }> {
 }
 
+export interface JobRemovalFailureErrorParams extends BaseErrorParams<ErrorCode.JOB_REMOVAL_FAILURE, {
+    jobId: ApId,
+}> {
+}
 
 export enum ErrorCode {
-    INVALID_BEARER_TOKEN = "INVALID_BEARER_TOKEN",
-    PIECE_NOT_FOUND = "PIECE_NOT_FOUND",
     COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
-    COMPONENT_NOT_FOUND = "COMPONENT_NOT_FOUND",
     CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
     EXISTING_USER = "EXISTING_USER",
     FILE_NOT_FOUND = "FILE_NOT_FOUND",
     FLOW_NOT_FOUND = "FLOW_NOT_FOUND",
     INSTANCE_NOT_FOUND = "INSTANCE_NOT_FOUND",
     INSTANCE_RUN_NOT_FOUND = "INSTANCE_NOT_FOUND",
+    INVALID_BEARER_TOKEN = "INVALID_BEARER_TOKEN",
     INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
+    JOB_REMOVAL_FAILURE = "JOB_REMOVAL_FAILURE",
+    PIECE_NOT_FOUND = "PIECE_NOT_FOUND",
+    PIECE_TRIGGER_NOT_FOUND = "PIECE_TRIGGER_NOT_FOUND",
     STEP_NOT_FOUND = "STEP_NOT_FOUND",
 }

@@ -1,4 +1,4 @@
-import { apId, UpsertInstanceRequest, Cursor, Instance, InstanceId, ProjectId, SeekPage } from "shared";
+import { apId, UpsertInstanceRequest, Cursor, Instance, InstanceId, ProjectId, SeekPage, InstanceStatus } from "shared";
 import { collectionService } from "../collections/collection.service";
 import { flowService } from "../flows/flow-service";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
@@ -7,6 +7,7 @@ import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { Order } from "../helper/pagination/paginator";
 import { InstanceEntity } from "./instance-entity";
 import { instanceRepo as repo } from "./instance-repo";
+import { instanceSideEffects } from "./instance-side-effects";
 
 export const instanceService = {
     async upsert({ collectionId, status }: UpsertInstanceRequest): Promise<Instance> {
@@ -32,17 +33,26 @@ export const instanceService = {
             )
         );
 
-        const instance: Partial<Instance> = await repo.findOneBy({ id: collectionId }) ?? {
+        const oldInstance: Partial<Instance> = await repo.findOneBy({ id: collectionId }) ?? {
             id: apId(),
             projectId: collection.projectId,
+            status: InstanceStatus.DISABLED,
         };
 
-        instance.collectionId = collectionId;
-        instance.collectionVersionId = collection.version!.id;
-        instance.flowIdToVersionId = flowIdToVersionId;
-        instance.status = status;
+        const newInstance: Partial<Instance> = {
+            ...oldInstance,
+            collectionId,
+            collectionVersionId: collection.version!.id,
+            flowIdToVersionId,
+            status,
+        }
 
-        return repo.save(instance);
+        const savedInstance = await repo.save(newInstance);
+
+        instanceSideEffects.disable(oldInstance);
+        instanceSideEffects.enable(newInstance);
+
+        return savedInstance;
     },
 
     async list({ projectId, cursor, limit }: ListParams): Promise<SeekPage<Instance>> {

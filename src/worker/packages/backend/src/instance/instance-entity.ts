@@ -2,7 +2,7 @@ import {EntitySchema} from "typeorm"
 import {Collection, CollectionVersion, Instance} from "shared";
 import {ApIdSchema, BaseColumnSchemaPart} from "../helper/base-entity";
 
-interface InstanceSchema extends Instance {
+export interface InstanceSchema extends Instance {
     collection: Collection;
     collectionVersion: CollectionVersion;
 }

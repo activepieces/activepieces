@@ -1,5 +1,9 @@
 import { createClient } from 'redis';
+import { default as Redis } from "ioredis";
 
-export const redisClient = createClient();
-export const redisLock = require("redis-lock")(redisClient, 5000);
-redisClient.on('error', (err) => console.log('Redis Client Error', err));
+export const redisLockClient = createClient();
+export const redisLock = require("redis-lock")(redisLockClient, 5000);
+redisLockClient.on('error', (err) => console.log('Redis Client Error', err));
+
+export const redisConnection = new Redis();
+redisConnection.on('error', (err) => console.error('Redis Client Error', err));
