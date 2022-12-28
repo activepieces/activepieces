@@ -12,7 +12,7 @@ import {
     Instance,
     InstanceRun,
     InstanceRunId,
-    PrincipalType, ProjectId,
+    PrincipalType,
     Trigger
 } from "shared";
 import {InstanceId} from "shared";
@@ -72,10 +72,9 @@ async function downloadFiles(sandbox: Sandbox, flowVersion: FlowVersion,
 
     fs.mkdirSync(buildPath + "/codes/");
     let artifacts: File[] = await buildCodes(flowVersion);
-    for (let i = 0; i < artifacts.length; ++i) {
-        fs.writeFileSync(buildPath + "/codes/" + artifacts[i].id + ".js", artifacts[i].data);
-    }
-
+    artifacts.forEach(artifact => {
+        fs.writeFileSync(buildPath + "/codes/" + artifact.id + ".js", artifact.data);
+    })
     fs.writeFileSync(buildPath + "/activepieces-engine.js", fs.readFileSync("resources/activepieces-engine.js"));
     fs.writeFileSync(buildPath + "/input.json", await constructInputString(flowVersion.id, collectionVersion.collectionId, collectionVersion.id, payload));
 
@@ -130,15 +129,19 @@ async function buildCodes(flowVersion: FlowVersion) {
 export const flowWorker = {
     async executeInstance(instance: Instance, flowId: FlowId, payload: undefined) {
         let flowVersionId: FlowVersionId = instance.flowIdToVersionId[flowId];
-        return executeFlow({
+        const request: ExecutionRequest = {
             runId: apId(),
             instanceId: instance.id,
             flowVersionId: flowVersionId,
             collectionVersionId: instance.collectionVersionId,
             payload: payload
-        });
+        };
+        const instanceRun = await createRun(request);
+        // TODO THIS IS ASYNC, WE SHOULD JUST ADD IT TO QUEUE
+        executeFlow(request);
+        return instanceRun;
     },
-    async executeTest(collectionVersionId: CollectionVersionId, flowVersionId: FlowVersionId, payload: unknown) : Promise<InstanceRun> {
+    async executeTest(collectionVersionId: CollectionVersionId, flowVersionId: FlowVersionId, payload: unknown): Promise<InstanceRun> {
         const request: ExecutionRequest = {
             runId: apId(),
             instanceId: null,
@@ -147,13 +150,14 @@ export const flowWorker = {
             payload: payload
         };
         const instanceRun = await createRun(request);
+        // TODO THIS IS ASYNC, WE SHOULD JUST ADD IT TO QUEUE
         executeFlow(request);
         return instanceRun;
     },
 }
 
 // TODO NEED TO BE OPTIMIZED SINCE WE ARE FETCHING THESE INFO FROM DATABASE TWICE
-async function createRun(request: ExecutionRequest) : Promise<InstanceRun>{
+async function createRun(request: ExecutionRequest): Promise<InstanceRun> {
     const collectionVersion = (await collectionVersionService.getOne(request.collectionVersionId))!;
     const collection = (await collectionService.getOne(collectionVersion.collectionId, null))!;
     const flowVersion = (await flowVersionService.getOne(request.flowVersionId))!;
