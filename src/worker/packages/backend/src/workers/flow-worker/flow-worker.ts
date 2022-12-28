@@ -12,7 +12,7 @@ import {
     Instance,
     InstanceRun,
     InstanceRunId,
-    PrincipalType,
+    PrincipalType, ProjectId,
     Trigger
 } from "shared";
 import {InstanceId} from "shared";
@@ -22,9 +22,9 @@ import {collectionVersionService} from "../../collections/collection-version/col
 import {redisLock} from "../../database/redis-connection";
 import {fileService} from "../../file/file.service";
 import {codeBuilder} from "../code-worker/code-builder";
-import { tokenUtils } from "../../authentication/lib/token-utils";
-import { collectionService } from "../../collections/collection.service";
-import { instanceRunService } from "../../instance-run/instance-run-service";
+import {tokenUtils} from "../../authentication/lib/token-utils";
+import {collectionService} from "../../collections/collection.service";
+import {instanceRunService} from "../../instance-run/instance-run-service";
 
 const fs = require("fs");
 
@@ -39,56 +39,52 @@ export interface ExecutionRequest {
 async function executeFlow(request: ExecutionRequest) {
     const flowVersion = (await flowVersionService.getOne(request.flowVersionId))!;
     const collectionVersion = (await collectionVersionService.getOne(request.collectionVersionId))!;
-    const collection = (await collectionService.getOne(collectionVersion.collectionId, null))!;
 
-    const instanceRun = await instanceRunService.start(request.instanceId, collection.projectId, flowVersion, collectionVersion);
-     
     let sandbox = sandboxManager.obtainSandbox();
     let flowLock = await redisLock(flowVersion.id);
-    console.log("Executing flow " + flowVersion.id + " and run Id " + instanceRun.id +" in sandbox " + sandbox.boxId);
+    console.log("Executing flow " + flowVersion.id + " and run Id " + request.runId + " in sandbox " + sandbox.boxId);
     try {
         sandbox.cleanAndInit();
- 
+
         await downloadFiles(sandbox, flowVersion, collectionVersion, request.payload);
 
         sandbox.runCommandLine("/usr/bin/node activepieces-engine.js execute-flow");
         const executionOutput: ExecutionOutput = JSON.parse(fs.readFileSync(sandbox.getSandboxFilePath("output.json").toString()));
-        console.log(JSON.stringify(executionOutput));
         const logsFile = await fileService.save(Buffer.from(JSON.stringify(executionOutput)));
-        await instanceRunService.finish(instanceRun.id, executionOutput.status, logsFile.id);
+        await instanceRunService.finish(request.runId, executionOutput.status, logsFile.id);
     } finally {
         sandboxManager.returnSandbox(sandbox.boxId);
         await flowLock();
-    } 
-    console.log("Finished executing flow " + flowVersion + " and run Id " + instanceRun.id + " in sandbox " + sandbox.boxId);
+    }
+    console.log("Finished executing flow " + flowVersion + " and run Id " + request.runId + " in sandbox " + sandbox.boxId);
 
 }
 
 async function downloadFiles(sandbox: Sandbox, flowVersion: FlowVersion,
-                             collectionVersion: CollectionVersion, payload: unknown){
+                             collectionVersion: CollectionVersion, payload: unknown) {
     let buildPath = sandbox.getSandboxFolderPath();
 
     fs.mkdirSync(buildPath + "/flows/");
     fs.writeFileSync(buildPath + "/flows/" + flowVersion.id + ".json", JSON.stringify(flowVersion));
-    
+
     fs.mkdirSync(buildPath + "/collections/");
     fs.writeFileSync(buildPath + "/collections/" + collectionVersion.id + ".json", JSON.stringify(collectionVersion));
-    
+
     fs.mkdirSync(buildPath + "/codes/");
     let artifacts: File[] = await buildCodes(flowVersion);
     for (let i = 0; i < artifacts.length; ++i) {
         fs.writeFileSync(buildPath + "/codes/" + artifacts[i].id + ".js", artifacts[i].data);
     }
-    
+
     fs.writeFileSync(buildPath + "/activepieces-engine.js", fs.readFileSync("resources/activepieces-engine.js"));
-    fs.writeFileSync(buildPath + "/input.json", await constructInputString(flowVersion.id,  collectionVersion.collectionId, collectionVersion.id, payload));
+    fs.writeFileSync(buildPath + "/input.json", await constructInputString(flowVersion.id, collectionVersion.collectionId, collectionVersion.id, payload));
 
 }
 
 async function constructInputString(flowVersionId: FlowVersionId,
-     collectionId: CollectionId,
-     collectionVersionId: CollectionVersionId,
-     payload: unknown) : Promise<string> {
+                                    collectionId: CollectionId,
+                                    collectionVersionId: CollectionVersionId,
+                                    payload: unknown): Promise<string> {
     return JSON.stringify({
         flowVersionId: flowVersionId,
         collectionVersionId: collectionVersionId,
@@ -125,7 +121,7 @@ async function buildCodes(flowVersion: FlowVersion) {
         currentStep = currentStep.nextAction;
     }
     let files: File[] = await Promise.all(buildRequests);
-    if(files.length > 0) {
+    if (files.length > 0) {
         await flowVersionService.overwriteVersion(flowVersion.id, flowVersion);
     }
     return files;
@@ -138,17 +134,28 @@ export const flowWorker = {
             runId: apId(),
             instanceId: instance.id,
             flowVersionId: flowVersionId,
-            collectionVersionId:  instance.collectionVersionId, 
+            collectionVersionId: instance.collectionVersionId,
             payload: payload
         });
     },
-    async executeTest(collectionVersionId: CollectionVersionId, flowVersionId: FlowVersionId, payload: unknown) {
-        return executeFlow({
+    async executeTest(collectionVersionId: CollectionVersionId, flowVersionId: FlowVersionId, payload: unknown) : Promise<InstanceRun> {
+        const request: ExecutionRequest = {
             runId: apId(),
             instanceId: null,
             flowVersionId: flowVersionId,
-            collectionVersionId: collectionVersionId, 
+            collectionVersionId: collectionVersionId,
             payload: payload
-        });
+        };
+        const instanceRun = await createRun(request);
+        executeFlow(request);
+        return instanceRun;
     },
+}
+
+// TODO NEED TO BE OPTIMIZED SINCE WE ARE FETCHING THESE INFO FROM DATABASE TWICE
+async function createRun(request: ExecutionRequest) : Promise<InstanceRun>{
+    const collectionVersion = (await collectionVersionService.getOne(request.collectionVersionId))!;
+    const collection = (await collectionService.getOne(collectionVersion.collectionId, null))!;
+    const flowVersion = (await flowVersionService.getOne(request.flowVersionId))!;
+    return instanceRunService.start(request.runId, request.instanceId, collection.projectId, flowVersion, collectionVersion);
 }

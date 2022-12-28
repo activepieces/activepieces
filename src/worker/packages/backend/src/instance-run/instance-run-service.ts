@@ -36,9 +36,9 @@ export const instanceRunService = {
         })
         return this.getOne({id: instanceRunId});
     },
-    async start(instanceId: InstanceId | null, projectId: ProjectId, flowVersion: FlowVersion, collectionVerson: CollectionVersion): Promise<InstanceRun> {
+    async start(runId: InstanceRunId, instanceId: InstanceId | null, projectId: ProjectId, flowVersion: FlowVersion, collectionVerson: CollectionVersion): Promise<InstanceRun> {
         let instanceRun: Partial<InstanceRun> = {
-            id: apId(),
+            id: runId,
             instanceId: instanceId,
             projectId: projectId,
             collectionId: collectionVerson.collectionId,
