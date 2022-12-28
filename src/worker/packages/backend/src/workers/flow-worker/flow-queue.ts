@@ -1,6 +1,7 @@
 import { Queue } from 'bullmq';
 import { FlowVersionId } from 'shared';
 import { ApId } from 'shared/dist/common/id-generator';
+import { redisConnection } from '../../database/redis-connection';
 import { ActivepiecesError, ErrorCode } from '../../helper/activepieces-error';
 
 type JobData = {
@@ -21,7 +22,7 @@ type RemoveParams = {
 
 const JOB_REMOVAL_FAILURE = 0;
 
-const jobQueue = new Queue<JobData, JobResultType, ApId>('jobs');
+const jobQueue = new Queue<JobData, JobResultType, ApId>('jobs', { connection: redisConnection });
 
 export const flowQueue = {
     async add({ id, data, cronExpression }: AddParams): Promise<void> {

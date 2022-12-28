@@ -8,7 +8,6 @@ import {ActivepiecesError} from "./helper/activepieces-error";
 import {projectModule} from "./project/project.module";
 import {flowModule} from "./flows/flow.module";
 import {fileModule} from "./file/file.module";
-import {redisClient} from "./database/redis-connection";
 import {piecesController} from "./pieces/pieces.controller";
 import {codeModule} from "./code/code.module";
 import {oauth2Module} from "./oauth2/oauth2.module";
@@ -55,7 +54,6 @@ app.setErrorHandler(function (error, request, reply) {
 
 const start = async () => {
     try {
-        await redisClient.connect();
         await app.listen({ port: 3000 });
     } catch (err) {
         app.log.error(err);
