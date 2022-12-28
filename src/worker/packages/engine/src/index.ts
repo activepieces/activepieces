@@ -1,13 +1,8 @@
-import {ExecutionState} from './model/execution/execution-state';
 import {FlowExecutor} from './executors/flow-executor';
 import {Utils} from './utils';
-import {StepOutput} from './model/output/step-output';
 import {globals} from './globals';
-import {Trigger} from "pieces/dist/src/framework/trigger/trigger";
-import {Action} from "pieces/dist/src/framework/action/action";
-import {Input} from "pieces/dist/src/framework/config/input.model";
-import {pieces} from "pieces/dist/src/apps";
-import {Piece} from "pieces/dist/src/framework/piece";
+import { StepOutput } from 'shared/dist/instance-run/execution/step-output';
+import { ExecutionState } from 'shared';
 
 
 const args = process.argv.slice(2);

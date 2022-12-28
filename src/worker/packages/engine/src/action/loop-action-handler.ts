@@ -1,10 +1,9 @@
 import {FlowExecutor} from '../executors/flow-executor';
-import {ExecutionState} from '../model/execution/execution-state';
-import {StepOutput, StepOutputStatus} from '../model/output/step-output';
-import {LoopOnItemsStepOutput} from '../model/output/loop-on-items-step-output';
 import {VariableService} from '../services/variable-service';
-import {LoopOnItemsAction} from "shared";
+import {ExecutionState, LoopOnItemsAction} from "shared";
 import {BaseActionHandler} from "./action-handler";
+import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput} from 'shared';
+
 
 
 export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction> {

@@ -1,8 +1,6 @@
 import {VariableService} from "../services/variable-service";
-import {ExecutionState} from "../model/execution/execution-state";
-import {StepOutput, StepOutputStatus} from "../model/output/step-output";
 import {PieceExecutor} from "../executors/piece-executor";
-import {PieceAction} from "shared";
+import {ExecutionState, PieceAction, StepOutput, StepOutputStatus} from "shared";
 import {BaseActionHandler} from "./action-handler";
 
 
