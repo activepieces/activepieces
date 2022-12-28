@@ -1,12 +1,14 @@
-<div [formGroup]="form" class="ap-flex flex-column pairs-form-container">
+<div [formGroup]="form" class="ap-flex ap-flex-col pairs-form-container">
   <ng-container *ngFor="let pair of pairs.controls; let idx = index; let isLast = last; let isFirst=first">
     <div class="ap-flex pair-container" *ngIf="!(isLast && disabled && idx>0)" [formGroup]="getPair(idx)">
       <div class="delete-btn-container">
-        <app-icon-button [ [width]="9" [height]="9" iconFilename="delete.svg"
+
+        <app-icon-button [width]="9" [height]="9" iconFilename="delete.svg"
           [tooltipText]=" !deleteButton.isHovered && !keyInput.isHovered && !valueInput.isHovered ?'' :'Remove Item'"
-          class="delete-btn"
-          [class.opacity-0]=" !deleteButton.isHovered && !keyInput.isHovered && !valueInput.isHovered" appTrackHover
+          class="delete-btn ap-z-50"
+          [class.opacity-0]="!deleteButton.isHovered && !keyInput.isHovered && !valueInput.isHovered" appTrackHover
           #deleteButton="hoverTrackerDirective" (click)="removePair(idx)"></app-icon-button>
+
         <input #key name="key" class="form-control key-control" [class.first]="isFirst && pairs.controls.length>1"
           [class.last]="isLast && pairs.controls.length>1" [class.only-one]="pairs.controls.length === 1"
           formControlName="key" type="text" (keyup)="dictionaryControlValueChanged()" placeholder="Key" appTrackHover
@@ -17,6 +19,7 @@
         formControlName="value" (keyup)="dictionaryControlValueChanged()" type="text" placeholder="Value" appTrackHover
         #valueInput="hoverTrackerDirective" />
     </div>
+
   </ng-container>
   <div class="ap-flex">
     <app-button btnColor="primary" btnStyle="basic" *ngIf="form.enabled" (buttonClicked)="addNewPair(true)"
