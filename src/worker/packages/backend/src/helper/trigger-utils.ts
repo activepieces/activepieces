@@ -2,8 +2,11 @@ import { pieces } from "pieces";
 import { FlowVersion, PieceTrigger, Trigger, TriggerType as FlowTriggerType } from "shared";
 import { TriggerType as PieceTriggerType } from "pieces";
 import { ActivepiecesError, ErrorCode } from "./activepieces-error";
+import { flowQueue } from "../workers/flow-worker/flow-queue";
 
 const PIECES_WEBHOOK_BASE_URL = "";
+
+const EVERY_FIFTEEN_MINUTES = "* 15 * * * *";
 
 export const triggerUtils = {
     async enable(flowVersion: FlowVersion): Promise<void> {
@@ -43,6 +46,12 @@ const disablePieceTrigger = async (flowVersion: FlowVersion): Promise<void> => {
                 propsValue: flowTrigger.settings.input,
             });
             break;
+
+        case PieceTriggerType.POLLING:
+            await flowQueue.remove({
+                id: flowVersion.id,
+            });
+            break;
     }
 };
 
@@ -55,6 +64,16 @@ const enablePieceTrigger = async (flowVersion: FlowVersion): Promise<void> => {
             await pieceTrigger.onEnable({
                 webhookUrl: `${PIECES_WEBHOOK_BASE_URL}/flow-version/${flowVersion.id}`,
                 propsValue: flowTrigger.settings.input,
+            });
+            break;
+
+        case PieceTriggerType.POLLING:
+            await flowQueue.add({
+                id: flowVersion.id,
+                data: {
+                    flowVersionId: flowVersion.id,
+                },
+                cronExpression: EVERY_FIFTEEN_MINUTES,
             });
             break;
     }

@@ -17,9 +17,7 @@ export const instanceSideEffects = {
 
         await lockFlowVersions(flowVersions);
 
-        const enableTriggers = flowVersions
-            .map(flowVersion => flowVersion.trigger)
-            .map(triggerUtils.enable);
+        const enableTriggers = flowVersions.map(triggerUtils.enable);
 
         await Promise.all(enableTriggers);
     },
@@ -35,9 +33,7 @@ export const instanceSideEffects = {
             id: In(flowVersionIds),
         });
 
-        const disableTriggers = flowVersions
-            .map(flowVersion => flowVersion.trigger)
-            .map(triggerUtils.disable);
+        const disableTriggers = flowVersions.map(triggerUtils.enable);
 
         await Promise.all(disableTriggers);
     }
