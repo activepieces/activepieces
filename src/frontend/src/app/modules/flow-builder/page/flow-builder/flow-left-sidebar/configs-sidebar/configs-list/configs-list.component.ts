@@ -8,7 +8,6 @@ import { Config } from '../../../../../../common/model/fields/variable/config';
 @Component({
 	selector: 'app-configs-list',
 	templateUrl: './configs-list.component.html',
-	styleUrls: ['./configs-list.component.css'],
 })
 export class VariableListComponent implements OnInit {
 	@Output() selectedVariable: EventEmitter<{ value: Config; index: number }> = new EventEmitter<any>();

@@ -26,8 +26,8 @@
       </div>
     </div>
     <div class="flow-content ap-flex ap-flex-col ap-justify-center  ap-self-stretch">
-      <div class="ap-flex ap-items-center ap-gap-2 ">
-        <div class="ap-flex ap-flex-col ap-gap-2">
+      <div class="ap-flex  ap-items-center ap-gap-2 ">
+        <div class="ap-flex ap-flex-grow ap-flex-col ap-gap-2">
           <div class="ap-typography-subtitle-1 ap-font-normal flow-title ap-flex-grow ap-max-w-[150px]" #stepTitle
             [matTooltip]="_flowItem.display_name">
             {{ _flowItem.display_name }}
@@ -40,20 +40,23 @@
               Settings</div>
           </div>
         </div>
-        <div class="ap-flex-grow"></div>
-        <div *ngIf="selectedRun$ | async">
-          <ng-container *ngIf="stepStatus$|async as actionStatus; else stepInsideLoopStatusTemplate">
-            <ng-container *ngIf="actionStatus === actionStatusEnum.RUNNING">
-              <div class="spinner-border !ap-border-primary !ap-border-r-transparent " role="status"></div>
+
+        <ng-container *ngIf="selectedRun$ | async">
+          <div class="ap-flex-grow" *ngIf="selectedRun$ | async"></div>
+          <div>
+            <ng-container *ngIf="stepStatus$|async as actionStatus; else stepInsideLoopStatusTemplate">
+              <ng-container *ngIf="actionStatus === actionStatusEnum.RUNNING">
+                <div class="spinner-border !ap-border-primary !ap-border-r-transparent " role="status"></div>
+              </ng-container>
+              <app-state-icon [showStatusText]="false" *ngIf="actionStatus !== actionStatusEnum.RUNNING"
+                [succeeded]="actionStatus === actionStatusEnum.SUCCEEDED"></app-state-icon>
             </ng-container>
-            <app-state-icon [showStatusText]="false" *ngIf="actionStatus !== actionStatusEnum.RUNNING"
-              [succeeded]="actionStatus === actionStatusEnum.SUCCEEDED"></app-state-icon>
-          </ng-container>
-          <ng-template #stepInsideLoopStatusTemplate>
-            <app-state-icon *ngIf="stepInsideLoopStatus$ | async as stepInsideLoopStatus" [showStatusText]="false"
-              [succeeded]="stepInsideLoopStatus === actionStatusEnum.SUCCEEDED"></app-state-icon>
-          </ng-template>
-        </div>
+            <ng-template #stepInsideLoopStatusTemplate>
+              <app-state-icon *ngIf="stepInsideLoopStatus$ | async as stepInsideLoopStatus" [showStatusText]="false"
+                [succeeded]="stepInsideLoopStatus === actionStatusEnum.SUCCEEDED"></app-state-icon>
+            </ng-template>
+          </div>
+        </ng-container>
       </div>
     </div>
   </div>

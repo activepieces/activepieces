@@ -1,43 +1,14 @@
-<div class="column config-variables" >
-  <div class="top p-3">
-    <app-sidebar-header
-      [backArrow]="false"
-      (closeClicked)="closeSidebar()"
-      [title]="'Config variables'"
-    ></app-sidebar-header>
-    <app-button
-    btnColor="primary"
-    btnStyle="basic"
-    btnSize="medium"
-    *ngIf="!(viewMode$ | async | defaultTrue)"
-    (buttonClicked)="openConfigVariableModal(undefined)"
+<div class="column config-variables">
+  <app-sidebar-header [backArrow]="false" (closeClicked)="closeSidebar()"
+    [title]="'Config variables'"></app-sidebar-header>
+  <div class="ap-h-full ap-p-3">
 
-  >    + New Variable
-  </app-button>
+    <app-button btnColor="primary" btnStyle="basic" btnSize="medium" *ngIf="!(viewMode$ | async | defaultTrue)"
+      (buttonClicked)="openConfigVariableModal(undefined)"> + New Variable
+    </app-button>
+    <app-configs-list (selectedVariable)="
+    openConfigVariableModal($event)
+  "></app-configs-list>
   </div>
-  <div class="bottom">
-    <div class="column">
-      <div>
-        <mat-tab-group
-          #tabGroup
-        >
-          <mat-tab>
-            <ng-template mat-tab-label>
-              <div
-                class="category-label"
-                [class.category-label-active]="tabGroup.selectedIndex === 0"
-              >
-                Collection
-              </div>
-            </ng-template>
-            <app-configs-list
-              (selectedVariable)="
-                openConfigVariableModal($event)
-              "
-            ></app-configs-list>
-          </mat-tab>
-        </mat-tab-group>
-      </div>
-    </div>
-  </div>
+
 </div>
