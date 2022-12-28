@@ -1,8 +1,7 @@
-import {ExecutionState} from '../model/execution/execution-state';
-import {StepOutput, StepOutputStatus} from '../model/output/step-output';
+
 import {globals} from '../globals';
 import {VariableService} from '../services/variable-service';
-import {PutStoreEntryRequest, StorageAction} from "shared";
+import {ExecutionState, PutStoreEntryRequest, StepOutput, StepOutputStatus, StorageAction} from "shared";
 import {StoreOperation} from "shared/dist/flows/actions/action";
 import {BaseActionHandler} from "./action-handler";
 

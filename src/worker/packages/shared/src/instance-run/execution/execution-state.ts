@@ -1,6 +1,4 @@
-import {StepOutput} from '../output/step-output';
-import {LoopOnItemsStepOutput} from '../output/loop-on-items-step-output';
-import * as webpack from 'webpack';
+import {LoopOnItemsStepOutput, StepOutput} from './step-output';
 
 export class ExecutionState {
   configs: Record<string, unknown>;

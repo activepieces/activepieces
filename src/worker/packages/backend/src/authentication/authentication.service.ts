@@ -29,6 +29,7 @@ export const authenticationService = {
         });
 
         return {
+            ...user,
             token,
         };
     },
@@ -65,6 +66,7 @@ export const authenticationService = {
         });
 
         return {
+            ...user,
             token,
         };
     }

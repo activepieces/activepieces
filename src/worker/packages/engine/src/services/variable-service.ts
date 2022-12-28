@@ -1,6 +1,6 @@
 import {get} from 'lodash';
-import {ExecutionState} from '../model/execution/execution-state';
 import {isString} from 'lodash';
+import { ExecutionState } from 'shared';
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\$\\{(.*?)\\}', 'g');
