@@ -1,14 +1,8 @@
-import {ExecutionState} from '../model/execution/execution-state';
-import {StepOutputStatus} from '../model/output/step-output';
-import {ExecutionError} from '../model/execution/execution-error';
-import {
-    ExecutionOutput,
-    ExecutionOutputStatus,
-} from '../model/execution/execution-output';
+
 import {Utils} from '../utils';
 import {globals} from '../globals';
 import {ActionHandler} from "../action/action-handler";
-import {CollectionVersion, FlowVersion} from "shared";
+import {CollectionVersion, ExecutionState, FlowVersion, StepOutputStatus, ExecutionError,ExecutionOutputStatus, ExecutionOutput} from "shared";
 import {createAction} from "../action/action-factory";
 
 export class FlowExecutor {
@@ -21,7 +15,7 @@ export class FlowExecutor {
     public async executeFlow(
         collectionId: string,
         flowId: string
-    ) {
+    ) : Promise<ExecutionOutput>{
         try {
             const startTime = new Date().getTime();
 
@@ -40,39 +34,45 @@ export class FlowExecutor {
             return this.getExecutionOutput( flowStatus, duration);
         } catch (e) {
             console.error(e);
-            return new ExecutionOutput(
-                ExecutionOutputStatus.FAILED,
-                this.executionState,
-                0,
-                new ExecutionError('Flow Execution', (e as Error).message)
-            );
+            return {
+                status: ExecutionOutputStatus.FAILED,
+                executionState: this.executionState,
+                duration: 0,
+                errorMessage: {
+                    stepName: 'Flow Execution',
+                    errorMessage: (e as Error).message
+                }
+            }
         }
     }
 
     private getExecutionOutput(
         flowStatus: boolean,
         duration: number
-    ) {
+    ): ExecutionOutput {
         if (!flowStatus) {
-            return new ExecutionOutput(
-                ExecutionOutputStatus.FAILED,
-                this.executionState,
-                duration,
-                this.getError()
-            );
+            return {
+                status: ExecutionOutputStatus.FAILED,
+                executionState: this.executionState,
+                duration: duration,
+                errorMessage: this.getError()
+            }
         }
-        return new ExecutionOutput(
-            ExecutionOutputStatus.SUCCEEDED,
-            this.executionState,
-            duration,
-            undefined
-        );
+        return {
+            status: ExecutionOutputStatus.SUCCEEDED,
+            executionState: this.executionState,
+            duration: duration,
+            errorMessage: undefined
+        }
     }
 
-    private getError() {
+    private getError() :  ExecutionError | undefined  {
         for (const [key, value] of Object.entries(this.executionState.steps)) {
             if (value.status === StepOutputStatus.FAILED) {
-                return new ExecutionError(key, value.errorMessage);
+                return {
+                    stepName: key,
+                    errorMessage: value.errorMessage as string
+                }
             }
         }
 
@@ -115,7 +115,7 @@ export class FlowExecutor {
             const collectionVersion: CollectionVersion = Utils.parseJsonFile(`${globals.collectionDirectory}/${collectionId}.json`)
             const flowVersion: FlowVersion = Utils.parseJsonFile(`${globals.flowDirectory}/${flowId}.json`)
 
-            let configs = new Map(
+            let configs: Map<string, unknown> = new Map(
                 collectionVersion.configs.map(config => {
                     return [config.key, config.value];
                 })

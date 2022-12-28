@@ -47,7 +47,7 @@ export class Piece {
 	}
 }
 
-export const createComponent = (request: {
+export const createPiece = (request: {
 	name: string;
 	displayName: string;
 	logoUrl: string;

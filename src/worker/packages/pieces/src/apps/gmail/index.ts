@@ -1,7 +1,7 @@
-import {createComponent} from '../../framework/piece';
+import {createPiece} from '../../framework/piece';
 import {gmailSendEmailAction} from './actions/send-email-action';
 
-export const gmail = createComponent({
+export const gmail = createPiece({
 	name: 'Gmail',
 	logoUrl: 'https://cdn.activepieces.com/components/gmail/logo.png',
 	actions: [gmailSendEmailAction],

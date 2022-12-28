@@ -1,63 +1,100 @@
 import fs from 'node:fs';
 import {
     Action,
-    ActionType, CodeActionSettings,
+    ActionType, apId, CodeActionSettings,
+    CollectionId,
+    CollectionVersion,
     CollectionVersionId,
+    ExecutionOutput,
     File,
     FlowId,
     FlowVersion,
     FlowVersionId,
     Instance,
+    InstanceRun,
+    InstanceRunId,
+    PrincipalType,
     Trigger
 } from "shared";
 import {InstanceId} from "shared";
-import {sandboxManager} from "../sandbox";
+import {Sandbox, sandboxManager} from "../sandbox";
 import {flowVersionService} from "../../flows/flow-version/flow-version.service";
 import {collectionVersionService} from "../../collections/collection-version/collection-version.service";
 import {redisLock} from "../../database/redis-connection";
 import {fileService} from "../../file/file.service";
 import {codeBuilder} from "../code-worker/code-builder";
+import {tokenUtils} from "../../authentication/lib/token-utils";
+import {collectionService} from "../../collections/collection.service";
+import {instanceRunService} from "../../instance-run/instance-run-service";
 
-async function executeFlow(instanceId: InstanceId | undefined,
-                           flowVersionId: FlowVersionId,
-                           collectionVersionId: CollectionVersionId,
-                           payload: unknown) {
-    const flowVersion = (await flowVersionService.getOne(flowVersionId))!;
-    const collectionVersion = await collectionVersionService.getOne(collectionVersionId);
+
+export interface ExecutionRequest {
+    runId: InstanceRunId,
+    instanceId: InstanceId | null;
+    flowVersionId: FlowVersionId;
+    collectionVersionId: CollectionVersionId;
+    payload: unknown
+}
+
+async function executeFlow(request: ExecutionRequest) {
+    const flowVersion = (await flowVersionService.getOne(request.flowVersionId))!;
+    const collectionVersion = (await collectionVersionService.getOne(request.collectionVersionId))!;
+
     let sandbox = sandboxManager.obtainSandbox();
-    let buildPath = sandbox.getSandboxFolderPath();
-    let flowLock = await redisLock(flowVersionId);
-
-    console.log("Executing flow " + flowVersionId + " in sandbox " + sandbox.boxId);
+    let flowLock = await redisLock(flowVersion.id);
+    console.log("Executing flow " + flowVersion.id + " and run Id " + request.runId + " in sandbox " + sandbox.boxId);
     try {
         sandbox.cleanAndInit();
-        fs.mkdirSync(buildPath + "/flows/");
-        fs.mkdirSync(buildPath + "/collections/");
-        fs.mkdirSync(buildPath + "/codes/");
 
-        let artifacts: File[] = await buildCodes(flowVersion);
-        for (let i = 0; i < artifacts.length; ++i) {
-            fs.writeFileSync(buildPath + "/codes/" + artifacts[i].id + ".js", artifacts[i].data);
-        }
-        fs.writeFileSync(buildPath + "/flows/" + flowVersionId + ".js", JSON.stringify(flowVersion));
-        fs.writeFileSync(buildPath + "/collections/" + collectionVersionId + ".js", JSON.stringify(collectionVersion));
-        fs.writeFileSync(buildPath + "/activepieces-engine.js", fs.readFileSync("resources/activepieces-engine.js"));
-        fs.writeFileSync(buildPath + "/input.json", JSON.stringify({
-            flowVersionId: flowVersionId,
-            collectionVersionId: collectionVersionId,
-            // TODO REPLACE WITH WORKER TOKEN
-            workerToken: "TOKEN",
-            apiUrl: "",
-            triggerPayload: payload
-        }))
+        await downloadFiles(sandbox, flowVersion, collectionVersion, request.payload);
+
         sandbox.runCommandLine("/usr/bin/node activepieces-engine.js execute-flow");
-        // TODO PARSE THE INPUT AND SAVE THE RUN
+        const executionOutput: ExecutionOutput = JSON.parse(fs.readFileSync(sandbox.getSandboxFilePath("output.json")).toString());
+        const logsFile = await fileService.save(Buffer.from(JSON.stringify(executionOutput)));
+        await instanceRunService.finish(request.runId, executionOutput.status, logsFile.id);
     } finally {
         sandboxManager.returnSandbox(sandbox.boxId);
         await flowLock();
     }
-    console.log("Finished executing flow " + flowVersionId + " in sandbox " + sandbox.boxId);
+    console.log("Finished executing flow " + flowVersion + " and run Id " + request.runId + " in sandbox " + sandbox.boxId);
 
+}
+
+async function downloadFiles(sandbox: Sandbox, flowVersion: FlowVersion,
+                             collectionVersion: CollectionVersion, payload: unknown) {
+    let buildPath = sandbox.getSandboxFolderPath();
+
+    fs.mkdirSync(buildPath + "/flows/");
+    fs.writeFileSync(buildPath + "/flows/" + flowVersion.id + ".json", JSON.stringify(flowVersion));
+
+    fs.mkdirSync(buildPath + "/collections/");
+    fs.writeFileSync(buildPath + "/collections/" + collectionVersion.id + ".json", JSON.stringify(collectionVersion));
+
+    fs.mkdirSync(buildPath + "/codes/");
+    let artifacts: File[] = await buildCodes(flowVersion);
+    artifacts.forEach(artifact => {
+        fs.writeFileSync(buildPath + "/codes/" + artifact.id + ".js", artifact.data);
+    })
+    fs.writeFileSync(buildPath + "/activepieces-engine.js", fs.readFileSync("resources/activepieces-engine.js"));
+    fs.writeFileSync(buildPath + "/input.json", await constructInputString(flowVersion.id, collectionVersion.collectionId, collectionVersion.id, payload));
+
+}
+
+async function constructInputString(flowVersionId: FlowVersionId,
+                                    collectionId: CollectionId,
+                                    collectionVersionId: CollectionVersionId,
+                                    payload: unknown): Promise<string> {
+    return JSON.stringify({
+        flowVersionId: flowVersionId,
+        collectionVersionId: collectionVersionId,
+        workerToken: tokenUtils.encode({
+            id: apId(),
+            type: PrincipalType.WORKER,
+            collectionId: collectionId
+        }),
+        apiUrl: "http://localhost:3000",
+        triggerPayload: payload
+    });
 }
 
 async function buildCodes(flowVersion: FlowVersion) {
@@ -83,7 +120,7 @@ async function buildCodes(flowVersion: FlowVersion) {
         currentStep = currentStep.nextAction;
     }
     let files: File[] = await Promise.all(buildRequests);
-    if(files.length > 0) {
+    if (files.length > 0) {
         await flowVersionService.overwriteVersion(flowVersion.id, flowVersion);
     }
     return files;
@@ -92,9 +129,37 @@ async function buildCodes(flowVersion: FlowVersion) {
 export const flowWorker = {
     async executeInstance(instance: Instance, flowId: FlowId, payload: undefined) {
         let flowVersionId: FlowVersionId = instance.flowIdToVersionId[flowId];
-        return executeFlow(instance.id, flowVersionId, instance.collectionVersionId, payload);
+        const request: ExecutionRequest = {
+            runId: apId(),
+            instanceId: instance.id,
+            flowVersionId: flowVersionId,
+            collectionVersionId: instance.collectionVersionId,
+            payload: payload
+        };
+        const instanceRun = await createRun(request);
+        // TODO THIS IS ASYNC, WE SHOULD JUST ADD IT TO QUEUE
+        executeFlow(request);
+        return instanceRun;
     },
-    async executeTest(collectionVersionId: CollectionVersionId, flowVersionId: FlowVersionId, payload: unknown) {
-        return executeFlow(undefined, flowVersionId, collectionVersionId, payload);
+    async executeTest(collectionVersionId: CollectionVersionId, flowVersionId: FlowVersionId, payload: unknown): Promise<InstanceRun> {
+        const request: ExecutionRequest = {
+            runId: apId(),
+            instanceId: null,
+            flowVersionId: flowVersionId,
+            collectionVersionId: collectionVersionId,
+            payload: payload
+        };
+        const instanceRun = await createRun(request);
+        // TODO THIS IS ASYNC, WE SHOULD JUST ADD IT TO QUEUE
+        executeFlow(request);
+        return instanceRun;
     },
+}
+
+// TODO NEED TO BE OPTIMIZED SINCE WE ARE FETCHING THESE INFO FROM DATABASE TWICE
+async function createRun(request: ExecutionRequest): Promise<InstanceRun> {
+    const collectionVersion = (await collectionVersionService.getOne(request.collectionVersionId))!;
+    const collection = (await collectionService.getOne(collectionVersion.collectionId, null))!;
+    const flowVersion = (await flowVersionService.getOne(request.flowVersionId))!;
+    return instanceRunService.start(request.runId, request.instanceId, collection.projectId, flowVersion, collectionVersion);
 }

@@ -1,7 +1,7 @@
 import {slackSendMessageAction} from './actions/send-message-action';
-import {createComponent} from "../../framework/piece";
+import {createPiece} from "../../framework/piece";
 
-export const slack = createComponent({
+export const slack = createPiece({
 	name: 'slack',
 	displayName: "Slack",
 	logoUrl: 'https://cdn.activepieces.com/components/slack/logo.png',

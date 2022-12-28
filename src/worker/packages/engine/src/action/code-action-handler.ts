@@ -1,9 +1,8 @@
-import {ExecutionState} from '../model/execution/execution-state';
-import {StepOutput, StepOutputStatus} from '../model/output/step-output';
+
 import {VariableService} from '../services/variable-service';
 import {CodeExecutor} from '../executors/code-executer';
 
-import {CodeAction} from "shared";
+import {CodeAction, ExecutionState, StepOutput, StepOutputStatus} from "shared";
 import {BaseActionHandler} from "./action-handler";
 
 export class CodeActionHandler extends BaseActionHandler<CodeAction> {
