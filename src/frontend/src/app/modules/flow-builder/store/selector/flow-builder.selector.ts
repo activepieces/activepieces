@@ -16,7 +16,6 @@ import { ActionType } from '../../../common/model/enum/action-type.enum';
 import { ConfigType } from 'src/app/modules/common/model/enum/config-type';
 import { Collection } from 'src/app/modules/common/model/collection.interface';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
-import { DropdownItemOption } from 'src/app/modules/common/model/dropdown-item-option';
 import { environment } from 'src/environments/environment';
 
 export const BUILDER_STATE_NAME = 'builderState';
@@ -96,15 +95,6 @@ export const selectCurrentFlowId = createSelector(
 	selectBuilderState,
 	(state: GlobalBuilderState) => state.flowsState.selectedFlowId
 );
-
-export const selectDynamicDropdownReference = () =>
-	createSelector(selectCurrentCollectionConfigs, (flowConfigs: Config[], pieceConfigs: Config[]) => {
-		return [...flowConfigs, ...pieceConfigs]
-			.filter(f => f.type == ConfigType.OAUTH2)
-			.map(f => {
-				return { value: f.key, label: f.label } as DropdownItemOption;
-			});
-	});
 
 export const selectAuth2Configs = createSelector(selectCurrentCollectionConfigs, (collectionConfigs: Config[]) => {
 	return [...collectionConfigs].filter(f => f.type == ConfigType.OAUTH2);
@@ -333,7 +323,6 @@ export const BuilderSelectors = {
 	selectCurrentStepName,
 	selectCurrentCollectionConfigs,
 	selectCurrentRightSideBarType,
-	selectDynamicDropdownReference,
 	selectCurrentFlowRunStatus,
 	selectCurrentDisplayName,
 	selectAuth2Configs,

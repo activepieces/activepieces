@@ -196,7 +196,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 				if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
 					const authConfigOptionValue = newAuthConfig.value;
 					this.form.get(authConfigName)!.setValue(authConfigOptionValue);
-					this.updatedAuthLabel = newAuthConfig.label;
+					this.updatedAuthLabel = newAuthConfig.key;
 				}
 			}),
 			mapTo(void 0)
@@ -230,7 +230,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 							if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
 								const authConfigOptionValue = newAuthConfig.value;
 								this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
-								this.updatedAuthLabel = newAuthConfig.label;
+								this.updatedAuthLabel = newAuthConfig.key;
 							}
 						}),
 						mapTo(void 0)

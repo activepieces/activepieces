@@ -1,45 +1,47 @@
-<form [formGroup]="settingsForm" class="ap-flex flex-column config-modal-form-controls-container">
-  <div>
-    <label required>Redirect Url</label>
-    <input type="text" formControlName="redirect_url" class="form-control">
+<form [formGroup]="settingsForm" class="ap-flex ap-flex-col ap-gap-2">
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Redirect URL</mat-label>
+    <input formControlName="redirect_url" matInput type="text" />
+  </mat-form-field>
 
-  </div>
-
-  <div>
-    <label required>Auth Url</label>
-    <input type="text" formControlName="auth_url" class="form-control">
-    <p @fadeInUp class="invalid-input" *ngIf="submitted &&  settingsForm.get('auth_url')!.invalid ">
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Auth URL</mat-label>
+    <input formControlName="auth_url" matInput type="text" />
+    <mat-error *ngIf="settingsForm.controls.auth_url.invalid">
       Auth url is required
-    </p>
-  </div>
-  <div>
-    <label required>Token Url</label>
-    <input type="text" formControlName="token_url" class="form-control">
-    <p @fadeInUp class="invalid-input" *ngIf="submitted &&  settingsForm.get('token_url')!.invalid ">
-      Toekn url is required
-    </p>
-  </div>
-  <div>
-    <label required>Client Id</label>
-    <input type="text" formControlName="client_id" class="form-control">
-    <p @fadeInUp class="invalid-input" *ngIf="submitted &&  settingsForm.get('client_id')!.invalid ">
-      Client id is required
-    </p>
-  </div>
-  <div>
-    <label required> Client Secret</label>
-    <input type="password" formControlName="client_secret" class="form-control">
-    <p @fadeInUp class="invalid-input" *ngIf="submitted &&  settingsForm.get('client_secret')!.invalid">
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Token URL</mat-label>
+    <input formControlName="token_url" matInput type="text" />
+    <mat-error *ngIf="settingsForm.controls.token_url.invalid">
+      Token URL is required
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Client ID</mat-label>
+    <input formControlName="client_id" matInput type="text" />
+    <mat-error *ngIf="settingsForm.controls.client_id.invalid">
+      Client ID is required
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Client Secret</mat-label>
+    <input formControlName="client_secret" matInput type="password" />
+    <mat-error *ngIf="settingsForm.controls.client_secret.invalid">
       Client secret is required
-    </p>
-  </div>
-  <div>
-    <label required> Scope</label>
-    <input type="text" formControlName="scope" class="form-control">
-    <span class="text-sm text-muted">Enter the scope required seperated by space.</span>
-    <p @fadeInUp class="invalid-input" *ngIf="submitted && settingsForm.get('scope')!.invalid">
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Scope</mat-label>
+    <input formControlName="scope" matInput type="text" />
+    <mat-error *ngIf="settingsForm.controls.scope.invalid">
       Scope is required
-    </p>
-  </div>
+    </mat-error>
+  </mat-form-field>
 </form>
 <ng-container *ngIf="settingsFormValueChanged$|async"></ng-container>

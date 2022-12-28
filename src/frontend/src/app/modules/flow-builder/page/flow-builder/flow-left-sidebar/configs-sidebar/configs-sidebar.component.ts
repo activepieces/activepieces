@@ -3,11 +3,11 @@ import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar
 import { BuilderSelectors } from '../../../../store/selector/flow-builder.selector';
 import { Observable } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
-
 import { FlowsActions } from '../../../../store/action/flows.action';
 import { Config } from '../../../../../common/model/fields/variable/config';
+import { MatDialog } from '@angular/material/dialog';
 import { CreateEditConfigModalComponent } from '../create-or-edit-config-modal/create-or-edit-config-modal.component';
+import { __values } from 'tslib';
 
 @Component({
 	selector: 'app-configs-sidebar',
@@ -16,9 +16,8 @@ import { CreateEditConfigModalComponent } from '../create-or-edit-config-modal/c
 })
 export class VariableSidebarComponent {
 	viewMode$: Observable<boolean>;
-	createEditConfigModalRef: BsModalRef;
 
-	constructor(private modalService: BsModalService, private store: Store) {
+	constructor(private store: Store, private dialogService: MatDialog) {
 		this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
 	}
 
@@ -31,13 +30,8 @@ export class VariableSidebarComponent {
 	}
 
 	openConfigVariableModal($event: { value: Config; index: number } | undefined) {
-		this.createEditConfigModalRef = this.modalService.show(CreateEditConfigModalComponent, {
-			ignoreBackdropClick: true,
-			class: 'modal-dialog-centered',
-			initialState: {
-				configIndexInConfigsList: $event == undefined ? undefined : $event.index,
-				configToUpdate: $event == undefined ? undefined : $event.value,
-			},
+		this.dialogService.open(CreateEditConfigModalComponent, {
+			data: $event ? { config: $event?.value, index: $event?.index } : undefined,
 		});
 	}
 }

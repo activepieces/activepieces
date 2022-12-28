@@ -5,7 +5,6 @@ import { ConfigType } from '../../enum/config-type';
 export class Config {
 	key: string;
 	type: ConfigType;
-	label: string;
 	settings?: OAuth2ConfigSettings;
 	value: any;
 	collectionVersionId?: UUID;

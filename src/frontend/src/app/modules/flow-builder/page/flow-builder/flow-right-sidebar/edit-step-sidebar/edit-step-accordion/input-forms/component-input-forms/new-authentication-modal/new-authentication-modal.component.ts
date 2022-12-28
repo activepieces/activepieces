@@ -84,16 +84,12 @@ export class NewAuthenticationModalComponent implements OnInit {
 		const configKey = this.configToUpdateWithIndex
 			? this.configToUpdateWithIndex.config.key
 			: this.settingsForm.get('key')!.value;
-		const configLabel = this.configToUpdateWithIndex
-			? this.configToUpdateWithIndex.config.label
-			: this.settingsForm.get('key')!.value;
 		const settingsFormValue = this.settingsForm.getRawValue();
 		const value = settingsFormValue['value'];
 		delete settingsFormValue['value'];
 		delete settingsFormValue.key;
 		const newConfig: Config = {
 			key: configKey,
-			label: configLabel,
 			type: ConfigType.OAUTH2,
 			collectionVersionId: currentCollectionId,
 			settings: {

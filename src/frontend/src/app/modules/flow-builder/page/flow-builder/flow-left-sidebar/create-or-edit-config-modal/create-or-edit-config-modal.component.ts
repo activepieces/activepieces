@@ -1,18 +1,23 @@
-import { AfterViewChecked, Component, Input, OnInit } from '@angular/core';
+import { AfterViewChecked, Component, Inject, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../store/selector/flow-builder.selector';
-import { Observable, of, skipWhile, take, tap } from 'rxjs';
+import { Observable, of, pairwise, skipWhile, take, tap } from 'rxjs';
 import { LeftSideBarType } from '../../../../../common/model/enum/left-side-bar-type.enum';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Config } from '../../../../../common/model/fields/variable/config';
 import { ConfigType, configTypesDropdownOptions } from '../../../../../common/model/enum/config-type';
 import { FlowsActions } from '../../../../store/action/flows.action';
-import { BsModalRef } from 'ngx-bootstrap/modal';
 import { fadeInUp400ms } from '../../../../../common/animation/fade-in-up.animation';
 import { OAuth2ConfigSettings } from 'src/app/modules/common/model/fields/variable/config-settings';
 import { CollectionActions } from 'src/app/modules/flow-builder/store/action/collection.action';
 import { ConfigKeyValidator } from '../../validators/configKeyValidator';
-
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+interface ConfigForm {
+	key: FormControl<string>;
+	value: FormControl<any>;
+	settings: FormControl<any>;
+	type: FormControl<ConfigType>;
+}
 @Component({
 	selector: 'app-create-or-edit-config-modal',
 	templateUrl: './create-or-edit-config-modal.component.html',
@@ -20,22 +25,21 @@ import { ConfigKeyValidator } from '../../validators/configKeyValidator';
 	animations: [fadeInUp400ms],
 })
 export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked {
-	@Input()
-	configIndexInConfigsList: number | undefined;
-	@Input()
-	configToUpdate: Config | undefined;
 	viewMode$: Observable<boolean> = of(false);
-	configForm: UntypedFormGroup;
+	configForm: FormGroup<ConfigForm>;
 	submitted = false;
-	savingLoading = false;
 	newConfigLabel$: Observable<string | undefined> = of(undefined);
-	configTypeChanged$: Observable<ConfigType>;
+	configTypeChanged$: Observable<[ConfigType, ConfigType]>;
 	hasViewModeListenerBeenSet = false;
-	configType = ConfigType;
-	configTypesDropdownOptions = configTypesDropdownOptions;
 	ConfigType = ConfigType;
+	configTypesDropdownOptions = configTypesDropdownOptions;
 
-	constructor(private bsModalRef: BsModalRef, private store: Store, private formBuilder: UntypedFormBuilder) {}
+	constructor(
+		private store: Store,
+		private formBuilder: FormBuilder,
+		@Inject(MAT_DIALOG_DATA) public dialogData: undefined | { config: Config; index: number },
+		private dialogRef: MatDialogRef<CreateEditConfigModalComponent>
+	) {}
 
 	ngOnInit(): void {
 		this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(
@@ -55,54 +59,43 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 	}
 
 	private buildConfigForm() {
-		if (!this.configToUpdate) {
-			this.configForm = this.formBuilder.group({
-				key: new UntypedFormControl(
-					'',
-					[Validators.required, Validators.pattern('[A-Za-z0-9_]*')],
-					[
-						ConfigKeyValidator.createValidator(
-							this.store.select(BuilderSelectors.selectAllConfigs).pipe(take(1)),
-							undefined
-						),
-					]
-				),
-				type: new UntypedFormControl(ConfigType.SHORT_TEXT, [Validators.required]),
-				settings: new UntypedFormControl(undefined),
-				value: new UntypedFormControl(undefined, Validators.required),
-			});
-		} else {
-			this.configForm = this.formBuilder.group({
-				key: new UntypedFormControl(
-					{ value: this.configToUpdate.key, disabled: true },
-					[],
-					[
-						ConfigKeyValidator.createValidator(
-							this.store.select(BuilderSelectors.selectAllConfigs).pipe(take(1)),
-							this.configToUpdate.key
-						),
-					]
-				),
-				type: new UntypedFormControl(this.configToUpdate.type, [Validators.required]),
-				settings: new UntypedFormControl(this.configToUpdate.settings),
-				value: new UntypedFormControl(this.configToUpdate.value, Validators.required),
-			});
+		this.configForm = this.formBuilder.group({
+			key: new FormControl('', {
+				nonNullable: true,
+				validators: [Validators.required, Validators.pattern('[A-Za-z0-9_]*')],
+				asyncValidators: [
+					ConfigKeyValidator.createValidator(
+						this.store.select(BuilderSelectors.selectAllConfigs).pipe(take(1)),
+						undefined
+					),
+				],
+			}),
+			type: new FormControl(ConfigType.SHORT_TEXT, { nonNullable: true, validators: [Validators.required] }),
+			settings: new FormControl(undefined),
+			value: new FormControl(undefined, Validators.required),
+		});
+
+		if (this.dialogData) {
+			this.configForm.patchValue(this.dialogData.config);
+			this.configForm.controls.key.disable();
+			this.configForm.controls.type.disable();
 		}
 	}
 	private setupConfigTypeListener() {
-		this.configTypeChanged$ = this.configForm.get('type')!.valueChanges.pipe(
+		this.configTypeChanged$ = this.configForm.controls.type.valueChanges.pipe(
 			skipWhile(() => this.configForm.disabled),
-			tap(newType => {
-				const currentType = this.configForm.get('type')!.value;
-				if (!this.isConfigOfTypeText(currentType) || !this.isConfigOfTypeText(newType)) {
+			pairwise(),
+			tap(([oldType, newType]) => {
+				if (!this.isConfigOfTypeText(oldType) || !this.isConfigOfTypeText(newType)) {
 					const defaultValue = this.getDefaultValueForConfigType(newType);
-					const valueControl = this.configForm.get('value')!;
+					const valueControl = this.configForm.controls.value;
 					valueControl.setValue(defaultValue);
-					const settingsControl = this.configForm.get('settings')!;
+					const settingsControl = this.configForm.controls.settings;
 					if (newType !== ConfigType.OAUTH2) {
 						settingsControl.setValue(undefined);
+						settingsControl.setErrors(null);
 					} else {
-						settingsControl.setValue({ ...new OAuth2ConfigSettings() });
+						settingsControl.setValue(new OAuth2ConfigSettings());
 					}
 				}
 			})
@@ -120,12 +113,12 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 	}
 
 	saveConfig(config: Config): void {
-		if (this.configIndexInConfigsList == undefined) {
+		if (this.dialogData == undefined) {
 			this.store.dispatch(CollectionActions.addConfig({ config: config }));
 		} else {
 			this.store.dispatch(
 				CollectionActions.updateConfig({
-					configIndex: this.configIndexInConfigsList,
+					configIndex: this.dialogData.index,
 					config: config,
 				})
 			);
@@ -140,16 +133,14 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 				sidebarType: LeftSideBarType.CONFIGS,
 			})
 		);
-
-		this.bsModalRef.hide();
-	}
-
-	getControlValue(name: string) {
-		return this.configForm.get(name)!.value;
+		this.dialogRef.close();
 	}
 
 	submit() {
-		if (!this.savingLoading && this.configForm.valid) {
+		this.configForm.markAllAsTouched();
+		debugger;
+		console.log(this.configForm.errors);
+		if (this.configForm.valid) {
 			const config: Config = this.configForm.getRawValue();
 			this.saveConfig(config);
 		}

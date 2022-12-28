@@ -59,7 +59,6 @@ import { ScheduleTriggerInputFormComponent } from './page/flow-builder/flow-righ
 import { ConfigCardComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/config-card/config-card.component';
 import { VariableListComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/configs-list/configs-list.component';
 import { CreateEditConfigModalComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/create-or-edit-config-modal.component';
-import { DefaultConfigTypeSettingsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/default-config-type-settings/default-config-type-settings.component';
 import { OAuth2ConfigSettingsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/o-auth2-config-settings/o-auth2-config-settings.component';
 import { DeployButtonComponent } from './page/flow-builder/flow-builder-header/deploy-button/deploy-button.component';
 import { TrackFocusDirective } from './page/flow-builder/flow-left-sidebar/run-details/steps-results-list/track-focus.directive';
@@ -136,7 +135,6 @@ import { DeleteStepDialogComponent } from './page/flow-builder/flow-item-tree/fl
 		CodeStepInputFormComponent,
 		ScheduleTriggerInputFormComponent,
 		ConfigCardComponent,
-		DefaultConfigTypeSettingsComponent,
 		OAuth2ConfigSettingsComponent,
 		ComponentActionInputFormComponent,
 		NewAuthenticationModalComponent,
