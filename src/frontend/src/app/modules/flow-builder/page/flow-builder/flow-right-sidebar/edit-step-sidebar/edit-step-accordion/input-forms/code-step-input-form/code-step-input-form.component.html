@@ -1,14 +1,13 @@
 <form [formGroup]="codeStepForm" class="ng-submitted">
-  <div class="ap-flex flex-column accordion-form-controls-container">
+  <div class="ap-flex ap-flex-col ap-gap-2">
     <div>
-      <label for="parameters">Parameters</label>
-      <app-dictonary-form-control id="parameters" formControlName="input"></app-dictonary-form-control>
+      <div class="ap-mb-2 ap-pointer-events-none">Parameters</div>
+      <app-dictonary-form-control formControlName="input"></app-dictonary-form-control>
     </div>
     <div>
-      <label for="code">Code</label>
-      <app-code-artifact-form-control id="code" [artifactChanged$]="stepArtifactChanged$"
-        [artifactCacheKey]="stepCacheKey" *ngIf="_stepArtifact$ |async; else loading"
-        formControlName="artifact"></app-code-artifact-form-control>
+      <div class="ap-mb-2 ap-pointer-events-none">Code</div>
+      <app-code-artifact-form-control [artifactChanged$]="stepArtifactChanged$" [artifactCacheKey]="stepCacheKey"
+        *ngIf="_stepArtifact$ |async; else loading" formControlName="artifact"></app-code-artifact-form-control>
     </div>
   </div>
 </form>

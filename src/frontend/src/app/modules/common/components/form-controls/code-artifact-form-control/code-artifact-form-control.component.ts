@@ -1,12 +1,17 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { BsModalService } from 'ngx-bootstrap/modal';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { debounceTime, distinctUntilChanged, Observable, Subject, takeUntil, tap } from 'rxjs';
 import { Artifact } from 'src/app/modules/flow-builder/model/artifact.interface';
 import { ArtifactCacheKey, StepCacheKey } from 'src/app/modules/flow-builder/service/artifact-cache-key';
 import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
 import { cacheArtifactDebounceTime } from '../../../utils';
 import { CodeArtifactControlFullscreenComponent } from './code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
+
+export interface CodeArtifactForm {
+	content: FormControl<string>;
+	package: FormControl<string>;
+}
 
 @Component({
 	selector: 'app-code-artifact-form-control',
@@ -28,14 +33,13 @@ export class CodeArtifactFormControlComponent implements ControlValueAccessor, O
 		if (key) this.setupCachingAndAutoSaveListener();
 	}
 	@Input() artifactChanged$: Subject<boolean> = new Subject();
-	codeArtifactForm: UntypedFormGroup;
+	codeArtifactForm: FormGroup<CodeArtifactForm>;
 	codeEditorOptions = { lineNumbers: true, lineWrapping: true, theme: 'lucario', readOnly: '', mode: 'javascript' };
-	constructor(
-		private formBuilder: UntypedFormBuilder,
-		private modalService: BsModalService,
-		private codeService: CodeService
-	) {
-		this.codeArtifactForm = this.formBuilder.group({ content: new UntypedFormControl(''), package: new UntypedFormControl('') });
+	constructor(private formBuilder: FormBuilder, private codeService: CodeService, private dialogService: MatDialog) {
+		this.codeArtifactForm = this.formBuilder.group({
+			content: new FormControl('', { nonNullable: true }),
+			package: new FormControl('', { nonNullable: true }),
+		});
 	}
 	ngOnInit(): void {
 		if (!this.autosave) {
@@ -65,13 +69,12 @@ export class CodeArtifactFormControlComponent implements ControlValueAccessor, O
 		this.onTouched = touched;
 	}
 	showFullscreenEditor() {
-		this.modalService.show<CodeArtifactControlFullscreenComponent>(CodeArtifactControlFullscreenComponent, {
-			class: 'modal-fullscreen',
-			ignoreBackdropClick: false,
-			initialState: {
+		this.dialogService.open(CodeArtifactControlFullscreenComponent, {
+			data: {
 				codeFilesForm: this.codeArtifactForm,
-				readOnly: this.codeEditorOptions.readOnly === 'nocursor',
+				readonly: this.codeEditorOptions.readOnly === 'nocursor',
 			},
+			panelClass: 'fullscreen-dialog',
 		});
 	}
 
@@ -101,7 +104,7 @@ export class CodeArtifactFormControlComponent implements ControlValueAccessor, O
 		//The only valid case in this is the step cache key
 		if (this._artifactCacheKey) {
 			if (this._artifactCacheKey instanceof StepCacheKey) {
-				this.codeService.updateArtifactInFlowStepsCache(this._artifactCacheKey, this.codeArtifactForm.value);
+				this.codeService.updateArtifactInFlowStepsCache(this._artifactCacheKey, this.codeArtifactForm.getRawValue());
 			} else {
 				throw new Error('Cache key type has no corresponding cache');
 			}

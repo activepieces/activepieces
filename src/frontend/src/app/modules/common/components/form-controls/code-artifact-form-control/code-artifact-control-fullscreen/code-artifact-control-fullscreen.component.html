@@ -1,64 +1,64 @@
-<div class="code-editor h-100 ap-flex flex-column">
-  <div class="modal-header text-center ap-flex ap-justify-center ap-items-center">
-    <h5 class="modal-title">Code Editor</h5>
-
+<div class="code-editor ap-h-full ap-flex ap-flex-col">
+  <div class="modal-header  ap-p-3 ap-typography-headline-6 ap-flex ap-text-white  ap-items-center">
+    Code Editor
     <div class="ap-flex-grow"></div>
 
-    <app-button *ngIf="!readOnly" btnStyle="flat" btnColor="basic" (buttonClicked)="openNpmPackageModal()"
-      btnSize="small">
+    <app-button *ngIf="!readOnly" btnStyle="flat" (buttonClicked)="openNpmPackageModal()" btnSize="small">
       Add npm package
     </app-button>
-
-    <app-button [loading]="testLoading" btnStyle="flat" btnColor="basic" class="ml-1" btnSize="small"
+    <app-button [loading]="testLoading" btnStyle="flat" class="ap-ml-1" btnSize="small"
       (buttonClicked)="openTestCodeModal()">Test code
     </app-button>
     <app-icon-button (click)="hide()" [iconFilename]="'minimize.svg'"></app-icon-button>
-
   </div>
+
+
   <div class="modal-body ap-flex-grow">
     <div class="ap-flex code-height-auto code-container">
-      <div class="p-2">
-        <div class="p-2">
-          <div class="ap-flex flex-column">
-            <div class="p-2 ap-items-center ap-flex flex-row file-container"
+      <div class="ap-p-2">
+        <div class="ap-p-2">
+          <div class="ap-flex ap-flex-col">
+            <div class="ap-p-2 ap-items-center ap-flex flex-row file-container"
               [class.file-active]="SelectedFileInFullscreenCodeEditor.CONTENT === selectedFile"
               (click)="selectFile(SelectedFileInFullscreenCodeEditor.CONTENT)">
               <div>
-                <app-img class="code-file-icon" [width]="16" [height]="16" [src]="'/assets/img/custom/files/js.svg'">
-                </app-img>
+                <svg-icon class="code-file-icon" [svgStyle]="{width:'16px' , height:'16px'}"
+                  src="/assets/img/custom/files/js.svg">
+                </svg-icon>
               </div>
-              <div class="ml-2">index.js</div>
+              <div class="ap-ml-2">index.js</div>
             </div>
 
-            <div class="p-2 ap-items-center ap-flex flex-row file-container mt-2"
+            <div class="ap-p-2 ap-items-center ap-flex flex-row file-container ap-mt-2"
               [class.file-active]="SelectedFileInFullscreenCodeEditor.PACKAGE === selectedFile"
               (click)="selectFile(SelectedFileInFullscreenCodeEditor.PACKAGE)">
               <div>
-                <app-img class="code-file-icon" [width]="16" [height]="16"
-                  [src]="'/assets/img/custom/files/package.svg'"></app-img>
+                <svg-icon class="code-file-icon" [svgStyle]="{width:'16px' , height:'16px'}"
+                  src="/assets/img/custom/files/package.svg">
+                </svg-icon>
               </div>
-              <div class="ml-2">package.json</div>
+              <div class="ap-ml-2">package.json</div>
             </div>
           </div>
         </div>
       </div>
-      <div class="p-2 ap-flex-grow overflow-auto">
-        <div class="h-100">
+      <div class="ap-p-2 ap-flex-grow overflow-auto">
+        <div class="ap-h-full">
           <!-- Use ngModel to update the editor outside the modal -->
           <ngx-monaco-editor *ngIf="selectedFile === SelectedFileInFullscreenCodeEditor.CONTENT"
             [options]="codeEditorOptions" [ngModel]="contentControl().value"
-            (ngModelChange)="contentControl().setValue($event)" class="h-100"></ngx-monaco-editor>
+            (ngModelChange)="contentControl().setValue($event)" class="ap-h-full"></ngx-monaco-editor>
 
-          <ngx-monaco-editor *ngIf="selectedFile ===  SelectedFileInFullscreenCodeEditor.PACKAGE" class="h-100"
+          <ngx-monaco-editor *ngIf="selectedFile ===  SelectedFileInFullscreenCodeEditor.PACKAGE" class="ap-h-full"
             [ngModel]="packageControl().value" (ngModelChange)="packageControl().setValue($event)"
             [options]="packageDotJsonOptions"></ngx-monaco-editor>
         </div>
 
       </div>
-      <div class="p-2 console-container">
-        <div class="console-size code-height-auto h-100">
-          <div class="ap-flex flex-column h-100">
-            <div class="ap-flex">
+      <div class="ap-p-2 console-container">
+        <div class="console-size code-height-auto ap-h-full">
+          <div class="ap-flex ap-flex-col ap-h-full">
+            <div class="ap-flex ap-gap-2">
               <app-button btnColor="primary"
                 [btnStyle]="selectedTab === SelectedTabInFullscreenCodeEditor.OUTPUT? 'flat':'stroked'" class="mr-2"
                 btnSize="small" (buttonClicked)="selectTab(SelectedTabInFullscreenCodeEditor.OUTPUT)"> Output
@@ -67,15 +67,14 @@
                 [btnStyle]="selectedTab === SelectedTabInFullscreenCodeEditor.CONSOLE? 'flat':'stroked'"
                 (buttonClicked)="selectTab(SelectedTabInFullscreenCodeEditor.CONSOLE)"> Console
               </app-button>
-
-
             </div>
-            <div class="mt-2 ap-flex-grow position-relative">
-              <form [formGroup]="testResultForm" class="h-100">
-                <ngx-codemirror *ngIf="selectedTab === SelectedTabInFullscreenCodeEditor.OUTPUT" class="h-100"
+            <div class="ap-mt-2 ap-flex-grow ap-relative">
+              <form [formGroup]="testResultForm" class="ap-h-full">
+                <ngx-codemirror *ngIf="selectedTab === SelectedTabInFullscreenCodeEditor.OUTPUT" class="ap-h-full"
                   formControlName="outputResult" [options]="outputResultEditorOptions"></ngx-codemirror>
                 <ngx-codemirror *ngIf="selectedTab === SelectedTabInFullscreenCodeEditor.CONSOLE"
-                  formControlName="consoleResult" [options]="consoleResultEditoroptions" class="h-100"></ngx-codemirror>
+                  formControlName="consoleResult" [options]="consoleResultEditoroptions"
+                  class="ap-h-full"></ngx-codemirror>
               </form>
               <div class="test-code-loading-container" *ngIf="testLoading">
                 <div>

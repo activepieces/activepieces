@@ -1,10 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormGroup, FormBuilder, FormControl } from '@angular/forms';
 import { Observable, Subject, takeUntil, tap } from 'rxjs';
 import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
 import { Artifact } from 'src/app/modules/flow-builder/model/artifact.interface';
 import { StepCacheKey } from 'src/app/modules/flow-builder/service/artifact-cache-key';
-import { CodeStepInputFormSchema, InputFormsSchema } from '../input-forms-schema';
+import { CodeStepInputFormSchema } from '../input-forms-schema';
 
 @Component({
 	selector: 'app-code-step-input-form',
@@ -19,7 +19,7 @@ import { CodeStepInputFormSchema, InputFormsSchema } from '../input-forms-schema
 	],
 })
 export class CodeStepInputFormComponent implements ControlValueAccessor {
-	codeStepForm: UntypedFormGroup;
+	codeStepForm: FormGroup<{ input: FormControl<string>; artifact: FormControl<Artifact> }>;
 	_stepArtifact$: Observable<Artifact>;
 	inputControlValueChanged$: Observable<any>;
 	artifactControlValueChanged$: Observable<any>;
@@ -31,12 +31,12 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
 		this._stepArtifact$ = artifact$.pipe(
 			tap(artifact => {
 				this.stepArtifactChanged$.next(true);
-				const artifactControl = this.codeStepForm.get('artifact')!;
+				const artifactControl = this.codeStepForm.controls.artifact;
 				artifactControl.setValue(artifact);
 				this.artifactControlValueChanged$ = artifactControl.valueChanges.pipe(
 					takeUntil(this.stepArtifactChanged$),
 					tap(() => {
-						const parametersControlValue = this.codeStepForm.get('input')!.value;
+						const parametersControlValue = this.codeStepForm.controls.input.value;
 						this.onChange({ input: parametersControlValue });
 					})
 				);
@@ -47,19 +47,19 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
 	onChange = (value: CodeStepInputFormSchema) => {};
 	onTouch = () => {};
 
-	constructor(private formBuilder: UntypedFormBuilder) {
+	constructor(private formBuilder: FormBuilder) {
 		this.codeStepForm = this.formBuilder.group({
-			input: new UntypedFormControl(''),
-			artifact: new UntypedFormControl(),
+			input: new FormControl('', { nonNullable: true }),
+			artifact: new FormControl({ content: '', package: '' }, { nonNullable: true }),
 		});
-		this.inputControlValueChanged$ = this.codeStepForm.get('input')!.valueChanges.pipe(
+		this.inputControlValueChanged$ = this.codeStepForm.controls.input.valueChanges.pipe(
 			tap(parametersControlValue => {
 				this.onChange({ input: parametersControlValue });
 			})
 		);
 	}
 
-	writeValue(obj: InputFormsSchema): void {
+	writeValue(obj: CodeStepInputFormSchema): void {
 		if (obj.type === ActionType.CODE) {
 			this.codeStepForm.patchValue(obj);
 			if (this.codeStepForm.disabled) {

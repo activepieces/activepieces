@@ -1,15 +1,14 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
-import { Observable, switchMap, take, tap } from 'rxjs';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormGroup, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Observable } from 'rxjs';
 import { CodeTestExecutionResult } from 'src/app/modules/common/model/flow-builder/code-test-execution-result';
 import { ThemeService } from 'src/app/modules/common/service/theme.service';
 import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
+import { CodeArtifactForm } from '../code-artifact-form-control.component';
 import { SelectedFileInFullscreenCodeEditor } from '../selected-file-in-fullscreeen-code-editor.enum';
-import { NewAddNpmPackageModalComponent } from './add-npm-package-modal/add-npm-package-modal.component';
+
 import { SelectedTabInFullscreenCodeEditor } from './selected-tab-in-fullscreen-code-editor.enum';
-import { TestCodeFormModalComponent } from './test-code-form-modal/test-code-form-modal.component';
 
 type PackageName = string;
 type PackageVersion = string;
@@ -18,8 +17,8 @@ type PackageVersion = string;
 	styleUrls: ['./code-artifact-control-fullscreen.component.scss'],
 })
 export class CodeArtifactControlFullscreenComponent implements OnInit {
-	@Input() codeFilesForm: UntypedFormGroup;
-	@Input() readOnly: boolean;
+	codeFilesForm: FormGroup<CodeArtifactForm>;
+	readOnly: boolean;
 	selectedFile = SelectedFileInFullscreenCodeEditor.CONTENT;
 	executeCodeTest$: Observable<CodeTestExecutionResult>;
 	codeEditorOptions = {
@@ -52,15 +51,16 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 	testLoading = false;
 	constructor(
 		public themeService: ThemeService,
-		private modalRef: BsModalRef,
 		private formBuilder: UntypedFormBuilder,
-		private modalService: BsModalService,
-		private codeService: CodeService
+		private codeService: CodeService,
+		@Inject(MAT_DIALOG_DATA) public state: { codeFilesForm: UntypedFormGroup; readOnly: boolean }
 	) {
 		this.testResultForm = this.formBuilder.group({
 			outputResult: new UntypedFormControl(),
 			consoleResult: new UntypedFormControl(),
 		});
+		this.codeFilesForm = this.state.codeFilesForm;
+		this.readOnly = this.state.readOnly;
 	}
 	ngOnInit(): void {
 		if (this.readOnly) {
@@ -82,14 +82,14 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 		return SelectedTabInFullscreenCodeEditor;
 	}
 	openNpmPackageModal() {
-		const npmModal: BsModalRef<NewAddNpmPackageModalComponent> = this.modalService.show(NewAddNpmPackageModalComponent);
-		this.addNpmPackage$ = npmModal.content!.packageFound$.pipe(
-			take(1),
-			tap(pkg => {
-				this.addNewPackage(pkg);
-				this.selectedFile = SelectedFileInFullscreenCodeEditor.PACKAGE;
-			})
-		);
+		// const npmModal: BsModalRef<NewAddNpmPackageModalComponent> = this.modalService.show(NewAddNpmPackageModalComponent);
+		// this.addNpmPackage$ = npmModal.content!.packageFound$.pipe(
+		// 	take(1),
+		// 	tap(pkg => {
+		// 		this.addNewPackage(pkg);
+		// 		this.selectedFile = SelectedFileInFullscreenCodeEditor.PACKAGE;
+		// 	})
+		// );
 	}
 	addNewPackage(pkg: { [key: PackageName]: PackageVersion }) {
 		const packageDotJson = this.getPackageDotJsonObject();
@@ -109,23 +109,23 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 		}
 	}
 	openTestCodeModal() {
-		const testContextModal: BsModalRef<TestCodeFormModalComponent> = this.modalService.show(TestCodeFormModalComponent);
-		this.executeCodeTest$ = testContextModal.content!.contextSubmitted.pipe(
-			take(1),
-			tap(() => {
-				this.testResultForm.setValue({ outputResult: '', consoleResult: '' });
-				this.testLoading = true;
-			}),
-			switchMap(context => {
-				return this.codeService.executeTest(this.codeFilesForm.value, context);
-			}),
-			tap(result => {
-				const outputResult = this.codeService.beautifyJson(result.output);
-				const consoleResult = this.getConsoleResult(result);
-				this.testResultForm.setValue({ outputResult: outputResult, consoleResult: consoleResult });
-				this.testLoading = false;
-			})
-		);
+		// const testContextModal: BsModalRef<TestCodeFormModalComponent> = this.modalService.show(TestCodeFormModalComponent);
+		// this.executeCodeTest$ = testContextModal.content!.contextSubmitted.pipe(
+		// 	take(1),
+		// 	tap(() => {
+		// 		this.testResultForm.setValue({ outputResult: '', consoleResult: '' });
+		// 		this.testLoading = true;
+		// 	}),
+		// 	switchMap(context => {
+		// 		return this.codeService.executeTest(this.codeFilesForm.getRawValue(), context);
+		// 	}),
+		// 	tap(result => {
+		// 		const outputResult = this.codeService.beautifyJson(result.output);
+		// 		const consoleResult = this.getConsoleResult(result);
+		// 		this.testResultForm.setValue({ outputResult: outputResult, consoleResult: consoleResult });
+		// 		this.testLoading = false;
+		// 	})
+		// );
 	}
 
 	getConsoleResult(codeTestExecutionResult: CodeTestExecutionResult) {
@@ -135,7 +135,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 		return codeTestExecutionResult.standard_output;
 	}
 	hide() {
-		this.modalRef.hide();
+		// this.modalRef.hide();
 	}
 	packageControl() {
 		return this.codeFilesForm.get('package')!;

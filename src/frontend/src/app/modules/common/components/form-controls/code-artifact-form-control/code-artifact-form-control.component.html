@@ -1,12 +1,13 @@
 <form [formGroup]="codeArtifactForm">
   <div class="code-font-sm code-size-200 code-block">
-    <div class="py-2 px-4 ap-flex bar-containing-expand-button">
+    <div class="ap-py-2 ap-px-4 ap-flex bar-containing-expand-button">
       <div class="ap-flex-grow">
-        <span class="text-white">Index.js</span>
+        <span class="ap-text-white">Index.js</span>
       </div>
       <div>
-        <app-img [src]="'/assets/img/custom/maximize.svg'" [width]="16" [height]="16" class="cursor-pointer"
-          (click)="showFullscreenEditor()"></app-img>
+        <svg-icon src="/assets/img/custom/maximize.svg" [svgStyle]="{width:'16px', height:'16px'}"
+          class="ap-cursor-pointer" (click)="showFullscreenEditor()"> </svg-icon>
+
       </div>
     </div>
 
