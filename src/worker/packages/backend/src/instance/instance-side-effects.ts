@@ -1,11 +1,17 @@
-import { FlowVersion, FlowVersionState, Instance, InstanceStatus } from "shared";
+import { CollectionVersion, CollectionVersionState, FlowVersion, FlowVersionState, Instance, InstanceStatus } from "shared";
 import { In } from "typeorm";
+import { collectionVersionRepo } from "../collections/collection-version/collection-version-repo";
 import { flowVersionRepo } from "../flows/flow-version/flow-version-repo";
 import { triggerUtils } from "../helper/trigger-utils";
+import { InstanceSchema } from "./instance-entity";
 
 export const instanceSideEffects = {
-    async enable(instance: Partial<Instance>): Promise<void> {
-        if (instance.status === InstanceStatus.DISABLED || !instance.flowIdToVersionId) {
+    async enable(instance: Partial<InstanceSchema>): Promise<void> {
+        if (
+            instance.status === InstanceStatus.DISABLED
+            || !instance.flowIdToVersionId
+            || !instance.collectionVersion
+        ) {
             return;
         }
 
@@ -15,7 +21,10 @@ export const instanceSideEffects = {
             id: In(flowVersionIds),
         });
 
-        await lockFlowVersions(flowVersions);
+        await lockVersions({
+            collectionVersion: instance.collectionVersion,
+            flowVersions,
+        });
 
         const enableTriggers = flowVersions.map(triggerUtils.enable);
 
@@ -39,10 +48,22 @@ export const instanceSideEffects = {
     }
 };
 
-const lockFlowVersions = async (flowVersions: FlowVersion[]): Promise<void> => {
+const lockVersions = async ({ collectionVersion, flowVersions }: LockVersionsParams): Promise<void> => {
+    collectionVersion.state = CollectionVersionState.LOCKED;
+
     flowVersions.forEach(flowVersion => {
         flowVersion.state = FlowVersionState.LOCKED;
     });
 
-    await flowVersionRepo.save(flowVersions);
+    const saveLockedVersions = [
+        collectionVersionRepo.save(collectionVersion),
+        flowVersionRepo.save(flowVersions),
+    ];
+
+    await Promise.all(saveLockedVersions);
+};
+
+type LockVersionsParams = {
+    collectionVersion: CollectionVersion,
+    flowVersions: FlowVersion[],
 };
