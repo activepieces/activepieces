@@ -1,14 +1,13 @@
-import {PropsValue} from "./property/prop.model";
 
 
-export interface Context{
+export interface Context<T>{
     payload?: unknown;
     webhookUrl?: string,
-    propsValue: PropsValue,
+    propsValue: T,
     store?: Store
 }
 
 export type Store = {
-    save(key: string): Promise<unknown>;
-    get(key: string): Promise<unknown>;
+    save<T>(key: string, value: T): Promise<T>;
+    get<T>(key: string): Promise<T>;
 }

@@ -1,6 +1,5 @@
-import { pieces } from "pieces";
+import {pieces, TriggerStrategy} from "pieces";
 import { FlowVersion, PieceTrigger, Trigger, TriggerType as FlowTriggerType } from "shared";
-import { TriggerType as PieceTriggerType } from "pieces";
 import { ActivepiecesError, ErrorCode } from "./activepieces-error";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
 
@@ -40,14 +39,14 @@ const disablePieceTrigger = async (flowVersion: FlowVersion): Promise<void> => {
     const pieceTrigger = getPieceTrigger(flowTrigger);
 
     switch (pieceTrigger.type) {
-        case PieceTriggerType.WEBHOOK:
+        case TriggerStrategy.WEBHOOK:
             await pieceTrigger.onDisable({
                 webhookUrl: `${PIECES_WEBHOOK_BASE_URL}/flow-version/${flowVersion.id}`,
                 propsValue: flowTrigger.settings.input,
             });
             break;
 
-        case PieceTriggerType.POLLING:
+        case TriggerStrategy.POLLING:
             await flowQueue.remove({
                 id: flowVersion.id,
             });
@@ -60,14 +59,14 @@ const enablePieceTrigger = async (flowVersion: FlowVersion): Promise<void> => {
     const pieceTrigger = getPieceTrigger(flowTrigger);
 
     switch (pieceTrigger.type) {
-        case PieceTriggerType.WEBHOOK:
+        case TriggerStrategy.WEBHOOK:
             await pieceTrigger.onEnable({
                 webhookUrl: `${PIECES_WEBHOOK_BASE_URL}/flow-version/${flowVersion.id}`,
                 propsValue: flowTrigger.settings.input,
             });
             break;
 
-        case PieceTriggerType.POLLING:
+        case TriggerStrategy.POLLING:
             await flowQueue.add({
                 id: flowVersion.id,
                 data: {

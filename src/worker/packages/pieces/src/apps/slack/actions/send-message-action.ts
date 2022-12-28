@@ -2,30 +2,25 @@ import {AuthenticationType} from '../../../common/authentication/core/authentica
 import {HttpMethod} from '../../../common/http/core/http-method';
 import type {HttpRequest} from '../../../common/http/core/http-request';
 import {createAction} from '../../../framework/action/action';
-import {httpClient} from "../../../common/http/core/http-client";
-import {PropertyType} from "../../../framework/property/prop.model";
-import {Context} from "../../../framework/context";
+import {httpClient} from "../../../common/http/core/http-client";;
+import {Props} from "../../../framework/property/prop.model";
 
 export const slackSendMessageAction = createAction({
     name: 'send_channel_message',
     displayName: "Send Slack Message",
     description: 'Send Slack Message',
-    props: [
-        {
-            name: 'authentication',
+    props: {
+        authentication: Props.OAuth2({
             description: "",
             displayName: 'Authentication',
-            type: PropertyType.OAUTH2,
             authUrl: "https://slack.com/oauth/authorize",
             tokenUrl: "https://slack.com/api/oauth.access",
             required: true,
             scope: ["channels:read", "channels:write"]
-        },
-        {
-            name: 'channel',
+        }),
+        channel: Props.Dropdown({
             displayName: 'Channel',
             description: 'Channel, private group, or IM channel to send message to. Can be an encoded ID, or a name. See [below](#channels) for more details.',
-            type: PropertyType.DROPDOWN,
             required: true,
             async options(configuration) {
                 return {
@@ -46,44 +41,38 @@ export const slackSendMessageAction = createAction({
                     ]
                 }
             },
-        },
-        {
-            name: 'text',
+        }),
+        text: Props.LongText({
             displayName: 'Message',
             description: 'The text of your message',
-            type: PropertyType.LONG_TEXT,
             required: true,
-        },
-        {
-            name: 'as_user',
+        }),
+        as_user: Props.LongText({
             displayName: 'Send as a Bot?',
             description: 'Pass true to post the message as the authed user, instead of as a bot. Defaults to false. See [authorship](#authorship) below.',
-            type: PropertyType.CHECKBOX,
-            required: false,
-        },
-        {
-            name: 'username',
+            required: true,
+        }),
+        username: Props.ShortText({
             displayName: 'Bot name',
             description: 'Set your bot\'s user name. Must be used in conjunction with `as_user` set to false, otherwise ignored. See [authorship](#authorship) below.',
-            type: PropertyType.SHORT_TEXT,
             required: false,
-        }
-    ],
-    async run(context: Context) {
+        })
+    },
+    async run(context) {
         let configValue = context.propsValue;
-        let body = {
+        let body: Record<string, unknown> = {
             text: configValue['text'],
             channel: configValue['channel'],
             as_user: configValue['as_user'],
             username: configValue['username']
         };
-        const request: HttpRequest<Record<string, string>> = {
+        const request: HttpRequest<Record<string, unknown>> = {
             method: HttpMethod.POST,
             url: 'https://slack.com/api/chat.postMessage',
             body: body,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: configValue['authentication']['access_token'],
+                token: configValue['authentication']!['access_token'],
             },
             queryParams: {},
         };

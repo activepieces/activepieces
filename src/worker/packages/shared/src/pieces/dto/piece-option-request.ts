@@ -1,7 +1,7 @@
 export interface PieceOptionRequest {
     stepName: string;
     configName: string;
-    configs: Record<string, unknown>;
+    configs: Record<string, any>;
 }
 
 export const PieceOptionRequestSchema = {

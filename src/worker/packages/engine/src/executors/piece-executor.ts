@@ -1,10 +1,9 @@
 import {pieces} from "pieces/dist/src/apps";
 import {Piece} from "pieces/dist/src/framework/piece";
-import {PropsValue, Context} from "pieces";
 
 
 export class PieceExecutor {
-    public async exec(pieceName: string, actionName: string, config: PropsValue) {
+    public async exec(pieceName: string, actionName: string, config: Record<string, any>) {
         const piece = this.getPiece(pieceName);
 
         return await piece.getAction(actionName)!.run({

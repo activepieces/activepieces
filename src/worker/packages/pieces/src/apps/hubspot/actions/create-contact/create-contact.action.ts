@@ -1,87 +1,73 @@
-import { AuthenticationType } from "../../../../common/authentication/core/authentication-type";
-import { httpClient } from "../../../../common/http/core/http-client";
-import { HttpMethod } from "../../../../common/http/core/http-method";
-import { HttpRequest } from "../../../../common/http/core/http-request";
-import { createAction } from "../../../../framework/action/action";
-import {PropertyType} from "../../../../framework/property/prop.model";
+import {AuthenticationType} from "../../../../common/authentication/core/authentication-type";
+import {httpClient} from "../../../../common/http/core/http-client";
+import {HttpMethod} from "../../../../common/http/core/http-method";
+import {HttpRequest} from "../../../../common/http/core/http-request";
+import {createAction} from "../../../../framework/action/action";
 import {Context} from "../../../../framework/context";
+import {Props} from "../../../../framework/property/prop.model";
 
 
 export const createHubspotContact = createAction({
-	name: 'create_contact',
-	displayName: "Create Contact",
-	description: "Create Contact",
-	props: [
-		{
-			name: 'authentication',
-			description: "",
-			displayName: 'Authentication',
-			type: PropertyType.OAUTH2,
-			authUrl: "https://app.hubspot.com/oauth/authorize",
-			tokenUrl: "https://api.hubapi.com/oauth/v1/token",
-			required: true,
-			scope: ["crm.objects.contacts.write"]
-		},
-		{
-			name: 'firstName',
-			displayName: 'First Name',
-			description: 'First name of the new contact',
-			type: PropertyType.SHORT_TEXT,
-			required: true,
-		},
-        {
-			name: 'lastName',
-			displayName: 'Last Name',
-			description: 'Last name of the new contact',
-			type: PropertyType.SHORT_TEXT,
-			required: true,
-		},
-        {
-			name: 'zip',
-			displayName: 'Zip Code',
-			description: 'Zip code of the new contact',
-			type: PropertyType.SHORT_TEXT,
-			required: false,
-		},
-        {
-			name: 'email',
-			displayName: 'Email',
-			description: 'Email of the new contact',
-			type: PropertyType.SHORT_TEXT,
-			required: false,
-		},
-
-		
-	],
-	async run(context: Context) {
-        const configsWIthoutAuthentication= {...context.propsValue};
-        delete configsWIthoutAuthentication['authentication'];
-        const properties = Object.keys(configsWIthoutAuthentication).map(configKey=>{
-            return {
-                property: configKey,
-                value:configsWIthoutAuthentication[configKey]
-            }
+    name: 'create_contact',
+    displayName: "Create Contact",
+    description: "Create Contact",
+    props: {
+        authentication: Props.OAuth2({
+            description: "",
+            displayName: 'Authentication',
+            authUrl: "https://app.hubspot.com/oauth/authorize",
+            tokenUrl: "https://api.hubapi.com/oauth/v1/token",
+            required: true,
+            scope: ["crm.objects.contacts.write"]
+        }),
+        firstName: Props.ShortText({
+            displayName: 'First Name',
+            description: 'First name of the new contact',
+            required: true,
+        }),
+        lastName: Props.ShortText({
+            displayName: 'Last Name',
+            description: 'Last name of the new contact',
+            required: true,
+        }),
+        zip: Props.ShortText({
+            displayName: 'Zip Code',
+            description: 'Zip code of the new contact',
+            required: false,
+        }),
+        email: Props.ShortText({
+            displayName: 'Email',
+            description: 'Email of the new contact',
+            required: false,
         })
-		const body = {
-			properties: properties
-		};
-		const request: HttpRequest<{properties:{property:string, value:string}[]}> = {
-			method: HttpMethod.POST,
-			url: 'https://api.hubapi.com/contacts/v1/contact/',
-			body: body,
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: context.propsValue['authentication']['access_token'],
-			},
-			queryParams: {},
-		};
+    },
+    async run(context) {
+        const configsWithoutAuthentication = {...context.propsValue};
+        delete configsWithoutAuthentication['authentication'];
+        const body = {
+            properties: Object.entries(configsWithoutAuthentication).map(f => {
+                return {
+                    property: f[0] as string,
+                    value: f[1]
+                }
+            }),
+        }
+        const request: HttpRequest<{ properties: { property: string, value: any }[] }> = {
+            method: HttpMethod.POST,
+            url: 'https://api.hubapi.com/contacts/v1/contact/',
+            body: body,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: context.propsValue.authentication!.access_token,
+            },
+            queryParams: {},
+        };
+        const result = await httpClient.sendRequest(request);
 
-		const result = await httpClient.sendRequest(request);
-
-		return {
-			success: true,
-			request_body: body,
-			response_body: result
-		};
-	},
+        return {
+            success: true,
+            request_body: body,
+            response_body: result
+        };
+    },
 });

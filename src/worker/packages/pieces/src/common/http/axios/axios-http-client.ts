@@ -15,8 +15,8 @@ export class AxiosHttpClient extends BaseHttpClient {
 		super(baseUrl, authenticationConverter);
 	}
 
-    async sendRequest<RequestBody extends HttpMessageBody, ResponseBody extends HttpMessageBody>(
-        request: HttpRequest<RequestBody>
+    async sendRequest<ResponseBody extends HttpMessageBody>(
+        request: HttpRequest<HttpMessageBody>
     ): Promise<ResponseBody> {
         const url = this.getUrl(request);
 		const headers = this.getHeaders(request);

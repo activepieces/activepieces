@@ -3,65 +3,53 @@ import type {HttpRequest} from '../../../common/http/core/http-request';
 import {HttpMethod} from '../../../common/http/core/http-method';
 import {AuthenticationType} from '../../../common/authentication/core/authentication-type';
 import {httpClient} from '../../../common/http/core/http-client';
-import {PropertyType} from "../../../framework/property/prop.model";
+import {Props} from "../../../framework/property/prop.model";
 export const gmailSendEmailAction = createAction({
 	name: 'send_email',
 	description: 'Send an email through a Gmail account',
     displayName:'Send Email',
-	props: [
-		{
-			name: 'authentication',
+	props: {
+		authentication: Props.OAuth2({
 			description: "",
 			displayName: 'Authentication',
-			type: PropertyType.OAUTH2,
 			authUrl: "https://accounts.google.com/o/oauth2/auth",
 			tokenUrl: "https://oauth2.googleapis.com/token",
 			required: true,
 			scope: ["https://mail.google.com/"]
-		},
-		{
-			name: 'sender',
+		}),
+		sender: Props.ShortText({
 			displayName: 'Sender Email (From)',
 			description: undefined,
-			type: PropertyType.SHORT_TEXT,
 			required: true,
-		},
-		{
-			name: 'receiver',
+		}),
+		receiver: Props.ShortText({
 			displayName: 'receiver Email (To)',
 			description: undefined,
-			type: PropertyType.SHORT_TEXT,
 			required: true,
-		},
-		{
-			name: 'subject',
+		}),
+		subject: Props.ShortText({
 			displayName: 'Subject',
 			description: undefined,
-			type:  PropertyType.SHORT_TEXT,
 			required: true,
-		},
-		{
-			name: 'bodyText',
+		}),
+		body_text: Props.ShortText({
 			displayName: 'Body (Text)',
 			description: 'Text version of the body for the email you want to send',
-			type:  PropertyType.LONG_TEXT,
 			required: true,
-		},
-		{
-			name: 'bodyHml',
+		}),
+		body_html: Props.ShortText({
 			displayName: 'Body (HTML)',
 			description: 'HTML version of the body for the email you want to send',
-			type:  PropertyType.LONG_TEXT,
 			required: false,
-		},
-	],
+		})
+	},
 	async run(configValue) {
 		const mailOptions = {
 			from: configValue.propsValue['sender'],
 			to: configValue.propsValue['receiver'],
 			subject: configValue.propsValue['subject'],
-			text: configValue.propsValue['bodyText'],
-			html: configValue.propsValue['bodyHtml'],
+			text: configValue.propsValue['body_text'],
+			html: configValue.propsValue['body_html'],
 		};
 		const emailText = `From: ${mailOptions.from}
 To: ${mailOptions.to}
@@ -77,15 +65,15 @@ ${mailOptions.html ? mailOptions.html : mailOptions.text}`;
 				headers: [
 					{
 						name: 'from',
-						value: mailOptions.from,
+						value: mailOptions.from!,
 					},
 					{
 						name: 'to',
-						value: mailOptions.to,
+						value: mailOptions.to!,
 					},
 					{
 						name: 'subject',
-						value: mailOptions.subject,
+						value: mailOptions.subject!,
 					},
 				],
 				mimeType: 'text/html',
@@ -97,7 +85,7 @@ ${mailOptions.html ? mailOptions.html : mailOptions.text}`;
 			body: requestBody,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: configValue.propsValue['authentication']['access_token'],
+				token: configValue.propsValue['authentication']!['access_token'],
 			},
 			queryParams: {},
 		};
