@@ -1,4 +1,4 @@
-export {Context} from "../components/dist/src/framework/context";
+export {Context} from "./src/framework/context";
 
 export {PropsValue} from "./src/framework/property/prop.model";
 export * from "./src/framework/property/prop.model";
