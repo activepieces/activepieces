@@ -33,7 +33,7 @@ export const instanceSideEffects = {
             id: In(flowVersionIds),
         });
 
-        const disableTriggers = flowVersions.map(triggerUtils.enable);
+        const disableTriggers = flowVersions.map(triggerUtils.disable);
 
         await Promise.all(disableTriggers);
     }
