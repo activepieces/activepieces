@@ -15,6 +15,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@fastify/cors": "^8.2.0",
         "@fastify/jwt": "^6.5.0",
         "@fastify/type-provider-typebox": "^2.4.0",
         "@types/koa": "^2.13.4",

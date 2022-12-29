@@ -17,6 +17,7 @@ import { flowRunModule } from "./flow-run/flow-run-module";
 import { flagModule } from "./flags/flag.module";
 import { codeModule } from "./workers/code-worker/code.module";
 import { flowWorkerModule } from "./workers/flow-worker/flow-worker.module";
+import cors from '@fastify/cors'
 
 declare module "fastify" {
   export interface FastifyRequest {
@@ -26,6 +27,10 @@ declare module "fastify" {
 
 const app = fastify({
   logger: true,
+});
+app.register(cors, {
+  origin: "*",
+  methods: ["*"]
 });
 app.addHook("onRequest", tokenVerifyMiddleware);
 app.register(databaseModule);

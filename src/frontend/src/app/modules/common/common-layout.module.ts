@@ -43,7 +43,6 @@ import { AddNpmPackageModalComponent } from './components/form-controls/code-art
 import { NgSelectTagValueTemplateComponent } from './components/form-controls/ng-select-tag-value-template/ng-select-tag-value-template.component';
 import { projectReducer } from './store/reducer/project.reducer';
 import { ItemTextPipe } from './components/form-controls/ng-select-tag-value-template/item-text.pipe';
-import { PopoverModule } from 'ngx-bootstrap/popover';
 import { TrackHoverDirective } from './components/form-controls/dictionary-form-control/track-hover.directive';
 import { NgSelectConnectorActionItemTemplateComponent } from './components/form-controls/ng-select-connector-action-item-template/ng-select-connector-action-item-template.component';
 import { RequestTypeTemplateComponent } from './components/form-controls/request-type-template/request-type-template.component';
@@ -130,7 +129,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MonacoEditorModule,
 		NgSelectModule,
 		MatSnackBarModule,
-		PopoverModule,
 		MatSlideToggleModule,
 		MatCardModule,
 		MatFormFieldModule,
@@ -144,7 +142,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	],
 	exports: [
 		EditableTextComponent,
-		PopoverModule,
 		IconButtonComponent,
 		StateIconComponent,
 		JsonViewComponent,
