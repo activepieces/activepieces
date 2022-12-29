@@ -6,7 +6,7 @@
     "fs-extra": "^10.1.0",
     "lodash.get": "^4.4.2",
     "unzip-stream": "^0.3.1",
-    "components": "*"
+    "pieces": "*"
   },
   "devDependencies": {
     "webpack-ignore-dynamic-require": "^1.0.0",
@@ -26,7 +26,7 @@
     "webpack-cli": "^4.10.0"
   },
   "scripts": {
-    "build": "webpack --mode production && cp dist/activepieces-worker.js ../../../backend/backend-loader/src/main/resources/activepieces-worker.js",
+    "build": "webpack --mode production && cp dist/activepieces-engine.js ../backend/resources/activepieces-engine.js",
     "lint": "gts lint",
     "clean": "gts clean",
     "compile": "gts clean && tsc && cd dist/src && node index.js",

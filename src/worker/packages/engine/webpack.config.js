@@ -17,7 +17,7 @@ module.exports = {
   entry: path.resolve(__dirname, 'src/index.ts'),
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'activepieces-worker.js',
+    filename: 'activepieces-engine.js',
     publicPath: '/dist/',
   },
   resolve: {
