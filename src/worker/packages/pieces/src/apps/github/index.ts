@@ -4,7 +4,7 @@ import {githubNewRepoEvent} from "./trigger/new-star";
 export const github = createPiece({
 	name: 'github',
 	displayName: "Github",
-	logoUrl: 'https://cdn.activepieces.com/components/github/logo.png',
+	logoUrl: 'https://cdn.activepieces.com/components/github.png',
 	actions: [],
 	triggers: [githubNewRepoEvent],
 });

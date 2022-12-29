@@ -1,5 +1,5 @@
 import {createTrigger, TriggerStrategy} from "../../../framework/trigger/trigger";
-import {Props} from "../../../framework/property/prop.model";
+import {Property} from "../../../framework/property/prop.model";
 
 export const newLeads = createTrigger(
     {
@@ -8,7 +8,7 @@ export const newLeads = createTrigger(
         description: "This webhook will be triggered on creation on new leads",
         type: TriggerStrategy.WEBHOOK,
         props: {
-            authentication: Props.OAuth2({
+            authentication: Property.OAuth2({
                 description: "",
                 displayName: 'Authentication',
                 authUrl: "https://www.facebook.com/v15.0/dialog/oauth",

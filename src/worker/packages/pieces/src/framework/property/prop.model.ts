@@ -6,13 +6,14 @@ type BasicPropertySchema = {
 };
 
 type DropdownPropertySchema<T> = BasicPropertySchema & {
-	options: (propsValue: Record<string, number | string | DropdownState<any> | AuthPropertyValue>) => Promise<DropdownState<T>>
+	options: (propsValue: Record<string, AuthPropertyValue | number | string | DropdownState<any>>) => Promise<DropdownState<T>>
 }
 
 type OAuth2PropertySchema = BasicPropertySchema & {
 	authUrl: string;
 	tokenUrl: string;
 	scope: string[];
+	extra?: Record<string, unknown>
 }
 
 export enum PropertyType {
@@ -43,6 +44,7 @@ export interface NumberProperty extends BasicPropertySchema, TPropertyValue<numb
 
 export type AuthPropertyValue = {
 	access_token: string;
+	data: Record<string, any>
 }
 
 export interface OAuth2Property extends OAuth2PropertySchema, TPropertyValue<AuthPropertyValue, PropertyType.OAUTH2> {
@@ -50,6 +52,7 @@ export interface OAuth2Property extends OAuth2PropertySchema, TPropertyValue<Aut
 
 export type DropdownState<T> = {
 	disabled?: boolean;
+	placeholder?: string;
 	options: DropdownOption<T>[];
 }
 
@@ -60,23 +63,20 @@ export type DropdownOption<T>= {
 
 export interface DropdownProperty<T> extends DropdownPropertySchema<T>, TPropertyValue<T, PropertyType.DROPDOWN> {}
 
-export type Property =
-	| ShortTextProperty
-	| LongTextProperty
-	| OAuth2Property
-	| CheckboxProperty
-	| DropdownProperty<any>
-	| NumberProperty;
-
 export interface PropertySchema {
-	[name: string]: Property
+	[name: string]: ShortTextProperty
+		| LongTextProperty
+		| OAuth2Property
+		| CheckboxProperty
+		| DropdownProperty<any>
+		| NumberProperty;
 }
 
 export type StaticPropsValue<T extends PropertySchema> = {
 	[P in keyof T]: T[P]['valueSchema'];
 }
 
-export const Props = {
+export const Property = {
 	ShortText(request: BasicPropertySchema): ShortTextProperty {
 		return {...request, valueSchema: undefined, type: PropertyType.SHORT_TEXT};
 	},

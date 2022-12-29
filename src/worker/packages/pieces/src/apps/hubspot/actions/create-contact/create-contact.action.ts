@@ -4,7 +4,7 @@ import {HttpMethod} from "../../../../common/http/core/http-method";
 import {HttpRequest} from "../../../../common/http/core/http-request";
 import {createAction} from "../../../../framework/action/action";
 import {Context} from "../../../../framework/context";
-import {Props} from "../../../../framework/property/prop.model";
+import {Property} from "../../../../framework/property/prop.model";
 
 
 export const createHubspotContact = createAction({
@@ -12,7 +12,7 @@ export const createHubspotContact = createAction({
     displayName: "Create Contact",
     description: "Create Contact",
     props: {
-        authentication: Props.OAuth2({
+        authentication: Property.OAuth2({
             description: "",
             displayName: 'Authentication',
             authUrl: "https://app.hubspot.com/oauth/authorize",
@@ -20,22 +20,22 @@ export const createHubspotContact = createAction({
             required: true,
             scope: ["crm.objects.contacts.write"]
         }),
-        firstName: Props.ShortText({
+        firstName: Property.ShortText({
             displayName: 'First Name',
             description: 'First name of the new contact',
             required: true,
         }),
-        lastName: Props.ShortText({
+        lastName: Property.ShortText({
             displayName: 'Last Name',
             description: 'Last name of the new contact',
             required: true,
         }),
-        zip: Props.ShortText({
+        zip: Property.ShortText({
             displayName: 'Zip Code',
             description: 'Zip code of the new contact',
             required: false,
         }),
-        email: Props.ShortText({
+        email: Property.ShortText({
             displayName: 'Email',
             description: 'Email of the new contact',
             required: false,

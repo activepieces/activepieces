@@ -3,13 +3,14 @@ import type {HttpRequest} from '../../../common/http/core/http-request';
 import {HttpMethod} from '../../../common/http/core/http-method';
 import {AuthenticationType} from '../../../common/authentication/core/authentication-type';
 import {httpClient} from '../../../common/http/core/http-client';
-import {Props} from "../../../framework/property/prop.model";
+import {Property} from "../../../framework/property/prop.model";
+
 export const gmailSendEmailAction = createAction({
 	name: 'send_email',
 	description: 'Send an email through a Gmail account',
     displayName:'Send Email',
 	props: {
-		authentication: Props.OAuth2({
+		authentication: Property.OAuth2({
 			description: "",
 			displayName: 'Authentication',
 			authUrl: "https://accounts.google.com/o/oauth2/auth",
@@ -17,27 +18,27 @@ export const gmailSendEmailAction = createAction({
 			required: true,
 			scope: ["https://mail.google.com/"]
 		}),
-		sender: Props.ShortText({
+		sender: Property.ShortText({
 			displayName: 'Sender Email (From)',
 			description: undefined,
 			required: true,
 		}),
-		receiver: Props.ShortText({
+		receiver: Property.ShortText({
 			displayName: 'receiver Email (To)',
 			description: undefined,
 			required: true,
 		}),
-		subject: Props.ShortText({
+		subject: Property.ShortText({
 			displayName: 'Subject',
 			description: undefined,
 			required: true,
 		}),
-		body_text: Props.ShortText({
+		body_text: Property.ShortText({
 			displayName: 'Body (Text)',
 			description: 'Text version of the body for the email you want to send',
 			required: true,
 		}),
-		body_html: Props.ShortText({
+		body_html: Property.ShortText({
 			displayName: 'Body (HTML)',
 			description: 'HTML version of the body for the email you want to send',
 			required: false,
