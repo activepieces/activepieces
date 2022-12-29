@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { ConnectorComponent } from '../../common/components/configs-form/connector-action-or-config';
 import { environment } from 'src/environments/environment';
 import { Observable, shareReplay } from 'rxjs';
-import { DropdownItemOption } from '../../common/model/dropdown-item-option';
+import { DropdownOption } from '../../common/model/dropdown-options';
 
 @Injectable({
 	providedIn: 'root',
@@ -32,12 +32,6 @@ export class ActionMetaService {
 			description: 'Store or retrieve data from activepieces key/value database',
 			logoUrl: '/assets/img/custom/piece/storage.svg',
 		},
-		{
-			type: ActionType.RESPONSE,
-			name: 'Response',
-			description: 'Return response to caller workflow',
-			logoUrl: '/assets/img/custom/piece/response.svg',
-		},
 	];
 
 	public triggerItemsDetails = [
@@ -54,18 +48,6 @@ export class ActionMetaService {
 			logoUrl: '/assets/img/custom/piece/webhook.svg',
 		},
 		{
-			type: TriggerType.COLLECTION_DISABLED,
-			name: 'Collection Disabled',
-			description: 'Trigger flow when collection is stopped and on old deployments if a new deployment occurs',
-			logoUrl: '/assets/img/custom/piece/instance-stopped.svg',
-		},
-		{
-			type: TriggerType.COLLECTION_ENABLED,
-			name: 'Collection Enabled',
-			description: 'Trigger flow when collection is enabled or deployed',
-			logoUrl: '/assets/img/custom/piece/instance-started.svg',
-		},
-		{
 			type: TriggerType.EMPTY,
 			name: 'Trigger',
 			description: 'Choose a trigger',
@@ -73,19 +55,19 @@ export class ActionMetaService {
 		},
 	];
 	constructor(private http: HttpClient) {}
-	private getComponents() {
-		return this.http.get<ConnectorComponent[]>(environment.apiUrl + '/components');
+	private getPieces() {
+		return this.http.get<ConnectorComponent[]>(environment.apiUrl + '/pieces');
 	}
 	public connectorComponents() {
 		if (!this.connectorComponents$) {
-			this.connectorComponents$ = this.getComponents().pipe(shareReplay(1));
+			this.connectorComponents$ = this.getPieces().pipe(shareReplay(1));
 		}
 		return this.connectorComponents$;
 	}
 	getConnectorActionConfigOptions(
 		req: { config_name: string; action_name: string; config: any },
-		componentName: string
+		pieceName: string
 	) {
-		return this.http.post<DropdownItemOption[]>(environment.apiUrl + `/components/${componentName}/options`, req);
+		return this.http.post<DropdownOption[]>(environment.apiUrl + `/pieces/${pieceName}/options`, req);
 	}
 }

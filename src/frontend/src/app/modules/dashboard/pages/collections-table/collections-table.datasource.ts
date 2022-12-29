@@ -41,7 +41,7 @@ export class CollectionsTableDataSource extends DataSource<Collection> {
 				this.isLoading = true;
 			}),
 			switchMap(res => {
-				return this.collectionService.list(res.project.id, { pageSize: res.pageSize, cursor: res.pageCursor });
+				return this.collectionService.list( {  projectId: res.project.id, limit: res.pageSize, cursor: res.pageCursor });
 			}),
 			catchError(err => {
 				throw err;

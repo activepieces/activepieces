@@ -55,6 +55,7 @@
     "kl-angular-mentions": "^1.2.3",
     "marked": "^4.2.4",
     "monaco-editor": "^0.33.0",
+    "nanoid": "^4.0.0",
     "ngx-skeleton-loader": "^5.0.0",
     "ngx-timeago": "^2.0.0",
     "posthog-js": "^1.38.1",

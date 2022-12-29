@@ -12,12 +12,12 @@ import {
 import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
 import { fadeIn400ms } from 'src/app/modules/common/animation/fade-in.animations';
 export interface UserInfo {
-	first_name: FormControl<string>;
-	last_name: FormControl<string>;
+	firstName: FormControl<string>;
+	lastName: FormControl<string>;
 	email: FormControl<string>;
 	password: FormControl<string>;
-	track_events: FormControl<boolean>;
-	news_letter: FormControl<boolean>;
+  trackEvents: FormControl<boolean>;
+	newsLetter: FormControl<boolean>;
 }
 @Component({
 	templateUrl: './sign-up.component.html',
@@ -37,8 +37,8 @@ export class SignUpComponent {
 		public authenticationService: AuthenticationService
 	) {
 		this.registrationForm = this.formBuilder.group({
-			first_name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-			last_name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+			firstName: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+			lastName: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
 			email: new FormControl<string>('', {
 				nonNullable: true,
 				validators: [Validators.email, Validators.pattern('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'), Validators.required],
@@ -55,8 +55,8 @@ export class SignUpComponent {
 					containsNumber(),
 				],
 			}),
-			track_events: new FormControl<boolean>(false, { nonNullable: true }),
-			news_letter: new FormControl<boolean>(false, { nonNullable: true }),
+      trackEvents: new FormControl<boolean>(false, { nonNullable: true }),
+      newsLetter: new FormControl<boolean>(false, { nonNullable: true }),
 		});
 	}
 

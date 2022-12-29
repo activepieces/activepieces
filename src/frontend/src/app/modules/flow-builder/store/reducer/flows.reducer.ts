@@ -68,7 +68,7 @@ const _flowsReducer = createReducer(
 		const clonedFlows = clonedState.flows;
 		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
 		if (flowIndex != -1) {
-			clonedFlows[flowIndex].last_version = FlowVersion.clone(clonedFlows[flowIndex].last_version).replaceTrigger(
+			clonedFlows[flowIndex].version = FlowVersion.clone(clonedFlows[flowIndex].version).replaceTrigger(
 				newTrigger
 			);
 		}
@@ -83,10 +83,10 @@ const _flowsReducer = createReducer(
 		const clonedFlows: Flow[] = JSON.parse(JSON.stringify(state)).flows;
 		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
 		if (flowIndex != -1) {
-			clonedFlows[flowIndex].last_version = FlowVersion.clone(clonedFlows[flowIndex].last_version);
-			clonedFlows[flowIndex].last_version.dropPiece(draggedPieceName, newParentName);
+			clonedFlows[flowIndex].version = FlowVersion.clone(clonedFlows[flowIndex].version);
+			clonedFlows[flowIndex].version.dropPiece(draggedPieceName, newParentName);
 		}
-		clonedFlows[flowIndex].last_version.valid = false;
+		clonedFlows[flowIndex].version.valid = false;
 		return {
 			...state,
 			flows: clonedFlows,
@@ -103,7 +103,7 @@ const _flowsReducer = createReducer(
 		const tabeState = state.tabsState[state.selectedFlowId!.toString()];
 
 		if (flowIndex != -1) {
-			clonedFlows[flowIndex].last_version = FlowVersion.clone(clonedFlows[flowIndex].last_version).addNewChild(
+			clonedFlows[flowIndex].version = FlowVersion.clone(clonedFlows[flowIndex].version).addNewChild(
 				tabeState.rightSidebar.props.stepName,
 				newAction,
 				tabeState.rightSidebar.props.buttonType
@@ -127,7 +127,7 @@ const _flowsReducer = createReducer(
 		};
 		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
 		if (flowIndex != -1) {
-			clonedFlows[flowIndex].last_version = FlowVersion.clone(clonedFlows[flowIndex].last_version).updateStep(
+			clonedFlows[flowIndex].version = FlowVersion.clone(clonedFlows[flowIndex].version).updateStep(
 				stepName,
 				newStep
 			);
@@ -144,7 +144,7 @@ const _flowsReducer = createReducer(
 		const clonedFlows = clonedState.flows;
 		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
 		if (flowIndex != -1) {
-			clonedFlows[flowIndex].last_version = FlowVersion.clone(clonedFlows[flowIndex].last_version).deleteStep(stepName);
+			clonedFlows[flowIndex].version = FlowVersion.clone(clonedFlows[flowIndex].version).deleteStep(stepName);
 		}
 		return {
 			...state,
@@ -158,7 +158,7 @@ const _flowsReducer = createReducer(
 		const clonedFlows = clonedState.flows;
 		const flowIndex = clonedFlows.findIndex(f => f.id === flowId);
 		if (flowIndex != -1) {
-			clonedFlows[flowIndex].last_version.display_name = displayName;
+			clonedFlows[flowIndex].version.display_name = displayName;
 		}
 		return {
 			...state,
@@ -198,8 +198,8 @@ const _flowsReducer = createReducer(
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
 		//in case a new version was created after the former one was locked.
 		const flowSaved = clonedState.flows.find(f => f.id == flow.id)!;
-		flowSaved.last_version.id = flow.last_version.id;
-		flowSaved.last_version.state = flow.last_version.state;
+		flowSaved.version.id = flow.version.id;
+		flowSaved.version.state = flow.version.state;
 		return { ...clonedState };
 	}),
 	on(FlowsActions.setLeftSidebar, (state, { sidebarType }): FlowsState => {
@@ -266,7 +266,7 @@ const _flowsReducer = createReducer(
 		const flow: Flow | undefined = flowsState.flows.find(f => f.id === flowsState.selectedFlowId);
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(flowsState));
 		if (flow) {
-			const step = FlowStructureUtil.findStep(flow.last_version.trigger, stepName);
+			const step = FlowStructureUtil.findStep(flow.version.trigger, stepName);
 			const updatedTabState = {
 				...clonedState.tabsState[flow.id.toString()],
 				focusedStep: { ...step },

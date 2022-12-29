@@ -11,7 +11,7 @@ import { PosthogService } from 'src/app/modules/common/service/posthog.service';
 import { ApPaginatorComponent } from 'src/app/modules/common/components/pagination/ap-paginator.component';
 import { CollectionsTableDataSource } from './collections-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import { ArchiveCollectionDialogComponent } from './archive-collection-dialog/archive-collection-dialog.component';
+import { DeleteCollectionDialogComponent } from './delete-collection-dialog/delete-collection-dialog.component';
 import { ARE_THERE_COLLECTIONS_FLAG } from '../../dashboard.routing';
 import { DEFAULT_PAGE_SIZE } from 'src/app/modules/common/components/pagination/tables.utils';
 @Component({
@@ -59,7 +59,7 @@ export class CollectionsTableComponent implements OnInit {
 	}
 
 	archiveCollection(collection: Collection) {
-		const dialogRef = this.dialogService.open(ArchiveCollectionDialogComponent, { data: { ...collection } });
+		const dialogRef = this.dialogService.open(DeleteCollectionDialogComponent, { data: { ...collection } });
 		this.archiveCollectionDialogClosed$ = dialogRef.beforeClosed().pipe(
 			tap(res => {
 				if (res) {
@@ -78,21 +78,22 @@ export class CollectionsTableComponent implements OnInit {
 			const collectionDiplayName = 'Untitled';
 			this.createCollection$ = this.projectService.selectedProjectAndTakeOne().pipe(
 				switchMap(project => {
-					return this.collectionService.create(project.id, {
-						display_name: collectionDiplayName,
+					return this.collectionService.create({
+						projectId: project.id,
+						displayName: collectionDiplayName,
 					});
 				}),
 				switchMap(collection => {
-					if (this.authenticationService.currentUserSubject.value?.track_events) {
+					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('collection.created [Builder]', collection);
 					}
 					return this.flowService.create(collection.id, 'Flow 1');
 				}),
 				tap(flow => {
-					if (this.authenticationService.currentUserSubject.value?.track_events) {
+					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('flow.created [Builder]', flow);
 					}
-					this.router.navigate(['/flows/', flow.collection_id], { queryParams: { newCollection: true } });
+					this.router.navigate(['/flows/', flow.collectionId], { queryParams: { newCollection: true } });
 				})
 			);
 		}

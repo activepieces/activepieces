@@ -43,7 +43,7 @@ export class AppComponent implements OnInit {
 					return;
 				}
 				this.store.dispatch(CommonActions.loadInitial({ user: user }));
-				if (user.track_events) {
+				if (user.trackEvents) {
 					this.posthogService.init();
 				}
 			}),

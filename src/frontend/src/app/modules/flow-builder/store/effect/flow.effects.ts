@@ -91,8 +91,8 @@ export class FlowsEffects {
 				this.store.select(BuilderSelectors.selectCurrentCollection),
 			]),
 			concatMap(([action, flow, collection]) => {
-				if (collection.last_version.state === VersionEditState.LOCKED) {
-					return this.collectionService.update(collection.id, collection.last_version).pipe(
+				if (collection.version.state === VersionEditState.LOCKED) {
+					return this.collectionService.update(collection.id, collection.version).pipe(
 						map(() => {
 							const genSavedId = UUID.UUID();
 							return FlowsActions.saveFlowStarted({ flow: flow!, saveRequestId: genSavedId });
@@ -144,7 +144,7 @@ export class FlowsEffects {
 	);
 
 	private processFlowUpdate(request: { flow: Flow; tabState: TabState; saveRequestId: UUID }): Observable<Flow> {
-		return this.flowService.update(request.flow.id, request.flow.last_version).pipe(
+		return this.flowService.update(request.flow.id, request.flow.version).pipe(
 			tap(updatedFlow => {
 				this.store.dispatch(FlowsActions.savedSuccess({ saveRequestId: request.saveRequestId, flow: updatedFlow }));
 				const now = new Date();

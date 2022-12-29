@@ -24,7 +24,7 @@ export class CollectionEffects {
 				ofType(...SingleFlowModifyingState),
 				concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
 				filter(([action, collection]) => {
-					return collection.last_version.state === VersionEditState.LOCKED;
+					return collection.version.state === VersionEditState.LOCKED;
 				})
 			);
 		},
@@ -37,7 +37,7 @@ export class CollectionEffects {
 			concatLatestFrom(() => this.store.select(BuilderSelectors.selectCurrentCollection)),
 			debounceTime(autoSaveDebounceTime),
 			concatMap(([action, collection]) => {
-				return this.collectionService.update(collection.id, collection.last_version).pipe(
+				return this.collectionService.update(collection.id, collection.version).pipe(
 					tap(() => {
 						const now = new Date();
 						const nowDate = now.toLocaleDateString('en-us', {
@@ -124,7 +124,7 @@ export class CollectionEffects {
 			return this.actions$.pipe(
 				ofType(CollectionActions.deploySuccess),
 				tap(action => {
-					if (this.authenticationService.currentUserSubject.value?.track_events) {
+					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('collection.enable', action.instance);
 					}
 					this.snackBar.open(`Deployment finished`);

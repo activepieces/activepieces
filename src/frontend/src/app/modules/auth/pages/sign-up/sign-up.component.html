@@ -3,13 +3,13 @@
   <div class="ap-flex ap-gap-1 md:ap-gap-4 ap-items-center ap-flex-col md:ap-flex-row">
     <mat-form-field class="ap-w-full md:ap-w-initial" appearance="outline">
       <mat-label>First Name</mat-label>
-      <input matInput placeholder="John/Jane" formControlName="first_name" />
-      <mat-error *ngIf="registrationForm.controls.first_name.invalid"> First name is required </mat-error>
+      <input matInput placeholder="John/Jane" formControlName="firstName" />
+      <mat-error *ngIf="registrationForm.controls.firstName.invalid"> First name is required </mat-error>
     </mat-form-field>
     <mat-form-field class="ap-w-full md:ap-w-initial" appearance="outline">
       <mat-label>Last Name</mat-label>
-      <input matInput placeholder="Doe" formControlName="last_name" />
-      <mat-error *ngIf="registrationForm.controls.last_name.invalid"> Last name is required </mat-error>
+      <input matInput placeholder="Doe" formControlName="lastName" />
+      <mat-error *ngIf="registrationForm.controls.lastName.invalid"> Last name is required </mat-error>
     </mat-form-field>
   </div>
 
@@ -102,10 +102,10 @@
   <p @fadeInUp class="ap-text-danger ap-text-center" *ngIf="emailExists">
     You have already registered with this email.
   </p>
-  <mat-checkbox id="news_letter" class="news_letter" color="primary" formControlName="news_letter">Recieve updates and
+  <mat-checkbox id="news_letter" class="news_letter" color="primary" formControlName="newsLetter">Recieve updates and
     newsletters from activepieces</mat-checkbox>
 
-  <mat-checkbox id="track_events" color="primary" formControlName="track_events">Help improve activepieces by sending
+  <mat-checkbox id="trackEvents" color="primary" formControlName="trackEvents">Help improve activepieces by sending
     data anonymously</mat-checkbox>
 
   <div class="text-center">

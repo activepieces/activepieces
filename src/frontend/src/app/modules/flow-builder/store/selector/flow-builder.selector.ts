@@ -35,14 +35,9 @@ export const selectCurrentCollectionInstance = createSelector(selectBuilderState
 	return state.collectionState.instance;
 });
 
-export const selectCurrentCollectionName = createSelector(
-	selectCurrentCollection,
-	(collection: Collection) => collection.name
-);
-
 export const selectCurrentCollectionConfigs = createSelector(selectCurrentCollection, (collection: Collection) => {
-	return collection.last_version.configs.map(c => {
-		return { ...c, collectionVersionId: collection.last_version.id };
+	return collection.version.configs.map(c => {
+		return { ...c, collectionVersionId: collection.version.id };
 	});
 });
 
@@ -75,7 +70,7 @@ export const selectReadOnly = createSelector(
 
 export const selectFlows = createSelector(selectBuilderState, (state: GlobalBuilderState) => state.flowsState.flows);
 export const selectFlowsValidity = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
-	const allFlowsValidity = state.flowsState.flows.map(f => f.last_version.valid);
+	const allFlowsValidity = state.flowsState.flows.map(f => f.version.valid);
 	return allFlowsValidity.reduce((current, previous) => current && previous, true);
 });
 
@@ -84,7 +79,7 @@ export const selectFlowsCount = createSelector(selectFlows, (flows: Flow[]) => f
 export const selectCanPublish = createSelector(selectFlows, (flows: Flow[]) => {
 	let canPublish = true;
 	for (let i = 0; i < flows.length; ++i) {
-		if (!flows[i].last_version?.valid) {
+		if (!flows[i].version?.valid) {
 			canPublish = false;
 		}
 	}
@@ -126,7 +121,7 @@ export const selectFlow = (flowId: UUID) =>
 export const selectCurrentFlowValidity = createSelector(selectCurrentFlow, (flow: Flow | undefined) => {
 	if (!flow) return false;
 
-	return flow.last_version.valid;
+	return flow.version.valid;
 });
 
 export const selectFlowSelectedId = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
@@ -261,10 +256,10 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
 		if (triggerItemDetails) {
 			return triggerItemDetails;
 		}
-		if (flowItem.type === ActionType.COMPONENT) {
+		if (flowItem.type === ActionType.PIECE) {
 			return state.connectorComponentsActionsFlowItemDetails.find(f => f.name === flowItem.settings.component_name);
 		}
-		if (flowItem.type === TriggerType.COMPONENT) {
+		if (flowItem.type === TriggerType.PIECE) {
 			return state.connectorComponentsTriggersFlowItemDetails.find(f => f.name === flowItem.settings.component_name);
 		}
 
@@ -315,7 +310,6 @@ export const BuilderSelectors = {
 	selectCurrentFlow,
 	selectCurrentRightSideBar,
 	selectCurrentStep,
-	selectCurrentCollectionName,
 	selectCanPublish,
 	selectCurrentLeftSidebar,
 	selectCurrentLeftSidebarType,

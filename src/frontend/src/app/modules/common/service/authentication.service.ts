@@ -29,21 +29,24 @@ export class AuthenticationService {
     });
   }
 
-  signUp(request: { email; password; first_name; last_name }): Observable<HttpResponse<User>> {
+  signUp(request: { email; password; firstName; lastName; newsLetter; trackEvents;}): Observable<HttpResponse<User>> {
     return this.http.post<User>(environment.apiUrl + '/authentication/sign-up', request, {
       observe: 'response',
     });
   }
 
   saveToken(response: HttpResponse<any>) {
-    console.log(response.headers.get('Authorization'));
-    localStorage.setItem(environment.jwtTokenName, <string>response.headers.get('Authorization'));
+    localStorage.setItem(environment.jwtTokenName, response.body.token);
   }
 
   saveUser(response: HttpResponse<any>) {
     this.saveToken(response);
-    localStorage.setItem(environment.userPropertyNameInLocalStorage, JSON.stringify(response.body));
-    this.currentUserSubject.next(response.body);
+    this.updateUser(response.body);
+  }
+
+  updateUser(user: User) {
+    localStorage.setItem(environment.userPropertyNameInLocalStorage, JSON.stringify(user));
+    this.currentUserSubject.next(user);
   }
 
   isLoggedIn() {

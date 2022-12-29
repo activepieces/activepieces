@@ -1,70 +1,57 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../environments/environment';
-import { Collection, CollectionVersion } from '../model/collection.interface';
-import { Observable } from 'rxjs';
-import { SeekPage } from '../model/seek-page';
-import { UUID } from 'angular2-uuid';
-import { CodeService } from '../../flow-builder/service/code.service';
-import { InstanceStatus } from '../model/enum/instance-status';
-import { Instance } from '../model/instance.interface';
+import {Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {environment} from '../../../../environments/environment';
+import {Collection, CollectionVersion} from '../model/collection.interface';
+import {Observable} from 'rxjs';
+import {SeekPage} from '../model/seek-page';
+import {InstanceStatus} from '../model/enum/instance-status';
+import {Instance} from '../model/instance.interface';
+import {Config} from "../model/fields/variable/config";
+
 @Injectable({
 	providedIn: 'root',
 })
 export class CollectionService {
-	constructor(private http: HttpClient, private codeService: CodeService) {
-		this.codeService;
+	constructor(private http: HttpClient) {
 	}
 
-	create(
-		projectId: UUID,
-		collection: {
-			display_name: string;
-		}
+	create(collection: { projectId: string, displayName: string; }
 	): Observable<Collection> {
-		return this.http.post<Collection>(environment.apiUrl + '/projects/' + projectId + '/collections', collection);
+		return this.http.post<Collection>(environment.apiUrl +  '/collections', collection);
 	}
 
-	update(collectionId: UUID, collection: CollectionVersion): Observable<Collection> {
-		const updateCollection$ = this.http.put<Collection>(environment.apiUrl + '/collections/' + collectionId, {
-			display_name: collection.display_name,
-			configs: collection.configs,
-		});
-		return updateCollection$;
+	update(collectionId: string, updateCollection: {configs: Config[], displayName}): Observable<Collection> {
+    return this.http.put<Collection>(environment.apiUrl + '/collections/' + collectionId, updateCollection);
 	}
 
-	getVersion(versionId: UUID): Observable<CollectionVersion> {
-		return this.http.get<CollectionVersion>(environment.apiUrl + '/collection-versions/' + versionId);
+  // TODO REMOVE
+	listVersions(collectionId: string): Observable<CollectionVersion[]> {
+		return this.http.get<CollectionVersion[]>(environment.apiUrl + '/collections/' + collectionId + '/versions/', {});
 	}
 
-	listVersions(pieceId: UUID): Observable<CollectionVersion[]> {
-		return this.http.get<CollectionVersion[]>(environment.apiUrl + '/collections/' + pieceId + '/versions/', {});
+	get(collectionId: string): Observable<Collection> {
+		return this.http.get<Collection>(environment.apiUrl + '/collections/' + collectionId);
 	}
 
-	lock(pieceId: UUID): Observable<Collection> {
-		return this.http.post<Collection>(environment.apiUrl + '/collections/' + pieceId + '/commit', {});
-	}
-
-	get(pieceId: UUID): Observable<Collection> {
-		return this.http.get<Collection>(environment.apiUrl + '/collections/' + pieceId);
-	}
-
-	list(projectId: string, params: { pageSize: number; cursor: string }): Observable<SeekPage<Collection>> {
+	list(params: { projectId: string; limit: number; cursor: string }): Observable<SeekPage<Collection>> {
 		const queryParams: { [key: string]: string | number } = {};
-		queryParams['limit'] = params.pageSize;
+		queryParams['limit'] = params.limit;
+    queryParams['projectId'] = params.projectId;
 		if (params.cursor) {
 			queryParams['cursor'] = params.cursor;
 		}
-		return this.http.get<SeekPage<Collection>>(environment.apiUrl + '/projects/' + projectId + '/collections', {
+		return this.http.get<SeekPage<Collection>>(environment.apiUrl + '/collections', {
 			params: queryParams,
 		});
 	}
 
-	archive(pieceId: UUID): Observable<void> {
-		return this.http.delete<void>(environment.apiUrl + '/collections/' + pieceId);
+	delete(collectionId: string): Observable<void> {
+		return this.http.delete<void>(environment.apiUrl + '/collections/' + collectionId);
 	}
-	deploy(collection_id: UUID): Observable<Instance> {
-		return this.http.post<Instance>(environment.apiUrl + `/collections/${collection_id}/instance`, {
+
+  // TODO FIX
+	deploy(collectionId: string): Observable<Instance> {
+		return this.http.post<Instance>(environment.apiUrl + `/collections/${collectionId}/instance`, {
 			status: InstanceStatus.ENABLED,
 		});
 	}

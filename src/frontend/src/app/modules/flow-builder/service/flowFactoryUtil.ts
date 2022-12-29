@@ -13,7 +13,7 @@ export class FlowFactoryUtil {
 	constructor() {}
 
 	public static createRootStep(flow: Flow): FlowItem | undefined {
-		const latestVersion = flow.last_version;
+		const latestVersion = flow.version;
 		if (latestVersion.trigger) {
 			const newFlow = FlowFactoryUtil.addCordDetails(latestVersion.trigger);
 			FlowFactoryUtil.buildHelper(newFlow);
@@ -31,8 +31,7 @@ export class FlowFactoryUtil {
 				case ActionType.CODE:
 				case ActionType.STORAGE:
 				case ActionType.LOOP_ON_ITEMS:
-				case ActionType.RESPONSE:
-				case ActionType.COMPONENT:
+				case ActionType.PIECE:
 					const simple = this.addCordDetails(clonedContent);
 					FlowFactoryUtil.buildHelper(simple);
 					return simple;

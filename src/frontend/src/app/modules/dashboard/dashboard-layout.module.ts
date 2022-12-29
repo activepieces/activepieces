@@ -13,7 +13,7 @@ import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { EmptyCollectionsTableComponent } from './pages/collections-table/empty-collections-table/empty-collections-table.component';
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 import { SidenavRoutesListComponent } from './components/sidenav-routes-list/sidenav-routes-list.component';
-import { ArchiveCollectionDialogComponent } from './pages/collections-table/archive-collection-dialog/archive-collection-dialog.component';
+import { DeleteCollectionDialogComponent } from './pages/collections-table/delete-collection-dialog/delete-collection-dialog.component';
 import { PageTitleComponent } from './components/page-title/page-title.component';
 
 @NgModule({
@@ -24,7 +24,7 @@ import { PageTitleComponent } from './components/page-title/page-title.component
 		CollectionsTableComponent,
 		EmptyCollectionsTableComponent,
 		UserAvatarComponent,
-		ArchiveCollectionDialogComponent,
+		DeleteCollectionDialogComponent,
 		PageTitleComponent,
 	],
 	imports: [

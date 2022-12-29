@@ -14,7 +14,7 @@ export class AreThereCollectionsResovler implements Resolve<Observable<boolean>>
 	resolve(): Observable<boolean> {
 		return this.projectService.selectedProjectAndTakeOne().pipe(
 			switchMap(project => {
-				return this.collectionService.list(project.id, { pageSize: DEFAULT_PAGE_SIZE, cursor: '' }).pipe(
+				return this.collectionService.list({ projectId: project.id, limit: DEFAULT_PAGE_SIZE, cursor: '' }).pipe(
 					map(res => {
 						return res.data.length > 0;
 					})

@@ -98,7 +98,7 @@ export class TestFlowModalComponent implements OnInit {
 
 	testFlowButtonClicked(flow: Flow, collection: Collection, testFlowTemplate: TemplateRef<any>) {
 		this.submitted = true;
-		if (flow.last_version.trigger?.type === TriggerType.WEBHOOK) {
+		if (flow.version.trigger?.type === TriggerType.WEBHOOK) {
 			this.dialogRef = this.dialogService.open(testFlowTemplate);
 		} else {
 			this.executeTest(collection, flow, {});
@@ -112,7 +112,7 @@ export class TestFlowModalComponent implements OnInit {
 		}
 	}
 	executeTest(collection: Collection, flow: Flow, payload: Object) {
-		this.executeTest$ = this.flowService.execute(collection.last_version.id, flow.last_version.id, payload).pipe(
+		this.executeTest$ = this.flowService.execute(collection.version.id, flow.version.id, payload).pipe(
 			tap({
 				next: (instanceRun: InstanceRun) => {
 					this.testRunSnackbar = this.snackbar.openFromComponent(TestRunBarComponent, {
@@ -156,7 +156,7 @@ export class TestFlowModalComponent implements OnInit {
 			switchMap(() => this.instanceRunService.get(runId)),
 			switchMap(instanceRun => {
 				if (instanceRun.status !== InstanceRunStatus.RUNNING && instanceRun.logs_file_id) {
-					if (this.authenticationService.currentUserSubject.value?.track_events) {
+					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('flow.tested', instanceRun);
 					}
 					return this.flowService.logs(instanceRun.logs_file_id).pipe(

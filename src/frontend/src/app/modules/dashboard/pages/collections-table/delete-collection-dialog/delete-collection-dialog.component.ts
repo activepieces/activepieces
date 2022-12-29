@@ -7,31 +7,31 @@ import { Collection } from 'src/app/modules/common/model/collection.interface';
 import { CollectionService } from 'src/app/modules/common/service/collection.service';
 
 @Component({
-	templateUrl: './archive-collection-dialog.component.html',
+	templateUrl: './delete-collection-dialog.component.html',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ArchiveCollectionDialogComponent {
+export class DeleteCollectionDialogComponent {
 	confirmationForm: FormGroup<{ confirmation: FormControl<string> }>;
-	archiveCollection$: Observable<void>;
+	deleteCollection$: Observable<void>;
 	constructor(
 		private formBuilder: FormBuilder,
 		private collectionService: CollectionService,
 		private snackBar: MatSnackBar,
 		@Inject(MAT_DIALOG_DATA) public collection: Collection,
-		private dialogRef: MatDialogRef<ArchiveCollectionDialogComponent>
+		private dialogRef: MatDialogRef<DeleteCollectionDialogComponent>
 	) {
 		this.confirmationForm = this.formBuilder.group({
 			confirmation: new FormControl('', {
 				nonNullable: true,
-				validators: [Validators.required, Validators.pattern('ARCHIVE')],
+				validators: [Validators.required, Validators.pattern('DELETE')],
 			}),
 		});
 	}
-	archiveCollection() {
-		if (this.confirmationForm.valid && !this.archiveCollection$) {
-			this.archiveCollection$ = this.collectionService.delete(this.collection.id).pipe(
+	deleteCollection() {
+		if (this.confirmationForm.valid && !this.deleteCollection$) {
+			this.deleteCollection$ = this.collectionService.delete(this.collection.id).pipe(
 				catchError(err => {
-					this.snackBar.open('An error occured while archiving, please check your console', '', {
+					this.snackBar.open('An error occurred while deleting, please check your console', '', {
 						duration: undefined,
 						panelClass: 'error',
 					});
@@ -43,7 +43,7 @@ export class ArchiveCollectionDialogComponent {
 				}),
 				tap(() => {
 					this.dialogRef.close(true);
-					this.snackBar.open(`${this.collection.version.display_name} was archived successfully`);
+					this.snackBar.open(`${this.collection.version.displayName} was deleted successfully`);
 				})
 			);
 		}

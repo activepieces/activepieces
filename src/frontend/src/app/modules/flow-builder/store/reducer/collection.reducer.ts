@@ -1,5 +1,3 @@
-// // import the interface
-
 import { CollectionActions } from '../action/collection.action';
 import { UUID } from 'angular2-uuid';
 import { Action, createReducer, on } from '@ngrx/store';
@@ -13,21 +11,19 @@ const initialState: CollectionState = {
 	state: CollectionStateEnum.NONE,
 	lastSaveRequestId: UUID.UUID(),
 	collection: {
-		last_version: {
+		version: {
 			id: '',
-			display_name: 'dummy',
+      collectionId: "",
+			displayName: 'dummy',
 			state: VersionEditState.DRAFT,
 			configs: [],
-			flowsVersionId: [],
 			created: 0,
 			updated: 0,
 		},
 		created: 0,
 		updated: 0,
 		id: '',
-		name: 'dummy',
-		project_id: 'dummy',
-		versionsList: [],
+		projectId: 'dummy',
 	},
 	instance: undefined,
 };
@@ -39,7 +35,7 @@ const _collectionReducer = createReducer(
 	}),
 	on(CollectionActions.changeName, (state, { displayName }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		clonedState.collection.last_version.display_name = displayName;
+		clonedState.collection.version.displayName = displayName;
 		clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
 		return clonedState;
 	}),
@@ -55,19 +51,19 @@ const _collectionReducer = createReducer(
 
 	on(CollectionActions.addConfig, (state, { config }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		clonedState.collection.last_version.configs.push(config);
+		clonedState.collection.version.configs.push(config);
 		clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
 		return clonedState;
 	}),
 	on(CollectionActions.deleteConfigSucceeded, (state, { configIndex: index }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		clonedState.collection.last_version.configs.splice(index, 1);
+		clonedState.collection.version.configs.splice(index, 1);
 		clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
 		return clonedState;
 	}),
 	on(CollectionActions.updateConfig, (state, { configIndex, config }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		clonedState.collection.last_version.configs[configIndex] = config;
+		clonedState.collection.version.configs[configIndex] = config;
 		clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
 		return clonedState;
 	}),

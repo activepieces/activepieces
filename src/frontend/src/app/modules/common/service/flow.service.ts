@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
-import { CollectionVersion } from '../model/collection.interface';
 import { forkJoin, map, Observable, of, skipWhile, switchMap, take, tap } from 'rxjs';
 import { Flow } from '../model/flow.class';
 import { SeekPage } from '../model/seek-page';
@@ -59,7 +58,7 @@ export class FlowService {
 								})
 							)
 							.subscribe(tab => {
-								if (response.last_version.trigger?.type === TriggerType.EMPTY) {
+								if (response.version.trigger?.type === TriggerType.EMPTY) {
 									this.store.dispatch(
 										FlowsActions.setRightSidebar({
 											sidebarType: RightSideBarType.TRIGGER_TYPE,
@@ -75,28 +74,20 @@ export class FlowService {
 			);
 	}
 
-	create(colelctionId: UUID, flowDisplayName: string): Observable<Flow> {
-		const formData = new FormData();
-
-		const createDefaultFlowRequest = {
-			display_name: flowDisplayName,
-			trigger: {
-				name: 'trigger',
-				display_name: 'Trigger',
-				type: TriggerType.EMPTY,
-			},
-			valid: false,
-		};
-		formData.append('flow', new Blob([JSON.stringify(createDefaultFlowRequest)], { type: 'application/json' }));
-		const createFlow$ = this.http.post<Flow>(environment.apiUrl + '/collections/' + colelctionId + '/flows', formData);
-		return createFlow$;
+	create(collectionId: string, flowDisplayName: string): Observable<Flow> {
+		return this.http.post<Flow>(environment.apiUrl + '/flows', {
+			displayName: flowDisplayName,
+			collectionId: collectionId
+		
+		});
 	}
 
-	get(flowId: UUID): Observable<Flow> {
+	get(flowId: string): Observable<Flow> {
 		return this.http.get<Flow>(environment.apiUrl + '/flows/' + flowId);
 	}
 
-	getVersion(flowVersionId: UUID): Observable<FlowVersion> {
+	// TODO REMOVE
+	getVersion(flowVersionId: string): Observable<FlowVersion> {
 		return this.http.get<FlowVersion>(environment.apiUrl + '/flows/versions/' + flowVersionId);
 	}
 
@@ -104,18 +95,6 @@ export class FlowService {
 		return this.http.get<SeekPage<Flow>>(
 			environment.apiUrl + '/collections/' + integrationId + '/flows?limit=' + limit
 		);
-	}
-
-	listVersionsByFlowId(flowID: UUID): Observable<FlowVersion[]> {
-		return this.http.get<FlowVersion[]>(environment.apiUrl + '/flows/' + flowID + '/versions');
-	}
-
-	listByPieceVersion(pieceVersion: CollectionVersion): Observable<FlowVersion[]> {
-		return forkJoin(pieceVersion.flowsVersionId.map(item => this.getVersion(item)));
-	}
-
-	count(integrationId: UUID): Observable<number> {
-		return this.http.get<number>(environment.apiUrl + '/collections/' + integrationId + '/flows/count');
 	}
 
 	delete(workflowId: UUID): Observable<void> {

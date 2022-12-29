@@ -44,14 +44,14 @@ export class FlowItemsDetailsEffects {
 				.map(c => {
 					if (Object.keys(c.actions).length > 0 && !forTriggers) {
 						return new FlowItemDetails(
-							ActionType.COMPONENT,
+							ActionType.PIECE,
 							c.name,
 							`Connect to ${c.name} and use its api to make requests`,
 							c.logoUrl
 						);
 					} else if (Object.keys(c.triggers).length > 0 && forTriggers) {
 						return new FlowItemDetails(
-							TriggerType.COMPONENT,
+							TriggerType.PIECE,
 							c.name,
 							`Trigger this flow following a specific event on ${c.name}`,
 							c.logoUrl

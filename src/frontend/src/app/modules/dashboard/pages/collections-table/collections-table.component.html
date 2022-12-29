@@ -4,7 +4,7 @@
     <table mat-table [dataSource]="dataSource" class="ap-w-[100%] " aria-label="Collections">
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef>Name</th>
-        <td mat-cell *matCellDef="let collection">{{ collection.last_version.display_name }}</td>
+        <td mat-cell *matCellDef="let collection">{{ collection.version.displayName }}</td>
       </ng-container>
 
       <ng-container matColumnDef="created">

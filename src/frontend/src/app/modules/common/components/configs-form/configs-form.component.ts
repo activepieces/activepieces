@@ -18,9 +18,9 @@ import { ConfigType } from '../../model/enum/config-type';
 import { Config } from '../../model/fields/variable/config';
 import { ThemeService } from '../../service/theme.service';
 import { FrontEndConnectorConfig, InputType } from './connector-action-or-config';
-import { DropdownItemOption } from '../../model/dropdown-item-option';
 import { NewAuthenticationModalComponent } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 import { MatDialog } from '@angular/material/dialog';
+import { DropdownOption } from '../../model/dropdown-options';
 type ConfigKey = string;
 
 @Component({
@@ -56,10 +56,10 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	updateValueOnChange$: Observable<void> = new Observable<void>();
 	updateAuthConfig$: Observable<void>;
 	configType = InputType;
-	optionsObservables$: { [key: ConfigKey]: Observable<DropdownItemOption[]> } = {};
+	optionsObservables$: { [key: ConfigKey]: Observable<DropdownOption[]> } = {};
 	dropdownsLoadingFlags$: { [key: ConfigKey]: Observable<boolean> } = {};
-	allAuthConfigs$: Observable<DropdownItemOption[]>;
-	authConfigs: DropdownItemOption[] = [];
+	allAuthConfigs$: Observable<DropdownOption[]>;
+	authConfigs: DropdownOption[] = [];
 	updateOrAddConfigModalClosed$: Observable<void>;
 	authConfigDropdownChanged$: Observable<any>;
 	updatedAuthLabel = '';

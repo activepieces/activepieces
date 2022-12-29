@@ -26,10 +26,10 @@ export class UserAvatarComponent {
 	get userFirstLetter() {
 		if (
 			this.authenticationService.currentUser == undefined ||
-			this.authenticationService.currentUser.first_name == undefined
+			this.authenticationService.currentUser.firstName == undefined
 		) {
 			return '';
 		}
-		return this.authenticationService.currentUser.first_name[0];
+		return this.authenticationService.currentUser.firstName[0];
 	}
 }

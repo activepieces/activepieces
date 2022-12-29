@@ -33,21 +33,22 @@ export class EmptyCollectionsTableComponent {
 			const collectionDiplayName = 'Untitled';
 			this.createCollection$ = this.projectService.selectedProjectAndTakeOne().pipe(
 				switchMap(project => {
-					return this.collectionService.create(project.id, {
-						display_name: collectionDiplayName,
+					return this.collectionService.create( {
+            projectId: project.id,
+						displayName: collectionDiplayName,
 					});
 				}),
 				switchMap(collection => {
-					if (this.authenticationService.currentUserSubject.value?.track_events) {
+					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('collection.created [Start building]', collection);
 					}
 					return this.flowService.create(collection.id, 'Flow 1');
 				}),
 				tap(flow => {
-					if (this.authenticationService.currentUserSubject.value?.track_events) {
+					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('flow.created [Start building]', flow);
 					}
-					this.router.navigate(['/flows/', flow.collection_id], { queryParams: { newCollection: true } });
+					this.router.navigate(['/flows/', flow.collectionId], { queryParams: { newCollection: true } });
 				})
 			);
 		}

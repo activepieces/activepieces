@@ -80,15 +80,6 @@ export class FlowStructureUtil {
 
 	public static branches(mainPiece: FlowItem | Trigger): FlowItem[] {
 		const branches: FlowItem[] = [];
-		if (mainPiece.type === ActionType.BRANCH) {
-			const branchData = mainPiece;
-			for (let i = 0; i < branchData.settings.branches.length; ++i) {
-				const nextAction = branchData.settings.branches[i].nextAction;
-				if (nextAction) {
-					branches.push(nextAction);
-				}
-			}
-		}
 		if (mainPiece.type === ActionType.LOOP_ON_ITEMS) {
 			const loopAction = mainPiece as LoopOnItemActionInterface;
 			if (loopAction.firstLoopAction) {

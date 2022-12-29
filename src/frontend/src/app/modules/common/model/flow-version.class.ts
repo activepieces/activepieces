@@ -10,7 +10,7 @@ import { FlowItem } from './flow-builder/flow-item';
 
 export class FlowVersion {
 	id: UUID;
-	flow_id: UUID;
+	flow_id: string;
 	display_name: string;
 	state: VersionEditState;
 	created: number;
@@ -21,7 +21,7 @@ export class FlowVersion {
 	valid: boolean;
 	constructor(obj: {
 		id: UUID;
-		flow_id: UUID;
+		flow_id: string;
 		display_name: string;
 		description: string;
 		state: VersionEditState;

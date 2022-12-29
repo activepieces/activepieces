@@ -1,12 +1,11 @@
-import { UUID } from 'angular2-uuid';
 import { ActionStatus } from './enum/action-status';
 import { InstanceRunStatus } from './enum/instance-run-status';
 
 export interface InstanceRun {
-	id: UUID;
-	flow_version_id: UUID;
+	id: string;
+	flow_version_id: string;
 	status: InstanceRunStatus;
-	logs_file_id: UUID;
+	logs_file_id: string;
 	start_time: number;
 	finish_time: number;
 	collection_display_name: string;

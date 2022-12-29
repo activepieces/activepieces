@@ -99,7 +99,7 @@ export class StepTypeSidebarComponent implements OnInit {
 				if (this._showTriggers) {
 					this.replaceTrigger(flowItemDetails);
 				} else {
-					const stepName = FlowVersion.clone(flow.last_version).findAvailableName('step');
+					const stepName = FlowVersion.clone(flow.version).findAvailableName('step');
 					const settings: any = this.constructStepSettings(flowItemDetails.type as ActionType, flowItemDetails);
 					const action: FlowItem = {
 						type: flowItemDetails.type as ActionType,
@@ -134,16 +134,10 @@ export class StepTypeSidebarComponent implements OnInit {
 			trigger.settings.cron_expression = defaultCronJobForScheduleTrigger;
 			trigger.valid = true;
 		}
-		if (trigger.type === TriggerType.COLLECTION_DISABLED) {
-			trigger.valid = true;
-		}
-		if (trigger.type === TriggerType.COLLECTION_ENABLED) {
-			trigger.valid = true;
-		}
 		if (trigger.type === TriggerType.WEBHOOK) {
 			trigger.valid = true;
 		}
-		if (trigger.type === TriggerType.COMPONENT) {
+		if (trigger.type === TriggerType.PIECE) {
 			trigger.valid = false;
 
 			trigger.settings.component_name = triggerDetails.name;
@@ -170,11 +164,6 @@ export class StepTypeSidebarComponent implements OnInit {
 					items: '',
 				};
 			}
-			case ActionType.RESPONSE: {
-				return {
-					output: {},
-				};
-			}
 			case ActionType.STORAGE: {
 				return {
 					operation: StorageOperation.GET,
@@ -182,7 +171,7 @@ export class StepTypeSidebarComponent implements OnInit {
 					key: '',
 				};
 			}
-			case ActionType.COMPONENT: {
+			case ActionType.PIECE: {
 				const componentDetails = flowItemDetails as ComponentItemDetails;
 				return {
 					component_name: componentDetails.name,

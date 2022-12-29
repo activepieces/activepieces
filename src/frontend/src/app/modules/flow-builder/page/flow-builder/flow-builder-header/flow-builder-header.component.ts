@@ -26,7 +26,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
 	collection$: Observable<Collection>;
 	flowsCount$: Observable<number>;
 	viewMode$: Observable<boolean>;
-	disablePublishButton$: Observable<boolean>;
 	collectionActions$: Observable<ChevronDropdownOption[]>;
 	newCollectionCheck$: Observable<Params>;
 	collectionNameHovered = false;

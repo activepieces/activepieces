@@ -72,7 +72,7 @@ export class FlowBuilderTabComponent {
 	}
 
 	saveNewName(newName: string) {
-		if (this.flow.last_version.display_name == newName) {
+		if (this.flow.version.display_name == newName) {
 			this.revertNewName();
 		} else {
 			this.dispatchNewName(newName);
@@ -92,7 +92,7 @@ export class FlowBuilderTabComponent {
 		this.store.dispatch(
 			FlowsActions.changeName({
 				flowId: this.flow.id,
-				displayName: this.flow.last_version.display_name,
+				displayName: this.flow.version.display_name,
 			})
 		);
 	}

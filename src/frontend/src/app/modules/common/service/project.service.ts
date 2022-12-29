@@ -28,14 +28,6 @@ export class ProjectService {
 		);
 	}
 
-	update(project: Project): Observable<Project> {
-		return this.http.post<Project>(environment.apiUrl + '/projects/' + project.id, project);
-	}
-
-	get(projectId: string): Observable<Project> {
-		return this.http.get<Project>(environment.apiUrl + '/projects/' + projectId);
-	}
-
 	list(): Observable<Project[]> {
 		return this.http.get<Project[]>(environment.apiUrl + '/projects');
 	}

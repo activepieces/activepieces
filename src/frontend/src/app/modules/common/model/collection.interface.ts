@@ -3,20 +3,20 @@ import { Config } from './fields/variable/config';
 
 export interface Collection {
 	id: string;
-	name: string;
-	project_id: string;
-	last_version: CollectionVersion;
-	versionsList: string[];
+	projectId: string;
+	version: CollectionVersion;
 	created: number;
 	updated: number;
 }
 
 export interface CollectionVersion {
 	id: string;
-	display_name: string;
+	displayName: string;
+  	collectionId: string;
 	state: VersionEditState;
 	configs: Config[];
-	flowsVersionId: string[];
 	created: number;
 	updated: number;
 }
+
+
