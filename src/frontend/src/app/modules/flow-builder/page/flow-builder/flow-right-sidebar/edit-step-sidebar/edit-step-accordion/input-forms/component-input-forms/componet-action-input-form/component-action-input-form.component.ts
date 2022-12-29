@@ -296,7 +296,8 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 		}
 	}
 	actionDropdownCompareFn(item, selected) {
-		return item.value.actionName === selected.actionName;
+		debugger;
+		return item.actionName === selected.actionName;
 	}
 	setDisabledState?(isDisabled: boolean): void {
 		if (isDisabled) {

@@ -1,5 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import {
+	UntypedFormBuilder,
+	UntypedFormControl,
+	UntypedFormGroup,
+	NG_VALIDATORS,
+	NG_VALUE_ACCESSOR,
+	Validators,
+} from '@angular/forms';
 import { Config } from '@fortawesome/fontawesome-svg-core';
 import { map, Observable, of, tap } from 'rxjs';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
@@ -190,7 +197,10 @@ export class ComponentTriggerInputFormComponent {
 	private triggerSelected(selectedActionValue: { triggerName: string; configs: FrontEndConnectorConfig[] }) {
 		const configsForm = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME);
 		if (!configsForm) {
-			this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new UntypedFormControl([...selectedActionValue.configs]));
+			this.componentForm.addControl(
+				CONFIGS_FORM_CONTROL_NAME,
+				new UntypedFormControl([...selectedActionValue.configs])
+			);
 		} else {
 			configsForm.setValue([...selectedActionValue.configs]);
 		}
@@ -209,7 +219,7 @@ export class ComponentTriggerInputFormComponent {
 		return res;
 	}
 	triggerDropdownCompareFn(item, selected) {
-		return item.value.triggerName === selected.triggerName;
+		return item.triggerName === selected.triggerName;
 	}
 	setDisabledState?(isDisabled: boolean): void {
 		if (isDisabled) {

@@ -1,47 +1,34 @@
-<form [formGroup]="componentForm">
-  <div class="ap-flex flex-column connector-input-form-container ng-submitted">
+<form [formGroup]="componentForm" class="ap-flex ap-flex-col ap-gap-2">
 
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label> Action </mat-label>
+    <mat-select placeholder="Select an action" [formControlName]="ACTION_FORM_CONTROL_NAME"
+      [compareWith]="actionDropdownCompareFn">
+      <mat-select-trigger>
+        <ng-container *ngFor="let opt of actions$ | async">
+          {{opt.label.name}}
+        </ng-container>
+      </mat-select-trigger>
+      <mat-option *ngFor="let opt of actions$ | async" [value]="opt.value" [matTooltip]="opt.label.description">
+        <div>{{opt.label.name}}</div>
+        <div class="ap-typography-caption ap-text-description ap-truncate"> {{opt.label.description}}</div>
+      </mat-option>
+      <mat-option [disabled]="true" *ngIf=" ( actions$ | async) === undefined ||  (actions$ | async)?.length === 0">
+        No options available
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)?.invalid">
+      Action is required
+    </mat-error>
+  </mat-form-field>
+  <ng-container
+    *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value && componentForm.get(CONFIGS_FORM_CONTROL_NAME)">
     <div>
-      <label required>What do you want to do?</label>
-      <ng-select [formControlName]="ACTION_FORM_CONTROL_NAME" [items]="actions$ | async" bindLabel="label"
-        appearance="outline" bindValue="value" appendTo="body" [clearable]="false" [searchFn]="customSearchFn" #select
-        class="connector-actions-dropdown ap-w-full ap-bg-white" loadingText="Loading..."
-        [compareWith]="actionDropdownCompareFn">
-        <ng-template ng-notfound-tmp let-searchTerm="searchTerm">
-          <app-ng-select-no-items-found-template [searchTerm]="searchTerm">
-          </app-ng-select-no-items-found-template>
-        </ng-template>
-        <ng-template ng-option-tmp let-item="item">
-          <!-- <ng-container *ngIf="item !== customRequestItem">
-            <app-ng-select-connector-action-item-template [item]="item">
-            </app-ng-select-connector-action-item-template>
-          </ng-container> -->
-          {{item.label.name}}
-        </ng-template>
-      </ng-select>
-      <p @fadeInUp class="invalid-input" *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.invalid ">
-        Please select an action.
-      </p>
-
+      <app-configs-form [actionName]="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value?.actionName"
+        [componentName]="componentName" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
+      </app-configs-form>
     </div>
-
-
-    <ng-container *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value === customRequestItem.value">
-      <app-connector-custom-request-form-control [formControlName]="CUSTOM_REQUEST_FORM_CONTROL_NAME">
-      </app-connector-custom-request-form-control>
-    </ng-container>
-
-    <ng-container
-      *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value && componentForm.get(CONFIGS_FORM_CONTROL_NAME)">
-      <div>
-        <app-configs-form [actionName]="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value?.actionName"
-          [componentName]="componentName" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
-        </app-configs-form>
-      </div>
-    </ng-container>
-
-  </div>
-
+  </ng-container>
 </form>
 
 <ng-container *ngIf="valueChanges$ | async"></ng-container>

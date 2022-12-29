@@ -1,44 +1,40 @@
-<form [formGroup]="componentForm">
-  <div class="ap-flex flex-column connector-input-form-container ng-submitted">
+<form [formGroup]="componentForm" class="ap-flex ap-flex-col ap-gap-2">
 
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label> Trigger </mat-label>
+    <mat-select placeholder="Select an action" [formControlName]="TRIGGER_FORM_CONTROL_NAME"
+      [compareWith]="triggerDropdownCompareFn">
+
+      <mat-select-trigger>
+        <ng-container *ngFor="let opt of triggers$ | async">
+          {{opt.label.name}}
+        </ng-container>
+      </mat-select-trigger>
+
+      <mat-option *ngFor="let opt of triggers$ | async" [value]="opt.value" [matTooltip]="opt.label.description">
+        <div>{{opt.label.name}}</div>
+        <div class="ap-typography-caption ap-text-description ap-truncate"> {{opt.label.description}}</div>
+      </mat-option>
+      <mat-option [disabled]="true" *ngIf=" ( triggers$ | async) === undefined ||  (triggers$ | async)?.length === 0">
+        No options available
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="componentForm.get(TRIGGER_FORM_CONTROL_NAME)?.invalid">
+      Trigger is required
+    </mat-error>
+  </mat-form-field>
+
+  <ng-container
+    *ngIf="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value && componentForm.get(CONFIGS_FORM_CONTROL_NAME)">
     <div>
-      <label required>Trigger</label>
-      <ng-select [formControlName]="TRIGGER_FORM_CONTROL_NAME" [items]="triggers$ | async" bindLabel="label"
-        bindValue="value" appendTo="body" [clearable]="false" [searchFn]="customSearchFn" #select
-        class="connector-actions-dropdown" loadingText="Loading..." [compareWith]="triggerDropdownCompareFn">
-        <ng-template ng-notfound-tmp let-searchTerm="searchTerm">
-          <app-ng-select-no-items-found-template [searchTerm]="searchTerm">
-          </app-ng-select-no-items-found-template>
-        </ng-template>
-        <ng-template ng-label-tmp let-item="item">
-
-          <app-ng-select-connector-action-item-template [item]="selectedTrigger$ |async" [hideDescription]="true">
-          </app-ng-select-connector-action-item-template>
-        </ng-template>
-        <ng-template ng-option-tmp let-item="item">
-          <ng-container>
-            <app-ng-select-connector-action-item-template [item]="item">
-            </app-ng-select-connector-action-item-template>
-          </ng-container>
-        </ng-template>
-      </ng-select>
-      <p @fadeInUp class="invalid-input" *ngIf="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.invalid ">
-        Please select a trigger.
-      </p>
-
+      <app-configs-form [actionName]="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value?.actionName"
+        [componentName]="componentName" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
+      </app-configs-form>
     </div>
+  </ng-container>
 
 
-    <ng-container
-      *ngIf="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value && componentForm.get(CONFIGS_FORM_CONTROL_NAME)">
-      <div>
-        <app-configs-form [actionName]="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value?.actionName"
-          [componentName]="componentName" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
-        </app-configs-form>
-      </div>
-    </ng-container>
-
-  </div>
 
 </form>
 

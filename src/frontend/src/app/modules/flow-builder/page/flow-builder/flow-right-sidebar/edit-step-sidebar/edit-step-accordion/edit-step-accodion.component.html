@@ -37,12 +37,14 @@
                         [iconFilename]="'copy.svg'" [tooltipText]="'copy'"
                         (buttonClicked)="copyUrl(url)"></app-icon-button></p>
 
+                    <div class="ap-typography-caption ap-flex ap-flex-col ap-gap-2">
+                      <p [matTooltip]="url"> {{url}} </p>
+                      <p>This url will only be activated if the current collection is deployed after
+                        webhook
+                        trigger has been chosen. </p>
+                      <p>To access the payload object, use {{"${trigger}"}} </p>
 
-                    <p class="ap-mt-1 url-paragraph" [matTooltip]="url"> {{url}} </p>
-                    <p class="ap-mt-1">This url will only be activated if the current collection is deployed after
-                      webhook
-                      trigger has been chosen. </p>
-                    <p class="ap-mt-1">To access the payload object, use {{"${trigger}"}} </p>
+                    </div>
 
                   </section>
 

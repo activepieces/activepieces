@@ -10,8 +10,7 @@ import {
 	Validators,
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { BsModalService } from 'ngx-bootstrap/modal';
-import { catchError, map, mapTo, Observable, of, shareReplay, startWith, take, tap } from 'rxjs';
+import { catchError, map, Observable, of, shareReplay, startWith, take, tap } from 'rxjs';
 import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
@@ -21,6 +20,7 @@ import { ThemeService } from '../../service/theme.service';
 import { FrontEndConnectorConfig, InputType } from './connector-action-or-config';
 import { DropdownItemOption } from '../../model/dropdown-item-option';
 import { NewAuthenticationModalComponent } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
+import { MatDialog } from '@angular/material/dialog';
 type ConfigKey = string;
 
 @Component({
@@ -67,7 +67,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		private fb: UntypedFormBuilder,
 		public themeService: ThemeService,
 		private actionMetaDataService: ActionMetaService,
-		private modalService: BsModalService,
+		private dialogService: MatDialog,
 		private store: Store
 	) {
 		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions);
@@ -124,6 +124,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			}),
 			map(() => void 0)
 		);
+
+		this.form.markAllAsTouched();
 	}
 
 	private createConfigsFormControls(configs: FrontEndConnectorConfig[]) {
@@ -156,14 +158,20 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			{ config_name: dropdownConfig.key, action_name: actionName, config: authConfig },
 			componentName
 		);
-
 		this.optionsObservables$[dropdownConfig.key] = options$.pipe(
+			tap(opts => {
+				const currentConfigValue = this.form.get(dropdownConfig.key)!.value;
+				if (!opts.find(opt => opt.value == currentConfigValue)) {
+					this.form.get(dropdownConfig.key)!.setValue(null);
+				}
+			}),
 			shareReplay(1),
 			catchError(err => {
 				console.error(err);
 				return of([]);
 			})
 		);
+
 		this.dropdownsLoadingFlags$[dropdownConfig.key] = this.optionsObservables$[dropdownConfig.key].pipe(
 			startWith(null),
 			map(val => {
@@ -182,25 +190,21 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		this.selectedOptionalConfigs.push(config);
 	}
 	openNewAuthenticationModal(authConfigName: string) {
-		const modalRef = this.modalService.show(NewAuthenticationModalComponent, {
-			ignoreBackdropClick: true,
-			class: 'modal-dialog-centered',
-			initialState: {
-				connectorAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
-				appName: this.componentName,
-			},
-		});
-
-		this.updateOrAddConfigModalClosed$ = modalRef.onHidden.pipe(
-			tap((newAuthConfig: Config) => {
-				if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
-					const authConfigOptionValue = newAuthConfig.value;
-					this.form.get(authConfigName)!.setValue(authConfigOptionValue);
-					this.updatedAuthLabel = newAuthConfig.key;
-				}
-			}),
-			mapTo(void 0)
-		);
+		this.updateOrAddConfigModalClosed$ = this.dialogService
+			.open(NewAuthenticationModalComponent, {
+				data: { connectorAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2), appName: this.componentName },
+			})
+			.afterClosed()
+			.pipe(
+				tap((newAuthConfig: Config) => {
+					if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
+						const authConfigOptionValue = newAuthConfig.value;
+						this.form.get(authConfigName)!.setValue(authConfigOptionValue);
+						this.updatedAuthLabel = newAuthConfig.key;
+					}
+				}),
+				map(() => void 0)
+			);
 	}
 	editSelectedAuthConfig(authConfigKey: string) {
 		const selectedValue: any = this.form.get(authConfigKey)!.value;
@@ -216,28 +220,28 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			}),
 			tap(configAndIndex => {
 				if (configAndIndex) {
-					const modalRef = this.modalService.show(NewAuthenticationModalComponent, {
-						ignoreBackdropClick: true,
-						class: 'modal-dialog-centered',
-						initialState: {
-							configToUpdateWithIndex: configAndIndex,
-							connectorAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
-							appName: this.componentName,
-						},
-					});
-					this.updateOrAddConfigModalClosed$ = modalRef.onHidden.pipe(
-						tap((newAuthConfig: Config) => {
-							if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
-								const authConfigOptionValue = newAuthConfig.value;
-								this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
-								this.updatedAuthLabel = newAuthConfig.key;
-							}
-						}),
-						mapTo(void 0)
-					);
+					this.updateOrAddConfigModalClosed$ = this.dialogService
+						.open(NewAuthenticationModalComponent, {
+							data: {
+								configToUpdateWithIndex: configAndIndex,
+								connectorAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
+								appName: this.componentName,
+							},
+						})
+						.afterClosed()
+						.pipe(
+							tap((newAuthConfig: Config) => {
+								if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
+									const authConfigOptionValue = newAuthConfig.value;
+									this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
+									this.updatedAuthLabel = newAuthConfig.key;
+								}
+							}),
+							map(() => void 0)
+						);
 				}
 			}),
-			mapTo(void 0)
+			map(() => void 0)
 		);
 	}
 	refreshDropdowns(authConfigValue: any) {
@@ -247,7 +251,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			}
 		});
 	}
-	authenticationDropdownCompareWithFunction = (a: { label: string; value: any }, formControlValue: any) => {
-		return formControlValue && formControlValue['access_token'] === a.value['access_token'];
+	authenticationDropdownCompareWithFunction = (opt: any, formControlValue: any) => {
+		return formControlValue && formControlValue['access_token'] === opt['access_token'];
 	};
 }

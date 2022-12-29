@@ -49,7 +49,6 @@ import { NgSelectConnectorActionItemTemplateComponent } from './components/form-
 import { RequestTypeTemplateComponent } from './components/form-controls/request-type-template/request-type-template.component';
 import { NgSelectCustomRequestComponent } from './components/form-controls/ng-select-custom-request/ng-select-custom-request.component';
 import { NgSelectNoItemsFoundTemplateComponent } from './components/form-controls/ng-select-no-items-found-template/ng-select-no-items-found-template.component';
-import { MatLegacySlideToggleModule as MatSlideToggleModule } from '@angular/material/legacy-slide-toggle';
 import { EndpointFormControlComponent } from './components/form-controls/endpoint-form-control/endpoint-form-control.component';
 import { ConnectorCustomRequestFormControlComponent } from './components/form-controls/connector-custom-request-form-control/connector-custom-request-form-control.component';
 import { MatCardModule } from '@angular/material/card';
@@ -64,6 +63,7 @@ import { DialogTitleTemplateComponent } from './components/dialog-title-template
 import { MatDialogModule } from '@angular/material/dialog';
 import { JsonViewDialogComponent } from './components/json-view/json-view-dialog/json-view-dialog.component';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 0,
 	hideDelay: 0,

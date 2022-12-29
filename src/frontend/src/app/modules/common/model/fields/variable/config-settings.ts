@@ -6,4 +6,5 @@ export class OAuth2ConfigSettings {
 	scope: string = '';
 	client_secret: string = '';
 	response_type: string = 'code';
+	redirect_url: string = '';
 }

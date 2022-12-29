@@ -24,12 +24,13 @@ export class Oauth2Service {
 		scope: string;
 		token_url: string;
 		response_type: string;
+		redirect_url: string;
 	}): Observable<any> {
 		this.currentlyOpenPopUp?.close();
 		const winTarget = '_blank';
 		const winFeatures =
 			'resizable=no, toolbar=no,left=100, top=100, scrollbars=no, menubar=no, status=no, directories=no, location=no, width=600, height=800';
-		const redirect_uri = environment.redirectUrl;
+		const redirect_uri = request.redirect_url || environment.redirectUrl;
 		const url =
 			request.auth_url +
 			'?response_type=' +
@@ -49,7 +50,7 @@ export class Oauth2Service {
 		this.currentlyOpenPopUp = popup;
 		const codeObs$ = new Observable<any>(observer => {
 			window.addEventListener('message', function (event) {
-				if (environment.redirectUrl.startsWith(event.origin)) {
+				if (redirect_uri.startsWith(event.origin)) {
 					if (event.data != undefined) {
 						event.data.code = decodeURIComponent(event.data.code);
 						observer.next(event.data);
