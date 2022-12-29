@@ -6,7 +6,7 @@ import type {QueryParams} from './query-params';
 export type HttpRequest<RequestBody extends HttpMessageBody> = {
 	method: HttpMethod;
 	url: string;
-	body: RequestBody | undefined;
-	authentication: Authentication | undefined;
-	queryParams: QueryParams | undefined;
+	body?: RequestBody | undefined;
+	authentication?: Authentication | undefined;
+	queryParams?: QueryParams | undefined;
 };
