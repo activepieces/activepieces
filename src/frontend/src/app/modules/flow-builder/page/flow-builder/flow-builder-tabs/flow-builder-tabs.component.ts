@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { Flow } from '../../../../common/model/flow.class';
 import { ThemeService } from '../../../../common/service/theme.service';
-import { BsModalRef } from 'ngx-bootstrap/modal';
 import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { exhaustMap, fromEvent, map, Observable, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
@@ -18,7 +17,6 @@ import { BuilderSelectors } from '../../../store/selector/flow-builder.selector'
 })
 export class FlowBuilderTabsComponent implements OnInit, AfterViewInit {
 	flows$: Observable<Flow[]>;
-	bsModalRef: BsModalRef;
 	viewMode$: Observable<ViewModeEnum>;
 	isFlowSelected$: Observable<boolean>;
 	viewSingleMode: boolean;

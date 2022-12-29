@@ -1,28 +1,22 @@
-import {EntitySchema, ObjectLiteral, ObjectType} from 'typeorm';
-import Paginator, {Order} from "./paginator";
-
+import { EntitySchema, ObjectLiteral } from "typeorm";
+import Paginator, { Order } from "./paginator";
 
 export interface PagingQuery {
   afterCursor?: string;
   beforeCursor?: string;
   limit?: number;
-  order?: Order | 'ASC' | 'DESC';
+  order?: Order | "ASC" | "DESC";
 }
 
 export interface PaginationOptions<Entity> {
   entity: EntitySchema<Entity>;
   alias?: string;
   query?: PagingQuery;
-  paginationKeys: Extract<keyof Entity, string>[];
+  paginationKeys: Array<Extract<keyof Entity, string>>;
 }
 
 export function buildPaginator<Entity extends ObjectLiteral>(options: PaginationOptions<Entity>): Paginator<Entity> {
-  const {
-    entity,
-    query = {},
-    alias = entity.options.name.toLowerCase(),
-    paginationKeys,
-  } = options;
+  const { entity, query = {}, alias = entity.options.name.toLowerCase(), paginationKeys } = options;
 
   const paginator = new Paginator(entity, paginationKeys);
 

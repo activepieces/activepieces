@@ -2,7 +2,6 @@ import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild } from '@an
 import { ActivatedRoute, Params } from '@angular/router';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { InstanceRunStatus } from '../../../common/model/enum/instance-run-status';
-import { BsModalRef } from 'ngx-bootstrap/modal';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { Store } from '@ngrx/store';
@@ -32,7 +31,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 	@ViewChild('canvasWrapper') canvasWrapper: ElementRef;
 	@ViewChild('rightSideDrawer', { read: ElementRef }) rightSideBar: ElementRef;
 	@ViewChild('leftSideDrawer', { read: ElementRef }) leftSideBar: ElementRef;
-	bsModalRef: BsModalRef;
 	rightSidebarWidth = '0';
 	leftSideBarWidth = '0';
 	leftSidebar$: Observable<LeftSideBarType>;

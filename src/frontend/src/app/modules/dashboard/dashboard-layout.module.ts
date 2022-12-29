@@ -5,7 +5,6 @@ import { DashboardContainerComponent } from './dashboard-container.component';
 import { RouterModule } from '@angular/router';
 import { DashboardLayoutRouting } from './dashboard.routing';
 import { RunsComponent } from './pages/runs-table/runs-table.component';
-import { ProgressbarModule } from 'ngx-bootstrap/progressbar';
 import { CommonLayoutModule } from '../common/common-layout.module';
 import { CollectionsTableComponent } from './pages/collections-table/collections-table.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -33,7 +32,6 @@ import { PageTitleComponent } from './components/page-title/page-title.component
 		CommonLayoutModule,
 		RouterModule.forChild(DashboardLayoutRouting),
 		ReactiveFormsModule,
-		ProgressbarModule,
 		FontAwesomeModule,
 		TimeagoModule.forChild(),
 		NgxSkeletonLoaderModule,

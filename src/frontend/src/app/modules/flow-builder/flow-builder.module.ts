@@ -10,7 +10,6 @@ import { FlowRightSidebarComponent } from './page/flow-builder/flow-right-sideba
 import { FlowBuilderTabsComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tabs.component';
 import { CommonLayoutModule } from '../common/common-layout.module';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { BsModalService, ModalModule } from 'ngx-bootstrap/modal';
 import { ChevronDropdownMenuComponent } from './components/chevron-dropdown-menu/chevron-dropdown-menu.component';
 import { FlowBuilderTabComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tab/flow-builder-tab.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
@@ -35,9 +34,7 @@ import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
 import { VariableSidebarComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/configs-sidebar.component';
 import { ViewModeEffects } from './store/effect/viewMode.effects';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
-import { TimepickerModule } from 'ngx-bootstrap/timepicker';
 import { AngularSvgIconModule } from 'angular-svg-icon';
-import { TabsModule } from 'ngx-bootstrap/tabs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FlowItemConnectionComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-connection/flow-item-connection.component';
 import { FlowItemContentComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-content/flow-item-content.component';
@@ -81,8 +78,6 @@ import { DeleteStepDialogComponent } from './page/flow-builder/flow-item-tree/fl
 		CommonLayoutModule,
 		CodemirrorModule,
 		DragDropModule,
-		ModalModule.forRoot(),
-		TimepickerModule.forRoot(),
 		AngularSvgIconModule.forRoot(),
 		EffectsModule.forFeature([CollectionEffects, FlowsEffects, ViewModeEffects, FlowItemsDetailsEffects]),
 		StoreModule.forFeature('builderState', {
@@ -91,13 +86,12 @@ import { DeleteStepDialogComponent } from './page/flow-builder/flow-item-tree/fl
 			viewMode: viewModeReducer,
 			flowItemsDetailsState: flowItemsDetailsReducer,
 		}),
-		TabsModule,
 		FontAwesomeModule,
 		MatExpansionModule,
 		MonacoEditorModule,
 		MatTabsModule,
 	],
-	providers: [BsModalService, { provide: HTTP_INTERCEPTORS, useClass: HttpInterceptorService, multi: true }],
+	providers: [{ provide: HTTP_INTERCEPTORS, useClass: HttpInterceptorService, multi: true }],
 	declarations: [
 		CollectionBuilderComponent,
 		FlowBuilderHeaderComponent,
