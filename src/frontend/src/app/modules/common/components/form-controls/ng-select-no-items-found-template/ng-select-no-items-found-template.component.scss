@@ -1,0 +1,14 @@
+@import "src/assets/scss/variables.scss";
+
+.none-found-text {
+  font-size: .75rem;
+  font-weight: 400;
+  line-height: 1rem;
+  color: $description;
+  padding: 4px 2px;
+
+  span {
+    color: $body;
+    font-weight: 600;
+  }
+}

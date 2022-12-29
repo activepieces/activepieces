@@ -1,0 +1,47 @@
+<div class="box">
+  <div class="header">
+    <app-flow-builder-header></app-flow-builder-header>
+  </div>
+  <div class="content">
+    <div class="drawer-container">
+      <mat-drawer-container class="ap-h-full" #builderContainer>
+        <mat-drawer [disableClose]="true" mode="side" position="end"
+          [opened]="(rightSidebar$ | async) !== rightSideBarType.NONE" #rightSideDrawer
+          [style.width]="rightSidebarWidth" [style.overflow]="'visible'">
+          <div #dragHandleRight cdkDragLockAxis="x" cdkDrag
+            class="flow-builder-resizer-handle ap-flex ap-justify-center ap-items-center right-side-handle"
+            [class.active]="rightSidebarDragging" (cdkDragMoved)="
+              rightDrawerHandleDrag($event, dragHandleRight, builderContainer)
+            " (cdkDragStarted)="rightDrawerHandleDragStarted()" (cdkDragEnded)="rightDrawHandleDragStopped()">
+            <div class="knob"></div>
+          </div>
+          <app-flow-right-sidebar></app-flow-right-sidebar>
+        </mat-drawer>
+        <mat-drawer-content [class.no-transition]="rightSidebarDragging || leftSidebarDragging">
+          <div class="box">
+            <div class="header"> <app-flow-builder-tabs></app-flow-builder-tabs>
+            </div>
+            <div class="content canvas" #canvasWrapper>
+              <app-flow-item-tree></app-flow-item-tree>
+            </div>
+          </div>
+        </mat-drawer-content>
+        <mat-drawer [disableClose]="true" mode="side" position="start"
+          [opened]="(leftSidebar$ | async) !== leftSideBarType.NONE" [style.width]="leftSideBarWidth"
+          [style.overflow]="'visible'" #leftSideDrawer>
+          <div #dragHandleLeft cdkDragLockAxis="x" cdkDrag
+            class="flow-builder-resizer-handle ap-flex ap-justify-center ap-items-center left-side-handle"
+            (cdkDragMoved)="
+              leftDrawerHandleDrag($event, dragHandleLeft, builderContainer)
+            " [class.active]="leftSidebarDragging" (cdkDragStarted)="leftDrawerHandleDragStarted()"
+            (cdkDragEnded)="leftDrawerHandleDragEnded()">
+            <div class="knob"></div>
+          </div>
+          <app-flow-left-sidebar></app-flow-left-sidebar>
+        </mat-drawer>
+      </mat-drawer-container>
+    </div>
+  </div>
+</div>
+<ng-container *ngIf="loadInitialData$ | async"></ng-container>
+<ng-container *ngIf="newCollectionCheck$ | async"></ng-container>

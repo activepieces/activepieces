@@ -1,0 +1,24 @@
+<div class="px-3 pt-3">
+  <ng-container *ngIf="(displayNameChanged$ | async ) ==='' || (displayNameChanged$ | async ) !=='' ">
+    <app-sidebar-header [title]="'Edit '+ (displayNameChanged$ | async )"
+      (closeClicked)="closeSidebar()"></app-sidebar-header>
+  </ng-container>
+</div>
+
+<div class="step-type-item-container">
+  <app-step-type-item [clickable]="false" [flowItemDetails$]="selectedFlowItemDetails$"></app-step-type-item>
+</div>
+<ng-container *ngIf="selectedStepAndFlowId$ | async as selectedStepAndFlowId; else loading">
+  <ng-container *ngIf="selectedFlowItemDetails$  | async; else loading"> <app-edit-step-accodion
+      [selectedStep]="selectedStepAndFlowId.step!" [stepArtifactCacheKeyAndUrl]="stepCacheKeyAndArtifactUrl"
+      [displayNameChanged$]="displayNameChanged$"></app-edit-step-accodion>
+  </ng-container>
+
+</ng-container>
+
+
+<ng-template #loading>
+  <div class="d-column ap-flex-grow ap-justify-center ap-items-center">
+    <app-loading-icon> </app-loading-icon>
+  </div>
+</ng-template>

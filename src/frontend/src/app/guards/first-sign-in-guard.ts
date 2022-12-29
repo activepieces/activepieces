@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 import { tap } from 'rxjs';
-import { AuthenticationService } from '../layout/common-layout/service/authentication.service';
+import { AuthenticationService } from '../modules/common/service/authentication.service';
 
 @Injectable({
 	providedIn: 'root',

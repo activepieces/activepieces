@@ -1,0 +1,40 @@
+<div class="px-3 pt-3">
+
+  <app-sidebar-header title="Collection Versions" (closeClicked)="closeVersionSidebar()"></app-sidebar-header>
+
+</div>
+
+
+<div *ngIf="collectionVersionsList$ | async as versions; else loading"
+  class="ap-px-4  ap-justify-center ap-items-center piece-version-list-height" [class.d-column]="versions.length === 0">
+  <ng-container *ngIf="versions.length > 0; else loading">
+    <div class=" ap-p-4 ap-mb-4 ap-flex ap-gap-0.5 ap-items-center" *ngFor=" let version of versions; let i=index">
+      <div class="ap-flex ap-flex-col ap-gap-2 ap-flex-grow">
+        <div class="ap-flex-grow">
+          <div class="ap-typography-body-1">Collection Version #{{ versions.length - i }}</div>
+          <div class="ap-typography-caption">
+            {{ timeHelperService.formatDateTimeMills(version.created) }}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <span class="ap-text-success ap-bg-grayCard ap-rounded ap-p-1 ap-justify-self-end ap-typography-caption"
+          *ngIf="version.state === versionEditState.DRAFT">DRAFT</span>
+        <span class="ap-text-danger ap-bg-danger-light ap-rounded ap-p-1 ap-justify-self-end ap-typography-caption"
+          *ngIf="version.state === versionEditState.LOCKED">LOCKED</span>
+      </div>
+
+
+    </div>
+  </ng-container>
+</div>
+
+
+<ng-template #loading>
+  <div
+    class="collections-versions-loading-icon-container ap-flex flex-direction-column ap-justify-center ap-items-center">
+    <app-loading-icon></app-loading-icon>
+  </div>
+
+</ng-template>

@@ -1,0 +1,15 @@
+<div class="ap-flex" *ngIf="item">
+  <div class="item-container" [matTooltip]="tooltipText" [matTooltipShowDelay]="500"
+    [class.ap-flex-grow]="item.disabled">
+    <ng-container *ngIf="!item.disabled; else separatorTemplate">
+      <div class="request-and-title">
+        <div class="item-title"> {{item.label.name}} </div>
+      </div>
+      <div *ngIf="!hideDescription" class="description">{{item.label.description}}</div>
+    </ng-container>
+    <ng-template #separatorTemplate>
+      <div class="ap-separator "></div>
+    </ng-template>
+  </div>
+  <div *ngIf="!item.disabled" class="ap-flex-grow" #spacer></div>
+</div>

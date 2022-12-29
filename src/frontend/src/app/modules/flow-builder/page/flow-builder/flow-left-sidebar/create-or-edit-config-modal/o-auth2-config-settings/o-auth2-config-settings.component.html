@@ -1,0 +1,47 @@
+<form [formGroup]="settingsForm" class="ap-flex ap-flex-col ap-gap-2">
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Redirect URL</mat-label>
+    <input formControlName="redirect_url" matInput type="text" />
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Auth URL</mat-label>
+    <input formControlName="auth_url" matInput type="text" />
+    <mat-error *ngIf="settingsForm.controls.auth_url.invalid">
+      Auth url is required
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Token URL</mat-label>
+    <input formControlName="token_url" matInput type="text" />
+    <mat-error *ngIf="settingsForm.controls.token_url.invalid">
+      Token URL is required
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Client ID</mat-label>
+    <input formControlName="client_id" matInput type="text" />
+    <mat-error *ngIf="settingsForm.controls.client_id.invalid">
+      Client ID is required
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Client Secret</mat-label>
+    <input formControlName="client_secret" matInput type="password" />
+    <mat-error *ngIf="settingsForm.controls.client_secret.invalid">
+      Client secret is required
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Scope</mat-label>
+    <input formControlName="scope" matInput type="text" />
+    <mat-error *ngIf="settingsForm.controls.scope.invalid">
+      Scope is required
+    </mat-error>
+  </mat-form-field>
+</form>
+<ng-container *ngIf="settingsFormValueChanged$|async"></ng-container>

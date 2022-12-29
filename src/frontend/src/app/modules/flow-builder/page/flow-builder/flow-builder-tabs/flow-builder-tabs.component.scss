@@ -1,0 +1,50 @@
+@import "src/assets/scss/variables.scss";
+
+.tab-link.active {
+  box-shadow: inset 1px 0px 0px $line, inset 0px 1px 0px $line,
+    inset -1px 0px 0px $line;
+  border-radius: 5px 5px 0px 0px;
+}
+
+::-webkit-scrollbar:horizontal {
+  height: 0px;
+}
+::-webkit-scrollbar-thumb:horizontal {
+  border-radius: 10px;
+}
+
+.white-gradient-right {
+  min-width: 45px;
+  align-self: stretch;
+  margin-left: -45px;
+  pointer-events: none;
+  background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0) 76.47%);
+  transform: matrix(-1, 0, 0, 1, 0, 0);
+}
+
+
+
+.scroll-arrow {
+  background-color: $white;
+  min-width: 36px;
+  transition: all 0.5s ease;
+  cursor: pointer;
+  &:hover {
+    background-color: $hover;
+  }
+  border-radius: 3px;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.white-gradient-left {
+
+  align-self: stretch;
+  pointer-events: none;
+  margin-right: -45px;
+  background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0) 76.47%);
+  transform: matrix(1, 0, 0, 1, 0, 0);
+}
+

@@ -1,0 +1,26 @@
+<app-dialog-title-template>
+    Delete {{stepName}}
+</app-dialog-title-template>
+<mat-dialog-content>
+    <div class="ap-typography-body-1 ap-text-description ap-mb-4">
+        Please type "DELETE" to confirm deleting this step
+    </div>
+    <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" (submit)=" deleteStep()">
+        <mat-form-field class="ap-w-full" appearance="outline">
+            <input formControlName="confirmation" matInput type="text" placeholder="DELETE" />
+            <mat-error *ngIf="confirmationForm.controls.confirmation.invalid">Please write the confirmation message
+                correctly</mat-error>
+        </mat-form-field>
+    </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <app-button btnColor="basic" mat-dialog-close btnSize="default">
+            Cancel
+        </app-button>
+        <app-button cdkFocusInitial btnSize="default" (click)="deleteStep()" btnColor="warn" type="submit">
+            Confirm
+        </app-button>
+    </div>
+</mat-dialog-actions>

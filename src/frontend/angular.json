@@ -2,12 +2,14 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "cli": {
     "analytics": "49352f9d-f19a-4cff-9f6d-2d7b06f7ae96",
-    "defaultCollection": "@angular-eslint/schematics"
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
   },
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "piece-builder": {
+    "activepieces": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:application": {
@@ -34,7 +36,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/piece-builder",
+            "outputPath": "dist/activepieces",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
@@ -49,10 +51,10 @@
               }
             ],
             "styles": [
-              "src/assets/css/nucleo-svg.css",
-              "src/assets/css/nucleo-icons.css",
-              "src/assets/css/font-awesome.css",
-              "src/assets/scss/argon-design-system.scss",
+
+              "./node_modules/codemirror/addon/lint/lint.css",
+              "./node_modules/codemirror/lib/codemirror.css",
+              "./node_modules/codemirror/theme/lucario.css",
               "src/styles.scss"
             ],
             "scripts": [
@@ -117,10 +119,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "piece-builder:build:production"
+              "browserTarget": "activepieces:build:production"
             },
             "development": {
-              "browserTarget": "piece-builder:build:development"
+              "browserTarget": "activepieces:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -128,7 +130,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "piece-builder:build"
+            "browserTarget": "activepieces:build"
           }
         },
         "test": {
@@ -148,7 +150,12 @@
               }
             ],
             "styles": [
+              "./node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css",
+              "./node_modules/codemirror/addon/lint/lint.css",
+              "./node_modules/codemirror/lib/codemirror.css",
+              "./node_modules/codemirror/theme/lucario.css",
               "src/styles.scss"
+
             ],
             "scripts": []
           }
@@ -164,6 +171,5 @@
         }
       }
     }
-  },
-  "defaultProject": "piece-builder"
+  }
 }

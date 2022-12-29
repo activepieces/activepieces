@@ -1,0 +1,14 @@
+.list-container {
+  padding: 7.5px 0px;
+
+  height: calc(100vh - 204px) !important;
+}
+
+.list-item {
+  margin: 7.5px 0px;
+}
+
+.empty-list-text
+{
+  min-height: 50vh;
+}

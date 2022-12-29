@@ -1,0 +1,10 @@
+<form [formGroup]="responseStepForm" class="ng-submitted">
+  <div class="ap-flex flex-column accordion-form-controls-container">
+    <div>
+      <div class="ap-mb-2 ap-pointer-events-none">Output</div>
+      <app-dictonary-form-control formControlName="output"></app-dictonary-form-control>
+    </div>
+  </div>
+</form>
+
+<ng-container *ngIf="updateComponentValue$ | async"></ng-container>

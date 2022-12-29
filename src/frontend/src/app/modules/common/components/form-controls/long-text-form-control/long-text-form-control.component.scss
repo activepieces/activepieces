@@ -1,0 +1,16 @@
+@import "/src/assets/scss/variables";
+.long-text-input {
+  outline: 0;
+  height: unset;
+  &:focus {
+    outline: 0;
+  }
+}
+.long-text-input:empty:not(:focus)::before {
+  content: attr(placeholder);
+  color: $placeholder;
+}
+
+.long-text-input.disabled {
+  word-break: break-all;
+}
