@@ -1,16 +1,16 @@
-import { apId, CollectionVersion, Cursor, ExecutionOutputStatus, FileId, FlowVersion, Instance, InstanceId, InstanceRun, InstanceRunId, ProjectId, SeekPage } from "shared";
+import { apId, CollectionVersion, Cursor, ExecutionOutputStatus, FileId, FlowVersion, Instance, InstanceId, FlowRun, FlowRunId, ProjectId, SeekPage } from "shared";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { Order } from "../helper/pagination/paginator";
-import { InstanceRunEntity } from "./instance-run-entity";
-import { instanceRunRepo as repo } from "./instance-run-repo";
+import { FlowRunEntity } from "./flow-run-entity";
+import { flowRunRepo as repo } from "./flow-run-repo";
 
-export const instanceRunService = {
-    async list({ projectId, cursor, limit }: ListParams): Promise<SeekPage<InstanceRun>> {
+export const flowRunService = {
+    async list({ projectId, cursor, limit }: ListParams): Promise<SeekPage<FlowRun>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor);
 
         const paginator = buildPaginator({
-            entity: InstanceRunEntity,
+            entity: FlowRunEntity,
             paginationKeys: ["created"],
             query: {
                 limit: limit,
@@ -20,24 +20,24 @@ export const instanceRunService = {
             },
         });
 
-        const query = repo.createQueryBuilder("instance_run").where({
+        const query = repo.createQueryBuilder("flow_run").where({
             projectId,
         });
 
         const { data, cursor: newCursor } = await paginator.paginate(query);
 
-        return paginationHelper.createPage<InstanceRun>(data, newCursor);
+        return paginationHelper.createPage<FlowRun>(data, newCursor);
     },
-    async finish(instanceRunId: InstanceRunId, status: ExecutionOutputStatus, logsFileId: FileId): Promise<InstanceRun | null>{
-        await repo.update(instanceRunId, {
+    async finish(flowRunId: FlowRunId, status: ExecutionOutputStatus, logsFileId: FileId): Promise<FlowRun | null>{
+        await repo.update(flowRunId, {
             logsFileId: logsFileId,
             status: status,
             finishTime: (new Date()).toISOString()
         })
-        return this.getOne({id: instanceRunId});
+        return this.getOne({id: flowRunId});
     },
-    async start(runId: InstanceRunId, instanceId: InstanceId | null, projectId: ProjectId, flowVersion: FlowVersion, collectionVerson: CollectionVersion): Promise<InstanceRun> {
-        let instanceRun: Partial<InstanceRun> = {
+    async start(runId: FlowRunId, instanceId: InstanceId | null, projectId: ProjectId, flowVersion: FlowVersion, collectionVerson: CollectionVersion): Promise<FlowRun> {
+        let flowRun: Partial<FlowRun> = {
             id: runId,
             instanceId: instanceId,
             projectId: projectId,
@@ -49,9 +49,9 @@ export const instanceRunService = {
             status: ExecutionOutputStatus.RUNNING,
             startTime: (new Date()).toISOString()
         };
-        return repo.save( instanceRun);
+        return repo.save( flowRun);
     },
-    async getOne({ id }: GetOneParams): Promise<InstanceRun | null> {
+    async getOne({ id }: GetOneParams): Promise<FlowRun | null> {
         return repo.findOneBy({
             id,
         });
@@ -65,5 +65,5 @@ type ListParams = {
 };
 
 type GetOneParams = {
-    id: InstanceRunId,
+    id: FlowRunId,
 };

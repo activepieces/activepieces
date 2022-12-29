@@ -11,8 +11,8 @@ import {
     FlowVersion,
     FlowVersionId,
     Instance,
-    InstanceRun,
-    InstanceRunId,
+    FlowRun,
+    FlowRunId,
     PrincipalType,
     Trigger
 } from "shared";
@@ -25,11 +25,11 @@ import {fileService} from "../../file/file.service";
 import {codeBuilder} from "../code-worker/code-builder";
 import {tokenUtils} from "../../authentication/lib/token-utils";
 import {collectionService} from "../../collections/collection.service";
-import {instanceRunService} from "../../instance-run/instance-run-service";
+import {flowRunService} from "../../flow-run/flow-run-service";
 
 
 export interface ExecutionRequest {
-    runId: InstanceRunId,
+    runId: FlowRunId,
     instanceId: InstanceId | null;
     flowVersionId: FlowVersionId;
     collectionVersionId: CollectionVersionId;
@@ -51,7 +51,7 @@ async function executeFlow(request: ExecutionRequest) {
         sandbox.runCommandLine("/usr/bin/node activepieces-engine.js execute-flow");
         const executionOutput: ExecutionOutput = JSON.parse(fs.readFileSync(sandbox.getSandboxFilePath("output.json")).toString());
         const logsFile = await fileService.save(Buffer.from(JSON.stringify(executionOutput)));
-        await instanceRunService.finish(request.runId, executionOutput.status, logsFile.id);
+        await flowRunService.finish(request.runId, executionOutput.status, logsFile.id);
     } finally {
         sandboxManager.returnSandbox(sandbox.boxId);
         await flowLock();
@@ -136,12 +136,12 @@ export const flowWorker = {
             collectionVersionId: instance.collectionVersionId,
             payload: payload
         };
-        const instanceRun = await createRun(request);
+        const FlowRun = await createRun(request);
         // TODO THIS IS ASYNC, WE SHOULD JUST ADD IT TO QUEUE
         executeFlow(request);
-        return instanceRun;
+        return FlowRun;
     },
-    async executeTest(collectionVersionId: CollectionVersionId, flowVersionId: FlowVersionId, payload: unknown): Promise<InstanceRun> {
+    async executeTest(collectionVersionId: CollectionVersionId, flowVersionId: FlowVersionId, payload: unknown): Promise<FlowRun> {
         const request: ExecutionRequest = {
             runId: apId(),
             instanceId: null,
@@ -149,17 +149,17 @@ export const flowWorker = {
             collectionVersionId: collectionVersionId,
             payload: payload
         };
-        const instanceRun = await createRun(request);
+        const FlowRun = await createRun(request);
         // TODO THIS IS ASYNC, WE SHOULD JUST ADD IT TO QUEUE
         executeFlow(request);
-        return instanceRun;
+        return FlowRun;
     },
 }
 
 // TODO NEED TO BE OPTIMIZED SINCE WE ARE FETCHING THESE INFO FROM DATABASE TWICE
-async function createRun(request: ExecutionRequest): Promise<InstanceRun> {
+async function createRun(request: ExecutionRequest): Promise<FlowRun> {
     const collectionVersion = (await collectionVersionService.getOne(request.collectionVersionId))!;
     const collection = (await collectionService.getOne(collectionVersion.collectionId, null))!;
     const flowVersion = (await flowVersionService.getOne(request.flowVersionId))!;
-    return instanceRunService.start(request.runId, request.instanceId, collection.projectId, flowVersion, collectionVersion);
+    return flowRunService.start(request.runId, request.instanceId, collection.projectId, flowVersion, collectionVersion);
 }

@@ -1,4 +1,4 @@
-import {CollectionId, FileId, FlowId, InstanceId, InstanceRunId} from "shared";
+import {CollectionId, FileId, FlowId, InstanceId, FlowRunId} from "shared";
 import { ApId } from "shared/dist/common/id-generator";
 
 export class ActivepiecesError extends Error {
@@ -16,7 +16,7 @@ type ErrorParams =
     | FileNotFoundErrorParams
     | FlowNotFoundErrorParams
     | InstanceNotFoundErrorParams
-    | InstanceRunNotFoundErrorParams
+    | FlowRunNotFoundErrorParams
     | InvalidBearerTokenParams
     | InvalidCredentialsErrorParams
     | JobRemovalFailureErrorParams
@@ -49,8 +49,8 @@ export interface InstanceNotFoundErrorParams extends BaseErrorParams<ErrorCode.I
 }> {
 }
 
-export interface InstanceRunNotFoundErrorParams extends BaseErrorParams<ErrorCode.INSTANCE_NOT_FOUND, {
-    id: InstanceRunId
+export interface FlowRunNotFoundErrorParams extends BaseErrorParams<ErrorCode.INSTANCE_NOT_FOUND, {
+    id: FlowRunId
 }> {
 }
 
@@ -100,7 +100,7 @@ export enum ErrorCode {
     FILE_NOT_FOUND = "FILE_NOT_FOUND",
     FLOW_NOT_FOUND = "FLOW_NOT_FOUND",
     INSTANCE_NOT_FOUND = "INSTANCE_NOT_FOUND",
-    INSTANCE_RUN_NOT_FOUND = "INSTANCE_NOT_FOUND",
+    FLOW_RUN_NOT_FOUND = "INSTANCE_NOT_FOUND",
     INVALID_BEARER_TOKEN = "INVALID_BEARER_TOKEN",
     INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
     JOB_REMOVAL_FAILURE = "JOB_REMOVAL_FAILURE",
