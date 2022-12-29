@@ -1,1 +1,1 @@
-declare module "redis-lock"
+declare module "redis-lock";

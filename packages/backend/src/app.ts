@@ -1,33 +1,33 @@
-import fastify from 'fastify';
-import {apId, Principal, PrincipalType} from 'shared';
-import {databaseModule} from './database/database-module';
-import {authenticationModule} from './authentication/authentication.module';
-import {collectionModule} from "./collections/collection.module";
-import {StatusCodes} from "http-status-codes";
-import {ActivepiecesError} from "./helper/activepieces-error";
-import {projectModule} from "./project/project.module";
-import {flowModule} from "./flows/flow.module";
-import {fileModule} from "./file/file.module";
-import {piecesController} from "./pieces/pieces.controller";
-import {oauth2Module} from "./oauth2/oauth2.module";
-import {tokenVerifyMiddleware} from "./authentication/token-verify-middleware";
-import {storeEntryModule} from "./store-entry/store-entry.module";
-import {instanceModule} from './instance/instance-module';
-import {flowRunModule} from './flow-run/flow-run-module';
-import {flagModule} from "./flags/flag.module";
-import { codeModule } from './workers/code-worker/code.module';
-import { flowWorkerModule } from './workers/flow-worker/flow-worker.module';
+import fastify from "fastify";
+import { Principal } from "shared";
+import { databaseModule } from "./database/database-module";
+import { authenticationModule } from "./authentication/authentication.module";
+import { collectionModule } from "./collections/collection.module";
+import { StatusCodes } from "http-status-codes";
+import { ActivepiecesError } from "./helper/activepieces-error";
+import { projectModule } from "./project/project.module";
+import { flowModule } from "./flows/flow.module";
+import { fileModule } from "./file/file.module";
+import { piecesController } from "./pieces/pieces.controller";
+import { oauth2Module } from "./oauth2/oauth2.module";
+import { tokenVerifyMiddleware } from "./authentication/token-verify-middleware";
+import { storeEntryModule } from "./store-entry/store-entry.module";
+import { instanceModule } from "./instance/instance-module";
+import { flowRunModule } from "./flow-run/flow-run-module";
+import { flagModule } from "./flags/flag.module";
+import { codeModule } from "./workers/code-worker/code.module";
+import { flowWorkerModule } from "./workers/flow-worker/flow-worker.module";
 
-declare module 'fastify' {
-    export interface FastifyRequest {
-        principal: Principal;
-    }
+declare module "fastify" {
+  export interface FastifyRequest {
+    principal: Principal;
+  }
 }
 
 const app = fastify({
-    logger: true
+  logger: true,
 });
-app.addHook('onRequest', tokenVerifyMiddleware);
+app.addHook("onRequest", tokenVerifyMiddleware);
 app.register(databaseModule);
 app.register(authenticationModule);
 app.register(projectModule);
@@ -44,23 +44,23 @@ app.register(instanceModule);
 app.register(flowRunModule);
 
 app.setErrorHandler(function (error, request, reply) {
-    if (error instanceof ActivepiecesError) {
-        let apError = error as ActivepiecesError;
-        reply.status(StatusCodes.BAD_REQUEST).send({
-            code: apError.error.code
-        })
-    }else {
-        reply.status(error.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR).send(error)
-    }
-})
+  if (error instanceof ActivepiecesError) {
+    const apError = error as ActivepiecesError;
+    reply.status(StatusCodes.BAD_REQUEST).send({
+      code: apError.error.code,
+    });
+  } else {
+    reply.status(error.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR).send(error);
+  }
+});
 
 const start = async () => {
-    try {
-        await app.listen({ port: 3000 });
-    } catch (err) {
-        app.log.error(err);
-        process.exit(1);
-    }
-}
+  try {
+    await app.listen({ port: 3000 });
+  } catch (err) {
+    app.log.error(err);
+    process.exit(1);
+  }
+};
 
 start();

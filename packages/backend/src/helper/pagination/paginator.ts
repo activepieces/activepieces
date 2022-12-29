@@ -1,20 +1,19 @@
 import {
-  Brackets, EntitySchema,
+  Brackets,
+  EntitySchema,
+  ObjectLiteral,
   OrderByCondition,
   SelectQueryBuilder,
   WhereExpressionBuilder,
-  ObjectLiteral
-} from 'typeorm';
-import {decodeByType, encodeByType, atob, btoa} from "./pagination-utils";
+} from "typeorm";
+import { atob, btoa, decodeByType, encodeByType } from "./pagination-utils";
 
 export enum Order {
-  ASC = 'ASC',
-  DESC = 'DESC',
+  ASC = "ASC",
+  DESC = "DESC",
 }
 
-export interface CursorParam {
-  [key: string]: any;
-}
+export type CursorParam = Record<string, any>;
 
 export interface CursorResult {
   beforeCursor: string | null;
@@ -42,8 +41,8 @@ export default class Paginator<Entity extends ObjectLiteral> {
   private order: Order = Order.DESC;
 
   public constructor(
-    private entity: EntitySchema,
-    private paginationKeys: Extract<keyof Entity, string>[],
+    private readonly entity: EntitySchema,
+    private readonly paginationKeys: Array<Extract<keyof Entity, string>>
   ) {}
 
   public setAlias(alias: string): void {
@@ -66,9 +65,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
     this.order = order;
   }
 
-  public async paginate(
-    builder: SelectQueryBuilder<Entity>,
-  ): Promise<PagingResult<Entity>> {
+  public async paginate(builder: SelectQueryBuilder<Entity>): Promise<PagingResult<Entity>> {
     const entities = await this.appendPagingQuery(builder).getMany();
     const hasMore = entities.length > this.limit;
 
@@ -102,9 +99,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
     };
   }
 
-  private appendPagingQuery(
-    builder: SelectQueryBuilder<Entity>,
-  ): SelectQueryBuilder<Entity> {
+  private appendPagingQuery(builder: SelectQueryBuilder<Entity>): SelectQueryBuilder<Entity> {
     const cursors: CursorParam = {};
     const clonedBuilder = new SelectQueryBuilder<Entity>(builder);
 
@@ -115,9 +110,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
     }
 
     if (Object.keys(cursors).length > 0) {
-      clonedBuilder.andWhere(
-        new Brackets((where) => this.buildCursorQuery(where, cursors)),
-      );
+      clonedBuilder.andWhere(new Brackets((where) => this.buildCursorQuery(where, cursors)));
     }
 
     clonedBuilder.take(this.limit + 1);
@@ -129,7 +122,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
   private buildCursorQuery(where: WhereExpressionBuilder, cursors: CursorParam): void {
     const operator = this.getOperator();
     const params: CursorParam = {};
-    let query = '';
+    let query = "";
     this.paginationKeys.forEach((key) => {
       params[key] = cursors[key];
       where.orWhere(`${query}${this.alias}.${key} ${operator} :${key}`, params);
@@ -139,14 +132,14 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
   private getOperator(): string {
     if (this.hasAfterCursor()) {
-      return this.order === Order.ASC ? '>' : '<';
+      return this.order === Order.ASC ? ">" : "<";
     }
 
     if (this.hasBeforeCursor()) {
-      return this.order === Order.ASC ? '<' : '>';
+      return this.order === Order.ASC ? "<" : ">";
     }
 
-    return '=';
+    return "=";
   }
 
   private buildOrder(): OrderByCondition {
@@ -179,16 +172,16 @@ export default class Paginator<Entity extends ObjectLiteral> {
         const value = encodeByType(type, entity[key]);
         return `${key}:${value}`;
       })
-      .join(',');
+      .join(",");
 
     return btoa(payload);
   }
 
   private decode(cursor: string): CursorParam {
     const cursors: CursorParam = {};
-    const columns = atob(cursor).split(',');
+    const columns = atob(cursor).split(",");
     columns.forEach((column) => {
-      const [key, raw] = column.split(':');
+      const [key, raw] = column.split(":");
       const type = this.getEntityPropertyType(key);
       const value = decodeByType(type, raw);
       cursors[key] = value;
@@ -199,7 +192,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
   private getEntityPropertyType(key: string): string {
     const col = this.entity.options.columns[key];
-    if(col === undefined){
+    if (col === undefined) {
       throw new Error("entity property not found " + key);
     }
     return col.type.toString();

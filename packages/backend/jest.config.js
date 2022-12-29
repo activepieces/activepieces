@@ -6,6 +6,6 @@ module.exports = {
   coveragePathIgnorePatterns: [
     'node_modules',
     '<rootDir>/test/resources/*',
-    '<rootDir>/test/resources/*/*',
-  ],
-};
+    '<rootDir>/test/resources/*/*'
+  ]
+}
