@@ -29,7 +29,7 @@ export class ArchiveCollectionDialogComponent {
 	}
 	archiveCollection() {
 		if (this.confirmationForm.valid && !this.archiveCollection$) {
-			this.archiveCollection$ = this.collectionService.archive(this.collection.id).pipe(
+			this.archiveCollection$ = this.collectionService.delete(this.collection.id).pipe(
 				catchError(err => {
 					this.snackBar.open('An error occured while archiving, please check your console', '', {
 						duration: undefined,
@@ -43,7 +43,7 @@ export class ArchiveCollectionDialogComponent {
 				}),
 				tap(() => {
 					this.dialogRef.close(true);
-					this.snackBar.open(`${this.collection.last_version.display_name} was archived successfully`);
+					this.snackBar.open(`${this.collection.version.display_name} was archived successfully`);
 				})
 			);
 		}
