@@ -8,10 +8,10 @@ import {ApId} from "../common/id-generator";
 import { ExecutionOutputStatus } from "./execution/execution-output";
 import { InstanceId } from "../instance/model";
 
-export type InstanceRunId = ApId;
+export type FlowRunId = ApId;
 
-export interface InstanceRun extends BaseModel<InstanceRunId> {
-    id: InstanceRunId,
+export interface FlowRun extends BaseModel<FlowRunId> {
+    id: FlowRunId,
     instanceId: InstanceId | null,
     projectId: ProjectId,
     collectionId: CollectionId,

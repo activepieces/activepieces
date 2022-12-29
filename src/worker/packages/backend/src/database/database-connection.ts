@@ -8,7 +8,7 @@ import {FlowVersionEntity} from "../flows/flow-version/flow-version-entity";
 import {FileEntity} from "../file/file-entity";
 import {StoreEntryEntity} from "../store-entry/store-entry-entity";
 import {InstanceEntity} from '../instance/instance-entity';
-import { InstanceRunEntity } from '../instance-run/instance-run-entity';
+import { FlowRunEntity } from '../flow-run/flow-run-entity';
 import {FlagEntity} from "../flags/flag-entity";
 
 export const databaseConnection = new DataSource({
@@ -27,7 +27,7 @@ export const databaseConnection = new DataSource({
         FlowEntity,
         FlowVersionEntity,
         InstanceEntity,
-        InstanceRunEntity,
+        FlowRunEntity,
         ProjectEntity,
         StoreEntryEntity,
         UserEntity,

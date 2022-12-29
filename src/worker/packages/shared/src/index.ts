@@ -1,11 +1,11 @@
-export * from "./instance-run/execution/step-output";
+export * from "./flow-run/execution/step-output";
 
 export * from "./flows/flow-operations";
 export * from "./collections/config";
 export * from './instance';
 
-export * from "./instance-run/execution/execution-output";
-export { StepOutputStatus } from "./instance-run/execution/step-output";
+export * from "./flow-run/execution/execution-output";
+export { StepOutputStatus } from "./flow-run/execution/step-output";
 export {ClaimTokenWithSecretRequest} from "./oauth2/dto/claim-token-with-secret";
 export {ClaimTokenFromCloudRequest} from "./oauth2/dto/claim-token-from-cloud";
 export {CodeRunStatus} from "./workers/code-worker/code-run-status";
@@ -21,7 +21,7 @@ export {CodeAction, PieceAction, LoopOnItemsAction, StorageAction, StorageAction
     PieceActionSettings, LoopOnItemsActionSettings ,Action, ActionType, CodeActionSettings} from './flows/actions/action'
 export {StoreEntry, StoreEntryId} from './store-entry/store-entry';
 export {User, UserStatus, UserId} from './user/user';
-export { StepOutput } from "./instance-run/execution/step-output";
+export { StepOutput } from "./flow-run/execution/step-output";
 export { ExecuteTestRequest} from './flow-worker/execute-test-request';
 export {Trigger, EmptyTrigger, PieceTriggerSettings, ScheduleTriggerSettings, PieceTrigger, ScheduleTrigger, WebhookTrigger, TriggerType} from './flows/triggers/trigger';
 export {Collection, CollectionId} from './collections/collection';
@@ -31,9 +31,9 @@ export {FlowVersion, FlowVersionState, FlowVersionId} from './flows/flow-version
 export {Flow, FlowId} from './flows/flow';
 export {File, FileId} from './file/file'
 export {getStep} from './flows/flow-helper';
-export {InstanceRun, InstanceRunId} from './instance-run/instance-run'
-export {ExecutionState} from './instance-run/execution/execution-state';
-export {ExecutionOutput, ExecutionError} from './instance-run/execution/execution-output';
+export {FlowRun, FlowRunId} from './flow-run/flow-run'
+export {ExecutionState} from './flow-run/execution/execution-state';
+export {ExecutionOutput, ExecutionError} from './flow-run/execution/execution-output';
 export {Project, ProjectId} from './project/project';
 export {Config} from './collections/config';
 export {FlowOperationRequest, FlowOperationType, DeleteActionRequest, UpdateActionRequest, AddActionRequest, UpdateTriggerRequest, ChangeNameRequest} from './flows/flow-operations'

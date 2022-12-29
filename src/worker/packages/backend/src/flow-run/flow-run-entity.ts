@@ -1,16 +1,16 @@
 import {EntitySchema} from "typeorm"
 import {ApIdSchema, BaseColumnSchemaPart} from "../helper/base-entity";
-import {Collection, CollectionVersion, Instance, InstanceRun, Project} from "shared";
+import {Collection, CollectionVersion, Instance, FlowRun, Project} from "shared";
 
-interface InstanceRunSchema extends InstanceRun {
+interface FlowRunSchema extends FlowRun {
     project: Project,
     collection: Collection,
     collectionVersion: CollectionVersion,
     instance: Instance,
 }
 
-export const InstanceRunEntity = new EntitySchema<InstanceRunSchema>({
-    name: "instance_run",
+export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
+    name: "flow_run",
     columns: {
         ...BaseColumnSchemaPart,
         instanceId: {...ApIdSchema, nullable: true},
@@ -56,7 +56,7 @@ export const InstanceRunEntity = new EntitySchema<InstanceRunSchema>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'projectId',
-                foreignKeyConstraintName: "fk_instance_run_project_id",
+                foreignKeyConstraintName: "fk_flow_run_project_id",
             },
         },
         collection: {
@@ -66,7 +66,7 @@ export const InstanceRunEntity = new EntitySchema<InstanceRunSchema>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'collectionId',
-                foreignKeyConstraintName: "fk_instance_run_collection_id",
+                foreignKeyConstraintName: "fk_flow_run_collection_id",
             },
         },
         collectionVersion: {
@@ -76,7 +76,7 @@ export const InstanceRunEntity = new EntitySchema<InstanceRunSchema>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'collectionVersionId',
-                foreignKeyConstraintName: "fk_instance_run_collection_version_id",
+                foreignKeyConstraintName: "fk_flow_run_collection_version_id",
             },
         },
         instance: {
@@ -87,7 +87,7 @@ export const InstanceRunEntity = new EntitySchema<InstanceRunSchema>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'instanceId',
-                foreignKeyConstraintName: "fk_instance_run_instance_id",
+                foreignKeyConstraintName: "fk_flow_run_instance_id",
             },
         },
     },

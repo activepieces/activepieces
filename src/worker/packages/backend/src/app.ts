@@ -13,7 +13,7 @@ import {oauth2Module} from "./oauth2/oauth2.module";
 import {tokenVerifyMiddleware} from "./authentication/token-verify-middleware";
 import {storeEntryModule} from "./store-entry/store-entry.module";
 import {instanceModule} from './instance/instance-module';
-import {instanceRunModule} from './instance-run/instance-run-module';
+import {flowRunModule} from './flow-run/flow-run-module';
 import {flagModule} from "./flags/flag.module";
 import { codeModule } from './workers/code-worker/code.module';
 import { flowWorkerModule } from './workers/flow-worker/flow-worker.module';
@@ -41,7 +41,7 @@ app.register(flowWorkerModule);
 app.register(piecesController);
 app.register(oauth2Module);
 app.register(instanceModule);
-app.register(instanceRunModule);
+app.register(flowRunModule);
 
 app.setErrorHandler(function (error, request, reply) {
     if (error instanceof ActivepiecesError) {
