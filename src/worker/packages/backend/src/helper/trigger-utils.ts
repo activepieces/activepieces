@@ -15,6 +15,16 @@ export const triggerUtils = {
                 await enablePieceTrigger(flowVersion);
                 break;
 
+            case FlowTriggerType.SCHEDULE:
+                await flowQueue.add({
+                    id: flowVersion.id,
+                    data: {
+                        flowVersionId: flowVersion.id,
+                    },
+                    cronExpression: flowVersion.trigger.settings.cronExpression,
+                });
+                break;
+
             default:
                 break;
         }
@@ -27,6 +37,9 @@ export const triggerUtils = {
                 break;
 
             case FlowTriggerType.SCHEDULE:
+                await flowQueue.remove({
+                    id: flowVersion.id,
+                });
                 break;
 
             default:
