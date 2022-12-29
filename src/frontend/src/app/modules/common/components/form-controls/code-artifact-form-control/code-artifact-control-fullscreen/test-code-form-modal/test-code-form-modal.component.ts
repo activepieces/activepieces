@@ -9,16 +9,6 @@ import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
 	selector: 'app-test-code-form-modal',
 	templateUrl: './test-code-form-modal.component.html',
 	animations: [fadeInUp400ms],
-	styles: [
-		`
-			.bar-containing-beautify-button {
-				background-color: #2b3e50;
-				border-top-left-radius: 5px;
-				border-top-right-radius: 5px;
-				margin-bottom: -3px;
-			}
-		`,
-	],
 })
 export class TestCodeFormModalComponent {
 	testCodeForm: FormGroup<{ context: FormControl<string> }>;

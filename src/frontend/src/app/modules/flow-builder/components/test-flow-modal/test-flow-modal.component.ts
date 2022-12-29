@@ -1,5 +1,4 @@
-import { Component, OnInit, TemplateRef } from '@angular/core';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, TemplateRef } from '@angular/core';
 import { FlowService } from '../../../common/service/flow.service';
 import { InstanceRunStatus } from '../../../common/model/enum/instance-run-status';
 import { catchError, combineLatest, interval, map, Observable, of, switchMap, takeUntil, takeWhile, tap } from 'rxjs';
@@ -21,17 +20,20 @@ import jsonlint from 'jsonlint-mod';
 import { PosthogService } from 'src/app/modules/common/service/posthog.service';
 import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { CodeService } from '../../service/code.service';
 @Component({
 	selector: 'app-test-flow-modal',
 	templateUrl: './test-flow-modal.component.html',
 	styleUrls: ['./test-flow-modal.component.scss'],
 	animations: [fadeInUp400ms],
+	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TestFlowModalComponent implements OnInit {
 	submitted = false;
+	dialogRef: MatDialogRef<TemplateRef<any>>;
 	instanceRunStatus$: Observable<undefined | InstanceRunStatus>;
 	isSaving$: Observable<boolean> = of(false);
-	modalRef?: BsModalRef;
 	selectedFlow$: Observable<Flow | undefined>;
 	instanceRunStatusChecker$: Observable<InstanceRun>;
 	executeTest$: Observable<InstanceRun | null>;
@@ -53,9 +55,11 @@ export class TestFlowModalComponent implements OnInit {
 		private store: Store,
 		private instanceRunService: InstanceRunService,
 		private snackbar: MatSnackBar,
-		private modalService: BsModalService,
 		private posthogService: PosthogService,
-		private authenticationService: AuthenticationService
+		private authenticationService: AuthenticationService,
+		private dialogService: MatDialog,
+		private codeService: CodeService,
+		private cd: ChangeDetectorRef
 	) {
 		(<any>window).jsonlint = jsonlint;
 	}
@@ -95,15 +99,16 @@ export class TestFlowModalComponent implements OnInit {
 	testFlowButtonClicked(flow: Flow, collection: Collection, testFlowTemplate: TemplateRef<any>) {
 		this.submitted = true;
 		if (flow.last_version.trigger?.type === TriggerType.WEBHOOK) {
-			this.modalRef = this.modalService.show(testFlowTemplate);
+			this.dialogRef = this.dialogService.open(testFlowTemplate);
 		} else {
 			this.executeTest(collection, flow, {});
 		}
 	}
 	testFlowWithPayload(collection: Collection, flow: Flow) {
 		if (this.payloadControl.valid) {
+			this.dialogRef.close();
 			this.executeTest(collection, flow, JSON.parse(this.payloadControl.value));
-			this.modalRef?.hide();
+			this.cd.detectChanges();
 		}
 	}
 	executeTest(collection: Collection, flow: Flow, payload: Object) {
@@ -184,5 +189,11 @@ export class TestFlowModalComponent implements OnInit {
 
 	public get statusEnum() {
 		return InstanceRunStatus;
+	}
+	beautify() {
+		try {
+			const payload = this.payloadControl;
+			payload.setValue(this.codeService.beautifyJson(JSON.parse(payload.value)));
+		} catch {}
 	}
 }
