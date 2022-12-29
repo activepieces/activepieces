@@ -136,7 +136,9 @@ $ap-typography: mat.define-typography-config(
 .ap-typography-caption {
 	@include mat.typography-level($ap-typography, 'caption');
 }
-
+.ap-typography-button {
+    @include mat.typography-level($ap-typography, 'button');
+  }
 $ap-primary-palette: (
 	50: #eee8fc,
 	100: #d4c6f6,

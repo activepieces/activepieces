@@ -1,4 +1,4 @@
-<div class="ap-flex-col piece-type-sidebar">
+<div class="ap-flex-col">
   <app-sidebar-header (closeClicked)="closeSidebar()" [title]="sideBarDisplayName"></app-sidebar-header>
   <ng-container *ngIf="flowItemDetailsLoaded$ | async; else loading">
     <mat-tab-group #tabGroup>

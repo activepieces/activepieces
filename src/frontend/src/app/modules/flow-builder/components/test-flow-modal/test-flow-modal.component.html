@@ -1,26 +1,17 @@
-
 <ng-container *ngIf="selectedFlow$ | async as currentFLow">
-<ng-container *ngIf="selectedCollection$ | async as currentCollection">
-  <app-button
-  [hidden]="(instanceRunStatus$ | async) === statusEnum.RUNNING"
-  (buttonClicked)="testFlowButtonClicked(currentFLow, currentCollection,modalTemplate)"
-  btnStyle="basic"
-  btnColor="primary"
-  [disabled]="shouldDisableTestButton$ | async"
-  [tooltip]="testFlowButtonDisabledTooltip"
-  placement="bottom"
-  btnSize="medium"
->
-Test flow
-</app-button>
-</ng-container>
+  <ng-container *ngIf="selectedCollection$ | async as currentCollection">
+    <app-button [hidden]="(instanceRunStatus$ | async) === statusEnum.RUNNING"
+      (buttonClicked)="testFlowButtonClicked(currentFLow, currentCollection,modalTemplate)" btnStyle="basic"
+      btnColor="primary" [disabled]="shouldDisableTestButton$ | async" [tooltip]="testFlowButtonDisabledTooltip"
+      placement="bottom" btnSize="medium">
+      Test flow
+    </app-button>
+  </ng-container>
 </ng-container>
 
 
-<div
-  [hidden]="(instanceRunStatus$ | async) !== statusEnum.RUNNING"
-  class="btn btn-text text-center text-success"
->
+<div [hidden]="(instanceRunStatus$ | async) !== statusEnum.RUNNING"
+  class="ap-text-center  ap-typography-button ap-text-success">
   Running...
 </div>
 <ng-container *ngIf="executeTest$ |async"></ng-container>
@@ -28,51 +19,33 @@ Test flow
 <ng-template #modalTemplate>
   <div class="modal-header">
     <h5 class="modal-title pull-left">Test flow</h5>
-    <button
-      type="button"
-      class="btn-close close pull-right"
-      aria-label="Close"
-      (click)="modalRef?.hide()"
-    >
-      <span aria-hidden="true" class="visually-hidden close-custom"
-        >&times;</span
-      >
+    <button type="button" class="btn-close close pull-right" aria-label="Close" (click)="modalRef?.hide()">
+      <span aria-hidden="true" class="visually-hidden close-custom">&times;</span>
     </button>
   </div>
   <ng-container *ngIf="selectedFlow$ | async as currentFLow">
     <ng-container *ngIf="selectedCollection$ | async as currentCollection">
       <div class="modal-body">
         <div class="code-font-sm code-size-200 code-block">
-          <ngx-codemirror [formControl]="payloadControl"  [options]="codeEditorOptions">
+          <ngx-codemirror [formControl]="payloadControl" [options]="codeEditorOptions">
           </ngx-codemirror>
         </div>
 
-            <p
-              @fadeInUp
-              *ngIf="
+        <p @fadeInUp *ngIf="
                 submitted && payloadControl.invalid
-              "
-              class="invalid-input"
-            >
-            Payload is not a valid JSON object.
-            </p>
+              " class="invalid-input">
+          Payload is not a valid JSON object.
+        </p>
 
       </div>
       <div class="modal-footer" top-border>
-        <app-button
-        btnColor="basic"
-        btnStyle="basic"
-        (buttonClicked)="modalRef?.hide()"
-      > Cancel
-      </app-button>
-        <app-button
-        btnColor="primary"
-        (buttonClicked)="testFlowWithPayload(currentCollection,currentFLow)"
-        >Test
+        <app-button btnColor="basic" btnStyle="basic" (buttonClicked)="modalRef?.hide()"> Cancel
+        </app-button>
+        <app-button btnColor="primary" (buttonClicked)="testFlowWithPayload(currentCollection,currentFLow)">Test
         </app-button>
       </div>
-      </ng-container>
     </ng-container>
+  </ng-container>
 
 
 </ng-template>

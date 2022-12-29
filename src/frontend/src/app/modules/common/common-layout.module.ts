@@ -17,7 +17,6 @@ import { LoadingSkeletonComponent } from './components/loading-skeleton/loading-
 import { ApInputComponent } from './components/ap-input/ap-input.component';
 import { LoadingIconComponent } from './components/loading-icon/loading-icon.component';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { MatLegacyTabsModule as MatTabsModule } from '@angular/material/legacy-tabs';
 import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
 import { OutputLogPipe } from './pipe/output-log';
@@ -25,7 +24,6 @@ import { DefaultZeroPipe } from './pipe/default-zero.pipe';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { StoreModule } from '@ngrx/store';
 import { AngularSvgIconModule } from 'angular-svg-icon';
-import { JsonViewModalComponent } from './components/json-view-modal/json-view-modal.component';
 import { MatTooltipDefaultOptions, MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
 import { RawOutputLogPipe } from './pipe/raw-output-log';
@@ -64,6 +62,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { DialogTitleTemplateComponent } from './components/dialog-title-template/dialog-title-template.component';
 import { MatDialogModule } from '@angular/material/dialog';
+import { JsonViewDialogComponent } from './components/json-view/json-view-dialog/json-view-dialog.component';
+import { MatTabsModule } from '@angular/material/tabs';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 0,
 	hideDelay: 0,
@@ -87,7 +87,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		OutputLogPipe,
 		RawOutputLogPipe,
 		DefaultZeroPipe,
-		JsonViewModalComponent,
+		JsonViewComponent,
 		LongTextFormControlComponent,
 		CheckboxComponent,
 		DictionaryFormControlComponent,
@@ -109,6 +109,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		EndpointFormControlComponent,
 		ConnectorCustomRequestFormControlComponent,
 		DialogTitleTemplateComponent,
+		JsonViewDialogComponent,
 	],
 	imports: [
 		TimeagoModule,
@@ -116,7 +117,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		CommonModule,
 		ReactiveFormsModule,
 		NgxSkeletonLoaderModule,
-
 		MatExpansionModule,
 		MatTabsModule,
 		CodemirrorModule,

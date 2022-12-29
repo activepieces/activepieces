@@ -138,7 +138,6 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 
 	submit() {
 		this.configForm.markAllAsTouched();
-		debugger;
 		console.log(this.configForm.errors);
 		if (this.configForm.valid) {
 			const config: Config = this.configForm.getRawValue();

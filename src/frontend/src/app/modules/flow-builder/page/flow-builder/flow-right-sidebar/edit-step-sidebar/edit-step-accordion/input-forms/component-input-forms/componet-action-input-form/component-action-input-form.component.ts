@@ -60,17 +60,17 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 	initialSetup$: Observable<ActionDropdownOption[]>;
 	componentName: string;
 	intialComponentInputFormValue: { action_name: string; input: { [key: string]: any } } | null;
-	customRequestItem = {
-		value: { actionName: 'CUSTOM_REQUEST', configs: [] as FrontEndConnectorConfig[] },
-		label: { name: 'Custom Request', description: 'Sends authenticated request' },
-		disabled: true,
-	};
 	separatorItem: ActionDropdownOption = {
 		label: {
 			name: '',
 			description: '',
 		},
 		value: { actionName: '', configs: [] as FrontEndConnectorConfig[], separator: true },
+		disabled: true,
+	};
+	customRequestItem = {
+		value: { actionName: 'CUSTOM_REQUEST', configs: [] as FrontEndConnectorConfig[] },
+		label: { name: 'Custom Request', description: 'Sends authenticated request' },
 		disabled: true,
 	};
 	selectedAction$: Observable<any>;
@@ -145,14 +145,9 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 			}),
 			map((actionDropdownItems: ActionDropdownOption[]) => {
 				if (actionDropdownItems.length > 3) {
-					return [
-						this.customRequestItem,
-						...actionDropdownItems.slice(0, 3),
-						this.separatorItem,
-						...actionDropdownItems.slice(3),
-					];
+					return [...actionDropdownItems.slice(0, 3), this.separatorItem, ...actionDropdownItems.slice(3)];
 				}
-				return [this.customRequestItem, ...actionDropdownItems];
+				return [...actionDropdownItems];
 			})
 		);
 		this.initialSetup$ = this.actions$.pipe(
@@ -250,7 +245,10 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 	private actionSelected(selectedActionValue: { actionName: string; configs: FrontEndConnectorConfig[] }) {
 		const configsForm = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME);
 		if (!configsForm) {
-			this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new UntypedFormControl([...selectedActionValue.configs]));
+			this.componentForm.addControl(
+				CONFIGS_FORM_CONTROL_NAME,
+				new UntypedFormControl([...selectedActionValue.configs])
+			);
 		} else {
 			configsForm.setValue([...selectedActionValue.configs]);
 		}

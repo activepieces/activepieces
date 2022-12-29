@@ -27,6 +27,7 @@ module.exports = {
 				greenBorder: '#5Fd2b0',
 				description: '#8C8C8C',
 				hover: '#fafafa',
+				success: '#209e34',
 			},
 		},
 		container: {

@@ -2,7 +2,7 @@
   <div *ngIf="backArrow" class="icon-button" (click)="backArrowClicked.emit()">
     <fa-icon [fixedWidth]="true" [size]="'1x'" [icon]="faChevronLeft" style="flex-grow: 1; cursor: pointer"></fa-icon>
   </div>
-  <div class="ap-typography-subtitle-1 ap-font-normal ap-flex-grow" #drawerTitle
+  <div class="ap-typography-subtitle-1 ap-text-title ap-font-normal ap-flex-grow" #drawerTitle
     [matTooltip]="drawerTitle.clientWidth < drawerTitle.scrollWidth? title:''">
     {{ title }}
   </div>

@@ -33,7 +33,6 @@ export class StepTypeSidebarComponent implements OnInit {
 	@Input() set showTriggers(shouldShowTriggers) {
 		this._showTriggers = shouldShowTriggers;
 		if (this._showTriggers) {
-			// this.triggersDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetailsForCoreTriggers);
 			this.sideBarDisplayName = 'Triggers';
 		} else {
 			this.sideBarDisplayName = 'Flow Steps';

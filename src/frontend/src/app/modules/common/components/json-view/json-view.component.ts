@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { HighlightService } from '../../service/highlight.service';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
-import { JsonViewModalComponent } from '../json-view-modal/json-view-modal.component';
+import { JsonViewDialogComponent } from './json-view-dialog/json-view-dialog.component';
 
 @Component({
 	selector: 'app-json-viewer',
@@ -24,9 +24,7 @@ export class JsonViewComponent implements AfterViewInit {
 		}, 10);
 	}
 
-	private bsModalRef: BsModalRef;
-
-	constructor(private modalService: BsModalService, private highlightService: HighlightService) {}
+	constructor(private highlightService: HighlightService, private dialogService: MatDialog) {}
 
 	ngAfterViewInit(): void {
 		if (!this.highlight) {
@@ -36,8 +34,6 @@ export class JsonViewComponent implements AfterViewInit {
 	}
 
 	openModal() {
-		this.bsModalRef = this.modalService.show(JsonViewModalComponent, { class: 'modal-xl' });
-		this.bsModalRef.content.json = this._content;
-		this.bsModalRef.content.title = this.title;
+		this.dialogService.open(JsonViewDialogComponent, { data: { title: this.title, content: this._content } });
 	}
 }
