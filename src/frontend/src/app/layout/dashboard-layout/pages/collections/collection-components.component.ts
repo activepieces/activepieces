@@ -14,6 +14,7 @@ import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
 import { FlowService } from 'src/app/layout/common-layout/service/flow.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Flow } from 'src/app/layout/common-layout/model/flow.class';
+import { PosthogService } from 'src/app/layout/common-layout/service/posthog.service';
 
 @Component({
 	selector: 'app-flows-group',
@@ -41,7 +42,8 @@ export class CollectionComponent implements OnInit {
 		private modalService: BsModalService,
 		private projectService: ProjectService,
 		private flowService: FlowService,
-		private snackBar: MatSnackBar
+		private snackBar: MatSnackBar,
+		private posthogService: PosthogService
 	) {}
 
 	ngOnInit(): void {
@@ -113,9 +115,15 @@ export class CollectionComponent implements OnInit {
 					});
 				}),
 				switchMap(collection => {
+					if (this.authenticationService.currentUserSubject.value?.track_events) {
+						this.posthogService.captureEvent('collection.created [Builder]', collection);
+					}
 					return this.flowService.create(collection.id, 'Flow 1');
 				}),
 				tap(flow => {
+					if (this.authenticationService.currentUserSubject.value?.track_events) {
+						this.posthogService.captureEvent('flow.created [Builder]', flow);
+					}
 					this.router.navigate(['/flows/', flow.collection_id], { queryParams: { newCollection: true } });
 				})
 			);
