@@ -1,8 +1,0 @@
-export enum ActionType {
-	BRANCH = 'BRANCH',
-	CODE = 'CODE',
-	STORAGE = 'STORAGE',
-	RESPONSE = 'RESPONSE',
-	LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
-	COMPONENT = 'COMPONENT',
-}

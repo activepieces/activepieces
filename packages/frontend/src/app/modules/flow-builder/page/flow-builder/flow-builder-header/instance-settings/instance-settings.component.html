@@ -1,0 +1,36 @@
+<app-icon-button [buttonDisabled]="(collectionInstance$ | async) === undefined" [tooltipText]="tooltipText"
+  [buttonDisabled]="(collectionInstance$ | async) === undefined" [iconFilename]="'settings.svg'"
+  (buttonClicked)="openModal(modalTemplate)"></app-icon-button>
+
+<ng-template #modalTemplate>
+  <app-dialog-title-template>
+    Instance Info
+  </app-dialog-title-template>
+  <mat-dialog-content>
+    <ng-container *ngIf="collectionInstance$ | async as collectionInstance">
+      <ng-container *ngIf="collection$ | async as collection">
+        <div class="ap-typography-body-2">Latest Collection Version Id: <span
+            class="ap-font-bold">{{collection.version.id}} </span></div>
+        <div class="ap-typography-body-2">Deployed Collection Version Id:
+          <span class="ap-font-bold">{{collectionInstance.collection_version_id}} </span>
+        </div>
+        <div class="ap-typography-body-2">Deployment
+          Date:<span class="ap-font-bold">{{timeHelperService.formatDateTimeMills(collectionInstance.created)}}</span>
+        </div>
+      </ng-container>
+    </ng-container>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+      <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
+        Cancel
+      </app-button>
+      <app-button cdkFocusInitial btnSize="default" btnColor="warn" (click)="disableInstance()" [loading]="loading"
+        btnColor="warn">
+        Disable
+      </app-button>
+    </div>
+  </mat-dialog-actions>
+  <ng-container *ngIf="deleteInstance$ | async"></ng-container>
+</ng-template>
