@@ -8,7 +8,6 @@ import { RunsComponent } from './pages/runs-table/runs-table.component';
 import { CommonLayoutModule } from '../common/common-layout.module';
 import { CollectionsTableComponent } from './pages/collections-table/collections-table.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TimeagoModule } from 'ngx-timeago';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { EmptyCollectionsTableComponent } from './pages/collections-table/empty-collections-table/empty-collections-table.component';
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
@@ -33,7 +32,6 @@ import { PageTitleComponent } from './components/page-title/page-title.component
 		RouterModule.forChild(DashboardLayoutRouting),
 		ReactiveFormsModule,
 		FontAwesomeModule,
-		TimeagoModule.forChild(),
 		NgxSkeletonLoaderModule,
 	],
 	exports: [],
