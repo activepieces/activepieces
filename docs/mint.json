@@ -9,8 +9,6 @@
     "primary": "#5155D7",
     "dark": "#3033A6",
     "light": "#6D72F6",
-    "ultraLight": "#BCBCEF",
-    "ultraDark": "##070963",
     "background": {
       "dark": "#0C1322",
       "light": "#ffffff"
@@ -105,6 +103,7 @@
       ]
     },
     {
+      "group": "",
       "pages": ["license"]
     }
   ]
