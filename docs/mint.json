@@ -41,36 +41,26 @@
   ],
   "navigation": [
     {
-      "group": "Get Started",
+      "group": "Quickstart",
       "pages": [
-        "get-started/quickstart",
-        "get-started/what-is-activepieces",
-        {
-          "group": "Installation",
-          "pages": [
-            "get-started/installation/using-docker",
-            "get-started/installation/1-click-on-digitalocean",
-            "get-started/installation/cloud"
-          ]
-        }
+        "quickstart/quick-intro",
+        "quickstart/setup",
+        "quickstart/hello-world"
       ]
     },
     {
       "group": "Using Activepieces",
       "pages": [
-        "using-activepieces/concepts",
         "using-activepieces/triggers",
-        "using-activepieces/refer-to-steps",
-        "using-activepieces/example-flow",
-        "using-activepieces/publish-and-enable",
-        "using-activepieces/debug-flow"
+        "using-activepieces/variables",
+        "using-activepieces/publishing",
+        "using-activepieces/debugging"
       ]
     },
     {
       "group": "Pieces",
       "pages": [
         "pieces/overview",
-        "pieces/missing-pieces",
         {
           "group": "Apps",
           "pages": [
@@ -90,7 +80,8 @@
             "pieces/flow-controls/loop",
             "pieces/flow-controls/if"
           ]
-        }
+        },
+        "pieces/custom-pieces"
       ]
     },
     {

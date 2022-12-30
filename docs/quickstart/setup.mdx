@@ -1,0 +1,29 @@
+---
+title: "Setup"
+description: ""
+---
+
+<Note>We are currently working on 2 other setup methods: 1-Click Install on DigitalOcean and a cloud version. You can use the Docker image to install Activepieces today.</Note>
+
+We will use Activepieces [Docker](https://docs.docker.com/get-docker/) image to get up and running quickly:
+
+**1. Clone Activepieces repository.**
+
+```bash
+git clone https://github.com/activepieces/activepieces.git
+```
+
+**2. Go to the repository folder.**
+
+```bash
+cd activepieces
+```
+
+**3. Run Activepieces.**
+```bash
+docker compose -p activepieces up
+```
+
+**4. Head to https://localhost:8080 on the browser and set up your account.**
+
+You are now ready to build your first flow. We will do this in the next guide.
