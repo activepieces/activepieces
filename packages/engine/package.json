@@ -4,17 +4,15 @@
     "@types/node": "^18.7.13",
     "axios": "^1.0.0",
     "fs-extra": "^10.1.0",
-    "lodash.get": "^4.4.2",
-    "unzip-stream": "^0.3.1",
-    "pieces": "*",
-    "shared": "*"
+    "lodash": "^4.17.21",
+    "pieces": "workspace:*",
+    "shared": "workspace:*",
+    "unzip-stream": "^0.3.1"
   },
   "devDependencies": {
-    "webpack-ignore-dynamic-require": "^1.0.0",
-    "webpack-node-externals": "^3.0.0",
+    "@types/lodash": "^4.14.191",
     "@types/fs-extra": "^9.0.13",
     "@types/jest": "^28.0.8",
-    "@types/lodash.get": "^4.4.6",
     "@types/node": "^14.11.2",
     "@types/unzip-stream": "^0.3.1",
     "@types/webpack": "^4.4.6",
@@ -24,7 +22,9 @@
     "ts-loader": "^8.3.0",
     "typescript": "^4.0.3",
     "webpack": "^5.74.0",
-    "webpack-cli": "^4.10.0"
+    "webpack-cli": "^4.10.0",
+    "webpack-ignore-dynamic-require": "^1.0.0",
+    "webpack-node-externals": "^3.0.0"
   },
   "scripts": {
     "build": "webpack --mode production && cp dist/activepieces-engine.js ../backend/resources/activepieces-engine.js",

@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import './assets/scss/variables.scss';
+@import './assets/scss/css-reset.scss';
+@import './assets/scss/ng-material-override.scss';
+@import './assets/scss/spinner.scss';
+@import './assets/scss/utlis.scss';
+@import "~prismjs/plugins/line-numbers/prism-line-numbers.css";
+@import "./assets/scss/code-editors-override.scss";
+
