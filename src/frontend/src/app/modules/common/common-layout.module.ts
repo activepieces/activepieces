@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { EditableTextComponent } from './components/editable-text/editable-text.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IconButtonComponent } from './components/icon-button/icon-button.component';
-import { TimeagoModule } from 'ngx-timeago';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { HighlightService } from './service/highlight.service';
 import { StateIconComponent } from './components/status-icon/state-icon.component';
@@ -27,27 +26,19 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { MatTooltipDefaultOptions, MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
 import { RawOutputLogPipe } from './pipe/raw-output-log';
-import { NgSelectModule } from '@ng-select/ng-select';
 import { MatSnackBarModule, MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { CheckboxComponent } from './components/app-checkbox/checkbox.component';
 import { LongTextFormControlComponent } from './components/form-controls/long-text-form-control/long-text-form-control.component';
 import { DictionaryFormControlComponent } from './components/form-controls/dictionary-form-control/dictionary-form-control.component';
 import { OAuth2ConnectControlComponent } from './components/form-controls/o-auth2-connect-control/o-auth2-connect-control.component';
 import { ConfigsFormComponent } from './components/configs-form/configs-form.component';
-import { NgSelectItemTemplateComponent } from './components/form-controls/ng-select-item-template/ng-select-item-template.component';
-import { NgSelectLoadingSpinnerTemplateComponent } from './components/form-controls/ng-select-loading-spinner-template/ng-select-loading-spinner-template.component';
 import { CodeArtifactFormControlComponent } from './components/form-controls/code-artifact-form-control/code-artifact-form-control.component';
 import { CodeArtifactControlFullscreenComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { TestCodeFormModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/test-code-form-modal/test-code-form-modal.component';
 import { AddNpmPackageModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component';
-import { NgSelectTagValueTemplateComponent } from './components/form-controls/ng-select-tag-value-template/ng-select-tag-value-template.component';
 import { projectReducer } from './store/reducer/project.reducer';
-import { ItemTextPipe } from './components/form-controls/ng-select-tag-value-template/item-text.pipe';
 import { TrackHoverDirective } from './components/form-controls/dictionary-form-control/track-hover.directive';
-import { NgSelectConnectorActionItemTemplateComponent } from './components/form-controls/ng-select-connector-action-item-template/ng-select-connector-action-item-template.component';
 import { RequestTypeTemplateComponent } from './components/form-controls/request-type-template/request-type-template.component';
-import { NgSelectCustomRequestComponent } from './components/form-controls/ng-select-custom-request/ng-select-custom-request.component';
-import { NgSelectNoItemsFoundTemplateComponent } from './components/form-controls/ng-select-no-items-found-template/ng-select-no-items-found-template.component';
 import { EndpointFormControlComponent } from './components/form-controls/endpoint-form-control/endpoint-form-control.component';
 import { ConnectorCustomRequestFormControlComponent } from './components/form-controls/connector-custom-request-form-control/connector-custom-request-form-control.component';
 import { MatCardModule } from '@angular/material/card';
@@ -92,26 +83,18 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		DictionaryFormControlComponent,
 		OAuth2ConnectControlComponent,
 		ConfigsFormComponent,
-		NgSelectItemTemplateComponent,
-		NgSelectLoadingSpinnerTemplateComponent,
 		CodeArtifactFormControlComponent,
 		CodeArtifactControlFullscreenComponent,
 		TestCodeFormModalComponent,
 		AddNpmPackageModalComponent,
-		NgSelectTagValueTemplateComponent,
-		ItemTextPipe,
 		TrackHoverDirective,
-		NgSelectConnectorActionItemTemplateComponent,
 		RequestTypeTemplateComponent,
-		NgSelectCustomRequestComponent,
-		NgSelectNoItemsFoundTemplateComponent,
 		EndpointFormControlComponent,
 		ConnectorCustomRequestFormControlComponent,
 		DialogTitleTemplateComponent,
 		JsonViewDialogComponent,
 	],
 	imports: [
-		TimeagoModule,
 		FontAwesomeModule,
 		CommonModule,
 		ReactiveFormsModule,
@@ -127,7 +110,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		AngularSvgIconModule,
 		MatTooltipModule,
 		MonacoEditorModule,
-		NgSelectModule,
 		MatSnackBarModule,
 		MatSlideToggleModule,
 		MatCardModule,
@@ -158,21 +140,14 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		FontAwesomeModule,
 		MatSnackBarModule,
 		MatButtonModule,
-		NgSelectModule,
 		LongTextFormControlComponent,
 		CheckboxComponent,
 		OAuth2ConnectControlComponent,
 		DictionaryFormControlComponent,
 		ConfigsFormComponent,
-		NgSelectItemTemplateComponent,
 		CodeArtifactFormControlComponent,
-		NgSelectTagValueTemplateComponent,
-		NgSelectLoadingSpinnerTemplateComponent,
 		MatTooltipModule,
 		MatSlideToggleModule,
-		NgSelectConnectorActionItemTemplateComponent,
-		NgSelectCustomRequestComponent,
-		NgSelectNoItemsFoundTemplateComponent,
 		EndpointFormControlComponent,
 		ConnectorCustomRequestFormControlComponent,
 		MatCardModule,
