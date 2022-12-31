@@ -10,10 +10,79 @@ This allows flows to be so powerful as you can design each step to work with the
 There are two types of data that you can use in any step:
 
 - Output from previous steps: `${step_name.output_variable}`
-- Config variables: `${configs.variable_name}`
+- Config variables: `${configs.variable_key}`
 
 We'll go through both types in detail.
 
 ### Steps Output
 
+Each step of your flow has an **input** that flows in and an **output** that flows out.
+
+You can use the output of any previous step in the piece settings.
+
+If you use just `${step_name}`, this variable will contain the full output from that step. If the output was a JSON object, you can access its properties like this: `${step_name.property_name}`.
+
+Steps names show on the second line of any step, for example, the following step is called `step_2`. These names are generated automatically.
+
+<img width="300" src="/resources/screenshots/using-activepieces-step-name.png" />
+
 ### Config Variables
+
+Config variables let you store simple data and use across your collection flows. Variables have **keys** and **values**.
+
+You can define Config Variables by clicking on **Configs** next to Test flow, then **+ New Variable**.
+
+Any variable in the collection can be resued in any other step by using this syntax: `${configs.variable_key}`.
+
+You will learn this practically in the second part of the example below.
+
+### Example
+
+We'll add 2 code pieces, the first one will return a JSON object, and the second one will use it.
+
+**Using Steps Output**
+
+1. Start a new flow.
+2. Set the trigger to anything (we'll only run the flow through **Test flow**).
+3. Add a code piece, add the following code to it:
+```javascript
+exports.codePiece = async (params) => {
+    return {
+        type: "alien",
+        color: "beautiful",
+        age: 1200
+    };
+};
+```
+4. Add another code piece, we want to pass the output of the previous code step to this one, and use it to construct a sentence.
+5. In the **Parameters** section of the piece settings, we'll set the following parameters:
+
+| Key | Value |
+| - | - |
+| type | `${step_1.type}` |
+| color | `${step_1.color}` |
+| age | `${step_1.age}` |
+
+It will look like this:
+![Pass Parameters to Code Piece](/resources/screenshots/using-activepieces-code-params.png)
+
+**Using Config Variables**
+
+5. Click on **Configs** next to Test flow. In the Configs Panel, click on **+ New Variable**. Define a new variable with they key `planet` and the value `Pluto` and save it.
+
+6. Go back to the second code piece, add a 4th parameter with the key `planet` and the value `${configs.planet}`. This will pass the config variable to the code piece.
+
+**Final Code and Testing**
+
+6. We'll use the 4 parameters in the code by `params.key`. Use the following code for the second code piece:
+```javascript
+exports.codePiece = async (params) => {
+    return "Welcome to "+ params.planet + ".\n\n"+
+      "I am a "+ params.color +" "+ params.type +" and I am "+ params.age +" years old!";
+};
+```
+
+7. Click on **Test flow** and watch the output of the second code piece. It will look like this:
+![Output of a Code Piece](/resources/screenshots/using-activepieces-code-output.png)
+
+Congratulations 🎉 You are now capable of passing data through flow steps!
