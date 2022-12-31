@@ -49,9 +49,9 @@
     {
       "group": "Using Activepieces",
       "pages": [
+        "using-activepieces/overview",
         "using-activepieces/triggers",
-        "using-activepieces/variables",
-        "using-activepieces/publishing",
+        "using-activepieces/passing-data",
         "using-activepieces/debugging"
       ]
     },
