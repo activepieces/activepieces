@@ -31,7 +31,7 @@ async function build(artifact: Buffer): Promise<Buffer> {
   try {
     console.log("Started Building in sandbox " + buildPath);
 
-    sandbox.cleanAndInit();
+    await sandbox.cleanAndInit();
 
     await downloadFiles(artifact, buildPath);
 

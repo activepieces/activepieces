@@ -28,7 +28,7 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
   let executionResult: CodeExecutionResult;
   try {
     console.log("Started Executing Code in sandbox " + buildPath);
-    sandbox.cleanAndInit();
+    await sandbox.cleanAndInit();
 
     const bundledCode = await codeBuilder.build(artifact);
     const codeExecutor = fs.readFileSync("resources/code-executor.js");
@@ -36,7 +36,7 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
     fs.writeFileSync(buildPath + "/_input.txt", JSON.stringify(input));
     fs.writeFileSync(buildPath + "/code-executor.js", codeExecutor);
     try {
-      sandbox.runCommandLine("/usr/bin/node code-executor.js");
+      await sandbox.runCommandLine("/usr/bin/node code-executor.js");
     } catch (ignored) {}
     const metaResult = sandbox.parseMetaFile();
     executionResult = {

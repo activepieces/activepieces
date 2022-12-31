@@ -49,7 +49,7 @@ async function executeFlow(request: ExecutionRequest) {
     "[" + request.runId + "] Executing flow " + flowVersion.id +  + " in sandbox " + sandbox.boxId
   );
   try {
-    sandbox.cleanAndInit();
+    await sandbox.cleanAndInit();
 
     console.log(
       "[" + request.runId + "] Downloading Files"
@@ -59,10 +59,10 @@ async function executeFlow(request: ExecutionRequest) {
     console.log(
       "[" + request.runId + "] Running Engine"
     );
-    sandbox.runCommandLine("/usr/bin/node activepieces-engine.js execute-flow");
-
+    await sandbox.runCommandLine("/usr/bin/node activepieces-engine.js execute-flow");
+    
     console.log(
-      "[" + request.runId + "] Reading Output"
+      "[" + request.runId + "] Reading Output "
     );
     const executionOutput: ExecutionOutput = JSON.parse(
       fs.readFileSync(sandbox.getSandboxFilePath("output.json")).toString()
