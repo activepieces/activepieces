@@ -1,0 +1,56 @@
+---
+title: "Hello World"
+description: "Create your first automation with Activepieces"
+---
+
+We will create a flow that sends a message to a Slack channel every 1 hour, and call it Big Ben ⏰
+
+### 1. Create a new collection.
+
+You should see the following screen after setting up your account. Click on **Start building** to create a new collection.
+
+This will also create your first flow `Flow 1` inside the collection. You can change its name from `Untitled` to `Big Ben`.
+
+![Activepieces Dashboard](/resources/screenshots/quickstart-empty-dashboard.png)
+
+### 2. Configure the trigger.
+
+You will see the following screen, choose the Schedule trigger:
+
+![Select Flow Trigger](/resources/screenshots/quickstart-configure-trigger.png)
+
+We'll now set the Schedule to run every hour by using this expression `0 0 * ? * *` in the settings, as follows:
+
+<img width="350" src="/resources/screenshots/quickstart-trigger-schedule.png" />
+
+<Note>You can learn more about Cron expressions in the [Triggers](/using-activepieces/triggers) page</Note>
+
+### 3. Add a Slack piece.
+
+Click on the **+** button below the trigger:
+
+<img width="400" src="/resources/screenshots/quickstart-add-piece-button.png" />
+
+The Pieces panel will open. Go to the **Apps** tab and choose **Slack**.
+
+<img width="350" src="/resources/screenshots/quickstart-piece-slack.png" />
+
+(Slack configratuon will go here)
+
+### 4. Test the flow.
+
+Your flow is complete, it's time to test it. Click on **Test flow** right above your flow.
+
+![Test Flow](/resources/screenshots/quickstart-test-flow.png)
+
+Once the test is completed, you'll receive the message in the Slack channel you chose and the builder will turn like this:
+
+![Test Flow](/resources/screenshots/quickstart-test-flow-completed.png)
+
+The check mark means the step ran successfully. You can click on any step and see its input and output.
+
+### 5. Publish the collection.
+
+To enable your automation, click on the **Publish** button on the top of the screen. This will save the collection as a new version and automatically enable it.
+
+It's official, you are ready to use Activepieces now 🎉
