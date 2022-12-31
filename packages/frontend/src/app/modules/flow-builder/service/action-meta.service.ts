@@ -1,12 +1,11 @@
 import { Injectable } from '@angular/core';
 import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { ActionType } from '../../common/model/enum/action-type.enum';
-import { TriggerType } from '../../common/model/enum/trigger-type.enum';
+import { ActionType, TriggerType} from 'shared';
 import { HttpClient } from '@angular/common/http';
 import { ConnectorComponent } from '../../common/components/configs-form/connector-action-or-config';
 import { environment } from 'src/environments/environment';
 import { Observable, shareReplay } from 'rxjs';
-import { DropdownOption } from '../../common/model/dropdown-options';
+import { DropdownItem } from '../../common/model/dropdown-item.interface';
 
 @Injectable({
 	providedIn: 'root',
@@ -19,12 +18,6 @@ export class ActionMetaService {
 			name: 'Code',
 			description: 'Powerful nodejs code with npm',
 			logoUrl: '/assets/img/custom/piece/code.svg',
-		},
-		{
-			type: ActionType.LOOP_ON_ITEMS,
-			name: 'Loop',
-			description: 'Repeat an actions multiple times',
-			logoUrl: '/assets/img/custom/piece/loop.svg',
 		},
 		{
 			type: ActionType.STORAGE,
@@ -68,6 +61,6 @@ export class ActionMetaService {
 		req: { config_name: string; action_name: string; config: any },
 		pieceName: string
 	) {
-		return this.http.post<DropdownOption[]>(environment.apiUrl + `/pieces/${pieceName}/options`, req);
+		return this.http.post<DropdownItem[]>(environment.apiUrl + `/pieces/${pieceName}/options`, req);
 	}
 }

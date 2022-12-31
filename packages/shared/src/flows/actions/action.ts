@@ -22,7 +22,7 @@ interface BaseAction<T, V> {
 
 export type CodeActionSettings = {
   artifact?: string;
-  artifactSourceId: string;
+  artifactSourceId: string | undefined;
   artifactPackagedId: string | undefined;
   input: Record<string, unknown>;
 }
@@ -41,10 +41,9 @@ export const CodeActionSchema = Type.Object({
 })
 
 // Piece Action
-
 export type PieceActionSettings = {
   pieceName: string;
-  actionName: string;
+  actionName: string | undefined;
   input: Record<string, unknown>;
 }
 
@@ -72,7 +71,7 @@ export enum StoreOperation {
 export type StorageActionSettings = {
   operation: StoreOperation,
   key: string;
-  value: unknown;
+  value?: unknown;
 }
 
 export interface StorageAction extends BaseAction<ActionType.STORAGE, StorageActionSettings> {
@@ -84,13 +83,14 @@ export const StorageActionSchema = Type.Object({
   type: Type.Literal(ActionType.STORAGE),
   settings: Type.Object({
     operation: Type.Enum(StoreOperation),
-    key: Type.String({}),
+    key: Type.String({
+      minLength: 1
+    }),
     value: Type.Any({})
   })
 })
 
 // Loop Items
-
 export type LoopOnItemsActionSettings = {
   items: unknown;
 }

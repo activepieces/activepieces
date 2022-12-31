@@ -10,11 +10,14 @@ import {
   ProjectId,
   SeekPage,
 } from "shared";
+import { databaseConnection } from "../database/database-connection";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { Order } from "../helper/pagination/paginator";
 import { FlowRunEntity } from "./flow-run-entity";
-import { flowRunRepo as repo } from "./flow-run-repo";
+
+
+export const repo = databaseConnection.getRepository(FlowRunEntity);
 
 export const flowRunService = {
   async list({ projectId, cursor, limit }: ListParams): Promise<SeekPage<FlowRun>> {
@@ -59,6 +62,7 @@ export const flowRunService = {
       instanceId,
       projectId,
       collectionId: collectionVerson.collectionId,
+      flowId: flowVersion.flowId,
       flowVersionId: flowVersion.id,
       collectionVersionId: collectionVerson.id,
       flowDisplayName: flowVersion.displayName,

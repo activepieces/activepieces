@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { Observable } from 'rxjs';
-import { UUID } from 'angular2-uuid';
-import { Instance } from '../model/instance.interface';
+import { Instance } from 'shared';
 
 @Injectable({
 	providedIn: 'root',
@@ -11,11 +10,15 @@ import { Instance } from '../model/instance.interface';
 export class InstanceService {
 	constructor(private http: HttpClient) {}
 
-	get(collectionId: UUID): Observable<Instance> {
-		return this.http.get<Instance>(environment.apiUrl + `/collections/${collectionId}/instance`);
+	get(collectionId: string): Observable<Instance> {
+		return this.http.get<Instance>(environment.apiUrl + `/instance`, {
+			params: {
+				collectionId: collectionId
+			}
+		});
 	}
 
-	delete(instanceId: UUID): Observable<void> {
+	delete(instanceId: string): Observable<void> {
 		return this.http.delete<void>(environment.apiUrl + `/instance/${instanceId}`);
 	}
 }

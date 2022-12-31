@@ -1,11 +1,10 @@
 import { CollectionActions } from '../action/collection.action';
 import { UUID } from 'angular2-uuid';
 import { Action, createReducer, on } from '@ngrx/store';
-import { VersionEditState } from '../../../common/model/enum/version-edit-state.enum';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { CollectionState } from '../model/collection-state.model';
-import { Collection } from 'src/app/modules/common/model/collection.interface';
 import { FlowsActions } from '../action/flows.action';
+import { Collection, CollectionVersionState } from 'shared';
 
 const initialState: CollectionState = {
 	state: CollectionStateEnum.NONE,
@@ -15,13 +14,13 @@ const initialState: CollectionState = {
 			id: '',
       collectionId: "",
 			displayName: 'dummy',
-			state: VersionEditState.DRAFT,
+			state: CollectionVersionState.DRAFT,
 			configs: [],
-			created: 0,
-			updated: 0,
+			created: "",
+			updated: "",
 		},
-		created: 0,
-		updated: 0,
+		created: "",
+		updated: "",
 		id: '',
 		projectId: 'dummy',
 	},
@@ -30,12 +29,12 @@ const initialState: CollectionState = {
 const _collectionReducer = createReducer(
 	initialState,
 	on(CollectionActions.setInitial, (state, { collection, instance }): CollectionState => {
-		const clonedPiece: Collection = JSON.parse(JSON.stringify(collection));
+		const clonedPiece: Collection= JSON.parse(JSON.stringify(collection));
 		return { collection: clonedPiece, state: CollectionStateEnum.NONE, instance: instance };
 	}),
 	on(CollectionActions.changeName, (state, { displayName }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		clonedState.collection.version.displayName = displayName;
+		clonedState.collection.version!.displayName = displayName;
 		clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
 		return clonedState;
 	}),
@@ -51,19 +50,19 @@ const _collectionReducer = createReducer(
 
 	on(CollectionActions.addConfig, (state, { config }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		clonedState.collection.version.configs.push(config);
+		clonedState.collection.version!.configs.push(config);
 		clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
 		return clonedState;
 	}),
 	on(CollectionActions.deleteConfigSucceeded, (state, { configIndex: index }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		clonedState.collection.version.configs.splice(index, 1);
+		clonedState.collection.version!.configs.splice(index, 1);
 		clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
 		return clonedState;
 	}),
 	on(CollectionActions.updateConfig, (state, { configIndex, config }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-		clonedState.collection.version.configs[configIndex] = config;
+		clonedState.collection.version!.configs[configIndex] = config;
 		clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
 		return clonedState;
 	}),
@@ -76,9 +75,9 @@ const _collectionReducer = createReducer(
 	on(CollectionActions.deploySuccess, (state, props): CollectionState => {
 		return { ...state, state: state.state & ~CollectionStateEnum.DEPLOYING, instance: props.instance };
 	}),
-	on(FlowsActions.saveFlowStarted, (state, { flow, saveRequestId }): CollectionState => {
+	// TODO(abdulyki) add why there is flow actions inside collection reducer
+	on(FlowsActions.applyUpdateOperation, (state, { flow, saveRequestId }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-
 		return {
 			...clonedState,
 			state: clonedState.state | CollectionStateEnum.SAVING_FLOW,

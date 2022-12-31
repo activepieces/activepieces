@@ -25,10 +25,11 @@ import {
 	VERTICAL_LINE_LENGTH,
 	AFTER_NESTED_LOOP_LINE_LENGTH,
 } from '../draw-utils';
-import { LoopOnItemActionInterface } from '../../../../../../../common/model/flow-builder/actions/loop-action.interface';
 import { AddButtonType } from '../../../../../../../common/model/enum/add-button-type';
 import { FlowsActions } from '../../../../../../store/action/flows.action';
 import { Observable } from 'rxjs';
+import { LoopOnItemsAction } from 'shared';
+import { FlowItem, FlowItemRenderInfo } from 'src/app/modules/common/model/flow-builder/flow-item';
 
 @Component({
 	selector: 'app-loop-line-connection',
@@ -58,13 +59,13 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
 	showEmptyLoopAddButtonBoxShadow = false;
 	svgHeight: number = 0;
 
-	_flowItem: LoopOnItemActionInterface;
+	_flowItem: (LoopOnItemsAction & FlowItemRenderInfo);
 
 	showDropArea$: Observable<boolean> = new Observable<boolean>();
 
 	@Input() viewMode: boolean;
 
-	@Input() set flowItem(value: LoopOnItemActionInterface) {
+	@Input() set flowItem(value: (LoopOnItemsAction & FlowItemRenderInfo)) {
 		this._flowItem = value;
 		this.svgHeight = this.flowItem.connectionsBox!.height;
 		this.writeLines();
@@ -93,7 +94,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
 		if (this.flowItem.firstLoopAction === undefined || this.flowItem.firstLoopAction === null) {
 			childFlowsGraphHeight = EMPTY_LOOP_ADD_BUTTON_HEIGHT + SPACE_BETWEEN_ITEM_CONTENT_AND_LINE + VERTICAL_LINE_LENGTH;
 		} else {
-			childFlowsGraphHeight = this.flowItem.firstLoopAction.boundingBox!.height;
+			childFlowsGraphHeight = (this.flowItem.firstLoopAction as FlowItem).boundingBox!.height;
 		}
 		commands.push(...this.writeStartingLine());
 		commands.push(...this.writeLoopClosing(childFlowsGraphHeight));
@@ -188,7 +189,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
 		const topOffset =
 			this.flowItem.connectionsBox!.height -
 			SPACE_BETWEEN_ITEM_CONTENT_AND_LINE -
-			(this.flowItem.next_action ? ARROW_HEAD_SIZE.height : 0);
+			(this.flowItem.nextAction ? ARROW_HEAD_SIZE.height : 0);
 		this.afterLoopAddButtonTop = `${
 			topOffset -
 			VERTICAL_LINE_LENGTH / 2.0 -

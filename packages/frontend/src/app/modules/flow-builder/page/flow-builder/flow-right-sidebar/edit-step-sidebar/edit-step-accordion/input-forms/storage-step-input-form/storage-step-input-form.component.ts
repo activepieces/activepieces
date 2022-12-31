@@ -9,18 +9,15 @@ import {
 	Validators,
 } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
+import { ActionType, StoreOperation } from 'shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
-import { DropdownOption } from 'src/app/modules/common/model/dropdown-options';
-import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
-import { StorageOperation } from 'src/app/modules/common/model/flow-builder/actions/storage-operation.enum';
-import { StorageScope } from 'src/app/modules/common/model/flow-builder/actions/storage-scope.enum';
+import { DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
 import { StorageStepInputFormSchema } from '../input-forms-schema';
 
 interface StorageStepForm {
-	operation: FormControl<StorageOperation>;
+	operation: FormControl<StoreOperation>;
 	key: FormControl<string>;
 	value: FormControl<string>;
-	scope: FormControl<StorageScope>;
 }
 @Component({
 	selector: 'app-storage-step-input-form',
@@ -40,21 +37,20 @@ interface StorageStepForm {
 	animations: [fadeInUp400ms],
 })
 export class StorageStepInputFormComponent implements ControlValueAccessor {
-	operationDropdownOptions: DropdownOption[] = [
-		{ label: 'GET', value: StorageOperation.GET },
-		{ label: 'PUT', value: StorageOperation.PUT },
+	operationDropdownOptions: DropdownItem[] = [
+		{ label: 'GET', value: StoreOperation.GET },
+		{ label: 'PUT', value: StoreOperation.PUT },
 	];
-	operationChanged$: Observable<StorageOperation>;
+	operationChanged$: Observable<StoreOperation>;
 	storageStepForm: FormGroup<StorageStepForm>;
 	onChange = (value: StorageStepInputFormSchema) => {};
 	onTouch = () => {};
 	updateComponentValue$: Observable<any>;
 	constructor(private formBuilder: FormBuilder) {
 		this.storageStepForm = this.formBuilder.group({
-			operation: new FormControl(StorageOperation.GET, { nonNullable: true, validators: [Validators.required] }),
+			operation: new FormControl(StoreOperation.GET, { nonNullable: true, validators: [Validators.required] }),
 			key: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			value: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			scope: new FormControl(StorageScope.COLLECTION, { nonNullable: true }),
+			value: new FormControl('', { nonNullable: true, validators: [Validators.required] })
 		});
 		this.storageStepForm.markAllAsTouched();
 		this.setUpListenerToOperationControl();
@@ -67,10 +63,9 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 	writeValue(obj: StorageStepInputFormSchema): void {
 		if (obj.type === ActionType.STORAGE) {
 			this.storageStepForm.setValue({
-				operation: StorageOperation.GET,
+				operation: StoreOperation.GET,
 				key: '',
-				value: '',
-				scope: StorageScope.COLLECTION,
+				value: ''
 			});
 			this.storageStepForm.patchValue(obj);
 			this.operationControlChecker(obj.operation);
@@ -92,12 +87,12 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 		);
 	}
 
-	operationControlChecker(operation: StorageOperation) {
+	operationControlChecker(operation: StoreOperation) {
 		const valueControl = this.storageStepForm.controls.value;
-		if (operation === StorageOperation.GET) {
+		if (operation === StoreOperation.GET) {
 			valueControl.setValue('');
 			valueControl.disable();
-		} else if (operation === StorageOperation.PUT && this.storageStepForm.enabled) {
+		} else if (operation === StoreOperation.PUT && this.storageStepForm.enabled) {
 			valueControl.enable();
 		}
 	}
@@ -108,7 +103,7 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 		return null;
 	}
 
-	isOperationSelected(item: DropdownOption) {
+	isOperationSelected(item: DropdownItem) {
 		return this.storageStepForm.controls.operation.value === item.value;
 	}
 
@@ -121,6 +116,6 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 	}
 
 	get StorageOperation() {
-		return StorageOperation;
+		return StoreOperation;
 	}
 }

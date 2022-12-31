@@ -26,7 +26,7 @@ export class DeleteStepDialogComponent {
 	}
 	deleteStep() {
 		if (this.confirmationForm.valid) {
-			this.store.dispatch(FlowsActions.deleteStep({ stepName: this.stepName }));
+			this.store.dispatch(FlowsActions.deleteAction({operation :{ name: this.stepName }}));
 			this.dialogRef.close(true);
 		}
 	}

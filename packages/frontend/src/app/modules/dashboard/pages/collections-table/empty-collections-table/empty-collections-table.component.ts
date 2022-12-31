@@ -4,9 +4,9 @@ import { CollectionService } from 'src/app/modules/common/service/collection.ser
 import { ProjectService } from 'src/app/modules/common/service/project.service';
 import { Observable, switchMap, tap } from 'rxjs';
 import { FlowService } from 'src/app/modules/common/service/flow.service';
-import { Flow } from 'src/app/modules/common/model/flow.class';
 import { PosthogService } from 'src/app/modules/common/service/posthog.service';
 import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
+import { Flow } from 'shared';
 
 @Component({
 	selector: 'app-empty-collections-table',
@@ -42,7 +42,7 @@ export class EmptyCollectionsTableComponent {
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('collection.created [Start building]', collection);
 					}
-					return this.flowService.create(collection.id, 'Flow 1');
+					return this.flowService.create({collectionId: collection.id, displayName: 'Flow 1'});
 				}),
 				tap(flow => {
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {

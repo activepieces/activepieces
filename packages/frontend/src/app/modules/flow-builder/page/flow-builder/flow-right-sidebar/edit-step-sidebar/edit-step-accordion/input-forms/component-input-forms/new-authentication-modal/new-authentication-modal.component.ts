@@ -3,9 +3,9 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { Observable, take } from 'rxjs';
+import { ConfigType } from 'shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { FrontEndConnectorConfig } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
-import { ConfigType } from 'src/app/modules/common/model/enum/config-type';
 import { Config } from 'src/app/modules/common/model/fields/variable/config';
 import { ConfigKeyValidator } from 'src/app/modules/flow-builder/page/flow-builder/validators/configKeyValidator';
 import { CollectionActions } from 'src/app/modules/flow-builder/store/action/collection.action';

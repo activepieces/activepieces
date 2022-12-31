@@ -1,12 +1,8 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {environment} from '../../../../environments/environment';
-import {Collection, CollectionVersion} from '../model/collection.interface';
 import {Observable} from 'rxjs';
-import {SeekPage} from '../model/seek-page';
-import {InstanceStatus} from '../model/enum/instance-status';
-import {Instance} from '../model/instance.interface';
-import {Config} from "../model/fields/variable/config";
+import { InstanceStatus, Collection, CollectionVersion, SeekPage, Instance, UpdateCollectionRequest, CollectionId, CreateCollectionRequest} from 'shared';
 
 @Injectable({
 	providedIn: 'root',
@@ -15,13 +11,13 @@ export class CollectionService {
 	constructor(private http: HttpClient) {
 	}
 
-	create(collection: { projectId: string, displayName: string; }
+	create(request: CreateCollectionRequest
 	): Observable<Collection> {
-		return this.http.post<Collection>(environment.apiUrl +  '/collections', collection);
+		return this.http.post<Collection>(environment.apiUrl +  '/collections', request);
 	}
 
-	update(collectionId: string, updateCollection: {configs: Config[], displayName}): Observable<Collection> {
-    return this.http.put<Collection>(environment.apiUrl + '/collections/' + collectionId, updateCollection);
+	update(collectionId: CollectionId, request: UpdateCollectionRequest): Observable<Collection> {
+    return this.http.post<Collection>(environment.apiUrl + '/collections/' + collectionId, request);
 	}
 
   // TODO REMOVE
@@ -34,9 +30,10 @@ export class CollectionService {
 	}
 
 	list(params: { projectId: string; limit: number; cursor: string }): Observable<SeekPage<Collection>> {
-		const queryParams: { [key: string]: string | number } = {};
-		queryParams['limit'] = params.limit;
-    queryParams['projectId'] = params.projectId;
+		const queryParams: { [key: string]: string | number } = {
+			limit: params.limit,
+			projectId: params.projectId
+		};
 		if (params.cursor) {
 			queryParams['cursor'] = params.cursor;
 		}

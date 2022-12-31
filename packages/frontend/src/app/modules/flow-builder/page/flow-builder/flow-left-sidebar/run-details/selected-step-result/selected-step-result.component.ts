@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ActionStatus } from 'src/app/modules/common/model/enum/action-status';
-import { StepResult } from 'src/app/modules/common/model/instance-run.interface';
+import { StepOutput, StepOutputStatus } from 'shared';
 
 @Component({
 	selector: 'app-selected-step-result',
@@ -8,16 +7,16 @@ import { StepResult } from 'src/app/modules/common/model/instance-run.interface'
 	styleUrls: ['./selected-step-result.component.scss'],
 })
 export class SelectedStepResultComponent implements OnInit {
-	@Input() selectedStepResult: StepResult;
+	@Input() selectedStepResult: StepOutput;
 	@Input() selectedStepName: string;
 	constructor() {}
 	ngOnInit(): void {
-		if (!this.selectedStepResult.output && this.selectedStepResult.error_message) {
-			this.selectedStepResult = { ...this.selectedStepResult, output: this.selectedStepResult.error_message };
+		if (!this.selectedStepResult.output && this.selectedStepResult.errorMessage) {
+			this.selectedStepResult = { ...this.selectedStepResult, output: this.selectedStepResult.errorMessage };
 		}
 	}
 
 	get ActionStatusEnum() {
-		return ActionStatus;
+		return StepOutputStatus;
 	}
 }

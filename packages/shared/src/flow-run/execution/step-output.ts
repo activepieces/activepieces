@@ -1,4 +1,5 @@
 export enum StepOutputStatus {
+  RUNNING = "RUNNING",
   SUCCEEDED = 'SUCCEEDED',
   FAILED = 'FAILED',
 }
@@ -6,7 +7,7 @@ export enum StepOutputStatus {
 export class StepOutput{
   duration?: number;
   input?: unknown;
-  output?: unknown;
+  output?: any;
   errorMessage?: unknown;
   status?: StepOutputStatus;
 }

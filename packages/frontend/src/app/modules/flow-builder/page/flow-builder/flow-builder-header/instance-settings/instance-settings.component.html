@@ -10,12 +10,12 @@
     <ng-container *ngIf="collectionInstance$ | async as collectionInstance">
       <ng-container *ngIf="collection$ | async as collection">
         <div class="ap-typography-body-2">Latest Collection Version Id: <span
-            class="ap-font-bold">{{collection.version.id}} </span></div>
+            class="ap-font-bold">{{collection.version!.id}} </span></div>
         <div class="ap-typography-body-2">Deployed Collection Version Id:
-          <span class="ap-font-bold">{{collectionInstance.collection_version_id}} </span>
+          <span class="ap-font-bold">{{collectionInstance.collectionVersionId}} </span>
         </div>
         <div class="ap-typography-body-2">Deployment
-          Date:<span class="ap-font-bold">{{timeHelperService.formatDateTimeMills(collectionInstance.created)}}</span>
+          Date:<span class="ap-font-bold">{{timeHelperService.formatDateString(collectionInstance.created)}}</span>
         </div>
       </ng-container>
     </ng-container>

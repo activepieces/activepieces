@@ -9,8 +9,7 @@ import {
 	SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
 	VERTICAL_LINE_LENGTH,
 } from '../page/flow-builder/flow-item-tree/flow-item/flow-item-connection/draw-utils';
-import { ActionType } from '../../common/model/enum/action-type.enum';
-import { LoopOnItemActionInterface } from '../../common/model/flow-builder/actions/loop-action.interface';
+import { ActionType, LoopOnItemsAction } from 'shared';
 
 export class FlowRenderUtil {
 	constructor() {}
@@ -37,12 +36,12 @@ export class FlowRenderUtil {
 			height: FLOW_ITEM_HEIGHT,
 		};
 		if (flowItem.type == ActionType.LOOP_ON_ITEMS) {
-			const loopItem = flowItem as LoopOnItemActionInterface;
+			const loopItem = flowItem as LoopOnItemsAction;
 			if (loopItem.firstLoopAction !== undefined && loopItem.firstLoopAction !== null) {
 				this.buildBoxes(loopItem.firstLoopAction);
 			}
 			const subGraph = loopItem.firstLoopAction
-				? loopItem.firstLoopAction.boundingBox!.height
+				?( loopItem.firstLoopAction as FlowItem).boundingBox!.height
 				: EMPTY_LOOP_ADD_BUTTON_HEIGHT + VERTICAL_LINE_LENGTH;
 			const svgBoxHeight =
 				SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
@@ -66,10 +65,10 @@ export class FlowRenderUtil {
 			};
 		}
 		flowItem.boundingBox.height += flowItem.connectionsBox.height;
-		this.buildBoxes(flowItem.next_action);
-		if (flowItem.next_action !== undefined && flowItem.next_action !== null) {
+		this.buildBoxes(flowItem.nextAction);
+		if (flowItem.nextAction !== undefined && flowItem.nextAction !== null) {
 			flowItem.connectionsBox.height += SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
-			flowItem.boundingBox.height += SPACE_BETWEEN_ITEM_CONTENT_AND_LINE + flowItem.next_action?.boundingBox!.height;
+			flowItem.boundingBox.height += SPACE_BETWEEN_ITEM_CONTENT_AND_LINE + flowItem.nextAction?.boundingBox!.height;
 		}
 	}
 
@@ -79,10 +78,10 @@ export class FlowRenderUtil {
 		}
 
 		const simpleAction = piece;
-		if (simpleAction.next_action) {
-			simpleAction.next_action.xOffset = 0;
+		if (simpleAction.nextAction) {
+			simpleAction.nextAction.xOffset = 0;
 			/*      simpleAction.nextAction.yOffset = FlowRendererService.SPACING_VERTICAL;*/
-			this.buildCoordinates(simpleAction.next_action);
+			this.buildCoordinates(simpleAction.nextAction);
 		}
 	}
 }

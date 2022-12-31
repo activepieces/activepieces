@@ -10,7 +10,6 @@ import {
 } from '@angular/forms';
 
 import { map, Observable, of, tap } from 'rxjs';
-import { DropdownOption } from 'src/app/modules/common/model/dropdown-options';
 import { environment } from 'src/environments/environment';
 import { Config } from 'src/app/modules/common/model/fields/variable/config';
 import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
@@ -20,6 +19,7 @@ import {
 } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { ComponentActionInputFormSchema } from '../../input-forms-schema';
+import { DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
 declare type ActionDropdownOption = {
 	label: {
 		name: string;
@@ -80,7 +80,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 	onChange = (value: any) => {};
 	onTouch = () => {};
 	updateOrAddConfigModalClosed$: Observable<Config>;
-	allAuthConfigs$: Observable<DropdownOption[]>;
+	allAuthConfigs$: Observable<DropdownItem[]>;
 	constructor(
 		private fb: UntypedFormBuilder,
 		private actionMetaDataService: ActionMetaService,

@@ -2,12 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import * as JSZip from 'jszip';
-import { catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { catchError, from, map, Observable, of, switchMap } from 'rxjs';
 import { Artifact } from '../model/artifact.interface';
-import { UUID } from 'angular2-uuid';
-import { ArtifactCacheKey, StepCacheKey } from './artifact-cache-key';
-import { CodeTestExecutionResult } from '../../common/model/flow-builder/code-test-execution-result';
-import { ArtifactAndItsNameInFormData } from '../../common/model/helper/artifacts-zipping-helper';
+import { CodeExecutionResult } from 'shared';
 
 type NpmPkg = {
 	'dist-tags': {
@@ -28,7 +25,6 @@ type ArtifactsCache = Map<string, ArtifactCacheResult>;
 })
 export class CodeService {
 	artifactsCacheForFlowConfigs: ArtifactsCache = new Map();
-	artifactsCacheForCollectionConfigs: ArtifactsCache = new Map();
 	artifactsCacheForSteps: ArtifactsCache = new Map();
 	cachedFile: Map<String, any> = new Map<String, any>();
 
@@ -47,7 +43,7 @@ export class CodeService {
 		return this.cachedFile[url];
 	}
 
-	executeTest(artifact: Artifact, context: any): Observable<CodeTestExecutionResult> {
+	executeTest(artifact: Artifact, context: any): Observable<CodeExecutionResult> {
 		const formData = new FormData();
 		const zippedFile$ = CodeService.zipFile(artifact);
 		return zippedFile$.pipe(
@@ -55,7 +51,7 @@ export class CodeService {
 				const file = new File([new Blob([zippedFile])], 'artifact.zip');
 				formData.append('artifact', file);
 				formData.append('input', new Blob([JSON.stringify(context)], { type: 'application/json' }));
-				return this.http.post<CodeTestExecutionResult>(environment.apiUrl + '/execute-code', formData);
+				return this.http.post<CodeExecutionResult>(environment.apiUrl + '/execute-code', formData);
 			})
 		);
 	}
@@ -66,6 +62,11 @@ export class CodeService {
 			package: '{\n' + '  "dependencies": {\n' + '  }\n' + '}\n',
 		};
 	}
+
+	public helloWorldBase64(): string{
+		return "UEsDBAoDAAAAANm8nlU2SH+AOAAAADgAAAAIAAAAaW5kZXguanNleHBvcnRzLmNvZGUgPSBhc3luYyAocGFyYW1zKSA9PiB7CiAgICByZXR1cm4gdHJ1ZTsKfQoKClBLAwQKAwAAAADTvJ5V0krbox0AAAAdAAAADAAAAHBhY2thZ2UuanNvbnsKICAiZGVwZW5kZW5jaWVzIjogewoKICB9Cn0KUEsBAj8DCgMAAAAA2byeVTZIf4A4AAAAOAAAAAgAJAAAAAAAAAAggLSBAAAAAGluZGV4LmpzCgAgAAAAAAABABgAgKIBfJ8c2QGAogF8nxzZAYCiAXyfHNkBUEsBAj8DCgMAAAAA07yeVdJK26MdAAAAHQAAAAwAJAAAAAAAAAAggLSBXgAAAHBhY2thZ2UuanNvbgoAIAAAAAAAAQAYAICU2nSfHNkBgJTadJ8c2QGAlNp0nxzZAVBLBQYAAAAAAgACALgAAAClAAAAAAA=";
+	}
+	
 
 	static zipFile(artifact: Artifact): Observable<string | Uint8Array> {
 		const zip = new JSZip();
@@ -123,6 +124,8 @@ export class CodeService {
 		);
 	}
 
+	// TODO REMOVENOW
+	/** 
 	private getArtifactFromCache(
 		artifactsCache: ArtifactsCache,
 		artifactKey: string,
@@ -144,60 +147,6 @@ export class CodeService {
 		return of(this.helloWorld());
 	}
 
-	getOrCreateStepArtifact(stepCacheKey: StepCacheKey, artifactUrl: string) {
-		return this.getArtifactFromCache(this.artifactsCacheForSteps, stepCacheKey.toString(), artifactUrl);
-	}
+	**/
 
-	private removeFromCache(artifactsCache: ArtifactsCache, artifactKey: string) {
-		artifactsCache.delete(artifactKey);
-	}
-
-	removeArtifactInFlowStepsCache(artifactKey: StepCacheKey) {
-		this.removeFromCache(this.artifactsCacheForSteps, artifactKey.toString());
-	}
-
-	private updateArtifactInCache(artifactsCache: ArtifactsCache, artifactKey: string, artifact: Artifact) {
-		const cacheResult = artifactsCache.get(artifactKey);
-		if (!cacheResult) {
-			throw new Error(`trying to update an empty artifacts' cache entry,  ${artifactKey}`);
-		}
-		cacheResult.needsToBeUploadedToServer = true;
-		cacheResult.artifact = artifact;
-	}
-
-	updateArtifactInFlowStepsCache(artifactKey: StepCacheKey, artifact: Artifact) {
-		this.updateArtifactInCache(this.artifactsCacheForSteps, artifactKey.toString(), artifact);
-	}
-
-	private getDirtyArtifactsFromCache(cache: ArtifactsCache, incompleteArtifactKey: ArtifactCacheKey) {
-		const dirtyArtifacts: ArtifactAndItsNameInFormData[] = [];
-		const getArtifactNameMethod = CodeService.getArtifactNameMethod(incompleteArtifactKey);
-		cache.forEach((cacheResult, key) => {
-			if (key.startsWith(`${incompleteArtifactKey.toString()}`) && cacheResult.needsToBeUploadedToServer) {
-				const artifactAndName = { artifact: cacheResult.artifact, name: getArtifactNameMethod(key) };
-				dirtyArtifacts.push(artifactAndName);
-			}
-		});
-		return dirtyArtifacts;
-	}
-	private static getArtifactNameMethod(artifactCacheKey: ArtifactCacheKey) {
-		if (artifactCacheKey instanceof StepCacheKey) {
-			return StepCacheKey.getStepName;
-		}
-		throw new Error('Aritfact cache key type has no method to get artifact name');
-	}
-
-	getDirtyArtifactsForFlowSteps(flowId: UUID) {
-		return this.getDirtyArtifactsFromCache(this.artifactsCacheForSteps, new StepCacheKey(flowId, ''));
-	}
-	private unmarkDirtyArtifacts(cache: ArtifactsCache, incompleteArtifactKey: ArtifactCacheKey) {
-		cache.forEach((result, key) => {
-			if (key.startsWith(`${incompleteArtifactKey.toString()}`)) {
-				result.needsToBeUploadedToServer = false;
-			}
-		});
-	}
-	unmarkDirtyArtifactsInFlowStepsCache(flowId: UUID) {
-		this.unmarkDirtyArtifacts(this.artifactsCacheForCollectionConfigs, new StepCacheKey(flowId, ''));
-	}
 }

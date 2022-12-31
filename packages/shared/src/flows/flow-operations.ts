@@ -34,7 +34,7 @@ export const FlowOperationRequestSchema = Type.Union([
         })
     }),
     Type.Object({
-        type: Type.Literal(FlowOperationType.UPDATE_TRIGGER),
+        type: Type.Literal(FlowOperationType.UPDATE_ACTION),
         request: Type.Object({})
     }),
     Type.Object({
@@ -56,7 +56,7 @@ export type DeleteActionRequest = {
 }
 
 export type AddActionRequest = {
-    parentAction: string,
+    parentAction: string | undefined,
     action: UpdateActionRequest
 }
 

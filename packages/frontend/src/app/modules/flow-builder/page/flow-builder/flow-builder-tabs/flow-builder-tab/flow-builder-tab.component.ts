@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { Flow } from '../../../../../common/model/flow.class';
 import { Store } from '@ngrx/store';
 import { FlowsActions } from '../../../../store/action/flows.action';
 
@@ -9,6 +8,7 @@ import {
 } from '../../../../components/chevron-dropdown-menu/chevron-dropdown-option';
 import { DeleteFlowDialogComponent } from './delete-flow-dialog/delete-flow-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import { Flow } from 'shared';
 
 @Component({
 	selector: 'app-flow-builder-tab',
@@ -72,7 +72,7 @@ export class FlowBuilderTabComponent {
 	}
 
 	saveNewName(newName: string) {
-		if (this.flow.version.display_name == newName) {
+		if (this.flow.version?.displayName == newName) {
 			this.revertNewName();
 		} else {
 			this.dispatchNewName(newName);
@@ -92,7 +92,7 @@ export class FlowBuilderTabComponent {
 		this.store.dispatch(
 			FlowsActions.changeName({
 				flowId: this.flow.id,
-				displayName: this.flow.version.display_name,
+				displayName: this.flow.version!.displayName,
 			})
 		);
 	}

@@ -6,15 +6,11 @@ import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { Store } from '@ngrx/store';
-import { FlowsActions } from 'src/app/modules/flow-builder/store/action/flows.action';
-import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
-import { StepCacheKey } from 'src/app/modules/flow-builder/service/artifact-cache-key';
 import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
-import { Artifact } from 'src/app/modules/flow-builder/model/artifact.interface';
-import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
-import { TriggerType } from 'src/app/modules/common/model/enum/trigger-type.enum';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ActionType, TriggerType, UpdateActionRequest } from 'shared';
+import { FlowsActions } from 'src/app/modules/flow-builder/store/action/flows.action';
 
 @Component({
 	selector: 'app-edit-step-accodion',
@@ -22,8 +18,6 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 	styleUrls: ['./edit-step-accodion.component.scss'],
 })
 export class EditStepAccordionComponent implements AfterViewInit {
-	codeArtifact$: Observable<Artifact> | null;
-	stepCacheKey: StepCacheKey | null;
 	autoSaveListener$: Observable<{
 		describe: { displayName: string; name: string };
 		input: any;
@@ -44,15 +38,7 @@ export class EditStepAccordionComponent implements AfterViewInit {
 	TriggerType = TriggerType;
 	@Input() displayNameChanged$: Subject<string>;
 
-	@Input() set stepArtifactCacheKeyAndUrl(urlAndCacheKey: { cacheKey: StepCacheKey; url: string } | null) {
-		if (urlAndCacheKey) {
-			this.codeArtifact$ = this.codeService.getOrCreateStepArtifact(urlAndCacheKey.cacheKey, urlAndCacheKey.url);
-			this.stepCacheKey = urlAndCacheKey.cacheKey;
-		} else {
-			this.codeArtifact$ = null;
-			this.stepCacheKey = null;
-		}
-	}
+
 	@Input() set selectedStep(step: FlowItem) {
 		this._selectedStep = step;
 		this.cancelAutoSaveListener$.next(true);
@@ -65,7 +51,6 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		private formBuilder: UntypedFormBuilder,
 		private cd: ChangeDetectorRef,
 		private store: Store,
-		private codeService: CodeService,
 		private snackbar: MatSnackBar
 	) {
 		this.webhookUrl$ = this.store.select(BuilderSelectors.selectCurrentFlowWebhookUrl);
@@ -102,7 +87,7 @@ export class EditStepAccordionComponent implements AfterViewInit {
 	updateFormValue(stepSelected: FlowItem) {
 		const describeControl = this.stepForm.get('describe')!;
 		describeControl.setValue({
-			displayName: stepSelected.display_name,
+			displayName: stepSelected.displayName,
 			name: stepSelected.name,
 		});
 		const inputControl = this.stepForm.get('input')!;
@@ -116,14 +101,32 @@ export class EditStepAccordionComponent implements AfterViewInit {
 			skipWhile(() => this.stepForm.disabled),
 			tap(() => {
 				this.store.dispatch(
-					FlowsActions.updateStep({
-						stepName: this._selectedStep.name,
-						newStep: this.prepareStepDataToSave(),
+					FlowsActions.updateAction({
+						operation: this.prepareStepDataToSave(),
 					})
 				);
 			})
 		);
 	}
+
+	prepareStepDataToSave(): UpdateActionRequest {
+		const describeControlValue: { displayName: string; name: string } = this.stepForm.get('describe')!.value;
+		const inputControlValue = this.stepForm.get('input')!.value;
+		const stepToSave: UpdateActionRequest = JSON.parse(JSON.stringify(this._selectedStep));
+		stepToSave.displayName = describeControlValue.displayName;
+		stepToSave.settings = inputControlValue;
+		stepToSave.name = this._selectedStep.name;
+
+		if (this._selectedStep.type === ActionType.PIECE || this._selectedStep.type === TriggerType.PIECE) {
+			const componentSettings = {
+				...this._selectedStep.settings,
+				...inputControlValue,
+			};
+			stepToSave.settings = componentSettings;
+		}
+		return stepToSave;
+	}
+
 	setDiplayNameListener() {
 		this.displayNameChangedListener$ = this.stepForm.get('describe')!.valueChanges.pipe(
 			takeUntil(this.cancelAutoSaveListener$),
@@ -136,26 +139,6 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		);
 	}
 
-	prepareStepDataToSave() {
-		const describeControlValue: { displayName: string; name: string } = this.stepForm.get('describe')!.value;
-		const inputControlValue = this.stepForm.get('input')!.value;
-		const stepToSave: FlowItem = JSON.parse(JSON.stringify(this._selectedStep));
-		stepToSave.display_name = describeControlValue.displayName;
-		stepToSave.settings = inputControlValue;
-		stepToSave.name = this._selectedStep.name;
-
-		if (this._selectedStep.type === ActionType.PIECE || this._selectedStep.type === TriggerType.PIECE) {
-			const componentSettings = {
-				...this._selectedStep.settings,
-				...inputControlValue,
-			};
-			stepToSave.settings = componentSettings;
-		}
-
-		stepToSave.valid = this.stepForm.valid;
-		delete stepToSave.settings.artifact;
-		return stepToSave;
-	}
 	copyUrl(url: string) {
 		navigator.clipboard.writeText(url);
 		this.snackbar.open('Webhook url copied to clipboard');

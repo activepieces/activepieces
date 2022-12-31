@@ -1,4 +1,5 @@
-import { UUID } from 'angular2-uuid';
+// TODO REMOVENOW
+/**import { UUID } from 'angular2-uuid';
 
 export class ArtifactCacheKey {
 	protected _prefix: ArtifactCachKeyPrefix;
@@ -26,3 +27,4 @@ enum ArtifactCachKeyPrefix {
 	COLLECTION_CONFIG = 'collection.config',
 	STEP = 'flow.step',
 }
+**/

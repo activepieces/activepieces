@@ -1,12 +1,4 @@
-export enum ConfigType {
-	SHORT_TEXT = 'SHORT_TEXT',
-	LONG_TEXT = 'LONG_TEXT',
-	NUMBER = 'NUMBER',
-	CHECKBOX = 'CHECKBOX',
-	DICTIONARY = 'DICTIONARY',
-	OAUTH2 = 'OAUTH2',
-	SELECT = 'SELECT',
-}
+import { ConfigType } from "shared";
 
 export const configTypesDropdownOptions = [
 	{

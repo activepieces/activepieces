@@ -19,7 +19,6 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
 import { OutputLogPipe } from './pipe/output-log';
-import { DefaultZeroPipe } from './pipe/default-zero.pipe';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { StoreModule } from '@ngrx/store';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -27,7 +26,6 @@ import { MatTooltipDefaultOptions, MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
 import { RawOutputLogPipe } from './pipe/raw-output-log';
 import { MatSnackBarModule, MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
-import { CheckboxComponent } from './components/app-checkbox/checkbox.component';
 import { LongTextFormControlComponent } from './components/form-controls/long-text-form-control/long-text-form-control.component';
 import { DictionaryFormControlComponent } from './components/form-controls/dictionary-form-control/dictionary-form-control.component';
 import { OAuth2ConnectControlComponent } from './components/form-controls/o-auth2-connect-control/o-auth2-connect-control.component';
@@ -76,10 +74,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		DefaultTruePipe,
 		OutputLogPipe,
 		RawOutputLogPipe,
-		DefaultZeroPipe,
 		JsonViewComponent,
 		LongTextFormControlComponent,
-		CheckboxComponent,
 		DictionaryFormControlComponent,
 		OAuth2ConnectControlComponent,
 		ConfigsFormComponent,
@@ -135,13 +131,11 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		LoadingIconComponent,
 		DefaultFalsePipe,
 		DefaultTruePipe,
-		DefaultZeroPipe,
 		AngularSvgIconModule,
 		FontAwesomeModule,
 		MatSnackBarModule,
 		MatButtonModule,
 		LongTextFormControlComponent,
-		CheckboxComponent,
 		OAuth2ConnectControlComponent,
 		DictionaryFormControlComponent,
 		ConfigsFormComponent,

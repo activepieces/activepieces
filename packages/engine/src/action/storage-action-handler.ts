@@ -1,20 +1,20 @@
+import { globals } from '../globals';
+import { VariableService } from '../services/variable-service';
+import {
+  ExecutionState,
+  PutStoreEntryRequest,
+  StepOutput,
+  StepOutputStatus,
+  StorageAction
+} from 'shared';
+import { BaseActionHandler } from './action-handler';
+import { StoreOperation } from 'shared';
+import axios from 'axios';
 
-import {globals} from '../globals';
-import {VariableService} from '../services/variable-service';
-import {ExecutionState, PutStoreEntryRequest, StepOutput, StepOutputStatus, StorageAction} from "shared";
-import {BaseActionHandler} from "./action-handler";
-import {StoreOperation} from "shared/dist/flows/actions/action";
-
-const axios = require('axios').default;
-
-
-export class StorageActionExecutor extends BaseActionHandler<StorageAction> {
+export class StorageActionHandler extends BaseActionHandler<StorageAction> {
   variableService: VariableService;
 
-  constructor(
-    action: StorageAction,
-    nextAction?: BaseActionHandler<any>
-  ) {
+  constructor(action: StorageAction, nextAction?: BaseActionHandler<any>) {
     super(action, nextAction);
     this.variableService = new VariableService();
   }
@@ -27,7 +27,7 @@ export class StorageActionExecutor extends BaseActionHandler<StorageAction> {
     try {
       let data = undefined;
       const headers = {
-        Authorization: 'Bearer ' + globals.workerToken,
+        Authorization: 'Bearer ' + globals.workerToken
       };
       const key = this.variableService.resolve(
         this.action.settings.key,
@@ -35,13 +35,12 @@ export class StorageActionExecutor extends BaseActionHandler<StorageAction> {
       );
       switch (this.action.settings.operation) {
         case StoreOperation.GET:
-          data = (
-            await axios({
-              method: 'GET',
-              url: globals.apiUrl + '/v1/store-entries?key=' + key,
-              headers: headers,
-            })
-          ).data;
+          data =
+            (
+              await axios.get(globals.apiUrl + '/v1/store-entries?key=' + key, {
+                headers: headers
+              })
+            ).data?.value ?? null;
           break;
         case StoreOperation.PUT:
           const value = this.variableService.resolve(
@@ -50,20 +49,21 @@ export class StorageActionExecutor extends BaseActionHandler<StorageAction> {
           );
           const putRequest: PutStoreEntryRequest = {
             value: value,
-            key: key,
+            key: key
           };
-          data = (
-            await axios({
-              method: 'POST',
-              url: globals.apiUrl + '/v1/store-entries',
-              data: putRequest,
-              headers: headers,
-            })
-          ).data;
+          data =
+            (
+              await axios({
+                method: 'POST',
+                url: globals.apiUrl + '/v1/store-entries',
+                data: putRequest,
+                headers: headers
+              })
+            ).data?.value ?? null;
           break;
       }
       stepOutput.output = {
-        value: data,
+        value: data
       };
       stepOutput.status = StepOutputStatus.SUCCEEDED;
     } catch (e) {

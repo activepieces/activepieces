@@ -12,15 +12,15 @@ export const storeEntryController = async (fastify: FastifyInstance, options: Fa
       },
     },
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Body: PutStoreEntryRequest;
       }>,
       _reply
     ) => {
-      if (_request.principal.type !== PrincipalType.WORKER) {
+      if (request.principal.type !== PrincipalType.WORKER) {
         _reply.status(StatusCodes.FORBIDDEN).send();
       } else {
-        return await storeEntryService.upsert(_request.principal.collectionId, _request.body);
+        return await storeEntryService.upsert(request.principal.collectionId, request.body);
       }
     }
   );
@@ -39,7 +39,7 @@ export const storeEntryController = async (fastify: FastifyInstance, options: Fa
       },
     },
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Body: PutStoreEntryRequest;
         Querystring: {
           key: string;
@@ -47,10 +47,10 @@ export const storeEntryController = async (fastify: FastifyInstance, options: Fa
       }>,
       _reply
     ) => {
-      if (_request.principal.type !== PrincipalType.WORKER) {
+      if (request.principal.type !== PrincipalType.WORKER) {
         _reply.status(StatusCodes.FORBIDDEN).send();
       } else {
-        return await storeEntryService.getOne(_request.principal.collectionId, _request.query.key);
+        return await storeEntryService.getOne(request.principal.collectionId, request.query.key);
       }
     }
   );

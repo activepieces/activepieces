@@ -1,5 +1,5 @@
-import {get} from 'lodash';
-import {isString} from 'lodash';
+import { get } from 'lodash';
+import { isString } from 'lodash';
 import { ExecutionState } from 'shared';
 
 export class VariableService {
@@ -79,10 +79,10 @@ export class VariableService {
 
   private getExecutionStateObject(executionState: ExecutionState): object {
     type ValuesMap = {
-      configs: {[key: string]: unknown};
-      steps: {[key: string]: unknown};
+      configs: { [key: string]: unknown };
+      steps: { [key: string]: unknown };
     };
-    const valuesMap: ValuesMap = {configs: {}, steps: {}};
+    const valuesMap: ValuesMap = { configs: {}, steps: {} };
 
     Object.entries(executionState.configs).forEach(([key, value]) => {
       valuesMap.configs[key] = value;

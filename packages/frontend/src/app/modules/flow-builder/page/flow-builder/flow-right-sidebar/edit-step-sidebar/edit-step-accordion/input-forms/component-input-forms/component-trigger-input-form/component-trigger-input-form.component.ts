@@ -14,7 +14,7 @@ import {
 	ComponnentConfigsForActionsOrTriggers,
 	FrontEndConnectorConfig,
 } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
-import { DropdownOption } from 'src/app/modules/common/model/dropdown-options';
+import { DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
 import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
 import { ComponentTriggerInputFormSchema } from '../../input-forms-schema';
 
@@ -63,7 +63,7 @@ export class ComponentTriggerInputFormComponent {
 	onChange = (value: any) => {};
 	onTouch = () => {};
 	updateOrAddConfigModalClosed$: Observable<Config>;
-	allAuthConfigs$: Observable<DropdownOption[]>;
+	allAuthConfigs$: Observable<DropdownItem[]>;
 	constructor(
 		private fb: UntypedFormBuilder,
 		private actionMetaDataService: ActionMetaService,

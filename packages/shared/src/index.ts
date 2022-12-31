@@ -1,3 +1,5 @@
+export { StoreOperation} from "./flows/actions/action";
+
 export * from "./flow-run/execution/step-output";
 
 export * from "./flows/flow-operations";

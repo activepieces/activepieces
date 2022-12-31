@@ -5,13 +5,14 @@ import { Observable, of, pairwise, skipWhile, take, tap } from 'rxjs';
 import { LeftSideBarType } from '../../../../../common/model/enum/left-side-bar-type.enum';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Config } from '../../../../../common/model/fields/variable/config';
-import { ConfigType, configTypesDropdownOptions } from '../../../../../common/model/enum/config-type';
+import { configTypesDropdownOptions } from '../../../../../common/model/enum/config-type';
 import { FlowsActions } from '../../../../store/action/flows.action';
 import { fadeInUp400ms } from '../../../../../common/animation/fade-in-up.animation';
 import { OAuth2ConfigSettings } from 'src/app/modules/common/model/fields/variable/config-settings';
 import { CollectionActions } from 'src/app/modules/flow-builder/store/action/collection.action';
 import { ConfigKeyValidator } from '../../validators/configKeyValidator';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { ConfigType } from 'shared';
 interface ConfigForm {
 	key: FormControl<string>;
 	value: FormControl<any>;

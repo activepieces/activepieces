@@ -1,19 +1,16 @@
-import { FlowItem } from '../../common/model/flow-builder/flow-item';
-import { ActionType } from '../../common/model/enum/action-type.enum';
-import { Trigger } from '../../common/model/flow-builder/trigger/trigger.interface';
-import { Flow } from '../../common/model/flow.class';
+import { FlowItem } from '../../common/model/flow-builder/flow-item'
+import { ActionType, Flow, LoopOnItemsAction, Trigger } from 'shared';
 import { FlowStructureUtil } from './flowStructureUtil';
 import {
 	FLOW_ITEM_HEIGHT,
 	FLOW_ITEM_WIDTH,
 } from '../page/flow-builder/flow-item-tree/flow-item/flow-item-connection/draw-utils';
-import { LoopOnItemActionInterface } from '../../common/model/flow-builder/actions/loop-action.interface';
 
 export class FlowFactoryUtil {
 	constructor() {}
 
 	public static createRootStep(flow: Flow): FlowItem | undefined {
-		const latestVersion = flow.version;
+		const latestVersion = flow.version!;
 		if (latestVersion.trigger) {
 			const newFlow = FlowFactoryUtil.addCordDetails(latestVersion.trigger);
 			FlowFactoryUtil.buildHelper(newFlow);
@@ -59,16 +56,16 @@ export class FlowFactoryUtil {
 		}
 		if (FlowStructureUtil.isTrigger(flowItemData)) {
 			const trigger = flowItemData as Trigger;
-			if (trigger.next_action) {
-				flowItemData.next_action = FlowFactoryUtil.createStepFromAction(trigger.next_action)!;
+			if (trigger.nextAction) {
+				flowItemData.nextAction = FlowFactoryUtil.createStepFromAction(trigger.nextAction)!;
 			}
 		} else {
 			const action = flowItemData;
-			if (action.next_action) {
-				flowItemData.next_action = FlowFactoryUtil.createStepFromAction(action.next_action);
+			if (action.nextAction) {
+				flowItemData.nextAction = FlowFactoryUtil.createStepFromAction(action.nextAction);
 			}
 			if (action.type === ActionType.LOOP_ON_ITEMS) {
-				const loopAction = action as LoopOnItemActionInterface;
+				const loopAction = action as LoopOnItemsAction;
 				if (loopAction.firstLoopAction) {
 					loopAction.firstLoopAction = FlowFactoryUtil.createStepFromAction(loopAction.firstLoopAction);
 				}

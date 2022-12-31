@@ -15,9 +15,13 @@ import { collectionVersionService } from "./collection-version/collection-versio
 import { CollectionEntity } from "./collection-entity";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { buildPaginator } from "../helper/pagination/build-paginator";
-import { collectionRepo } from "./collection-repo";
+import { databaseConnection } from "../database/database-connection";
+
+export const collectionRepo = databaseConnection.getRepository(CollectionEntity);
 
 export const collectionService = {
+
+  
   /**
    * get a collection by id and versionId
    * @param id collection id to get
@@ -62,7 +66,7 @@ export const collectionService = {
     return paginationHelper.createPage<Collection>(data, cursor);
   },
 
-  async update(collectionId: CollectionId, request: UpdateCollectionRequest): Promise<CollectionVersion | null> {
+  async update(collectionId: CollectionId, request: UpdateCollectionRequest): Promise<Collection | null> {
     let lastVersion = await collectionVersionService.getCollectionVersionId(collectionId, null);
     if (lastVersion === null) {
       throw new Error("There is no latest version of collection id " + collectionId);
@@ -72,7 +76,7 @@ export const collectionService = {
     } else {
       await collectionVersionService.updateVersion(lastVersion, request);
     }
-    return await collectionVersionService.getCollectionVersionId(collectionId, null);
+    return await collectionService.getOne(collectionId, null);
   },
 
   async create(request: CreateCollectionRequest): Promise<Collection> {

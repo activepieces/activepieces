@@ -1,7 +1,5 @@
-import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
-import { TriggerType } from 'src/app/modules/common/model/enum/trigger-type.enum';
-import { StorageOperation } from 'src/app/modules/common/model/flow-builder/actions/storage-operation.enum';
-import { StorageScope } from 'src/app/modules/common/model/flow-builder/actions/storage-scope.enum';
+
+import { StoreOperation, TriggerType, ActionType } from 'shared';
 declare type ConfigsAndTheirValues = { [key: string]: any };
 interface InputFormsSchemaBase {
 	type?: ActionType | TriggerType;
@@ -17,14 +15,13 @@ export interface CodeStepInputFormSchema extends InputFormsSchemaBase {
 }
 
 export interface StorageStepInputFormSchema extends InputFormsSchemaBase {
-	operation: StorageOperation;
+	operation: StoreOperation	;
 	key: string;
 	value: string;
-	scope: StorageScope;
 }
 
 export interface ScheduledTriggerInputFormSchema extends InputFormsSchemaBase {
-	cron_expression: string;
+	cronExpression: string;
 }
 export interface EventTriggerInputFormSchema extends InputFormsSchemaBase {
 	eventsName: string[];

@@ -1,6 +1,6 @@
 import { UUID } from 'angular2-uuid';
+import { ConfigType } from 'shared';
 import { OAuth2ConfigSettings } from './config-settings';
-import { ConfigType } from '../../enum/config-type';
 
 export class Config {
 	key: string;

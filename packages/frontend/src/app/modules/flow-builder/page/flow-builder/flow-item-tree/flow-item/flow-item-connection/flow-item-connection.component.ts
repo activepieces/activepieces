@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { ThemeService } from '../../../../../../common/service/theme.service';
 import { FlowItem } from '../../../../../../common/model/flow-builder/flow-item';
-import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
-import { LoopOnItemActionInterface } from '../../../../../../common/model/flow-builder/actions/loop-action.interface';
+import { ActionType, LoopOnItemsAction } from 'shared';
+
 
 @Component({
 	selector: 'app-flow-item-connection',
@@ -22,6 +22,6 @@ export class FlowItemConnectionComponent {
 	}
 
 	castToLoopItem() {
-		return this.flowItem as LoopOnItemActionInterface;
+		return this.flowItem as LoopOnItemsAction;
 	}
 }

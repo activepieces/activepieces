@@ -1,7 +1,6 @@
 import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
-import { InstanceRunStatus } from '../../../common/model/enum/instance-run-status';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { Store } from '@ngrx/store';
@@ -14,13 +13,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from './test-run-bar/test-run-bar.component';
 import { BuilderActions } from '../../store/action/builder.action';
 import { FlowItemDetailsActions } from '../../store/action/flow-items-details.action';
-import { InstanceRun } from '../../../common/model/instance-run.interface';
-import { Flow } from '../../../common/model/flow.class';
 import { RunDetailsService } from './flow-left-sidebar/run-details/iteration-details.service';
 import { FlowsActions } from '../../store/action/flows.action';
-import { Collection } from 'src/app/modules/common/model/collection.interface';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
-import { Instance } from 'src/app/modules/common/model/instance.interface';
+import { Collection, ExecutionOutputStatus, Instance} from 'shared';
 
 @Component({
 	selector: 'app-collection-builder',
@@ -55,8 +51,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 				const runInformation: InstanceRunInfo = value['runInformation'];
 				if (runInformation !== undefined) {
 					const collection = runInformation.collection;
-					const flow: Flow = runInformation.flow;
-					const run: InstanceRun = runInformation.run;
+					const flow = runInformation.flow;
+					const run = runInformation.run;
 
 					this.store.dispatch(
 						BuilderActions.loadInitial({
@@ -123,7 +119,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 	}
 
 	public get instanceRunStatus() {
-		return InstanceRunStatus;
+		return ExecutionOutputStatus;
 	}
 
 	public get leftSideBarType() {

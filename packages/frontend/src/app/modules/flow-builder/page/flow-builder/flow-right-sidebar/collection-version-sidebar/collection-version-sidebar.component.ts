@@ -1,14 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ThemeService } from '../../../../../common/service/theme.service';
 import { TimeHelperService } from '../../../../../common/service/time-helper.service';
-import { VersionEditState } from '../../../../../common/model/enum/version-edit-state.enum';
 import { CollectionService } from '../../../../../common/service/collection.service';
-import { CollectionVersion } from '../../../../../common/model/collection.interface';
 import { RightSideBarType } from '../../../../../common/model/enum/right-side-bar-type.enum';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../store/selector/flow-builder.selector';
 import { FlowsActions } from '../../../../store/action/flows.action';
 import { map, Observable, switchMap, take } from 'rxjs';
+import { CollectionVersion, CollectionVersionState } from 'shared';
 
 @Component({
 	selector: 'app-piece-version-sidebar',
@@ -47,6 +46,6 @@ export class CollectionVersionSidebarComponent implements OnInit {
 	}
 
 	get versionEditState() {
-		return VersionEditState;
+		return CollectionVersionState;
 	}
 }

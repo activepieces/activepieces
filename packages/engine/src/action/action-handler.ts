@@ -1,4 +1,4 @@
-import {StepOutput, Action, ActionType, ExecutionState} from "shared";
+import { StepOutput, Action, ActionType, ExecutionState } from 'shared';
 
 export type ActionHandler = BaseActionHandler<any>;
 
@@ -13,7 +13,6 @@ export abstract class BaseActionHandler<A extends Action> {
 
   abstract execute(
     executionState: ExecutionState,
-    ancestors: [string, number][],
+    ancestors: [string, number][]
   ): Promise<StepOutput>;
 }
-

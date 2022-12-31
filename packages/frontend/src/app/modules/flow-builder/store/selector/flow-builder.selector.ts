@@ -2,21 +2,16 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../model/builder-state.model';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
-import { Flow } from '../../../common/model/flow.class';
+import { Flow, FlowRun } from 'shared';
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
-import { UUID } from 'angular2-uuid';
-import { InstanceRun } from '../../../common/model/instance-run.interface';
 import { FlowItem } from '../../../common/model/flow-builder/flow-item';
 import { Config } from '../../../common/model/fields/variable/config';
 import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
 import { FlowsState } from '../model/flows-state.model';
-import { TriggerType } from 'src/app/modules/common/model/enum/trigger-type.enum';
-import { ActionType } from '../../../common/model/enum/action-type.enum';
-import { ConfigType } from 'src/app/modules/common/model/enum/config-type';
-import { Collection } from 'src/app/modules/common/model/collection.interface';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { environment } from 'src/environments/environment';
+import { ActionType, Collection, ConfigType, TriggerType } from 'shared';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -36,8 +31,8 @@ export const selectCurrentCollectionInstance = createSelector(selectBuilderState
 });
 
 export const selectCurrentCollectionConfigs = createSelector(selectCurrentCollection, (collection: Collection) => {
-	return collection.version.configs.map(c => {
-		return { ...c, collectionVersionId: collection.version.id };
+	return collection.version!.configs.map(c => {
+		return { ...c, collectionVersionId: collection.version!.id };
 	});
 });
 
@@ -70,7 +65,7 @@ export const selectReadOnly = createSelector(
 
 export const selectFlows = createSelector(selectBuilderState, (state: GlobalBuilderState) => state.flowsState.flows);
 export const selectFlowsValidity = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
-	const allFlowsValidity = state.flowsState.flows.map(f => f.version.valid);
+	const allFlowsValidity = state.flowsState.flows.map(f => f.version!.valid);
 	return allFlowsValidity.reduce((current, previous) => current && previous, true);
 });
 
@@ -109,19 +104,19 @@ export const selectCurrentFlowWebhookUrl = createSelector(selectCurrentFlow, flo
 	return `${environment.apiUrl}/flows/${flow?.id}/webhook`;
 });
 
-export const selectTabState = (flowId: UUID) =>
+export const selectTabState = (flowId: string) =>
 	createSelector(selectFlowsState, (state: FlowsState): TabState => {
 		return state.tabsState[flowId.toString()];
 	});
 
-export const selectFlow = (flowId: UUID) =>
+export const selectFlow = (flowId: string) =>
 	createSelector(selectFlowsState, (state: FlowsState): Flow | undefined => {
 		return state.flows.find(f => f.id === flowId);
 	});
 export const selectCurrentFlowValidity = createSelector(selectCurrentFlow, (flow: Flow | undefined) => {
 	if (!flow) return false;
 
-	return flow.version.valid;
+	return flow.version!.valid;
 });
 
 export const selectFlowSelectedId = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
@@ -142,7 +137,7 @@ export const selectCurrentStepName = createSelector(selectCurrentStep, selectedS
 	return null;
 });
 export const selectCurrentDisplayName = createSelector(selectCurrentStep, state => {
-	return state?.display_name;
+	return state?.displayName;
 });
 export const selectCurrentTabState = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
 	if (state.flowsState.selectedFlowId == undefined) {
@@ -162,7 +157,7 @@ export const selectCurrentFlowRun = createSelector(selectBuilderState, (state: G
 	return tabState.selectedRun;
 });
 
-export const selectCurrentFlowRunStatus = createSelector(selectCurrentFlowRun, (run: InstanceRun | undefined) => {
+export const selectCurrentFlowRunStatus = createSelector(selectCurrentFlowRun, (run: FlowRun | undefined) => {
 	if (run === undefined) {
 		return undefined;
 	}
@@ -257,17 +252,17 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
 			return triggerItemDetails;
 		}
 		if (flowItem.type === ActionType.PIECE) {
-			return state.connectorComponentsActionsFlowItemDetails.find(f => f.name === flowItem.settings.component_name);
+			return state.connectorComponentsActionsFlowItemDetails.find(f => f.name === flowItem.settings.pieceName);
 		}
 		if (flowItem.type === TriggerType.PIECE) {
-			return state.connectorComponentsTriggersFlowItemDetails.find(f => f.name === flowItem.settings.component_name);
+			return state.connectorComponentsTriggersFlowItemDetails.find(f => f.name === flowItem.settings.pieceName);
 		}
 
 		//Core items might contain remote flows so always have them at the end
 		let coreItemDetials = state.coreFlowItemsDetails.find(c => c.type === flowItem.type);
 
 		if (!coreItemDetials) {
-			console.warn(`Flow item details for ${flowItem.display_name} are not currently loaded`);
+			console.warn(`Flow item details for ${flowItem.displayName} are not currently loaded`);
 		}
 		return coreItemDetials;
 	});
