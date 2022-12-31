@@ -39,6 +39,7 @@ export const triggerUtils = {
         console.log("Deleted Schedule for flow version Id " + flowVersion.id);
         await flowQueue.remove({
           id: flowVersion.id,
+          repeatable: true,
         });
         break;
 
@@ -63,6 +64,7 @@ const disablePieceTrigger = async (flowVersion: FlowVersion): Promise<void> => {
     case TriggerStrategy.POLLING:
       await flowQueue.remove({
         id: flowVersion.id,
+        repeatable: true,
       });
       break;
   }
