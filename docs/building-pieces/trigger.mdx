@@ -6,12 +6,12 @@ description: ""
 Trigger structure
 
 ```typescript
-export const createNewIssue = createAction({
+export const createNewIssue = createTrigger({
     name: string, // Unique name across the piece.
     displayName: string, // Display name on the interface.
 	description: string, // Description for the action
     triggerType: POLLING | WEBHOOK,
-	props: Property[]; // Required properties from the user.
+	props: {}; // Required properties from the user.
     // Run when the user disable the collection or
     // the old collection is deleted after new one is published.
 	onEnable: (context, propsValue) => {};
