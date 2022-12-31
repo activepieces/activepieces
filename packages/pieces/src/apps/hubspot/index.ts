@@ -5,7 +5,7 @@ import { createHubspotContact } from './actions/create-contact/create-contact.ac
 export const hubspot = createPiece({
 	name: 'hubspot',
 	displayName: "Hubspot",
-	logoUrl: 'https://cdn.activepieces.com/components/hubspot.png',
+	logoUrl: 'https://cdn.activepieces.com/pieces/hubspot.png',
 	actions: [createHubspotContact],
 	triggers: [],
 });

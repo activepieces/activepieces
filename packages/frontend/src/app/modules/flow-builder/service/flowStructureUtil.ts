@@ -1,5 +1,5 @@
 import { FlowItem } from '../../common/model/flow-builder/flow-item';
-import { ActionType, LoopOnItemsAction, Trigger, TriggerType } from 'shared';
+import { ActionType, FlowVersion, LoopOnItemsAction, Trigger, TriggerType } from 'shared';
 
 export class FlowStructureUtil {
 	constructor() {}
@@ -89,4 +89,26 @@ export class FlowStructureUtil {
 		}
 		return branches;
 	}
+	
+	public static findAvailableName(flowVersion: FlowVersion, stepPrefix: string) {
+		const steps = FlowStructureUtil.traverseAllSteps(flowVersion.trigger);
+		let number = 1;
+		while (true) {
+			let exist = false;
+			for (let i = 0; i < steps.length; ++i) {
+				const action = steps[i];
+				if (action.name === stepPrefix.toString().toLowerCase() + '_' + number) {
+					exist = true;
+					break;
+				}
+			}
+			if (exist) {
+				number++;
+			} else {
+				break;
+			}
+		}
+		return stepPrefix.toString().toLowerCase() + '_' + number;
+	}
+
 }

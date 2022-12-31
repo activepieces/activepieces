@@ -2,7 +2,6 @@ import { FlowExecutor } from './executors/flow-executor';
 import { Utils } from './utils';
 import { globals } from './globals';
 import { ExecutionState, StepOutput } from 'shared';
-import axios, { AxiosError } from 'axios';
 
 const args = process.argv.slice(2);
 
@@ -33,23 +32,13 @@ function executeFlow() {
 }
 
 async function execute() {
-  const data = await axios.get(
-    'http://localhost:3000/v1/store-entries?key=hello',
-    {
-      headers: {
-        Authorization:
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjEifQ.eyJpZCI6ImI2ejdrZ2RWQUpMWEsybXhXN3hEaCIsInR5cGUiOiJXT1JLRVIiLCJjb2xsZWN0aW9uSWQiOiJodjl5UXY3RHVQUE45dG1lUHEzMWoiLCJpYXQiOjE2NzI0NDQ1NDIsImV4cCI6MTY3MzA0OTM0MiwiaXNzIjoiYWN0aXZlcGllY2VzIn0.EvKyxntiTjx-rjOlz69MURzbhvR-nHhP_tYdHUbbM9E'
-      }
-    }
-  );
-  console.log(data.data);
-  /**   switch (args[0]) {
+  switch (args[0]) {
     case 'execute-flow':
       executeFlow();
       break;
     default:
       break;
-    }**/
+  }
 }
 
 execute();

@@ -4,7 +4,7 @@ import {
 	getDisplayNameForTrigger,
 } from 'src/app/modules/common/utils';
 import { Store } from '@ngrx/store';
-import { Observable, take, tap } from 'rxjs';
+import { forkJoin, map, Observable, take, tap } from 'rxjs';
 import { FlowItemDetails } from './step-type-item/flow-item-details';
 import { FlowsActions } from '../../../../store/action/flows.action';
 import { RightSideBarType } from '../../../../../common/model/enum/right-side-bar-type.enum';
@@ -12,8 +12,9 @@ import { Component, Input, OnInit } from '@angular/core';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
 import { ComponentItemDetails } from './step-type-item/component-item-details';
 import { environment } from '../../../../../../../environments/environment';
-import { StoreOperation, Trigger, ActionType, TriggerType, Flow, AddActionRequest } from 'shared';
+import { StoreOperation, Trigger, ActionType, TriggerType, Flow, AddActionRequest, FlowVersion } from 'shared';
 import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
+import { FlowStructureUtil } from 'src/app/modules/flow-builder/service/flowStructureUtil';
 
 @Component({
 	selector: 'app-step-type-sidebar',
@@ -82,20 +83,33 @@ export class StepTypeSidebarComponent implements OnInit {
 	}
 
 	onTypeSelected(flowItemDetails: FlowItemDetails) {
-		this.flowTypeSelected$ = this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
+		this.flowTypeSelected$ = forkJoin([
+			this.store.select(BuilderSelectors.selectCurrentFlow).pipe(take(1)),
+			this.store.select(BuilderSelectors.selectCurrentRightSideBar).pipe(take(1)),
+		]).pipe(
 			take(1),
-			tap(flow => {
-				if (flow == undefined) {
+			tap(results => {
+				if (results[0] == undefined) {
 					return;
 				}
 				if (this._showTriggers) {
 					this.replaceTrigger(flowItemDetails);
 				} else {
-					const action = this.constructAction(flowItemDetails.type as ActionType, flowItemDetails);
-					this.store.dispatch(FlowsActions.addAction({ 
-						operation: action
-					 }));
+					const action = this.constructAction(
+						results[1].props.stepName,
+						results[0].version!,
+						flowItemDetails.type as ActionType,
+						flowItemDetails
+					);
+					this.store.dispatch(
+						FlowsActions.addAction({
+							operation: action,
+						})
+					);
 				}
+			}),
+			map(results => {
+				return results[0];
 			})
 		);
 	}
@@ -104,19 +118,17 @@ export class StepTypeSidebarComponent implements OnInit {
 		let base = {
 			name: 'trigger',
 			nextAction: undefined,
-			displayName: getDisplayNameForTrigger(triggerDetails.type as TriggerType)
-		}
+			displayName: getDisplayNameForTrigger(triggerDetails.type as TriggerType),
+		};
 		let trigger: Trigger;
-		switch (triggerDetails.type as TriggerType){
+		switch (triggerDetails.type as TriggerType) {
 			case TriggerType.EMPTY:
 				trigger = {
 					...base,
 					valid: false,
 					type: TriggerType.EMPTY,
-					settings: {
-
-					}
-				}
+					settings: {},
+				};
 				break;
 			case TriggerType.SCHEDULE:
 				trigger = {
@@ -124,17 +136,17 @@ export class StepTypeSidebarComponent implements OnInit {
 					valid: true,
 					type: TriggerType.SCHEDULE,
 					settings: {
-						cronExpression: defaultCronJobForScheduleTrigger
-					}
-				}
+						cronExpression: defaultCronJobForScheduleTrigger,
+					},
+				};
 				break;
 			case TriggerType.WEBHOOK:
 				trigger = {
 					...base,
 					valid: true,
 					type: TriggerType.WEBHOOK,
-					settings: {}
-				}
+					settings: {},
+				};
 				break;
 			case TriggerType.PIECE:
 				trigger = {
@@ -144,29 +156,33 @@ export class StepTypeSidebarComponent implements OnInit {
 					settings: {
 						pieceName: triggerDetails.name,
 						triggerName: '',
-						input: {}
-					}
-				}
+						input: {},
+					},
+				};
 				break;
-
 		}
 		this.store.dispatch(
 			FlowsActions.updateTrigger({
-				operation: trigger
+				operation: trigger,
 			})
 		);
 	}
 
-	constructAction(actionType: ActionType, flowItemDetails: FlowItemDetails): AddActionRequest {
+	constructAction(
+		parentAction: string,
+		flowVersion: FlowVersion,
+		actionType: ActionType,
+		flowItemDetails: FlowItemDetails
+	): AddActionRequest {
 		let baseProps = {
-			name: flowItemDetails.name,
+			name: FlowStructureUtil.findAvailableName(flowVersion, 'step'),
 			displayName: getDefaultDisplayNameForPiece(flowItemDetails.type as ActionType, flowItemDetails.name),
-			nextAction: undefined
+			nextAction: undefined,
 		};
 		switch (actionType) {
 			case ActionType.CODE: {
 				return {
-					parentAction: undefined,
+					parentAction: parentAction,
 					action: {
 						...baseProps,
 						type: ActionType.CODE,
@@ -175,25 +191,25 @@ export class StepTypeSidebarComponent implements OnInit {
 							artifactSourceId: undefined,
 							artifactPackagedId: undefined,
 							input: {},
-						}
+						},
 					},
-				}
+				};
 			}
 			case ActionType.LOOP_ON_ITEMS: {
 				return {
-					parentAction: undefined,
+					parentAction: parentAction,
 					action: {
 						...baseProps,
 						type: ActionType.LOOP_ON_ITEMS,
 						settings: {
 							items: '',
 						},
-					}
-				}
+					},
+				};
 			}
 			case ActionType.STORAGE: {
 				return {
-					parentAction: undefined,
+					parentAction: parentAction,
 					action: {
 						...baseProps,
 						type: ActionType.STORAGE,
@@ -201,22 +217,22 @@ export class StepTypeSidebarComponent implements OnInit {
 							operation: StoreOperation.GET,
 							key: '',
 						},
-					}
+					},
 				};
 			}
 			case ActionType.PIECE: {
 				const componentDetails = flowItemDetails as ComponentItemDetails;
 				return {
-					parentAction: undefined,
+					parentAction: parentAction,
 					action: {
 						...baseProps,
 						type: ActionType.PIECE,
 						settings: {
 							pieceName: componentDetails.name,
 							actionName: undefined,
-							input: {}
+							input: {},
 						},
-					}
+					},
 				};
 			}
 		}
