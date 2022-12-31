@@ -1,9 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormGroup, FormBuilder, FormControl } from '@angular/forms';
-import { Observable, Subject, takeUntil, tap } from 'rxjs';
-import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
+import { Observable, tap } from 'rxjs';
+import { ActionType } from 'shared';
 import { Artifact } from 'src/app/modules/flow-builder/model/artifact.interface';
-import { StepCacheKey } from 'src/app/modules/flow-builder/service/artifact-cache-key';
 import { CodeStepInputFormSchema } from '../input-forms-schema';
 
 @Component({
@@ -23,26 +22,6 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
 	_stepArtifact$: Observable<Artifact>;
 	inputControlValueChanged$: Observable<any>;
 	artifactControlValueChanged$: Observable<any>;
-	stepArtifactChanged$: Subject<boolean> = new Subject();
-	@Input()
-	stepCacheKey: StepCacheKey;
-	@Input()
-	set stepArtifact$(artifact$: Observable<Artifact>) {
-		this._stepArtifact$ = artifact$.pipe(
-			tap(artifact => {
-				this.stepArtifactChanged$.next(true);
-				const artifactControl = this.codeStepForm.controls.artifact;
-				artifactControl.setValue(artifact);
-				this.artifactControlValueChanged$ = artifactControl.valueChanges.pipe(
-					takeUntil(this.stepArtifactChanged$),
-					tap(() => {
-						const parametersControlValue = this.codeStepForm.controls.input.value;
-						this.onChange({ input: parametersControlValue });
-					})
-				);
-			})
-		);
-	}
 
 	onChange = (value: CodeStepInputFormSchema) => {};
 	onTouch = () => {};
@@ -54,6 +33,12 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
 		});
 		this.inputControlValueChanged$ = this.codeStepForm.controls.input.valueChanges.pipe(
 			tap(parametersControlValue => {
+				this.onChange({ input: parametersControlValue });
+			})
+		);
+		const artifactControl = this.codeStepForm.controls.artifact;
+		this.artifactControlValueChanged$ = artifactControl.valueChanges.pipe(tap(() => {
+				const parametersControlValue = this.codeStepForm.controls.input.value;
 				this.onChange({ input: parametersControlValue });
 			})
 		);

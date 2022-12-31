@@ -1,8 +1,5 @@
 import { FlowItem } from '../../common/model/flow-builder/flow-item';
-import { TriggerType } from '../../common/model/enum/trigger-type.enum';
-import { ActionType } from '../../common/model/enum/action-type.enum';
-import { Trigger } from '../../common/model/flow-builder/trigger/trigger.interface';
-import { LoopOnItemActionInterface } from '../../common/model/flow-builder/actions/loop-action.interface';
+import { ActionType, FlowVersion, LoopOnItemsAction, Trigger, TriggerType } from 'shared';
 
 export class FlowStructureUtil {
 	constructor() {}
@@ -81,15 +78,37 @@ export class FlowStructureUtil {
 	public static branches(mainPiece: FlowItem | Trigger): FlowItem[] {
 		const branches: FlowItem[] = [];
 		if (mainPiece.type === ActionType.LOOP_ON_ITEMS) {
-			const loopAction = mainPiece as LoopOnItemActionInterface;
+			const loopAction = mainPiece as LoopOnItemsAction;
 			if (loopAction.firstLoopAction) {
 				branches.push(loopAction.firstLoopAction);
 			}
 		}
-		const nextAction = mainPiece.next_action;
+		const nextAction = mainPiece.nextAction;
 		if (nextAction) {
 			branches.push(nextAction);
 		}
 		return branches;
 	}
+	
+	public static findAvailableName(flowVersion: FlowVersion, stepPrefix: string) {
+		const steps = FlowStructureUtil.traverseAllSteps(flowVersion.trigger);
+		let number = 1;
+		while (true) {
+			let exist = false;
+			for (let i = 0; i < steps.length; ++i) {
+				const action = steps[i];
+				if (action.name === stepPrefix.toString().toLowerCase() + '_' + number) {
+					exist = true;
+					break;
+				}
+			}
+			if (exist) {
+				number++;
+			} else {
+				break;
+			}
+		}
+		return stepPrefix.toString().toLowerCase() + '_' + number;
+	}
+
 }

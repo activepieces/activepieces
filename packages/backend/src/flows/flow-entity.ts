@@ -1,10 +1,11 @@
 import { EntitySchema } from "typeorm";
-import { Collection, Flow, FlowVersion } from "shared";
+import { Collection, Flow, FlowRun, FlowVersion } from "shared";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 
 interface FlowSchema extends Flow {
   versions: FlowVersion[];
   collection: Collection;
+  runs: FlowRun[];
 }
 
 export const FlowEntity = new EntitySchema<FlowSchema>({
@@ -21,6 +22,11 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
     },
   ],
   relations: {
+    runs: {
+      type: "one-to-many",
+      target: "flow_run",
+      inverseSide: "flow",
+    },
     versions: {
       type: "one-to-many",
       target: "flow_version",

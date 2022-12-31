@@ -179,5 +179,8 @@ export const flowHelper = {
         clonedVersion.valid = isValid(clonedVersion);
         return clonedVersion;
     },
-    getStep: getStep
+    getStep: getStep,
+    clone: (flowVersion: FlowVersion): FlowVersion => {
+        return JSON.parse(JSON.stringify(flowVersion));
+    }
 }

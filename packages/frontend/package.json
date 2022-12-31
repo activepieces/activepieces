@@ -47,6 +47,7 @@
     "cron-expression-validator": "^1.0.20",
     "cronstrue": "^2.10.0",
     "flatpickr": "^4.6.9",
+    "shared": "workspace:*",
     "font-awesome": "^4.7.0",
     "http-status-codes": "^2.1.4",
     "jshint": "^2.13.5",

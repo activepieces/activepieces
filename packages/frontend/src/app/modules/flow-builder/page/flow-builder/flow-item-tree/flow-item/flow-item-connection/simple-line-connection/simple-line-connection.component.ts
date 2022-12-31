@@ -113,6 +113,6 @@ export class SimpleLineConnectionComponent implements OnInit, AfterViewInit, OnC
 	}
 
 	hasNextAction() {
-		return this.flowItem.next_action !== undefined && this.flowItem.next_action !== null;
+		return this.flowItem.nextAction !== undefined && this.flowItem.nextAction !== null;
 	}
 }

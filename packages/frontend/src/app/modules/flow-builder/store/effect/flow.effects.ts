@@ -1,39 +1,22 @@
 import { Injectable } from '@angular/core';
 import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
-import {
-	catchError,
-	concatMap,
-	EMPTY,
-	groupBy,
-	mergeMap,
-	Observable,
-	of,
-	switchMap,
-	tap,
-	throttle,
-	throwError,
-} from 'rxjs';
+import { catchError, concatMap, EMPTY, groupBy, mergeMap, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
-import { FlowsActions, SingleFlowModifyingState } from '../action/flows.action';
+import { FlowsActions, FlowsActionType, SingleFlowModifyingState } from '../action/flows.action';
 import { FlowService } from '../../../common/service/flow.service';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuilderSelectors } from '../selector/flow-builder.selector';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
-import { TriggerType } from '../../../common/model/enum/trigger-type.enum';
 import { TestRunBarComponent } from '../../page/flow-builder/test-run-bar/test-run-bar.component';
 import { UUID } from 'angular2-uuid';
-import { Flow } from 'src/app/modules/common/model/flow.class';
-import { Trigger } from 'src/app/modules/common/model/flow-builder/trigger/trigger.interface';
 import { BuilderActions } from '../action/builder.action';
-import { CodeService } from '../../service/code.service';
-import { StepCacheKey } from '../../service/artifact-cache-key';
 import { TabState } from '../model/tab-state';
-import { VersionEditState } from 'src/app/modules/common/model/enum/version-edit-state.enum';
 import { CollectionService } from 'src/app/modules/common/service/collection.service';
 import { RunDetailsService } from '../../page/flow-builder/flow-left-sidebar/run-details/iteration-details.service';
+import { Collection, CollectionVersionState, Flow, FlowId, FlowOperationRequest, FlowOperationType, TriggerType } from 'shared';
 
 @Injectable()
 export class FlowsEffects {
@@ -53,7 +36,7 @@ export class FlowsEffects {
 	deleteFlowStarted$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(FlowsActions.deleteFlowStarted),
-			concatMap((action: { flowId: UUID; saveRequestId: UUID }) => {
+			concatMap((action: { flowId: FlowId; saveRequestId: UUID }) => {
 				return this.flowService.delete(action.flowId).pipe(
 					map(() => {
 						return FlowsActions.deleteSuccess({ saveRequestId: action.saveRequestId });
@@ -64,52 +47,65 @@ export class FlowsEffects {
 		);
 	});
 
-	deleteStepArtifactFromCache = createEffect(
-		() => {
-			return this.actions$.pipe(
-				ofType(FlowsActions.deleteStep),
-				concatLatestFrom(() => [this.store.select(BuilderSelectors.selectCurrentFlow)]),
-				concatMap(([action, flow]) => {
-					if (flow === undefined) {
-						return throwError(() => new Error('Internal error, current flow cannot be selected when deleting step'));
-					}
-					this.codeService.removeArtifactInFlowStepsCache(new StepCacheKey(flow.id, action.stepName));
-					return of(void 0);
-				})
-			);
-		},
-		{
-			dispatch: false,
-		}
-	);
-
-	startSaveFlow$ = createEffect(() => {
+	flowModified$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(...SingleFlowModifyingState),
-			concatLatestFrom(action => [
+			concatLatestFrom(() => [
 				this.store.select(BuilderSelectors.selectCurrentFlow),
 				this.store.select(BuilderSelectors.selectCurrentCollection),
 			]),
 			concatMap(([action, flow, collection]) => {
-				if (collection.version.state === VersionEditState.LOCKED) {
-					return this.collectionService.update(collection.id, collection.version).pipe(
-						map(() => {
-							const genSavedId = UUID.UUID();
-							return FlowsActions.saveFlowStarted({ flow: flow!, saveRequestId: genSavedId });
-						})
-					);
-				} else {
-					const genSavedId = UUID.UUID();
-					return of(FlowsActions.saveFlowStarted({ flow: flow!, saveRequestId: genSavedId }));
+				let collection$: Observable<Collection> = of(collection);
+				if (collection.version!.state === CollectionVersionState.LOCKED) {
+					collection$ = this.collectionService.update(collection.id, collection.version!);
 				}
+				return collection$.pipe(map(() => {
+					const genSavedId = UUID.UUID();
+					let flowOperation: FlowOperationRequest;
+					switch(action.type){
+						case FlowsActionType.UPDATE_TRIGGER:
+							flowOperation = {
+								type: FlowOperationType.UPDATE_TRIGGER,
+								request: action.operation
+							}
+							break;
+						case FlowsActionType.ADD_ACTION:
+							flowOperation = {
+								type: FlowOperationType.ADD_ACTION,
+								request: action.operation
+							}
+							break;
+						case FlowsActionType.UPDATE_ACTION:
+							flowOperation = {
+								type: FlowOperationType.UPDATE_ACTION,
+								request: action.operation
+							}
+							break;
+						case FlowsActionType.DELETE_ACTION:
+							flowOperation = {
+								type: FlowOperationType.DELETE_ACTION,
+								request: action.operation
+							}
+							break;
+						case FlowsActionType.CHANGE_NAME:
+							flowOperation = {
+								type: FlowOperationType.CHANGE_NAME,
+								request: {
+									displayName: action.displayName
+								}
+							}
+							break;
+					}
+					return FlowsActions.applyUpdateOperation({ flow: flow!, operation: flowOperation, saveRequestId: genSavedId });
+				}));
 			})
 		);
 	});
 
-	saveFlowStarted$ = createEffect(
+	applyUpdateOperationS = createEffect(
 		() => {
 			return this.actions$.pipe(
-				ofType(FlowsActions.saveFlowStarted),
+				ofType(FlowsActions.applyUpdateOperation),
 				groupBy(action => action.flow.id),
 				mergeMap(changeFlowPendingAction$ => {
 					return changeFlowPendingAction$.pipe(
@@ -117,15 +113,17 @@ export class FlowsEffects {
 							this.store.select(BuilderSelectors.selectFlow(action.flow.id)),
 							this.store.select(BuilderSelectors.selectTabState(action.flow.id)),
 						]),
-						throttle(
-							([action, flow, tabState]) => {
-								if (flow === undefined || tabState === undefined) {
-									return throwError(() => new Error('Flow is not selected'));
-								}
-								return this.processFlowUpdate({ flow: flow, tabState: tabState, saveRequestId: action.saveRequestId });
-							},
-							{ trailing: true, leading: true }
-						),
+						concatMap(([action, flow, tabState]) => {
+							if (flow === undefined || tabState === undefined) {
+								return throwError(() => new Error('Flow is not selected'));
+							}
+							return this.processFlowUpdate({
+								operation: action.operation,
+								flow: flow,
+								tabState: tabState,
+								saveRequestId: action.saveRequestId,
+							});
+						}),
 						catchError(e => {
 							console.error(e);
 							const shownBar = this.snackBar.open(
@@ -143,8 +141,13 @@ export class FlowsEffects {
 		{ dispatch: false }
 	);
 
-	private processFlowUpdate(request: { flow: Flow; tabState: TabState; saveRequestId: UUID }): Observable<Flow> {
-		return this.flowService.update(request.flow.id, request.flow.version).pipe(
+	private processFlowUpdate(request: {
+		operation: FlowOperationRequest,
+		flow: Flow;
+		tabState: TabState;
+		saveRequestId: UUID;
+	}): Observable<Flow> {
+		return this.flowService.update(request.flow.id, request.operation).pipe(
 			tap(updatedFlow => {
 				this.store.dispatch(FlowsActions.savedSuccess({ saveRequestId: request.saveRequestId, flow: updatedFlow }));
 				const now = new Date();
@@ -197,22 +200,23 @@ export class FlowsEffects {
 
 	replaceTrigger = createEffect(() => {
 		return this.actions$.pipe(
-			ofType(FlowsActions.replaceTrigger),
-			switchMap((params: { newTrigger: Trigger }) => {
-				return of(FlowsActions.selectStep({ step: params.newTrigger }));
+			ofType(FlowsActions.updateTrigger),
+			concatLatestFrom(() => this.store.select(BuilderSelectors.selectCurrentFlow)),
+			switchMap(([action, flow]) => {
+				return of(FlowsActions.selectStepByName({ stepName: flow!.version!.trigger.name }));
 			})
 		);
 	});
 
 	deleteStep = createEffect(() => {
 		return this.actions$.pipe(
-			ofType(FlowsActions.deleteStep),
+			ofType(FlowsActions.deleteAction),
 			concatLatestFrom(() => [
 				this.store.select(BuilderSelectors.selectCurrentTabState),
 				this.store.select(BuilderSelectors.selectCurrentStepName),
 			]),
-			switchMap(([{ stepName: stepToDeleteName }, state, currentStepName]) => {
-				if (state && currentStepName === stepToDeleteName && state.rightSidebar.type === RightSideBarType.EDIT_STEP) {
+			switchMap(([{ operation }, state, currentStepName]) => {
+				if (state && currentStepName === operation.name && state.rightSidebar.type === RightSideBarType.EDIT_STEP) {
 					return of(
 						FlowsActions.setRightSidebar({
 							sidebarType: RightSideBarType.NONE,
@@ -227,10 +231,10 @@ export class FlowsEffects {
 
 	addStep = createEffect(() => {
 		return this.actions$.pipe(
-			ofType(FlowsActions.addStep),
+			ofType(FlowsActions.addAction),
 			concatLatestFrom(() => this.store.select(BuilderSelectors.selectCurrentFlowId)),
-			switchMap(([{ newAction }]) => {
-				return of(FlowsActions.selectStep({ step: newAction }));
+			switchMap(([{ operation }]) => {
+				return of(FlowsActions.selectStepByName({ stepName: operation.action.name }));
 			})
 		);
 	});
@@ -294,9 +298,9 @@ export class FlowsEffects {
 
 	stepSelectedEffect = createEffect(() => {
 		return this.actions$.pipe(
-			ofType(FlowsActions.selectStep),
-			concatLatestFrom(() => [this.store.select(BuilderSelectors.selectCurrentFlowRun)]),
-			switchMap(([{ step }, run]) => {
+			ofType(FlowsActions.selectStepByName),
+			concatLatestFrom(() => [this.store.select(BuilderSelectors.selectCurrentStep), this.store.select(BuilderSelectors.selectCurrentFlowRun)]),
+			switchMap(([{ stepName }, step, run]) => {
 				if (step && step.type === TriggerType.EMPTY) {
 					return of(
 						FlowsActions.setRightSidebar({
@@ -329,7 +333,6 @@ export class FlowsEffects {
 		private store: Store,
 		private actions$: Actions,
 		private snackBar: MatSnackBar,
-		private codeService: CodeService,
 		private collectionService: CollectionService,
 		private runDetailsService: RunDetailsService
 	) {}

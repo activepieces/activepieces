@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { StepResult } from 'src/app/modules/common/model/instance-run.interface';
+import { StepOutput } from 'shared';
+
 
 @Component({
 	selector: 'app-iteration-accordion',
@@ -8,7 +9,7 @@ import { StepResult } from 'src/app/modules/common/model/instance-run.interface'
 })
 export class IterationAccordionComponent {
 	@Input() iterationIndex: number;
-	@Input() IterationResults: { stepName: string; result: StepResult }[];
+	@Input() IterationResults: { stepName: string; result: StepOutput }[];
 	@Input() selectedStepName: string | null;
 	@Input() nestingLevel = 0;
 	@Output() childStepSelected = new EventEmitter();

@@ -17,6 +17,8 @@ import {
   Instance,
   InstanceId,
   PrincipalType,
+  StepOutput,
+  StepOutputStatus,
   Trigger,
 } from "shared";
 import { Sandbox, sandboxManager } from "../sandbox";
@@ -43,13 +45,25 @@ async function executeFlow(request: ExecutionRequest) {
 
   const sandbox = sandboxManager.obtainSandbox();
   const flowLock = await redisLock(flowVersion.id);
-  console.log("Executing flow " + flowVersion.id + " and run Id " + request.runId + " in sandbox " + sandbox.boxId);
+  console.log(
+    "[" + request.runId + "] Executing flow " + flowVersion.id +  + " in sandbox " + sandbox.boxId
+  );
   try {
-    sandbox.cleanAndInit();
+    await sandbox.cleanAndInit();
 
+    console.log(
+      "[" + request.runId + "] Downloading Files"
+    );
     await downloadFiles(sandbox, flowVersion, collectionVersion, request.payload);
 
-    sandbox.runCommandLine("/usr/bin/node activepieces-engine.js execute-flow");
+    console.log(
+      "[" + request.runId + "] Running Engine"
+    );
+    await sandbox.runCommandLine("/usr/bin/node activepieces-engine.js execute-flow");
+    
+    console.log(
+      "[" + request.runId + "] Reading Output "
+    );
     const executionOutput: ExecutionOutput = JSON.parse(
       fs.readFileSync(sandbox.getSandboxFilePath("output.json")).toString()
     );
@@ -60,7 +74,7 @@ async function executeFlow(request: ExecutionRequest) {
     await flowLock();
   }
   console.log(
-    "Finished executing flow " + flowVersion + " and run Id " + request.runId + " in sandbox " + sandbox.boxId
+    "[" + request.runId + "] Finished executing flow " + flowVersion +  + " in sandbox " + sandbox.boxId
   );
 }
 
@@ -86,7 +100,12 @@ async function downloadFiles(
   fs.writeFileSync(buildPath + "/activepieces-engine.js", fs.readFileSync("resources/activepieces-engine.js"));
   fs.writeFileSync(
     buildPath + "/input.json",
-    await constructInputString(flowVersion.id, collectionVersion.collectionId, collectionVersion.id, payload)
+    await constructInputString(flowVersion.id, collectionVersion.collectionId, collectionVersion.id, {
+      duration: 0,
+      input: {},
+      output: payload,
+      status: StepOutputStatus.SUCCEEDED,
+    })
   );
 }
 
@@ -94,12 +113,12 @@ async function constructInputString(
   flowVersionId: FlowVersionId,
   collectionId: CollectionId,
   collectionVersionId: CollectionVersionId,
-  payload: unknown
+  payload: StepOutput
 ): Promise<string> {
   return JSON.stringify({
     flowVersionId,
     collectionVersionId,
-    workerToken: tokenUtils.encode({
+    workerToken: await tokenUtils.encode({
       id: apId(),
       type: PrincipalType.WORKER,
       collectionId,
@@ -118,7 +137,7 @@ async function buildCodes(flowVersion: FlowVersion) {
       buildRequests.push(
         new Promise<File>(async (resolve, reject) => {
           if (codeActionSettings.artifactPackagedId === undefined) {
-            const sourceId = codeActionSettings.artifactSourceId;
+            const sourceId = codeActionSettings.artifactSourceId!;
             const fileEntity = await fileService.getOne(sourceId);
             const builtFile = await codeBuilder.build(fileEntity!.data);
             const savedPackagedFile: File = await fileService.save(builtFile);

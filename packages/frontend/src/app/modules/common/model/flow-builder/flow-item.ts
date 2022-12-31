@@ -1,23 +1,20 @@
-import { ActionType } from '../enum/action-type.enum';
-import { TriggerType } from '../enum/trigger-type.enum';
+import { Action, Trigger } from "shared";
 
-export interface FlowItem {
-	name: string;
-	type?: ActionType | TriggerType;
-	display_name: string;
-	settings: any;
-	valid?: boolean;
 
-	// Render
+export type FlowItemRenderInfo = {
 	boundingBox?: BoundingBox;
 	connectionsBox?: BoundingBox;
 	xOffset?: number;
 	yOffset?: number;
-	yOffsetFromLastNode: number;
+	yOffsetFromLastNode?: number;
 	width?: number;
 	height?: number;
-	next_action?: FlowItem;
-}
+	nextAction?: FlowItem;
+};
+
+export type FlowItem = (Action | Trigger) & FlowItemRenderInfo;
+
+
 
 export interface BoundingBox {
 	width: number;

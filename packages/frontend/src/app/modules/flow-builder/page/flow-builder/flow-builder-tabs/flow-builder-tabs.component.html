@@ -20,7 +20,7 @@
       [class.ap-border-b-[1px]]="!((selectedFlowId$ | async) === flow.id)" #flowSpan>
       <app-flow-builder-tab [flow]="flow" [readonlyMode]="readOnlyMode$ | async | defaultTrue"
         (switchToFlow)="changeSelectedFlow(flow); scrollToFlowTab(index)"
-        [tabSelected]="!!(selectedFlowId$ | async) === flow.id"></app-flow-builder-tab>
+        [tabSelected]="(selectedFlowId$ | async) === flow.id"></app-flow-builder-tab>
     </span>
   </div>
   <div class="white-gradient-right" *ngIf="shouldShowRightArrow(tabsContainer)"></div>

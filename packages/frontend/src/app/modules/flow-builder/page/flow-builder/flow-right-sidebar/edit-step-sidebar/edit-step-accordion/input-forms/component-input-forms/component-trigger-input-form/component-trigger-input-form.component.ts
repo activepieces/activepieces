@@ -11,10 +11,11 @@ import { Config } from '@fortawesome/fontawesome-svg-core';
 import { map, Observable, of, tap } from 'rxjs';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import {
-	ComponnentConfigsForActionsOrTriggers,
-	FrontEndConnectorConfig,
+	CollectionConfig,
+	propsConvertor,
 } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
-import { DropdownOption } from 'src/app/modules/common/model/dropdown-options';
+
+import { DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
 import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
 import { ComponentTriggerInputFormSchema } from '../../input-forms-schema';
 
@@ -23,7 +24,7 @@ declare type TriggerDropdownOption = {
 		name: string;
 		description: string;
 	};
-	value: { triggerName: string; configs: FrontEndConnectorConfig[]; separator?: boolean };
+	value: { triggerName: string; configs: CollectionConfig[]; separator?: boolean };
 	disabled?: boolean;
 };
 
@@ -55,15 +56,15 @@ export class ComponentTriggerInputFormComponent {
 	componentForm: UntypedFormGroup;
 	initialSetup$: Observable<TriggerDropdownOption[]>;
 	componentName: string;
-	intialComponentTriggerInputFormValue: { trigger_name: string; input: { [key: string]: any } } | null;
+	intialComponentTriggerInputFormValue: { triggerName: string; input: { [key: string]: any } } | null;
 	selectedTrigger$: Observable<any>;
 	triggers$: Observable<TriggerDropdownOption[]>;
 	valueChanges$: Observable<void>;
-	triggerDropdownValueChanged$: Observable<{ triggerName: string; configs: FrontEndConnectorConfig[] }>;
+	triggerDropdownValueChanged$: Observable<{ triggerName: string; configs: CollectionConfig[] }>;
 	onChange = (value: any) => {};
 	onTouch = () => {};
 	updateOrAddConfigModalClosed$: Observable<Config>;
-	allAuthConfigs$: Observable<DropdownOption[]>;
+	allAuthConfigs$: Observable<DropdownItem[]>;
 	constructor(
 		private fb: UntypedFormBuilder,
 		private actionMetaDataService: ActionMetaService,
@@ -98,12 +99,12 @@ export class ComponentTriggerInputFormComponent {
 		);
 	}
 
-	fetchTriggers(componentName: string) {
+	fetchTriggers(pieceName: string) {
 		const component$ = this.actionMetaDataService.connectorComponents().pipe(
 			map(comps => {
-				const component = comps.find(c => c.name === componentName);
+				const component = comps.find(c => c.name === pieceName);
 				if (!component) {
-					throw new Error(`Activepieces- component not found: ${componentName}`);
+					throw new Error(`Activepieces- piece not found: ${pieceName}`);
 				}
 				return component;
 			})
@@ -113,29 +114,32 @@ export class ComponentTriggerInputFormComponent {
 				const triggersKeys = Object.keys(component.triggers);
 				return triggersKeys.map(triggerName => {
 					const trigger = component.triggers[triggerName];
+					const configs = Object.entries(trigger.props).map(keyEntry => {
+						return propsConvertor.convertToFrontEndConfig(keyEntry[0], keyEntry[1]);
+					});
 					return {
 						value: {
-							triggerName: trigger.name,
-							configs: trigger.configs.map(c => ComponnentConfigsForActionsOrTriggers.convertToFrontEndConfig(c)),
+							triggerName: triggerName,
+							configs: configs,
 						},
-						label: { name: trigger.name, description: trigger.description },
+						label: { name: trigger.displayName, description: trigger.description },
 					};
 				});
 			})
 		);
 		this.initialSetup$ = this.triggers$.pipe(
 			tap(items => {
-				if (this.intialComponentTriggerInputFormValue && this.intialComponentTriggerInputFormValue.trigger_name) {
+				if (this.intialComponentTriggerInputFormValue && this.intialComponentTriggerInputFormValue.triggerName) {
 					this.componentForm
 						.get(TRIGGER_FORM_CONTROL_NAME)!
 						.setValue(
-							items.find(i => i.value.triggerName === this.intialComponentTriggerInputFormValue?.trigger_name)?.value,
+							items.find(i => i.value.triggerName === this.intialComponentTriggerInputFormValue?.triggerName)?.value,
 							{
 								emitEvent: false,
 							}
 						);
 					this.selectedTrigger$ = of(
-						items.find(it => it.value.triggerName === this.intialComponentTriggerInputFormValue?.trigger_name)
+						items.find(it => it.value.triggerName === this.intialComponentTriggerInputFormValue?.triggerName)
 					).pipe(
 						tap(selectedTrigger => {
 							if (selectedTrigger) {
@@ -162,10 +166,10 @@ export class ComponentTriggerInputFormComponent {
 	}
 	writeValue(obj: ComponentTriggerInputFormSchema): void {
 		this.intialComponentTriggerInputFormValue = obj;
-		this.componentName = obj.component_name;
+		this.componentName = obj.pieceName;
 		this.componentForm.get(TRIGGER_FORM_CONTROL_NAME)?.setValue(undefined, { emitEvent: false });
 		this.componentForm.removeControl(CONFIGS_FORM_CONTROL_NAME, { emitEvent: false });
-		this.fetchTriggers(obj.component_name);
+		this.fetchTriggers(obj.pieceName);
 	}
 
 	registerOnChange(fn: any): void {
@@ -181,7 +185,7 @@ export class ComponentTriggerInputFormComponent {
 		return { invalid: true };
 	}
 
-	triggerSelectValueChanged(selectedActionValue: { triggerName: string; configs: FrontEndConnectorConfig[] } | null) {
+	triggerSelectValueChanged(selectedActionValue: { triggerName: string; configs: CollectionConfig[] } | null) {
 		if (selectedActionValue) {
 			this.triggerSelected(selectedActionValue);
 
@@ -194,7 +198,7 @@ export class ComponentTriggerInputFormComponent {
 		}
 	}
 
-	private triggerSelected(selectedActionValue: { triggerName: string; configs: FrontEndConnectorConfig[] }) {
+	private triggerSelected(selectedActionValue: { triggerName: string; configs: CollectionConfig[] }) {
 		const configsForm = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME);
 		if (!configsForm) {
 			this.componentForm.addControl(

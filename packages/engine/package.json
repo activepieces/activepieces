@@ -30,6 +30,7 @@
     "build": "webpack --mode production && cp dist/activepieces-engine.js ../backend/resources/activepieces-engine.js",
     "lint": "gts lint",
     "clean": "gts clean",
+    "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write",
     "compile": "gts clean && tsc && cd dist/src && node index.js",
     "fix": "gts fix",
     "test": "jest --coverage",

@@ -55,7 +55,7 @@
       </mat-error>
     </mat-form-field>
 
-    <ng-container *ngSwitchCase="configType.SELECT">
+    <ng-container *ngSwitchCase="configType.DROPDOWN">
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }} </mat-label>
         <mat-select [formControlName]="config.key">

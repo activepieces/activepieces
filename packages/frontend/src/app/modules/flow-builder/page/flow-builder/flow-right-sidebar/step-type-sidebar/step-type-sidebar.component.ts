@@ -4,24 +4,17 @@ import {
 	getDisplayNameForTrigger,
 } from 'src/app/modules/common/utils';
 import { Store } from '@ngrx/store';
-import { Observable, take, tap } from 'rxjs';
+import { forkJoin, map, Observable, take, tap } from 'rxjs';
 import { FlowItemDetails } from './step-type-item/flow-item-details';
 import { FlowsActions } from '../../../../store/action/flows.action';
 import { RightSideBarType } from '../../../../../common/model/enum/right-side-bar-type.enum';
-import { Trigger } from '../../../../../common/model/flow-builder/trigger/trigger.interface';
-import { TriggerType } from '../../../../../common/model/enum/trigger-type.enum';
 import { Component, Input, OnInit } from '@angular/core';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
-import { FlowVersion } from 'src/app/modules/common/model/flow-version.class';
-import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
-import { StorageOperation } from 'src/app/modules/common/model/flow-builder/actions/storage-operation.enum';
-import { StorageScope } from 'src/app/modules/common/model/flow-builder/actions/storage-scope.enum';
-import { StepCacheKey } from 'src/app/modules/flow-builder/service/artifact-cache-key';
-import { Flow } from 'src/app/modules/common/model/flow.class';
-import { CodeService } from '../../../../service/code.service';
-import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
 import { ComponentItemDetails } from './step-type-item/component-item-details';
 import { environment } from '../../../../../../../environments/environment';
+import { StoreOperation, Trigger, ActionType, TriggerType, Flow, AddActionRequest, FlowVersion } from 'shared';
+import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
+import { FlowStructureUtil } from 'src/app/modules/flow-builder/service/flowStructureUtil';
 
 @Component({
 	selector: 'app-step-type-sidebar',
@@ -73,7 +66,7 @@ export class StepTypeSidebarComponent implements OnInit {
 
 		if (environment.feature.newComponents) {
 			this.tabsAndTheirLists.push({
-				displayName: 'apps',
+				displayName: 'Apps',
 				list$: connectorComponentsItemsDetails$,
 				emptyListText: this._showTriggers ? 'No app triggers are available' : 'No app steps are available',
 			});
@@ -90,95 +83,158 @@ export class StepTypeSidebarComponent implements OnInit {
 	}
 
 	onTypeSelected(flowItemDetails: FlowItemDetails) {
-		this.flowTypeSelected$ = this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
+		this.flowTypeSelected$ = forkJoin([
+			this.store.select(BuilderSelectors.selectCurrentFlow).pipe(take(1)),
+			this.store.select(BuilderSelectors.selectCurrentRightSideBar).pipe(take(1)),
+		]).pipe(
 			take(1),
-			tap(flow => {
-				if (flow == undefined) {
+			tap(results => {
+				if (results[0] == undefined) {
 					return;
 				}
 				if (this._showTriggers) {
 					this.replaceTrigger(flowItemDetails);
 				} else {
-					const stepName = FlowVersion.clone(flow.version).findAvailableName('step');
-					const settings: any = this.constructStepSettings(flowItemDetails.type as ActionType, flowItemDetails);
-					const action: FlowItem = {
-						type: flowItemDetails.type as ActionType,
-						name: stepName,
-						display_name: getDefaultDisplayNameForPiece(flowItemDetails.type as ActionType, flowItemDetails.name),
-						settings: settings,
-						valid: flowItemDetails.type !== ActionType.STORAGE && flowItemDetails.type !== ActionType.LOOP_ON_ITEMS,
-						yOffsetFromLastNode: 0,
-					};
-					if (flowItemDetails.type === ActionType.CODE) {
-						this.codeService.getOrCreateStepArtifact(new StepCacheKey(flow.id, stepName), '');
-					}
-					this.dispatchAddStep(action);
+					const action = this.constructAction(
+						results[1].props.stepName,
+						results[0].version!,
+						flowItemDetails.type as ActionType,
+						flowItemDetails
+					);
+					this.store.dispatch(
+						FlowsActions.addAction({
+							operation: action,
+						})
+					);
 				}
+			}),
+			map(results => {
+				return results[0];
 			})
 		);
-	}
-	dispatchAddStep(action: FlowItem) {
-		this.store.dispatch(FlowsActions.addStep({ newAction: action }));
 	}
 
 	private replaceTrigger(triggerDetails: FlowItemDetails) {
-		const trigger: Trigger = {
-			type: triggerDetails.type as TriggerType,
+		let base = {
 			name: 'trigger',
-			display_name: getDisplayNameForTrigger(triggerDetails.type as TriggerType),
-			settings: {},
-			yOffsetFromLastNode: 0,
-			valid: false,
+			nextAction: undefined,
+			displayName: getDisplayNameForTrigger(triggerDetails.type as TriggerType),
 		};
-		if (trigger.type == TriggerType.SCHEDULE) {
-			trigger.settings.cron_expression = defaultCronJobForScheduleTrigger;
-			trigger.valid = true;
-		}
-		if (trigger.type === TriggerType.WEBHOOK) {
-			trigger.valid = true;
-		}
-		if (trigger.type === TriggerType.PIECE) {
-			trigger.valid = false;
-
-			trigger.settings.component_name = triggerDetails.name;
-			trigger.settings.trigger_name = '';
-			trigger.settings.input = {};
+		let trigger: Trigger;
+		switch (triggerDetails.type as TriggerType) {
+			case TriggerType.EMPTY:
+				trigger = {
+					...base,
+					valid: false,
+					type: TriggerType.EMPTY,
+					settings: {},
+				};
+				break;
+			case TriggerType.SCHEDULE:
+				trigger = {
+					...base,
+					valid: true,
+					type: TriggerType.SCHEDULE,
+					settings: {
+						cronExpression: defaultCronJobForScheduleTrigger,
+					},
+				};
+				break;
+			case TriggerType.WEBHOOK:
+				trigger = {
+					...base,
+					valid: true,
+					type: TriggerType.WEBHOOK,
+					settings: {},
+				};
+				break;
+			case TriggerType.PIECE:
+				trigger = {
+					...base,
+					type: TriggerType.PIECE,
+					valid: false,
+					settings: {
+						pieceName: triggerDetails.name,
+						triggerName: '',
+						input: {},
+					},
+				};
+				break;
 		}
 		this.store.dispatch(
-			FlowsActions.replaceTrigger({
-				newTrigger: trigger,
+			FlowsActions.updateTrigger({
+				operation: trigger,
 			})
 		);
 	}
 
-	// TODO GET RID OF ANY AND MAKE THEM CLASSES :)
-	constructStepSettings(actionType: ActionType, flowItemDetails: FlowItemDetails) {
+	constructAction(
+		parentAction: string,
+		flowVersion: FlowVersion,
+		actionType: ActionType,
+		flowItemDetails: FlowItemDetails
+	): AddActionRequest {
+		let baseProps = {
+			name: FlowStructureUtil.findAvailableName(flowVersion, 'step'),
+			displayName: getDefaultDisplayNameForPiece(flowItemDetails.type as ActionType, flowItemDetails.name),
+			nextAction: undefined,
+		};
 		switch (actionType) {
 			case ActionType.CODE: {
 				return {
-					input: {},
+					parentAction: parentAction,
+					action: {
+						...baseProps,
+						type: ActionType.CODE,
+						settings: {
+							artifact: this.codeService.helloWorldBase64(),
+							artifactSourceId: undefined,
+							artifactPackagedId: undefined,
+							input: {},
+						},
+					},
 				};
 			}
 			case ActionType.LOOP_ON_ITEMS: {
 				return {
-					items: '',
+					parentAction: parentAction,
+					action: {
+						...baseProps,
+						type: ActionType.LOOP_ON_ITEMS,
+						settings: {
+							items: '',
+						},
+					},
 				};
 			}
 			case ActionType.STORAGE: {
 				return {
-					operation: StorageOperation.GET,
-					scope: StorageScope.COLLECTION,
-					key: '',
+					parentAction: parentAction,
+					action: {
+						...baseProps,
+						type: ActionType.STORAGE,
+						settings: {
+							operation: StoreOperation.GET,
+							key: '',
+						},
+					},
 				};
 			}
 			case ActionType.PIECE: {
 				const componentDetails = flowItemDetails as ComponentItemDetails;
 				return {
-					component_name: componentDetails.name,
+					parentAction: parentAction,
+					action: {
+						...baseProps,
+						type: ActionType.PIECE,
+						settings: {
+							pieceName: componentDetails.name,
+							actionName: undefined,
+							input: {},
+						},
+					},
 				};
 			}
 		}
-
-		return {};
 	}
 }

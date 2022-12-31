@@ -1,5 +1,5 @@
 import { UUID } from 'angular2-uuid';
-import { Flow } from 'src/app/modules/common/model/flow.class';
+import { Flow } from 'shared';
 import { TabState } from './tab-state';
 
 type FlowId = string;

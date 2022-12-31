@@ -1,9 +1,6 @@
 import { Component, NgZone, OnInit } from '@angular/core';
 import { distinctUntilChanged, map, Observable } from 'rxjs';
-import { InstanceRunStatus } from '../../../../../common/model/enum/instance-run-status';
 import { UUID } from 'angular2-uuid';
-import { ActionStatus } from '../../../../../common/model/enum/action-status';
-import { InstanceRun, StepResult } from '../../../../../common/model/instance-run.interface';
 import { TimeHelperService } from '../../../../../common/service/time-helper.service';
 import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { BuilderSelectors } from '../../../../store/selector/flow-builder.selector';
@@ -11,6 +8,7 @@ import { Store } from '@ngrx/store';
 import { RunDetailsService } from './iteration-details.service';
 import { FlowsActions } from 'src/app/modules/flow-builder/store/action/flows.action';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
+import { ExecutionOutputStatus, FlowRun, StepOutput, StepOutputStatus } from 'shared';
 
 @Component({
 	selector: 'app-run-details',
@@ -19,7 +17,7 @@ import { CdkDragMove } from '@angular/cdk/drag-drop';
 })
 export class RunDetailsComponent implements OnInit {
 	runResults: {
-		result: StepResult;
+		result: StepOutput;
 		stepName: string;
 	}[] = [];
 	accordionRect: DOMRect;
@@ -27,9 +25,9 @@ export class RunDetailsComponent implements OnInit {
 	flowId: UUID;
 	logs$: Observable<
 		| {
-				selectedRun: InstanceRun | undefined;
+				selectedRun: FlowRun | undefined;
 				runResults: {
-					result: StepResult;
+					result: StepOutput;
 					stepName: string;
 				}[];
 		  }
@@ -49,10 +47,10 @@ export class RunDetailsComponent implements OnInit {
 		const run$ = this.store.select(BuilderSelectors.selectCurrentFlowRun);
 		this.logs$ = run$.pipe(
 			distinctUntilChanged((prev, curr) => {
-				return prev?.id === curr?.id && prev?.status === curr?.status && prev?.logs_file_id === curr?.logs_file_id;
+				return prev?.id === curr?.id && prev?.status === curr?.status && prev?.logsFileId === curr?.logsFileId;
 			}),
 			map(selectedFlowRun => {
-				if (selectedFlowRun && selectedFlowRun.status !== InstanceRunStatus.RUNNING && selectedFlowRun.logs_file_id) {
+				if (selectedFlowRun && selectedFlowRun.status !== ExecutionOutputStatus.RUNNING && selectedFlowRun.logsFileId) {
 					this.runResults = this.createStepResultsForDetailsAccordion(selectedFlowRun);
 					return {
 						selectedRun: selectedFlowRun,
@@ -65,9 +63,9 @@ export class RunDetailsComponent implements OnInit {
 		);
 	}
 
-	copyStepResultAndFormatDuration(stepResult: StepResult) {
-		const copiedStep: StepResult = JSON.parse(JSON.stringify(stepResult));
-		copiedStep.duration = this.formatStepDuration(copiedStep.duration);
+	copyStepResultAndFormatDuration(stepResult: StepOutput) {
+		const copiedStep: StepOutput = JSON.parse(JSON.stringify(stepResult));
+		copiedStep.duration = this.formatStepDuration(copiedStep.duration!);
 		return copiedStep;
 	}
 	formatStepDuration(duration: number) {
@@ -85,20 +83,20 @@ export class RunDetailsComponent implements OnInit {
 	}
 
 	public get actionStatusEnum() {
-		return ActionStatus;
+		return StepOutputStatus;
 	}
 
 	public get InstanceRunStatus() {
-		return InstanceRunStatus;
+		return ExecutionOutputStatus;
 	}
 
-	createStepResultsForDetailsAccordion(run: InstanceRun): {
-		result: StepResult;
+	createStepResultsForDetailsAccordion(run: FlowRun): {
+		result: StepOutput;
 		stepName: string;
 	}[] {
-		const stepNames = Object.keys(run.state!.steps);
+		const stepNames = Object.keys(run.executionOutput!.executionState.steps);
 		return stepNames.map(name => {
-			const result = run.state!.steps[name];
+			const result = run.executionOutput!.executionState.steps[name];
 			return {
 				result: result,
 				stepName: name,

@@ -3,7 +3,7 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, map, Observable, of, tap } from 'rxjs';
-import { Collection } from 'src/app/modules/common/model/collection.interface';
+import { Collection } from 'shared';
 import { CollectionService } from 'src/app/modules/common/service/collection.service';
 
 @Component({
@@ -43,7 +43,7 @@ export class DeleteCollectionDialogComponent {
 				}),
 				tap(() => {
 					this.dialogRef.close(true);
-					this.snackBar.open(`${this.collection.version.displayName} was deleted successfully`);
+					this.snackBar.open(`${this.collection.version!.displayName} was deleted successfully`);
 				})
 			);
 		}

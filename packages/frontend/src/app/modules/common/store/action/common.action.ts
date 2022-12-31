@@ -1,5 +1,6 @@
 import { createAction, props } from '@ngrx/store';
-import { User } from '../../model/user.interface';
+import { User } from 'shared';
+
 
 export enum CommonActionType {
 	LOAD_INITIAL = '[APP_STATE] LOAD_INITIAL',

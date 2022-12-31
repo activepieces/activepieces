@@ -1,9 +1,13 @@
-/** @type {import('tailwindcss').Config} */
+const defaultTheme = require('tailwindcss/defaultTheme')
+
 module.exports = {
 	prefix: 'ap-',
 	content: ['./src/**/*.{html,ts}'],
 	theme: {
 		extend: {
+			fontFamily: {
+				"sans" :[ 'Open Sans,sans-serif' , ...defaultTheme.fontFamily.sans],
+			},
 			backgroundImage: {
 				authBg: "url('/assets/img/custom/auth/auth-bg.png')",
 				nofbg: "url('/assets/img/custom/auth/404.svg')",

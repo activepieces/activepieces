@@ -21,7 +21,7 @@ export const flowRunController = async (app: FastifyInstance, _options: FastifyP
     const flowRunPage = await service.list({
       projectId: request.query.projectId,
       cursor: request.query.cursor ?? null,
-      limit: request.query.limit ?? DEFAULT_PAGING_LIMIT,
+      limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
     });
 
     reply.send(flowRunPage);

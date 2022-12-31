@@ -3,7 +3,7 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { Flow } from 'src/app/modules/common/model/flow.class';
+import { Flow } from 'shared';
 import { FlowsActions } from 'src/app/modules/flow-builder/store/action/flows.action';
 
 @Component({

@@ -10,68 +10,65 @@ export enum HttpMethod {
 	TRACE = 'TRACE',
 }
 
-export class FrontEndConnectorConfig {
+export interface CollectionConfig {
 	key: string;
 	type: InputType;
 	label: string;
-	value: any;
+	value?: any;
 	description?: string;
 	authUrl?: string;
 	tokenUrl?: string;
 	scopes?: string;
 	required: boolean;
 }
-export class ComponnentConfigsForActionsOrTriggers {
+
+export class PieceProperty {
 	name: string;
 	description: string;
-	url: string;
-	httpMethod: HttpMethod;
 	type: InputType;
 	required: boolean;
 	displayName: string;
 	authUrl?: string;
 	tokenUrl?: string;
-	scopes?: string[];
-	static convertToFrontEndConfig(componentConfig: ComponnentConfigsForActionsOrTriggers) {
-		const frontEndConfig = new FrontEndConnectorConfig();
-		frontEndConfig.description = componentConfig.description;
-		frontEndConfig.key = componentConfig.name;
-		frontEndConfig.label = componentConfig.displayName;
-		frontEndConfig.required = componentConfig.required;
-		frontEndConfig.type = componentConfig.type;
-		frontEndConfig.authUrl = componentConfig.authUrl;
-		frontEndConfig.tokenUrl = componentConfig.tokenUrl;
-		frontEndConfig.scopes = componentConfig.scopes?.join(' ') || '';
-		return frontEndConfig;
-	}
+	scope?: string[];
 }
 
-export class ConnectorComponent {
+export const propsConvertor = {
+	convertToFrontEndConfig: (name: string, prop: PieceProperty): CollectionConfig => {
+		return {
+			key: name,
+			type: prop.type,
+			label: prop.displayName,
+			description: prop.description,
+			authUrl: prop.authUrl,
+			tokenUrl: prop.tokenUrl,
+			scopes: prop.scope?.join(' ') || '',
+			required: prop.required,
+		};
+	},
+};
+
+export interface AppPiece {
 	name: string;
 	logoUrl: string;
-	actions: Record<
-		string,
-		{
-			name: string;
-			description: string;
-			configs: ComponnentConfigsForActionsOrTriggers[];
-		}
-	>;
-	triggers: Record<
-		string,
-		{
-			name: string;
-			description: string;
-			configs: ComponnentConfigsForActionsOrTriggers[];
-		}
-	>;
+	actions: propMap;
+	triggers: propMap;
 }
+
+type propMap = Record<
+	string,
+	{
+		displayName: string;
+		description: string;
+		props: Record<string, PieceProperty>;
+	}
+>;
+
 export enum InputType {
 	SHORT_TEXT = 'SHORT_TEXT',
 	LONG_TEXT = 'LONG_TEXT',
-	SELECT = 'SELECT',
+	DROPDOWN = 'DROPDOWN',
 	NUMBER = 'NUMBER',
 	CHECKBOX = 'CHECKBOX',
-	JSON = 'JSON',
 	OAUTH2 = 'OAUTH2',
 }

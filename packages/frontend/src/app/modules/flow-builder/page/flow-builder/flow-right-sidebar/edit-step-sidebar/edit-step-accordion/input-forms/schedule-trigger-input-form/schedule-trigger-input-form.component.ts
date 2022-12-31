@@ -12,7 +12,7 @@ import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.anima
 import { cronJobValidator } from 'src/app/modules/common/validators/cronjob-validator';
 import { InputFormsSchema, ScheduledTriggerInputFormSchema } from '../input-forms-schema';
 import cronstrue from 'cronstrue';
-import { TriggerType } from 'src/app/modules/common/model/enum/trigger-type.enum';
+import { TriggerType } from 'shared';
 @Component({
 	selector: 'app-schedule-trigger-input-form',
 	templateUrl: './schedule-trigger-input-form.component.html',
@@ -31,13 +31,13 @@ import { TriggerType } from 'src/app/modules/common/model/enum/trigger-type.enum
 	animations: [fadeInUp400ms],
 })
 export class ScheduleTriggerInputFormComponent implements ControlValueAccessor {
-	scheduledFrom: FormGroup<{ cron_expression: FormControl<string> }>;
+	scheduledFrom: FormGroup<{ cronExpression: FormControl<string> }>;
 	onChange = (value: InputFormsSchema) => {};
 	onTouch = () => {};
 	updateComponentValue$: Observable<any>;
 	constructor(private formBuilder: FormBuilder) {
 		this.scheduledFrom = this.formBuilder.group({
-			cron_expression: new FormControl('', { nonNullable: true, validators: [cronJobValidator] }),
+			cronExpression: new FormControl('', { nonNullable: true, validators: [cronJobValidator] }),
 		});
 		this.updateComponentValue$ = this.scheduledFrom.valueChanges.pipe(
 			tap(() => {
@@ -45,29 +45,36 @@ export class ScheduleTriggerInputFormComponent implements ControlValueAccessor {
 			})
 		);
 	}
+	
 	writeValue(obj: InputFormsSchema): void {
 		if (obj.type === TriggerType.SCHEDULE) {
-			this.scheduledFrom.patchValue({ cron_expression: (obj as ScheduledTriggerInputFormSchema).cron_expression });
+			this.scheduledFrom.patchValue({ cronExpression: (obj as ScheduledTriggerInputFormSchema).cronExpression });
 		}
 	}
+	
 	registerOnChange(fn: any): void {
 		this.onChange = fn;
 	}
+	
 	registerOnTouched(fn: any): void {
 		this.onTouch = fn;
 	}
+	
 	getControl(controlName: string) {
 		return this.scheduledFrom.get(controlName);
 	}
+	
 	validate() {
 		if (this.scheduledFrom.invalid) {
 			return { invalid: true };
 		}
 		return null;
 	}
+	
 	interpretCronExpression() {
-		return cronstrue.toString(this.getControl('cron_expression')!.value);
+		return cronstrue.toString(this.getControl('cronExpression')!.value);
 	}
+
 	setDisabledState?(isDisabled: boolean): void {
 		if (isDisabled) {
 			this.scheduledFrom.disable();

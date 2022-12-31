@@ -15,6 +15,7 @@ export const triggerUtils = {
         break;
 
       case FlowTriggerType.SCHEDULE:
+        console.log("Created Schedule for flow version Id " + flowVersion.id);
         await flowQueue.add({
           id: flowVersion.id,
           data: {
@@ -23,7 +24,6 @@ export const triggerUtils = {
           cronExpression: flowVersion.trigger.settings.cronExpression,
         });
         break;
-
       default:
         break;
     }
@@ -36,6 +36,7 @@ export const triggerUtils = {
         break;
 
       case FlowTriggerType.SCHEDULE:
+        console.log("Deleted Schedule for flow version Id " + flowVersion.id);
         await flowQueue.remove({
           id: flowVersion.id,
         });

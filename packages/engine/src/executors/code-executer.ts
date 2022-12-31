@@ -1,4 +1,4 @@
-import {globals} from '../globals';
+import { globals } from '../globals';
 
 export class CodeExecutor {
   public async executeCode(artifact: string, params: any) {

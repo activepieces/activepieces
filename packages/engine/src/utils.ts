@@ -1,4 +1,4 @@
-import {readFileSync, writeFileSync} from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 
 export class Utils {
   public static parseJsonFile(filePath: string) {

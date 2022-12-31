@@ -84,7 +84,7 @@ export const flowService = {
       version: flowVersion,
     };
   },
-  async update(flowId: FlowId, request: FlowOperationRequest): Promise<FlowVersion | null> {
+  async update(flowId: FlowId, request: FlowOperationRequest): Promise<Flow | null> {
     const flowLock = await redisLock(flowId);
     let lastVersion = (await flowVersionService.getFlowVersion(flowId, undefined))!;
     if (lastVersion.state === FlowVersionState.LOCKED) {
@@ -92,7 +92,7 @@ export const flowService = {
     }
     await flowVersionService.applyOperation(lastVersion, request);
     await flowLock();
-    return await flowVersionService.getFlowVersion(flowId, undefined);
+    return await this.getOne(flowId, undefined);
   },
   async delete(flowId: FlowId): Promise<void> {
     await flowRepo.delete({ id: flowId });

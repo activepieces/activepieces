@@ -7,10 +7,7 @@ import { BuilderSelectors } from '../../../../store/selector/flow-builder.select
 import { FlowsActions } from '../../../../store/action/flows.action';
 import { UUID } from 'angular2-uuid';
 import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
-import { StepCacheKey } from 'src/app/modules/flow-builder/service/artifact-cache-key';
-import { CodeAction } from 'src/app/modules/common/model/flow-builder/actions/code-action.interface';
-import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
-import { environment } from 'src/environments/environment';
+import { ActionType } from 'shared';
 
 @Component({
 	selector: 'app-edit-step-sidebar',
@@ -22,7 +19,6 @@ export class NewEditPieceSidebarComponent implements OnInit {
 	displayNameChanged$: BehaviorSubject<string> = new BehaviorSubject('Step');
 	selectedStepAndFlowId$: Observable<{ step: FlowItem | null | undefined; flowId: UUID | null }>;
 	selectedFlowItemDetails$: Observable<FlowItemDetails | undefined>;
-	stepCacheKeyAndArtifactUrl: { cacheKey: StepCacheKey; url: string } | null;
 
 	flowId$: Observable<null | UUID>;
 	ngOnInit(): void {
@@ -36,17 +32,9 @@ export class NewEditPieceSidebarComponent implements OnInit {
 			}),
 			tap(result => {
 				if (result.step) {
-					this.displayNameChanged$.next(result.step.display_name);
+					this.displayNameChanged$.next(result.step.displayName);
 					this.selectedFlowItemDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetails(result.step));
 					this.cd.detectChanges();
-					if (result.step.type === ActionType.CODE) {
-						this.stepCacheKeyAndArtifactUrl = {
-							cacheKey: new StepCacheKey(result.flowId!, result.step.name),
-							url: environment.apiUrl + `/files/${(result.step as CodeAction).settings.artifact_source_id}`,
-						};
-					} else {
-						this.stepCacheKeyAndArtifactUrl = null;
-					}
 				} else {
 					this.selectedFlowItemDetails$ = of(undefined);
 				}

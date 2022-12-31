@@ -10,8 +10,8 @@ import {
 } from '@angular/forms';
 
 import { Observable, tap } from 'rxjs';
+import { ActionType } from 'shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
-import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
 import { LoopStepInputFormSchema } from '../input-forms-schema';
 
 @Component({

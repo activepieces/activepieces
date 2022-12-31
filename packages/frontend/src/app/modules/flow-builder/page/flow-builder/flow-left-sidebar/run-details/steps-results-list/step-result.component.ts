@@ -5,11 +5,10 @@ import { MatExpansionPanel } from '@angular/material/expansion';
 import { Store } from '@ngrx/store';
 
 import { map, Observable, startWith, tap } from 'rxjs';
-import { ActionStatus } from 'src/app/modules/common/model/enum/action-status';
-import { LoopStepOutput, StepResult } from 'src/app/modules/common/model/instance-run.interface';
 import { RunDetailsService } from '../iteration-details.service';
 import { FlowsActions } from '../../../../../store/action/flows.action';
 import { fadeInAnimation } from 'src/app/modules/common/animation/fade-in.animations';
+import { StepOutput, StepOutputStatus } from 'shared';
 
 @Component({
 	selector: 'app-step-result',
@@ -18,7 +17,7 @@ import { fadeInAnimation } from 'src/app/modules/common/animation/fade-in.animat
 	animations: [fadeInAnimation(400, false)],
 })
 export class StepResultComponent implements OnInit, AfterViewInit {
-	@Input() stepNameAndResult: { stepName: string; result: StepResult };
+	@Input() stepNameAndResult: { stepName: string; result: StepOutput };
 	@Input() set selectedStepName(stepName: string | null) {
 		this._selectedStepName = stepName;
 		if (this._selectedStepName === this.stepNameAndResult.stepName) {
@@ -33,8 +32,8 @@ export class StepResultComponent implements OnInit, AfterViewInit {
 	nestingLevelPadding: string = '0px';
 	finishedBuilding = false;
 	iterationIndexControl = new UntypedFormControl(1);
-	iteration$: Observable<{ stepName: string; result: StepResult }[]>;
-	iterationsAccordionList: { stepName: string; result: StepResult }[][] = [];
+	iteration$: Observable<{ stepName: string; result: StepOutput }[]>;
+	iterationsAccordionList: { stepName: string; result: StepOutput }[][] = [];
 	hideIterationInput$: Observable<boolean>;
 	showIterationInput = false;
 	iterationInputMinWidth = '0px';
@@ -49,9 +48,9 @@ export class StepResultComponent implements OnInit, AfterViewInit {
 
 	ngOnInit(): void {
 		this.nestingLevelPadding = `${this.nestingLevel * 25}px`;
-		if (this.stepNameAndResult.result.output.iterations) {
+		if (this.stepNameAndResult.result.output?.iterations !== undefined) {
 			this.isLoopStep = true;
-			const loopOutput = this.stepNameAndResult.result as LoopStepOutput;
+			const loopOutput = this.stepNameAndResult.result;
 			loopOutput.output.iterations.forEach(iteration => {
 				this.iterationsAccordionList.push(this.createStepResultsForDetailsAccordion(iteration));
 			});
@@ -115,7 +114,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
 	}
 
 	get ActionStatus() {
-		return ActionStatus;
+		return StepOutputStatus;
 	}
 
 	selectStepOrToggleExpansionPanel($event: MouseEvent, expansionPanel: MatExpansionPanel) {
@@ -135,8 +134,8 @@ export class StepResultComponent implements OnInit, AfterViewInit {
 		$event.stopPropagation();
 	}
 
-	createStepResultsForDetailsAccordion(iteration: { [key: string]: StepResult }): {
-		result: StepResult;
+	createStepResultsForDetailsAccordion(iteration: { [key: string]: StepOutput }): {
+		result: StepOutput;
 		stepName: string;
 	}[] {
 		const iterationStepsNames = Object.keys(iteration);
@@ -152,7 +151,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
 		$event.stopPropagation();
 	}
 
-	clearStepsThatWereNotReached(parentLoopStepResultAndName: { stepName: string; result: StepResult }) {
+	clearStepsThatWereNotReached(parentLoopStepResultAndName: { stepName: string; result: StepOutput }) {
 		this.runDetailsService.iterationStepResultState$.next({
 			stepName: parentLoopStepResultAndName.stepName,
 			result: undefined,

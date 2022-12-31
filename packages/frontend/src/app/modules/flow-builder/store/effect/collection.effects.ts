@@ -12,9 +12,10 @@ import { SingleFlowModifyingState } from '../action/flows.action';
 import { BuilderActions } from '../action/builder.action';
 
 import { autoSaveDebounceTime } from 'src/app/modules/common/utils';
-import { VersionEditState } from 'src/app/modules/common/model/enum/version-edit-state.enum';
 import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
 import { PosthogService } from 'src/app/modules/common/service/posthog.service';
+import { CollectionVersionState, InstanceStatus } from 'shared';
+import { InstanceService } from 'src/app/modules/common/service/instance.service';
 
 @Injectable()
 export class CollectionEffects {
@@ -24,7 +25,7 @@ export class CollectionEffects {
 				ofType(...SingleFlowModifyingState),
 				concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
 				filter(([action, collection]) => {
-					return collection.version.state === VersionEditState.LOCKED;
+					return collection.version!.state === CollectionVersionState.LOCKED;
 				})
 			);
 		},
@@ -37,7 +38,7 @@ export class CollectionEffects {
 			concatLatestFrom(() => this.store.select(BuilderSelectors.selectCurrentCollection)),
 			debounceTime(autoSaveDebounceTime),
 			concatMap(([action, collection]) => {
-				return this.collectionService.update(collection.id, collection.version).pipe(
+				return this.collectionService.update(collection.id, collection.version!).pipe(
 					tap(() => {
 						const now = new Date();
 						const nowDate = now.toLocaleDateString('en-us', {
@@ -139,7 +140,10 @@ export class CollectionEffects {
 			ofType(CollectionActions.deploy),
 			concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
 			switchMap(([action, collection]) => {
-				return this.collectionService.deploy(collection.id).pipe(
+				return this.instanceService.deploy({
+					collectionId: collection.id,
+					status: InstanceStatus.ENABLED
+				}).pipe(
 					switchMap(instance => {
 						return of(CollectionActions.deploySuccess({ instance: instance }));
 					}),
@@ -155,6 +159,7 @@ export class CollectionEffects {
 	constructor(
 		private collectionBuilderService: CollectionBuilderService,
 		private collectionService: CollectionService,
+		private instanceService: InstanceService,
 		private store: Store,
 		private actions$: Actions,
 		private snackBar: MatSnackBar,

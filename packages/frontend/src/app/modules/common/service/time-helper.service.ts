@@ -6,11 +6,6 @@ import { Injectable } from '@angular/core';
 export class TimeHelperService {
 	constructor() {}
 
-	formatDateTimeMilli(epochMilli: number) {
-		const date = new Date(epochMilli);
-		return date.toLocaleString();
-	}
-
 	countDownTimeDaysOnly(epochTimestamp: number) {
 		const now = new Date();
 		const utcSecondsSinceEpoch = now.getTime() / 1000;
@@ -37,19 +32,9 @@ export class TimeHelperService {
 		return `${daysString} d - ${hoursString} hrs `;
 	}
 
-	formatDateTimeMills(epochMills: number) {
-		const date = new Date(epochMills);
+	formatDateString(dateString: string) {
+		const date = new Date(dateString);
 		return date.toLocaleString();
-	}
-
-	formatDateTime(epochSeconds: number) {
-		const date = new Date(epochSeconds * 1000);
-		return date.toLocaleString();
-	}
-
-	formatDate(epochSeconds: number) {
-		const date = new Date(epochSeconds * 1000);
-		return date.toLocaleDateString();
 	}
 
 	formatDateToString(date: Date) {

@@ -1,12 +1,13 @@
 import { EntitySchema } from "typeorm";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
-import { Collection, CollectionVersion, FlowRun, Instance, Project } from "shared";
+import { Collection, CollectionVersion, Flow, FlowRun, Instance, Project } from "shared";
 
 interface FlowRunSchema extends FlowRun {
   project: Project;
   collection: Collection;
   collectionVersion: CollectionVersion;
   instance: Instance;
+  flow: Flow;
 }
 
 export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
@@ -15,6 +16,7 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
     ...BaseColumnSchemaPart,
     instanceId: { ...ApIdSchema, nullable: true },
     projectId: ApIdSchema,
+    flowId: ApIdSchema,
     collectionId: ApIdSchema,
     flowVersionId: ApIdSchema,
     collectionVersionId: ApIdSchema,
@@ -41,12 +43,7 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
       name: "idx_run_project_id",
       columns: ["projectId"],
       unique: false,
-    },
-    {
-      name: "idx_run_instance_id",
-      columns: ["instanceId"],
-      unique: true,
-    },
+    }
   ],
   relations: {
     project: {
@@ -57,6 +54,16 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
       joinColumn: {
         name: "projectId",
         foreignKeyConstraintName: "fk_flow_run_project_id",
+      },
+    },
+    flow: {
+      type: "many-to-one",
+      target: "flow",
+      cascade: true,
+      onDelete: "CASCADE",
+      joinColumn: {
+        name: "flowId",
+        foreignKeyConstraintName: "fk_flow_run_flow_id",
       },
     },
     collection: {

@@ -1,9 +1,13 @@
+import { VariableService } from '../services/variable-service';
+import { CodeExecutor } from '../executors/code-executer';
 
-import {VariableService} from '../services/variable-service';
-import {CodeExecutor} from '../executors/code-executer';
-
-import {CodeAction, ExecutionState, StepOutput, StepOutputStatus} from "shared";
-import {BaseActionHandler} from "./action-handler";
+import {
+  CodeAction,
+  ExecutionState,
+  StepOutput,
+  StepOutputStatus
+} from 'shared';
+import { BaseActionHandler } from './action-handler';
 
 export class CodeActionHandler extends BaseActionHandler<CodeAction> {
   variableService: VariableService;
@@ -35,12 +39,10 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
       stepOutput.status = StepOutputStatus.SUCCEEDED;
       return stepOutput;
     } catch (e) {
-     // console.error(e);
+      // console.error(e);
       stepOutput.errorMessage = (e as Error).message;
       stepOutput.status = StepOutputStatus.FAILED;
       return stepOutput;
     }
   }
 }
-
-

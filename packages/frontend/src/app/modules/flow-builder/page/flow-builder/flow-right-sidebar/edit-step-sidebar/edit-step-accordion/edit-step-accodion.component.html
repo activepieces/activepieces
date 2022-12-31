@@ -95,8 +95,7 @@
       </app-storage-step-input-form>
       <app-loop-step-input-form *ngSwitchCase="ActionType.LOOP_ON_ITEMS" formControlName="input">
       </app-loop-step-input-form>
-      <app-code-step-input-form *ngSwitchCase="ActionType.CODE" formControlName="input" [stepCacheKey]="stepCacheKey!"
-        [stepArtifact$]="codeArtifact$!">
+      <app-code-step-input-form *ngSwitchCase="ActionType.CODE" formControlName="input">
       </app-code-step-input-form>
       <app-component-action-input-form *ngSwitchCase="ActionType.PIECE" formControlName="input">
       </app-component-action-input-form>

@@ -1,10 +1,8 @@
-import {FlowExecutor} from '../executors/flow-executor';
-import {VariableService} from '../services/variable-service';
-import {ExecutionState, LoopOnItemsAction} from "shared";
-import {BaseActionHandler} from "./action-handler";
-import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput} from 'shared';
-
-
+import { FlowExecutor } from '../executors/flow-executor';
+import { VariableService } from '../services/variable-service';
+import { ExecutionState, LoopOnItemsAction } from 'shared';
+import { BaseActionHandler } from './action-handler';
+import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from 'shared';
 
 export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction> {
   firstLoopAction?: BaseActionHandler<any>;
@@ -12,7 +10,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
   variableService: VariableService;
 
   constructor(
-      action: LoopOnItemsAction,
+    action: LoopOnItemsAction,
     firstLoopAction: BaseActionHandler<any> | undefined,
     nextAction: BaseActionHandler<any> | undefined
   ) {
@@ -51,7 +49,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     stepOutput.output = {
       current_iteration: 1,
       current_item: undefined,
-      iterations: [],
+      iterations: []
     };
     executionState.insertStep(stepOutput, this.action.name, ancestors);
     const loopOutput = stepOutput.output;
@@ -72,7 +70,8 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
         const executor = new FlowExecutor(executionState);
         const loopStatus = await executor.iterateFlow(
           this.firstLoopAction,
-          ancestors);
+          ancestors
+        );
 
         ancestors.pop();
 
@@ -104,7 +103,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     executionState.updateLastStep(
       {
         ...loopOutput,
-        iterations: undefined,
+        iterations: undefined
       },
       this.action.name
     );

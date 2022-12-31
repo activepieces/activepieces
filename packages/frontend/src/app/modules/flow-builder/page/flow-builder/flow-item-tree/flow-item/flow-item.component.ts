@@ -1,11 +1,8 @@
-import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
-import { FlowRendererService } from '../../../../service/flow-renderer.service';
-import { CdkDragEnd, CdkDragMove, CdkDragStart } from '@angular/cdk/drag-drop';
+import { Component, Input, OnInit } from '@angular/core';
 import { Point } from '../../../../../common/model/helper/point';
 import { FlowItem } from '../../../../../common/model/flow-builder/flow-item';
 import { map, Observable, of } from 'rxjs';
 import { BuilderSelectors } from '../../../../store/selector/flow-builder.selector';
-import { FlowsActions } from '../../../../store/action/flows.action';
 import { Store } from '@ngrx/store';
 import { FlowStructureUtil } from '../../../../service/flowStructureUtil';
 import {
@@ -42,9 +39,7 @@ export class FlowItemComponent implements OnInit {
 	viewMode$: Observable<boolean> = of(false);
 	dragDelta: Point | undefined;
 
-	@ViewChild('flowItem') private flowItemElement: ElementRef;
-
-	constructor(private flowRendererService: FlowRendererService, private store: Store) {}
+	constructor(private store: Store) {}
 
 	ngOnInit(): void {
 		this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
@@ -68,59 +63,7 @@ export class FlowItemComponent implements OnInit {
 		};
 	}
 
-	startDrag(event: CdkDragStart) {
-		this.dragging = true;
-		this.flowRendererService.setDragPiece(this._flowItemData);
-		this.flowRendererService.draggingSubject.next(true);
-	}
 
-	drop(event: CdkDragEnd) {
-		const rect = event.source.element.nativeElement.getBoundingClientRect();
-		const centerOfDraggedObject = {
-			x: rect.x + rect.width / 2,
-			y: rect.y + rect.height / 2,
-		};
-		this.flowRendererService.setDropPoint(
-			{
-				x: centerOfDraggedObject.x,
-				y: centerOfDraggedObject.y,
-			},
-			this._flowItemData
-		);
-
-		this.flowRendererService.draggingSubject.next(false);
-		const droppedInformation = this.flowRendererService.getDraggedInformation();
-		if (droppedInformation.draggedPiece && droppedInformation.candidateAddButton) {
-			this.store.dispatch(
-				FlowsActions.dropPiece({
-					draggedPieceName: droppedInformation.draggedPiece.name,
-					newParentName: droppedInformation.candidateAddButton.stepName,
-				})
-			);
-		}
-		this.dragDelta = undefined;
-		event.source.reset();
-	}
-
-	move(event: CdkDragMove) {
-		if (!this.dragDelta) {
-			const pnt = this.getPosition();
-			this.dragDelta = new Point(
-				event.pointerPosition.x - (pnt.x + this._flowItemData.width! / 2.0),
-				event.pointerPosition.y - pnt.y
-			);
-		}
-	}
-
-	getPosition(): Point {
-		const x =
-			this.flowItemElement.nativeElement.getBoundingClientRect().left +
-			(window.scrollX || document.documentElement.scrollLeft);
-		const y =
-			this.flowItemElement.nativeElement.getBoundingClientRect().top +
-			(window.scrollY || document.documentElement.scrollTop);
-		return { x, y };
-	}
 
 	nextActionItem() {
 		return {

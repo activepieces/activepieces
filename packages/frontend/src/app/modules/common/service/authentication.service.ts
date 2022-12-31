@@ -1,10 +1,10 @@
 import {Injectable} from '@angular/core';
 import {BehaviorSubject, map, Observable} from 'rxjs';
 import {environment} from '../../../../environments/environment';
-import {User} from '../model/user.interface';
 import {HttpClient, HttpResponse} from '@angular/common/http';
 import {Router} from '@angular/router';
 import {JwtHelperService} from '@auth0/angular-jwt';
+import { User } from 'shared';
 
 @Injectable({
   providedIn: 'root',

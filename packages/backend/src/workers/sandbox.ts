@@ -1,17 +1,17 @@
-const { execSync } = require("child_process");
+const { exec } = require("child_process");
 const fs = require("fs");
 
 export class Sandbox {
   constructor(public readonly boxId: number) {}
 
-  cleanAndInit(): void {
-    Sandbox.runIsolate("--box-id=" + this.boxId + " --cleanup");
-    Sandbox.runIsolate("--box-id=" + this.boxId + " --init");
+  async cleanAndInit(): Promise<void> {
+    await Sandbox.runIsolate("--box-id=" + this.boxId + " --cleanup");
+    await Sandbox.runIsolate("--box-id=" + this.boxId + " --init");
   }
 
-  runCommandLine(commandLine: string): string {
+  async runCommandLine(commandLine: string): Promise<string> {
     const metaFile = this.getSandboxFilePath("meta.txt");
-    return Sandbox.runIsolate(
+    return await Sandbox.runIsolate(
       "--dir=/usr/bin/ --dir=/etc/ --share-net --full-env --box-id=" +
         this.boxId +
         " --processes --wall-time=600 --meta=" +
@@ -58,8 +58,21 @@ export class Sandbox {
     return "/var/local/lib/isolate/" + this.boxId + "/box";
   }
 
-  private static runIsolate(cmd: string): string {
-    return execSync("sudo ./resources/isolate " + cmd).toString("utf-8");
+  private static runIsolate(cmd: string): Promise<string> {
+    const fullCmd = "./resources/isolate " + cmd;
+    return new Promise((resolve, reject) => {
+      exec(fullCmd, (error: any, stdout: string | PromiseLike<string>, stderr: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        if (stderr) {
+          resolve(stderr);
+          return;
+        }
+        resolve(stdout);
+      });
+    });
   }
 }
 

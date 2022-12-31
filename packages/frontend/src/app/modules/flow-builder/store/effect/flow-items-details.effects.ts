@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { forkJoin, map, of, switchMap } from 'rxjs';
-import { ConnectorComponent } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
-import { ActionType } from 'src/app/modules/common/model/enum/action-type.enum';
-import { TriggerType } from 'src/app/modules/common/model/enum/trigger-type.enum';
+import { ActionType, TriggerType } from 'shared';
+import { AppPiece } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
 import { FlowItemDetails } from '../../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionMetaService } from '../../service/action-meta.service';
 import { FlowItemDetailsActions } from '../action/flow-items-details.action';
@@ -39,7 +38,7 @@ export class FlowItemsDetailsEffects {
 		);
 	});
 	createFlowItemDetailsForComponents(forTriggers: boolean) {
-		return (components: ConnectorComponent[]) => {
+		return (components: AppPiece[]) => {
 			return components
 				.map(c => {
 					if (Object.keys(c.actions).length > 0 && !forTriggers) {

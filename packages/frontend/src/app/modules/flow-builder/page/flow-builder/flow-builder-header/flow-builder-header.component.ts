@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Collection } from '../../../../common/model/collection.interface';
 import { CollectionBuilderService } from '../../../service/collection-builder.service';
 import { RightSideBarType } from '../../../../common/model/enum/right-side-bar-type.enum';
 import { ThemeService } from 'src/app/modules/common/service/theme.service';
@@ -14,6 +13,7 @@ import {
 	ChevronDropdownOption,
 	ChevronDropdownOptionType,
 } from '../../../components/chevron-dropdown-menu/chevron-dropdown-option';
+import { Collection } from 'shared';
 
 @Component({
 	selector: 'app-flow-builder-header',

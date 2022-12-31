@@ -1,18 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, TemplateRef } from '@angular/core';
 import { FlowService } from '../../../common/service/flow.service';
-import { InstanceRunStatus } from '../../../common/model/enum/instance-run-status';
 import { catchError, combineLatest, interval, map, Observable, of, switchMap, takeUntil, takeWhile, tap } from 'rxjs';
 import { fadeInUp400ms } from '../../../common/animation/fade-in-up.animation';
-import { Flow } from '../../../common/model/flow.class';
-import { TriggerType } from '../../../common/model/enum/trigger-type.enum';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/selector/flow-builder.selector';
 import { TestRunBarComponent } from '../../page/flow-builder/test-run-bar/test-run-bar.component';
 import { FlowsActions } from '../../store/action/flows.action';
-import { Collection } from 'src/app/modules/common/model/collection.interface';
-import { initializedRun, InstanceRun } from 'src/app/modules/common/model/instance-run.interface';
-import { InstanceRunService } from '../../../common/service/instance-run.service';
-import { UUID } from 'angular2-uuid';
+import { InstanceRunService } from '../../../common/service/flow-run.service';
 import { HttpStatusCode } from '@angular/common/http';
 import { UntypedFormControl } from '@angular/forms';
 import { jsonValidator } from 'src/app/modules/common/validators/json-validator';
@@ -22,6 +16,9 @@ import { AuthenticationService } from 'src/app/modules/common/service/authentica
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { CodeService } from '../../service/code.service';
+import { Collection, ExecutionOutputStatus, Flow, FlowRun, TriggerType } from 'shared';
+import { initializedRun } from 'src/app/modules/common/model/flow-run.interface';
+
 @Component({
 	selector: 'app-test-flow-modal',
 	templateUrl: './test-flow-modal.component.html',
@@ -32,11 +29,11 @@ import { CodeService } from '../../service/code.service';
 export class TestFlowModalComponent implements OnInit {
 	submitted = false;
 	dialogRef: MatDialogRef<TemplateRef<any>>;
-	instanceRunStatus$: Observable<undefined | InstanceRunStatus>;
+	instanceRunStatus$: Observable<undefined | ExecutionOutputStatus>;
 	isSaving$: Observable<boolean> = of(false);
 	selectedFlow$: Observable<Flow | undefined>;
-	instanceRunStatusChecker$: Observable<InstanceRun>;
-	executeTest$: Observable<InstanceRun | null>;
+	instanceRunStatusChecker$: Observable<FlowRun>;
+	executeTest$: Observable<FlowRun | null>;
 	selectedCollection$: Observable<Collection>;
 	shouldDisableTestButton$: Observable<boolean>;
 	testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
@@ -98,7 +95,7 @@ export class TestFlowModalComponent implements OnInit {
 
 	testFlowButtonClicked(flow: Flow, collection: Collection, testFlowTemplate: TemplateRef<any>) {
 		this.submitted = true;
-		if (flow.version.trigger?.type === TriggerType.WEBHOOK) {
+		if (flow.version!.trigger?.type === TriggerType.WEBHOOK) {
 			this.dialogRef = this.dialogService.open(testFlowTemplate);
 		} else {
 			this.executeTest(collection, flow, {});
@@ -112,54 +109,64 @@ export class TestFlowModalComponent implements OnInit {
 		}
 	}
 	executeTest(collection: Collection, flow: Flow, payload: Object) {
-		this.executeTest$ = this.flowService.execute(collection.version.id, flow.version.id, payload).pipe(
-			tap({
-				next: (instanceRun: InstanceRun) => {
-					this.testRunSnackbar = this.snackbar.openFromComponent(TestRunBarComponent, {
-						duration: undefined,
-						data: {
-							flowId: flow.id,
-						},
-					});
-					this.store.dispatch(
-						FlowsActions.setRun({
-							flowId: flow.id,
-							run: instanceRun !== null ? instanceRun : initializedRun,
-						})
-					);
-					this.setStatusChecker(flow.id, instanceRun.id);
-				},
-				error: err => {
-					console.error(err);
-				},
-			}),
-			catchError(err => {
-				console.error(err);
-				if (err?.status == HttpStatusCode.PaymentRequired) {
-					this.snackbar.open('You reached the maximum runs number allowed. Contact support to discuss your plan.', '', {
-						duration: 3000,
-						panelClass: 'error',
-					});
-				} else {
-					this.snackbar.open('Instance run failed, please check your console.', '', {
-						panelClass: 'error',
-					});
-				}
-				this.store.dispatch(FlowsActions.exitRun({ flowId: flow.id }));
-				return of(null);
+		this.executeTest$ = this.flowService
+			.execute({
+				collectionVersionId: collection.version!.id,
+				flowVersionId: flow.version!.id,
+				payload,
 			})
-		);
+			.pipe(
+				tap({
+					next: (instanceRun: FlowRun) => {
+						this.testRunSnackbar = this.snackbar.openFromComponent(TestRunBarComponent, {
+							duration: undefined,
+							data: {
+								flowId: flow.id,
+							},
+						});
+						this.store.dispatch(
+							FlowsActions.setRun({
+								flowId: flow.id,
+								run: instanceRun ?? initializedRun,
+							})
+						);
+						this.setStatusChecker(flow.id, instanceRun.id);
+					},
+					error: err => {
+						console.error(err);
+					},
+				}),
+				catchError(err => {
+					console.error(err);
+					if (err?.status == HttpStatusCode.PaymentRequired) {
+						this.snackbar.open(
+							'You reached the maximum runs number allowed. Contact support to discuss your plan.',
+							'',
+							{
+								duration: 3000,
+								panelClass: 'error',
+							}
+						);
+					} else {
+						this.snackbar.open('Instance run failed, please check your console.', '', {
+							panelClass: 'error',
+						});
+					}
+					this.store.dispatch(FlowsActions.exitRun({ flowId: flow.id }));
+					return of(null);
+				})
+			);
 	}
-	setStatusChecker(flowId: UUID, runId: UUID) {
+	setStatusChecker(flowId: string, runId: string) {
 		this.instanceRunStatusChecker$ = interval(1500).pipe(
 			takeUntil(this.testRunSnackbar.instance.exitButtonClicked),
 			switchMap(() => this.instanceRunService.get(runId)),
 			switchMap(instanceRun => {
-				if (instanceRun.status !== InstanceRunStatus.RUNNING && instanceRun.logs_file_id) {
+				if (instanceRun.status !== ExecutionOutputStatus.RUNNING && instanceRun.logsFileId) {
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('flow.tested', instanceRun);
 					}
-					return this.flowService.logs(instanceRun.logs_file_id).pipe(
+					return this.flowService.logs(instanceRun.logsFileId).pipe(
 						map(state => {
 							return { ...instanceRun, state: state };
 						})
@@ -168,7 +175,7 @@ export class TestFlowModalComponent implements OnInit {
 				return of(instanceRun);
 			}),
 			tap(instanceRun => {
-				if (instanceRun.status !== InstanceRunStatus.RUNNING && instanceRun.logs_file_id) {
+				if (instanceRun.status !== ExecutionOutputStatus.RUNNING && instanceRun.logsFileId) {
 					this.store.dispatch(
 						FlowsActions.setRun({
 							flowId: flowId,
@@ -178,7 +185,7 @@ export class TestFlowModalComponent implements OnInit {
 				}
 			}),
 			takeWhile(instanceRun => {
-				return instanceRun.status === InstanceRunStatus.RUNNING;
+				return instanceRun.status === ExecutionOutputStatus.RUNNING;
 			})
 		);
 	}
@@ -188,8 +195,9 @@ export class TestFlowModalComponent implements OnInit {
 	}
 
 	public get statusEnum() {
-		return InstanceRunStatus;
+		return ExecutionOutputStatus;
 	}
+
 	beautify() {
 		try {
 			const payload = this.payloadControl;

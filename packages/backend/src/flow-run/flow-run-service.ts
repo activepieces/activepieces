@@ -10,21 +10,23 @@ import {
   ProjectId,
   SeekPage,
 } from "shared";
+import { databaseConnection } from "../database/database-connection";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { Order } from "../helper/pagination/paginator";
 import { FlowRunEntity } from "./flow-run-entity";
-import { flowRunRepo as repo } from "./flow-run-repo";
+
+
+export const repo = databaseConnection.getRepository(FlowRunEntity);
 
 export const flowRunService = {
   async list({ projectId, cursor, limit }: ListParams): Promise<SeekPage<FlowRun>> {
     const decodedCursor = paginationHelper.decodeCursor(cursor);
-
     const paginator = buildPaginator({
       entity: FlowRunEntity,
       paginationKeys: ["created"],
       query: {
-        limit,
+        limit: limit,
         order: Order.DESC,
         afterCursor: decodedCursor.nextCursor,
         beforeCursor: decodedCursor.previousCursor,
@@ -32,11 +34,9 @@ export const flowRunService = {
     });
 
     const query = repo.createQueryBuilder("flow_run").where({
-      projectId,
-    });
-
+      projectId
+    }).andWhere('flow_run.instanceId is not null');
     const { data, cursor: newCursor } = await paginator.paginate(query);
-
     return paginationHelper.createPage<FlowRun>(data, newCursor);
   },
   async finish(flowRunId: FlowRunId, status: ExecutionOutputStatus, logsFileId: FileId): Promise<FlowRun | null> {
@@ -59,6 +59,7 @@ export const flowRunService = {
       instanceId,
       projectId,
       collectionId: collectionVerson.collectionId,
+      flowId: flowVersion.flowId,
       flowVersionId: flowVersion.id,
       collectionVersionId: collectionVerson.id,
       flowDisplayName: flowVersion.displayName,

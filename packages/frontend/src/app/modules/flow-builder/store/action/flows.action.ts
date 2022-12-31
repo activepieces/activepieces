@@ -1,30 +1,27 @@
 import { createAction, props } from '@ngrx/store';
 import { UUID } from 'angular2-uuid';
-import { Trigger } from '../../../common/model/flow-builder/trigger/trigger.interface';
-import { InstanceRun } from '../../../common/model/instance-run.interface';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
-import { Flow } from '../../../common/model/flow.class';
-import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
+import { AddActionRequest, Flow, DeleteActionRequest, UpdateActionRequest, UpdateTriggerRequest, FlowRun, FlowId, FlowOperationRequest } from 'shared';
 
 export enum FlowsActionType {
+	// Flow Version Modifying Action
+	UPDATE_TRIGGER = '[FLOWS] UPDATE_TRIGGER',
+	CHANGE_NAME = '[FLOWS] CHANGE_NAME',
+	ADD_ACTION = '[FLOWS] ADD_ACTION',
+	DELETE_ACTION = '[FLOWS] DELETE_ACTION',
+	UPDATE_ACTION = '[FLOWS] UPDATE_ACTION',
+
 	SET_INITIAL = '[FLOWS] SET_INITIAL',
 	DELETE_FLOW = '[FLOWS] DELETE_FLOW',
 	ADD_FLOW = '[FLOWS] ADD_FLOW',
-	CHANGE_NAME = '[FLOWS] CHANGE_NAME',
 	SAVED_FAILED = '[FLOWS] SAVED_FAILED',
 	SAVED_SUCCESS = '[FLOWS] SAVED_SUCCESS',
 	SELECT_FLOW = '[FLOWS] SELECT_FLOW',
-	DELETE_STEP = '[FLOWS] DELETE_STEP',
-	UPDATE_STEP = '[FLOWS] UPDATE_STEP',
-	SAVE_FLOW_STARTED = '[FLOWS] SAVE_FLOW_STARTED',
+	APPLY_UPDATE_OPERATION = '[FLOWS] APPLY_UPDATE_OPERATION',
 	DELETE_FLOW_STARTED = '[FLOWS] DELETE_FLOW_STARTED',
-	ADD_STEP = '[FLOWS] ADD_STEP',
-	REPLACE_TRIGGER = '[FLOWS] REPLACE_TRIGGER',
-	DROP_PIECE = '[FLOWS] DROP_PIECE',
 	SET_LEFT_SIDEBAR = '[FLOWS] SET_LEFT_SIDEBAR',
 	SET_RIGHT_SIDEBAR = '[FLOWS] SET_RIGHT_BAR',
-	SELECT_STEP = '[FLOWS] SELECT_STEP',
 	DESELECT_STEP = '[FLOWS] DESELECT_STEP',
 	SET_RUN = '[FLOWS] SET_RUN',
 	EXIT_RUN = '[FLOWS] EXIT_RUN',
@@ -32,68 +29,52 @@ export enum FlowsActionType {
 	DELETE_SUCCESS = '[FLOWS] DELETE_SUCCESS',
 }
 
-export const SingleFlowModifyingState = [
-	FlowsActionType.DROP_PIECE,
-	FlowsActionType.CHANGE_NAME,
-	FlowsActionType.DELETE_STEP,
-	FlowsActionType.ADD_STEP,
-	FlowsActionType.REPLACE_TRIGGER,
-	FlowsActionType.UPDATE_STEP,
-];
+export const updateTrigger = createAction(FlowsActionType.UPDATE_TRIGGER, props<{ operation: UpdateTriggerRequest }>());
+
+export const addAction = createAction(
+	FlowsActionType.ADD_ACTION,
+	props<{operation: AddActionRequest}>()
+);
+
+
+export const updateAction = createAction(
+	FlowsActionType.UPDATE_ACTION,
+	props<{operation: UpdateActionRequest}>()
+);
+
+export const deleteAction = createAction(FlowsActionType.DELETE_ACTION, props<{operation: DeleteActionRequest}>());
+
 
 export const savedSuccess = createAction(FlowsActionType.SAVED_SUCCESS, props<{ saveRequestId: UUID; flow: Flow }>());
 
 export const savedFailed = createAction(FlowsActionType.SAVED_FAILED, props<{ error: any }>());
 
-export const replaceTrigger = createAction(FlowsActionType.REPLACE_TRIGGER, props<{ newTrigger: Trigger }>());
-
-export const dropPiece = createAction(
-	FlowsActionType.DROP_PIECE,
-	props<{ draggedPieceName: string; newParentName: string }>()
-);
-
-export const addStep = createAction(
-	FlowsActionType.ADD_STEP,
-	props<{
-		newAction: FlowItem;
-	}>()
-);
-
-export const updateStep = createAction(
-	FlowsActionType.UPDATE_STEP,
-	props<{ stepName: string; newStep: FlowItem | Trigger }>()
-);
-
-export const deleteStep = createAction(FlowsActionType.DELETE_STEP, props<{ stepName: string }>());
-
-export const deleteFlow = createAction(FlowsActionType.DELETE_FLOW, props<{ flowId: UUID }>());
+export const deleteFlow = createAction(FlowsActionType.DELETE_FLOW, props<{ flowId: FlowId }>());
 
 export const addFlow = createAction(FlowsActionType.ADD_FLOW, props<{ flow: Flow }>());
 
-export const changeName = createAction(FlowsActionType.CHANGE_NAME, props<{ flowId: UUID; displayName: string }>());
+export const changeName = createAction(FlowsActionType.CHANGE_NAME, props<{ flowId: FlowId; displayName: string }>());
 
 export const setInitial = createAction(
 	FlowsActionType.SET_INITIAL,
-	props<{ flows: Flow[]; run: InstanceRun | undefined }>()
+	props<{ flows: Flow[]; run: FlowRun | undefined }>()
 );
 
-export const saveFlowStarted = createAction(
-	FlowsActionType.SAVE_FLOW_STARTED,
-	props<{ flow: Flow; saveRequestId: UUID }>()
+export const applyUpdateOperation = createAction(
+	FlowsActionType.APPLY_UPDATE_OPERATION,
+	props<{ flow: Flow; operation: FlowOperationRequest, saveRequestId: UUID }>()
 );
 
 export const deleteFlowStarted = createAction(
 	FlowsActionType.DELETE_FLOW_STARTED,
-	props<{ flowId: UUID; saveRequestId: UUID }>()
+	props<{ flowId: FlowId; saveRequestId: UUID }>()
 );
 
-export const selectFlow = createAction(FlowsActionType.SELECT_FLOW, props<{ flowId: UUID }>());
+export const selectFlow = createAction(FlowsActionType.SELECT_FLOW, props<{ flowId: FlowId }>());
 
-export const exitRun = createAction(FlowsActionType.EXIT_RUN, props<{ flowId: UUID }>());
+export const exitRun = createAction(FlowsActionType.EXIT_RUN, props<{ flowId: FlowId }>());
 
-export const setRun = createAction(FlowsActionType.SET_RUN, props<{ flowId: UUID; run: InstanceRun }>());
-
-export const selectStep = createAction(FlowsActionType.SELECT_STEP, props<{ step: FlowItem }>());
+export const setRun = createAction(FlowsActionType.SET_RUN, props<{ flowId: FlowId; run: FlowRun }>());
 
 export const deselectStep = createAction(FlowsActionType.DESELECT_STEP);
 
@@ -111,20 +92,18 @@ export const setRightSidebar = createAction(
 export const FlowsActions = {
 	setInitial,
 	savedSuccess,
-	addStep,
-	dropPiece,
+	addAction,
 	savedFailed,
 	deleteFlow,
 	addFlow,
-	deleteStep,
-	replaceTrigger,
+	deleteAction,
+	updateTrigger,
 	selectFlow,
-	updateStep,
+	updateAction,
 	changeName,
-	saveFlowStarted,
+	applyUpdateOperation,
 	deleteFlowStarted,
 	setLeftSidebar,
-	selectStep,
 	setRightSidebar,
 	setRun,
 	deselectStep,
@@ -132,3 +111,12 @@ export const FlowsActions = {
 	selectStepByName,
 	deleteSuccess,
 };
+
+export const SingleFlowModifyingState = [
+	changeName,
+	updateAction,
+	addAction,
+	updateTrigger,
+	deleteAction
+];
+

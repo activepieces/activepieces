@@ -1,8 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { ThemeService } from '../../../../../../common/service/theme.service';
-import { TriggerType } from '../../../../../../common/model/enum/trigger-type.enum';
-import { ActionStatus } from '../../../../../../common/model/enum/action-status';
-import { InstanceRunStatus } from '../../../../../../common/model/enum/instance-run-status';
 import { filter, map, Observable, of, Subject, switchMap, takeUntil, tap } from 'rxjs';
 import { FlowItem } from '../../../../../../common/model/flow-builder/flow-item';
 import { RightSideBarType } from '../../../../../../common/model/enum/right-side-bar-type.enum';
@@ -12,9 +9,9 @@ import { FlowsActions } from '../../../../../store/action/flows.action';
 import { FlowItemDetails } from '../../../flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { fadeIn400ms } from 'src/app/modules/common/animation/fade-in.animations';
 import { RunDetailsService } from '../../../flow-left-sidebar/run-details/iteration-details.service';
-import { InstanceRun, StepResult } from 'src/app/modules/common/model/instance-run.interface';
 import { DeleteStepDialogComponent } from './delete-step-dialog/delete-step-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import { ExecutionOutputStatus, FlowRun, StepOutput, StepOutputStatus, TriggerType } from 'shared';
 
 @Component({
 	selector: 'app-flow-item-content',
@@ -25,13 +22,13 @@ import { MatDialog } from '@angular/material/dialog';
 })
 export class FlowItemContentComponent implements OnInit {
 	//in case it is not reached, we return undefined
-	stepStatus$: Observable<ActionStatus | undefined>;
-	stepInsideLoopStatus$: Observable<ActionStatus | undefined>;
+	stepStatus$: Observable<StepOutputStatus | undefined>;
+	stepInsideLoopStatus$: Observable<StepOutputStatus | undefined>;
 	hover = false;
 	flowItemChanged$: Subject<boolean> = new Subject();
 	stepIconUrl: string;
 	_flowItem: FlowItem;
-	selectedRun$: Observable<InstanceRun | undefined>;
+	selectedRun$: Observable<FlowRun | undefined>;
 	@Input() selected: boolean;
 	@Input() trigger = false;
 	@Input() viewMode: boolean;
@@ -42,7 +39,7 @@ export class FlowItemContentComponent implements OnInit {
 		this.cd.detectChanges();
 	}
 
-	stepResult: StepResult | undefined;
+	stepResult: StepOutput | undefined;
 	flowItemDetails$: Observable<FlowItemDetails | null | undefined>;
 	constructor(
 		public themeService: ThemeService,
@@ -92,19 +89,19 @@ export class FlowItemContentComponent implements OnInit {
 		);
 	}
 
-	getStepStatusIfItsNotInsideLoop(): Observable<ActionStatus | undefined> {
+	getStepStatusIfItsNotInsideLoop(): Observable<StepOutputStatus | undefined> {
 		return this.selectedRun$.pipe(
 			map(selectedRun => {
 				if (selectedRun) {
-					if (selectedRun.status !== InstanceRunStatus.RUNNING && selectedRun.state) {
+					if (selectedRun.status !== ExecutionOutputStatus.RUNNING && selectedRun.executionOutput?.executionState) {
 						const stepName = this._flowItem.name;
-						const result = selectedRun.state.steps[stepName.toString()];
+						const result = selectedRun.executionOutput?.executionState.steps[stepName.toString()];
 						if (result) {
 							this.stepResult = result;
 						}
 						return result === undefined ? undefined : result.status;
 					} else {
-						return ActionStatus.RUNNING;
+						return StepOutputStatus.RUNNING;
 					}
 				}
 				return undefined;
@@ -121,7 +118,7 @@ export class FlowItemContentComponent implements OnInit {
 	}
 
 	get actionStatusEnum() {
-		return ActionStatus;
+		return StepOutputStatus;
 	}
 
 	get triggerType() {
@@ -138,8 +135,8 @@ export class FlowItemContentComponent implements OnInit {
 	}
 	selectStep() {
 		this.store.dispatch(
-			FlowsActions.selectStep({
-				step: this._flowItem,
+			FlowsActions.selectStepByName({
+				stepName: this._flowItem.name,
 			})
 		);
 		this.runDetailsService.currentStepResult$.next({ stepName: this._flowItem.name, result: this.stepResult });

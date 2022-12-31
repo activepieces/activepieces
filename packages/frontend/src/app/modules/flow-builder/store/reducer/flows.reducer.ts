@@ -1,14 +1,12 @@
-// // import the interface
-
 import { Action, createReducer, on } from '@ngrx/store';
-import { Flow } from '../../../common/model/flow.class';
 import { FlowsActions } from '../action/flows.action';
 import { UUID } from 'angular2-uuid';
-import { FlowVersion } from '../../../common/model/flow-version.class';
 import { TabState } from '../model/tab-state';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { FlowStructureUtil } from '../../service/flowStructureUtil';
+import { Flow, flowHelper, FlowOperationType } from 'shared';
+import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
 
 type FlowsState = {
 	flows: Flow[];
@@ -59,7 +57,7 @@ const _flowsReducer = createReducer(
 	on(FlowsActions.selectFlow, (state, { flowId }): FlowsState => {
 		return { ...state, selectedFlowId: flowId };
 	}),
-	on(FlowsActions.replaceTrigger, (state, { newTrigger }): FlowsState => {
+	on(FlowsActions.updateTrigger, (state, {operation}): FlowsState => {
 		if (state.selectedFlowId === null) {
 			throw new Error('Selected flow id is null');
 		}
@@ -68,46 +66,30 @@ const _flowsReducer = createReducer(
 		const clonedFlows = clonedState.flows;
 		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
 		if (flowIndex != -1) {
-			clonedFlows[flowIndex].version = FlowVersion.clone(clonedFlows[flowIndex].version).replaceTrigger(
-				newTrigger
-			);
+			clonedFlows[flowIndex].version = flowHelper.apply(clonedFlows[flowIndex].version!, {
+				type: FlowOperationType.UPDATE_TRIGGER,
+				request: operation
+			});
 		}
-		clonedState.tabsState[state.selectedFlowId!.toString()].focusedStep = newTrigger;
+		clonedState.tabsState[state.selectedFlowId!.toString()].focusedStep = clonedFlows[flowIndex].version?.trigger as FlowItem;
 		return {
 			...state,
 			flows: clonedFlows,
 			selectedFlowId: state.selectedFlowId,
 		};
 	}),
-	on(FlowsActions.dropPiece, (state, { draggedPieceName, newParentName }): FlowsState => {
-		const clonedFlows: Flow[] = JSON.parse(JSON.stringify(state)).flows;
-		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
-		if (flowIndex != -1) {
-			clonedFlows[flowIndex].version = FlowVersion.clone(clonedFlows[flowIndex].version);
-			clonedFlows[flowIndex].version.dropPiece(draggedPieceName, newParentName);
-		}
-		clonedFlows[flowIndex].version.valid = false;
-		return {
-			...state,
-			flows: clonedFlows,
-			selectedFlowId: state.selectedFlowId,
-		};
-	}),
-	on(FlowsActions.addStep, (state, { newAction }): FlowsState => {
+	on(FlowsActions.addAction, (state, { operation }): FlowsState => {
 		if (state.selectedFlowId === null) {
 			throw new Error('Selected flow id is null');
 		}
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
 		const clonedFlows = clonedState.flows;
 		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
-		const tabeState = state.tabsState[state.selectedFlowId!.toString()];
-
 		if (flowIndex != -1) {
-			clonedFlows[flowIndex].version = FlowVersion.clone(clonedFlows[flowIndex].version).addNewChild(
-				tabeState.rightSidebar.props.stepName,
-				newAction,
-				tabeState.rightSidebar.props.buttonType
-			);
+			clonedFlows[flowIndex].version = flowHelper.apply(clonedFlows[flowIndex].version!, {
+				type: FlowOperationType.ADD_ACTION,
+				request: operation
+			});
 		}
 		return {
 			...state,
@@ -115,23 +97,23 @@ const _flowsReducer = createReducer(
 			selectedFlowId: state.selectedFlowId,
 		};
 	}),
-	on(FlowsActions.updateStep, (state, { stepName, newStep }): FlowsState => {
+	on(FlowsActions.updateAction, (state, { operation }): FlowsState => {
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
 		const clonedFlows = clonedState.flows;
 		const clonedTabsState = {
 			...clonedState.tabsState,
 		};
-		clonedTabsState[state.selectedFlowId!.toString()] = {
-			...clonedState.tabsState[state.selectedFlowId!.toString()],
-			focusedStep: { ...newStep },
-		};
 		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
 		if (flowIndex != -1) {
-			clonedFlows[flowIndex].version = FlowVersion.clone(clonedFlows[flowIndex].version).updateStep(
-				stepName,
-				newStep
-			);
+			clonedFlows[flowIndex].version = flowHelper.apply(clonedFlows[flowIndex].version!, {
+				type: FlowOperationType.UPDATE_ACTION,
+				request: operation
+			})
 		}
+		clonedTabsState[state.selectedFlowId!.toString()] = {
+			...clonedState.tabsState[state.selectedFlowId!.toString()],
+			focusedStep: flowHelper.getStep(clonedFlows[flowIndex].version!, operation.name)!,
+		};
 		return {
 			...state,
 			tabsState: clonedTabsState,
@@ -139,12 +121,15 @@ const _flowsReducer = createReducer(
 			selectedFlowId: state.selectedFlowId,
 		};
 	}),
-	on(FlowsActions.deleteStep, (state, { stepName }): FlowsState => {
+	on(FlowsActions.deleteAction, (state, { operation }): FlowsState => {
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
 		const clonedFlows = clonedState.flows;
 		const flowIndex = clonedFlows.findIndex(f => f.id === state.selectedFlowId);
 		if (flowIndex != -1) {
-			clonedFlows[flowIndex].version = FlowVersion.clone(clonedFlows[flowIndex].version).deleteStep(stepName);
+			clonedFlows[flowIndex].version = flowHelper.apply(clonedFlows[flowIndex].version!, {
+				type: FlowOperationType.DELETE_ACTION,
+				request: operation
+			});
 		}
 		return {
 			...state,
@@ -158,7 +143,7 @@ const _flowsReducer = createReducer(
 		const clonedFlows = clonedState.flows;
 		const flowIndex = clonedFlows.findIndex(f => f.id === flowId);
 		if (flowIndex != -1) {
-			clonedFlows[flowIndex].version.display_name = displayName;
+			clonedFlows[flowIndex].version!.displayName = displayName;
 		}
 		return {
 			...state,
@@ -190,7 +175,7 @@ const _flowsReducer = createReducer(
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
 		clonedState.flows.push(flow);
 		clonedState.selectedFlowId = flow.id;
-		clonedState.tabsState[clonedState.selectedFlowId.toString()] = JSON.parse(JSON.stringify(initialTabState));
+		clonedState.tabsState[clonedState.selectedFlowId!.toString()] = JSON.parse(JSON.stringify(initialTabState));
 		return clonedState;
 	}),
 
@@ -198,8 +183,8 @@ const _flowsReducer = createReducer(
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
 		//in case a new version was created after the former one was locked.
 		const flowSaved = clonedState.flows.find(f => f.id == flow.id)!;
-		flowSaved.version.id = flow.version.id;
-		flowSaved.version.state = flow.version.state;
+		flowSaved.version!.id = flow.version!.id;
+		flowSaved.version!.state = flow.version!.state;
 		return { ...clonedState };
 	}),
 	on(FlowsActions.setLeftSidebar, (state, { sidebarType }): FlowsState => {
@@ -223,22 +208,6 @@ const _flowsReducer = createReducer(
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
 		const tabState: TabState = clonedState.tabsState[flowId.toString()];
 		tabState.selectedRun = undefined;
-		return clonedState;
-	}),
-	on(FlowsActions.selectStep, (state, { step }): FlowsState => {
-		if (state.selectedFlowId === undefined || state.selectedFlowId === null) {
-			throw new Error('Flow id is not selected');
-		}
-
-		const clonedState = { ...state };
-
-		const updatedTabState = {
-			...clonedState.tabsState[state.selectedFlowId.toString()],
-			focusedStep: { ...step },
-		};
-		const updatedTabStateWrapper = {};
-		updatedTabStateWrapper[state.selectedFlowId.toString()] = updatedTabState;
-		clonedState.tabsState = { ...clonedState.tabsState, ...updatedTabStateWrapper };
 		return clonedState;
 	}),
 	on(FlowsActions.deselectStep, (state, {}): FlowsState => {
@@ -266,7 +235,7 @@ const _flowsReducer = createReducer(
 		const flow: Flow | undefined = flowsState.flows.find(f => f.id === flowsState.selectedFlowId);
 		const clonedState: FlowsState = JSON.parse(JSON.stringify(flowsState));
 		if (flow) {
-			const step = FlowStructureUtil.findStep(flow.version.trigger, stepName);
+			const step = FlowStructureUtil.findStep(flow.version!.trigger, stepName);
 			const updatedTabState = {
 				...clonedState.tabsState[flow.id.toString()],
 				focusedStep: { ...step },

@@ -10,22 +10,19 @@ import {
 } from '@angular/forms';
 
 import { map, Observable, of, tap } from 'rxjs';
-import { DropdownOption } from 'src/app/modules/common/model/dropdown-options';
 import { environment } from 'src/environments/environment';
 import { Config } from 'src/app/modules/common/model/fields/variable/config';
 import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
-import {
-	ComponnentConfigsForActionsOrTriggers,
-	FrontEndConnectorConfig,
-} from 'src/app/modules/common/components/configs-form/connector-action-or-config';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { ComponentActionInputFormSchema } from '../../input-forms-schema';
+import { DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
+import { CollectionConfig, propsConvertor } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
 declare type ActionDropdownOption = {
 	label: {
 		name: string;
 		description: string;
 	};
-	value: { actionName: string; configs: FrontEndConnectorConfig[]; separator?: boolean };
+	value: { actionName: string; configs: CollectionConfig[]; separator?: boolean };
 	disabled?: boolean;
 };
 
@@ -59,28 +56,28 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 	customRequestFeatureFlag = false;
 	initialSetup$: Observable<ActionDropdownOption[]>;
 	componentName: string;
-	intialComponentInputFormValue: { action_name: string; input: { [key: string]: any } } | null;
+	intialComponentInputFormValue: { actionName: string; input: { [key: string]: any } } | null;
 	separatorItem: ActionDropdownOption = {
 		label: {
 			name: '',
 			description: '',
 		},
-		value: { actionName: '', configs: [] as FrontEndConnectorConfig[], separator: true },
+		value: { actionName: '', configs: [] as CollectionConfig[], separator: true },
 		disabled: true,
 	};
 	customRequestItem = {
-		value: { actionName: 'CUSTOM_REQUEST', configs: [] as FrontEndConnectorConfig[] },
+		value: { actionName: 'CUSTOM_REQUEST', configs: [] as CollectionConfig[] },
 		label: { name: 'Custom Request', description: 'Sends authenticated request' },
 		disabled: true,
 	};
 	selectedAction$: Observable<any>;
 	actions$: Observable<ActionDropdownOption[]>;
 	valueChanges$: Observable<void>;
-	actionDropdownValueChanged$: Observable<{ actionName: string; configs: FrontEndConnectorConfig[] }>;
+	actionDropdownValueChanged$: Observable<{ actionName: string; configs: CollectionConfig[] }>;
 	onChange = (value: any) => {};
 	onTouch = () => {};
 	updateOrAddConfigModalClosed$: Observable<Config>;
-	allAuthConfigs$: Observable<DropdownOption[]>;
+	allAuthConfigs$: Observable<DropdownItem[]>;
 	constructor(
 		private fb: UntypedFormBuilder,
 		private actionMetaDataService: ActionMetaService,
@@ -134,12 +131,15 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 				const actionsKeys = Object.keys(component.actions);
 				return actionsKeys.map(actionName => {
 					const action = component.actions[actionName];
+					const configs = Object.entries(action.props).map(keyEntry => {
+						return propsConvertor.convertToFrontEndConfig(keyEntry[0], keyEntry[1]);
+					});
 					return {
 						value: {
-							actionName: action.name,
-							configs: action.configs.map(c => ComponnentConfigsForActionsOrTriggers.convertToFrontEndConfig(c)),
+							actionName: actionName,
+							configs: configs,
 						},
-						label: { name: action.name, description: action.description },
+						label: { name: action.displayName, description: action.description },
 					};
 				});
 			}),
@@ -152,7 +152,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 		);
 		this.initialSetup$ = this.actions$.pipe(
 			tap(items => {
-				if (this.intialComponentInputFormValue?.action_name === this.customRequestItem.value.actionName) {
+				if (this.intialComponentInputFormValue?.actionName === this.customRequestItem.value.actionName) {
 					this.componentForm
 						.get(ACTION_FORM_CONTROL_NAME)!
 						.setValue(this.customRequestItem.value, { emitEvent: false });
@@ -161,14 +161,14 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 						new UntypedFormControl(this.intialComponentInputFormValue.input),
 						{ emitEvent: false }
 					);
-				} else if (this.intialComponentInputFormValue && this.intialComponentInputFormValue.action_name) {
+				} else if (this.intialComponentInputFormValue && this.intialComponentInputFormValue.actionName) {
 					this.componentForm
 						.get(ACTION_FORM_CONTROL_NAME)!
-						.setValue(items.find(i => i.value.actionName === this.intialComponentInputFormValue?.action_name)?.value, {
+						.setValue(items.find(i => i.value.actionName === this.intialComponentInputFormValue?.actionName)?.value, {
 							emitEvent: false,
 						});
 					this.selectedAction$ = of(
-						items.find(it => it.value.actionName === this.intialComponentInputFormValue?.action_name)
+						items.find(it => it.value.actionName === this.intialComponentInputFormValue?.actionName)
 					).pipe(
 						tap(selectedAction => {
 							if (selectedAction) {
@@ -195,11 +195,11 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 	}
 	writeValue(obj: ComponentActionInputFormSchema): void {
 		this.intialComponentInputFormValue = obj;
-		this.componentName = obj.component_name;
+		this.componentName = obj.pieceName;
 		this.componentForm.get(ACTION_FORM_CONTROL_NAME)?.setValue(undefined, { emitEvent: false });
 		this.componentForm.removeControl(CONFIGS_FORM_CONTROL_NAME, { emitEvent: false });
 		this.componentForm.removeControl(CUSTOM_REQUEST_FORM_CONTROL_NAME, { emitEvent: false });
-		this.fetchActions(obj.component_name);
+		this.fetchActions(obj.pieceName);
 	}
 
 	removeDataControls() {
@@ -226,7 +226,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 		this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.setValue(this.customRequestItem.value);
 	}
 
-	actionSelectValueChanged(selectedActionValue: { actionName: string; configs: FrontEndConnectorConfig[] } | null) {
+	actionSelectValueChanged(selectedActionValue: { actionName: string; configs: CollectionConfig[] } | null) {
 		if (selectedActionValue) {
 			if (selectedActionValue.actionName === this.customRequestItem.value.actionName) {
 				this.customRequestSelected();
@@ -242,7 +242,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 		}
 	}
 
-	private actionSelected(selectedActionValue: { actionName: string; configs: FrontEndConnectorConfig[] }) {
+	private actionSelected(selectedActionValue: { actionName: string; configs: CollectionConfig[] }) {
 		const configsForm = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME);
 		if (!configsForm) {
 			this.componentForm.addControl(

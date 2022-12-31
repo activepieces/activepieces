@@ -2,7 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, UntypedFormBuilder } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { filter, Observable, switchMap, tap } from 'rxjs';
-import { CodeTestExecutionResult } from 'src/app/modules/common/model/flow-builder/code-test-execution-result';
+import { CodeExecutionResult } from 'shared';
 import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
 import { CodeArtifactForm } from '../code-artifact-form-control.component';
 import { SelectedFileInFullscreenCodeEditor } from '../selected-file-in-fullscreeen-code-editor.enum';
@@ -24,7 +24,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 	codeFilesForm: FormGroup<CodeArtifactForm>;
 	readOnly: boolean;
 	selectedFile = SelectedFileInFullscreenCodeEditor.CONTENT;
-	executeCodeTest$: Observable<CodeTestExecutionResult>;
+	executeCodeTest$: Observable<CodeExecutionResult>;
 	codeEditorOptions = {
 		minimap: { enabled: false },
 		theme: 'vs',
@@ -137,11 +137,11 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 			);
 	}
 
-	getConsoleResult(codeTestExecutionResult: CodeTestExecutionResult) {
-		if (codeTestExecutionResult.error_message) {
-			return `${codeTestExecutionResult.standard_output} \n---------error-------\n ${codeTestExecutionResult.error_message}`;
+	getConsoleResult(codeTestExecutionResult: CodeExecutionResult) {
+		if (codeTestExecutionResult.standardError) {
+			return `${codeTestExecutionResult.standardOutput} \n---------error-------\n ${codeTestExecutionResult.standardError}`;
 		}
-		return codeTestExecutionResult.standard_output;
+		return codeTestExecutionResult.standardOutput;
 	}
 	hide() {
 		this.dialogRef.close(true);

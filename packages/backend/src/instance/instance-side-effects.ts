@@ -13,14 +13,17 @@ import { triggerUtils } from "../helper/trigger-utils";
 import { InstanceSchema } from "./instance-entity";
 
 export const instanceSideEffects = {
-  async enable(instance: Partial<InstanceSchema>): Promise<void> {
+  async enable(instance: Partial<Instance>): Promise<void> {
     if (
       instance.status === InstanceStatus.DISABLED ||
       instance.flowIdToVersionId == null ||
-      instance.collectionVersion == null
+      instance.collectionVersionId == null
     ) {
       return;
     }
+    const collectionVersion = (await collectionVersionRepo.findOneBy({
+      id: instance.collectionVersionId
+    }))!;
 
     const flowVersionIds = Object.values(instance.flowIdToVersionId);
 
@@ -29,7 +32,7 @@ export const instanceSideEffects = {
     });
 
     await lockVersions({
-      collectionVersion: instance.collectionVersion,
+      collectionVersion: collectionVersion,
       flowVersions,
     });
 

@@ -1,5 +1,4 @@
-import { ActionType } from '../../../../../../common/model/enum/action-type.enum';
-import { TriggerType } from '../../../../../../common/model/enum/trigger-type.enum';
+import { ActionType, TriggerType } from "shared";
 
 export class FlowItemDetails {
 	constructor(

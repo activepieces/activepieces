@@ -1,6 +1,6 @@
-import { ActionType } from './model/enum/action-type.enum';
-import { TriggerType } from './model/enum/trigger-type.enum';
-import { Flow } from './model/flow.class';
+
+import { ActionType, Flow, TriggerType } from 'shared';
+
 
 export function getDisplayNameForTrigger(triggerType: TriggerType) {
 	switch (triggerType) {
@@ -43,7 +43,7 @@ export function isOfTypeTriggerType(value: string) {
 export function findDefaultFlowDisplayName(flows: Flow[]) {
 	let defaultFlowIndex = 1;
 
-	while (flows.find(f => f.version.display_name.toLowerCase() == `flow ${defaultFlowIndex}`)) {
+	while (flows.find(f => f.version?.displayName.toLowerCase() == `flow ${defaultFlowIndex}`)) {
 		defaultFlowIndex++;
 	}
 	return `Flow ${defaultFlowIndex}`;

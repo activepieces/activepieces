@@ -24,9 +24,7 @@ export const flowVersionService = {
     });
   },
   async applyOperation(flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowVersion | null> {
-    if (request.type === FlowOperationType.UPDATE_ACTION) {
-      request = await prepareRequest(flowVersion, request);
-    }
+    request = await prepareRequest(flowVersion, request);
     const mutatedFlowVersion: FlowVersion = flowHelper.apply(flowVersion, request);
     await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>);
     return await flowVersionRepo.findOneBy({

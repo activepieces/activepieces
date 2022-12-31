@@ -7,9 +7,7 @@ export enum TriggerType {
   SCHEDULE = 'SCHEDULE',
   EMPTY = 'EMPTY',
   WEBHOOK = 'WEBHOOK',
-  COLLECTION_ENABLED = 'COLLECTION_ENABLED',
-  COLLECTION_DISABLED = 'COLLECTION_DISABLED',
-  PIECE = 'COMPONENT_TRIGGER',
+  PIECE = 'PIECE_TRIGGER',
 }
 
 interface BaseTrigger<T extends TriggerType, V> {

@@ -1,12 +1,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Collection } from '../../../common/model/collection.interface';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CollectionService } from '../../../common/service/collection.service';
 import { AuthenticationService } from '../../../common/service/authentication.service';
 import { ProjectService } from 'src/app/modules/common/service/project.service';
 import { map, Observable, startWith, Subject, switchMap, tap } from 'rxjs';
 import { FlowService } from 'src/app/modules/common/service/flow.service';
-import { Flow } from 'src/app/modules/common/model/flow.class';
 import { PosthogService } from 'src/app/modules/common/service/posthog.service';
 import { ApPaginatorComponent } from 'src/app/modules/common/components/pagination/ap-paginator.component';
 import { CollectionsTableDataSource } from './collections-table.datasource';
@@ -14,6 +12,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { DeleteCollectionDialogComponent } from './delete-collection-dialog/delete-collection-dialog.component';
 import { ARE_THERE_COLLECTIONS_FLAG } from '../../dashboard.routing';
 import { DEFAULT_PAGE_SIZE } from 'src/app/modules/common/components/pagination/tables.utils';
+import { Collection, Flow } from 'shared';
 @Component({
 	templateUrl: './collections-table.component.html',
 })
@@ -87,7 +86,7 @@ export class CollectionsTableComponent implements OnInit {
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('collection.created [Builder]', collection);
 					}
-					return this.flowService.create(collection.id, 'Flow 1');
+					return this.flowService.create({collectionId: collection.id, displayName: 'Flow 1'} );
 				}),
 				tap(flow => {
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {

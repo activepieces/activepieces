@@ -1,4 +1,4 @@
-import { Project } from '../../model/project.interface';
+import { Project } from "shared";
 
 export interface ProjectsState {
 	loaded: boolean;
