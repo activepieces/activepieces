@@ -1,16 +1,10 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
-import { Cursor, InstanceId, ProjectId, UpsertInstanceRequest } from "shared";
+import { CollectionId, Cursor, InstanceId, ProjectId, UpsertInstanceRequest } from "shared";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
 import { instanceService as service } from "./instance-service";
 
 const DEFAULT_PAGING_LIMIT = 10;
-
-interface ListQueryParams {
-  projectId: ProjectId;
-  cursor: Cursor | undefined;
-  limit: number | undefined;
-}
 
 interface GetOnePathParams {
   id: InstanceId;
@@ -32,33 +26,19 @@ export const instanceController = async (app: FastifyInstance, _options: Fastify
   );
 
   // list
-  app.get("/", async (request: FastifyRequest<{ Querystring: ListQueryParams }>, reply: FastifyReply) => {
-    const instancePage = await service.list({
-      projectId: request.query.projectId,
-      cursor: request.query.cursor ?? null,
-      limit: request.query.limit ?? DEFAULT_PAGING_LIMIT,
-    });
-
-    reply.send(instancePage);
-  });
-
-  // get one
-  app.get("/:id", async (request: FastifyRequest<{ Params: GetOnePathParams }>, reply: FastifyReply) => {
-    const instance = await service.getOne({
-      id: request.params.id,
-    });
-
-    if (instance == null) {
-      throw new ActivepiecesError({
-        code: ErrorCode.INSTANCE_NOT_FOUND,
-        params: {
-          id: request.params.id,
-        },
-      });
+  app.get(
+    "/",
+    async (
+      request: FastifyRequest<{
+        Querystring: {
+          collectionId: CollectionId;
+        };
+      }>,
+      reply: FastifyReply
+    ) => {
+      reply.send(await service.getByCollectionId({ collectionId: request.query.collectionId }));
     }
-
-    reply.send(instance);
-  });
+  );
 
   // delete one
   app.delete("/:id", async (request: FastifyRequest<{ Params: GetOnePathParams }>, reply: FastifyReply) => {

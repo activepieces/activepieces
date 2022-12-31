@@ -37,6 +37,8 @@ export const InstanceEntity = new EntitySchema<InstanceSchema>({
     collectionVersion: {
       type: "one-to-one",
       target: "collection_version",
+      cascade: true,
+      onDelete: "CASCADE",
       joinColumn: {
         name: "collectionVersionId",
         referencedColumnName: "id",

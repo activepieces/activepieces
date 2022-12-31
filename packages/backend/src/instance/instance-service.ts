@@ -1,11 +1,18 @@
-import { apId, Cursor, Instance, InstanceId, InstanceStatus, ProjectId, SeekPage, UpsertInstanceRequest } from "shared";
+import {
+  apId,
+  CollectionId,
+  Cursor,
+  Instance,
+  InstanceId,
+  InstanceStatus,
+  ProjectId,
+  SeekPage,
+  UpsertInstanceRequest,
+} from "shared";
 import { collectionService } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
 import { flowService } from "../flows/flow-service";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
-import { buildPaginator } from "../helper/pagination/build-paginator";
-import { paginationHelper } from "../helper/pagination/pagination-utils";
-import { Order } from "../helper/pagination/paginator";
 import { InstanceEntity } from "./instance-entity";
 import { instanceSideEffects } from "./instance-side-effects";
 
@@ -28,14 +35,15 @@ export const instanceService = {
 
     const flowIdToVersionId = Object.fromEntries(flowPage.data.map((flow) => [flow.id, flow.version!.id]));
 
-    const oldInstance: Partial<Instance> = (await instanceRepo.findOneBy({ id: collectionId })) ?? {
-      id: apId(),
-      projectId: collection.projectId,
-      status: InstanceStatus.DISABLED,
-    };
+    const oldInstance: Partial<Instance | null> = await instanceRepo.findOneBy({ collectionId: collectionId });
+
+    if (oldInstance !== null && oldInstance !== undefined) {
+      await instanceRepo.delete(oldInstance.id!);
+    }
 
     const newInstance: Partial<Instance> = {
-      ...oldInstance,
+      id: apId(),
+      projectId: collection.projectId,
       collectionId,
       collectionVersionId: collection.version!.id,
       flowIdToVersionId,
@@ -44,56 +52,32 @@ export const instanceService = {
 
     const savedInstance = await instanceRepo.save(newInstance);
 
-    instanceSideEffects.disable(oldInstance);
+    if (oldInstance !== null) {
+      instanceSideEffects.disable(oldInstance);
+    }
     instanceSideEffects.enable(newInstance);
-
     return savedInstance;
   },
 
-  async list({ projectId, cursor, limit }: ListParams): Promise<SeekPage<Instance>> {
-    const decodedCursor = paginationHelper.decodeCursor(cursor);
-
-    const paginator = buildPaginator({
-      entity: InstanceEntity,
-      paginationKeys: ["created"],
-      query: {
-        limit,
-        order: Order.ASC,
-        afterCursor: decodedCursor.nextCursor,
-        beforeCursor: decodedCursor.previousCursor,
-      },
-    });
-
-    const query = instanceRepo.createQueryBuilder("instance").where({
-      projectId,
-    });
-
-    const { data, cursor: newCursor } = await paginator.paginate(query);
-
-    return paginationHelper.createPage<Instance>(data, newCursor);
-  },
-
-  async getOne({ id }: GetOneParams): Promise<Instance | null> {
+  async getByCollectionId({ collectionId }: GetOneParams): Promise<Instance | null> {
     return await instanceRepo.findOneBy({
-      id,
+      collectionId,
     });
   },
 
   async deleteOne({ id }: DeleteOneParams): Promise<void> {
+    const oldInstance: Partial<Instance | null> = await instanceRepo.findOneBy({ id: id });
+    if (oldInstance !== null) {
+      instanceSideEffects.disable(oldInstance);
+    }
     await instanceRepo.delete({
       id,
     });
   },
 };
 
-interface ListParams {
-  projectId: ProjectId;
-  cursor: Cursor | null;
-  limit: number;
-}
-
 interface GetOneParams {
-  id: InstanceId;
+  collectionId: CollectionId;
 }
 
 interface DeleteOneParams {

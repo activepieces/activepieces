@@ -22,12 +22,11 @@ export const repo = databaseConnection.getRepository(FlowRunEntity);
 export const flowRunService = {
   async list({ projectId, cursor, limit }: ListParams): Promise<SeekPage<FlowRun>> {
     const decodedCursor = paginationHelper.decodeCursor(cursor);
-
     const paginator = buildPaginator({
       entity: FlowRunEntity,
       paginationKeys: ["created"],
       query: {
-        limit,
+        limit: limit,
         order: Order.DESC,
         afterCursor: decodedCursor.nextCursor,
         beforeCursor: decodedCursor.previousCursor,
@@ -35,11 +34,9 @@ export const flowRunService = {
     });
 
     const query = repo.createQueryBuilder("flow_run").where({
-      projectId,
-    });
-
+      projectId
+    }).andWhere('flow_run.instanceId is not null');
     const { data, cursor: newCursor } = await paginator.paginate(query);
-
     return paginationHelper.createPage<FlowRun>(data, newCursor);
   },
   async finish(flowRunId: FlowRunId, status: ExecutionOutputStatus, logsFileId: FileId): Promise<FlowRun | null> {
