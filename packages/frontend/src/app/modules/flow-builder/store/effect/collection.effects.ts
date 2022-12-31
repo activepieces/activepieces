@@ -140,18 +140,66 @@ export class CollectionEffects {
 			ofType(CollectionActions.deploy),
 			concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
 			switchMap(([action, collection]) => {
-				return this.instanceService.deploy({
-					collectionId: collection.id,
-					status: InstanceStatus.ENABLED
-				}).pipe(
-					switchMap(instance => {
-						return of(CollectionActions.deploySuccess({ instance: instance }));
-					}),
-					catchError(err => {
-						console.error(err);
-						return of(CollectionActions.deployFailed());
+				return this.instanceService
+					.publish({
+						collectionId: collection.id,
+						status: InstanceStatus.ENABLED,
 					})
-				);
+					.pipe(
+						switchMap(instance => {
+							return of(CollectionActions.deploySuccess({ instance: instance }));
+						}),
+						catchError(err => {
+							console.error(err);
+							return of(CollectionActions.deployFailed());
+						})
+					);
+			})
+		);
+	});
+
+	enableInstance$ = createEffect(() => {
+		return this.actions$.pipe(
+			ofType(CollectionActions.enableInstance),
+			concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
+			switchMap(([action, collection]) => {
+				return this.instanceService
+					.publish({
+						collectionId: collection.id,
+						status: InstanceStatus.ENABLED,
+					})
+					.pipe(
+						switchMap(instance => {
+							return of(CollectionActions.deploySuccess({ instance: instance }));
+						}),
+						catchError(err => {
+							console.error(err);
+							return of(CollectionActions.deployFailed());
+						})
+					);
+			})
+		);
+	});
+
+	disableInstance$ = createEffect(() => {
+		return this.actions$.pipe(
+			ofType(CollectionActions.disableInstance),
+			concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
+			switchMap(([action, collection]) => {
+				return this.instanceService
+					.publish({
+						collectionId: collection.id,
+						status: InstanceStatus.DISABLED,
+					})
+					.pipe(
+						switchMap(instance => {
+							return of(CollectionActions.deploySuccess({ instance: instance }));
+						}),
+						catchError(err => {
+							console.error(err);
+							return of(CollectionActions.deployFailed());
+						})
+					);
 			})
 		);
 	});
