@@ -66,7 +66,7 @@ export class StepTypeSidebarComponent implements OnInit {
 
 		if (environment.feature.newComponents) {
 			this.tabsAndTheirLists.push({
-				displayName: 'apps',
+				displayName: 'Apps',
 				list$: connectorComponentsItemsDetails$,
 				emptyListText: this._showTriggers ? 'No app triggers are available' : 'No app steps are available',
 			});

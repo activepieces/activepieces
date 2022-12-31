@@ -7,9 +7,6 @@ interface InputFormsSchemaBase {
 export interface LoopStepInputFormSchema extends InputFormsSchemaBase {
 	items: string;
 }
-export interface ResponseStepInputFormSchema extends InputFormsSchemaBase {
-	output: any;
-}
 export interface CodeStepInputFormSchema extends InputFormsSchemaBase {
 	input: any;
 }
@@ -23,19 +20,16 @@ export interface StorageStepInputFormSchema extends InputFormsSchemaBase {
 export interface ScheduledTriggerInputFormSchema extends InputFormsSchemaBase {
 	cronExpression: string;
 }
-export interface EventTriggerInputFormSchema extends InputFormsSchemaBase {
-	eventsName: string[];
-}
 
 //TODO figure out a way to check the type of the (input form schema) because right now they are interfaces and instance of won't work since these are json objects from the server
 export interface ComponentActionInputFormSchema extends InputFormsSchemaBase {
-	component_name: string;
-	action_name: string;
+	pieceName: string;
+	actionName: string;
 	input: ConfigsAndTheirValues | CustomRequestForComponentFormSchema;
 }
 export interface ComponentTriggerInputFormSchema extends InputFormsSchemaBase {
-	component_name: string;
-	trigger_name: string;
+	pieceName: string;
+	triggerName: string;
 	input: ConfigsAndTheirValues;
 }
 interface CustomRequestForComponentFormSchema {
@@ -47,9 +41,7 @@ interface CustomRequestForComponentFormSchema {
 
 export type InputFormsSchema =
 	| LoopStepInputFormSchema
-	| ResponseStepInputFormSchema
 	| StorageStepInputFormSchema
 	| CodeStepInputFormSchema
 	| ScheduledTriggerInputFormSchema
-	| EventTriggerInputFormSchema
 	| ComponentActionInputFormSchema;

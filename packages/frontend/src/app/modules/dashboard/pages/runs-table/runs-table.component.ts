@@ -16,7 +16,7 @@ export class RunsComponent implements OnInit {
 	runsPage$: Observable<SeekPage<FlowRun>>;
 	dataSource!: RunsTableDataSource;
 	displayedColumns = ['collectionName', 'flowName', 'status', 'started', 'finished'];
-	readonly InstanceRunStatus = ExecutionOutputStatus;
+	readonly ExecutionOutputStatus = ExecutionOutputStatus;
 
 	constructor(
 		private router: Router,
@@ -40,7 +40,4 @@ export class RunsComponent implements OnInit {
 		window.open(url, '_blank');
 	}
 
-	instanceRunEnum() {
-		return ExecutionOutputStatus;
-	}
 }

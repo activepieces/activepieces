@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { Observable } from 'rxjs';
-import { Instance } from 'shared';
+import { CollectionId, Instance, InstanceId, UpsertInstanceRequest } from 'shared';
 
 @Injectable({
 	providedIn: 'root',
@@ -10,15 +10,19 @@ import { Instance } from 'shared';
 export class InstanceService {
 	constructor(private http: HttpClient) {}
 
-	get(collectionId: string): Observable<Instance> {
-		return this.http.get<Instance>(environment.apiUrl + `/instance`, {
+	deploy(request : UpsertInstanceRequest): Observable<Instance> {
+		return this.http.post<Instance>(environment.apiUrl + `/instances`, request);
+	}
+	
+	get(collectionId: CollectionId): Observable<Instance> {
+		return this.http.get<Instance>(environment.apiUrl + `/instances`, {
 			params: {
 				collectionId: collectionId
 			}
 		});
 	}
 
-	delete(instanceId: string): Observable<void> {
-		return this.http.delete<void>(environment.apiUrl + `/instance/${instanceId}`);
+	delete(instanceId: InstanceId): Observable<void> {
+		return this.http.delete<void>(environment.apiUrl + `/instances/${instanceId}`);
 	}
 }

@@ -16,7 +16,7 @@ import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/fl
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { Config } from '../../model/fields/variable/config';
 import { ThemeService } from '../../service/theme.service';
-import { FrontEndConnectorConfig, InputType } from './connector-action-or-config';
+import { CollectionConfig, InputType } from './connector-action-or-config';
 import { NewAuthenticationModalComponent } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfigType } from 'shared';
@@ -43,10 +43,10 @@ type ConfigKey = string;
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfigsFormComponent implements ControlValueAccessor {
-	configs: FrontEndConnectorConfig[] = [];
-	requiredConfigs: FrontEndConnectorConfig[] = [];
-	allOptionalConfigs: FrontEndConnectorConfig[] = [];
-	selectedOptionalConfigs: FrontEndConnectorConfig[] = [];
+	configs: CollectionConfig[] = [];
+	requiredConfigs: CollectionConfig[] = [];
+	allOptionalConfigs: CollectionConfig[] = [];
+	selectedOptionalConfigs: CollectionConfig[] = [];
 	optionalConfigsMenuOpened = false;
 	@Input() actionName: string;
 	@Input() componentName: string;
@@ -73,7 +73,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions);
 	}
 
-	writeValue(obj: FrontEndConnectorConfig[]): void {
+	writeValue(obj: CollectionConfig[]): void {
 		this.configs = obj;
 
 		this.createForm();
@@ -128,7 +128,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		this.form.markAllAsTouched();
 	}
 
-	private createConfigsFormControls(configs: FrontEndConnectorConfig[]) {
+	private createConfigsFormControls(configs: CollectionConfig[]) {
 		const controls: { [key: string]: UntypedFormControl } = {};
 		configs.forEach(c => {
 			const validators: ValidatorFn[] = [];
@@ -143,13 +143,13 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		return this.form.get(configKey);
 	}
 
-	removeConfig(config: FrontEndConnectorConfig) {
+	removeConfig(config: CollectionConfig) {
 		this.form.removeControl(config.key);
 		const configIndex = this.allOptionalConfigs.findIndex(c => c === config);
 		this.selectedOptionalConfigs.splice(configIndex, 1);
 	}
 	contructDropdownObservable(
-		dropdownConfig: FrontEndConnectorConfig,
+		dropdownConfig: CollectionConfig,
 		authConfig: any,
 		actionName: string,
 		componentName: string
@@ -185,7 +185,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			})
 		);
 	}
-	addOptionalConfig(config: FrontEndConnectorConfig) {
+	addOptionalConfig(config: CollectionConfig) {
 		this.form.addControl(config.key, new UntypedFormControl());
 		this.selectedOptionalConfigs.push(config);
 	}
@@ -246,7 +246,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	}
 	refreshDropdowns(authConfigValue: any) {
 		this.configs.forEach(c => {
-			if (c.type === InputType.SELECT) {
+			if (c.type === InputType.DROPDOWN) {
 				this.contructDropdownObservable(c, authConfigValue, this.actionName, this.componentName);
 			}
 		});

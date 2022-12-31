@@ -14,7 +14,8 @@ import { BuilderActions } from '../action/builder.action';
 import { autoSaveDebounceTime } from 'src/app/modules/common/utils';
 import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
 import { PosthogService } from 'src/app/modules/common/service/posthog.service';
-import { CollectionVersionState } from 'shared';
+import { CollectionVersionState, InstanceStatus } from 'shared';
+import { InstanceService } from 'src/app/modules/common/service/instance.service';
 
 @Injectable()
 export class CollectionEffects {
@@ -139,7 +140,10 @@ export class CollectionEffects {
 			ofType(CollectionActions.deploy),
 			concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
 			switchMap(([action, collection]) => {
-				return this.collectionService.deploy(collection.id).pipe(
+				return this.instanceService.deploy({
+					collectionId: collection.id,
+					status: InstanceStatus.ENABLED
+				}).pipe(
 					switchMap(instance => {
 						return of(CollectionActions.deploySuccess({ instance: instance }));
 					}),
@@ -155,6 +159,7 @@ export class CollectionEffects {
 	constructor(
 		private collectionBuilderService: CollectionBuilderService,
 		private collectionService: CollectionService,
+		private instanceService: InstanceService,
 		private store: Store,
 		private actions$: Actions,
 		private snackBar: MatSnackBar,

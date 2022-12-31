@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionType, TriggerType} from 'shared';
 import { HttpClient } from '@angular/common/http';
-import { ConnectorComponent } from '../../common/components/configs-form/connector-action-or-config';
+import { AppPiece } from '../../common/components/configs-form/connector-action-or-config';
 import { environment } from 'src/environments/environment';
 import { Observable, shareReplay } from 'rxjs';
 import { DropdownItem } from '../../common/model/dropdown-item.interface';
@@ -11,7 +11,7 @@ import { DropdownItem } from '../../common/model/dropdown-item.interface';
 	providedIn: 'root',
 })
 export class ActionMetaService {
-	private connectorComponents$: Observable<ConnectorComponent[]>;
+	private connectorComponents$: Observable<AppPiece[]>;
 	public coreFlowItemsDetails: FlowItemDetails[] = [
 		{
 			type: ActionType.CODE,
@@ -49,7 +49,7 @@ export class ActionMetaService {
 	];
 	constructor(private http: HttpClient) {}
 	private getPieces() {
-		return this.http.get<ConnectorComponent[]>(environment.apiUrl + '/pieces');
+		return this.http.get<AppPiece[]>(environment.apiUrl + '/pieces');
 	}
 	public connectorComponents() {
 		if (!this.connectorComponents$) {
