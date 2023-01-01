@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } from "fastify";
+import { FastifyPluginCallback, FastifyReply, FastifyRequest } from "fastify";
 import { CreateFlowRunRequest, Cursor, FlowRunId, ProjectId } from "shared";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
 import { flowRunService, flowRunService as service } from "./flow-run-service";
@@ -15,7 +15,7 @@ interface GetOnePathParams {
   id: FlowRunId;
 }
 
-export const flowRunController = (app: FastifyInstance, _options: FastifyPluginOptions): void => {
+export const flowRunController: FastifyPluginCallback = (app, _options, done): void => {
   // create one
   app.post(
     "/",
@@ -66,4 +66,6 @@ export const flowRunController = (app: FastifyInstance, _options: FastifyPluginO
 
     await reply.send(flowRun);
   });
+
+  done();
 };

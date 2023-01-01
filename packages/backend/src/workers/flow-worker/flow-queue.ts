@@ -29,9 +29,13 @@ const JOB_REMOVAL_FAILURE = 0;
 export const ONE_TIME_JOB_QUEUE = "oneTimeJobs";
 export const REPEATABLE_JOB_QUEUE = "repeatableJobs";
 
-const oneTimeJobQueue = new Queue<OneTimeJobData, unknown, ApId>(ONE_TIME_JOB_QUEUE, { connection: redisConnection });
+const oneTimeJobQueue = new Queue<OneTimeJobData, unknown, ApId>(ONE_TIME_JOB_QUEUE, {
+  connection: redisConnection,
+  sharedConnection: true,
+});
 const repeatableJobQueue = new Queue<RepeatableJobData, unknown, ApId>(REPEATABLE_JOB_QUEUE, {
   connection: redisConnection,
+  sharedConnection: true,
 });
 
 export const flowQueue = {

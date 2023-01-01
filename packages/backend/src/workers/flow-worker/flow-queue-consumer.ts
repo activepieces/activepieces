@@ -30,12 +30,12 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     });
   },
   {
-    autorun: false,
     connection: redisConnection,
+    sharedConnection: true,
   }
 );
 
 export const initFlowQueueConsumer = async (): Promise<void> => {
-  const startWorkers = [oneTimeJobConsumer.run(), repeatableJobConsumer.run()];
+  const startWorkers = [oneTimeJobConsumer.waitUntilReady(), repeatableJobConsumer.waitUntilReady()];
   await Promise.all(startWorkers);
 };
