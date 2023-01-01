@@ -210,16 +210,15 @@ export class ComponentTriggerInputFormComponent {
 		}
 	}
 
-	getFormattedFormData(): { trigger_name: string; input: { [configKey: string]: any } } {
+	getFormattedFormData(): { triggerName: string; input: { [configKey: string]: any } } {
 		const trigger = this.componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value;
 		const configs = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME)?.value || {};
 		const res = {
-			trigger_name: trigger?.triggerName,
+			triggerName: trigger?.triggerName,
 			input: {
 				...configs,
 			},
 		};
-		console.log(res);
 		return res;
 	}
 	triggerDropdownCompareFn(item, selected) {

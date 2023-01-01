@@ -13,11 +13,6 @@
     "prepare": "",
     "docs:json": "compodoc -p ./tsconfig.json -e json -d ."
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run prettier:check"
-    }
-  },
   "private": true,
   "dependencies": {
     "@angular/animations": "^15.0.4",

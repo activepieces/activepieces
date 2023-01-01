@@ -10,7 +10,6 @@ import { In } from "typeorm";
 import { collectionVersionRepo } from "../collections/collection-version/collection-version-repo";
 import { flowVersionRepo } from "../flows/flow-version/flow-version-repo";
 import { triggerUtils } from "../helper/trigger-utils";
-import { InstanceSchema } from "./instance-entity";
 
 export const instanceSideEffects = {
   async enable(instance: Partial<Instance>): Promise<void> {
