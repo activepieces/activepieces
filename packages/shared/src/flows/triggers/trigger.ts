@@ -2,6 +2,8 @@ import {
   Action,
 } from "../actions/action";
 import {Type} from "@sinclair/typebox";
+import { Format } from '@sinclair/typebox/format'
+import { isValidCron } from 'cron-validator'
 
 export enum TriggerType {
   SCHEDULE = 'SCHEDULE',
@@ -39,12 +41,16 @@ export type ScheduleTriggerSettings = {
 export interface ScheduleTrigger extends BaseTrigger<TriggerType.SCHEDULE, ScheduleTriggerSettings> {
 }
 
+Format.Set('cronexpression', value => isValidCron(value));
+
 export const ScheduleTriggerSchema = Type.Object({
   name: Type.String({}),
   displayName: Type.String({}),
   type: Type.Literal(TriggerType.SCHEDULE),
   settings: Type.Object({
-    cronExpression: Type.String({})
+    cronExpression: Type.String({
+      format: 'cronexpression'
+    })
   })
 })
 

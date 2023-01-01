@@ -110,7 +110,7 @@ function createAction(request: UpdateActionRequest, nextAction: Action | undefin
             } as CodeAction;
             break;
     }
-    action.valid = (action.valid??true) && actionSchemaValidator.Check(action);
+    action.valid = (request.valid??true) && actionSchemaValidator.Check(action);
     return action;
 }
 
