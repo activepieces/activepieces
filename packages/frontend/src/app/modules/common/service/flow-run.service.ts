@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
-import { map, Observable, switchMap } from 'rxjs';
+import { map, Observable, of, switchMap } from 'rxjs';
 import { ExecutionOutput, FlowRun, SeekPage } from 'shared';
 
 @Injectable({
@@ -13,11 +13,14 @@ export class InstanceRunService {
 	get(id: string): Observable<FlowRun> {
 		return this.http.get<FlowRun>(environment.apiUrl + '/flow-runs/' + id).pipe(
 			switchMap(instanceRun => {
-				return this.logs(instanceRun.logsFileId).pipe(
-					map(output => {
-						return { ...instanceRun, executionOutput: output } as FlowRun;
-					})
-				);
+				if(instanceRun.logsFileId !== null){
+					return this.logs(instanceRun.logsFileId).pipe(
+						map(output => {
+							return { ...instanceRun, executionOutput: output } as FlowRun;
+						})
+					);
+				}
+				return of(instanceRun);
 			})
 		);
 	}

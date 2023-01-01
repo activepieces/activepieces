@@ -1,4 +1,4 @@
-import { ApId, CollectionId, FileId, FlowId, FlowRunId, InstanceId } from "shared";
+import { ApId, CollectionId, CollectionVersionId, FileId, FlowId, FlowRunId, FlowVersionId, InstanceId } from "shared";
 
 export class ActivepiecesError extends Error {
   constructor(public error: ErrorParams) {
@@ -8,12 +8,14 @@ export class ActivepiecesError extends Error {
 
 type ErrorParams =
   | CollectionNotFoundErrorParams
+  | CollectionVersionNotFoundErrorParams
   | ConfigNotFoundErrorParams
   | ExistingUserErrorParams
   | FileNotFoundErrorParams
   | FlowNotFoundErrorParams
-  | InstanceNotFoundErrorParams
   | FlowRunNotFoundErrorParams
+  | FlowVersionNotFoundErrorParams
+  | InstanceNotFoundErrorParams
   | InvalidBearerTokenParams
   | InvalidCredentialsErrorParams
   | JobRemovalFailureErrorParams
@@ -46,6 +48,14 @@ export interface CollectionNotFoundErrorParams
     }
   > {}
 
+export interface CollectionVersionNotFoundErrorParams
+  extends BaseErrorParams<
+    ErrorCode.COLLECTION_VERSION_NOT_FOUND,
+    {
+      id: CollectionVersionId;
+    }
+  > {}
+
 export interface InstanceNotFoundErrorParams
   extends BaseErrorParams<
     ErrorCode.INSTANCE_NOT_FOUND,
@@ -59,6 +69,14 @@ export interface FlowRunNotFoundErrorParams
     ErrorCode.INSTANCE_NOT_FOUND,
     {
       id: FlowRunId;
+    }
+  > {}
+
+export interface FlowVersionNotFoundErrorParams
+  extends BaseErrorParams<
+    ErrorCode.FLOW_VERSION_NOT_FOUND,
+    {
+      id: FlowVersionId;
     }
   > {}
 
@@ -118,12 +136,14 @@ export interface JobRemovalFailureErrorParams
 
 export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
+  COLLECTION_VERSION_NOT_FOUND = "COLLECTION_VERSION_NOT_FOUND",
   CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
   EXISTING_USER = "EXISTING_USER",
   FILE_NOT_FOUND = "FILE_NOT_FOUND",
   FLOW_NOT_FOUND = "FLOW_NOT_FOUND",
-  INSTANCE_NOT_FOUND = "INSTANCE_NOT_FOUND",
   FLOW_RUN_NOT_FOUND = "INSTANCE_NOT_FOUND",
+  FLOW_VERSION_NOT_FOUND = "FLOW_VERSION_NOT_FOUND",
+  INSTANCE_NOT_FOUND = "INSTANCE_NOT_FOUND",
   INVALID_BEARER_TOKEN = "INVALID_BEARER_TOKEN",
   INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
   JOB_REMOVAL_FAILURE = "JOB_REMOVAL_FAILURE",

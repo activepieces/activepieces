@@ -17,5 +17,8 @@
   ],
   "exclude": [
     "tests/**/*.ts"
-  ]  
+  ],
+  "ts-node": {
+    "files": true
+  },
 }

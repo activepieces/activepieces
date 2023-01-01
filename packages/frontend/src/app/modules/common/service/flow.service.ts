@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { forkJoin, map, Observable, of, skipWhile, switchMap, take } from 'rxjs';
-import { CollectionId, CreateFlowRequest, ExecuteTestRequest, ExecutionOutputStatus, ExecutionState, Flow, FlowId, FlowOperationRequest, FlowRun, FlowVersionId, SeekPage, TriggerType } from 'shared';
-import { UUID } from 'angular2-uuid';
+import { CollectionId, CreateFlowRequest, CreateFlowRunRequest, ExecutionOutputStatus, ExecutionState, FileId, Flow, FlowId, FlowOperationRequest, FlowRun, FlowVersionId, SeekPage, TriggerType } from 'shared';
 import { BuilderSelectors } from '../../flow-builder/store/selector/flow-builder.selector';
 import { findDefaultFlowDisplayName } from '../utils';
 import { Store } from '@ngrx/store';
@@ -98,15 +97,15 @@ export class FlowService {
 		return this.http.post<Flow>(environment.apiUrl + '/flows/' + flowId, opreation);
 	}
 
-	execute(request: ExecuteTestRequest): Observable<FlowRun> {
+	execute(request: CreateFlowRunRequest): Observable<FlowRun> {
 		return this.http
 			.post<FlowRun>(
-				environment.apiUrl + '/flow-worker/execute-test',
+				environment.apiUrl + '/flow-runs',
 				request
 			)
 			.pipe(switchMap(run => {
 					if (run.status !== ExecutionOutputStatus.RUNNING && run.logsFileId !== null) {
-						return this.logs(run.logsFileId).pipe(
+						return this.loadStateLogs(run.logsFileId).pipe(
 							map(state => {
 								return { ...run, state: state };
 							})
@@ -117,7 +116,9 @@ export class FlowService {
 			);
 	}
 
-	logs(fileId: UUID): Observable<ExecutionState> {
+	loadStateLogs(fileId: FileId): Observable<ExecutionState> {
+		console.log("GO GO GO " + fileId);
+
 		return this.http.get<ExecutionState>(environment.apiUrl + `/files/${fileId}`);
 	}
 }

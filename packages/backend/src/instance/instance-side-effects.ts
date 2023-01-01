@@ -12,7 +12,7 @@ import { flowVersionRepo } from "../flows/flow-version/flow-version-repo";
 import { triggerUtils } from "../helper/trigger-utils";
 
 export const instanceSideEffects = {
-  async enable(instance: Partial<Instance>): Promise<void> {
+  async enable(instance: Instance): Promise<void> {
     if (
       instance.status === InstanceStatus.DISABLED ||
       instance.flowIdToVersionId == null ||
@@ -31,11 +31,19 @@ export const instanceSideEffects = {
     });
 
     await lockVersions({
-      collectionVersion: collectionVersion,
+      collectionVersion,
       flowVersions,
     });
 
-    const enableTriggers = flowVersions.map((version) => triggerUtils.enable(collectionVersion.collectionId, version));
+    const enableTriggers = flowVersions.map(
+      async (flowVersion) =>
+        await triggerUtils.enable({
+          instanceId: instance.id,
+          collectionId: instance.collectionId,
+          collectionVersionId: instance.collectionVersionId,
+          flowVersion,
+        })
+    );
 
     await Promise.all(enableTriggers);
   },

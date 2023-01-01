@@ -158,6 +158,7 @@ export class TestFlowModalComponent implements OnInit {
 			);
 	}
 	setStatusChecker(flowId: string, runId: string) {
+
 		this.instanceRunStatusChecker$ = interval(1500).pipe(
 			takeUntil(this.testRunSnackbar.instance.exitButtonClicked),
 			switchMap(() => this.instanceRunService.get(runId)),
@@ -166,7 +167,7 @@ export class TestFlowModalComponent implements OnInit {
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('flow.tested', instanceRun);
 					}
-					return this.flowService.logs(instanceRun.logsFileId).pipe(
+					return this.flowService.loadStateLogs(instanceRun.logsFileId).pipe(
 						map(state => {
 							return { ...instanceRun, state: state };
 						})

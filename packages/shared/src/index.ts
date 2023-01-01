@@ -24,7 +24,7 @@ export {CodeAction, PieceAction, LoopOnItemsAction, StorageAction, StorageAction
 export {StoreEntry, StoreEntryId} from './store-entry/store-entry';
 export {User, UserStatus, UserId} from './user/user';
 export { StepOutput } from "./flow-run/execution/step-output";
-export { ExecuteTestRequest} from './flow-worker/execute-test-request';
+export {CreateFlowRunRequest} from './flow-run/create-flow-run-request';
 export {Trigger, EmptyTrigger, PieceTriggerSettings, ScheduleTriggerSettings, PieceTrigger, ScheduleTrigger, WebhookTrigger, TriggerType} from './flows/triggers/trigger';
 export {Collection, CollectionId} from './collections/collection';
 export {CollectionVersion, CollectionVersionState, CollectionVersionId} from './collections/collection-version';
