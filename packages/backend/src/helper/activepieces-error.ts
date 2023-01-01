@@ -60,7 +60,8 @@ export interface InstanceNotFoundErrorParams
   extends BaseErrorParams<
     ErrorCode.INSTANCE_NOT_FOUND,
     {
-      id: InstanceId;
+      id?: InstanceId;
+      collectionId?: CollectionId;
     }
   > {}
 

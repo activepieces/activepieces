@@ -18,6 +18,7 @@ import { flagModule } from "./flags/flag.module";
 import { codeModule } from "./workers/code-worker/code.module";
 import { flowWorkerModule } from "./workers/flow-worker/flow-worker-module";
 import cors from '@fastify/cors'
+import { webhookModule } from "./webhooks/webhook-module";
 
 declare module "fastify" {
   export interface FastifyRequest {
@@ -47,6 +48,7 @@ app.register(piecesController);
 app.register(oauth2Module);
 app.register(instanceModule);
 app.register(flowRunModule);
+app.register(webhookModule);
 
 app.setErrorHandler(function (error, request, reply) {
   if (error instanceof ActivepiecesError) {
