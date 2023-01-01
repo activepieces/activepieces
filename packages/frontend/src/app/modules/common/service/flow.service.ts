@@ -105,7 +105,7 @@ export class FlowService {
 				request
 			)
 			.pipe(switchMap(run => {
-					if (run.status !== ExecutionOutputStatus.RUNNING && run.logsFileId) {
+					if (run.status !== ExecutionOutputStatus.RUNNING && run.logsFileId !== null) {
 						return this.logs(run.logsFileId).pipe(
 							map(state => {
 								return { ...run, state: state };

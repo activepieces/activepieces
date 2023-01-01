@@ -74,7 +74,7 @@ async function executeFlow(request: ExecutionRequest) {
     await flowLock();
   }
   console.log(
-    "[" + request.runId + "] Finished executing flow " + flowVersion +  + " in sandbox " + sandbox.boxId
+    "[" + request.runId + "] Finished executing flow " + flowVersion.id +  + " in sandbox " + sandbox.boxId
   );
 }
 
