@@ -23,7 +23,7 @@ export class CollectionsTableComponent implements OnInit {
 	createCollection$: Observable<Flow>;
 	dataSource!: CollectionsTableDataSource;
 	displayedColumns = ['name', 'created', 'action'];
-	collectionArchived$: Subject<boolean> = new Subject();
+	collectionDeleted$: Subject<boolean> = new Subject();
 	areThereCollections$: Observable<boolean>;
 	constructor(
 		private router: Router,
@@ -43,7 +43,7 @@ export class CollectionsTableComponent implements OnInit {
 			this.paginator,
 			this.projectService,
 			this.collectionService,
-			this.collectionArchived$.asObservable().pipe(startWith(true))
+			this.collectionDeleted$.asObservable().pipe(startWith(true))
 		);
 		this.areThereCollections$ = this.activatedRoute.data.pipe(
 			map(res => {
@@ -57,12 +57,12 @@ export class CollectionsTableComponent implements OnInit {
 		this.router.navigate([link]);
 	}
 
-	archiveCollection(collection: Collection) {
+	deleteCollection(collection: Collection) {
 		const dialogRef = this.dialogService.open(DeleteCollectionDialogComponent, { data: { ...collection } });
 		this.archiveCollectionDialogClosed$ = dialogRef.beforeClosed().pipe(
 			tap(res => {
 				if (res) {
-					this.collectionArchived$.next(true);
+					this.collectionDeleted$.next(true);
 				}
 			}),
 			map(() => {
@@ -86,7 +86,7 @@ export class CollectionsTableComponent implements OnInit {
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('collection.created [Builder]', collection);
 					}
-					return this.flowService.create({collectionId: collection.id, displayName: 'Flow 1'} );
+					return this.flowService.create({ collectionId: collection.id, displayName: 'Flow 1' });
 				}),
 				tap(flow => {
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
