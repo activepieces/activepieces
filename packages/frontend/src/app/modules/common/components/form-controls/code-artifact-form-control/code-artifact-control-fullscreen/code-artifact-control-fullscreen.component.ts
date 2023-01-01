@@ -129,6 +129,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 					return this.codeService.executeTest(this.codeFilesForm.getRawValue(), context);
 				}),
 				tap(result => {
+					debugger;
 					const outputResult = this.codeService.beautifyJson(result.output);
 					const consoleResult = this.getConsoleResult(result);
 					this.testResultForm.setValue({ outputResult: outputResult, consoleResult: consoleResult });

@@ -188,8 +188,8 @@ export class StepTypeSidebarComponent implements OnInit {
 						type: ActionType.CODE,
 						settings: {
 							artifact: this.codeService.helloWorldBase64(),
-							artifactSourceId: undefined,
-							artifactPackagedId: undefined,
+							artifactSourceId: '',
+							artifactPackagedId: '',
 							input: {},
 						},
 					},

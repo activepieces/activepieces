@@ -47,7 +47,6 @@
     "cron-expression-validator": "^1.0.20",
     "cronstrue": "^2.10.0",
     "flatpickr": "^4.6.9",
-    "shared": "workspace:*",
     "font-awesome": "^4.7.0",
     "http-status-codes": "^2.1.4",
     "jshint": "^2.13.5",
@@ -60,6 +59,7 @@
     "posthog-js": "^1.38.1",
     "prismjs": "^1.28.0",
     "rxjs": "~7.8.0",
+    "shared": "workspace:*",
     "tslib": "^2.3.0",
     "zone.js": "~0.11.4"
   },
@@ -73,6 +73,7 @@
     "@angular/cli": "^15.0.4",
     "@angular/compiler-cli": "^15.0.4",
     "@ngrx/eslint-plugin": "^15.1.0",
+    "@schematics/angular": "^15.0.4",
     "@types/jasmine": "~3.10.0",
     "@types/node": "^12.11.1",
     "@typescript-eslint/eslint-plugin": "5.27.1",

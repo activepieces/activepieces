@@ -171,6 +171,7 @@ importers:
       '@ngrx/eslint-plugin': ^15.1.0
       '@ngrx/store': ^15.1.0
       '@ngrx/store-devtools': ^15.1.0
+      '@schematics/angular': ^15.0.4
       '@types/jasmine': ~3.10.0
       '@types/node': ^12.11.1
       '@types/prismjs': ^1.9.0
@@ -268,6 +269,7 @@ importers:
       '@angular/cli': 15.0.4
       '@angular/compiler-cli': 15.0.4_ewn2ril7hiljdjavj4fhvjxokq
       '@ngrx/eslint-plugin': 15.1.0_d6qaxtm4z57fslwcbi4d5wrunu
+      '@schematics/angular': 15.0.4
       '@types/jasmine': 3.10.7
       '@types/node': 12.20.55
       '@typescript-eslint/eslint-plugin': 5.27.1_ljg35agbu6zme5q357gz5ah2ui

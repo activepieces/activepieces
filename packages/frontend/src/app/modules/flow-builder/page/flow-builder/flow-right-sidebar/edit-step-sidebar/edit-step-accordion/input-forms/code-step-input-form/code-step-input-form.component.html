@@ -6,13 +6,13 @@
     </div>
     <div>
       <div class="ap-mb-2 ap-pointer-events-none">Code</div>
-      <app-code-artifact-form-control 
-        *ngIf="_stepArtifact$ |async; else loading" formControlName="artifact"></app-code-artifact-form-control>
+      <app-code-artifact-form-control *ngIf="_stepArtifact$ |async; else loading"
+        formControlName="artifact"></app-code-artifact-form-control>
     </div>
   </div>
 </form>
 
-<ng-container *ngIf="inputControlValueChanged$ | async"></ng-container>
+<ng-container *ngIf="formValueChanged$ | async"></ng-container>
 <ng-template #loading>
   <div class="ap-flex ap-items-center ap-justify-center artifact-loading-container">
     <app-loading-icon [whiteLoader]="true"></app-loading-icon>
