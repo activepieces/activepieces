@@ -13,7 +13,7 @@ import {
 	ChevronDropdownOption,
 	ChevronDropdownOptionType,
 } from '../../../components/chevron-dropdown-menu/chevron-dropdown-option';
-import { Collection } from 'shared';
+import { Collection, Instance } from 'shared';
 
 @Component({
 	selector: 'app-flow-builder-header',
@@ -28,6 +28,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 	viewMode$: Observable<boolean>;
 	collectionActions$: Observable<ChevronDropdownOption[]>;
 	newCollectionCheck$: Observable<Params>;
+	collectionInstance$: Observable<Instance | undefined>;
 	collectionNameHovered = false;
 	constructor(
 		private store: Store,
@@ -38,6 +39,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
+		this.collectionInstance$ = this.store.select(BuilderSelectors.selectCurrentCollectionInstance);
 		this.collection$ = this.store.select(BuilderSelectors.selectCurrentCollection);
 		this.flowsCount$ = this.store.select(BuilderSelectors.selectFlowsCount);
 		this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);

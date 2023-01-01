@@ -14,7 +14,8 @@ export enum CollectionActionType {
 	DEPLOY_COLLECTION = '[COLLECTION] DEPLOY_COLLECTION',
 	DEPLOY_COLLECTION_FAILED = '[COLLECTION] DEPLOY_COLLECTION_FAILED',
 	DEPLOY_COLLECTION_SUCCESS = '[COLLECTION] DEPLOY_COLLECTION_SUCCESS',
-	REMOVE_INSTANCE = `[COLLECTION] REMOVE_INSTANCE`,
+	DISABLE_INSTANCE = '[COLLECTION] DISABLE_INSTANCE',
+	ENABLE_INSTANCE = `[COLLECTION] ENABLE_INSTANCE`,
 }
 
 export const CollectionModifyingState = [
@@ -26,7 +27,6 @@ export const CollectionModifyingState = [
 
 export const changeName = createAction(CollectionActionType.CHANGE_NAME, props<{ displayName: string }>());
 
-export const removeInstance = createAction(CollectionActionType.REMOVE_INSTANCE);
 export const changeDescription = createAction(CollectionActionType.CHANGE_NAME, props<{ description: string }>());
 export const updateConfig = createAction(
 	CollectionActionType.UPDATE_CONFIG,
@@ -50,7 +50,8 @@ export const savedSuccess = createAction(
 	CollectionActionType.COLLECTION_SAVED_SUCCESS,
 	props<{ collection: Collection }>()
 );
-
+export const enableInstance = createAction(CollectionActionType.ENABLE_INSTANCE);
+export const disableInstance = createAction(CollectionActionType.DISABLE_INSTANCE);
 export const deploy = createAction(CollectionActionType.DEPLOY_COLLECTION);
 export const deployFailed = createAction(CollectionActionType.DEPLOY_COLLECTION_FAILED);
 export const deploySuccess = createAction(
@@ -77,5 +78,6 @@ export const CollectionActions = {
 	deploy,
 	deploySuccess,
 	deployFailed,
-	removeInstance,
+	enableInstance,
+	disableInstance,
 };

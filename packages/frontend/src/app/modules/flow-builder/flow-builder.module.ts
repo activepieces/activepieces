@@ -59,7 +59,6 @@ import { OAuth2ConfigSettingsComponent } from './page/flow-builder/flow-left-sid
 import { DeployButtonComponent } from './page/flow-builder/flow-builder-header/deploy-button/deploy-button.component';
 import { TrackFocusDirective } from './page/flow-builder/flow-left-sidebar/run-details/steps-results-list/track-focus.directive';
 import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
-import { InstanceSettingsComponent } from './page/flow-builder/flow-builder-header/instance-settings/instance-settings.component';
 import { NewAuthenticationModalComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 import { ComponentActionInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/componet-action-input-form/component-action-input-form.component';
 import { ComponentTriggerInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/component-trigger-input-form/component-trigger-input-form.component';
@@ -68,6 +67,7 @@ import { HttpInterceptorService } from './service/interceptor.service';
 import { MatTabsModule } from '@angular/material/tabs';
 import { DeleteFlowDialogComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tab/delete-flow-dialog/delete-flow-dialog.component';
 import { DeleteStepDialogComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
+import { ToggleInstanceStateComponent } from './page/flow-builder/flow-builder-header/toggle-instance-state/toggle-instance-state.component';
 @NgModule({
 	imports: [
 		CommonModule,
@@ -133,10 +133,10 @@ import { DeleteStepDialogComponent } from './page/flow-builder/flow-item-tree/fl
 		DeployButtonComponent,
 		TrackFocusDirective,
 		CenterMatMenuDirective,
-		InstanceSettingsComponent,
 		ComponentTriggerInputFormComponent,
 		DeleteFlowDialogComponent,
 		DeleteStepDialogComponent,
+		ToggleInstanceStateComponent,
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 	exports: [FlowBuilderHeaderComponent],

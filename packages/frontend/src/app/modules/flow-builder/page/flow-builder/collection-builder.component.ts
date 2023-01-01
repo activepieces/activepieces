@@ -16,7 +16,7 @@ import { FlowItemDetailsActions } from '../../store/action/flow-items-details.ac
 import { RunDetailsService } from './flow-left-sidebar/run-details/iteration-details.service';
 import { FlowsActions } from '../../store/action/flows.action';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
-import { Collection, ExecutionOutputStatus, Instance} from 'shared';
+import { Collection, ExecutionOutputStatus, Instance } from 'shared';
 
 @Component({
 	selector: 'app-collection-builder',

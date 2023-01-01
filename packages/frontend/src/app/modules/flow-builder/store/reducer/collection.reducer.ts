@@ -12,15 +12,15 @@ const initialState: CollectionState = {
 	collection: {
 		version: {
 			id: '',
-      collectionId: "",
+			collectionId: '',
 			displayName: 'dummy',
 			state: CollectionVersionState.DRAFT,
 			configs: [],
-			created: "",
-			updated: "",
+			created: '',
+			updated: '',
 		},
-		created: "",
-		updated: "",
+		created: '',
+		updated: '',
 		id: '',
 		projectId: 'dummy',
 	},
@@ -29,7 +29,7 @@ const initialState: CollectionState = {
 const _collectionReducer = createReducer(
 	initialState,
 	on(CollectionActions.setInitial, (state, { collection, instance }): CollectionState => {
-		const clonedPiece: Collection= JSON.parse(JSON.stringify(collection));
+		const clonedPiece: Collection = JSON.parse(JSON.stringify(collection));
 		return { collection: clonedPiece, state: CollectionStateEnum.NONE, instance: instance };
 	}),
 	on(CollectionActions.changeName, (state, { displayName }): CollectionState => {
@@ -40,7 +40,7 @@ const _collectionReducer = createReducer(
 	}),
 	on(CollectionActions.savedSuccess, (state, { collection }): CollectionState => {
 		const clonedPiece: Collection = JSON.parse(JSON.stringify(collection));
-		return { collection: clonedPiece, state: CollectionStateEnum.NONE };
+		return { collection: clonedPiece, state: CollectionStateEnum.NONE, instance: state.instance };
 	}),
 	on(CollectionActions.savedFailed, (state, { error }): CollectionState => {
 		const clonedPiece: Collection = JSON.parse(JSON.stringify(state.collection));
@@ -103,9 +103,6 @@ const _collectionReducer = createReducer(
 				? clonedState.state & ~CollectionStateEnum.SAVING_FLOW
 				: clonedState.state;
 		return { ...clonedState, state: saving_deploying_state };
-	}),
-	on(CollectionActions.removeInstance, (state): CollectionState => {
-		return { ...state, instance: undefined };
 	}),
 	on(FlowsActions.deleteSuccess, (state, { saveRequestId }): CollectionState => {
 		return {

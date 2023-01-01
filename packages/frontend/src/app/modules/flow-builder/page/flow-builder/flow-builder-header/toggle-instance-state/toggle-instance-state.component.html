@@ -1,0 +1,4 @@
+<mat-slide-toggle [formControl]="toggleFormControl" color="primary"
+    matTooltip="This toggle switches the state of the instance for this collection">Enable</mat-slide-toggle>
+
+<ng-container *ngIf="instanceStateChanged$ |async "></ng-container>
