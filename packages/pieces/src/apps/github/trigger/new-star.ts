@@ -63,7 +63,7 @@ export const githubNewRepoEvent = createTrigger({
         });
     },
     async onDisable(context) {
-        const {owner, repo, webhookId} = await context.store?.get<WebhookInformation>("_trigger")!;
+        const {owner, repo, webhookId} = (await context.store?.get<WebhookInformation>("_trigger"))!;
         const request: HttpRequest<never> = {
             method: HttpMethod.DELETE,
             url: `${githubCommon.baseUrl}/repos/${owner}/${repo}/hooks/${webhookId}`,
