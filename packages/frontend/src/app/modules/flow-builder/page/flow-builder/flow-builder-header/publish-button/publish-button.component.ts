@@ -54,7 +54,7 @@ export class PublishButtonComponent implements OnInit {
 				} else if (res.isPublishing) {
 					return 'Publishing';
 				}
-				return 'Pubslih';
+				return 'Publish';
 			})
 		);
 	}
