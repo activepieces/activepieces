@@ -1,4 +1,5 @@
 import { Queue } from "bullmq";
+import Redis from "ioredis";
 import { ApId } from "shared";
 import { redisConnection } from "../../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "../../helper/activepieces-error";
@@ -30,16 +31,20 @@ export const ONE_TIME_JOB_QUEUE = "oneTimeJobs";
 export const REPEATABLE_JOB_QUEUE = "repeatableJobs";
 
 const oneTimeJobQueue = new Queue<OneTimeJobData, unknown, ApId>(ONE_TIME_JOB_QUEUE, {
-  connection: redisConnection,
-  sharedConnection: true,
+  connection: new Redis(6379, {
+    maxRetriesPerRequest: null,
+  }),
 });
+
 const repeatableJobQueue = new Queue<RepeatableJobData, unknown, ApId>(REPEATABLE_JOB_QUEUE, {
-  connection: redisConnection,
-  sharedConnection: true,
+  connection: new Redis(6379, {
+    maxRetriesPerRequest: null,
+  }),
 });
 
 export const flowQueue = {
   async add(params: AddParams): Promise<void> {
+    console.log("[flowQueue#add] params=", params);
     if (isRepeatable(params)) {
       const { id, data, cronExpression } = params;
 
@@ -52,7 +57,7 @@ export const flowQueue = {
     } else {
       const { id, data } = params;
 
-      await repeatableJobQueue.add(id, data, {
+      await oneTimeJobQueue.add(id, data, {
         jobId: id,
       });
     }

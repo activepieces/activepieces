@@ -1,5 +1,6 @@
 import { Worker } from "bullmq";
 import { ApId } from "shared";
+import Redis from "ioredis";
 import { redisConnection } from "../../database/redis-connection";
 import { flowRunService } from "../../flow-run/flow-run-service";
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from "./flow-queue";
@@ -9,18 +10,21 @@ import { OneTimeJobData, RepeatableJobData } from "./job-data";
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
   ONE_TIME_JOB_QUEUE,
   async (job) => {
+    console.log(`\n[oneTimeJobConsumer] job.id=${job.name}\n`);
     const data = job.data;
     return await flowWorker.executeFlow(data);
   },
   {
-    autorun: false,
-    connection: redisConnection,
+    connection: new Redis(6379, {
+      maxRetriesPerRequest: null,
+    }),
   }
 );
 
 const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
   REPEATABLE_JOB_QUEUE,
   async (job) => {
+    console.log(`\n[repeatableJobConsumer] job.id=${job.name}\n`);
     const { data } = job;
     return await flowRunService.start({
       instanceId: data.instanceId,
@@ -30,8 +34,9 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     });
   },
   {
-    connection: redisConnection,
-    sharedConnection: true,
+    connection: new Redis(6379, {
+      maxRetriesPerRequest: null,
+    }),
   }
 );
 
