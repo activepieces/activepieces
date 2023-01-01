@@ -9,13 +9,13 @@ export const codeController = async (fastify: FastifyInstance, options: FastifyP
       schema: ExecuteCodeRequest,
     },
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Body: ExecuteCodeRequest;
       }>,
       _reply
     ) => {
-      const bufferFromBase64 = Buffer.from(_request.body.artifact, "base64");
-      return await codeRunner.run(bufferFromBase64, _request.body.input);
+      const bufferFromBase64 = Buffer.from(request.body.artifact, "base64");
+      return await codeRunner.run(bufferFromBase64, request.body.input);
     }
   );
 };

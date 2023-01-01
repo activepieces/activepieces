@@ -58,7 +58,7 @@ export class ActionMetaService {
 		return this.connectorComponents$;
 	}
 	getConnectorActionConfigOptions(
-		req: { config_name: string; action_name: string; config: any },
+		req: { configName: string; actionName: string; config: any },
 		pieceName: string
 	) {
 		return this.http.post<DropdownItem[]>(environment.apiUrl + `/pieces/${pieceName}/options`, req);

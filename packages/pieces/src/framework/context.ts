@@ -7,7 +7,7 @@ export interface Context<T>{
     store?: Store
 }
 
-export type Store = {
+export interface Store {
     save<T>(key: string, value: T): Promise<T>;
     get<T>(key: string): Promise<T>;
 }

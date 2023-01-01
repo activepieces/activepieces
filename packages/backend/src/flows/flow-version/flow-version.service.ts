@@ -1,3 +1,4 @@
+import { getPiece, PieceProperty, Property } from "pieces";
 import {
   ActionType,
   apId,
@@ -11,6 +12,9 @@ import {
   FlowVersionId,
   FlowVersionState,
   getStep,
+  PieceActionSettings,
+  PieceTriggerSettings,
+  TriggerType,
 } from "shared";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { fileService } from "../../file/file.service";
@@ -25,7 +29,7 @@ export const flowVersionService = {
   },
   async applyOperation(flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowVersion | null> {
     request = await prepareRequest(flowVersion, request);
-    const mutatedFlowVersion: FlowVersion = flowHelper.apply(flowVersion, request);
+    let mutatedFlowVersion: FlowVersion = flowHelper.apply(flowVersion, request);
     await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>);
     return await flowVersionRepo.findOneBy({
       id: flowVersion.id,
@@ -67,17 +71,27 @@ async function prepareRequest(flowVersion: FlowVersion, request: FlowOperationRe
   const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request));
   switch (clonedRequest.type) {
     case FlowOperationType.ADD_ACTION:
-      if (clonedRequest.request.action.type === ActionType.CODE) {
+      clonedRequest.request.action.valid = true;
+      if (clonedRequest.request.action.type === ActionType.PIECE) {
+        clonedRequest.request.action.valid = validateAction(clonedRequest.request.action.settings);
+      } else if (clonedRequest.request.action.type === ActionType.CODE) {
         const codeSettings: CodeActionSettings = clonedRequest.request.action.settings;
         await uploadArtifact(codeSettings);
       }
       break;
     case FlowOperationType.UPDATE_ACTION:
-      if (clonedRequest.request.type === ActionType.CODE) {
+      clonedRequest.request.valid = true;
+      if (clonedRequest.request.type === ActionType.PIECE) {
+        clonedRequest.request.valid = validateAction(clonedRequest.request.settings);
+      } else if (clonedRequest.request.type === ActionType.CODE) {
         const codeSettings: CodeActionSettings = clonedRequest.request.settings;
         await uploadArtifact(codeSettings);
         const previousStep = getStep(flowVersion, clonedRequest.request.name);
-        if (previousStep !== undefined && previousStep.type === ActionType.CODE) {
+        if (
+          previousStep !== undefined &&
+          previousStep.type === ActionType.CODE &&
+          codeSettings.artifactSourceId !== previousStep.settings.artifactSourceId
+        ) {
           await deleteArtifact(previousStep.settings);
         }
       }
@@ -89,10 +103,59 @@ async function prepareRequest(flowVersion: FlowVersion, request: FlowOperationRe
         await deleteArtifact(previousStep.settings);
       }
       break;
+    case FlowOperationType.UPDATE_TRIGGER:
+      clonedRequest.request.valid = true;
+      if (clonedRequest.request.type === TriggerType.PIECE) {
+        clonedRequest.request.valid = validateTrigger(clonedRequest.request.settings);
+      }
+      break;
     default:
       break;
   }
   return clonedRequest;
+}
+
+function validateAction(settings: PieceActionSettings) {
+  if (settings.pieceName === undefined || settings.actionName === undefined || settings.input === undefined) {
+    return false;
+  }
+  let piece = getPiece(settings.pieceName);
+  if (piece === undefined) {
+    return false;
+  }
+  let action = piece.getAction(settings.actionName);
+  if (action === undefined) {
+    return false;
+  }
+  return validateProps(action.props, settings.input);
+}
+
+function validateTrigger(settings: PieceTriggerSettings) {
+  if (settings.pieceName === undefined || settings.triggerName === undefined || settings.input === undefined) {
+    return false;
+  }
+  let piece = getPiece(settings.pieceName);
+  if (piece === undefined) {
+    return false;
+  }
+  let trigger = piece.getTrigger(settings.triggerName);
+  if (trigger === undefined) {
+    return false;
+  }
+  return validateProps(trigger.props, settings.input);
+}
+
+// TODO replace with proper validation, currently it's only validate wether the input is there or not, It should check schema and types as well.
+function validateProps(props: Record<string, PieceProperty>, input: Record<string, unknown>) {
+  const entries = Object.entries(props);
+  for (let i = 0; i < entries.length; ++i) {
+    const property: PieceProperty = entries[i][1];
+    const name: string = entries[i][0];
+    if (property.required && input[name] === undefined) {
+      return false;
+    }
+  }
+  return true;
 }
 
 async function deleteArtifact(codeSettings: CodeActionSettings): Promise<CodeActionSettings> {

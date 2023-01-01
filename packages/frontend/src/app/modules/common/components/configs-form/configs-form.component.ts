@@ -155,7 +155,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		componentName: string
 	) {
 		const options$ = this.actionMetaDataService.getConnectorActionConfigOptions(
-			{ config_name: dropdownConfig.key, action_name: actionName, config: authConfig },
+			{ configName: dropdownConfig.key, actionName: actionName, config: authConfig },
 			componentName
 		);
 		this.optionsObservables$[dropdownConfig.key] = options$.pipe(

@@ -18,11 +18,6 @@ export const gmailSendEmailAction = createAction({
 			required: true,
 			scope: ["https://mail.google.com/"]
 		}),
-		sender: Property.ShortText({
-			displayName: 'Sender Email (From)',
-			description: undefined,
-			required: true,
-		}),
 		receiver: Property.ShortText({
 			displayName: 'receiver Email (To)',
 			description: undefined,
@@ -46,14 +41,12 @@ export const gmailSendEmailAction = createAction({
 	},
 	async run(configValue) {
 		const mailOptions = {
-			from: configValue.propsValue['sender'],
 			to: configValue.propsValue['receiver'],
 			subject: configValue.propsValue['subject'],
 			text: configValue.propsValue['body_text'],
 			html: configValue.propsValue['body_html'],
 		};
-		const emailText = `From: ${mailOptions.from}
-To: ${mailOptions.to}
+		const emailText = `To: ${mailOptions.to}
 Subject: ${mailOptions.subject}
 Content-Type: text/html
 Content-Transfer-Encoding: base64
@@ -64,10 +57,6 @@ ${mailOptions.html ? mailOptions.html : mailOptions.text}`;
 			raw: Buffer.from(emailText).toString('base64'),
 			payload: {
 				headers: [
-					{
-						name: 'from',
-						value: mailOptions.from!,
-					},
 					{
 						name: 'to',
 						value: mailOptions.to!,
@@ -82,7 +71,7 @@ ${mailOptions.html ? mailOptions.html : mailOptions.text}`;
 		};
 		const request: HttpRequest<Record<string, unknown>> = {
 			method: HttpMethod.POST,
-			url: `https://gmail.googleapis.com/gmail/v1/users/${mailOptions.from}/messages/send`,
+			url: `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`,
 			body: requestBody,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,

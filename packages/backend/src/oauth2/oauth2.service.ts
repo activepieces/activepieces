@@ -5,7 +5,7 @@ import { ClaimTokenWithSecretRequest, CloudOAuth2Config, ConfigType, OAuth2Confi
 export const oauth2Service = {
   claim: async (request: ClaimTokenWithSecretRequest): Promise<unknown> => {
     try {
-      return await axios.post(
+      return (await axios.post(
         request.tokenUrl,
         qs.stringify({
           client_id: request.clientId,
@@ -17,10 +17,10 @@ export const oauth2Service = {
         {
           headers: { "content-type": "application/x-www-form-urlencoded" },
         }
-      );
+      )).data;
     } catch (e: unknown | AxiosError) {
       if (axios.isAxiosError(e)) {
-        return e.response;
+        return e.response?.data;
       }
       return e;
     }
