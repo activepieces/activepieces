@@ -52,7 +52,11 @@ export const flowRunService = {
     return paginationHelper.createPage<FlowRun>(data, newCursor);
   },
 
-  async finish(flowRunId: FlowRunId, status: ExecutionOutputStatus, logsFileId: FileId): Promise<FlowRun | null> {
+  async finish(
+    flowRunId: FlowRunId,
+    status: ExecutionOutputStatus,
+    logsFileId: FileId | null
+  ): Promise<FlowRun | null> {
     await repo.update(flowRunId, {
       logsFileId,
       status,

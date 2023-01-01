@@ -22,7 +22,7 @@ export interface FlowRun extends BaseModel<FlowRunId> {
     collectionVersionId: CollectionVersionId,
     flowDisplayName: string;
     collectionDisplayName: string;
-    logsFileId: FileId;
+    logsFileId: FileId | null;
     status: ExecutionOutputStatus;
     startTime: string;
     finishTime: string;
