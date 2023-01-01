@@ -50,7 +50,7 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 		this.storageStepForm = this.formBuilder.group({
 			operation: new FormControl(StoreOperation.GET, { nonNullable: true, validators: [Validators.required] }),
 			key: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			value: new FormControl('', { nonNullable: true, validators: [Validators.required] })
+			value: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
 		});
 		this.storageStepForm.markAllAsTouched();
 		this.setUpListenerToOperationControl();
@@ -65,7 +65,7 @@ export class StorageStepInputFormComponent implements ControlValueAccessor {
 			this.storageStepForm.setValue({
 				operation: StoreOperation.GET,
 				key: '',
-				value: ''
+				value: '',
 			});
 			this.storageStepForm.patchValue(obj);
 			this.operationControlChecker(obj.operation);

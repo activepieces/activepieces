@@ -122,13 +122,12 @@ export class EditStepAccordionComponent implements AfterViewInit {
 
 	prepareStepDataToSave(): UpdateActionRequest | UpdateTriggerRequest {
 		const describeControlValue: { displayName: string; name: string } = this.stepForm.get('describe')!.value;
-
 		const inputControlValue = this.stepForm.get('input')!.value;
 		const stepToSave: UpdateActionRequest = JSON.parse(JSON.stringify(this._selectedStep));
 		stepToSave.displayName = describeControlValue.displayName;
 		stepToSave.settings = inputControlValue;
 		stepToSave.name = this._selectedStep.name;
-
+		stepToSave.valid = this.stepForm.valid;
 		if (this._selectedStep.type === ActionType.PIECE || this._selectedStep.type === TriggerType.PIECE) {
 			const componentSettings = {
 				...this._selectedStep.settings,

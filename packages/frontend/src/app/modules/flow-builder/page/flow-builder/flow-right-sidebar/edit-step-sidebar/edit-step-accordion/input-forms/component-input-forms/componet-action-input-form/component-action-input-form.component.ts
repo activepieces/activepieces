@@ -16,7 +16,10 @@ import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-m
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { ComponentActionInputFormSchema } from '../../input-forms-schema';
 import { DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
-import { CollectionConfig, propsConvertor } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
+import {
+	CollectionConfig,
+	propsConvertor,
+} from 'src/app/modules/common/components/configs-form/connector-action-or-config';
 declare type ActionDropdownOption = {
 	label: {
 		name: string;
