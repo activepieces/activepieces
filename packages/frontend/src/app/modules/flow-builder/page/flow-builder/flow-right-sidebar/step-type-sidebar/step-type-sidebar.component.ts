@@ -178,6 +178,7 @@ export class StepTypeSidebarComponent implements OnInit {
 			name: FlowStructureUtil.findAvailableName(flowVersion, 'step'),
 			displayName: getDefaultDisplayNameForPiece(flowItemDetails.type as ActionType, flowItemDetails.name),
 			nextAction: undefined,
+			valid: true
 		};
 		switch (actionType) {
 			case ActionType.CODE: {

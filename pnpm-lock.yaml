@@ -386,10 +386,14 @@ importers:
     specifiers:
       '@sinclair/typebox': ^0.25.16
       '@types/node': ^18.11.18
+      cron-expression-validator: ^1.0.20
+      cron-validator: ^1.3.1
       nanoid: ^3.3.4
       typescript: ^4.6.2
     dependencies:
       '@sinclair/typebox': 0.25.16
+      cron-expression-validator: 1.0.20
+      cron-validator: 1.3.1
       nanoid: 3.3.4
     devDependencies:
       '@types/node': 18.11.18
@@ -6135,6 +6139,10 @@ packages:
     engines: {node: '>=12.0.0'}
     dependencies:
       luxon: 3.2.0
+    dev: false
+
+  /cron-validator/1.3.1:
+    resolution: {integrity: sha512-C1HsxuPCY/5opR55G5/WNzyEGDWFVG+6GLrA+fW/sCTcP6A6NTjUP2AK7B8n2PyFs90kDG2qzwm8LMheADku6A==}
     dev: false
 
   /cronstrue/2.21.0:

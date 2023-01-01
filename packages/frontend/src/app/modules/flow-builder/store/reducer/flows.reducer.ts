@@ -68,7 +68,7 @@ const _flowsReducer = createReducer(
 		if (flowIndex != -1) {
 			clonedFlows[flowIndex].version = flowHelper.apply(clonedFlows[flowIndex].version!, {
 				type: FlowOperationType.UPDATE_TRIGGER,
-				request: operation
+				request: {...operation, valid: true}
 			});
 		}
 		clonedState.tabsState[state.selectedFlowId!.toString()].focusedStep = clonedFlows[flowIndex].version?.trigger as FlowItem;
@@ -107,7 +107,7 @@ const _flowsReducer = createReducer(
 		if (flowIndex != -1) {
 			clonedFlows[flowIndex].version = flowHelper.apply(clonedFlows[flowIndex].version!, {
 				type: FlowOperationType.UPDATE_ACTION,
-				request: operation
+				request: {...operation, valid: true}
 			})
 		}
 		clonedTabsState[state.selectedFlowId!.toString()] = {
