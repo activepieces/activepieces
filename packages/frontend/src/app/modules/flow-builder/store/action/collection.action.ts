@@ -11,10 +11,11 @@ export enum CollectionActionType {
 	DELETE_CONFIG_SUCCEEDED = '[COLLECTION] DELETE_CONFIG_SUCCEEDED',
 	COLLECTION_SAVED_SUCCESS = '[COLLECTION] SAVED_SUCCESS',
 	COLLECTION_SAVED_FAILED = '[COLLECTION] SAVED_FAILED',
-	DEPLOY_COLLECTION = '[COLLECTION] DEPLOY_COLLECTION',
-	DEPLOY_COLLECTION_FAILED = '[COLLECTION] DEPLOY_COLLECTION_FAILED',
-	DEPLOY_COLLECTION_SUCCESS = '[COLLECTION] DEPLOY_COLLECTION_SUCCESS',
-	REMOVE_INSTANCE = `[COLLECTION] REMOVE_INSTANCE`,
+	PUBLISH_COLLECTION = '[COLLECTION] PUBLISH_COLLECTION',
+	PUBLISH_COLLECTION_FAILED = '[COLLECTION] PUBLISH_COLLECTION_FAILED',
+	PUBLISH_COLLECTION_SUCCESS = '[COLLECTION] PUBLISH_COLLECTION_SUCCESS',
+	DISABLE_INSTANCE = '[COLLECTION] DISABLE_INSTANCE',
+	ENABLE_INSTANCE = `[COLLECTION] ENABLE_INSTANCE`,
 }
 
 export const CollectionModifyingState = [
@@ -26,7 +27,6 @@ export const CollectionModifyingState = [
 
 export const changeName = createAction(CollectionActionType.CHANGE_NAME, props<{ displayName: string }>());
 
-export const removeInstance = createAction(CollectionActionType.REMOVE_INSTANCE);
 export const changeDescription = createAction(CollectionActionType.CHANGE_NAME, props<{ description: string }>());
 export const updateConfig = createAction(
 	CollectionActionType.UPDATE_CONFIG,
@@ -50,12 +50,13 @@ export const savedSuccess = createAction(
 	CollectionActionType.COLLECTION_SAVED_SUCCESS,
 	props<{ collection: Collection }>()
 );
-
-export const deploy = createAction(CollectionActionType.DEPLOY_COLLECTION);
-export const deployFailed = createAction(CollectionActionType.DEPLOY_COLLECTION_FAILED);
-export const deploySuccess = createAction(
-	CollectionActionType.DEPLOY_COLLECTION_SUCCESS,
-	props<{ instance: Instance }>()
+export const enableInstance = createAction(CollectionActionType.ENABLE_INSTANCE);
+export const disableInstance = createAction(CollectionActionType.DISABLE_INSTANCE);
+export const publish = createAction(CollectionActionType.PUBLISH_COLLECTION);
+export const publishFailed = createAction(CollectionActionType.PUBLISH_COLLECTION_FAILED);
+export const publishSuccess = createAction(
+	CollectionActionType.PUBLISH_COLLECTION_SUCCESS,
+	props<{ instance: Instance; showSnackbar: boolean }>()
 );
 export const savedFailed = createAction(CollectionActionType.COLLECTION_SAVED_FAILED, props<{ error: any }>());
 
@@ -74,8 +75,9 @@ export const CollectionActions = {
 	savedFailed,
 	deleteConfigFailed,
 	deleteConfig,
-	deploy,
-	deploySuccess,
-	deployFailed,
-	removeInstance,
+	publish,
+	publishSuccess,
+	publishFailed,
+	enableInstance,
+	disableInstance,
 };

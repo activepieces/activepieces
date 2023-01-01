@@ -1,4 +1,3 @@
-
 import { StoreOperation, TriggerType, ActionType } from 'shared';
 declare type ConfigsAndTheirValues = { [key: string]: any };
 interface InputFormsSchemaBase {
@@ -8,11 +7,14 @@ export interface LoopStepInputFormSchema extends InputFormsSchemaBase {
 	items: string;
 }
 export interface CodeStepInputFormSchema extends InputFormsSchemaBase {
-	input: any;
+	artifact?: string;
+	artifactSourceId: string;
+	artifactPackagedId: string;
+	input: Record<string, unknown>;
 }
 
 export interface StorageStepInputFormSchema extends InputFormsSchemaBase {
-	operation: StoreOperation	;
+	operation: StoreOperation;
 	key: string;
 	value: string;
 }

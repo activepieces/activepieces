@@ -29,13 +29,21 @@ export const storeEntryService = {
   },
 };
 
-
-// TODO CONTINUE
-export const contextStore: Store = {
-  save: function <T>(key: string, value: T): Promise<T> {
-    throw new Error("Function not implemented.");
-  },
-  get: function <T>(key: string): Promise<T> {
-    throw new Error("Function not implemented.");
-  }
+export function createContextStore(collectionId: CollectionId): Store {
+  return {
+    save: async function <T>(key: string, value: T): Promise<T> {
+      const storeEntry = await storeEntryService.upsert(collectionId, {
+        key: key,
+        value: value,
+      });
+      return value;
+    },
+    get: async function <T>(key: string): Promise<T  | null> {
+      const storeEntry = await storeEntryService.getOne(collectionId,  key);
+      if(storeEntry === null){
+        return null;
+      }
+      return storeEntry.value as T;
+    },
+  };
 }

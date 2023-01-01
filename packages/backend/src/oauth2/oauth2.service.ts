@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 import qs from "qs";
-import { ClaimTokenWithSecretRequest, CloudOAuth2Config, ConfigType, OAuth2Config } from "shared";
+import { ClaimTokenFromCloudRequest, ClaimTokenWithSecretRequest, CloudOAuth2Config, ConfigType, OAuth2Config } from "shared";
 
 export const oauth2Service = {
   claim: async (request: ClaimTokenWithSecretRequest): Promise<unknown> => {
@@ -17,6 +17,19 @@ export const oauth2Service = {
         {
           headers: { "content-type": "application/x-www-form-urlencoded" },
         }
+      )).data;
+    } catch (e: unknown | AxiosError) {
+      if (axios.isAxiosError(e)) {
+        return e.response?.data;
+      }
+      return e;
+    }
+  },
+  claimWithCloud: async (request: ClaimTokenFromCloudRequest): Promise<unknown> => {
+    try {
+      return (await axios.post(
+        "https://secrets.activepieces.com/claim",
+        request
       )).data;
     } catch (e: unknown | AxiosError) {
       if (axios.isAxiosError(e)) {

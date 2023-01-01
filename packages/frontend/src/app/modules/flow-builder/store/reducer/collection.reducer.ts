@@ -12,15 +12,15 @@ const initialState: CollectionState = {
 	collection: {
 		version: {
 			id: '',
-      collectionId: "",
+			collectionId: '',
 			displayName: 'dummy',
 			state: CollectionVersionState.DRAFT,
 			configs: [],
-			created: "",
-			updated: "",
+			created: '',
+			updated: '',
 		},
-		created: "",
-		updated: "",
+		created: '',
+		updated: '',
 		id: '',
 		projectId: 'dummy',
 	},
@@ -29,7 +29,7 @@ const initialState: CollectionState = {
 const _collectionReducer = createReducer(
 	initialState,
 	on(CollectionActions.setInitial, (state, { collection, instance }): CollectionState => {
-		const clonedPiece: Collection= JSON.parse(JSON.stringify(collection));
+		const clonedPiece: Collection = JSON.parse(JSON.stringify(collection));
 		return { collection: clonedPiece, state: CollectionStateEnum.NONE, instance: instance };
 	}),
 	on(CollectionActions.changeName, (state, { displayName }): CollectionState => {
@@ -40,12 +40,12 @@ const _collectionReducer = createReducer(
 	}),
 	on(CollectionActions.savedSuccess, (state, { collection }): CollectionState => {
 		const clonedPiece: Collection = JSON.parse(JSON.stringify(collection));
-		return { collection: clonedPiece, state: CollectionStateEnum.NONE };
+		return { collection: clonedPiece, state: CollectionStateEnum.NONE, instance: state.instance };
 	}),
 	on(CollectionActions.savedFailed, (state, { error }): CollectionState => {
 		const clonedPiece: Collection = JSON.parse(JSON.stringify(state.collection));
 		console.error(error);
-		return { collection: clonedPiece, state: CollectionStateEnum.FAILED_SAVING_OR_DEPLOYING };
+		return { collection: clonedPiece, state: CollectionStateEnum.FAILED_SAVING_OR_PUBLISHING };
 	}),
 
 	on(CollectionActions.addConfig, (state, { config }): CollectionState => {
@@ -66,14 +66,14 @@ const _collectionReducer = createReducer(
 		clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
 		return clonedState;
 	}),
-	on(CollectionActions.deploy, (state): CollectionState => {
-		return { ...state, state: CollectionStateEnum.DEPLOYING | state.state };
+	on(CollectionActions.publish, (state): CollectionState => {
+		return { ...state, state: CollectionStateEnum.PUBLISHING | state.state };
 	}),
-	on(CollectionActions.deployFailed, (state): CollectionState => {
-		return { ...state, state: CollectionStateEnum.FAILED_SAVING_OR_DEPLOYING };
+	on(CollectionActions.publishFailed, (state): CollectionState => {
+		return { ...state, state: CollectionStateEnum.FAILED_SAVING_OR_PUBLISHING };
 	}),
-	on(CollectionActions.deploySuccess, (state, props): CollectionState => {
-		return { ...state, state: state.state & ~CollectionStateEnum.DEPLOYING, instance: props.instance };
+	on(CollectionActions.publishSuccess, (state, props): CollectionState => {
+		return { ...state, state: state.state & ~CollectionStateEnum.PUBLISHING, instance: props.instance };
 	}),
 	// TODO(abdulyki) add why there is flow actions inside collection reducer
 	on(FlowsActions.applyUpdateOperation, (state, { flow, saveRequestId }): CollectionState => {
@@ -93,19 +93,16 @@ const _collectionReducer = createReducer(
 		};
 	}),
 	on(FlowsActions.savedFailed, (state, {}): CollectionState => {
-		return { ...state, state: CollectionStateEnum.FAILED_SAVING_OR_DEPLOYING };
+		return { ...state, state: CollectionStateEnum.FAILED_SAVING_OR_PUBLISHING };
 	}),
 	on(FlowsActions.savedSuccess, (state, { saveRequestId, flow }): CollectionState => {
 		const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
 		//in case a new version was created after the former one was locked.
-		const saving_deploying_state =
+		const savingPublishingState =
 			saveRequestId === clonedState.lastSaveRequestId
 				? clonedState.state & ~CollectionStateEnum.SAVING_FLOW
 				: clonedState.state;
-		return { ...clonedState, state: saving_deploying_state };
-	}),
-	on(CollectionActions.removeInstance, (state): CollectionState => {
-		return { ...state, instance: undefined };
+		return { ...clonedState, state: savingPublishingState };
 	}),
 	on(FlowsActions.deleteSuccess, (state, { saveRequestId }): CollectionState => {
 		return {

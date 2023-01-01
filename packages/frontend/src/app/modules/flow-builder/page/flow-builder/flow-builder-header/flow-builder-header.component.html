@@ -6,10 +6,10 @@
       [applyClass]="true" src="assets/img/custom/pencil-underline.svg" class="ap-flex ap-items-center ap-fill-body">
     </svg-icon>
     <app-editable-text [editing]="editing" (editingChanges)="changeEditValue($event)"
-                       [value]="collection.version!.displayName" (valueChanges)="savePieceName($event)"
-                       [disableEditing]="viewMode$ | async | defaultTrue" [allowClick]="true"
-                       [cssClasses]="'ap-typography-headline-6 ap-font-bold'" class="ap-text-title"
-                       (mouseenter)="collectionNameHovered=true" (mouseleave)="collectionNameHovered=false"></app-editable-text>
+      [value]="collection.version!.displayName" (valueChanges)="savePieceName($event)"
+      [disableEditing]="viewMode$ | async | defaultTrue" [allowClick]="true"
+      [cssClasses]="'ap-typography-headline-6 ap-font-bold'" class="ap-text-title"
+      (mouseenter)="collectionNameHovered=true" (mouseleave)="collectionNameHovered=false"></app-editable-text>
     <app-chevron-dropdown-menu [hidden]="
         (viewMode$ | async | defaultFalse) || (flowsCount$ | async) === 0
       " [data]="pipeActions" (selectValueChange)="actionHandler($event)" *ngIf="!editing" [useChevron]="true"
@@ -20,10 +20,12 @@
       (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></app-icon-button>
     <div class="ap-flex-grow" #spacer></div>
     <div class="ap-flex ap-items-center ap-gap-2">
-      <app-icon-button tooltipText="Version History" [iconFilename]="'revert.svg'"
-        (buttonClicked)="openCollectionVersionsLists()" *ngIf="(viewMode$ | async) === false"></app-icon-button>
-      <app-instance-settings *ngIf="(viewMode$ | async) === false"></app-instance-settings>
-      <app-deploy-button *ngIf="(viewMode$ | async) === false"></app-deploy-button>
+      <ng-container *ngIf=" (viewMode$ | async)===false">
+        <ng-container *ngIf="collectionInstance$| async as instance">
+          <app-toggle-instance-state [collectionId]="collection.id"
+            [collectionInstance]="instance"></app-toggle-instance-state>
+        </ng-container></ng-container>
+      <app-publish-button *ngIf="(viewMode$ | async) === false"></app-publish-button>
     </div>
   </div>
 </nav>

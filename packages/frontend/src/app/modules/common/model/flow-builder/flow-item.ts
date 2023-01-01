@@ -1,5 +1,4 @@
-import { Action, Trigger } from "shared";
-
+import { Action, Trigger } from 'shared';
 
 export type FlowItemRenderInfo = {
 	boundingBox?: BoundingBox;
@@ -13,8 +12,6 @@ export type FlowItemRenderInfo = {
 };
 
 export type FlowItem = (Action | Trigger) & FlowItemRenderInfo;
-
-
 
 export interface BoundingBox {
 	width: number;

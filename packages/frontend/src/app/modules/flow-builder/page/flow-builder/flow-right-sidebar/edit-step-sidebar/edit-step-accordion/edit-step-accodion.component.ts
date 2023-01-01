@@ -9,7 +9,7 @@ import { Store } from '@ngrx/store';
 import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActionType, TriggerType, UpdateActionRequest } from 'shared';
+import { ActionType, TriggerType, UpdateActionRequest, UpdateTriggerRequest } from 'shared';
 import { FlowsActions } from 'src/app/modules/flow-builder/store/action/flows.action';
 
 @Component({
@@ -37,7 +37,6 @@ export class EditStepAccordionComponent implements AfterViewInit {
 	ActionType = ActionType;
 	TriggerType = TriggerType;
 	@Input() displayNameChanged$: Subject<string>;
-
 
 	@Input() set selectedStep(step: FlowItem) {
 		this._selectedStep = step;
@@ -100,23 +99,35 @@ export class EditStepAccordionComponent implements AfterViewInit {
 			takeUntil(this.cancelAutoSaveListener$),
 			skipWhile(() => this.stepForm.disabled),
 			tap(() => {
-				this.store.dispatch(
-					FlowsActions.updateAction({
-						operation: this.prepareStepDataToSave(),
-					})
-				);
+				if (
+					this._selectedStep.type === TriggerType.PIECE ||
+					this._selectedStep.type === TriggerType.SCHEDULE ||
+					this._selectedStep.type === TriggerType.WEBHOOK
+				) {
+					this.store.dispatch(
+						FlowsActions.updateTrigger({
+							operation: this.prepareStepDataToSave() as UpdateTriggerRequest,
+						})
+					);
+				} else {
+					this.store.dispatch(
+						FlowsActions.updateAction({
+							operation: this.prepareStepDataToSave() as UpdateActionRequest,
+						})
+					);
+				}
 			})
 		);
 	}
 
-	prepareStepDataToSave(): UpdateActionRequest {
+	prepareStepDataToSave(): UpdateActionRequest | UpdateTriggerRequest {
 		const describeControlValue: { displayName: string; name: string } = this.stepForm.get('describe')!.value;
 		const inputControlValue = this.stepForm.get('input')!.value;
 		const stepToSave: UpdateActionRequest = JSON.parse(JSON.stringify(this._selectedStep));
 		stepToSave.displayName = describeControlValue.displayName;
 		stepToSave.settings = inputControlValue;
 		stepToSave.name = this._selectedStep.name;
-
+		stepToSave.valid = this.stepForm.valid;
 		if (this._selectedStep.type === ActionType.PIECE || this._selectedStep.type === TriggerType.PIECE) {
 			const componentSettings = {
 				...this._selectedStep.settings,

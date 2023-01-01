@@ -57,7 +57,7 @@ const _flowsReducer = createReducer(
 	on(FlowsActions.selectFlow, (state, { flowId }): FlowsState => {
 		return { ...state, selectedFlowId: flowId };
 	}),
-	on(FlowsActions.updateTrigger, (state, {operation}): FlowsState => {
+	on(FlowsActions.updateTrigger, (state, { operation }): FlowsState => {
 		if (state.selectedFlowId === null) {
 			throw new Error('Selected flow id is null');
 		}
@@ -68,10 +68,11 @@ const _flowsReducer = createReducer(
 		if (flowIndex != -1) {
 			clonedFlows[flowIndex].version = flowHelper.apply(clonedFlows[flowIndex].version!, {
 				type: FlowOperationType.UPDATE_TRIGGER,
-				request: operation
+				request: { ...operation },
 			});
 		}
-		clonedState.tabsState[state.selectedFlowId!.toString()].focusedStep = clonedFlows[flowIndex].version?.trigger as FlowItem;
+		clonedState.tabsState[state.selectedFlowId!.toString()].focusedStep = clonedFlows[flowIndex].version
+			?.trigger as FlowItem;
 		return {
 			...state,
 			flows: clonedFlows,
@@ -88,7 +89,7 @@ const _flowsReducer = createReducer(
 		if (flowIndex != -1) {
 			clonedFlows[flowIndex].version = flowHelper.apply(clonedFlows[flowIndex].version!, {
 				type: FlowOperationType.ADD_ACTION,
-				request: operation
+				request: operation,
 			});
 		}
 		return {
@@ -107,8 +108,8 @@ const _flowsReducer = createReducer(
 		if (flowIndex != -1) {
 			clonedFlows[flowIndex].version = flowHelper.apply(clonedFlows[flowIndex].version!, {
 				type: FlowOperationType.UPDATE_ACTION,
-				request: operation
-			})
+				request: { ...operation },
+			});
 		}
 		clonedTabsState[state.selectedFlowId!.toString()] = {
 			...clonedState.tabsState[state.selectedFlowId!.toString()],
@@ -128,7 +129,7 @@ const _flowsReducer = createReducer(
 		if (flowIndex != -1) {
 			clonedFlows[flowIndex].version = flowHelper.apply(clonedFlows[flowIndex].version!, {
 				type: FlowOperationType.DELETE_ACTION,
-				request: operation
+				request: operation,
 			});
 		}
 		return {

@@ -1,5 +1,5 @@
 {
     "watch": ["src"],
-    "exec": "npx nx run-many --target=build --projects=pieces,engine,backend && npm install && npx nx serve backend",
+    "exec": "npx nx run-many --target=build --projects=pieces,engine,backend,shared && pnpm install && sudo npx nx serve backend",
     "ext": "ts"
   }

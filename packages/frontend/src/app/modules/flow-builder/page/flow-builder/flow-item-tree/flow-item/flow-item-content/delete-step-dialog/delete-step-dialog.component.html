@@ -3,15 +3,9 @@
 </app-dialog-title-template>
 <mat-dialog-content>
     <div class="ap-typography-body-1 ap-text-description ap-mb-4">
-        Please type "DELETE" to confirm deleting this step
+        Are you sure you want to delete {{stepName}}?
     </div>
-    <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" (submit)=" deleteStep()">
-        <mat-form-field class="ap-w-full" appearance="outline">
-            <input formControlName="confirmation" matInput type="text" placeholder="DELETE" />
-            <mat-error *ngIf="confirmationForm.controls.confirmation.invalid">Please write the confirmation message
-                correctly</mat-error>
-        </mat-form-field>
-    </form>
+
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">

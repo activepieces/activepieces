@@ -8,5 +8,5 @@ export type StoreEntryId = ApId;
 export interface StoreEntry extends BaseModel<StoreEntryId> {
     key: string;
     collectionId: CollectionId,
-    value: Buffer;
+    value: unknown;
 }

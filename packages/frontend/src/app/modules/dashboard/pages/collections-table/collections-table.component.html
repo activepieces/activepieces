@@ -12,12 +12,15 @@
         <td mat-cell *matCellDef="let collection">{{ collection.created | date: 'short' }}</td>
       </ng-container>
       <ng-container matColumnDef="action">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let collection">
-          <button mat-icon-button matTooltip="Archive" matTooltipPosition="above"
-            (click)="$event.stopImmediatePropagation(); archiveCollection(collection)">
+        <th mat-header-cell class="!ap-text-center" *matHeaderCellDef>
+          <app-button btnColor="primary" btnSize="small" (buttonClicked)="createCollection()"
+            [loading]="creatingCollection"> New Collection</app-button>
+        </th>
+        <td mat-cell *matCellDef="let collection" class="!ap-text-center">
+          <button mat-icon-button matTooltip="Delete Collection"
+            (click)="$event.stopImmediatePropagation(); deleteCollection(collection)">
             <svg-icon [svgStyle]="{ width: '18px', height: '18px' }" class="ap-flex ap-justify-center "
-              [applyClass]="true" src="assets/img/custom/dashboard/archive.svg">
+              [applyClass]="true" src="assets/img/custom/trash.svg">
             </svg-icon>
           </button>
         </td>

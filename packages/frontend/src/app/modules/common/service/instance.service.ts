@@ -10,15 +10,15 @@ import { CollectionId, Instance, InstanceId, UpsertInstanceRequest } from 'share
 export class InstanceService {
 	constructor(private http: HttpClient) {}
 
-	deploy(request : UpsertInstanceRequest): Observable<Instance> {
+	publish(request: UpsertInstanceRequest): Observable<Instance> {
 		return this.http.post<Instance>(environment.apiUrl + `/instances`, request);
 	}
-	
+
 	get(collectionId: CollectionId): Observable<Instance> {
 		return this.http.get<Instance>(environment.apiUrl + `/instances`, {
 			params: {
-				collectionId: collectionId
-			}
+				collectionId: collectionId,
+			},
 		});
 	}
 

@@ -1,7 +1,7 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, Subject, tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { Artifact } from 'src/app/modules/flow-builder/model/artifact.interface';
 import { CodeArtifactControlFullscreenComponent } from './code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 
@@ -23,16 +23,6 @@ export interface CodeArtifactForm {
 	],
 })
 export class CodeArtifactFormControlComponent implements ControlValueAccessor, OnInit {
-	@Input() autosave = true;
-	// TODO REMOVENOW
-	/** 
-	_artifactCacheKey: ArtifactCacheKey;
-	@Input() set artifactCacheKey(key: ArtifactCacheKey) {
-		this._artifactCacheKey = key;
-		if (key) this.setupCachingAndAutoSaveListener();
-	}
-	*/
-	@Input() artifactChanged$: Subject<boolean> = new Subject();
 	codeArtifactForm: FormGroup<CodeArtifactForm>;
 	codeEditorOptions = { lineNumbers: true, lineWrapping: true, theme: 'lucario', readOnly: '', mode: 'javascript' };
 	constructor(private formBuilder: FormBuilder, private dialogService: MatDialog) {
@@ -42,9 +32,7 @@ export class CodeArtifactFormControlComponent implements ControlValueAccessor, O
 		});
 	}
 	ngOnInit(): void {
-		if (!this.autosave) {
-			this.setupValueListener();
-		}
+		this.setupValueListener();
 	}
 	setDisabledState?(isDisabled: boolean): void {
 		if (isDisabled) {
@@ -85,5 +73,4 @@ export class CodeArtifactFormControlComponent implements ControlValueAccessor, O
 			})
 		);
 	}
-
 }

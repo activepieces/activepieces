@@ -1,13 +1,13 @@
 <app-dialog-title-template>
-    Archive {{collection.version!.displayName}}
+    Delete {{collection.version!.displayName}}
 </app-dialog-title-template>
 <mat-dialog-content>
     <div class="ap-typography-body-1 ap-text-description ap-mb-4">
-        Please type "ARCHIVE" to confirm archiving this collection
+        Please type "DELETE" to confirm delete this collection
     </div>
     <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" (submit)="deleteCollection()">
         <mat-form-field class="ap-w-full" appearance="outline">
-            <input formControlName="confirmation" matInput type="text" placeholder="ARCHIVE" />
+            <input formControlName="confirmation" matInput type="text" placeholder="DELETE" />
             <mat-error *ngIf="confirmationForm.controls.confirmation.invalid">Please write the confirmation message
                 correctly</mat-error>
         </mat-form-field>

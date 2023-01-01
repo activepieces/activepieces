@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "@sinclair/typebox": "^0.25.16",
+    "cron-expression-validator": "^1.0.20",
     "nanoid": "^3.3.4"
   },
   "exports": "./dist/index.js",

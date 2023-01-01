@@ -39,6 +39,7 @@ export const instanceSideEffects = {
       async (flowVersion) =>
         await triggerUtils.enable({
           instanceId: instance.id,
+          collectionId: instance.collectionId,
           collectionVersionId: instance.collectionVersionId,
           flowVersion,
         })
@@ -58,7 +59,7 @@ export const instanceSideEffects = {
       id: In(flowVersionIds),
     });
 
-    const disableTriggers = flowVersions.map(triggerUtils.disable);
+    const disableTriggers = flowVersions.map((version) => triggerUtils.disable(instance.collectionId!, version));
 
     await Promise.all(disableTriggers);
   },

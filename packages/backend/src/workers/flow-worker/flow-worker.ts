@@ -128,16 +128,15 @@ async function buildCodes(flowVersion: FlowVersion): Promise<File[]> {
 
 const getFile = async (codeActionSettings: CodeActionSettings): Promise<File> => {
   if (codeActionSettings.artifactPackagedId === undefined) {
+    console.log(`Building package for file id ${codeActionSettings.artifactSourceId}`);
     const sourceId = codeActionSettings.artifactSourceId!;
     const fileEntity = await fileService.getOne(sourceId);
     const builtFile = await codeBuilder.build(fileEntity!.data);
     const savedPackagedFile: File = await fileService.save(builtFile);
     codeActionSettings.artifactPackagedId = savedPackagedFile.id;
-    return savedPackagedFile;
-  } else {
-    const file: File = (await fileService.getOne(codeActionSettings.artifactPackagedId))!;
-    return file;
   }
+  const file: File = (await fileService.getOne(codeActionSettings.artifactPackagedId))!;
+  return file;
 };
 
 export const flowWorker = {
