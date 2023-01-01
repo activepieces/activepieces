@@ -151,11 +151,18 @@ function validateProps(props: Record<string, PieceProperty>, input: Record<strin
   for (let i = 0; i < entries.length; ++i) {
     const property: PieceProperty = entries[i][1];
     const name: string = entries[i][0];
-    if (property.required && input[name] === undefined) {
+    if (property.required && isMissing(input[name])) {
       return false;
     }
   }
   return true;
+}
+
+function isMissing(value: any) {
+  if (value !== undefined && (typeof value === "string" || value instanceof String) && value.length === 0) {
+    return true;
+  }
+  return value === undefined;
 }
 
 async function deleteArtifact(codeSettings: CodeActionSettings): Promise<CodeActionSettings> {

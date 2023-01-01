@@ -22,7 +22,7 @@ export const instanceSideEffects = {
       return;
     }
     const collectionVersion = (await collectionVersionRepo.findOneBy({
-      id: instance.collectionVersionId
+      id: instance.collectionVersionId,
     }))!;
 
     const flowVersionIds = Object.values(instance.flowIdToVersionId);
@@ -36,7 +36,7 @@ export const instanceSideEffects = {
       flowVersions,
     });
 
-    const enableTriggers = flowVersions.map(triggerUtils.enable);
+    const enableTriggers = flowVersions.map((version) => triggerUtils.enable(collectionVersion.collectionId, version));
 
     await Promise.all(enableTriggers);
   },
@@ -52,7 +52,7 @@ export const instanceSideEffects = {
       id: In(flowVersionIds),
     });
 
-    const disableTriggers = flowVersions.map(triggerUtils.disable);
+    const disableTriggers = flowVersions.map((version) => triggerUtils.disable(instance.collectionId!, version));
 
     await Promise.all(disableTriggers);
   },
