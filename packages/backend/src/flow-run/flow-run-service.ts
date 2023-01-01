@@ -62,6 +62,8 @@ export const flowRunService = {
   },
 
   async start({ instanceId, flowVersionId, collectionVersionId, payload }: StartParams): Promise<FlowRun> {
+    console.log(`[flowRunService#start] instanceId=${instanceId} flowVersionId=${flowVersionId}`);
+
     const flowVersion = await getFlowVersionOrThrow(flowVersionId);
     const collectionVersion = await getCollectionVersionOrThrow(collectionVersionId);
     const collection = await getCollectionOrThrow(collectionVersion.collectionId);

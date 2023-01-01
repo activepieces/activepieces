@@ -1,7 +1,6 @@
 import { Queue } from "bullmq";
 import Redis from "ioredis";
 import { ApId } from "shared";
-import { redisConnection } from "../../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "../../helper/activepieces-error";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
 
@@ -42,18 +41,24 @@ const repeatableJobQueue = new Queue<RepeatableJobData, unknown, ApId>(REPEATABL
   }),
 });
 
+const repeatableJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`;
+
 export const flowQueue = {
   async add(params: AddParams): Promise<void> {
     console.log("[flowQueue#add] params=", params);
     if (isRepeatable(params)) {
       const { id, data, cronExpression } = params;
 
-      await repeatableJobQueue.add(id, data, {
+      const job = await repeatableJobQueue.add(id, data, {
         jobId: id,
         repeat: {
           pattern: cronExpression,
         },
       });
+
+      const client = await repeatableJobQueue.client;
+
+      await client.set(repeatableJobKey(id), job.repeatJobKey!);
     } else {
       const { id, data } = params;
 
@@ -64,17 +69,43 @@ export const flowQueue = {
   },
 
   async remove({ id, repeatable }: RemoveParams): Promise<void> {
-    const queue = repeatable ? repeatableJobQueue : oneTimeJobQueue;
+    if (repeatable) {
+      const client = await repeatableJobQueue.client;
+      const jobKey = await client.get(repeatableJobKey(id));
 
-    const result = await queue.remove(id);
+      if (jobKey === null) {
+        throw new ActivepiecesError({
+          code: ErrorCode.JOB_REMOVAL_FAILURE,
+          params: {
+            jobId: id,
+          },
+        });
+      }
 
-    if (result === JOB_REMOVAL_FAILURE) {
-      throw new ActivepiecesError({
-        code: ErrorCode.JOB_REMOVAL_FAILURE,
-        params: {
-          jobId: id,
-        },
-      });
+      const result = await repeatableJobQueue.removeRepeatableByKey(jobKey);
+      await client.del(repeatableJobKey(id));
+
+      if (!result) {
+        throw new ActivepiecesError({
+          code: ErrorCode.JOB_REMOVAL_FAILURE,
+          params: {
+            jobId: id,
+          },
+        });
+      }
+    } else {
+      const result = await oneTimeJobQueue.remove(id);
+
+      console.log(`[flowQueue#remove]: result=${result}`);
+
+      if (result === JOB_REMOVAL_FAILURE) {
+        throw new ActivepiecesError({
+          code: ErrorCode.JOB_REMOVAL_FAILURE,
+          params: {
+            jobId: id,
+          },
+        });
+      }
     }
   },
 };
