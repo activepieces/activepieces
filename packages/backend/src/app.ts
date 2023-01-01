@@ -16,7 +16,7 @@ import { instanceModule } from "./instance/instance-module";
 import { flowRunModule } from "./flow-run/flow-run-module";
 import { flagModule } from "./flags/flag.module";
 import { codeModule } from "./workers/code-worker/code.module";
-import { flowWorkerModule } from "./workers/flow-worker/flow-worker.module";
+import { flowWorkerModule } from "./workers/flow-worker/flow-worker-module";
 import cors from '@fastify/cors'
 
 declare module "fastify" {
