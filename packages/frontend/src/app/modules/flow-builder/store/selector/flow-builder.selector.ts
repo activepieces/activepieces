@@ -40,10 +40,10 @@ export const selectCollectionState = createSelector(
 	selectBuilderState,
 	(state: GlobalBuilderState) => state.collectionState.state
 );
-export const selectIsDeploying = createSelector(
+export const selectIsPublishing = createSelector(
 	selectBuilderState,
 	(state: GlobalBuilderState) =>
-		(state.collectionState.state & CollectionStateEnum.DEPLOYING) === CollectionStateEnum.DEPLOYING
+		(state.collectionState.state & CollectionStateEnum.PUBLISHING) === CollectionStateEnum.PUBLISHING
 );
 export const selectIsSaving = createSelector(
 	selectBuilderState,
@@ -332,7 +332,7 @@ export const BuilderSelectors = {
 	selectFlowItemDetailsForConnectorComponents,
 	selectAuthConfigsDropdownOptions,
 	selectCurrentCollectionInstance,
-	selectIsDeploying,
+	selectIsPublishing,
 	selectCurrentFlowWebhookUrl,
 	selectFlowItemDetailsForConnectorComponentsTriggers,
 };

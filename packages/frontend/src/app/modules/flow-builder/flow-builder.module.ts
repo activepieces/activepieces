@@ -56,7 +56,7 @@ import { ConfigCardComponent } from './page/flow-builder/flow-left-sidebar/confi
 import { VariableListComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/configs-list/configs-list.component';
 import { CreateEditConfigModalComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/create-or-edit-config-modal.component';
 import { OAuth2ConfigSettingsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/o-auth2-config-settings/o-auth2-config-settings.component';
-import { DeployButtonComponent } from './page/flow-builder/flow-builder-header/deploy-button/deploy-button.component';
+import { PublishButtonComponent } from './page/flow-builder/flow-builder-header/publish-button/publish-button.component';
 import { TrackFocusDirective } from './page/flow-builder/flow-left-sidebar/run-details/steps-results-list/track-focus.directive';
 import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
 import { NewAuthenticationModalComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
@@ -130,7 +130,7 @@ import { ToggleInstanceStateComponent } from './page/flow-builder/flow-builder-h
 		OAuth2ConfigSettingsComponent,
 		ComponentActionInputFormComponent,
 		NewAuthenticationModalComponent,
-		DeployButtonComponent,
+		PublishButtonComponent,
 		TrackFocusDirective,
 		CenterMatMenuDirective,
 		ComponentTriggerInputFormComponent,

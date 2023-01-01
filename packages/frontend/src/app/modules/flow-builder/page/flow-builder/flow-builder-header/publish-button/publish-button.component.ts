@@ -5,13 +5,13 @@ import { CollectionActions } from 'src/app/modules/flow-builder/store/action/col
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
 
 @Component({
-	selector: 'app-deploy-button',
-	templateUrl: './deploy-button.component.html',
-	styleUrls: ['./deploy-button.component.scss'],
+	selector: 'app-publish-button',
+	templateUrl: './publish-button.component.html',
+	styleUrls: ['./publish-button.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DeployButtonComponent implements OnInit {
-	collectionState$: Observable<{ isSaving: boolean; isDeploying: boolean }>;
+export class PublishButtonComponent implements OnInit {
+	collectionState$: Observable<{ isSaving: boolean; isPublishing: boolean }>;
 	isDeployingOrIsSaving$: Observable<boolean>;
 	deploying$: Observable<boolean> = of(false);
 	disableDeployButton$: Observable<boolean>;
@@ -26,14 +26,14 @@ export class DeployButtonComponent implements OnInit {
 	private setCollectionStateListener() {
 		this.collectionState$ = combineLatest({
 			isSaving: this.store.select(BuilderSelectors.selectIsSaving),
-			isDeploying: this.store.select(BuilderSelectors.selectIsDeploying),
+			isPublishing: this.store.select(BuilderSelectors.selectIsPublishing),
 		});
 		this.disableDeployButton$ = combineLatest({
-			deploymentAndSaving: this.collectionState$,
+			publishingSavingStates: this.collectionState$,
 			AllFlowsValidty: this.store.select(BuilderSelectors.selectFlowsValidity),
 		}).pipe(
 			map(res => {
-				return !res.AllFlowsValidty || res.deploymentAndSaving.isDeploying || res.deploymentAndSaving.isSaving;
+				return !res.AllFlowsValidty || res.publishingSavingStates.isPublishing || res.publishingSavingStates.isSaving;
 			})
 		);
 		this.buttonTooltipText$ = this.disableDeployButton$.pipe(
@@ -42,7 +42,7 @@ export class DeployButtonComponent implements OnInit {
 				if (res) {
 					return 'Please fix all flows';
 				} else {
-					return 'Deploy collection';
+					return 'Publish collection';
 				}
 			})
 		);
@@ -51,15 +51,15 @@ export class DeployButtonComponent implements OnInit {
 			map(res => {
 				if (res.isSaving) {
 					return 'Saving';
-				} else if (res.isDeploying) {
-					return 'Deploying';
+				} else if (res.isPublishing) {
+					return 'Publishing';
 				}
-				return 'Deploy';
+				return 'Pubslih';
 			})
 		);
 	}
 
-	deploy() {
-		this.store.dispatch(CollectionActions.deploy());
+	publish() {
+		this.store.dispatch(CollectionActions.publish());
 	}
 }

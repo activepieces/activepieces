@@ -25,7 +25,7 @@
           <app-toggle-instance-state [collectionId]="collection.id"
             [collectionInstance]="instance"></app-toggle-instance-state>
         </ng-container></ng-container>
-      <app-deploy-button *ngIf="(viewMode$ | async) === false"></app-deploy-button>
+      <app-publish-button *ngIf="(viewMode$ | async) === false"></app-publish-button>
     </div>
   </div>
 </nav>

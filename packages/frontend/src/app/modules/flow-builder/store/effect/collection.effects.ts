@@ -106,12 +106,12 @@ export class CollectionEffects {
 		{ dispatch: false }
 	);
 
-	deployFailed$ = createEffect(
+	publishFailed$ = createEffect(
 		() => {
 			return this.actions$.pipe(
-				ofType(CollectionActions.deployFailed),
+				ofType(CollectionActions.publishFailed),
 				tap(action => {
-					this.snackBar.open(`Deployment failed`, '', {
+					this.snackBar.open(`Publishing failed`, '', {
 						panelClass: 'error',
 						duration: 5000,
 					});
@@ -120,24 +120,26 @@ export class CollectionEffects {
 		},
 		{ dispatch: false }
 	);
-	deploySuccess$ = createEffect(
+	publishingSuccess$ = createEffect(
 		() => {
 			return this.actions$.pipe(
-				ofType(CollectionActions.deploySuccess),
+				ofType(CollectionActions.publishSuccess),
 				tap(action => {
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('collection.enable', action.instance);
 					}
-					this.snackBar.open(`Deployment finished`);
+					if (action.showSnackbar) {
+						this.snackBar.open(`Publishing finished`);
+					}
 				})
 			);
 		},
 		{ dispatch: false }
 	);
 
-	deploy$ = createEffect(() => {
+	publish$ = createEffect(() => {
 		return this.actions$.pipe(
-			ofType(CollectionActions.deploy),
+			ofType(CollectionActions.publish),
 			concatLatestFrom(action => [this.store.select(BuilderSelectors.selectCurrentCollection)]),
 			switchMap(([action, collection]) => {
 				return this.instanceService
@@ -147,11 +149,11 @@ export class CollectionEffects {
 					})
 					.pipe(
 						switchMap(instance => {
-							return of(CollectionActions.deploySuccess({ instance: instance }));
+							return of(CollectionActions.publishSuccess({ instance: instance, showSnackbar: true }));
 						}),
 						catchError(err => {
 							console.error(err);
-							return of(CollectionActions.deployFailed());
+							return of(CollectionActions.publishFailed());
 						})
 					);
 			})
@@ -170,11 +172,11 @@ export class CollectionEffects {
 					})
 					.pipe(
 						switchMap(instance => {
-							return of(CollectionActions.deploySuccess({ instance: instance }));
+							return of(CollectionActions.publishSuccess({ instance: instance, showSnackbar: false }));
 						}),
 						catchError(err => {
 							console.error(err);
-							return of(CollectionActions.deployFailed());
+							return of(CollectionActions.publishFailed());
 						})
 					);
 			})
@@ -193,11 +195,11 @@ export class CollectionEffects {
 					})
 					.pipe(
 						switchMap(instance => {
-							return of(CollectionActions.deploySuccess({ instance: instance }));
+							return of(CollectionActions.publishSuccess({ instance: instance, showSnackbar: false }));
 						}),
 						catchError(err => {
 							console.error(err);
-							return of(CollectionActions.deployFailed());
+							return of(CollectionActions.publishFailed());
 						})
 					);
 			})
