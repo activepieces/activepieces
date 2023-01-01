@@ -9,11 +9,8 @@ import {
   CollectionVersionId,
   ExecutionOutput,
   File,
-  FlowId,
-  FlowRun,
   FlowVersion,
   FlowVersionId,
-  Instance,
   PrincipalType,
   StepOutput,
   StepOutputStatus,
@@ -26,11 +23,10 @@ import { redisLock } from "../../database/redis-connection";
 import { fileService } from "../../file/file.service";
 import { codeBuilder } from "../code-worker/code-builder";
 import { tokenUtils } from "../../authentication/lib/token-utils";
-import { collectionService } from "../../collections/collection.service";
 import { flowRunService } from "../../flow-run/flow-run-service";
-import { JobData } from "./job-data";
+import { OneTimeJobData } from "./job-data";
 
-async function executeFlow(jobData: JobData): Promise<void> {
+async function executeFlow(jobData: OneTimeJobData): Promise<void> {
   const flowVersion = (await flowVersionService.getOne(jobData.flowVersionId))!;
   const collectionVersion = (await collectionVersionService.getOne(jobData.collectionVersionId))!;
 
@@ -143,49 +139,5 @@ const getFile = async (codeActionSettings: CodeActionSettings): Promise<File> =>
 };
 
 export const flowWorker = {
-  async executeInstance(instance: Instance, flowId: FlowId, payload: undefined) {
-    const flowVersionId: FlowVersionId = instance.flowIdToVersionId[flowId];
-    const request: JobData = {
-      runId: apId(),
-      instanceId: instance.id,
-      flowVersionId,
-      collectionVersionId: instance.collectionVersionId,
-      payload,
-    };
-    const FlowRun = await createRun(request);
-    // TODO THIS IS ASYNC, WE SHOULD JUST ADD IT TO QUEUE
-    await executeFlow(request);
-    return FlowRun;
-  },
-  async executeTest(
-    collectionVersionId: CollectionVersionId,
-    flowVersionId: FlowVersionId,
-    payload: unknown
-  ): Promise<FlowRun> {
-    const request: JobData = {
-      runId: apId(),
-      instanceId: null,
-      flowVersionId,
-      collectionVersionId,
-      payload,
-    };
-    const FlowRun = await createRun(request);
-    // TODO THIS IS ASYNC, WE SHOULD JUST ADD IT TO QUEUE
-    await executeFlow(request);
-    return FlowRun;
-  },
+  executeFlow,
 };
-
-// TODO NEED TO BE OPTIMIZED SINCE WE ARE FETCHING THESE INFO FROM DATABASE TWICE
-async function createRun(request: JobData): Promise<FlowRun> {
-  const collectionVersion = (await collectionVersionService.getOne(request.collectionVersionId))!;
-  const collection = (await collectionService.getOne(collectionVersion.collectionId, null))!;
-  const flowVersion = (await flowVersionService.getOne(request.flowVersionId))!;
-  return await flowRunService.start(
-    request.runId,
-    request.instanceId,
-    collection.projectId,
-    flowVersion,
-    collectionVersion
-  );
-}

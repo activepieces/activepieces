@@ -10,10 +10,9 @@ import { In } from "typeorm";
 import { collectionVersionRepo } from "../collections/collection-version/collection-version-repo";
 import { flowVersionRepo } from "../flows/flow-version/flow-version-repo";
 import { triggerUtils } from "../helper/trigger-utils";
-import { InstanceSchema } from "./instance-entity";
 
 export const instanceSideEffects = {
-  async enable(instance: Partial<Instance>): Promise<void> {
+  async enable(instance: Instance): Promise<void> {
     if (
       instance.status === InstanceStatus.DISABLED ||
       instance.flowIdToVersionId == null ||
@@ -22,7 +21,7 @@ export const instanceSideEffects = {
       return;
     }
     const collectionVersion = (await collectionVersionRepo.findOneBy({
-      id: instance.collectionVersionId
+      id: instance.collectionVersionId,
     }))!;
 
     const flowVersionIds = Object.values(instance.flowIdToVersionId);
@@ -32,11 +31,18 @@ export const instanceSideEffects = {
     });
 
     await lockVersions({
-      collectionVersion: collectionVersion,
+      collectionVersion,
       flowVersions,
     });
 
-    const enableTriggers = flowVersions.map(triggerUtils.enable);
+    const enableTriggers = flowVersions.map(
+      async (flowVersion) =>
+        await triggerUtils.enable({
+          instanceId: instance.id,
+          collectionVersionId: instance.collectionVersionId,
+          flowVersion,
+        })
+    );
 
     await Promise.all(enableTriggers);
   },

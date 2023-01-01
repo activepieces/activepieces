@@ -1,14 +1,4 @@
-import {
-  apId,
-  CollectionId,
-  Cursor,
-  Instance,
-  InstanceId,
-  InstanceStatus,
-  ProjectId,
-  SeekPage,
-  UpsertInstanceRequest,
-} from "shared";
+import { apId, CollectionId, Instance, InstanceId, UpsertInstanceRequest } from "shared";
 import { collectionService } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
 import { flowService } from "../flows/flow-service";
@@ -35,7 +25,7 @@ export const instanceService = {
 
     const flowIdToVersionId = Object.fromEntries(flowPage.data.map((flow) => [flow.id, flow.version!.id]));
 
-    const oldInstance: Partial<Instance | null> = await instanceRepo.findOneBy({ collectionId: collectionId });
+    const oldInstance: Partial<Instance | null> = await instanceRepo.findOneBy({ collectionId });
 
     if (oldInstance !== null && oldInstance !== undefined) {
       await instanceRepo.delete(oldInstance.id!);
@@ -53,9 +43,9 @@ export const instanceService = {
     const savedInstance = await instanceRepo.save(newInstance);
 
     if (oldInstance !== null) {
-      instanceSideEffects.disable(oldInstance);
+      await instanceSideEffects.disable(oldInstance);
     }
-    instanceSideEffects.enable(newInstance);
+    await instanceSideEffects.enable(savedInstance);
     return savedInstance;
   },
 
@@ -66,9 +56,9 @@ export const instanceService = {
   },
 
   async deleteOne({ id }: DeleteOneParams): Promise<void> {
-    const oldInstance: Partial<Instance | null> = await instanceRepo.findOneBy({ id: id });
+    const oldInstance: Partial<Instance | null> = await instanceRepo.findOneBy({ id });
     if (oldInstance !== null) {
-      instanceSideEffects.disable(oldInstance);
+      await instanceSideEffects.disable(oldInstance);
     }
     await instanceRepo.delete({
       id,

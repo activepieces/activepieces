@@ -7,9 +7,7 @@ import {
   UpdateCollectionRequest,
 } from "shared";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
-import { databaseConnection } from "../../database/database-connection";
 import { collectionVersionRepo } from "./collection-version-repo";
-
 
 export const collectionVersionService = {
   async updateVersion(

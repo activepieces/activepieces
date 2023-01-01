@@ -2,13 +2,22 @@ import { Queue } from "bullmq";
 import { ApId } from "shared";
 import { redisConnection } from "../../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "../../helper/activepieces-error";
-import { JobData } from "./job-data";
+import { OneTimeJobData, RepeatableJobData } from "./job-data";
 
-interface AddParams {
+interface BaseAddParams {
   id: ApId;
-  data: JobData;
-  cronExpression?: string | undefined;
 }
+
+interface RepeatableJobAddParams extends BaseAddParams {
+  data: RepeatableJobData;
+  cronExpression: string;
+}
+
+interface OneTimeJobAddParams extends BaseAddParams {
+  data: OneTimeJobData;
+}
+
+type AddParams = OneTimeJobAddParams | RepeatableJobAddParams;
 
 interface RemoveParams {
   id: ApId;
@@ -17,21 +26,30 @@ interface RemoveParams {
 
 const JOB_REMOVAL_FAILURE = 0;
 
-const oneTimeJobQueue = new Queue<JobData, unknown, ApId>("oneTimeJobs", { connection: redisConnection });
-const repeatableJobQueue = new Queue<JobData, unknown, ApId>("repeatableJobs", { connection: redisConnection });
+export const ONE_TIME_JOB_QUEUE = "oneTimeJobs";
+export const REPEATABLE_JOB_QUEUE = "repeatableJobs";
+
+const oneTimeJobQueue = new Queue<OneTimeJobData, unknown, ApId>(ONE_TIME_JOB_QUEUE, { connection: redisConnection });
+const repeatableJobQueue = new Queue<RepeatableJobData, unknown, ApId>(REPEATABLE_JOB_QUEUE, {
+  connection: redisConnection,
+});
 
 export const flowQueue = {
-  async add({ id, data, cronExpression }: AddParams): Promise<void> {
-    if (cronExpression === undefined) {
-      await oneTimeJobQueue.add(id, data, {
-        jobId: id,
-      });
-    } else {
+  async add(params: AddParams): Promise<void> {
+    if (isRepeatable(params)) {
+      const { id, data, cronExpression } = params;
+
       await repeatableJobQueue.add(id, data, {
         jobId: id,
         repeat: {
           pattern: cronExpression,
         },
+      });
+    } else {
+      const { id, data } = params;
+
+      await repeatableJobQueue.add(id, data, {
+        jobId: id,
       });
     }
   },
@@ -50,4 +68,8 @@ export const flowQueue = {
       });
     }
   },
+};
+
+const isRepeatable = (params: AddParams): params is RepeatableJobAddParams => {
+  return (params as RepeatableJobAddParams).cronExpression !== undefined;
 };
