@@ -1,12 +1,12 @@
 import {Context} from "../context";
-import {PropertySchema, StaticPropsValue} from "../property/prop.model";
+import {PieceProperty, StaticPropsValue} from "../property/prop.model";
 
 export enum TriggerStrategy {
     POLLING = 'POLLING',
     WEBHOOK = 'WEBHOOK'
 }
 
-class ITrigger<T extends PropertySchema> {
+class ITrigger<T extends PieceProperty> {
     constructor(
         public readonly name: string,
         public readonly displayName: string,
@@ -23,7 +23,7 @@ class ITrigger<T extends PropertySchema> {
 
 export type Trigger = ITrigger<any>;
 
-export function createTrigger<T extends PropertySchema>(request: {
+export function createTrigger<T extends PieceProperty>(request: {
     name: string;
     displayName: string;
     description: string;

@@ -53,7 +53,7 @@ export interface PieceAction extends BaseAction<ActionType.PIECE, PieceActionSet
 export const PieceActionSchema = Type.Object({
   name: Type.String({}),
   displayName: Type.String({}),
-  type: Type.Literal(ActionType.CODE),
+  type: Type.Literal(ActionType.PIECE),
   settings: Type.Object({
     pieceName: Type.String({}),
     actionName: Type.String({}),

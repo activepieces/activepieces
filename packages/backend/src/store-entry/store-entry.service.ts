@@ -1,3 +1,4 @@
+import { Store } from "pieces";
 import { apId, CollectionId, PutStoreEntryRequest, StoreEntry } from "shared";
 import { databaseConnection } from "../database/database-connection";
 import { StoreEntryEntity } from "./store-entry-entity";
@@ -27,3 +28,14 @@ export const storeEntryService = {
     });
   },
 };
+
+
+// TODO CONTINUE
+export const contextStore: Store = {
+  save: function <T>(key: string, value: T): Promise<T> {
+    throw new Error("Function not implemented.");
+  },
+  get: function <T>(key: string): Promise<T> {
+    throw new Error("Function not implemented.");
+  }
+}

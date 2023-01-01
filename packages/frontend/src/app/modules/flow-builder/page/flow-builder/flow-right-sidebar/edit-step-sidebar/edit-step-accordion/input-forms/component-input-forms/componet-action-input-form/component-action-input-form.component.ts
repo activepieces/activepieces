@@ -269,7 +269,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 		}
 	}
 
-	getFormattedFormData(): { action_name: string; input: { [configKey: string]: any } } {
+	getFormattedFormData(): { actionName: string; input: { [configKey: string]: any } } {
 		const action = this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.value;
 		if (action === this.customRequestItem.value) {
 			const customRequestData = this.componentForm.get(CUSTOM_REQUEST_FORM_CONTROL_NAME)?.value || {
@@ -280,23 +280,21 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 			};
 
 			return {
-				action_name: this.customRequestItem.value.actionName,
+				actionName: this.customRequestItem.value.actionName,
 				...customRequestData,
 			};
 		} else {
 			const configs = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME)?.value || {};
 			const res = {
-				action_name: action?.actionName,
+				actionName: action?.actionName,
 				input: {
 					...configs,
 				},
 			};
-			console.log(res);
 			return res;
 		}
 	}
 	actionDropdownCompareFn(item, selected) {
-		debugger;
 		return item.actionName === selected.actionName;
 	}
 	setDisabledState?(isDisabled: boolean): void {

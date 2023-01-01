@@ -1,4 +1,3 @@
-import {FlowVersion} from "./flow-version";
 import {
     AddActionRequest, DeleteActionRequest,
     FlowOperationType,
@@ -17,6 +16,7 @@ import {
 } from "./actions/action";
 import {Trigger, TriggerSchema, TriggerType} from "./triggers/trigger";
 import {TypeCompiler} from "@sinclair/typebox/compiler";
+import { FlowVersion } from "./flow-version";
 
 const actionSchemaValidator = TypeCompiler.Compile(ActionSchema);
 const triggerSchemaValidation = TypeCompiler.Compile(TriggerSchema);
@@ -110,7 +110,7 @@ function createAction(request: UpdateActionRequest, nextAction: Action | undefin
             } as CodeAction;
             break;
     }
-    action.valid = actionSchemaValidator.Check(action);
+    action.valid = (action.valid??true) && actionSchemaValidator.Check(action);
     return action;
 }
 
@@ -152,11 +152,12 @@ function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: 
             };
             break;
     }
-    trigger.valid = triggerSchemaValidation.Check(trigger);
+    trigger.valid = (trigger.valid??true) && triggerSchemaValidation.Check(trigger);
     return trigger;
 }
 
 export const flowHelper = {
+    isValid: isValid,
     apply(flowVersion: FlowVersion, operation: FlowOperationRequest): FlowVersion {
         const clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion));
         switch (operation.type) {

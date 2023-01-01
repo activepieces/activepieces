@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { OAuth2Response } from '../model/fields/variable/subfields/oauth2-response.interface';
 import { UUID } from 'angular2-uuid';
 import { map, Observable, switchMap } from 'rxjs';
+import { ClaimTokenWithSecretRequest } from 'shared';
 
 @Injectable({
 	providedIn: 'root',
@@ -13,8 +14,8 @@ export class Oauth2Service {
 
 	constructor(private httpClient: HttpClient) {}
 
-	public claimWithSecret(request: { code: string; client_id: string; token_url: string; client_secret: string }) {
-		return this.httpClient.post<OAuth2Response>(environment.apiUrl + '/oauth2/claim-with-secret', request);
+	public claimWithSecret(request: ClaimTokenWithSecretRequest) {
+		return this.httpClient.post<OAuth2Response>(environment.apiUrl + '/oauth2/claim', request);
 	}
 
 	public openPopup(request: {
@@ -70,9 +71,10 @@ export class Oauth2Service {
 				if (params != undefined && params.code != undefined) {
 					return this.claimWithSecret({
 						code: decodeURIComponent(params.code),
-						client_id: request.client_id,
-						client_secret: request.client_secret,
-						token_url: request.token_url,
+						clientId: request.client_id,
+						clientSecret: request.client_secret,
+						redirectUrl: redirect_uri,
+						tokenUrl: request.token_url,
 					}).pipe(
 						map(value => {
 							if (value['error']) {

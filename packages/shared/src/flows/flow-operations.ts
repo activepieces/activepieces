@@ -71,6 +71,7 @@ interface BasicActionStep<A, V> {
     settings: V;
     name: string,
     displayName: string;
+    valid?: boolean;
 }
 
 export type UpdateTriggerRequest = BasicTriggerRequest<TriggerType.WEBHOOK, {}>
@@ -83,6 +84,7 @@ interface BasicTriggerRequest<A, V> {
     type: A;
     settings: V;
     displayName: string;
+    valid?: boolean;
 }
 
 interface BasicOperationRequest<T extends FlowOperationType, V> {

@@ -63,7 +63,7 @@ export type DropdownOption<T>= {
 
 export interface DropdownProperty<T> extends DropdownPropertySchema<T>, TPropertyValue<T, PropertyType.DROPDOWN> {}
 
-export interface PropertySchema {
+export interface PieceProperty {
 	[name: string]: ShortTextProperty
 		| LongTextProperty
 		| OAuth2Property
@@ -72,7 +72,7 @@ export interface PropertySchema {
 		| NumberProperty;
 }
 
-export type StaticPropsValue<T extends PropertySchema> = {
+export type StaticPropsValue<T extends PieceProperty> = {
 	[P in keyof T]: T[P]['valueSchema'];
 }
 

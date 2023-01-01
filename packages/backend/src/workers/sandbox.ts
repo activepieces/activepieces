@@ -27,7 +27,11 @@ export class Sandbox {
     if (!fs.existsSync(outputFile)) {
       return undefined;
     }
-    return fs.readFileSync(outputFile).toString("utf-8");
+    let str = fs.readFileSync(outputFile).toString("utf-8");
+    if (this.isJson(str)) {
+      return JSON.parse(str);
+    }
+    return str;
   }
 
   parseStandardOutput(): string {
@@ -74,6 +78,16 @@ export class Sandbox {
       });
     });
   }
+
+  private isJson(str: string) {
+    try {
+      JSON.parse(str);
+    } catch (e) {
+      return false;
+    }
+    return true;
+  }
+
 }
 
 export default class SandboxManager {

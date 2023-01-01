@@ -37,7 +37,7 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
       },
     },
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Params: {
           flowId: FlowId;
         };
@@ -45,11 +45,11 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
       }>,
       _reply
     ) => {
-      const flow = await flowService.getOne(_request.params.flowId, undefined);
+      const flow = await flowService.getOne(request.params.flowId, undefined);
       if (flow === null) {
-        throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: _request.params.flowId } });
+        throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } });
       }
-      return await flowService.update(_request.params.flowId, _request.body);
+      return await flowService.update(request.params.flowId, request.body);
     }
   );
 

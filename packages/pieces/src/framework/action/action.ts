@@ -1,7 +1,7 @@
 import {Context} from "../context";
-import {Property, PropertySchema, StaticPropsValue} from "../property/prop.model";
+import {Property, PieceProperty, StaticPropsValue} from "../property/prop.model";
 
-class IAction<T extends PropertySchema> {
+class IAction<T extends PieceProperty> {
 	constructor(
 		public readonly name: string,
 		public readonly displayName: string,
@@ -14,7 +14,7 @@ class IAction<T extends PropertySchema> {
 
 export type Action = IAction<any>;
 
-export function createAction<T extends PropertySchema>(request: {
+export function createAction<T extends PieceProperty>(request: {
 	name: string;
 	displayName: string,
 	description: string;

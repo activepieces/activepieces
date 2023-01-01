@@ -16,7 +16,8 @@ export const oauth2Controller = async (fastify: FastifyInstance, options: Fastif
       }>,
       _reply
     ) => {
-      return await oauth2Service.claim(request.body);
+      const result = await oauth2Service.claim(request.body);
+      return result;
     }
   );
 };
