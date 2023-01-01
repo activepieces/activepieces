@@ -162,7 +162,7 @@ export class TestFlowModalComponent implements OnInit {
 			takeUntil(this.testRunSnackbar.instance.exitButtonClicked),
 			switchMap(() => this.instanceRunService.get(runId)),
 			switchMap(instanceRun => {
-				if (instanceRun.status !== ExecutionOutputStatus.RUNNING && instanceRun.logsFileId) {
+				if (instanceRun.status !== ExecutionOutputStatus.RUNNING && instanceRun.logsFileId !== null) {
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('flow.tested', instanceRun);
 					}
@@ -175,7 +175,7 @@ export class TestFlowModalComponent implements OnInit {
 				return of(instanceRun);
 			}),
 			tap(instanceRun => {
-				if (instanceRun.status !== ExecutionOutputStatus.RUNNING && instanceRun.logsFileId) {
+				if (instanceRun.status !== ExecutionOutputStatus.RUNNING && instanceRun.logsFileId !== null) {
 					this.store.dispatch(
 						FlowsActions.setRun({
 							flowId: flowId,
