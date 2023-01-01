@@ -16,8 +16,8 @@ export const databaseConnection = new DataSource({
   host: "localhost",
   port: 7432,
   username: "postgres",
-  password: "postgres",
-  database: "postgres",
+  password: "A79Vm5D4p2VQHOp2gd5",
+  database: "activepieces",
   synchronize: true,
   entities: [
     CollectionEntity,
