@@ -69,7 +69,8 @@
           "group": "Helpers",
           "pages": [
             "pieces/helpers/http-request",
-            "pieces/helpers/code"
+            "pieces/helpers/code",
+            "pieces/helpers/storage"
           ]
         },
         {
@@ -85,25 +86,11 @@
     {
       "group": "Building Pieces",
       "pages": [
-        "building-pieces/overview",
-        "building-pieces/quickstart",
-        "building-pieces/piece",
-        "building-pieces/input",
-        "building-pieces/action",
-        "building-pieces/trigger"
+        "building-pieces/overview"
       ]
     },
     {
-      "group": "Contributing",
-      "pages": [
-        "contributing/overview",
-        "contributing/architecture",
-        "contributing/flow-worker",
-        "contributing/code-worker"
-      ]
-    },
-    {
-      "group": "",
+      "group": "Other",
       "pages": ["license"]
     }
   ]
