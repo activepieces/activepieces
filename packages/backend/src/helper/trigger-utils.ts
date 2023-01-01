@@ -1,21 +1,20 @@
 import { pieces, Trigger, TriggerStrategy } from "pieces";
-import { CollectionId, CollectionVersionId, FlowVersion, InstanceId, PieceTrigger, TriggerType as FlowTriggerType } from "shared";
+import { CollectionId, CollectionVersionId, FlowId, FlowVersion, InstanceId, PieceTrigger, TriggerType } from "shared";
 import { ActivepiecesError, ErrorCode } from "./activepieces-error";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
 import { createContextStore } from "../store-entry/store-entry.service";
-
-const PIECES_WEBHOOK_BASE_URL = "";
+import { getPublicIp } from "./public-ip-utils";
 
 const EVERY_FIFTEEN_MINUTES = "* 15 * * * *";
 
 export const triggerUtils = {
-  async enable({ instanceId, collectionId,  collectionVersionId, flowVersion }: EnableParams): Promise<void> {
+  async enable({ instanceId, collectionId, collectionVersionId, flowVersion }: EnableParams): Promise<void> {
     switch (flowVersion.trigger.type) {
-      case FlowTriggerType.PIECE:
+      case TriggerType.PIECE:
         await enablePieceTrigger({ instanceId, collectionId, collectionVersionId, flowVersion });
         break;
 
-      case FlowTriggerType.SCHEDULE:
+      case TriggerType.SCHEDULE:
         console.log("Created Schedule for flow version Id " + flowVersion.id);
 
         await flowQueue.add({
@@ -36,11 +35,11 @@ export const triggerUtils = {
 
   async disable(collectionId: CollectionId, flowVersion: FlowVersion): Promise<void> {
     switch (flowVersion.trigger.type) {
-      case FlowTriggerType.PIECE:
+      case TriggerType.PIECE:
         await disablePieceTrigger(collectionId, flowVersion);
         break;
 
-      case FlowTriggerType.SCHEDULE:
+      case TriggerType.SCHEDULE:
         console.log("Deleted Schedule for flow version Id " + flowVersion.id);
         await flowQueue.remove({
           id: flowVersion.id,
@@ -62,7 +61,7 @@ const disablePieceTrigger = async (collectionId: CollectionId, flowVersion: Flow
     case TriggerStrategy.WEBHOOK:
       await pieceTrigger.onDisable({
         store: createContextStore(collectionId),
-        webhookUrl: `${PIECES_WEBHOOK_BASE_URL}/flow-version/${flowVersion.id}`,
+        webhookUrl: await getWebhookUrl(flowVersion.flowId),
         propsValue: flowTrigger.settings.input,
       });
       break;
@@ -76,7 +75,12 @@ const disablePieceTrigger = async (collectionId: CollectionId, flowVersion: Flow
   }
 };
 
-const enablePieceTrigger = async ({ instanceId, flowVersion, collectionId, collectionVersionId }: EnableParams): Promise<void> => {
+const enablePieceTrigger = async ({
+  instanceId,
+  flowVersion,
+  collectionId,
+  collectionVersionId,
+}: EnableParams): Promise<void> => {
   const flowTrigger = flowVersion.trigger as PieceTrigger;
   const pieceTrigger = getPieceTrigger(flowTrigger);
 
@@ -84,7 +88,7 @@ const enablePieceTrigger = async ({ instanceId, flowVersion, collectionId, colle
     case TriggerStrategy.WEBHOOK:
       await pieceTrigger.onEnable({
         store: createContextStore(collectionId),
-        webhookUrl: `${PIECES_WEBHOOK_BASE_URL}/flow-version/${flowVersion.id}`,
+        webhookUrl: await getWebhookUrl(flowVersion.flowId),
         propsValue: flowTrigger.settings.input,
       });
       break;
@@ -129,6 +133,11 @@ const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
   }
 
   return pieceTrigger;
+};
+
+const getWebhookUrl = async (flowId: FlowId): Promise<string> => {
+  const { ip } = await getPublicIp();
+  return `http://${ip}/v1/webhooks/flow/${flowId}`;
 };
 
 interface EnableParams {
