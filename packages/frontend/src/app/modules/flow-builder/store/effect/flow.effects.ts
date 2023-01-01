@@ -16,7 +16,15 @@ import { BuilderActions } from '../action/builder.action';
 import { TabState } from '../model/tab-state';
 import { CollectionService } from 'src/app/modules/common/service/collection.service';
 import { RunDetailsService } from '../../page/flow-builder/flow-left-sidebar/run-details/iteration-details.service';
-import { Collection, CollectionVersionState, Flow, FlowId, FlowOperationRequest, FlowOperationType, TriggerType } from 'shared';
+import {
+	Collection,
+	CollectionVersionState,
+	Flow,
+	FlowId,
+	FlowOperationRequest,
+	FlowOperationType,
+	TriggerType,
+} from 'shared';
 
 @Injectable()
 export class FlowsEffects {
@@ -59,45 +67,52 @@ export class FlowsEffects {
 				if (collection.version!.state === CollectionVersionState.LOCKED) {
 					collection$ = this.collectionService.update(collection.id, collection.version!);
 				}
-				return collection$.pipe(map(() => {
-					const genSavedId = UUID.UUID();
-					let flowOperation: FlowOperationRequest;
-					switch(action.type){
-						case FlowsActionType.UPDATE_TRIGGER:
-							flowOperation = {
-								type: FlowOperationType.UPDATE_TRIGGER,
-								request: action.operation
-							}
-							break;
-						case FlowsActionType.ADD_ACTION:
-							flowOperation = {
-								type: FlowOperationType.ADD_ACTION,
-								request: action.operation
-							}
-							break;
-						case FlowsActionType.UPDATE_ACTION:
-							flowOperation = {
-								type: FlowOperationType.UPDATE_ACTION,
-								request: action.operation
-							}
-							break;
-						case FlowsActionType.DELETE_ACTION:
-							flowOperation = {
-								type: FlowOperationType.DELETE_ACTION,
-								request: action.operation
-							}
-							break;
-						case FlowsActionType.CHANGE_NAME:
-							flowOperation = {
-								type: FlowOperationType.CHANGE_NAME,
-								request: {
-									displayName: action.displayName
-								}
-							}
-							break;
-					}
-					return FlowsActions.applyUpdateOperation({ flow: flow!, operation: flowOperation, saveRequestId: genSavedId });
-				}));
+
+				return collection$.pipe(
+					map(() => {
+						const genSavedId = UUID.UUID();
+						let flowOperation: FlowOperationRequest;
+						switch (action.type) {
+							case FlowsActionType.UPDATE_TRIGGER:
+								flowOperation = {
+									type: FlowOperationType.UPDATE_TRIGGER,
+									request: action.operation,
+								};
+								break;
+							case FlowsActionType.ADD_ACTION:
+								flowOperation = {
+									type: FlowOperationType.ADD_ACTION,
+									request: action.operation,
+								};
+								break;
+							case FlowsActionType.UPDATE_ACTION:
+								flowOperation = {
+									type: FlowOperationType.UPDATE_ACTION,
+									request: action.operation,
+								};
+								break;
+							case FlowsActionType.DELETE_ACTION:
+								flowOperation = {
+									type: FlowOperationType.DELETE_ACTION,
+									request: action.operation,
+								};
+								break;
+							case FlowsActionType.CHANGE_NAME:
+								flowOperation = {
+									type: FlowOperationType.CHANGE_NAME,
+									request: {
+										displayName: action.displayName,
+									},
+								};
+								break;
+						}
+						return FlowsActions.applyUpdateOperation({
+							flow: flow!,
+							operation: flowOperation,
+							saveRequestId: genSavedId,
+						});
+					})
+				);
 			})
 		);
 	});
@@ -142,7 +157,7 @@ export class FlowsEffects {
 	);
 
 	private processFlowUpdate(request: {
-		operation: FlowOperationRequest,
+		operation: FlowOperationRequest;
 		flow: Flow;
 		tabState: TabState;
 		saveRequestId: UUID;
@@ -299,7 +314,10 @@ export class FlowsEffects {
 	stepSelectedEffect = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(FlowsActions.selectStepByName),
-			concatLatestFrom(() => [this.store.select(BuilderSelectors.selectCurrentStep), this.store.select(BuilderSelectors.selectCurrentFlowRun)]),
+			concatLatestFrom(() => [
+				this.store.select(BuilderSelectors.selectCurrentStep),
+				this.store.select(BuilderSelectors.selectCurrentFlowRun),
+			]),
 			switchMap(([{ stepName }, step, run]) => {
 				if (step && step.type === TriggerType.EMPTY) {
 					return of(

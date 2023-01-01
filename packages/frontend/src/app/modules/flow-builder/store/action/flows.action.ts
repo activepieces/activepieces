@@ -2,7 +2,16 @@ import { createAction, props } from '@ngrx/store';
 import { UUID } from 'angular2-uuid';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
-import { AddActionRequest, Flow, DeleteActionRequest, UpdateActionRequest, UpdateTriggerRequest, FlowRun, FlowId, FlowOperationRequest } from 'shared';
+import {
+	AddActionRequest,
+	Flow,
+	DeleteActionRequest,
+	UpdateActionRequest,
+	UpdateTriggerRequest,
+	FlowRun,
+	FlowId,
+	FlowOperationRequest,
+} from 'shared';
 
 export enum FlowsActionType {
 	// Flow Version Modifying Action
@@ -31,19 +40,11 @@ export enum FlowsActionType {
 
 export const updateTrigger = createAction(FlowsActionType.UPDATE_TRIGGER, props<{ operation: UpdateTriggerRequest }>());
 
-export const addAction = createAction(
-	FlowsActionType.ADD_ACTION,
-	props<{operation: AddActionRequest}>()
-);
+export const addAction = createAction(FlowsActionType.ADD_ACTION, props<{ operation: AddActionRequest }>());
 
+export const updateAction = createAction(FlowsActionType.UPDATE_ACTION, props<{ operation: UpdateActionRequest }>());
 
-export const updateAction = createAction(
-	FlowsActionType.UPDATE_ACTION,
-	props<{operation: UpdateActionRequest}>()
-);
-
-export const deleteAction = createAction(FlowsActionType.DELETE_ACTION, props<{operation: DeleteActionRequest}>());
-
+export const deleteAction = createAction(FlowsActionType.DELETE_ACTION, props<{ operation: DeleteActionRequest }>());
 
 export const savedSuccess = createAction(FlowsActionType.SAVED_SUCCESS, props<{ saveRequestId: UUID; flow: Flow }>());
 
@@ -62,7 +63,7 @@ export const setInitial = createAction(
 
 export const applyUpdateOperation = createAction(
 	FlowsActionType.APPLY_UPDATE_OPERATION,
-	props<{ flow: Flow; operation: FlowOperationRequest, saveRequestId: UUID }>()
+	props<{ flow: Flow; operation: FlowOperationRequest; saveRequestId: UUID }>()
 );
 
 export const deleteFlowStarted = createAction(
@@ -112,11 +113,4 @@ export const FlowsActions = {
 	deleteSuccess,
 };
 
-export const SingleFlowModifyingState = [
-	changeName,
-	updateAction,
-	addAction,
-	updateTrigger,
-	deleteAction
-];
-
+export const SingleFlowModifyingState = [changeName, updateAction, addAction, updateTrigger, deleteAction];

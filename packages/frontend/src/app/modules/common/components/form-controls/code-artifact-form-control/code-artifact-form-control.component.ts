@@ -69,7 +69,6 @@ export class CodeArtifactFormControlComponent implements ControlValueAccessor, O
 	setupValueListener() {
 		this.updateComponentValue$ = this.codeArtifactForm.valueChanges.pipe(
 			tap(artifact => {
-				debugger;
 				this.onChange(artifact);
 			})
 		);
