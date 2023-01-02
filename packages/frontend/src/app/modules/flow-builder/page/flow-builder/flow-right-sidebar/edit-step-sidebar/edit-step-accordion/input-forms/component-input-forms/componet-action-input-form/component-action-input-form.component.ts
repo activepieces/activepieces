@@ -11,7 +11,6 @@ import {
 
 import { map, Observable, of, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Config } from 'src/app/modules/common/model/fields/variable/config';
 import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { ComponentActionInputFormSchema } from '../../input-forms-schema';
@@ -20,6 +19,7 @@ import {
 	CollectionConfig,
 	propsConvertor,
 } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
+import { Config } from 'shared';
 declare type ActionDropdownOption = {
 	label: {
 		name: string;

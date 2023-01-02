@@ -15,7 +15,7 @@ export const discordCommon = {
         extra: {
             // [Send Message, Send Message in Thread, Read message history, Mention everyone,
             // Use external Emojis, Use External Stickers, Add reactions, Use slash comments]
-            permissions: 414464805952
+            permissions: 534723914816
         }
     }),
     channel: Property.Dropdown({
@@ -30,7 +30,7 @@ export const discordCommon = {
                 }
             }
             const authentication: AuthPropertyValue = value['authentication'] as AuthPropertyValue;
-            const guildId = authentication['data']['guild_id'];
+            const guildId = authentication['data']['guild']['id'];
             const accessToken = authentication['access_token'];
             const request: HttpRequest<never> = {
                 method: HttpMethod.GET,

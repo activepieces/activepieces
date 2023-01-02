@@ -1,6 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { Collection, Instance } from 'shared';
-import { Config } from '../../../common/model/fields/variable/config';
+import { Collection, Config, Instance } from 'shared';
 export enum CollectionActionType {
 	CHANGE_NAME = '[COLLECTION] CHANGE_NAME',
 	SET_INITIAL = '[COLLECTION] SET_INITIAL',

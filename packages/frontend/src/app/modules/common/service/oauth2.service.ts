@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
-import { OAuth2Response } from '../model/fields/variable/subfields/oauth2-response.interface';
 import { UUID } from 'angular2-uuid';
 import { map, Observable, switchMap } from 'rxjs';
-import { ClaimTokenWithSecretRequest } from 'shared';
+import { ClaimTokenWithSecretRequest, OAuth2ConfigSettings, OAuth2Response } from 'shared';
 
 @Injectable({
 	providedIn: 'root',
@@ -18,26 +17,17 @@ export class Oauth2Service {
 		return this.httpClient.post<OAuth2Response>(environment.apiUrl + '/oauth2/claim', request);
 	}
 
-	public openPopup(request: {
-		auth_url: string;
-		client_id: string;
-		client_secret: string;
-		scope: string;
-		token_url: string;
-		response_type: string;
-		redirect_url: string;
-	}): Observable<any> {
+	public openPopup(request: OAuth2ConfigSettings & {redirectUrl: string, authUrl: string, extraParams: Record<string, unknown>}): Observable<any> {
 		this.currentlyOpenPopUp?.close();
 		const winTarget = '_blank';
 		const winFeatures =
 			'resizable=no, toolbar=no,left=100, top=100, scrollbars=no, menubar=no, status=no, directories=no, location=no, width=600, height=800';
-		const redirect_uri = request.redirect_url || environment.redirectUrl;
-		const url =
-			request.auth_url +
-			'?response_type=' +
-			request.response_type +
+		const redirect_uri = request.redirectUrl || environment.redirectUrl;
+		let url =
+			request.authUrl +
+			'?response_type=code' +
 			'&client_id=' +
-			request.client_id +
+			request.clientId +
 			'&redirect_uri=' +
 			redirect_uri +
 			'&access_type=offline' +
@@ -46,7 +36,10 @@ export class Oauth2Service {
 			'&prompt=consent' +
 			'&scope=' +
 			request.scope;
-
+		const entries = Object.entries(request.extraParams);
+		for(let i = 0; i < entries.length;++i){
+			url = url + "&" + entries[i][0] + "=" + entries[i][1];
+		}
 		const popup = window.open(url, winTarget, winFeatures);
 		this.currentlyOpenPopUp = popup;
 		const codeObs$ = new Observable<any>(observer => {
@@ -71,10 +64,10 @@ export class Oauth2Service {
 				if (params != undefined && params.code != undefined) {
 					return this.claimWithSecret({
 						code: decodeURIComponent(params.code),
-						clientId: request.client_id,
-						clientSecret: request.client_secret,
+						clientId: request.clientId,
+						clientSecret: request.clientSecret,
 						redirectUrl: redirect_uri,
-						tokenUrl: request.token_url,
+						tokenUrl: request.tokenUrl,
 					}).pipe(
 						map(value => {
 							if (value['error']) {

@@ -69,17 +69,20 @@ async function downloadFiles(
 ): Promise<void> {
   const buildPath = sandbox.getSandboxFolderPath();
 
+
+  // This has to be before flows, since it does modify code settings and fill it with packaged file id.
+  fs.mkdirSync(buildPath + "/codes/");
+  const artifacts: File[] = await buildCodes(flowVersion);
+  artifacts.forEach((artifact) => {
+    fs.writeFileSync(buildPath + "/codes/" + artifact.id + ".js", artifact.data);
+  });
+
   fs.mkdirSync(buildPath + "/flows/");
   fs.writeFileSync(buildPath + "/flows/" + flowVersion.id + ".json", JSON.stringify(flowVersion));
 
   fs.mkdirSync(buildPath + "/collections/");
   fs.writeFileSync(buildPath + "/collections/" + collectionVersion.id + ".json", JSON.stringify(collectionVersion));
 
-  fs.mkdirSync(buildPath + "/codes/");
-  const artifacts: File[] = await buildCodes(flowVersion);
-  artifacts.forEach((artifact) => {
-    fs.writeFileSync(buildPath + "/codes/" + artifact.id + ".js", artifact.data);
-  });
   fs.writeFileSync(buildPath + "/activepieces-engine.js", fs.readFileSync("resources/activepieces-engine.js"));
   fs.writeFileSync(
     buildPath + "/input.json",

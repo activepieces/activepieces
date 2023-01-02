@@ -1,4 +1,4 @@
-import { UUID } from 'angular2-uuid';
+/**import { UUID } from 'angular2-uuid';
 import { ConfigType } from 'shared';
 import { OAuth2ConfigSettings } from './config-settings';
 
@@ -12,3 +12,4 @@ export class Config {
 	placeholder?: string;
 	description?: string;
 }
+**/

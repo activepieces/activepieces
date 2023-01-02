@@ -2,7 +2,6 @@ import { Static, Type } from "@sinclair/typebox";
 
 export const ClaimTokenFromCloudRequest = Type.Object({
     pieceName: Type.String({}),
-    tokenUrl: Type.String({}),
     code: Type.String({}),
 });
 

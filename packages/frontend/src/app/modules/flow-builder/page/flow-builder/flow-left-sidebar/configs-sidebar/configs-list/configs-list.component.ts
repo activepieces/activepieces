@@ -3,7 +3,7 @@ import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { BuilderSelectors } from '../../../../../store/selector/flow-builder.selector';
 import { CollectionActions } from '../../../../../store/action/collection.action';
-import { Config } from '../../../../../../common/model/fields/variable/config';
+import { Config } from 'shared';
 
 @Component({
 	selector: 'app-configs-list',

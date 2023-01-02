@@ -18,8 +18,9 @@ export interface CollectionConfig {
 	description?: string;
 	authUrl?: string;
 	tokenUrl?: string;
-	scopes?: string;
+	scope?: string[];
 	required: boolean;
+	extra?: Record<string,unknown>
 }
 
 export class PieceProperty {
@@ -31,6 +32,7 @@ export class PieceProperty {
 	authUrl?: string;
 	tokenUrl?: string;
 	scope?: string[];
+	extra?: Record<string, unknown>
 }
 
 export const propsConvertor = {
@@ -42,8 +44,9 @@ export const propsConvertor = {
 			description: prop.description,
 			authUrl: prop.authUrl,
 			tokenUrl: prop.tokenUrl,
-			scopes: prop.scope?.join(' ') || '',
+			scope: prop.scope,
 			required: prop.required,
+			extra: prop.extra
 		};
 	},
 };

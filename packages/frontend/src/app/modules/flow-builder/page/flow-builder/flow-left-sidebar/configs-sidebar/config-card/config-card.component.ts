@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Config } from 'shared';
 import { ThemeService } from '../../../../../../common/service/theme.service';
-import { Config } from '../../../../../../common/model/fields/variable/config';
 
 @Component({
 	selector: 'app-variable-content',

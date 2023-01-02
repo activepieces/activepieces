@@ -10,16 +10,15 @@ import {
 	Validators,
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { catchError, map, Observable, of, shareReplay, startWith, take, tap } from 'rxjs';
+import { catchError, distinctUntilChanged, map, Observable, of, shareReplay, startWith, take, tap } from 'rxjs';
 import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
-import { Config } from '../../model/fields/variable/config';
 import { ThemeService } from '../../service/theme.service';
 import { CollectionConfig, InputType } from './connector-action-or-config';
 import { NewAuthenticationModalComponent } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 import { MatDialog } from '@angular/material/dialog';
-import { ConfigType } from 'shared';
+import { Config, ConfigType } from 'shared';
 import { DropdownItem } from '../../model/dropdown-item.interface';
 type ConfigKey = string;
 
@@ -61,7 +60,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	allAuthConfigs$: Observable<DropdownItem[]>;
 	authConfigs: DropdownItem[] = [];
 	updateOrAddConfigModalClosed$: Observable<void>;
-	authConfigDropdownChanged$: Observable<any>;
+	configDropdownChanged$: Observable<any>;
 	updatedAuthLabel = '';
 	constructor(
 		private fb: UntypedFormBuilder,
@@ -104,20 +103,20 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		const requiredConfigsControls = this.createConfigsFormControls(this.requiredConfigs);
 		const optionalConfigsControls = this.createConfigsFormControls(this.selectedOptionalConfigs);
 		this.form = this.fb.group({ ...requiredConfigsControls, ...optionalConfigsControls });
-		const authConfigs = this.configs.filter(c => c.type === InputType.OAUTH2);
-		if (authConfigs.length > 1) {
-			console.error(
-				'You have set more than one auth config in your connector, this case is not supported only your first auth config will be used'
-			);
-		}
-		if (authConfigs[0]) {
-			this.authConfigDropdownChanged$ = this.form.get(authConfigs[0].key)!.valueChanges.pipe(
-				startWith(authConfigs[0].value),
-				tap(val => {
-					this.refreshDropdowns(val);
-				})
-			);
-		}
+		
+		let configValue = this.configs.reduce(function(map, obj) {
+			map[obj.key] = obj.value;
+			return map;
+		}, {});
+
+		this.configDropdownChanged$ = this.form.valueChanges.pipe(
+			startWith(configValue),
+			distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
+			tap(val => {
+				this.refreshDropdowns(val);
+			})
+		);
+	
 		this.updateValueOnChange$ = this.form.valueChanges.pipe(
 			tap(value => {
 				this.OnChange(value);
@@ -155,15 +154,18 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		componentName: string
 	) {
 		const options$ = this.actionMetaDataService.getConnectorActionConfigOptions(
-			{ configName: dropdownConfig.key, actionName: actionName, config: authConfig },
+			{ configName: dropdownConfig.key, stepName: actionName, configs: authConfig },
 			componentName
 		);
 		this.optionsObservables$[dropdownConfig.key] = options$.pipe(
 			tap(opts => {
 				const currentConfigValue = this.form.get(dropdownConfig.key)!.value;
-				if (!opts.find(opt => opt.value == currentConfigValue)) {
+				if (!opts.options.find(opt => opt.value == currentConfigValue)) {
 					this.form.get(dropdownConfig.key)!.setValue(null);
 				}
+			}),
+			map(state => {
+				return state.options;
 			}),
 			shareReplay(1),
 			catchError(err => {
@@ -244,10 +246,10 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			map(() => void 0)
 		);
 	}
-	refreshDropdowns(authConfigValue: any) {
+	refreshDropdowns(configsValue: Record<string, any>) {
 		this.configs.forEach(c => {
 			if (c.type === InputType.DROPDOWN) {
-				this.contructDropdownObservable(c, authConfigValue, this.actionName, this.componentName);
+				this.contructDropdownObservable(c, configsValue, this.actionName, this.componentName);
 			}
 		});
 	}
