@@ -27,6 +27,6 @@ COPY . .
 RUN pnpm install --config.auto-install-peers=true
 RUN pnpm dlx nx run-many --target=build
 
-WORKDIR /user/src/app/packages/backend
+WORKDIR /usr/src/app/packages/backend
 
 ENTRYPOINT ["/usr/local/bin/pnpm", "serve:prod"]
