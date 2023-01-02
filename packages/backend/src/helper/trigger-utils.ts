@@ -16,6 +16,25 @@ import { getPublicIp } from "./public-ip-utils";
 const EVERY_FIFTEEN_MINUTES = "* 15 * * * *";
 
 export const triggerUtils = {
+  async executeTrigger({ collectionId, payload, flowVersion }: ExecuteTrigger): Promise<any[]> {
+    const flowTrigger = flowVersion.trigger;
+    let payloads = [];
+    switch (flowTrigger.type) {
+      case TriggerType.PIECE:
+        const pieceTrigger = getPieceTrigger(flowTrigger);
+        payloads = await pieceTrigger.run({
+          store: createContextStore(collectionId),
+          webhookUrl: await getWebhookUrl(flowVersion.flowId),
+          propsValue: flowTrigger.settings.input,
+          payload: payload,
+        });
+        break;
+      default:
+        payloads = [payload];
+        break;
+    }
+    return payloads;
+  },
   async enable({ collectionId, collectionVersionId, flowVersion }: EnableParams): Promise<void> {
     switch (flowVersion.trigger.type) {
       case TriggerType.PIECE:
@@ -151,5 +170,11 @@ const getWebhookUrl = async (flowId: FlowId): Promise<string> => {
 interface EnableParams {
   collectionId: CollectionId;
   collectionVersionId: CollectionVersionId;
+  flowVersion: FlowVersion;
+}
+
+interface ExecuteTrigger {
+  payload: any;
+  collectionId: CollectionId;
   flowVersion: FlowVersion;
 }
