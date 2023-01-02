@@ -47,7 +47,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	allOptionalConfigs: CollectionConfig[] = [];
 	selectedOptionalConfigs: CollectionConfig[] = [];
 	optionalConfigsMenuOpened = false;
-	@Input() actionName: string;
+	@Input() stepName: string;
 	@Input() componentName: string;
 	form!: UntypedFormGroup;
 	OnChange = value => {};
@@ -74,7 +74,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
 	writeValue(obj: CollectionConfig[]): void {
 		this.configs = obj;
-
 		this.createForm();
 	}
 	registerOnChange(fn: any): void {
@@ -150,11 +149,11 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	contructDropdownObservable(
 		dropdownConfig: CollectionConfig,
 		authConfig: any,
-		actionName: string,
+		stepName: string,
 		componentName: string
 	) {
 		const options$ = this.actionMetaDataService.getConnectorActionConfigOptions(
-			{ configName: dropdownConfig.key, stepName: actionName, configs: authConfig },
+			{ configName: dropdownConfig.key, stepName: stepName, configs: authConfig },
 			componentName
 		);
 		this.optionsObservables$[dropdownConfig.key] = options$.pipe(
@@ -249,7 +248,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	refreshDropdowns(configsValue: Record<string, any>) {
 		this.configs.forEach(c => {
 			if (c.type === InputType.DROPDOWN) {
-				this.contructDropdownObservable(c, configsValue, this.actionName, this.componentName);
+				this.contructDropdownObservable(c, configsValue, this.stepName, this.componentName);
 			}
 		});
 	}
