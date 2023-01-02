@@ -1,25 +1,31 @@
 import { Component, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { catchError, Observable, tap, throwError } from 'rxjs';
-import { OAuth2ConfigSettings } from 'shared';
 import { fadeInUp400ms } from '../../../animation/fade-in-up.animation';
 import { Oauth2Service } from '../../../service/oauth2.service';
 
+export interface CloudConnectionPopupSettings {
+	clientId: string;
+	authUrl: string;
+	extraParams: Record<string, unknown>;
+	scope: string;
+	pieceName: string;
+}
+
 @Component({
-	selector: 'app-o-auth2-connect-control',
-	templateUrl: './o-auth2-connect-control.component.html',
+	selector: 'app-o-auth2-cloud-connect-control',
+	templateUrl: './o-auth2-cloud-connect-control.component.html',
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
 			multi: true,
-			useExisting: OAuth2ConnectControlComponent,
+			useExisting: OAuth2CloudConnectControlComponent,
 		},
 	],
 	animations: [fadeInUp400ms],
 })
-export class OAuth2ConnectControlComponent implements ControlValueAccessor {
-	@Input() configSettings: OAuth2ConfigSettings;
-	@Input() settingsValid: boolean;
+export class OAuth2CloudConnectControlComponent implements ControlValueAccessor {
+	@Input() cloudConnectionPopupSettings: CloudConnectionPopupSettings;
 	responseData: any = null;
 	isDisabled = false;
 	popupOpened$: Observable<any>;
@@ -43,9 +49,8 @@ export class OAuth2ConnectControlComponent implements ControlValueAccessor {
 	popUpError = false;
 
 	openPopup(): void {
-		type authPopUp = OAuth2ConfigSettings & { extraParams: Record<string, unknown> };
-		const configSettings = this.configSettings as authPopUp;
-		this.popupOpened$ = this.oauth2Service.openPopup(configSettings).pipe(
+		debugger;
+		this.popupOpened$ = this.oauth2Service.openCloudAuthPopup(this.cloudConnectionPopupSettings).pipe(
 			tap(value => {
 				this.responseData = value;
 				this.onChange(value);

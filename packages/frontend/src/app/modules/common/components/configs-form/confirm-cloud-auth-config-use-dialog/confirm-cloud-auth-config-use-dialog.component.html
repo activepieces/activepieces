@@ -1,0 +1,21 @@
+<app-dialog-title-template>Would you like to use our app credentials?
+</app-dialog-title-template>
+<mat-dialog-content>
+    <div class="ap-typography-body-1 ap-text-title ap-mb-4">
+        This would save you time creating an app and copying
+        its credentials
+
+    </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <app-button btnColor="basic" mat-dialog-close btnSize="default">
+            No
+        </app-button>
+        <app-button cdkFocusInitial btnSize="default" (click)="useCloud()" btnColor="primary" type="submit">
+            Yes
+        </app-button>
+    </div>
+</mat-dialog-actions>

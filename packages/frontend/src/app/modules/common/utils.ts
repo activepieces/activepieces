@@ -1,6 +1,4 @@
-
 import { ActionType, Flow, TriggerType } from 'shared';
-
 
 export function getDisplayNameForTrigger(triggerType: TriggerType) {
 	switch (triggerType) {
@@ -30,7 +28,7 @@ export function getDefaultDisplayNameForPiece(pieceType: ActionType, pieceName: 
 			return 'Loop on Items';
 		}
 		case ActionType.PIECE: {
-			return 'Component';
+			return pieceName;
 		}
 	}
 }

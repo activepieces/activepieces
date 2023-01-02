@@ -3,87 +3,64 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { Observable, take } from 'rxjs';
-import { Config, ConfigType, OAuth2Config } from 'shared';
+import { CloudOAuth2Config, Config, ConfigType } from 'shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
+import { CloudConnectionPopupSettings } from 'src/app/modules/common/components/form-controls/o-auth2-cloud-connect-control /o-auth2-cloud-connect-control.component';
 import { ConfigKeyValidator } from 'src/app/modules/flow-builder/page/flow-builder/validators/configKeyValidator';
 import { CollectionActions } from 'src/app/modules/flow-builder/store/action/collection.action';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
-import { environment } from 'src/environments/environment';
 
 interface AuthConfigSettings {
 	pieceName: FormControl<string | null>;
-	redirectUrl: FormControl<string>;
-	clientSecret: FormControl<string>;
-	clientId: FormControl<string>;
-	authUrl: FormControl<string>;
-	tokenUrl: FormControl<string>;
-	scope: FormControl<string>;
 	key: FormControl<string>;
 	value: FormControl<any>;
-	refreshUrl: FormControl<string>;
-	extraParams: FormControl<Record<string, unknown>>;
 }
 @Component({
-	selector: 'app-new-authentication-modal',
-	templateUrl: './new-authentication-modal.component.html',
-	styleUrls: ['./new-authentication-modal.component.scss'],
+	selector: 'app-new-cloud-authentication-modal',
+	templateUrl: './new-cloud-authentication-modal.component.html',
+	styleUrls: ['./new-cloud-authentication-modal.component.scss'],
 	animations: [fadeInUp400ms],
 })
-export class NewAuthenticationModalComponent implements OnInit {
+export class NewCloudAuthenticationModalComponent implements OnInit {
 	@Input() pieceAuthConfig: PieceConfig;
 	@Input() pieceName: string;
-	@Input() configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
+	@Input() configToUpdateWithIndex: { config: CloudOAuth2Config; indexInList: number } | undefined;
+	cloudConnectionPopupSettings: CloudConnectionPopupSettings;
 	settingsForm: FormGroup<AuthConfigSettings>;
 	collectionId$: Observable<string>;
 	submitted = false;
-	clientIdTooltip = 'Your App ID, Key or Client ID. You can find it if you go to your app on the 3rd party service.';
-	clientSecretTooltip =
-		"Your App Secret. It's usually hidden and will show up when you click on Show in your app on the 3rd party service";
-	redirectUrlTooltip =
-		'Copy this URL and paste it under Redirect URL in your app on the 3rd party service. Activepieces predefines this because we manage the authentication flow.';
-	scopesTooltip = 'The permissions needed to access the endpoints you plan to work with on the 3rd party service.';
 	keyTooltip =
 		'The ID of this authentication definition. You will need to select this key whenever you want to reuse this authentication.';
 	constructor(
 		private fb: FormBuilder,
 		private store: Store,
-		public dialogRef: MatDialogRef<NewAuthenticationModalComponent>,
+		public dialogRef: MatDialogRef<NewCloudAuthenticationModalComponent>,
 		@Inject(MAT_DIALOG_DATA)
 		dialogData: {
 			pieceAuthConfig: PieceConfig;
 			pieceName: string;
-			configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
+			configToUpdateWithIndex: { config: CloudOAuth2Config; indexInList: number } | undefined;
+			clientId: string;
 		}
 	) {
 		this.pieceName = dialogData.pieceName;
 		this.pieceAuthConfig = dialogData.pieceAuthConfig;
 		this.configToUpdateWithIndex = dialogData.configToUpdateWithIndex;
+		debugger;
+		this.cloudConnectionPopupSettings = {
+			authUrl: this.pieceAuthConfig.authUrl!,
+			scope: this.pieceAuthConfig.scope!.join(' '),
+			extraParams: this.pieceAuthConfig.extra!,
+			pieceName: this.pieceName,
+			clientId: dialogData.clientId,
+		};
 	}
 
 	ngOnInit(): void {
 		this.collectionId$ = this.store.select(BuilderSelectors.selectCurrentCollectionId);
 		this.settingsForm = this.fb.group({
-			extraParams: new FormControl<Record<string, unknown>>(this.pieceAuthConfig.extra ?? {}, {
-				nonNullable: true,
-				validators: [Validators.required],
-			}),
 			pieceName: new FormControl<string | null>(this.pieceName, { nonNullable: false, validators: [] }),
-			redirectUrl: new FormControl(environment.redirectUrl, { nonNullable: true, validators: [Validators.required] }),
-			clientSecret: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			clientId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			authUrl: new FormControl(this.pieceAuthConfig.authUrl || '', {
-				nonNullable: true,
-				validators: [Validators.required],
-			}),
-			tokenUrl: new FormControl(this.pieceAuthConfig.tokenUrl || '', {
-				nonNullable: true,
-				validators: [Validators.required],
-			}),
-			scope: new FormControl(this.pieceAuthConfig.scope?.join(' ') || '', {
-				nonNullable: true,
-				validators: [Validators.required],
-			}),
 			key: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
 				nonNullable: true,
 				validators: [Validators.required, Validators.pattern('[A-Za-z0-9_]*')],
@@ -95,14 +72,9 @@ export class NewAuthenticationModalComponent implements OnInit {
 				],
 			}),
 			value: new FormControl(undefined as any, Validators.required),
-			refreshUrl: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
 		});
-		debugger;
 		if (this.configToUpdateWithIndex) {
-			this.settingsForm.patchValue({
-				...this.configToUpdateWithIndex.config.settings,
-				value: this.configToUpdateWithIndex.config.value,
-			});
+			this.settingsForm.controls.value.setValue(this.configToUpdateWithIndex.config.value);
 			this.settingsForm.controls.key.setValue(this.configToUpdateWithIndex.config.key);
 			this.settingsForm.controls.key.disable();
 		}
@@ -126,10 +98,9 @@ export class NewAuthenticationModalComponent implements OnInit {
 		delete settingsFormValue.key;
 		const newConfig: Config = {
 			key: configKey,
-			type: ConfigType.OAUTH2,
+			type: ConfigType.CLOUD_OAUTH2,
 			settings: {
-				...settingsFormValue,
-				required: true,
+				pieceName: this.cloudConnectionPopupSettings.pieceName,
 			},
 			value: value,
 		};

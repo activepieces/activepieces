@@ -2,7 +2,7 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../model/builder-state.model';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
-import { Config, Flow, FlowRun } from 'shared';
+import { CloudOAuth2Config, Config, Flow, FlowRun, OAuth2Config, OAuth2Response } from 'shared';
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
 import { FlowItem } from '../../../common/model/flow-builder/flow-item';
@@ -11,6 +11,7 @@ import { FlowsState } from '../model/flows-state.model';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { environment } from 'src/environments/environment';
 import { ActionType, Collection, ConfigType, TriggerType } from 'shared';
+import { OAuth2DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -86,12 +87,19 @@ export const selectCurrentFlowId = createSelector(
 );
 
 export const selectAuth2Configs = createSelector(selectCurrentCollectionConfigs, (collectionConfigs: Config[]) => {
-	return [...collectionConfigs].filter(f => f.type == ConfigType.OAUTH2);
+	return [...collectionConfigs].filter(c => c.type === ConfigType.OAUTH2 || c.type === ConfigType.CLOUD_OAUTH2) as (
+		| CloudOAuth2Config
+		| OAuth2Config
+	)[];
 });
 
 export const selectAllConfigs = createSelector(selectCurrentCollectionConfigs, (collectionConfigs: Config[]) => {
 	return [...collectionConfigs];
 });
+export const selectAllConfigsWithoutOAuth2 = createSelector(selectAllConfigs, (collectionConfigs: Config[]) => {
+	return [...collectionConfigs].filter(c => c.type !== ConfigType.OAUTH2 && c.type !== ConfigType.CLOUD_OAUTH2);
+});
+
 export const selectFlowsState = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
 	return state.flowsState;
 });
@@ -251,10 +259,14 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
 			return triggerItemDetails;
 		}
 		if (flowItem.type === ActionType.PIECE) {
-			return state.connectorComponentsActionsFlowItemDetails.find(f => f.name === flowItem.settings.pieceName);
+			return state.connectorComponentsActionsFlowItemDetails.find(
+				f => f.extra!.appName === flowItem.settings.pieceName
+			);
 		}
 		if (flowItem.type === TriggerType.PIECE) {
-			return state.connectorComponentsTriggersFlowItemDetails.find(f => f.name === flowItem.settings.pieceName);
+			return state.connectorComponentsTriggersFlowItemDetails.find(
+				f => f.extra!.appName === flowItem.settings.pieceName
+			);
 		}
 
 		//Core items might contain remote flows so always have them at the end
@@ -281,11 +293,11 @@ export const selectAuthConfigsDropdownOptions = createSelector(
 	selectCurrentCollectionConfigs,
 	(collectionConfigs: Config[]) => {
 		return [...collectionConfigs]
-			.filter(c => c.type === ConfigType.OAUTH2)
+			.filter(c => c.type === ConfigType.OAUTH2 || c.type === ConfigType.CLOUD_OAUTH2)
 			.map(c => {
-				const result: { label: string; value: any } = {
-					label: c.key,
-					value: c.value,
+				const result: OAuth2DropdownItem = {
+					label: { pieceName: (c as OAuth2Config).settings.pieceName, configKey: c.key },
+					value: c.value as OAuth2Response,
 				};
 				return result;
 			});
@@ -334,4 +346,5 @@ export const BuilderSelectors = {
 	selectIsPublishing,
 	selectCurrentFlowWebhookUrl,
 	selectFlowItemDetailsForConnectorComponentsTriggers,
+	selectAllConfigsWithoutOAuth2,
 };
