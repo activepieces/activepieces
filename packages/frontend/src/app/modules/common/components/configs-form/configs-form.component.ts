@@ -37,6 +37,7 @@ import { DropdownItem } from '../../model/dropdown-item.interface';
 import { NewCloudAuthenticationModalComponent } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-cloud-authentication-modal/new-cloud-authentication-modal.component';
 import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.service';
 import { ConfirmCloudAuthConfigUseDialog } from './confirm-cloud-auth-config-use-dialog/confirm-cloud-auth-config-use-dialog.component';
+import deepEqual from 'deep-equal';
 type ConfigKey = string;
 
 @Component({
@@ -340,6 +341,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	}
 
 	dropdownCompareWithFunction = (opt: any, formControlValue: any) => {
-		return formControlValue && JSON.stringify(formControlValue) === JSON.stringify(opt);
-	};
+		return formControlValue && deepEqual(formControlValue,opt);
+	}
 }

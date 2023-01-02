@@ -40,7 +40,6 @@ export class SignInComponent {
 			const request = this.loginForm.getRawValue();
 			this.authenticate$ = this.authenticationService.signIn(request).pipe(
 				catchError((error: HttpErrorResponse) => {
-					debugger;
 					if (error.status === StatusCodes.UNAUTHORIZED || error.status === StatusCodes.BAD_REQUEST) {
 						this.showInvalidEmailOrPasswordMessage = true;
 					}
