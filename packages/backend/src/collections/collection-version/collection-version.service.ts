@@ -90,10 +90,9 @@ async function refreshAndUpdateCollection(collectionVersion: Readonly<Collection
       const secondsSinceEpoch = Math.round(Date.now() / 1000);
       if (config.value.expires_in === undefined || config.value.refresh_token === undefined) continue;
       // Refresh if there is less than 15 minutes to expire
-      if (config.value.claimed_at + config.value.expires_in + 15 * 60 >= secondsSinceEpoch) {
+      if (config.value.claimed_at + config.value.expires_in + 15 * 60 <= secondsSinceEpoch) {
         refreshedConfigs = true;
         try {
-          console.log(`Refreshing auth ${config.key} for collection version id ${collectionVersion.id}`);
           let response = await oauth2Service.refresh(config);
           config.value = response;
         } catch (e) {
