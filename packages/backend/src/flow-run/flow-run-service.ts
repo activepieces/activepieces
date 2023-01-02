@@ -11,11 +11,10 @@ import {
   FlowRunId,
   FlowVersion,
   FlowVersionId,
-  InstanceId,
+  RunEnvironment,
   ProjectId,
   SeekPage,
 } from "shared";
-import { RunEnvironment } from "shared/dist/flow-run/flow-run";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 import { collectionService } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";

@@ -18,6 +18,7 @@ export const githubNewRepoEvent = createTrigger({
             displayName: "Event",
             description: "List of repository events",
             required: true,
+            refreshers: [],
             options: async (request) => {
                 return {
                     disabled: false,
