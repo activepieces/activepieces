@@ -29,6 +29,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
+          file: ./backend.Dockerfile
           push: true
           tags: |
             activepieces/backend:${{ env.RELEASE }}
