@@ -27,4 +27,6 @@ COPY . .
 RUN pnpm install --config.auto-install-peers=true
 RUN pnpm dlx nx run-many --target=build
 
-ENTRYPOINT ["node", "./packages/backend/dist/app.js"]
+WORKDIR /user/src/app/packages/backend
+
+ENTRYPOINT ["/usr/local/bin/pnpm", "serve:prod"]

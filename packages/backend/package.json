@@ -9,6 +9,7 @@
         "test": "jest --coverage",
         "test:watch": "jest --watch",
         "serve": "node -r dotenv/config -r ts-node/register src/app.ts",
+        "serve:prod": "node -r ts-node/register src/app.ts",
         "start": "nodemon"
     },
     "keywords": [],
