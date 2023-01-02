@@ -39,7 +39,7 @@ export const flowRunService = {
 
     const query = repo.createQueryBuilder("flow_run").where({
       projectId,
-      environment: RunEnvironment.PRODUCTION,
+      environment: RunEnvironment.PRODUCTION
     });
     const { data, cursor: newCursor } = await paginator.paginate(query);
     return paginationHelper.createPage<FlowRun>(data, newCursor);
@@ -58,7 +58,7 @@ export const flowRunService = {
     return await this.getOne({ id: flowRunId });
   },
 
-  async start({ flowVersionId, collectionVersionId, payload }: StartParams): Promise<FlowRun> {
+  async start({ flowVersionId, collectionVersionId, payload, environment}: StartParams): Promise<FlowRun> {
     console.log(`[flowRunService#start]  flowVersionId=${flowVersionId}`);
 
     const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId);
@@ -71,6 +71,7 @@ export const flowRunService = {
       collectionId: collectionVersion.collectionId,
       flowId: flowVersion.flowId,
       flowVersionId: flowVersion.id,
+      environment: environment,
       collectionVersionId: collectionVersion.id,
       flowDisplayName: flowVersion.displayName,
       collectionDisplayName: collectionVersion.displayName,

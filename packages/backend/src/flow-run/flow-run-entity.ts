@@ -18,6 +18,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
     collectionId: ApIdSchema,
     flowVersionId: ApIdSchema,
     collectionVersionId: ApIdSchema,
+    environment: {
+      type: String,
+      nullable: true
+    },
     flowDisplayName: {
       type: String,
     },
