@@ -88,6 +88,7 @@ async function refreshAndUpdateCollection(collectionVersion: Readonly<Collection
     let config = clonedVersion.configs[i];
     if (config.type === ConfigType.CLOUD_OAUTH2 || config.type == ConfigType.OAUTH2) {
       const secondsSinceEpoch = Math.round(Date.now() / 1000);
+      if (config.value.expires_in === undefined || config.value.refresh_token === undefined) continue;
       // Refresh if there is less than 15 minutes to expire
       if (config.value.claimed_at + config.value.expires_in + 15 * 60 >= secondsSinceEpoch) {
         refreshedConfigs = true;
@@ -96,8 +97,8 @@ async function refreshAndUpdateCollection(collectionVersion: Readonly<Collection
           let response = await oauth2Service.refresh(config);
           config.value = response;
         } catch (e) {
+          console.error(e);
           /// There is nothing to do other than wait for the 3P service code to work in next 15 minutes, and throw an error.
-          throw e;
         }
       }
     }
