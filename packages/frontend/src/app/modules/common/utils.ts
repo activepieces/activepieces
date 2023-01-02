@@ -47,7 +47,7 @@ export function findDefaultFlowDisplayName(flows: Flow[]) {
 	return `Flow ${defaultFlowIndex}`;
 }
 
-export const defaultCronJobForScheduleTrigger = '0 */5 * ? * *';
+export const defaultCronJobForScheduleTrigger = '0/5 * * * *';
 
 export const autoSaveDebounceTime = 600;
 export const cacheArtifactDebounceTime = 200;

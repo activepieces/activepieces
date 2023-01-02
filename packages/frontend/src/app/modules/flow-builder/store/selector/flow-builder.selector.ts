@@ -108,7 +108,7 @@ export const selectCurrentFlow = createSelector(selectFlowsState, (flowsState: F
 	return flowsState.flows.find(f => f.id === flowsState.selectedFlowId);
 });
 export const selectCurrentFlowWebhookUrl = createSelector(selectCurrentFlow, flow => {
-	return `${environment.apiUrl}/flows/${flow?.id}/webhook`;
+	return `${environment.apiUrl}/webhooks?flowId=${flow?.id}`;
 });
 
 export const selectTabState = (flowId: string) =>

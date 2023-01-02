@@ -181,7 +181,8 @@ importers:
       angular2-uuid: ^1.1.1
       autoprefixer: ^10.4.13
       codemirror: ^5.65.9
-      cron-expression-validator: ^1.0.20
+      cron-parser: ^4.7.0
+      cron-validator: ^1.3.1
       cronstrue: ^2.10.0
       eslint: ^8.17.0
       eslint-config-prettier: 8.5.0
@@ -241,7 +242,8 @@ importers:
       angular-svg-icon: 15.0.0_fbpzarz5tzwyhbfyo4dgitdwqu
       angular2-uuid: 1.1.1
       codemirror: 5.65.11
-      cron-expression-validator: 1.0.20
+      cron-parser: 4.7.0
+      cron-validator: 1.3.1
       cronstrue: 2.21.0
       flatpickr: 4.6.13
       font-awesome: 4.7.0
@@ -388,12 +390,12 @@ importers:
     specifiers:
       '@sinclair/typebox': ^0.25.16
       '@types/node': ^18.11.18
-      cron-expression-validator: ^1.0.20
+      cron-validator: ^1.3.1
       nanoid: ^3.3.4
       typescript: ^4.6.2
     dependencies:
       '@sinclair/typebox': 0.25.16
-      cron-expression-validator: 1.0.20
+      cron-validator: 1.3.1
       nanoid: 3.3.4
     devDependencies:
       '@types/node': 18.11.18
@@ -6130,15 +6132,15 @@ packages:
       pretty-bytes: 5.6.0
     dev: true
 
-  /cron-expression-validator/1.0.20:
-    resolution: {integrity: sha512-g0osBTdp+1ryDw2vzlG6UpDPaa4fO94ZChF2R0lEnRurbuUEL74XEVX7xZJ13m4Mq/gb3ni6UQu8+Oqt+eocsw==}
-    dev: false
-
   /cron-parser/4.7.0:
     resolution: {integrity: sha512-BdAELR+MCT2ZWsIBhZKDuUqIUCBjHHulPJnm53OfdRLA4EWBjva3R+KM5NeidJuGsNXdEcZkjC7SCnkW5rAFSA==}
     engines: {node: '>=12.0.0'}
     dependencies:
       luxon: 3.2.0
+    dev: false
+
+  /cron-validator/1.3.1:
+    resolution: {integrity: sha512-C1HsxuPCY/5opR55G5/WNzyEGDWFVG+6GLrA+fW/sCTcP6A6NTjUP2AK7B8n2PyFs90kDG2qzwm8LMheADku6A==}
     dev: false
 
   /cronstrue/2.21.0:
