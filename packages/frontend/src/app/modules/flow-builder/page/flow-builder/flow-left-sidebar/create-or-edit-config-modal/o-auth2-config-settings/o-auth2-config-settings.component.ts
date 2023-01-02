@@ -12,13 +12,13 @@ import { map, Observable, tap } from 'rxjs';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { environment } from 'src/environments/environment';
 interface SetttingsForm {
-	redirect_url: FormControl<string>;
-	client_secret: FormControl<string>;
-	client_id: FormControl<string>;
-	auth_url: FormControl<string>;
-	refresh_url: FormControl<string>;
-	token_url: FormControl<string>;
-	response_type: FormControl<string>;
+	redirectUrl: FormControl<string>;
+	clientSecret: FormControl<string>;
+	clientId: FormControl<string>;
+	authUrl: FormControl<string>;
+	refreshUrl: FormControl<string>;
+	tokenUrl: FormControl<string>;
+	responseType: FormControl<string>;
 	scope: FormControl<string>;
 }
 @Component({
@@ -45,17 +45,24 @@ export class OAuth2ConfigSettingsComponent implements ControlValueAccessor {
 	onChange = val => {};
 	constructor(private formBuilder: FormBuilder) {
 		this.settingsForm = this.formBuilder.group({
-			redirect_url: new FormControl({ value: environment.redirectUrl, disabled: true }, { nonNullable: true }),
-			client_secret: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			client_id: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			auth_url: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			refresh_url: new FormControl('', { nonNullable: true }),
-			token_url: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			response_type: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
+			redirectUrl: new FormControl(
+				{ value: environment.redirectUrl, disabled: false },
+				{ nonNullable: true, validators: [Validators.required] }
+			),
+			clientSecret: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+			clientId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+			authUrl: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+			refreshUrl: new FormControl('', { nonNullable: true }),
+			tokenUrl: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+			responseType: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
 			scope: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
 		});
 		this.settingsFormValueChanged$ = this.settingsForm.valueChanges.pipe(
-			tap(() => this.onChange({ ...this.settingsForm.getRawValue(), user_input_type: 'LOGIN' })),
+			tap(() =>
+				this.onChange({
+					...this.settingsForm.getRawValue(),
+				})
+			),
 			map(() => void 0)
 		);
 	}

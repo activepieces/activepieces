@@ -17,7 +17,9 @@ export class Oauth2Service {
 		return this.httpClient.post<OAuth2Response>(environment.apiUrl + '/oauth2/claim', request);
 	}
 
-	public openPopup(request: OAuth2ConfigSettings & {redirectUrl: string, authUrl: string, extraParams: Record<string, unknown>}): Observable<any> {
+	public openPopup(
+		request: OAuth2ConfigSettings & { redirectUrl: string; authUrl: string; extraParams: Record<string, unknown> }
+	): Observable<any> {
 		this.currentlyOpenPopUp?.close();
 		const winTarget = '_blank';
 		const winFeatures =
@@ -36,9 +38,11 @@ export class Oauth2Service {
 			'&prompt=consent' +
 			'&scope=' +
 			request.scope;
-		const entries = Object.entries(request.extraParams);
-		for(let i = 0; i < entries.length;++i){
-			url = url + "&" + entries[i][0] + "=" + entries[i][1];
+		if (request.extraParams) {
+			const entries = Object.entries(request.extraParams);
+			for (let i = 0; i < entries.length; ++i) {
+				url = url + '&' + entries[i][0] + '=' + entries[i][1];
+			}
 		}
 		const popup = window.open(url, winTarget, winFeatures);
 		this.currentlyOpenPopUp = popup;

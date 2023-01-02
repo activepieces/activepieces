@@ -31,7 +31,7 @@ interface AuthConfigSettings {
 	animations: [fadeInUp400ms],
 })
 export class NewAuthenticationModalComponent implements OnInit {
-	@Input() connectorAuthConfig: CollectionConfig;
+	@Input() pieceAuthConfig: CollectionConfig;
 	@Input() pieceName: string;
 	@Input() configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
 	settingsForm: FormGroup<AuthConfigSettings>;
@@ -51,20 +51,20 @@ export class NewAuthenticationModalComponent implements OnInit {
 		public dialogRef: MatDialogRef<NewAuthenticationModalComponent>,
 		@Inject(MAT_DIALOG_DATA)
 		dialogData: {
-			connectorAuthConfig: CollectionConfig;
+			pieceAuthConfig: CollectionConfig;
 			pieceName: string;
 			configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
 		}
 	) {
 		this.pieceName = dialogData.pieceName;
-		this.connectorAuthConfig = dialogData.connectorAuthConfig;
+		this.pieceAuthConfig = dialogData.pieceAuthConfig;
 		this.configToUpdateWithIndex = dialogData.configToUpdateWithIndex;
 	}
 
 	ngOnInit(): void {
 		this.collectionId$ = this.store.select(BuilderSelectors.selectCurrentCollectionId);
 		this.settingsForm = this.fb.group({
-			extraParams: new FormControl<Record<string, unknown>>(this.connectorAuthConfig.extra ?? {}, {
+			extraParams: new FormControl<Record<string, unknown>>(this.pieceAuthConfig.extra ?? {}, {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
@@ -72,15 +72,15 @@ export class NewAuthenticationModalComponent implements OnInit {
 			redirectUrl: new FormControl(environment.redirectUrl, { nonNullable: true, validators: [Validators.required] }),
 			clientSecret: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
 			clientId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			authUrl: new FormControl(this.connectorAuthConfig.authUrl || '', {
+			authUrl: new FormControl(this.pieceAuthConfig.authUrl || '', {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
-			tokenUrl: new FormControl(this.connectorAuthConfig.tokenUrl || '', {
+			tokenUrl: new FormControl(this.pieceAuthConfig.tokenUrl || '', {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
-			scope: new FormControl(this.connectorAuthConfig.scope?.join(' ') || '', {
+			scope: new FormControl(this.pieceAuthConfig.scope?.join(' ') || '', {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
@@ -97,7 +97,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 			value: new FormControl(undefined as any, Validators.required),
 			refreshUrl: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
 		});
-
+		debugger;
 		if (this.configToUpdateWithIndex) {
 			this.settingsForm.patchValue({
 				...this.configToUpdateWithIndex.config.settings,
@@ -147,7 +147,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 	}
 	get authenticationSettingsControlsValid() {
 		return Object.keys(this.settingsForm.controls)
-			.filter(k => k !== 'value')
+			.filter(k => k !== 'value' && !this.settingsForm.controls[k].disabled)
 			.map(key => {
 				return this.settingsForm.controls[key].valid;
 			})

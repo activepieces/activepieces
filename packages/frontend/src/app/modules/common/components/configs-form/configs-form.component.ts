@@ -193,7 +193,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	openNewAuthenticationModal(authConfigName: string) {
 		this.updateOrAddConfigModalClosed$ = this.dialogService
 			.open(NewAuthenticationModalComponent, {
-				data: { connectorAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2), pieceName: this.pieceName },
+				data: { pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2), pieceName: this.pieceName },
 			})
 			.afterClosed()
 			.pipe(
@@ -225,7 +225,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 						.open(NewAuthenticationModalComponent, {
 							data: {
 								configToUpdateWithIndex: configAndIndex,
-								connectorAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
+								pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
 								pieceName: this.pieceName,
 							},
 						})

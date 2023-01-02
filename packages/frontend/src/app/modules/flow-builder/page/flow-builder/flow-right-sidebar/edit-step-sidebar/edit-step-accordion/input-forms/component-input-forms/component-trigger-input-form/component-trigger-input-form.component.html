@@ -7,8 +7,8 @@
       [compareWith]="triggerDropdownCompareFn">
 
       <mat-select-trigger>
-        <ng-container *ngFor="let opt of triggers$ | async">
-          {{opt.label.name}}
+        <ng-container *ngIf="selectedTrigger$ | async as selectedTrigger">
+          {{selectedTrigger?.label.name}}
         </ng-container>
       </mat-select-trigger>
 

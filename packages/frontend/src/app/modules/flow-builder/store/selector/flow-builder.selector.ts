@@ -93,6 +93,10 @@ export const selectAuth2Configs = createSelector(selectCurrentCollectionConfigs,
 export const selectAllConfigs = createSelector(selectCurrentCollectionConfigs, (collectionConfigs: Config[]) => {
 	return [...collectionConfigs];
 });
+export const selectAllConfigsWithoutOAuth2 = createSelector(selectAllConfigs, (collectionConfigs: Config[]) => {
+	return [...collectionConfigs].filter(c => c.type !== ConfigType.OAUTH2);
+});
+
 export const selectFlowsState = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
 	return state.flowsState;
 });
@@ -339,4 +343,5 @@ export const BuilderSelectors = {
 	selectIsPublishing,
 	selectCurrentFlowWebhookUrl,
 	selectFlowItemDetailsForConnectorComponentsTriggers,
+	selectAllConfigsWithoutOAuth2,
 };
