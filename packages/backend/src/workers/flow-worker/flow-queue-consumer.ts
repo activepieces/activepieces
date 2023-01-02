@@ -1,7 +1,6 @@
 import { Worker } from "bullmq";
 import { ApId } from "shared";
-import Redis from "ioredis";
-import { createRedisClient, redisConnection } from "../../database/redis-connection";
+import { createRedisClient } from "../../database/redis-connection";
 import { flowRunService } from "../../flow-run/flow-run-service";
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from "./flow-queue";
 import { flowWorker } from "./flow-worker";
