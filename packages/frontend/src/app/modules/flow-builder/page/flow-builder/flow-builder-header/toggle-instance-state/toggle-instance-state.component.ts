@@ -13,12 +13,17 @@ import { disableInstance, enableInstance } from 'src/app/modules/flow-builder/st
 export class ToggleInstanceStateComponent implements OnInit {
 	toggleFormControl: FormControl<boolean> = new FormControl();
 	instanceStateChanged$: Observable<boolean>;
-	collectionInstance$: Observable<Instance | undefined>;
+	_collectionInstance: Instance | undefined;
 	@Input() collectionId: string;
-	@Input() collectionInstance: Instance | undefined;
+	@Input() set collectionInstance(instance: Instance | undefined) {
+		if (instance && this.toggleFormControl) {
+			this.toggleFormControl.setValue(instance.status === InstanceStatus.ENABLED, { emitEvent: false });
+		}
+		this._collectionInstance = instance;
+	}
 	constructor(private store: Store) {}
 	ngOnInit(): void {
-		this.toggleFormControl.setValue(this.collectionInstance?.status === InstanceStatus.ENABLED);
+		this.toggleFormControl.setValue(this._collectionInstance?.status === InstanceStatus.ENABLED);
 		this.instanceStateChanged$ = this.toggleFormControl.valueChanges.pipe(
 			tap(res => {
 				if (res) {

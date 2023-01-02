@@ -68,6 +68,7 @@ export class EditStepAccordionComponent implements AfterViewInit {
 			input: new UntypedFormControl({}),
 		});
 	}
+
 	ngAfterViewInit(): void {
 		const expansionAnimationDuration = 500;
 		this.delayExpansionPanelRendering$ = of(true).pipe(delay(expansionAnimationDuration));

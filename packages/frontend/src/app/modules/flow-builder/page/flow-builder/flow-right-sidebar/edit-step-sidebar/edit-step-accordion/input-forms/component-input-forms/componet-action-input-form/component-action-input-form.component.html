@@ -5,9 +5,11 @@
     <mat-select placeholder="Select an action" [formControlName]="ACTION_FORM_CONTROL_NAME"
       [compareWith]="actionDropdownCompareFn">
       <mat-select-trigger>
-        <ng-container *ngFor="let opt of actions$ | async">
-          {{opt.label.name}}
-        </ng-container>
+        <mat-select-trigger>
+          <ng-container *ngIf="selectedAction$ | async as selectedAction">
+            {{selectedAction?.label.name}}
+          </ng-container>
+        </mat-select-trigger>
       </mat-select-trigger>
       <mat-option *ngFor="let opt of actions$ | async" [value]="opt.value" [matTooltip]="opt.label.description">
         <div>{{opt.label.name}}</div>
@@ -25,7 +27,7 @@
     *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value && componentForm.get(CONFIGS_FORM_CONTROL_NAME)">
     <div>
       <app-configs-form [stepName]="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value?.actionName"
-        [componentName]="componentName" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
+        [pieceName]="componentName" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
       </app-configs-form>
     </div>
   </ng-container>

@@ -154,7 +154,7 @@ export class StepTypeSidebarComponent implements OnInit {
 					type: TriggerType.PIECE,
 					valid: false,
 					settings: {
-						pieceName: triggerDetails.name,
+						pieceName: triggerDetails.extra!.appName,
 						triggerName: '',
 						input: {},
 					},
@@ -178,7 +178,7 @@ export class StepTypeSidebarComponent implements OnInit {
 			name: FlowStructureUtil.findAvailableName(flowVersion, 'step'),
 			displayName: getDefaultDisplayNameForPiece(flowItemDetails.type as ActionType, flowItemDetails.name),
 			nextAction: undefined,
-			valid: true
+			valid: true,
 		};
 		switch (actionType) {
 			case ActionType.CODE: {
@@ -229,7 +229,7 @@ export class StepTypeSidebarComponent implements OnInit {
 						...baseProps,
 						type: ActionType.PIECE,
 						settings: {
-							pieceName: componentDetails.name,
+							pieceName: componentDetails.extra!.appName,
 							actionName: undefined,
 							input: {},
 						},

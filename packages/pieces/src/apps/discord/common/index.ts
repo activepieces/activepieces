@@ -21,6 +21,7 @@ export const discordCommon = {
     channel: Property.Dropdown({
         displayName: "Channel",
         required: true,
+        refreshers: ['authentication'],
         options: async (value) => {
             if (value['authentication'] === undefined) {
                 return {

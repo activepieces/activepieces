@@ -15,6 +15,7 @@ export const githubCommon = {
     }),
     repositoryDropdown: Property.Dropdown<{ repo: string, owner: string }>({
         displayName: "Repository",
+        refreshers: ['authentication'],
         required: true,
         options: async (propsValue) => {
             if (propsValue['authentication'] === undefined) {
