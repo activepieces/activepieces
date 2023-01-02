@@ -1,6 +1,6 @@
 import { Worker } from "bullmq";
 import { ApId } from "shared";
-import Redis from "ioredis";
+import { createRedisClient } from "../../database/redis-connection";
 import { flowRunService } from "../../flow-run/flow-run-service";
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from "./flow-queue";
 import { flowWorker } from "./flow-worker";
@@ -14,9 +14,7 @@ const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
     return await flowWorker.executeFlow(data);
   },
   {
-    connection: new Redis(6379, {
-      maxRetriesPerRequest: null,
-    }),
+    connection: createRedisClient(),
   }
 );
 
@@ -33,9 +31,7 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     });
   },
   {
-    connection: new Redis(6379, {
-      maxRetriesPerRequest: null,
-    }),
+    connection: createRedisClient(),
   }
 );
 

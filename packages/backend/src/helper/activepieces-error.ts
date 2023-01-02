@@ -1,4 +1,5 @@
 import { ApId, CollectionId, CollectionVersionId, FileId, FlowId, FlowRunId, FlowVersionId, InstanceId } from "shared";
+import { SystemProp } from "./system/system-prop";
 
 export class ActivepiecesError extends Error {
   constructor(public error: ErrorParams) {
@@ -21,7 +22,8 @@ type ErrorParams =
   | JobRemovalFailureErrorParams
   | PieceNotFoundErrorParams
   | PieceTriggerNotFoundErrorParams
-  | StepNotFoundErrorParams;
+  | StepNotFoundErrorParams
+  | SystemPropNotDefinedErrorParams;
 
 export interface BaseErrorParams<T, V> {
   code: T;
@@ -135,6 +137,14 @@ export interface JobRemovalFailureErrorParams
     }
   > {}
 
+export interface SystemPropNotDefinedErrorParams
+  extends BaseErrorParams<
+    ErrorCode.SYSTEM_PROP_NOT_DEFINED,
+    {
+      prop: SystemProp;
+    }
+  > {}
+
 export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
   COLLECTION_VERSION_NOT_FOUND = "COLLECTION_VERSION_NOT_FOUND",
@@ -151,4 +161,5 @@ export enum ErrorCode {
   PIECE_NOT_FOUND = "PIECE_NOT_FOUND",
   PIECE_TRIGGER_NOT_FOUND = "PIECE_TRIGGER_NOT_FOUND",
   STEP_NOT_FOUND = "STEP_NOT_FOUND",
+  SYSTEM_PROP_NOT_DEFINED = "SYSTEM_PROP_NOT_DEFINED",
 }

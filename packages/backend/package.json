@@ -1,6 +1,6 @@
 {
     "name": "backend",
-    "version": "1.0.0",
+    "version": "0.1.7",
     "description": "",
     "main": "./src/index.ts",
     "scripts": {
@@ -8,7 +8,9 @@
         "build": "tsc",
         "test": "jest --coverage",
         "test:watch": "jest --watch",
-        "serve": "sh check.sh && ts-node src/app.ts",
+        "serve": "node -r dotenv/config -r ts-node/register src/app.ts",
+        "serve:check": "sh check.sh && pnpm serve",
+        "serve:prod": "node -r ts-node/register src/app.ts",
         "start": "nodemon"
     },
     "keywords": [],
@@ -44,6 +46,7 @@
         "@types/node": "^17.0.21",
         "@types/qs": "^6.9.7",
         "@typescript-eslint/eslint-plugin": "^5.47.1",
+        "dotenv": "^16.0.3",
         "eslint": "^8.30.0",
         "eslint-config-prettier": "^8.5.0",
         "eslint-config-standard-with-typescript": "^24.0.0",
