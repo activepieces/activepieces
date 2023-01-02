@@ -28,7 +28,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
-          context: packages/frontend
+          context: .
+          file: ./frontend.Dockerfile
           push: true
           tags: |
             activepieces/frontend:${{ env.RELEASE }}
