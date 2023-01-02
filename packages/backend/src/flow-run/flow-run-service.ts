@@ -1,26 +1,20 @@
 import {
   apId,
-  Collection,
-  CollectionId,
-  CollectionVersion,
   CollectionVersionId,
   Cursor,
   ExecutionOutputStatus,
   FileId,
   FlowRun,
   FlowRunId,
-  FlowVersion,
   FlowVersionId,
-  InstanceId,
   ProjectId,
   SeekPage,
+  RunEnvironment
 } from "shared";
-import { RunEnvironment } from "shared/dist/flow-run/flow-run";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 import { collectionService } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
 import { flowVersionService } from "../flows/flow-version/flow-version.service";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { Order } from "../helper/pagination/paginator";
@@ -43,12 +37,10 @@ export const flowRunService = {
       },
     });
 
-    const query = repo
-      .createQueryBuilder("flow_run")
-      .where({
-        projectId,
-        environment: RunEnvironment.PRODUCTION
-      });
+    const query = repo.createQueryBuilder("flow_run").where({
+      projectId,
+      environment: RunEnvironment.PRODUCTION,
+    });
     const { data, cursor: newCursor } = await paginator.paginate(query);
     return paginationHelper.createPage<FlowRun>(data, newCursor);
   },
@@ -69,9 +61,9 @@ export const flowRunService = {
   async start({ flowVersionId, collectionVersionId, payload }: StartParams): Promise<FlowRun> {
     console.log(`[flowRunService#start]  flowVersionId=${flowVersionId}`);
 
-    const flowVersion = await getFlowVersionOrThrow(flowVersionId);
-    const collectionVersion = await getCollectionVersionOrThrow(collectionVersionId);
-    const collection = await getCollectionOrThrow(collectionVersion.collectionId);
+    const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId);
+    const collectionVersion = await collectionVersionService.getOneOrThrow(collectionVersionId);
+    const collection = await collectionService.getOneOrThrow(collectionVersion.collectionId);
 
     const flowRun: Partial<FlowRun> = {
       id: apId(),
@@ -103,51 +95,6 @@ export const flowRunService = {
   },
 };
 
-const getFlowVersionOrThrow = async (id: FlowVersionId): Promise<FlowVersion> => {
-  const flowVersion = await flowVersionService.getOne(id);
-
-  if (flowVersion === null) {
-    throw new ActivepiecesError({
-      code: ErrorCode.FLOW_VERSION_NOT_FOUND,
-      params: {
-        id,
-      },
-    });
-  }
-
-  return flowVersion;
-};
-
-const getCollectionVersionOrThrow = async (id: CollectionVersionId): Promise<CollectionVersion> => {
-  const collectionVersion = await collectionVersionService.getOne(id);
-
-  if (collectionVersion === null) {
-    throw new ActivepiecesError({
-      code: ErrorCode.COLLECTION_VERSION_NOT_FOUND,
-      params: {
-        id,
-      },
-    });
-  }
-
-  return collectionVersion;
-};
-
-const getCollectionOrThrow = async (id: CollectionId): Promise<Collection> => {
-  const collection = await collectionService.getOne(id, null);
-
-  if (collection === null) {
-    throw new ActivepiecesError({
-      code: ErrorCode.COLLECTION_NOT_FOUND,
-      params: {
-        id,
-      },
-    });
-  }
-
-  return collection;
-};
-
 interface ListParams {
   projectId: ProjectId;
   cursor: Cursor | null;
@@ -159,7 +106,7 @@ interface GetOneParams {
 }
 
 interface StartParams {
-  environment: RunEnvironment,
+  environment: RunEnvironment;
   flowVersionId: FlowVersionId;
   collectionVersionId: CollectionVersionId;
   payload: unknown;

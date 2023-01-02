@@ -1,3 +1,5 @@
+export { RefreshTokenFromCloudRequest } from "./oauth2/dto/refresh-token-from-cloud";
+
 export { StoreOperation} from "./flows/actions/action";
 
 export * from "./flow-run/execution/step-output";
