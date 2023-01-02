@@ -12,7 +12,7 @@ import { githubCommon } from '../common';
 export const githubNewRepoEvent = createTrigger({
   name: 'new_repo_event',
   displayName: 'New Repository Event',
-  description: 'Triggers when there is new event on the repository',
+  description: 'Triggers when there is a new event on the repository',
   props: {
     authentication: githubCommon.authentication,
     repository: githubCommon.repositoryDropdown,
@@ -79,9 +79,16 @@ export const githubNewRepoEvent = createTrigger({
     }
   },
   async run(context) {
+    if (isVerficationCall(context.payload)) {
+      return [];
+    }
     return [context.payload];
   },
 });
+
+function isVerficationCall(payload: Record<string, any>) {
+  return payload['zen'] !== undefined;
+}
 
 interface WebhookInformation {
   webhookId: string;

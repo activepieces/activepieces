@@ -1,7 +1,7 @@
 
 
 export interface Context<T>{
-    payload?: unknown;
+    payload?: any;
     webhookUrl?: string,
     propsValue: T,
     store?: Store
