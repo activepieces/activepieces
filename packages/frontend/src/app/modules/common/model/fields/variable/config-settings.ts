@@ -1,4 +1,4 @@
-export class OAuth2ConfigSettings {
+/**export class OAuth2ConfigSettings {
 	auth_url: string = '';
 	token_url: string = '';
 	refresh_url: string = '';
@@ -8,3 +8,4 @@ export class OAuth2ConfigSettings {
 	response_type: string = 'code';
 	redirect_url: string = '';
 }
+**/

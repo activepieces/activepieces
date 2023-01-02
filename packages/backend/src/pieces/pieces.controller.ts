@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
 import { PieceOptionRequest, PieceOptionRequestSchema } from "shared";
 import { getPiece, pieces } from "pieces/dist/src/apps";
-import { DropdownProperty, PropertyType } from "pieces";
+import { DropdownProperty, DropdownState, PropertyType } from "pieces";
 
 export const piecesController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
   fastify.get("/v1/pieces", async (_request, _reply) => {
@@ -41,9 +41,9 @@ export const piecesController = async (fastify: FastifyInstance, options: Fastif
           },
         });
       }
-      const configs = action !== undefined ? action.props : trigger!.props;
-      const config = configs.find((f: { name: string }) => f.name === request.body.configName);
-      if (config === undefined || config.type !== PropertyType.DROPDOWN) {
+      const props = action !== undefined ? action.props : trigger!.props;
+      const property = props[request.body.configName];
+      if (property === undefined || property.type !== PropertyType.DROPDOWN) {
         throw new ActivepiecesError({
           code: ErrorCode.CONFIG_NOT_FOUND,
           params: {
@@ -53,7 +53,16 @@ export const piecesController = async (fastify: FastifyInstance, options: Fastif
           },
         });
       }
-      return await (config as DropdownProperty<unknown>).options(request.body.configs);
+      try{
+        return await (property as DropdownProperty<unknown>).options(request.body.configs);
+      }catch(e){
+        console.error(e);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "The piece throws an error"
+        } as DropdownState<unknown>;
+      }
     }
   );
 };

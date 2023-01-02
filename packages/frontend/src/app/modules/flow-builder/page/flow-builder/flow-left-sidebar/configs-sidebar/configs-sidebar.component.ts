@@ -4,10 +4,10 @@ import { BuilderSelectors } from '../../../../store/selector/flow-builder.select
 import { Observable } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { FlowsActions } from '../../../../store/action/flows.action';
-import { Config } from '../../../../../common/model/fields/variable/config';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateEditConfigModalComponent } from '../create-or-edit-config-modal/create-or-edit-config-modal.component';
 import { __values } from 'tslib';
+import { Config } from 'shared';
 
 @Component({
 	selector: 'app-configs-sidebar',

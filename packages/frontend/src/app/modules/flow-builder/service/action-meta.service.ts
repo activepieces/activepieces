@@ -5,7 +5,6 @@ import { HttpClient } from '@angular/common/http';
 import { AppPiece } from '../../common/components/configs-form/connector-action-or-config';
 import { environment } from 'src/environments/environment';
 import { Observable, shareReplay } from 'rxjs';
-import { DropdownItem } from '../../common/model/dropdown-item.interface';
 
 @Injectable({
 	providedIn: 'root',
@@ -58,9 +57,19 @@ export class ActionMetaService {
 		return this.connectorComponents$;
 	}
 	getConnectorActionConfigOptions(
-		req: { configName: string; actionName: string; config: any },
+		req: { configName: string; stepName: string; configs: Record<string, any> },
 		pieceName: string
 	) {
-		return this.http.post<DropdownItem[]>(environment.apiUrl + `/pieces/${pieceName}/options`, req);
+		return this.http.post<DropdownState<any>>(environment.apiUrl + `/pieces/${pieceName}/options`, req);
 	}
 }
+export type DropdownState<T> = {
+	disabled?: boolean;
+	placeholder?: string;
+	options: DropdownOption<T>[];
+}
+
+export type DropdownOption<T>= {
+	label: string;
+	value: T;
+};

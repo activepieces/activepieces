@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { catchError, Observable, tap, throwError } from 'rxjs';
+import { OAuth2ConfigSettings } from 'shared';
 import { fadeInUp400ms } from '../../../animation/fade-in-up.animation';
-import { OAuth2ConfigSettings } from '../../../model/fields/variable/config-settings';
 import { Oauth2Service } from '../../../service/oauth2.service';
 
 @Component({
@@ -43,7 +43,8 @@ export class OAuth2ConnectControlComponent implements ControlValueAccessor {
 	popUpError = false;
 
 	openPopup(): void {
-		const configSettings = this.configSettings;
+		type authPopUp = OAuth2ConfigSettings & {extraParams: Record<string, unknown>};
+		const configSettings = this.configSettings as authPopUp;
 		this.popupOpened$ = this.oauth2Service.openPopup(configSettings).pipe(
 			tap(value => {
 				this.responseData = value;

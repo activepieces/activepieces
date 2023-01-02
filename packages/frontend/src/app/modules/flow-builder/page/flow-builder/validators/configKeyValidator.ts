@@ -1,7 +1,7 @@
 import { AbstractControl } from '@angular/forms';
 
 import { map, Observable } from 'rxjs';
-import { Config } from 'src/app/modules/common/model/fields/variable/config';
+import { Config } from 'shared';
 
 export class ConfigKeyValidator {
 	static createValidator(allConfigs$: Observable<Config[]>, configToUpdateKey: string | undefined) {

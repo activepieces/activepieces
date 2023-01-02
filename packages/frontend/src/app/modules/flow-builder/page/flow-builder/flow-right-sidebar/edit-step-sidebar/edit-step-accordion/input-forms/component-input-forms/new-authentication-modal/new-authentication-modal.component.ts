@@ -3,26 +3,26 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { Observable, take } from 'rxjs';
-import { ConfigType } from 'shared';
+import { Config, ConfigType, OAuth2Config } from 'shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { CollectionConfig } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
-import { Config } from 'src/app/modules/common/model/fields/variable/config';
 import { ConfigKeyValidator } from 'src/app/modules/flow-builder/page/flow-builder/validators/configKeyValidator';
 import { CollectionActions } from 'src/app/modules/flow-builder/store/action/collection.action';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
 import { environment } from 'src/environments/environment';
 
 interface AuthConfigSettings {
-	redirect_url: FormControl<string>;
-	client_secret: FormControl<string>;
-	client_id: FormControl<string>;
-	auth_url: FormControl<string>;
-	token_url: FormControl<string>;
+	pieceName: FormControl<string | null>;
+	redirectUrl: FormControl<string>;
+	clientSecret: FormControl<string>;
+	clientId: FormControl<string>;
+	authUrl: FormControl<string>;
+	tokenUrl: FormControl<string>;
 	scope: FormControl<string>;
 	key: FormControl<string>;
 	value: FormControl<any>;
-	response_type: FormControl<string>;
-	refresh_url: FormControl<string>;
+	refreshUrl: FormControl<string>;
+	extraParams: FormControl<Record<string, unknown>>;
 }
 @Component({
 	selector: 'app-new-authentication-modal',
@@ -33,7 +33,7 @@ interface AuthConfigSettings {
 export class NewAuthenticationModalComponent implements OnInit {
 	@Input() connectorAuthConfig: CollectionConfig;
 	@Input() appName: string;
-	@Input() configToUpdateWithIndex: { config: Config; indexInList: number } | undefined;
+	@Input() configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
 	settingsForm: FormGroup<AuthConfigSettings>;
 	collectionId$: Observable<string>;
 	submitted = false;
@@ -53,7 +53,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 		dialogData: {
 			connectorAuthConfig: CollectionConfig;
 			appName: string;
-			configToUpdateWithIndex: { config: Config; indexInList: number } | undefined;
+			configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
 		}
 	) {
 		this.appName = dialogData.appName;
@@ -63,21 +63,21 @@ export class NewAuthenticationModalComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.collectionId$ = this.store.select(BuilderSelectors.selectCurrentCollectionId);
-		console.log(environment.redirectUrl);
 		this.settingsForm = this.fb.group({
-			redirect_url: new FormControl(environment.redirectUrl, { nonNullable: true, validators: [Validators.required] }),
-			client_secret: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			client_id: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			auth_url: new FormControl(this.connectorAuthConfig.authUrl || '', {
+			extraParams: new FormControl<Record<string, unknown>>(this.connectorAuthConfig.extra??{}, { nonNullable: true, validators: [Validators.required] }),
+			pieceName: new FormControl<string | null>(null, { nonNullable: false, validators: [] }),
+			redirectUrl: new FormControl(environment.redirectUrl, { nonNullable: true, validators: [Validators.required] }),
+			clientSecret: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+			clientId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+			authUrl: new FormControl(this.connectorAuthConfig.authUrl || '', {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
-			token_url: new FormControl(this.connectorAuthConfig.tokenUrl || '', {
+			tokenUrl: new FormControl(this.connectorAuthConfig.tokenUrl || '', {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
-			response_type: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
-			scope: new FormControl(this.connectorAuthConfig.scopes || '', {
+			scope: new FormControl(this.connectorAuthConfig.scope?.join(' ') || '', {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
@@ -92,28 +92,28 @@ export class NewAuthenticationModalComponent implements OnInit {
 				],
 			}),
 			value: new FormControl(undefined as any, Validators.required),
-			refresh_url: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
+			refreshUrl: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
 		});
 
 		if (this.configToUpdateWithIndex) {
 			this.settingsForm.patchValue({
-				...this.configToUpdateWithIndex.config.settings!,
+				...this.configToUpdateWithIndex.config.settings,
 				value: this.configToUpdateWithIndex.config.value,
 			});
 			this.settingsForm.controls.key.setValue(this.configToUpdateWithIndex.config.key);
 			this.settingsForm.controls.key.disable();
 		}
 	}
-	submit(currentCollectionId: string) {
+	submit() {
 		this.submitted = true;
 		this.settingsForm.markAllAsTouched();
 		if (this.settingsForm.valid) {
-			const config = this.constructConfig(currentCollectionId);
+			const config = this.constructConfig();
 			this.saveConfigToCollection(config);
 			this.dialogRef.close(config);
 		}
 	}
-	constructConfig(currentCollectionId: string) {
+	constructConfig() {
 		const configKey = this.configToUpdateWithIndex
 			? this.configToUpdateWithIndex.config.key
 			: this.settingsForm.get('key')!.value;
@@ -121,10 +121,9 @@ export class NewAuthenticationModalComponent implements OnInit {
 		const value = settingsFormValue['value'];
 		delete settingsFormValue['value'];
 		delete settingsFormValue.key;
-		const newConfig: Config = {
+		const newConfig: Config  = {
 			key: configKey,
 			type: ConfigType.OAUTH2,
-			collectionVersionId: currentCollectionId,
 			settings: {
 				...settingsFormValue,
 				required: true,

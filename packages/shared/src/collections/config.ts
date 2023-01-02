@@ -22,20 +22,23 @@ export interface DictionaryConfig
 export interface NumberConfig extends BasicConfig<ConfigType.NUMBER, number> {}
 
 export interface OAuth2Response {
-  expires_in: string;
+  expires_in: number;
   token_type: string;
   access_token: string;
+  claimed_at: number;
   refresh_token: string;
-  scope: string;
+  scope: string[];
+  data: Record<string, any>
 }
 
 export interface CloudOAuth2ConfigSettings {
   pieceName: string;
-  response: OAuth2Response;
 }
 
 export interface CloudOAuth2Config
-  extends BasicConfig<ConfigType.CLOUD_OAUTH2, CloudOAuth2ConfigSettings> {}
+  extends BasicConfig<ConfigType.CLOUD_OAUTH2, OAuth2Response> {
+  settings: CloudOAuth2ConfigSettings;
+}
 
 export interface OAuth2ConfigSettings {
   pieceName: string | null;
@@ -43,13 +46,14 @@ export interface OAuth2ConfigSettings {
   authUrl: string;
   clientId: string;
   clientSecret: string;
-  scope: string[];
+  scope: string;
   redirectUrl: string;
-  response: OAuth2Response;
 }
 
 export interface OAuth2Config
-  extends BasicConfig<ConfigType.OAUTH2, OAuth2ConfigSettings> {}
+  extends BasicConfig<ConfigType.OAUTH2, OAuth2Response> {
+  settings: OAuth2ConfigSettings;
+}
 
 export enum ConfigType {
   CHECKBOX = 'CHECKBOX',

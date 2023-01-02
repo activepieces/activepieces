@@ -6,7 +6,7 @@
 
   <mat-dialog-content>
 
-    <form class="ap-flex ap-flex-col ap-gap-2 ap-w-[430px]" [formGroup]="settingsForm" (submit)="submit(collectionId)">
+    <form class="ap-flex ap-flex-col ap-gap-2 ap-w-[430px]" [formGroup]="settingsForm" (submit)="submit()">
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label>Key</mat-label>
         <input [matTooltip]="keyTooltip" formControlName="key" matInput type="text" />
@@ -26,22 +26,22 @@
 
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label>Redirect URL</mat-label>
-        <input [matTooltip]="redirectUrlTooltip" formControlName="redirect_url" matInput type="text" />
-        <mat-error *ngIf="settingsForm.controls.redirect_url.invalid">
+        <input [matTooltip]="redirectUrlTooltip" formControlName="redirectUrl" matInput type="text" />
+        <mat-error *ngIf="settingsForm.controls.redirectUrl.invalid">
           Redirect URL is required</mat-error>
       </mat-form-field>
 
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label>Client ID</mat-label>
-        <input [matTooltip]="clientIdTooltip" formControlName="client_id" matInput type="text" />
-        <mat-error *ngIf="settingsForm.controls.client_id.invalid">
+        <input [matTooltip]="clientIdTooltip" formControlName="clientId" matInput type="text" />
+        <mat-error *ngIf="settingsForm.controls.clientId.invalid">
           Client ID is required</mat-error>
       </mat-form-field>
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label>Client Secret</mat-label>
-        <input [matTooltip]="clientSecretTooltip" formControlName="client_secret" matInput type="password"
+        <input [matTooltip]="clientSecretTooltip" formControlName="clientSecret" matInput type="password"
           placeholder="Key" />
-        <mat-error *ngIf="settingsForm.controls.client_secret.invalid">
+        <mat-error *ngIf="settingsForm.controls.clientSecret.invalid">
           Client Secret is required</mat-error>
       </mat-form-field>
 
@@ -61,7 +61,7 @@
       <app-button btnColor="basic" mat-dialog-close btnSize="default">
         Cancel
       </app-button>
-      <app-button cdkFocusInitial btnSize="default" (click)="submit(collectionId)" btnColor="primary" type="submit">
+      <app-button cdkFocusInitial btnSize="default" (click)="submit()" btnColor="primary" type="submit">
         Save
       </app-button>
     </div>

@@ -112,6 +112,6 @@
 <ng-container *ngFor="let obs$  of 	optionsObservables$ | keyvalue">
   <ng-container *ngIf=" obs$.value | async "></ng-container>
 </ng-container>
-<ng-container *ngIf="authConfigDropdownChanged$  | async"></ng-container>
+<ng-container *ngIf="configDropdownChanged$  | async"></ng-container>
 <ng-container *ngIf="updateOrAddConfigModalClosed$ | async "></ng-container>
 <ng-container *ngIf="updateAuthConfig$ | async"> </ng-container>

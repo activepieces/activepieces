@@ -117,8 +117,6 @@ export class FlowService {
 	}
 
 	loadStateLogs(fileId: FileId): Observable<ExecutionState> {
-		console.log("GO GO GO " + fileId);
-
 		return this.http.get<ExecutionState>(environment.apiUrl + `/files/${fileId}`);
 	}
 }
