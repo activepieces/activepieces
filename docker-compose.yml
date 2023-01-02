@@ -19,9 +19,6 @@ services:
       - AP_REDIS_PORT=6379
     networks:
       - activepieces
-    ports:
-      - 3000:3000
-    working_dir: /usr/src/app/packages/backend
 
   frontend:
     image: activepieces/frontend:0.1.1
