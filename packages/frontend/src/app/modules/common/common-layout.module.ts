@@ -53,6 +53,8 @@ import { JsonViewDialogComponent } from './components/json-view/json-view-dialog
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AuthConfigsPipe } from './components/configs-form/auth-configs.pipe';
+import { OAuth2CloudConnectControlComponent } from './components/form-controls/o-auth2-cloud-connect-control /o-auth2-cloud-connect-control.component';
+import { ConfirmCloudAuthConfigUseDialog } from './components/configs-form/confirm-cloud-auth-config-use-dialog/confirm-cloud-auth-config-use-dialog.component';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 0,
 	hideDelay: 0,
@@ -90,7 +92,9 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		ConnectorCustomRequestFormControlComponent,
 		DialogTitleTemplateComponent,
 		JsonViewDialogComponent,
-  AuthConfigsPipe,
+		AuthConfigsPipe,
+		OAuth2CloudConnectControlComponent,
+		ConfirmCloudAuthConfigUseDialog,
 	],
 	imports: [
 		FontAwesomeModule,
@@ -156,6 +160,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MatTableModule,
 		DialogTitleTemplateComponent,
 		MatDialogModule,
+		OAuth2CloudConnectControlComponent,
 	],
 	providers: [
 		HighlightService,

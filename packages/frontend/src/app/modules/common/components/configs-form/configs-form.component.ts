@@ -10,16 +10,31 @@ import {
 	Validators,
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { catchError, distinctUntilChanged, map, Observable, of, shareReplay, startWith, take, tap } from 'rxjs';
+import {
+	catchError,
+	distinctUntilChanged,
+	EMPTY,
+	map,
+	Observable,
+	of,
+	shareReplay,
+	startWith,
+	switchMap,
+	take,
+	tap,
+} from 'rxjs';
 import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
-import { CollectionConfig, InputType } from './connector-action-or-config';
+import { PieceConfig, InputType } from './connector-action-or-config';
 import { NewAuthenticationModalComponent } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 import { MatDialog } from '@angular/material/dialog';
 import { Config, ConfigType } from 'shared';
 import { DropdownItem } from '../../model/dropdown-item.interface';
+import { NewCloudAuthenticationModalComponent } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-cloud-authentication-modal/new-cloud-authentication-modal.component';
+import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.service';
+import { ConfirmCloudAuthConfigUseDialog } from './confirm-cloud-auth-config-use-dialog/confirm-cloud-auth-config-use-dialog.component';
 type ConfigKey = string;
 
 @Component({
@@ -42,10 +57,10 @@ type ConfigKey = string;
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfigsFormComponent implements ControlValueAccessor {
-	configs: CollectionConfig[] = [];
-	requiredConfigs: CollectionConfig[] = [];
-	allOptionalConfigs: CollectionConfig[] = [];
-	selectedOptionalConfigs: CollectionConfig[] = [];
+	configs: PieceConfig[] = [];
+	requiredConfigs: PieceConfig[] = [];
+	allOptionalConfigs: PieceConfig[] = [];
+	selectedOptionalConfigs: PieceConfig[] = [];
 	optionalConfigsMenuOpened = false;
 	@Input() stepName: string;
 	@Input() pieceName: string;
@@ -62,17 +77,19 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	updateOrAddConfigModalClosed$: Observable<void>;
 	configDropdownChanged$: Observable<any>;
 	updatedAuthLabel = '';
+	cloudAuthCheck$: Observable<void>;
 	constructor(
 		private fb: UntypedFormBuilder,
 		public themeService: ThemeService,
 		private actionMetaDataService: ActionMetaService,
 		private dialogService: MatDialog,
-		private store: Store
+		private store: Store,
+		private cloudAuthConfigsService: CloudAuthConfigsService
 	) {
 		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions);
 	}
 
-	writeValue(obj: CollectionConfig[]): void {
+	writeValue(obj: PieceConfig[]): void {
 		this.configs = obj;
 		this.createForm();
 	}
@@ -126,7 +143,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		this.form.markAllAsTouched();
 	}
 
-	private createConfigsFormControls(configs: CollectionConfig[]) {
+	private createConfigsFormControls(configs: PieceConfig[]) {
 		const controls: { [key: string]: UntypedFormControl } = {};
 		configs.forEach(c => {
 			const validators: ValidatorFn[] = [];
@@ -141,17 +158,12 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		return this.form.get(configKey);
 	}
 
-	removeConfig(config: CollectionConfig) {
+	removeConfig(config: PieceConfig) {
 		this.form.removeControl(config.key);
 		const configIndex = this.allOptionalConfigs.findIndex(c => c === config);
 		this.selectedOptionalConfigs.splice(configIndex, 1);
 	}
-	contructDropdownObservable(
-		dropdownConfig: CollectionConfig,
-		authConfig: any,
-		stepName: string,
-		componentName: string
-	) {
+	contructDropdownObservable(dropdownConfig: PieceConfig, authConfig: any, stepName: string, componentName: string) {
 		const options$ = this.actionMetaDataService.getConnectorActionConfigOptions(
 			{ configName: dropdownConfig.key, stepName: stepName, configs: authConfig },
 			componentName
@@ -186,9 +198,36 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			})
 		);
 	}
-	addOptionalConfig(config: CollectionConfig) {
+	addOptionalConfig(config: PieceConfig) {
 		this.form.addControl(config.key, new UntypedFormControl());
 		this.selectedOptionalConfigs.push(config);
+	}
+
+	newAuthenticationDialogProcess(authConfigName: string) {
+		this.cloudAuthCheck$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
+			map(res => {
+				return res[this.pieceName];
+			}),
+			switchMap(cloudAuth2Config => {
+				if (cloudAuth2Config) {
+					return this.dialogService
+						.open(ConfirmCloudAuthConfigUseDialog)
+						.afterClosed()
+						.pipe(
+							tap(confirmationResult => {
+								if (confirmationResult) {
+									this.openNewCloudAuthenticationModal(authConfigName, cloudAuth2Config.clientId);
+								} else {
+									this.openNewAuthenticationModal(authConfigName);
+								}
+							})
+						);
+				} else {
+					this.openNewAuthenticationModal(authConfigName);
+					return EMPTY;
+				}
+			})
+		);
 	}
 	openNewAuthenticationModal(authConfigName: string) {
 		this.updateOrAddConfigModalClosed$ = this.dialogService
@@ -207,13 +246,34 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 				map(() => void 0)
 			);
 	}
+
+	openNewCloudAuthenticationModal(authConfigName: string, clientId: string) {
+		this.updateOrAddConfigModalClosed$ = this.dialogService
+			.open(NewCloudAuthenticationModalComponent, {
+				data: {
+					pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
+					pieceName: this.pieceName,
+					clientId: clientId,
+				},
+			})
+			.afterClosed()
+			.pipe(
+				tap((newAuthConfig: Config) => {
+					if (newAuthConfig && newAuthConfig.type === ConfigType.CLOUD_OAUTH2) {
+						const authConfigOptionValue = newAuthConfig.value;
+						this.form.get(authConfigName)!.setValue(authConfigOptionValue);
+						this.updatedAuthLabel = newAuthConfig.key;
+					}
+				}),
+				map(() => void 0)
+			);
+	}
 	editSelectedAuthConfig(authConfigKey: string) {
 		const selectedValue: any = this.form.get(authConfigKey)!.value;
 		const allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuth2Configs);
 		this.updateAuthConfig$ = allAuthConfigs$.pipe(
 			take(1),
 			map(configs => {
-				console.log(configs);
 				const updatedConfigIndex = configs.findIndex(
 					c => selectedValue && selectedValue['access_token'] === c.value['access_token']
 				);
@@ -221,25 +281,54 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			}),
 			tap(configAndIndex => {
 				if (configAndIndex) {
-					this.updateOrAddConfigModalClosed$ = this.dialogService
-						.open(NewAuthenticationModalComponent, {
-							data: {
-								configToUpdateWithIndex: configAndIndex,
-								pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
-								pieceName: this.pieceName,
-							},
-						})
-						.afterClosed()
-						.pipe(
-							tap((newAuthConfig: Config) => {
-								if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
-									const authConfigOptionValue = newAuthConfig.value;
-									this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
-									this.updatedAuthLabel = newAuthConfig.key;
-								}
-							}),
-							map(() => void 0)
+					debugger;
+					if (configAndIndex.config.type === ConfigType.OAUTH2) {
+						this.updateOrAddConfigModalClosed$ = this.dialogService
+							.open(NewAuthenticationModalComponent, {
+								data: {
+									configToUpdateWithIndex: configAndIndex,
+									pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
+									pieceName: this.pieceName,
+								},
+							})
+							.afterClosed()
+							.pipe(
+								tap((newAuthConfig: Config) => {
+									if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
+										const authConfigOptionValue = newAuthConfig.value;
+										this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
+										this.updatedAuthLabel = newAuthConfig.key;
+									}
+								}),
+								map(() => void 0)
+							);
+					} else {
+						this.updateOrAddConfigModalClosed$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
+							switchMap(res => {
+								const clientId = res[this.pieceName].clientId;
+								return this.dialogService
+									.open(NewCloudAuthenticationModalComponent, {
+										data: {
+											configToUpdateWithIndex: configAndIndex,
+											pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
+											pieceName: this.pieceName,
+											clientId: clientId,
+										},
+									})
+									.afterClosed()
+									.pipe(
+										tap((newAuthConfig: Config) => {
+											if (newAuthConfig && newAuthConfig.type === ConfigType.CLOUD_OAUTH2) {
+												const authConfigOptionValue = newAuthConfig.value;
+												this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
+												this.updatedAuthLabel = newAuthConfig.key;
+											}
+										}),
+										map(() => void 0)
+									);
+							})
 						);
+					}
 				}
 			}),
 			map(() => void 0)

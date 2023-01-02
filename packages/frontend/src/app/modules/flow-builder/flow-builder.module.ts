@@ -68,6 +68,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { DeleteFlowDialogComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tab/delete-flow-dialog/delete-flow-dialog.component';
 import { DeleteStepDialogComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
 import { ToggleInstanceStateComponent } from './page/flow-builder/flow-builder-header/toggle-instance-state/toggle-instance-state.component';
+import { NewCloudAuthenticationModalComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-cloud-authentication-modal/new-cloud-authentication-modal.component';
 @NgModule({
 	imports: [
 		CommonModule,
@@ -137,6 +138,7 @@ import { ToggleInstanceStateComponent } from './page/flow-builder/flow-builder-h
 		DeleteFlowDialogComponent,
 		DeleteStepDialogComponent,
 		ToggleInstanceStateComponent,
+		NewCloudAuthenticationModalComponent,
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 	exports: [FlowBuilderHeaderComponent],

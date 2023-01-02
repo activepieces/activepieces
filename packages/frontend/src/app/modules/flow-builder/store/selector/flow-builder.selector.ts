@@ -2,7 +2,7 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../model/builder-state.model';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
-import { Config, Flow, FlowRun, OAuth2Config, OAuth2Response } from 'shared';
+import { CloudOAuth2Config, Config, Flow, FlowRun, OAuth2Config, OAuth2Response } from 'shared';
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
 import { FlowItem } from '../../../common/model/flow-builder/flow-item';
@@ -87,14 +87,17 @@ export const selectCurrentFlowId = createSelector(
 );
 
 export const selectAuth2Configs = createSelector(selectCurrentCollectionConfigs, (collectionConfigs: Config[]) => {
-	return [...collectionConfigs].filter(f => f.type == ConfigType.OAUTH2);
+	return [...collectionConfigs].filter(c => c.type === ConfigType.OAUTH2 || c.type === ConfigType.CLOUD_OAUTH2) as (
+		| CloudOAuth2Config
+		| OAuth2Config
+	)[];
 });
 
 export const selectAllConfigs = createSelector(selectCurrentCollectionConfigs, (collectionConfigs: Config[]) => {
 	return [...collectionConfigs];
 });
 export const selectAllConfigsWithoutOAuth2 = createSelector(selectAllConfigs, (collectionConfigs: Config[]) => {
-	return [...collectionConfigs].filter(c => c.type !== ConfigType.OAUTH2);
+	return [...collectionConfigs].filter(c => c.type !== ConfigType.OAUTH2 && c.type !== ConfigType.CLOUD_OAUTH2);
 });
 
 export const selectFlowsState = createSelector(selectBuilderState, (state: GlobalBuilderState) => {
@@ -290,7 +293,7 @@ export const selectAuthConfigsDropdownOptions = createSelector(
 	selectCurrentCollectionConfigs,
 	(collectionConfigs: Config[]) => {
 		return [...collectionConfigs]
-			.filter(c => c.type === ConfigType.OAUTH2)
+			.filter(c => c.type === ConfigType.OAUTH2 || c.type === ConfigType.CLOUD_OAUTH2)
 			.map(c => {
 				const result: OAuth2DropdownItem = {
 					label: { pieceName: (c as OAuth2Config).settings.pieceName, configKey: c.key },

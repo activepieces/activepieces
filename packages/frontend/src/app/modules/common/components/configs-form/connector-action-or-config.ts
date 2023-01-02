@@ -10,7 +10,7 @@ export enum HttpMethod {
 	TRACE = 'TRACE',
 }
 
-export interface CollectionConfig {
+export interface PieceConfig {
 	key: string;
 	type: InputType;
 	label: string;
@@ -18,6 +18,7 @@ export interface CollectionConfig {
 	description?: string;
 	authUrl?: string;
 	tokenUrl?: string;
+	redirectUrl?: string;
 	scope?: string[];
 	required: boolean;
 	extra?: Record<string, unknown>;
@@ -36,7 +37,7 @@ export class PieceProperty {
 }
 
 export const propsConvertor = {
-	convertToFrontEndConfig: (name: string, prop: PieceProperty): CollectionConfig => {
+	convertToFrontEndConfig: (name: string, prop: PieceProperty): PieceConfig => {
 		return {
 			key: name,
 			type: prop.type,

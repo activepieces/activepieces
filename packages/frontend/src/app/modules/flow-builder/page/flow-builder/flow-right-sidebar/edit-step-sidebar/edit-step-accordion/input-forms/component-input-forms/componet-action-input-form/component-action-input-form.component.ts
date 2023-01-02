@@ -15,17 +15,14 @@ import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-m
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { ComponentActionInputFormSchema } from '../../input-forms-schema';
 import { DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
-import {
-	CollectionConfig,
-	propsConvertor,
-} from 'src/app/modules/common/components/configs-form/connector-action-or-config';
+import { PieceConfig, propsConvertor } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
 import { Config } from 'shared';
 declare type ActionDropdownOption = {
 	label: {
 		name: string;
 		description: string;
 	};
-	value: { actionName: string; configs: CollectionConfig[]; separator?: boolean };
+	value: { actionName: string; configs: PieceConfig[]; separator?: boolean };
 	disabled?: boolean;
 };
 
@@ -65,18 +62,18 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 			name: '',
 			description: '',
 		},
-		value: { actionName: '', configs: [] as CollectionConfig[], separator: true },
+		value: { actionName: '', configs: [] as PieceConfig[], separator: true },
 		disabled: true,
 	};
 	customRequestItem = {
-		value: { actionName: 'CUSTOM_REQUEST', configs: [] as CollectionConfig[] },
+		value: { actionName: 'CUSTOM_REQUEST', configs: [] as PieceConfig[] },
 		label: { name: 'Custom Request', description: 'Sends authenticated request' },
 		disabled: true,
 	};
 	selectedAction$: Observable<any>;
 	actions$: Observable<ActionDropdownOption[]>;
 	valueChanges$: Observable<void>;
-	actionDropdownValueChanged$: Observable<{ actionName: string; configs: CollectionConfig[] }>;
+	actionDropdownValueChanged$: Observable<{ actionName: string; configs: PieceConfig[] }>;
 	onChange = (value: any) => {};
 	onTouch = () => {};
 	updateOrAddConfigModalClosed$: Observable<Config>;
@@ -230,7 +227,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 		this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.setValue(this.customRequestItem.value);
 	}
 
-	actionSelectValueChanged(selectedActionValue: { actionName: string; configs: CollectionConfig[] } | null) {
+	actionSelectValueChanged(selectedActionValue: { actionName: string; configs: PieceConfig[] } | null) {
 		if (selectedActionValue) {
 			if (selectedActionValue.actionName === this.customRequestItem.value.actionName) {
 				this.customRequestSelected();
@@ -246,7 +243,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 		}
 	}
 
-	private actionSelected(selectedActionValue: { actionName: string; configs: CollectionConfig[] }) {
+	private actionSelected(selectedActionValue: { actionName: string; configs: PieceConfig[] }) {
 		const configsForm = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME);
 		if (!configsForm) {
 			this.componentForm.addControl(

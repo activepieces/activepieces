@@ -98,7 +98,7 @@
         </mat-form-field>
 
 
-        <app-button btnColor="primary" btnStyle="basic" (buttonClicked)="openNewAuthenticationModal(config.key)"
+        <app-button btnColor="primary" btnStyle="basic" (buttonClicked)="newAuthenticationDialogProcess(config.key)"
           type="button" class="new-config-btn" btnSize="medium" *ngIf="formGroup.enabled"> + New Authentication
         </app-button>
       </div>
@@ -116,3 +116,4 @@
 <ng-container *ngIf="configDropdownChanged$  | async"></ng-container>
 <ng-container *ngIf="updateOrAddConfigModalClosed$ | async "></ng-container>
 <ng-container *ngIf="updateAuthConfig$ | async"> </ng-container>
+<ng-container *ngIf="cloudAuthCheck$ | async"></ng-container>
