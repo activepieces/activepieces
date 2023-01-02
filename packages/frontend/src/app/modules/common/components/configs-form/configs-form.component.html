@@ -58,14 +58,21 @@
     <ng-container *ngSwitchCase="configType.DROPDOWN">
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }} </mat-label>
-        <mat-select [formControlName]="config.key">
-          <mat-option *ngFor="let opt of optionsObservables$[config.key]| async" [value]="opt.value">
-            {{opt.label}}
-          </mat-option>
-          <mat-option [disabled]="true"
-            *ngIf=" ( optionsObservables$[config.key]| async) === undefined ||  (optionsObservables$[config.key]| async)?.length === 0">
+        <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
+          <ng-container *ngIf="optionsObservables$[config.key]| async as state">
+            <mat-option *ngFor="let opt of state.options" [value]="opt.value">
+              {{opt.label}}
+            </mat-option>
+            <mat-option [disabled]="true" *ngIf=" state.disabled">
+              {{state.placeholder}}
+            </mat-option>
+          </ng-container>
+
+
+          <!-- <mat-option [disabled]="true"
+            *ngIf=" ( optionsObservables$[config.key]| async) === undefined ||  (optionsObservables$[config.key]| async)!.options?.length === 0 && !(optionsObservables$[config.key]| async)?.disabled ">
             No options available
-          </mat-option>
+          </mat-option> -->
         </mat-select>
         <mat-error *ngIf="formGroup.get(config.key)?.invalid">
           {{config.label}} is required
@@ -82,7 +89,7 @@
 
         <mat-form-field class="ap-w-full" appearance="outline">
           <mat-label> {{ config.label }} </mat-label>
-          <mat-select [formControlName]="config.key" [compareWith]="authenticationDropdownCompareWithFunction">
+          <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
             <mat-option *ngFor="let opt of ((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)"
               [value]="opt.value">
               {{opt.label.configKey}}

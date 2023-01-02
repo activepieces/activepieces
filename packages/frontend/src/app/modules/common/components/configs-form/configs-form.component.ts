@@ -12,6 +12,8 @@ import {
 import { Store } from '@ngrx/store';
 import {
 	catchError,
+	combineLatest,
+	debounceTime,
 	distinctUntilChanged,
 	EMPTY,
 	map,
@@ -23,7 +25,7 @@ import {
 	take,
 	tap,
 } from 'rxjs';
-import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
+import { ActionMetaService, DropdownState } from 'src/app/modules/flow-builder/service/action-meta.service';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
@@ -71,7 +73,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	updateValueOnChange$: Observable<void> = new Observable<void>();
 	updateAuthConfig$: Observable<void>;
 	configType = InputType;
-	optionsObservables$: { [key: ConfigKey]: Observable<DropdownItem[]> } = {};
+	optionsObservables$: {
+		[key: ConfigKey]: Observable<DropdownState<any>>;
+	} = {};
 	dropdownsLoadingFlags$: { [key: ConfigKey]: Observable<boolean> } = {};
 	allAuthConfigs$: Observable<DropdownItem[]>;
 	updateOrAddConfigModalClosed$: Observable<void>;
@@ -119,20 +123,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		const requiredConfigsControls = this.createConfigsFormControls(this.requiredConfigs);
 		const optionalConfigsControls = this.createConfigsFormControls(this.selectedOptionalConfigs);
 		this.form = this.fb.group({ ...requiredConfigsControls, ...optionalConfigsControls });
-
-		let configValue = this.configs.reduce((map, obj) => {
-			map[obj.key] = obj.value;
-			return map;
-		}, {});
-
-		this.configDropdownChanged$ = this.form.valueChanges.pipe(
-			startWith(configValue),
-			distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
-			tap(val => {
-				this.refreshDropdowns(val);
-			})
-		);
-
+		this.createDropdownConfigsObservables();
 		this.updateValueOnChange$ = this.form.valueChanges.pipe(
 			tap(value => {
 				this.OnChange(value);
@@ -141,6 +132,50 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		);
 
 		this.form.markAllAsTouched();
+	}
+
+	createDropdownConfigsObservables() {
+		this.configs.forEach(c => {
+			if (c.type === InputType.DROPDOWN) {
+				const refreshers$ = {};
+
+				c.refreshers!.forEach(r => {
+					refreshers$[r] = this.form.controls[r].valueChanges.pipe(
+						distinctUntilChanged((prev, curr) => {
+							return JSON.stringify(prev) === JSON.stringify(curr);
+						}),
+						startWith(this.configs.find(c => c.key === r)!.value),
+						debounceTime(150)
+					);
+				});
+				if (c.refreshers!.length === 0) {
+					refreshers$['oneTimeRefresh'] = of(true);
+				}
+				this.optionsObservables$[c.key] = combineLatest(refreshers$).pipe(
+					switchMap(res => {
+						return this.actionMetaDataService.getConnectorActionConfigOptions(
+							{ configName: c.key, stepName: this.stepName, configs: res },
+							this.pieceName
+						);
+					}),
+					shareReplay(1),
+					catchError(err => {
+						console.error(err);
+						return of({ options: [], disabled: true, placeholder: 'unknown server erro happend, check console' });
+					})
+				);
+				this.dropdownsLoadingFlags$[c.key] = this.optionsObservables$[c.key].pipe(
+					startWith(null),
+					map(val => {
+						if (val === null) return true;
+						if (!Array.isArray(val.options)) {
+							console.error(`Activepieces- Config ${c.label} options are not returned in array form--> ${val}`);
+						}
+						return false;
+					})
+				);
+			}
+		});
 	}
 
 	private createConfigsFormControls(configs: PieceConfig[]) {
@@ -163,41 +198,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		const configIndex = this.allOptionalConfigs.findIndex(c => c === config);
 		this.selectedOptionalConfigs.splice(configIndex, 1);
 	}
-	contructDropdownObservable(dropdownConfig: PieceConfig, authConfig: any, stepName: string, componentName: string) {
-		const options$ = this.actionMetaDataService.getConnectorActionConfigOptions(
-			{ configName: dropdownConfig.key, stepName: stepName, configs: authConfig },
-			componentName
-		);
-		this.optionsObservables$[dropdownConfig.key] = options$.pipe(
-			tap(opts => {
-				const currentConfigValue = this.form.get(dropdownConfig.key)!.value;
-				if (!opts.options.find(opt => opt.value == currentConfigValue)) {
-					this.form.get(dropdownConfig.key)!.setValue(null);
-				}
-			}),
-			map(state => {
-				return state.options;
-			}),
-			shareReplay(1),
-			catchError(err => {
-				console.error(err);
-				return of([]);
-			})
-		);
 
-		this.dropdownsLoadingFlags$[dropdownConfig.key] = this.optionsObservables$[dropdownConfig.key].pipe(
-			startWith(null),
-			map(val => {
-				if (val === null) return true;
-				if (!Array.isArray(val)) {
-					console.error(
-						`Activepieces- Config ${dropdownConfig.label} options are not returned in array form--> ${val}`
-					);
-				}
-				return false;
-			})
-		);
-	}
 	addOptionalConfig(config: PieceConfig) {
 		this.form.addControl(config.key, new UntypedFormControl());
 		this.selectedOptionalConfigs.push(config);
@@ -205,6 +206,10 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
 	newAuthenticationDialogProcess(authConfigName: string) {
 		this.cloudAuthCheck$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
+			catchError(err => {
+				console.error(err);
+				return of({});
+			}),
 			map(res => {
 				return res[this.pieceName];
 			}),
@@ -275,13 +280,12 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			take(1),
 			map(configs => {
 				const updatedConfigIndex = configs.findIndex(
-					c => selectedValue && selectedValue['access_token'] === c.value['access_token']
+					c => selectedValue && JSON.stringify(selectedValue) === JSON.stringify(c.value)
 				);
 				return { config: configs[updatedConfigIndex], indexInList: updatedConfigIndex };
 			}),
 			tap(configAndIndex => {
 				if (configAndIndex) {
-					debugger;
 					if (configAndIndex.config.type === ConfigType.OAUTH2) {
 						this.updateOrAddConfigModalClosed$ = this.dialogService
 							.open(NewAuthenticationModalComponent, {
@@ -334,14 +338,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			map(() => void 0)
 		);
 	}
-	refreshDropdowns(configsValue: Record<string, any>) {
-		this.configs.forEach(c => {
-			if (c.type === InputType.DROPDOWN) {
-				this.contructDropdownObservable(c, configsValue, this.stepName, this.pieceName);
-			}
-		});
-	}
-	authenticationDropdownCompareWithFunction = (opt: any, formControlValue: any) => {
-		return formControlValue && formControlValue['access_token'] === opt['access_token'];
+
+	dropdownCompareWithFunction = (opt: any, formControlValue: any) => {
+		return formControlValue && JSON.stringify(formControlValue) === JSON.stringify(opt);
 	};
 }

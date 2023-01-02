@@ -143,8 +143,10 @@ export class ComponentTriggerInputFormComponent {
 							if (selectedTrigger) {
 								const configs = [...selectedTrigger.value.configs];
 								const configsValues = this.intialComponentTriggerInputFormValue?.input;
+								debugger;
 								if (configsValues) {
 									Object.keys(configsValues).forEach(key => {
+										debugger;
 										const config = configs.find(c => c.key === key);
 										if (config) {
 											config.value = configsValues[key];

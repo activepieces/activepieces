@@ -22,6 +22,7 @@ export interface PieceConfig {
 	scope?: string[];
 	required: boolean;
 	extra?: Record<string, unknown>;
+	refreshers?: string[];
 }
 
 export class PieceProperty {
@@ -34,6 +35,7 @@ export class PieceProperty {
 	tokenUrl?: string;
 	scope?: string[];
 	extra?: Record<string, unknown>;
+	refreshers?: string[];
 }
 
 export const propsConvertor = {
@@ -48,6 +50,7 @@ export const propsConvertor = {
 			scope: prop.scope,
 			required: prop.required,
 			extra: prop.extra,
+			refreshers: prop.refreshers,
 		};
 	},
 };

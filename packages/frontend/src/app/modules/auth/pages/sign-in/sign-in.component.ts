@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthenticationService } from '../../../common/service/authentication.service';
 import { fadeInUp400ms } from '../../../common/animation/fade-in-up.animation';
-import { catchError, map, Observable, tap } from 'rxjs';
+import { catchError, map, Observable, of, tap } from 'rxjs';
 import { StatusCodes } from 'http-status-codes';
 interface SignInForm {
 	email: FormControl<string>;
@@ -15,6 +15,7 @@ interface SignInForm {
 	templateUrl: './sign-in.component.html',
 	styleUrls: ['./sign-in.component.scss'],
 	animations: [fadeInUp400ms],
+	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignInComponent {
 	loginForm: FormGroup<SignInForm>;
@@ -39,15 +40,18 @@ export class SignInComponent {
 			const request = this.loginForm.getRawValue();
 			this.authenticate$ = this.authenticationService.signIn(request).pipe(
 				catchError((error: HttpErrorResponse) => {
+					debugger;
 					if (error.status === StatusCodes.UNAUTHORIZED || error.status === StatusCodes.BAD_REQUEST) {
 						this.showInvalidEmailOrPasswordMessage = true;
 					}
 					this.loading = false;
-					throw error;
+					return of(null);
 				}),
 				tap(response => {
-					this.authenticationService.saveUser(response);
-					this.router.navigate(['/']);
+					if (response) {
+						this.authenticationService.saveUser(response);
+						this.router.navigate(['/']);
+					}
 				}),
 				map(() => void 0)
 			);
