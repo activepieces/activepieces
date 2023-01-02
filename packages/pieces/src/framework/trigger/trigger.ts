@@ -15,7 +15,7 @@ class ITrigger<T extends PieceProperty> {
         public readonly type: TriggerStrategy,
         public readonly onEnable: (context: Context<StaticPropsValue<T>>) => Promise<void>,
         public readonly onDisable: (context: Context<StaticPropsValue<T>>) => Promise<void>,
-        public readonly run: (context: Context<StaticPropsValue<T>>) => Promise<unknown>
+        public readonly run: (context: Context<StaticPropsValue<T>>) => Promise<unknown[]>
     ) {
     }
 }
@@ -30,7 +30,7 @@ export function createTrigger<T extends PieceProperty>(request: {
     props: T;
     type: TriggerStrategy,
     onEnable: (context: Context<StaticPropsValue<T>>) => Promise<void>;
-    onDisable: (context: Context<StaticPropsValue<T>>) => Promise<void>;
+onDisable: (context: Context<StaticPropsValue<T>>) => Promise<void>;
     run: (context: Context<StaticPropsValue<T>>) => Promise<unknown[]>;
 }): Trigger {
     return new ITrigger<T>(

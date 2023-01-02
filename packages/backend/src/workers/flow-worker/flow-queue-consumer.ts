@@ -5,6 +5,8 @@ import { flowRunService } from "../../flow-run/flow-run-service";
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from "./flow-queue";
 import { flowWorker } from "./flow-worker";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
+import { triggerUtils } from "../../helper/trigger-utils";
+import { flowVersionService } from "../../flows/flow-version/flow-version.service";
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
   ONE_TIME_JOB_QUEUE,

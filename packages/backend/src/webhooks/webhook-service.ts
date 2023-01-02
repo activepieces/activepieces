@@ -1,52 +1,36 @@
-import { Collection, CollectionId, Flow, FlowId, Instance, RunEnvironment } from "shared";
+import { CollectionId, FlowId, Instance, RunEnvironment, TriggerType } from "shared";
 import { collectionService } from "../collections/collection.service";
 import { flowRunService } from "../flow-run/flow-run-service";
 import { flowService } from "../flows/flow-service";
+import { flowVersionService } from "../flows/flow-version/flow-version.service";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { triggerUtils } from "../helper/trigger-utils";
 import { instanceService } from "../instance/instance-service";
 
 export const webhookService = {
   async callback({ flowId, payload }: CallbackParams): Promise<void> {
-    const flow = await getFlowOrThrow(flowId);
-    const collection = await getCollectionOrThrow(flow.collectionId);
+    const flow = await flowService.getOneOrThrow(flowId);
+    const collection = await collectionService.getOneOrThrow(flow.collectionId);
+    const instance = await getInstanceOrThrow(collection.id);
 
-    await flowRunService.start({
-      environment: RunEnvironment.PRODUCTION,
-      flowVersionId: flow.version!.id,
-      collectionVersionId: collection.version!.id,
-      payload,
+    const flowVersion = await flowVersionService.getOneOrThrow(instance.flowIdToVersionId[flow.id]);
+    let payloads: any[] = await triggerUtils.executeTrigger({
+      collectionId: collection.id,
+      flowVersion: flowVersion,
+      payload: payload,
+    });
+
+
+    console.log(`Triggers returned a ${payloads.length} payloads`);
+    payloads.forEach((triggerPayload) => {
+      flowRunService.start({
+        environment: RunEnvironment.PRODUCTION,
+        flowVersionId: flow.version!.id,
+        collectionVersionId: collection.version!.id,
+        payload: triggerPayload,
+      });
     });
   },
-};
-
-const getFlowOrThrow = async (id: FlowId): Promise<Flow> => {
-  const flow = await flowService.getOne(id, undefined);
-
-  if (flow === null) {
-    throw new ActivepiecesError({
-      code: ErrorCode.FLOW_NOT_FOUND,
-      params: {
-        id,
-      },
-    });
-  }
-
-  return flow;
-};
-
-const getCollectionOrThrow = async (id: CollectionId): Promise<Collection> => {
-  const collection = await collectionService.getOne(id, null);
-
-  if (collection === null) {
-    throw new ActivepiecesError({
-      code: ErrorCode.COLLECTION_NOT_FOUND,
-      params: {
-        id,
-      },
-    });
-  }
-
-  return collection;
 };
 
 const getInstanceOrThrow = async (collectionId: CollectionId): Promise<Instance> => {
