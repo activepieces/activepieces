@@ -251,10 +251,14 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
 			return triggerItemDetails;
 		}
 		if (flowItem.type === ActionType.PIECE) {
-			return state.connectorComponentsActionsFlowItemDetails.find(f => f.name === flowItem.settings.pieceName);
+			return state.connectorComponentsActionsFlowItemDetails.find(
+				f => f.extra!.appName === flowItem.settings.pieceName
+			);
 		}
 		if (flowItem.type === TriggerType.PIECE) {
-			return state.connectorComponentsTriggersFlowItemDetails.find(f => f.name === flowItem.settings.pieceName);
+			return state.connectorComponentsTriggersFlowItemDetails.find(
+				f => f.extra!.appName === flowItem.settings.pieceName
+			);
 		}
 
 		//Core items might contain remote flows so always have them at the end

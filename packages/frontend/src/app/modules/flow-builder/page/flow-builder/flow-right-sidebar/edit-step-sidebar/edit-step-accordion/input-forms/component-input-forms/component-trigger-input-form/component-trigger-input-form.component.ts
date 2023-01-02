@@ -92,6 +92,7 @@ export class ComponentTriggerInputFormComponent {
 		this.componentForm = this.fb.group({
 			[TRIGGER_FORM_CONTROL_NAME]: new UntypedFormControl(null, Validators.required),
 		});
+		this.componentForm.markAllAsTouched();
 		this.valueChanges$ = this.componentForm.valueChanges.pipe(
 			tap(() => {
 				this.onChange(this.getFormattedFormData());
@@ -200,13 +201,12 @@ export class ComponentTriggerInputFormComponent {
 	private triggerSelected(selectedValue: { triggerName: string; configs: CollectionConfig[] }) {
 		const configsForm = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME);
 		if (!configsForm) {
-			this.componentForm.addControl(
-				CONFIGS_FORM_CONTROL_NAME,
-				new UntypedFormControl([...selectedValue.configs])
-			);
+			this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new UntypedFormControl([...selectedValue.configs]));
 		} else {
 			configsForm.setValue([...selectedValue.configs]);
 		}
+		this.cd.detectChanges();
+		this.componentForm.updateValueAndValidity();
 	}
 
 	getFormattedFormData(): { triggerName: string; input: { [configKey: string]: any } } {

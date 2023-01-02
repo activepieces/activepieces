@@ -112,6 +112,7 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 		this.componentForm = this.fb.group({
 			[ACTION_FORM_CONTROL_NAME]: new UntypedFormControl(null, Validators.required),
 		});
+		this.componentForm.markAllAsTouched();
 		this.valueChanges$ = this.componentForm.valueChanges.pipe(
 			tap(() => {
 				this.onChange(this.getFormattedFormData());
@@ -258,6 +259,8 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 		if (this.componentForm.get(CUSTOM_REQUEST_FORM_CONTROL_NAME)) {
 			this.componentForm.removeControl(CUSTOM_REQUEST_FORM_CONTROL_NAME);
 		}
+		this.cd.detectChanges();
+		this.componentForm.updateValueAndValidity();
 	}
 
 	private customRequestSelected() {

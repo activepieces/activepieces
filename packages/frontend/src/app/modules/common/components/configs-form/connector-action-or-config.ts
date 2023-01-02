@@ -20,7 +20,7 @@ export interface CollectionConfig {
 	tokenUrl?: string;
 	scope?: string[];
 	required: boolean;
-	extra?: Record<string,unknown>
+	extra?: Record<string, unknown>;
 }
 
 export class PieceProperty {
@@ -32,7 +32,7 @@ export class PieceProperty {
 	authUrl?: string;
 	tokenUrl?: string;
 	scope?: string[];
-	extra?: Record<string, unknown>
+	extra?: Record<string, unknown>;
 }
 
 export const propsConvertor = {
@@ -46,7 +46,7 @@ export const propsConvertor = {
 			tokenUrl: prop.tokenUrl,
 			scope: prop.scope,
 			required: prop.required,
-			extra: prop.extra
+			extra: prop.extra,
 		};
 	},
 };
@@ -56,6 +56,7 @@ export interface AppPiece {
 	logoUrl: string;
 	actions: propMap;
 	triggers: propMap;
+	displayName: string;
 }
 
 type propMap = Record<
