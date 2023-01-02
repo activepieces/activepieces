@@ -19,13 +19,15 @@ RUN npm install --global --unsafe-perm webpack-node-externals@^3.0.0
 RUN corepack enable
 RUN corepack prepare pnpm@7.21.0 --activate
 
-EXPOSE 3000
+COPY packages/backend/resources/default.cf /usr/local/etc/isolate
 
 WORKDIR /usr/src/app
 COPY . .
 
 RUN pnpm install --config.auto-install-peers=true
 RUN pnpm dlx nx run-many --target=build
+
+EXPOSE 3000
 
 WORKDIR /usr/src/app/packages/backend
 
