@@ -26,6 +26,7 @@ export const slackSendMessageAction = createAction({
       description:
         'Channel, private group, or IM channel to send message to. Can be an encoded ID, or a name. See [below](#channels) for more details.',
       required: true,
+      refreshers: ['authentication'],
       async options(value) {
         if (value['authentication'] === undefined) {
           return {
