@@ -26,6 +26,10 @@ import { codeBuilder } from "../code-worker/code-builder";
 import { tokenUtils } from "../../authentication/lib/token-utils";
 import { flowRunService } from "../../flow-run/flow-run-service";
 import { OneTimeJobData } from "./job-data";
+import { system } from "../../helper/system/system";
+import { SystemProp } from "../../helper/system/system-prop";
+
+const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
   const flowVersion = (await flowVersionService.getOne(jobData.flowVersionId))!;
@@ -41,7 +45,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     await downloadFiles(sandbox, flowVersion, collectionVersion, jobData.payload);
 
     console.log("[" + jobData.runId + "] Running Engine");
-    await sandbox.runCommandLine("/usr/bin/node activepieces-engine.js execute-flow");
+    await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js execute-flow`);
 
     console.log("[" + jobData.runId + "] Reading Output ");
 

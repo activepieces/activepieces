@@ -1,8 +1,12 @@
 import { sandboxManager } from "../sandbox";
 import { CodeExecutionResult, CodeRunStatus } from "shared";
 import { codeBuilder } from "./code-builder";
+import { system } from "../../helper/system/system";
+import { SystemProp } from "../../helper/system/system-prop";
 
 const fs = require("fs");
+
+const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 
 function fromStatus(code: string): CodeRunStatus {
   if (code === undefined) {
@@ -36,7 +40,7 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
     fs.writeFileSync(buildPath + "/_input.txt", JSON.stringify(input));
     fs.writeFileSync(buildPath + "/code-executor.js", codeExecutor);
     try {
-      await sandbox.runCommandLine("/usr/bin/node code-executor.js");
+      await sandbox.runCommandLine(`${nodeExecutablePath} code-executor.js`);
     } catch (ignored) {}
     const metaResult = sandbox.parseMetaFile();
     executionResult = {

@@ -10,6 +10,7 @@ services:
       - postgres
       - redis
     environment:
+      - AP_NODE_EXECUTABLE_PATH=/usr/local/bin/node
       - AP_POSTGRES_DATABASE=activepieces
       - AP_POSTGRES_HOST=postgres
       - AP_POSTGRES_PASSWORD=A79Vm5D4p2VQHOp2gd5
