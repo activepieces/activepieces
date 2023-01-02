@@ -8,7 +8,7 @@
         "build": "tsc",
         "test": "jest --coverage",
         "test:watch": "jest --watch",
-        "serve": "ts-node src/app.ts",
+        "serve": "sh check.sh && ts-node src/app.ts",
         "start": "nodemon"
     },
     "keywords": [],
