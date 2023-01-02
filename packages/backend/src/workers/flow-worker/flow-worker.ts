@@ -8,6 +8,7 @@ import {
   CollectionVersion,
   CollectionVersionId,
   ExecutionOutput,
+  ExecutionOutputStatus,
   File,
   FlowVersion,
   FlowVersionId,
@@ -52,6 +53,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id);
   } catch (e: unknown) {
     console.error(`[${jobData.runId}] error`, e);
+    await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null);
   } finally {
     sandboxManager.returnSandbox(sandbox.boxId);
     await flowLock();
