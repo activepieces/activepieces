@@ -7,7 +7,8 @@ import {
   InstanceStatus,
 } from "shared";
 import { In } from "typeorm";
-import { collectionVersionRepo } from "../collections/collection-version/collection-version-repo";
+import { collectionVersionService } from "../collections/collection-version/collection-version.service";
+import { collectionService } from "../collections/collection.service";
 import { flowVersionRepo } from "../flows/flow-version/flow-version-repo";
 import { triggerUtils } from "../helper/trigger-utils";
 
@@ -20,9 +21,7 @@ export const instanceSideEffects = {
     ) {
       return;
     }
-    const collectionVersion = (await collectionVersionRepo.findOneBy({
-      id: instance.collectionVersionId,
-    }))!;
+    const collectionVersion = (await collectionVersionService.getOne(instance.collectionVersionId))!;
 
     const flowVersionIds = Object.values(instance.flowIdToVersionId);
 
@@ -71,7 +70,10 @@ const lockVersions = async ({ collectionVersion, flowVersions }: LockVersionsPar
     flowVersion.state = FlowVersionState.LOCKED;
   });
 
-  const saveLockedVersions = [collectionVersionRepo.save(collectionVersion), flowVersionRepo.save(flowVersions)];
+  const saveLockedVersions = [
+    collectionVersionService.updateVersion(collectionVersion.id, collectionVersion),
+    flowVersionRepo.save(flowVersions),
+  ];
 
   await Promise.all(saveLockedVersions);
 };
