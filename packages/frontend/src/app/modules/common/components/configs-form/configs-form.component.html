@@ -83,11 +83,12 @@
         <mat-form-field class="ap-w-full" appearance="outline">
           <mat-label> {{ config.label }} </mat-label>
           <mat-select [formControlName]="config.key" [compareWith]="authenticationDropdownCompareWithFunction">
-            <mat-option *ngFor="let opt of (allAuthConfigs$ | async)" [value]="opt.value">
-              {{opt.label}}
+            <mat-option *ngFor="let opt of ((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)"
+              [value]="opt.value">
+              {{opt.label.configKey}}
             </mat-option>
             <mat-option [disabled]="true"
-              *ngIf=" ( allAuthConfigs$| async) === undefined ||  (allAuthConfigs$| async)?.length === 0">
+              *ngIf="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0">
               You have no OAuth2 Configs
             </mat-option>
           </mat-select>

@@ -32,7 +32,7 @@ interface AuthConfigSettings {
 })
 export class NewAuthenticationModalComponent implements OnInit {
 	@Input() connectorAuthConfig: CollectionConfig;
-	@Input() appName: string;
+	@Input() pieceName: string;
 	@Input() configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
 	settingsForm: FormGroup<AuthConfigSettings>;
 	collectionId$: Observable<string>;
@@ -52,11 +52,11 @@ export class NewAuthenticationModalComponent implements OnInit {
 		@Inject(MAT_DIALOG_DATA)
 		dialogData: {
 			connectorAuthConfig: CollectionConfig;
-			appName: string;
+			pieceName: string;
 			configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
 		}
 	) {
-		this.appName = dialogData.appName;
+		this.pieceName = dialogData.pieceName;
 		this.connectorAuthConfig = dialogData.connectorAuthConfig;
 		this.configToUpdateWithIndex = dialogData.configToUpdateWithIndex;
 	}
@@ -64,8 +64,11 @@ export class NewAuthenticationModalComponent implements OnInit {
 	ngOnInit(): void {
 		this.collectionId$ = this.store.select(BuilderSelectors.selectCurrentCollectionId);
 		this.settingsForm = this.fb.group({
-			extraParams: new FormControl<Record<string, unknown>>(this.connectorAuthConfig.extra??{}, { nonNullable: true, validators: [Validators.required] }),
-			pieceName: new FormControl<string | null>(null, { nonNullable: false, validators: [] }),
+			extraParams: new FormControl<Record<string, unknown>>(this.connectorAuthConfig.extra ?? {}, {
+				nonNullable: true,
+				validators: [Validators.required],
+			}),
+			pieceName: new FormControl<string | null>(this.pieceName, { nonNullable: false, validators: [] }),
 			redirectUrl: new FormControl(environment.redirectUrl, { nonNullable: true, validators: [Validators.required] }),
 			clientSecret: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
 			clientId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -81,7 +84,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
-			key: new FormControl(this.appName.replace(/[^A-Za-z0-9_]/g, '_'), {
+			key: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
 				nonNullable: true,
 				validators: [Validators.required, Validators.pattern('[A-Za-z0-9_]*')],
 				asyncValidators: [
@@ -121,7 +124,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 		const value = settingsFormValue['value'];
 		delete settingsFormValue['value'];
 		delete settingsFormValue.key;
-		const newConfig: Config  = {
+		const newConfig: Config = {
 			key: configKey,
 			type: ConfigType.OAUTH2,
 			settings: {

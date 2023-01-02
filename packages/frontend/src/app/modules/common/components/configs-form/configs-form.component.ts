@@ -48,7 +48,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	selectedOptionalConfigs: CollectionConfig[] = [];
 	optionalConfigsMenuOpened = false;
 	@Input() stepName: string;
-	@Input() componentName: string;
+	@Input() pieceName: string;
+	@Input() pieceDisplayName: string;
 	form!: UntypedFormGroup;
 	OnChange = value => {};
 	OnTouched = () => {};
@@ -58,7 +59,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	optionsObservables$: { [key: ConfigKey]: Observable<DropdownItem[]> } = {};
 	dropdownsLoadingFlags$: { [key: ConfigKey]: Observable<boolean> } = {};
 	allAuthConfigs$: Observable<DropdownItem[]>;
-	authConfigs: DropdownItem[] = [];
 	updateOrAddConfigModalClosed$: Observable<void>;
 	configDropdownChanged$: Observable<any>;
 	updatedAuthLabel = '';
@@ -102,8 +102,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		const requiredConfigsControls = this.createConfigsFormControls(this.requiredConfigs);
 		const optionalConfigsControls = this.createConfigsFormControls(this.selectedOptionalConfigs);
 		this.form = this.fb.group({ ...requiredConfigsControls, ...optionalConfigsControls });
-		
-		let configValue = this.configs.reduce(function(map, obj) {
+
+		let configValue = this.configs.reduce((map, obj) => {
 			map[obj.key] = obj.value;
 			return map;
 		}, {});
@@ -115,7 +115,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 				this.refreshDropdowns(val);
 			})
 		);
-	
+
 		this.updateValueOnChange$ = this.form.valueChanges.pipe(
 			tap(value => {
 				this.OnChange(value);
@@ -193,7 +193,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	openNewAuthenticationModal(authConfigName: string) {
 		this.updateOrAddConfigModalClosed$ = this.dialogService
 			.open(NewAuthenticationModalComponent, {
-				data: { connectorAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2), appName: this.componentName },
+				data: { connectorAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2), pieceName: this.pieceName },
 			})
 			.afterClosed()
 			.pipe(
@@ -226,7 +226,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 							data: {
 								configToUpdateWithIndex: configAndIndex,
 								connectorAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
-								appName: this.componentName,
+								pieceName: this.pieceName,
 							},
 						})
 						.afterClosed()
@@ -248,7 +248,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	refreshDropdowns(configsValue: Record<string, any>) {
 		this.configs.forEach(c => {
 			if (c.type === InputType.DROPDOWN) {
-				this.contructDropdownObservable(c, configsValue, this.stepName, this.componentName);
+				this.contructDropdownObservable(c, configsValue, this.stepName, this.pieceName);
 			}
 		});
 	}

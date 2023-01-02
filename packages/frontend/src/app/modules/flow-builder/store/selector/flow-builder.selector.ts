@@ -2,7 +2,7 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../model/builder-state.model';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
-import { Config, Flow, FlowRun } from 'shared';
+import { Config, Flow, FlowRun, OAuth2Config, OAuth2Response } from 'shared';
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
 import { FlowItem } from '../../../common/model/flow-builder/flow-item';
@@ -11,6 +11,7 @@ import { FlowsState } from '../model/flows-state.model';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { environment } from 'src/environments/environment';
 import { ActionType, Collection, ConfigType, TriggerType } from 'shared';
+import { OAuth2DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -287,9 +288,9 @@ export const selectAuthConfigsDropdownOptions = createSelector(
 		return [...collectionConfigs]
 			.filter(c => c.type === ConfigType.OAUTH2)
 			.map(c => {
-				const result: { label: string; value: any } = {
-					label: c.key,
-					value: c.value,
+				const result: OAuth2DropdownItem = {
+					label: { pieceName: (c as OAuth2Config).settings.pieceName, configKey: c.key },
+					value: c.value as OAuth2Response,
 				};
 				return result;
 			});

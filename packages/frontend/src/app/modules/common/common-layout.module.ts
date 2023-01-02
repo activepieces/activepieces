@@ -52,6 +52,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { JsonViewDialogComponent } from './components/json-view/json-view-dialog/json-view-dialog.component';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { AuthConfigsPipe } from './components/configs-form/auth-configs.pipe';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 0,
 	hideDelay: 0,
@@ -89,6 +90,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		ConnectorCustomRequestFormControlComponent,
 		DialogTitleTemplateComponent,
 		JsonViewDialogComponent,
+  AuthConfigsPipe,
 	],
 	imports: [
 		FontAwesomeModule,
