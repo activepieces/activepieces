@@ -1,5 +1,13 @@
 import { pieces, Trigger, TriggerStrategy } from "pieces";
-import { CollectionId, CollectionVersionId, FlowId, FlowVersion, PieceTrigger, RunEnvironment, TriggerType } from "shared";
+import {
+  CollectionId,
+  CollectionVersionId,
+  FlowId,
+  FlowVersion,
+  PieceTrigger,
+  RunEnvironment,
+  TriggerType,
+} from "shared";
 import { ActivepiecesError, ErrorCode } from "./activepieces-error";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
 import { createContextStore } from "../store-entry/store-entry.service";
@@ -75,11 +83,7 @@ const disablePieceTrigger = async (collectionId: CollectionId, flowVersion: Flow
   }
 };
 
-const enablePieceTrigger = async ({
-  flowVersion,
-  collectionId,
-  collectionVersionId,
-}: EnableParams): Promise<void> => {
+const enablePieceTrigger = async ({ flowVersion, collectionId, collectionVersionId }: EnableParams): Promise<void> => {
   const flowTrigger = flowVersion.trigger as PieceTrigger;
   const pieceTrigger = getPieceTrigger(flowTrigger);
 
@@ -135,8 +139,13 @@ const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
 };
 
 const getWebhookUrl = async (flowId: FlowId): Promise<string> => {
+  let webhookUrl = process.env.WEBHOOK_URL;
+  const suffix = `/v1/webhooks?flowId=${flowId}`;
+  if (webhookUrl !== undefined) {
+    return webhookUrl + suffix;
+  }
   const { ip } = await getPublicIp();
-  return `http://${ip}/v1/webhooks?flowId=${flowId}`;
+  return `http://${ip}:3000` + suffix;
 };
 
 interface EnableParams {
