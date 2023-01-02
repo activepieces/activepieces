@@ -33,7 +33,7 @@ export {FlowVersion, FlowVersionState, FlowVersionId} from './flows/flow-version
 export {Flow, FlowId} from './flows/flow';
 export {File, FileId} from './file/file'
 export {getStep} from './flows/flow-helper';
-export {FlowRun, FlowRunId} from './flow-run/flow-run'
+export {FlowRun, FlowRunId, RunEnvironment} from './flow-run/flow-run'
 export {ExecutionState} from './flow-run/execution/execution-state';
 export {ExecutionOutput, ExecutionError} from './flow-run/execution/execution-output';
 export {Project, ProjectId} from './project/project';

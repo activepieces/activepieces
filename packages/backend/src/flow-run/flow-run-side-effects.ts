@@ -11,8 +11,8 @@ export const flowRunSideEffects = {
     await flowQueue.add({
       id: flowRun.id,
       data: {
+        environment: flowRun.environment,
         runId: flowRun.id,
-        instanceId: flowRun.instanceId,
         flowVersionId: flowRun.flowVersionId,
         collectionVersionId: flowRun.collectionVersionId,
         payload,

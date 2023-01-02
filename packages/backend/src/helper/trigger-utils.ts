@@ -1,5 +1,5 @@
 import { pieces, Trigger, TriggerStrategy } from "pieces";
-import { CollectionId, CollectionVersionId, FlowId, FlowVersion, InstanceId, PieceTrigger, TriggerType } from "shared";
+import { CollectionId, CollectionVersionId, FlowId, FlowVersion, PieceTrigger, RunEnvironment, TriggerType } from "shared";
 import { ActivepiecesError, ErrorCode } from "./activepieces-error";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
 import { createContextStore } from "../store-entry/store-entry.service";
@@ -8,10 +8,10 @@ import { getPublicIp } from "./public-ip-utils";
 const EVERY_FIFTEEN_MINUTES = "* 15 * * * *";
 
 export const triggerUtils = {
-  async enable({ instanceId, collectionId, collectionVersionId, flowVersion }: EnableParams): Promise<void> {
+  async enable({ collectionId, collectionVersionId, flowVersion }: EnableParams): Promise<void> {
     switch (flowVersion.trigger.type) {
       case TriggerType.PIECE:
-        await enablePieceTrigger({ instanceId, collectionId, collectionVersionId, flowVersion });
+        await enablePieceTrigger({ collectionId, collectionVersionId, flowVersion });
         break;
 
       case TriggerType.SCHEDULE:
@@ -20,7 +20,7 @@ export const triggerUtils = {
         await flowQueue.add({
           id: flowVersion.id,
           data: {
-            instanceId,
+            environment: RunEnvironment.PRODUCTION,
             collectionVersionId,
             flowVersionId: flowVersion.id,
           },
@@ -76,7 +76,6 @@ const disablePieceTrigger = async (collectionId: CollectionId, flowVersion: Flow
 };
 
 const enablePieceTrigger = async ({
-  instanceId,
   flowVersion,
   collectionId,
   collectionVersionId,
@@ -97,7 +96,7 @@ const enablePieceTrigger = async ({
       await flowQueue.add({
         id: flowVersion.id,
         data: {
-          instanceId,
+          environment: RunEnvironment.PRODUCTION,
           collectionVersionId,
           flowVersionId: flowVersion.id,
         },
@@ -141,7 +140,6 @@ const getWebhookUrl = async (flowId: FlowId): Promise<string> => {
 };
 
 interface EnableParams {
-  instanceId: InstanceId;
   collectionId: CollectionId;
   collectionVersionId: CollectionVersionId;
   flowVersion: FlowVersion;
