@@ -30,4 +30,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: "activepieces/backend:${{ env.RELEASE }} activepieces/backend:latest"
+          tags: |
+            activepieces/backend:${{ env.RELEASE }}
+            activepieces/backend:latest
