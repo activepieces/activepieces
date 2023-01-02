@@ -9,7 +9,6 @@ export const webhookService = {
   async callback({ flowId, payload }: CallbackParams): Promise<void> {
     const flow = await getFlowOrThrow(flowId);
     const collection = await getCollectionOrThrow(flow.collectionId);
-    const instance = await getInstanceOrThrow(collection.id);
 
     await flowRunService.start({
       environment: RunEnvironment.PRODUCTION,

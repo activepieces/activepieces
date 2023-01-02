@@ -63,7 +63,7 @@
             <mat-option *ngFor="let opt of state.options" [value]="opt.value">
               {{opt.label}}
             </mat-option>
-            <mat-option [disabled]="true" *ngIf=" state.disabled">
+            <mat-option [disabled]="true" *ngIf="state.disabled">
               {{state.placeholder}}
             </mat-option>
           </ng-container>
