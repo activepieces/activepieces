@@ -11,10 +11,11 @@ export const githubCommon = {
         required: true,
         authUrl: 'https://github.com/login/oauth/authorize',
         tokenUrl: 'https://github.com/login/oauth/access_token',
-        scope: ['write:repo_hook'],
+        scope: ['admin:repo_hook',],
     }),
     repositoryDropdown: Property.Dropdown<{ repo: string, owner: string }>({
         displayName: "Repository",
+        refreshers: ['authentication'],
         required: true,
         options: async (propsValue) => {
             if (propsValue['authentication'] === undefined) {

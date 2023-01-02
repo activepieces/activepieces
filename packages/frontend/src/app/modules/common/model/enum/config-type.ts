@@ -1,4 +1,4 @@
-import { ConfigType } from "shared";
+import { ConfigType } from 'shared';
 
 export const configTypesDropdownOptions = [
 	{
@@ -13,14 +13,6 @@ export const configTypesDropdownOptions = [
 		icon: 'multiline-text.svg',
 		group: 'Text',
 	},
-
-	{
-		label: 'OAuth 2.0',
-		value: 'OAUTH2',
-		icon: 'wire.svg',
-		group: 'Authentication',
-	},
-
 	{ label: 'Number', value: ConfigType.NUMBER, icon: 'number.svg', group: 'Number' },
 	{
 		label: 'Checkbox',

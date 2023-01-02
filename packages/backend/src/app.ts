@@ -25,6 +25,7 @@ declare module "fastify" {
     principal: Principal;
   }
 }
+console.log("WEBHOOK_URL=" + process.env.WEBHOOK_URL);
 
 const app = fastify({
   logger: true,

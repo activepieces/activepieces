@@ -9,6 +9,7 @@ const ignoredRoutes = new Set([
   "/v1/flags",
   "/v1/oauth2/claim-with-cloud",
   "/v1/authentication/sign-up",
+  "/v1/webhooks"
 ]);
 
 const HEADER_PREFIX = "Bearer ";

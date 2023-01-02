@@ -1,8 +1,7 @@
-import { ExecutionOutputStatus, FlowRun } from 'shared';
+import { ExecutionOutputStatus, FlowRun, RunEnvironment } from 'shared';
 
 export const initializedRun: FlowRun = {
 	id: '',
-	instanceId: '',
 	projectId: '',
 	collectionId: '',
 	flowVersionId: '',
@@ -14,6 +13,7 @@ export const initializedRun: FlowRun = {
 	finishTime: '',
 	created: '',
 	updated: '',
+	environment: RunEnvironment.TESTING,
 	collectionDisplayName: '',
 	flowDisplayName: ''
 };

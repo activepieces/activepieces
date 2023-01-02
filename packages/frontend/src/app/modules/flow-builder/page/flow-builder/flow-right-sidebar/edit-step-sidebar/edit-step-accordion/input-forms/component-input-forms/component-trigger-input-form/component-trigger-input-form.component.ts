@@ -10,10 +10,7 @@ import {
 import { Config } from '@fortawesome/fontawesome-svg-core';
 import { map, Observable, of, tap } from 'rxjs';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
-import {
-	CollectionConfig,
-	propsConvertor,
-} from 'src/app/modules/common/components/configs-form/connector-action-or-config';
+import { PieceConfig, propsConvertor } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
 
 import { DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
 import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
@@ -24,7 +21,7 @@ declare type TriggerDropdownOption = {
 		name: string;
 		description: string;
 	};
-	value: { triggerName: string; configs: CollectionConfig[]; separator?: boolean };
+	value: { triggerName: string; configs: PieceConfig[]; separator?: boolean };
 	disabled?: boolean;
 };
 
@@ -60,7 +57,7 @@ export class ComponentTriggerInputFormComponent {
 	selectedTrigger$: Observable<any>;
 	triggers$: Observable<TriggerDropdownOption[]>;
 	valueChanges$: Observable<void>;
-	triggerDropdownValueChanged$: Observable<{ triggerName: string; configs: CollectionConfig[] }>;
+	triggerDropdownValueChanged$: Observable<{ triggerName: string; configs: PieceConfig[] }>;
 	onChange = (value: any) => {};
 	onTouch = () => {};
 	updateOrAddConfigModalClosed$: Observable<Config>;
@@ -92,6 +89,7 @@ export class ComponentTriggerInputFormComponent {
 		this.componentForm = this.fb.group({
 			[TRIGGER_FORM_CONTROL_NAME]: new UntypedFormControl(null, Validators.required),
 		});
+		this.componentForm.markAllAsTouched();
 		this.valueChanges$ = this.componentForm.valueChanges.pipe(
 			tap(() => {
 				this.onChange(this.getFormattedFormData());
@@ -185,7 +183,7 @@ export class ComponentTriggerInputFormComponent {
 		return { invalid: true };
 	}
 
-	triggerSelectValueChanged(selectedValue: { triggerName: string; configs: CollectionConfig[] } | null) {
+	triggerSelectValueChanged(selectedValue: { triggerName: string; configs: PieceConfig[] } | null) {
 		if (selectedValue) {
 			this.triggerSelected(selectedValue);
 			this.selectedTrigger$ = this.triggers$.pipe(
@@ -197,16 +195,15 @@ export class ComponentTriggerInputFormComponent {
 		}
 	}
 
-	private triggerSelected(selectedValue: { triggerName: string; configs: CollectionConfig[] }) {
+	private triggerSelected(selectedValue: { triggerName: string; configs: PieceConfig[] }) {
 		const configsForm = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME);
 		if (!configsForm) {
-			this.componentForm.addControl(
-				CONFIGS_FORM_CONTROL_NAME,
-				new UntypedFormControl([...selectedValue.configs])
-			);
+			this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new UntypedFormControl([...selectedValue.configs]));
 		} else {
 			configsForm.setValue([...selectedValue.configs]);
 		}
+		this.cd.detectChanges();
+		this.componentForm.updateValueAndValidity();
 	}
 
 	getFormattedFormData(): { triggerName: string; input: { [configKey: string]: any } } {

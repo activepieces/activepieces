@@ -58,14 +58,21 @@
     <ng-container *ngSwitchCase="configType.DROPDOWN">
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }} </mat-label>
-        <mat-select [formControlName]="config.key">
-          <mat-option *ngFor="let opt of optionsObservables$[config.key]| async" [value]="opt.value">
-            {{opt.label}}
-          </mat-option>
-          <mat-option [disabled]="true"
-            *ngIf=" ( optionsObservables$[config.key]| async) === undefined ||  (optionsObservables$[config.key]| async)?.length === 0">
+        <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
+          <ng-container *ngIf="optionsObservables$[config.key]| async as state">
+            <mat-option *ngFor="let opt of state.options" [value]="opt.value">
+              {{opt.label}}
+            </mat-option>
+            <mat-option [disabled]="true" *ngIf="state.disabled">
+              {{state.placeholder}}
+            </mat-option>
+          </ng-container>
+
+
+          <!-- <mat-option [disabled]="true"
+            *ngIf=" ( optionsObservables$[config.key]| async) === undefined ||  (optionsObservables$[config.key]| async)!.options?.length === 0 && !(optionsObservables$[config.key]| async)?.disabled ">
             No options available
-          </mat-option>
+          </mat-option> -->
         </mat-select>
         <mat-error *ngIf="formGroup.get(config.key)?.invalid">
           {{config.label}} is required
@@ -82,13 +89,14 @@
 
         <mat-form-field class="ap-w-full" appearance="outline">
           <mat-label> {{ config.label }} </mat-label>
-          <mat-select [formControlName]="config.key" [compareWith]="authenticationDropdownCompareWithFunction">
-            <mat-option *ngFor="let opt of (allAuthConfigs$ | async)" [value]="opt.value">
-              {{opt.label}}
+          <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
+            <mat-option *ngFor="let opt of ((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)"
+              [value]="opt.value">
+              {{opt.label.configKey}}
             </mat-option>
             <mat-option [disabled]="true"
-              *ngIf=" ( allAuthConfigs$| async) === undefined ||  (allAuthConfigs$| async)?.length === 0">
-              You have no OAuth2 Configs
+              *ngIf="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0">
+              You have no authentication set up for this app
             </mat-option>
           </mat-select>
           <mat-error *ngIf="formGroup.get(config.key)!.invalid">
@@ -97,7 +105,7 @@
         </mat-form-field>
 
 
-        <app-button btnColor="primary" btnStyle="basic" (buttonClicked)="openNewAuthenticationModal(config.key)"
+        <app-button btnColor="primary" btnStyle="basic" (buttonClicked)="newAuthenticationDialogProcess(config.key)"
           type="button" class="new-config-btn" btnSize="medium" *ngIf="formGroup.enabled"> + New Authentication
         </app-button>
       </div>
@@ -115,3 +123,4 @@
 <ng-container *ngIf="configDropdownChanged$  | async"></ng-container>
 <ng-container *ngIf="updateOrAddConfigModalClosed$ | async "></ng-container>
 <ng-container *ngIf="updateAuthConfig$ | async"> </ng-container>
+<ng-container *ngIf="cloudAuthCheck$ | async"></ng-container>

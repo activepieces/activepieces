@@ -1,5 +1,5 @@
 import { FastifyPluginCallback, FastifyReply, FastifyRequest } from "fastify";
-import { CreateFlowRunRequest, Cursor, FlowRunId, ProjectId } from "shared";
+import { CreateFlowRunRequest, Cursor, FlowRunId, ProjectId, RunEnvironment } from "shared";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
 import { flowRunService, flowRunService as service } from "./flow-run-service";
 
@@ -28,7 +28,7 @@ export const flowRunController: FastifyPluginCallback = (app, _options, done): v
       const { flowVersionId, collectionVersionId, payload } = request.body;
 
       const flowRun = await flowRunService.start({
-        instanceId: null,
+        environment: RunEnvironment.TESTING,
         flowVersionId,
         collectionVersionId,
         payload,

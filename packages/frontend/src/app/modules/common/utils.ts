@@ -1,6 +1,4 @@
-
 import { ActionType, Flow, TriggerType } from 'shared';
-
 
 export function getDisplayNameForTrigger(triggerType: TriggerType) {
 	switch (triggerType) {
@@ -30,7 +28,7 @@ export function getDefaultDisplayNameForPiece(pieceType: ActionType, pieceName: 
 			return 'Loop on Items';
 		}
 		case ActionType.PIECE: {
-			return 'Component';
+			return pieceName;
 		}
 	}
 }
@@ -49,7 +47,7 @@ export function findDefaultFlowDisplayName(flows: Flow[]) {
 	return `Flow ${defaultFlowIndex}`;
 }
 
-export const defaultCronJobForScheduleTrigger = '0 */5 * ? * *';
+export const defaultCronJobForScheduleTrigger = '0/5 * * * *';
 
 export const autoSaveDebounceTime = 600;
 export const cacheArtifactDebounceTime = 200;

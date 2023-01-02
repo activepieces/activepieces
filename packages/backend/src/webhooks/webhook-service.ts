@@ -1,4 +1,4 @@
-import { Collection, CollectionId, Flow, FlowId, Instance } from "shared";
+import { Collection, CollectionId, Flow, FlowId, Instance, RunEnvironment } from "shared";
 import { collectionService } from "../collections/collection.service";
 import { flowRunService } from "../flow-run/flow-run-service";
 import { flowService } from "../flows/flow-service";
@@ -9,10 +9,9 @@ export const webhookService = {
   async callback({ flowId, payload }: CallbackParams): Promise<void> {
     const flow = await getFlowOrThrow(flowId);
     const collection = await getCollectionOrThrow(flow.collectionId);
-    const instance = await getInstanceOrThrow(collection.id);
 
     await flowRunService.start({
-      instanceId: instance.id,
+      environment: RunEnvironment.PRODUCTION,
       flowVersionId: flow.version!.id,
       collectionVersionId: collection.version!.id,
       payload,

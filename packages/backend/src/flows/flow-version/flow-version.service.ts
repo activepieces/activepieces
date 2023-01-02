@@ -1,4 +1,4 @@
-import { getPiece, PieceProperty, Property } from "pieces";
+import { getPiece, PieceProperty } from "pieces";
 import {
   ActionType,
   apId,
@@ -18,6 +18,7 @@ import {
 } from "shared";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { fileService } from "../../file/file.service";
+import { ActivepiecesError, ErrorCode } from "../../helper/activepieces-error";
 import { flowVersionRepo } from "./flow-version-repo";
 
 export const flowVersionService = {
@@ -41,7 +42,20 @@ export const flowVersionService = {
       id,
     });
   },
-
+  async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
+    const flowVersion = await flowVersionService.getOne(id);
+  
+    if (flowVersion === null) {
+      throw new ActivepiecesError({
+        code: ErrorCode.FLOW_VERSION_NOT_FOUND,
+        params: {
+          id,
+        },
+      });
+    }
+  
+    return flowVersion;
+  },  
   async getFlowVersion(flowId: FlowId, versionId: FlowVersionId | undefined): Promise<FlowVersion | null> {
     return await flowVersionRepo.findOne({
       where: {

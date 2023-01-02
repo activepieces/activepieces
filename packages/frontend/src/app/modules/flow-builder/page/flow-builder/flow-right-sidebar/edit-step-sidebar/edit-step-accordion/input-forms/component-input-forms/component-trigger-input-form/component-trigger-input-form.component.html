@@ -7,8 +7,8 @@
       [compareWith]="triggerDropdownCompareFn">
 
       <mat-select-trigger>
-        <ng-container *ngFor="let opt of triggers$ | async">
-          {{opt.label.name}}
+        <ng-container *ngIf="selectedTrigger$ | async as selectedTrigger">
+          {{selectedTrigger?.label.name}}
         </ng-container>
       </mat-select-trigger>
 
@@ -29,7 +29,7 @@
     *ngIf="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value && componentForm.get(CONFIGS_FORM_CONTROL_NAME)">
     <div>
       <app-configs-form [stepName]="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value?.triggerName"
-        [componentName]="componentName" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
+        [pieceName]="componentName" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
       </app-configs-form>
     </div>
   </ng-container>

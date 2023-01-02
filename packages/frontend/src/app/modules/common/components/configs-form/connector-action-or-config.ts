@@ -10,7 +10,7 @@ export enum HttpMethod {
 	TRACE = 'TRACE',
 }
 
-export interface CollectionConfig {
+export interface PieceConfig {
 	key: string;
 	type: InputType;
 	label: string;
@@ -18,9 +18,11 @@ export interface CollectionConfig {
 	description?: string;
 	authUrl?: string;
 	tokenUrl?: string;
+	redirectUrl?: string;
 	scope?: string[];
 	required: boolean;
-	extra?: Record<string,unknown>
+	extra?: Record<string, unknown>;
+	refreshers?: string[];
 }
 
 export class PieceProperty {
@@ -32,11 +34,12 @@ export class PieceProperty {
 	authUrl?: string;
 	tokenUrl?: string;
 	scope?: string[];
-	extra?: Record<string, unknown>
+	extra?: Record<string, unknown>;
+	refreshers?: string[];
 }
 
 export const propsConvertor = {
-	convertToFrontEndConfig: (name: string, prop: PieceProperty): CollectionConfig => {
+	convertToFrontEndConfig: (name: string, prop: PieceProperty): PieceConfig => {
 		return {
 			key: name,
 			type: prop.type,
@@ -46,7 +49,8 @@ export const propsConvertor = {
 			tokenUrl: prop.tokenUrl,
 			scope: prop.scope,
 			required: prop.required,
-			extra: prop.extra
+			extra: prop.extra,
+			refreshers: prop.refreshers,
 		};
 	},
 };
@@ -56,6 +60,7 @@ export interface AppPiece {
 	logoUrl: string;
 	actions: propMap;
 	triggers: propMap;
+	displayName: string;
 }
 
 type propMap = Record<

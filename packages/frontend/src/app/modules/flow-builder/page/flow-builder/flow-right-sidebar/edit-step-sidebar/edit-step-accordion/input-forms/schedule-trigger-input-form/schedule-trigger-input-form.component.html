@@ -2,7 +2,7 @@
 
   <mat-form-field class="ap-w-full" appearance="outline">
     <mat-label>Cron Expression</mat-label>
-    <input matInput placeholder="0/30 * * ? * *" class="ap-bg-white" formControlName="cronExpression" />
+    <input matInput placeholder="0/30 * * * *" class="ap-bg-white" formControlName="cronExpression" />
     <mat-error *ngIf="scheduledFrom.controls.cronExpression.invalid">
       <ng-container *ngIf="scheduledFrom.controls.cronExpression.getError('required'); else invalidCronExpression">
         Expression is required.

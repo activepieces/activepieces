@@ -24,7 +24,7 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     console.log(`\n[repeatableJobConsumer] job.id=${job.name}\n`);
     const { data } = job;
     return await flowRunService.start({
-      instanceId: data.instanceId,
+      environment: data.environment,
       flowVersionId: data.flowVersionId,
       collectionVersionId: data.collectionVersionId,
       payload: null,

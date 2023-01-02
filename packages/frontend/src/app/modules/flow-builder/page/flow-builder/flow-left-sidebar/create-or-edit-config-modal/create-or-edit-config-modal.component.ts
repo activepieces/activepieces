@@ -73,7 +73,6 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 			settings: new FormControl(undefined),
 			value: new FormControl(undefined, Validators.required),
 		});
-
 		if (this.dialogData) {
 			this.configForm.patchValue(this.dialogData.config);
 			this.configForm.controls.key.disable();
@@ -94,9 +93,7 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 						settingsControl.setValue(undefined);
 						settingsControl.setErrors(null);
 					} else {
-						settingsControl.setValue({
-							
-						});
+						settingsControl.setValue({});
 					}
 				}
 			})

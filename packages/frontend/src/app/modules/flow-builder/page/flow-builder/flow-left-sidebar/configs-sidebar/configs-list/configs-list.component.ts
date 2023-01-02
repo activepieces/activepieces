@@ -19,7 +19,7 @@ export class VariableListComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
-		this.variables$ = this.store.select(BuilderSelectors.selectCurrentCollectionConfigs);
+		this.variables$ = this.store.select(BuilderSelectors.selectAllConfigsWithoutOAuth2);
 	}
 
 	deleteVariable(index: number) {

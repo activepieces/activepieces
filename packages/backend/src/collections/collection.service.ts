@@ -16,12 +16,11 @@ import { CollectionEntity } from "./collection-entity";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { databaseConnection } from "../database/database-connection";
+import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
 
 export const collectionRepo = databaseConnection.getRepository(CollectionEntity);
 
 export const collectionService = {
-
-  
   /**
    * get a collection by id and versionId
    * @param id collection id to get
@@ -39,6 +38,20 @@ export const collectionService = {
       ...collection,
       version: await collectionVersionService.getCollectionVersionId(id, versionId),
     };
+  },
+  async getOneOrThrow(id: CollectionId): Promise<Collection> {
+    const collection = await collectionService.getOne(id, null);
+
+    if (collection === null) {
+      throw new ActivepiecesError({
+        code: ErrorCode.COLLECTION_NOT_FOUND,
+        params: {
+          id,
+        },
+      });
+    }
+
+    return collection;
   },
   async list(projectId: ProjectId, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<Collection>> {
     const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
@@ -74,7 +87,7 @@ export const collectionService = {
     if (lastVersion.state === CollectionVersionState.LOCKED) {
       lastVersion = await collectionVersionService.createVersion(collectionId, request);
     } else {
-      await collectionVersionService.updateVersion(lastVersion, request);
+      await collectionVersionService.updateVersion(lastVersion.id, request);
     }
     return await collectionService.getOne(collectionId, null);
   },

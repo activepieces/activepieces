@@ -6,7 +6,6 @@ interface FlowRunSchema extends FlowRun {
   project: Project;
   collection: Collection;
   collectionVersion: CollectionVersion;
-  instance: Instance;
   flow: Flow;
 }
 
@@ -14,12 +13,15 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
   name: "flow_run",
   columns: {
     ...BaseColumnSchemaPart,
-    instanceId: { ...ApIdSchema, nullable: true },
     projectId: ApIdSchema,
     flowId: ApIdSchema,
     collectionId: ApIdSchema,
     flowVersionId: ApIdSchema,
     collectionVersionId: ApIdSchema,
+    environment: {
+      type: String,
+      nullable: true
+    },
     flowDisplayName: {
       type: String,
     },
@@ -84,17 +86,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
       joinColumn: {
         name: "collectionVersionId",
         foreignKeyConstraintName: "fk_flow_run_collection_version_id",
-      },
-    },
-    instance: {
-      type: "many-to-one",
-      target: "instance",
-      cascade: true,
-      nullable: true,
-      onDelete: "CASCADE",
-      joinColumn: {
-        name: "instanceId",
-        foreignKeyConstraintName: "fk_flow_run_instance_id",
       },
     },
   },
