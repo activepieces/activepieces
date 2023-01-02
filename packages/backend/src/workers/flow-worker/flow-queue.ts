@@ -1,6 +1,7 @@
 import { Queue } from "bullmq";
 import Redis from "ioredis";
 import { ApId } from "shared";
+import { createRedisClient } from "../../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "../../helper/activepieces-error";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
 
@@ -30,15 +31,11 @@ export const ONE_TIME_JOB_QUEUE = "oneTimeJobs";
 export const REPEATABLE_JOB_QUEUE = "repeatableJobs";
 
 const oneTimeJobQueue = new Queue<OneTimeJobData, unknown, ApId>(ONE_TIME_JOB_QUEUE, {
-  connection: new Redis(6379, {
-    maxRetriesPerRequest: null,
-  }),
+  connection: createRedisClient(),
 });
 
 const repeatableJobQueue = new Queue<RepeatableJobData, unknown, ApId>(REPEATABLE_JOB_QUEUE, {
-  connection: new Redis(6379, {
-    maxRetriesPerRequest: null,
-  }),
+  connection: createRedisClient(),
 });
 
 const repeatableJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`;

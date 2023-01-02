@@ -29,6 +29,7 @@ importers:
       bcrypt: ^5.1.0
       bullmq: ^3.5.1
       decompress: ^4.2.1
+      dotenv: ^16.0.3
       eslint: ^8.30.0
       eslint-config-prettier: ^8.5.0
       eslint-config-standard-with-typescript: ^24.0.0
@@ -82,6 +83,7 @@ importers:
       '@types/node': 17.0.45
       '@types/qs': 6.9.7
       '@typescript-eslint/eslint-plugin': 5.47.1_lzzuuodtsqwxnvqeq4g4likcqa
+      dotenv: 16.0.3
       eslint: 8.30.0
       eslint-config-prettier: 8.5.0_eslint@8.30.0
       eslint-config-standard-with-typescript: 24.0.0_r3et37n5jo7vy32jffmixody7a
@@ -6611,7 +6613,6 @@ packages:
   /dotenv/16.0.3:
     resolution: {integrity: sha512-7GO6HghkA5fYG9TYnNxi14/7K9f5occMlp3zXAuSxn7CKCxt9xbNWG7yF8hTCSUchlfWSe3uLmlPfigevRItzQ==}
     engines: {node: '>=12'}
-    dev: false
 
   /duplexer/0.1.2:
     resolution: {integrity: sha512-jtD6YG370ZCIi/9GTaJKQxWTZD045+4R4hTk/x1UyoqadyJ9x9CgSi1RlVDQF8U2sxLLSnFkCaMihqljHIWgMg==}
