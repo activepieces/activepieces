@@ -97,7 +97,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 			value: new FormControl(undefined as any, Validators.required),
 			refreshUrl: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
 		});
-		debugger;
+
 		if (this.configToUpdateWithIndex) {
 			this.settingsForm.patchValue({
 				...this.configToUpdateWithIndex.config.settings,

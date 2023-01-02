@@ -49,7 +49,6 @@ export class OAuth2CloudConnectControlComponent implements ControlValueAccessor 
 	popUpError = false;
 
 	openPopup(): void {
-		debugger;
 		this.popupOpened$ = this.oauth2Service.openCloudAuthPopup(this.cloudConnectionPopupSettings).pipe(
 			tap(value => {
 				this.responseData = value;

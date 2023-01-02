@@ -47,7 +47,7 @@ export class NewCloudAuthenticationModalComponent implements OnInit {
 		this.pieceName = dialogData.pieceName;
 		this.pieceAuthConfig = dialogData.pieceAuthConfig;
 		this.configToUpdateWithIndex = dialogData.configToUpdateWithIndex;
-		debugger;
+
 		this.cloudConnectionPopupSettings = {
 			authUrl: this.pieceAuthConfig.authUrl!,
 			scope: this.pieceAuthConfig.scope!.join(' '),
