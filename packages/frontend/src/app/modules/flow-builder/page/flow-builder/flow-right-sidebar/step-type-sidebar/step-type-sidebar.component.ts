@@ -154,7 +154,7 @@ export class StepTypeSidebarComponent implements OnInit {
 					type: TriggerType.PIECE,
 					valid: false,
 					settings: {
-						pieceName: triggerDetails.name,
+						pieceName: triggerDetails.extra!.appName,
 						triggerName: '',
 						input: {},
 					},

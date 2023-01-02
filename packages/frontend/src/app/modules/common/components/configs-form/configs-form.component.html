@@ -89,7 +89,7 @@
             </mat-option>
             <mat-option [disabled]="true"
               *ngIf="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0">
-              You have no OAuth2 Configs
+              You have no authentication set up for this app
             </mat-option>
           </mat-select>
           <mat-error *ngIf="formGroup.get(config.key)!.invalid">

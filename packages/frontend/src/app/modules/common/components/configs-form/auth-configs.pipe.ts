@@ -7,7 +7,6 @@ import { OAuth2DropdownItem } from '../../model/dropdown-item.interface';
 })
 export class AuthConfigsPipe implements PipeTransform {
 	transform(value: OAuth2DropdownItem[], pieceName: string): OAuth2DropdownItem[] {
-		debugger;
 		return value.filter(item => item.label.pieceName === pieceName || !item.label.pieceName);
 	}
 }
