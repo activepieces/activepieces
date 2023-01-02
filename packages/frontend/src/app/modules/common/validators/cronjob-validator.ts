@@ -1,8 +1,8 @@
 import { AbstractControl, ValidationErrors } from '@angular/forms';
-import * as cronValidator from 'cron-expression-validator';
+import { isValidCron } from 'cron-validator';
 
 export function cronJobValidator(control: AbstractControl): ValidationErrors | null {
-	if (cronValidator.isValidCronExpression(control.value)) {
+	if (isValidCron(control.value, {seconds: true})) {
 		return null;
 	}
 	return { 'invalid-cron-job': true };

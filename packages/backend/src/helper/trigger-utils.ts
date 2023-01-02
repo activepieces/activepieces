@@ -136,7 +136,7 @@ const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
 
 const getWebhookUrl = async (flowId: FlowId): Promise<string> => {
   const { ip } = await getPublicIp();
-  return `http://${ip}/v1/webhooks/flow/${flowId}`;
+  return `http://${ip}/v1/webhooks?flowId=${flowId}`;
 };
 
 interface EnableParams {
