@@ -185,28 +185,27 @@ export class ComponentTriggerInputFormComponent {
 		return { invalid: true };
 	}
 
-	triggerSelectValueChanged(selectedActionValue: { triggerName: string; configs: CollectionConfig[] } | null) {
-		if (selectedActionValue) {
-			this.triggerSelected(selectedActionValue);
-
+	triggerSelectValueChanged(selectedValue: { triggerName: string; configs: CollectionConfig[] } | null) {
+		if (selectedValue) {
+			this.triggerSelected(selectedValue);
 			this.selectedTrigger$ = this.triggers$.pipe(
 				map(items => {
-					console.log(items.find(it => it.value.triggerName === selectedActionValue.triggerName));
-					return items.find(it => it.value.triggerName === selectedActionValue.triggerName);
+					console.log(items.find(it => it.value.triggerName === selectedValue.triggerName));
+					return items.find(it => it.value.triggerName === selectedValue.triggerName);
 				})
 			);
 		}
 	}
 
-	private triggerSelected(selectedActionValue: { triggerName: string; configs: CollectionConfig[] }) {
+	private triggerSelected(selectedValue: { triggerName: string; configs: CollectionConfig[] }) {
 		const configsForm = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME);
 		if (!configsForm) {
 			this.componentForm.addControl(
 				CONFIGS_FORM_CONTROL_NAME,
-				new UntypedFormControl([...selectedActionValue.configs])
+				new UntypedFormControl([...selectedValue.configs])
 			);
 		} else {
-			configsForm.setValue([...selectedActionValue.configs]);
+			configsForm.setValue([...selectedValue.configs]);
 		}
 	}
 

@@ -6,7 +6,8 @@ import { discord } from './discord';
 
 export const pieces: Piece[] = [
 	slack,
-	gmail
+	gmail,
+	github
 ];
 
 export const getPiece = (name: string): Piece | undefined => {

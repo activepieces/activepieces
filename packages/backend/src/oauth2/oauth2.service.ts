@@ -23,26 +23,26 @@ export const oauth2Service = {
             code: request.code,
           }),
           {
-            headers: { "content-type": "application/x-www-form-urlencoded" },
+            headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
           }
         )
       ).data;
-      const secondsSinceEpoch = Math.round(Date.now() / 1000)
+      const secondsSinceEpoch = Math.round(Date.now() / 1000);
       let formattedResponse: OAuth2Response = {
-        access_token: response['access_token'],
-        expires_in: response['expires_in'],
+        access_token: response["access_token"],
+        expires_in: response["expires_in"],
         claimed_at: secondsSinceEpoch,
-        refresh_token: response['refresh_token'],
-        scope: response['scope'],
-        token_type: response['token_type'],
-        data: response
+        refresh_token: response["refresh_token"],
+        scope: response["scope"],
+        token_type: response["token_type"],
+        data: response,
       };
-      delete formattedResponse.data['access_token'];
-      delete formattedResponse.data['expires_in'];
-      delete formattedResponse.data['refresh_token'];
-      delete formattedResponse.data['scope'];
-      delete formattedResponse.data['token_type'];
-      
+      delete formattedResponse.data["access_token"];
+      delete formattedResponse.data["expires_in"];
+      delete formattedResponse.data["refresh_token"];
+      delete formattedResponse.data["scope"];
+      delete formattedResponse.data["token_type"];
+
       return formattedResponse;
     } catch (e: unknown | AxiosError) {
       if (axios.isAxiosError(e)) {
@@ -84,7 +84,7 @@ function refreshConfig(config: OAuth2Config) {
         refresh_token: config.value.refresh_token,
       }),
       {
-        headers: { "content-type": "application/x-www-form-urlencoded" },
+        headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
       }
     );
   } catch (e: unknown | AxiosError) {
