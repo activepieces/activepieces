@@ -1,7 +1,7 @@
 export const environment = {
 	production: true,
 	apiDomainUrl: '',
-	apiUrl: '/api',
+	apiUrl: '/api/v1',
 	jwtTokenName: 'token',
 	stageName: 'prod',
 	redirectUrl: 'http://localhost:8080/redirect',
