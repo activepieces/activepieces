@@ -1,7 +1,7 @@
-import { CollectionVersionId, FlowRunId, FlowVersionId, InstanceId } from "shared";
+import { CollectionVersionId, FlowRunId, FlowVersionId, RunEnvironment } from "shared";
 
 interface BaseJobData {
-  instanceId: InstanceId | null;
+  environment: RunEnvironment;
   flowVersionId: FlowVersionId;
   collectionVersionId: CollectionVersionId;
 }

@@ -15,6 +15,7 @@ import {
   ProjectId,
   SeekPage,
 } from "shared";
+import { RunEnvironment } from "shared/dist/flow-run/flow-run";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 import { collectionService } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
@@ -46,8 +47,8 @@ export const flowRunService = {
       .createQueryBuilder("flow_run")
       .where({
         projectId,
-      })
-      .andWhere("flow_run.instanceId is not null");
+        environment: RunEnvironment.PRODUCTION
+      });
     const { data, cursor: newCursor } = await paginator.paginate(query);
     return paginationHelper.createPage<FlowRun>(data, newCursor);
   },
@@ -65,8 +66,8 @@ export const flowRunService = {
     return await this.getOne({ id: flowRunId });
   },
 
-  async start({ instanceId, flowVersionId, collectionVersionId, payload }: StartParams): Promise<FlowRun> {
-    console.log(`[flowRunService#start] instanceId=${instanceId} flowVersionId=${flowVersionId}`);
+  async start({ flowVersionId, collectionVersionId, payload }: StartParams): Promise<FlowRun> {
+    console.log(`[flowRunService#start]  flowVersionId=${flowVersionId}`);
 
     const flowVersion = await getFlowVersionOrThrow(flowVersionId);
     const collectionVersion = await getCollectionVersionOrThrow(collectionVersionId);
@@ -74,7 +75,6 @@ export const flowRunService = {
 
     const flowRun: Partial<FlowRun> = {
       id: apId(),
-      instanceId,
       projectId: collection.projectId,
       collectionId: collectionVersion.collectionId,
       flowId: flowVersion.flowId,
@@ -159,7 +159,7 @@ interface GetOneParams {
 }
 
 interface StartParams {
-  instanceId: InstanceId | null;
+  environment: RunEnvironment,
   flowVersionId: FlowVersionId;
   collectionVersionId: CollectionVersionId;
   payload: unknown;

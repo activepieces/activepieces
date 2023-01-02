@@ -38,7 +38,6 @@ export const instanceSideEffects = {
     const enableTriggers = flowVersions.map(
       async (flowVersion) =>
         await triggerUtils.enable({
-          instanceId: instance.id,
           collectionId: instance.collectionId,
           collectionVersionId: instance.collectionVersionId,
           flowVersion,
