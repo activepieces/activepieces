@@ -6,6 +6,8 @@ services:
     container_name: activepieces-backend
     restart: unless-stopped
     privileged: true
+    ports:
+      - 3000:3000
     depends_on:
       - postgres
       - redis
