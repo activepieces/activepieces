@@ -29,6 +29,9 @@ jobs:
         with:
           context: .
           file: ./frontend.Dockerfile
+          platforms: |
+            linux/amd64
+            linux/arm64
           push: true
           tags: |
             activepieces/frontend:${{ env.RELEASE }}
