@@ -1,4 +1,4 @@
-The primary source of the Code of Conduct is at [activepieces.com](https://www.activepieces.com/code-of-conduct/) - it is reproduced here for reference.
+The primary source of the Code of Conduct is here.
 
 ## 1. Purpose
 
