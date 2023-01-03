@@ -62,7 +62,8 @@
         {
           "group": "Apps",
           "pages": [
-            "pieces/apps/slack"
+            "pieces/apps/slack",
+            "pieces/apps/discord"
           ]
         },
         {
