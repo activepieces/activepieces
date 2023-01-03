@@ -10,7 +10,16 @@
   "repoType": "github",
   "repoHost": "https://github.com",
   "skipCi": true,
-  "commitConvention": "angular",  
+  "commitConvention": "angular",
   "contributors": [
+    {
+      "login": "khaledmashaly",
+      "name": "Khaled Mashaly",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61781545?v=4",
+      "profile": "https://github.com/khaledmashaly",
+      "contributions": [
+        "maintenance"
+      ]
+    }
   ]
 }
