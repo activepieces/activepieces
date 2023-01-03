@@ -1,0 +1,32 @@
+<form [formGroup]="storageStepForm" class="ap-flex ap-flex-col ap-gap-2">
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Operation</mat-label>
+    <mat-select formControlName="operation">
+      <mat-option *ngFor="let opt of operationDropdownOptions" [value]="opt.value">
+        {{opt.label}}
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="storageStepForm.controls.operation.invalid">
+      Operation is required.
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Key</mat-label>
+    <input matInput placeholder="Key of value stored" class="ap-bg-white" formControlName="key" />
+    <mat-error *ngIf="storageStepForm.controls.key.invalid">
+      Key is required.
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field *ngIf="storageStepForm.controls.operation.value === StorageOperation.PUT" class="ap-w-full"
+    appearance="outline">
+    <mat-label>Value</mat-label>
+    <input matInput placeholder="Value to store" class="ap-bg-white" formControlName="value" />
+    <mat-error *ngIf="storageStepForm.controls.value.invalid">
+      Value is required.
+    </mat-error>
+  </mat-form-field>
+</form>
+
+<ng-container *ngIf="updateComponentValue$ | async"></ng-container>
+<ng-container *ngIf="operationChanged$ | async"></ng-container>

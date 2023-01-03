@@ -1,0 +1,16 @@
+<form [formGroup]="describeForm" class="ap-flex ap-flex-col ap-gap-2">
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Display Name</mat-label>
+    <input matInput placeholder="Step X" class="ap-bg-white" formControlName="displayName" />
+    <mat-error *ngIf="describeForm.controls.displayName!.invalid">
+      Display name is required.
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="ap-w-full " appearance="outline">
+    <mat-label>Name</mat-label>
+    <input matInput placeholder="Step_X" class="ap-bg-white" formControlName="name" />
+  </mat-form-field>
+</form>
+
+<ng-container *ngIf="updateComponentValue$ | async"></ng-container>

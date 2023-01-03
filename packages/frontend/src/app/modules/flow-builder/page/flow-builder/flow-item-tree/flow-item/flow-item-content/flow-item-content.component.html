@@ -1,0 +1,63 @@
+<div class="flow-container" (mouseenter)="hover = true" (mouseleave)="hover = false">
+  <div class="options-container" [hidden]="viewMode">
+    <div class="ap-rounded-full  ap-opacity-0
+    ap-transition ap-fade-in ap-duration-500
+    ap-cursor-pointer ap-flex ap-items-center ap-mr-5 ap-justify-center
+     ap-bg-white ap-border-solid ap-border-[1px]
+      ap-border-line ap-min-w-[50px] ap-min-h-[50px]" [class.ap-opacity-100]="hover" [class.ap-opacity-0]="!hover">
+      <app-icon-button *ngIf="trigger" [iconFilename]="'replace.svg'" tooltipText="Change Trigger"
+        (buttonClicked)="changeTrigger()"></app-icon-button>
+      <app-icon-button *ngIf="!trigger" [iconFilename]="'trash.svg'" color="warn" tooltipText="Delete Step"
+        (buttonClicked)="deleteStep()"></app-icon-button>
+    </div>
+  </div>
+
+  <div class="flow-item ap-flex ap-items-center" [class.selected]="selected"
+    [class.empty-trigger]="_flowItem.type === triggerType.EMPTY" (click)="selectStep()">
+    <div class="flow-icon-container ap-flex ap-justify-center ap-items-center">
+      <ng-container *ngIf="flowItemDetails$ | async">
+        <img *ngIf="stepIconUrl" class="logo-icon" @fadeIn [src]="stepIconUrl" />
+      </ng-container>
+
+      <div *ngIf="!stepIconUrl" class="step-icon-loading-spinner-container">
+        <div class="spinner-grow ap-text-primary">
+          <span class="sr-only">...</span>
+        </div>
+      </div>
+    </div>
+    <div class="flow-content ap-flex ap-flex-col ap-justify-center  ap-self-stretch">
+      <div class="ap-flex  ap-items-center ap-gap-2 ">
+        <div class="ap-flex ap-flex-grow ap-flex-col ap-gap-2">
+          <div class="ap-typography-subtitle-1 ap-font-normal flow-title ap-flex-grow ap-max-w-[150px]" #stepTitle
+            [matTooltip]="_flowItem.displayName">
+            {{ _flowItem.displayName }}
+          </div>
+          <div class="ap-typography-caption ap-flex ap-text-description ap-items-center">
+            <div>{{ _flowItem.name }}</div>
+            <div #spacer class="ap-flex-grow"></div>
+            <div class="ap-text-danger ap-bg-danger-light ap-rounded ap-p-1 ap-justify-self-end" *ngIf="
+          !_flowItem.valid" @fadeIn>Invalid
+              Settings</div>
+          </div>
+        </div>
+
+        <ng-container *ngIf="selectedRun$ | async">
+          <div class="ap-flex-grow" *ngIf="selectedRun$ | async"></div>
+          <div>
+            <ng-container *ngIf="stepStatus$|async as actionStatus; else stepInsideLoopStatusTemplate">
+              <ng-container *ngIf="actionStatus === actionStatusEnum.RUNNING">
+                <div class="spinner-border !ap-border-primary !ap-border-r-transparent " role="status"></div>
+              </ng-container>
+              <app-state-icon [showStatusText]="false" *ngIf="actionStatus !== actionStatusEnum.RUNNING"
+                [succeeded]="actionStatus === actionStatusEnum.SUCCEEDED"></app-state-icon>
+            </ng-container>
+            <ng-template #stepInsideLoopStatusTemplate>
+              <app-state-icon *ngIf="stepInsideLoopStatus$ | async as stepInsideLoopStatus" [showStatusText]="false"
+                [succeeded]="stepInsideLoopStatus === actionStatusEnum.SUCCEEDED"></app-state-icon>
+            </ng-template>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

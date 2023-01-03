@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "commonjs",
+    "lib": ["es2017"],
+    "outDir": "dist",
+    "rootDir": "src",
+    "noImplicitAny": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "strict": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "types/**/*.d.ts"
+  ],
+  "exclude": [
+    "tests/**/*.ts"
+  ],
+  "ts-node": {
+    "files": true,
+    "transpileOnly": true
+  }
+}

@@ -1,4 +1,0 @@
-@mixin icon-shape-variant($color) {
-  color: saturate(darken($color, 10%), 10);
-  background-color: transparentize(lighten($color, 10%), 0.5);
-}

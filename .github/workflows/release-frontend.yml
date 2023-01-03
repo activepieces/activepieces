@@ -1,0 +1,36 @@
+name: Release frontend
+
+on:
+  push:
+    branches:
+      - dev
+      - feature-new-backend-dockerfile
+
+jobs:
+  Release-Frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Set RELEASE env var from package.json
+        run: echo RELEASE=$(node --print "require('./packages/frontend/package.json').version") >> $GITHUB_ENV
+
+      - name: Fail if tag already exists
+        run: "! docker manifest inspect activepieces/frontend:${{ env.RELEASE }}"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./frontend.Dockerfile
+          push: true
+          tags: |
+            activepieces/frontend:${{ env.RELEASE }}
+            activepieces/frontend:latest

@@ -1,8 +1,0 @@
-.classpath
-.project
-.settings/
-target/
-/code-build/
-*.iml
-/code
-/.idea/

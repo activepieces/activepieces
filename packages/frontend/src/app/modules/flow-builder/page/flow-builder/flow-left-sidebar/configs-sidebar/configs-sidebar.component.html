@@ -1,0 +1,14 @@
+<div class="column config-variables">
+  <app-sidebar-header [backArrow]="false" (closeClicked)="closeSidebar()"
+    [title]="'Config variables'"></app-sidebar-header>
+  <div class="ap-h-full ap-p-3">
+
+    <app-button btnColor="primary" btnStyle="basic" btnSize="medium" *ngIf="!(viewMode$ | async | defaultTrue)"
+      (buttonClicked)="openConfigVariableModal(undefined)"> + New Variable
+    </app-button>
+    <app-configs-list (selectedVariable)="
+    openConfigVariableModal($event)
+  "></app-configs-list>
+  </div>
+
+</div>

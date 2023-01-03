@@ -1,0 +1,5 @@
+<div class="endpoint-form-control" [formGroup]="endpointForm">
+  <div class="url-form-control" [matTooltip]="url">{{url}}</div>
+  <input class="form-control" formControlName="path">
+</div>
+<ng-container *ngIf="valueChanges$ | async"></ng-container>

@@ -1,0 +1,126 @@
+<form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col ap-gap-2">
+  <div *ngFor="let config of requiredConfigs; let i = index">
+    <ng-container
+      *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:config, configIndex:i,formGroup:form}"></ng-container>
+  </div>
+  <div *ngIf="allOptionalConfigs.length > 0" class="ap-flex ap-items-center optional-input-label-container">
+    <div> Optional Inputs </div>
+    <div #spacer class="ap-flex-grow"></div>
+    <app-button *ngIf="selectedOptionalConfigs.length !== allOptionalConfigs.length && form.enabled" btnColor="primary"
+      btnSize="medium" btnStyle="basic" #menuTrigger="matMenuTrigger" (menuOpened)="optionalConfigsMenuOpened=true"
+      (menuClosed)="optionalConfigsMenuOpened=false" [matMenuTriggerFor]="bodyTypesMenu">
+      + Add Input
+    </app-button>
+    <mat-menu #bodyTypesMenu="matMenu">
+      <ng-container *ngFor="let config of allOptionalConfigs">
+        <ng-container *ngIf="!selectedOptionalConfigs.includes(config)">
+          <div (click)="addOptionalConfig(config)" mat-menu-item>
+            {{config.label}}
+          </div>
+        </ng-container>
+      </ng-container>
+    </mat-menu>
+  </div>
+  <div *ngFor="let config of selectedOptionalConfigs; let i = index">
+    <ng-container
+      *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:config, configIndex:i, formGroup:form}"></ng-container>
+  </div>
+</form>
+
+<ng-template let-config let-configIndex="configIndex" #formFieldsTemplate let-formGroup="formGroup">
+
+  <ng-container [ngSwitch]="config.type" [formGroup]="formGroup">
+
+    <ng-container *ngSwitchCase="configType.CHECKBOX">
+      <mat-slide-toggle [formControlName]="config.key" color="primary"
+        [matTooltip]="config.description">{{config.label}}</mat-slide-toggle>
+    </ng-container>
+
+    <mat-form-field *ngIf="config.type === configType.SHORT_TEXT || config.type === configType.NUMBER" class="ap-w-full"
+      appearance="outline">
+      <mat-label>{{config.label}}</mat-label>
+      <input matInput [formControlName]="config.key" [matTooltip]="config.description"
+        [type]=" config.type === configType.SHORT_TEXT? 'text' : 'number'" />
+      <mat-error *ngIf="formGroup.get(config.key)?.invalid">
+        {{config.label}} is required
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field *ngSwitchCase="configType.LONG_TEXT" class="ap-w-full" appearance="outline">
+      <mat-label>{{config.label}}</mat-label>
+      <textarea matInput [formControlName]="config.key">
+      </textarea>
+      <mat-error *ngIf="formGroup.get(config.key)?.invalid">
+        {{config.label}} is required
+      </mat-error>
+    </mat-form-field>
+
+    <ng-container *ngSwitchCase="configType.DROPDOWN">
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }} </mat-label>
+        <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
+          <ng-container *ngIf="optionsObservables$[config.key]| async as state">
+            <mat-option *ngFor="let opt of state.options" [value]="opt.value">
+              {{opt.label}}
+            </mat-option>
+            <mat-option [disabled]="true" *ngIf="state.disabled">
+              {{state.placeholder}}
+            </mat-option>
+          </ng-container>
+
+
+          <!-- <mat-option [disabled]="true"
+            *ngIf=" ( optionsObservables$[config.key]| async) === undefined ||  (optionsObservables$[config.key]| async)!.options?.length === 0 && !(optionsObservables$[config.key]| async)?.disabled ">
+            No options available
+          </mat-option> -->
+        </mat-select>
+        <mat-error *ngIf="formGroup.get(config.key)?.invalid">
+          {{config.label}} is required
+        </mat-error>
+      </mat-form-field>
+
+    </ng-container>
+    <ng-container *ngSwitchCase="configType.OAUTH2">
+      <div class="ap-relative">
+        <app-button btnColor="primary" btnStyle="basic" btnSize="extraSmall"
+          *ngIf="formGroup.enabled && formGroup.get(config.key)!.value"
+          (buttonClicked)="editSelectedAuthConfig(config.key)" class="edit-selected-auth"> Edit
+        </app-button>
+
+        <mat-form-field class="ap-w-full" appearance="outline">
+          <mat-label> {{ config.label }} </mat-label>
+          <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
+            <mat-option *ngFor="let opt of ((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)"
+              [value]="opt.value">
+              {{opt.label.configKey}}
+            </mat-option>
+            <mat-option [disabled]="true"
+              *ngIf="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0">
+              You have no authentication set up for this app
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="formGroup.get(config.key)!.invalid">
+            {{config.label}} is required
+          </mat-error>
+        </mat-form-field>
+
+
+        <app-button btnColor="primary" btnStyle="basic" (buttonClicked)="newAuthenticationDialogProcess(config.key)"
+          type="button" class="new-config-btn" btnSize="medium" *ngIf="formGroup.enabled"> + New Authentication
+        </app-button>
+      </div>
+
+    </ng-container>
+
+  </ng-container>
+
+
+</ng-template>
+<ng-container *ngIf="updateValueOnChange$ | async"></ng-container>
+<ng-container *ngFor="let obs$  of 	optionsObservables$ | keyvalue">
+  <ng-container *ngIf=" obs$.value | async "></ng-container>
+</ng-container>
+<ng-container *ngIf="configDropdownChanged$  | async"></ng-container>
+<ng-container *ngIf="updateOrAddConfigModalClosed$ | async "></ng-container>
+<ng-container *ngIf="updateAuthConfig$ | async"> </ng-container>
+<ng-container *ngIf="cloudAuthCheck$ | async"></ng-container>
