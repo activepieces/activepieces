@@ -7,7 +7,7 @@ ports:
   - port: 3000
     onOpen: ignore
   - port: 8080
-    onOpen: open-preview
+    onOpen: open-browser
 
 vscode:
   extensions:
