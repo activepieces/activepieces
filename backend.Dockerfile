@@ -25,7 +25,10 @@ WORKDIR /usr/src/app
 COPY . .
 
 RUN pnpm install --frozen-lockfile --config.auto-install-peers=true
-RUN pnpm dlx nx run-many --target=build
+RUN cd packages/shared && pnpm build
+RUN cd packages/pieces && pnpm build
+RUN cd packages/engine && pnpm build
+RUN cd packages/backend && pnpm build
 
 EXPOSE 3000
 
