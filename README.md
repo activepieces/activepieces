@@ -1,14 +1,7 @@
 <p align="center">
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
   <img width="300" alt="activepieceslogo" src="https://github.com/activepieces/activepieces/raw/main/assets/ap-logo.png">
 </p>
 <p align="center">
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-98-orange.svg?style=flat-square)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
-
 <a href="/LICENSE" target="_blank"><img src="https://img.shields.io/github/license/activepieces/activepieces?style=for-the-badge&" alt="Activepieces Licence" /></a>&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
 </p>
 
@@ -101,5 +94,5 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-This project follows the [all-contributors][all-contributors] specification. Contributions of any kind welcome!
-[all-contributors]: <https://github.com/all-contributors/all-contributors>
+This project follows the [all-contributors](https://allcontributors.org) specification.
+Contributions of any kind are welcome!
