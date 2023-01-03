@@ -7,7 +7,7 @@ RUN corepack prepare pnpm@7.21.0 --activate
 WORKDIR /usr/src/app
 COPY . .
 
-RUN pnpm install --config.auto-install-peers=true
+RUN pnpm install --frozen-lockfile --config.auto-install-peers=true
 RUN pnpm dlx nx run-many --target=build
 
 ### STAGE 2: Run ###

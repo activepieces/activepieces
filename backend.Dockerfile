@@ -24,7 +24,7 @@ COPY packages/backend/resources/default.cf /usr/local/etc/isolate
 WORKDIR /usr/src/app
 COPY . .
 
-RUN pnpm install --config.auto-install-peers=true
+RUN pnpm install --frozen-lockfile --config.auto-install-peers=true
 RUN pnpm dlx nx run-many --target=build
 
 EXPOSE 3000
