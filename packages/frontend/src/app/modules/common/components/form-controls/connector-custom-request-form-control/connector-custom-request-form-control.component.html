@@ -1,0 +1,54 @@
+<form [formGroup]="customRequestFormGroup" class="ng-submitted">
+  <div class="ap-flex flex-column accordion-form-controls-container">
+    <div>
+      <label for="endpoint">Endpoint</label>
+      <app-endpoint-form-control id="endpoint" formControlName="endpoint"></app-endpoint-form-control>
+    </div>
+    <div>
+      <label for="parameters">URL Parameters</label>
+      <app-dictonary-form-control formControlName="parameters" id="parameters"></app-dictonary-form-control>
+
+    </div>
+    <div>
+      <label for="headers">Headers</label>
+      <app-dictonary-form-control formControlName="headers" id="headers"></app-dictonary-form-control>
+    </div>
+    <div>
+      <div class="body-label-container">
+        <label class="m-0" for="body">Body</label>
+        <div class="ap-flex-grow" #spacer></div>
+        <app-button btnColor="basic" btnSize="medium" btnStyle="basic" #menuTrigger="matMenuTrigger"
+          (menuOpened)="bodyTypeMenuOpened=true" (menuClosed)="bodyTypeMenuOpened=false"
+          [matMenuTriggerFor]="bodyTypesMenu">
+          {{bodyTypesLabels.get(bodyType)}} <svg-icon class="body-type-chevron" [class.flip]="bodyTypeMenuOpened"
+            [applyClass]="true" src="assets/img/custom/chevron.svg"> </svg-icon>
+
+        </app-button>
+        <mat-menu #bodyTypesMenu="matMenu">
+          <div (click)="changeBodyType(BodyType.KEY_PAIR)" mat-menu-item>
+            {{bodyTypesLabels.get(BodyType.KEY_PAIR)}}
+          </div>
+          <div (click)="changeBodyType(BodyType.RAW)" mat-menu-item>
+            {{bodyTypesLabels.get(BodyType.RAW)}}
+          </div>
+          <div (click)="changeBodyType(BodyType.JSON)" mat-menu-item>
+            {{bodyTypesLabels.get(BodyType.JSON)}}
+          </div>
+        </mat-menu>
+      </div>
+      <ng-container [ngSwitch]="bodyType">
+        <app-dictonary-form-control *ngSwitchCase="BodyType.KEY_PAIR" formControlName="body" id="body">
+        </app-dictonary-form-control>
+        <textarea class="form-control" *ngSwitchCase="BodyType.RAW" formControlName="body" rows="4"
+          type="text"></textarea>
+        <div class="code-font-sm code-size-200 code-block">
+          <ngx-codemirror formControlName="body" *ngSwitchCase="BodyType.JSON" [options]="codeEditorOptions">
+          </ngx-codemirror>
+        </div>
+
+      </ng-container>
+
+    </div>
+  </div>
+</form>
+<ng-container *ngIf="valueChanges$ | async"></ng-container>

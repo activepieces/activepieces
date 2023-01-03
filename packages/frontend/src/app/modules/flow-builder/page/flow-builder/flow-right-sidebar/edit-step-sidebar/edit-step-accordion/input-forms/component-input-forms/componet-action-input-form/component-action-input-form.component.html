@@ -1,0 +1,40 @@
+<form [formGroup]="componentForm" class="ap-flex ap-flex-col ap-gap-2">
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label> Action </mat-label>
+    <mat-select placeholder="Select an action" [formControlName]="ACTION_FORM_CONTROL_NAME"
+      [compareWith]="actionDropdownCompareFn">
+      <mat-select-trigger>
+        <mat-select-trigger>
+          <ng-container *ngIf="selectedAction$ | async as selectedAction">
+            {{selectedAction?.label.name}}
+          </ng-container>
+        </mat-select-trigger>
+      </mat-select-trigger>
+      <mat-option *ngFor="let opt of actions$ | async" [value]="opt.value" [matTooltip]="opt.label.description">
+        <div>{{opt.label.name}}</div>
+        <div class="ap-typography-caption ap-text-description ap-truncate"> {{opt.label.description}}</div>
+      </mat-option>
+      <mat-option [disabled]="true" *ngIf=" ( actions$ | async) === undefined ||  (actions$ | async)?.length === 0">
+        No options available
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)?.invalid">
+      Action is required
+    </mat-error>
+  </mat-form-field>
+  <ng-container
+    *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value && componentForm.get(CONFIGS_FORM_CONTROL_NAME)">
+    <div>
+      <app-configs-form [stepName]="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value?.actionName"
+        [pieceName]="componentName" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
+      </app-configs-form>
+    </div>
+  </ng-container>
+</form>
+
+<ng-container *ngIf="valueChanges$ | async"></ng-container>
+<ng-container *ngIf="actionDropdownValueChanged$ | async"></ng-container>
+<ng-container *ngIf="updateOrAddConfigModalClosed$ | async"></ng-container>
+<ng-container *ngIf="initialSetup$ | async"> </ng-container>
+<ng-container *ngIf="selectedAction$ | async"></ng-container>

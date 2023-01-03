@@ -1,0 +1,55 @@
+<form [formGroup]="settingsForm" class="ap-flex ap-flex-col ap-gap-2">
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Redirect URL</mat-label>
+    <input formControlName="redirectUrl" matInput type="text" />
+    <mat-error *ngIf="settingsForm.controls.redirectUrl.invalid">
+      Redirect URL is required
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Auth URL</mat-label>
+    <input formControlName="authUrl" matInput type="text" />
+    <mat-error *ngIf="settingsForm.controls.authUrl.invalid">
+      Auth url is required
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Token URL</mat-label>
+    <input formControlName="tokenUrl" matInput type="text" />
+    <mat-error *ngIf="settingsForm.controls.tokenUrl.invalid">
+      Token URL is required
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Client ID</mat-label>
+    <input formControlName="clientId" matInput type="text" />
+    <mat-error *ngIf="settingsForm.controls.clientId.invalid">
+      Client ID is required
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Client Secret</mat-label>
+    <input formControlName="clientSecret" matInput type="password" />
+    <mat-error *ngIf="settingsForm.controls.clientSecret.invalid">
+      Client secret is required
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Scope</mat-label>
+    <input formControlName="scope" matInput type="text" />
+    <mat-error *ngIf="settingsForm.controls.scope.invalid">
+      Scope is required
+    </mat-error>
+  </mat-form-field>
+  <ng-container *ngIf="settingsForm.controls.scope.valid">
+    <div class="ap-typography-caption ap-text-description -ap-mt-2">
+      Scopes are separated by space.
+    </div>
+  </ng-container>
+</form>
+<ng-container *ngIf="settingsFormValueChanged$|async"></ng-container>

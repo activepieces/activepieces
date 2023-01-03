@@ -1,4 +1,7 @@
 <p align="center">
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
   <img width="300" alt="activepieceslogo" src="https://github.com/activepieces/activepieces/raw/main/assets/ap-logo.png">
 </p>
 <p align="center">
@@ -17,7 +20,7 @@
 
 ## Get started for free
 
-* Activepieces is still a prototype, an offical release coming soon*
+**Activepieces is still a prototype, an offical release is coming soon**
 
 Clone Activepieces to your machine and run it with 1 command
 
@@ -32,8 +35,8 @@ cd activepieces
 docker compose -p activepieces up
  ``` 
  
-The username is `admin@activepieces.com` and the password is `password`.
- 
+Vist `http://localhost:8080`
+
 ### Other Options
 We're planning to launch a cloud version of Activepieces and instructions to distribute it on your own infrastructure
 

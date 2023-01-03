@@ -1,5 +1,5 @@
 {
-  "name": "Passr",
+  "name": "Activepieces",
   "logo": {
     "light": "./resources/logo/light.svg",
     "dark": "./resources/logo/dark.svg"
@@ -9,8 +9,6 @@
     "primary": "#5155D7",
     "dark": "#3033A6",
     "light": "#6D72F6",
-    "ultraLight": "#BCBCEF",
-    "ultraDark": "##070963",
     "background": {
       "dark": "#0C1322",
       "light": "#ffffff"
@@ -18,19 +16,82 @@
   },
   "topbarLinks": [
     {
-      "name": "Contact Us",
-      "url": "mailto:support@activepieces.com"
+      "name": "Main Site",
+      "url": "https://www.activepieces.com"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://www.github.com/activepieces/activepieces"
+    },
+    {
+      "name": "Request Piece",
+      "icon": "bullseye-pointer",
+      "url": "https://github.com/activepieces/activepieces/discussions/categories/piece-requests"
+    },
+    {
+      "name": "Discord",
+      "icon": "discord",
+      "url": "https://discord.gg/2jUXBKDdP8"
     }
   ],
   "navigation": [
     {
-      "group": "Getting Started",
-      "pages": ["getting-started/installation",
-        "getting-started/key-concepts"]
+      "group": "Quickstart",
+      "pages": [
+        "quickstart/quick-intro",
+        "quickstart/setup",
+        "quickstart/hello-world"
+      ]
     },
     {
-      "group": "Contributing",
-      "pages": ["contributing/architecture", "contributing/flow-worker" ,"contributing/code-worker"]
+      "group": "Using Activepieces",
+      "pages": [
+        "using-activepieces/overview",
+        "using-activepieces/triggers",
+        "using-activepieces/passing-data",
+        "using-activepieces/debugging"
+      ]
+    },
+    {
+      "group": "Pieces",
+      "pages": [
+        "pieces/overview",
+        {
+          "group": "Apps",
+          "pages": [
+            "pieces/apps/slack"
+          ]
+        },
+        {
+          "group": "Helpers",
+          "pages": [
+            "pieces/helpers/http-request",
+            "pieces/helpers/code",
+            "pieces/helpers/storage"
+          ]
+        },
+        {
+          "group": "Flow Controls",
+          "pages": [
+            "pieces/flow-controls/loop",
+            "pieces/flow-controls/if"
+          ]
+        },
+        "pieces/custom-pieces"
+      ]
+    },
+    {
+      "group": "Building Pieces",
+      "pages": [
+        "building-pieces/overview"
+      ]
+    },
+    {
+      "group": "Other",
+      "pages": ["license"]
     }
   ]
 }

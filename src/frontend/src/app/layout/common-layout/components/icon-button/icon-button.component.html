@@ -1,9 +1,0 @@
-<div class="h-100 d-flex align-items-center" (click)=" disabled? $event.stopPropagation():null">
-  <button type="button" mat-icon-button class="d-flex align-items-center justify-content-center"
-    [disabled]="disabled"
-    (mouseenter)="hover = true" (mouseleave)="hover = false" [style.width]="buttonWidth+'px'"
-    [style.height]="buttonHeight+'px'" [style.padding]="buttonPadding">
-    <svg-icon [svgStyle]="iconSvgStyle(hover)" src="assets/img/custom/{{ iconFilename }}" [matTooltip]="tooltipText"
-      matTooltipPosition="right" class="d-flex align-items-center"></svg-icon>
-  </button>
-</div>

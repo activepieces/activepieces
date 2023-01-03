@@ -1,0 +1,43 @@
+<div class="ap-h-full" [class.ap-hidden]="(areThereCollections$|async)===false">
+  <app-page-title title="Flows"></app-page-title>
+  <div class="ap-min-h-[70%]">
+    <table mat-table [dataSource]="dataSource" class="ap-w-[100%] " aria-label="Collections">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let collection">{{ collection.version.displayName }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="created">
+        <th mat-header-cell *matHeaderCellDef>Created</th>
+        <td mat-cell *matCellDef="let collection">{{ collection.created | date: 'short' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="action">
+        <th mat-header-cell class="!ap-text-center" *matHeaderCellDef>
+          <app-button btnColor="primary" btnSize="small" (buttonClicked)="createCollection()"
+            [loading]="creatingCollection"> New Collection</app-button>
+        </th>
+        <td mat-cell *matCellDef="let collection" class="!ap-text-center">
+          <button mat-icon-button matTooltip="Delete Collection"
+            (click)="$event.stopImmediatePropagation(); deleteCollection(collection)">
+            <svg-icon [svgStyle]="{ width: '18px', height: '18px' }" class="ap-flex ap-justify-center "
+              [applyClass]="true" src="assets/img/custom/trash.svg">
+            </svg-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openBuilder(row)" mat-row
+        *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+  </div>
+
+  <div class="ap-flex ap-justify-end">
+    <app-ap-paginator #paginator> </app-ap-paginator>
+  </div>
+</div>
+
+
+<app-empty-collections-table *ngIf="(areThereCollections$|async)===false"></app-empty-collections-table>
+<ng-container *ngIf="archiveCollectionDialogClosed$ | async"></ng-container>
+<ng-container *ngIf="createCollection$ | async"> </ng-container>

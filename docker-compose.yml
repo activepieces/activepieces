@@ -2,20 +2,29 @@ version: '3.0'
 
 services:
   backend:
-    image: activepieces/backend:0.0.22
+    image: activepieces/backend:0.1.72
     container_name: activepieces-backend
     restart: unless-stopped
     privileged: true
-    depends_on: [ db ]
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
     ports:
-      - 8000:8000
+      - 3000:3000
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - AP_NODE_EXECUTABLE_PATH=/usr/local/bin/node
+      - AP_POSTGRES_DATABASE=activepieces
+      - AP_POSTGRES_HOST=postgres
+      - AP_POSTGRES_PASSWORD=A79Vm5D4p2VQHOp2gd5
+      - AP_POSTGRES_PORT=5432
+      - AP_POSTGRES_USERNAME=postgres
+      - AP_REDIS_HOST=redis
+      - AP_REDIS_PORT=6379
     networks:
       - activepieces
 
   frontend:
-    image: activepieces/frontend:0.0.13
+    image: activepieces/frontend:0.1.22
     container_name: activepieces-frontend
     restart: unless-stopped
     depends_on: [ backend ]
@@ -24,21 +33,31 @@ services:
     networks:
       - activepieces
 
-  db:
+  postgres:
     image: postgres:14.4
-    container_name: activepieces-db
+    container_name: activepieces-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: A79Vm5D4p2VQHOp2gd5
+      - POSTGRES_DB=activepieces
+      - POSTGRES_PASSWORD=A79Vm5D4p2VQHOp2gd5
+      - POSTGRES_USER=postgres
     volumes:
-      - db:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - activepieces
+
+  redis:
+    image: redis:7.0.7
+    container_name: activepieces-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
     networks:
       - activepieces
 
 volumes:
-  db:
+  postgres_data:
+  redis_data:
 
 networks:
   activepieces:
