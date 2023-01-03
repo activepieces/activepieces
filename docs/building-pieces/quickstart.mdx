@@ -1,0 +1,117 @@
+---
+title: "Quickstart"
+description: ""
+---
+
+We will create a `discord` piece with `send message` action.
+
+
+# Create Piece
+
+The first thing to do is to create folder inside the apps folder in pieces package.
+
+```bash
+cd packages/pieces/src/apps
+```
+
+Create discord folder
+```bash
+mkdir discord && cd discord
+```
+
+Create piece definition.
+```bash
+touch index.ts
+```
+
+and add the following snippet.
+
+```typescript
+import {createPiece} from "../../framework/piece";
+
+export const discord = createPiece({
+    name: 'discord',
+    displayName: "Discord",
+    logoUrl: 'https://cdn.activepieces.com/pieces/discord.png',
+    actions: [],
+    triggers: [],
+});
+````
+
+# Properties
+
+Let's define the common properties, since it's going to be used in many places, we are going to place them in common file.
+
+Create `common` folder inside discord and then `index.ts`
+
+```
+mkdir common && touch common/index.ts
+```
+
+We need to ask the user for the channel, where the bot will be sending message.
+
+To create a channel dropdown, add the following variable inside the `discordCommon`.
+
+Add the following snippet to the folder, We can find the required information 
+from [discord docs](https://discord.com/developers/docs/topics/oauth2)
+
+```typescript
+import {AuthPropertyValue, Property} from "../../../framework/property/prop.model";
+import {HttpRequest} from "../../../common/http/core/http-request";
+import {HttpMethod} from "../../../common/http/core/http-method";
+import {AuthenticationType} from "../../../common/authentication/core/authentication-type";
+import {httpClient} from "../../../common/http/core/http-client";
+
+export const discordCommon = {
+    baseUrl: "https://discord.com/api",
+    authentication: Property.OAuth2({
+        displayName: "Authentication",
+        required: true,
+        authUrl: 'https://discord.com/oauth2/authorize',
+        tokenUrl: 'https://discord.com/api/oauth2/token',
+        scope: ['bot'],
+        extra: {
+            // [Send Message, Send Message in Thread, Read message history, Mention everyone,
+            // Use external Emojis, Use External Stickers, Add reactions, Use slash comments]
+            permissions: 414464805952
+        }
+    }),
+    channel: Property.Dropdown({
+        displayName: "Channel",
+        required: true,
+        options: async (value) => {
+            if (value['authentication'] === undefined) {
+                return {
+                    disabled: true,
+                    placeholder: "connect discord account",
+                    options: []
+                }
+            }
+            const authentication: AuthPropertyValue = value['authentication'] as AuthPropertyValue;
+            const guildId = authentication['data']['guild_id'];
+            const accessToken = authentication['access_token'];
+            const request: HttpRequest<never> = {
+                method: HttpMethod.GET,
+                url: `${discordCommon.baseUrl}/guilds/${guildId}/channels`,
+                authentication: {
+                    type: AuthenticationType.BEARER_TOKEN,
+                    token: accessToken,
+                },
+            };
+            const channels = await httpClient.sendRequest<{id: string, name: string}[]>(request);
+            return {
+                disabled: false,
+                placeholder: "Select channel",
+                options: channels.map(ch => {
+                    return {
+                        label: ch.name,
+                        value: ch.id
+                    }
+                })
+            }
+        }
+    })
+}
+```
+
+

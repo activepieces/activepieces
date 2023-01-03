@@ -3,7 +3,7 @@ title: "Architecture"
 description: ""
 ---
 
-TODO Add Diagram
+![ActivePieces](https://user-images.githubusercontent.com/12976630/209025942-b463c70b-c27f-4724-aa19-dfad14a525f3.jpg)
 
 # Code Structure
 
@@ -22,7 +22,7 @@ The repository is `nx` with `package-based` to manage different packages.
 ```
 * `frontend`: based on `angular` framework to implement the user interface.
 * `server`: based on `fastify` framework for api implementations.
-* `worker`: contains the logic for bundling code actions, scheduling and prepare sandbox with engine to execute flow.
+* `worker`: contains the logic for `flow worker` and `code worker`.
 * `engine`: contains the logic for flow execution inside the sandbox.
 * `components`: contains the third party app implementations for trigger and actions.
 * `shared`: contains data models and helper functions that's shared between all other packages.
