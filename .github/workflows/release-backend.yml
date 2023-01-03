@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - dev
-      - feature-new-backend-dockerfile
 
 jobs:
   Release-Backend:
