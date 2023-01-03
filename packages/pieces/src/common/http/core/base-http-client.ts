@@ -27,7 +27,7 @@ export abstract class BaseHttpClient implements HttpClient {
 	protected getHeaders<RequestBody extends HttpMessageBody>(
 		request: HttpRequest<RequestBody>,
 	): RequestHeaders {
-		const requestHeaders: RequestHeaders = {
+		let requestHeaders: RequestHeaders = {
 			[HttpHeader.ACCEPT]: MediaType.APPLICATION_JSON,
 		};
 
@@ -38,7 +38,9 @@ export abstract class BaseHttpClient implements HttpClient {
 		if (request.body) {
 			requestHeaders[HttpHeader.CONTENT_TYPE] = MediaType.APPLICATION_JSON;
 		}
-
+		if(request.headers){
+			requestHeaders = {...requestHeaders, ...request.headers};
+		}
 		return requestHeaders;
 	}
 

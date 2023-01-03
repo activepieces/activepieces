@@ -11,7 +11,7 @@ export const githubCommon = {
         required: true,
         authUrl: 'https://github.com/login/oauth/authorize',
         tokenUrl: 'https://github.com/login/oauth/access_token',
-        scope: ['admin:repo_hook',],
+        scope: ['admin:repo_hook', 'admin:org', 'repo'],
     }),
     repositoryDropdown: Property.Dropdown<{ repo: string, owner: string }>({
         displayName: "Repository",
@@ -25,15 +25,7 @@ export const githubCommon = {
                 }
             }
             const authProp: AuthPropertyValue = propsValue['authentication'] as AuthPropertyValue;
-            const request: HttpRequest<never> = {
-                method: HttpMethod.GET,
-                url: `${githubCommon.baseUrl}/user/repos?per_page=100`,
-                authentication: {
-                    type: AuthenticationType.BEARER_TOKEN,
-                    token: authProp.access_token
-                },
-            };
-            let repositories = await httpClient.sendRequest<GithubRepository[]>(request);
+            let repositories = await getUserRepo(authProp);
             return {
                 disabled: false,
                 options: repositories.map(repo => {
@@ -50,6 +42,20 @@ export const githubCommon = {
     })
 }
 
+async function getUserRepo(authProp: AuthPropertyValue): Promise<GithubRepository[]> {
+    const request: HttpRequest<never> = {
+        method: HttpMethod.GET,
+        url: `${githubCommon.baseUrl}/user/repos`,
+        queryParams: {
+            per_page: '200'
+        },
+        authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: authProp.access_token
+        },
+    };
+    return await httpClient.sendRequest<GithubRepository[]>(request);
+}
 export interface GithubRepository {
     name: string;
     owner: {
