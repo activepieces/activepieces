@@ -8,13 +8,7 @@
   "colors": {
     "primary": "#5155D7",
     "dark": "#3033A6",
-    "light": "#6D72F6",
-    "ultraLight": "#BCBCEF",
-    "ultraDark": "##070963",
-    "background": {
-      "dark": "#0C1322",
-      "light": "#ffffff"
-    }
+    "light": "#6D72F6"
   },
   "topbarLinks": [
     {
@@ -63,49 +57,18 @@
         "pieces/overview",
         {
           "group": "Apps",
-          "pages": [
-            "pieces/apps/slack"
-          ]
+          "pages": ["pieces/apps/slack"]
         },
         {
           "group": "Helpers",
-          "pages": [
-            "pieces/helpers/http-request",
-            "pieces/helpers/code"
-          ]
+          "pages": ["pieces/helpers/http-request", "pieces/helpers/code"]
         },
         {
           "group": "Flow Controls",
-          "pages": [
-            "pieces/flow-controls/loop",
-            "pieces/flow-controls/if"
-          ]
+          "pages": ["pieces/flow-controls/loop", "pieces/flow-controls/if"]
         },
         "pieces/custom-pieces"
       ]
-    },
-    {
-      "group": "Building Pieces",
-      "pages": [
-        "building-pieces/overview",
-        "building-pieces/quickstart",
-        "building-pieces/piece",
-        "building-pieces/input",
-        "building-pieces/action",
-        "building-pieces/trigger"
-      ]
-    },
-    {
-      "group": "Contributing",
-      "pages": [
-        "contributing/overview",
-        "contributing/architecture",
-        "contributing/flow-worker",
-        "contributing/code-worker"
-      ]
-    },
-    {
-      "pages": ["license"]
     }
   ]
 }
