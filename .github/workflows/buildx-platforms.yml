@@ -1,0 +1,12 @@
+name: Log buildx platforms
+on:
+  push:
+    branches:
+      - feature-docker-multiplatform-build
+
+jobs:
+  Log-Build-x-platforms:
+    runs-on: ubuntu-latest
+    steps:
+      - name: log buildx builds
+        run: docker buildx ls
