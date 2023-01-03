@@ -1,6 +1,6 @@
 <p align="center">
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
   <img width="300" alt="activepieceslogo" src="https://github.com/activepieces/activepieces/raw/main/assets/ap-logo.png">
 </p>
@@ -91,6 +91,7 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
   <tbody>
     <tr>
       <td align="center"><a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="Khaled Mashaly"/><br /><sub><b>Khaled Mashaly</b></sub></a><br /><a href="#maintenance-khaledmashaly" title="Maintenance">🚧</a></td>
+      <td align="center"><a href="https://steercampaign.com"><img src="https://avatars.githubusercontent.com/u/12627658?v=4?s=100" width="100px;" alt="Mohammad Abu Musa"/><br /><sub><b>Mohammad Abu Musa</b></sub></a><br /><a href="#maintenance-mabumusa1" title="Maintenance">🚧</a></td>
     </tr>
   </tbody>
 </table>
