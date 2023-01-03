@@ -29,8 +29,8 @@ cd activepieces
 docker compose -p activepieces up
  ``` 
  
-The username is `admin@activepieces.com` and the password is `password`.
- 
+Vist `http://localhost:8080`
+
 ### Other Options
 We're planning to launch a cloud version of Activepieces and instructions to distribute it on your own infrastructure
 
