@@ -1,3 +1,4 @@
+import { cwd } from "node:process";
 const { exec } = require("child_process");
 const fs = require("fs");
 
@@ -63,7 +64,8 @@ export class Sandbox {
   }
 
   private static runIsolate(cmd: string): Promise<string> {
-    const fullCmd = "./resources/isolate " + cmd;
+    const currentDir = cwd();
+    const fullCmd = `${currentDir}/resources/isolate ${cmd}`;
     return new Promise((resolve, reject) => {
       exec(fullCmd, (error: any, stdout: string | PromiseLike<string>, stderr: any) => {
         if (error) {
