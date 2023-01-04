@@ -66,3 +66,4 @@ testem.log
 Thumbs.db
 
 .pnpm-store
+packages/backend/resources/activepieces-engine.js
