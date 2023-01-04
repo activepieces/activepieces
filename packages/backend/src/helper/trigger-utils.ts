@@ -12,6 +12,8 @@ import { ActivepiecesError, ErrorCode } from "./activepieces-error";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
 import { createContextStore } from "../store-entry/store-entry.service";
 import { getPublicIp } from "./public-ip-utils";
+import { system } from "./system/system";
+import { SystemProp } from "./system/system-prop";
 
 const EVERY_FIFTEEN_MINUTES = "* 15 * * * *";
 
@@ -158,13 +160,15 @@ const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
 };
 
 const getWebhookUrl = async (flowId: FlowId): Promise<string> => {
-  let webhookUrl = process.env.WEBHOOK_URL;
-  const suffix = `/v1/webhooks?flowId=${flowId}`;
-  if (webhookUrl !== undefined) {
-    return webhookUrl + suffix;
+  const webhookPath = `v1/webhooks?flowId=${flowId}`;
+  let serverUrl = system.get(SystemProp.SERVER_URL);
+
+  if (serverUrl !== undefined) {
+    const { ip } = await getPublicIp();
+    serverUrl = `http://${ip}:3000`
   }
-  const { ip } = await getPublicIp();
-  return `http://${ip}:3000` + suffix;
+
+  return `${serverUrl}/${webhookPath}`;
 };
 
 interface EnableParams {
