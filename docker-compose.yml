@@ -2,7 +2,7 @@ version: '3.0'
 
 services:
   backend:
-    image: activepieces/backend:0.1.9
+    image: activepieces/backend:0.1.10
     container_name: activepieces-backend
     restart: unless-stopped
     privileged: true

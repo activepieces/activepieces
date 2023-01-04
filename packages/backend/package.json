@@ -1,6 +1,6 @@
 {
     "name": "backend",
-    "version": "0.1.9",
+    "version": "0.1.10",
     "description": "",
     "main": "./src/index.ts",
     "scripts": {
