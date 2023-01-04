@@ -2,7 +2,6 @@
   <img width="300" alt="activepieceslogo" src="https://github.com/activepieces/activepieces/raw/main/assets/ap-logo.png">
 </p>
 <p align="center">
-  <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 <a href="/LICENSE" target="_blank"><img src="https://img.shields.io/github/license/activepieces/activepieces?style=for-the-badge&" alt="Activepieces Licence" /></a>&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
 </p>
 
@@ -29,8 +28,8 @@ cd activepieces
 docker compose -p activepieces up
  ``` 
  
-The username is `admin@activepieces.com` and the password is `password`.
- 
+Vist `http://localhost:8080`
+
 ### Other Options
 We're planning to launch a cloud version of Activepieces and instructions to distribute it on your own infrastructure
 
@@ -78,11 +77,22 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
 
 ## Contributors 🦸
 
-[//]: contributor-faces
-
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
-<a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/106551704?s=60&v=4" width="50" height="50" alt=""/></a> <a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?s=60&v=4" width="50" height="50" alt=""/></a> <a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?s=60&v=4" width="50" height="50" alt=""/></a>
+<table>
+  <tbody>
+    <tr>
+      <td align="center"><a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="Khaled Mashaly"/><br /><sub><b>Khaled Mashaly</b></sub></a><br /><a href="#maintenance-khaledmashaly" title="Maintenance">🚧</a></td>
+      <td align="center"><a href="https://steercampaign.com"><img src="https://avatars.githubusercontent.com/u/12627658?v=4?s=100" width="100px;" alt="Mohammad Abu Musa"/><br /><sub><b>Mohammad Abu Musa</b></sub></a><br /><a href="#maintenance-mabumusa1" title="Maintenance">🚧</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://allcontributors.org) specification.
+Contributions of any kind are welcome!
