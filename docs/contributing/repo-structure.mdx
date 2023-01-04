@@ -9,17 +9,15 @@ The repository is structured as a monorepo using the NX build system, with TypeS
 .
 ├── packages
 │   ├── frontend
-│   ├── server
+│   ├── backend
 │   ├── engine
-│   ├── components
-│   ├── worker
+│   ├── pieces
 │   ├── shared
 
 ```
 
 - `frontend`: This package contains the user interface, implemented using the Angular framework.
-- `server`: This package contains the API implementation, using the Fastify framework.
-- `worker`: This package contains the logic for the flow worker and code worker.
+- `backend`: This package contains the API implementation, using the Fastify framework.
 - `engine`: This package contains the logic for flow execution within the sandbox.
-- `components`: This package contains the implementation of triggers and actions for third-party apps.
+- `pieces`: This package contains the implementation of triggers and actions for third-party apps.
 - `shared`: This package contains shared data models and helper functions used by the other packages.
