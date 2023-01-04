@@ -21,7 +21,8 @@
     </div>
 </div>
 <ng-template #btnContent>
-    <div [class.ap-opacity-0]="!loading" class="spinner-border loading-spinner-size-and-position" role="status"></div>
+    <div [class.ap-opacity-0]="!loading" class="spinner-border loading-spinner-size-and-position"
+        [class.dark-spinner]="darkLoadingSpinner" role="status"></div>
     <div [class.ap-opacity-0]="loading">
         <ng-content></ng-content>
     </div>

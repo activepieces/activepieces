@@ -2,11 +2,14 @@
   "name": "worker",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "start": "nx run backend:start & nx run frontend:start"
+  },
   "private": true,
   "devDependencies": {
     "@nrwl/workspace": "^15.4.2",
     "nx": "15.3.3",
+    "nodemon": "^2.0.20",
     "prettier": "^2.6.2",
     "typescript": "^4.9.4"
   }

@@ -6,7 +6,7 @@ import { Observable, take } from 'rxjs';
 import { CloudOAuth2Config, Config, ConfigType } from 'shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
-import { CloudConnectionPopupSettings } from 'src/app/modules/common/components/form-controls/o-auth2-cloud-connect-control /o-auth2-cloud-connect-control.component';
+import { CloudConnectionPopupSettings } from 'src/app/modules/common/components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
 import { ConfigKeyValidator } from 'src/app/modules/flow-builder/page/flow-builder/validators/configKeyValidator';
 import { CollectionActions } from 'src/app/modules/flow-builder/store/action/collection.action';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
