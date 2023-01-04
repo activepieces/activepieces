@@ -1,0 +1,33 @@
+---
+title: "Local Development"
+description: ""
+---
+
+## Using Dev Containers in Visual Studio Code
+
+The project includes a dev container configuration that allows you to use Visual Studio Code's [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) extension to develop the project in a consistent environment. This can be especially helpful if you are new to the project or if you have a different environment setup on your local machine.
+
+## Prerequisites
+
+Before you can use the dev container, you will need to install the following:
+
+- [Visual Studio Code](https://code.visualstudio.com/)
+- The [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) extension for Visual Studio Code
+- [Docker](https://www.docker.com/)
+
+## Using the Dev Container
+
+To use the dev container for the Activepieces project, follow these steps:
+
+1. Clone the Activepieces repository to your local machine.
+2. Open the project in Visual Studio Code.
+3. Press `Ctrl+P` and type `> Dev Containers: Reopen in Container`.
+4. Run `pnpm install && pnpm start`.
+5. The backend will run at `localhost:3000` and the frontend will run at `localhost:4200`.
+
+## Exiting the Dev Container
+
+To exit the dev container and return to your local environment, follow these steps:
+
+1. In the bottom left corner of Visual Studio Code, click the `Remote-Containers: Reopen folder locally` button.
+2. Visual Studio Code will close the connection to the dev container and reopen the project in your local environment.

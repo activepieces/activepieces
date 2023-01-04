@@ -84,7 +84,8 @@
       <div class="ap-relative">
         <app-button btnColor="primary" btnStyle="basic" btnSize="extraSmall"
           *ngIf="formGroup.enabled && formGroup.get(config.key)!.value"
-          (buttonClicked)="editSelectedAuthConfig(config.key)" class="edit-selected-auth"> Edit
+          (buttonClicked)="editSelectedAuthConfig(config.key)" class="edit-selected-auth" [darkLoadingSpinner]="true"
+          [loading]="checkingOAuth2CloudManager"> Edit
         </app-button>
 
         <mat-form-field class="ap-w-full" appearance="outline">
@@ -106,7 +107,8 @@
 
 
         <app-button btnColor="primary" btnStyle="basic" (buttonClicked)="newAuthenticationDialogProcess(config.key)"
-          type="button" class="new-config-btn" btnSize="medium" *ngIf="formGroup.enabled"> + New Authentication
+          type="button" class="new-config-btn" btnSize="medium" *ngIf="formGroup.enabled" [darkLoadingSpinner]="true"
+          [loading]="checkingOAuth2CloudManager"> + New Authentication
         </app-button>
       </div>
 
