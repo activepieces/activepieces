@@ -60,6 +60,7 @@ type ConfigKey = string;
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfigsFormComponent implements ControlValueAccessor {
+	checkingOAuth2CloudManager = false;
 	configs: PieceConfig[] = [];
 	requiredConfigs: PieceConfig[] = [];
 	allOptionalConfigs: PieceConfig[] = [];
@@ -206,34 +207,40 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	}
 
 	newAuthenticationDialogProcess(authConfigName: string) {
-		this.cloudAuthCheck$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
-			catchError(err => {
-				console.error(err);
-				return of({});
-			}),
-			map(res => {
-				return res[this.pieceName];
-			}),
-			switchMap(cloudAuth2Config => {
-				if (cloudAuth2Config) {
-					return this.dialogService
-						.open(ConfirmCloudAuthConfigUseDialog)
-						.afterClosed()
-						.pipe(
-							tap(confirmationResult => {
-								if (confirmationResult) {
-									this.openNewCloudAuthenticationModal(authConfigName, cloudAuth2Config.clientId);
-								} else {
-									this.openNewAuthenticationModal(authConfigName);
-								}
-							})
-						);
-				} else {
-					this.openNewAuthenticationModal(authConfigName);
-					return EMPTY;
-				}
-			})
-		);
+		if (!this.checkingOAuth2CloudManager) {
+			this.checkingOAuth2CloudManager = true;
+			this.cloudAuthCheck$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
+				catchError(err => {
+					console.error(err);
+					return of({});
+				}),
+				map(res => {
+					return res[this.pieceName];
+				}),
+				tap(() => {
+					this.checkingOAuth2CloudManager = false;
+				}),
+				switchMap(cloudAuth2Config => {
+					if (cloudAuth2Config) {
+						return this.dialogService
+							.open(ConfirmCloudAuthConfigUseDialog)
+							.afterClosed()
+							.pipe(
+								tap(confirmationResult => {
+									if (confirmationResult) {
+										this.openNewCloudAuthenticationModal(authConfigName, cloudAuth2Config.clientId);
+									} else {
+										this.openNewAuthenticationModal(authConfigName);
+									}
+								})
+							);
+					} else {
+						this.openNewAuthenticationModal(authConfigName);
+						return EMPTY;
+					}
+				})
+			);
+		}
 	}
 	openNewAuthenticationModal(authConfigName: string) {
 		this.updateOrAddConfigModalClosed$ = this.dialogService
@@ -308,31 +315,37 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 								map(() => void 0)
 							);
 					} else {
-						this.updateOrAddConfigModalClosed$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
-							switchMap(res => {
-								const clientId = res[this.pieceName].clientId;
-								return this.dialogService
-									.open(NewCloudAuthenticationModalComponent, {
-										data: {
-											configToUpdateWithIndex: configAndIndex,
-											pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
-											pieceName: this.pieceName,
-											clientId: clientId,
-										},
-									})
-									.afterClosed()
-									.pipe(
-										tap((newAuthConfig: Config) => {
-											if (newAuthConfig && newAuthConfig.type === ConfigType.CLOUD_OAUTH2) {
-												const authConfigOptionValue = newAuthConfig.value;
-												this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
-												this.updatedAuthLabel = newAuthConfig.key;
-											}
-										}),
-										map(() => void 0)
-									);
-							})
-						);
+						if (!this.checkingOAuth2CloudManager) {
+							this.checkingOAuth2CloudManager = true;
+							this.updateOrAddConfigModalClosed$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
+								tap(() => {
+									this.checkingOAuth2CloudManager = false;
+								}),
+								switchMap(res => {
+									const clientId = res[this.pieceName].clientId;
+									return this.dialogService
+										.open(NewCloudAuthenticationModalComponent, {
+											data: {
+												configToUpdateWithIndex: configAndIndex,
+												pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
+												pieceName: this.pieceName,
+												clientId: clientId,
+											},
+										})
+										.afterClosed()
+										.pipe(
+											tap((newAuthConfig: Config) => {
+												if (newAuthConfig && newAuthConfig.type === ConfigType.CLOUD_OAUTH2) {
+													const authConfigOptionValue = newAuthConfig.value;
+													this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
+													this.updatedAuthLabel = newAuthConfig.key;
+												}
+											}),
+											map(() => void 0)
+										);
+								})
+							);
+						}
 					}
 				}
 			}),
@@ -341,6 +354,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	}
 
 	dropdownCompareWithFunction = (opt: any, formControlValue: any) => {
-		return formControlValue && deepEqual(formControlValue,opt);
-	}
+		return formControlValue && deepEqual(formControlValue, opt);
+	};
 }
