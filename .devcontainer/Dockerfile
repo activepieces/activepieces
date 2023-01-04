@@ -18,7 +18,7 @@ RUN npm install --global --unsafe-perm webpack@5.74.0
 RUN npm install --global --unsafe-perm webpack-cli@^4.10.0
 RUN npm install --global --unsafe-perm webpack-node-externals@^3.0.0
 RUN npm install -g @angular/cli
-
+RUN npm install -g nx
 
 
 RUN apt-get update \
