@@ -25,7 +25,7 @@ services:
       - activepieces
 
   frontend:
-    image: activepieces/frontend:0.1.3
+    image: activepieces/frontend:0.1.4
     container_name: activepieces-frontend
     restart: unless-stopped
     depends_on: [ backend ]
