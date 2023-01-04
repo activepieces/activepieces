@@ -85,6 +85,14 @@
       ]
     },
     {
+      "group": "Contributing",
+      "pages": [
+        "contributing/overview",
+        "contributing/repo-structure",
+        "contributing/local-development"
+      ]
+    },
+    {
       "group": "Building Pieces",
       "pages": [
         "building-pieces/overview"
