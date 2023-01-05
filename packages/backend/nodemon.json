@@ -1,5 +1,5 @@
 {
-    "watch": ["src"],
-    "exec": "pnpm run serve",
+    "watch": ["src",  "../pieces/src", "../shared/src", "../engine/src"],
+    "exec": "pnpm nx run-many --target=build --projects=pieces,engine,shared,backend && pnpm install && pnpm run serve",
     "ext": "ts"
-  }
+}
