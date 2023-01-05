@@ -5,7 +5,7 @@ description: "Create your first automation with Activepieces"
 
 In this section, you'll learn how to create automation flows, integrate with available apps and customize the trigger for your automation.
 
-This guide will take you through the steps to create a flow that sends a message to a Slack channel every hour.
+This guide will take you through the steps to create "Hello World" flow that sends a message to a Slack channel every hour.
 
 ## Create Demo account
 
@@ -22,19 +22,21 @@ email address confirmation is needed for this demo account.
 
 You should see the following screen after setting up your account. Click on **Start building** to create a new collection.
 
-Think of a collection as a folder for your flows.
+This will also create your first flow `Flow 1` inside the collection. Think of a collection as a folder for your flows.
 
-This will also create your first flow `Flow 1` inside the collection. You can change the name of the flow from `Untitled` to `Hello World`.
+You can change the name of the flow from `Untitled` to `Hello World`.
 
 ![Activepieces Dashboard](/resources/screenshots/quickstart-empty-dashboard.png)
 
 ### 2. Configure the trigger.
 
-To be able to send a message every hour, we need a scheduler that would start our flow on a fixed 
+To be able to send a message every hour, we need a scheduler that would start our flow on fixed time intervals.
 
-On the flow screen, choose the Schedule trigger:
+Once you click on the `Empty Trigger`, choose the Schedule trigger from the Core menu:
 
 ![Select Flow Trigger](/resources/screenshots/quickstart-configure-trigger.png)
+
+<Note>To know more about other types of triggers, visit [Triggers](/using-activepieces/triggers) page.</Note>
 
 We'll now set the Schedule to run every hour by using this expression `0 0 * ? * *` in the settings, as follows:
 
@@ -44,6 +46,11 @@ We'll now set the Schedule to run every hour by using this expression `0 0 * ? *
 
 ### 3. Add a Slack piece.
 
+While **Trigger** is what starts a flow, the actual logic of the flow happens in **Pieces**. Pieces perform a specific task or operation.
+They can be external services (Apps) or data processors (Helpers). 
+
+Since we would like to send a message to Slack, we will need a Slack piece.
+
 Click on the **+** button below the trigger:
 
 <img width="400" src="/resources/screenshots/quickstart-add-piece-button.png" />
@@ -52,17 +59,28 @@ The Pieces panel will open. Go to the **Apps** tab and choose **Slack**.
 
 <img width="350" src="/resources/screenshots/quickstart-piece-slack.png" />
 
+App pieces have **Actions**.  Actions are the different ways you could integrate with the App. Since we want to send a message, we'll choose *Send slack message* action.
+
+Depending on the action chosen, several fields need to be specified for the action to work. 
+
+For our case, we need to define *Authentication* with Slack first. Click on **+ New Authentication**. You are then prompted to either use Activepieces slack app credentials or create your own developer app
+on Slack and add your credentials. For simplicity, choose to use Activepieces app and log in to Slack.
+
+Next, you need to choose the desired channel to send your message. Choose the channel from the dropdown menu.
+
+Last but not least, write down the text of the message. Eg: "Activepieces is cool!".
+
 <Warning>
    This section is currently under construction 🚧
 </Warning>
 
 ### 4. Test the flow.
 
-Your flow is complete, it's time to test it. Click on **Test flow** right above your flow.
+Your flow is complete! It's time to test it. Click on **Test flow** right above your flow.
 
 ![Test Flow](/resources/screenshots/quickstart-test-flow.png)
 
-Once the test is completed, you'll receive the message in the Slack channel you chose and the builder will turn like this:
+Once the test is completed, you should receive the message in the Slack channel you chose and the builder will turn like this:
 
 ![Test Flow](/resources/screenshots/quickstart-test-flow-completed.png)
 
@@ -71,5 +89,11 @@ The check mark means the step ran successfully. You can click on any step and se
 ### 5. Publish the collection.
 
 To enable your automation, click on the **Publish** button on the top of the screen. This will save the collection as a new version and automatically enable it.
+Your flow now is running in the background. 
 
 It's official, you are ready to use Activepieces now 🎉
+
+6. Suggestions
+
+Think of ways you can expand on this flow. 
+Do you want t
