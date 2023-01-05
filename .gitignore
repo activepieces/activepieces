@@ -64,3 +64,6 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+.pnpm-store
+packages/backend/resources/activepieces-engine.js

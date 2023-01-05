@@ -1,6 +1,6 @@
 // Update the VARIANT arg in docker-compose.yml to pick a Node.js version
 {
-	"name": "ACtivepieces Dev",
+	"name": "Activepieces Dev",
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "app",
 	"workspaceFolder": "/workspace",
@@ -15,12 +15,11 @@
 			]
 		}
 	},
-
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// This can be used to network with other containers or with the host.
-	// "forwardPorts": [3000, 5432],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
-	"remoteUser": "root"
+	"remoteUser": "root",
+	"postCreateCommand": "pnpm install --frozen-lockfile && pnpm nx run-many --target=build"
 }

@@ -8,15 +8,9 @@ import { FlagId, flagService } from "../flags/flag.service";
 
 export const authenticationService = {
   signUp: async (request: AuthenticationRequest): Promise<AuthenticationResponse> => {
-    const existingUser = await userService.getOne();
-
-    if (existingUser !== null) {
-      throw new ActivepiecesError({ code: ErrorCode.EXISTING_USER, params: {} });
-    }
+    const user = await userService.create(request);
 
     await flagService.save({ id: FlagId.USER_CREATED, value: true });
-
-    const user = await userService.create(request);
 
     await projectService.create({
       displayName: "Project",

@@ -1,14 +1,16 @@
 import type {Piece} from '../framework/piece';
 import { gmail } from './gmail';
-import {slack} from "./slack";
-import {github} from "./github";
+import { slack} from "./slack";
+import { github} from "./github";
 import { discord } from './discord';
+import { hackernews } from './hackernews';
 
 export const pieces: Piece[] = [
 	slack,
 	gmail,
 	discord,
-	github
+	github,
+	hackernews
 ];
 
 export const getPiece = (name: string): Piece | undefined => {
