@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } from "fastify";
-import { AuthenticationRequest } from "shared";
+import { SignInRequest, SignUpRequest } from "shared";
 import { authenticationService } from "./authentication.service";
 
 export const authenticationController = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
@@ -7,10 +7,10 @@ export const authenticationController = async (app: FastifyInstance, _options: F
     "/sign-up",
     {
       schema: {
-        body: AuthenticationRequest,
+        body: SignUpRequest,
       },
     },
-    async (request: FastifyRequest<{ Body: AuthenticationRequest }>, reply: FastifyReply) => {
+    async (request: FastifyRequest<{ Body: SignUpRequest }>, reply: FastifyReply) => {
       const authenticationResponse = await authenticationService.signUp(request.body);
       reply.send(authenticationResponse);
     }
@@ -20,10 +20,10 @@ export const authenticationController = async (app: FastifyInstance, _options: F
     "/sign-in",
     {
       schema: {
-        body: AuthenticationRequest,
+        body: SignInRequest,
       },
     },
-    async (request: FastifyRequest<{ Body: AuthenticationRequest }>, reply: FastifyReply) => {
+    async (request: FastifyRequest<{ Body: SignInRequest }>, reply: FastifyReply) => {
       const authenticationResponse = await authenticationService.signIn(request.body);
       reply.send(authenticationResponse);
     }

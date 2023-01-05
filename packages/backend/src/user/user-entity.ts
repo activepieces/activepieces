@@ -26,6 +26,14 @@ export const UserEntity = new EntitySchema<UserSchema>({
     status: {
       type: String,
     },
+    trackEvents: {
+      type: Boolean,
+      nullable: true,
+    },
+    newsLetter: {
+      type: Boolean,
+      nullable: true,
+    },
   },
   relations: {
     projects: {

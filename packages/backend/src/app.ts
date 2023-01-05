@@ -19,6 +19,7 @@ import { codeModule } from "./workers/code-worker/code.module";
 import { flowWorkerModule } from "./workers/flow-worker/flow-worker-module";
 import cors from '@fastify/cors'
 import { webhookModule } from "./webhooks/webhook-module";
+import { errorHandler } from "./helper/error-handler";
 
 declare module "fastify" {
   export interface FastifyRequest {
@@ -50,16 +51,7 @@ app.register(instanceModule);
 app.register(flowRunModule);
 app.register(webhookModule);
 
-app.setErrorHandler(function (error, request, reply) {
-  if (error instanceof ActivepiecesError) {
-    const apError = error as ActivepiecesError;
-    reply.status(StatusCodes.BAD_REQUEST).send({
-      code: apError.error.code,
-    });
-  } else {
-    reply.status(error.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR).send(error);
-  }
-});
+app.setErrorHandler(errorHandler);
 
 const start = async () => {
   try {
