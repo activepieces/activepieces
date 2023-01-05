@@ -22,14 +22,19 @@
   ],
   "anchors": [
     {
-      "name": "GitHub",
-      "icon": "github",
-      "url": "https://www.github.com/activepieces/activepieces"
+      "name": "Pieces",
+      "icon": "plug",
+      "url": "pieces"
     },
     {
-      "name": "Request Piece",
-      "icon": "bullseye-pointer",
-      "url": "https://github.com/activepieces/activepieces/discussions/categories/piece-requests"
+      "name": "Self-hosting",
+      "icon": "server",
+      "url": "self-hosting"
+    },
+    {
+      "name": "Github",
+      "icon": "github",
+      "url": "https://www.github.com/activepieces/activepieces"
     },
     {
       "name": "Discord",
@@ -44,15 +49,6 @@
         "quickstart/quick-intro",
         "quickstart/setup",
         "quickstart/hello-world"
-      ]
-    },
-    {
-      "group": "Using Activepieces",
-      "pages": [
-        "using-activepieces/overview",
-        "using-activepieces/triggers",
-        "using-activepieces/passing-data",
-        "using-activepieces/debugging"
       ]
     },
     {
@@ -78,10 +74,19 @@
           "group": "Flow Controls",
           "pages": [
             "pieces/flow-controls/loop",
-            "pieces/flow-controls/if"
+            "pieces/flow-controls/branch"
           ]
         },
         "pieces/custom-pieces"
+      ]
+    },
+    {
+      "group": "Using Activepieces",
+      "pages": [
+        "using-activepieces/overview",
+        "using-activepieces/triggers",
+        "using-activepieces/passing-data",
+        "using-activepieces/debugging"
       ]
     },
     {
@@ -95,7 +100,8 @@
     {
       "group": "Building Pieces",
       "pages": [
-        "building-pieces/overview"
+        "contributing/building-pieces/quickstart",
+        "contributing/building-pieces/examples"
       ]
     },
     {
