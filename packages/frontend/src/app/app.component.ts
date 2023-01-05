@@ -42,6 +42,7 @@ export class AppComponent implements OnInit {
 					this.store.dispatch(CommonActions.clearState());
 					return;
 				}
+				debugger;
 				this.store.dispatch(CommonActions.loadInitial({ user: user }));
 				if (user.trackEvents) {
 					this.posthogService.init();

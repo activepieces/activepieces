@@ -1,4 +1,13 @@
-<router-outlet></router-outlet>
+<mat-toolbar>
+   <div class="ap-bg-primary-light ap-typography-body-1 ap-flex ap-flex-col ap-items-center ap-p-1">
+      <div class="ap-typography-body-1 ap-text-primary !ap-font-bold">This is an Activepieces demo</div>
+      <div class="ap-typography-body-2 ap-text-title ap-text-center">All data gets cleared every 24 hours, please don't use this for production purposes. </div>
+</div></mat-toolbar>
+<div class="ap-text-body ap-h-full">
+  <router-outlet></router-outlet>
+</div>
+
+
 
 <div *ngIf="routeLoader$ | async"
   class="ap-flex  ap-flex-grow ap-justify-center  ap-items-center ap-h-full route-loader ap-w-full">
