@@ -39,5 +39,4 @@ export class RunsComponent implements OnInit {
 		const url = this.router.serializeUrl(this.router.createUrlTree(['/runs'])) + '/' + run.id;
 		window.open(url, '_blank');
 	}
-
 }

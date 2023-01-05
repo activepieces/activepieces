@@ -59,13 +59,13 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
 	showEmptyLoopAddButtonBoxShadow = false;
 	svgHeight: number = 0;
 
-	_flowItem: (LoopOnItemsAction & FlowItemRenderInfo);
+	_flowItem: LoopOnItemsAction & FlowItemRenderInfo;
 
 	showDropArea$: Observable<boolean> = new Observable<boolean>();
 
 	@Input() viewMode: boolean;
 
-	@Input() set flowItem(value: (LoopOnItemsAction & FlowItemRenderInfo)) {
+	@Input() set flowItem(value: LoopOnItemsAction & FlowItemRenderInfo) {
 		this._flowItem = value;
 		this.svgHeight = this.flowItem.connectionsBox!.height;
 		this.writeLines();

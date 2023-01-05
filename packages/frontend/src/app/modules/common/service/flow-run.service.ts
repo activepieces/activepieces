@@ -13,7 +13,7 @@ export class InstanceRunService {
 	get(id: string): Observable<FlowRun> {
 		return this.http.get<FlowRun>(environment.apiUrl + '/flow-runs/' + id).pipe(
 			switchMap(instanceRun => {
-				if(instanceRun.logsFileId !== null){
+				if (instanceRun.logsFileId !== null) {
 					return this.logs(instanceRun.logsFileId).pipe(
 						map(output => {
 							return { ...instanceRun, executionOutput: output } as FlowRun;
@@ -28,7 +28,7 @@ export class InstanceRunService {
 	list(projectId: string, params: { limit: number; cursor: string }): Observable<SeekPage<FlowRun>> {
 		const queryParams: { [key: string]: string | number } = {
 			limit: params.limit,
-			projectId: projectId
+			projectId: projectId,
 		};
 		if (params.cursor) {
 			queryParams['cursor'] = params.cursor;
@@ -41,5 +41,4 @@ export class InstanceRunService {
 	private logs(fileId: string): Observable<ExecutionOutput> {
 		return this.http.get<ExecutionOutput>(environment.apiUrl + `/files/${fileId}`);
 	}
-
 }

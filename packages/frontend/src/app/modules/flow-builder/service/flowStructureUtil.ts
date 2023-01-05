@@ -89,7 +89,7 @@ export class FlowStructureUtil {
 		}
 		return branches;
 	}
-	
+
 	public static findAvailableName(flowVersion: FlowVersion, stepPrefix: string) {
 		const steps = FlowStructureUtil.traverseAllSteps(flowVersion.trigger);
 		let number = 1;
@@ -110,5 +110,4 @@ export class FlowStructureUtil {
 		}
 		return stepPrefix.toString().toLowerCase() + '_' + number;
 	}
-
 }
