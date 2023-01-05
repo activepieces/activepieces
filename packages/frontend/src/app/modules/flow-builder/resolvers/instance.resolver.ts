@@ -4,7 +4,6 @@ import { catchError, Observable, of } from 'rxjs';
 import { InstanceService } from '../../common/service/instance.service';
 import { Instance } from 'shared';
 
-
 @Injectable({
 	providedIn: 'root',
 })

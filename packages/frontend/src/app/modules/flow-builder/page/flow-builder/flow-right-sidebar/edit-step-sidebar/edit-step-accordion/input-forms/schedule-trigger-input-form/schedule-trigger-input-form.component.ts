@@ -45,32 +45,32 @@ export class ScheduleTriggerInputFormComponent implements ControlValueAccessor {
 			})
 		);
 	}
-	
+
 	writeValue(obj: InputFormsSchema): void {
 		if (obj.type === TriggerType.SCHEDULE) {
 			this.scheduledFrom.patchValue({ cronExpression: (obj as ScheduledTriggerInputFormSchema).cronExpression });
 		}
 	}
-	
+
 	registerOnChange(fn: any): void {
 		this.onChange = fn;
 	}
-	
+
 	registerOnTouched(fn: any): void {
 		this.onTouch = fn;
 	}
-	
+
 	getControl(controlName: string) {
 		return this.scheduledFrom.get(controlName);
 	}
-	
+
 	validate() {
 		if (this.scheduledFrom.invalid) {
 			return { invalid: true };
 		}
 		return null;
 	}
-	
+
 	interpretCronExpression() {
 		return cronstrue.toString(this.getControl('cronExpression')!.value);
 	}

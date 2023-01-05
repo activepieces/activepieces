@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { StepOutput } from 'shared';
 
-
 @Component({
 	selector: 'app-iteration-accordion',
 	templateUrl: './iteration-accordion.component.html',

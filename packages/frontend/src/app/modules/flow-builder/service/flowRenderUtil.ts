@@ -41,7 +41,7 @@ export class FlowRenderUtil {
 				this.buildBoxes(loopItem.firstLoopAction);
 			}
 			const subGraph = loopItem.firstLoopAction
-				?( loopItem.firstLoopAction as FlowItem).boundingBox!.height
+				? (loopItem.firstLoopAction as FlowItem).boundingBox!.height
 				: EMPTY_LOOP_ADD_BUTTON_HEIGHT + VERTICAL_LINE_LENGTH;
 			const svgBoxHeight =
 				SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +

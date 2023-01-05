@@ -1,4 +1,4 @@
-import { FlowItem } from '../../common/model/flow-builder/flow-item'
+import { FlowItem } from '../../common/model/flow-builder/flow-item';
 import { ActionType, Flow, LoopOnItemsAction, Trigger } from 'shared';
 import { FlowStructureUtil } from './flowStructureUtil';
 import {

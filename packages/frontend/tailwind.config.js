@@ -1,4 +1,4 @@
-const defaultTheme = require('tailwindcss/defaultTheme')
+const defaultTheme = require('tailwindcss/defaultTheme');
 
 module.exports = {
 	prefix: 'ap-',
@@ -6,7 +6,7 @@ module.exports = {
 	theme: {
 		extend: {
 			fontFamily: {
-				"sans" :[ 'Open Sans,sans-serif' , ...defaultTheme.fontFamily.sans],
+				sans: ['Open Sans,sans-serif', ...defaultTheme.fontFamily.sans],
 			},
 			backgroundImage: {
 				authBg: "url('/assets/img/custom/auth/auth-bg.png')",
@@ -22,8 +22,8 @@ module.exports = {
 					DEFAULT: '#dc3545',
 					light: '#efa2a980',
 				},
-				primary: '#6e41e2',
-				warn: '#F06D0E',
+				primary: { DEFAULT: '#6e41e2', light: '#EEE8FC' },
+				warn: '#ffff7cb8',
 				blueLink: '#1890ff',
 				sidebar: '#FAFBFC',
 				blueBorder: '#6385dc',

@@ -63,8 +63,6 @@ export class FlowItemComponent implements OnInit {
 		};
 	}
 
-
-
 	nextActionItem() {
 		return {
 			width: FLOW_ITEM_WIDTH + 'px',

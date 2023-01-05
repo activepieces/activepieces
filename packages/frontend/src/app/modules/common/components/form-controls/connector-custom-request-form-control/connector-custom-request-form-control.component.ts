@@ -1,5 +1,11 @@
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import {
+	ControlValueAccessor,
+	UntypedFormBuilder,
+	UntypedFormControl,
+	UntypedFormGroup,
+	NG_VALUE_ACCESSOR,
+} from '@angular/forms';
 import { BodyType } from './body-type.enum';
 import jsonlint from 'jsonlint-mod';
 import { Observable, tap } from 'rxjs';

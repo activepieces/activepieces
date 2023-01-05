@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../../common/service/authentication.service';
@@ -10,19 +10,22 @@ import {
 	containsUppercaseCharacter,
 } from 'src/app/modules/common/validators';
 import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
-import { fadeIn400ms } from 'src/app/modules/common/animation/fade-in.animations';
+
+import { HttpErrorResponse } from '@angular/common/http';
+import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 export interface UserInfo {
 	firstName: FormControl<string>;
 	lastName: FormControl<string>;
 	email: FormControl<string>;
 	password: FormControl<string>;
-  trackEvents: FormControl<boolean>;
+	trackEvents: FormControl<boolean>;
 	newsLetter: FormControl<boolean>;
 }
 @Component({
 	templateUrl: './sign-up.component.html',
 	styleUrls: ['./sign-up.component.scss'],
-	animations: [fadeIn400ms],
+	animations: [fadeInUp400ms],
+	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignUpComponent {
 	registrationForm: FormGroup<UserInfo>;
@@ -30,6 +33,7 @@ export class SignUpComponent {
 	tokenError = false;
 	emailExists = false;
 	emailChanged = false;
+	emailValueChanged$: Observable<string>;
 	signUp$: Observable<void>;
 	constructor(
 		private formBuilder: FormBuilder,
@@ -55,9 +59,14 @@ export class SignUpComponent {
 					containsNumber(),
 				],
 			}),
-      trackEvents: new FormControl<boolean>(false, { nonNullable: true }),
-      newsLetter: new FormControl<boolean>(false, { nonNullable: true }),
+			trackEvents: new FormControl<boolean>(false, { nonNullable: true }),
+			newsLetter: new FormControl<boolean>(false, { nonNullable: true }),
 		});
+		this.emailValueChanged$ = this.registrationForm.controls.email.valueChanges.pipe(
+			tap(() => {
+				this.emailChanged = true;
+			})
+		);
 	}
 
 	signUp() {
@@ -65,19 +74,33 @@ export class SignUpComponent {
 			this.loading = true;
 			const request = this.registrationForm.getRawValue();
 			this.signUp$ = this.authenticationService.signUp(request).pipe(
+				catchError((err: HttpErrorResponse) => {
+					this.emailExists = true;
+					this.emailChanged = false;
+					this.loading = false;
+					return of(null);
+				}),
 				tap(response => {
-					this.authenticationService.saveToken(response);
-					this.authenticationService.saveUser(response);
+					if (response) {
+						this.authenticationService.saveToken(response);
+						this.authenticationService.saveUser(response);
+					}
 				}),
-				switchMap(() => {
-					return this.authenticationService.saveNewsLetterSubscriber(request.email);
+				switchMap(response => {
+					if (this.registrationForm.controls.newsLetter.value && response) {
+						return this.authenticationService.saveNewsLetterSubscriber(request.email).pipe(
+							catchError(err => {
+								console.error(err);
+								return of(void 0);
+							})
+						);
+					}
+					return of(response);
 				}),
-				catchError(err => {
-					console.error(err);
-					return of(void 0);
-				}),
-				tap(() => {
-					this.router.navigate(['/flows']);
+				tap(response => {
+					if (response) {
+						this.router.navigate(['/flows']);
+					}
 				}),
 				map(() => void 0)
 			);
