@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import { BehaviorSubject, map, Observable, shareReplay } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { User } from 'shared';
+
+type FlagsMap = Record<string, boolean | string | Object | undefined>;
 
 @Injectable({
 	providedIn: 'root',
@@ -15,7 +17,7 @@ export class AuthenticationService {
 	);
 
 	private jwtHelper = new JwtHelperService();
-
+	flags$: Observable<FlagsMap>;
 	constructor(private router: Router, private http: HttpClient) {}
 
 	get currentUser(): User {
@@ -73,9 +75,8 @@ export class AuthenticationService {
 	}
 
 	isFirstSignIn() {
-		return this.http.get<boolean>(environment.apiUrl + '/flags').pipe(
+		return this.getAllFlags().pipe(
 			map(value => {
-				debugger;
 				return !value['USER_CREATED'];
 			})
 		);
@@ -83,5 +84,28 @@ export class AuthenticationService {
 
 	saveNewsLetterSubscriber(email: string) {
 		return this.http.post('https://us-central1-activepieces-b3803.cloudfunctions.net/addContact', { email: email });
+	}
+	getAllFlags() {
+		if (!this.flags$) {
+			this.flags$ = this.http.get<FlagsMap>(environment.apiUrl + '/flags').pipe(shareReplay(1));
+		}
+		return this.flags$;
+	}
+
+	getWarningMessage(): Observable<{ title?: string; body?: string } | undefined> {
+		return this.getAllFlags().pipe(
+			map(flags => {
+				const warningTitle: string | undefined = flags['WARNING_TEXT_HEADER'] as string | undefined;
+				const warningBody: string | undefined = flags['WARNING_TEXT_BODY'] as string | undefined;
+				debugger;
+				if (warningTitle || warningBody) {
+					return {
+						title: warningTitle,
+						body: warningBody,
+					};
+				}
+				return undefined;
+			})
+		);
 	}
 }

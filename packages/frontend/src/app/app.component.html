@@ -1,7 +1,7 @@
-<mat-toolbar>
+<mat-toolbar *ngIf="warningMessage$|async as warning" @fadeInUp>
    <div class="ap-bg-primary-light ap-typography-body-1 ap-flex ap-flex-col ap-items-center ap-p-1">
-      <div class="ap-typography-body-1 ap-text-primary !ap-font-bold">This is an Activepieces demo</div>
-      <div class="ap-typography-body-2 ap-text-title ap-text-center">All data gets cleared every 24 hours, please don't use this for production purposes. </div>
+      <div class="ap-typography-body-1 ap-text-primary !ap-font-bold">{{warning.title}}</div>
+      <div class="ap-typography-body-2 ap-text-title ap-text-center">{{warning.body}}</div>
 </div></mat-toolbar>
 <div class="ap-text-body ap-h-full">
   <router-outlet></router-outlet>
