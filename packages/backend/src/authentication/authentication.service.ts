@@ -1,4 +1,4 @@
-import { AuthenticationRequest, AuthenticationResponse, PrincipalType } from "shared";
+import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest } from "shared";
 import { userService } from "../user/user-service";
 import { passwordHasher } from "./lib/password-hasher";
 import { tokenUtils } from "./lib/token-utils";
@@ -7,7 +7,7 @@ import { projectService } from "../project/project.service";
 import { FlagId, flagService } from "../flags/flag.service";
 
 export const authenticationService = {
-  signUp: async (request: AuthenticationRequest): Promise<AuthenticationResponse> => {
+  signUp: async (request: SignUpRequest): Promise<AuthenticationResponse> => {
     const user = await userService.create(request);
 
     await flagService.save({ id: FlagId.USER_CREATED, value: true });
@@ -22,13 +22,15 @@ export const authenticationService = {
       type: PrincipalType.USER,
     });
 
+    const { password, ...userResponse } = user;
+
     return {
-      ...user,
+      ...userResponse,
       token,
     };
   },
 
-  signIn: async (request: AuthenticationRequest): Promise<AuthenticationResponse> => {
+  signIn: async (request: SignInRequest): Promise<AuthenticationResponse> => {
     const user = await userService.getOne({
       email: request.email,
     });

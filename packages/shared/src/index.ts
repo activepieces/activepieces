@@ -18,7 +18,8 @@ export {ExecuteCodeRequest} from './code/dto/code-request';
 export {flowHelper} from "./flows/flow-helper";
 export {PutStoreEntryRequest} from "./store-entry/dto/put-store-entry-request";
 export {AuthenticationResponse} from './authentication/dto/authentication-response';
-export {AuthenticationRequest} from './authentication/dto/authentication-request'
+export {SignUpRequest} from './authentication/dto/sign-up-request';
+export {SignInRequest} from './authentication/dto/sign-in-request';
 export { PrincipalType } from "./authentication/model/principal-type";
 export { Principal } from "./authentication/model/principal";
 export {CodeAction, PieceAction, LoopOnItemsAction, StorageAction, StorageActionSettings,

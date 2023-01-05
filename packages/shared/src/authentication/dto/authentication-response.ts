@@ -1,10 +1,5 @@
-import { UserId, UserStatus } from "../../user/user";
+import { User, UserId, UserStatus } from "../../user/user";
 
-export type AuthenticationResponse = {
+export type AuthenticationResponse = Omit<User, "password"> & {
     token: string;
-    id: UserId,
-    email: string,
-    firstName: string,
-    lastName: string,
-    status: UserStatus
 };
