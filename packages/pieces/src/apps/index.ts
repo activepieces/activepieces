@@ -4,13 +4,15 @@ import { slack} from "./slack";
 import { github} from "./github";
 import { discord } from './discord';
 import { hackernews } from './hackernews';
+import { facebook } from './facebook';
 
 export const pieces: Piece[] = [
 	slack,
 	gmail,
 	discord,
 	github,
-	hackernews
+	hackernews,
+	facebook
 ];
 
 export const getPiece = (name: string): Piece | undefined => {
