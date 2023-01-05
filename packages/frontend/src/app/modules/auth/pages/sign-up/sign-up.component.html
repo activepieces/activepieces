@@ -1,4 +1,4 @@
-<div class="ap-typography-headline-5 ap-text-center ap-mb-4">Let's Get Started!</div>
+<div class="ap-typography-headline-5 ap-text-center ap-mb-4 md">Let's Get Started!</div>
 <form [formGroup]="registrationForm" (ngSubmit)="signUp()" class="ap-flex ap-flex-col ap-gap-2">
   <div class="ap-flex ap-gap-1 md:ap-gap-4 ap-items-center ap-flex-col md:ap-flex-row">
     <mat-form-field class="ap-w-full md:ap-w-initial" appearance="outline">
@@ -25,7 +25,7 @@
         Email is invalid
       </ng-container>
       <ng-template #otherEmailErrors>
-        <ng-container *ngIf="registrationForm.controls.email.getError('alreadyInUse')">Email is already
+        <ng-container *ngIf="emailExists && !emailChanged">Email is already
           used</ng-container>
         <ng-container *ngIf="registrationForm.controls.email.getError('required')">Email is
           required</ng-container></ng-template>
@@ -114,6 +114,10 @@
     </app-button>
   </div>
 </form>
+<div class="ap-text-center ap-typography-caption ap-mt-2">
+  <a routerLink="/sign-in" >Already have an account? </a>
+</div>
 
 
 <ng-container *ngIf="signUp$ | async"></ng-container>
+<ng-container *ngIf="emailValueChanged$ | async"> </ng-container>
