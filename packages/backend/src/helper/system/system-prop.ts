@@ -9,4 +9,6 @@ export enum SystemProp {
 
   REDIS_HOST = "REDIS_HOST",
   REDIS_PORT = "REDIS_PORT",
+
+  SERVER_URL = "SERVER_URL",
 }

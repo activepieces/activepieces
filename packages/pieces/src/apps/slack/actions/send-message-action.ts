@@ -10,8 +10,8 @@ import {
 
 export const slackSendMessageAction = createAction({
   name: 'send_channel_message',
-  displayName: 'Send Slack Message',
-  description: 'Send Slack Message',
+  displayName: 'Send slack message',
+  description: 'Send slack message',
   props: {
     authentication: Property.OAuth2({
       description: '',

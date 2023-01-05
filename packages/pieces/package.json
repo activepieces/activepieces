@@ -21,7 +21,6 @@
   "scripts": {
     "build": "tsc -p tsconfig.json --outDir dist",
     "posttest": "npm run lint",
-    "dev": "nodemon",
     "test": "jest --coverage",
     "test:watch": "jest --watch"
   }
