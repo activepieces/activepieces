@@ -1,14 +1,19 @@
 import { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
-import { ActivepiecesError } from "./activepieces-error";
+import { ActivepiecesError, ErrorCode } from "./activepieces-error";
 
 export const errorHandler = async (
   error: FastifyError,
   _request: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> => {
+  console.error("[errorHandler]:", error);
+
   if (error instanceof ActivepiecesError) {
-    await reply.status(StatusCodes.BAD_REQUEST).send({
+    const statusCode =
+      error.error.code === ErrorCode.INVALID_BEARER_TOKEN ? StatusCodes.UNAUTHORIZED : StatusCodes.BAD_REQUEST;
+
+    await reply.status(statusCode).send({
       code: error.error.code,
     });
   } else {
