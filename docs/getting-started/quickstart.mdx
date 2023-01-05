@@ -1,21 +1,38 @@
 ---
-title: "Hello World"
+title: "Quickstart"
 description: "Create your first automation with Activepieces"
 ---
 
-We will create a flow that sends a message to a Slack channel every 1 hour, and call it Big Ben ⏰
+In this section, you'll learn how to create automation flows, integrate with available apps and customize the trigger for your automation.
 
-### 1. Create a new collection.
+This guide will take you through the steps to create a flow that sends a message to a Slack channel every hour.
+
+## Create Demo account
+
+To get started, visit https://demo.activepieces.com/sign-up and create an account using any email and password.
+
+
+<Warning>
+Please note that this is a demo instance and should not be used for production purposes.
+The information you enter will not be retained and the data will be deleted every 24 hours. Note that no 
+email address confirmation is needed for this demo account.
+</Warning>
+
+## Create Hello World Flow
 
 You should see the following screen after setting up your account. Click on **Start building** to create a new collection.
 
-This will also create your first flow `Flow 1` inside the collection. You can change its name from `Untitled` to `Big Ben`.
+Think of a collection as a folder for your flows.
+
+This will also create your first flow `Flow 1` inside the collection. You can change the name of the flow from `Untitled` to `Hello World`.
 
 ![Activepieces Dashboard](/resources/screenshots/quickstart-empty-dashboard.png)
 
 ### 2. Configure the trigger.
 
-You will see the following screen, choose the Schedule trigger:
+To be able to send a message every hour, we need a scheduler that would start our flow on a fixed 
+
+On the flow screen, choose the Schedule trigger:
 
 ![Select Flow Trigger](/resources/screenshots/quickstart-configure-trigger.png)
 
