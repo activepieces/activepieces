@@ -15,6 +15,10 @@ Visit [our docs](https://www.activepieces.com/docs) to learn all the details.
 
 ## Get started for free
 
+### Option One: Demo Instance
+visit https://demo.activepieces.com
+
+### Option Two: Self Host
 Clone Activepieces to your machine and run it with 1 command
 
  ```bash 
