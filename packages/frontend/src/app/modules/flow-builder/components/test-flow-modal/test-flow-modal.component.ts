@@ -158,7 +158,6 @@ export class TestFlowModalComponent implements OnInit {
 			);
 	}
 	setStatusChecker(flowId: string, runId: string) {
-
 		this.instanceRunStatusChecker$ = interval(1500).pipe(
 			takeUntil(this.testRunSnackbar.instance.exitButtonClicked),
 			switchMap(() => this.instanceRunService.get(runId)),

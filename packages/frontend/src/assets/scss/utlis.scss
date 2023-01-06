@@ -39,3 +39,7 @@
       outline: black solid 1px ;
     }
 }
+
+a{
+  @apply ap-underline ap-text-blueLink ap-typography-caption
+}

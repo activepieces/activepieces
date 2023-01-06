@@ -14,7 +14,7 @@ import { SignUpComponent } from './pages/sign-up/sign-up.component';
 		RouterModule.forChild(AuthLayoutRoutes),
 		FormsModule,
 		ReactiveFormsModule,
-		CommonLayoutModule
+		CommonLayoutModule,
 	],
 	declarations: [AuthLayoutComponent, SignInComponent, SignUpComponent],
 })

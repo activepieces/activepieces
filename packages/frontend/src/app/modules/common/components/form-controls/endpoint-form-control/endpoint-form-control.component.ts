@@ -1,5 +1,11 @@
 import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import {
+	ControlValueAccessor,
+	UntypedFormBuilder,
+	UntypedFormControl,
+	UntypedFormGroup,
+	NG_VALUE_ACCESSOR,
+} from '@angular/forms';
 import { Observable, tap } from 'rxjs';
 import { HttpMethod } from '../../configs-form/connector-action-or-config';
 

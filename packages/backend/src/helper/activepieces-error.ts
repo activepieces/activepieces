@@ -91,7 +91,13 @@ export interface InvalidCredentialsErrorParams
     }
   > {}
 
-export interface ExistingUserErrorParams extends BaseErrorParams<ErrorCode.EXISTING_USER, {}> {}
+export interface ExistingUserErrorParams
+  extends BaseErrorParams<
+    ErrorCode.EXISTING_USER,
+    {
+      email: string;
+    }
+  > {}
 
 export interface StepNotFoundErrorParams
   extends BaseErrorParams<

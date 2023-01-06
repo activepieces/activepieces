@@ -55,6 +55,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AuthConfigsPipe } from './components/configs-form/auth-configs.pipe';
 import { OAuth2CloudConnectControlComponent } from './components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
 import { ConfirmCloudAuthConfigUseDialog } from './components/configs-form/confirm-cloud-auth-config-use-dialog/confirm-cloud-auth-config-use-dialog.component';
+import { MatToolbarModule } from '@angular/material/toolbar';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 0,
 	hideDelay: 0,
@@ -123,6 +124,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MatSelectModule,
 		MatTableModule,
 		MatDialogModule,
+		MatToolbarModule,
 	],
 	exports: [
 		EditableTextComponent,
@@ -161,6 +163,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		DialogTitleTemplateComponent,
 		MatDialogModule,
 		OAuth2CloudConnectControlComponent,
+		MatToolbarModule,
 	],
 	providers: [
 		HighlightService,

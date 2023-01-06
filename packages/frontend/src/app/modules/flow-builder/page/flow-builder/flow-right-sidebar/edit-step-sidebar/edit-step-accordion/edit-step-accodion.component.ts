@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Input } from '@angular/core';
 
-import { delay, map, Observable, of, skipWhile, Subject, takeUntil, tap } from 'rxjs';
+import { delay, forkJoin, map, Observable, of, skipWhile, Subject, take, takeUntil, tap } from 'rxjs';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
@@ -11,6 +11,7 @@ import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/fl
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActionType, TriggerType, UpdateActionRequest, UpdateTriggerRequest } from 'shared';
 import { FlowsActions } from 'src/app/modules/flow-builder/store/action/flows.action';
+import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
 
 @Component({
 	selector: 'app-edit-step-accodion',
@@ -50,9 +51,17 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		private formBuilder: UntypedFormBuilder,
 		private cd: ChangeDetectorRef,
 		private store: Store,
-		private snackbar: MatSnackBar
+		private snackbar: MatSnackBar,
+		private authenticationService: AuthenticationService
 	) {
-		this.webhookUrl$ = this.store.select(BuilderSelectors.selectCurrentFlowWebhookUrl);
+		this.webhookUrl$ = forkJoin({
+			flowId: this.store.select(BuilderSelectors.selectCurrentFlowId).pipe(take(1)),
+			serverUrl: this.authenticationService.getServerUrl(),
+		}).pipe(
+			map(res => {
+				return `${res.serverUrl}/v1/webhook?flowId=${res.flowId}`;
+			})
+		);
 		this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(
 			tap(readOnly => {
 				if (readOnly) {

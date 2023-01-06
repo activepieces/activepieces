@@ -1,7 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 import { User } from 'shared';
 
-
 export enum CommonActionType {
 	LOAD_INITIAL = '[APP_STATE] LOAD_INITIAL',
 	CLEAR_STATE = '[APP_STATE] CLEAR_STATE',

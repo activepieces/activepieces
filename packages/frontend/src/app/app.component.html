@@ -1,4 +1,13 @@
-<router-outlet></router-outlet>
+<mat-toolbar *ngIf="warningMessage$|async as warning" @fadeInUp>
+   <div class="ap-bg-primary-light ap-typography-body-1 ap-flex ap-flex-col ap-items-center ap-p-1">
+      <div class="ap-typography-body-1 ap-text-primary !ap-font-bold">{{warning.title}}</div>
+      <div class="ap-typography-body-2 ap-text-title ap-text-center">{{warning.body}}</div>
+</div></mat-toolbar>
+<div class="ap-text-body ap-h-full">
+  <router-outlet></router-outlet>
+</div>
+
+
 
 <div *ngIf="routeLoader$ | async"
   class="ap-flex  ap-flex-grow ap-justify-center  ap-items-center ap-h-full route-loader ap-w-full">

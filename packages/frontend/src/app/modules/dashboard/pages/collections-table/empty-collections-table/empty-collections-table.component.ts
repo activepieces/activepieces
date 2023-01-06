@@ -33,16 +33,17 @@ export class EmptyCollectionsTableComponent {
 			const collectionDiplayName = 'Untitled';
 			this.createCollection$ = this.projectService.selectedProjectAndTakeOne().pipe(
 				switchMap(project => {
-					return this.collectionService.create( {
-            projectId: project.id,
+					return this.collectionService.create({
+						projectId: project.id,
 						displayName: collectionDiplayName,
 					});
 				}),
 				switchMap(collection => {
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
+						debugger;
 						this.posthogService.captureEvent('collection.created [Start building]', collection);
 					}
-					return this.flowService.create({collectionId: collection.id, displayName: 'Flow 1'});
+					return this.flowService.create({ collectionId: collection.id, displayName: 'Flow 1' });
 				}),
 				tap(flow => {
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {

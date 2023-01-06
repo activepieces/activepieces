@@ -2,7 +2,21 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { forkJoin, map, Observable, of, skipWhile, switchMap, take } from 'rxjs';
-import { CollectionId, CreateFlowRequest, CreateFlowRunRequest, ExecutionOutputStatus, ExecutionState, FileId, Flow, FlowId, FlowOperationRequest, FlowRun, FlowVersionId, SeekPage, TriggerType } from 'shared';
+import {
+	CollectionId,
+	CreateFlowRequest,
+	CreateFlowRunRequest,
+	ExecutionOutputStatus,
+	ExecutionState,
+	FileId,
+	Flow,
+	FlowId,
+	FlowOperationRequest,
+	FlowRun,
+	FlowVersionId,
+	SeekPage,
+	TriggerType,
+} from 'shared';
 import { BuilderSelectors } from '../../flow-builder/store/selector/flow-builder.selector';
 import { findDefaultFlowDisplayName } from '../utils';
 import { Store } from '@ngrx/store';
@@ -12,10 +26,7 @@ import { RightSideBarType } from '../model/enum/right-side-bar-type.enum';
 	providedIn: 'root',
 })
 export class FlowService {
-	constructor(
-		private store: Store,
-		private http: HttpClient
-	) {}
+	constructor(private store: Store, private http: HttpClient) {}
 
 	createEmptyFlow() {
 		return forkJoin({
@@ -25,7 +36,7 @@ export class FlowService {
 			.pipe(
 				switchMap(collectionWIthFlows => {
 					const flowDisplayName = findDefaultFlowDisplayName(collectionWIthFlows.flows);
-					return this.create({collectionId: collectionWIthFlows.collection.id, displayName: flowDisplayName});
+					return this.create({ collectionId: collectionWIthFlows.collection.id, displayName: flowDisplayName });
 				})
 			)
 			.pipe(
@@ -63,17 +74,17 @@ export class FlowService {
 	create(request: CreateFlowRequest): Observable<Flow> {
 		return this.http.post<Flow>(environment.apiUrl + '/flows', {
 			displayName: request.displayName,
-			collectionId: request.collectionId
+			collectionId: request.collectionId,
 		});
 	}
 
 	get(flowId: FlowId, flowVersionId: undefined | FlowVersionId): Observable<Flow> {
 		let params = {};
-		if(flowVersionId){
+		if (flowVersionId) {
 			params['versionId'] = flowVersionId;
 		}
 		return this.http.get<Flow>(environment.apiUrl + '/flows/' + flowId, {
-			params: params
+			params: params,
 		});
 	}
 
@@ -82,15 +93,12 @@ export class FlowService {
 	}
 
 	listByCollection(collectionId: CollectionId): Observable<SeekPage<Flow>> {
-		return this.http.get<SeekPage<Flow>>(
-			environment.apiUrl + '/flows',
-			{
-				params: {
-					limit: 100000,
-					collectionId: collectionId
-				}
-			}
-		);
+		return this.http.get<SeekPage<Flow>>(environment.apiUrl + '/flows', {
+			params: {
+				limit: 100000,
+				collectionId: collectionId,
+			},
+		});
 	}
 
 	update(flowId: FlowId, opreation: FlowOperationRequest): Observable<Flow> {
@@ -98,22 +106,18 @@ export class FlowService {
 	}
 
 	execute(request: CreateFlowRunRequest): Observable<FlowRun> {
-		return this.http
-			.post<FlowRun>(
-				environment.apiUrl + '/flow-runs',
-				request
-			)
-			.pipe(switchMap(run => {
-					if (run.status !== ExecutionOutputStatus.RUNNING && run.logsFileId !== null) {
-						return this.loadStateLogs(run.logsFileId).pipe(
-							map(state => {
-								return { ...run, state: state };
-							})
-						);
-					}
-					return of(run);
-				})
-			);
+		return this.http.post<FlowRun>(environment.apiUrl + '/flow-runs', request).pipe(
+			switchMap(run => {
+				if (run.status !== ExecutionOutputStatus.RUNNING && run.logsFileId !== null) {
+					return this.loadStateLogs(run.logsFileId).pipe(
+						map(state => {
+							return { ...run, state: state };
+						})
+					);
+				}
+				return of(run);
+			})
+		);
 	}
 
 	loadStateLogs(fileId: FileId): Observable<ExecutionState> {

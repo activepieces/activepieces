@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { ActionType, TriggerType} from 'shared';
+import { ActionType, TriggerType } from 'shared';
 import { HttpClient } from '@angular/common/http';
 import { AppPiece } from '../../common/components/configs-form/connector-action-or-config';
 import { environment } from 'src/environments/environment';
@@ -67,9 +67,9 @@ export type DropdownState<T> = {
 	disabled?: boolean;
 	placeholder?: string;
 	options: DropdownOption<T>[];
-}
+};
 
-export type DropdownOption<T>= {
+export type DropdownOption<T> = {
 	label: string;
 	value: T;
 };

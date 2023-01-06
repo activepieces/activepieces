@@ -100,7 +100,46 @@ $ap-typography: mat.define-typography-config(
 			$letter-spacing: 0.5px,
 		),
 );
+@layer utilities{
+  .ap-typography-headline-1 {
+    @include mat.typography-level($ap-typography, 'headline-1');
+  }
+  .ap-typography-headline-2 {
+    @include mat.typography-level($ap-typography, 'headline-2');
+  }
+  .ap-typography-headline-3 {
+    @include mat.typography-level($ap-typography, 'headline-3');
+  }
+  .ap-typography-headline-4 {
+    @include mat.typography-level($ap-typography, 'headline-4');
+  }
+  .ap-typography-headline-5 {
+    @include mat.typography-level($ap-typography, 'headline-5');
+  }
 
+  .ap-typography-headline-6 {
+    @include mat.typography-level($ap-typography, 'headline-6');
+  }
+
+  .ap-typography-subtitle-1 {
+    @include mat.typography-level($ap-typography, 'subtitle-1');
+  }
+  .ap-typography-subtitle-2 {
+    @include mat.typography-level($ap-typography, 'subtitle-2');
+  }
+  .ap-typography-body-1 {
+    @include mat.typography-level($ap-typography, 'body-1');
+  }
+  .ap-typography-body-2 {
+    @include mat.typography-level($ap-typography, 'body-2');
+  }
+  .ap-typography-caption {
+    @include mat.typography-level($ap-typography, 'caption');
+  }
+  .ap-typography-button {
+      @include mat.typography-level($ap-typography, 'button');
+    }
+}
 .ap-typography-headline-1 {
 	@include mat.typography-level($ap-typography, 'headline-1');
 }

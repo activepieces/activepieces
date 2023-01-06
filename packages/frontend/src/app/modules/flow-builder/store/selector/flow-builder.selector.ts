@@ -9,7 +9,6 @@ import { FlowItem } from '../../../common/model/flow-builder/flow-item';
 import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
 import { FlowsState } from '../model/flows-state.model';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
-import { environment } from 'src/environments/environment';
 import { ActionType, Collection, ConfigType, TriggerType } from 'shared';
 import { OAuth2DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
 
@@ -106,9 +105,6 @@ export const selectFlowsState = createSelector(selectBuilderState, (state: Globa
 
 export const selectCurrentFlow = createSelector(selectFlowsState, (flowsState: FlowsState) => {
 	return flowsState.flows.find(f => f.id === flowsState.selectedFlowId);
-});
-export const selectCurrentFlowWebhookUrl = createSelector(selectCurrentFlow, flow => {
-	return `${environment.apiUrl}/webhooks?flowId=${flow?.id}`;
 });
 
 export const selectTabState = (flowId: string) =>
@@ -344,7 +340,6 @@ export const BuilderSelectors = {
 	selectAuthConfigsDropdownOptions,
 	selectCurrentCollectionInstance,
 	selectIsPublishing,
-	selectCurrentFlowWebhookUrl,
 	selectFlowItemDetailsForConnectorComponentsTriggers,
 	selectAllConfigsWithoutOAuth2,
 };

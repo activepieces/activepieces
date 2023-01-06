@@ -3,7 +3,6 @@ import { ThemeService } from '../../../../../../common/service/theme.service';
 import { FlowItem } from '../../../../../../common/model/flow-builder/flow-item';
 import { ActionType, LoopOnItemsAction } from 'shared';
 
-
 @Component({
 	selector: 'app-flow-item-connection',
 	templateUrl: './flow-item-connection.component.html',

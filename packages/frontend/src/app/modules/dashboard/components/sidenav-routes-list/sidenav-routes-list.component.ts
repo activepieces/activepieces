@@ -20,16 +20,19 @@ export class SidenavRoutesListComponent implements OnInit {
 	sideNavRoutes: SideNavRoute[] = [
 		{
 			icon: '/assets/img/custom/dashboard/collections.svg',
-			borderColorInTailwind: 'ap-border-purpleBorder',
+			borderColorInTailwind: '!ap-border-purpleBorder',
 			caption: 'Flows',
 			route: 'flows',
 		},
 		{
 			icon: 'assets/img/custom/dashboard/runs.svg',
-			borderColorInTailwind: 'ap-border-greenBorder',
+			borderColorInTailwind: '!ap-border-greenBorder',
 			caption: 'Runs',
 			route: 'runs',
 		},
 	];
 	ngOnInit(): void {}
+	openDocs() {
+		window.open('https://activepieces.com/docs', '_blank');
+	}
 }

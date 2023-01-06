@@ -4,7 +4,7 @@ export function fadeInUpAnimation(duration: number) {
 	return trigger('fadeInUp', [
 		transition(':enter', [
 			style({
-				transform: 'translateY(20px)',
+				transform: 'translateY(-20px)',
 				opacity: 0,
 			}),
 			animate(

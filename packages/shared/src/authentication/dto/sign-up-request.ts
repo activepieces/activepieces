@@ -1,6 +1,6 @@
 import { Static, Type } from "@sinclair/typebox";
 
-export const AuthenticationRequest = Type.Object({
+export const SignUpRequest = Type.Object({
     email: Type.String({
         format: 'email',
     }),
@@ -8,6 +8,10 @@ export const AuthenticationRequest = Type.Object({
         minLength: 8,
         maxLength: 25,
     }),
+    firstName: Type.String(),
+    lastName: Type.String(),
+    trackEvents: Type.Boolean(),
+    newsLetter: Type.Boolean(),
 });
 
-export type AuthenticationRequest = Static<typeof AuthenticationRequest>;
+export type SignUpRequest = Static<typeof SignUpRequest>;

@@ -15,5 +15,5 @@ export const initializedRun: FlowRun = {
 	updated: '',
 	environment: RunEnvironment.TESTING,
 	collectionDisplayName: '',
-	flowDisplayName: ''
+	flowDisplayName: '',
 };
