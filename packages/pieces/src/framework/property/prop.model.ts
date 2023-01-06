@@ -7,7 +7,7 @@ type BasicPropertySchema = {
 
 type DropdownPropertySchema<T> = BasicPropertySchema & {
 	refreshers: string[];
-	options: (propsValue: Record<string, AuthPropertyValue | number | string | DropdownState<any>>) => Promise<DropdownState<T>>
+	options: (propsValue: any) => Promise<DropdownState<T>>
 }
 
 type OAuth2PropertySchema = BasicPropertySchema & {

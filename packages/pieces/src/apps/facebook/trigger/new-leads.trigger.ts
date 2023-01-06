@@ -18,6 +18,8 @@ export const newLeads = createTrigger(
             context.store?.save("lastFetched", timestamp);
         },
         run: async (context) => {
+            let pageToken = context.propsValue['page']!['access_token'];
+
             return Promise.resolve([])
         }
     }
