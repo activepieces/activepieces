@@ -10,9 +10,12 @@
     "dark": "#3033A6",
     "light": "#6D72F6",
     "background": {
-      "dark": "#0C1322",
-      "light": "#ffffff"
+      "dark": "#121212"
     }
+  },
+  "topbarCtaButton": {
+    "type": "github",
+    "url": "https://github.com/activepieces/activepieces"
   },
   "topbarLinks": [
     {
@@ -22,14 +25,19 @@
   ],
   "anchors": [
     {
-      "name": "GitHub",
-      "icon": "github",
-      "url": "https://www.github.com/activepieces/activepieces"
+      "name": "Pieces",
+      "icon": "plug",
+      "url": "pieces"
     },
     {
-      "name": "Request Piece",
-      "icon": "bullseye-pointer",
-      "url": "https://github.com/activepieces/activepieces/discussions/categories/piece-requests"
+      "name": "Self-hosting",
+      "icon": "server",
+      "url": "self-hosting"
+    },
+    {
+      "name": "Contributing",
+      "icon": "code",
+      "url": "contributing"
     },
     {
       "name": "Discord",
@@ -39,49 +47,66 @@
   ],
   "navigation": [
     {
-      "group": "Quickstart",
+      "group": "Overview",
       "pages": [
-        "quickstart/quick-intro",
-        "quickstart/setup",
-        "quickstart/hello-world"
-      ]
-    },
-    {
-      "group": "Using Activepieces",
-      "pages": [
-        "using-activepieces/overview",
-        "using-activepieces/triggers",
-        "using-activepieces/passing-data",
-        "using-activepieces/debugging"
+        "getting-started/introduction",
+        "getting-started/quickstart"
       ]
     },
     {
       "group": "Pieces",
       "pages": [
         "pieces/overview",
-        {
-          "group": "Apps",
-          "pages": [
-            "pieces/apps/slack",
-            "pieces/apps/discord"
-          ]
-        },
-        {
-          "group": "Helpers",
-          "pages": [
-            "pieces/helpers/http-request",
-            "pieces/helpers/code",
-            "pieces/helpers/storage"
-          ]
-        },
-        {
-          "group": "Flow Controls",
-          "pages": [
-            "pieces/flow-controls/loop",
-            "pieces/flow-controls/if"
-          ]
-        },
         "pieces/custom-pieces"
+      ]
+    },
+    {
+      "group": "Flow Controls",
+      "pages": [
+        "pieces/flow-controls/loop",
+        "pieces/flow-controls/branch"
+      ]
+    },
+    {
+      "group": "Helpers",
+      "pages": [
+        "pieces/helpers/http-request",
+        "pieces/helpers/code",
+        "pieces/helpers/storage"
+      ]
+    },
+    {
+      "group": "Apps",
+      "pages": [
+        "pieces/apps/slack",
+        "pieces/apps/discord"
+      ]
+    },
+    {
+      "group": "Self Hosting",
+      "pages": [
+        "self-hosting/overview"
+      ]
+    },
+    {
+      "group": "Deployment Options",
+      "pages": [
+        "self-hosting/deployments/docker-compose"
+      ]
+    },
+    {
+      "group": "Configurations",
+      "pages": [
+        "self-hosting/configurations/env-vars"
+      ]
+    },
+    {
+      "group": "Building Flows",
+      "pages": [
+        "building-flows/overview",
+        "building-flows/triggers",
+        "building-flows/passing-data",
+        "building-flows/debugging"
       ]
     },
     {
@@ -95,12 +120,18 @@
     {
       "group": "Building Pieces",
       "pages": [
-        "building-pieces/overview"
+        "contributing/building-pieces/quickstart",
+        "contributing/building-pieces/examples"
       ]
     },
     {
       "group": "Other",
       "pages": ["license"]
     }
-  ]
+  ],
+  "analytics": {
+    "posthog": {
+        "apiKey": "phc_TXdpocbYTeZVm5VJmMzHTMrCofBQu3e0kN7HGMNGTVW"
+    }
+  }
 }
