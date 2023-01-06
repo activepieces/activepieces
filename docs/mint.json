@@ -10,8 +10,7 @@
     "dark": "#3033A6",
     "light": "#6D72F6",
     "background": {
-      "dark": "#0C1322",
-      "light": "#ffffff"
+      "dark": "#121212"
     }
   },
   "topbarCtaButton": {

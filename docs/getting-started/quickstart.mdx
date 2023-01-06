@@ -3,9 +3,8 @@ title: "Quickstart"
 description: "Create your first automation with Activepieces"
 ---
 
-In this section, you'll learn how to create automation flows, integrate with available apps and customize the trigger for your automation.
-
-This guide will take you through the steps to create "Hello World" flow that sends a message to a Slack channel every hour.
+In this tutorial, you will learn how to build automation flows and integrate them with various apps. You will also learn how to customize the trigger for your automation. 
+To demonstrate these concepts, we will walk you through the creation of a simple "Hello World" flow that sends a message to a Slack channel on an hourly basis.
 
 ## Create Demo account
 
@@ -20,19 +19,16 @@ email address confirmation is needed for this demo account.
 
 ## Create Hello World Flow
 
-You should see the following screen after setting up your account. Click on **Start building** to create a new collection.
-
-This will also create your first flow `Flow 1` inside the collection. Think of a collection as a folder for your flows.
-
-You can change the name of the flow from `Untitled` to `Hello World`.
+Once you have set up your account, you will be presented with the following screen. To create a new collection, click on the `Start building` button. 
+This will also create your first flow, called `Flow 1`, within the collection. 
+A collection is like a folder that organizes your flows. To give your flow a more meaningful name, click on `Untitled` and change it to `Hello World.`
 
 ![Activepieces Dashboard](/resources/screenshots/quickstart-empty-dashboard.png)
 
 ### 2. Configure the trigger.
 
-To be able to send a message every hour, we need a scheduler that would start our flow on fixed time intervals.
-
-Once you click on the `Empty Trigger`, choose the Schedule trigger from the Core menu:
+In order to send a message on an hourly basis, we need a scheduler that can trigger our flow at fixed time intervals.
+To set this up, click on the `Empty Trigger` and select the `Schedule` trigger from the "Core" menu.
 
 ![Select Flow Trigger](/resources/screenshots/quickstart-configure-trigger.png)
 
@@ -66,7 +62,7 @@ Depending on the action chosen, several fields need to be specified for the acti
 For our case, we need to define *Authentication* with Slack first. Click on **+ New Authentication**. You are then prompted to either use Activepieces slack app credentials or create your own developer app
 on Slack and add your credentials. For simplicity, choose to use Activepieces app and log in to Slack.
 
-Next, you need to choose the desired channel to send your message. Choose the channel from the dropdown menu.
+Next, select the desired channel to receive the message from the dropdown menu.
 
 Last but not least, write down the text of the message. Eg: "Activepieces is cool!".
 
@@ -92,8 +88,3 @@ To enable your automation, click on the **Publish** button on the top of the scr
 Your flow now is running in the background. 
 
 It's official, you are ready to use Activepieces now 🎉
-
-6. Suggestions
-
-Think of ways you can expand on this flow. 
-Do you want t
