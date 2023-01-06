@@ -1,25 +1,18 @@
-import {AuthenticationType} from "../../../../common/authentication/core/authentication-type";
-import {httpClient} from "../../../../common/http/core/http-client";
-import {HttpMethod} from "../../../../common/http/core/http-method";
-import {HttpRequest} from "../../../../common/http/core/http-request";
-import {createAction} from "../../../../framework/action/action";
-import {Context} from "../../../../framework/context";
-import {Property} from "../../../../framework/property/prop.model";
+import {AuthenticationType} from "../../../common/authentication/core/authentication-type";
+import {httpClient} from "../../../common/http/core/http-client";
+import {HttpMethod} from "../../../common/http/core/http-method";
+import {HttpRequest} from "../../../common/http/core/http-request";
+import {createAction} from "../../../framework/action/action";
+import {Property} from "../../../framework/property/prop.model";
+import { hubspotCommons } from "../common";
 
 
 export const createHubspotContact = createAction({
     name: 'create_contact',
     displayName: "Create Contact",
-    description: "Create Contact",
+    description: "Creates a contact on hubspot",
     props: {
-        authentication: Property.OAuth2({
-            description: "",
-            displayName: 'Authentication',
-            authUrl: "https://app.hubspot.com/oauth/authorize",
-            tokenUrl: "https://api.hubapi.com/oauth/v1/token",
-            required: true,
-            scope: ["crm.objects.contacts.write"]
-        }),
+        authentication: hubspotCommons.authentication,
         firstName: Property.ShortText({
             displayName: 'First Name',
             description: 'First name of the new contact',
