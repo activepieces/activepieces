@@ -1,4 +1,4 @@
-import { pieces, Trigger, TriggerStrategy } from "pieces/src";
+import { pieces, Trigger, TriggerStrategy } from "pieces";
 import {
   CollectionId,
   CollectionVersionId,

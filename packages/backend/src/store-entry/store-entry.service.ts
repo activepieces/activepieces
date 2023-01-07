@@ -1,4 +1,4 @@
-import { Store } from "pieces/src";
+import { Store } from "pieces";
 import { apId, CollectionId, PutStoreEntryRequest, StoreEntry } from "shared";
 import { databaseConnection } from "../database/database-connection";
 import { StoreEntryEntity } from "./store-entry-entity";
