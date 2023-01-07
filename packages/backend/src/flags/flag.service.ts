@@ -1,4 +1,4 @@
-import { Flag } from "shared";
+import { apId, Flag } from "shared";
 import { databaseConnection } from "../database/database-connection";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
@@ -14,9 +14,21 @@ export const flagService = {
     });
   },
   async getOne(flagId: FlagId): Promise<Flag | null> {
-    return await flagRepo.findOneBy({
+    const flag = await flagRepo.findOneBy({
       id: flagId,
     });
+    if (flag === null) {
+      switch (flagId) {
+        case FlagId.ANONYMOUSE_SERVER_ID:
+          return await flagRepo.save({
+            id: flagId,
+            value: apId()
+          })
+        default:
+          break;
+      }
+    }
+    return flag;
   },
   async getAll(): Promise<Flag[]> {
     const flags = await flagRepo.find({});
@@ -51,6 +63,7 @@ export const flagService = {
 };
 
 export enum FlagId {
+  ANONYMOUSE_SERVER_ID = "ANONYMOUSE_SERVER_ID",
   SERVER_URL = "SERVER_URL",
   USER_CREATED = "USER_CREATED",
   WARNING_TEXT_BODY = "WARNING_TEXT_BODY",
@@ -61,6 +74,7 @@ export type FlagType =
   | BaseFlagStructure<FlagId.SERVER_URL, string>
   | BaseFlagStructure<FlagId.USER_CREATED, boolean>
   | BaseFlagStructure<FlagId.WARNING_TEXT_BODY, string>
+  | BaseFlagStructure<FlagId.ANONYMOUSE_SERVER_ID, string>
   | BaseFlagStructure<FlagId.WARNING_TEXT_HEADER, string>;
 
 interface BaseFlagStructure<K extends FlagId, V> {

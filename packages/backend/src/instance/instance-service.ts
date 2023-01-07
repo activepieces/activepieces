@@ -3,6 +3,7 @@ import { collectionService } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
 import { flowService } from "../flows/flow-service";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { EventName, telemetry } from "../helper/telemetry.utils";
 import { InstanceEntity } from "./instance-entity";
 import { instanceSideEffects } from "./instance-side-effects";
 
@@ -41,11 +42,18 @@ export const instanceService = {
     };
 
     const savedInstance = await instanceRepo.save(newInstance);
-
     if (oldInstance !== null) {
       await instanceSideEffects.disable(oldInstance);
     }
     await instanceSideEffects.enable(savedInstance);
+
+
+    telemetry.track({
+      name: EventName.COLLECTION_PUBLISHED,
+      payload: {
+        collectionId: savedInstance.collectionId!
+      }
+    })
     return savedInstance;
   },
 

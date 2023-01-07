@@ -104,12 +104,12 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
       schema: CreateCollectionSchema,
     },
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Body: CreateCollectionRequest;
       }>,
       _reply
     ) => {
-      return await collectionService.create(_request.body);
+      return await collectionService.create(request.body);;
     }
   );
 };

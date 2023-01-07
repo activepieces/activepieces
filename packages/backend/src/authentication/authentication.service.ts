@@ -6,6 +6,7 @@ import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
 import { projectService } from "../project/project.service";
 import { FlagId, flagService } from "../flags/flag.service";
 import { QueryFailedError } from "typeorm";
+import { EventName, telemetry } from "../helper/telemetry.utils";
 
 export const authenticationService = {
   signUp: async (request: SignUpRequest): Promise<AuthenticationResponse> => {
@@ -25,6 +26,13 @@ export const authenticationService = {
       });
 
       const { password, ...userResponse } = user;
+
+      telemetry.track({
+        name: EventName.SIGNED_UP,
+        payload: {
+          created: user.created
+        }
+      })
 
       return {
         ...userResponse,

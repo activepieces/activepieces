@@ -18,6 +18,7 @@ import { flowVersionService } from "../flows/flow-version/flow-version.service";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { Order } from "../helper/pagination/paginator";
+import { EventName, telemetry } from "../helper/telemetry.utils";
 import { FlowRunEntity } from "./flow-run-entity";
 import { flowRunSideEffects } from "./flow-run-side-effects";
 
@@ -58,7 +59,7 @@ export const flowRunService = {
     return await this.getOne({ id: flowRunId });
   },
 
-  async start({ flowVersionId, collectionVersionId, payload, environment}: StartParams): Promise<FlowRun> {
+  async start({ flowVersionId, collectionVersionId, payload, environment }: StartParams): Promise<FlowRun> {
     console.log(`[flowRunService#start]  flowVersionId=${flowVersionId}`);
 
     const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId);
@@ -80,6 +81,14 @@ export const flowRunService = {
     };
 
     const savedFlowRun = await repo.save(flowRun);
+
+    telemetry.track({
+      name: EventName.RUN_CREATED,
+      payload: {
+        flowId: flowRun.flowId!,
+        collectionId: flowRun.collectionId!,
+      }
+    })
 
     await flowRunSideEffects.start({
       flowRun: savedFlowRun,

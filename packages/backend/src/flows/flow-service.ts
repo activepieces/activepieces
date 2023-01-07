@@ -20,6 +20,7 @@ import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { redisLock } from "../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { EventName, telemetry } from "../helper/telemetry.utils";
 
 const flowRepo = databaseConnection.getRepository(FlowEntity);
 
@@ -41,6 +42,12 @@ export const flowService = {
         valid: false,
       } as EmptyTrigger,
     });
+    telemetry.track({
+      name: EventName.FLOW_CREATED,
+      payload: {
+        flowId: flow.id!,
+      }
+    })
     const latestFlowVersion = await flowVersionService.getFlowVersion(savedFlow.id, undefined);
     return {
       ...savedFlow,
@@ -49,7 +56,7 @@ export const flowService = {
   },
   async getOneOrThrow(id: FlowId): Promise<Flow> {
     const flow = await flowService.getOne(id, undefined);
-  
+
     if (flow === null) {
       throw new ActivepiecesError({
         code: ErrorCode.FLOW_NOT_FOUND,
@@ -58,7 +65,7 @@ export const flowService = {
         },
       });
     }
-  
+
     return flow;
   },
   async list(collectionId: CollectionId, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<Flow>> {

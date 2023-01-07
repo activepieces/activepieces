@@ -5,7 +5,6 @@ import { Store } from '@ngrx/store';
 import { NavigationStart, Router } from '@angular/router';
 import { SvgIconRegistryService } from 'angular-svg-icon';
 import { CommonActions } from './modules/common/store/action/common.action';
-import { PosthogService } from './modules/common/service/posthog.service';
 import { fadeInUp400ms } from './modules/common/animation/fade-in-up.animation';
 
 @Component({
@@ -24,8 +23,7 @@ export class AppComponent implements OnInit {
 		private store: Store,
 		private authenticationService: AuthenticationService,
 		private router: Router,
-		private iconReg: SvgIconRegistryService,
-		private posthogService: PosthogService
+		private iconReg: SvgIconRegistryService
 	) {
 		this.unsavedIconLoader$ = this.iconReg.loadSvg('assets/img/custom/unsaved.svg')?.pipe(map(value => void 0));
 		this.routeLoader$ = this.router.events.pipe(
@@ -47,9 +45,6 @@ export class AppComponent implements OnInit {
 					return;
 				}
 				this.store.dispatch(CommonActions.loadInitial({ user: user }));
-				if (user.trackEvents) {
-					this.posthogService.init();
-				}
 			}),
 			map(() => void 0)
 		);

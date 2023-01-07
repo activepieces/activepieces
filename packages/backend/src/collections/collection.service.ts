@@ -17,6 +17,7 @@ import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { databaseConnection } from "../database/database-connection";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { EventName, telemetry } from "../helper/telemetry.utils";
 
 export const collectionRepo = databaseConnection.getRepository(CollectionEntity);
 
@@ -103,6 +104,13 @@ export const collectionService = {
       displayName: request.displayName,
       configs: [],
     });
+    telemetry.track({
+      name: EventName.COLLECTION_CREATED,
+      payload: {
+        projectId: collection.projectId!,
+        collectionId: collection.id!
+      }
+    })
     return savedCollection;
   },
 
