@@ -15,7 +15,6 @@ import {
 	combineLatest,
 	debounceTime,
 	distinctUntilChanged,
-	EMPTY,
 	map,
 	Observable,
 	of,
@@ -30,13 +29,18 @@ import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/fl
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
 import { PieceConfig, InputType } from './connector-action-or-config';
-import { NewAuthenticationModalComponent } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
+import {
+	NewAuthenticationModalComponent,
+	USE_CLOUD_CREDENTIALS,
+} from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 import { MatDialog } from '@angular/material/dialog';
 import { Config, ConfigType } from 'shared';
 import { DropdownItem } from '../../model/dropdown-item.interface';
-import { NewCloudAuthenticationModalComponent } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-cloud-authentication-modal/new-cloud-authentication-modal.component';
+import {
+	NewCloudAuthenticationModalComponent,
+	USE_MY_OWN_CREDENTIALS,
+} from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-cloud-authentication-modal/new-cloud-authentication-modal.component';
 import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.service';
-import { ConfirmCloudAuthConfigUseDialog } from './confirm-cloud-auth-config-use-dialog/confirm-cloud-auth-config-use-dialog.component';
 import deepEqual from 'deep-equal';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 type ConfigKey = string;
@@ -216,31 +220,20 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 					console.error(err);
 					return of({});
 				}),
-				map(res => {
-					return res[this.pieceName];
-				}),
 				tap(() => {
 					this.checkingOAuth2CloudManager = false;
 				}),
-				switchMap(cloudAuth2Config => {
+				map(res => {
+					return res[this.pieceName];
+				}),
+				tap((cloudAuth2Config: { clientId: string }) => {
 					if (cloudAuth2Config) {
-						return this.dialogService
-							.open(ConfirmCloudAuthConfigUseDialog)
-							.afterClosed()
-							.pipe(
-								tap(confirmationResult => {
-									if (confirmationResult) {
-										this.openNewCloudAuthenticationModal(authConfigName, cloudAuth2Config.clientId);
-									} else {
-										this.openNewAuthenticationModal(authConfigName);
-									}
-								})
-							);
+						this.openNewCloudAuthenticationModal(authConfigName, cloudAuth2Config.clientId);
 					} else {
 						this.openNewAuthenticationModal(authConfigName);
-						return EMPTY;
 					}
-				})
+				}),
+				map(() => void 0)
 			);
 		}
 	}
@@ -251,11 +244,29 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			})
 			.afterClosed()
 			.pipe(
-				tap((newAuthConfig: Config) => {
-					if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
-						const authConfigOptionValue = newAuthConfig.value;
+				tap((result: Config | string) => {
+					if (typeof result === 'string' && result === USE_CLOUD_CREDENTIALS) {
+						this.checkingOAuth2CloudManager = true;
+						this.cloudAuthCheck$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
+							catchError(err => {
+								console.error(err);
+								return of({});
+							}),
+							tap(() => {
+								this.checkingOAuth2CloudManager = false;
+							}),
+							map(res => {
+								return res[this.pieceName];
+							}),
+							tap((cloudAuth2Config: { clientId: string }) => {
+								this.openNewCloudAuthenticationModal(authConfigName, cloudAuth2Config.clientId);
+							}),
+							map(() => void 0)
+						);
+					} else if (typeof result === 'object' && result.type === ConfigType.OAUTH2) {
+						const authConfigOptionValue = result.value;
 						this.form.get(authConfigName)!.setValue(authConfigOptionValue);
-						this.updatedAuthLabel = newAuthConfig.key;
+						this.updatedAuthLabel = result.key;
 					}
 				}),
 				map(() => void 0)
@@ -273,11 +284,13 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			})
 			.afterClosed()
 			.pipe(
-				tap((newAuthConfig: Config) => {
-					if (newAuthConfig && newAuthConfig.type === ConfigType.CLOUD_OAUTH2) {
-						const authConfigOptionValue = newAuthConfig.value;
+				tap((result: Config | string) => {
+					if (typeof result === 'object' && result.type === ConfigType.CLOUD_OAUTH2) {
+						const authConfigOptionValue = result.value;
 						this.form.get(authConfigName)!.setValue(authConfigOptionValue);
-						this.updatedAuthLabel = newAuthConfig.key;
+						this.updatedAuthLabel = result.key;
+					} else if (result === USE_MY_OWN_CREDENTIALS) {
+						this.openNewAuthenticationModal(authConfigName);
 					}
 				}),
 				map(() => void 0)
