@@ -10,7 +10,7 @@ const initialState: FlowItemsDetailsState = {
 };
 export const flowItemsDetailsReducer = createReducer(
 	initialState,
-	on(FlowItemDetailsActions.clearFlowItemsDetails, (): FlowItemsDetailsState => {
+	on(FlowItemDetailsActions.loadFlowItemsDetails, (): FlowItemsDetailsState => {
 		return initialState;
 	}),
 	on(

@@ -17,7 +17,7 @@
     <div class="drop-point-container" *ngIf="showDropArea$ | async as showDropArea">
       <div class="drop-point-border" [class.scale-1]="showDropArea"></div>
     </div>
-    <svg-icon src="./assets/img/custom/add-button.svg"></svg-icon>
+    <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
 
   <div class="add-button ap-cursor-pointer afterLoopAddButton" (click)="add()" *ngIf="!viewMode"
@@ -26,7 +26,7 @@
       <div class="drop-point-border" [class.scale-1]="showDropArea"></div>
     </div>
 
-    <svg-icon src="./assets/img/custom/add-button.svg"></svg-icon>
+    <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
   <div #emptyLoopAddButton
     class="empty-loop-add-button ap-flex ap-items-center ap-justify-center ap-absolute ap-cursor-pointer"
