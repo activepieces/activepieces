@@ -38,6 +38,7 @@ import { NewCloudAuthenticationModalComponent } from 'src/app/modules/flow-build
 import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.service';
 import { ConfirmCloudAuthConfigUseDialog } from './confirm-cloud-auth-config-use-dialog/confirm-cloud-auth-config-use-dialog.component';
 import deepEqual from 'deep-equal';
+import { AuthenticationService } from '../../service/authentication.service';
 type ConfigKey = string;
 
 @Component({
@@ -90,7 +91,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		private actionMetaDataService: ActionMetaService,
 		private dialogService: MatDialog,
 		private store: Store,
-		private cloudAuthConfigsService: CloudAuthConfigsService
+		private cloudAuthConfigsService: CloudAuthConfigsService,
+    private authenticationService:AuthenticationService
 	) {
 		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions);
 	}
@@ -243,9 +245,11 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		}
 	}
 	openNewAuthenticationModal(authConfigName: string) {
-		this.updateOrAddConfigModalClosed$ = this.dialogService
+		this.updateOrAddConfigModalClosed$ =
+    this.authenticationService.getServerUrl().pipe(switchMap(serverUrl=>{
+      return     this.dialogService
 			.open(NewAuthenticationModalComponent, {
-				data: { pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2), pieceName: this.pieceName },
+				data: { pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2), pieceName: this.pieceName, serverUrl:serverUrl},
 			})
 			.afterClosed()
 			.pipe(
@@ -258,6 +262,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 				}),
 				map(() => void 0)
 			);
+    }))
+
 	}
 
 	openNewCloudAuthenticationModal(authConfigName: string, clientId: string) {
