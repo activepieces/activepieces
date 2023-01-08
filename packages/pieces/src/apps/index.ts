@@ -13,7 +13,7 @@ export const pieces: Piece[] = [
 	discord,
 	github,
 	hubspot,
-	hackernews,	
+	hackernews,
 	mailchimp
 ];
 
