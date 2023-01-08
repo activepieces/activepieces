@@ -4,17 +4,17 @@ import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
 
 const ignoredRoutes = new Set([
   "/v1/authentication/sign-in",
-  "/v1/pieces",
-  "/v1/oauth2/claim",
-  "/v1/flags",
-  "/v1/oauth2/claim-with-cloud",
   "/v1/authentication/sign-up",
-  "/v1/webhooks"
+  "/v1/flags",
+  "/v1/oauth2/claim",
+  "/v1/oauth2/claim-with-cloud",
+  "/v1/pieces",
+  "/v1/webhooks",
 ]);
 
 const HEADER_PREFIX = "Bearer ";
 
-export const tokenVerifyMiddleware = async (request: FastifyRequest, _reply: FastifyReply) => {
+export const tokenVerifyMiddleware = async (request: FastifyRequest, _reply: FastifyReply): Promise<void> => {
   if (ignoredRoutes.has(request.routerPath)) {
     return;
   }
