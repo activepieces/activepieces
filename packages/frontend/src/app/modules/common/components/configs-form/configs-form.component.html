@@ -1,3 +1,11 @@
+<!-- <div class="ap-px-4  ap-py-2 expansion-panel-body">
+  <p class="ap-my-2 doc-container ap-cursor-default" placement="bottom">
+    <fa-icon class="ap-mr-2 info-icon" matTooltipShowDelay="100" matTooltip="Connector Documentation"
+      [icon]="faInfoCircle"></fa-icon>
+    <a > </a>
+  </p>
+</div> -->
+
 <form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col ap-gap-2">
   <div *ngFor="let config of requiredConfigs; let i = index">
     <ng-container

@@ -1,5 +1,5 @@
 import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar-type.enum';
@@ -14,9 +14,9 @@ import { TestRunBarComponent } from './test-run-bar/test-run-bar.component';
 import { BuilderActions } from '../../store/action/builder.action';
 import { FlowItemDetailsActions } from '../../store/action/flow-items-details.action';
 import { RunDetailsService } from './flow-left-sidebar/run-details/iteration-details.service';
-import { FlowsActions } from '../../store/action/flows.action';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
 import { Collection, ExecutionOutputStatus, Instance } from 'shared';
+import { Title } from '@angular/platform-browser';
 
 @Component({
 	selector: 'app-collection-builder',
@@ -36,7 +36,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 	rightSidebarDragging: boolean = false;
 	leftSidebarDragging: boolean = false;
 	loadInitialData$: Observable<void> = new Observable<void>();
-	newCollectionCheck$: Observable<Params>;
 	constructor(
 		private store: Store,
 		public pieceBuilderService: CollectionBuilderService,
@@ -44,7 +43,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 		private ngZone: NgZone,
 		private snackbar: MatSnackBar,
 		private runDetailsService: RunDetailsService,
-		private route: ActivatedRoute
+		private titleService: Title
 	) {
 		this.loadInitialData$ = this.actRoute.data.pipe(
 			tap(value => {
@@ -53,7 +52,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 					const collection = runInformation.collection;
 					const flow = runInformation.flow;
 					const run = runInformation.run;
-
 					this.store.dispatch(
 						BuilderActions.loadInitial({
 							collection: collection,
@@ -62,7 +60,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 							run: run,
 						})
 					);
-
+					this.titleService.setTitle(`AP-${collection.version?.displayName}`);
 					this.snackbar.openFromComponent(TestRunBarComponent, {
 						duration: undefined,
 					});
@@ -70,6 +68,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 					const collection: Collection = value['collection'];
 					const flows = value['flows'];
 					const instance: Instance | undefined = value['instance'];
+					this.titleService.setTitle(`AP-${collection.version?.displayName}`);
 					this.store.dispatch(
 						BuilderActions.loadInitial({
 							collection: collection,
@@ -86,18 +85,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 
 		this.leftSidebar$ = this.store.select(BuilderSelectors.selectCurrentLeftSidebarType);
 		this.rightSidebar$ = this.store.select(BuilderSelectors.selectCurrentRightSideBarType);
-		this.newCollectionCheck$ = this.route.queryParams.pipe(
-			tap(params => {
-				if (params['newCollection']) {
-					this.store.dispatch(
-						FlowsActions.setRightSidebar({
-							sidebarType: RightSideBarType.TRIGGER_TYPE,
-							props: {},
-						})
-					);
-				}
-			})
-		);
 	}
 
 	ngOnDestroy(): void {

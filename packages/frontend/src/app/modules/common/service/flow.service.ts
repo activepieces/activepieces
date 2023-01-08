@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
-import { forkJoin, map, Observable, of, skipWhile, switchMap, take } from 'rxjs';
+import { forkJoin, map, Observable, of, switchMap, take, tap } from 'rxjs';
 import {
 	CollectionId,
 	CreateFlowRequest,
@@ -15,13 +15,12 @@ import {
 	FlowRun,
 	FlowVersionId,
 	SeekPage,
-	TriggerType,
 } from 'shared';
 import { BuilderSelectors } from '../../flow-builder/store/selector/flow-builder.selector';
 import { findDefaultFlowDisplayName } from '../utils';
 import { Store } from '@ngrx/store';
 import { FlowsActions } from '../../flow-builder/store/action/flows.action';
-import { RightSideBarType } from '../model/enum/right-side-bar-type.enum';
+
 @Injectable({
 	providedIn: 'root',
 })
@@ -40,33 +39,10 @@ export class FlowService {
 				})
 			)
 			.pipe(
-				map(response => {
-					if (response != undefined) {
-						this.store
-							.select(BuilderSelectors.selectCurrentFlowId)
-							.pipe(skipWhile(f => f != response.id))
-							.pipe(take(1))
-							.pipe(
-								switchMap(f => {
-									return this.store
-										.select(BuilderSelectors.selectCurrentTabState)
-										.pipe(skipWhile(f => f == undefined))
-										.pipe(take(1));
-								})
-							)
-							.subscribe(tab => {
-								if (response.version!.trigger?.type === TriggerType.EMPTY) {
-									this.store.dispatch(
-										FlowsActions.setRightSidebar({
-											sidebarType: RightSideBarType.TRIGGER_TYPE,
-											props: {},
-										})
-									);
-								}
-							});
+				tap(response => {
+					if (response) {
 						this.store.dispatch(FlowsActions.addFlow({ flow: response }));
 					}
-					return response;
 				})
 			);
 	}

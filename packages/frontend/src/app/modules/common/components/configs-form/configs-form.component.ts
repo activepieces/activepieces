@@ -38,6 +38,7 @@ import { NewCloudAuthenticationModalComponent } from 'src/app/modules/flow-build
 import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.service';
 import { ConfirmCloudAuthConfigUseDialog } from './confirm-cloud-auth-config-use-dialog/confirm-cloud-auth-config-use-dialog.component';
 import deepEqual from 'deep-equal';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 type ConfigKey = string;
 
 @Component({
@@ -60,6 +61,7 @@ type ConfigKey = string;
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfigsFormComponent implements ControlValueAccessor {
+	faInfoCircle = faInfoCircle;
 	checkingOAuth2CloudManager = false;
 	configs: PieceConfig[] = [];
 	requiredConfigs: PieceConfig[] = [];
