@@ -1,8 +1,21 @@
-import { cwd } from "node:process";
+import { arch, cwd } from "node:process";
+import { system } from "../helper/system/system";
+import { SystemProp } from "../helper/system/system-prop";
 const { exec } = require("child_process");
 const fs = require("fs");
 
+const getIsolateExecutableName = () => {
+  const defaultName = "isolate";
+  const executableNameMap: Record<string, string> = {
+    "arm": "isolate-arm",
+    "arm64": "isolate-arm",
+  };
+  return executableNameMap[arch] ?? defaultName;
+};
+
 export class Sandbox {
+  private static readonly isolateExecutableName = getIsolateExecutableName();
+
   constructor(public readonly boxId: number) {}
 
   async cleanAndInit(): Promise<void> {
@@ -65,7 +78,7 @@ export class Sandbox {
 
   private static runIsolate(cmd: string): Promise<string> {
     const currentDir = cwd();
-    const fullCmd = `${currentDir}/resources/isolate ${cmd}`;
+    const fullCmd = `${currentDir}/resources/${this.isolateExecutableName} ${cmd}`;
     return new Promise((resolve, reject) => {
       exec(fullCmd, (error: any, stdout: string | PromiseLike<string>, stderr: any) => {
         if (error) {
