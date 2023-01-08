@@ -87,8 +87,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 				validators: [Validators.required],
 			}),
 			scope: new FormControl(this.pieceAuthConfig.scope?.join(' ') || '', {
-				nonNullable: true,
-				validators: [Validators.required],
+				nonNullable: true			
 			}),
 			key: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
 				nonNullable: true,
