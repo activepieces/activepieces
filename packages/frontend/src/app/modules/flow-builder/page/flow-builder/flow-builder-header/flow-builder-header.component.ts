@@ -52,12 +52,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
 					type: ChevronDropdownOptionType.NORMAL,
 				},
 				{
-					id: 'VERSIONS',
-					name: 'Versions',
-					cssClasses: '',
-					type: ChevronDropdownOptionType.NORMAL,
-				},
-				{
 					id: 'SEP_1',
 					type: ChevronDropdownOptionType.SEPARATOR,
 					cssClasses: '',
