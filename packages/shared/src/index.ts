@@ -1,13 +1,15 @@
+export * from "./app-auth/dto/upsert-app-request";
+
 export { RefreshTokenFromCloudRequest } from "./oauth2/dto/refresh-token-from-cloud";
 
 export { StoreOperation} from "./flows/actions/action";
 
 export * from "./flow-run/execution/step-output";
-
 export * from "./flows/flow-operations";
 export * from "./collections/config";
 export * from './instance';
 
+export {AppAuth} from "./app-auth/app-auth";
 export * from "./flow-run/execution/execution-output";
 export { StepOutputStatus } from "./flow-run/execution/step-output";
 export {ClaimTokenWithSecretRequest} from "./oauth2/dto/claim-token-with-secret";
