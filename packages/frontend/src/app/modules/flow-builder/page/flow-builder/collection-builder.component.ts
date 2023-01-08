@@ -97,7 +97,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 			passive: false,
 			capture: true,
 		});
-		this.store.dispatch(FlowItemDetailsActions.clearFlowItemsDetails());
 		this.store.dispatch(FlowItemDetailsActions.loadFlowItemsDetails());
 	}
 
