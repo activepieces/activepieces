@@ -24,6 +24,7 @@ interface AuthConfigSettings {
 	refreshUrl: FormControl<string>;
 	extraParams: FormControl<Record<string, unknown>>;
 }
+export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
 @Component({
 	selector: 'app-new-authentication-modal',
 	templateUrl: './new-authentication-modal.component.html',
@@ -154,5 +155,8 @@ export class NewAuthenticationModalComponent implements OnInit {
 			.reduce((prev, next) => {
 				return prev && next;
 			}, true);
+	}
+	useCloudCreds() {
+		this.dialogRef.close(USE_CLOUD_CREDENTIALS);
 	}
 }

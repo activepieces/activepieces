@@ -16,6 +16,7 @@ interface AuthConfigSettings {
 	key: FormControl<string>;
 	value: FormControl<any>;
 }
+export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
 @Component({
 	selector: 'app-new-cloud-authentication-modal',
 	templateUrl: './new-cloud-authentication-modal.component.html',
@@ -125,5 +126,8 @@ export class NewCloudAuthenticationModalComponent implements OnInit {
 			.reduce((prev, next) => {
 				return prev && next;
 			}, true);
+	}
+	useOwnCred() {
+		this.dialogRef.close(USE_MY_OWN_CREDENTIALS);
 	}
 }

@@ -10,11 +10,15 @@
 * Self-host with a simple docker command
 * An alternative to Zapier, Make.com and Tray
 
+Visit [our docs](https://www.activepieces.com/docs) to learn all the details.
+
 
 ## Get started for free
 
-**Activepieces is still a prototype, an offical release is coming soon**
+### Option One: Demo Instance
+visit https://demo.activepieces.com
 
+### Option Two: Self Host
 Clone Activepieces to your machine and run it with 1 command
 
  ```bash 
