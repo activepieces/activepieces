@@ -1,8 +1,6 @@
 import { arch, cwd } from "node:process";
-import { system } from "../helper/system/system";
-import { SystemProp } from "../helper/system/system-prop";
-const { exec } = require("child_process");
-const fs = require("fs");
+import { exec } from "node:child_process";
+import fs from "node:fs";
 
 const getIsolateExecutableName = () => {
   const defaultName = "isolate";
