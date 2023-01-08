@@ -42,6 +42,7 @@ import {
 } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-cloud-authentication-modal/new-cloud-authentication-modal.component';
 import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.service';
 import deepEqual from 'deep-equal';
+import { AuthenticationService } from '../../service/authentication.service';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 type ConfigKey = string;
 
@@ -96,7 +97,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		private actionMetaDataService: ActionMetaService,
 		private dialogService: MatDialog,
 		private store: Store,
-		private cloudAuthConfigsService: CloudAuthConfigsService
+		private cloudAuthConfigsService: CloudAuthConfigsService,
+    private authenticationService:AuthenticationService
 	) {
 		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions);
 	}
@@ -238,9 +240,11 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		}
 	}
 	openNewAuthenticationModal(authConfigName: string) {
-		this.updateOrAddConfigModalClosed$ = this.dialogService
+		this.updateOrAddConfigModalClosed$ =
+    this.authenticationService.getServerUrl().pipe(switchMap(serverUrl=>{
+      return     this.dialogService
 			.open(NewAuthenticationModalComponent, {
-				data: { pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2), pieceName: this.pieceName },
+				data: { pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2), pieceName: this.pieceName, serverUrl:serverUrl},
 			})
 			.afterClosed()
 			.pipe(
@@ -271,6 +275,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 				}),
 				map(() => void 0)
 			);
+    }))
+
 	}
 
 	openNewCloudAuthenticationModal(authConfigName: string, clientId: string) {

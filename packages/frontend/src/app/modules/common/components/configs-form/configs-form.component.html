@@ -30,9 +30,10 @@
     </mat-menu>
   </div>
   <div *ngFor="let config of selectedOptionalConfigs; let i = index">
-    <ng-container
-      *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:config, configIndex:i, formGroup:form}"></ng-container>
+    <ng-container *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:config, configIndex:i, formGroup:form}">
+    </ng-container>
   </div>
+
 </form>
 
 <ng-template let-config let-configIndex="configIndex" #formFieldsTemplate let-formGroup="formGroup">
@@ -72,7 +73,7 @@
               {{opt.label}}
             </mat-option>
             <mat-option [disabled]="true" *ngIf="state.disabled">
-              {{state.placeholder}}
+              <div> {{state.placeholder}} </div>
             </mat-option>
           </ng-container>
         </mat-select>

@@ -9,7 +9,6 @@ import { PieceConfig } from 'src/app/modules/common/components/configs-form/conn
 import { ConfigKeyValidator } from 'src/app/modules/flow-builder/page/flow-builder/validators/configKeyValidator';
 import { CollectionActions } from 'src/app/modules/flow-builder/store/action/collection.action';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
-import { environment } from 'src/environments/environment';
 
 interface AuthConfigSettings {
 	pieceName: FormControl<string | null>;
@@ -35,6 +34,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 	@Input() pieceAuthConfig: PieceConfig;
 	@Input() pieceName: string;
 	@Input() configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
+	@Input() serverUrl: string;
 	settingsForm: FormGroup<AuthConfigSettings>;
 	collectionId$: Observable<string>;
 	submitted = false;
@@ -55,11 +55,13 @@ export class NewAuthenticationModalComponent implements OnInit {
 			pieceAuthConfig: PieceConfig;
 			pieceName: string;
 			configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
+			serverUrl: string;
 		}
 	) {
 		this.pieceName = dialogData.pieceName;
 		this.pieceAuthConfig = dialogData.pieceAuthConfig;
 		this.configToUpdateWithIndex = dialogData.configToUpdateWithIndex;
+		this.serverUrl = dialogData.serverUrl;
 	}
 
 	ngOnInit(): void {
@@ -70,7 +72,10 @@ export class NewAuthenticationModalComponent implements OnInit {
 				validators: [Validators.required],
 			}),
 			pieceName: new FormControl<string | null>(this.pieceName, { nonNullable: false, validators: [] }),
-			redirectUrl: new FormControl(environment.redirectUrl, { nonNullable: true, validators: [Validators.required] }),
+			redirectUrl: new FormControl(this.serverUrl ? `${this.serverUrl}/redirect` : '', {
+				nonNullable: true,
+				validators: [Validators.required],
+			}),
 			clientSecret: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
 			clientId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
 			authUrl: new FormControl(this.pieceAuthConfig.authUrl || '', {
