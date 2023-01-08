@@ -2,9 +2,11 @@ import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
+import { Observable, take } from 'rxjs';
 import { Flow } from 'shared';
 import { FlowsActions } from 'src/app/modules/flow-builder/store/action/flows.action';
+import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
+import { DeleteFlowValidator } from '../../../validators/deleteFlowValidator';
 
 @Component({
 	templateUrl: './delete-flow-dialog.component.html',
@@ -23,6 +25,9 @@ export class DeleteFlowDialogComponent {
 			confirmation: new FormControl('', {
 				nonNullable: true,
 				validators: [Validators.required, Validators.pattern('DELETE')],
+				asyncValidators: [
+					DeleteFlowValidator.createValidator(this.store.select(BuilderSelectors.selectFlows).pipe(take(1))),
+				],
 			}),
 		});
 	}
