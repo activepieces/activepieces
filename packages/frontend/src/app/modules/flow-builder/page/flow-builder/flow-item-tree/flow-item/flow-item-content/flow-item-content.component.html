@@ -5,9 +5,9 @@
     ap-cursor-pointer ap-flex ap-items-center ap-mr-5 ap-justify-center
      ap-bg-white ap-border-solid ap-border-[1px]
       ap-border-line ap-min-w-[50px] ap-min-h-[50px]" [class.ap-opacity-100]="hover" [class.ap-opacity-0]="!hover">
-      <app-icon-button *ngIf="trigger" [iconFilename]="'replace.svg'" tooltipText="Change Trigger"
-        (buttonClicked)="changeTrigger()"></app-icon-button>
-      <app-icon-button *ngIf="!trigger" [iconFilename]="'trash.svg'" color="warn" tooltipText="Delete Step"
+      <app-icon-button *ngIf="trigger" iconFilename="replace.svg" tooltipText="Change Trigger" [width]="17"
+        [height]="17" (buttonClicked)="changeTrigger()"></app-icon-button>
+      <app-icon-button *ngIf="!trigger" iconFilename="trash.svg" color="warn" tooltipText="Delete Step"
         (buttonClicked)="deleteStep()"></app-icon-button>
     </div>
   </div>
