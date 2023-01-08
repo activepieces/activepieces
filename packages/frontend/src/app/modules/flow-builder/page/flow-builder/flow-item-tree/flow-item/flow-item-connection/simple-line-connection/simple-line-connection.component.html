@@ -13,6 +13,6 @@
     <div class="drop-point-container" *ngIf="showDropArea$ | async as showDropArea">
       <div class="drop-point-border" [class.scale-1]="showDropArea"></div>
     </div>
-    <svg-icon src="./assets/img/custom/add-button.svg"></svg-icon>
+    <svg-icon src="./assets/img/custom/add-button.svg" [svgStyle]="addButtonSize"></svg-icon>
   </div>
 </div>

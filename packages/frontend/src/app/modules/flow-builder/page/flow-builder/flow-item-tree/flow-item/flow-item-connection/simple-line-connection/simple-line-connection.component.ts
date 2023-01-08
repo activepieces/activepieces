@@ -45,7 +45,7 @@ export class SimpleLineConnectionComponent implements OnInit, AfterViewInit, OnC
 	arrowHeadTop = '0px';
 	addButtonLeft = '0px';
 	addButtonTop = '0px';
-
+	addButtonSize = { width: `${ADD_BUTTON_SIZE.width}px`, height: `${ADD_BUTTON_SIZE.height}px` };
 	constructor(private store: Store, private flowRendererService: FlowRendererService) {}
 
 	drawCommand: string;
