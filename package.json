@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "license": "MIT",
   "scripts": {
     "start": "nx run backend:start & nx run frontend:start"
