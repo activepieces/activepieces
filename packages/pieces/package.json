@@ -18,8 +18,10 @@
     "nodemon": "^2.0.20",
     "typescript": "^4.0.3"
   },
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json --outDir dist",
+    "build": "tsc -p tsconfig.json",
     "posttest": "npm run lint",
     "test": "jest --coverage",
     "test:watch": "jest --watch"

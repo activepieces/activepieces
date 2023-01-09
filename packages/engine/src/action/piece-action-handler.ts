@@ -1,5 +1,4 @@
 import { VariableService } from '../services/variable-service';
-import { PieceExecutor } from '../executors/piece-executor';
 import {
   ExecutionState,
   PieceAction,
@@ -7,6 +6,7 @@ import {
   StepOutputStatus
 } from 'shared';
 import { BaseActionHandler } from './action-handler';
+import { PieceExecutor } from '../executors/piece-executor';
 
 export class PieceActionHandler extends BaseActionHandler<PieceAction> {
   variableService: VariableService;
