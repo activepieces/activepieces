@@ -1,15 +1,18 @@
 import { Static, Type } from "@sinclair/typebox";
-import { AuthAppName } from "../../app-auth/app-auth";
 
-export const UpsertOAuth2ConnectionRequest = Type.Object({
-    appName: Type.Union([Type.Literal(AuthAppName.SALESFORCE), Type.Literal(AuthAppName.BLACKBAUD)]),
-    projectId: Type.String({}),
-    settings: Type.Object({
-        clientId: Type.String({}),
-        clientSecret: Type.String({}),
-        scope: Type.String({}),
-    }),
+export const UpsertConnectionRequest = Type.Object({
+    name: Type.String({}),
+    appSecretId: Type.String({}),
+    connection: Type.Any([
+        Type.Object({
+            expires_in: Type.Optional(Type.Number()),
+            claimed_at: Type.Optional(Type.Number()),
+            refresh_token: Type.Optional(Type.String()),
+            token_type: Type.String({}),
+            access_token: Type.String({}),
+            scope: Type.Array(Type.String({})),
+            data: Type.Object({})
+        })
+    ])
 });
-
-export const UpsertAuthAppRequest = Type.Union([UpsertOAuth2ConnectionRequest]);
-export type UpsertAuthAppRequest = Static<typeof UpsertAuthAppRequest>;
+export type UpsertConnectionRequest = Static<typeof UpsertConnectionRequest>;

@@ -22,6 +22,7 @@ type ErrorParams =
   | JobRemovalFailureErrorParams
   | PieceNotFoundErrorParams
   | PieceTriggerNotFoundErrorParams
+  | AppSecretNotFoundErrorParams
   | StepNotFoundErrorParams
   | SystemPropNotDefinedErrorParams;
 
@@ -30,9 +31,9 @@ export interface BaseErrorParams<T, V> {
   params: V;
 }
 
-export interface InvalidBearerTokenParams extends BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {}> {}
+export interface InvalidBearerTokenParams extends BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {}> { }
 
-export interface FileNotFoundErrorParams extends BaseErrorParams<ErrorCode.FILE_NOT_FOUND, { id: FileId }> {}
+export interface FileNotFoundErrorParams extends BaseErrorParams<ErrorCode.FILE_NOT_FOUND, { id: FileId }> { }
 
 export interface FlowNotFoundErrorParams
   extends BaseErrorParams<
@@ -40,7 +41,7 @@ export interface FlowNotFoundErrorParams
     {
       id: FlowId;
     }
-  > {}
+  > { }
 
 export interface CollectionNotFoundErrorParams
   extends BaseErrorParams<
@@ -48,7 +49,7 @@ export interface CollectionNotFoundErrorParams
     {
       id: CollectionId;
     }
-  > {}
+  > { }
 
 export interface CollectionVersionNotFoundErrorParams
   extends BaseErrorParams<
@@ -56,7 +57,7 @@ export interface CollectionVersionNotFoundErrorParams
     {
       id: CollectionVersionId;
     }
-  > {}
+  > { }
 
 export interface InstanceNotFoundErrorParams
   extends BaseErrorParams<
@@ -65,7 +66,7 @@ export interface InstanceNotFoundErrorParams
       id?: InstanceId;
       collectionId?: CollectionId;
     }
-  > {}
+  > { }
 
 export interface FlowRunNotFoundErrorParams
   extends BaseErrorParams<
@@ -73,7 +74,7 @@ export interface FlowRunNotFoundErrorParams
     {
       id: FlowRunId;
     }
-  > {}
+  > { }
 
 export interface FlowVersionNotFoundErrorParams
   extends BaseErrorParams<
@@ -81,7 +82,7 @@ export interface FlowVersionNotFoundErrorParams
     {
       id: FlowVersionId;
     }
-  > {}
+  > { }
 
 export interface InvalidCredentialsErrorParams
   extends BaseErrorParams<
@@ -89,7 +90,7 @@ export interface InvalidCredentialsErrorParams
     {
       email: string;
     }
-  > {}
+  > { }
 
 export interface ExistingUserErrorParams
   extends BaseErrorParams<
@@ -97,7 +98,7 @@ export interface ExistingUserErrorParams
     {
       email: string;
     }
-  > {}
+  > { }
 
 export interface StepNotFoundErrorParams
   extends BaseErrorParams<
@@ -106,7 +107,7 @@ export interface StepNotFoundErrorParams
       pieceName: string;
       stepName: string;
     }
-  > {}
+  > { }
 
 export interface PieceNotFoundErrorParams
   extends BaseErrorParams<
@@ -114,7 +115,7 @@ export interface PieceNotFoundErrorParams
     {
       pieceName: string;
     }
-  > {}
+  > { }
 
 export interface PieceTriggerNotFoundErrorParams
   extends BaseErrorParams<
@@ -123,7 +124,7 @@ export interface PieceTriggerNotFoundErrorParams
       pieceName: string;
       triggerName: string;
     }
-  > {}
+  > { }
 
 export interface ConfigNotFoundErrorParams
   extends BaseErrorParams<
@@ -133,7 +134,15 @@ export interface ConfigNotFoundErrorParams
       stepName: string;
       configName: string;
     }
-  > {}
+  > { }
+
+export interface AppSecretNotFoundErrorParams
+  extends BaseErrorParams<
+    ErrorCode.APP_SECRET_NOT_FOUND,
+    {
+      appSecretId: ApId;
+    }
+  > { }
 
 export interface JobRemovalFailureErrorParams
   extends BaseErrorParams<
@@ -141,7 +150,7 @@ export interface JobRemovalFailureErrorParams
     {
       jobId: ApId;
     }
-  > {}
+  > { }
 
 export interface SystemPropNotDefinedErrorParams
   extends BaseErrorParams<
@@ -149,12 +158,13 @@ export interface SystemPropNotDefinedErrorParams
     {
       prop: SystemProp;
     }
-  > {}
+  > { }
 
 export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
   COLLECTION_VERSION_NOT_FOUND = "COLLECTION_VERSION_NOT_FOUND",
   CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
+  APP_SECRET_NOT_FOUND = "APP_SECRET_NOT_FOUND",
   EXISTING_USER = "EXISTING_USER",
   FILE_NOT_FOUND = "FILE_NOT_FOUND",
   FLOW_NOT_FOUND = "FLOW_NOT_FOUND",

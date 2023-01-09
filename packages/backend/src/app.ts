@@ -20,6 +20,8 @@ import { flowWorkerModule } from "./workers/flow-worker/flow-worker-module";
 import cors from '@fastify/cors'
 import { webhookModule } from "./webhooks/webhook-module";
 import { errorHandler } from "./helper/error-handler";
+import { appSecretModule } from "./app-secret/app-secret.module";
+import { appConnectionModule } from "./app-connection/app-connection.module";
 
 declare module "fastify" {
   export interface FastifyRequest {
@@ -47,9 +49,11 @@ app.register(codeModule);
 app.register(flowWorkerModule);
 app.register(piecesController);
 app.register(oauth2Module);
+app.register(appSecretModule);
 app.register(instanceModule);
 app.register(flowRunModule);
 app.register(webhookModule);
+app.register(appConnectionModule);
 
 app.setErrorHandler(errorHandler);
 
