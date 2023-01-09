@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Mautic Community Support
+    url: https://forum.mautic.org/c/support
+    about: Please ask and answer support questions here.
+  - name: Mautic Feature Requests
+    url: https://forum.mautic.org/c/ideas
+    about: We use GitHub issues as a bug tracker only. Please go to https://forum.mautic.org/c/ideas to find support and discuss features/ideas.

@@ -1,0 +1,70 @@
+name: Bug Report
+description: File a bug report
+title: "Your bug title goes here!"
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+        Before you create the issue:
+        - Search for similar reports among other reported issues.
+        - Learn how to troubleshoot at LINK-FOR-TROUBLE-SHOOTING
+  - type: dropdown
+    id: Activepieces_Version
+    attributes:
+      label: Activepieces Version
+      description: What version of Activepieces you are using? Please test to reproduce your bug with the [latest stable version of Activepieces](https://www.Activepieces.org/Activepieces-releases) which might contain new fixes.  If you are able, please also check the latest development release.
+      options:
+        - 1.0.x series
+    validations:
+      required: true
+  - type: input
+    id: Docker_version
+    attributes:
+      label: Docker version
+      description: What Docker version are you using in your environment?
+      placeholder: ex. 8.0.20
+    validations:
+      required: true
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: What browsers are you seeing the problem on?
+      multiple: true
+      options:
+      - Firefox
+      - Chrome
+      - Safari
+      - Microsoft Edge
+      - Not relevant
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      value: "A bug happened!"
+    validations:
+      required: true
+  - type: textarea
+    id: how_to_reproduce
+    attributes:
+       label: How can we reproduce this issue?
+       description: Explain us carefuly how we can reproduce the bug you faced.
+       value: "Step 1: "
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.  Please check to ensure that you are not sharing any sensitive information in your logs (replace with REDACTED as required)
+      render: Shell
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree that you have read and agree to follow our [Code of Conduct](https://contribute.Activepieces.org/policies/code-of-conduct)
+      options:
+        - label: I confirm that I have read and agree to follow this project's Code of Conduct
+          required: true
