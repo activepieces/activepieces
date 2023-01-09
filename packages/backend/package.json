@@ -1,6 +1,6 @@
 {
     "name": "backend",
-    "version": "0.1.9",
+    "version": "0.1.14",
     "description": "",
     "main": "./src/index.ts",
     "scripts": {
@@ -40,6 +40,7 @@
         "typeorm-extension": "^2.4.0"
     },
     "devDependencies": {
+        "@sinclair/typebox": "^0.25.16",
         "@types/bcrypt": "^5.0.0",
         "@types/decompress": "^4.2.4",
         "@types/jsonwebtoken": "^8.5.9",

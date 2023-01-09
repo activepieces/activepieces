@@ -1,10 +1,8 @@
 import fastify from "fastify";
-import { Principal } from "shared";
+import cors from "@fastify/cors";
 import { databaseModule } from "./database/database-module";
 import { authenticationModule } from "./authentication/authentication.module";
 import { collectionModule } from "./collections/collection.module";
-import { StatusCodes } from "http-status-codes";
-import { ActivepiecesError } from "./helper/activepieces-error";
 import { projectModule } from "./project/project.module";
 import { flowModule } from "./flows/flow.module";
 import { fileModule } from "./file/file.module";
@@ -17,15 +15,8 @@ import { flowRunModule } from "./flow-run/flow-run-module";
 import { flagModule } from "./flags/flag.module";
 import { codeModule } from "./workers/code-worker/code.module";
 import { flowWorkerModule } from "./workers/flow-worker/flow-worker-module";
-import cors from '@fastify/cors'
 import { webhookModule } from "./webhooks/webhook-module";
 import { errorHandler } from "./helper/error-handler";
-
-declare module "fastify" {
-  export interface FastifyRequest {
-    principal: Principal;
-  }
-}
 
 const app = fastify({
   logger: true,

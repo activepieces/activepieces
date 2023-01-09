@@ -2,14 +2,14 @@ import { Component, Inject, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
-import { Observable, take } from 'rxjs';
+import { map, Observable, take } from 'rxjs';
 import { Config, ConfigType, OAuth2Config } from 'shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
+import { CloudAuthConfigsService } from 'src/app/modules/common/service/cloud-auth-configs.service';
 import { ConfigKeyValidator } from 'src/app/modules/flow-builder/page/flow-builder/validators/configKeyValidator';
 import { CollectionActions } from 'src/app/modules/flow-builder/store/action/collection.action';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
-import { environment } from 'src/environments/environment';
 
 interface AuthConfigSettings {
 	pieceName: FormControl<string | null>;
@@ -24,6 +24,7 @@ interface AuthConfigSettings {
 	refreshUrl: FormControl<string>;
 	extraParams: FormControl<Record<string, unknown>>;
 }
+export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
 @Component({
 	selector: 'app-new-authentication-modal',
 	templateUrl: './new-authentication-modal.component.html',
@@ -34,6 +35,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 	@Input() pieceAuthConfig: PieceConfig;
 	@Input() pieceName: string;
 	@Input() configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
+	@Input() serverUrl: string;
 	settingsForm: FormGroup<AuthConfigSettings>;
 	collectionId$: Observable<string>;
 	submitted = false;
@@ -45,23 +47,32 @@ export class NewAuthenticationModalComponent implements OnInit {
 	scopesTooltip = 'The permissions needed to access the endpoints you plan to work with on the 3rd party service.';
 	keyTooltip =
 		'The ID of this authentication definition. You will need to select this key whenever you want to reuse this authentication.';
+	hasCloudAuthCred$: Observable<boolean>;
 	constructor(
 		private fb: FormBuilder,
 		private store: Store,
 		public dialogRef: MatDialogRef<NewAuthenticationModalComponent>,
+		private cloudAuthConfigsService: CloudAuthConfigsService,
 		@Inject(MAT_DIALOG_DATA)
 		dialogData: {
 			pieceAuthConfig: PieceConfig;
 			pieceName: string;
 			configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
+			serverUrl: string;
 		}
 	) {
 		this.pieceName = dialogData.pieceName;
 		this.pieceAuthConfig = dialogData.pieceAuthConfig;
 		this.configToUpdateWithIndex = dialogData.configToUpdateWithIndex;
+		this.serverUrl = dialogData.serverUrl;
 	}
 
 	ngOnInit(): void {
+		this.hasCloudAuthCred$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
+			map(res => {
+				return !!res[this.pieceName];
+			})
+		);
 		this.collectionId$ = this.store.select(BuilderSelectors.selectCurrentCollectionId);
 		this.settingsForm = this.fb.group({
 			extraParams: new FormControl<Record<string, unknown>>(this.pieceAuthConfig.extra ?? {}, {
@@ -69,7 +80,10 @@ export class NewAuthenticationModalComponent implements OnInit {
 				validators: [Validators.required],
 			}),
 			pieceName: new FormControl<string | null>(this.pieceName, { nonNullable: false, validators: [] }),
-			redirectUrl: new FormControl(environment.redirectUrl, { nonNullable: true, validators: [Validators.required] }),
+			redirectUrl: new FormControl(this.serverUrl ? `${this.serverUrl}/redirect` : '', {
+				nonNullable: true,
+				validators: [Validators.required],
+			}),
 			clientSecret: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
 			clientId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
 			authUrl: new FormControl(this.pieceAuthConfig.authUrl || '', {
@@ -81,8 +95,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 				validators: [Validators.required],
 			}),
 			scope: new FormControl(this.pieceAuthConfig.scope?.join(' ') || '', {
-				nonNullable: true,
-				validators: [Validators.required],
+				nonNullable: true			
 			}),
 			key: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
 				nonNullable: true,
@@ -154,5 +167,8 @@ export class NewAuthenticationModalComponent implements OnInit {
 			.reduce((prev, next) => {
 				return prev && next;
 			}, true);
+	}
+	useCloudCreds() {
+		this.dialogRef.close(USE_CLOUD_CREDENTIALS);
 	}
 }

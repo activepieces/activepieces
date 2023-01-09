@@ -4,18 +4,16 @@ import {
 	getDisplayNameForTrigger,
 } from 'src/app/modules/common/utils';
 import { Store } from '@ngrx/store';
-import { forkJoin, map, Observable, take, tap } from 'rxjs';
+import { combineLatest, forkJoin, map, Observable, take, tap } from 'rxjs';
 import { FlowItemDetails } from './step-type-item/flow-item-details';
 import { FlowsActions } from '../../../../store/action/flows.action';
 import { RightSideBarType } from '../../../../../common/model/enum/right-side-bar-type.enum';
 import { Component, Input, OnInit } from '@angular/core';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
 import { ComponentItemDetails } from './step-type-item/component-item-details';
-import { environment } from '../../../../../../../environments/environment';
 import { StoreOperation, Trigger, ActionType, TriggerType, Flow, AddActionRequest, FlowVersion } from 'shared';
 import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
 import { FlowStructureUtil } from 'src/app/modules/flow-builder/service/flowStructureUtil';
-
 @Component({
 	selector: 'app-step-type-sidebar',
 	templateUrl: './step-type-sidebar.component.html',
@@ -26,14 +24,14 @@ export class StepTypeSidebarComponent implements OnInit {
 	@Input() set showTriggers(shouldShowTriggers) {
 		this._showTriggers = shouldShowTriggers;
 		if (this._showTriggers) {
-			this.sideBarDisplayName = 'Triggers';
+			this.sideBarDisplayName = 'Select Trigger';
 		} else {
-			this.sideBarDisplayName = 'Flow Steps';
+			this.sideBarDisplayName = 'Select Step';
 		}
 		this.populateTabsAndTheirLists();
 	}
 
-	sideBarDisplayName = 'Flow Steps';
+	sideBarDisplayName = 'Select Step';
 	tabsAndTheirLists: {
 		displayName: string;
 		list$: Observable<FlowItemDetails[]>;
@@ -58,19 +56,28 @@ export class StepTypeSidebarComponent implements OnInit {
 		const connectorComponentsItemsDetails$ = this._showTriggers
 			? this.store.select(BuilderSelectors.selectFlowItemDetailsForConnectorComponentsTriggers)
 			: this.store.select(BuilderSelectors.selectFlowItemDetailsForConnectorComponents);
+
+		this.tabsAndTheirLists.push({
+			displayName: 'All',
+			list$: combineLatest({ core: coreItemsDetails$, apps: connectorComponentsItemsDetails$ }).pipe(
+				map(res => {
+					return [...res.core, ...res.apps];
+				})
+			),
+			emptyListText: '',
+		});
+
 		this.tabsAndTheirLists.push({
 			displayName: 'Core',
 			list$: coreItemsDetails$,
 			emptyListText: '',
 		});
 
-		if (environment.feature.newComponents) {
-			this.tabsAndTheirLists.push({
-				displayName: 'Apps',
-				list$: connectorComponentsItemsDetails$,
-				emptyListText: this._showTriggers ? 'No app triggers are available' : 'No app steps are available',
-			});
-		}
+		this.tabsAndTheirLists.push({
+			displayName: this._showTriggers ? 'App Events' : 'App Actions',
+			list$: connectorComponentsItemsDetails$,
+			emptyListText: this._showTriggers ? 'No app triggers are available' : 'No app steps are available',
+		});
 	}
 
 	closeSidebar() {

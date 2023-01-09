@@ -3,7 +3,7 @@
     "lib" : ["es2019"],
     "module": "commonjs",
     "moduleResolution": "Node",
-    "rootDir": ".",
+    "rootDir": "src",
     "outDir": "dist",
     "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false,
@@ -15,6 +15,7 @@
     "noImplicitReturns": true,
     "pretty": true,
     "sourceMap": true,
+    "strictPropertyInitialization": false,
     "strict": true,
     "target": "es2018"
   },
@@ -22,6 +23,5 @@
     "node_modules"
   ],
   "include": [
-    "src/**/*.ts"
-  ]
+    "src/**/*.ts" ]
 }

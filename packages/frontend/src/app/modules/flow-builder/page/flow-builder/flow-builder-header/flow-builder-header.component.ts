@@ -14,6 +14,7 @@ import {
 	ChevronDropdownOptionType,
 } from '../../../components/chevron-dropdown-menu/chevron-dropdown-option';
 import { Collection, Instance } from 'shared';
+import { Title } from '@angular/platform-browser';
 
 @Component({
 	selector: 'app-flow-builder-header',
@@ -35,7 +36,8 @@ export class FlowBuilderHeaderComponent implements OnInit {
 		public themeService: ThemeService,
 		private router: Router,
 		public collectionBuilderService: CollectionBuilderService,
-		private route: ActivatedRoute
+		private route: ActivatedRoute,
+		private titleService: Title
 	) {}
 
 	ngOnInit(): void {
@@ -48,12 +50,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
 				{
 					id: 'RENAME',
 					name: 'Rename',
-					cssClasses: '',
-					type: ChevronDropdownOptionType.NORMAL,
-				},
-				{
-					id: 'VERSIONS',
-					name: 'Versions',
 					cssClasses: '',
 					type: ChevronDropdownOptionType.NORMAL,
 				},
@@ -101,6 +97,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 
 	savePieceName(newPieceName: string) {
 		this.store.dispatch(CollectionActions.changeName({ displayName: newPieceName }));
+		this.titleService.setTitle(`AP-${newPieceName}`);
 	}
 
 	redirectHome(newWindow: boolean) {

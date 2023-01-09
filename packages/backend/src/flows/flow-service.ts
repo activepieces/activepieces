@@ -34,7 +34,7 @@ export const flowService = {
       displayName: request.displayName,
       valid: false,
       trigger: {
-        displayName: "Empty Trigger",
+        displayName: "Select Trigger",
         name: "trigger",
         type: TriggerType.EMPTY,
         settings: {},
