@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - dev
-      - feature-docker-multiplatform-build
 
 jobs:
   Release-Frontend:
