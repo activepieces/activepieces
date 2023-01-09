@@ -58,7 +58,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
 	afterLoopArrowHeadTop: number = 0;
 	showEmptyLoopAddButtonBoxShadow = false;
 	svgHeight: number = 0;
-
+	addButtonSize = { width: `${ADD_BUTTON_SIZE.width}px`, height: `${ADD_BUTTON_SIZE.height}px` };
 	_flowItem: LoopOnItemsAction & FlowItemRenderInfo;
 
 	showDropArea$: Observable<boolean> = new Observable<boolean>();

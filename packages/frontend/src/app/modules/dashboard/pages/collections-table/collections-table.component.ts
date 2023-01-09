@@ -89,6 +89,7 @@ export class CollectionsTableComponent implements OnInit {
 					return this.flowService.create({ collectionId: collection.id, displayName: 'Flow 1' });
 				}),
 				tap(flow => {
+					debugger;
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
 						this.posthogService.captureEvent('flow.created [Builder]', flow);
 					}

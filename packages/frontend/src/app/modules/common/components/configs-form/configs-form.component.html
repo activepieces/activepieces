@@ -1,3 +1,11 @@
+<!-- <div class="ap-px-4  ap-py-2 expansion-panel-body">
+  <p class="ap-my-2 doc-container ap-cursor-default" placement="bottom">
+    <fa-icon class="ap-mr-2 info-icon" matTooltipShowDelay="100" matTooltip="Connector Documentation"
+      [icon]="faInfoCircle"></fa-icon>
+    <a > </a>
+  </p>
+</div> -->
+
 <form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col ap-gap-2">
   <div *ngFor="let config of requiredConfigs; let i = index">
     <ng-container
@@ -22,9 +30,10 @@
     </mat-menu>
   </div>
   <div *ngFor="let config of selectedOptionalConfigs; let i = index">
-    <ng-container
-      *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:config, configIndex:i, formGroup:form}"></ng-container>
+    <ng-container *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:config, configIndex:i, formGroup:form}">
+    </ng-container>
   </div>
+
 </form>
 
 <ng-template let-config let-configIndex="configIndex" #formFieldsTemplate let-formGroup="formGroup">
@@ -64,15 +73,9 @@
               {{opt.label}}
             </mat-option>
             <mat-option [disabled]="true" *ngIf="state.disabled">
-              {{state.placeholder}}
+              <div> {{state.placeholder}} </div>
             </mat-option>
           </ng-container>
-
-
-          <!-- <mat-option [disabled]="true"
-            *ngIf=" ( optionsObservables$[config.key]| async) === undefined ||  (optionsObservables$[config.key]| async)!.options?.length === 0 && !(optionsObservables$[config.key]| async)?.disabled ">
-            No options available
-          </mat-option> -->
         </mat-select>
         <mat-error *ngIf="formGroup.get(config.key)?.invalid">
           {{config.label}} is required
@@ -95,9 +98,15 @@
               [value]="opt.value">
               {{opt.label.configKey}}
             </mat-option>
-            <mat-option [disabled]="true"
-              *ngIf="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0">
-              You have no authentication set up for this app
+            <mat-option *ngIf="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0"
+              class="add-auth">
+              <div class="ap-flex">
+                <div class="ap-flex-grow">No authentication</div>
+                <app-button btnColor="primary" btnStyle="basic"
+                  (buttonClicked)="newAuthenticationDialogProcess(config.key)" type="button" btnSize="small"
+                  *ngIf="formGroup.enabled" [darkLoadingSpinner]="true" [loading]="checkingOAuth2CloudManager">+ Add
+                </app-button>
+              </div>
             </mat-option>
           </mat-select>
           <mat-error *ngIf="formGroup.get(config.key)!.invalid">
@@ -107,7 +116,7 @@
 
 
         <app-button btnColor="primary" btnStyle="basic" (buttonClicked)="newAuthenticationDialogProcess(config.key)"
-          type="button" class="new-config-btn" btnSize="medium" *ngIf="formGroup.enabled" [darkLoadingSpinner]="true"
+          type="button" btnSize="medium" *ngIf="formGroup.enabled" [darkLoadingSpinner]="true"
           [loading]="checkingOAuth2CloudManager"> + New Authentication
         </app-button>
       </div>

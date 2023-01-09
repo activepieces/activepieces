@@ -59,7 +59,7 @@ export class EditStepAccordionComponent implements AfterViewInit {
 			serverUrl: this.authenticationService.getServerUrl(),
 		}).pipe(
 			map(res => {
-				return `${res.serverUrl}/v1/webhook?flowId=${res.flowId}`;
+				return `${res.serverUrl}/v1/webhooks?flowId=${res.flowId}`;
 			})
 		);
 		this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(

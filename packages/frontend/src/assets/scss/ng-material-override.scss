@@ -586,3 +586,9 @@ mat-form-field
         border-radius: 0px;
     }
 }
+mat-option.add-auth{
+  .mdc-list-item__primary-text
+  {
+    flex-grow:1 !important;
+  }
+}
