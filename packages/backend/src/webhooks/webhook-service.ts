@@ -25,8 +25,8 @@ export const webhookService = {
     payloads.forEach((triggerPayload) => {
       flowRunService.start({
         environment: RunEnvironment.PRODUCTION,
-        flowVersionId: flow.version!.id,
-        collectionVersionId: collection.version!.id,
+        flowVersionId: flowVersion.id,
+        collectionVersionId: instance.collectionVersionId,
         payload: triggerPayload,
       });
     });
