@@ -1,5 +1,5 @@
-import { pieces } from 'pieces/dist/src/apps';
-import { Piece } from 'pieces/dist/src/framework/piece';
+import { pieces } from 'pieces';
+import { Piece } from 'pieces';
 
 export class PieceExecutor {
   public async exec(
