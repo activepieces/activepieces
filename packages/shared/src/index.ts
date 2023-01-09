@@ -1,8 +1,7 @@
-export { ListAppRequest } from "./app-secret/dto/list-app-request";
+export { ListAppRequest } from "./app-credential/dto/list-app-request";
 export { ListAppConnectionRequest } from "./app-connection/dto/list-app-connection-request";
-export * from "./app-secret/app-secret";
-export * from "./app-secret/app-secret";
-export * from "./app-secret/dto/upsert-app-request";
+export * from "./app-credential/app-credential";
+export * from "./app-credential/dto/upsert-app-request";
 export * from "./flow-run/execution/step-output";
 export * from "./flows/flow-operations";
 export * from "./collections/config";

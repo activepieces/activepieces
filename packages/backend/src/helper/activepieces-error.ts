@@ -140,7 +140,7 @@ export interface AppSecretNotFoundErrorParams
   extends BaseErrorParams<
     ErrorCode.APP_SECRET_NOT_FOUND,
     {
-      appSecretId: ApId;
+      appCredentialId: ApId;
     }
   > { }
 

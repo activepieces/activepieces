@@ -1,4 +1,4 @@
-import { apId, AppConnection, AppConnectionId, AppSecret, AppSecretId, Cursor, ProjectId, SeekPage, UpsertAppSecretRequest, UpsertConnectionRequest } from "shared";
+import { apId, AppConnection, AppConnectionId, AppCredentialId, Cursor, SeekPage, UpsertConnectionRequest } from "shared";
 import { databaseConnection } from "../database/database-connection";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
@@ -8,10 +8,10 @@ const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 
 export const appConnectionService = {
     async upsert(request: UpsertConnectionRequest): Promise<AppConnection> {
-        await appConnectionRepo.upsert({ ...request, id: apId() }, ["name", "appSecretId"]);
+        await appConnectionRepo.upsert({ ...request, id: apId() }, ["name", "appCredentialId"]);
         return appConnectionRepo.findOneByOrFail({
             name: request.name,
-            appSecretId: request.appSecretId
+            appCredentialId: request.appCredentialId
         })
     },
     async getOne(id: AppConnectionId): Promise<AppConnection | null> {
@@ -22,7 +22,7 @@ export const appConnectionService = {
     async delete(id: AppConnectionId): Promise<void> {
         await appConnectionRepo.delete({ id: id });
     },
-    async list(appSeceretId: AppSecretId, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<AppConnection>> {
+    async list(credentialId: AppCredentialId, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
         const paginator = buildPaginator({
             entity: AppConnectionEntity,
@@ -34,8 +34,8 @@ export const appConnectionService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         });
-        const queryBuilder = appConnectionRepo.createQueryBuilder("app_connection").where({ appSeceretId });
-        const { data, cursor } = await paginator.paginate(queryBuilder.where({ appSeceretId }));
+        const queryBuilder = appConnectionRepo.createQueryBuilder("app_connection").where({ appSeceretId: credentialId });
+        const { data, cursor } = await paginator.paginate(queryBuilder.where({ appSeceretId: credentialId }));
         return paginationHelper.createPage<AppConnection>(data, cursor);
     }
 };

@@ -2,7 +2,7 @@ import { Static, Type } from "@sinclair/typebox";
 
 export const UpsertConnectionRequest = Type.Object({
     name: Type.String({}),
-    appSecretId: Type.String({}),
+    appCredentialId: Type.String({}),
     connection: Type.Any([
         Type.Object({
             expires_in: Type.Optional(Type.Number()),

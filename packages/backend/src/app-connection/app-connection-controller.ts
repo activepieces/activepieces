@@ -31,14 +31,14 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
         }>,
         _reply
       ) => {
-        const appSecret = await appConnectionService.getOne(request.params.connectionId);
-        if (appSecret === null) {
+        const appCredential = await appConnectionService.getOne(request.params.connectionId);
+        if (appCredential === null) {
           throw new ActivepiecesError({
             code: ErrorCode.APP_SECRET_NOT_FOUND,
-            params: { appSecretId: request.params.connectionId },
+            params: { appCredentialId: request.params.connectionId },
           });
         }
-        return appSecret;
+        return appCredential;
       }
     );
   
@@ -53,7 +53,7 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
         }>,
         _reply
       ) => {
-        return await appConnectionService.list(request.query.appSecretId, request.query.cursor, request.query.limit);
+        return await appConnectionService.list(request.query.appCredentialId, request.query.cursor, request.query.limit);
       }
     );
   

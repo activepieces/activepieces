@@ -1,51 +1,48 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
 import {
-  AppSecretId,
-  ListAppRequest,
-  ListFlowsRequest,
-  ListFlowsSchema,
-  UpsertAppSecretRequest,
+  AppCredentialId,
+  ListAppRequest, UpsertAppCredentialsRequest,
 } from "shared";
 import { StatusCodes } from "http-status-codes";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
-import { appSecretService } from "./app-secret-service";
+import { appCredentialService } from "./app-credential-service";
 
 
-export const appSecretController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
+export const appCredentialController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
   fastify.post(
     "/",
     {
-      schema: UpsertAppSecretRequest,
+      schema: UpsertAppCredentialsRequest,
     },
     async (
       request: FastifyRequest<{
-        Body: UpsertAppSecretRequest;
+        Body: UpsertAppCredentialsRequest;
       }>,
       _reply
     ) => {
-      return await appSecretService.upsert(request.body);
+      return await appCredentialService.upsert(request.body);
     }
   );
 
 
   fastify.get(
-    "/:appSecretId",
+    "/:id",
     async (
       request: FastifyRequest<{
         Params: {
-          appSecretId: AppSecretId;
+          id: AppCredentialId;
         };
       }>,
       _reply
     ) => {
-      const appSecret = await appSecretService.getOne(request.params.appSecretId);
-      if (appSecret === null) {
+      const appCredential = await appCredentialService.getOne(request.params.id);
+      if (appCredential === null) {
         throw new ActivepiecesError({
           code: ErrorCode.APP_SECRET_NOT_FOUND,
-          params: { appSecretId: request.params.appSecretId },
+          params: { appCredentialId: request.params.id },
         });
       }
-      return appSecret;
+      return appCredential;
     }
   );
 
@@ -60,21 +57,21 @@ export const appSecretController = async (fastify: FastifyInstance, options: Fas
       }>,
       _reply
     ) => {
-      return await appSecretService.list(request.query.projectId, request.query.cursor, request.query.limit);
+      return await appCredentialService.list(request.query.projectId, request.query.cursor, request.query.limit);
     }
   );
 
   fastify.delete(
-    "/:appSecretId",
+    "/:id",
     async (
       request: FastifyRequest<{
         Params: {
-          appSecretId: AppSecretId;
+          id: AppCredentialId;
         };
       }>,
       _reply
     ) => {
-      await appSecretService.delete(request.params.appSecretId);
+      await appCredentialService.delete(request.params.id);
       _reply.status(StatusCodes.OK).send();
     }
   );

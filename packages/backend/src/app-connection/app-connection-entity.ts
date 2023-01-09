@@ -1,9 +1,9 @@
-import { AppConnection, AppSecret } from "shared";
+import { AppConnection, AppCredential } from "shared";
 import { EntitySchema } from "typeorm";
 import { BaseColumnSchemaPart } from "../helper/base-entity";
 
 export interface AppConnectionSchema extends AppConnection {
-  appSecret: AppSecret;
+  appCredential: AppCredential;
 }
 
 export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
@@ -13,7 +13,7 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
     name: {
       type: String,
     },
-    appSecretId: {
+    appCredentialId: {
       type: String
     },
     connection: {
@@ -22,20 +22,20 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
   },
   indices: [
     {
-      name: "idx_app_connection_secret_id_name",
-      columns: ["appSecretId", "name"],
+      name: "idx_app_connection_credential_id_name",
+      columns: ["appCredentialId", "name"],
       unique: true,
     },
   ],
   relations: {
-    appSecret: {
+    appCredential: {
       type: "many-to-one",
-      target: "app_secret",
+      target: "app_credential",
       cascade: true,
       onDelete: "CASCADE",
       joinColumn: {
-        name: "appSecretId",
-        foreignKeyConstraintName: "fk_app_connection_app_secret_id",
+        name: "appCredentialId",
+        foreignKeyConstraintName: "fk_app_connection_app_credential_id",
       },
     },
   },

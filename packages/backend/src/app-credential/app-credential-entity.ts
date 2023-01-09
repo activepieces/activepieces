@@ -1,14 +1,14 @@
-import { Project, AppSecret, AppConnection } from "shared";
+import { Project, AppCredential, AppConnection } from "shared";
 import { EntitySchema } from "typeorm";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 
-export interface AppSecretSchema extends AppSecret {
+export interface AppCredentialSchema extends AppCredential {
   project: Project;
   appConnections: AppConnection[];
 }
 
-export const AppSecretEntity = new EntitySchema<AppSecretSchema>({
-  name: "app_secret",
+export const AppCredentialEntity = new EntitySchema<AppCredentialSchema>({
+  name: "app_credential",
   columns: {
     ...BaseColumnSchemaPart,
     name: {
@@ -24,7 +24,7 @@ export const AppSecretEntity = new EntitySchema<AppSecretSchema>({
   },
   indices: [
     {
-      name: "idx_app_secret_project_id_name",
+      name: "idx_app_credential_project_id_name",
       columns: ["projectId", "name"],
       unique: true,
     },
@@ -33,7 +33,7 @@ export const AppSecretEntity = new EntitySchema<AppSecretSchema>({
     appConnections: {
       type: "one-to-many",
       target: "app_connection",
-      inverseSide: "appSecret",
+      inverseSide: "appCredential",
     },
     project: {
       type: "many-to-one",
@@ -42,7 +42,7 @@ export const AppSecretEntity = new EntitySchema<AppSecretSchema>({
       onDelete: "CASCADE",
       joinColumn: {
         name: "projectId",
-        foreignKeyConstraintName: "fk_app_secret_project_id",
+        foreignKeyConstraintName: "fk_app_credential_project_id",
       },
     },
   },

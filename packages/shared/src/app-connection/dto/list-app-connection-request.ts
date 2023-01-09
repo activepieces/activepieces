@@ -1,20 +1,8 @@
-import { AppSecretId } from "../../app-secret/app-secret";
-import { Cursor } from "../../common/seek-page";
+import { Static, Type } from "@sinclair/typebox";
 
-export interface ListAppConnectionRequest {
-    appSecretId: AppSecretId;
-    limit: number;
-    cursor: Cursor;
-}
-
-export const ListAppConnectionRequest = {
-    querystring: {
-        type: 'object',
-        properties: {
-            limit: { type: 'number' },
-            appSecretId: { type: 'string' },
-            cursor: { type: 'string' },
-        },
-        required: ['appSecretId']
-    }
-}
+export const ListAppConnectionRequest = Type.Object({
+    cursor: Type.String({}),
+    appCredentialId: Type.String({}),
+    limit: Type.Number({})
+});
+export type ListAppConnectionRequest = Static<typeof ListAppConnectionRequest>;
