@@ -126,7 +126,7 @@
     },
     {
       "group": "Other",
-      "pages": ["license"]
+      "pages": ["changelog", "license"]
     }
   ],
   "analytics": {
