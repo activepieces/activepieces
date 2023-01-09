@@ -1,5 +1,5 @@
 import {createPiece} from '../../framework/piece';
-import { createHubspotContact } from './actions/create-contact/create-contact.action';
+import { createHubspotContact } from './actions/create-contact.action';
 
 
 export const hubspot = createPiece({
