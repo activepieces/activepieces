@@ -7,8 +7,9 @@ RUN corepack prepare pnpm@7.21.0 --activate
 WORKDIR /usr/src/app
 COPY . .
 
-RUN pnpm install --config.auto-install-peers=true
-RUN pnpm dlx nx run-many --target=build
+RUN pnpm install --frozen-lockfile --config.auto-install-peers=true
+RUN cd packages/shared && pnpm build
+RUN cd packages/frontend && pnpm build
 
 ### STAGE 2: Run ###
 FROM nginx:1.17.1-alpine
