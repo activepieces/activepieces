@@ -25,8 +25,9 @@ export const addMemberToList = createAction({
             required: true,
         }),
         listId: Property.Dropdown<string>({
-            displayName: "List",
-            refreshers: ['authentication'],
+            displayName: "Audience",
+            refreshers: ["authentication"],
+            description: "Audience you want to add the contact to",
             required: true,
             options: async (propsValue) => {
                 if (propsValue['authentication'] === undefined) {
@@ -62,7 +63,7 @@ export const addMemberToList = createAction({
                 {label:'Transactional',value:'transactional'}
             ]} ;}
             
-        }),
+        })
     },
     
     async run(context) {
