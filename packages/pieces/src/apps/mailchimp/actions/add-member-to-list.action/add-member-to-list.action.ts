@@ -3,22 +3,16 @@ import {HttpMethod} from "../../../../common/http/core/http-method";
 import {HttpRequest} from "../../../../common/http/core/http-request";
 import {createAction} from "../../../../framework/action/action";
 import { AuthPropertyValue, Property } from "../../../../framework/property/prop.model";
+import {getMailChimpServerPrefix, mailChimpAuth} from "../../common";
 import * as mailchimp from "@mailchimp/mailchimp_marketing";
 
 
 export const addMemberToList = createAction({
     name: 'add_member_to_list',
-    displayName: "Add Member to List",
-    description: "Add a member to an existing Mailchimp list",
+    displayName: "Add Member to an Audience (List)",
+    description: "Add a member to an existing Mailchimp audience (list)",
     props: {
-        authentication: Property.OAuth2({
-            description: "",
-            displayName: 'Authentication',
-            authUrl: "https://login.mailchimp.com/oauth2/authorize",
-            tokenUrl: "https://login.mailchimp.com/oauth2/token",
-            required: true,
-            scope: []
-        }),
+        authentication: mailChimpAuth,
         email: Property.ShortText({
             displayName: 'Email',
             description: 'Email of the new contact',
@@ -68,14 +62,7 @@ export const addMemberToList = createAction({
     
     async run(context) {
         const access_token= context.propsValue.authentication?.access_token;
-        const mailChimpMetaDataRequest: HttpRequest<{dc:string}> = {
-            method: HttpMethod.GET,
-            url: 'https://login.mailchimp.com/oauth2/metadata',
-            headers: {
-                Authorization: `OAuth ${access_token}`
-              }
-        };
-        const mailChimpServerPrefix = (await httpClient.sendRequest(mailChimpMetaDataRequest)).dc;
+        const mailChimpServerPrefix = await getMailChimpServerPrefix(access_token!);
         mailchimp.setConfig({
             accessToken: access_token,
             server: mailChimpServerPrefix
@@ -86,15 +73,7 @@ export const addMemberToList = createAction({
 });
 async function getUserLists(authProp: AuthPropertyValue): Promise<{lists:MailChimpList[]}> {
     const access_token= authProp.access_token;
-    console.log(authProp);
-        const mailChimpMetaDataRequest: HttpRequest<{dc:string}> = {
-            method: HttpMethod.GET,
-            url: 'https://login.mailchimp.com/oauth2/metadata',
-            headers: {
-                Authorization: `OAuth ${access_token}`
-              }
-        };
-        const mailChimpServerPrefix = (await httpClient.sendRequest(mailChimpMetaDataRequest)).dc;
+        const mailChimpServerPrefix = await getMailChimpServerPrefix(access_token!);
         mailchimp.setConfig({
             accessToken: access_token,
             server: mailChimpServerPrefix
