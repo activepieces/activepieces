@@ -12,11 +12,15 @@ export type AppCredentialId = string;
 export interface OAuth2Settings {
   clientId: string;
   clientSecret: string;
+  tokenUrl: string;
+  redirectUrl: string;
 }
 
-export interface AppCredential extends BaseModel<AppCredentialId> {
+export type AppCredential = BaseAppCredential<AppSecretType.OAUTH2, OAuth2Settings> | BaseAppCredential<AppSecretType.CLOUD_OAUTH2, {}> | BaseAppCredential<AppSecretType.API_KEY, {}>;
+
+interface BaseAppCredential<T extends AppSecretType, S> {
   name: string;
   projectId: ProjectId;
-  type: AppSecretType;
-  settings: OAuth2Settings | {}
+  type: T;
+  settings: S;
 }

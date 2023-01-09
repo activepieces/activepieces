@@ -1,5 +1,4 @@
 import { AppCredentialId } from "../app-credential/app-credential";
-import { OAuth2Response } from "../collections/config";
 import { BaseModel } from "../common/base-model";
 
 export type AppConnectionId = string;
@@ -8,5 +7,19 @@ export type AppConnectionId = string;
 export interface AppConnection extends BaseModel<AppConnectionId> {
   name: string;
   appCredentialId: AppCredentialId;
-  connection: OAuth2Response;
+  connection: OAuth2Response | ApiKey;
+}
+
+export interface ApiKey {
+  api_key: string;
+}
+
+export interface OAuth2Response {
+  expires_in: number;
+  token_type: string;
+  access_token: string;
+  claimed_at: number;
+  refresh_token: string;
+  scope: string[];
+  data: Record<string, any>
 }

@@ -8,11 +8,15 @@ import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
 import { appCredentialService } from "./app-credential-service";
 
 
+const DEFAULT_PAGING_LIMIT = 10;
+
 export const appCredentialController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
   fastify.post(
     "/",
     {
-      schema: UpsertAppCredentialsRequest,
+      schema: {
+        body: UpsertAppCredentialsRequest
+      },
     },
     async (
       request: FastifyRequest<{
@@ -49,7 +53,9 @@ export const appCredentialController = async (fastify: FastifyInstance, options:
   fastify.get(
     "/",
     {
-      schema: ListAppRequest,
+      schema: {
+        querystring: ListAppRequest
+      },
     },
     async (
       request: FastifyRequest<{
@@ -57,7 +63,7 @@ export const appCredentialController = async (fastify: FastifyInstance, options:
       }>,
       _reply
     ) => {
-      return await appCredentialService.list(request.query.projectId, request.query.cursor, request.query.limit);
+      return await appCredentialService.list(request.query.projectId, request.query.cursor, request.query.limit ?? DEFAULT_PAGING_LIMIT);
     }
   );
 

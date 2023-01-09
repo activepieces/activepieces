@@ -5,10 +5,13 @@ import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
 import { appConnectionService } from "./app-connection-service";
 
 export const appConnectionController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
-    fastify.post(
+    
+  fastify.post(
       "/",
       {
-        schema: UpsertConnectionRequest,
+        schema: {
+          body: UpsertConnectionRequest
+        }
       },
       async (
         request: FastifyRequest<{
@@ -45,7 +48,9 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
     fastify.get(
       "/",
       {
-        schema: ListAppConnectionRequest,
+        schema: {
+          querystring: ListAppConnectionRequest
+        },
       },
       async (
         request: FastifyRequest<{

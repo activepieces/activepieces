@@ -2,10 +2,11 @@ import { Project, AppCredential, AppConnection } from "shared";
 import { EntitySchema } from "typeorm";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 
-export interface AppCredentialSchema extends AppCredential {
+export type AppCredentialSchema = AppCredential & {
   project: Project;
-  appConnections: AppConnection[];
-}
+  appConnections: AppConnection[]
+};
+
 
 export const AppCredentialEntity = new EntitySchema<AppCredentialSchema>({
   name: "app_credential",
