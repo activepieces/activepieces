@@ -7,7 +7,7 @@
 
 ## Activepieces is an open-source business automation tool
 * Built for no-code users and citizen developers
-* Self-host with a simple docker command
+* Self-host with a simple Docker command
 * An alternative to Zapier, Make.com and Tray
 
 Read [Activepieces docs](https://www.activepieces.com/docs) to learn the key concepts and browse the pieces.
