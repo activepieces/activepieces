@@ -29,7 +29,7 @@ export const fetchTopStories = createAction({
             method: HttpMethod.GET,
             url: `${HACKER_NEWS_API_URL}item/${storyId}.json`
           });
-          topStories.push(storyResponse);
+          topStories.push(storyResponse.body);
         }
 		return topStories;
 	},
