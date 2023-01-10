@@ -108,6 +108,14 @@ export class AuthenticationService {
 			})
 		);
 	}
+	getApiUrl(): Observable<string> {
+		return this.getAllFlags().pipe(
+			map(flags => {
+				return flags['API_URL'] as string;
+			})
+		);
+	}
+
 	getServerUrl(): Observable<string> {
 		return this.getAllFlags().pipe(
 			map(flags => {
