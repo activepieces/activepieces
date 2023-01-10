@@ -50,7 +50,7 @@ export const discordCommon = {
           Authorization: `Bot ${value['bot_token']}`,
         },
       };
-      const channels = await httpClient.sendRequest<
+      const { body: channels } = await httpClient.sendRequest<
         { id: string; name: string }[]
       >(request);
       return {

@@ -57,7 +57,7 @@ export const githubNewRepoEvent = createTrigger({
       },
       queryParams: {},
     };
-    let webhook = await httpClient.sendRequest<{ id: string }>(request);
+    let { body: webhook } = await httpClient.sendRequest<{ id: string }>(request);
     await context.store?.save<WebhookInformation>('_trigger', {
       webhookId: webhook.id,
       owner: owner,

@@ -21,7 +21,7 @@ export const fetchTopStories = createAction({
 			method: HttpMethod.GET,
 			url: `${HACKER_NEWS_API_URL}topstories.json`
 		});
-        const topStoryIds: string[] = topStoryIdsResponse;
+        const topStoryIds: string[] = topStoryIdsResponse.body;
         const topStories = [];
         for (let i = 0; i < Math.min(configValue.propsValue['number_of_stories']!, topStoryIds.length); i++) {
           const storyId = topStoryIds[i];
@@ -29,7 +29,7 @@ export const fetchTopStories = createAction({
             method: HttpMethod.GET,
             url: `${HACKER_NEWS_API_URL}item/${storyId}.json`
           });
-          topStories.push(storyResponse);
+          topStories.push(storyResponse.body);
         }
 		return topStories;
 	},

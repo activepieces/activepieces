@@ -1,3 +1,4 @@
+import { URL } from 'node:url';
 import type {Authentication} from '../../authentication/core/authentication';
 import type {AuthenticationConverter} from './authentication/authentication-converter';
 import type {HttpClient} from './http-client';
@@ -5,7 +6,8 @@ import {HttpHeader} from './http-header';
 import type {HttpMessageBody} from './http-message-body';
 import type {HttpRequest} from './http-request';
 import {MediaType} from './media-type';
-import type {RequestHeaders} from './request-headers';
+import type {HttpHeaders} from './http-headers';
+import { HttpResponse } from './http-response';
 
 export abstract class BaseHttpClient implements HttpClient {
 	constructor(
@@ -15,19 +17,24 @@ export abstract class BaseHttpClient implements HttpClient {
 
 	abstract sendRequest<RequestBody extends HttpMessageBody, ResponseBody extends HttpMessageBody>(
 		request: HttpRequest<RequestBody>,
-	): Promise<ResponseBody>;
+	): Promise<HttpResponse<ResponseBody>>;
 
 	protected getUrl<RequestBody extends HttpMessageBody>(request: HttpRequest<RequestBody>): string {
-		const base = this.baseUrl;
-		const path = request.url;
-		const query = new URLSearchParams(request.queryParams).toString();
-		return `${base}${path}?${query}`;
+		const url = new URL(`${this.baseUrl}${request.url}`);
+
+		if (request.queryParams) {
+			for (const [name, value] of Object.entries(request.queryParams)) {
+				url.searchParams.append(name, value);
+			}
+		}
+
+		return url.toString();
 	}
 
 	protected getHeaders<RequestBody extends HttpMessageBody>(
 		request: HttpRequest<RequestBody>,
-	): RequestHeaders {
-		let requestHeaders: RequestHeaders = {
+	): HttpHeaders {
+		let requestHeaders: HttpHeaders = {
 			[HttpHeader.ACCEPT]: MediaType.APPLICATION_JSON,
 		};
 
@@ -44,7 +51,7 @@ export abstract class BaseHttpClient implements HttpClient {
 		return requestHeaders;
 	}
 
-	private populateAuthentication(authentication: Authentication, headers: RequestHeaders): void {
+	private populateAuthentication(authentication: Authentication, headers: HttpHeaders): void {
 		this.authenticationConverter.convert(authentication, headers);
 	}
 }
