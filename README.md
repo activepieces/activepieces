@@ -15,10 +15,10 @@ Read [Activepieces docs](https://www.activepieces.com/docs) to learn the key con
 
 ## Get started for free
 
-### Option One: Demo Instance
-visit https://demo.activepieces.com
+### Option #1: Play around with the Demo App
+Go to [Activepieces Demo Website](https://demo.activepieces.com) and play around with the app features.
 
-### Option Two: Self Host
+### Option #2: Self Host
 Clone Activepieces to your machine and run it with 1 command
 
  ```bash 
@@ -35,7 +35,7 @@ docker compose -p activepieces up
 Vist `http://localhost:8080`
 
 ### Other Options
-We're planning to launch a cloud version of Activepieces and instructions to distribute it on your own infrastructure
+We're planning to launch a cloud edition of Activepieces soon.
 
 ## Features
 
