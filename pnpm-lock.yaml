@@ -270,7 +270,7 @@ importers:
       jszip: 3.10.1
       kl-angular-mentions: 1.2.3_wcjhsjedbutghxn65tv34lliyq
       marked: 4.2.5
-      monaco-editor: link:dist/activepieces/assets/monaco-editor
+      monaco-editor: link:_static/assets/monaco-editor
       ngx-skeleton-loader: 5.0.0_wcjhsjedbutghxn65tv34lliyq
       posthog-js: 1.39.0
       prismjs: 1.29.0

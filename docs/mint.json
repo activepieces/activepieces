@@ -48,24 +48,15 @@
   "navigation": [
     {
       "group": "Overview",
-      "pages": [
-        "getting-started/introduction",
-        "getting-started/quickstart"
-      ]
+      "pages": ["getting-started/introduction", "getting-started/quickstart"]
     },
     {
       "group": "Pieces",
-      "pages": [
-        "pieces/overview",
-        "pieces/custom-pieces"
-      ]
+      "pages": ["pieces/overview", "pieces/custom-pieces"]
     },
     {
       "group": "Flow Controls",
-      "pages": [
-        "pieces/flow-controls/loop",
-        "pieces/flow-controls/branch"
-      ]
+      "pages": ["pieces/flow-controls/loop", "pieces/flow-controls/branch"]
     },
     {
       "group": "Helpers",
@@ -78,27 +69,25 @@
     {
       "group": "Apps",
       "pages": [
-        "pieces/apps/slack",
-        "pieces/apps/discord"
+        "pieces/apps/discord",
+        "pieces/apps/github",
+        "pieces/apps/gmail",
+        "pieces/apps/hackernews",
+        "pieces/apps/hubspot",
+        "pieces/apps/slack"
       ]
     },
     {
       "group": "Self Hosting",
-      "pages": [
-        "self-hosting/overview"
-      ]
+      "pages": ["self-hosting/overview"]
     },
     {
       "group": "Deployment Options",
-      "pages": [
-        "self-hosting/deployments/docker-compose"
-      ]
+      "pages": ["self-hosting/deployments/docker-compose"]
     },
     {
       "group": "Configurations",
-      "pages": [
-        "self-hosting/configurations/env-vars"
-      ]
+      "pages": ["self-hosting/configurations/env-vars"]
     },
     {
       "group": "Building Flows",
@@ -131,7 +120,7 @@
   ],
   "analytics": {
     "posthog": {
-        "apiKey": "phc_TXdpocbYTeZVm5VJmMzHTMrCofBQu3e0kN7HGMNGTVW"
+      "apiKey": "phc_TXdpocbYTeZVm5VJmMzHTMrCofBQu3e0kN7HGMNGTVW"
     }
   }
 }

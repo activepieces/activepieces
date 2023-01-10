@@ -1,6 +1,12 @@
-import { pieces, Trigger } from 'pieces';
-import { Action } from 'pieces/dist/framework/action/action';
+import { pieces, Trigger, Action } from 'pieces';
+
 import * as fs from 'fs';
+const mintJson: { navigation: { group: string; pages: string[] }[] } =
+  JSON.parse(fs.readFileSync('../../../docs/mint.json', 'utf8'));
+const appsFolderPath = 'pieces/apps';
+const appsDocsFilesPaths: string[] = [];
+const TEMPLATE_MDX = fs.readFileSync('template.mdx', 'utf8');
+
 function getCardTemplate(title: string, description: string) {
   const CARD_TEMPLATE = `
     <CardGroup cols={2}>
@@ -26,7 +32,6 @@ function getPieceCards(
   return itemsCards;
 }
 
-const TEMPLATE_MDX = fs.readFileSync('template.mdx', 'utf8');
 pieces.forEach((p) => {
   var docsFile = TEMPLATE_MDX.replace('TITLE', p.displayName);
   var actionsCards = getPieceCards(p.metadata().actions);
@@ -39,12 +44,26 @@ pieces.forEach((p) => {
     triggerCards =
       '*No supported triggers yet, please let us know if you need something on Discord so we can help out* \n';
   }
-
-  console.log(triggerCards.length + ' ', actionsCards.length);
   docsFile = docsFile.replace('ACTIONS', actionsCards);
   docsFile = docsFile.replace('TRIGGERS', triggerCards);
   fs.writeFileSync(
-    `../../../docs/pieces/apps/${p.metadata().name}.mdx`,
+    `../../../docs/${appsFolderPath}/${p.metadata().name}.mdx`,
     docsFile
   );
+  appsDocsFilesPaths.push(`${appsFolderPath}/${p.metadata().name}`);
 });
+
+if (!mintJson['navigation']) {
+  mintJson['navigation'] = [];
+}
+
+const appsGroupIndex = mintJson.navigation.findIndex((n) => n.group === 'Apps');
+const appsGroup = { group: 'Apps', pages: appsDocsFilesPaths.sort() };
+if (appsGroupIndex === -1) {
+  mintJson.navigation.push(appsGroup);
+} else {
+  mintJson.navigation[appsGroupIndex] = appsGroup;
+}
+fs.writeFileSync('../../../docs/mint.json', JSON.stringify(mintJson, null, 2));
+
+console.log('docs generated');
