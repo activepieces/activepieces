@@ -1,10 +1,11 @@
 import { EntitySchema } from "typeorm";
-import { Collection, Project, User } from "shared";
+import { AppCredential, Collection, Project, User } from "shared";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 
 interface ProjectSchema extends Project {
   owner: User;
   collections: Collection[];
+  appCredentials: AppCredential[];
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
@@ -24,6 +25,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
     },
   ],
   relations: {
+    appCredentials: {
+      type: "one-to-many",
+      target: "app_credential",
+      inverseSide: "project",
+    },
     owner: {
       type: "many-to-one",
       target: "user",
