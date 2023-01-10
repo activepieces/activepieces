@@ -53,7 +53,7 @@ export const slackSendMessageAction = createAction({
         return {
           disabled: false,
           placeholder: 'Select channel',
-          options: response.channels.map((ch) => {
+          options: response.body.channels.map((ch) => {
             return {
               label: ch.name,
               value: ch.id,

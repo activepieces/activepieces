@@ -6,6 +6,7 @@ import type {HttpMessageBody} from './http-message-body';
 import type {HttpRequest} from './http-request';
 import {MediaType} from './media-type';
 import type {HttpHeaders} from './http-headers';
+import { HttpResponse } from './http-response';
 
 export abstract class BaseHttpClient implements HttpClient {
 	constructor(
@@ -15,7 +16,7 @@ export abstract class BaseHttpClient implements HttpClient {
 
 	abstract sendRequest<RequestBody extends HttpMessageBody, ResponseBody extends HttpMessageBody>(
 		request: HttpRequest<RequestBody>,
-	): Promise<ResponseBody>;
+	): Promise<HttpResponse<ResponseBody>>;
 
 	protected getUrl<RequestBody extends HttpMessageBody>(request: HttpRequest<RequestBody>): string {
 		const base = this.baseUrl;

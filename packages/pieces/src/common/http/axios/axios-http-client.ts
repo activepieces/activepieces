@@ -5,7 +5,7 @@ import { BaseHttpClient } from '../core/base-http-client';
 import { HttpMessageBody } from '../core/http-message-body';
 import { HttpMethod } from '../core/http-method';
 import { HttpRequest } from '../core/http-request';
-import { HttpHeaders } from '../core/http-headers';
+import { HttpResponse } from '../core/http-response';
 
 export class AxiosHttpClient extends BaseHttpClient {
 	constructor(
@@ -18,7 +18,7 @@ export class AxiosHttpClient extends BaseHttpClient {
 
     async sendRequest<ResponseBody extends HttpMessageBody>(
         request: HttpRequest<HttpMessageBody>
-    ): Promise<ResponseBody> {
+    ): Promise<HttpResponse<ResponseBody>> {
         const url = this.getUrl(request);
 		const headers = this.getHeaders(request);
 		const axiosRequestMethod = this.getAxiosRequestMethod(request.method);
@@ -30,7 +30,11 @@ export class AxiosHttpClient extends BaseHttpClient {
             data: request.body,
         })
 
-		return response.data as ResponseBody;
+		return {
+			status: response.status,
+			headers: response.headers,
+			body: response.data,
+		};
     }
 
 	private getAxiosRequestMethod(httpMethod: HttpMethod): string {
