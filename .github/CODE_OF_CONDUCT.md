@@ -71,12 +71,12 @@ If a community member engages in unacceptable behavior, we may take any action d
 
 
 ## 7. Reporting Guidelines
-If you are subject to or witness unacceptable behavior, or have any other concerns, please notify us as soon as possible by emailing info@Activepieces.org, or contacting a Activepieces team member on the specific platform.
+If you are subject to or witness unacceptable behavior, or have any other concerns, please notify us as soon as possible by emailing info@activepieces.com, or contacting a Activepieces team member on the specific platform.
 
 Processes for dealing with breaches of the Code of Conduct can be found [here][coc-breaches].
 
 ## 8. Addressing Grievances
-Only permanent resolutions (such as bans) may be appealed. To appeal a decision, contact the Activepieces team at info@Activepieces.org with your appeal and the team will review the situation.
+Only permanent resolutions (such as bans) may be appealed. To appeal a decision, contact the Activepieces team at info@activepieces.com with your appeal and the team will review the situation.
 
 ## 9. Scope
 We expect all community participants (contributors, moderators and other guests) to abide by this Code of Conduct in all community venues–online and in-person–as well as in all one-on-one communications pertaining to community affairs.
@@ -86,7 +86,7 @@ While this code of conduct is specifically aimed at Activepieces’s official re
 Resources or incidents which break this code of conduct for any reason in a non-Activepieces community location will be considered in the same way as resources or incidents from owned channels, and subject to the same sanctions. 
 
 ## 10. Contact info
-For more information, please contact info@Activepieces.org.
+For more information, please contact info@activepieces.com.
 
 ## 11. License and attribution
 This Code of Conduct is directly adapted from the Stumptown Syndicate and distributed under a [Creative Commons Attribution-ShareAlike license][cc-by-sa].
