@@ -22,6 +22,7 @@ export const webhookService = {
 
 
     console.log(`Triggers returned a ${payloads.length} payloads`);
+
     payloads.forEach((triggerPayload) => {
       flowRunService.start({
         environment: RunEnvironment.PRODUCTION,
