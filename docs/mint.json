@@ -78,8 +78,12 @@
     {
       "group": "Apps",
       "pages": [
-        "pieces/apps/slack",
-        "pieces/apps/discord"
+        "pieces/apps/discord",
+        "pieces/apps/github",
+        "pieces/apps/gmail",
+        "pieces/apps/hackernews",
+        "pieces/apps/hubspot",
+        "pieces/apps/slack"
       ]
     },
     {
@@ -126,12 +130,14 @@
     },
     {
       "group": "Other",
-      "pages": ["license"]
+      "pages": [
+        "license"
+      ]
     }
   ],
   "analytics": {
     "posthog": {
-        "apiKey": "phc_TXdpocbYTeZVm5VJmMzHTMrCofBQu3e0kN7HGMNGTVW"
+      "apiKey": "phc_TXdpocbYTeZVm5VJmMzHTMrCofBQu3e0kN7HGMNGTVW"
     }
   }
 }

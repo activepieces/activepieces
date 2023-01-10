@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "nx run backend:start & nx run frontend:start"
+    "start": "nx run backend:start & nx run frontend:start",
+    "generate-apps-pieces-docs": "cd packages/docs-generator/src/ && tsc index.ts && node index.js"
   },
   "private": true,
   "devDependencies": {
