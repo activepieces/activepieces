@@ -5,6 +5,7 @@ import { BaseHttpClient } from '../core/base-http-client';
 import { HttpMessageBody } from '../core/http-message-body';
 import { HttpMethod } from '../core/http-method';
 import { HttpRequest } from '../core/http-request';
+import { HttpHeaders } from '../core/http-headers';
 
 export class AxiosHttpClient extends BaseHttpClient {
 	constructor(

@@ -5,7 +5,7 @@ import {HttpHeader} from './http-header';
 import type {HttpMessageBody} from './http-message-body';
 import type {HttpRequest} from './http-request';
 import {MediaType} from './media-type';
-import type {RequestHeaders} from './request-headers';
+import type {HttpHeaders} from './http-headers';
 
 export abstract class BaseHttpClient implements HttpClient {
 	constructor(
@@ -26,8 +26,8 @@ export abstract class BaseHttpClient implements HttpClient {
 
 	protected getHeaders<RequestBody extends HttpMessageBody>(
 		request: HttpRequest<RequestBody>,
-	): RequestHeaders {
-		let requestHeaders: RequestHeaders = {
+	): HttpHeaders {
+		let requestHeaders: HttpHeaders = {
 			[HttpHeader.ACCEPT]: MediaType.APPLICATION_JSON,
 		};
 
@@ -44,7 +44,7 @@ export abstract class BaseHttpClient implements HttpClient {
 		return requestHeaders;
 	}
 
-	private populateAuthentication(authentication: Authentication, headers: RequestHeaders): void {
+	private populateAuthentication(authentication: Authentication, headers: HttpHeaders): void {
 		this.authenticationConverter.convert(authentication, headers);
 	}
 }
