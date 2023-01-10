@@ -29,7 +29,7 @@ export class StorageActionHandler extends BaseActionHandler<StorageAction> {
       const headers = {
         Authorization: 'Bearer ' + globals.workerToken
       };
-      const key = this.variableService.resolve(
+      const key = await this.variableService.resolve(
         this.action.settings.key,
         executionState
       );
@@ -43,7 +43,7 @@ export class StorageActionHandler extends BaseActionHandler<StorageAction> {
             ).data?.value ?? null;
           break;
         case StoreOperation.PUT:
-          const value = this.variableService.resolve(
+          const value = await this.variableService.resolve(
             this.action.settings.value,
             executionState
           );

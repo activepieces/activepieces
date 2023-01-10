@@ -18,9 +18,6 @@ dist/
 coverage/
 node_modules/
 
-# worker in backend resources
-src/backend/backend-loader/src/main/resources/activepieces-worker.js
-
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
 # compiled output

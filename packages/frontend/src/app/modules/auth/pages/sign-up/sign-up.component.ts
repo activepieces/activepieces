@@ -59,8 +59,8 @@ export class SignUpComponent {
 					containsNumber(),
 				],
 			}),
-			trackEvents: new FormControl<boolean>(false, { nonNullable: true }),
-			newsLetter: new FormControl<boolean>(false, { nonNullable: true }),
+			trackEvents: new FormControl<boolean>(true, { nonNullable: true }),
+			newsLetter: new FormControl<boolean>(true, { nonNullable: true }),
 		});
 		this.emailValueChanged$ = this.registrationForm.controls.email.valueChanges.pipe(
 			tap(() => {

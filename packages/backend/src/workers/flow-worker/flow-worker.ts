@@ -4,6 +4,7 @@ import {
   ActionType,
   apId,
   CodeActionSettings,
+  Collection,
   CollectionId,
   CollectionVersion,
   CollectionVersionId,
@@ -13,6 +14,7 @@ import {
   FlowVersion,
   FlowVersionId,
   PrincipalType,
+  ProjectId,
   StepOutput,
   StepOutputStatus,
   Trigger,
@@ -28,12 +30,14 @@ import { flowRunService } from "../../flow-run/flow-run-service";
 import { OneTimeJobData } from "./job-data";
 import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";
+import { collectionService } from "../../collections/collection.service";
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
   const flowVersion = (await flowVersionService.getOne(jobData.flowVersionId))!;
   const collectionVersion = (await collectionVersionService.getOne(jobData.collectionVersionId))!;
+  const collection = await collectionService.getOneOrThrow(collectionVersion.collectionId);
 
   const sandbox = sandboxManager.obtainSandbox();
   const flowLock = await redisLock(flowVersion.id);
@@ -42,7 +46,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     await sandbox.cleanAndInit();
 
     console.log("[" + jobData.runId + "] Downloading Files");
-    await downloadFiles(sandbox, flowVersion, collectionVersion, jobData.payload);
+    await downloadFiles(sandbox, flowVersion, collection, collectionVersion, jobData.payload);
 
     console.log("[" + jobData.runId + "] Running Engine");
     await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js execute-flow`);
@@ -68,6 +72,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
 async function downloadFiles(
   sandbox: Sandbox,
   flowVersion: FlowVersion,
+  collection: Collection,
   collectionVersion: CollectionVersion,
   payload: unknown
 ): Promise<void> {
@@ -90,7 +95,7 @@ async function downloadFiles(
   fs.writeFileSync(buildPath + "/activepieces-engine.js", fs.readFileSync("resources/activepieces-engine.js"));
   fs.writeFileSync(
     buildPath + "/input.json",
-    await constructInputString(flowVersion.id, collectionVersion.collectionId, collectionVersion.id, {
+    await constructInputString(collection.projectId, flowVersion.id, collectionVersion.collectionId, collectionVersion.id, {
       duration: 0,
       input: {},
       output: payload,
@@ -100,6 +105,7 @@ async function downloadFiles(
 }
 
 async function constructInputString(
+  projectId: ProjectId,
   flowVersionId: FlowVersionId,
   collectionId: CollectionId,
   collectionVersionId: CollectionVersionId,
@@ -108,6 +114,7 @@ async function constructInputString(
   return JSON.stringify({
     flowVersionId,
     collectionVersionId,
+    projectId,
     workerToken: await tokenUtils.encode({
       id: apId(),
       type: PrincipalType.WORKER,

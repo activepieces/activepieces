@@ -25,7 +25,7 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     ancestors: [string, number][]
   ): Promise<StepOutput> {
     const stepOutput = new StepOutput();
-    const params = this.variableService.resolve(
+    const params = await this.variableService.resolve(
       this.action.settings.input,
       executionState
     );

@@ -1,4 +1,4 @@
-import { apId, AppConnection, AppConnectionId, AppCredential, AppCredentialId, AppSecretType, Cursor, OAuth2Response, OAuth2Settings, RefreshTokenFromCloudRequest, SeekPage, UpsertConnectionRequest } from "shared";
+import { apId, AppConnection, AppConnectionId, AppCredential, AppCredentialId, AppSecretType, Cursor, OAuth2Response, OAuth2Settings, ProjectId, RefreshTokenFromCloudRequest, SeekPage, UpsertConnectionRequest } from "shared";
 import { databaseConnection } from "../database/database-connection";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
@@ -10,22 +10,29 @@ import { appCredentialService } from "../app-credential/app-credential-service";
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 
 export const appConnectionService = {
-    async upsert(request: UpsertConnectionRequest): Promise<AppConnection> {
-        await appConnectionRepo.upsert({ ...request, id: apId() }, ["name", "appCredentialId"]);
+    async upsert(projectId: ProjectId, request: UpsertConnectionRequest): Promise<AppConnection> {
+        await appConnectionRepo.upsert({ ...request, projectId, id: apId() }, ["name", "appCredentialId"]);
         return appConnectionRepo.findOneByOrFail({
             name: request.name,
             appCredentialId: request.appCredentialId
         })
     },
     async getOne(id: AppConnectionId): Promise<AppConnection | null> {
-        return appConnectionRepo.findOneBy({
+        const appConnection = await appConnectionRepo.findOneBy({
             id: id
-        })
+        });
+        if (appConnection === null) {
+            return null;
+        }
+        const refreshedAppConnection = await refresh(appConnection);
+        await appConnectionRepo.update(id, refreshedAppConnection);
+        return refreshedAppConnection;
     },
     async delete(id: AppConnectionId): Promise<void> {
         await appConnectionRepo.delete({ id: id });
     },
-    async list(credentialId: AppCredentialId, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<AppConnection>> {
+    async list(projectId: ProjectId, appName: string | undefined, name: string | undefined, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<AppConnection>> {
+        const appCredentialId = appName === undefined ? undefined : (await appCredentialService.getByNameOrThrow(projectId, appName))!.id;
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
         const paginator = buildPaginator({
             entity: AppConnectionEntity,
@@ -37,13 +44,18 @@ export const appConnectionService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         });
-        const queryBuilder = appConnectionRepo.createQueryBuilder("app_connection").where({ appSeceretId: credentialId });
-        const { data, cursor } = await paginator.paginate(queryBuilder.where({ appSeceretId: credentialId }));
+        let queryBuilder = appConnectionRepo.createQueryBuilder("app_connection").where({ projectId });
+        if (name !== undefined) {
+            queryBuilder = queryBuilder.where({ name });
+        }
+        if (appName !== undefined) {
+            queryBuilder = queryBuilder.where({ appCredentialId });
+        }
+        const { data, cursor } = await paginator.paginate(queryBuilder);
         return paginationHelper.createPage<AppConnection>(data, cursor);
     }
 };
 
-// TODO USE
 async function refresh(connection: AppConnection): Promise<AppConnection> {
     const appCredential = await appCredentialService.getOneOrThrow(connection.appCredentialId);
     switch (appCredential.type) {
@@ -59,8 +71,19 @@ async function refresh(connection: AppConnection): Promise<AppConnection> {
     return connection;
 }
 
+function expired(connection: OAuth2Response) {
+    const secondsSinceEpoch = Math.round(Date.now() / 1000);
+    if (connection.expires_in === undefined || connection.refresh_token === undefined) {
+        return false;
+    }
+    // Refresh if there is less than 15 minutes to expire
+    return (connection.claimed_at + connection.expires_in + 15 * 60 <= secondsSinceEpoch)
+}
 
 async function refreshCloud(appCredential: AppCredential, connection: OAuth2Response): Promise<OAuth2Response> {
+    if (!expired(connection)) {
+        return connection;
+    }
     return (
         await axios.post("https://secrets.activepieces.com/refresh", {
             refreshToken: connection.refresh_token,
@@ -70,6 +93,9 @@ async function refreshCloud(appCredential: AppCredential, connection: OAuth2Resp
 }
 
 async function refreshWithCredentials(appCredential: AppCredential, connection: OAuth2Response): Promise<OAuth2Response> {
+    if (!expired(connection)) {
+        return connection;
+    }
     try {
         let settings = appCredential.settings as OAuth2Settings;
         let response = (
@@ -112,30 +138,3 @@ function formatOAuth2Response(response: Record<string, any>) {
     return formattedResponse;
 }
 
-/** 
-async function refreshAndUpdateCollection(collectionVersion: Readonly<CollectionVersion>): Promise<CollectionVersion> {
-    let clonedVersion: CollectionVersion = JSON.parse(JSON.stringify(collectionVersion));
-    let refreshedConfigs = false;
-    for (let i = 0; i < clonedVersion.configs.length; ++i) {
-      let config = clonedVersion.configs[i];
-      if (config.type === ConfigType.CLOUD_OAUTH2 || config.type == ConfigType.OAUTH2) {
-        const secondsSinceEpoch = Math.round(Date.now() / 1000);
-        if (config.value.expires_in === undefined || config.value.refresh_token === undefined) continue;
-        // Refresh if there is less than 15 minutes to expire
-        if (config.value.claimed_at + config.value.expires_in + 15 * 60 <= secondsSinceEpoch) {
-          refreshedConfigs = true;
-          try {
-            let response = await oauth2Service.refresh(config);
-            config.value = response;
-          } catch (e) {
-            console.error(e);
-            /// There is nothing to do other than wait for the 3P service code to work in next 15 minutes, and throw an error.
-          }
-        }
-      }
-    }
-    if (refreshedConfigs) {
-      await collectionVersionService.updateVersion(clonedVersion.id, clonedVersion);
-    }
-    return clonedVersion;
-  }**/

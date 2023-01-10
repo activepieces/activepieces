@@ -1,9 +1,10 @@
-import { AppConnection, AppCredential } from "shared";
+import { AppConnection, AppCredential, Project } from "shared";
 import { EntitySchema } from "typeorm";
-import { BaseColumnSchemaPart } from "../helper/base-entity";
+import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 
 export interface AppConnectionSchema extends AppConnection {
   appCredential: AppCredential;
+  project: Project;
 }
 
 export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
@@ -16,6 +17,7 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
     appCredentialId: {
       type: String
     },
+    projectId: ApIdSchema,
     connection: {
       type: "jsonb"
     }
@@ -28,6 +30,16 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
     },
   ],
   relations: {
+    project: {
+      type: "many-to-one",
+      target: "project",
+      cascade: true,
+      onDelete: "CASCADE",
+      joinColumn: {
+        name: "projectId",
+        foreignKeyConstraintName: "fk_app_connection_app_project_id",
+      },
+    },
     appCredential: {
       type: "many-to-one",
       target: "app_credential",

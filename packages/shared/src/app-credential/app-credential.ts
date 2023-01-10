@@ -18,7 +18,7 @@ export interface OAuth2Settings {
 
 export type AppCredential = BaseAppCredential<AppSecretType.OAUTH2, OAuth2Settings> | BaseAppCredential<AppSecretType.CLOUD_OAUTH2, {}> | BaseAppCredential<AppSecretType.API_KEY, {}>;
 
-interface BaseAppCredential<T extends AppSecretType, S> {
+interface BaseAppCredential<T extends AppSecretType, S> extends BaseModel<AppCredentialId>{
   name: string;
   projectId: ProjectId;
   type: T;

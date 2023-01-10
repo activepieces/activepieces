@@ -98,7 +98,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		private dialogService: MatDialog,
 		private store: Store,
 		private cloudAuthConfigsService: CloudAuthConfigsService,
-    private authenticationService:AuthenticationService
+		private authenticationService: AuthenticationService
 	) {
 		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions);
 	}
@@ -240,43 +240,47 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		}
 	}
 	openNewAuthenticationModal(authConfigName: string) {
-		this.updateOrAddConfigModalClosed$ =
-    this.authenticationService.getServerUrl().pipe(switchMap(serverUrl=>{
-      return     this.dialogService
-			.open(NewAuthenticationModalComponent, {
-				data: { pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2), pieceName: this.pieceName, serverUrl:serverUrl},
+		this.updateOrAddConfigModalClosed$ = this.authenticationService.getServerUrl().pipe(
+			switchMap(serverUrl => {
+				return this.dialogService
+					.open(NewAuthenticationModalComponent, {
+						data: {
+							pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
+							pieceName: this.pieceName,
+							serverUrl: serverUrl,
+						},
+					})
+					.afterClosed()
+					.pipe(
+						tap((result: Config | string) => {
+							if (typeof result === 'string' && result === USE_CLOUD_CREDENTIALS) {
+								this.checkingOAuth2CloudManager = true;
+								this.cloudAuthCheck$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
+									catchError(err => {
+										console.error(err);
+										return of({});
+									}),
+									tap(() => {
+										this.checkingOAuth2CloudManager = false;
+									}),
+									map(res => {
+										return res[this.pieceName];
+									}),
+									tap((cloudAuth2Config: { clientId: string }) => {
+										this.openNewCloudAuthenticationModal(authConfigName, cloudAuth2Config.clientId);
+									}),
+									map(() => void 0)
+								);
+							} else if (typeof result === 'object' && result.type === ConfigType.OAUTH2) {
+								const authConfigOptionValue = result.value;
+								this.form.get(authConfigName)!.setValue(authConfigOptionValue);
+								this.updatedAuthLabel = result.key;
+							}
+						}),
+						map(() => void 0)
+					);
 			})
-			.afterClosed()
-			.pipe(
-				tap((result: Config | string) => {
-					if (typeof result === 'string' && result === USE_CLOUD_CREDENTIALS) {
-						this.checkingOAuth2CloudManager = true;
-						this.cloudAuthCheck$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
-							catchError(err => {
-								console.error(err);
-								return of({});
-							}),
-							tap(() => {
-								this.checkingOAuth2CloudManager = false;
-							}),
-							map(res => {
-								return res[this.pieceName];
-							}),
-							tap((cloudAuth2Config: { clientId: string }) => {
-								this.openNewCloudAuthenticationModal(authConfigName, cloudAuth2Config.clientId);
-							}),
-							map(() => void 0)
-						);
-					} else if (typeof result === 'object' && result.type === ConfigType.OAUTH2) {
-						const authConfigOptionValue = result.value;
-						this.form.get(authConfigName)!.setValue(authConfigOptionValue);
-						this.updatedAuthLabel = result.key;
-					}
-				}),
-				map(() => void 0)
-			);
-    }))
-
+		);
 	}
 
 	openNewCloudAuthenticationModal(authConfigName: string, clientId: string) {

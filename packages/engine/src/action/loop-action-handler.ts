@@ -38,7 +38,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     executionState: ExecutionState,
     ancestors: [string, number][]
   ): Promise<StepOutput> {
-    const resolvedInput = this.variableService.resolve(
+    const resolvedInput = await this.variableService.resolve(
       this.action.settings,
       executionState
     );

@@ -34,7 +34,7 @@ import { CodeArtifactFormControlComponent } from './components/form-controls/cod
 import { CodeArtifactControlFullscreenComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { TestCodeFormModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/test-code-form-modal/test-code-form-modal.component';
 import { AddNpmPackageModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component';
-import { projectReducer } from './store/reducer/project.reducer';
+import { projectReducer } from './store/project/project.reducer';
 import { TrackHoverDirective } from './components/form-controls/dictionary-form-control/track-hover.directive';
 import { RequestTypeTemplateComponent } from './components/form-controls/request-type-template/request-type-template.component';
 import { EndpointFormControlComponent } from './components/form-controls/endpoint-form-control/endpoint-form-control.component';
@@ -54,7 +54,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AuthConfigsPipe } from './components/configs-form/auth-configs.pipe';
 import { OAuth2CloudConnectControlComponent } from './components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
-import { ConfirmCloudAuthConfigUseDialog } from './components/configs-form/confirm-cloud-auth-config-use-dialog/confirm-cloud-auth-config-use-dialog.component';
 import { MatToolbarModule } from '@angular/material/toolbar';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 0,
@@ -95,7 +94,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		JsonViewDialogComponent,
 		AuthConfigsPipe,
 		OAuth2CloudConnectControlComponent,
-		ConfirmCloudAuthConfigUseDialog,
 	],
 	imports: [
 		FontAwesomeModule,

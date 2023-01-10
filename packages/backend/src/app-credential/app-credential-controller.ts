@@ -63,7 +63,9 @@ export const appCredentialController = async (fastify: FastifyInstance, options:
       }>,
       _reply
     ) => {
-      return await appCredentialService.list(request.query.projectId, request.query.cursor, request.query.limit ?? DEFAULT_PAGING_LIMIT);
+      return await appCredentialService.list(request.query.projectId,
+        request.query.cursor,
+        request.query.limit ?? DEFAULT_PAGING_LIMIT);
     }
   );
 

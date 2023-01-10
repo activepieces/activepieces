@@ -11,11 +11,13 @@ function executeFlow() {
       flowVersionId: string;
       collectionVersionId: string;
       workerToken: string;
+      projectId: string;
       apiUrl: string;
       triggerPayload: StepOutput;
     } = Utils.parseJsonFile(globals.inputFile);
 
     globals.workerToken = input.workerToken;
+    globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl;
 
     const executionState = new ExecutionState();

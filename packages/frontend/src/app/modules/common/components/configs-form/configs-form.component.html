@@ -113,8 +113,6 @@
             {{config.label}} is required
           </mat-error>
         </mat-form-field>
-
-
         <app-button btnColor="primary" btnStyle="basic" (buttonClicked)="newAuthenticationDialogProcess(config.key)"
           type="button" btnSize="medium" *ngIf="formGroup.enabled" [darkLoadingSpinner]="true"
           [loading]="checkingOAuth2CloudManager"> + New Authentication

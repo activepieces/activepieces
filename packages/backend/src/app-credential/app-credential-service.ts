@@ -18,19 +18,34 @@ export const appCredentialService = {
         })
     },
     async getOneOrThrow(id: AppCredentialId): Promise<AppCredential> {
-        const flow = await appCredentialService.getOne(id);
-      
-        if (flow === null) {
-          throw new ActivepiecesError({
-            code: ErrorCode.APP_CREDENTIAL_NOT_FOUND,
-            params: {
-              id,
-            },
-          });
+        const cred = await appCredentialService.getOne(id);
+
+        if (cred === null) {
+            throw new ActivepiecesError({
+                code: ErrorCode.APP_CREDENTIAL_NOT_FOUND,
+                params: {
+                    id,
+                },
+            });
         }
-      
-        return flow;
-      },
+
+        return cred;
+    },
+    async getByNameOrThrow(projectId: ProjectId, name: string): Promise<AppCredential | null> {
+        let appCred = await appCredentialRepo.findOneBy({
+            projectId: projectId,
+            name: name
+        });
+        if (appCred === null) {
+            throw new ActivepiecesError({
+                code: ErrorCode.APP_CREDENTIAL_NOT_FOUND,
+                params: {
+                    id: name,
+                },
+            });
+        }
+        return appCred;
+    },
     async getOne(id: AppCredentialId): Promise<AppCredential | null> {
         return appCredentialRepo.findOneBy({
             id: id
@@ -39,7 +54,8 @@ export const appCredentialService = {
     async delete(id: AppCredentialId): Promise<void> {
         await appCredentialRepo.delete({ id: id });
     },
-    async list(projectId: ProjectId, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<AppCredential>> {
+    async list(projectId: ProjectId,
+        cursorRequest: Cursor | null, limit: number): Promise<SeekPage<AppCredential>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
         const paginator = buildPaginator({
             entity: AppCredentialEntity,
@@ -51,7 +67,8 @@ export const appCredentialService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         });
-        const queryBuilder = appCredentialRepo.createQueryBuilder("app_credential").where({ projectId });
+        const queryBuilder = appCredentialRepo.createQueryBuilder("app_credential")
+            .where({ projectId });
         const { data, cursor } = await paginator.paginate(queryBuilder.where({ projectId }));
         return paginationHelper.createPage<AppCredential>(data, cursor);
     }
