@@ -22,11 +22,12 @@ export const webhookService = {
 
 
     console.log(`Triggers returned a ${payloads.length} payloads`);
+
     payloads.forEach((triggerPayload) => {
       flowRunService.start({
         environment: RunEnvironment.PRODUCTION,
-        flowVersionId: flow.version!.id,
-        collectionVersionId: collection.version!.id,
+        flowVersionId: flowVersion.id,
+        collectionVersionId: instance.collectionVersionId,
         payload: triggerPayload,
       });
     });

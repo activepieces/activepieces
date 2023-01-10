@@ -20,7 +20,8 @@ services:
       - AP_POSTGRES_USERNAME=postgres
       - AP_REDIS_HOST=redis
       - AP_REDIS_PORT=6379
-      - AP_SERVER_URL=http://localhost:8080/api
+      - AP_SERVER_URL=http://localhost:8080
+      - AP_API_URL=http://localhost:8080/api
     networks:
       - activepieces
 
