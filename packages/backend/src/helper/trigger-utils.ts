@@ -161,7 +161,7 @@ const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
 
 const getWebhookUrl = async (flowId: FlowId): Promise<string> => {
   const webhookPath = `v1/webhooks?flowId=${flowId}`;
-  let serverUrl = system.get(SystemProp.API_URL);
+  let serverUrl = system.get(SystemProp.BACKEND_URL);
 
   if (serverUrl !== undefined) {
     const { ip } = await getPublicIp();
