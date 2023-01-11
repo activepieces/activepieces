@@ -51,8 +51,9 @@ export const triggerUtils = {
           id: flowVersion.id,
           data: {
             environment: RunEnvironment.PRODUCTION,
+            collectionId,
             collectionVersionId,
-            flowVersionId: flowVersion.id,
+            flowVersion,
             triggerType: TriggerType.SCHEDULE,
           },
           cronExpression: flowVersion.trigger.settings.cronExpression,
@@ -124,8 +125,9 @@ const enablePieceTrigger = async ({ flowVersion, collectionId, collectionVersion
         id: flowVersion.id,
         data: {
           environment: RunEnvironment.PRODUCTION,
+          collectionId,
           collectionVersionId,
-          flowVersionId: flowVersion.id,
+          flowVersion,
           triggerType: TriggerType.PIECE,
         },
         cronExpression: EVERY_FIFTEEN_MINUTES,
