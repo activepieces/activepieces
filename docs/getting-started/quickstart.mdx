@@ -6,33 +6,30 @@ description: "Create your first automation with Activepieces"
 In this tutorial, you will learn how to build automation flows and integrate them with various apps. You will also learn how to customize the trigger for your automation. 
 To demonstrate these concepts, we will walk you through the creation of a simple "Hello World" flow that sends a message to a Slack channel on an hourly basis.
 
-## Create Demo account
+### 1. Create Demo account
 
-To get started, visit https://demo.activepieces.com/sign-up and create an account using any email and password.
+To get started, visit [Activepieces Demo Website](https://demo.activepieces.com/sign-up) and create an account.
 
 
 <Warning>
-Please note that this is a demo instance and should not be used for production purposes.
-The information you enter will not be retained and the data will be deleted every 24 hours. Note that no 
-email address confirmation is needed for this demo account.
+This is a demo app and should not be used for real life cases, all data will be cleared every 24 hours.
 </Warning>
 
-## Create Hello World Flow
+### 2. Create Hello World Flow
 
 Once you have set up your account, you will be presented with the following screen. To create a new collection, click on the `Start building` button. 
-This will also create your first flow, called `Flow 1`, within the collection. 
+This will also create your first flow, called `Flow 1`, within the collection.
+
 A collection is like a folder that organizes your flows. To give your flow a more meaningful name, click on `Untitled` and change it to `Hello World.`
 
 ![Activepieces Dashboard](/resources/screenshots/quickstart-empty-dashboard.png)
 
-### 2. Configure the trigger.
+### 3. Configure the trigger.
 
 In order to send a message on an hourly basis, we need a scheduler that can trigger our flow at fixed time intervals.
 To set this up, click on the `Empty Trigger` and select the `Schedule` trigger from the "Core" menu.
 
 ![Select Flow Trigger](/resources/screenshots/quickstart-configure-trigger.png)
-
-<Note>To know more about other types of triggers, visit [Triggers](/using-activepieces/triggers) page.</Note>
 
 We'll now set the Schedule to run every hour by using this expression `0 0 * ? * *` in the settings, as follows:
 
@@ -40,7 +37,7 @@ We'll now set the Schedule to run every hour by using this expression `0 0 * ? *
 
 <Note>You can learn more about Cron expressions in the [Triggers](/using-activepieces/triggers) page</Note>
 
-### 3. Add a Slack piece.
+### 4. Add a Slack piece.
 
 While **Trigger** is what starts a flow, the actual logic of the flow happens in **Pieces**. Pieces perform a specific task or operation.
 They can be external services (Apps) or data processors (Helpers). 
@@ -70,7 +67,7 @@ Last but not least, write down the text of the message. Eg: "Activepieces is coo
    This section is currently under construction 🚧
 </Warning>
 
-### 4. Test the flow.
+### 5. Test the flow.
 
 Your flow is complete! It's time to test it. Click on **Test flow** right above your flow.
 
@@ -82,7 +79,7 @@ Once the test is completed, you should receive the message in the Slack channel 
 
 The check mark means the step ran successfully. You can click on any step and see its input and output.
 
-### 5. Publish the collection.
+### 6. Publish the collection.
 
 To enable your automation, click on the **Publish** button on the top of the screen. This will save the collection as a new version and automatically enable it.
 Your flow now is running in the background. 

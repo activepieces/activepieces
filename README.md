@@ -7,18 +7,18 @@
 
 ## Activepieces is an open-source business automation tool
 * Built for no-code users and citizen developers
-* Self-host with a simple docker command
+* Self-host with a simple Docker command
 * An alternative to Zapier, Make.com and Tray
 
-Visit [our docs](https://www.activepieces.com/docs) to learn all the details.
+Read [Activepieces docs](https://www.activepieces.com/docs) to learn the key concepts and browse the pieces.
 
 
 ## Get started for free
 
-### Option One: Demo Instance
-visit https://demo.activepieces.com
+### Option #1: Play around with the Demo App
+Go to [Activepieces Demo Website](https://demo.activepieces.com) and play around with the app features.
 
-### Option Two: Self Host
+### Option #2: Self Host
 Clone Activepieces to your machine and run it with 1 command
 
  ```bash 
@@ -35,7 +35,7 @@ docker compose -p activepieces up
 Vist `http://localhost:8080`
 
 ### Other Options
-We're planning to launch a cloud version of Activepieces and instructions to distribute it on your own infrastructure
+We're planning to launch a cloud edition of Activepieces soon.
 
 ## Features
 
@@ -55,18 +55,7 @@ Design your flow visually or write Node.js code if you feel like it. There are n
 <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f902e016e13f712543baf_Screenshot%202022-12-06%20at%2021.54%201.png" width="100%">
 
 ## Connectors
-We're building no-code connectors to make flow building a frictionless process. Here is our list of connectors:
-* Slack
-* Gmail [Soon]
-* Google Sheets [Soon]
-* GitHub [Soon]
-* MailChimp [Soon]
-* HubSpot [Soon]
-* Trello [Soon]
-* Shopify [Soon]
-* DropBox [Soon]
-* Facebook Lead Ads [Soon]
-* Google Calendar [Soon]
+We're building no-code connectors to make flow building a frictionless process. Go to the [Pieces](https://www.activepieces.com/docs/pieces) section of our docs to browse all available pieces.
 
 > :warning: The list of connectors will keep chagning as we hear from our users, join [our Discord Server](https://discord.gg/2jUXBKDdP8) to shape the connectors roadmap.
 
@@ -87,8 +76,11 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
 <table>
   <tbody>
     <tr>
+          <td align="center"><a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4" width="100px;" alt="Mohammad Abu Aboud"/><br /><sub><b>Mohammad Abu Aboud</b></sub></a><br /><a href="#maintenance-abuaboud" title="Maintenance">🚧</a></td>
       <td align="center"><a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="Khaled Mashaly"/><br /><sub><b>Khaled Mashaly</b></sub></a><br /><a href="#maintenance-khaledmashaly" title="Maintenance">🚧</a></td>
-      <td align="center"><a href="https://steercampaign.com"><img src="https://avatars.githubusercontent.com/u/12627658?v=4?s=100" width="100px;" alt="Mohammad Abu Musa"/><br /><sub><b>Mohammad Abu Musa</b></sub></a><br /><a href="#maintenance-mabumusa1" title="Maintenance">🚧</a></td>
+      <td align="center"><a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4" width="100px;" alt="Abdulrahman Al Hussein"/><br /><sub><b>Abdulrahman Al Hussein</b></sub></a><br /><a href="#maintenance-AbdulTheActivePiecer" title="Maintenance">🚧</a></td>
+            <td align="center"><a href="https://steercampaign.com"><img src="https://avatars.githubusercontent.com/u/12627658?v=4?s=100" width="100px;" alt="Mohammad Abu Musa"/><br /><sub><b>Mohammad Abu Musa</b></sub></a><br /><a href="#maintenance-mabumusa1" title="Maintenance">🚧</a></td>
+<td align="center"><a href="https://github.com/aboudzein"><img src="https://avatars.githubusercontent.com/u/12976630?v=4" width="100px;" alt="Abdurahman Zeineddin"/><br /><sub><b>Abdurahman Zeineddin</b></sub></a><br /><a href="#maintenance-aboudzein" title="Maintenance">🚧</a></td>
     </tr>
   </tbody>
 </table>

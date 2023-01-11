@@ -3,16 +3,16 @@ title: "Create First Piece"
 description: ""
 ---
 
-This tutorial will guide you through the process of creating an Hacker news piece with an action that fetches the top stores. It is assumed that you are familiar with the following:
+This tutorial will guide you through the process of creating a Hacker News piece with an action that fetches the top stories. It assumes that you are familiar with the following:
 
-* [Activepieces Repo Structure](../contributing/repo-structure) and familiar with [Activepieces Local development](../contributing/local-development)
-* Typescript syntax
+* [Activepieces Repo Structure](../repo-structure) and [Activepieces Local development](../local-development).
+* TypeScript syntax.
 
 Hacker News is a social news website that allows users to submit and vote on stories related to computer science and entrepreneurship.
 
-# Piece definition
+## Piece Definition
 
-To get started, let's create the piece definition and folder for Hackernews:
+To get started, let's create a new folder for Hacker News and add the piece definition inside.
 
 ```bash
 mkdir packages/pieces/apps/hackernews && cd packages/pieces/apps/hackernews
@@ -38,7 +38,7 @@ export const hackernews = createPiece({
 });
 ```
 
-# Action definition
+## Action Definition
 
 Now let's create first action which fetch top stories from hackernews, The first step to do that is to create folder for the actions inside the hackernews folder.
 
@@ -110,7 +110,7 @@ The `run` function is the function that is called when the action is executed. I
 
 The `run` function first defines the URL of the Hacker News API, and then makes a GET request to the topstories.json endpoint using the httpClient.sendRequest function to fetch the top story IDs. It then iterates over the top story IDs and makes a GET request to the `item/{id}.json` endpoint for each story ID to fetch the details of each story. Finally, it returns the top stories as an array.
 
-# Expose The definition
+## Expose The Definition
 
 To make the action readable by Activepieces, add it to the array of actions in the piece definition.
 
