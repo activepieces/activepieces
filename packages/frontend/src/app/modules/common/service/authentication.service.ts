@@ -111,7 +111,7 @@ export class AuthenticationService {
 	getApiUrl(): Observable<string> {
 		return this.getAllFlags().pipe(
 			map(flags => {
-				return flags['API_URL'] as string;
+				return flags['BACKEND_URL'] as string;
 			})
 		);
 	}
@@ -119,7 +119,7 @@ export class AuthenticationService {
 	getServerUrl(): Observable<string> {
 		return this.getAllFlags().pipe(
 			map(flags => {
-				return flags['SERVER_URL'] as string;
+				return flags['FRONTEND_URL'] as string;
 			})
 		);
 	}

@@ -61,7 +61,7 @@ const start = async () => {
  / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/ 
 
-started on ${system.get(SystemProp.API_URL)}
+started on ${system.get(SystemProp.FRONTEND_URL)}
     `);
 
   } catch (err) {
