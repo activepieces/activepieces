@@ -27,14 +27,14 @@ export const flagService = {
 
     flags.push(
       {
-        id: FlagId.API_URL,
-        value: system.get(SystemProp.API_URL),
+        id: FlagId.BACKEND_URL,
+        value: system.get(SystemProp.BACKEND_URL),
         created,
         updated,
       },
       {
-        id: FlagId.SERVER_URL,
-        value: system.get(SystemProp.SERVER_URL),
+        id: FlagId.FRONTEND_URL,
+        value: system.get(SystemProp.FRONTEND_URL),
         created,
         updated,
       },
@@ -57,16 +57,16 @@ export const flagService = {
 };
 
 export enum FlagId {
-  SERVER_URL = "SERVER_URL",
-  API_URL = "API_URL",
+  FRONTEND_URL = "FRONTEND_URL",
+  BACKEND_URL = "BACKEND_URL",
   USER_CREATED = "USER_CREATED",
   WARNING_TEXT_BODY = "WARNING_TEXT_BODY",
   WARNING_TEXT_HEADER = "WARNING_TEXT_HEADER",
 }
 
 export type FlagType =
-  | BaseFlagStructure<FlagId.SERVER_URL, string>
-  | BaseFlagStructure<FlagId.API_URL, string>
+  | BaseFlagStructure<FlagId.FRONTEND_URL, string>
+  | BaseFlagStructure<FlagId.BACKEND_URL, string>
   | BaseFlagStructure<FlagId.USER_CREATED, boolean>
   | BaseFlagStructure<FlagId.WARNING_TEXT_BODY, string>
   | BaseFlagStructure<FlagId.WARNING_TEXT_HEADER, string>;
