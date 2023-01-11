@@ -1,12 +1,9 @@
-import { pieces, Trigger, Action } from 'pieces';
+import { pieces, Trigger, Action, Piece } from 'pieces';
 
 import * as fs from 'fs';
 const mintJson: { navigation: { group: string; pages: string[] }[] } =
   JSON.parse(fs.readFileSync('../../../docs/mint.json', 'utf8'));
-const appsFolderPath = 'pieces/apps';
-const appsDocsFilesPaths: string[] = [];
-const TEMPLATE_MDX = fs.readFileSync('template.mdx', 'utf8');
-
+const appsDocsFolderPath = 'pieces/apps';
 function getCardTemplate(title: string, description: string) {
   const CARD_TEMPLATE = `
     <CardGroup cols={2}>
@@ -31,15 +28,15 @@ function getPieceCards(
     .join('');
   return itemsCards;
 }
-
-pieces.forEach((p) => {
-  var docsFile = TEMPLATE_MDX.replace('TITLE', p.displayName);
-  var actionsCards = getPieceCards(p.metadata().actions);
+/** returns the mint.json navigation path for the docs */
+function writePieceDoc(p: Piece, mdxTemplate:string) {
+  let docsFile = mdxTemplate.replace('TITLE', p.displayName);
+  let actionsCards = getPieceCards(p.metadata().actions);
   if (!actionsCards) {
     actionsCards =
       '*No supported actions yet, please let us know if you need something on Discord so we can help out* \n';
   }
-  var triggerCards = getPieceCards(p.metadata().triggers);
+  let triggerCards = getPieceCards(p.metadata().triggers);
   if (!triggerCards) {
     triggerCards =
       '*No supported triggers yet, please let us know if you need something on Discord so we can help out* \n';
@@ -47,12 +44,28 @@ pieces.forEach((p) => {
   docsFile = docsFile.replace('ACTIONS', actionsCards);
   docsFile = docsFile.replace('TRIGGERS', triggerCards);
   fs.writeFileSync(
-    `../../../docs/${appsFolderPath}/${p.metadata().name}.mdx`,
+    `../../../docs/${appsDocsFolderPath}/${p.metadata().name}.mdx`,
     docsFile
   );
-  appsDocsFilesPaths.push(`${appsFolderPath}/${p.metadata().name}`);
-});
+  return `${appsDocsFolderPath}/${p.metadata().name}`;
+}
 
+
+const TEMPLATE_MDX = fs.readFileSync('template.mdx', 'utf8');
+const appsDocsFilesPaths: string[] = [];
+pieces.forEach((p) => {
+  const predefinedMdxPath =`../../pieces/src/apps/${p.name}/${p.name}.mdx`;
+  if(fs.existsSync(predefinedMdxPath))
+  {
+    const predfinedMdxFile= fs.readFileSync(predefinedMdxPath,'utf8');
+    appsDocsFilesPaths.push(writePieceDoc(p,predfinedMdxFile));
+    console.log(p.displayName);
+  }
+  else
+  {
+    appsDocsFilesPaths.push(writePieceDoc(p,TEMPLATE_MDX));
+  }
+});
 if (!mintJson['navigation']) {
   mintJson['navigation'] = [];
 }
