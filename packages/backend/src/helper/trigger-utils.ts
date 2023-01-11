@@ -37,6 +37,7 @@ export const triggerUtils = {
     }
     return payloads;
   },
+
   async enable({ collectionId, collectionVersionId, flowVersion }: EnableParams): Promise<void> {
     switch (flowVersion.trigger.type) {
       case TriggerType.PIECE:
@@ -52,6 +53,7 @@ export const triggerUtils = {
             environment: RunEnvironment.PRODUCTION,
             collectionVersionId,
             flowVersionId: flowVersion.id,
+            triggerType: TriggerType.SCHEDULE,
           },
           cronExpression: flowVersion.trigger.settings.cronExpression,
         });
@@ -124,6 +126,7 @@ const enablePieceTrigger = async ({ flowVersion, collectionId, collectionVersion
           environment: RunEnvironment.PRODUCTION,
           collectionVersionId,
           flowVersionId: flowVersion.id,
+          triggerType: TriggerType.PIECE,
         },
         cronExpression: EVERY_FIFTEEN_MINUTES,
       });

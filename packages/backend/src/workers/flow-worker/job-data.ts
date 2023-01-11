@@ -1,4 +1,4 @@
-import { CollectionVersionId, FlowRunId, FlowVersionId, RunEnvironment } from "shared";
+import { CollectionVersionId, FlowRunId, FlowVersionId, RunEnvironment, TriggerType } from "shared";
 
 interface BaseJobData {
   environment: RunEnvironment;
@@ -6,7 +6,9 @@ interface BaseJobData {
   collectionVersionId: CollectionVersionId;
 }
 
-export type RepeatableJobData = BaseJobData;
+export interface RepeatableJobData extends BaseJobData {
+  triggerType: TriggerType;
+};
 
 export interface OneTimeJobData extends BaseJobData {
   runId: FlowRunId;
