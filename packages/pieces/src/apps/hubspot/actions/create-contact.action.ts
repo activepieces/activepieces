@@ -60,7 +60,7 @@ export const createHubspotContact = createAction({
         return {
             success: true,
             request_body: body,
-            response_body: result
+            response_body: result.body,
         };
     },
 });

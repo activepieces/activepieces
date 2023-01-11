@@ -54,7 +54,8 @@ async function getUserRepo(authProp: AuthPropertyValue): Promise<GithubRepositor
             token: authProp.access_token
         },
     };
-    return await httpClient.sendRequest<GithubRepository[]>(request);
+    const response = await httpClient.sendRequest<GithubRepository[]>(request);
+    return response.body;
 }
 export interface GithubRepository {
     name: string;

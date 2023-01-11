@@ -1,5 +1,6 @@
 {
   "name": "pieces",
+  "version": "0.0.1",
   "dependencies": {
     "@mailchimp/mailchimp_marketing": "^3.0.80",
     "@types/mailchimp__mailchimp_marketing": "^3.0.6",

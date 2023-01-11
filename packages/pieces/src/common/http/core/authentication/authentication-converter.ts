@@ -1,6 +1,6 @@
 import type {Authentication} from '../../../authentication/core/authentication';
-import type {RequestHeaders} from '../request-headers';
+import type {HttpHeaders} from '../http-headers';
 
 export type AuthenticationConverter = {
-	convert: (authentication: Authentication, headers: RequestHeaders) => RequestHeaders;
+	convert: (authentication: Authentication, headers: HttpHeaders) => HttpHeaders;
 };
