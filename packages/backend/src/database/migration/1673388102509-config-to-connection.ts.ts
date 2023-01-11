@@ -8,7 +8,6 @@ export class configToConnection1673388102509 implements MigrationInterface {
         const collectionVersionRepo = queryRunner.connection.getRepository("collection_version");
         const collectionRepo = queryRunner.connection.getRepository("collection");
         const appConnectionRepo = queryRunner.connection.getRepository("app_connection");
-        const appCredentialRepo = queryRunner.connection.getRepository("app_credentials");
         const flowVersionRepo = queryRunner.connection.getRepository("flow_version");
 
         const versions = await collectionVersionRepo.find({});
@@ -31,43 +30,30 @@ export class configToConnection1673388102509 implements MigrationInterface {
                 } = configs[i];
                 switch (config.type) {
                     case "OAUTH2":
-                    case "CLOUD_AUTH2":
-                        let previousApp = await appCredentialRepo.findOneByOrFail({
-                            name: config.settings.pieceName ?? config.key,
-                            projectId: projectId
-                        })
-                        if (config.type === "CLOUD_AUTH2") {
-                            await appCredentialRepo.upsert({
-                                id: previousApp.id ?? apId(),
-                                type: "CLOUD_OAUTH2",
-                                name: config.settings.pieceName ?? config.key,
-                                projectId: projectId,
-                                settings: {},
-                            }, ["name", "projectId"]);
-                        } else {
-                            await appCredentialRepo.upsert({
-                                id: previousApp.id ?? apId(),
-                                type: "OAUTH2",
-                                name: config.settings.pieceName ?? config.key,
-                                projectId: projectId,
-                                settings: {
-                                    clientId: config.settings.clientId,
-                                    clientSecret: config.settings.clientSecret,
-                                    tokenUrl: config.settings.tokenUrl,
-                                    redirectUrl: config.settings.redirectUrl
-                                },
-                            }, ["name", "projectId"]);
-                        }
-                        let app = await appCredentialRepo.findOneByOrFail({
-                            name: config.settings.pieceName ?? config.key,
-                            projectId: projectId
-                        })
-
                         await appConnectionRepo.upsert({
+                            id: apId(),
+                            type: "OAUTH2",
+                            appName: config.settings.pieceName,
                             name: config.key,
-                            appCredentialId: app.id,
-                            connection: config.value, projectId, id: apId()
-                        }, ["name", "appCredentialId"]);
+                            projectId: projectId,
+                            connection: config.value,
+                            settings: {
+                                clientId: config.settings.clientId,
+                                clientSecret: config.settings.clientSecret,
+                                tokenUrl: config.settings.tokenUrl,
+                                redirectUrl: config.settings.redirectUrl
+                            },
+                        }, ["name", "appName", "projectId"]);
+                        break;
+                    case "CLOUD_AUTH2":
+                        await appConnectionRepo.upsert({
+                            id: apId(),
+                            type: "CLOUD_OAUTH2",
+                            appName: config.settings.pieceName,
+                            name: config.key,
+                            projectId: projectId,
+                            connection: config.value,
+                        }, ["name", "appName", "projectId"]);
                         break;
                     default:
                         break;
@@ -81,7 +67,7 @@ export class configToConnection1673388102509 implements MigrationInterface {
                 configs: any[]
             };
             collectionVersion.configs = collectionVersion.configs.filter(f => f.type !== "OAUTH2" && f.type !== "CLOUD_OAUTH2");
-            collectionVersionRepo.update(collectionVersion.id, collectionVersion);
+            await collectionVersionRepo.update(collectionVersion.id, collectionVersion);
         }
         const flowVersions = await flowVersionRepo.find();
         for (let i = 0; i < flowVersions.length; ++i) {

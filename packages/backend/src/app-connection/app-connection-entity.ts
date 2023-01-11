@@ -1,11 +1,8 @@
-import { AppConnection, AppCredential, Project } from "shared";
+import { AppConnection, Project } from "shared";
 import { EntitySchema } from "typeorm";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 
-export interface AppConnectionSchema extends AppConnection {
-  appCredential: AppCredential;
-  project: Project;
-}
+export type AppConnectionSchema = AppConnection & { project: Project };
 
 export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
   name: "app_connection",
@@ -14,18 +11,25 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
     name: {
       type: String,
     },
-    appCredentialId: {
+    type: {
+      type: String
+    },
+    appName: {
       type: String
     },
     projectId: ApIdSchema,
+    settings: {
+      type: "jsonb",
+      nullable: true
+    },
     connection: {
       type: "jsonb"
     }
   },
   indices: [
     {
-      name: "idx_app_connection_credential_id_name",
-      columns: ["appCredentialId", "name"],
+      name: "idx_app_connection_project_id_and_app_name_and_name",
+      columns: ["projectId", "appName", "name"],
       unique: true,
     },
   ],
@@ -39,16 +43,6 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         name: "projectId",
         foreignKeyConstraintName: "fk_app_connection_app_project_id",
       },
-    },
-    appCredential: {
-      type: "many-to-one",
-      target: "app_credential",
-      cascade: true,
-      onDelete: "CASCADE",
-      joinColumn: {
-        name: "appCredentialId",
-        foreignKeyConstraintName: "fk_app_connection_app_credential_id",
-      },
-    },
+    }
   },
 });

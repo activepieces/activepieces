@@ -1,4 +1,4 @@
-import { ApId, AppCredentialId, CollectionId, CollectionVersionId, FileId, FlowId, FlowRunId, FlowVersionId, InstanceId } from "shared";
+import { ApId, CollectionId, CollectionVersionId, FileId, FlowId, FlowRunId, FlowVersionId, InstanceId } from "shared";
 import { SystemProp } from "./system/system-prop";
 
 export class ActivepiecesError extends Error {
@@ -24,7 +24,6 @@ type ErrorParams =
   | PieceTriggerNotFoundErrorParams
   | AppSecretNotFoundErrorParams
   | StepNotFoundErrorParams
-  | AppCredentialNotFound
   | SystemPropNotDefinedErrorParams;
 
 export interface BaseErrorParams<T, V> {
@@ -57,14 +56,6 @@ export interface CollectionVersionNotFoundErrorParams
     ErrorCode.COLLECTION_VERSION_NOT_FOUND,
     {
       id: CollectionVersionId;
-    }
-  > { }
-
-export interface AppCredentialNotFound
-  extends BaseErrorParams<
-    ErrorCode.APP_CREDENTIAL_NOT_FOUND,
-    {
-      id?: AppCredentialId
     }
   > { }
 

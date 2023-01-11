@@ -1,7 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
 import { AppConnectionId, ListAppConnectionRequest, UpsertConnectionRequest } from "shared";
-import { appCredentialService } from "../app-credential/app-credential-service";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
 import { appConnectionService } from "./app-connection-service";
 
@@ -21,8 +20,7 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
       }>,
       _reply
     ) => {
-      let appCredential = await appCredentialService.getOneOrThrow(request.body.appCredentialId);
-      return await appConnectionService.upsert(appCredential.projectId, request.body);
+      return await appConnectionService.upsert(request.body);
     }
   );
 

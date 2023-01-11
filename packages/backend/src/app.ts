@@ -18,7 +18,6 @@ import { flowWorkerModule } from "./workers/flow-worker/flow-worker-module";
 import { webhookModule } from "./webhooks/webhook-module";
 import { errorHandler } from "./helper/error-handler";
 import { appConnectionModule } from "./app-connection/app-connection.module";
-import { appCredentialModule } from "./app-credential/app-credential.module";
 import { databaseConnection } from "./database/database-connection";
 
 const app = fastify({
@@ -41,7 +40,6 @@ app.register(codeModule);
 app.register(flowWorkerModule);
 app.register(piecesController);
 app.register(oauth2Module);
-app.register(appCredentialModule);
 app.register(instanceModule);
 app.register(flowRunModule);
 app.register(webhookModule);

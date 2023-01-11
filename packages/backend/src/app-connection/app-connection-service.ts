@@ -1,20 +1,19 @@
-import { apId, AppConnection, AppConnectionId, AppCredential, AppCredentialId, AppSecretType, Cursor, OAuth2Response, OAuth2Settings, ProjectId, RefreshTokenFromCloudRequest, SeekPage, UpsertConnectionRequest } from "shared";
+import { apId, AppConnection, AppConnectionId, AppConnectionType, CloudAuth2Connection, Cursor, OAuth2AppConnection, OAuth2Response, ProjectId, RefreshTokenFromCloudRequest, SeekPage, UpsertConnectionRequest } from "shared";
 import { databaseConnection } from "../database/database-connection";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { AppConnectionEntity } from "./app-connection-entity";
 import axios, { AxiosError } from "axios";
 import qs from "qs";
-import { appCredentialService } from "../app-credential/app-credential-service";
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 
 export const appConnectionService = {
-    async upsert(projectId: ProjectId, request: UpsertConnectionRequest): Promise<AppConnection> {
-        await appConnectionRepo.upsert({ ...request, projectId, id: apId() }, ["name", "appCredentialId"]);
+    async upsert(request: UpsertConnectionRequest): Promise<AppConnection> {
+        await appConnectionRepo.upsert({ ...request, id: apId() }, ["name", "appName", "projectId"]);
         return appConnectionRepo.findOneByOrFail({
             name: request.name,
-            appCredentialId: request.appCredentialId
+            appName: request.appName
         })
     },
     async getOne(id: AppConnectionId): Promise<AppConnection | null> {
@@ -32,7 +31,6 @@ export const appConnectionService = {
         await appConnectionRepo.delete({ id: id });
     },
     async list(projectId: ProjectId, appName: string | undefined, name: string | undefined, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<AppConnection>> {
-        const appCredentialId = appName === undefined ? undefined : (await appCredentialService.getByNameOrThrow(projectId, appName))!.id;
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
         const paginator = buildPaginator({
             entity: AppConnectionEntity,
@@ -49,21 +47,21 @@ export const appConnectionService = {
             queryBuilder = queryBuilder.where({ name });
         }
         if (appName !== undefined) {
-            queryBuilder = queryBuilder.where({ appCredentialId });
+            queryBuilder = queryBuilder.where({ appName });
         }
         const { data, cursor } = await paginator.paginate(queryBuilder);
+
         return paginationHelper.createPage<AppConnection>(data, cursor);
     }
 };
 
 async function refresh(connection: AppConnection): Promise<AppConnection> {
-    const appCredential = await appCredentialService.getOneOrThrow(connection.appCredentialId);
-    switch (appCredential.type) {
-        case AppSecretType.CLOUD_OAUTH2:
-            connection.connection = await refreshCloud(appCredential, connection.connection as OAuth2Response);
+    switch (connection.type) {
+        case AppConnectionType.CLOUD_OAUTH2:
+            connection.connection = await refreshCloud(connection);
             break;
-        case AppSecretType.OAUTH2:
-            connection.connection = await refreshWithCredentials(appCredential, connection.connection as OAuth2Response);
+        case AppConnectionType.OAUTH2:
+            connection.connection = await refreshWithCredentials(connection);
             break;
         default:
             break;
@@ -80,24 +78,24 @@ function expired(connection: OAuth2Response) {
     return (connection.claimed_at + connection.expires_in + 15 * 60 <= secondsSinceEpoch)
 }
 
-async function refreshCloud(appCredential: AppCredential, connection: OAuth2Response): Promise<OAuth2Response> {
-    if (!expired(connection)) {
-        return connection;
+async function refreshCloud(appConnection: CloudAuth2Connection): Promise<OAuth2Response> {
+    if (!expired(appConnection.connection)) {
+        return appConnection.connection;
     }
     return (
         await axios.post("https://secrets.activepieces.com/refresh", {
-            refreshToken: connection.refresh_token,
-            pieceName: appCredential.name,
+            refreshToken: appConnection.connection.refresh_token,
+            pieceName: appConnection.appName,
         } as RefreshTokenFromCloudRequest)
     ).data;
 }
 
-async function refreshWithCredentials(appCredential: AppCredential, connection: OAuth2Response): Promise<OAuth2Response> {
-    if (!expired(connection)) {
-        return connection;
+async function refreshWithCredentials(appConnection: OAuth2AppConnection): Promise<OAuth2Response> {
+    if (!expired(appConnection.connection)) {
+        return appConnection.connection;
     }
     try {
-        let settings = appCredential.settings as OAuth2Settings;
+        let settings = appConnection.settings;
         let response = (
             await axios.post(
                 settings.tokenUrl,
@@ -106,7 +104,7 @@ async function refreshWithCredentials(appCredential: AppCredential, connection: 
                     client_secret: settings.clientSecret,
                     redirect_uri: settings.redirectUrl,
                     grant_type: "refresh_token",
-                    refresh_token: connection.refresh_token,
+                    refresh_token: appConnection.connection.refresh_token,
                 }),
                 {
                     headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
