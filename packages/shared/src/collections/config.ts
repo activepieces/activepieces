@@ -1,4 +1,4 @@
-import { OAuth2Response } from "../app-connection/app-connection";
+import { OAuth2ConnectionValue } from "../app-connection/app-connection";
 
 export type Config =
   | ShortTextConfig
@@ -31,7 +31,7 @@ export interface CloudOAuth2ConfigSettings {
 
 // TODO REMOVE AFTER DEPRECACTION
 export interface CloudOAuth2Config
-  extends BasicConfig<ConfigType.CLOUD_OAUTH2, OAuth2Response> {
+  extends BasicConfig<ConfigType.CLOUD_OAUTH2, OAuth2ConnectionValue> {
   settings: CloudOAuth2ConfigSettings;
 }
 
@@ -50,7 +50,7 @@ export interface OAuth2ConfigSettings {
 
 // TODO REMOVE AFTER DEPRECACTION
 export interface OAuth2Config
-  extends BasicConfig<ConfigType.OAUTH2, OAuth2Response> {
+  extends BasicConfig<ConfigType.OAUTH2, OAuth2ConnectionValue> {
   settings: OAuth2ConfigSettings;
 }
 
