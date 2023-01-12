@@ -1,25 +1,25 @@
-<ng-container *ngIf="collectionId$ | async as collectionId">
+<ng-container *ngIf="project$ | async as project">
   <app-dialog-title-template>
-    <ng-container *ngIf="!configToUpdateWithIndex; else editConfigHeader">New Authentication</ng-container>
-    <ng-template #editConfigHeader>Edit {{configToUpdateWithIndex!.config.key}}</ng-template>
+    <ng-container *ngIf="!connectionToUpdate; else editConfigHeader">New Connection</ng-container>
+    <ng-template #editConfigHeader>Edit {{connectionToUpdate!.name}}</ng-template>
   </app-dialog-title-template>
 
   <mat-dialog-content>
 
-    <form class="ap-flex ap-flex-col ap-gap-2 ap-w-[430px]" [formGroup]="settingsForm" (submit)="submit()">
+    <form class="ap-flex ap-flex-col ap-gap-2 ap-w-[430px]" [formGroup]="settingsForm" (submit)="submit(project.id)">
       <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label>Key</mat-label>
-        <input [matTooltip]="keyTooltip" formControlName="key" matInput type="text" />
-        <mat-error *ngIf="settingsForm.controls.key.invalid">
-          <ng-container *ngIf="settingsForm.controls.key.getError('required'); else patternErrorOrAlreadyUsed">
-            Key is required
+        <mat-label>Name</mat-label>
+        <input [matTooltip]="keyTooltip" formControlName="name" matInput type="text" />
+        <mat-error *ngIf="settingsForm.controls.name.invalid">
+          <ng-container *ngIf="settingsForm.controls.name.getError('required'); else patternErrorOrAlreadyUsed">
+            Name is required
           </ng-container>
           <ng-template #patternErrorOrAlreadyUsed>
-            <ng-container *ngIf="settingsForm.controls.key.getError('requiredPattern');">
-              Keys can only contain letters, numbers and underscores
+            <ng-container *ngIf="settingsForm.controls.name.getError('requiredPattern');">
+              Name can only contain letters, numbers and underscores
             </ng-container>
-            <ng-container *ngIf="settingsForm.controls.key.getError('keyUsed');">
-              Keys is already used
+            <ng-container *ngIf="settingsForm.controls.name.getError('nameUsed');">
+              Name is already used
             </ng-container>
           </ng-template></mat-error>
       </mat-form-field>
@@ -47,9 +47,10 @@
 
       <div>
         <app-o-auth2-connect-control [configSettings]="settingsForm.getRawValue()"
-          [settingsValid]="authenticationSettingsControlsValid" formControlName="value"></app-o-auth2-connect-control>
+          [settingsValid]="authenticationSettingsControlsValid"
+          formControlName="connection"></app-o-auth2-connect-control>
         <p @fadeInUp class="ap-typography-caption ap-text-danger"
-          *ngIf="submitted && settingsForm.get('value')!.invalid ">
+          *ngIf="submitted && settingsForm.get('connection')!.invalid ">
           You have to connect an account to continue
         </p>
       </div>
@@ -63,10 +64,11 @@
       <app-button btnColor="basic" mat-dialog-close btnSize="default">
         Cancel
       </app-button>
-      <app-button cdkFocusInitial btnSize="default" (click)="submit()" btnColor="primary" type="submit">
+      <app-button cdkFocusInitial btnSize="default" (click)="submit(project.id)" btnColor="primary" type="submit"
+        [loading]="loading">
         Save
       </app-button>
     </div>
   </mat-dialog-actions>
-
+  <ng-container *ngIf="upsert$ |async"></ng-container>
 </ng-container>

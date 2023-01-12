@@ -97,7 +97,7 @@ export class AuthenticationService {
 			map(flags => {
 				const warningTitle: string | undefined = flags['WARNING_TEXT_HEADER'] as string | undefined;
 				const warningBody: string | undefined = flags['WARNING_TEXT_BODY'] as string | undefined;
-				debugger;
+
 				if (warningTitle || warningBody) {
 					return {
 						title: warningTitle,

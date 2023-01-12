@@ -348,4 +348,5 @@ export const BuilderSelectors = {
 	selectIsPublishing,
 	selectFlowItemDetailsForConnectorComponentsTriggers,
 	selectAllConfigsWithoutOAuth2,
+	selectAllAppConnections,
 };

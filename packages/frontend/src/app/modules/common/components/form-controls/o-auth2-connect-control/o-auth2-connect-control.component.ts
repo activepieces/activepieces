@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { catchError, Observable, tap, throwError } from 'rxjs';
-import { OAuth2ConfigSettings } from 'shared';
+import { OAuth2ConfigSettings, OAuth2Settings } from 'shared';
 import { fadeInUp400ms } from '../../../animation/fade-in-up.animation';
 import { Oauth2Service } from '../../../service/oauth2.service';
 
@@ -18,7 +18,7 @@ import { Oauth2Service } from '../../../service/oauth2.service';
 	animations: [fadeInUp400ms],
 })
 export class OAuth2ConnectControlComponent implements ControlValueAccessor {
-	@Input() configSettings: OAuth2ConfigSettings;
+	@Input() configSettings: OAuth2Settings;
 	@Input() settingsValid: boolean;
 	responseData: any = null;
 	isDisabled = false;

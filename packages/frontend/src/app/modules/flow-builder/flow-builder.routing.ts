@@ -24,7 +24,7 @@ export const FlowLayoutRouting: Routes = [
 	{
 		path: 'runs/:runId',
 		component: CollectionBuilderComponent,
-		resolve: { runInformation: GetInstanceRunResolver, ConnectionsResolver: ConnectionsResolver },
+		resolve: { runInformation: GetInstanceRunResolver, connections: ConnectionsResolver },
 		canActivate: [UserLoggedIn],
 	},
 ];

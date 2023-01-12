@@ -33,7 +33,7 @@ import {
 	USE_CLOUD_CREDENTIALS,
 } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 import { MatDialog } from '@angular/material/dialog';
-import { CloudAuth2Connection, Config, ConfigType, OAuth2AppConnection } from 'shared';
+import { AppConnection, AppConnectionType, CloudAuth2Connection, OAuth2AppConnection } from 'shared';
 import { DropdownItem } from '../../model/dropdown-item.interface';
 import {
 	NewCloudAuthenticationModalComponent,
@@ -99,7 +99,11 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		private cloudAuthConfigsService: CloudAuthConfigsService,
 		private authenticationService: AuthenticationService
 	) {
-		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAppConnectionsDropdownOptions);
+		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAppConnectionsDropdownOptions).pipe(
+			tap(res => {
+				console.log(res);
+			})
+		);
 	}
 
 	writeValue(obj: PieceConfig[]): void {
@@ -250,7 +254,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 					})
 					.afterClosed()
 					.pipe(
-						tap((result: Config | string) => {
+						tap((result: OAuth2AppConnection | string) => {
 							if (typeof result === 'string' && result === USE_CLOUD_CREDENTIALS) {
 								this.checkingOAuth2CloudManager = true;
 								this.cloudAuthCheck$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
@@ -269,8 +273,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 									}),
 									map(() => void 0)
 								);
-							} else if (typeof result === 'object' && result.type === ConfigType.OAUTH2) {
-								const authConfigOptionValue = result.value;
+							} else if (typeof result === 'object') {
+								const authConfigOptionValue = result.connection;
 								this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
 							}
 						}),
@@ -291,10 +295,10 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			})
 			.afterClosed()
 			.pipe(
-				tap((result: Config | string) => {
-					if (typeof result === 'object' && result.type === ConfigType.CLOUD_OAUTH2) {
-						const authConfigOptionValue = result.value;
-						this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
+				tap((result: AppConnection | string) => {
+					if (typeof result === 'object') {
+						const connectionValue = result.connection;
+						this.form.get(authConfigKey)!.setValue(connectionValue);
 					} else if (result === USE_MY_OWN_CREDENTIALS) {
 						this.openOAuth2NewConnectionModal(authConfigKey);
 					}
@@ -304,22 +308,20 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	}
 	editSelectedAuthConfig(authConfigKey: string) {
 		const selectedValue: any = this.form.get(authConfigKey)!.value;
-		const allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuth2Configs);
-		this.updateAuthConfig$ = allAuthConfigs$.pipe(
+		const allConnections$ = this.store.select(BuilderSelectors.selectAllAppConnections);
+		this.updateAuthConfig$ = allConnections$.pipe(
 			take(1),
-			map(configs => {
-				const updatedConfigIndex = configs.findIndex(
-					c => selectedValue && JSON.stringify(selectedValue) === JSON.stringify(c.value)
-				);
-				return { config: configs[updatedConfigIndex], indexInList: updatedConfigIndex };
+			map(connections => {
+				const connection = connections.find(c => selectedValue && deepEqual(selectedValue, c.connection));
+				return connection;
 			}),
-			tap(configAndIndex => {
-				if (configAndIndex) {
-					if (configAndIndex.config.type === ConfigType.OAUTH2) {
+			tap(connection => {
+				if (connection) {
+					if (connection.type === AppConnectionType.OAUTH2) {
 						this.updateOrAddConfigModalClosed$ = this.dialogService
 							.open(NewAuthenticationModalComponent, {
 								data: {
-									configToUpdateWithIndex: configAndIndex,
+									connectionToUpdate: connection,
 									pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
 									pieceName: this.pieceName,
 								},
@@ -328,8 +330,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 							.pipe(
 								tap((newOAuth2Connection: OAuth2AppConnection) => {
 									if (newOAuth2Connection) {
-										const authConfigOptionValue = newOAuth2Connection.connection;
-										this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
+										const connectionValue = newOAuth2Connection.connection;
+										this.form.get(authConfigKey)!.setValue(connectionValue);
 									}
 								}),
 								map(() => void 0)
@@ -346,7 +348,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 									return this.dialogService
 										.open(NewCloudAuthenticationModalComponent, {
 											data: {
-												configToUpdateWithIndex: configAndIndex,
+												connectionToUpdate: connection,
 												pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
 												pieceName: this.pieceName,
 												clientId: clientId,

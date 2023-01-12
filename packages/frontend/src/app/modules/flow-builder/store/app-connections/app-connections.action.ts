@@ -7,11 +7,8 @@ export enum AppConectionActionType {
 	DELETE = '[APP_CONNECTION] DELETE_APP_CONNECTION',
 }
 
-const loadInitial = createAction(AppConectionActionType.LOAD_INITIAL, props<{ appConnections: AppConnection[] }>());
-
 const upsert = createAction(AppConectionActionType.UPSERT, props<{ connection: AppConnection }>());
 
 export const appConnectionsActions = {
-	loadInitial,
 	upsert,
 };
