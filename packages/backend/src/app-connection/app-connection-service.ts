@@ -1,4 +1,4 @@
-import { apId, AppConnection, AppConnectionId, AppConnectionType, CloudAuth2Connection, Cursor, OAuth2AppConnection, OAuth2Response, ProjectId, RefreshTokenFromCloudRequest, SeekPage, UpsertConnectionRequest } from "shared";
+import { apId, AppConnection, AppConnectionId, AppConnectionType, BaseOAuth2ConnectionValue, CloudOAuth2ConnectionValue, Cursor, OAuth2ConnectionValueWithApp, ProjectId, RefreshTokenFromCloudRequest, SeekPage, UpsertConnectionRequest } from "shared";
 import { databaseConnection } from "../database/database-connection";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
@@ -10,7 +10,7 @@ const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 
 export const appConnectionService = {
     async upsert(request: UpsertConnectionRequest): Promise<AppConnection> {
-        await appConnectionRepo.upsert({ ...request, id: apId() }, ["name", "appName", "projectId"]);
+        await appConnectionRepo.upsert({ ...request, id: apId() }, ["name", "projectId"]);
         return appConnectionRepo.findOneByOrFail({
             name: request.name,
             appName: request.appName
@@ -50,26 +50,42 @@ export const appConnectionService = {
             queryBuilder = queryBuilder.where({ appName });
         }
         const { data, cursor } = await paginator.paginate(queryBuilder);
-
         return paginationHelper.createPage<AppConnection>(data, cursor);
     }
 };
 
 async function refresh(connection: AppConnection): Promise<AppConnection> {
-    switch (connection.type) {
+    switch (connection.value.type) {
         case AppConnectionType.CLOUD_OAUTH2:
-            connection.connection = await refreshCloud(connection);
+            connection.value = await refreshCloud(connection.appName, connection.value);
             break;
         case AppConnectionType.OAUTH2:
-            connection.connection = await refreshWithCredentials(connection);
+            connection.value = await refreshWithCredentials(connection.value);
             break;
+        case AppConnectionType.CUSTOM:
+            for (const key in Object.keys(connection.value)) {
+                let connectionValue = connection.value[key];
+                if (typeof connectionValue === 'object' && connectionValue.hasOwnProperty('type')) {
+                    let type: AppConnectionType = connectionValue.type;
+                    switch (type) {
+                        case AppConnectionType.CLOUD_OAUTH2:
+                            connectionValue = await refreshCloud(connection.appName, connectionValue as CloudOAuth2ConnectionValue);
+                            break;
+                        case AppConnectionType.OAUTH2:
+                            connectionValue = await refreshWithCredentials(connectionValue as OAuth2ConnectionValueWithApp);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
         default:
             break;
     }
     return connection;
 }
 
-function expired(connection: OAuth2Response) {
+function expired(connection: BaseOAuth2ConnectionValue) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000);
     if (connection.expires_in === undefined || connection.refresh_token === undefined) {
         return false;
@@ -78,48 +94,52 @@ function expired(connection: OAuth2Response) {
     return (connection.claimed_at + connection.expires_in + 15 * 60 <= secondsSinceEpoch)
 }
 
-async function refreshCloud(appConnection: CloudAuth2Connection): Promise<OAuth2Response> {
-    if (!expired(appConnection.connection)) {
-        return appConnection.connection;
+async function refreshCloud(appName: string, connectionValue: CloudOAuth2ConnectionValue): Promise<CloudOAuth2ConnectionValue> {
+    if (!expired(connectionValue)) {
+        return connectionValue;
     }
-    return (
+    let response = (
         await axios.post("https://secrets.activepieces.com/refresh", {
-            refreshToken: appConnection.connection.refresh_token,
-            pieceName: appConnection.appName,
+            refreshToken: connectionValue.refresh_token,
+            pieceName: appName,
         } as RefreshTokenFromCloudRequest)
-    ).data;
+    ).data;;
+    return {
+        ...response,
+        type: AppConnectionType.CLOUD_OAUTH2
+    }
 }
 
-async function refreshWithCredentials(appConnection: OAuth2AppConnection): Promise<OAuth2Response> {
-    if (!expired(appConnection.connection)) {
-        return appConnection.connection;
+async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithApp): Promise<OAuth2ConnectionValueWithApp> {
+    if (!expired(appConnection)) {
+        return appConnection;
     }
     try {
-        let settings = appConnection.settings;
+        let settings = appConnection;
         let response = (
             await axios.post(
-                settings.tokenUrl,
+                settings.token_url,
                 qs.stringify({
-                    client_id: settings.clientId,
-                    client_secret: settings.clientSecret,
-                    redirect_uri: settings.redirectUrl,
+                    client_id: settings.client_id,
+                    client_secret: settings.client_secret,
+                    redirect_uri: settings.redirect_url,
                     grant_type: "refresh_token",
-                    refresh_token: appConnection.connection.refresh_token,
+                    refresh_token: appConnection.refresh_token,
                 }),
                 {
                     headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
                 }
             )
         ).data;
-        return formatOAuth2Response(response);
+        return { ...appConnection, ...formatOAuth2Response(response) };
     } catch (e: unknown | AxiosError) {
         throw e;
     }
 }
 
-function formatOAuth2Response(response: Record<string, any>) {
+export function formatOAuth2Response(response: Record<string, any>) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000);
-    let formattedResponse: OAuth2Response = {
+    let formattedResponse: BaseOAuth2ConnectionValue = {
         access_token: response["access_token"],
         expires_in: response["expires_in"],
         claimed_at: secondsSinceEpoch,
@@ -128,11 +148,12 @@ function formatOAuth2Response(response: Record<string, any>) {
         token_type: response["token_type"],
         data: response,
     };
-    delete formattedResponse.data["access_token"];
-    delete formattedResponse.data["expires_in"];
-    delete formattedResponse.data["refresh_token"];
-    delete formattedResponse.data["scope"];
-    delete formattedResponse.data["token_type"];
+    deleteProps(formattedResponse.data, ['access_token', "access_token", "expires_in", "refresh_token", "scope", "token_type"]);
     return formattedResponse;
 }
 
+function deleteProps(obj: Record<string, any>, prop: string[]) {
+    for (const p of prop) {
+        delete obj[p];
+    }
+}

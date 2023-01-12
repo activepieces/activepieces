@@ -11,18 +11,11 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
     name: {
       type: String,
     },
-    type: {
-      type: String
-    },
     appName: {
       type: String
     },
     projectId: ApIdSchema,
-    settings: {
-      type: "jsonb",
-      nullable: true
-    },
-    connection: {
+    value: {
       type: "jsonb"
     }
   },
@@ -30,6 +23,11 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
     {
       name: "idx_app_connection_project_id_and_app_name_and_name",
       columns: ["projectId", "appName", "name"],
+      unique: true,
+    },
+    {
+      name: "idx_app_connection_project_id_and_name",
+      columns: ["projectId", "name"],
       unique: true,
     },
   ],

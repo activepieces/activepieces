@@ -3,8 +3,8 @@ import qs from "qs";
 import {
   ClaimTokenFromCloudRequest,
   ClaimTokenWithSecretRequest,
-  OAuth2Response,
 } from "shared";
+import { formatOAuth2Response } from "../app-connection/app-connection-service";
 
 export const oauth2Service = {
   claim: async (request: ClaimTokenWithSecretRequest): Promise<unknown> => {
@@ -24,7 +24,7 @@ export const oauth2Service = {
           }
         )
       ).data;
-      return formatResponse(response);
+      return formatOAuth2Response(response);
     } catch (e: unknown | AxiosError) {
       if (axios.isAxiosError(e)) {
         return e.response?.data;
@@ -43,22 +43,3 @@ export const oauth2Service = {
     }
   }
 };
-
-function formatResponse(response: Record<string, any>) {
-  const secondsSinceEpoch = Math.round(Date.now() / 1000);
-  let formattedResponse: OAuth2Response = {
-    access_token: response["access_token"],
-    expires_in: response["expires_in"],
-    claimed_at: secondsSinceEpoch,
-    refresh_token: response["refresh_token"],
-    scope: response["scope"],
-    token_type: response["token_type"],
-    data: response,
-  };
-  delete formattedResponse.data["access_token"];
-  delete formattedResponse.data["expires_in"];
-  delete formattedResponse.data["refresh_token"];
-  delete formattedResponse.data["scope"];
-  delete formattedResponse.data["token_type"];
-  return formattedResponse;
-}
