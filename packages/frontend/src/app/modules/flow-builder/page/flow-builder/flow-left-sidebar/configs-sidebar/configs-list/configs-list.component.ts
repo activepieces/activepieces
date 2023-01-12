@@ -1,8 +1,8 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { BuilderSelectors } from '../../../../../store/selector/flow-builder.selector';
-import { CollectionActions } from '../../../../../store/action/collection.action';
+import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
+import { CollectionActions } from '../../../../../store/collection/collection.action';
 import { Config } from 'shared';
 
 @Component({

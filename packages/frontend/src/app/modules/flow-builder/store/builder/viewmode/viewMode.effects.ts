@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 
-import { BuilderActions } from '../action/builder.action';
+import { BuilderActions } from '../builder.action';
 import { EMPTY, of, switchMap } from 'rxjs';
-import { ViewModeEnum } from '../model/enums/view-mode.enum';
-import { ViewModeActions } from '../action/view-mode.action';
+import { ViewModeEnum } from '../../model/enums/view-mode.enum';
+import { ViewModeActions } from './view-mode.action';
 
 @Injectable()
 export class ViewModeEffects {

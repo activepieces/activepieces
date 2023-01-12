@@ -25,7 +25,6 @@ import {
 	tap,
 } from 'rxjs';
 import { ActionMetaService, DropdownState } from 'src/app/modules/flow-builder/service/action-meta.service';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
 import { PieceConfig, InputType } from './connector-action-or-config';
@@ -44,6 +43,7 @@ import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.servic
 import deepEqual from 'deep-equal';
 import { AuthenticationService } from '../../service/authentication.service';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
 type ConfigKey = string;
 
 @Component({

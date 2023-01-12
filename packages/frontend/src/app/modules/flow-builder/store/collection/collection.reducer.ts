@@ -1,9 +1,9 @@
-import { CollectionActions } from '../action/collection.action';
+import { CollectionActions } from './collection.action';
 import { UUID } from 'angular2-uuid';
 import { Action, createReducer, on } from '@ngrx/store';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { CollectionState } from '../model/collection-state.model';
-import { FlowsActions } from '../action/flows.action';
+import { FlowsActions } from '../flow/flows.action';
 import { Collection, CollectionVersionState } from 'shared';
 
 const initialState: CollectionState = {

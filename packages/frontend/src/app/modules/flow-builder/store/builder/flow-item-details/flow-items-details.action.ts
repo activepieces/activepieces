@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
+import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
 
 export enum FlowItemDetailsActionType {
 	LOAD = '[FLOW_ITEMS_DETAILS] LOAD',

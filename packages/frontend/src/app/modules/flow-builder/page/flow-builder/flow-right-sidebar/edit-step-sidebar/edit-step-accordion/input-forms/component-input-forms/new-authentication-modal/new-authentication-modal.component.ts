@@ -8,8 +8,8 @@ import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.anima
 import { PieceConfig } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
 import { CloudAuthConfigsService } from 'src/app/modules/common/service/cloud-auth-configs.service';
 import { ConfigKeyValidator } from 'src/app/modules/flow-builder/page/flow-builder/validators/configKeyValidator';
-import { CollectionActions } from 'src/app/modules/flow-builder/store/action/collection.action';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
+import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
+import { CollectionActions } from 'src/app/modules/flow-builder/store/collection/collection.action';
 
 interface AuthConfigSettings {
 	pieceName: FormControl<string | null>;
@@ -95,7 +95,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 				validators: [Validators.required],
 			}),
 			scope: new FormControl(this.pieceAuthConfig.scope?.join(' ') || '', {
-				nonNullable: true			
+				nonNullable: true,
 			}),
 			key: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
 				nonNullable: true,

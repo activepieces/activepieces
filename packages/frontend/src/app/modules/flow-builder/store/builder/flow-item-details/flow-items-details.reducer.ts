@@ -1,6 +1,6 @@
 import { createReducer, on } from '@ngrx/store';
-import { FlowItemDetailsActions } from '../action/flow-items-details.action';
-import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
+import { FlowItemDetailsActions } from './flow-items-details.action';
+import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
 const initialState: FlowItemsDetailsState = {
 	coreFlowItemsDetails: [],
 	coreTriggerFlowItemsDetails: [],

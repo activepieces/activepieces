@@ -4,15 +4,15 @@ import { CollectionBuilderService } from '../../service/collection-builder.servi
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '../../store/selector/flow-builder.selector';
+import { BuilderSelectors } from '../../store/builder/builder.selector';
 import { map, Observable, tap } from 'rxjs';
 import { ViewModeEnum } from '../../store/model/enums/view-mode.enum';
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from './test-run-bar/test-run-bar.component';
-import { BuilderActions } from '../../store/action/builder.action';
-import { FlowItemDetailsActions } from '../../store/action/flow-items-details.action';
+import { BuilderActions } from '../../store/builder/builder.action';
+import { FlowItemDetailsActions } from '../../store/builder/flow-item-details/flow-items-details.action';
 import { RunDetailsService } from './flow-left-sidebar/run-details/iteration-details.service';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
 import { Collection, ExecutionOutputStatus, Instance } from 'shared';

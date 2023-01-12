@@ -6,14 +6,15 @@ import {
 import { Store } from '@ngrx/store';
 import { combineLatest, forkJoin, map, Observable, take, tap } from 'rxjs';
 import { FlowItemDetails } from './step-type-item/flow-item-details';
-import { FlowsActions } from '../../../../store/action/flows.action';
+import { FlowsActions } from '../../../../store/flow/flows.action';
 import { RightSideBarType } from '../../../../../common/model/enum/right-side-bar-type.enum';
 import { Component, Input, OnInit } from '@angular/core';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
+
 import { ComponentItemDetails } from './step-type-item/component-item-details';
 import { StoreOperation, Trigger, ActionType, TriggerType, Flow, AddActionRequest, FlowVersion } from 'shared';
 import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
 import { FlowStructureUtil } from 'src/app/modules/flow-builder/service/flowStructureUtil';
+import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
 @Component({
 	selector: 'app-step-type-sidebar',
 	templateUrl: './step-type-sidebar.component.html',

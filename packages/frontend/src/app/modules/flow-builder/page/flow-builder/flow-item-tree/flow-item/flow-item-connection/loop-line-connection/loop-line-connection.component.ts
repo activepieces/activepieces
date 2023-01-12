@@ -26,7 +26,7 @@ import {
 	AFTER_NESTED_LOOP_LINE_LENGTH,
 } from '../draw-utils';
 import { AddButtonType } from '../../../../../../../common/model/enum/add-button-type';
-import { FlowsActions } from '../../../../../../store/action/flows.action';
+import { FlowsActions } from '../../../../../../store/flow/flows.action';
 import { Observable } from 'rxjs';
 import { LoopOnItemsAction } from 'shared';
 import { FlowItem, FlowItemRenderInfo } from 'src/app/modules/common/model/flow-builder/flow-item';

@@ -1,16 +1,17 @@
 import { AfterViewChecked, Component, Inject, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '../../../../store/selector/flow-builder.selector';
+import { BuilderSelectors } from '../../../../store/builder/builder.selector';
 import { Observable, of, pairwise, skipWhile, take, tap } from 'rxjs';
 import { LeftSideBarType } from '../../../../../common/model/enum/left-side-bar-type.enum';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { configTypesDropdownOptions } from '../../../../../common/model/enum/config-type';
-import { FlowsActions } from '../../../../store/action/flows.action';
+import { FlowsActions } from '../../../../store/flow/flows.action';
 import { fadeInUp400ms } from '../../../../../common/animation/fade-in-up.animation';
-import { CollectionActions } from 'src/app/modules/flow-builder/store/action/collection.action';
+
 import { ConfigKeyValidator } from '../../validators/configKeyValidator';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Config, ConfigType } from 'shared';
+import { CollectionActions } from 'src/app/modules/flow-builder/store/collection/collection.action';
 interface ConfigForm {
 	key: FormControl<string>;
 	value: FormControl<any>;

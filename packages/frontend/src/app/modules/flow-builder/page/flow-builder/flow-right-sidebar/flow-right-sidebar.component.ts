@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { RightSideBarType } from '../../../../common/model/enum/right-side-bar-type.enum';
 import { Observable } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '../../../store/selector/flow-builder.selector';
+import { BuilderSelectors } from '../../../store/builder/builder.selector';
 
 @Component({
 	selector: 'app-flow-right-sidebar',

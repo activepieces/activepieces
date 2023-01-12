@@ -3,9 +3,9 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { forkJoin, map, of, switchMap } from 'rxjs';
 import { ActionType, TriggerType } from 'shared';
 import { AppPiece } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
-import { FlowItemDetails } from '../../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { ActionMetaService } from '../../service/action-meta.service';
-import { FlowItemDetailsActions } from '../action/flow-items-details.action';
+import { FlowItemDetails } from '../../../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
+import { ActionMetaService } from '../../../service/action-meta.service';
+import { FlowItemDetailsActions } from './flow-items-details.action';
 
 @Injectable()
 export class FlowItemsDetailsEffects {

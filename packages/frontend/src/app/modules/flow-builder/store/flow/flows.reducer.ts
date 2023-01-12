@@ -1,5 +1,5 @@
 import { Action, createReducer, on } from '@ngrx/store';
-import { FlowsActions } from '../action/flows.action';
+import { FlowsActions } from './flows.action';
 import { UUID } from 'angular2-uuid';
 import { TabState } from '../model/tab-state';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';

@@ -1,6 +1,6 @@
 import { Action, createReducer, on } from '@ngrx/store';
-import { ViewModeActions } from '../action/view-mode.action';
-import { ViewModeEnum } from '../model/enums/view-mode.enum';
+import { ViewModeActions } from './view-mode.action';
+import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 
 const initialState: any = ViewModeEnum.BUILDING;
 

@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Inject, OnInit, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '../../../store/selector/flow-builder.selector';
+import { BuilderSelectors } from '../../../store/builder/builder.selector';
 import { Observable, of, tap } from 'rxjs';
-import { FlowsActions } from '../../../store/action/flows.action';
+import { FlowsActions } from '../../../store/flow/flows.action';
 import { MatSnackBarRef, MAT_SNACK_BAR_DATA } from '@angular/material/snack-bar';
 import { ExecutionOutputStatus, FlowId, FlowRun } from 'shared';
 

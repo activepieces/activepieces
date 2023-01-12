@@ -2,14 +2,14 @@ import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType, concatLatestFrom } from '@ngrx/effects';
 import { catchError, debounceTime, of, tap } from 'rxjs';
 import { concatMap, filter, map, switchMap } from 'rxjs/operators';
-import { CollectionActions, CollectionModifyingState, savedFailed, savedSuccess } from '../action/collection.action';
+import { CollectionActions, CollectionModifyingState, savedFailed, savedSuccess } from './collection.action';
 import { CollectionService } from '../../../common/service/collection.service';
 import { Store } from '@ngrx/store';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { BuilderSelectors } from '../selector/flow-builder.selector';
-import { SingleFlowModifyingState } from '../action/flows.action';
-import { BuilderActions } from '../action/builder.action';
+import { BuilderSelectors } from '../builder/builder.selector';
+import { SingleFlowModifyingState } from '../flow/flows.action';
+import { BuilderActions } from '../builder/builder.action';
 
 import { autoSaveDebounceTime } from 'src/app/modules/common/utils';
 import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
