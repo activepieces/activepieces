@@ -1,10 +1,7 @@
 import { createAction } from '../../../framework/action/action';
 import { Property } from '../../../framework/property/prop.model';
-import { GoogleAuth } from 'google-auth-library';
-
 import { ImageAnnotatorClient } from '@google-cloud/vision';
-import { ClientOptions } from 'google-gax';
-import { createAuth } from './google-auth';
+import { createAuth } from '../common/google-auth';
 import { assertNotNullOrUndefined } from '../../../common/helpers/assertions';
 
 function createClient(auth: any) {
@@ -30,31 +27,18 @@ function createFileRequest(inputConfig: any, features: any, pages: any) {
 }
 
 export const convertPdfToText = createAction({
-  name: 'convert_pdf_to_text', // Must be a unique across the piece, this shouldn't be changed.
+  name: 'convert_pdf_to_text',
   displayName: 'Convert pdf to text',
   description: 'using google cloud vision will convert pdf to text',
   props: {
-    // Properties to ask from the user, in this ask we will take number of
     serviceAccountCredentials: Property.LongText({
       displayName: 'Service Account Credentials',
       required: true,
-      // states: {
-      //   "^regex$": {
-      //     show:[]
-      //   }
-      // }
     }),
     allPages: Property.Checkbox({
       displayName: 'Do you want to convert all pages ?',
       required: false,
-      // states: {
-      //   true: {
-      //     show: ['startingPage', 'endingPage'],
-      //   },
-      //   false: {
-      //     hide: ['startingPage', 'endingPage'],
-      //   },
-      // },
+      description: 'If checked, starting and ending page will be ignored',
     }),
     startingPage: Property.Number({
       displayName: 'Starting Page',
@@ -103,9 +87,18 @@ export const convertPdfToText = createAction({
       0
     );
 
-    const detectedText = firstResponse.responses.map(
-      (response) => response.fullTextAnnotation
-    );
+    let detectedText = '';
+    for (const response of firstResponse.responses) {
+      assertNotNullOrUndefined(
+        response.fullTextAnnotation,
+        'No response from google cloud vision',
+        0
+      );
+      const pageNumber = firstResponse.responses.indexOf(response) + 1;
+      detectedText += `Page ${pageNumber}:`;
+      detectedText += response.fullTextAnnotation.text;
+    }
+
     return detectedText;
   },
 });
