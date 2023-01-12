@@ -6,7 +6,7 @@ import { httpClient } from '../../../common/http/core/http-client';
 import {
   OAuth2PropertyValue,
   Property,
-} from '../../../framework/property/prop.model';
+} from '../../../framework/property';
 
 export const slackSendMessageAction = createAction({
   name: 'send_channel_message',

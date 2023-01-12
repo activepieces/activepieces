@@ -1,7 +1,7 @@
 import {createAction} from '../../../framework/action/action';
 
 import {appendGoogleSheetValues, Dimension, ValueInputOption} from './utils';
-import {Property} from "../../../framework/property/prop.model";
+import {Property} from "../../../framework/property";
 
 export const insertRowAction = createAction({
     name: 'insert_row',
