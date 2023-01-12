@@ -1,7 +1,7 @@
 import { BasePropertySchema, PropertyType, TPropertyValue } from "./base-prop";
-import { AuthProp } from "./custom-auth-prop";
+import { AuthPropValue } from "./custom-auth-prop";
 
-type OAuthUrlResolver = (propsValue: Record<string, AuthProp>) => Promise<string>;
+type OAuthUrlResolver = (propsValue: Record<string, AuthPropValue>) => Promise<string>;
 
 export type OAuth2PropertySchema = BasePropertySchema & {
 	authUrl: string | OAuthUrlResolver;

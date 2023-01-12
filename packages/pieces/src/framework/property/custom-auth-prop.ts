@@ -1,7 +1,8 @@
 import { BasePropertySchema, PropertyType, SecretTextProperty, TPropertyValue } from "./base-prop";
+import { DropdownProperty } from "./dropdown-prop";
 import { OAuth2Property } from "./oauth-prop";
 
-export type AuthProp = OAuth2Property | SecretTextProperty;
+export type AuthProp = OAuth2Property | SecretTextProperty | DropdownProperty<string | number>;
 
 export type AuthPropValue = AuthProp extends any ? AuthProp['valueSchema'] : never;
 
