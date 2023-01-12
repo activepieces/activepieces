@@ -13,6 +13,8 @@ export {
   DropdownProperty,
   DropdownOption,
   DropdownState,
+  ApiKeyProperty,
+  ApiKeyPropertyValue,
 } from './framework/property/prop.model';
 export { Piece } from './framework/piece';
 
