@@ -19,17 +19,16 @@ const OAuth2ConnectionValue = {
 
 const UpsertCloudOAuth2Request = Type.Object({
     ...commonAuthProps,
-    type: Type.Union([Type.Literal(AppConnectionType.CLOUD_OAUTH2)]),
     value: Type.Object({
         ...OAuth2ConnectionValue,
-        type: Type.Union([Type.Literal(AppConnectionType.CLOUD_OAUTH2)]),
+        type: Type.Literal(AppConnectionType.CLOUD_OAUTH2),
     })
 });
 
 const UpsertSecretTextRequest = Type.Object({
     ...commonAuthProps,
     value: Type.Object({
-        type: Type.Union([Type.Literal(AppConnectionType.SECRET_TEXT)]),
+        type: Type.Literal(AppConnectionType.SECRET_TEXT),
         api_key: Type.String({})
     })
 });
@@ -42,7 +41,7 @@ const UpsertOAuth2Request = Type.Object({
         token_url: Type.String({}),
         redirect_url: Type.String({}),
         ...OAuth2ConnectionValue,
-        type: Type.Union([Type.Literal(AppConnectionType.CLOUD_OAUTH2)]),
+        type: Type.Literal(AppConnectionType.OAUTH2),
     })
 });
 
