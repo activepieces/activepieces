@@ -9,9 +9,11 @@ type DropdownPropertySchema<T> = BasicPropertySchema & {
 	options: (propsValue: Record<string, PropValue>) => Promise<DropdownState<T>>
 }
 
+type OAuthUrlResolver = (propsValue: Record<string, Exclude<PropValue, CustomAuthPropertyValue>>) => Promise<string>;
+
 type OAuth2PropertySchema = BasicPropertySchema & {
-	authUrl: string;
-	tokenUrl: string;
+	authUrl: string | OAuthUrlResolver;
+	tokenUrl: string | OAuthUrlResolver;
 	scope: string[];
 	extra?: Record<string, unknown>
 }
