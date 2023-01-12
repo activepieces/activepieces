@@ -66,6 +66,7 @@ export const slackSendMessageAction = createAction({
       displayName: 'Message',
       description: 'The text of your message',
       required: true,
+      secret: false,
     }),
   },
   async run(context) {

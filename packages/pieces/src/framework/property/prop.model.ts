@@ -5,6 +5,13 @@ type BasicPropertySchema = {
 	required: boolean;
 };
 
+type TextPropertySchema = BasicPropertySchema & {
+	/**
+	 * Whether the text input contains sensitive data, e.g. a password or an API key.
+	 */
+	secret: boolean;
+};
+
 type DropdownPropertySchema<T> = BasicPropertySchema & {
 	refreshers: string[];
 	options: (propsValue: Record<string, OAuth2PropertyValue | number | string | DropdownState<any>>) => Promise<DropdownState<T>>
@@ -14,7 +21,7 @@ type OAuth2PropertySchema = BasicPropertySchema & {
 	authUrl: string;
 	tokenUrl: string;
 	scope: string[];
-	extra?: Record<string, unknown>
+	extra?: Record<string, unknown>;
 }
 
 type ApiKeyPropertySchema = BasicPropertySchema & {
@@ -36,13 +43,13 @@ type TPropertyValue<T, U> = {
 	type: U;
 }
 
-export interface LongTextProperty extends BasicPropertySchema, TPropertyValue<string, PropertyType.LONG_TEXT> {
+export interface LongTextProperty extends TextPropertySchema, TPropertyValue<string, PropertyType.LONG_TEXT> {
 }
 
 export interface CheckboxProperty extends BasicPropertySchema, TPropertyValue<string, PropertyType.CHECKBOX> {
 }
 
-export interface ShortTextProperty extends BasicPropertySchema, TPropertyValue<string, PropertyType.SHORT_TEXT> {
+export interface ShortTextProperty extends TextPropertySchema, TPropertyValue<string, PropertyType.SHORT_TEXT> {
 }
 
 export interface NumberProperty extends BasicPropertySchema, TPropertyValue<number, PropertyType.NUMBER> {
@@ -90,13 +97,13 @@ export type StaticPropsValue<T extends PieceProperty> = {
 }
 
 export const Property = {
-	ShortText(request: BasicPropertySchema): ShortTextProperty {
+	ShortText(request: TextPropertySchema): ShortTextProperty {
 		return {...request, valueSchema: undefined, type: PropertyType.SHORT_TEXT};
 	},
 	Checkbox(request: BasicPropertySchema): CheckboxProperty {
 		return {...request, valueSchema: undefined, type: PropertyType.CHECKBOX};
 	},
-	LongText(request: BasicPropertySchema): LongTextProperty {
+	LongText(request: TextPropertySchema): LongTextProperty {
 		return {...request, valueSchema: undefined, type: PropertyType.LONG_TEXT};
 	},
 	Number(request: BasicPropertySchema): NumberProperty {

@@ -34,6 +34,7 @@ export const convertPdfToText = createAction({
     serviceAccountCredentials: Property.LongText({
       displayName: 'Service Account Credentials',
       required: true,
+      secret: true,
     }),
     allPages: Property.Checkbox({
       displayName: 'Do you want to convert all pages ?',
@@ -54,6 +55,7 @@ export const convertPdfToText = createAction({
       displayName: 'Google Cloud Storage Location',
       required: true,
       description: 'gs://direct-upload/hello.pdf',
+      secret: false,
     }),
   },
   async run({ propsValue }) {

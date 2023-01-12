@@ -17,21 +17,25 @@ export const createHubspotContact = createAction({
             displayName: 'First Name',
             description: 'First name of the new contact',
             required: true,
+            secret: false,
         }),
         lastName: Property.ShortText({
             displayName: 'Last Name',
             description: 'Last name of the new contact',
             required: true,
+            secret: false,
         }),
         zip: Property.ShortText({
             displayName: 'Zip Code',
             description: 'Zip code of the new contact',
             required: false,
+            secret: false,
         }),
         email: Property.ShortText({
             displayName: 'Email',
             description: 'Email of the new contact',
             required: false,
+            secret: false,
         })
     },
     async run(context) {

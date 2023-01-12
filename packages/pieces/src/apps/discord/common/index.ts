@@ -23,6 +23,7 @@ export const discordCommon = {
   bot_token: Property.ShortText({
     displayName: 'Bot token',
     required: true,
+    secret: true,
   }),
   channel: Property.Dropdown({
     displayName: 'Channel',

@@ -20,16 +20,19 @@ export const insertRowAction = createAction({
             displayName: 'Range',
             description: 'The A1 notation of a range to search for a logical table of data. Values are appended after the last row of the table.\n https://developers.google.com/sheets/api/guides/concepts#cell',
             required: true,
+            secret: false,
         }),
         values: Property.LongText({
             displayName: 'Values',
             description: 'These are the cell values that will be appended to your sheet, they should be a json array',
             required: true,
+            secret: false,
         }),
         spread_sheet_id: Property.ShortText({
             displayName: 'Spread Sheet Id',
             description: 'The id of your spread sheet: https://docs.google.com/spreadsheets/d/{spreadSheetId}',
             required: true,
+            secret: false,
         }),
         as_string: Property.Checkbox({
             displayName: 'As String',

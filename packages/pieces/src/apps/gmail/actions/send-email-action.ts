@@ -22,21 +22,25 @@ export const gmailSendEmailAction = createAction({
 			displayName: 'receiver Email (To)',
 			description: undefined,
 			required: true,
+			secret: false,
 		}),
 		subject: Property.ShortText({
 			displayName: 'Subject',
 			description: undefined,
 			required: true,
+			secret: false,
 		}),
 		body_text: Property.ShortText({
 			displayName: 'Body (Text)',
 			description: 'Text version of the body for the email you want to send',
 			required: true,
+			secret: false,
 		}),
 		body_html: Property.ShortText({
 			displayName: 'Body (HTML)',
 			description: 'HTML version of the body for the email you want to send',
 			required: false,
+			secret: false,
 		})
 	},
 	async run(configValue) {

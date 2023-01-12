@@ -17,6 +17,7 @@ export const addMemberToList = createAction({
             displayName: 'Email',
             description: 'Email of the new contact',
             required: true,
+            secret: false,
         }),
         listId: Property.Dropdown<string>({
             displayName: "Audience",

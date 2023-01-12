@@ -16,6 +16,7 @@ export const discordSendMessage = createAction({
     content: Property.LongText({
       displayName: 'Message',
       required: true,
+      secret: false,
     }),
   },
   async run(configValue) {
