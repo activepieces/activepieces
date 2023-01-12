@@ -45,7 +45,7 @@ export const Property = {
 	Dropdown<T>(request: DropdownPropertySchema<T>): DropdownProperty<T> {
 		return {...request, valueSchema: undefined, type: PropertyType.DROPDOWN};
 	},
-	ApiKey(request: BasePropertySchema): SecretTextProperty {
+	SecretText(request: BasePropertySchema): SecretTextProperty {
 		return {...request, valueSchema: undefined, type: PropertyType.SECRET_TEXT};
 	},
 	CustomAuth(request: CustomAuthPropertySchema): CustomAuthProperty {
