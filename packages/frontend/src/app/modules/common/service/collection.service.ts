@@ -15,7 +15,7 @@ import {
 	providedIn: 'root',
 })
 export class CollectionService {
-	constructor(private http: HttpClient) { }
+	constructor(private http: HttpClient) {}
 
 	create(request: CreateCollectionRequest): Observable<Collection> {
 		return this.http.post<Collection>(environment.apiUrl + '/collections', request);

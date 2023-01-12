@@ -33,7 +33,7 @@ import {
 	USE_CLOUD_CREDENTIALS,
 } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 import { MatDialog } from '@angular/material/dialog';
-import { Config, ConfigType } from 'shared';
+import { CloudAuth2Connection, Config, ConfigType, OAuth2AppConnection } from 'shared';
 import { DropdownItem } from '../../model/dropdown-item.interface';
 import {
 	NewCloudAuthenticationModalComponent,
@@ -89,7 +89,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	allAuthConfigs$: Observable<DropdownItem[]>;
 	updateOrAddConfigModalClosed$: Observable<void>;
 	configDropdownChanged$: Observable<any>;
-	updatedAuthLabel = '';
 	cloudAuthCheck$: Observable<void>;
 	constructor(
 		private fb: UntypedFormBuilder,
@@ -100,7 +99,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		private cloudAuthConfigsService: CloudAuthConfigsService,
 		private authenticationService: AuthenticationService
 	) {
-		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAuthConfigsDropdownOptions);
+		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAppConnectionsDropdownOptions);
 	}
 
 	writeValue(obj: PieceConfig[]): void {
@@ -148,7 +147,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		this.configs.forEach(c => {
 			if (c.type === InputType.DROPDOWN) {
 				const refreshers$ = {};
-
 				c.refreshers!.forEach(r => {
 					refreshers$[r] = this.form.controls[r].valueChanges.pipe(
 						distinctUntilChanged((prev, curr) => {
@@ -214,7 +212,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		this.selectedOptionalConfigs.push(config);
 	}
 
-	newAuthenticationDialogProcess(authConfigName: string) {
+	newAuthenticationDialogProcess(pieceConfigName: string) {
 		if (!this.checkingOAuth2CloudManager) {
 			this.checkingOAuth2CloudManager = true;
 			this.cloudAuthCheck$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
@@ -230,16 +228,16 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 				}),
 				tap((cloudAuth2Config: { clientId: string }) => {
 					if (cloudAuth2Config) {
-						this.openNewCloudAuthenticationModal(authConfigName, cloudAuth2Config.clientId);
+						this.openNewCloudOAuth2ConnectionModal(pieceConfigName, cloudAuth2Config.clientId);
 					} else {
-						this.openNewAuthenticationModal(authConfigName);
+						this.openOAuth2NewConnectionModal(pieceConfigName);
 					}
 				}),
 				map(() => void 0)
 			);
 		}
 	}
-	openNewAuthenticationModal(authConfigName: string) {
+	openOAuth2NewConnectionModal(authConfigKey: string) {
 		this.updateOrAddConfigModalClosed$ = this.authenticationService.getServerUrl().pipe(
 			switchMap(serverUrl => {
 				return this.dialogService
@@ -267,14 +265,13 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 										return res[this.pieceName];
 									}),
 									tap((cloudAuth2Config: { clientId: string }) => {
-										this.openNewCloudAuthenticationModal(authConfigName, cloudAuth2Config.clientId);
+										this.openNewCloudOAuth2ConnectionModal(authConfigKey, cloudAuth2Config.clientId);
 									}),
 									map(() => void 0)
 								);
 							} else if (typeof result === 'object' && result.type === ConfigType.OAUTH2) {
 								const authConfigOptionValue = result.value;
-								this.form.get(authConfigName)!.setValue(authConfigOptionValue);
-								this.updatedAuthLabel = result.key;
+								this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
 							}
 						}),
 						map(() => void 0)
@@ -283,7 +280,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		);
 	}
 
-	openNewCloudAuthenticationModal(authConfigName: string, clientId: string) {
+	openNewCloudOAuth2ConnectionModal(authConfigKey: string, clientId: string) {
 		this.updateOrAddConfigModalClosed$ = this.dialogService
 			.open(NewCloudAuthenticationModalComponent, {
 				data: {
@@ -297,10 +294,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 				tap((result: Config | string) => {
 					if (typeof result === 'object' && result.type === ConfigType.CLOUD_OAUTH2) {
 						const authConfigOptionValue = result.value;
-						this.form.get(authConfigName)!.setValue(authConfigOptionValue);
-						this.updatedAuthLabel = result.key;
+						this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
 					} else if (result === USE_MY_OWN_CREDENTIALS) {
-						this.openNewAuthenticationModal(authConfigName);
+						this.openOAuth2NewConnectionModal(authConfigKey);
 					}
 				}),
 				map(() => void 0)
@@ -330,11 +326,10 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 							})
 							.afterClosed()
 							.pipe(
-								tap((newAuthConfig: Config) => {
-									if (newAuthConfig && newAuthConfig.type === ConfigType.OAUTH2) {
-										const authConfigOptionValue = newAuthConfig.value;
+								tap((newOAuth2Connection: OAuth2AppConnection) => {
+									if (newOAuth2Connection) {
+										const authConfigOptionValue = newOAuth2Connection.connection;
 										this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
-										this.updatedAuthLabel = newAuthConfig.key;
 									}
 								}),
 								map(() => void 0)
@@ -359,11 +354,10 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 										})
 										.afterClosed()
 										.pipe(
-											tap((newAuthConfig: Config) => {
-												if (newAuthConfig && newAuthConfig.type === ConfigType.CLOUD_OAUTH2) {
-													const authConfigOptionValue = newAuthConfig.value;
+											tap((cloudOAuth2Connection: CloudAuth2Connection) => {
+												if (cloudOAuth2Connection) {
+													const authConfigOptionValue = cloudOAuth2Connection.connection;
 													this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
-													this.updatedAuthLabel = newAuthConfig.key;
 												}
 											}),
 											map(() => void 0)

@@ -58,8 +58,10 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 							flows: [flow],
 							viewMode: ViewModeEnum.VIEW_INSTANCE_RUN,
 							run: run,
+							appConnections: value['connections'],
 						})
 					);
+
 					this.titleService.setTitle(`AP-${collection.version?.displayName}`);
 					this.snackbar.openFromComponent(TestRunBarComponent, {
 						duration: undefined,
@@ -76,6 +78,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 							viewMode: ViewModeEnum.BUILDING,
 							run: undefined,
 							instance: instance,
+							appConnections: value['connections'],
 						})
 					);
 				}

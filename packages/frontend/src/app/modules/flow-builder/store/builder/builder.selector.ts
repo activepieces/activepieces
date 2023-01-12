@@ -2,7 +2,7 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../model/builder-state.model';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
-import { CloudOAuth2Config, Config, Flow, FlowRun, OAuth2Config, OAuth2Response } from 'shared';
+import { AppConnection, CloudOAuth2Config, Config, Flow, FlowRun, OAuth2Config } from 'shared';
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
 import { FlowItem } from '../../../common/model/flow-builder/flow-item';
@@ -10,7 +10,7 @@ import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
 import { FlowsState } from '../model/flows-state.model';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { ActionType, Collection, ConfigType, TriggerType } from 'shared';
-import { OAuth2DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
+import { ConnectionDropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -285,20 +285,26 @@ export const selectConfig = (configKey: string) =>
 		}
 		return undefined;
 	});
-export const selectAuthConfigsDropdownOptions = createSelector(
-	selectCurrentCollectionConfigs,
-	(collectionConfigs: Config[]) => {
-		return [...collectionConfigs]
-			.filter(c => c.type === ConfigType.OAUTH2 || c.type === ConfigType.CLOUD_OAUTH2)
-			.map(c => {
-				const result: OAuth2DropdownItem = {
-					label: { pieceName: (c as OAuth2Config).settings.pieceName, configKey: c.key },
-					value: c.value as OAuth2Response,
-				};
-				return result;
-			});
-	}
+const selectAllAppConnections = createSelector(
+	selectBuilderState,
+	globalState => globalState.appConnectionsState.connections
 );
+
+export const selectConnection = (connectionName: string) =>
+	createSelector(selectAllAppConnections, (connections: AppConnection[]) => {
+		return connections.find(c => c.name === connectionName)!;
+	});
+
+const selectAppConnectionsDropdownOptions = createSelector(selectAllAppConnections, (connections: AppConnection[]) => {
+	return [...connections].map(c => {
+		const result: ConnectionDropdownItem = {
+			label: { appName: c.appName, name: c.name },
+			value: c.connection,
+		};
+		return result;
+	});
+});
+
 export const BuilderSelectors = {
 	selectCurrentCollection,
 	selectCurrentCollectionId,
@@ -337,7 +343,7 @@ export const BuilderSelectors = {
 	selectConfig,
 	selectFlowsValidity,
 	selectFlowItemDetailsForConnectorComponents,
-	selectAuthConfigsDropdownOptions,
+	selectAppConnectionsDropdownOptions,
 	selectCurrentCollectionInstance,
 	selectIsPublishing,
 	selectFlowItemDetailsForConnectorComponentsTriggers,

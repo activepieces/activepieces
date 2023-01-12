@@ -7,7 +7,7 @@ import { SeekPage, AppConnectionId, ListAppConnectionRequest, AppConnection, Ups
 @Injectable({
 	providedIn: 'root',
 })
-export class AppConnectionService {
+export class AppConnectionsService {
 	constructor(private http: HttpClient) {}
 
 	upsert(request: UpsertConnectionRequest): Observable<AppConnection> {

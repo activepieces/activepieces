@@ -69,6 +69,7 @@ import { DeleteFlowDialogComponent } from './page/flow-builder/flow-builder-tabs
 import { DeleteStepDialogComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
 import { ToggleInstanceStateComponent } from './page/flow-builder/flow-builder-header/toggle-instance-state/toggle-instance-state.component';
 import { NewCloudAuthenticationModalComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-cloud-authentication-modal/new-cloud-authentication-modal.component';
+import { appConnectionsReducer } from './store/app-connections/app-connections.reducer';
 @NgModule({
 	imports: [
 		CommonModule,
@@ -85,6 +86,7 @@ import { NewCloudAuthenticationModalComponent } from './page/flow-builder/flow-r
 			flowsState: flowsReducer,
 			viewMode: viewModeReducer,
 			flowItemsDetailsState: flowItemsDetailsReducer,
+			appConnectionsState: appConnectionsReducer,
 		}),
 		FontAwesomeModule,
 		MatExpansionModule,

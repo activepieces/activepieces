@@ -9,8 +9,3 @@ export interface ProjectsState {
 	selectedIndex: number;
 	projects: Project[];
 }
-
-export interface AppConnectionState {
-	loaded: boolean;
-	appCredentials: AppConnectionState[];
-}
