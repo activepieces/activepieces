@@ -7,7 +7,7 @@ type BasicPropertySchema = {
 
 type DropdownPropertySchema<T> = BasicPropertySchema & {
 	refreshers: string[];
-	options: (propsValue: Record<string, AuthPropertyValue | number | string | DropdownState<any>>) => Promise<DropdownState<T>>
+	options: (propsValue: Record<string, OAuth2PropertyValue | number | string | DropdownState<any>>) => Promise<DropdownState<T>>
 }
 
 type OAuth2PropertySchema = BasicPropertySchema & {
@@ -17,13 +17,18 @@ type OAuth2PropertySchema = BasicPropertySchema & {
 	extra?: Record<string, unknown>
 }
 
+type ApiKeyPropertySchema = BasicPropertySchema & {
+	apiKey: string;
+}
+
 export enum PropertyType {
 	SHORT_TEXT = 'SHORT_TEXT',
 	LONG_TEXT = 'LONG_TEXT',
 	DROPDOWN = 'DROPDOWN',
 	NUMBER = 'NUMBER',
 	CHECKBOX = 'CHECKBOX',
-	OAUTH2 = 'OAUTH2'
+	OAUTH2 = 'OAUTH2',
+	API_KEY = 'API_KEY',
 }
 
 type TPropertyValue<T, U> = {
@@ -43,12 +48,12 @@ export interface ShortTextProperty extends BasicPropertySchema, TPropertyValue<s
 export interface NumberProperty extends BasicPropertySchema, TPropertyValue<number, PropertyType.NUMBER> {
 }
 
-export type AuthPropertyValue = {
+export type OAuth2PropertyValue = {
 	access_token: string;
 	data: Record<string, any>
 }
 
-export interface OAuth2Property extends OAuth2PropertySchema, TPropertyValue<AuthPropertyValue, PropertyType.OAUTH2> {
+export interface OAuth2Property extends OAuth2PropertySchema, TPropertyValue<OAuth2PropertyValue, PropertyType.OAUTH2> {
 }
 
 export type DropdownState<T> = {
@@ -64,13 +69,20 @@ export type DropdownOption<T>= {
 
 export interface DropdownProperty<T> extends DropdownPropertySchema<T>, TPropertyValue<T, PropertyType.DROPDOWN> {}
 
+export type ApiKeyPropertyValue = {
+	apiKey: string;
+}
+
+export interface ApiKeyProperty extends ApiKeyPropertySchema, TPropertyValue<ApiKeyPropertyValue, PropertyType.API_KEY> {}
+
 export interface PieceProperty {
 	[name: string]: ShortTextProperty
 		| LongTextProperty
 		| OAuth2Property
 		| CheckboxProperty
 		| DropdownProperty<any>
-		| NumberProperty;
+		| NumberProperty
+		| ApiKeyProperty;
 }
 
 export type StaticPropsValue<T extends PieceProperty> = {
@@ -95,5 +107,8 @@ export const Property = {
 	},
 	Dropdown<T>(request: DropdownPropertySchema<T>): DropdownProperty<T> {
 		return {...request, valueSchema: undefined, type: PropertyType.DROPDOWN};
+	},
+	ApiKey(request: ApiKeyPropertySchema): ApiKeyProperty {
+		return {...request, valueSchema: undefined, type: PropertyType.API_KEY};
 	},
 }

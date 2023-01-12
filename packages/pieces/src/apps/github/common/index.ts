@@ -1,4 +1,4 @@
-import {AuthPropertyValue, Property} from "../../../framework/property/prop.model";
+import {OAuth2PropertyValue, Property} from "../../../framework/property/prop.model";
 import {HttpRequest} from "../../../common/http/core/http-request";
 import {HttpMethod} from "../../../common/http/core/http-method";
 import {AuthenticationType} from "../../../common/authentication/core/authentication-type";
@@ -24,7 +24,7 @@ export const githubCommon = {
                     options: []
                 }
             }
-            const authProp: AuthPropertyValue = propsValue['authentication'] as AuthPropertyValue;
+            const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
             let repositories = await getUserRepo(authProp);
             return {
                 disabled: false,
@@ -42,7 +42,7 @@ export const githubCommon = {
     })
 }
 
-async function getUserRepo(authProp: AuthPropertyValue): Promise<GithubRepository[]> {
+async function getUserRepo(authProp: OAuth2PropertyValue): Promise<GithubRepository[]> {
     const request: HttpRequest<never> = {
         method: HttpMethod.GET,
         url: `${githubCommon.baseUrl}/user/repos`,

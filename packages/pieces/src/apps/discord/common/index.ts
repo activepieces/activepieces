@@ -1,5 +1,5 @@
 import {
-  AuthPropertyValue,
+  OAuth2PropertyValue,
   Property,
 } from '../../../framework/property/prop.model';
 import { HttpRequest } from '../../../common/http/core/http-request';
@@ -39,9 +39,9 @@ export const discordCommon = {
           options: [],
         };
       }
-      const authentication: AuthPropertyValue = value[
+      const authentication: OAuth2PropertyValue = value[
         'authentication'
-      ] as AuthPropertyValue;
+      ] as OAuth2PropertyValue;
       const guildId = authentication['data']['guild']['id'];
       const request: HttpRequest<never> = {
         method: HttpMethod.GET,

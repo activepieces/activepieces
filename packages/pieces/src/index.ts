@@ -7,7 +7,7 @@ export {
   CheckboxProperty,
   StaticPropsValue,
   OAuth2Property,
-  AuthPropertyValue,
+  OAuth2PropertyValue,
   NumberProperty,
   Property,
   DropdownProperty,
