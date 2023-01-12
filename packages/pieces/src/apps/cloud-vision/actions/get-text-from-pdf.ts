@@ -1,5 +1,5 @@
 import { createAction } from '../../../framework/action/action';
-import { Property } from '../../../framework/property/prop.model';
+import { Property } from '../../../framework/property';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { createAuth } from '../common/google-auth';
 import { assertNotNullOrUndefined } from '../../../common/helpers/assertions';
