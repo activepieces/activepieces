@@ -18,10 +18,12 @@
     "strictPropertyInitialization": false,
     "strict": true,
     "target": "es2018",
+    "skipLibCheck": true,
     "typeRoots": [
       "node_modules/@types",
       "packages/pieces/node_modules/@types",
-      "packages/pieces/node_modules/@google-cloud/vision"
+      "packages/pieces/node_modules/@google-cloud/vision",
+      "packages/pieces/node_modules/openai"
     ]
   },
   "exclude": ["node_modules"],

@@ -10,6 +10,7 @@
     "google-auth-library": "^8.7.0",
     "google-gax": "^3.5.2",
     "lodash.get": "^4.4.2",
+    "openai": "^3.1.0",
     "unzip-stream": "^0.3.1"
   },
   "devDependencies": {
