@@ -2,32 +2,27 @@ import { BaseModel } from "../common/base-model";
 
 export type AppConnectionId = string;
 
-interface BaseAppConnection<T extends AppConnectionType, S> extends BaseModel<AppConnectionId> {
+interface BaseAppConnection<S> extends BaseModel<AppConnectionId> {
   name: string;
   appName: string;
   projectId: string;
-  type: T,
-  connection: S;
+  value: S;
 }
 
 export enum AppConnectionType {
   OAUTH2 = "OAUTH2",
   CLOUD_OAUTH2 = "CLOUD_OAUTH2",
-  API_KEY = "API_KEY"
+  SECRET_TEXT = "SECRET_TEXT",
+  CUSTOM = "CUSTOM"
 }
 
-export interface ApiKey {
-  api_key: string;
+export interface SecretTextConnectionValue {
+  type: AppConnectionType.SECRET_TEXT,
+  secret_key: string;
 }
 
-export interface OAuth2Settings {
-  clientId: string;
-  clientSecret: string;
-  tokenUrl: string;
-  redirectUrl: string;
-}
 
-export interface OAuth2Response {
+export interface BaseOAuth2ConnectionValue {
   expires_in: number;
   token_type: string;
   access_token: string;
@@ -37,8 +32,33 @@ export interface OAuth2Response {
   data: Record<string, any>
 }
 
-export type OAuth2AppConnection = (BaseAppConnection<AppConnectionType.OAUTH2, OAuth2Response> & { settings: OAuth2Settings });
-export type ApiKeyAppConnection = BaseAppConnection<AppConnectionType.API_KEY, ApiKey>
-export type CloudAuth2Connection = BaseAppConnection<AppConnectionType.CLOUD_OAUTH2, OAuth2Response>
+export interface CloudOAuth2ConnectionValue extends BaseOAuth2ConnectionValue {
+  type: AppConnectionType.CLOUD_OAUTH2;
+  expires_in: number;
+  token_type: string;
+  access_token: string;
+  claimed_at: number;
+  refresh_token: string;
+  scope: string[];
+  data: Record<string, any>
+}
 
-export type AppConnection = ApiKeyAppConnection | OAuth2AppConnection | CloudAuth2Connection;
+export interface OAuth2ConnectionValueWithApp extends BaseOAuth2ConnectionValue {
+  type: AppConnectionType.OAUTH2;
+  client_id: string;
+  client_secret: string;
+  token_url: string;
+  redirect_url: string;
+}
+
+export interface CustomConnectionValue {
+  type: AppConnectionType.CUSTOM,
+  [P: string]: string | number | CloudOAuth2ConnectionValue | SecretTextConnectionValue | OAuth2ConnectionValueWithApp;
+}
+
+export type OAuth2AppConnection = (BaseAppConnection<OAuth2ConnectionValueWithApp>);
+export type ApiKeyAppConnection = BaseAppConnection<SecretTextConnectionValue>
+export type CloudAuth2Connection = BaseAppConnection<CloudOAuth2ConnectionValue>
+export type CustomAuthentication = BaseAppConnection<CustomConnectionValue>
+
+export type AppConnection = CustomAuthentication | ApiKeyAppConnection | OAuth2AppConnection | CloudAuth2Connection;
