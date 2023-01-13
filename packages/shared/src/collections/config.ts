@@ -1,13 +1,9 @@
-import { CloudOAuth2ConnectionValue, OAuth2ConnectionValueWithApp } from "../app-connection/app-connection";
-
 export type Config =
   | ShortTextConfig
   | LongTextConfig
   | CheckboxConfig
   | DictionaryConfig
-  | NumberConfig
-  | CloudOAuth2Config
-  | OAuth2Config;
+  | NumberConfig;
   
 export interface ShortTextConfig
   extends BasicConfig<ConfigType.SHORT_TEXT, string> {}
@@ -23,46 +19,12 @@ export interface DictionaryConfig
 
 export interface NumberConfig extends BasicConfig<ConfigType.NUMBER, number> {}
 
-
-// TODO REMOVE AFTER DEPRECACTION
-export interface CloudOAuth2ConfigSettings {
-  pieceName: string;
-}
-
-// TODO REMOVE AFTER DEPRECACTION
-export interface CloudOAuth2Config
-  extends BasicConfig<ConfigType.CLOUD_OAUTH2, CloudOAuth2ConnectionValue> {
-  settings: CloudOAuth2ConfigSettings;
-}
-
-
-// TODO REMOVE AFTER DEPRECACTION
-export interface OAuth2ConfigSettings {
-  pieceName: string | null;
-  tokenUrl: string;
-  authUrl: string;
-  clientId: string;
-  clientSecret: string;
-  scope: string;
-  redirectUrl: string;
-}
-
-
-// TODO REMOVE AFTER DEPRECACTION
-export interface OAuth2Config
-  extends BasicConfig<ConfigType.OAUTH2, OAuth2ConnectionValueWithApp> {
-  settings: OAuth2ConfigSettings;
-}
-
 export enum ConfigType {
   CHECKBOX = 'CHECKBOX',
   NUMBER = 'NUMBER',
   DICTIONARY = 'DICTIONARY',
   LONG_TEXT = 'LONG_TEXT',
-  SHORT_TEXT = 'SHORT_TEXT',
-  // TODO REMOVE AFTER DEPRECATION
-  CLOUD_OAUTH2 = 'CLOUD_AUTH2',
-  OAUTH2 = 'OAUTH2',
+  SHORT_TEXT = 'SHORT_TEXT'
 }
 
 interface BasicConfig<T extends ConfigType, V> {

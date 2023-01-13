@@ -90,12 +90,7 @@ export class CreateEditConfigModalComponent implements OnInit, AfterViewChecked 
 					const valueControl = this.configForm.controls.value;
 					valueControl.setValue(defaultValue);
 					const settingsControl = this.configForm.controls.settings;
-					if (newType !== ConfigType.OAUTH2) {
-						settingsControl.setValue(undefined);
-						settingsControl.setErrors(null);
-					} else {
-						settingsControl.setValue({});
-					}
+					settingsControl.setValue({});
 				}
 			})
 		);

@@ -55,7 +55,6 @@ import { ScheduleTriggerInputFormComponent } from './page/flow-builder/flow-righ
 import { ConfigCardComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/config-card/config-card.component';
 import { VariableListComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/configs-list/configs-list.component';
 import { CreateEditConfigModalComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/create-or-edit-config-modal.component';
-import { OAuth2ConfigSettingsComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/o-auth2-config-settings/o-auth2-config-settings.component';
 import { PublishButtonComponent } from './page/flow-builder/flow-builder-header/publish-button/publish-button.component';
 import { TrackFocusDirective } from './page/flow-builder/flow-left-sidebar/run-details/steps-results-list/track-focus.directive';
 import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
@@ -130,7 +129,6 @@ import { appConnectionsReducer } from './store/app-connections/app-connections.r
 		CodeStepInputFormComponent,
 		ScheduleTriggerInputFormComponent,
 		ConfigCardComponent,
-		OAuth2ConfigSettingsComponent,
 		ComponentActionInputFormComponent,
 		NewAuthenticationModalComponent,
 		PublishButtonComponent,

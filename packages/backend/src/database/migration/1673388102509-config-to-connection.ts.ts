@@ -32,28 +32,30 @@ export class configToConnection1673388102509 implements MigrationInterface {
                     case "OAUTH2":
                         await appConnectionRepo.upsert({
                             id: apId(),
-                            type: "OAUTH2",
                             appName: config.settings.pieceName,
                             name: config.key,
                             projectId: projectId,
-                            connection: config.value,
-                            settings: {
-                                clientId: config.settings.clientId,
-                                clientSecret: config.settings.clientSecret,
-                                tokenUrl: config.settings.tokenUrl,
-                                redirectUrl: config.settings.redirectUrl
-                            },
-                        }, ["name", "appName", "projectId"]);
+                            value: {
+                                type: "OAUTH2",
+                                ...config.value,
+                                client_id: config.settings.clientId,
+                                client_secret: config.settings.clientSecret,
+                                token_url: config.settings.tokenUrl,
+                                redirect_url: config.settings.redirectUrl
+                            }
+                        }, ["name", "projectId"]);
                         break;
                     case "CLOUD_AUTH2":
                         await appConnectionRepo.upsert({
                             id: apId(),
-                            type: "CLOUD_OAUTH2",
                             appName: config.settings.pieceName,
                             name: config.key,
                             projectId: projectId,
-                            connection: config.value,
-                        }, ["name", "appName", "projectId"]);
+                            value: {
+                                type: "CLOUD_OAUTH2",
+                                ...config.value
+                            },
+                        }, ["name", "projectId"]);
                         break;
                     default:
                         break;
