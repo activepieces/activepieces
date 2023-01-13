@@ -1,7 +1,7 @@
 import { createAction } from '../../../framework/action/action';
-import { Property } from '../../../framework/property/prop.model';
 import { assertNotNullOrUndefined } from '../../../common/helpers/assertions';
 import { Configuration, OpenAIApi } from 'openai';
+import { Property } from '../../../framework/property';
 
 export const askOpenAI = createAction({
   name: 'ask_chatgpt',
