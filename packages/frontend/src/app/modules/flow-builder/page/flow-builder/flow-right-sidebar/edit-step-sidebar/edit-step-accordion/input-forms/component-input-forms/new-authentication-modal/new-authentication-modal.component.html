@@ -26,31 +26,31 @@
 
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label>Redirect URL</mat-label>
-        <input [matTooltip]="redirectUrlTooltip" formControlName="redirectUrl" matInput type="text" />
-        <mat-error *ngIf="settingsForm.controls.redirectUrl.invalid">
+        <input [matTooltip]="redirectUrlTooltip" formControlName="redirect_url" matInput type="text" />
+        <mat-error *ngIf="settingsForm.controls.redirect_url.invalid">
           Redirect URL is required</mat-error>
       </mat-form-field>
 
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label>Client ID</mat-label>
-        <input [matTooltip]="clientIdTooltip" formControlName="clientId" matInput type="text" />
-        <mat-error *ngIf="settingsForm.controls.clientId.invalid">
+        <input [matTooltip]="clientIdTooltip" formControlName="client_id" matInput type="text" />
+        <mat-error *ngIf="settingsForm.controls.client_id.invalid">
           Client ID is required</mat-error>
       </mat-form-field>
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label>Client Secret</mat-label>
-        <input [matTooltip]="clientSecretTooltip" formControlName="clientSecret" matInput type="password"
+        <input [matTooltip]="clientSecretTooltip" formControlName="client_secret" matInput type="password"
           placeholder="Key" />
-        <mat-error *ngIf="settingsForm.controls.clientSecret.invalid">
+        <mat-error *ngIf="settingsForm.controls.client_secret.invalid">
           Client Secret is required</mat-error>
       </mat-form-field>
 
       <div>
         <app-o-auth2-connect-control [configSettings]="settingsForm.getRawValue()"
           [settingsValid]="authenticationSettingsControlsValid"
-          formControlName="connection"></app-o-auth2-connect-control>
+          formControlName="value"></app-o-auth2-connect-control>
         <p @fadeInUp class="ap-typography-caption ap-text-danger"
-          *ngIf="submitted && settingsForm.get('connection')!.invalid ">
+          *ngIf="submitted && settingsForm.get('value')!.invalid ">
           You have to connect an account to continue
         </p>
       </div>

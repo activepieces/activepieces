@@ -85,25 +85,30 @@ async function refresh(connection: AppConnection): Promise<AppConnection> {
     return connection;
 }
 
-function expired(connection: BaseOAuth2ConnectionValue) {
+const REFRESH_THRESHOLD = 15 * 60; // Refresh if there is less than 15 minutes to expire
+
+function isExpired(connection: BaseOAuth2ConnectionValue) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000);
-    if (connection.expires_in === undefined || connection.refresh_token === undefined) {
+
+    if (!connection.expires_in || !connection.refresh_token) {
         return false;
     }
-    // Refresh if there is less than 15 minutes to expire
-    return (connection.claimed_at + connection.expires_in + 15 * 60 <= secondsSinceEpoch)
+
+    return (connection.claimed_at + connection.expires_in + REFRESH_THRESHOLD <= secondsSinceEpoch)
 }
 
 async function refreshCloud(appName: string, connectionValue: CloudOAuth2ConnectionValue): Promise<CloudOAuth2ConnectionValue> {
-    if (!expired(connectionValue)) {
+    if (!isExpired(connectionValue)) {
         return connectionValue;
     }
-    let response = (
+
+    const response = (
         await axios.post("https://secrets.activepieces.com/refresh", {
             refreshToken: connectionValue.refresh_token,
             pieceName: appName,
         } as RefreshTokenFromCloudRequest)
     ).data;;
+
     return {
         ...response,
         type: AppConnectionType.CLOUD_OAUTH2
@@ -111,12 +116,13 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
 }
 
 async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithApp): Promise<OAuth2ConnectionValueWithApp> {
-    if (!expired(appConnection)) {
+    if (!isExpired(appConnection)) {
         return appConnection;
     }
+
     try {
-        let settings = appConnection;
-        let response = (
+        const settings = appConnection;
+        const response = (
             await axios.post(
                 settings.token_url,
                 qs.stringify({
@@ -131,6 +137,7 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
                 }
             )
         ).data;
+
         return { ...appConnection, ...formatOAuth2Response(response) };
     } catch (e: unknown | AxiosError) {
         throw e;
@@ -148,6 +155,7 @@ export function formatOAuth2Response(response: Record<string, any>) {
         token_type: response["token_type"],
         data: response,
     };
+
     deleteProps(formattedResponse.data, ['access_token', "access_token", "expires_in", "refresh_token", "scope", "token_type"]);
     return formattedResponse;
 }
@@ -157,3 +165,4 @@ function deleteProps(obj: Record<string, any>, prop: string[]) {
         delete obj[p];
     }
 }
+``

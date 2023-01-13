@@ -274,7 +274,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 									map(() => void 0)
 								);
 							} else if (typeof result === 'object') {
-								const authConfigOptionValue = result.connection;
+								const authConfigOptionValue = result.value;
 								this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
 							}
 						}),
@@ -297,7 +297,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			.pipe(
 				tap((result: AppConnection | string) => {
 					if (typeof result === 'object') {
-						const connectionValue = result.connection;
+						const connectionValue = result.value;
 						this.form.get(authConfigKey)!.setValue(connectionValue);
 					} else if (result === USE_MY_OWN_CREDENTIALS) {
 						this.openOAuth2NewConnectionModal(authConfigKey);
@@ -312,12 +312,12 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		this.updateAuthConfig$ = allConnections$.pipe(
 			take(1),
 			map(connections => {
-				const connection = connections.find(c => selectedValue && deepEqual(selectedValue, c.connection));
+				const connection = connections.find(c => selectedValue && deepEqual(selectedValue, c.value));
 				return connection;
 			}),
 			tap(connection => {
 				if (connection) {
-					if (connection.type === AppConnectionType.OAUTH2) {
+					if (connection.value.type === AppConnectionType.OAUTH2) {
 						this.updateOrAddConfigModalClosed$ = this.dialogService
 							.open(NewAuthenticationModalComponent, {
 								data: {
@@ -330,7 +330,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 							.pipe(
 								tap((newOAuth2Connection: OAuth2AppConnection) => {
 									if (newOAuth2Connection) {
-										const connectionValue = newOAuth2Connection.connection;
+										const connectionValue = newOAuth2Connection.value;
 										this.form.get(authConfigKey)!.setValue(connectionValue);
 									}
 								}),
@@ -358,7 +358,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 										.pipe(
 											tap((cloudOAuth2Connection: CloudAuth2Connection) => {
 												if (cloudOAuth2Connection) {
-													const authConfigOptionValue = cloudOAuth2Connection.connection;
+													const authConfigOptionValue = cloudOAuth2Connection.value;
 													this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
 												}
 											}),

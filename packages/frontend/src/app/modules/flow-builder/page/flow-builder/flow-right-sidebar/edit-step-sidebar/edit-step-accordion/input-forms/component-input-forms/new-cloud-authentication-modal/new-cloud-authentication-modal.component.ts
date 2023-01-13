@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { catchError, Observable, of, take, tap } from 'rxjs';
-import { AppConnection, AppConnectionType, CloudAuth2Connection, Project } from 'shared';
+import { AppConnection, AppConnectionType, UpsertCloudOAuth2Request, Project } from 'shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
 import { CloudConnectionPopupSettings } from 'src/app/modules/common/components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
@@ -17,7 +17,7 @@ import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/bui
 interface AuthConfigSettings {
 	appName: FormControl<string | null>;
 	name: FormControl<string>;
-	connection: FormControl<any>;
+	value: FormControl<any>;
 }
 export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
 @Component({
@@ -78,10 +78,10 @@ export class NewCloudAuthenticationModalComponent implements OnInit {
 					),
 				],
 			}),
-			connection: new FormControl(undefined as any, Validators.required),
+			value: new FormControl(undefined as any, Validators.required),
 		});
 		if (this.connectionToUpdate) {
-			this.settingsForm.controls.connection.setValue(this.connectionToUpdate.connection);
+			this.settingsForm.controls.value.setValue(this.connectionToUpdate.value);
 			this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
 			this.settingsForm.controls.name.disable();
 		}
@@ -99,23 +99,19 @@ export class NewCloudAuthenticationModalComponent implements OnInit {
 			? this.connectionToUpdate.name
 			: this.settingsForm.controls.name.value;
 		const settingsFormValue: any = { ...this.settingsForm.getRawValue() };
-		const connectionValue = settingsFormValue['connection'];
+		const connectionValue = settingsFormValue['value'];
 		delete settingsFormValue['value'];
 		delete settingsFormValue.key;
-		const newConfig: CloudAuth2Connection = {
+		const newConfig: UpsertCloudOAuth2Request		= {
 			appName: this.pieceName,
-			connection: connectionValue,
-			type: AppConnectionType.CLOUD_OAUTH2,
-			created: '',
-			updated: '',
+			value: {type: AppConnectionType.CLOUD_OAUTH2, ...connectionValue},
 			name: connectionName,
-			id: this.connectionToUpdate ? this.connectionToUpdate.id : '',
 			projectId: projectId,
 		};
 		return newConfig;
 	}
 
-	saveConnection(connection: CloudAuth2Connection): void {
+	saveConnection(connection: UpsertCloudOAuth2Request): void {
 		this.upsert$ = this.appConnectionsService.upsert(connection).pipe(
 			catchError(err => {
 				console.error(err);

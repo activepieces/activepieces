@@ -1,3 +1,4 @@
+export * from "./app-connection/dto/upsert-app-connection-request";
 export * from "./app-connection/app-connection";
 export * from "./app-connection/dto/list-app-connection-request";
 export * from "./flow-run/execution/step-output";

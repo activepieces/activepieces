@@ -25,8 +25,8 @@
       </mat-form-field>
       <div>
         <app-o-auth2-cloud-connect-control [cloudConnectionPopupSettings]="cloudConnectionPopupSettings"
-          formControlName="connection"></app-o-auth2-cloud-connect-control>
-        <p @fadeInUp class="ap-typography-caption ap-text-danger" *ngIf="settingsForm.get('connection')!.invalid ">
+          formControlName="value"></app-o-auth2-cloud-connect-control>
+        <p @fadeInUp class="ap-typography-caption ap-text-danger" *ngIf="settingsForm.get('value')!.invalid ">
           You have to connect an account to continue
         </p>
       </div>

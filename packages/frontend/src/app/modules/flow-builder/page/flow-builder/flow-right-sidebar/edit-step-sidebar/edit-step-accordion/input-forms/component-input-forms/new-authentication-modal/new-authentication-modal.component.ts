@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { catchError, map, Observable, of, take, tap } from 'rxjs';
-import { AppConnection, AppConnectionType, OAuth2AppConnection, OAuth2Settings, Project } from 'shared';
+import { AppConnection, AppConnectionType, OAuth2AppConnection, Project, UpsertOAuth2Request } from 'shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
 import { AppConnectionsService } from 'src/app/modules/common/service/app-connections.service';
@@ -16,15 +16,15 @@ import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/bui
 
 interface AuthConfigSettings {
 	appName: FormControl<string | null>;
-	redirectUrl: FormControl<string>;
-	clientSecret: FormControl<string>;
-	clientId: FormControl<string>;
-	authUrl: FormControl<string>;
-	tokenUrl: FormControl<string>;
+	redirect_url: FormControl<string>;
+	client_secret: FormControl<string>;
+	client_id: FormControl<string>;
+	auth_url: FormControl<string>;
+	token_url: FormControl<string>;
 	scope: FormControl<string>;
 	name: FormControl<string>;
-	connection: FormControl<any>;
-	refreshUrl: FormControl<string>;
+	value: FormControl<any>;
+	refresh_url: FormControl<string>;
 	extraParams: FormControl<Record<string, unknown>>;
 }
 export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
@@ -88,17 +88,17 @@ export class NewAuthenticationModalComponent implements OnInit {
 				validators: [Validators.required],
 			}),
 			appName: new FormControl<string | null>(this.pieceName, { nonNullable: false, validators: [] }),
-			redirectUrl: new FormControl(this.serverUrl ? `${this.serverUrl}/redirect` : '', {
+			redirect_url: new FormControl(this.serverUrl ? `${this.serverUrl}/redirect` : '', {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
-			clientSecret: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			clientId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			authUrl: new FormControl(this.pieceAuthConfig.authUrl || '', {
+			client_secret: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+			client_id: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+			auth_url: new FormControl(this.pieceAuthConfig.authUrl || '', {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
-			tokenUrl: new FormControl(this.pieceAuthConfig.tokenUrl || '', {
+			token_url: new FormControl(this.pieceAuthConfig.tokenUrl || '', {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
@@ -115,14 +115,13 @@ export class NewAuthenticationModalComponent implements OnInit {
 					),
 				],
 			}),
-			connection: new FormControl(undefined as any, Validators.required),
-			refreshUrl: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
+			value: new FormControl(undefined as any, Validators.required),
+			refresh_url: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
 		});
 
 		if (this.connectionToUpdate) {
 			this.settingsForm.patchValue({
-				...this.connectionToUpdate.settings,
-				connection: this.connectionToUpdate.connection,
+				value: this.connectionToUpdate.value,
 			});
 			this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
 			this.settingsForm.controls.name.disable();
@@ -140,26 +139,21 @@ export class NewAuthenticationModalComponent implements OnInit {
 		const connectionName = this.connectionToUpdate
 			? this.connectionToUpdate.name
 			: this.settingsForm.controls.name.value;
-		const settingsFormValue: OAuth2Settings = { ...this.settingsForm.getRawValue() };
-		const connectionValue = settingsFormValue['connection'];
-		delete settingsFormValue['connection'];
-		const newConfig: OAuth2AppConnection = {
+		const settingsFormValue = { ...this.settingsForm.getRawValue() };
+		const connectionValue = settingsFormValue['value'];
+		delete settingsFormValue['value'];
+		delete connectionValue['name'];
+		delete connectionValue['appName'];
+		const newConfig: UpsertOAuth2Request = {
 			name: connectionName,
-			type: AppConnectionType.OAUTH2,
-			settings: {
-				...settingsFormValue,
-			},
 			appName: this.pieceName,
-			connection: connectionValue,
-			created: '',
-			updated: '',
-			id: this.connectionToUpdate ? this.connectionToUpdate.id : '',
+			value: {...settingsFormValue, type: AppConnectionType.OAUTH2, ...connectionValue},
 			projectId: projectId,
 		};
 		return newConfig;
 	}
 
-	saveConnection(connection: OAuth2AppConnection): void {
+	saveConnection(connection: UpsertOAuth2Request): void {
 		this.upsert$ = this.appConnectionsService.upsert(connection).pipe(
 			catchError(err => {
 				console.error(err);
@@ -177,7 +171,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 	}
 	get authenticationSettingsControlsValid() {
 		return Object.keys(this.settingsForm.controls)
-			.filter(k => k !== 'connection' && !this.settingsForm.controls[k].disabled)
+			.filter(k => k !== 'value' && !this.settingsForm.controls[k].disabled)
 			.map(key => {
 				return this.settingsForm.controls[key].valid;
 			})

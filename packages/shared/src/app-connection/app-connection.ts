@@ -43,7 +43,14 @@ export interface CloudOAuth2ConnectionValue extends BaseOAuth2ConnectionValue {
   data: Record<string, any>
 }
 
-export interface OAuth2ConnectionValueWithApp extends BaseOAuth2ConnectionValue {
+export interface OAuth2AppDetails {
+  client_id: string;
+  client_secret: string;
+  token_url: string;
+  redirect_url: string;
+}
+
+export interface OAuth2ConnectionValueWithApp extends BaseOAuth2ConnectionValue, OAuth2AppDetails {
   type: AppConnectionType.OAUTH2;
   client_id: string;
   client_secret: string;
