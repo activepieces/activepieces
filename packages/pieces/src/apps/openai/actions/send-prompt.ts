@@ -53,6 +53,6 @@ export const askOpenAI = createAction({
       presence_penalty: 0.6,
     });
     assertNotNullOrUndefined(response, 'Error generating text from OpenAI.', 0);
-    return response.data.choices[0].text;
+    return response.data.choices[0].text?.trim();
   },
 });
