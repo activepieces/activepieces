@@ -1,20 +1,12 @@
 import {ProjectId} from "../../project/project";
 import {Cursor} from "../../common/seek-page";
+import { Static, Type } from "@sinclair/typebox";
 
-export interface ListCollectionsRequest {
-    projectId: ProjectId;
-    limit: number;
-    cursor: Cursor;
-}
+export const ListCollectionsRequest = Type.Object({
+    projectId: Type.String({}),
+    limit: Type.Optional(Type.Number({})),
+    cursor: Type.Optional(Type.String({})),
+});
 
-export const ListCollectionsSchema = {
-    querystring: {
-        type: 'object',
-        properties: {
-            limit: {type: 'number'},
-            projectId: {type: 'string'},
-            cursor: {type: 'string'},
-        },
-        required: ['projectId']
-    }
-}
+export type ListCollectionsRequest = Static<typeof ListCollectionsRequest> & { projectId: ProjectId, cursor: Cursor};
+

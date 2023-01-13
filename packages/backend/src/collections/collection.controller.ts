@@ -4,14 +4,14 @@ import {
   CollectionId,
   CollectionVersionId,
   CreateCollectionRequest,
-  CreateCollectionSchema,
-  ListCollectionsSchema,
-  ProjectId,
+  ListCollectionsRequest,
   UpdateCollectionRequest,
   UpdateCollectionSchema,
 } from "shared";
 import { StatusCodes } from "http-status-codes";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+
+const DEFAULT_PAGE_SIZE = 10;
 
 export const collectionController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
   fastify.delete(
@@ -82,26 +82,26 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
   fastify.get(
     "/",
     {
-      schema: ListCollectionsSchema,
+      schema: {
+        querystring: ListCollectionsRequest
+      },
     },
     async (
       _request: FastifyRequest<{
-        Querystring: {
-          projectId: ProjectId;
-          limit: number;
-          cursor: string;
-        };
+        Querystring: ListCollectionsRequest;
       }>,
       _reply
     ) => {
-      return await collectionService.list(_request.query.projectId, _request.query.cursor, _request.query.limit);
+      return await collectionService.list(_request.query.projectId, _request.query.cursor, _request.query.limit??DEFAULT_PAGE_SIZE);
     }
   );
 
   fastify.post(
     "/",
     {
-      schema: CreateCollectionSchema,
+      schema: {
+        body: CreateCollectionRequest
+      },
     },
     async (
       _request: FastifyRequest<{

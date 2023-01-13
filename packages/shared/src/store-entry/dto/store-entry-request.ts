@@ -6,3 +6,9 @@ export const PutStoreEntryRequest = Type.Object({
 });
 
 export type PutStoreEntryRequest = Static<typeof PutStoreEntryRequest>;
+
+export const GetStoreEntryRequest = Type.Object({
+    key: Type.String({})
+});
+
+export type GetStoreEntryRequest = Static<typeof GetStoreEntryRequest>;

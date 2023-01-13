@@ -1,23 +1,25 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
 import {
   CreateFlowRequest,
-  CreateFlowRequestSchema,
   FlowId,
   FlowOperationRequest,
   FlowOperationRequestSchema,
   FlowVersionId,
   ListFlowsRequest,
-  ListFlowsSchema,
 } from "shared";
 import { StatusCodes } from "http-status-codes";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
 import { flowService } from "./flow-service";
 
+const DEFUALT_PAGE_SIZE = 10;
+
 export const flowController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
   fastify.post(
     "/",
     {
-      schema: CreateFlowRequestSchema,
+      schema: {
+        body: CreateFlowRequest
+      },
     },
     async (
       _request: FastifyRequest<{
@@ -56,7 +58,9 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
   fastify.get(
     "/",
     {
-      schema: ListFlowsSchema,
+      schema: {
+        querystring: ListFlowsRequest
+      },
     },
     async (
       _request: FastifyRequest<{
@@ -64,7 +68,7 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
       }>,
       _reply
     ) => {
-      return await flowService.list(_request.query.collectionId, _request.query.cursor, _request.query.limit);
+      return await flowService.list(_request.query.collectionId, _request.query.cursor, _request.query.limit??DEFUALT_PAGE_SIZE);
     }
   );
 
