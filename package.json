@@ -1,10 +1,10 @@
 {
   "name": "activepieces",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "scripts": {
     "start": "nx run backend:start & nx run frontend:start",
-    "generate-app-pieces-docs": "cd packages/docs-generator/src/ && tsc index.ts && node index.js"
+    "generate-app-pieces-docs": "pnpm nx build pieces && cd packages/pieces/dist/docs-generator/ && node index.js"
   },
   "private": true,
   "devDependencies": {

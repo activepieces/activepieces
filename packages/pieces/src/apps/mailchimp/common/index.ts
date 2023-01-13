@@ -1,7 +1,7 @@
 import {httpClient} from "../../../common/http/core/http-client";
 import {HttpMethod} from "../../../common/http/core/http-method";
 import {HttpRequest} from "../../../common/http/core/http-request";
-import {Property} from "../../../framework/property/prop.model";
+import {Property} from "../../../framework/property";
 
 export async function getMailChimpServerPrefix(access_token:string)
 {

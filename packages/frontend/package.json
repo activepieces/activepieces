@@ -1,10 +1,10 @@
 {
   "name": "frontend",
-  "version": "0.1.71",
+  "version": "0.1.72",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --configuration=production && rm -rf _static && mv dist/activepieces _static",
+    "build": "ng build --configuration=production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",

@@ -2,7 +2,7 @@ import {httpClient} from "../../../../common/http/core/http-client";
 import {HttpMethod} from "../../../../common/http/core/http-method";
 import {HttpRequest} from "../../../../common/http/core/http-request";
 import {createAction} from "../../../../framework/action/action";
-import { AuthPropertyValue, Property } from "../../../../framework/property/prop.model";
+import { OAuth2PropertyValue, Property } from "../../../../framework/property";
 import {getMailChimpServerPrefix, mailChimpAuth} from "../../common";
 import * as mailchimp from "@mailchimp/mailchimp_marketing";
 
@@ -31,7 +31,7 @@ export const addMemberToList = createAction({
                         placeholder: "Please select an authentication"
                     }
                 }
-                const authProp: AuthPropertyValue = propsValue['authentication'] as AuthPropertyValue;
+                const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
                 let lists =  (await getUserLists(authProp)).lists;
                 return {
                     disabled: false,
@@ -71,7 +71,7 @@ export const addMemberToList = createAction({
        return await mailchimp.lists.addListMember(context.propsValue.listId!,{email_address:context.propsValue.email!, status:context.propsValue.status!})
     },
 });
-async function getUserLists(authProp: AuthPropertyValue): Promise<{lists:MailChimpList[]}> {
+async function getUserLists(authProp: OAuth2PropertyValue): Promise<{lists:MailChimpList[]}> {
     const access_token= authProp.access_token;
         const mailChimpServerPrefix = await getMailChimpServerPrefix(access_token!);
         mailchimp.setConfig({
