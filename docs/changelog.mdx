@@ -12,19 +12,24 @@ Semantic versioning is a standardized way of versioning software projects. It us
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
 ### 01/09/2023
-**Version 0.1** ([GitHub](https://github.com/activepieces/activepieces/pull/244))
+**Version 0.1.X** ([GitHub](https://github.com/activepieces/activepieces/pull/244))
 
 * **Pieces:**
     * HubSpot: Add Contact Action Added.
     * Hacker News: Get Top X Stories Action Added.
+    * Google Cloud Vision: Get Text from PDF
+    * Open AI: Ask Chat GPT
     * MailChimp: Add Member To List Action Added.
 
 * **Documentation:**
     * Tutorial for creating first piece added.
+    * Auto generate documentation for pieces.
     * Documentation structure revamped.
 
 * **Fixes:**
+    * Breaking change: send http request wrapper now returns body,headers,status instead of body only.
     * Webhook Trigger fixed.
+    * Fullscreen code editior issue fixed, It wasn't loading.
     * Webhook Url and Redirect url fixed on demo instance.
     * JWT Security key can now be supplied by environment variable or auto generated.
     * Docker Image now works on ARM architecture (MacOS).
