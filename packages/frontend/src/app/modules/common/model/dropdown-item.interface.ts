@@ -1,5 +1,3 @@
-import { AppConnection } from 'shared';
-
 export interface DropdownItem {
 	label: any;
 	value: any;
@@ -7,5 +5,5 @@ export interface DropdownItem {
 
 export interface ConnectionDropdownItem {
 	label: { appName: string | null; name: string };
-	value: AppConnection['value'];
+	value: string;
 }

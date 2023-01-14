@@ -40,7 +40,6 @@ import {
 	USE_MY_OWN_CREDENTIALS,
 } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-cloud-authentication-modal/new-cloud-authentication-modal.component';
 import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.service';
-import deepEqual from 'deep-equal';
 import { AuthenticationService } from '../../service/authentication.service';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
@@ -270,7 +269,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 									map(() => void 0)
 								);
 							} else if (typeof result === 'object') {
-								const authConfigOptionValue = result.value;
+								const authConfigOptionValue = `\${connections.${result.name}}`;
 								this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
 							}
 						}),
@@ -293,8 +292,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			.pipe(
 				tap((result: AppConnection | string) => {
 					if (typeof result === 'object') {
-						const connectionValue = result.value;
-						this.form.get(authConfigKey)!.setValue(connectionValue);
+						const authConfigOptionValue = `\${connections.${result.name}}`;
+						this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
 					} else if (result === USE_MY_OWN_CREDENTIALS) {
 						this.openOAuth2NewConnectionModal(authConfigKey);
 					}
@@ -308,7 +307,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		this.updateAuthConfig$ = allConnections$.pipe(
 			take(1),
 			map(connections => {
-				const connection = connections.find(c => selectedValue && deepEqual(selectedValue, c.value));
+				const connection = connections.find(
+					c => selectedValue && c.name === this.getConnectionNameFromInterpolatedString(selectedValue)
+				);
 				return connection;
 			}),
 			tap(connection => {
@@ -370,7 +371,12 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		);
 	}
 
-	dropdownCompareWithFunction = (opt: any, formControlValue: any) => {
-		return formControlValue && deepEqual(formControlValue, opt);
+	dropdownCompareWithFunction = (opt: string, formControlValue: string) => {
+		return opt === formControlValue;
 	};
+	getConnectionNameFromInterpolatedString(interpolatedString: string) {
+		//eg. ${connections.google}
+		const result = interpolatedString.split('${connections.')[1];
+		return result.slice(0, result.length - 1);
+	}
 }
