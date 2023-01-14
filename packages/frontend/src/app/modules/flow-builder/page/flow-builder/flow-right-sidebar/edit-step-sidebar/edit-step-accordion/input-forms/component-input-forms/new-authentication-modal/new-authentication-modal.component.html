@@ -47,10 +47,9 @@
 
       <div>
         <app-o-auth2-connect-control [configSettings]="settingsForm.getRawValue()"
-          [settingsValid]="authenticationSettingsControlsValid"
-          formControlName="value"></app-o-auth2-connect-control>
+          [settingsValid]="authenticationSettingsControlsValid" formControlName="value"></app-o-auth2-connect-control>
         <p @fadeInUp class="ap-typography-caption ap-text-danger"
-          *ngIf="submitted && settingsForm.get('value')!.invalid ">
+          *ngIf="settingsForm.controls.value.invalid &&  settingsForm.controls.value.touched">
           You have to connect an account to continue
         </p>
       </div>

@@ -99,11 +99,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		private cloudAuthConfigsService: CloudAuthConfigsService,
 		private authenticationService: AuthenticationService
 	) {
-		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAppConnectionsDropdownOptions).pipe(
-			tap(res => {
-				console.log(res);
-			})
-		);
+		this.allAuthConfigs$ = this.store.select(BuilderSelectors.selectAppConnectionsDropdownOptions);
 	}
 
 	writeValue(obj: PieceConfig[]): void {
