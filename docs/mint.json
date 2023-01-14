@@ -58,12 +58,14 @@
     {
       "group": "Apps",
       "pages": [
+        "pieces/apps/cloudVisionAI",
         "pieces/apps/discord",
         "pieces/apps/github",
         "pieces/apps/gmail",
         "pieces/apps/hackernews",
         "pieces/apps/hubspot",
         "pieces/apps/mailchimp",
+        "pieces/apps/openai",
         "pieces/apps/slack"
       ]
     },
