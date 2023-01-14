@@ -68,7 +68,7 @@ export class configToConnection1673388102509 implements MigrationInterface {
                 id: string;
                 configs: any[]
             };
-            collectionVersion.configs = collectionVersion.configs.filter(f => f.type !== "OAUTH2" && f.type !== "CLOUD_OAUTH2");
+            collectionVersion.configs = collectionVersion.configs.filter(f => f.type !== "OAUTH2" && f.type !== "CLOUD_OAUTH2" && f.type !== "CLOUD_AUTH2");
             await collectionVersionRepo.update(collectionVersion.id, collectionVersion);
         }
         const flowVersions = await flowVersionRepo.find();
