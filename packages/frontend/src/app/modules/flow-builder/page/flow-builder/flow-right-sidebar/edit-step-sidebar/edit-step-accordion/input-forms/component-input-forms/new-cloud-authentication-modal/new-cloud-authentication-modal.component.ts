@@ -102,9 +102,9 @@ export class NewCloudAuthenticationModalComponent implements OnInit {
 		const connectionValue = settingsFormValue['value'];
 		delete settingsFormValue['value'];
 		delete settingsFormValue.key;
-		const newConfig: UpsertCloudOAuth2Request		= {
+		const newConfig: UpsertCloudOAuth2Request = {
 			appName: this.pieceName,
-			value: {type: AppConnectionType.CLOUD_OAUTH2, ...connectionValue},
+			value: { type: AppConnectionType.CLOUD_OAUTH2, ...connectionValue },
 			name: connectionName,
 			projectId: projectId,
 		};

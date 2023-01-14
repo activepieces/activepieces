@@ -147,7 +147,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 		const newConfig: UpsertOAuth2Request = {
 			name: connectionName,
 			appName: this.pieceName,
-			value: {...settingsFormValue, type: AppConnectionType.OAUTH2, ...connectionValue},
+			value: { ...settingsFormValue, type: AppConnectionType.OAUTH2, ...connectionValue },
 			projectId: projectId,
 		};
 		return newConfig;
