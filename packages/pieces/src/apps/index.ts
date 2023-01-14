@@ -6,6 +6,7 @@ import { discord } from './discord';
 import { hackernews } from './hackernews';
 import { hubspot } from './hubspot';
 import { mailchimp } from './mailchimp';
+import { stripe } from './stripe';
 
 export const pieces: Piece[] = [
 	slack,
@@ -14,7 +15,8 @@ export const pieces: Piece[] = [
 	github,
 	hubspot,
 	hackernews,
-	mailchimp
+	mailchimp,
+	stripe
 ];
 
 export const getPiece = (name: string): Piece | undefined => {
