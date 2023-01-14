@@ -168,7 +168,7 @@ const getWebhookUrl = async (flowId: FlowId): Promise<string> => {
   const webhookPath = `v1/webhooks?flowId=${flowId}`;
   let serverUrl = system.get(SystemProp.BACKEND_URL);
 
-  if (serverUrl !== undefined) {
+  if (serverUrl === undefined) {
     const { ip } = await getPublicIp();
     serverUrl = `http://${ip}:3000`
   }
