@@ -57,15 +57,14 @@ export class VariableService {
     let paths = path.split(".");
     if (paths[0] === this.CONNECTIONS) {
       // Invalid naming return nothing
-      if (paths.length < 3) {
+      if (paths.length < 2) {
         return '';
       }
       // Need to be resolved dynamically
-      let appName = paths[1];
-      let connectioName = paths[2];
-      paths.splice(0, 3);
+      let connectioName = paths[1];
+      paths.splice(0, 2);
       let newPath = paths.join(".");
-      const connection = (await connectionService.obtain(appName, connectioName))?.value;
+      const connection = (await connectionService.obtain(connectioName))?.value;
       if (paths.length === 0) {
         return connection;
       }
