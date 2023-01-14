@@ -240,7 +240,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		}
 	}
 	openNewAuthenticationModal(authConfigName: string) {
-		this.updateOrAddConfigModalClosed$ = this.authenticationService.getServerUrl().pipe(
+		this.updateOrAddConfigModalClosed$ = this.authenticationService.getFrontendUrl().pipe(
 			switchMap(serverUrl => {
 				return this.dialogService
 					.open(NewAuthenticationModalComponent, {

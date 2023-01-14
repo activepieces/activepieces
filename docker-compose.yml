@@ -2,7 +2,7 @@ version: '3.0'
 
 services:
   backend:
-    image: activepieces/backend:0.1.17
+    image: activepieces/backend:0.1.19
     container_name: activepieces-backend
     restart: unless-stopped
     privileged: true
@@ -21,12 +21,12 @@ services:
       - AP_REDIS_HOST=redis
       - AP_REDIS_PORT=6379
       - AP_FRONTEND_URL=http://localhost:8080
-      - AP_BACKEND_URL=http://localhost:8080/api
+##    - AP_BACKEND_URL=http://localhost:8080/api
     networks:
       - activepieces
 
   frontend:
-    image: activepieces/frontend:0.1.72
+    image: activepieces/frontend:0.1.73
     container_name: activepieces-frontend
     restart: unless-stopped
     depends_on: [ backend ]
