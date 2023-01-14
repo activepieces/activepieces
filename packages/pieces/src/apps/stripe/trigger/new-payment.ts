@@ -2,7 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
 } from '../../../framework/trigger/trigger';
-import {Property} from "../../../framework/property/prop.model";
+import { Property } from '../../../framework/property';
 import { stripeCommon } from '../common';
 
 export const stripeNewPayment = createTrigger({
