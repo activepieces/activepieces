@@ -56,20 +56,6 @@
       ]
     },
     {
-      "group": "Apps",
-      "pages": [
-        "pieces/apps/cloudVisionAI",
-        "pieces/apps/discord",
-        "pieces/apps/github",
-        "pieces/apps/gmail",
-        "pieces/apps/hackernews",
-        "pieces/apps/hubspot",
-        "pieces/apps/mailchimp",
-        "pieces/apps/openai",
-        "pieces/apps/slack"
-      ]
-    },
-    {
       "group": "Helpers",
       "pages": [
         "pieces/helpers/http-request",
@@ -82,6 +68,20 @@
       "pages": [
         "pieces/flow-controls/loop",
         "pieces/flow-controls/branch"
+      ]
+    },
+    {
+      "group": "Apps",
+      "pages": [
+        "pieces/apps/cloudVisionAI",
+        "pieces/apps/discord",
+        "pieces/apps/github",
+        "pieces/apps/gmail",
+        "pieces/apps/hackernews",
+        "pieces/apps/hubspot",
+        "pieces/apps/mailchimp",
+        "pieces/apps/openai",
+        "pieces/apps/slack"
       ]
     },
     {
@@ -114,6 +114,15 @@
       "pages": [
         "contributing/building-pieces/quickstart",
         "contributing/building-pieces/examples"
+      ]
+    },
+    {
+      "group": "Pieces Reference",
+      "pages": [
+        "contributing/pieces-reference/piece",
+        "contributing/pieces-reference/property",
+        "contributing/pieces-reference/action",
+        "contributing/pieces-reference/trigger"
       ]
     },
     {
