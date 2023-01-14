@@ -1,5 +1,5 @@
 import {Context} from "../context";
-import {Property, PieceProperty, StaticPropsValue} from "../property/prop.model";
+import {Property, PieceProperty, StaticPropsValue} from "../property/property";
 
 class IAction<T extends PieceProperty> {
 	constructor(

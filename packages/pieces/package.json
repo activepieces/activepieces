@@ -2,11 +2,15 @@
   "name": "pieces",
   "version": "0.0.1",
   "dependencies": {
+    "@google-cloud/vision": "^3.0.1",
     "@mailchimp/mailchimp_marketing": "^3.0.80",
     "@types/mailchimp__mailchimp_marketing": "^3.0.6",
     "axios": "^1.0.0",
     "fs-extra": "^10.1.0",
+    "google-auth-library": "^8.7.0",
+    "google-gax": "^3.5.2",
     "lodash.get": "^4.4.2",
+    "openai": "^3.1.0",
     "unzip-stream": "^0.3.1"
   },
   "devDependencies": {

@@ -4,9 +4,9 @@ import type { HttpRequest } from '../../../common/http/core/http-request';
 import { createAction } from '../../../framework/action/action';
 import { httpClient } from '../../../common/http/core/http-client';
 import {
-  AuthPropertyValue,
+  OAuth2PropertyValue,
   Property,
-} from '../../../framework/property/prop.model';
+} from '../../../framework/property';
 
 export const slackSendMessageAction = createAction({
   name: 'send_channel_message',
@@ -35,9 +35,9 @@ export const slackSendMessageAction = createAction({
             options: [],
           };
         }
-        const authentication: AuthPropertyValue = value[
+        const authentication: OAuth2PropertyValue = value[
           'authentication'
-        ] as AuthPropertyValue;
+        ] as OAuth2PropertyValue;
         const accessToken = authentication['access_token'];
         const request: HttpRequest<never> = {
           method: HttpMethod.GET,

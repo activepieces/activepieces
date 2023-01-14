@@ -11,9 +11,7 @@ import {
 import { ActivepiecesError, ErrorCode } from "./activepieces-error";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
 import { createContextStore } from "../store-entry/store-entry.service";
-import { getPublicIp } from "./public-ip-utils";
-import { system } from "./system/system";
-import { SystemProp } from "./system/system-prop";
+import { getBackendUrl } from "./public-ip-utils";
 
 const EVERY_FIFTEEN_MINUTES = "* 15 * * * *";
 
@@ -37,6 +35,7 @@ export const triggerUtils = {
     }
     return payloads;
   },
+
   async enable({ collectionId, collectionVersionId, flowVersion }: EnableParams): Promise<void> {
     switch (flowVersion.trigger.type) {
       case TriggerType.PIECE:
@@ -50,8 +49,10 @@ export const triggerUtils = {
           id: flowVersion.id,
           data: {
             environment: RunEnvironment.PRODUCTION,
+            collectionId,
             collectionVersionId,
-            flowVersionId: flowVersion.id,
+            flowVersion,
+            triggerType: TriggerType.SCHEDULE,
           },
           cronExpression: flowVersion.trigger.settings.cronExpression,
         });
@@ -122,8 +123,10 @@ const enablePieceTrigger = async ({ flowVersion, collectionId, collectionVersion
         id: flowVersion.id,
         data: {
           environment: RunEnvironment.PRODUCTION,
+          collectionId,
           collectionVersionId,
-          flowVersionId: flowVersion.id,
+          flowVersion,
+          triggerType: TriggerType.PIECE,
         },
         cronExpression: EVERY_FIFTEEN_MINUTES,
       });
@@ -161,13 +164,7 @@ const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
 
 const getWebhookUrl = async (flowId: FlowId): Promise<string> => {
   const webhookPath = `v1/webhooks?flowId=${flowId}`;
-  let serverUrl = system.get(SystemProp.BACKEND_URL);
-
-  if (serverUrl !== undefined) {
-    const { ip } = await getPublicIp();
-    serverUrl = `http://${ip}:3000`
-  }
-
+  let serverUrl = await getBackendUrl();
   return `${serverUrl}/${webhookPath}`;
 };
 

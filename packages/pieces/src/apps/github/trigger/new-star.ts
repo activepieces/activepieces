@@ -6,7 +6,7 @@ import { httpClient } from '../../../common/http/core/http-client';
 import { HttpRequest } from '../../../common/http/core/http-request';
 import { HttpMethod } from '../../../common/http/core/http-method';
 import { AuthenticationType } from '../../../common/authentication/core/authentication-type';
-import { Property } from '../../../framework/property/prop.model';
+import { Property } from '../../../framework/property';
 import { githubCommon } from '../common';
 
 export const githubNewRepoEvent = createTrigger({
