@@ -9,7 +9,7 @@ All properties `name` should be a snake case.
 
 # Schema
 
-Here is the schema of each property type.
+The following is the schema for each property type:
 
 ## Short text
 
@@ -51,7 +51,7 @@ Property.Number({
     required: boolean,
     authUrl: string, // The url used for redirection
     tokenUrl: string, // The url used for claiming token
-    scope: string[]],
+    scope: string[],
 })
 ```
 
@@ -68,13 +68,14 @@ Property.Number({
 
 ## Dropdown 
 
-Options is function, so you can load options dynmiucally depends on the user props value.
+Options can be loaded dynamically based on the user's props value.
 
 ```typescript
 Property.Dropdown({
     displayName: string;
     description: string | undefined;
     required: boolean;
+    refreshers: string[], // properties that when changed, will trigger the options function to execute
     options: async (propsValue): DropdownState {
         if (props['authentication'] === undefined) {
             return {
