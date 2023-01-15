@@ -119,29 +119,23 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
     if (!isExpired(appConnection)) {
         return appConnection;
     }
-
-    try {
-        const settings = appConnection;
-        const response = (
-            await axios.post(
-                settings.token_url,
-                qs.stringify({
-                    client_id: settings.client_id,
-                    client_secret: settings.client_secret,
-                    redirect_uri: settings.redirect_url,
-                    grant_type: "refresh_token",
-                    refresh_token: appConnection.refresh_token,
-                }),
-                {
-                    headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
-                }
-            )
-        ).data;
-
-        return { ...appConnection, ...formatOAuth2Response(response) };
-    } catch (e: unknown | AxiosError) {
-        throw e;
-    }
+    const settings = appConnection;
+    const response = (
+        await axios.post(
+            settings.token_url,
+            qs.stringify({
+                client_id: settings.client_id,
+                client_secret: settings.client_secret,
+                redirect_uri: settings.redirect_url,
+                grant_type: "refresh_token",
+                refresh_token: appConnection.refresh_token,
+            }),
+            {
+                headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
+            }
+        )
+    ).data;
+    return { ...appConnection, ...formatOAuth2Response(response) };
 }
 
 export function formatOAuth2Response(response: Record<string, any>) {

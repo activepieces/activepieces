@@ -100,11 +100,6 @@ const disablePieceTrigger = async ({ flowVersion, projectId, collectionId, colle
         collectionVersion: collectionVersion,
         projectId: projectId
       });
-      await pieceTrigger.onDisable({
-        store: createContextStore(collectionId),
-        webhookUrl: await getWebhookUrl(flowVersion.flowId),
-        propsValue: flowTrigger.settings.input,
-      });
       break;
 
     case TriggerStrategy.POLLING:

@@ -53,7 +53,7 @@ function executeTrigger() {
     globals.apiUrl = input.apiUrl!;
 
     triggerHelper.executeTrigger(input).then((output) => {
-      Utils.writeToJsonFile(globals.outputFile, output);
+      Utils.writeToJsonFile(globals.outputFile, output??"");
     });
   } catch (e) {
     Utils.writeToJsonFile(globals.outputFile, (e as Error).message);

@@ -13,8 +13,8 @@ const OAuth2ConnectionValue = {
     refresh_token: Type.Optional(Type.String()),
     token_type: Type.Optional(Type.String({})),
     access_token: Type.String({}),
-    scope: Type.Array(Type.String({})),
-    data: Type.Object({}),
+    scope: Type.String(),
+    data: Type.Any({}),
 }
 
 export const UpsertCloudOAuth2Request = Type.Object({
@@ -47,7 +47,7 @@ export const UpsertOAuth2Request = Type.Object({
 
 export type UpsertCloudOAuth2Request = Static<typeof UpsertCloudOAuth2Request>;
 export type UpsertOAuth2Request = Static<typeof UpsertCloudOAuth2Request>;
-export type UpsertSecretTextRequest = Static<typeof UpsertCloudOAuth2Request>;
+export type UpsertSecretTextRequest = Static<typeof UpsertSecretTextRequest>;
 
-export const UpsertConnectionRequest = Type.Union([UpsertCloudOAuth2Request, UpsertOAuth2Request, UpsertSecretTextRequest]);
+export const UpsertConnectionRequest = Type.Union([UpsertSecretTextRequest, UpsertOAuth2Request, UpsertCloudOAuth2Request]);
 export type UpsertConnectionRequest = Static<typeof UpsertConnectionRequest>;

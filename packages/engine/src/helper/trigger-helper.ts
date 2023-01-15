@@ -1,12 +1,15 @@
-import { pieces, Store, Trigger } from "pieces";
-import { ActivepiecesError, ErrorCode, ExecuteTriggerOperation, ExecutionState, PieceTrigger, TriggerHookType } from "shared";
+import { pieces, Store } from "pieces";
+import { ExecuteTriggerOperation, ExecutionState, PieceTrigger, TriggerHookType } from "shared";
 import { storageService } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 
 export const triggerHelper = {
   async executeTrigger(params: ExecuteTriggerOperation) {
     const flowTrigger: PieceTrigger = params.flowVersion.trigger as PieceTrigger;
-    const trigger = getPieceTrigger(flowTrigger);
+    const trigger = pieces.find((p) => p.name === flowTrigger.settings.pieceName)?.getTrigger(flowTrigger.settings.triggerName);
+    if (trigger === undefined) {
+      throw new Error(`Piece trigger is not found ${flowTrigger.settings.triggerName} and piece name ${flowTrigger.settings.pieceName}`)
+    }
     const variableService = new VariableService();
     const executionState = new ExecutionState();
     executionState.insertConfigs(params.collectionVersion);
@@ -47,31 +50,3 @@ function createContextStore(): Store {
     },
   };
 }
-
-
-const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
-  const piece = pieces.find((p) => p.name === trigger.settings.pieceName);
-
-  if (piece == null) {
-    throw new ActivepiecesError({
-      code: ErrorCode.PIECE_NOT_FOUND,
-      params: {
-        pieceName: trigger.settings.pieceName,
-      },
-    });
-  }
-
-  const pieceTrigger = piece.getTrigger(trigger.settings.triggerName);
-
-  if (pieceTrigger == null) {
-    throw new ActivepiecesError({
-      code: ErrorCode.PIECE_TRIGGER_NOT_FOUND,
-      params: {
-        pieceName: trigger.settings.pieceName,
-        triggerName: trigger.settings.triggerName,
-      },
-    });
-  }
-
-  return pieceTrigger;
-};

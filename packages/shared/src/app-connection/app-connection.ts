@@ -28,7 +28,7 @@ export interface BaseOAuth2ConnectionValue {
   access_token: string;
   claimed_at: number;
   refresh_token: string;
-  scope: string[];
+  scope: string;
   data: Record<string, any>
 }
 
@@ -39,7 +39,7 @@ export interface CloudOAuth2ConnectionValue extends BaseOAuth2ConnectionValue {
   access_token: string;
   claimed_at: number;
   refresh_token: string;
-  scope: string[];
+  scope: string;
   data: Record<string, any>
 }
 

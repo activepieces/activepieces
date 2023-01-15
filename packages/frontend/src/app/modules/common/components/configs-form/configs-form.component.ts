@@ -43,6 +43,7 @@ import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.servic
 import { AuthenticationService } from '../../service/authentication.service';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
+import deepEqual from 'deep-equal';
 type ConfigKey = string;
 
 @Component({
@@ -374,8 +375,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	}
 
 	dropdownCompareWithFunction = (opt: string, formControlValue: string) => {
-		return opt === formControlValue;
+		return formControlValue !== undefined && deepEqual(opt, formControlValue);
 	};
+
 	getConnectionNameFromInterpolatedString(interpolatedString: string) {
 		//eg. ${connections.google}
 		const result = interpolatedString.split('${connections.')[1];
