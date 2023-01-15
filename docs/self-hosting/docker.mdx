@@ -1,0 +1,57 @@
+---
+title: "Install/Upgrade with Docker"
+description: ""
+---
+
+To get up and running quickly with Activepieces, we will use the Activepieces Docker image. Follow these steps:
+
+## Prerequisites
+
+You need to have [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) and [Docker](https://docs.docker.com/get-docker/) installed on your machine in order to set up Activepieces via Docker Compose.
+
+## Installing
+
+**1. Clone Activepieces repository.**
+
+Use the command line to clone Activepieces repository:
+
+```bash
+git clone https://github.com/activepieces/activepieces.git
+```
+
+**2. Go to the repository folder.**
+
+```bash
+cd activepieces
+```
+
+**3. Run Activepieces.**
+
+```bash
+docker compose -p activepieces up
+```
+
+## Upgrading
+
+To upgrade to new versions, which are installed using docker compose, perform the following steps. First, open a terminal in the activepieces repository directory and run the following commands.
+
+<Tip>
+Please review the [Changelog](https://activepieces.com/docs/changelog) for any breaking changes.
+</Tip>
+
+**1. Pull the new docker compose file**
+```bash
+git pull
+```
+
+**2. Pull the new images**
+```bash
+docker-compose pull
+```
+
+3. Run the updated docker images
+```
+docker-compose up -d --remove-orphans
+```
+
+Congratulations! You have now successfully updated the version.

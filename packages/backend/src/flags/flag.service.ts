@@ -1,5 +1,6 @@
 import { Flag } from "shared";
 import { databaseConnection } from "../database/database-connection";
+import { getBackendUrl } from "../helper/public-ip-utils";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
 import { FlagEntity } from "./flag-entity";
@@ -27,8 +28,14 @@ export const flagService = {
 
     flags.push(
       {
-        id: FlagId.SERVER_URL,
-        value: system.get(SystemProp.SERVER_URL),
+        id: FlagId.BACKEND_URL,
+        value: await getBackendUrl(),
+        created,
+        updated,
+      },
+      {
+        id: FlagId.FRONTEND_URL,
+        value: system.get(SystemProp.FRONTEND_URL),
         created,
         updated,
       },
@@ -51,14 +58,16 @@ export const flagService = {
 };
 
 export enum FlagId {
-  SERVER_URL = "SERVER_URL",
+  FRONTEND_URL = "FRONTEND_URL",
+  BACKEND_URL = "BACKEND_URL",
   USER_CREATED = "USER_CREATED",
   WARNING_TEXT_BODY = "WARNING_TEXT_BODY",
   WARNING_TEXT_HEADER = "WARNING_TEXT_HEADER",
 }
 
 export type FlagType =
-  | BaseFlagStructure<FlagId.SERVER_URL, string>
+  | BaseFlagStructure<FlagId.FRONTEND_URL, string>
+  | BaseFlagStructure<FlagId.BACKEND_URL, string>
   | BaseFlagStructure<FlagId.USER_CREATED, boolean>
   | BaseFlagStructure<FlagId.WARNING_TEXT_BODY, string>
   | BaseFlagStructure<FlagId.WARNING_TEXT_HEADER, string>;

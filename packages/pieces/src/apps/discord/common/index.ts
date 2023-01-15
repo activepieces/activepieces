@@ -1,10 +1,9 @@
 import {
-  AuthPropertyValue,
+  OAuth2PropertyValue,
   Property,
-} from '../../../framework/property/prop.model';
+} from '../../../framework/property';
 import { HttpRequest } from '../../../common/http/core/http-request';
 import { HttpMethod } from '../../../common/http/core/http-method';
-import { AuthenticationType } from '../../../common/authentication/core/authentication-type';
 import { httpClient } from '../../../common/http/core/http-client';
 
 export const discordCommon = {
@@ -39,9 +38,9 @@ export const discordCommon = {
           options: [],
         };
       }
-      const authentication: AuthPropertyValue = value[
+      const authentication: OAuth2PropertyValue = value[
         'authentication'
-      ] as AuthPropertyValue;
+      ] as OAuth2PropertyValue;
       const guildId = authentication['data']['guild']['id'];
       const request: HttpRequest<never> = {
         method: HttpMethod.GET,
@@ -50,7 +49,7 @@ export const discordCommon = {
           Authorization: `Bot ${value['bot_token']}`,
         },
       };
-      const channels = await httpClient.sendRequest<
+      const { body: channels } = await httpClient.sendRequest<
         { id: string; name: string }[]
       >(request);
       return {

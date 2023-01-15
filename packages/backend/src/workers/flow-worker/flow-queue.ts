@@ -1,5 +1,4 @@
 import { Queue } from "bullmq";
-import Redis from "ioredis";
 import { ApId } from "shared";
 import { createRedisClient } from "../../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "shared";

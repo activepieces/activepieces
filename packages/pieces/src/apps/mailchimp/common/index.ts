@@ -1,7 +1,7 @@
 import {httpClient} from "../../../common/http/core/http-client";
 import {HttpMethod} from "../../../common/http/core/http-method";
 import {HttpRequest} from "../../../common/http/core/http-request";
-import {Property} from "../../../framework/property/prop.model";
+import {Property} from "../../../framework/property";
 
 export async function getMailChimpServerPrefix(access_token:string)
 {
@@ -12,7 +12,7 @@ export async function getMailChimpServerPrefix(access_token:string)
             Authorization: `OAuth ${access_token}`
           }
     };
-    return  (await httpClient.sendRequest(mailChimpMetaDataRequest)).dc;
+    return  (await httpClient.sendRequest(mailChimpMetaDataRequest)).body.dc;
 }
 export const mailChimpAuth =  Property.OAuth2({
     description: "",

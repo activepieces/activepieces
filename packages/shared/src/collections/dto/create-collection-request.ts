@@ -1,17 +1,10 @@
+import { Static, Type } from "@sinclair/typebox";
 import {ProjectId} from "../../project/project";
 
-export interface CreateCollectionRequest {
-    displayName: string;
-    projectId: ProjectId
-}
+export const CreateCollectionRequest = Type.Object({
+    projectId: Type.String({}),
+    displayName: Type.String({}),
+});
 
-export const CreateCollectionSchema = {
-    body: {
-        type: 'object',
-        properties: {
-            displayName: {type: 'string'},
-            projectId: {type: 'string'}
-        },
-        required: ['displayName', 'projectId']
-    }
-}
+export type CreateCollectionRequest = Static<typeof CreateCollectionRequest> & { projectId: ProjectId};
+

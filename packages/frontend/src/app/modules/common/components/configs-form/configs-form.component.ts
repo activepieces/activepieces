@@ -229,15 +229,15 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 					if (cloudAuth2Config) {
 						this.openNewCloudOAuth2ConnectionModal(pieceConfigName, cloudAuth2Config.clientId);
 					} else {
-						this.openOAuth2NewConnectionModal(pieceConfigName);
+						this.openNewAuthenticationModal(pieceConfigName);
 					}
 				}),
 				map(() => void 0)
 			);
 		}
 	}
-	openOAuth2NewConnectionModal(authConfigKey: string) {
-		this.updateOrAddConfigModalClosed$ = this.authenticationService.getServerUrl().pipe(
+	openNewAuthenticationModal(authConfigName: string) {
+		this.updateOrAddConfigModalClosed$ = this.authenticationService.getFrontendUrl().pipe(
 			switchMap(serverUrl => {
 				return this.dialogService
 					.open(NewAuthenticationModalComponent, {
@@ -295,7 +295,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 						const authConfigOptionValue = `\${connections.${result.name}}`;
 						this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
 					} else if (result === USE_MY_OWN_CREDENTIALS) {
-						this.openOAuth2NewConnectionModal(authConfigKey);
+						this.openNewAuthenticationModal(authConfigKey);
 					}
 				}),
 				map(() => void 0)

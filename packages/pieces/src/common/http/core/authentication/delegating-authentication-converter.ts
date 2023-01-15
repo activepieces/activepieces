@@ -1,4 +1,4 @@
-import type {RequestHeaders} from '../request-headers';
+import type {HttpHeaders} from '../http-headers';
 import type {AuthenticationConverter} from './authentication-converter';
 import {BearerTokenAuthenticationConverter} from './bearer-authentication-converter';
 import {AuthenticationType} from "../../../authentication/core/authentication-type";
@@ -15,7 +15,7 @@ export class DelegatingAuthenticationConverter implements AuthenticationConverte
 		};
 	}
 
-	convert(authentication: Authentication, headers: RequestHeaders): RequestHeaders {
+	convert(authentication: Authentication, headers: HttpHeaders): HttpHeaders {
 		const converter = this.converters[authentication.type];
 		return converter.convert(authentication, headers);
 	}

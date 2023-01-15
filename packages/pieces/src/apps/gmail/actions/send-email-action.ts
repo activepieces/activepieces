@@ -3,7 +3,7 @@ import type {HttpRequest} from '../../../common/http/core/http-request';
 import {HttpMethod} from '../../../common/http/core/http-method';
 import {AuthenticationType} from '../../../common/authentication/core/authentication-type';
 import {httpClient} from '../../../common/http/core/http-client';
-import {Property} from "../../../framework/property/prop.model";
+import {Property} from "../../../framework/property";
 
 export const gmailSendEmailAction = createAction({
 	name: 'send_email',

@@ -18,11 +18,21 @@ import { flowWorkerModule } from "./workers/flow-worker/flow-worker-module";
 import { webhookModule } from "./webhooks/webhook-module";
 import { errorHandler } from "./helper/error-handler";
 import { appConnectionModule } from "./app-connection/app-connection.module";
-import { databaseConnection } from "./database/database-connection";
+import { system } from "./helper/system/system";
+import { SystemProp } from "./helper/system/system-prop";
 
 const app = fastify({
   logger: true,
+  ajv: {
+    customOptions: {
+      removeAdditional: 'all',
+      useDefaults: true,
+      coerceTypes: true,
+    }
+  }
 });
+
+
 app.register(cors, {
   origin: "*",
   methods: ["*"]
@@ -55,6 +65,18 @@ const start = async () => {
       host: "0.0.0.0",
       port: 3000,
     });
+
+    console.log(`
+             _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____ 
+    /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
+   /  \\    | |         | |      | |    \\ \\  / /  | |__    | |__) |   | |   | |__    | |      | |__    | (___  
+  / /\\ \\   | |         | |      | |     \\ \\/ /   |  __|   |  ___/    | |   |  __|   | |      |  __|    \\___ \\ 
+ / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
+/_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/ 
+
+started on ${system.get(SystemProp.FRONTEND_URL)}
+    `);
+
   } catch (err) {
     app.log.error(err);
     process.exit(1);

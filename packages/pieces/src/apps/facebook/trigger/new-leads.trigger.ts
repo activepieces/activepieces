@@ -1,5 +1,5 @@
 import {createTrigger, TriggerStrategy} from "../../../framework/trigger/trigger";
-import {Property} from "../../../framework/property/prop.model";
+import {Property} from "../../../framework/property";
 
 export const newLeads = createTrigger(
     {

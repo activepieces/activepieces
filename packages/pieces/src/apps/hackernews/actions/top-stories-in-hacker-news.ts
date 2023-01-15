@@ -1,7 +1,7 @@
 import {createAction} from '../../../framework/action/action';
 import {HttpMethod} from '../../../common/http/core/http-method';
 import {httpClient} from '../../../common/http/core/http-client';
-import {Property} from "../../../framework/property/prop.model";
+import {Property} from "../../../framework/property";
 
 export const fetchTopStories = createAction({
 	name: 'fetch_top_stories', // Must be a unique across the piece, this shouldn't be changed.
@@ -21,7 +21,7 @@ export const fetchTopStories = createAction({
 			method: HttpMethod.GET,
 			url: `${HACKER_NEWS_API_URL}topstories.json`
 		});
-        const topStoryIds: string[] = topStoryIdsResponse;
+        const topStoryIds: string[] = topStoryIdsResponse.body;
         const topStories = [];
         for (let i = 0; i < Math.min(configValue.propsValue['number_of_stories']!, topStoryIds.length); i++) {
           const storyId = topStoryIds[i];
@@ -29,7 +29,7 @@ export const fetchTopStories = createAction({
             method: HttpMethod.GET,
             url: `${HACKER_NEWS_API_URL}item/${storyId}.json`
           });
-          topStories.push(storyResponse);
+          topStories.push(storyResponse.body);
         }
 		return topStories;
 	},

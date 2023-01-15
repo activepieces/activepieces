@@ -3,7 +3,7 @@ import {httpClient} from "../../../common/http/core/http-client";
 import {HttpMethod} from "../../../common/http/core/http-method";
 import {HttpRequest} from "../../../common/http/core/http-request";
 import {createAction} from "../../../framework/action/action";
-import {Property} from "../../../framework/property/prop.model";
+import {Property} from "../../../framework/property";
 import { hubspotCommons } from "../common";
 
 
@@ -60,7 +60,7 @@ export const createHubspotContact = createAction({
         return {
             success: true,
             request_body: body,
-            response_body: result
+            response_body: result.body,
         };
     },
 });

@@ -30,11 +30,6 @@
       "url": "pieces"
     },
     {
-      "name": "Self-hosting",
-      "icon": "server",
-      "url": "self-hosting"
-    },
-    {
       "name": "Contributing",
       "icon": "code",
       "url": "contributing"
@@ -61,10 +56,15 @@
       ]
     },
     {
-      "group": "Flow Controls",
+      "group": "Apps",
       "pages": [
-        "pieces/flow-controls/loop",
-        "pieces/flow-controls/branch"
+        "pieces/apps/discord",
+        "pieces/apps/github",
+        "pieces/apps/gmail",
+        "pieces/apps/hackernews",
+        "pieces/apps/hubspot",
+        "pieces/apps/mailchimp",
+        "pieces/apps/slack"
       ]
     },
     {
@@ -76,28 +76,18 @@
       ]
     },
     {
-      "group": "Apps",
+      "group": "Flow Controls",
       "pages": [
-        "pieces/apps/slack",
-        "pieces/apps/discord"
+        "pieces/flow-controls/loop",
+        "pieces/flow-controls/branch"
       ]
     },
     {
       "group": "Self Hosting",
       "pages": [
-        "self-hosting/overview"
-      ]
-    },
-    {
-      "group": "Deployment Options",
-      "pages": [
-        "self-hosting/deployments/docker-compose"
-      ]
-    },
-    {
-      "group": "Configurations",
-      "pages": [
-        "self-hosting/configurations/env-vars"
+        "self-hosting/overview",
+        "self-hosting/docker",
+        "self-hosting/configurations"
       ]
     },
     {
@@ -126,12 +116,15 @@
     },
     {
       "group": "Other",
-      "pages": ["license"]
+      "pages": [
+        "changelog",
+        "license"
+      ]
     }
   ],
   "analytics": {
     "posthog": {
-        "apiKey": "phc_TXdpocbYTeZVm5VJmMzHTMrCofBQu3e0kN7HGMNGTVW"
+      "apiKey": "phc_TXdpocbYTeZVm5VJmMzHTMrCofBQu3e0kN7HGMNGTVW"
     }
   }
 }
