@@ -35,6 +35,7 @@
         "redis": "^4.5.1",
         "redis-lock": "^1.0.0",
         "pieces": "workspace:*",
+        "engine": "workspace:*",
         "shared": "workspace:*",
         "typeorm": "^0.3.11",
         "typeorm-extension": "^2.4.0"
