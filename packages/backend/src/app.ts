@@ -20,6 +20,7 @@ import { errorHandler } from "./helper/error-handler";
 import { appConnectionModule } from "./app-connection/app-connection.module";
 import { system } from "./helper/system/system";
 import { SystemProp } from "./helper/system/system-prop";
+import { databaseConnection } from "./database/database-connection";
 
 const app = fastify({
   logger: true,
@@ -59,12 +60,11 @@ app.setErrorHandler(errorHandler);
 
 const start = async () => {
   try {
-    // TODO UNCOMMENT THIS
-    // await databaseConnection.runMigrations();
     await app.listen({
       host: "0.0.0.0",
       port: 3000,
     });
+    await databaseConnection.runMigrations();
 
     console.log(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____ 

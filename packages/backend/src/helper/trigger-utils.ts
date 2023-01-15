@@ -1,4 +1,4 @@
-import { pieces, Trigger, TriggerStrategy } from "pieces";
+import { getPiece, pieces, Trigger, TriggerStrategy } from "pieces";
 import {
   CollectionId,
   CollectionVersion,
@@ -143,7 +143,7 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId, collec
 };
 
 const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
-  const piece = pieces.find((p) => p.name === trigger.settings.pieceName);
+  const piece = getPiece(trigger.settings.pieceName);
 
   if (piece == null) {
     throw new ActivepiecesError({
