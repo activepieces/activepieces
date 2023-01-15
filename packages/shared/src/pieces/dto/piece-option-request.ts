@@ -1,17 +1,9 @@
-export interface PieceOptionRequest {
-    stepName: string;
-    configName: string;
-    configs: Record<string, any>;
-}
+import { Static, Type } from "@sinclair/typebox";
 
-export const PieceOptionRequestSchema = {
-    body: {
-        type: 'object',
-        properties: {
-            stepName: {type: 'string'},
-            configName: {type: 'string'},
-            configs: {type: 'object'}
-        },
-        required: ['stepName', 'configName', 'configs']
-    }
-}
+export const PieceOptionRequest = Type.Object({
+    stepName: Type.String({}),
+    configName: Type.String({}),
+    configs: Type.Object({})
+});
+
+export type PieceOptionRequest = Static<typeof PieceOptionRequest>;

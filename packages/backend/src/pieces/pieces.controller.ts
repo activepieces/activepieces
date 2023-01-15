@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
-import { PieceOptionRequest, PieceOptionRequestSchema } from "shared";
+import { PieceOptionRequest } from "shared";
 import { getPiece, pieces } from "pieces";
 import { DropdownProperty, DropdownState, PropertyType } from "pieces";
 
@@ -12,7 +12,9 @@ export const piecesController = async (fastify: FastifyInstance, options: Fastif
   fastify.post(
     "/v1/pieces/:pieceName/options",
     {
-      schema: PieceOptionRequestSchema,
+      schema: {
+        body: PieceOptionRequest
+      },
     },
     async (
       request: FastifyRequest<{

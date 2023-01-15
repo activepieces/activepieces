@@ -1,8 +1,8 @@
 import {
     ActionType, CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings, StorageActionSettings,
 } from "./actions/action";
-import {PieceTriggerSettings, ScheduleTriggerSettings, TriggerType} from "./triggers/trigger";
-import {Type} from "@sinclair/typebox";
+import { PieceTriggerSettings, ScheduleTriggerSettings, TriggerType } from "./triggers/trigger";
+import { Static, Type } from "@sinclair/typebox";
 
 
 export enum FlowOperationType {
@@ -13,47 +13,18 @@ export enum FlowOperationType {
     DELETE_ACTION = "DELETE_ACTION"
 }
 
-export type FlowOperationRequest = BasicOperationRequest<FlowOperationType.UPDATE_TRIGGER, UpdateTriggerRequest>
-    | BasicOperationRequest<FlowOperationType.ADD_ACTION, AddActionRequest>
-    | BasicOperationRequest<FlowOperationType.UPDATE_ACTION, UpdateActionRequest>
-    | BasicOperationRequest<FlowOperationType.CHANGE_NAME, ChangeNameRequest>
-    | BasicOperationRequest<FlowOperationType.DELETE_ACTION, DeleteActionRequest>;
 
+export const ChangeNameRequest = Type.Object({
+    displayName: Type.String({}),
+});
 
-export const FlowOperationRequestSchema = Type.Union([
-    Type.Object({
-        type: Type.Literal(FlowOperationType.CHANGE_NAME),
-        request: Type.Object({
-            displayName: Type.String()
-        })
-    }),
-    Type.Object({
-        type: Type.Literal(FlowOperationType.DELETE_ACTION),
-        request: Type.Object({
-            name: Type.String()
-        })
-    }),
-    Type.Object({
-        type: Type.Literal(FlowOperationType.UPDATE_ACTION),
-        request: Type.Object({})
-    }),
-    Type.Object({
-        type: Type.Literal(FlowOperationType.ADD_ACTION),
-        request: Type.Object({})
-    }),
-    Type.Object({
-        type: Type.Literal(FlowOperationType.UPDATE_TRIGGER),
-        request: Type.Object({})
-    })
-]);
+export type ChangeNameRequest = Static<typeof ChangeNameRequest>;
 
-export type ChangeNameRequest = {
-    displayName: string;
-}
+export const DeleteActionRequest = Type.Object({
+    name: Type.String()
+})
 
-export type DeleteActionRequest = {
-    name: string
-}
+export type DeleteActionRequest = Static<typeof DeleteActionRequest>;
 
 export type AddActionRequest = {
     parentAction: string | undefined,
@@ -87,7 +58,28 @@ interface BasicTriggerRequest<A, V> {
     valid?: boolean;
 }
 
-interface BasicOperationRequest<T extends FlowOperationType, V> {
-    type: T;
-    request: V;
-}
+
+export const FlowOperationRequest = Type.Union([
+    Type.Object({
+        type: Type.Literal(FlowOperationType.CHANGE_NAME),
+        request: ChangeNameRequest
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.DELETE_ACTION),
+        request: DeleteActionRequest
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.UPDATE_ACTION),
+        request: Type.Any({})
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.ADD_ACTION),
+        request: Type.Any({})
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.UPDATE_TRIGGER),
+        request: Type.Any({})
+    })
+]);
+
+export type FlowOperationRequest = Static<typeof FlowOperationRequest>;
