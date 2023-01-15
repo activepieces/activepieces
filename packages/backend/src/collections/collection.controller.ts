@@ -5,8 +5,7 @@ import {
   CollectionVersionId,
   CreateCollectionRequest,
   ListCollectionsRequest,
-  UpdateCollectionRequest,
-  UpdateCollectionSchema,
+  UpdateCollectionRequest
 } from "shared";
 import { StatusCodes } from "http-status-codes";
 import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
@@ -57,7 +56,9 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
   fastify.post(
     "/:collectionId",
     {
-      schema: UpdateCollectionSchema,
+      schema: {
+        body: UpdateCollectionRequest
+      },
     },
     async (
       _request: FastifyRequest<{

@@ -3,7 +3,6 @@ import {
   CreateFlowRequest,
   FlowId,
   FlowOperationRequest,
-  FlowOperationRequestSchema,
   FlowVersionId,
   ListFlowsRequest,
 } from "shared";
@@ -35,7 +34,7 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
     "/:flowId",
     {
       schema: {
-        body: FlowOperationRequestSchema,
+        body: FlowOperationRequest,
       },
     },
     async (

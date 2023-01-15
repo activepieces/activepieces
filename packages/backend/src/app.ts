@@ -22,7 +22,16 @@ import { SystemProp } from "./helper/system/system-prop";
 
 const app = fastify({
   logger: true,
+  ajv: {
+    customOptions: {
+      removeAdditional: 'all',
+      useDefaults: true,
+      coerceTypes: true,
+    }
+  }
 });
+
+
 app.register(cors, {
   origin: "*",
   methods: ["*"]

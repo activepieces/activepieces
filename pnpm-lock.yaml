@@ -28,6 +28,7 @@ importers:
       '@types/node': ^17.0.21
       '@types/qs': ^6.9.7
       '@typescript-eslint/eslint-plugin': ^5.47.1
+      ajv: ^8.12.0
       axios: ^1.2.1
       bcrypt: ^5.1.0
       bullmq: ^3.5.1
@@ -61,6 +62,7 @@ importers:
       '@fastify/cors': 8.2.0
       '@fastify/jwt': 6.5.0
       '@fastify/type-provider-typebox': 2.4.0_6bmuhyog6tsemt4ntrctkk3afu
+      ajv: 8.12.0
       axios: 1.2.2
       bcrypt: 5.1.0
       bullmq: 3.5.1
@@ -519,7 +521,7 @@ packages:
         optional: true
     dependencies:
       ajv: 8.11.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.11.0
       jsonc-parser: 3.2.0
       rxjs: 6.6.7
       source-map: 0.7.4
@@ -535,7 +537,7 @@ packages:
         optional: true
     dependencies:
       ajv: 8.11.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.11.0
       chokidar: 3.5.3
       jsonc-parser: 3.2.0
       rxjs: 6.6.7
@@ -2345,8 +2347,8 @@ packages:
   /@fastify/ajv-compiler/3.5.0:
     resolution: {integrity: sha512-ebbEtlI7dxXF5ziNdr05mOY8NnDiPB1XvAlLHctRt/Rc+C3LCOVW5imUVX+mhvUhnNzmPBHewUkOFgGlCxgdAA==}
     dependencies:
-      ajv: 8.11.2
-      ajv-formats: 2.1.1
+      ajv: 8.12.0
+      ajv-formats: 2.1.1_ajv@8.12.0
       fast-uri: 2.2.0
     dev: false
 
@@ -4968,13 +4970,26 @@ packages:
       indent-string: 4.0.0
     dev: true
 
-  /ajv-formats/2.1.1:
+  /ajv-formats/2.1.1_ajv@8.11.0:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependencies:
+      ajv: ^8.0.0
     peerDependenciesMeta:
       ajv:
         optional: true
     dependencies:
-      ajv: 8.11.2
+      ajv: 8.11.0
+    dev: true
+
+  /ajv-formats/2.1.1_ajv@8.12.0:
+    resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependencies:
+      ajv: ^8.0.0
+    peerDependenciesMeta:
+      ajv:
+        optional: true
+    dependencies:
+      ajv: 8.12.0
 
   /ajv-keywords/3.5.2_ajv@6.12.6:
     resolution: {integrity: sha512-5p6WTN0DdTGVQk6VjcEju19IgaHudalcfabD7yhDGeA6bcQnmL+CpveLJq/3hvfwd1aof6L386Ougkx6RfyMIQ==}
@@ -4984,12 +4999,12 @@ packages:
       ajv: 6.12.6
     dev: true
 
-  /ajv-keywords/5.1.0_ajv@8.11.2:
+  /ajv-keywords/5.1.0_ajv@8.12.0:
     resolution: {integrity: sha512-YCS/JNFAUyr5vAuhk1DWm1CBxRHW9LbJ2ozWeemrIqpbsqKjHVxYPyi5GC0rjZIT5JxJ3virVTS8wk4i/Z+krw==}
     peerDependencies:
       ajv: ^8.8.2
     dependencies:
-      ajv: 8.11.2
+      ajv: 8.12.0
       fast-deep-equal: 3.1.3
     dev: true
 
@@ -5011,8 +5026,8 @@ packages:
       uri-js: 4.4.1
     dev: true
 
-  /ajv/8.11.2:
-    resolution: {integrity: sha512-E4bfmKAhGiSTvMfL1Myyycaub+cUEU2/IvpylXkUu7CHBkBj1f/ikdzbD7YQ6FKUbixDxeYvB/xY4fvyroDlQg==}
+  /ajv/8.12.0:
+    resolution: {integrity: sha512-sRu1kpcO9yLtYxBKvqfTeh9KzZEwO3STyX1HT+4CaDzC6HpTGYhIhPIzj9XuKU7KYDwnaeh5hcOwjy1QuJzBPA==}
     dependencies:
       fast-deep-equal: 3.1.3
       json-schema-traverse: 1.0.0
@@ -7692,8 +7707,8 @@ packages:
     resolution: {integrity: sha512-rmw2Z8/mLkND8zI+3KTYIkNPEoF5v6GqDP/o+g7H3vjdWjBwuKpgAYFHIzL6ORRB+iqDjjtJnLIW9Mzxn5szOA==}
     dependencies:
       '@fastify/deepmerge': 1.3.0
-      ajv: 8.11.2
-      ajv-formats: 2.1.1
+      ajv: 8.12.0
+      ajv-formats: 2.1.1_ajv@8.12.0
       fast-deep-equal: 3.1.3
       fast-uri: 2.2.0
       rfdc: 1.3.0
@@ -12139,9 +12154,9 @@ packages:
     engines: {node: '>= 12.13.0'}
     dependencies:
       '@types/json-schema': 7.0.11
-      ajv: 8.11.2
-      ajv-formats: 2.1.1
-      ajv-keywords: 5.1.0_ajv@8.11.2
+      ajv: 8.12.0
+      ajv-formats: 2.1.1_ajv@8.12.0
+      ajv-keywords: 5.1.0_ajv@8.12.0
     dev: true
 
   /secure-json-parse/2.6.0:

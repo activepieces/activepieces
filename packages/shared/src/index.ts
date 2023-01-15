@@ -47,7 +47,7 @@ export {FlowOperationRequest, FlowOperationType, DeleteActionRequest, UpdateActi
 export {ListCollectionsRequest,} from './collections/dto/list-collections-request';
 export {ListFlowsRequest} from './flows/dto/list-flows-request';
 export {CreateCollectionRequest} from './collections/dto/create-collection-request';
-export {UpdateCollectionRequest, UpdateCollectionSchema} from './collections/dto/update-collection-request';
+export {UpdateCollectionRequest} from './collections/dto/update-collection-request';
 export {CreateFlowRequest} from './flows/dto/create-flow-request';
 export {CloneFlowVersionRequest} from './flows/dto/clone-flow-version-request';
 export {SeekPage, Cursor} from './common/seek-page';
