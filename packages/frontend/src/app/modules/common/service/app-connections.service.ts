@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { Observable } from 'rxjs';
-import { SeekPage, AppConnectionId, ListAppConnectionRequest, AppConnection, UpsertConnectionRequest } from 'shared';
+import { SeekPage, AppConnectionId, AppConnection, UpsertConnectionRequest, ListAppConnectionRequest} from 'shared';
 
 @Injectable({
 	providedIn: 'root',

@@ -17,7 +17,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
   ) {
     super(action, nextAction);
     this.action = action;
-    this.variableService = new VariableService(globals.workerToken);
+    this.variableService = new VariableService();
     this.firstLoopAction = firstLoopAction;
   }
 

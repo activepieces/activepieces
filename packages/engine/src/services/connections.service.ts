@@ -3,21 +3,22 @@ import { AppConnection, SeekPage } from 'shared';
 import { globals } from '../globals';
 
 export const connectionService = {
-    async obtain(connectionName: string, workerToken: string): Promise<null | AppConnection> {
+    async obtain(connectionName: string): Promise<null | AppConnection> {
+        const url = globals.apiUrl + `/v1/app-connections?projectId=${globals.projectId}&name=${connectionName}`;
         try {
             const result: SeekPage<AppConnection> = (await axios({
                 method: 'GET',
-                url: globals.apiUrl + `/v1/app-connections?projectId=${globals.projectId}&name=${connectionName}`,
+                url: url,
                 headers: {
-                    Authorization: 'Bearer ' + workerToken
+                    Authorization: 'Bearer ' + globals.workerToken
                 }
             })).data;
-            if(result.data.length === 0){
+            if (result.data.length === 0) {
                 return null;
             }
             return result.data[0];
         } catch (e) {
-            throw new Error("Connection information failed to load" + e);
+            throw new Error("Connection information failed to load" + e + " url " + url);
         }
     }
 

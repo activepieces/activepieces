@@ -76,8 +76,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	@Input() pieceName: string;
 	@Input() pieceDisplayName: string;
 	form!: UntypedFormGroup;
-	OnChange = value => {};
-	OnTouched = () => {};
+	OnChange = value => { };
+	OnTouched = () => { };
 	updateValueOnChange$: Observable<void> = new Observable<void>();
 	updateAuthConfig$: Observable<void>;
 	configType = InputType;
@@ -160,10 +160,12 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 				}
 				this.optionsObservables$[c.key] = combineLatest(refreshers$).pipe(
 					switchMap(res => {
-						return this.actionMetaDataService.getConnectorActionConfigOptions(
-							{ configName: c.key, stepName: this.stepName, configs: res },
-							this.pieceName
-						);
+						return this.store.select(BuilderSelectors.selectCurrentCollection).pipe(take(1), switchMap(collection => {
+							return this.actionMetaDataService.getConnectorActionConfigOptions(
+								{ propertyName: c.key, stepName: this.stepName, input: res, collectionVersionId: collection.version!.id },
+								this.pieceName
+							);
+						}));
 					}),
 					shareReplay(1),
 					catchError(err => {
@@ -264,13 +266,13 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 										return res[this.pieceName];
 									}),
 									tap((cloudAuth2Config: { clientId: string }) => {
-										this.openNewCloudOAuth2ConnectionModal(authConfigKey, cloudAuth2Config.clientId);
+										this.openNewCloudOAuth2ConnectionModal(authConfigName, cloudAuth2Config.clientId);
 									}),
 									map(() => void 0)
 								);
 							} else if (typeof result === 'object') {
 								const authConfigOptionValue = `\${connections.${result.name}}`;
-								this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
+								this.form.get(authConfigName)!.setValue(authConfigOptionValue);
 							}
 						}),
 						map(() => void 0)

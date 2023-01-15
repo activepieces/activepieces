@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { ActionType, TriggerType } from 'shared';
+import { ActionType, PieceOptionRequest, TriggerType } from 'shared';
 import { HttpClient } from '@angular/common/http';
 import { AppPiece } from '../../common/components/configs-form/connector-action-or-config';
 import { environment } from 'src/environments/environment';
@@ -46,7 +46,7 @@ export class ActionMetaService {
 			logoUrl: '/assets/img/custom/piece/empty-trigger.svg',
 		},
 	];
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 	private getPieces() {
 		return this.http.get<AppPiece[]>(environment.apiUrl + '/pieces');
 	}
@@ -57,7 +57,7 @@ export class ActionMetaService {
 		return this.connectorComponents$;
 	}
 	getConnectorActionConfigOptions(
-		req: { configName: string; stepName: string; configs: Record<string, any> },
+		req: PieceOptionRequest,
 		pieceName: string
 	) {
 		return this.http.post<DropdownState<any>>(environment.apiUrl + `/pieces/${pieceName}/options`, req);

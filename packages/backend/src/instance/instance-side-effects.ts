@@ -38,7 +38,8 @@ export const instanceSideEffects = {
       async (flowVersion) =>
         await triggerUtils.enable({
           collectionId: instance.collectionId,
-          collectionVersionId: instance.collectionVersionId,
+          collectionVersion: collectionVersion,
+          projectId: instance.projectId,
           flowVersion,
         })
     );
@@ -51,14 +52,13 @@ export const instanceSideEffects = {
       return;
     }
 
+    const collectionVersion = (await collectionVersionService.getOne(instance.collectionVersionId!))!;
     const flowVersionIds = Object.values(instance.flowIdToVersionId);
 
     const flowVersions = await flowVersionRepo.findBy({
       id: In(flowVersionIds),
     });
-
-    const disableTriggers = flowVersions.map((version) => triggerUtils.disable(instance.collectionId!, version));
-
+    const disableTriggers = flowVersions.map((version) => triggerUtils.disable({ collectionId: instance.collectionId!, flowVersion: version, projectId: instance.projectId!, collectionVersion }));
     await Promise.all(disableTriggers);
   },
 };

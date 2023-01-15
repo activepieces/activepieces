@@ -2,20 +2,13 @@ import fs from "node:fs";
 import {
   Action,
   ActionType,
-  apId,
   CodeActionSettings,
   Collection,
-  CollectionId,
   CollectionVersion,
-  CollectionVersionId,
-  ExecutionOutput,
+  EngineOperationType,
   ExecutionOutputStatus,
   File,
   FlowVersion,
-  FlowVersionId,
-  PrincipalType,
-  ProjectId,
-  StepOutput,
   StepOutputStatus,
   Trigger,
 } from "shared";
@@ -25,14 +18,10 @@ import { collectionVersionService } from "../../collections/collection-version/c
 import { redisLock } from "../../database/redis-connection";
 import { fileService } from "../../file/file.service";
 import { codeBuilder } from "../code-worker/code-builder";
-import { tokenUtils } from "../../authentication/lib/token-utils";
 import { flowRunService } from "../../flow-run/flow-run-service";
 import { OneTimeJobData } from "./job-data";
-import { system } from "../../helper/system/system";
-import { SystemProp } from "../../helper/system/system-prop";
 import { collectionService } from "../../collections/collection.service";
-
-const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
+import { engineHelper } from "../../helper/engine-helper";
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
   const flowVersion = (await flowVersionService.getOne(jobData.flowVersionId))!;
@@ -46,16 +35,20 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     await sandbox.cleanAndInit();
 
     console.log("[" + jobData.runId + "] Downloading Files");
-    await downloadFiles(sandbox, flowVersion, collection, collectionVersion, jobData.payload);
+    await downloadFiles(sandbox, flowVersion, collectionVersion);
 
-    console.log("[" + jobData.runId + "] Running Engine");
-    await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js execute-flow`);
-
-    console.log("[" + jobData.runId + "] Reading Output ");
-
-    const executionOutput: ExecutionOutput = JSON.parse(
-      fs.readFileSync(sandbox.getSandboxFilePath("output.json")).toString()
-    ) as ExecutionOutput;
+    const executionOutput = await engineHelper.executeFlow(sandbox, {
+      flowVersionId: flowVersion.id,
+      collectionVersionId: collectionVersion.id,
+      collectionId: collection.id,
+      projectId: collection.projectId,
+      triggerPayload: {
+        duration: 0,
+        input: {},
+        output: jobData.payload,
+        status: StepOutputStatus.SUCCEEDED,
+      },
+    });
 
     const logsFile = await fileService.save(Buffer.from(JSON.stringify(executionOutput)));
     await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id);
@@ -72,12 +65,9 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
 async function downloadFiles(
   sandbox: Sandbox,
   flowVersion: FlowVersion,
-  collection: Collection,
   collectionVersion: CollectionVersion,
-  payload: unknown
 ): Promise<void> {
   const buildPath = sandbox.getSandboxFolderPath();
-
 
   // This has to be before flows, since it does modify code settings and fill it with packaged file id.
   fs.mkdirSync(buildPath + "/codes/");
@@ -92,38 +82,8 @@ async function downloadFiles(
   fs.mkdirSync(buildPath + "/collections/");
   fs.writeFileSync(buildPath + "/collections/" + collectionVersion.id + ".json", JSON.stringify(collectionVersion));
 
-  fs.writeFileSync(buildPath + "/activepieces-engine.js", fs.readFileSync("resources/activepieces-engine.js"));
-  fs.writeFileSync(
-    buildPath + "/input.json",
-    await constructInputString(collection.projectId, flowVersion.id, collectionVersion.collectionId, collectionVersion.id, {
-      duration: 0,
-      input: {},
-      output: payload,
-      status: StepOutputStatus.SUCCEEDED,
-    })
-  );
 }
 
-async function constructInputString(
-  projectId: ProjectId,
-  flowVersionId: FlowVersionId,
-  collectionId: CollectionId,
-  collectionVersionId: CollectionVersionId,
-  payload: StepOutput
-): Promise<string> {
-  return JSON.stringify({
-    flowVersionId,
-    collectionVersionId,
-    projectId,
-    workerToken: await tokenUtils.encode({
-      id: apId(),
-      type: PrincipalType.WORKER,
-      collectionId,
-    }),
-    apiUrl: "http://localhost:3000",
-    triggerPayload: payload,
-  });
-}
 
 async function buildCodes(flowVersion: FlowVersion): Promise<File[]> {
   const buildRequests: Array<Promise<File>> = [];

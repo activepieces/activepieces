@@ -17,7 +17,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     nextAction: BaseActionHandler<any> | undefined
   ) {
     super(action, nextAction);
-    this.variableService = new VariableService(globals.workerToken);
+    this.variableService = new VariableService();
   }
 
   async execute(

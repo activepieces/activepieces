@@ -10,12 +10,6 @@ export class VariableService {
   private static CONNECTIONS = 'connections';
   private static STEPS = 'steps';
 
-  private workerToken: string;
-
-  constructor(_workerToken: string){
-    this.workerToken = _workerToken;
-  }
-
   private findPath(path: string) {
     const paths = path.split('.');
     if (
@@ -58,7 +52,6 @@ export class VariableService {
     });
   }
 
-
   private async handleTypeAndResolving(valuesMap: any, path: string): Promise<any> {
     let paths = path.split(".");
     if (paths[0] === VariableService.CONNECTIONS) {
@@ -70,7 +63,7 @@ export class VariableService {
       let connectioName = paths[1];
       paths.splice(0, 2);
       let newPath = paths.join(".");
-      const connection = (await connectionService.obtain(connectioName, this.workerToken))?.value;
+      const connection = (await connectionService.obtain(connectioName))?.value;
       if (paths.length === 0) {
         return connection;
       }

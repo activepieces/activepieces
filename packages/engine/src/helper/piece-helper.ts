@@ -1,16 +1,9 @@
-import { DropdownProperty, DropdownState, getPiece, PropertyType } from "pieces";
-import { ActivepiecesError, CollectionVersion, ErrorCode, ExecutionState } from "shared";
+import { DropdownProperty, DropdownState, getPiece, pieces, PropertyType, Trigger } from "pieces";
+import { ActivepiecesError, ErrorCode, ExecuteDropdownOptions, ExecuteTriggerOperation, ExecutionState, PieceTrigger } from "shared";
 import { VariableService } from "../services/variable-service";
 
 export const pieceHelper = {
-    async dropdownOptions(params: {
-        pieceName: string,
-        stepName: string,
-        configName: string,
-        input: Record<string, any>,
-        workerToken: string,
-        collectionVersion: CollectionVersion
-    }) {
+    async dropdownOptions(params: ExecuteDropdownOptions) {
         const component = getPiece(params.pieceName);
         if (component === undefined) {
             throw new ActivepiecesError({
@@ -32,25 +25,25 @@ export const pieceHelper = {
             });
         }
         const props = action !== undefined ? action.props : trigger!.props;
-        const property = props[params.configName];
+        const property = props[params.propertyName];
         if (property === undefined || property.type !== PropertyType.DROPDOWN) {
             throw new ActivepiecesError({
                 code: ErrorCode.CONFIG_NOT_FOUND,
                 params: {
                     stepName: params.stepName,
                     pieceName: params.pieceName,
-                    configName: params.configName,
+                    configName: params.propertyName,
                 },
             });
         }
         try {
-            const variableService = new VariableService(params.workerToken);
+            const variableService = new VariableService();
             const executionState = new ExecutionState();
             executionState.insertConfigs(params.collectionVersion);
             const resolvedInput = await variableService.resolve(params.input, executionState);
             return await (property as DropdownProperty<unknown>).options(resolvedInput);
         } catch (e) {
-            console.error(e);
+            console.error(e);   
             return {
                 disabled: true,
                 options: [],
