@@ -12,7 +12,6 @@ export const engineHelper = {
     async executeFlow(sandbox: Sandbox, operation: ExecuteFlowOperation): Promise<ExecutionOutput> {
         return await execute(EngineOperationType.EXECUTE_FLOW, sandbox, {
             ...operation,
-            apiUrl: "http://localhost:3000",
             workerToken: await workerToken(operation.collectionId)
         }) as ExecutionOutput;
     },
@@ -23,7 +22,6 @@ export const engineHelper = {
             await sandbox.cleanAndInit();
             result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
-                apiUrl: "http://localhost:3000",
                 workerToken: await workerToken(operation.collectionVersion.collectionId)
             });
         } finally {
@@ -41,7 +39,6 @@ export const engineHelper = {
             await sandbox.cleanAndInit();
             result = await execute(EngineOperationType.DROPDOWN_OPTION, sandbox, {
                 ...operation,
-                apiUrl: "http://localhost:3000",
                 workerToken: await workerToken(operation.collectionVersion.collectionId)
             }) as DropdownState<any>
         } finally {
@@ -63,7 +60,10 @@ async function execute(operation: EngineOperationType, sandbox: Sandbox, input: 
     console.log(`Executing ${operation} inside sandbox number ${sandbox.boxId}`)
     const sandboxPath = sandbox.getSandboxFolderPath();
     fs.writeFileSync(sandboxPath + "/activepieces-engine.js", fs.readFileSync("resources/activepieces-engine.js"));
-    fs.writeFileSync(sandboxPath + "/input.json", JSON.stringify(input));
+    fs.writeFileSync(sandboxPath + "/input.json", JSON.stringify({
+        ...input,
+        apiUrl: "http://localhost:3000"
+    }));
     console.log(`Wrote Input in ${sandboxPath}`)
 
     await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ` + operation);
