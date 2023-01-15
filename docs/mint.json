@@ -85,11 +85,12 @@
       ]
     },
     {
-      "group": "Self Hosting",
+      "group": "Installing",
       "pages": [
-        "self-hosting/overview",
-        "self-hosting/docker",
-        "self-hosting/configurations"
+        "install/overview",
+        "install/docker",
+        "install/digitalocean",
+        "install/configurations"
       ]
     },
     {
