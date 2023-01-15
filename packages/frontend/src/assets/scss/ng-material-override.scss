@@ -592,3 +592,10 @@ mat-option.add-auth{
     flex-grow:1 !important;
   }
 }
+
+.ql-editor {
+  padding: 0px !important;
+  @include mat.typography-level($ap-typography, "body-1");
+  line-height:  1.9rem;
+}
+
