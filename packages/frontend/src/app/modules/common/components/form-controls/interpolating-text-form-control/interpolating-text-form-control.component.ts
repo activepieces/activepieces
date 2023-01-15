@@ -15,7 +15,7 @@ import { ControlValueAccessor, FormControl, FormGroupDirective, NgControl, NgFor
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldControl } from '@angular/material/form-field';
 import { QuillEditorComponent, QuillModules } from 'ngx-quill';
-import { Observable, Subject, tap } from 'rxjs';
+import { lastValueFrom, Observable, Subject, take, tap } from 'rxjs';
 import {
 	CustomErrorMatcher,
 	fromOpsToText,
@@ -24,6 +24,8 @@ import {
 	QuillMaterialBase,
 } from './utils';
 import 'quill-mention';
+import { Store } from '@ngrx/store';
+import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
 @Component({
 	selector: 'app-interpolating-text-form-control',
 	templateUrl: './interpolating-text-form-control.component.html',
@@ -88,7 +90,12 @@ export class InterpolatingTextFormControlComponent
 	@Input()
 	set value(value: string) {
 		this._value = value;
-		this.editorFormControl.setValue(fromTextToOps(this._value));
+		setTimeout(async () => {
+			const stepsNamesAndDisplayNames = await lastValueFrom(
+				this.store.select(BuilderSelectors.selectAllFlowStepsNamesAndDisplayNames).pipe(take(1))
+			);
+			this.editorFormControl.setValue(fromTextToOps(this._value, stepsNamesAndDisplayNames));
+		}, 1);
 		this.stateChanges.next();
 	}
 
@@ -104,7 +111,8 @@ export class InterpolatingTextFormControlComponent
 		_defaultErrorStateMatcher: ErrorStateMatcher,
 		@Optional() _parentForm: NgForm,
 		@Optional() _parentFormGroup: FormGroupDirective,
-		@Optional() @Self() ngControl: NgControl
+		@Optional() @Self() ngControl: NgControl,
+		private store: Store
 	) {
 		super(_defaultErrorStateMatcher, _parentForm, _parentFormGroup, ngControl);
 		if (this.ngControl != null) {
@@ -163,8 +171,11 @@ export class InterpolatingTextFormControlComponent
 
 	@HostBinding('attr.aria-describedby') describedBy = '';
 
-	writeValue(value: string): void {
-		const parsedTextToOps = fromTextToOps(value);
+	async writeValue(value: string) {
+		const stepsNamesAndDisplayNames = await lastValueFrom(
+			this.store.select(BuilderSelectors.selectAllFlowStepsNamesAndDisplayNames).pipe(take(1))
+		);
+		const parsedTextToOps = fromTextToOps(value, stepsNamesAndDisplayNames);
 		this.editorFormControl.setValue(parsedTextToOps);
 		this._value = value;
 	}

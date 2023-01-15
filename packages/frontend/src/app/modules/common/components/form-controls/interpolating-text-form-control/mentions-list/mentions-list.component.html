@@ -1,0 +1,8 @@
+<mat-form-field (click)="$event.stopPropagation();" appearance="outline" class="ap-w-full">
+  <mat-icon matPrefix svgIcon="search"></mat-icon>
+  <input [formControl]="searchFormControl" matInput placeholder="Search">
+</mat-form-field>
+<ng-container *ngFor="let item of dropDownItems$|async; let isLast=last">
+  <button mat-menu-item>{{item.label}}</button>
+  <mat-divider *ngIf="!isLast"></mat-divider>
+</ng-container>

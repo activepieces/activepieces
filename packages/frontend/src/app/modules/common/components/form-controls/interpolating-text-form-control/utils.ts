@@ -31,18 +31,24 @@ export class CustomErrorMatcher implements ErrorStateMatcher {
 	}
 }
 
-export function fromTextToOps(text: string): {
+export function fromTextToOps(
+	text: string,
+	allStepsNamesAndDisplayNames: { displayName: string; name: string }[]
+): {
 	ops: (TextInsertOperation | MentionInsertOperation)[];
 } {
 	var regex = /(\$\{.*?\})/;
 	var matched = text.split(regex).filter(el => el);
 	var ops: (TextInsertOperation | MentionInsertOperation)[] = matched.map(item => {
 		if (item.length > 3 && item[0] === '$' && item[1] === '{' && item[item.length - 1] === '}') {
+			const itemPath = item.slice(2, item.length - 1);
+			const adjustedItemPath = adjustItemPath(itemPath, allStepsNamesAndDisplayNames);
 			return {
 				insert: {
 					mention: {
-						value: replaceArrayNotationsWithSpaces(replaceDotsWithSpaces(item.slice(2, item.length - 1))),
+						value: replaceArrayNotationsWithSpaces(replaceDotsWithSpaces(adjustedItemPath)),
 						denotationChar: '',
+						serverValue: item,
 					},
 				},
 			};
@@ -53,10 +59,23 @@ export function fromTextToOps(text: string): {
 	return { ops: ops };
 }
 
+function adjustItemPath(itemPath: string, allStepsNamesAndDisplayNames: { displayName: string; name: string }[]) {
+	const itemPrefix = itemPath.split('.')[0];
+	if (itemPrefix === 'configs') {
+		return itemPath.replace('configs', '');
+	} else {
+		const stepDisplayName = allStepsNamesAndDisplayNames.find(s => s.name === itemPrefix)?.displayName;
+		if (stepDisplayName) {
+			return itemPath.replace(itemPrefix, stepDisplayName);
+		}
+		return itemPath;
+	}
+}
 interface MentionInsertOperation {
 	insert: {
 		mention: {
 			value: string;
+			serverValue: string;
 		};
 	};
 }
@@ -74,9 +93,7 @@ export function fromOpsToText(operations: QuillEditorOperationsObject) {
 			if (typeof singleInsertOperation.insert === 'string') {
 				return singleInsertOperation.insert;
 			} else {
-				return `\${${replaceSpacesWithDots(
-					replaceDigitsTextWithArrayNotation(singleInsertOperation.insert.mention.value)
-				)}}`;
+				return singleInsertOperation.insert.mention.serverValue;
 			}
 		})
 		.join('');
@@ -94,14 +111,14 @@ function replaceArrayNotationsWithSpaces(str: string) {
 		return ` ${indexOfArrayWitoutBrackets}`;
 	});
 }
-const digitsRegexWithTrailingSpace = / [0-9]+/g;
-function replaceDigitsTextWithArrayNotation(str: string) {
-	return str.replace(digitsRegexWithTrailingSpace, foundDigitsWithTrailingSpace => {
-		const digitsWithoutTrailingSpace = foundDigitsWithTrailingSpace.slice(1);
-		return `[${digitsWithoutTrailingSpace}]`;
-	});
-}
-const spaceRegex = / /g;
-function replaceSpacesWithDots(str: string) {
-	return str.replace(spaceRegex, '.');
-}
+// const digitsRegexWithTrailingSpace = / [0-9]+/g;
+// function replaceDigitsTextWithArrayNotation(str: string) {
+// 	return str.replace(digitsRegexWithTrailingSpace, foundDigitsWithTrailingSpace => {
+// 		const digitsWithoutTrailingSpace = foundDigitsWithTrailingSpace.slice(1);
+// 		return `[${digitsWithoutTrailingSpace}]`;
+// 	});
+// }
+// const spaceRegex = / /g;
+// function replaceSpacesWithDots(str: string) {
+// 	return str.replace(spaceRegex, '.');
+// }

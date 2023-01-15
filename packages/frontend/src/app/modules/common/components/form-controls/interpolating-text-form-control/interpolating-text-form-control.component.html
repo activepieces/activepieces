@@ -1,6 +1,15 @@
 <quill-editor [formControl]="editorFormControl" [style]="{width:'100%'}" format="object" [modules]="modules"
   [preserveWhitespace]="true" trackChanges="all" (onBlur)="onBlur()" [placeholder]="''" (onFocus)="onFocus()"
-  [debounceTime]="0">
+  [debounceTime]="0" (click)="menuTrigger.openMenu(); menu.focusFirstItem()">
 </quill-editor>
-
+<div #spacer #menuTrigger="matMenuTrigger" [matMenuTriggerFor]="menu"></div>
 <ng-container *ngIf="valueChanges$|async"></ng-container>
+<mat-menu #menu="matMenu">
+  <div class="ap-p-2">
+
+    <div [style]="{width:spacer.getBoundingClientRect().width+'px'}">
+    </div>
+    <app-mentions-list (click)="$event.stopPropagation()"></app-mentions-list>
+  </div>
+
+</mat-menu>
