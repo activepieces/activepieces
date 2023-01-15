@@ -56,6 +56,9 @@ import { OAuth2CloudConnectControlComponent } from './components/form-controls/o
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { InterpolatingTextFormControlComponent } from './components/form-controls/interpolating-text-form-control/interpolating-text-form-control.component';
 import { QuillModule } from 'ngx-quill';
+import { MatIconModule } from '@angular/material/icon';
+import { MentionsListComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/mentions-list.component';
+import { MatDividerModule } from '@angular/material/divider';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 0,
 	hideDelay: 0,
@@ -95,6 +98,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		AuthConfigsPipe,
 		OAuth2CloudConnectControlComponent,
 		InterpolatingTextFormControlComponent,
+		MentionsListComponent,
 	],
 	imports: [
 		FontAwesomeModule,
@@ -125,6 +129,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MatTableModule,
 		MatDialogModule,
 		MatToolbarModule,
+		MatIconModule,
+		MatDividerModule,
 	],
 	exports: [
 		EditableTextComponent,
@@ -165,6 +171,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		OAuth2CloudConnectControlComponent,
 		MatToolbarModule,
 		InterpolatingTextFormControlComponent,
+		MatIconModule,
 	],
 	providers: [
 		HighlightService,

@@ -604,3 +604,7 @@ mat-option.add-auth{
   line-height:  1.9rem;
 }
 
+.mat-mdc-menu-panel.mat-mdc-menu-panel
+{
+  max-width: unset !important;
+}

@@ -11,6 +11,7 @@ import { FlowsState } from '../model/flows-state.model';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { ActionType, Collection, TriggerType } from 'shared';
 import { ConnectionDropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
+import { FlowStructureUtil } from '../../service/flowStructureUtil';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -295,6 +296,41 @@ const selectAppConnectionsDropdownOptions = createSelector(selectAllAppConnectio
 	});
 });
 
+const selectAllConfigsForMentionsDropdown = createSelector(
+	selectCurrentCollectionConfigs,
+	(collectionConfigs: Config[]) => {
+		return [...collectionConfigs].map(c => {
+			const result = {
+				label: c.key,
+				value: `\${connections.${c.key}}`,
+			};
+			return result;
+		});
+	}
+);
+
+const selectAllFlowSteps = createSelector(selectCurrentFlow, (flow: Flow | undefined) => {
+	if (flow && flow.version) {
+		return FlowStructureUtil.traverseAllSteps(flow.version.trigger);
+	}
+	return [];
+});
+const selectAllFlowStepsNamesAndDisplayNames = createSelector(selectAllFlowSteps, steps => {
+	return steps.map(s => {
+		return {
+			displayName: s.displayName,
+			name: s.name,
+		};
+	});
+});
+const selectAllStepsForMentionsDropdown = createSelector(selectAllFlowSteps, steps => {
+	return steps.map(s => {
+		return {
+			label: s.displayName,
+			value: `\${${s.name}}`,
+		};
+	});
+});
 export const BuilderSelectors = {
 	selectCurrentCollection,
 	selectCurrentCollectionId,
@@ -337,4 +373,8 @@ export const BuilderSelectors = {
 	selectIsPublishing,
 	selectFlowItemDetailsForConnectorComponentsTriggers,
 	selectAllAppConnections,
+	selectAllConfigsForMentionsDropdown,
+	selectAllFlowSteps,
+	selectAllFlowStepsNamesAndDisplayNames,
+	selectAllStepsForMentionsDropdown,
 };

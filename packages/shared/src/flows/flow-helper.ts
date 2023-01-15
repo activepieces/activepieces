@@ -15,7 +15,7 @@ import {
   StorageAction,
   ActionSchema,
 } from './actions/action';
-import { Trigger, TriggerSchema, TriggerType} from './triggers/trigger';
+import { Trigger, TriggerSchema, TriggerType } from './triggers/trigger';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { FlowVersion } from './flow-version';
 

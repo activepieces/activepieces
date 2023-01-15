@@ -9,3 +9,10 @@
   </app-edit-step-sidebar>
 
 </ng-container>
+
+<mat-form-field appearance="outline" style="margin-top: 20px; width: 100%;">
+  <mat-label> input </mat-label>
+  <app-interpolating-text-form-control [formControl]="testFormControl"></app-interpolating-text-form-control>
+
+</mat-form-field>
+{{testFormControl.value | json }}
