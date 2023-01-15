@@ -51,15 +51,17 @@
               }
             ],
             "styles": [
-
               "./node_modules/codemirror/addon/lint/lint.css",
               "./node_modules/codemirror/lib/codemirror.css",
               "./node_modules/codemirror/theme/lucario.css",
+              "./node_modules/quill-mention/dist/quill.mention.min.css",
               "src/styles.scss"
             ],
             "scripts": [
-              "node_modules/marked/marked.min.js"
-            ]
+              "node_modules/marked/marked.min.js",
+              "./node_modules/quill/dist/quill.min.js"
+            ],
+            "allowedCommonJsDependencies": ["quill"]
           },
           "configurations": {
             "staging": {

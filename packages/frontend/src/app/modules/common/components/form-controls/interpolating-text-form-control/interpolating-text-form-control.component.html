@@ -1,0 +1,6 @@
+<quill-editor [formControl]="editorFormControl" [style]="{width:'100%'}" format="object" [modules]="modules"
+  [preserveWhitespace]="true" trackChanges="all" (onBlur)="onBlur()" [placeholder]="''" (onFocus)="onFocus()"
+  [debounceTime]="0">
+</quill-editor>
+
+<ng-container *ngIf="valueChanges$|async"></ng-container>
