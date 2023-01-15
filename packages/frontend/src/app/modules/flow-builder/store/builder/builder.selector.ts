@@ -289,7 +289,7 @@ const selectAppConnectionsDropdownOptions = createSelector(selectAllAppConnectio
 	return [...connections].map(c => {
 		const result: ConnectionDropdownItem = {
 			label: { appName: c.appName, name: c.name },
-			value: c.value,
+			value: `\${connections.${c.name}}`,
 		};
 		return result;
 	});
