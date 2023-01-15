@@ -8,7 +8,7 @@ import {
 } from "shared";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { databaseConnection } from "../../database/database-connection";
-import { ActivepiecesError, ErrorCode } from "../../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { CollectionVersionEntity } from "./collection-version-entity";
 
 const collectionVersionRepo = databaseConnection.getRepository(CollectionVersionEntity);

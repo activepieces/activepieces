@@ -10,6 +10,12 @@ export class VariableService {
   private static CONNECTIONS = 'connections';
   private static STEPS = 'steps';
 
+  private workerToken: string;
+
+  constructor(_workerToken: string){
+    this.workerToken = _workerToken;
+  }
+
   private findPath(path: string) {
     const paths = path.split('.');
     if (
@@ -30,7 +36,7 @@ export class VariableService {
       input.match(this.VARIABLE_TOKEN)!.length === 1 &&
       input.match(this.VARIABLE_TOKEN)![0] === input
     ) {
-      let resolvedInput = await VariableService.handleTypeAndResolving(
+      let resolvedInput = await this.handleTypeAndResolving(
         valuesMap,
         this.findPath(input.substring(2, input.length - 1))
       )
@@ -38,7 +44,7 @@ export class VariableService {
     }
     // If input contains other text, replace the variable with its value as a string.
     return await replaceAsync(input, this.VARIABLE_TOKEN, async (_, matchedKey) => {
-      const resolvedInput = await VariableService.handleTypeAndResolving(
+      const resolvedInput = await this.handleTypeAndResolving(
         valuesMap,
         this.findPath(matchedKey)
       );
@@ -53,9 +59,9 @@ export class VariableService {
   }
 
 
-  private static async handleTypeAndResolving(valuesMap: any, path: string): Promise<any> {
+  private async handleTypeAndResolving(valuesMap: any, path: string): Promise<any> {
     let paths = path.split(".");
-    if (paths[0] === this.CONNECTIONS) {
+    if (paths[0] === VariableService.CONNECTIONS) {
       // Invalid naming return nothing
       if (paths.length < 2) {
         return '';
@@ -64,13 +70,13 @@ export class VariableService {
       let connectioName = paths[1];
       paths.splice(0, 2);
       let newPath = paths.join(".");
-      const connection = (await connectionService.obtain(connectioName))?.value;
+      const connection = (await connectionService.obtain(connectioName, this.workerToken))?.value;
       if (paths.length === 0) {
         return connection;
       }
-      return this.copyFromMap(connection, newPath);
+      return VariableService.copyFromMap(connection, newPath);
     }
-    return this.copyFromMap(valuesMap, path);
+    return VariableService.copyFromMap(valuesMap, path);
   }
 
   private static copyFromMap(valuesMap: any, path: string) {

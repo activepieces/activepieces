@@ -10,7 +10,7 @@ import {
   ListFlowsSchema,
 } from "shared";
 import { StatusCodes } from "http-status-codes";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { flowService } from "./flow-service";
 
 export const flowController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {

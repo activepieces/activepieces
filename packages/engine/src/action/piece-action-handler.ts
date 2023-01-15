@@ -7,6 +7,7 @@ import {
 } from 'shared';
 import { BaseActionHandler } from './action-handler';
 import { PieceExecutor } from '../executors/piece-executor';
+import { globals } from '../globals';
 
 export class PieceActionHandler extends BaseActionHandler<PieceAction> {
   variableService: VariableService;
@@ -16,7 +17,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     nextAction: BaseActionHandler<any> | undefined
   ) {
     super(action, nextAction);
-    this.variableService = new VariableService();
+    this.variableService = new VariableService(globals.workerToken);
   }
 
   async execute(

@@ -54,3 +54,4 @@ export { CloneFlowVersionRequest } from './flows/dto/clone-flow-version-request'
 export { SeekPage, Cursor } from './common/seek-page';
 export { apId, ApId } from './common/id-generator'
 export { Flag } from './flag/flag';
+export * from './common/activepieces-error';

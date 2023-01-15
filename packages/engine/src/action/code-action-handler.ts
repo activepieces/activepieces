@@ -8,6 +8,7 @@ import {
   StepOutputStatus
 } from 'shared';
 import { BaseActionHandler } from './action-handler';
+import { globals } from '../globals';
 
 export class CodeActionHandler extends BaseActionHandler<CodeAction> {
   variableService: VariableService;
@@ -17,7 +18,7 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     nextAction: BaseActionHandler<any> | undefined
   ) {
     super(action, nextAction);
-    this.variableService = new VariableService();
+    this.variableService = new VariableService(globals.workerToken);
   }
 
   async execute(

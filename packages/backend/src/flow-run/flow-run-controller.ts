@@ -1,6 +1,6 @@
 import { FastifyPluginCallback, FastifyReply, FastifyRequest } from "fastify";
 import { CreateFlowRunRequest, Cursor, FlowRunId, ProjectId, RunEnvironment } from "shared";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { flowRunService, flowRunService as service } from "./flow-run-service";
 
 const DEFAULT_PAGING_LIMIT = 10;

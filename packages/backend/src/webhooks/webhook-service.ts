@@ -3,7 +3,7 @@ import { collectionService } from "../collections/collection.service";
 import { flowRunService } from "../flow-run/flow-run-service";
 import { flowService } from "../flows/flow-service";
 import { flowVersionService } from "../flows/flow-version/flow-version.service";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { triggerUtils } from "../helper/trigger-utils";
 import { instanceService } from "../instance/instance-service";
 

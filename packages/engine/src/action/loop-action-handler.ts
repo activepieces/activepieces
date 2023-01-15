@@ -3,6 +3,7 @@ import { VariableService } from '../services/variable-service';
 import { ExecutionState, LoopOnItemsAction } from 'shared';
 import { BaseActionHandler } from './action-handler';
 import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from 'shared';
+import { globals } from '../globals';
 
 export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction> {
   firstLoopAction?: BaseActionHandler<any>;
@@ -16,7 +17,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
   ) {
     super(action, nextAction);
     this.action = action;
-    this.variableService = new VariableService();
+    this.variableService = new VariableService(globals.workerToken);
     this.firstLoopAction = firstLoopAction;
   }
 

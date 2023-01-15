@@ -16,7 +16,7 @@ export class StorageActionHandler extends BaseActionHandler<StorageAction> {
 
   constructor(action: StorageAction, nextAction?: BaseActionHandler<any>) {
     super(action, nextAction);
-    this.variableService = new VariableService();
+    this.variableService = new VariableService(globals.workerToken);
   }
 
   async execute(

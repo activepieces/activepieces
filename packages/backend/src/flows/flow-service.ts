@@ -19,7 +19,7 @@ import { flowVersionService } from "./flow-version/flow-version.service";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { redisLock } from "../database/redis-connection";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 
 const flowRepo = databaseConnection.getRepository(FlowEntity);
 

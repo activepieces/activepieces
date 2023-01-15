@@ -1,5 +1,12 @@
-import { ApId, CollectionId, CollectionVersionId, FileId, FlowId, FlowRunId, FlowVersionId, InstanceId } from "shared";
-import { SystemProp } from "./system/system-prop";
+import { AppConnectionId } from "../app-connection/app-connection";
+import { CollectionId } from "../collections/collection";
+import { CollectionVersionId } from "../collections/collection-version";
+import { FileId } from "../file/file";
+import { FlowRunId } from "../flow-run/flow-run";
+import { FlowId } from "../flows/flow";
+import { FlowVersionId } from "../flows/flow-version";
+import { InstanceId } from "../instance";
+import { ApId } from "./id-generator";
 
 export class ActivepiecesError extends Error {
   constructor(public error: ErrorParams) {
@@ -22,8 +29,8 @@ type ErrorParams =
   | JobRemovalFailureErrorParams
   | PieceNotFoundErrorParams
   | PieceTriggerNotFoundErrorParams
-  | AppSecretNotFoundErrorParams
   | StepNotFoundErrorParams
+  | AppConnectionNotFoundErrorParams
   | SystemPropNotDefinedErrorParams;
 
 export interface BaseErrorParams<T, V> {
@@ -34,6 +41,14 @@ export interface BaseErrorParams<T, V> {
 export interface InvalidBearerTokenParams extends BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {}> { }
 
 export interface FileNotFoundErrorParams extends BaseErrorParams<ErrorCode.FILE_NOT_FOUND, { id: FileId }> { }
+
+export interface AppConnectionNotFoundErrorParams
+  extends BaseErrorParams<
+    ErrorCode.APP_CONNECTION_NOT_FOUND,
+    {
+      id: AppConnectionId;
+    }
+  > { }
 
 export interface FlowNotFoundErrorParams
   extends BaseErrorParams<
@@ -136,14 +151,6 @@ export interface ConfigNotFoundErrorParams
     }
   > { }
 
-export interface AppSecretNotFoundErrorParams
-  extends BaseErrorParams<
-    ErrorCode.APP_SECRET_NOT_FOUND,
-    {
-      appCredentialId: ApId;
-    }
-  > { }
-
 export interface JobRemovalFailureErrorParams
   extends BaseErrorParams<
     ErrorCode.JOB_REMOVAL_FAILURE,
@@ -156,7 +163,7 @@ export interface SystemPropNotDefinedErrorParams
   extends BaseErrorParams<
     ErrorCode.SYSTEM_PROP_NOT_DEFINED,
     {
-      prop: SystemProp;
+      prop: string;
     }
   > { }
 
@@ -164,9 +171,8 @@ export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
   COLLECTION_VERSION_NOT_FOUND = "COLLECTION_VERSION_NOT_FOUND",
   CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
-  APP_SECRET_NOT_FOUND = "APP_SECRET_NOT_FOUND",
   EXISTING_USER = "EXISTING_USER",
-  APP_CREDENTIAL_NOT_FOUND = "APP_CREDENTIAL_NOT_FOUND",
+  APP_CONNECTION_NOT_FOUND = "APP_CONNECTION_NOT_FOUND",
   FILE_NOT_FOUND = "FILE_NOT_FOUND",
   FLOW_NOT_FOUND = "FLOW_NOT_FOUND",
   FLOW_RUN_NOT_FOUND = "INSTANCE_NOT_FOUND",

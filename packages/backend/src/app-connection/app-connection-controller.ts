@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
 import { AppConnectionId, ListAppConnectionRequest, UpsertConnectionRequest } from "shared";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { appConnectionService } from "./app-connection-service";
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -38,8 +38,8 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
       const appCredential = await appConnectionService.getOne(request.params.connectionId);
       if (appCredential === null) {
         throw new ActivepiecesError({
-          code: ErrorCode.APP_SECRET_NOT_FOUND,
-          params: { appCredentialId: request.params.connectionId },
+          code: ErrorCode.APP_CONNECTION_NOT_FOUND,
+          params: { id: request.params.connectionId },
         });
       }
       return appCredential;

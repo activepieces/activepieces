@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { PieceOptionRequest, PieceOptionRequestSchema } from "shared";
 import { getPiece, pieces } from "pieces";
 import { DropdownProperty, DropdownState, PropertyType } from "pieces";

@@ -11,7 +11,7 @@ import {
   UpdateCollectionSchema,
 } from "shared";
 import { StatusCodes } from "http-status-codes";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 
 export const collectionController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
   fastify.delete(

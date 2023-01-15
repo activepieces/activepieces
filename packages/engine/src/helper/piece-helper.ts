@@ -1,0 +1,61 @@
+import { DropdownProperty, DropdownState, getPiece, PropertyType } from "pieces";
+import { ActivepiecesError, CollectionVersion, ErrorCode, ExecutionState } from "shared";
+import { VariableService } from "../services/variable-service";
+
+export const pieceHelper = {
+    async dropdownOptions(params: {
+        pieceName: string,
+        stepName: string,
+        configName: string,
+        input: Record<string, any>,
+        workerToken: string,
+        collectionVersion: CollectionVersion
+    }) {
+        const component = getPiece(params.pieceName);
+        if (component === undefined) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PIECE_NOT_FOUND,
+                params: {
+                    pieceName: params.pieceName,
+                },
+            });
+        }
+        const action = component.getAction(params.stepName);
+        const trigger = component.getTrigger(params.stepName);
+        if (action === undefined && trigger === undefined) {
+            throw new ActivepiecesError({
+                code: ErrorCode.STEP_NOT_FOUND,
+                params: {
+                    stepName: params.stepName,
+                    pieceName: params.pieceName,
+                },
+            });
+        }
+        const props = action !== undefined ? action.props : trigger!.props;
+        const property = props[params.configName];
+        if (property === undefined || property.type !== PropertyType.DROPDOWN) {
+            throw new ActivepiecesError({
+                code: ErrorCode.CONFIG_NOT_FOUND,
+                params: {
+                    stepName: params.stepName,
+                    pieceName: params.pieceName,
+                    configName: params.configName,
+                },
+            });
+        }
+        try {
+            const variableService = new VariableService(params.workerToken);
+            const executionState = new ExecutionState();
+            executionState.insertConfigs(params.collectionVersion);
+            const resolvedInput = await variableService.resolve(params.input, executionState);
+            return await (property as DropdownProperty<unknown>).options(resolvedInput);
+        } catch (e) {
+            console.error(e);
+            return {
+                disabled: true,
+                options: [],
+                placeholder: "The piece throws an error"
+            } as DropdownState<unknown>;
+        }
+    }
+}

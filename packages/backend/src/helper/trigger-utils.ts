@@ -8,7 +8,7 @@ import {
   RunEnvironment,
   TriggerType,
 } from "shared";
-import { ActivepiecesError, ErrorCode } from "./activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
 import { createContextStore } from "../store-entry/store-entry.service";
 import { getPublicIp } from "./public-ip-utils";
