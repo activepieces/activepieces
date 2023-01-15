@@ -8,7 +8,6 @@ import {
 } from "shared";
 import { In } from "typeorm";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
-import { collectionService } from "../collections/collection.service";
 import { flowVersionRepo } from "../flows/flow-version/flow-version-repo";
 import { triggerUtils } from "../helper/trigger-utils";
 
