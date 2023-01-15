@@ -11,7 +11,7 @@ import { Flow } from 'shared';
 @Component({
 	selector: 'app-empty-collections-table',
 	templateUrl: './empty-collections-table.component.html',
-	styleUrls: ['./empty-collections-table.component.scss'],
+	styleUrls: [],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EmptyCollectionsTableComponent {

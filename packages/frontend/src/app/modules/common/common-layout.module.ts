@@ -24,7 +24,6 @@ import { StoreModule } from '@ngrx/store';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { MatTooltipDefaultOptions, MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
-import { RawOutputLogPipe } from './pipe/raw-output-log';
 import { MatSnackBarModule, MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { LongTextFormControlComponent } from './components/form-controls/long-text-form-control/long-text-form-control.component';
 import { DictionaryFormControlComponent } from './components/form-controls/dictionary-form-control/dictionary-form-control.component';
@@ -76,7 +75,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		DefaultFalsePipe,
 		DefaultTruePipe,
 		OutputLogPipe,
-		RawOutputLogPipe,
 		JsonViewComponent,
 		LongTextFormControlComponent,
 		DictionaryFormControlComponent,
