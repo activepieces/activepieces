@@ -20,5 +20,6 @@
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
+	"remoteUser": "root",
 	"postCreateCommand": "pnpm install --frozen-lockfile && pnpm nx run-many --target=build"
 }

@@ -1,4 +1,4 @@
-import { Property } from "../../../framework/property/prop.model";
+import { Property } from "../../../framework/property";
 
 export const hubspotCommons = {
     authentication: Property.OAuth2({

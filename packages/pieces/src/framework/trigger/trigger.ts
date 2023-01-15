@@ -1,5 +1,5 @@
 import {Context} from "../context";
-import {PieceProperty, StaticPropsValue} from "../property/prop.model";
+import {PieceProperty, StaticPropsValue} from "../property/property";
 
 export enum TriggerStrategy {
     POLLING = 'POLLING',

@@ -97,7 +97,6 @@ export class AuthenticationService {
 			map(flags => {
 				const warningTitle: string | undefined = flags['WARNING_TEXT_HEADER'] as string | undefined;
 				const warningBody: string | undefined = flags['WARNING_TEXT_BODY'] as string | undefined;
-				debugger;
 				if (warningTitle || warningBody) {
 					return {
 						title: warningTitle,
@@ -108,7 +107,7 @@ export class AuthenticationService {
 			})
 		);
 	}
-	getApiUrl(): Observable<string> {
+	getBackendUrl(): Observable<string> {
 		return this.getAllFlags().pipe(
 			map(flags => {
 				return flags['BACKEND_URL'] as string;
@@ -116,7 +115,7 @@ export class AuthenticationService {
 		);
 	}
 
-	getServerUrl(): Observable<string> {
+	getFrontendUrl(): Observable<string> {
 		return this.getAllFlags().pipe(
 			map(flags => {
 				return flags['FRONTEND_URL'] as string;
