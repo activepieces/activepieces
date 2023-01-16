@@ -131,7 +131,10 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 				tap(result => {
 					const outputResult = this.codeService.beautifyJson(result.output);
 					const consoleResult = this.getConsoleResult(result);
-					this.testResultForm.setValue({ outputResult: outputResult, consoleResult: consoleResult });
+					this.testResultForm.patchValue({
+						outputResult: outputResult ? outputResult : 'No output returned, check logs in case of errors',
+						consoleResult: consoleResult,
+					});
 					this.testLoading = false;
 				})
 			);
