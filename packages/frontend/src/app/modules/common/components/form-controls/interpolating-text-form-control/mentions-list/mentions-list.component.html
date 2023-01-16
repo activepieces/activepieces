@@ -6,7 +6,10 @@
   <mat-icon matPrefix svgIcon="search"></mat-icon>
   <input [formControl]="searchFormControl" matInput placeholder="Search" autocomplete="off">
 </mat-form-field>
-<ng-container *ngFor="let item of dropDownItems$|async; let isLast=last">
-  <button (click)="mentionClicked(item)" mat-menu-item>{{item.label}}</button>
-  <mat-divider *ngIf="!isLast"></mat-divider>
-</ng-container>
+<div class="ap-max-h-[200px] ap-overflow-scroll">
+  <ng-container *ngFor="let item of dropDownItems$|async; let isLast=last">
+    <button (click)="mentionClicked(item)" mat-menu-item>{{item.label}}</button>
+    <app-step-mentions-list></app-step-mentions-list>
+    <mat-divider *ngIf="!isLast"></mat-divider>
+  </ng-container>
+</div>
