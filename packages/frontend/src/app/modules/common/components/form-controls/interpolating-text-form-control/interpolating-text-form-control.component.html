@@ -1,6 +1,7 @@
 <quill-editor [formControl]="editorFormControl" [style]="{width:'100%'}" format="object" [modules]="modules"
   [preserveWhitespace]="true" trackChanges="all" (onBlur)="onBlur()" [placeholder]="''" (onFocus)="onFocus()"
-  [debounceTime]="0" (click)="menuTrigger.openMenu(); menu.focusFirstItem()">
+  (onEditorCreated)="editorCreated()" [debounceTime]="0" (click)="menuTrigger.openMenu(); menu.focusFirstItem()"
+  (keyup)="$event.key ==='Escape'? menuTrigger.closeMenu() : null">
 </quill-editor>
 <div #spacer #menuTrigger="matMenuTrigger" [matMenuTriggerFor]="menu"></div>
 <ng-container *ngIf="valueChanges$|async"></ng-container>

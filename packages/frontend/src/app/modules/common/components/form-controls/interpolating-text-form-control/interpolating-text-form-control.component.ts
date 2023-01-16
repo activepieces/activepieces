@@ -23,6 +23,7 @@ import {
 	InsertMentionOperation,
 	QuillEditorOperationsObject,
 	QuillMaterialBase,
+	TextInsertOperation,
 } from './utils';
 import 'quill-mention';
 import { Store } from '@ngrx/store';
@@ -134,6 +135,20 @@ export class InterpolatingTextFormControlComponent
 				}
 			})
 		);
+	}
+	editorCreated(): void {
+		this.editor.quillEditor.clipboard.addMatcher(Node.ELEMENT_NODE, (node, delta) => {
+			let ops: TextInsertOperation[] = [];
+			delta.ops.forEach((op: TextInsertOperation) => {
+				if (op.insert && typeof op.insert === 'string') {
+					ops.push({
+						insert: op.insert,
+					});
+				}
+			});
+			delta.ops = ops;
+			return delta;
+		});
 	}
 
 	get value() {

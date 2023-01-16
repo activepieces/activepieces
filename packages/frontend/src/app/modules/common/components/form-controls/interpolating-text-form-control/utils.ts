@@ -62,7 +62,7 @@ export function fromTextToOps(
 function adjustItemPath(itemPath: string, allStepsNamesAndDisplayNames: { displayName: string; name: string }[]) {
 	const itemPrefix = itemPath.split('.')[0];
 	if (itemPrefix === 'configs') {
-		return itemPath.replace('configs', '');
+		return itemPath.replace('configs.', '');
 	} else {
 		const stepDisplayName = allStepsNamesAndDisplayNames.find(s => s.name === itemPrefix)?.displayName;
 		if (stepDisplayName) {
@@ -80,7 +80,7 @@ export interface InsertMentionOperation {
 		};
 	};
 }
-interface TextInsertOperation {
+export interface TextInsertOperation {
 	insert: string;
 }
 
