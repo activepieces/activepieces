@@ -4,7 +4,6 @@ import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { AppConnectionEntity } from "./app-connection-entity";
 import axios, { AxiosError } from "axios";
-import qs from "qs";
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 
@@ -123,7 +122,7 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
     const response = (
         await axios.post(
             settings.token_url,
-            qs.stringify({
+            new URLSearchParams({
                 client_id: settings.client_id,
                 client_secret: settings.client_secret,
                 redirect_uri: settings.redirect_url,

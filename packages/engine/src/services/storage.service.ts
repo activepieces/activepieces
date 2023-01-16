@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Store } from 'pieces';
 import { PutStoreEntryRequest, StoreEntry } from 'shared';
 import { globals } from '../globals';
 
@@ -31,3 +32,22 @@ export const storageService = {
     }
 
 }
+export function createContextStore(): Store {
+    return {
+      save: async function <T>(key: string, value: T): Promise<T> {
+        const storeEntry = await storageService.put({
+          key: key,
+          value: value,
+        });
+        return value;
+      },
+      get: async function <T>(key: string): Promise<T | null> {
+        const storeEntry = await storageService.get(key);
+        if (storeEntry === null) {
+          return null;
+        }
+        return storeEntry.value as T;
+      },
+    };
+  }
+  

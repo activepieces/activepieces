@@ -1,5 +1,4 @@
 import axios, { AxiosError } from "axios";
-import qs from "qs";
 import {
   ClaimTokenFromCloudRequest,
   ClaimTokenWithSecretRequest,
@@ -12,7 +11,7 @@ export const oauth2Service = {
       let response = (
         await axios.post(
           request.tokenUrl,
-          qs.stringify({
+          new URLSearchParams({
             client_id: request.clientId,
             client_secret: request.clientSecret,
             redirect_uri: request.redirectUrl,

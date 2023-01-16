@@ -1,5 +1,6 @@
-import { DropdownProperty, DropdownState, getPiece, pieces, PropertyType, Trigger } from "pieces";
+import { DropdownProperty, DropdownState, getPiece, pieces, PropertyType, Store, Trigger } from "pieces";
 import { ActivepiecesError, ErrorCode, ExecuteDropdownOptions, ExecuteTriggerOperation, ExecutionState, PieceTrigger } from "shared";
+import { storageService } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 
 export const pieceHelper = {
@@ -52,3 +53,4 @@ export const pieceHelper = {
         }
     }
 }
+

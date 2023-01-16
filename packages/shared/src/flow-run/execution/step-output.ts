@@ -9,6 +9,7 @@ export class StepOutput{
   input?: unknown;
   output?: any;
   errorMessage?: unknown;
+  standardOutput?: unknown;
   status?: StepOutputStatus;
 }
 

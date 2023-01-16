@@ -64,7 +64,6 @@ const start = async () => {
       host: "0.0.0.0",
       port: 3000,
     });
-    await databaseConnection.runMigrations();
 
     console.log(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____ 
