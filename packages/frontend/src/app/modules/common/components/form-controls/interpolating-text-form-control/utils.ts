@@ -112,3 +112,28 @@ function replaceArrayNotationsWithSpaces(str: string) {
 		return ` ${indexOfArrayWitoutBrackets}`;
 	});
 }
+
+export interface MentionTreeNode {
+	propertyPath: string;
+	key: string;
+	children?: MentionTreeNode[];
+}
+/**Traverses an object to find its child properties and their paths, stepOutput has to be an object on first invocation */
+export function traverseStepOutputAndReturnMentionTree(
+	stepOutput: unknown,
+	path: string,
+	lastKey: string
+): MentionTreeNode {
+	if (stepOutput && typeof stepOutput === 'object') {
+		return {
+			propertyPath: path,
+			key: lastKey,
+			children: Object.keys(stepOutput).map(k => {
+				const newPath = Array.isArray(stepOutput) ? `${path}[${k}]` : `${path}.${k}`;
+				return traverseStepOutputAndReturnMentionTree(stepOutput[k], newPath, k);
+			}),
+		};
+	} else {
+		return { propertyPath: path, key: lastKey };
+	}
+}

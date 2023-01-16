@@ -60,6 +60,8 @@ import { QuillModule } from 'ngx-quill';
 import { MatIconModule } from '@angular/material/icon';
 import { MentionsListComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/mentions-list.component';
 import { MatDividerModule } from '@angular/material/divider';
+import { StepMentionsListComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/step-mentions-list/step-mentions-list.component';
+import { MatTreeModule } from '@angular/material/tree';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 0,
 	hideDelay: 0,
@@ -101,6 +103,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		OAuth2CloudConnectControlComponent,
 		InterpolatingTextFormControlComponent,
 		MentionsListComponent,
+		StepMentionsListComponent,
 	],
 	imports: [
 		FontAwesomeModule,
@@ -133,6 +136,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MatToolbarModule,
 		MatIconModule,
 		MatDividerModule,
+		MatTreeModule,
 	],
 	exports: [
 		EditableTextComponent,
@@ -174,6 +178,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MatToolbarModule,
 		InterpolatingTextFormControlComponent,
 		MatIconModule,
+		StepMentionsListComponent,
 	],
 	providers: [
 		HighlightService,
