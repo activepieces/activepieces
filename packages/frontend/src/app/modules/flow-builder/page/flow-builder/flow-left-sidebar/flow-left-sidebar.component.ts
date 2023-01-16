@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { Observable } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '../../../store/selector/flow-builder.selector';
+import { BuilderSelectors } from '../../../store/builder/builder.selector';
 
 @Component({
 	selector: 'app-flow-left-sidebar',

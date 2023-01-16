@@ -96,12 +96,12 @@
           <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
             <mat-option *ngFor="let opt of ((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)"
               [value]="opt.value">
-              {{opt.label.configKey}}
+              {{opt.label.name}}
             </mat-option>
             <mat-option *ngIf="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0"
               class="add-auth">
               <div class="ap-flex">
-                <div class="ap-flex-grow">No authentication</div>
+                <div class="ap-flex-grow">No connections</div>
                 <app-button btnColor="primary" btnStyle="basic"
                   (buttonClicked)="newAuthenticationDialogProcess(config.key)" type="button" btnSize="small"
                   *ngIf="formGroup.enabled" [darkLoadingSpinner]="true" [loading]="checkingOAuth2CloudManager">+ Add
@@ -115,7 +115,7 @@
         </mat-form-field>
         <app-button btnColor="primary" btnStyle="basic" (buttonClicked)="newAuthenticationDialogProcess(config.key)"
           type="button" btnSize="medium" *ngIf="formGroup.enabled" [darkLoadingSpinner]="true"
-          [loading]="checkingOAuth2CloudManager"> + New Authentication
+          [loading]="checkingOAuth2CloudManager"> + New Connection
         </app-button>
       </div>
 

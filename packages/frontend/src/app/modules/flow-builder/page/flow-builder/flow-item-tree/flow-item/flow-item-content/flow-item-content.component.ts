@@ -4,8 +4,8 @@ import { filter, map, Observable, of, Subject, switchMap, takeUntil, tap } from 
 import { FlowItem } from '../../../../../../common/model/flow-builder/flow-item';
 import { RightSideBarType } from '../../../../../../common/model/enum/right-side-bar-type.enum';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '../../../../../store/selector/flow-builder.selector';
-import { FlowsActions } from '../../../../../store/action/flows.action';
+import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
+import { FlowsActions } from '../../../../../store/flow/flows.action';
 import { FlowItemDetails } from '../../../flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { fadeIn400ms } from 'src/app/modules/common/animation/fade-in.animations';
 import { RunDetailsService } from '../../../flow-left-sidebar/run-details/iteration-details.service';

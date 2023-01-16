@@ -4,8 +4,8 @@ import { TimeHelperService } from '../../../../../common/service/time-helper.ser
 import { CollectionService } from '../../../../../common/service/collection.service';
 import { RightSideBarType } from '../../../../../common/model/enum/right-side-bar-type.enum';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '../../../../store/selector/flow-builder.selector';
-import { FlowsActions } from '../../../../store/action/flows.action';
+import { BuilderSelectors } from '../../../../store/builder/builder.selector';
+import { FlowsActions } from '../../../../store/flow/flows.action';
 import { map, Observable, switchMap, take } from 'rxjs';
 import { CollectionVersion, CollectionVersionState } from 'shared';
 

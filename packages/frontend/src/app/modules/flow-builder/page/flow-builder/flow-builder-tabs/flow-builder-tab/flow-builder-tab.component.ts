@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { FlowsActions } from '../../../../store/action/flows.action';
+import { FlowsActions } from '../../../../store/flow/flows.action';
 
 import {
 	ChevronDropdownOption,

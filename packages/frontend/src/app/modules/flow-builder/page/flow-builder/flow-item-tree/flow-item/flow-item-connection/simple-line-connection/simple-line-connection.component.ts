@@ -23,7 +23,7 @@ import {
 	VERTICAL_LINE_LENGTH,
 } from '../draw-utils';
 import { AddButtonType } from '../../../../../../../common/model/enum/add-button-type';
-import { FlowsActions } from '../../../../../../store/action/flows.action';
+import { FlowsActions } from '../../../../../../store/flow/flows.action';
 import { Observable } from 'rxjs';
 
 @Component({

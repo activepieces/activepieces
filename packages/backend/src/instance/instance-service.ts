@@ -2,7 +2,7 @@ import { apId, CollectionId, Instance, InstanceId, UpsertInstanceRequest } from 
 import { collectionService } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
 import { flowService } from "../flows/flow-service";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { InstanceEntity } from "./instance-entity";
 import { instanceSideEffects } from "./instance-side-effects";
 

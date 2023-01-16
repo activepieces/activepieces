@@ -3,6 +3,7 @@ import { VariableService } from '../services/variable-service';
 import { ExecutionState, LoopOnItemsAction } from 'shared';
 import { BaseActionHandler } from './action-handler';
 import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from 'shared';
+import { globals } from '../globals';
 
 export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction> {
   firstLoopAction?: BaseActionHandler<any>;
@@ -38,7 +39,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     executionState: ExecutionState,
     ancestors: [string, number][]
   ): Promise<StepOutput> {
-    const resolvedInput = this.variableService.resolve(
+    const resolvedInput = await this.variableService.resolve(
       this.action.settings,
       executionState
     );

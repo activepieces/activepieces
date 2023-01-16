@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { tokenUtils } from "./lib/token-utils";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 
 const ignoredRoutes = new Set([
   "/v1/authentication/sign-in",

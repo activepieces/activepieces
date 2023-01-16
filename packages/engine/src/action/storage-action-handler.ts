@@ -1,15 +1,14 @@
-import { globals } from '../globals';
 import { VariableService } from '../services/variable-service';
 import {
   ExecutionState,
   PutStoreEntryRequest,
   StepOutput,
   StepOutputStatus,
-  StorageAction
+  StorageAction,
+  StoreOperation
 } from 'shared';
 import { BaseActionHandler } from './action-handler';
-import { StoreOperation } from 'shared';
-import axios from 'axios';
+import { storageService } from '../services/storage.service';
 
 export class StorageActionHandler extends BaseActionHandler<StorageAction> {
   variableService: VariableService;
@@ -26,24 +25,16 @@ export class StorageActionHandler extends BaseActionHandler<StorageAction> {
     const stepOutput = new StepOutput();
     try {
       let data = undefined;
-      const headers = {
-        Authorization: 'Bearer ' + globals.workerToken
-      };
-      const key = this.variableService.resolve(
+      const key = await this.variableService.resolve(
         this.action.settings.key,
         executionState
       );
       switch (this.action.settings.operation) {
         case StoreOperation.GET:
-          data =
-            (
-              await axios.get(globals.apiUrl + '/v1/store-entries?key=' + key, {
-                headers: headers
-              })
-            ).data?.value ?? null;
+          data = (await storageService.get(key))?.value ?? null;
           break;
         case StoreOperation.PUT:
-          const value = this.variableService.resolve(
+          const value = await this.variableService.resolve(
             this.action.settings.value,
             executionState
           );
@@ -51,15 +42,7 @@ export class StorageActionHandler extends BaseActionHandler<StorageAction> {
             value: value,
             key: key
           };
-          data =
-            (
-              await axios({
-                method: 'POST',
-                url: globals.apiUrl + '/v1/store-entries',
-                data: putRequest,
-                headers: headers
-              })
-            ).data?.value ?? null;
+          data = (await storageService.put(putRequest))?.value ?? null;
           break;
       }
       stepOutput.output = {

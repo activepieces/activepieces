@@ -1,27 +1,30 @@
 import { Component, Inject, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
-import { map, Observable, take } from 'rxjs';
-import { Config, ConfigType, OAuth2Config } from 'shared';
+import { catchError, map, Observable, of, take, tap } from 'rxjs';
+import { AppConnection, AppConnectionType, OAuth2AppConnection, Project, UpsertOAuth2Request } from 'shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
+import { AppConnectionsService } from 'src/app/modules/common/service/app-connections.service';
 import { CloudAuthConfigsService } from 'src/app/modules/common/service/cloud-auth-configs.service';
-import { ConfigKeyValidator } from 'src/app/modules/flow-builder/page/flow-builder/validators/configKeyValidator';
-import { CollectionActions } from 'src/app/modules/flow-builder/store/action/collection.action';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
+import { ProjectService } from 'src/app/modules/common/service/project.service';
+import { ConnectionValidator } from 'src/app/modules/flow-builder/page/flow-builder/validators/connectionNameValidator';
+import { appConnectionsActions } from 'src/app/modules/flow-builder/store/app-connections/app-connections.action';
+import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
 
 interface AuthConfigSettings {
-	pieceName: FormControl<string | null>;
-	redirectUrl: FormControl<string>;
-	clientSecret: FormControl<string>;
-	clientId: FormControl<string>;
-	authUrl: FormControl<string>;
-	tokenUrl: FormControl<string>;
+	appName: FormControl<string | null>;
+	redirect_url: FormControl<string>;
+	client_secret: FormControl<string>;
+	client_id: FormControl<string>;
+	auth_url: FormControl<string>;
+	token_url: FormControl<string>;
 	scope: FormControl<string>;
-	key: FormControl<string>;
+	name: FormControl<string>;
 	value: FormControl<any>;
-	refreshUrl: FormControl<string>;
+	refresh_url: FormControl<string>;
 	extraParams: FormControl<Record<string, unknown>>;
 }
 export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
@@ -34,10 +37,11 @@ export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
 export class NewAuthenticationModalComponent implements OnInit {
 	@Input() pieceAuthConfig: PieceConfig;
 	@Input() pieceName: string;
-	@Input() configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
+	@Input() connectionToUpdate: OAuth2AppConnection | undefined;
 	@Input() serverUrl: string;
 	settingsForm: FormGroup<AuthConfigSettings>;
-	collectionId$: Observable<string>;
+	loading = false;
+	project$: Observable<Project>;
 	submitted = false;
 	clientIdTooltip = 'Your App ID, Key or Client ID. You can find it if you go to your app on the 3rd party service.';
 	clientSecretTooltip =
@@ -48,22 +52,26 @@ export class NewAuthenticationModalComponent implements OnInit {
 	keyTooltip =
 		'The ID of this authentication definition. You will need to select this key whenever you want to reuse this authentication.';
 	hasCloudAuthCred$: Observable<boolean>;
+	upsert$: Observable<AppConnection | null>;
 	constructor(
 		private fb: FormBuilder,
 		private store: Store,
 		public dialogRef: MatDialogRef<NewAuthenticationModalComponent>,
 		private cloudAuthConfigsService: CloudAuthConfigsService,
+		private appConnectionsService: AppConnectionsService,
+		private snackbar: MatSnackBar,
 		@Inject(MAT_DIALOG_DATA)
 		dialogData: {
 			pieceAuthConfig: PieceConfig;
 			pieceName: string;
-			configToUpdateWithIndex: { config: OAuth2Config; indexInList: number } | undefined;
+			connectionToUpdate: OAuth2AppConnection | undefined;
 			serverUrl: string;
-		}
+		},
+		private projectService: ProjectService
 	) {
 		this.pieceName = dialogData.pieceName;
 		this.pieceAuthConfig = dialogData.pieceAuthConfig;
-		this.configToUpdateWithIndex = dialogData.configToUpdateWithIndex;
+		this.connectionToUpdate = dialogData.connectionToUpdate;
 		this.serverUrl = dialogData.serverUrl;
 	}
 
@@ -73,90 +81,93 @@ export class NewAuthenticationModalComponent implements OnInit {
 				return !!res[this.pieceName];
 			})
 		);
-		this.collectionId$ = this.store.select(BuilderSelectors.selectCurrentCollectionId);
+		this.project$ = this.projectService.selectedProjectAndTakeOne();
 		this.settingsForm = this.fb.group({
 			extraParams: new FormControl<Record<string, unknown>>(this.pieceAuthConfig.extra ?? {}, {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
-			pieceName: new FormControl<string | null>(this.pieceName, { nonNullable: false, validators: [] }),
-			redirectUrl: new FormControl(this.serverUrl ? `${this.serverUrl}/redirect` : '', {
+			appName: new FormControl<string | null>(this.pieceName, { nonNullable: false, validators: [] }),
+			redirect_url: new FormControl(this.serverUrl ? `${this.serverUrl}/redirect` : '', {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
-			clientSecret: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			clientId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-			authUrl: new FormControl(this.pieceAuthConfig.authUrl || '', {
+			client_secret: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+			client_id: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+			auth_url: new FormControl(this.pieceAuthConfig.authUrl || '', {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
-			tokenUrl: new FormControl(this.pieceAuthConfig.tokenUrl || '', {
+			token_url: new FormControl(this.pieceAuthConfig.tokenUrl || '', {
 				nonNullable: true,
 				validators: [Validators.required],
 			}),
 			scope: new FormControl(this.pieceAuthConfig.scope?.join(' ') || '', {
-				nonNullable: true			
+				nonNullable: true,
 			}),
-			key: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
+			name: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
 				nonNullable: true,
 				validators: [Validators.required, Validators.pattern('[A-Za-z0-9_]*')],
 				asyncValidators: [
-					ConfigKeyValidator.createValidator(
-						this.store.select(BuilderSelectors.selectAllConfigs).pipe(take(1)),
+					ConnectionValidator.createValidator(
+						this.store.select(BuilderSelectors.selectAllAppConnections).pipe(take(1)),
 						undefined
 					),
 				],
 			}),
 			value: new FormControl(undefined as any, Validators.required),
-			refreshUrl: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
+			refresh_url: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
 		});
 
-		if (this.configToUpdateWithIndex) {
+		if (this.connectionToUpdate) {
 			this.settingsForm.patchValue({
-				...this.configToUpdateWithIndex.config.settings,
-				value: this.configToUpdateWithIndex.config.value,
+				value: this.connectionToUpdate.value,
 			});
-			this.settingsForm.controls.key.setValue(this.configToUpdateWithIndex.config.key);
-			this.settingsForm.controls.key.disable();
+			this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
+			this.settingsForm.controls.name.disable();
 		}
 	}
-	submit() {
-		this.submitted = true;
+	submit(projectId: string) {
 		this.settingsForm.markAllAsTouched();
-		if (this.settingsForm.valid) {
-			const config = this.constructConfig();
-			this.saveConfigToCollection(config);
-			this.dialogRef.close(config);
+		if (this.settingsForm.valid && !this.loading) {
+			this.loading = true;
+			const connection = this.constructConnection(projectId);
+			this.saveConnection(connection);
 		}
 	}
-	constructConfig() {
-		const configKey = this.configToUpdateWithIndex
-			? this.configToUpdateWithIndex.config.key
-			: this.settingsForm.get('key')!.value;
-		const settingsFormValue: any = { ...this.settingsForm.getRawValue() };
-		const value = settingsFormValue['value'];
+	constructConnection(projectId: string) {
+		const connectionName = this.connectionToUpdate
+			? this.connectionToUpdate.name
+			: this.settingsForm.controls.name.value;
+		const settingsFormValue = { ...this.settingsForm.getRawValue() };
+		const connectionValue = settingsFormValue['value'];
 		delete settingsFormValue['value'];
-		delete settingsFormValue.key;
-		const newConfig: Config = {
-			key: configKey,
-			type: ConfigType.OAUTH2,
-			settings: {
-				...settingsFormValue,
-				required: true,
-			},
-			value: value,
+		delete connectionValue['name'];
+		delete connectionValue['appName'];
+		const newConfig: UpsertOAuth2Request = {
+			name: connectionName,
+			appName: this.pieceName,
+			value: { ...settingsFormValue, type: AppConnectionType.OAUTH2, ...connectionValue },
+			projectId: projectId,
 		};
 		return newConfig;
 	}
 
-	saveConfigToCollection(config: Config): void {
-		if (!this.configToUpdateWithIndex) {
-			this.store.dispatch(CollectionActions.addConfig({ config: config }));
-		} else {
-			this.store.dispatch(
-				CollectionActions.updateConfig({ config: config, configIndex: this.configToUpdateWithIndex.indexInList })
-			);
-		}
+	saveConnection(connection: UpsertOAuth2Request): void {
+		this.upsert$ = this.appConnectionsService.upsert(connection).pipe(
+			catchError(err => {
+				console.error(err);
+				this.snackbar.open('Connection operation failed please check your console.', '', { panelClass: 'error' });
+				return of(null);
+			}),
+			tap(connection => {
+				if (connection) {
+					this.store.dispatch(appConnectionsActions.upsert({ connection: connection }));
+					this.dialogRef.close(connection);
+				}
+				this.loading = false;
+			})
+		);
 	}
 	get authenticationSettingsControlsValid() {
 		return Object.keys(this.settingsForm.controls)

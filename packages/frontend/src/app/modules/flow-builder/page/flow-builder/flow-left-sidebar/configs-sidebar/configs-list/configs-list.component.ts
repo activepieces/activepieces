@@ -1,8 +1,8 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { BuilderSelectors } from '../../../../../store/selector/flow-builder.selector';
-import { CollectionActions } from '../../../../../store/action/collection.action';
+import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
+import { CollectionActions } from '../../../../../store/collection/collection.action';
 import { Config } from 'shared';
 
 @Component({
@@ -19,7 +19,7 @@ export class VariableListComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
-		this.variables$ = this.store.select(BuilderSelectors.selectAllConfigsWithoutOAuth2);
+		this.variables$ = this.store.select(BuilderSelectors.selectAllConfigs);
 	}
 
 	deleteVariable(index: number) {

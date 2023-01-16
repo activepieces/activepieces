@@ -4,9 +4,9 @@ import { AuthenticationService } from './modules/common/service/authentication.s
 import { Store } from '@ngrx/store';
 import { NavigationStart, Router } from '@angular/router';
 import { SvgIconRegistryService } from 'angular-svg-icon';
-import { CommonActions } from './modules/common/store/action/common.action';
 import { PosthogService } from './modules/common/service/posthog.service';
 import { fadeInUp400ms } from './modules/common/animation/fade-in-up.animation';
+import { CommonActions } from './modules/common/store/common.action';
 
 @Component({
 	selector: 'app-root',

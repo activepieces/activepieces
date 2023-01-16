@@ -16,7 +16,7 @@ import { CollectionEntity } from "./collection-entity";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { databaseConnection } from "../database/database-connection";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 
 export const collectionRepo = databaseConnection.getRepository(CollectionEntity);
 

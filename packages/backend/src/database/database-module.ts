@@ -4,5 +4,6 @@ import { redisLockClient } from "./redis-connection";
 
 export const databaseModule: FastifyPluginAsync = async (_app, _opts) => {
   await databaseConnection.initialize();
+  await databaseConnection.runMigrations();
   await redisLockClient.connect();
 };

@@ -1,3 +1,4 @@
+import { CollectionVersion } from '../../collections/collection-version';
 import {LoopOnItemsStepOutput, StepOutput} from './step-output';
 
 export class ExecutionState {
@@ -12,7 +13,12 @@ export class ExecutionState {
   }
 
 
-  insertConfigs(configs: Record<string, unknown> | Map<string, unknown>) {
+  insertConfigs(collectionVersion: CollectionVersion) {
+    let configs: Map<string, unknown> = new Map(
+      collectionVersion.configs.map((config) => {
+        return [config.key, config.value];
+      })
+    );
     if (configs instanceof Map) {
       configs.forEach((value: any, key: string) => {
         this.configs[key] = value;

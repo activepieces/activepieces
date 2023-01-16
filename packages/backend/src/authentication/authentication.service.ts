@@ -2,7 +2,7 @@ import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest } f
 import { userService } from "../user/user-service";
 import { passwordHasher } from "./lib/password-hasher";
 import { tokenUtils } from "./lib/token-utils";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { projectService } from "../project/project.service";
 import { FlagId, flagService } from "../flags/flag.service";
 import { QueryFailedError } from "typeorm";

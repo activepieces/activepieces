@@ -8,7 +8,7 @@ import {
   UpdateCollectionRequest
 } from "shared";
 import { StatusCodes } from "http-status-codes";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 
 const DEFAULT_PAGE_SIZE = 10;
 

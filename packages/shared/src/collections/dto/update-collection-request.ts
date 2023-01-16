@@ -26,20 +26,7 @@ export const ConfigValidation = Type.Union([
         key: Type.String(),
         type: Type.Literal(ConfigType.DICTIONARY),
         value: Type.Object({}),
-    }),
-    Type.Object({
-        key: Type.String(),
-        type: Type.Literal(ConfigType.CLOUD_OAUTH2),
-        settings: Type.Object({}),
-        value: Type.Object({}),
-    }),
-    Type.Object({
-        key: Type.String(),
-        type: Type.Literal(ConfigType.OAUTH2),
-        settings: Type.Object({}),
-        value: Type.Object({}),
     })
-    
 ])
 
 export const UpdateCollectionRequest = Type.Object({

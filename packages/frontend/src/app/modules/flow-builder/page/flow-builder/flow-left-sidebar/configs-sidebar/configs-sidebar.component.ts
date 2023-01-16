@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar-type.enum';
-import { BuilderSelectors } from '../../../../store/selector/flow-builder.selector';
+import { BuilderSelectors } from '../../../../store/builder/builder.selector';
 import { Observable } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { FlowsActions } from '../../../../store/action/flows.action';
+import { FlowsActions } from '../../../../store/flow/flows.action';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateEditConfigModalComponent } from '../create-or-edit-config-modal/create-or-edit-config-modal.component';
 import { __values } from 'tslib';

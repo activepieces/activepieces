@@ -20,7 +20,7 @@ import {
 } from "shared";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { fileService } from "../../file/file.service";
-import { ActivepiecesError, ErrorCode } from "../../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { flowVersionRepo } from "./flow-version-repo";
 
 export const flowVersionService = {
@@ -191,7 +191,7 @@ function buildSchema(props: PieceProperty): TSchema {
         break;
       case PropertyType.OAUTH2:
         // Only accepts connections variable.
-        propsSchema[name] = Type.RegEx(RegExp('\$\{connections.(.*?)\}', 'g'));
+        propsSchema[name] = Type.RegEx(RegExp('[$]{1}\{connections.(.*?)\}'));
         break;
     }
     if (!property.required) {

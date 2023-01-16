@@ -1,4 +1,5 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } from "fastify";
+import { databaseConnection } from "../database/database-connection";
 import { flagService } from "./flag.service";
 
 export const flagController = async (app: FastifyInstance, _options: FastifyPluginOptions) => {

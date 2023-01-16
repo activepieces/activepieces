@@ -17,8 +17,10 @@ import { codeModule } from "./workers/code-worker/code.module";
 import { flowWorkerModule } from "./workers/flow-worker/flow-worker-module";
 import { webhookModule } from "./webhooks/webhook-module";
 import { errorHandler } from "./helper/error-handler";
+import { appConnectionModule } from "./app-connection/app-connection.module";
 import { system } from "./helper/system/system";
 import { SystemProp } from "./helper/system/system-prop";
+import { databaseConnection } from "./database/database-connection";
 
 const app = fastify({
   logger: true,
@@ -52,6 +54,7 @@ app.register(oauth2Module);
 app.register(instanceModule);
 app.register(flowRunModule);
 app.register(webhookModule);
+app.register(appConnectionModule);
 
 app.setErrorHandler(errorHandler);
 
