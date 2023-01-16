@@ -1,8 +1,12 @@
+<div class="ap-typography-headline-6 ap-flex ap-items-center ap-mb-1">Data to Insert<div class="ap-flex-grow">
+  </div>
+  <app-icon-button [iconFilename]="'close.svg'" (click)="closeMenu.emit()"></app-icon-button>
+</div>
 <mat-form-field (click)="$event.stopPropagation();" appearance="outline" class="ap-w-full">
   <mat-icon matPrefix svgIcon="search"></mat-icon>
-  <input [formControl]="searchFormControl" matInput placeholder="Search">
+  <input [formControl]="searchFormControl" matInput placeholder="Search" autocomplete="off">
 </mat-form-field>
 <ng-container *ngFor="let item of dropDownItems$|async; let isLast=last">
-  <button mat-menu-item>{{item.label}}</button>
+  <button (click)="mentionClicked(item)" mat-menu-item>{{item.label}}</button>
   <mat-divider *ngIf="!isLast"></mat-divider>
 </ng-container>

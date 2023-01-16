@@ -35,11 +35,11 @@ export function fromTextToOps(
 	text: string,
 	allStepsNamesAndDisplayNames: { displayName: string; name: string }[]
 ): {
-	ops: (TextInsertOperation | MentionInsertOperation)[];
+	ops: (TextInsertOperation | InsertMentionOperation)[];
 } {
 	var regex = /(\$\{.*?\})/;
 	var matched = text.split(regex).filter(el => el);
-	var ops: (TextInsertOperation | MentionInsertOperation)[] = matched.map(item => {
+	var ops: (TextInsertOperation | InsertMentionOperation)[] = matched.map(item => {
 		if (item.length > 3 && item[0] === '$' && item[1] === '{' && item[item.length - 1] === '}') {
 			const itemPath = item.slice(2, item.length - 1);
 			const adjustedItemPath = adjustItemPath(itemPath, allStepsNamesAndDisplayNames);
@@ -71,11 +71,12 @@ function adjustItemPath(itemPath: string, allStepsNamesAndDisplayNames: { displa
 		return itemPath;
 	}
 }
-interface MentionInsertOperation {
+export interface InsertMentionOperation {
 	insert: {
 		mention: {
 			value: string;
 			serverValue: string;
+			denotationChar: string;
 		};
 	};
 }
@@ -84,7 +85,7 @@ interface TextInsertOperation {
 }
 
 export interface QuillEditorOperationsObject {
-	ops: (MentionInsertOperation | TextInsertOperation)[];
+	ops: (InsertMentionOperation | TextInsertOperation)[];
 }
 
 export function fromOpsToText(operations: QuillEditorOperationsObject) {
@@ -111,14 +112,3 @@ function replaceArrayNotationsWithSpaces(str: string) {
 		return ` ${indexOfArrayWitoutBrackets}`;
 	});
 }
-// const digitsRegexWithTrailingSpace = / [0-9]+/g;
-// function replaceDigitsTextWithArrayNotation(str: string) {
-// 	return str.replace(digitsRegexWithTrailingSpace, foundDigitsWithTrailingSpace => {
-// 		const digitsWithoutTrailingSpace = foundDigitsWithTrailingSpace.slice(1);
-// 		return `[${digitsWithoutTrailingSpace}]`;
-// 	});
-// }
-// const spaceRegex = / /g;
-// function replaceSpacesWithDots(str: string) {
-// 	return str.replace(spaceRegex, '.');
-// }

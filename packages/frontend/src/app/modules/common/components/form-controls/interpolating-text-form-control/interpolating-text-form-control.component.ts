@@ -20,6 +20,7 @@ import {
 	CustomErrorMatcher,
 	fromOpsToText,
 	fromTextToOps,
+	InsertMentionOperation,
 	QuillEditorOperationsObject,
 	QuillMaterialBase,
 } from './utils';
@@ -124,7 +125,6 @@ export class InterpolatingTextFormControlComponent
 	ngOnInit(): void {
 		this.valueChanges$ = this.editorFormControl.valueChanges.pipe(
 			tap(val => {
-				console.log(val);
 				if (val.ops.length === 1 && val.ops[0].insert === '\n') {
 					this._value = '';
 					this.onChange('');
@@ -199,6 +199,10 @@ export class InterpolatingTextFormControlComponent
 		this.describedBy = ids.join(' ');
 	}
 	onContainerClick(): void {
+		this.focusEditor();
+	}
+
+	focusEditor() {
 		this.editor.quillEditor.focus();
 	}
 
@@ -222,5 +226,9 @@ export class InterpolatingTextFormControlComponent
 		this.onTouch();
 		this.focused = true;
 		this.stateChanges.next();
+	}
+
+	addMention(mentionOp: InsertMentionOperation) {
+		this.editor.quillEditor.getModule('mention').insertItem(mentionOp.insert.mention, true);
 	}
 }
