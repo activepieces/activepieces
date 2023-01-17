@@ -66,6 +66,7 @@ import { GenericMentionItemComponent } from './components/form-controls/interpol
 import { CodeStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/code-step-mention-item/code-step-mention-item.component';
 import { MentionsListComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/mentions-list.component';
 import { GenericStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/generic-step-mention-item/generic-step-mention-item.component';
+import { PieceStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component';
 
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 0,
@@ -112,7 +113,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		GenericMentionItemComponent,
 		CodeStepMentionItemComponent,
 		MentionsListComponent,
-  GenericStepMentionItemComponent,
+		GenericStepMentionItemComponent,
+		PieceStepMentionItemComponent,
 	],
 	imports: [
 		FontAwesomeModule,

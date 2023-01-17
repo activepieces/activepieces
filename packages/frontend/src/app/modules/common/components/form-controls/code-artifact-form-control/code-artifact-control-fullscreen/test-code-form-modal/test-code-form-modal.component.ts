@@ -23,10 +23,10 @@ export class TestCodeFormModalComponent {
 		private formBuilder: FormBuilder,
 		private dialogRef: MatDialogRef<TestCodeFormModalComponent>,
 		private codeService: CodeService,
-		@Inject(MAT_DIALOG_DATA) public data: { testData: Object | undefined }
+		@Inject(MAT_DIALOG_DATA) public data?: { testData: Object | undefined }
 	) {
 		this.testCodeForm = this.formBuilder.group({
-			context: new FormControl(this.data.testData ? JSON.stringify(this.data.testData) : '{\n\n}', {
+			context: new FormControl(this.data?.testData ? JSON.stringify(this.data.testData) : '{\n\n}', {
 				nonNullable: true,
 				validators: [Validators.required, jsonValidator],
 			}),

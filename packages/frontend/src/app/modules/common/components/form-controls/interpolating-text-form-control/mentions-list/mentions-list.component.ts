@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Output } from '@angul
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { combineLatest, map, Observable, startWith } from 'rxjs';
-import { ActionType } from 'shared';
+import { ActionType, TriggerType } from 'shared';
 import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
 import { InsertMentionOperation, MentionListItem } from '../utils';
@@ -16,7 +16,8 @@ export class MentionsListComponent {
 	searchFormControl: FormControl<string> = new FormControl('', { nonNullable: true });
 	stepsMentions$: Observable<(MentionListItem & { step: FlowItem })[]>;
 	configsMentions$: Observable<MentionListItem[]>;
-	ActionType = ActionType;
+	readonly ActionType = ActionType;
+	readonly TriggerType = TriggerType;
 	@Output()
 	addMention: EventEmitter<InsertMentionOperation> = new EventEmitter();
 	@Output()

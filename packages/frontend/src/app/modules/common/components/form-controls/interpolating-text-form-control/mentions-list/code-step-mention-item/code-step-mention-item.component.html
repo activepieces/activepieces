@@ -3,18 +3,16 @@
     <app-generic-step-mention-item [stepMention]="stepMention"></app-generic-step-mention-item>
     <div class="ap-flex-grow"></div>
     <app-button btnColor="primary" btnStyle="basic" type="button" btnSize="small" [darkLoadingSpinner]="true"
-      [loading]="testing" (click)="$event.stopPropagation(); openTestCodeModal();">Test
+      [loading]="(testing$|async)!" (click)="$event.stopPropagation();" (buttonClicked)="openTestCodeModal();">Test
     </app-button>
+
   </div>
 </button>
-<ng-container *ngIf="(codeStepHasError$|async)===true;else mentionsTreeTemplate">
-  <div class="ap-pl-6">
+<ng-container *ngIf="codeStepTest$ | async as result">
+  <app-step-mentions-tree *ngIf="result.children" [stepOutputObjectChildNodes]="result.children"
+    [stepDisplayName]="stepMention.step.displayName"
+    (mentionClicked)="mentionClicked.emit($event)"></app-step-mentions-tree>
+  <div class="ap-pl-6" *ngIf="result.error">
     <app-state-icon [showStatusText]="true" [succeeded]="false" textAfter="Step failed"></app-state-icon>
   </div>
 </ng-container>
-<ng-template #mentionsTreeTemplate>
-  <ng-container *ngIf="codeStepTest$ | async as childNodes">
-    <app-step-mentions-tree [stepOutputObjectChildNodes]="childNodes" [stepDisplayName]="stepMention.step.displayName"
-      (mentionClicked)="mentionClicked.emit($event)"></app-step-mentions-tree>
-  </ng-container>
-</ng-template>

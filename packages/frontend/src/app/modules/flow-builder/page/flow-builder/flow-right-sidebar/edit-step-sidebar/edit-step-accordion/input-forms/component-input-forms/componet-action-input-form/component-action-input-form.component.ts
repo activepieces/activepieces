@@ -117,17 +117,17 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 		);
 	}
 
-	fetchActions(componentName: string) {
-		const component$ = this.actionMetaDataService.connectorComponents().pipe(
-			map(comps => {
-				const component = comps.find(c => c.name === componentName);
+	fetchActions(pieceName: string) {
+		const pieces$ = this.actionMetaDataService.getPieces().pipe(
+			map(pieces => {
+				const component = pieces.find(c => c.name === pieceName);
 				if (!component) {
-					throw new Error(`Activepieces- component not found: ${componentName}`);
+					throw new Error(`Activepieces- piece not found: ${pieceName}`);
 				}
 				return component;
 			})
 		);
-		this.actions$ = component$.pipe(
+		this.actions$ = pieces$.pipe(
 			map(component => {
 				const actionsKeys = Object.keys(component.actions);
 				return actionsKeys.map(actionName => {

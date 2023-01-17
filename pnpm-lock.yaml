@@ -266,7 +266,7 @@ importers:
       jszip: 3.10.1
       kl-angular-mentions: 1.2.3_wcjhsjedbutghxn65tv34lliyq
       marked: 4.2.5
-      monaco-editor: link:_static/assets/monaco-editor
+      monaco-editor: link:dist/activepieces/assets/monaco-editor
       ngx-quill: 20.0.1_6bbvy3hpaiyg2vss2cyp33ypwa
       ngx-skeleton-loader: 5.0.0_wcjhsjedbutghxn65tv34lliyq
       posthog-js: 1.39.0
@@ -312,6 +312,64 @@ importers:
       typescript: 4.8.4
 
   packages/frontend/_static/assets/monaco-editor:
+    specifiers:
+      '@types/mocha': ^9.1.0
+      '@typescript/vfs': ^1.3.5
+      chai: ^4.3.6
+      clean-css: ^5.2.4
+      esbuild: ^0.14.18
+      esbuild-plugin-alias: ^0.2.1
+      glob: ^7.2.0
+      husky: ^7.0.4
+      jsdom: ^19.0.0
+      jsonc-parser: ^3.0.0
+      mocha: ^9.2.0
+      monaco-editor-core: 0.33.0
+      playwright: ^1.18.1
+      prettier: ^2.5.1
+      pretty-quick: ^3.1.3
+      requirejs: ^2.3.6
+      terser: ^5.10.0
+      ts-node: ^10.6.0
+      typedoc: ^0.22.11
+      typescript: 4.5.5
+      vscode-css-languageservice: ^5.1.12
+      vscode-html-languageservice: ^4.2.1
+      vscode-json-languageservice: 4.2.0
+      vscode-languageserver-textdocument: ^1.0.4
+      vscode-languageserver-types: 3.16.0
+      vscode-uri: 3.0.3
+      yaserver: ^0.4.0
+    devDependencies:
+      '@types/mocha': 9.1.1
+      '@typescript/vfs': 1.4.0
+      chai: 4.3.7
+      clean-css: 5.3.1
+      esbuild: 0.14.54
+      esbuild-plugin-alias: 0.2.1
+      glob: 7.2.3
+      husky: 7.0.4
+      jsdom: 19.0.0
+      jsonc-parser: 3.2.0
+      mocha: 9.2.2
+      monaco-editor-core: 0.33.0
+      playwright: 1.29.2
+      prettier: 2.8.1
+      pretty-quick: 3.1.3_prettier@2.8.1
+      requirejs: 2.3.6
+      terser: 5.16.1
+      ts-node: 10.9.1_typescript@4.5.5
+      typedoc: 0.22.18_typescript@4.5.5
+      typescript: 4.5.5
+      vscode-css-languageservice: 5.4.2
+      vscode-html-languageservice: 4.2.5
+      vscode-json-languageservice: 4.2.0
+      vscode-languageserver-textdocument: 1.0.8
+      vscode-languageserver-types: 3.16.0
+      vscode-uri: 3.0.3
+      yaserver: 0.4.0
+
+  packages/frontend/dist/activepieces/assets/monaco-editor:
     specifiers:
       '@types/mocha': ^9.1.0
       '@typescript/vfs': ^1.3.5
@@ -593,7 +651,7 @@ packages:
         optional: true
     dependencies:
       ajv: 8.11.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.11.0
       jsonc-parser: 3.2.0
       rxjs: 6.6.7
       source-map: 0.7.4
@@ -609,7 +667,7 @@ packages:
         optional: true
     dependencies:
       ajv: 8.11.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.11.0
       chokidar: 3.5.3
       jsonc-parser: 3.2.0
       rxjs: 6.6.7
@@ -5172,13 +5230,15 @@ packages:
       indent-string: 4.0.0
     dev: true
 
-  /ajv-formats/2.1.1:
+  /ajv-formats/2.1.1_ajv@8.11.0:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependencies:
+      ajv: ^8.0.0
     peerDependenciesMeta:
       ajv:
         optional: true
     dependencies:
-      ajv: 8.12.0
+      ajv: 8.11.0
     dev: true
 
   /ajv-formats/2.1.1_ajv@8.12.0:
@@ -5190,7 +5250,6 @@ packages:
         optional: true
     dependencies:
       ajv: 8.12.0
-    dev: false
 
   /ajv-keywords/3.5.2_ajv@6.12.6:
     resolution: {integrity: sha512-5p6WTN0DdTGVQk6VjcEju19IgaHudalcfabD7yhDGeA6bcQnmL+CpveLJq/3hvfwd1aof6L386Ougkx6RfyMIQ==}
@@ -13351,7 +13410,7 @@ packages:
     dependencies:
       '@types/json-schema': 7.0.11
       ajv: 8.12.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.12.0
       ajv-keywords: 5.1.0_ajv@8.12.0
     dev: true
 

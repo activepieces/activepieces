@@ -12,15 +12,28 @@
       (mentionClicked)="mentionClicked($event)"></app-generic-mention-item>
   </ng-container>
   <ng-container *ngFor="let stepMention of stepsMentions$|async">
-    <ng-container *ngIf="stepMention.step.type ===ActionType.CODE; else defaultStepTemplate">
-      <app-code-step-mention-item (mentionClicked)="mentionClicked($event)"
-        [stepMention]="stepMention"></app-code-step-mention-item>
-    </ng-container>
-    <ng-template #defaultStepTemplate>
-      <button mat-menu-item (click)="mentionClicked(stepMention)">
-        <app-generic-step-mention-item [stepMention]="stepMention"></app-generic-step-mention-item>
-      </button>
 
-    </ng-template>
+    <ng-container [ngSwitch]="stepMention.step.type">
+      <ng-container *ngSwitchCase="ActionType.CODE">
+        <app-code-step-mention-item (mentionClicked)="mentionClicked($event)"
+          [stepMention]="stepMention"></app-code-step-mention-item>
+      </ng-container>
+      <ng-container *ngSwitchCase="ActionType.PIECE">
+        <app-piece-step-mention-item (mentionClicked)="mentionClicked($event)"
+          [stepMention]="stepMention"></app-piece-step-mention-item>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="TriggerType.PIECE">
+        <app-piece-step-mention-item (mentionClicked)="mentionClicked($event)"
+          [stepMention]="stepMention"></app-piece-step-mention-item>
+      </ng-container>
+
+      <!-- <ng-container *ngSwitchDefault>
+        <button mat-menu-item (click)="mentionClicked(stepMention)">
+          <app-generic-step-mention-item [stepMention]="stepMention"></app-generic-step-mention-item>
+        </button>
+      </ng-container> -->
+    </ng-container>
+
   </ng-container>
 </div>
