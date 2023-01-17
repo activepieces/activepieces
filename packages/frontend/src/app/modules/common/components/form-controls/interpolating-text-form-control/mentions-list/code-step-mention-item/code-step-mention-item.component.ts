@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
-import { filter, forkJoin, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { filter, forkJoin, from, map, Observable, of, shareReplay, Subject, switchMap, tap } from 'rxjs';
 import { CodeActionSettings } from 'shared';
 import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
 import { FlowItemDetails } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
@@ -19,9 +19,8 @@ export class CodeStepMentionItemComponent implements OnInit {
 	@Input() stepMention: MentionListItem & { step: FlowItem };
 	@Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
 	flowItemDetails$: Observable<FlowItemDetails | undefined>;
-	codeStepTest$: Observable<MentionTreeNode[] | undefined>;
-	testing = false;
-	codeStepHasError$: Observable<boolean>;
+	codeStepTest$: Observable<{ children: MentionTreeNode[] | undefined; error?: boolean }>;
+	testing$: Subject<boolean> = new Subject();
 	constructor(private store: Store, private dialogService: MatDialog, private codeService: CodeService) {}
 	ngOnInit(): void {
 		this.flowItemDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetails(this.stepMention.step));
@@ -38,8 +37,7 @@ export class CodeStepMentionItemComponent implements OnInit {
 					return !!res;
 				}),
 				tap(() => {
-					this.testing = true;
-					this.codeStepHasError$ = of(false);
+					this.testing$.next(true);
 				}),
 				switchMap(context => {
 					return forkJoin({
@@ -50,25 +48,23 @@ export class CodeStepMentionItemComponent implements OnInit {
 				switchMap(res => {
 					return this.codeService.executeTest(res.artifact, res.context);
 				}),
-				tap(result => {
-					if (result.standardError) {
-						this.codeStepHasError$ = of(true);
-					}
-					this.testing = false;
+				tap(() => {
+					this.testing$.next(false);
 				}),
 				map(result => {
 					if (result.standardError) {
-						return [];
+						return { error: true, children: [] };
 					}
 					const outputResult = result.output;
-					if (typeof outputResult !== 'object') return [];
+					if (typeof outputResult !== 'object') return { children: [] };
 					const childrenNodes = traverseStepOutputAndReturnMentionTree(
 						outputResult,
 						this.stepMention.step.name,
 						this.stepMention.step.displayName
 					).children;
-					return childrenNodes;
-				})
+					return { children: childrenNodes };
+				}),
+				shareReplay(1)
 			);
 	}
 	getArtifactObs$(codeStepSettings: CodeActionSettings) {

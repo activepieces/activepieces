@@ -16,7 +16,6 @@ export class StepMentionsListComponent implements OnInit {
 	treeControl = new NestedTreeControl<MentionTreeNode>(node => node.children);
 	dataSource = new MatTreeNestedDataSource<MentionTreeNode>();
 	hasChild = (_: number, node: MentionTreeNode) => {
-		debugger;
 		return !!node.children && node.children.length > 0;
 	};
 	ngOnInit() {

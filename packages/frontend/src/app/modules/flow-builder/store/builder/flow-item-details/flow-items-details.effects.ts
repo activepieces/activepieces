@@ -13,7 +13,7 @@ export class FlowItemsDetailsEffects {
 		return this.actions$.pipe(
 			ofType(FlowItemDetailsActions.loadFlowItemsDetails),
 			switchMap(() => {
-				const components$ = this.flowItemsDetailsService.connectorComponents();
+				const components$ = this.flowItemsDetailsService.getPieces();
 				const coreTriggersFlowItemsDetails$ = of(this.flowItemsDetailsService.triggerItemsDetails);
 				const connectorComponentsTriggersFlowItemDetails$ = components$.pipe(
 					map(this.createFlowItemDetailsForComponents(true))
@@ -44,7 +44,7 @@ export class FlowItemsDetailsEffects {
 						return new FlowItemDetails(
 							ActionType.PIECE,
 							c.displayName,
-							`Connect to ${c.displayName} and use its api to make requests`,
+							c.description ? c.description : `Connect to ${c.displayName} and use its api to make requests`,
 							c.logoUrl,
 							{ appName: c.name }
 						);

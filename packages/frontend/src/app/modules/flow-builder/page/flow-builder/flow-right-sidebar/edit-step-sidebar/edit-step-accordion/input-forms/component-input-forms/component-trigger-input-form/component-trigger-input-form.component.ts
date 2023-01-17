@@ -98,9 +98,9 @@ export class ComponentTriggerInputFormComponent {
 	}
 
 	fetchTriggers(pieceName: string) {
-		const component$ = this.actionMetaDataService.connectorComponents().pipe(
-			map(comps => {
-				const component = comps.find(c => c.name === pieceName);
+		const component$ = this.actionMetaDataService.getPieces().pipe(
+			map(pieces => {
+				const component = pieces.find(c => c.name === pieceName);
 				if (!component) {
 					throw new Error(`Activepieces- piece not found: ${pieceName}`);
 				}

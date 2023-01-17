@@ -1,0 +1,21 @@
+<button (click)="mentionClicked.emit(_stepMention)" mat-menu-item>
+  <div class="ap-flex ap-flex-grow">
+    <app-generic-step-mention-item [stepMention]="_stepMention"></app-generic-step-mention-item>
+    <div class="ap-flex-grow"></div>
+    <app-button btnColor="primary" btnStyle="basic" type="button" btnSize="small" [darkLoadingSpinner]="true"
+      [loading]="(fetching$|async)!" (click)="$event.stopPropagation(); " (buttonClicked)="fetchSampleData()">Sample
+      Data
+    </app-button>
+  </div>
+</button>
+<ng-container *ngIf="sampleData$ | async as result">
+  <app-step-mentions-tree *ngIf="result.children" [stepOutputObjectChildNodes]="result.children"
+    [stepDisplayName]="_stepMention.step.displayName"
+    (mentionClicked)="mentionClicked.emit($event)"></app-step-mentions-tree>
+  <ng-container *ngIf="result.error">
+    <div class="ap-pl-6">
+      <app-state-icon [showStatusText]="true" [succeeded]="false" [textAfter]="result.error"></app-state-icon>
+    </div>
+  </ng-container>
+
+</ng-container>

@@ -162,7 +162,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 				this.optionsObservables$[c.key] = combineLatest(refreshers$).pipe(
 					switchMap(res => {
 						return this.store.select(BuilderSelectors.selectCurrentCollection).pipe(take(1), switchMap(collection => {
-							return this.actionMetaDataService.getConnectorActionConfigOptions(
+							return this.actionMetaDataService.getPieceActionConfigOptions(
 								{ propertyName: c.key, stepName: this.stepName, input: res, collectionVersionId: collection.version!.id },
 								this.pieceName
 							);
