@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {
 	ControlValueAccessor,
 	UntypedFormArray,
@@ -7,7 +7,7 @@ import {
 	UntypedFormGroup,
 	NG_VALUE_ACCESSOR,
 } from '@angular/forms';
-import { Observable, tap, timer } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { ThemeService } from '../../../service/theme.service';
 
 @Component({
@@ -27,27 +27,31 @@ export class DictionaryFormControlComponent implements ControlValueAccessor, OnI
 	disabled = false;
 	onChange = val => {};
 	onTouched = () => {};
-	focusOnLastKeyInput$: Observable<0>;
-	@ViewChildren('key') inputs: QueryList<ElementRef>;
+	valueChanges$: Observable<void>;
 	constructor(private fb: UntypedFormBuilder, public themeService: ThemeService) {
 		this.form = this.fb.group({ pairs: this.fb.array([]) });
+		this.valueChanges$ = this.form.valueChanges.pipe(
+			tap(() => {
+				this.dictionaryControlValueChanged();
+			})
+		);
 	}
 	ngOnInit(): void {
 		this.addNewPair();
 	}
 
 	writeValue(dictionaryValue: any): void {
-		this.pairs.clear();
+		this.pairs.clear({ emitEvent: false });
 		if (dictionaryValue) {
 			const pairsKeys = Object.keys(dictionaryValue);
 			const pairsToInsert = pairsKeys.map(key => {
 				return { key: key, value: dictionaryValue[key] };
 			});
 			pairsToInsert.forEach(p => {
-				this.addPair(p);
+				this.addPair(p, false);
 			});
 		}
-		this.addNewPair();
+		this.addNewPair(false);
 	}
 	registerOnChange(change: any): void {
 		this.onChange = change;
@@ -59,26 +63,16 @@ export class DictionaryFormControlComponent implements ControlValueAccessor, OnI
 	get pairs() {
 		return this.form.get('pairs') as UntypedFormArray;
 	}
-	addNewPair(withFocus = false) {
-		this.addPair({ key: '', value: '' });
-		if (withFocus) {
-			this.focusOnLastKeyInput$ = timer(50).pipe(
-				tap(() => {
-					const lastKeyInput = this.inputs.get(this.inputs.length - 1);
-					if (lastKeyInput) {
-						lastKeyInput.nativeElement.focus();
-					}
-				})
-			);
-		}
+	addNewPair(triggerChangeDetection: boolean = true) {
+		this.addPair({ key: '', value: '' }, triggerChangeDetection);
 	}
 
-	addPair(pair: { key: string; value: string }) {
+	addPair(pair: { key: string; value: string }, triggerChangeDetection: boolean = true) {
 		const pairGroup = this.fb.group({
 			key: new UntypedFormControl(pair.key),
 			value: new UntypedFormControl(pair.value),
 		});
-		this.pairs.push(pairGroup);
+		this.pairs.push(pairGroup, { emitEvent: triggerChangeDetection });
 	}
 
 	removePair(indexOfPair: number) {

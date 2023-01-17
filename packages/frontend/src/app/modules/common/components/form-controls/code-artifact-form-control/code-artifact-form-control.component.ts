@@ -46,7 +46,7 @@ export class CodeArtifactFormControlComponent implements ControlValueAccessor, O
 
 	writeValue(artifact: Artifact): void {
 		if (artifact && (artifact.content || artifact.package)) {
-			this.codeArtifactForm.patchValue(artifact);
+			this.codeArtifactForm.patchValue(artifact, { emitEvent: false });
 		}
 	}
 

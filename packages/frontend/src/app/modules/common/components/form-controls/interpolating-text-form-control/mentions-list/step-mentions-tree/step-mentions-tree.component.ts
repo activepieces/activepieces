@@ -1,7 +1,13 @@
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
-import { MentionListItem, MentionTreeNode, replaceArrayNotationsWithSpaces, replaceDotsWithSpaces } from '../../utils';
+import {
+	arrayNotationRegex,
+	MentionListItem,
+	MentionTreeNode,
+	replaceArrayNotationsWithSpaces,
+	replaceDotsWithSpaces,
+} from '../../utils';
 
 @Component({
 	selector: 'app-step-mentions-tree',
@@ -28,11 +34,13 @@ export class StepMentionsListComponent implements OnInit {
 				replaceDotsWithSpaces(this.replaceStepNameWithDisplayNameInPath(node.propertyPath, this.stepDisplayName))
 			),
 		};
-
 		this.mentionClicked.emit(mentionListItem);
 	}
 	replaceStepNameWithDisplayNameInPath(nodePath: string, stepName: string) {
 		const splitPath = nodePath.split('.');
-		return [stepName, ...splitPath.slice(1)].join('.');
+		const arrayNotationNextToStep = splitPath[0].match(arrayNotationRegex);
+		
+		const newPathHead = stepName + (arrayNotationNextToStep !== null ? arrayNotationNextToStep![0] : '');
+		return [newPathHead, ...splitPath.slice(1)].join('.');
 	}
 }

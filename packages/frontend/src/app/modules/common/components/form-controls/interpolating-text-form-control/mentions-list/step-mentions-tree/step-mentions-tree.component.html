@@ -1,8 +1,10 @@
-<mat-tree [dataSource]="dataSource" [treeControl]="treeControl" class="step-result-tree">
+<mat-tree (click)="$event.stopPropagation();" [dataSource]="dataSource" [treeControl]="treeControl"
+  class="step-result-tree">
   <!-- This is the tree node template for leaf nodes -->
   <!-- There is inline padding applied to this node using styles.
     This padding value depends on the mat-icon-button width. -->
-  <mat-tree-node (click)="mentionTreeNodeClicked(node)" mat-menu-item *matTreeNodeDef="let node" matTreeNodeToggle>
+  <mat-tree-node (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)" mat-menu-item
+    *matTreeNodeDef="let node" matTreeNodeToggle>
     {{node.key}}
   </mat-tree-node>
   <!-- This is the tree node template for expandable nodes -->

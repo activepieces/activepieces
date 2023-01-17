@@ -52,7 +52,6 @@ export class PieceStepMentionItemComponent {
 				throw new Error("Activepieces- step isn't of a piece type");
 			}),
 			map(sampleData => {
-				debugger;
 				const childrenNodes = traverseStepOutputAndReturnMentionTree(
 					sampleData,
 					this._stepMention.step.name,

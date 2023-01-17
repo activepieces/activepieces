@@ -63,7 +63,6 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(
 			tap(readOnly => {
 				if (readOnly) {
-					console.log('readonly');
 					this.stepForm.disable();
 				} else if (!this.stepForm.enabled) {
 					this.stepForm.enable();

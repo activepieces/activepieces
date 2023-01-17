@@ -15,7 +15,7 @@ import { ControlValueAccessor, FormControl, FormGroupDirective, NgControl, NgFor
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldControl } from '@angular/material/form-field';
 import { QuillEditorComponent, QuillModules } from 'ngx-quill';
-import { lastValueFrom, Observable, Subject, take, tap } from 'rxjs';
+import { lastValueFrom, Observable, skip, Subject, take, tap } from 'rxjs';
 import {
 	CustomErrorMatcher,
 	fromOpsToText,
@@ -48,6 +48,7 @@ export class InterpolatingTextFormControlComponent
 	extends QuillMaterialBase
 	implements OnInit, OnDestroy, DoCheck, MatFormFieldControl<string>, ControlValueAccessor
 {
+	@Input() insideMatField: boolean = true;
 	readonly modules: QuillModules = {
 		mention: {
 			mentionDenotationChars: ['@'],
@@ -126,11 +127,24 @@ export class InterpolatingTextFormControlComponent
 
 	ngOnInit(): void {
 		this.valueChanges$ = this.editorFormControl.valueChanges.pipe(
+			skip(1),
 			tap(val => {
+				debugger;
 				if (val.ops.length === 1 && val.ops[0].insert === '\n') {
 					this._value = '';
 					this.onChange('');
 				} else {
+					//quill always ads \n at the end of the last operation so we must remove it
+					let lastOp = val.ops.pop();
+					if (lastOp) {
+						if (typeof lastOp!.insert === 'string') {
+							if (lastOp!.insert.endsWith('\n')) {
+								lastOp!.insert = lastOp!.insert.slice(0, lastOp!.insert.length - 1);
+							}
+						}
+						val.ops.push(lastOp);
+					}
+
 					this._value = fromOpsToText(val);
 					this.onChange(this._value);
 				}
@@ -191,8 +205,9 @@ export class InterpolatingTextFormControlComponent
 		const stepsNamesAndDisplayNames = await lastValueFrom(
 			this.store.select(BuilderSelectors.selectAllFlowStepsNamesAndDisplayNames).pipe(take(1))
 		);
+
 		const parsedTextToOps = fromTextToOps(value, stepsNamesAndDisplayNames);
-		this.editorFormControl.setValue(parsedTextToOps);
+		this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
 		this._value = value;
 	}
 	registerOnChange(fn: any): void {

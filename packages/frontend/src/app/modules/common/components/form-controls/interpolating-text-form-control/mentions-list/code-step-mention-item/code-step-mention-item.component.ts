@@ -75,4 +75,7 @@ export class CodeStepMentionItemComponent implements OnInit {
 			return from(this.codeService.readFile(atob(codeStepSettings.artifact!)));
 		}
 	}
+	emitMention(mentionListItem: MentionListItem) {
+		this.mentionClicked.emit(mentionListItem);
+	}
 }

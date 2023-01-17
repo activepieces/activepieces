@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { combineLatest, map, Observable, startWith } from 'rxjs';
+import { combineLatest, distinctUntilChanged, map, Observable, startWith, take } from 'rxjs';
 import { ActionType, TriggerType } from 'shared';
 import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
@@ -25,24 +25,24 @@ export class MentionsListComponent {
 	closeMenu: EventEmitter<void> = new EventEmitter();
 	constructor(private store: Store) {
 		this.stepsMentions$ = combineLatest({
-			steps: this.store.select(BuilderSelectors.selectAllStepsForMentionsDropdown),
-			search: this.searchFormControl.valueChanges.pipe(startWith('')),
+			steps: this.store.select(BuilderSelectors.selectAllStepsForMentionsDropdown).pipe(take(1)),
+			search: this.searchFormControl.valueChanges.pipe(startWith(''), distinctUntilChanged()),
 		}).pipe(
 			map(res => {
 				return res.steps.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()));
 			})
 		);
 		this.configsMentions$ = combineLatest({
-			configs: this.store.select(BuilderSelectors.selectAllConfigsForMentionsDropdown),
-			search: this.searchFormControl.valueChanges.pipe(startWith('')),
+			configs: this.store.select(BuilderSelectors.selectAllConfigsForMentionsDropdown).pipe(take(1)),
+			search: this.searchFormControl.valueChanges.pipe(startWith(''), distinctUntilChanged()),
 		}).pipe(
 			map(res => {
 				return res.configs.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()));
 			})
 		);
 		this.connectionsMentions$ = combineLatest({
-			connections: this.store.select(BuilderSelectors.selectAppConnectionsForMentionsDropdown),
-			search: this.searchFormControl.valueChanges.pipe(startWith('')),
+			connections: this.store.select(BuilderSelectors.selectAppConnectionsForMentionsDropdown).pipe(take(1)),
+			search: this.searchFormControl.valueChanges.pipe(startWith(''), distinctUntilChanged()),
 		}).pipe(
 			map(res => {
 				return res.connections.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()));

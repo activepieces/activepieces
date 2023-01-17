@@ -48,8 +48,8 @@
     <mat-form-field *ngIf="config.type === configType.SHORT_TEXT || config.type === configType.NUMBER" class="ap-w-full"
       appearance="outline">
       <mat-label>{{config.label}}</mat-label>
-      <input matInput [formControlName]="config.key" [matTooltip]="config.description"
-        [type]=" config.type === configType.SHORT_TEXT? 'text' : 'number'" />
+      <app-interpolating-text-form-control [matTooltip]="config.description"
+        [formControlName]="config.key"></app-interpolating-text-form-control>
       <mat-error *ngIf="formGroup.get(config.key)?.invalid">
         {{config.label}} is required
       </mat-error>
@@ -57,8 +57,8 @@
 
     <mat-form-field *ngSwitchCase="configType.LONG_TEXT" class="ap-w-full" appearance="outline">
       <mat-label>{{config.label}}</mat-label>
-      <textarea matInput [formControlName]="config.key">
-      </textarea>
+      <app-interpolating-text-form-control [matTooltip]="config.description"
+        [formControlName]="config.key"></app-interpolating-text-form-control>
       <mat-error *ngIf="formGroup.get(config.key)?.invalid">
         {{config.label}} is required
       </mat-error>

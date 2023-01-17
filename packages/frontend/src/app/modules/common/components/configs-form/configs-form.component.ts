@@ -77,8 +77,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	@Input() pieceName: string;
 	@Input() pieceDisplayName: string;
 	form!: UntypedFormGroup;
-	OnChange = value => { };
-	OnTouched = () => { };
+	OnChange = value => {};
+	OnTouched = () => {};
 	updateValueOnChange$: Observable<void> = new Observable<void>();
 	updateAuthConfig$: Observable<void>;
 	configType = InputType;
@@ -161,12 +161,20 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 				}
 				this.optionsObservables$[c.key] = combineLatest(refreshers$).pipe(
 					switchMap(res => {
-						return this.store.select(BuilderSelectors.selectCurrentCollection).pipe(take(1), switchMap(collection => {
-							return this.actionMetaDataService.getPieceActionConfigOptions(
-								{ propertyName: c.key, stepName: this.stepName, input: res, collectionVersionId: collection.version!.id },
-								this.pieceName
-							);
-						}));
+						return this.store.select(BuilderSelectors.selectCurrentCollection).pipe(
+							take(1),
+							switchMap(collection => {
+								return this.actionMetaDataService.getPieceActionConfigOptions(
+									{
+										propertyName: c.key,
+										stepName: this.stepName,
+										input: res,
+										collectionVersionId: collection.version!.id,
+									},
+									this.pieceName
+								);
+							})
+						);
 					}),
 					shareReplay(1),
 					catchError(err => {

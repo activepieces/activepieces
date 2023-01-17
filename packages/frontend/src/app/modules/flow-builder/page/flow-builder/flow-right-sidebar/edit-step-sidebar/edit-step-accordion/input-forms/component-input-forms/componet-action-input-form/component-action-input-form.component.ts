@@ -236,7 +236,6 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 			}
 			this.selectedAction$ = this.actions$.pipe(
 				map(items => {
-					console.log(items.find(it => it.value.actionName === selectedActionValue.actionName));
 					return items.find(it => it.value.actionName === selectedActionValue.actionName);
 				})
 			);
