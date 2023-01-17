@@ -303,7 +303,7 @@ const selectAllConfigsForMentionsDropdown = createSelector(
 		return [...collectionConfigs].map(c => {
 			const result = {
 				label: c.key,
-				value: `\${connections.${c.key}}`,
+				value: `\${configs.${c.key}}`,
 			};
 			return result;
 		});
@@ -336,6 +336,19 @@ const selectAllStepsForMentionsDropdown = createSelector(
 		});
 	}
 );
+const selectAppConnectionsForMentionsDropdown = createSelector(
+	selectAllAppConnections,
+	(connections: AppConnection[]) => {
+		return [...connections].map(c => {
+			const result: MentionListItem = {
+				label: c.name,
+				value: `\${connections.${c.name}}`,
+			};
+			return result;
+		});
+	}
+);
+
 export const BuilderSelectors = {
 	selectCurrentCollection,
 	selectCurrentCollectionId,
@@ -382,4 +395,5 @@ export const BuilderSelectors = {
 	selectAllFlowSteps,
 	selectAllFlowStepsNamesAndDisplayNames,
 	selectAllStepsForMentionsDropdown,
+	selectAppConnectionsForMentionsDropdown,
 };

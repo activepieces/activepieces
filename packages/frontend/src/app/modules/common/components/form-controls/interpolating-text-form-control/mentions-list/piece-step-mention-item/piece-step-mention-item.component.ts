@@ -5,7 +5,7 @@ import { ActionType, PieceAction, PieceTrigger, TriggerType } from 'shared';
 import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
 import { FlowItemDetails } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
+import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
 import { MentionListItem, MentionTreeNode, traverseStepOutputAndReturnMentionTree } from '../../utils';
 
 @Component({

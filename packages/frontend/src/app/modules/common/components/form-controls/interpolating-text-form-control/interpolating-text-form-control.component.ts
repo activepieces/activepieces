@@ -27,7 +27,8 @@ import {
 } from './utils';
 import 'quill-mention';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
+import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
+
 @Component({
 	selector: 'app-interpolating-text-form-control',
 	templateUrl: './interpolating-text-form-control.component.html',

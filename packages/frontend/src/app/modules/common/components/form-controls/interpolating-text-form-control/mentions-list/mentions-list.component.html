@@ -11,6 +11,10 @@
     <app-generic-mention-item [mention]="configMention"
       (mentionClicked)="mentionClicked($event)"></app-generic-mention-item>
   </ng-container>
+  <ng-container *ngFor="let connectionMention of connectionsMentions$|async">
+    <app-generic-mention-item [mention]="connectionMention" iconUrl="./assets/img/custom/connections.svg"
+      (mentionClicked)="mentionClicked($event)"></app-generic-mention-item>
+  </ng-container>
   <ng-container *ngFor="let stepMention of stepsMentions$|async">
 
     <ng-container [ngSwitch]="stepMention.step.type">
@@ -28,11 +32,11 @@
           [stepMention]="stepMention"></app-piece-step-mention-item>
       </ng-container>
 
-      <!-- <ng-container *ngSwitchDefault>
+      <ng-container *ngSwitchDefault>
         <button mat-menu-item (click)="mentionClicked(stepMention)">
           <app-generic-step-mention-item [stepMention]="stepMention"></app-generic-step-mention-item>
         </button>
-      </ng-container> -->
+      </ng-container>
     </ng-container>
 
   </ng-container>

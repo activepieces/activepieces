@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import { combineLatest, map, Observable, startWith } from 'rxjs';
 import { ActionType, TriggerType } from 'shared';
 import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
+import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
 import { InsertMentionOperation, MentionListItem } from '../utils';
 
 @Component({
@@ -16,6 +16,7 @@ export class MentionsListComponent {
 	searchFormControl: FormControl<string> = new FormControl('', { nonNullable: true });
 	stepsMentions$: Observable<(MentionListItem & { step: FlowItem })[]>;
 	configsMentions$: Observable<MentionListItem[]>;
+	connectionsMentions$: Observable<MentionListItem[]>;
 	readonly ActionType = ActionType;
 	readonly TriggerType = TriggerType;
 	@Output()
@@ -37,6 +38,14 @@ export class MentionsListComponent {
 		}).pipe(
 			map(res => {
 				return res.configs.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()));
+			})
+		);
+		this.connectionsMentions$ = combineLatest({
+			connections: this.store.select(BuilderSelectors.selectAppConnectionsForMentionsDropdown),
+			search: this.searchFormControl.valueChanges.pipe(startWith('')),
+		}).pipe(
+			map(res => {
+				return res.connections.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()));
 			})
 		);
 	}
