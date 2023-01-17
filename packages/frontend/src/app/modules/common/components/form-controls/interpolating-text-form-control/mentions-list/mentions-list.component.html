@@ -6,10 +6,21 @@
   <mat-icon matPrefix svgIcon="search"></mat-icon>
   <input [formControl]="searchFormControl" matInput placeholder="Search" autocomplete="off">
 </mat-form-field>
-<div class="ap-max-h-[200px] ap-overflow-scroll">
-  <ng-container *ngFor="let item of dropDownItems$|async; let isLast=last">
-    <button (click)="mentionClicked(item)" mat-menu-item>{{item.label}}</button>
-    <app-step-mentions-list></app-step-mentions-list>
-    <mat-divider *ngIf="!isLast"></mat-divider>
+<div class="ap-max-h-[220px] ap-overflow-scroll">
+  <ng-container *ngFor="let configMention of configsMentions$|async">
+    <app-generic-mention-item [mention]="configMention"
+      (mentionClicked)="mentionClicked($event)"></app-generic-mention-item>
+  </ng-container>
+  <ng-container *ngFor="let stepMention of stepsMentions$|async">
+    <ng-container *ngIf="stepMention.step.type ===ActionType.CODE; else defaultStepTemplate">
+      <app-code-step-mention-item (mentionClicked)="mentionClicked($event)"
+        [stepMention]="stepMention"></app-code-step-mention-item>
+    </ng-container>
+    <ng-template #defaultStepTemplate>
+      <button mat-menu-item (click)="mentionClicked(stepMention)">
+        <app-generic-step-mention-item [stepMention]="stepMention"></app-generic-step-mention-item>
+      </button>
+
+    </ng-template>
   </ng-container>
 </div>

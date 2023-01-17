@@ -8,9 +8,11 @@ export class StateIconComponent implements OnInit {
 	@Input() size = 16;
 	@Input() succeeded: boolean;
 	@Input() showStatusText = true;
-	textAfter: string = '';
+	@Input() textAfter: string = '';
 	constructor() {}
 	ngOnInit(): void {
-		this.textAfter = this.succeeded ? 'Success' : 'Failed';
+		if (!this.textAfter) {
+			this.textAfter = this.succeeded ? 'Success' : 'Failed';
+		}
 	}
 }

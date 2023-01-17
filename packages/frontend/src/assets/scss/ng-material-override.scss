@@ -604,15 +604,17 @@ mat-option.add-auth{
   max-width: unset !important;
 }
 
-app-step-mentions-list
+app-mentions-list
 {
   mat-tree
   {
-    padding-left:20px;
+   padding-left:20px;
   }
   .mdc-list-item__primary-text
   {
     display: flex;
-    align-items: center;;
+    align-items: center;
+    width:100%;
   }
+
 }

@@ -12,7 +12,7 @@ import { FormControl } from '@angular/forms';
 })
 export class FlowRightSidebarComponent implements OnInit {
 	rightSidebarType$: Observable<RightSideBarType>;
-	testFormControl: FormControl<string> = new FormControl('${step_1} and ${configs.first}', { nonNullable: true });
+	testFormControl: FormControl<string> = new FormControl('', { nonNullable: true });
 	constructor(private store: Store) {}
 
 	ngOnInit(): void {

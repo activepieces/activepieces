@@ -58,10 +58,15 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { InterpolatingTextFormControlComponent } from './components/form-controls/interpolating-text-form-control/interpolating-text-form-control.component';
 import { QuillModule } from 'ngx-quill';
 import { MatIconModule } from '@angular/material/icon';
-import { MentionsListComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/mentions-list.component';
 import { MatDividerModule } from '@angular/material/divider';
-import { StepMentionsListComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/step-mentions-list/step-mentions-list.component';
+import { StepMentionsListComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/step-mentions-tree/step-mentions-tree.component';
 import { MatTreeModule } from '@angular/material/tree';
+import { MentionListItemTemplateComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/mention-list-item-template/mention-list-item-template.component';
+import { GenericMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/generic-mention-item/generic-mention-item.component';
+import { CodeStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/code-step-mention-item/code-step-mention-item.component';
+import { MentionsListComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/mentions-list.component';
+import { GenericStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/generic-step-mention-item/generic-step-mention-item.component';
+
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 0,
 	hideDelay: 0,
@@ -102,8 +107,12 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		AuthConfigsPipe,
 		OAuth2CloudConnectControlComponent,
 		InterpolatingTextFormControlComponent,
-		MentionsListComponent,
 		StepMentionsListComponent,
+		MentionListItemTemplateComponent,
+		GenericMentionItemComponent,
+		CodeStepMentionItemComponent,
+		MentionsListComponent,
+  GenericStepMentionItemComponent,
 	],
 	imports: [
 		FontAwesomeModule,
