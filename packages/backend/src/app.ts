@@ -1,4 +1,4 @@
-import fastify from "fastify";
+import fastify, { FastifyRequest } from "fastify";
 import cors from "@fastify/cors";
 import { databaseModule } from "./database/database-module";
 import { authenticationModule } from "./authentication/authentication.module";
@@ -56,6 +56,21 @@ app.register(flowRunModule);
 app.register(webhookModule);
 app.register(appConnectionModule);
 
+app.get(
+  "/redirect",
+  async (
+    request: FastifyRequest<{ Querystring: { code: string; } }>, reply
+  ) => {
+    let params = {
+      "code": request.query.code
+    };
+    if (params.code === undefined) {
+      reply.send("The code is missing in url");
+    } else {
+      reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${params['code']}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
+    }
+  }
+);
 app.setErrorHandler(errorHandler);
 
 const start = async () => {

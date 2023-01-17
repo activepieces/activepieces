@@ -10,6 +10,7 @@ const ignoredRoutes = new Set([
   "/v1/oauth2/claim-with-cloud",
   "/v1/pieces",
   "/v1/webhooks",
+  "/redirect"
 ]);
 
 const HEADER_PREFIX = "Bearer ";
