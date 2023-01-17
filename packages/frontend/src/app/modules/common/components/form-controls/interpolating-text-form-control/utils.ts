@@ -41,12 +41,14 @@ export function fromTextToOps(
 	var matched = text.split(regex).filter(el => el);
 	var ops: (TextInsertOperation | InsertMentionOperation)[] = matched.map(item => {
 		if (item.length > 3 && item[0] === '$' && item[1] === '{' && item[item.length - 1] === '}') {
-			const itemPath = item.slice(2, item.length - 1);
-			const adjustedItemPath = adjustItemPath(itemPath, allStepsNamesAndDisplayNames);
+			const itemPathWithoutInterpolationDenotation = item.slice(2, item.length - 1);
+			const mentionText = replaceArrayNotationsWithSpaces(
+				replaceDotsWithSpaces(adjustItemPath(itemPathWithoutInterpolationDenotation, allStepsNamesAndDisplayNames))
+			);
 			return {
 				insert: {
 					mention: {
-						value: replaceArrayNotationsWithSpaces(replaceDotsWithSpaces(adjustedItemPath)),
+						value: mentionText,
 						denotationChar: '',
 						serverValue: item,
 					},
@@ -62,12 +64,15 @@ export function fromTextToOps(
 function adjustItemPath(itemPath: string, allStepsNamesAndDisplayNames: { displayName: string; name: string }[]) {
 	const itemPrefix = itemPath.split('.')[0];
 	if (itemPrefix === 'configs') {
+		//remove configs prefix
 		return itemPath.replace('configs.', '');
 	} else {
+		//replace stepName with stepDisplayName
 		const stepDisplayName = allStepsNamesAndDisplayNames.find(s => s.name === itemPrefix)?.displayName;
 		if (stepDisplayName) {
-			return itemPath.replace(itemPrefix, stepDisplayName);
+			return [stepDisplayName, ...itemPath.split('.').slice(1)].join('.');
 		}
+		console.error(`step not found: ${itemPrefix}`);
 		return itemPath;
 	}
 }
@@ -102,11 +107,11 @@ export function fromOpsToText(operations: QuillEditorOperationsObject) {
 	return result;
 }
 const dotRegex = /\./g;
-function replaceDotsWithSpaces(str: string) {
+export function replaceDotsWithSpaces(str: string) {
 	return str.replace(dotRegex, ' ');
 }
 const arrayNotationRegex = /\[[0-9]+\]/g;
-function replaceArrayNotationsWithSpaces(str: string) {
+export function replaceArrayNotationsWithSpaces(str: string) {
 	return str.replace(arrayNotationRegex, foundArrayNotation => {
 		const indexOfArrayWitoutBrackets = foundArrayNotation.slice(1, foundArrayNotation.length - 1);
 		return ` ${indexOfArrayWitoutBrackets}`;
@@ -136,4 +141,9 @@ export function traverseStepOutputAndReturnMentionTree(
 	} else {
 		return { propertyPath: path, key: lastKey };
 	}
+}
+
+export interface MentionListItem {
+	label: string;
+	value: string;
 }

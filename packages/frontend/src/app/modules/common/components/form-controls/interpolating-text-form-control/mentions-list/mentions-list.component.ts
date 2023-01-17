@@ -2,8 +2,10 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Output } from '@angul
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { combineLatest, map, Observable, startWith } from 'rxjs';
+import { ActionType } from 'shared';
+import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
-import { InsertMentionOperation } from '../utils';
+import { InsertMentionOperation, MentionListItem } from '../utils';
 
 @Component({
 	selector: 'app-mentions-list',
@@ -12,26 +14,32 @@ import { InsertMentionOperation } from '../utils';
 })
 export class MentionsListComponent {
 	searchFormControl: FormControl<string> = new FormControl('', { nonNullable: true });
-	dropDownItems$: Observable<{ label: string; value: string }[]>;
+	stepsMentions$: Observable<(MentionListItem & { step: FlowItem })[]>;
+	configsMentions$: Observable<MentionListItem[]>;
+	ActionType = ActionType;
 	@Output()
 	addMention: EventEmitter<InsertMentionOperation> = new EventEmitter();
 	@Output()
 	closeMenu: EventEmitter<void> = new EventEmitter();
 	constructor(private store: Store) {
-		const allConfigs$ = this.store.select(BuilderSelectors.selectAllConfigsForMentionsDropdown);
-		const allSteps$ = this.store.select(BuilderSelectors.selectAllStepsForMentionsDropdown);
-		this.dropDownItems$ = combineLatest({
-			configs: allConfigs$,
-			steps: allSteps$,
+		this.stepsMentions$ = combineLatest({
+			steps: this.store.select(BuilderSelectors.selectAllStepsForMentionsDropdown),
 			search: this.searchFormControl.valueChanges.pipe(startWith('')),
 		}).pipe(
 			map(res => {
-				const items = [...res.configs, ...res.steps];
-				return items.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()));
+				return res.steps.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()));
+			})
+		);
+		this.configsMentions$ = combineLatest({
+			configs: this.store.select(BuilderSelectors.selectAllConfigsForMentionsDropdown),
+			search: this.searchFormControl.valueChanges.pipe(startWith('')),
+		}).pipe(
+			map(res => {
+				return res.configs.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()));
 			})
 		);
 	}
-	mentionClicked(mention: { label: string; value: string }) {
+	mentionClicked(mention: MentionListItem) {
 		this.addMention.emit({
 			insert: { mention: { serverValue: mention.value, value: mention.label, denotationChar: '' } },
 		});

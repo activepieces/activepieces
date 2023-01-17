@@ -18,7 +18,6 @@ export class FlowItemsDetailsEffects {
 				const connectorComponentsTriggersFlowItemDetails$ = components$.pipe(
 					map(this.createFlowItemDetailsForComponents(true))
 				);
-
 				const connectorComponentsActions$ = components$.pipe(map(this.createFlowItemDetailsForComponents(false)));
 				const coreFlowItemsDetails$ = of(this.flowItemsDetailsService.coreFlowItemsDetails);
 				return forkJoin({

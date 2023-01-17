@@ -13,7 +13,7 @@ import { BuilderSelectors } from '../../../store/builder/builder.selector';
 })
 export class FlowRightSidebarComponent implements OnInit {
 	rightSidebarType$: Observable<RightSideBarType>;
-	testFormControl: FormControl<string> = new FormControl('${step_1} and ${configs.first}', { nonNullable: true });
+	testFormControl: FormControl<string> = new FormControl('', { nonNullable: true });
 	constructor(private store: Store) {}
 
 	ngOnInit(): void {

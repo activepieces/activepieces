@@ -12,6 +12,7 @@ import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { ActionType, Collection, TriggerType } from 'shared';
 import { ConnectionDropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
 import { FlowStructureUtil } from '../../service/flowStructureUtil';
+import { MentionListItem } from 'src/app/modules/common/components/form-controls/interpolating-text-form-control/utils';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -298,7 +299,7 @@ const selectAppConnectionsDropdownOptions = createSelector(selectAllAppConnectio
 
 const selectAllConfigsForMentionsDropdown = createSelector(
 	selectCurrentCollectionConfigs,
-	(collectionConfigs: Config[]) => {
+	(collectionConfigs: Config[]): MentionListItem[] => {
 		return [...collectionConfigs].map(c => {
 			const result = {
 				label: c.key,
@@ -323,14 +324,18 @@ const selectAllFlowStepsNamesAndDisplayNames = createSelector(selectAllFlowSteps
 		};
 	});
 });
-const selectAllStepsForMentionsDropdown = createSelector(selectAllFlowSteps, steps => {
-	return steps.map(s => {
-		return {
-			label: s.displayName,
-			value: `\${${s.name}}`,
-		};
-	});
-});
+const selectAllStepsForMentionsDropdown = createSelector(
+	selectAllFlowSteps,
+	(steps): (MentionListItem & { step: FlowItem })[] => {
+		return steps.map(s => {
+			return {
+				label: s.displayName,
+				value: `\${${s.name}}`,
+				step: s,
+			};
+		});
+	}
+);
 export const BuilderSelectors = {
 	selectCurrentCollection,
 	selectCurrentCollectionId,

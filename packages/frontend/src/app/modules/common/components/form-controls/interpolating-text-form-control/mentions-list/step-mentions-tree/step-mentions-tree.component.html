@@ -1,14 +1,15 @@
-<mat-tree [dataSource]="dataSource" [treeControl]="treeControl" class="example-tree">
+<mat-tree [dataSource]="dataSource" [treeControl]="treeControl" class="step-result-tree">
   <!-- This is the tree node template for leaf nodes -->
   <!-- There is inline padding applied to this node using styles.
     This padding value depends on the mat-icon-button width. -->
-  <mat-tree-node mat-menu-item *matTreeNodeDef="let node" matTreeNodeToggle>
+  <mat-tree-node (click)="mentionTreeNodeClicked(node)" mat-menu-item *matTreeNodeDef="let node" matTreeNodeToggle>
     {{node.key}}
   </mat-tree-node>
   <!-- This is the tree node template for expandable nodes -->
   <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild">
-    <div class="mat-tree-node ap-flex ap-items-center" mat-menu-item>
-      <button (click)="$event.stopPropagation();" mat-icon-button matTreeNodeToggle [attr.aria-label]="'Toggle ' +
+    <div (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)" class="mat-tree-node ap-flex ap-items-center"
+      mat-menu-item>
+      <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'Toggle ' +
         node.name">
         <mat-icon class="mat-icon-rtl-mirror">
           {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
@@ -18,7 +19,7 @@
     </div>
     <!-- There is inline padding applied to this div using styles.
           This padding value depends on the mat-icon-button width.  -->
-    <div [class.example-tree-invisible]="!treeControl.isExpanded(node)" role="group">
+    <div [class.step-result-tree-invisible]="!treeControl.isExpanded(node)" role="group">
       <ng-container matTreeNodeOutlet></ng-container>
     </div>
   </mat-nested-tree-node>

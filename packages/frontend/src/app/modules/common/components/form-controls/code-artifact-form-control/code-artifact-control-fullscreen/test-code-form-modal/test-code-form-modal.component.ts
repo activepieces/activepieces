@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Inject, Output } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { jsonValidator } from 'src/app/modules/common/validators/json-validator';
 import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
@@ -22,11 +22,17 @@ export class TestCodeFormModalComponent {
 	constructor(
 		private formBuilder: FormBuilder,
 		private dialogRef: MatDialogRef<TestCodeFormModalComponent>,
-		private codeService: CodeService
+		private codeService: CodeService,
+		@Inject(MAT_DIALOG_DATA) public data: { testData: Object | undefined }
 	) {
 		this.testCodeForm = this.formBuilder.group({
-			context: new FormControl('{\n\n}', { nonNullable: true, validators: [Validators.required, jsonValidator] }),
+			context: new FormControl(this.data.testData ? JSON.stringify(this.data.testData) : '{\n\n}', {
+				nonNullable: true,
+				validators: [Validators.required, jsonValidator],
+			}),
 		});
+
+		this.beautify();
 	}
 
 	submitContext() {
