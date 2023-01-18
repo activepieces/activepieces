@@ -39,7 +39,6 @@ export class StepMentionsListComponent implements OnInit {
 	replaceStepNameWithDisplayNameInPath(nodePath: string, stepName: string) {
 		const splitPath = nodePath.split('.');
 		const arrayNotationNextToStep = splitPath[0].match(arrayNotationRegex);
-		
 		const newPathHead = stepName + (arrayNotationNextToStep !== null ? arrayNotationNextToStep![0] : '');
 		return [newPathHead, ...splitPath.slice(1)].join('.');
 	}

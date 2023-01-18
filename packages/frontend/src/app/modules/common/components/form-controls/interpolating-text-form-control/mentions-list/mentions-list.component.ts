@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { combineLatest, distinctUntilChanged, map, Observable, startWith, take } from 'rxjs';
+import { combineLatest, distinctUntilChanged, map, Observable, shareReplay, startWith, take } from 'rxjs';
 import { ActionType, TriggerType } from 'shared';
 import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
@@ -17,6 +17,8 @@ export class MentionsListComponent {
 	stepsMentions$: Observable<(MentionListItem & { step: FlowItem })[]>;
 	configsMentions$: Observable<MentionListItem[]>;
 	connectionsMentions$: Observable<MentionListItem[]>;
+	expandConfigs = false;
+	expandConnections = false;
 	readonly ActionType = ActionType;
 	readonly TriggerType = TriggerType;
 	@Output()
@@ -38,7 +40,8 @@ export class MentionsListComponent {
 		}).pipe(
 			map(res => {
 				return res.configs.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()));
-			})
+			}),
+			shareReplay(1)
 		);
 		this.connectionsMentions$ = combineLatest({
 			connections: this.store.select(BuilderSelectors.selectAppConnectionsForMentionsDropdown).pipe(take(1)),
@@ -46,7 +49,8 @@ export class MentionsListComponent {
 		}).pipe(
 			map(res => {
 				return res.connections.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()));
-			})
+			}),
+			shareReplay(1)
 		);
 	}
 	mentionClicked(mention: MentionListItem) {

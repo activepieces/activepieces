@@ -24,6 +24,7 @@ export class PieceStepMentionItemComponent {
 	}
 	_stepMention: MentionListItem & { step: PieceTrigger | PieceAction };
 	@Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
+	@Input() stepIndex: number;
 	flowItemDetails$: Observable<FlowItemDetails | undefined>;
 	sampleData$: Observable<{ children: MentionTreeNode[] | undefined; error: string }>;
 	fetching$: Subject<boolean> = new Subject();
@@ -41,6 +42,7 @@ export class PieceStepMentionItemComponent {
 		}
 
 		this.flowItemDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetails(this._stepMention.step));
+		this.fetchSampleData();
 	}
 	fetchSampleData() {
 		this.sampleData$ = this.actionMetaDataService.getPieces().pipe(

@@ -1,12 +1,7 @@
 <button (click)="mentionClicked.emit(_stepMention)" mat-menu-item>
   <div class="ap-flex ap-flex-grow"
     [matTooltip]="_stepMention.step.type === TriggerType.PIECE? 'Piece Trigger': 'Piece Step'">
-    <app-generic-step-mention-item [stepMention]="_stepMention"></app-generic-step-mention-item>
-    <div class="ap-flex-grow"></div>
-    <app-button btnColor="primary" btnStyle="basic" type="button" btnSize="small" [darkLoadingSpinner]="true"
-      [loading]="(fetching$|async)!" (click)="$event.stopPropagation(); " (buttonClicked)="fetchSampleData()">Sample
-      Data
-    </app-button>
+    <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"></app-generic-step-mention-item>
   </div>
 </button>
 <ng-container *ngIf="sampleData$ | async as result">
@@ -14,8 +9,8 @@
     [stepDisplayName]="_stepMention.step.displayName"
     (mentionClicked)="mentionClicked.emit($event)"></app-step-mentions-tree>
   <ng-container *ngIf="result.error">
-    <div class="ap-pl-6">
-      <app-state-icon [showStatusText]="true" [succeeded]="false" [textAfter]="result.error"></app-state-icon>
+    <div class="ap-pl-6 ap-py-2">
+      {{result.error}}
     </div>
   </ng-container>
 

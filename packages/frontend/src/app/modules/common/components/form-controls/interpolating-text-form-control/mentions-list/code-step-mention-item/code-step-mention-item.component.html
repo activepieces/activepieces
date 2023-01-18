@@ -1,11 +1,10 @@
 <button (click)="emitMention(stepMention)" mat-menu-item>
   <div class="ap-flex ap-flex-grow" matTooltip="Code Step">
-    <app-generic-step-mention-item [stepMention]="stepMention"></app-generic-step-mention-item>
+    <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="stepMention"></app-generic-step-mention-item>
     <div class="ap-flex-grow"></div>
     <app-button btnColor="primary" btnStyle="basic" type="button" btnSize="small" [darkLoadingSpinner]="true"
       [loading]="(testing$|async)!" (click)="$event.stopPropagation();" (buttonClicked)="openTestCodeModal();">Test
     </app-button>
-
   </div>
 </button>
 <ng-container *ngIf="codeStepTest$ | async as result">

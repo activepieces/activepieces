@@ -13,6 +13,7 @@ import { MentionListItem } from '../../utils';
 })
 export class GenericStepMentionItemComponent implements OnInit {
 	@Input() stepMention: MentionListItem & { step: FlowItem };
+	@Input() stepIndex: number;
 	flowItemDetails$: Observable<FlowItemDetails | undefined>;
 	constructor(private store: Store) {}
 	ngOnInit(): void {

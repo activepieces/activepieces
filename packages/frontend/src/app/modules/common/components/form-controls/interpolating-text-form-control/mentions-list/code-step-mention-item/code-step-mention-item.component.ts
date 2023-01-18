@@ -19,6 +19,7 @@ import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 })
 export class CodeStepMentionItemComponent implements OnInit {
 	@Input() stepMention: MentionListItem & { step: FlowItem };
+	@Input() stepIndex: number;
 	@Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
 	flowItemDetails$: Observable<FlowItemDetails | undefined>;
 	codeStepTest$: Observable<{ children: MentionTreeNode[] | undefined; error?: boolean }>;

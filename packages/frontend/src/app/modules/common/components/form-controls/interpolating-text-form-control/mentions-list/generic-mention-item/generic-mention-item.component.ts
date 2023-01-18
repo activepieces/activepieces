@@ -9,6 +9,4 @@ import { MentionListItem } from '../../utils';
 export class GenericMentionItemComponent {
 	@Input() mention: MentionListItem;
 	@Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
-	@Input() iconUrl: './assets/img/custom/configs.svg' | './assets/img/custom/connections.svg' =
-		'./assets/img/custom/configs.svg';
 }
