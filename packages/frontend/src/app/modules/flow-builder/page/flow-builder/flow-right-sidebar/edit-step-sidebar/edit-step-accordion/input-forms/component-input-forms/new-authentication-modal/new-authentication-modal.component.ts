@@ -170,6 +170,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 		);
 	}
 	get authenticationSettingsControlsValid() {
+		
 		return Object.keys(this.settingsForm.controls)
 			.filter(k => k !== 'value' && !this.settingsForm.controls[k].disabled)
 			.map(key => {

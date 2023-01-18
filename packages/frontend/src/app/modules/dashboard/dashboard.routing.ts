@@ -1,7 +1,8 @@
 import { Routes } from '@angular/router';
-import { RunsComponent } from './pages/runs-table/runs-table.component';
+import { RunsTableComponent } from './pages/runs-table/runs-table.component';
 import { CollectionsTableComponent } from './pages/collections-table/collections-table.component';
 import { AreThereCollectionsResovler } from './resolvers/are-there-collections.resolver';
+import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 export const ARE_THERE_COLLECTIONS_FLAG = 'areThereCollections';
 export const DashboardLayoutRouting: Routes = [
 	{
@@ -13,7 +14,13 @@ export const DashboardLayoutRouting: Routes = [
 				title: 'AP-Runs',
 				path: 'runs',
 				pathMatch: 'full',
-				component: RunsComponent,
+				component: RunsTableComponent,
+			},
+			{
+				title: 'AP-Connections',
+				path: 'connections',
+				pathMatch: 'full',
+				component: ConnectionsTableComponent,
 			},
 			{
 				title: 'AP-Flows',

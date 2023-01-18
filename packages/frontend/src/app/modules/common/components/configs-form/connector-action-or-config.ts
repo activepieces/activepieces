@@ -61,6 +61,7 @@ export interface AppPiece {
 	actions: propMap;
 	triggers: propMap;
 	displayName: string;
+	description?: string;
 }
 
 type propMap = Record<
@@ -69,6 +70,7 @@ type propMap = Record<
 		displayName: string;
 		description: string;
 		props: Record<string, PieceProperty>;
+		sampleData?: Object;
 	}
 >;
 

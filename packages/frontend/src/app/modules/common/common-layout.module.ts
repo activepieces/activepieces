@@ -54,6 +54,20 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AuthConfigsPipe } from './components/configs-form/auth-configs.pipe';
 import { OAuth2CloudConnectControlComponent } from './components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { InterpolatingTextFormControlComponent } from './components/form-controls/interpolating-text-form-control/interpolating-text-form-control.component';
+import { QuillModule } from 'ngx-quill';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDividerModule } from '@angular/material/divider';
+import { StepMentionsListComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/step-mentions-tree/step-mentions-tree.component';
+import { MatTreeModule } from '@angular/material/tree';
+import { MentionListItemTemplateComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/mention-list-item-template/mention-list-item-template.component';
+import { GenericMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/generic-mention-item/generic-mention-item.component';
+import { CodeStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/code-step-mention-item/code-step-mention-item.component';
+import { MentionsListComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/mentions-list.component';
+import { GenericStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/generic-step-mention-item/generic-step-mention-item.component';
+import { PieceStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component';
+import { WebhookTriggerMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component';
+
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 0,
 	hideDelay: 0,
@@ -92,6 +106,15 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		JsonViewDialogComponent,
 		AuthConfigsPipe,
 		OAuth2CloudConnectControlComponent,
+		InterpolatingTextFormControlComponent,
+		StepMentionsListComponent,
+		MentionListItemTemplateComponent,
+		GenericMentionItemComponent,
+		CodeStepMentionItemComponent,
+		MentionsListComponent,
+		GenericStepMentionItemComponent,
+		PieceStepMentionItemComponent,
+  WebhookTriggerMentionItemComponent,
 	],
 	imports: [
 		FontAwesomeModule,
@@ -103,6 +126,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		CodemirrorModule,
 		FormsModule,
 		MatMenuModule,
+		QuillModule.forRoot({}),
 		StoreModule.forFeature('commonState', {
 			projectsState: projectReducer,
 		}),
@@ -121,6 +145,9 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MatTableModule,
 		MatDialogModule,
 		MatToolbarModule,
+		MatIconModule,
+		MatDividerModule,
+		MatTreeModule,
 	],
 	exports: [
 		EditableTextComponent,
@@ -160,6 +187,9 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MatDialogModule,
 		OAuth2CloudConnectControlComponent,
 		MatToolbarModule,
+		InterpolatingTextFormControlComponent,
+		MatIconModule,
+		StepMentionsListComponent,
 	],
 	providers: [
 		HighlightService,

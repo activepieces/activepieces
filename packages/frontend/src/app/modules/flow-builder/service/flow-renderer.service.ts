@@ -76,7 +76,7 @@ export class FlowRendererService {
 				}
 			}
 		});
-		if (candidate) console.log((candidate as AddButtonAndFlowItemNameContainer).htmlElementForButton);
+
 		return candidate;
 	}
 }
