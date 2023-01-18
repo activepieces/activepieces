@@ -95,12 +95,14 @@ export class InterpolatingTextFormControlComponent
 	set value(value: string) {
 		this._value = value;
 		setTimeout(async () => {
-			const stepsNamesAndDisplayNames = await lastValueFrom(
-				this.store.select(BuilderSelectors.selectAllFlowStepsNamesAndDisplayNames).pipe(take(1))
-			);
-			this.editorFormControl.setValue(fromTextToOps(this._value, stepsNamesAndDisplayNames));
+			if (this._value) {
+				const stepsNamesAndDisplayNames = await lastValueFrom(
+					this.store.select(BuilderSelectors.selectAllFlowStepsNamesAndDisplayNames).pipe(take(1))
+				);
+				this.editorFormControl.setValue(fromTextToOps(this._value, stepsNamesAndDisplayNames));
+			}
+			this.stateChanges.next();
 		}, 1);
-		this.stateChanges.next();
 	}
 
 	@HostBinding()
@@ -205,9 +207,10 @@ export class InterpolatingTextFormControlComponent
 		const stepsNamesAndDisplayNames = await lastValueFrom(
 			this.store.select(BuilderSelectors.selectAllFlowStepsNamesAndDisplayNames).pipe(take(1))
 		);
-
-		const parsedTextToOps = fromTextToOps(value, stepsNamesAndDisplayNames);
-		this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
+		if (value) {
+			const parsedTextToOps = fromTextToOps(value, stepsNamesAndDisplayNames);
+			this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
+		}
 		this._value = value;
 	}
 	registerOnChange(fn: any): void {

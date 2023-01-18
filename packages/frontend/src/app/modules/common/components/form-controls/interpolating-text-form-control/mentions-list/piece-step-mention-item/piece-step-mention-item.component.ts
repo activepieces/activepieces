@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { map, Observable, Subject, tap } from 'rxjs';
+import { map, Observable, of, Subject, tap } from 'rxjs';
 import { ActionType, PieceAction, PieceTrigger, TriggerType } from 'shared';
 import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
 import { FlowItemDetails } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
 import { MentionListItem, MentionTreeNode, traverseStepOutputAndReturnMentionTree } from '../../utils';
+import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 
 @Component({
 	selector: 'app-piece-step-mention-item',
@@ -28,8 +29,17 @@ export class PieceStepMentionItemComponent {
 	fetching$: Subject<boolean> = new Subject();
 	noSampleDataNote$: Observable<string>;
 
-	constructor(private store: Store, private actionMetaDataService: ActionMetaService) {}
+	constructor(
+		private store: Store,
+		private actionMetaDataService: ActionMetaService,
+		private mentionsTreeCache: MentionsTreeCacheService
+	) {}
 	ngOnInit(): void {
+		const cacheResult = this.mentionsTreeCache.getStepMentionsTree(this._stepMention.step.name);
+		if (cacheResult) {
+			this.sampleData$ = of({ children: cacheResult, error: '' });
+		}
+
 		this.flowItemDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetails(this._stepMention.step));
 	}
 	fetchSampleData() {
@@ -66,7 +76,8 @@ export class PieceStepMentionItemComponent {
 				}
 				return { children: res, error: '' };
 			}),
-			tap(() => {
+			tap(res => {
+				this.mentionsTreeCache.setStepMentionsTree(this._stepMention.step.name, res.children);
 				this.fetching$.next(false);
 			})
 		);

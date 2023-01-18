@@ -10,6 +10,7 @@ import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/bui
 
 import { TestCodeFormModalComponent } from '../../../code-artifact-form-control/code-artifact-control-fullscreen/test-code-form-modal/test-code-form-modal.component';
 import { MentionListItem, MentionTreeNode, traverseStepOutputAndReturnMentionTree } from '../../utils';
+import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 
 @Component({
 	selector: 'app-code-step-mention-item',
@@ -22,8 +23,17 @@ export class CodeStepMentionItemComponent implements OnInit {
 	flowItemDetails$: Observable<FlowItemDetails | undefined>;
 	codeStepTest$: Observable<{ children: MentionTreeNode[] | undefined; error?: boolean }>;
 	testing$: Subject<boolean> = new Subject();
-	constructor(private store: Store, private dialogService: MatDialog, private codeService: CodeService) {}
+	constructor(
+		private store: Store,
+		private dialogService: MatDialog,
+		private codeService: CodeService,
+		private mentionsTreeCache: MentionsTreeCacheService
+	) {}
 	ngOnInit(): void {
+		const cacheResult = this.mentionsTreeCache.getStepMentionsTree(this.stepMention.step.name);
+		if (cacheResult) {
+			this.codeStepTest$ = of({ children: cacheResult, error: false });
+		}
 		this.flowItemDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetails(this.stepMention.step));
 	}
 	openTestCodeModal() {
@@ -64,6 +74,9 @@ export class CodeStepMentionItemComponent implements OnInit {
 						this.stepMention.step.displayName
 					).children;
 					return { children: childrenNodes };
+				}),
+				tap(res => {
+					this.mentionsTreeCache.setStepMentionsTree(this.stepMention.step.name, res.children || []);
 				}),
 				shareReplay(1)
 			);
