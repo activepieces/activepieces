@@ -13,7 +13,8 @@
 
   <mat-form-field class="ap-w-full" appearance="outline">
     <mat-label>Key</mat-label>
-    <input matInput placeholder="Key of value stored" class="ap-bg-white" formControlName="key" />
+    <app-interpolating-text-form-control placeholder="Key of value stored"
+      formControlName="key"></app-interpolating-text-form-control>
     <mat-error *ngIf="storageStepForm.controls.key.invalid">
       Key is required.
     </mat-error>
@@ -21,7 +22,8 @@
   <mat-form-field *ngIf="storageStepForm.controls.operation.value === StorageOperation.PUT" class="ap-w-full"
     appearance="outline">
     <mat-label>Value</mat-label>
-    <input matInput placeholder="Value to store" class="ap-bg-white" formControlName="value" />
+    <app-interpolating-text-form-control placeholder="Value to store"
+      formControlName="value"></app-interpolating-text-form-control>
     <mat-error *ngIf="storageStepForm.controls.value.invalid">
       Value is required.
     </mat-error>
