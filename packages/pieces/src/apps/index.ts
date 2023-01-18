@@ -8,17 +8,19 @@ import { hubspot } from './hubspot';
 import { mailchimp } from './mailchimp';
 import { cloudVisionAI } from './cloud-vision';
 import { openai } from './openai';
+import { stripe } from './stripe';
 
 export const pieces: Piece[] = [
-  slack,
-  gmail,
-  discord,
-  github,
-  hubspot,
-  hackernews,
-  mailchimp,
+	slack,
+	gmail,
+	discord,
+	github,
+	hubspot,
+	hackernews,
+	mailchimp,
   cloudVisionAI,
   openai,
+	stripe
 ];
 
 export const getPiece = (name: string): Piece | undefined => {
