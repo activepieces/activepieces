@@ -12,9 +12,10 @@ import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { EmptyCollectionsTableComponent } from './pages/collections-table/empty-collections-table/empty-collections-table.component';
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 import { SidenavRoutesListComponent } from './components/sidenav-routes-list/sidenav-routes-list.component';
-import { DeleteCollectionDialogComponent } from './pages/collections-table/delete-collection-dialog/delete-collection-dialog.component';
 import { PageTitleComponent } from './components/page-title/page-title.component';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
+
+import { DeleteEntityDialogComponent } from './components/delete-enity-dialog/delete-collection-dialog.component';
 
 @NgModule({
 	declarations: [
@@ -24,9 +25,9 @@ import { ConnectionsTableComponent } from './pages/connections-table/connections
 		CollectionsTableComponent,
 		EmptyCollectionsTableComponent,
 		UserAvatarComponent,
-		DeleteCollectionDialogComponent,
 		PageTitleComponent,
 		ConnectionsTableComponent,
+		DeleteEntityDialogComponent,
 	],
 	imports: [
 		CommonModule,

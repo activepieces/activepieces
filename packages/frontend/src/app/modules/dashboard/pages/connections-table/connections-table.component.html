@@ -32,12 +32,13 @@
       <ng-container matColumnDef="action">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let connection">
-          <app-icon-button tooltipText="Delete Connection" iconFilename="trash.svg" color="warn"></app-icon-button>
+          <app-icon-button tooltipText="Delete Connection" iconFilename="trash.svg" color="warn" [width]="16"
+            (buttonClicked)="deleteConnection(connection)" [height]="16"></app-icon-button>
         </td>
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr class="ap-cursor-pointer hover:!ap-bg-hover" mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
     <ng-container *ngIf="dataSource.data.length===0">
       <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px]">
@@ -50,3 +51,5 @@
     <app-ap-paginator> </app-ap-paginator>
   </div>
 </div>
+
+<ng-container *ngIf="deleteConnectionDialogClosed$ | async"></ng-container>

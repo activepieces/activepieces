@@ -3,22 +3,29 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, map, Observable, of, tap } from 'rxjs';
-import { Collection } from 'shared';
-import { CollectionService } from 'src/app/modules/common/service/collection.service';
+
+export interface DeleteEntityDialogData {
+	entityName: string;
+	deleteEntity$: Observable<unknown>;
+	note?: {
+		text: string;
+		danger: boolean;
+	};
+}
 
 @Component({
-	templateUrl: './delete-collection-dialog.component.html',
+	templateUrl: './delete-entity-dialog.component.html',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DeleteCollectionDialogComponent {
+export class DeleteEntityDialogComponent {
 	confirmationForm: FormGroup<{ confirmation: FormControl<string> }>;
-	deleteCollection$: Observable<void>;
+	deleteOperation$: Observable<void>;
 	constructor(
 		private formBuilder: FormBuilder,
-		private collectionService: CollectionService,
 		private snackBar: MatSnackBar,
-		@Inject(MAT_DIALOG_DATA) public collection: Collection,
-		private dialogRef: MatDialogRef<DeleteCollectionDialogComponent>
+		@Inject(MAT_DIALOG_DATA)
+		public data: DeleteEntityDialogData,
+		private dialogRef: MatDialogRef<DeleteEntityDialogComponent>
 	) {
 		this.confirmationForm = this.formBuilder.group({
 			confirmation: new FormControl('', {
@@ -28,8 +35,8 @@ export class DeleteCollectionDialogComponent {
 		});
 	}
 	deleteCollection() {
-		if (this.confirmationForm.valid && !this.deleteCollection$) {
-			this.deleteCollection$ = this.collectionService.delete(this.collection.id).pipe(
+		if (this.confirmationForm.valid && !this.deleteOperation$) {
+			this.deleteOperation$ = this.data.deleteEntity$.pipe(
 				catchError(err => {
 					this.snackBar.open('An error occurred while deleting, please check your console', '', {
 						duration: undefined,
@@ -43,7 +50,7 @@ export class DeleteCollectionDialogComponent {
 				}),
 				tap(() => {
 					this.dialogRef.close(true);
-					this.snackBar.open(`${this.collection.version!.displayName} was deleted successfully`);
+					this.snackBar.open(`${this.data.entityName} was deleted successfully`);
 				})
 			);
 		}

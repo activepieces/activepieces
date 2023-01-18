@@ -17,7 +17,8 @@ export class ConnectionsTableDataSource extends DataSource<FlowRun> {
 		private pageCursor$: Observable<string>,
 		private paginator: ApPaginatorComponent,
 		private projectService: ProjectService,
-		private connectionsService: AppConnectionsService
+		private connectionsService: AppConnectionsService,
+		private refresh$: Observable<boolean>
 	) {
 		super();
 	}
@@ -32,6 +33,7 @@ export class ConnectionsTableDataSource extends DataSource<FlowRun> {
 			pageCursor: this.pageCursor$,
 			pageSize: this.pageSize$,
 			project: this.projectService.selectedProjectAndTakeOne(),
+			refresh: this.refresh$,
 		}).pipe(
 			switchMap(res => {
 				return this.connectionsService.list({ projectId: res.project.id, limit: res.pageSize, cursor: res.pageCursor });
