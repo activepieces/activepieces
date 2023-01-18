@@ -6,6 +6,7 @@ import { SystemProp } from "./system/system-prop";
 import { tokenUtils } from "../authentication/lib/token-utils";
 import { DropdownState } from "pieces";
 import { logger } from "../app";
+import chalk from "chalk";
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 
@@ -69,10 +70,10 @@ async function execute(operation: EngineOperationType, sandbox: Sandbox, input: 
     let standardOutput = await sandbox.parseStandardOutput();
     let standardError = await sandbox.parseStandardError();
     standardOutput.split("\n").forEach(f => {
-        if (f.trim().length > 0) logger.info(f)
+        if (f.trim().length > 0) logger.info(chalk.yellow(f))
     });
     standardError.split("\n").forEach(f => {
-        if (f.trim().length > 0) logger.error(f)
+        if (f.trim().length > 0) logger.error(chalk.red(f))
     });
     return JSON.parse(fs.readFileSync(sandbox.getSandboxFilePath("output.json")).toString());
 }
