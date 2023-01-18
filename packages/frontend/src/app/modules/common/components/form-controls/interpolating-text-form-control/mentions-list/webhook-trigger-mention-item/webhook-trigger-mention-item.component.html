@@ -1,0 +1,35 @@
+<button (click)="openPathDialog(dialogTemplate)" mat-menu-item>
+  <app-generic-step-mention-item matTooltip="Webhook Trigger" [stepIndex]="stepIndex"
+    [stepMention]="_stepMention"></app-generic-step-mention-item>
+</button>
+
+
+<ng-template #dialogTemplate>
+  <app-dialog-title-template>
+    Webhook Payload Path
+  </app-dialog-title-template>
+  <mat-dialog-content>
+    <div class="ap-typography-body-1 ap-text-description ap-mb-4 ap-max-w-[500px]">
+      Please type the path within the webhook payload you would like to access
+    </div>
+    <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="pathFormGroup" (submit)="emitMention()">
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <input formControlName="path" matInput type="text" placeholder="eg.${trigger.value}" />
+        <mat-error *ngIf="pathFormGroup.controls.path.invalid">Path is invalid</mat-error>
+      </mat-form-field>
+    </form>
+
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+      <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
+        Cancel
+      </app-button>
+      <app-button cdkFocusInitial btnSize="default" type="submit" (click)="emitMention();" btnColor="warn">
+        Confirm
+      </app-button>
+    </div>
+  </mat-dialog-actions>
+
+</ng-template>

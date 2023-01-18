@@ -1,0 +1,17 @@
+<button (click)="mentionClicked.emit(_stepMention)" mat-menu-item>
+  <div class="ap-flex ap-flex-grow"
+    [matTooltip]="_stepMention.step.type === TriggerType.PIECE? 'Piece Trigger': 'Piece Step'">
+    <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"></app-generic-step-mention-item>
+  </div>
+</button>
+<ng-container *ngIf="sampleData$ | async as result">
+  <app-step-mentions-tree *ngIf="result.children" [stepOutputObjectChildNodes]="result.children"
+    [stepDisplayName]="_stepMention.step.displayName"
+    (mentionClicked)="mentionClicked.emit($event)"></app-step-mentions-tree>
+  <ng-container *ngIf="result.error">
+    <div class="ap-pl-6 ap-py-2">
+      {{result.error}}
+    </div>
+  </ng-container>
+
+</ng-container>

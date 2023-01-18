@@ -43,7 +43,6 @@ export class OAuth2ConnectControlComponent implements ControlValueAccessor {
 	popUpError = false;
 
 	openPopup(): void {
-		console.log(this.configSettings);
 		const configSettings = this.configSettings as (OAuth2AppDetails & { extraParams: Record<string, unknown>, auth_url: string, scope: string });
 		this.popupOpened$ = this.oauth2Service.openPopup(configSettings).pipe(
 			tap(value => {

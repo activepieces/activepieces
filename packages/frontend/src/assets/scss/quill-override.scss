@@ -1,0 +1,22 @@
+@import "~quill/dist/quill.bubble.css";
+
+.ql-container {
+  border: 0px solid transparent !important;
+  .mention
+    {
+      background-color: $grayCard;
+      border: 1px solid $dividers;
+      padding:2px;
+    }
+    p {
+      margin-bottom: 5px;
+    }
+    p:last-child{
+      margin-bottom:0px;
+    }
+}
+
+.ql-editor.ql-blank::before
+{
+  left:0px;
+}

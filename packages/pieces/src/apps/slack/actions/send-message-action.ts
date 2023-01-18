@@ -3,15 +3,17 @@ import { HttpMethod } from '../../../common/http/core/http-method';
 import type { HttpRequest } from '../../../common/http/core/http-request';
 import { createAction } from '../../../framework/action/action';
 import { httpClient } from '../../../common/http/core/http-client';
-import {
-  OAuth2PropertyValue,
-  Property,
-} from '../../../framework/property';
+import { OAuth2PropertyValue, Property } from '../../../framework/property';
 
 export const slackSendMessageAction = createAction({
   name: 'send_channel_message',
   displayName: 'Send slack message',
   description: 'Send slack message',
+  sampleData: {
+    success: true,
+    message: 'sample message',
+    results: [1, 2, 3, 4],
+  },
   props: {
     authentication: Property.OAuth2({
       description: '',

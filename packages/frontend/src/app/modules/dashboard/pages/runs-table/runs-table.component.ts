@@ -11,7 +11,7 @@ import { InstanceRunService } from 'src/app/modules/common/service/flow-run.serv
 	templateUrl: './runs-table.component.html',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RunsComponent implements OnInit {
+export class RunsTableComponent implements OnInit {
 	@ViewChild(ApPaginatorComponent, { static: true }) paginator!: ApPaginatorComponent;
 	runsPage$: Observable<SeekPage<FlowRun>>;
 	dataSource!: RunsTableDataSource;

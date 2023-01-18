@@ -9,10 +9,13 @@ import { PosthogService } from 'src/app/modules/common/service/posthog.service';
 import { ApPaginatorComponent } from 'src/app/modules/common/components/pagination/ap-paginator.component';
 import { CollectionsTableDataSource } from './collections-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import { DeleteCollectionDialogComponent } from './delete-collection-dialog/delete-collection-dialog.component';
 import { ARE_THERE_COLLECTIONS_FLAG } from '../../dashboard.routing';
 import { DEFAULT_PAGE_SIZE } from 'src/app/modules/common/components/pagination/tables.utils';
 import { Collection, Flow } from 'shared';
+import {
+	DeleteEntityDialogComponent,
+	DeleteEntityDialogData,
+} from '../../components/delete-enity-dialog/delete-collection-dialog.component';
 @Component({
 	templateUrl: './collections-table.component.html',
 })
@@ -58,7 +61,12 @@ export class CollectionsTableComponent implements OnInit {
 	}
 
 	deleteCollection(collection: Collection) {
-		const dialogRef = this.dialogService.open(DeleteCollectionDialogComponent, { data: { ...collection } });
+		const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
+			data: {
+				deleteEntity$: this.collectionService.delete(collection.id),
+				entityName: collection.version?.displayName,
+			} as DeleteEntityDialogData,
+		});
 		this.archiveCollectionDialogClosed$ = dialogRef.beforeClosed().pipe(
 			tap(res => {
 				if (res) {
