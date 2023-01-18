@@ -1,4 +1,4 @@
-import fastify from "fastify";
+import fastify, { FastifyRequest } from "fastify";
 import cors from "@fastify/cors";
 import { databaseModule } from "./database/database-module";
 import { authenticationModule } from "./authentication/authentication.module";
@@ -20,10 +20,25 @@ import { errorHandler } from "./helper/error-handler";
 import { appConnectionModule } from "./app-connection/app-connection.module";
 import { system } from "./helper/system/system";
 import { SystemProp } from "./helper/system/system-prop";
-import { databaseConnection } from "./database/database-connection";
+import chalk from 'chalk';
+
+const envToLogger = {
+  development: {
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        translateTime: 'HH:MM:ss Z',
+        colorize: true,
+        ignore: 'pid,hostname'
+      },
+    }
+  },
+  production: true
+}
 
 const app = fastify({
-  logger: true,
+  // TODO we need variable to switch to production mode.
+  logger: envToLogger['development'],
   ajv: {
     customOptions: {
       removeAdditional: 'all',
@@ -33,6 +48,7 @@ const app = fastify({
   }
 });
 
+export const logger = app.log;
 
 app.register(cors, {
   origin: "*",
@@ -56,6 +72,21 @@ app.register(flowRunModule);
 app.register(webhookModule);
 app.register(appConnectionModule);
 
+app.get(
+  "/redirect",
+  async (
+    request: FastifyRequest<{ Querystring: { code: string; } }>, reply
+  ) => {
+    let params = {
+      "code": request.query.code
+    };
+    if (params.code === undefined) {
+      reply.send("The code is missing in url");
+    } else {
+      reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${params['code']}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
+    }
+  }
+);
 app.setErrorHandler(errorHandler);
 
 const start = async () => {
