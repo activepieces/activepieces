@@ -5,6 +5,7 @@ import { system } from "./system/system";
 import { SystemProp } from "./system/system-prop";
 import { tokenUtils } from "../authentication/lib/token-utils";
 import { DropdownState } from "pieces";
+import { logger } from "../app";
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 
@@ -64,8 +65,14 @@ async function execute(operation: EngineOperationType, sandbox: Sandbox, input: 
         ...input,
         apiUrl: "http://localhost:3000"
     }));
-    console.log(`Wrote Input in ${sandboxPath}`)
-
     await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ` + operation);
+    let standardOutput = await sandbox.parseStandardOutput();
+    let standardError = await sandbox.parseStandardError();
+    standardOutput.split("\n").forEach(f => {
+        if (f.trim().length > 0) logger.info(f)
+    });
+    standardError.split("\n").forEach(f => {
+        if (f.trim().length > 0) logger.error(f)
+    });
     return JSON.parse(fs.readFileSync(sandbox.getSandboxFilePath("output.json")).toString());
 }

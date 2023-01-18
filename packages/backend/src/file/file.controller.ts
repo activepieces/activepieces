@@ -14,7 +14,7 @@ export const fileController = async (fastify: FastifyInstance, options: FastifyP
         };
       }>,
       _reply
-    ) => {
+    ) => {    
       const file = await fileService.getOne(_request.params.fileId);
       if (file === null) {
         throw new ActivepiecesError({ code: ErrorCode.FILE_NOT_FOUND, params: { id: _request.params.fileId } });

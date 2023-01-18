@@ -20,10 +20,25 @@ import { errorHandler } from "./helper/error-handler";
 import { appConnectionModule } from "./app-connection/app-connection.module";
 import { system } from "./helper/system/system";
 import { SystemProp } from "./helper/system/system-prop";
-import { databaseConnection } from "./database/database-connection";
+import chalk from 'chalk';
+
+const envToLogger = {
+  development: {
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        translateTime: 'HH:MM:ss Z',
+        colorize: true,
+        ignore: 'pid,hostname'
+      },
+    }
+  },
+  production: true
+}
 
 const app = fastify({
-  logger: true,
+  // TODO we need variable to switch to production mode.
+  logger: envToLogger['development'],
   ajv: {
     customOptions: {
       removeAdditional: 'all',
@@ -33,6 +48,7 @@ const app = fastify({
   }
 });
 
+export const logger = app.log;
 
 app.register(cors, {
   origin: "*",

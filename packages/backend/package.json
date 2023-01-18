@@ -32,9 +32,9 @@
         "ksuid": "^3.0.0",
         "nanoid": "^3.3.4",
         "pg": "^8.8.0",
+        "pieces": "workspace:*",
         "redis": "^4.5.1",
         "redis-lock": "^1.0.0",
-        "pieces": "workspace:*",
         "shared": "workspace:*",
         "typeorm": "^0.3.11",
         "typeorm-extension": "^2.4.0"
@@ -46,6 +46,7 @@
         "@types/jsonwebtoken": "^8.5.9",
         "@types/node": "^17.0.21",
         "@typescript-eslint/eslint-plugin": "^5.47.1",
+        "chalk": "^4.1.2",
         "dotenv": "^16.0.3",
         "eslint": "^8.30.0",
         "eslint-config-prettier": "^8.5.0",
@@ -55,6 +56,7 @@
         "eslint-plugin-prettier": "^4.2.1",
         "eslint-plugin-promise": "^6.1.1",
         "nodemon": "^2.0.20",
+        "pino-pretty": "^9.1.1",
         "ts-node": "^10.9.1",
         "typescript": "^4.9.4"
     }
