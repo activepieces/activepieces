@@ -1,5 +1,6 @@
 <button (click)="mentionClicked.emit(_stepMention)" mat-menu-item>
-  <div class="ap-flex ap-flex-grow">
+  <div class="ap-flex ap-flex-grow"
+    [matTooltip]="_stepMention.step.type === TriggerType.PIECE? 'Piece Trigger': 'Piece Step'">
     <app-generic-step-mention-item [stepMention]="_stepMention"></app-generic-step-mention-item>
     <div class="ap-flex-grow"></div>
     <app-button btnColor="primary" btnStyle="basic" type="button" btnSize="small" [darkLoadingSpinner]="true"

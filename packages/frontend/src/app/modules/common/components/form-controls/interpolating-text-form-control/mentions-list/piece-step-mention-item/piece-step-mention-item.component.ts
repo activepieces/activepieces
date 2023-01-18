@@ -89,11 +89,12 @@ export class PieceStepMentionItemComponent {
 			this._stepMention.step.type === TriggerType.PIECE ? this._stepMention.step.settings.triggerName : '';
 		const actionName =
 			this._stepMention.step.type === ActionType.PIECE ? this._stepMention.step.settings.actionName : '';
-		const noSampleData = `No sample data was added to ${actionOrTirggerText}`;
+		const noSampleData = `No sample available`;
 		const error =
 			!triggerName && !actionName
 				? `Please select ${actionOrTirggerText === 'action' ? 'an action' : 'a trigger'} `
 				: noSampleData;
 		return error;
 	}
+	TriggerType = TriggerType;
 }
