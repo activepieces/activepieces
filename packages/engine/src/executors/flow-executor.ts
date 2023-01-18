@@ -117,13 +117,8 @@ export class FlowExecutor {
         `${globals.flowDirectory}/${flowId}.json`
       );
 
-      let configs: Map<string, unknown> = new Map(
-        collectionVersion.configs.map((config) => {
-          return [config.key, config.value];
-        })
-      );
       // Add predefined configs to Execution State.
-      this.executionState.insertConfigs(configs);
+      this.executionState.insertConfigs(collectionVersion);
 
       return flowVersion;
     } catch (e) {

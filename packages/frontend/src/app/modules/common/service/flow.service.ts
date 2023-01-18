@@ -16,10 +16,10 @@ import {
 	FlowVersionId,
 	SeekPage,
 } from 'shared';
-import { BuilderSelectors } from '../../flow-builder/store/selector/flow-builder.selector';
+import { BuilderSelectors } from '../../flow-builder/store/builder/builder.selector';
 import { findDefaultFlowDisplayName } from '../utils';
 import { Store } from '@ngrx/store';
-import { FlowsActions } from '../../flow-builder/store/action/flows.action';
+import { FlowsActions } from '../../flow-builder/store/flow/flows.action';
 
 @Injectable({
 	providedIn: 'root',

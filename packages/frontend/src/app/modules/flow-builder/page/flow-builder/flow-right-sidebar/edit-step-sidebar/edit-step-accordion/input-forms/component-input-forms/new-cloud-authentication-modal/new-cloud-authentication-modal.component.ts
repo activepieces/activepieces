@@ -1,19 +1,22 @@
 import { Component, Inject, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
-import { Observable, take } from 'rxjs';
-import { CloudOAuth2Config, Config, ConfigType } from 'shared';
+import { catchError, Observable, of, take, tap } from 'rxjs';
+import { AppConnection, AppConnectionType, UpsertCloudOAuth2Request, Project } from 'shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
 import { CloudConnectionPopupSettings } from 'src/app/modules/common/components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
-import { ConfigKeyValidator } from 'src/app/modules/flow-builder/page/flow-builder/validators/configKeyValidator';
-import { CollectionActions } from 'src/app/modules/flow-builder/store/action/collection.action';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
+import { AppConnectionsService } from 'src/app/modules/common/service/app-connections.service';
+import { ProjectService } from 'src/app/modules/common/service/project.service';
+import { ConnectionValidator } from 'src/app/modules/flow-builder/page/flow-builder/validators/connectionNameValidator';
+import { appConnectionsActions } from 'src/app/modules/flow-builder/store/app-connections/app-connections.action';
+import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
 
 interface AuthConfigSettings {
-	pieceName: FormControl<string | null>;
-	key: FormControl<string>;
+	appName: FormControl<string | null>;
+	name: FormControl<string>;
 	value: FormControl<any>;
 }
 export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
@@ -26,29 +29,32 @@ export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
 export class NewCloudAuthenticationModalComponent implements OnInit {
 	@Input() pieceAuthConfig: PieceConfig;
 	@Input() pieceName: string;
-	@Input() configToUpdateWithIndex: { config: CloudOAuth2Config; indexInList: number } | undefined;
+	@Input() connectionToUpdate: AppConnection | undefined;
 	cloudConnectionPopupSettings: CloudConnectionPopupSettings;
 	settingsForm: FormGroup<AuthConfigSettings>;
-	collectionId$: Observable<string>;
-	submitted = false;
+	project$: Observable<Project>;
+	loading = false;
+	upsert$: Observable<AppConnection | null>;
 	keyTooltip =
 		'The ID of this authentication definition. You will need to select this key whenever you want to reuse this authentication.';
 	constructor(
 		private fb: FormBuilder,
 		private store: Store,
 		public dialogRef: MatDialogRef<NewCloudAuthenticationModalComponent>,
+		private appConnectionsService: AppConnectionsService,
+		private snackbar: MatSnackBar,
+		private projectService: ProjectService,
 		@Inject(MAT_DIALOG_DATA)
 		dialogData: {
 			pieceAuthConfig: PieceConfig;
 			pieceName: string;
-			configToUpdateWithIndex: { config: CloudOAuth2Config; indexInList: number } | undefined;
+			connectionToUpdate: AppConnection | undefined;
 			clientId: string;
 		}
 	) {
 		this.pieceName = dialogData.pieceName;
 		this.pieceAuthConfig = dialogData.pieceAuthConfig;
-		this.configToUpdateWithIndex = dialogData.configToUpdateWithIndex;
-
+		this.connectionToUpdate = dialogData.connectionToUpdate;
 		this.cloudConnectionPopupSettings = {
 			authUrl: this.pieceAuthConfig.authUrl!,
 			scope: this.pieceAuthConfig.scope!.join(' '),
@@ -59,67 +65,74 @@ export class NewCloudAuthenticationModalComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		this.collectionId$ = this.store.select(BuilderSelectors.selectCurrentCollectionId);
+		this.project$ = this.projectService.selectedProjectAndTakeOne();
 		this.settingsForm = this.fb.group({
-			pieceName: new FormControl<string | null>(this.pieceName, { nonNullable: false, validators: [] }),
-			key: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
+			appName: new FormControl<string | null>(this.pieceName, { nonNullable: false, validators: [] }),
+			name: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
 				nonNullable: true,
 				validators: [Validators.required, Validators.pattern('[A-Za-z0-9_]*')],
 				asyncValidators: [
-					ConfigKeyValidator.createValidator(
-						this.store.select(BuilderSelectors.selectAllConfigs).pipe(take(1)),
+					ConnectionValidator.createValidator(
+						this.store.select(BuilderSelectors.selectAllAppConnections).pipe(take(1)),
 						undefined
 					),
 				],
 			}),
 			value: new FormControl(undefined as any, Validators.required),
 		});
-		if (this.configToUpdateWithIndex) {
-			this.settingsForm.controls.value.setValue(this.configToUpdateWithIndex.config.value);
-			this.settingsForm.controls.key.setValue(this.configToUpdateWithIndex.config.key);
-			this.settingsForm.controls.key.disable();
+		if (this.connectionToUpdate) {
+			this.settingsForm.controls.value.setValue(this.connectionToUpdate.value);
+			this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
+			this.settingsForm.controls.name.disable();
 		}
 	}
-	submit() {
-		this.submitted = true;
+	submit(projectId: string) {
 		this.settingsForm.markAllAsTouched();
-		if (this.settingsForm.valid) {
-			const config = this.constructConfig();
-			this.saveConfigToCollection(config);
-			this.dialogRef.close(config);
+		if (this.settingsForm.valid && !this.loading) {
+			this.loading = true;
+			const config = this.constructConnection(projectId);
+			this.saveConnection(config);
 		}
 	}
-	constructConfig() {
-		const configKey = this.configToUpdateWithIndex
-			? this.configToUpdateWithIndex.config.key
-			: this.settingsForm.get('key')!.value;
+	constructConnection(projectId: string) {
+		const connectionName = this.connectionToUpdate
+			? this.connectionToUpdate.name
+			: this.settingsForm.controls.name.value;
 		const settingsFormValue: any = { ...this.settingsForm.getRawValue() };
-		const value = settingsFormValue['value'];
+		const connectionValue = settingsFormValue['value'];
 		delete settingsFormValue['value'];
 		delete settingsFormValue.key;
-		const newConfig: Config = {
-			key: configKey,
-			type: ConfigType.CLOUD_OAUTH2,
-			settings: {
-				pieceName: this.cloudConnectionPopupSettings.pieceName,
-			},
-			value: value,
+		const newConfig: UpsertCloudOAuth2Request = {
+			appName: this.pieceName,
+			value: { type: AppConnectionType.CLOUD_OAUTH2, ...connectionValue },
+			name: connectionName,
+			projectId: projectId,
 		};
 		return newConfig;
 	}
 
-	saveConfigToCollection(config: Config): void {
-		if (!this.configToUpdateWithIndex) {
-			this.store.dispatch(CollectionActions.addConfig({ config: config }));
-		} else {
-			this.store.dispatch(
-				CollectionActions.updateConfig({ config: config, configIndex: this.configToUpdateWithIndex.indexInList })
-			);
-		}
+	saveConnection(connection: UpsertCloudOAuth2Request): void {
+		this.upsert$ = this.appConnectionsService.upsert(connection).pipe(
+			catchError(err => {
+				console.error(err);
+				this.snackbar.open('Connection operation failed please check your console.', '', {
+					panelClass: 'error',
+					duration: 50000000,
+				});
+				return of(null);
+			}),
+			tap(connection => {
+				if (connection) {
+					this.store.dispatch(appConnectionsActions.upsert({ connection: connection }));
+					this.dialogRef.close(connection);
+				}
+				this.loading = false;
+			})
+		);
 	}
 	get authenticationSettingsControlsValid() {
 		return Object.keys(this.settingsForm.controls)
-			.filter(k => k !== 'value' && !this.settingsForm.controls[k].disabled)
+			.filter(k => k !== 'connection' && !this.settingsForm.controls[k].disabled)
 			.map(key => {
 				return this.settingsForm.controls[key].valid;
 			})

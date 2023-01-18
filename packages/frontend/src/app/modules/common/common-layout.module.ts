@@ -24,7 +24,6 @@ import { StoreModule } from '@ngrx/store';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { MatTooltipDefaultOptions, MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
-import { RawOutputLogPipe } from './pipe/raw-output-log';
 import { MatSnackBarModule, MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { LongTextFormControlComponent } from './components/form-controls/long-text-form-control/long-text-form-control.component';
 import { DictionaryFormControlComponent } from './components/form-controls/dictionary-form-control/dictionary-form-control.component';
@@ -34,7 +33,7 @@ import { CodeArtifactFormControlComponent } from './components/form-controls/cod
 import { CodeArtifactControlFullscreenComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { TestCodeFormModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/test-code-form-modal/test-code-form-modal.component';
 import { AddNpmPackageModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component';
-import { projectReducer } from './store/reducer/project.reducer';
+import { projectReducer } from './store/project/project.reducer';
 import { TrackHoverDirective } from './components/form-controls/dictionary-form-control/track-hover.directive';
 import { RequestTypeTemplateComponent } from './components/form-controls/request-type-template/request-type-template.component';
 import { EndpointFormControlComponent } from './components/form-controls/endpoint-form-control/endpoint-form-control.component';
@@ -76,7 +75,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		DefaultFalsePipe,
 		DefaultTruePipe,
 		OutputLogPipe,
-		RawOutputLogPipe,
 		JsonViewComponent,
 		LongTextFormControlComponent,
 		DictionaryFormControlComponent,

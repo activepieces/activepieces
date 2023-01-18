@@ -1,17 +1,9 @@
-import {CollectionId} from "../../collections/collection";
+import { Static, Type } from "@sinclair/typebox";
+import { CollectionId } from "../../collections/collection";
 
-export interface CreateFlowRequest{
-    displayName: string;
-    collectionId: CollectionId;
-}
+export const CreateFlowRequest = Type.Object({
+    displayName: Type.String({}),
+    collectionId: Type.String({})
+});
 
-export const CreateFlowRequestSchema = {
-    body: {
-        type: 'object',
-        properties: {
-            displayName: {type: 'string'},
-            collectionId: {type: 'string'}
-        },
-        required: ['displayName', 'collectionId']
-    }
-}
+export type CreateFlowRequest = Omit<Static<typeof CreateFlowRequest>,"collectionId"> & {collectionId: CollectionId};

@@ -6,6 +6,7 @@ class Globals {
   private _outputFile = './output.json';
   private _executorFile = './executor.js';
   private _workerToken = '';
+  private _projectId = '';
   private _apiUrl = '';
 
   set apiUrl(_apiUrl: string) {
@@ -15,6 +16,15 @@ class Globals {
   get apiUrl() {
     return this._apiUrl;
   }
+
+  set projectId(_projectId: string) {
+    this._projectId = _projectId;
+  }
+
+  get projectId() {
+    return this._projectId;
+  }
+
 
   set workerToken(_workerToken: string) {
     this._workerToken = _workerToken;

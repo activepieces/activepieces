@@ -1,4 +1,4 @@
-import fastify from "fastify";
+import fastify, { FastifyRequest } from "fastify";
 import cors from "@fastify/cors";
 import { databaseModule } from "./database/database-module";
 import { authenticationModule } from "./authentication/authentication.module";
@@ -17,12 +17,23 @@ import { codeModule } from "./workers/code-worker/code.module";
 import { flowWorkerModule } from "./workers/flow-worker/flow-worker-module";
 import { webhookModule } from "./webhooks/webhook-module";
 import { errorHandler } from "./helper/error-handler";
+import { appConnectionModule } from "./app-connection/app-connection.module";
 import { system } from "./helper/system/system";
 import { SystemProp } from "./helper/system/system-prop";
+import { databaseConnection } from "./database/database-connection";
 
 const app = fastify({
   logger: true,
+  ajv: {
+    customOptions: {
+      removeAdditional: 'all',
+      useDefaults: true,
+      coerceTypes: true,
+    }
+  }
 });
+
+
 app.register(cors, {
   origin: "*",
   methods: ["*"]
@@ -43,7 +54,23 @@ app.register(oauth2Module);
 app.register(instanceModule);
 app.register(flowRunModule);
 app.register(webhookModule);
+app.register(appConnectionModule);
 
+app.get(
+  "/redirect",
+  async (
+    request: FastifyRequest<{ Querystring: { code: string; } }>, reply
+  ) => {
+    let params = {
+      "code": request.query.code
+    };
+    if (params.code === undefined) {
+      reply.send("The code is missing in url");
+    } else {
+      reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${params['code']}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
+    }
+  }
+);
 app.setErrorHandler(errorHandler);
 
 const start = async () => {

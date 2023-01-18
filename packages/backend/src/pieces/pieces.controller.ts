@@ -1,8 +1,9 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
-import { ActivepiecesError, ErrorCode } from "../helper/activepieces-error";
-import { PieceOptionRequest, PieceOptionRequestSchema } from "shared";
-import { getPiece, pieces } from "pieces";
-import { DropdownProperty, DropdownState, PropertyType } from "pieces";
+import { PieceOptionRequest } from "shared";
+import { pieces } from "pieces";
+import { collectionVersionService } from "../collections/collection-version/collection-version.service";
+import { collectionService } from "../collections/collection.service";
+import { engineHelper } from "../helper/engine-helper";
 
 export const piecesController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
   fastify.get("/v1/pieces", async (_request, _reply) => {
@@ -12,7 +13,9 @@ export const piecesController = async (fastify: FastifyInstance, options: Fastif
   fastify.post(
     "/v1/pieces/:pieceName/options",
     {
-      schema: PieceOptionRequestSchema,
+      schema: {
+        body: PieceOptionRequest
+      },
     },
     async (
       request: FastifyRequest<{
@@ -21,48 +24,16 @@ export const piecesController = async (fastify: FastifyInstance, options: Fastif
       }>,
       _reply
     ) => {
-      const component = getPiece(request.params.pieceName);
-      if (component === undefined) {
-        throw new ActivepiecesError({
-          code: ErrorCode.PIECE_NOT_FOUND,
-          params: {
-            pieceName: request.params.pieceName,
-          },
-        });
-      }
-      const action = component.getAction(request.body.stepName);
-      const trigger = component.getTrigger(request.body.stepName);
-      if (action === undefined && trigger === undefined) {
-        throw new ActivepiecesError({
-          code: ErrorCode.STEP_NOT_FOUND,
-          params: {
-            stepName: request.body.stepName,
-            pieceName: request.params.pieceName,
-          },
-        });
-      }
-      const props = action !== undefined ? action.props : trigger!.props;
-      const property = props[request.body.configName];
-      if (property === undefined || property.type !== PropertyType.DROPDOWN) {
-        throw new ActivepiecesError({
-          code: ErrorCode.CONFIG_NOT_FOUND,
-          params: {
-            stepName: request.body.stepName,
-            pieceName: request.params.pieceName,
-            configName: request.body.configName,
-          },
-        });
-      }
-      try{
-        return await (property as DropdownProperty<unknown>).options(request.body.configs);
-      }catch(e){
-        console.error(e);
-        return {
-          disabled: true,
-          options: [],
-          placeholder: "The piece throws an error"
-        } as DropdownState<unknown>;
-      }
+      let collectionVersion = await collectionVersionService.getOneOrThrow(request.body.collectionVersionId);
+      let collection = await collectionService.getOneOrThrow(collectionVersion.collectionId);
+      return engineHelper.dropdownOptions({
+        pieceName: request.params.pieceName,
+        propertyName: request.body.propertyName,
+        stepName: request.body.stepName,
+        input: request.body.input,
+        collectionVersion: collectionVersion,
+        projectId: collection.projectId
+      })
     }
   );
 };

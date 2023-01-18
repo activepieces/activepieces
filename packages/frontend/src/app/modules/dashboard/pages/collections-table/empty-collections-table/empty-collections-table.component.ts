@@ -11,7 +11,7 @@ import { Flow } from 'shared';
 @Component({
 	selector: 'app-empty-collections-table',
 	templateUrl: './empty-collections-table.component.html',
-	styleUrls: ['./empty-collections-table.component.scss'],
+	styleUrls: [],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EmptyCollectionsTableComponent {
@@ -40,7 +40,6 @@ export class EmptyCollectionsTableComponent {
 				}),
 				switchMap(collection => {
 					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
-						debugger;
 						this.posthogService.captureEvent('collection.created [Start building]', collection);
 					}
 					return this.flowService.create({ collectionId: collection.id, displayName: 'Flow 1' });

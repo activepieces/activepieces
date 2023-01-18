@@ -1,17 +1,37 @@
-import {Config} from "../config";
+import { Static, Type } from "@sinclair/typebox";
+import {Config, ConfigType} from "../config";
 
-export interface UpdateCollectionRequest {
-    displayName: string;
-    configs: Config[];
-}
+export const ConfigValidation = Type.Union([
+    Type.Object({
+        key: Type.String(),
+        type: Type.Literal(ConfigType.CHECKBOX),
+        value: Type.Boolean(),
+    }),
+    Type.Object({
+        key: Type.String(),
+        type: Type.Literal(ConfigType.SHORT_TEXT),
+        value: Type.String(),
+    }),
+    Type.Object({
+        key: Type.String(),
+        type: Type.Literal(ConfigType.LONG_TEXT),
+        value: Type.String(),
+    }),
+    Type.Object({
+        key: Type.String(),
+        type: Type.Literal(ConfigType.NUMBER),
+        value: Type.Number(),
+    }),
+    Type.Object({
+        key: Type.String(),
+        type: Type.Literal(ConfigType.DICTIONARY),
+        value: Type.Object({}),
+    })
+])
 
-// TODO ADD VALIDATION FOR CONFIGS
-export const UpdateCollectionSchema = {
-    body: {
-        type: 'object',
-        properties: {
-            displayName: {type: 'string'},
-        },
-        required: ['displayName']
-    }
-}
+export const UpdateCollectionRequest = Type.Object({
+    configs: Type.Array(ConfigValidation),
+    displayName: Type.String({}),
+});
+
+export type UpdateCollectionRequest = Static<typeof UpdateCollectionRequest> & { configs: Config[]};

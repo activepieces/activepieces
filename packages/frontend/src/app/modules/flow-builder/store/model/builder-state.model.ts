@@ -1,3 +1,4 @@
+import { AppConnectionsState } from './app-connections-state.model';
 import { CollectionState } from './collection-state.model';
 import { ViewModeEnum } from './enums/view-mode.enum';
 import { FlowItemsDetailsState } from './flow-items-details-state.model';
@@ -9,4 +10,5 @@ export class GlobalBuilderState {
 	readonly flowsState: FlowsState;
 	readonly viewMode: ViewModeEnum;
 	readonly flowItemsDetailsState: FlowItemsDetailsState;
+	readonly appConnectionsState: AppConnectionsState;
 }

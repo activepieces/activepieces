@@ -12,6 +12,7 @@ import { FlowRunEntity } from "../flow-run/flow-run-entity";
 import { FlagEntity } from "../flags/flag-entity";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
+import { AppConnectionEntity } from "../app-connection/app-connection-entity";
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST);
@@ -28,6 +29,7 @@ export const databaseConnection = new DataSource({
   password,
   database,
   synchronize: true,
+  migrations: ['src/database/migration/**/*.ts'],
   entities: [
     CollectionEntity,
     CollectionVersionEntity,
@@ -40,5 +42,6 @@ export const databaseConnection = new DataSource({
     ProjectEntity,
     StoreEntryEntity,
     UserEntity,
+    AppConnectionEntity
   ],
 });

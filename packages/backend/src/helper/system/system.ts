@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode } from "../activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { SystemProp } from "./system-prop";
 
 export const system = {

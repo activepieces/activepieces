@@ -1,7 +1,7 @@
 import { Queue } from "bullmq";
 import { ApId } from "shared";
 import { createRedisClient } from "../../database/redis-connection";
-import { ActivepiecesError, ErrorCode } from "../../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
 
 interface BaseAddParams {

@@ -3,8 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { map, Observable, of, switchMap, take, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { ProjectSelectors } from '../store/selector/project.selector';
-import { ProjectActions } from '../store/action/project.action';
+import { ProjectSelectors } from '../store/project/project.selector';
+import { ProjectActions } from '../store/project/project.action';
 import { Project } from 'shared';
 
 @Injectable({

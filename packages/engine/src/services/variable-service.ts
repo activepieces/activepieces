@@ -1,42 +1,44 @@
 import { get } from 'lodash';
 import { isString } from 'lodash';
 import { ExecutionState } from 'shared';
+import { connectionService } from './connections.service';
+import replaceAsync from "string-replace-async";
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\$\\{(.*?)\\}', 'g');
-  private CONFIGS = 'configs';
-  private CONTEXT = 'context';
-  private STEPS = 'steps';
+  private static CONFIGS = 'configs';
+  private static CONNECTIONS = 'connections';
+  private static STEPS = 'steps';
 
   private findPath(path: string) {
     const paths = path.split('.');
     if (
       paths.length > 0 &&
-      paths[0] !== this.CONFIGS &&
-      paths[0] !== this.CONTEXT
+      paths[0] !== VariableService.CONFIGS &&
+      paths[0] !== VariableService.CONNECTIONS
     ) {
-      paths.splice(0, 0, this.STEPS);
+      paths.splice(0, 0, VariableService.STEPS);
     }
     return paths.join('.');
   }
 
-  private resolveInput(input: string, valuesMap: any) {
+  private async resolveInput(input: string, valuesMap: any): Promise<any> {
+
     // If input contains only a variable token, return the value of the variable while maintaining the variable type.
     if (
       input.match(this.VARIABLE_TOKEN) !== null &&
       input.match(this.VARIABLE_TOKEN)!.length === 1 &&
       input.match(this.VARIABLE_TOKEN)![0] === input
     ) {
-      const resolvedInput = VariableService.copyFromMap(
+      let resolvedInput = await this.handleTypeAndResolving(
         valuesMap,
         this.findPath(input.substring(2, input.length - 1))
-      );
+      )
       return resolvedInput;
     }
-
     // If input contains other text, replace the variable with its value as a string.
-    return input.replace(this.VARIABLE_TOKEN, (_, matchedKey) => {
-      const resolvedInput = VariableService.copyFromMap(
+    return await replaceAsync(input, this.VARIABLE_TOKEN, async (_, matchedKey) => {
+      const resolvedInput = await this.handleTypeAndResolving(
         valuesMap,
         this.findPath(matchedKey)
       );
@@ -50,6 +52,26 @@ export class VariableService {
     });
   }
 
+  private async handleTypeAndResolving(valuesMap: any, path: string): Promise<any> {
+    let paths = path.split(".");
+    if (paths[0] === VariableService.CONNECTIONS) {
+      // Invalid naming return nothing
+      if (paths.length < 2) {
+        return '';
+      }
+      // Need to be resolved dynamically
+      let connectioName = paths[1];
+      paths.splice(0, 2);
+      let newPath = paths.join(".");
+      const connection = (await connectionService.obtain(connectioName))?.value;
+      if (paths.length === 0) {
+        return connection;
+      }
+      return VariableService.copyFromMap(connection, newPath);
+    }
+    return VariableService.copyFromMap(valuesMap, path);
+  }
+
   private static copyFromMap(valuesMap: any, path: string) {
     const value = get(valuesMap, path);
     if (value === undefined) {
@@ -58,22 +80,22 @@ export class VariableService {
     return value;
   }
 
-  private resolveInternally(unresolvedInput: any, valuesMap: any) {
+  private async resolveInternally(unresolvedInput: any, valuesMap: any): Promise<any> {
     if (unresolvedInput === undefined || unresolvedInput === null) {
       return unresolvedInput;
     } else if (isString(unresolvedInput)) {
       return this.resolveInput(unresolvedInput, valuesMap);
     } else if (Array.isArray(unresolvedInput)) {
-      unresolvedInput.forEach(
-        (input, index) =>
-          (unresolvedInput[index] = this.resolveInternally(input, valuesMap))
-      );
+      for (let i = 0; i < unresolvedInput.length; ++i) {
+        unresolvedInput[i] = await this.resolveInternally(unresolvedInput[i], valuesMap);
+      }
     } else if (typeof unresolvedInput === 'object') {
-      Object.entries(unresolvedInput).forEach(([key, value]) => {
-        unresolvedInput[key] = this.resolveInternally(value, valuesMap);
-      });
+      const entries = Object.entries(unresolvedInput);
+      for (let i = 0; i < entries.length; ++i) {
+        const [key, value] = entries[i];
+        unresolvedInput[key] = await this.resolveInternally(value, valuesMap);
+      }
     }
-
     return unresolvedInput;
   }
 
@@ -95,7 +117,7 @@ export class VariableService {
     return valuesMap;
   }
 
-  resolve(unresolvedInput: any, executionState: ExecutionState) {
+  resolve(unresolvedInput: any, executionState: ExecutionState): Promise<any> {
     return this.resolveInternally(
       JSON.parse(JSON.stringify(unresolvedInput)),
       this.getExecutionStateObject(executionState)

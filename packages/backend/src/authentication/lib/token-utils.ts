@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { promisify } from "node:util";
 import jwt, { SignOptions, VerifyOptions } from "jsonwebtoken";
 import { Principal } from "shared";
-import { ActivepiecesError, ErrorCode } from "../../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";
 import { store } from "../../helper/store";

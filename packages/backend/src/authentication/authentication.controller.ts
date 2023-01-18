@@ -28,4 +28,11 @@ export const authenticationController = async (app: FastifyInstance, _options: F
       reply.send(authenticationResponse);
     }
   );
+
+  app.get(
+    "/me",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      reply.send(request.principal);
+    }
+  );
 };

@@ -1,4 +1,6 @@
-import { getPiece, PieceProperty } from "pieces";
+import { TSchema, Type } from "@sinclair/typebox";
+import { TypeCompiler } from '@sinclair/typebox/compiler';
+import { getPiece, PieceProperty, PropertyType } from "pieces";
 import {
   ActionType,
   apId,
@@ -18,7 +20,7 @@ import {
 } from "shared";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { fileService } from "../../file/file.service";
-import { ActivepiecesError, ErrorCode } from "../../helper/activepieces-error";
+import { ActivepiecesError, ErrorCode } from "shared";
 import { flowVersionRepo } from "./flow-version-repo";
 
 export const flowVersionService = {
@@ -44,7 +46,7 @@ export const flowVersionService = {
   },
   async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
     const flowVersion = await flowVersionService.getOne(id);
-  
+
     if (flowVersion === null) {
       throw new ActivepiecesError({
         code: ErrorCode.FLOW_VERSION_NOT_FOUND,
@@ -53,9 +55,9 @@ export const flowVersionService = {
         },
       });
     }
-  
+
     return flowVersion;
-  },  
+  },
   async getFlowVersion(flowId: FlowId, versionId: FlowVersionId | undefined): Promise<FlowVersion | null> {
     return await flowVersionRepo.findOne({
       where: {
@@ -159,24 +161,45 @@ function validateTrigger(settings: PieceTriggerSettings) {
   return validateProps(trigger.props, settings.input);
 }
 
-// TODO replace with proper validation, currently it's only validate wether the input is there or not, It should check schema and types as well.
-function validateProps(props: Record<string, PieceProperty>, input: Record<string, unknown>) {
-  const entries = Object.entries(props);
-  for (let i = 0; i < entries.length; ++i) {
-    const property: PieceProperty = entries[i][1];
-    const name: string = entries[i][0];
-    if (property.required && isMissing(input[name])) {
-      return false;
-    }
-  }
-  return true;
+function validateProps(props: PieceProperty, input: Record<string, unknown>) {
+  const propsSchema = buildSchema(props);
+  const propsValidator = TypeCompiler.Compile(propsSchema);
+  return propsValidator.Check(input);
 }
 
-function isMissing(value: any) {
-  if (value !== undefined && (typeof value === "string" || value instanceof String) && value.length === 0) {
-    return true;
+function buildSchema(props: PieceProperty): TSchema {
+  const entries = Object.entries(props);
+  let propsSchema: Record<string, TSchema> = {};
+  for (let i = 0; i < entries.length; ++i) {
+    const property = entries[i][1];
+    const name: string = entries[i][0];
+    switch (property.type) {
+      case PropertyType.SHORT_TEXT:
+      case PropertyType.LONG_TEXT:
+        propsSchema[name] = Type.String({
+          minLength: property.required ? 1 : undefined
+        });
+        break;
+      case PropertyType.CHECKBOX:
+        propsSchema[name] = Type.Boolean({});
+        break;
+      case PropertyType.NUMBER:
+        propsSchema[name] = Type.Number({});
+        break;
+      case PropertyType.DROPDOWN:
+        propsSchema[name] = Type.Any({});
+        break;
+      case PropertyType.OAUTH2:
+        // Only accepts connections variable.
+        propsSchema[name] = Type.RegEx(RegExp('[$]{1}\{connections.(.*?)\}'));
+        break;
+    }
+    if (!property.required) {
+      propsSchema[name] = Type.Optional(propsSchema[name]);
+    }
   }
-  return value === undefined;
+
+  return Type.Object(propsSchema);
 }
 
 async function deleteArtifact(codeSettings: CodeActionSettings): Promise<CodeActionSettings> {

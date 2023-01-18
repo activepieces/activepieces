@@ -39,12 +39,12 @@ export const gmailSendEmailAction = createAction({
 			required: false,
 		})
 	},
-	async run(configValue) {
+	async run(context) {
 		const mailOptions = {
-			to: configValue.propsValue['receiver'],
-			subject: configValue.propsValue['subject'],
-			text: configValue.propsValue['body_text'],
-			html: configValue.propsValue['body_html'],
+			to: context.propsValue['receiver'],
+			subject: context.propsValue['subject'],
+			text: context.propsValue['body_text'],
+			html: context.propsValue['body_html'],
 		};
 		const emailText = `To: ${mailOptions.to}
 Subject: ${mailOptions.subject}
@@ -75,7 +75,7 @@ ${mailOptions.html ? mailOptions.html : mailOptions.text}`;
 			body: requestBody,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: configValue.propsValue['authentication']!['access_token'],
+				token: context.propsValue['authentication']!['access_token'],
 			},
 			queryParams: {},
 		};
