@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Fail if tag already exists
-        run: "! docker manifest inspect activepieces/ap-base:${{ inputs.tag }}"
+        run: "! docker manifest inspect activepieces/ap-base:1"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -40,5 +40,5 @@ jobs:
             linux/arm64
           push: true
           tags: |
-            activepieces/ap-base:${{ inputs.tag }}
+            activepieces/ap-base:1
             activepieces/ap-base:latest
