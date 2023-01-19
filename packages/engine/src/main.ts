@@ -1,9 +1,9 @@
-import { FlowExecutor } from './executors/flow-executor';
-import { Utils } from './utils';
-import { globals } from './globals';
+import { FlowExecutor } from './lib/executors/flow-executor';
+import { Utils } from './lib/utils';
+import { globals } from './lib/globals';
 import { EngineOperationType, ExecuteDropdownOptions, ExecuteFlowOperation, ExecuteTriggerOperation, ExecutionState, StepOutput } from '@activepieces/shared';
-import { pieceHelper } from './helper/piece-helper';
-import { triggerHelper } from './helper/trigger-helper';
+import { pieceHelper } from './lib/helper/piece-helper';
+import { triggerHelper } from './lib/helper/trigger-helper';
 
 const args = process.argv.slice(2);
 

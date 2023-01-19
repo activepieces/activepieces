@@ -7,7 +7,7 @@ import { globals } from '../globals';
 
 export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction> {
   firstLoopAction?: BaseActionHandler<any>;
-  action: LoopOnItemsAction;
+  override action: LoopOnItemsAction;
   variableService: VariableService;
 
   constructor(
