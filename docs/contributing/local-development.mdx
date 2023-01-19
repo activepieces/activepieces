@@ -1,34 +1,26 @@
 ---
-title: "Local Development"
-description: ""
+title: 'Local Development'
+description: ''
 ---
 
-## Using Dev Containers in Visual Studio Code
-
-The project includes a dev container configuration that allows you to use Visual Studio Code's [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) extension to develop the project in a consistent environment. This can be especially helpful if you are new to the project or if you have a different environment setup on your local machine.
+This project utilizes Docker Compose for local development, allowing you to edit the application on your own computer while the files are running inside a Docker environment.
 
 ## Prerequisites
 
-Before you can use the dev container, you will need to install the following:
+- Docker and Docker Compose must be installed on your local machine.
 
-- [Visual Studio Code](https://code.visualstudio.com/).
-- The [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) extension for Visual Studio Code.
-- [Docker](https://www.docker.com/).
+## Using Docker Compose
 
-## Using the Dev Container
+First, install the necessary dependencies for your application by running the following command:
 
-To use the dev container for the Activepieces project, follow these steps:
+```bash
+npm ci
+```
 
-1. Clone the Activepieces repository to your local machine.
-2. Open the project in Visual Studio Code.
-3. Press `Ctrl+P` and type `> Dev Containers: Reopen in Container`.
-4. Run `cd src/packages/backend && pnpm install && pnpm start`.
-5. Open another terminal and run `cd src/packages/frontend && pnpm install && pnpm start`.
-6. The backend will run at `localhost:3000` and the frontend will run at `localhost:4200`.
+Next, start the application by using the command:
 
-## Exiting the Dev Container
+```bash
+docker-compose -f docker-compose.dev.yml up
+```
 
-To exit the dev container and return to your local environment, follow these steps:
-
-1. In the bottom left corner of Visual Studio Code, click the `Remote-Containers: Reopen folder locally` button.
-2. Visual Studio Code will close the connection to the dev container and reopen the project in your local environment.
+This command will start the containers specified in the docker-compose.dev.yml file and run them in the background. You can use the `docker-compose -f docker-compose.dev.yml down` command to stop the containers.
