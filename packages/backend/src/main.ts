@@ -1,25 +1,25 @@
 import fastify, { FastifyRequest } from "fastify";
 import cors from "@fastify/cors";
-import { databaseModule } from "./database/database-module";
-import { authenticationModule } from "./authentication/authentication.module";
-import { collectionModule } from "./collections/collection.module";
-import { projectModule } from "./project/project.module";
-import { flowModule } from "./flows/flow.module";
-import { fileModule } from "./file/file.module";
-import { piecesController } from "./pieces/pieces.controller";
-import { oauth2Module } from "./oauth2/oauth2.module";
-import { tokenVerifyMiddleware } from "./authentication/token-verify-middleware";
-import { storeEntryModule } from "./store-entry/store-entry.module";
-import { instanceModule } from "./instance/instance-module";
-import { flowRunModule } from "./flow-run/flow-run-module";
-import { flagModule } from "./flags/flag.module";
-import { codeModule } from "./workers/code-worker/code.module";
-import { flowWorkerModule } from "./workers/flow-worker/flow-worker-module";
-import { webhookModule } from "./webhooks/webhook-module";
-import { errorHandler } from "./helper/error-handler";
-import { appConnectionModule } from "./app-connection/app-connection.module";
-import { system } from "./helper/system/system";
-import { SystemProp } from "./helper/system/system-prop";
+import { databaseModule } from "./app/database/database-module";
+import { authenticationModule } from "./app/authentication/authentication.module";
+import { collectionModule } from "./app/collections/collection.module";
+import { projectModule } from "./app/project/project.module";
+import { flowModule } from "./app/flows/flow.module";
+import { fileModule } from "./app/file/file.module";
+import { piecesController } from "./app/pieces/pieces.controller";
+import { oauth2Module } from "./app/oauth2/oauth2.module";
+import { tokenVerifyMiddleware } from "./app/authentication/token-verify-middleware";
+import { storeEntryModule } from "./app/store-entry/store-entry.module";
+import { instanceModule } from "./app/instance/instance-module";
+import { flowRunModule } from "./app/flow-run/flow-run-module";
+import { flagModule } from "./app/flags/flag.module";
+import { codeModule } from "./app/workers/code-worker/code.module";
+import { flowWorkerModule } from "./app/workers/flow-worker/flow-worker-module";
+import { webhookModule } from "./app/webhooks/webhook-module";
+import { errorHandler } from "./app/helper/error-handler";
+import { appConnectionModule } from "./app/app-connection/app-connection.module";
+import { system } from "./app/helper/system/system";
+import { SystemProp } from "./app/helper/system/system-prop";
 import chalk from 'chalk';
 
 const envToLogger = {
@@ -97,12 +97,12 @@ const start = async () => {
     });
 
     console.log(`
-             _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____ 
+             _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
     /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
-   /  \\    | |         | |      | |    \\ \\  / /  | |__    | |__) |   | |   | |__    | |      | |__    | (___  
-  / /\\ \\   | |         | |      | |     \\ \\/ /   |  __|   |  ___/    | |   |  __|   | |      |  __|    \\___ \\ 
+   /  \\    | |         | |      | |    \\ \\  / /  | |__    | |__) |   | |   | |__    | |      | |__    | (___
+  / /\\ \\   | |         | |      | |     \\ \\/ /   |  __|   |  ___/    | |   |  __|   | |      |  __|    \\___ \\
  / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
-/_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/ 
+/_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
 started on ${system.get(SystemProp.FRONTEND_URL)}
     `);

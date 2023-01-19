@@ -5,7 +5,7 @@ import { system } from "./system/system";
 import { SystemProp } from "./system/system-prop";
 import { tokenUtils } from "../authentication/lib/token-utils";
 import { DropdownState } from "@activepieces/pieces";
-import { logger } from "../app";
+import { logger } from "../../main";
 import chalk from "chalk";
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
