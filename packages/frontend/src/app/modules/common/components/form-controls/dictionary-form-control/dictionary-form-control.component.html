@@ -9,14 +9,11 @@
           [class.opacity-0]="!deleteButton.isHovered && !keyInput.isHovered && !valueInput.isHovered" appTrackHover
           #deleteButton="hoverTrackerDirective" (click)="removePair(idx)"></app-icon-button>
       </div>
-      <div #key class="form-control key-control" [class.first]="isFirst && pairs.controls.length>1"
-        [class.last]="isLast && pairs.controls.length>1" [class.only-one]="pairs.controls.length === 1" appTrackHover
-        #keyInput="hoverTrackerDirective">
-        <app-interpolating-text-form-control placeholder="Key" [insideMatField]="false"
-          formControlName="key"></app-interpolating-text-form-control>
-      </div>
 
-
+      <input #key name="key" class="form-control key-control" [class.first]="isFirst && pairs.controls.length>1"
+      [class.last]="isLast && pairs.controls.length>1" [class.only-one]="pairs.controls.length === 1"
+      formControlName="key" type="text" (keyup)="dictionaryControlValueChanged()" placeholder="Key" appTrackHover
+      #keyInput="hoverTrackerDirective" />
 
       <div class="form-control value-control" [class.first]="isFirst && pairs.controls.length>1"
         [class.last]="isLast && pairs.controls.length>1" [class.only-one]="pairs.controls.length === 1" appTrackHover
