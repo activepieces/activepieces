@@ -12,7 +12,7 @@ export async function getMailChimpServerPrefix(access_token:string)
             Authorization: `OAuth ${access_token}`
           }
     };
-    return  (await httpClient.sendRequest(mailChimpMetaDataRequest)).body.dc;
+    return  (await httpClient.sendRequest(mailChimpMetaDataRequest)).body["dc"];
 }
 export const mailChimpAuth =  Property.OAuth2({
     description: "",

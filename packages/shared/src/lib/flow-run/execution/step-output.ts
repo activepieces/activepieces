@@ -14,10 +14,9 @@ export class StepOutput{
 }
 
 export class LoopOnItemsStepOutput extends StepOutput {
-  override output:
-    | {
-        current_item: any;
-        current_iteration: number;
-        iterations: Record<string, StepOutput>[];
-      };
+  override output!: {
+    current_item: any;
+    current_iteration: number;
+    iterations: Record<string, StepOutput>[];
+  };
 }
