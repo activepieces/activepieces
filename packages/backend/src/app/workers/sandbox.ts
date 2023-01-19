@@ -76,7 +76,7 @@ export class Sandbox {
 
   private static runIsolate(cmd: string): Promise<string> {
     const currentDir = cwd();
-    const fullCmd = `${currentDir}/resources/${this.isolateExecutableName} ${cmd}`;
+    const fullCmd = `${currentDir}/packages/backend/src/assets/${this.isolateExecutableName} ${cmd}`;
     return new Promise((resolve, reject) => {
       exec(fullCmd, (error: any, stdout: string | PromiseLike<string>, stderr: any) => {
         if (error) {

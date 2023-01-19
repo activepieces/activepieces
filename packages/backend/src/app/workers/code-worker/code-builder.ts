@@ -1,4 +1,6 @@
 import decompress = require("decompress");
+import { logger } from "packages/backend/src/main";
+import { cwd } from "process";
 import { sandboxManager } from "../sandbox";
 
 const { execSync } = require("child_process");
@@ -35,8 +37,8 @@ async function build(artifact: Buffer): Promise<Buffer> {
 
     await downloadFiles(artifact, buildPath);
 
-    await execSync("npm --prefix " + buildPath + " install");
-    await execSync("npm --prefix " + buildPath + " run build");
+    logger.info(Buffer.from(await execSync("npm --prefix " + buildPath + " install")).toString());
+    logger.info(Buffer.from(await execSync("npm --prefix " + buildPath + " run build").tostring()));
 
     const bundledFilePath = buildPath + "/dist/index.js";
     bundledFile = fs.readFileSync(bundledFilePath);
@@ -44,7 +46,7 @@ async function build(artifact: Buffer): Promise<Buffer> {
   } catch (e) {
     const consoleError = e as { stdout: string };
     const invalidArtifactFile = fs
-      .readFileSync("./resources/invalid-code.js")
+      .readFileSync("./packages/backend/src/assets/invalid-code.js")
       .toString("utf-8")
       .replace("${ERROR_MESSAGE}", JSON.stringify(consoleError.stdout.toString()).replace(/\"/g, '\\"'));
     bundledFile = Buffer.from(invalidArtifactFile, "utf-8");

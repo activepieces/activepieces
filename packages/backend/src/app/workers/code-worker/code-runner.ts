@@ -35,7 +35,7 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
     await sandbox.cleanAndInit();
 
     const bundledCode = await codeBuilder.build(artifact);
-    const codeExecutor = fs.readFileSync("resources/code-executor.js");
+    const codeExecutor = fs.readFileSync("packages/backend/src/assets/code-executor.js");
     fs.writeFileSync(buildPath + "/index.js", bundledCode);
     fs.writeFileSync(buildPath + "/_input.txt", JSON.stringify(input));
     fs.writeFileSync(buildPath + "/code-executor.js", codeExecutor);

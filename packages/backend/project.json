@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/backend/src",
   "projectType": "application",
+  "implicitDependencies": ["engine"],
   "targets": {
     "build": {
       "executor": "@nrwl/webpack:webpack",
