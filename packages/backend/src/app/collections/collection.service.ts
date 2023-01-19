@@ -10,13 +10,13 @@ import {
   ProjectId,
   SeekPage,
   UpdateCollectionRequest,
-} from "shared";
+} from "@activepieces/shared";
 import { collectionVersionService } from "./collection-version/collection-version.service";
 import { CollectionEntity } from "./collection-entity";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { databaseConnection } from "../database/database-connection";
-import { ActivepiecesError, ErrorCode } from "shared";
+import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 
 export const collectionRepo = databaseConnection.getRepository(CollectionEntity);
 

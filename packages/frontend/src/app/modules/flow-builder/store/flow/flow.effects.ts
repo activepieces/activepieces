@@ -24,7 +24,7 @@ import {
 	FlowOperationRequest,
 	FlowOperationType,
 	TriggerType,
-} from 'shared';
+} from '@activepieces/shared';
 
 @Injectable()
 export class FlowsEffects {

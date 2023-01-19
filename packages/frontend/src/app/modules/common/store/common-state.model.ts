@@ -1,4 +1,4 @@
-import { Project } from 'shared';
+import { Project } from '@activepieces/shared';
 
 export interface CommonStateModel {
 	readonly projectsState: ProjectsState;

@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 import {
   ClaimTokenFromCloudRequest,
   ClaimTokenWithSecretRequest,
-} from "shared";
+} from "@activepieces/shared";
 import { formatOAuth2Response } from "../app-connection/app-connection-service";
 
 export const oauth2Service = {

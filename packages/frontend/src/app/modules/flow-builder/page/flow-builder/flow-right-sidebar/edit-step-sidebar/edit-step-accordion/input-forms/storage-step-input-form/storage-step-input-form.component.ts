@@ -9,7 +9,7 @@ import {
 	Validators,
 } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
-import { ActionType, StoreOperation } from 'shared';
+import { ActionType, StoreOperation } from '@activepieces/shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
 import { StorageStepInputFormSchema } from '../input-forms-schema';

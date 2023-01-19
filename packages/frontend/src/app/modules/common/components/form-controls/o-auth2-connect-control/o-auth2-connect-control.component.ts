@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { catchError, Observable, tap, throwError } from 'rxjs';
-import { OAuth2AppDetails } from 'shared';
+import { OAuth2AppDetails } from '@activepieces/shared';
 import { fadeInUp400ms } from '../../../animation/fade-in-up.animation';
 import { Oauth2Service } from '../../../service/oauth2.service';
 

@@ -6,9 +6,9 @@ import {
   CreateCollectionRequest,
   ListCollectionsRequest,
   UpdateCollectionRequest
-} from "shared";
+} from "@activepieces/shared";
 import { StatusCodes } from "http-status-codes";
-import { ActivepiecesError, ErrorCode } from "shared";
+import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 
 const DEFAULT_PAGE_SIZE = 10;
 

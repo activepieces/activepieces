@@ -1,7 +1,7 @@
 import { FlowExecutor } from './executors/flow-executor';
 import { Utils } from './utils';
 import { globals } from './globals';
-import { EngineOperationType, ExecuteDropdownOptions, ExecuteFlowOperation, ExecuteTriggerOperation, ExecutionState, StepOutput } from 'shared';
+import { EngineOperationType, ExecuteDropdownOptions, ExecuteFlowOperation, ExecuteTriggerOperation, ExecutionState, StepOutput } from '@activepieces/shared';
 import { pieceHelper } from './helper/piece-helper';
 import { triggerHelper } from './helper/trigger-helper';
 

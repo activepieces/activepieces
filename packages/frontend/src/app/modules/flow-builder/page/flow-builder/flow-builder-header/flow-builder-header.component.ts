@@ -13,7 +13,7 @@ import {
 	ChevronDropdownOption,
 	ChevronDropdownOptionType,
 } from '../../../components/chevron-dropdown-menu/chevron-dropdown-option';
-import { Collection, Instance } from 'shared';
+import { Collection, Instance } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 
 @Component({

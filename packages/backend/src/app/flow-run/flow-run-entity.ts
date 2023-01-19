@@ -1,6 +1,6 @@
 import { EntitySchema } from "typeorm";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
-import { Collection, CollectionVersion, Flow, FlowRun, Instance, Project } from "shared";
+import { Collection, CollectionVersion, Flow, FlowRun, Instance, Project } from "@activepieces/shared";
 
 interface FlowRunSchema extends FlowRun {
   project: Project;

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { TriggerType, WebhookTrigger } from 'shared';
+import { TriggerType, WebhookTrigger } from '@activepieces/shared';
 import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
 import { MentionListItem, replaceArrayNotationsWithSpaces, replaceDotsWithSpaces } from '../../utils';
 const pathRegex = /\$\{trigger((\.[a-zA-Z_$][a-zA-Z_$0-9]*)(\[([0-9])+\])*)*\}/;

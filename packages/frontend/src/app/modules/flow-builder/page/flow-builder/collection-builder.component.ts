@@ -15,7 +15,7 @@ import { BuilderActions } from '../../store/builder/builder.action';
 import { FlowItemDetailsActions } from '../../store/builder/flow-item-details/flow-items-details.action';
 import { RunDetailsService } from './flow-left-sidebar/run-details/iteration-details.service';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
-import { Collection, ExecutionOutputStatus, Instance } from 'shared';
+import { Collection, ExecutionOutputStatus, Instance } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 
 @Component({

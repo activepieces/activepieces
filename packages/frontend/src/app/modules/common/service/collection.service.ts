@@ -9,7 +9,7 @@ import {
 	UpdateCollectionRequest,
 	CollectionId,
 	CreateCollectionRequest,
-} from 'shared';
+} from '@activepieces/shared';
 
 @Injectable({
 	providedIn: 'root',

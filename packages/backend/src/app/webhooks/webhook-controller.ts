@@ -1,7 +1,7 @@
 import { FastifyPluginCallback, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
 import { Static, Type } from "@sinclair/typebox";
-import { ApId } from "shared";
+import { ApId } from "@activepieces/shared";
 import { webhookService } from "./webhook-service";
 
 export const webhookController: FastifyPluginCallback = (app, _opts, done): void => {

@@ -6,7 +6,7 @@ import { Observable, switchMap, tap } from 'rxjs';
 import { FlowService } from 'src/app/modules/common/service/flow.service';
 import { PosthogService } from 'src/app/modules/common/service/posthog.service';
 import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
-import { Flow } from 'shared';
+import { Flow } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-empty-collections-table',

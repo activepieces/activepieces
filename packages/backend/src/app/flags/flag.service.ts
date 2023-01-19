@@ -1,4 +1,4 @@
-import { Flag } from "shared";
+import { Flag } from "@activepieces/shared";
 import { databaseConnection } from "../database/database-connection";
 import { getBackendUrl } from "../helper/public-ip-utils";
 import { system } from "../helper/system/system";

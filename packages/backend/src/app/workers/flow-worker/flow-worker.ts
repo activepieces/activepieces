@@ -11,7 +11,7 @@ import {
   FlowVersion,
   StepOutputStatus,
   Trigger,
-} from "shared";
+} from "@activepieces/shared";
 import { Sandbox, sandboxManager } from "../sandbox";
 import { flowVersionService } from "../../flows/flow-version/flow-version.service";
 import { collectionVersionService } from "../../collections/collection-version/collection-version.service";

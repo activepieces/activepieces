@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
-import { AppConnectionId, ListAppConnectionRequest, UpsertConnectionRequest } from "shared";
-import { ActivepiecesError, ErrorCode } from "shared";
+import { AppConnectionId, ListAppConnectionRequest, UpsertConnectionRequest } from "@activepieces/shared";
+import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { appConnectionService } from "./app-connection-service";
 
 const DEFAULT_PAGE_SIZE = 10;

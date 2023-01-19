@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { Project } from 'shared';
+import { Project } from '@activepieces/shared';
 
 export enum ProjectActionType {
 	CLEAR_PROJECTS = '[PROJECT] CLEAR_PROJECTS',

@@ -1,4 +1,4 @@
-import { FlowRun } from "shared";
+import { FlowRun } from "@activepieces/shared";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
 
 interface StartParams {

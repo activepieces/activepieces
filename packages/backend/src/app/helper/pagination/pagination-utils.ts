@@ -1,4 +1,4 @@
-import { SeekPage } from "shared";
+import { SeekPage } from "@activepieces/shared";
 import { CursorResult } from "typeorm";
 
 export function atob(value: string): string {

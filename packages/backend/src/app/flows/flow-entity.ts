@@ -1,5 +1,5 @@
 import { EntitySchema } from "typeorm";
-import { Collection, Flow, FlowRun, FlowVersion } from "shared";
+import { Collection, Flow, FlowRun, FlowVersion } from "@activepieces/shared";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 
 interface FlowSchema extends Flow {

@@ -1,5 +1,5 @@
-import { pieces, Store } from "pieces";
-import { ExecuteTriggerOperation, ExecutionState, PieceTrigger, TriggerHookType } from "shared";
+import { pieces, Store } from "@activepieces/pieces";
+import { ExecuteTriggerOperation, ExecutionState, PieceTrigger, TriggerHookType } from "@activepieces/shared";
 import { createContextStore, storageService } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 

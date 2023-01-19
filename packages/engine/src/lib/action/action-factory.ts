@@ -1,4 +1,4 @@
-import { Action, ActionType } from 'shared';
+import { Action, ActionType } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { CodeActionHandler } from './code-action-handler';
 import { PieceActionHandler } from './piece-action-handler';

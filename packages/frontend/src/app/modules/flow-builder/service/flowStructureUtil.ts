@@ -1,5 +1,5 @@
 import { FlowItem } from '../../common/model/flow-builder/flow-item';
-import { ActionType, FlowVersion, LoopOnItemsAction, Trigger, TriggerType } from 'shared';
+import { ActionType, FlowVersion, LoopOnItemsAction, Trigger, TriggerType } from '@activepieces/shared';
 
 export class FlowStructureUtil {
 	constructor() {}

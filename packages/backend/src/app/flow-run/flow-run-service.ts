@@ -10,7 +10,7 @@ import {
   ProjectId,
   SeekPage,
   RunEnvironment
-} from "shared";
+} from "@activepieces/shared";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 import { collectionService } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";

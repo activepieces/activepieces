@@ -1,4 +1,4 @@
-import { ActionType, Flow, TriggerType } from 'shared';
+import { ActionType, Flow, TriggerType } from '@activepieces/shared';
 
 export function getDisplayNameForTrigger(triggerType: TriggerType) {
 	switch (triggerType) {

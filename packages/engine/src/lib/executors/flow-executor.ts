@@ -9,7 +9,7 @@ import {
   ExecutionError,
   ExecutionOutputStatus,
   ExecutionOutput
-} from 'shared';
+} from '@activepieces/shared';
 import { createAction } from '../action/action-factory';
 
 export class FlowExecutor {

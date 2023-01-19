@@ -5,7 +5,7 @@ import {
   FlowVersionState,
   Instance,
   InstanceStatus,
-} from "shared";
+} from "@activepieces/shared";
 import { In } from "typeorm";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 import { flowVersionRepo } from "../flows/flow-version/flow-version-repo";

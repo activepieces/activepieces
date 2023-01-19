@@ -3,7 +3,7 @@ import { environment } from '../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { UUID } from 'angular2-uuid';
 import { map, Observable, switchMap } from 'rxjs';
-import { BaseOAuth2ConnectionValue, ClaimTokenWithSecretRequest, OAuth2AppDetails } from 'shared';
+import { BaseOAuth2ConnectionValue, ClaimTokenWithSecretRequest, OAuth2AppDetails } from '@activepieces/shared';
 
 @Injectable({
 	providedIn: 'root',

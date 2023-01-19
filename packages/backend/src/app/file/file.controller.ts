@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
-import { ActivepiecesError, ErrorCode } from "shared";
-import { FileId } from "shared";
+import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
+import { FileId } from "@activepieces/shared";
 import { fileService } from "./file.service";
 import { StatusCodes } from "http-status-codes";
 
@@ -14,7 +14,7 @@ export const fileController = async (fastify: FastifyInstance, options: FastifyP
         };
       }>,
       _reply
-    ) => {    
+    ) => {
       const file = await fileService.getOne(_request.params.fileId);
       if (file === null) {
         throw new ActivepiecesError({ code: ErrorCode.FILE_NOT_FOUND, params: { id: _request.params.fileId } });

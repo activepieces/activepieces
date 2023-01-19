@@ -4,7 +4,7 @@ import { environment } from '../../../../environments/environment';
 import * as JSZip from 'jszip';
 import { catchError, from, map, Observable, of, switchMap } from 'rxjs';
 import { Artifact } from '../model/artifact.interface';
-import { CodeExecutionResult } from 'shared';
+import { CodeExecutionResult } from '@activepieces/shared';
 
 type NpmPkg = {
 	'dist-tags': {

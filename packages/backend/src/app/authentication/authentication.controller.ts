@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } from "fastify";
-import { SignInRequest, SignUpRequest } from "shared";
+import { SignInRequest, SignUpRequest } from "@activepieces/shared";
 import { authenticationService } from "./authentication.service";
 
 export const authenticationController = async (app: FastifyInstance, _options: FastifyPluginOptions) => {

@@ -1,6 +1,6 @@
 import { EntitySchema } from "typeorm";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
-import { Collection, CollectionVersion, Flow, Project } from "shared";
+import { Collection, CollectionVersion, Flow, Project } from "@activepieces/shared";
 
 export interface CollectionSchema extends Collection {
   project: Project;

@@ -16,7 +16,7 @@ import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.anima
 import { ComponentActionInputFormSchema } from '../../input-forms-schema';
 import { DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
 import { PieceConfig, propsConvertor } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
-import { Config } from 'shared';
+import { Config } from '@activepieces/shared';
 declare type ActionDropdownOption = {
 	label: {
 		name: string;

@@ -1,9 +1,9 @@
-import { CollectionId, FlowId, Instance, RunEnvironment, TriggerType } from "shared";
+import { CollectionId, FlowId, Instance, RunEnvironment, TriggerType } from "@activepieces/shared";
 import { collectionService } from "../collections/collection.service";
 import { flowRunService } from "../flow-run/flow-run-service";
 import { flowService } from "../flows/flow-service";
 import { flowVersionService } from "../flows/flow-version/flow-version.service";
-import { ActivepiecesError, ErrorCode } from "shared";
+import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { triggerUtils } from "../helper/trigger-utils";
 import { instanceService } from "../instance/instance-service";
 
@@ -23,7 +23,7 @@ export const webhookService = {
 
     console.log(`Triggers returned a ${payloads.length} payloads`);
 
-    const createFlowRuns = payloads.map((payload) => 
+    const createFlowRuns = payloads.map((payload) =>
       flowRunService.start({
         environment: RunEnvironment.PRODUCTION,
         collectionVersionId: instance.collectionVersionId,

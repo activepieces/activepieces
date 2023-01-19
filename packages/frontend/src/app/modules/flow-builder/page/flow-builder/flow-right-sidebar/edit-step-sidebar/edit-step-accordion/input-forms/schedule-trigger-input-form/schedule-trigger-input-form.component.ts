@@ -12,7 +12,7 @@ import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.anima
 import { cronJobValidator } from 'src/app/modules/common/validators/cronjob-validator';
 import { InputFormsSchema, ScheduledTriggerInputFormSchema } from '../input-forms-schema';
 import cronstrue from 'cronstrue';
-import { TriggerType } from 'shared';
+import { TriggerType } from '@activepieces/shared';
 @Component({
 	selector: 'app-schedule-trigger-input-form',
 	templateUrl: './schedule-trigger-input-form.component.html',

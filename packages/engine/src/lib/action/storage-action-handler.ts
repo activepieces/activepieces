@@ -6,7 +6,7 @@ import {
   StepOutputStatus,
   StorageAction,
   StoreOperation
-} from 'shared';
+} from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { storageService } from '../services/storage.service';
 

@@ -16,7 +16,7 @@ import { AuthenticationService } from 'src/app/modules/common/service/authentica
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { CodeService } from '../../service/code.service';
-import { Collection, ExecutionOutputStatus, Flow, FlowRun, TriggerType } from 'shared';
+import { Collection, ExecutionOutputStatus, Flow, FlowRun, TriggerType } from '@activepieces/shared';
 import { initializedRun } from 'src/app/modules/common/model/flow-run.interface';
 
 @Component({

@@ -1,7 +1,7 @@
 import {ExecutionState} from '../../src/model/execution/execution-state';
 import {StepOutputStatus} from '../../src/model/output/step-output';
 import {FlowExecutor} from '../../src/executors/flow-executor';
-import {ActionType, LoopOnItemsAction} from "shared";
+import {ActionType, LoopOnItemsAction} from "@activepieces/shared";
 import {LoopOnItemActionHandler} from "../../src/action/loop-action-handler";
 import {createAction} from "../../src/action/action-factory";
 

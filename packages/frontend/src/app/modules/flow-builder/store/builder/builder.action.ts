@@ -1,6 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
-import { AppConnection, Collection, Flow, FlowRun, Instance } from 'shared';
+import { AppConnection, Collection, Flow, FlowRun, Instance } from '@activepieces/shared';
 
 export enum BuilderActionType {
 	LOAD_INITIAL = '[BUILDER] LOAD_INITIAL',

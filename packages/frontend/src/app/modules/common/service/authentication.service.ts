@@ -4,7 +4,7 @@ import { environment } from '../../../../environments/environment';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { User } from 'shared';
+import { User } from '@activepieces/shared';
 
 type FlagsMap = Record<string, boolean | string | Object | undefined>;
 

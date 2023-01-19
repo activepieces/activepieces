@@ -1,6 +1,6 @@
 import { EntitySchema } from "typeorm";
 import { BaseColumnSchemaPart } from "../helper/base-entity";
-import { Flag } from "shared";
+import { Flag } from "@activepieces/shared";
 
 interface FlagSchema extends Flag {}
 

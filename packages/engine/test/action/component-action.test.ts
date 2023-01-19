@@ -1,7 +1,7 @@
 import {ExecutionState} from '../../src/model/execution/execution-state';
 import {StepOutputStatus} from '../../src/model/output/step-output';
 import {ConfigurationValue} from "pieces/dist/src/framework/config/configuration-value.model";
-import {ActionType, PieceAction, PieceActionSettings} from "shared";
+import {ActionType, PieceAction, PieceActionSettings} from "@activepieces/shared";
 import {PieceActionHandler} from "../../src/action/piece-action-handler";
 import {PieceExecutor} from "../../src/executors/piece-executor";
 

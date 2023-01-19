@@ -1,4 +1,4 @@
-import {ExecutionState, StepOutput} from 'shared';
+import {ExecutionState, StepOutput} from '@activepieces/shared';
 import {VariableService} from '../../src/services/variable-service';
 
 const variableService = new VariableService();

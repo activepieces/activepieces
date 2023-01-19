@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { catchError, Observable, of, take, tap } from 'rxjs';
-import { AppConnection, AppConnectionType, UpsertCloudOAuth2Request, Project } from 'shared';
+import { AppConnection, AppConnectionType, UpsertCloudOAuth2Request, Project } from '@activepieces/shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
 import { CloudConnectionPopupSettings } from 'src/app/modules/common/components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';

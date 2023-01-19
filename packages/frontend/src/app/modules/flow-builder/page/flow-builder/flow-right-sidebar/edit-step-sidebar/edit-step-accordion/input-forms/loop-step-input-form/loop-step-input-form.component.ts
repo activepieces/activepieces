@@ -10,7 +10,7 @@ import {
 } from '@angular/forms';
 
 import { Observable, tap } from 'rxjs';
-import { ActionType } from 'shared';
+import { ActionType } from '@activepieces/shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { LoopStepInputFormSchema } from '../input-forms-schema';
 

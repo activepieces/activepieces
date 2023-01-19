@@ -1,4 +1,4 @@
-import { AppConnection, Project } from "shared";
+import { AppConnection, Project } from "@activepieces/shared";
 import { EntitySchema } from "typeorm";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 

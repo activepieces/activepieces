@@ -1,4 +1,4 @@
-import { StepOutput, Action, ActionType, ExecutionState } from 'shared';
+import { StepOutput, Action, ActionType, ExecutionState } from '@activepieces/shared';
 
 export type ActionHandler = BaseActionHandler<any>;
 

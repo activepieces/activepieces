@@ -1,6 +1,6 @@
 import { TSchema, Type } from "@sinclair/typebox";
 import { TypeCompiler } from '@sinclair/typebox/compiler';
-import { getPiece, PieceProperty, PropertyType } from "pieces";
+import { getPiece, PieceProperty, PropertyType } from "@activepieces/pieces";
 import {
   ActionType,
   apId,
@@ -17,10 +17,10 @@ import {
   PieceActionSettings,
   PieceTriggerSettings,
   TriggerType,
-} from "shared";
+} from "@activepieces/shared";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { fileService } from "../../file/file.service";
-import { ActivepiecesError, ErrorCode } from "shared";
+import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowVersionRepo } from "./flow-version-repo";
 
 export const flowVersionService = {

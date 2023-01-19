@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { ActionType, PieceOptionRequest, TriggerType } from 'shared';
+import { ActionType, PieceOptionRequest, TriggerType } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import { AppPiece } from '../../common/components/configs-form/connector-action-or-config';
 import { environment } from 'src/environments/environment';

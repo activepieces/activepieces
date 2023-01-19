@@ -8,7 +8,7 @@ import { map, Observable, startWith, tap } from 'rxjs';
 import { RunDetailsService } from '../iteration-details.service';
 import { FlowsActions } from '../../../../../store/flow/flows.action';
 import { fadeInAnimation } from 'src/app/modules/common/animation/fade-in.animations';
-import { StepOutput, StepOutputStatus } from 'shared';
+import { StepOutput, StepOutputStatus } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-step-result',

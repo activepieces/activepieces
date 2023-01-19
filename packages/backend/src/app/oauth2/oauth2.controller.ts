@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
 import { oauth2Service } from "./oauth2.service";
-import { ClaimTokenFromCloudRequest, ClaimTokenWithSecretRequest } from "shared";
+import { ClaimTokenFromCloudRequest, ClaimTokenWithSecretRequest } from "@activepieces/shared";
 
 export const oauth2Controller = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
   fastify.post(

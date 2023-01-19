@@ -11,7 +11,7 @@ import { CollectionsTableDataSource } from './collections-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
 import { ARE_THERE_COLLECTIONS_FLAG } from '../../dashboard.routing';
 import { DEFAULT_PAGE_SIZE } from 'src/app/modules/common/components/pagination/tables.utils';
-import { Collection, Flow } from 'shared';
+import { Collection, Flow } from '@activepieces/shared';
 import {
 	DeleteEntityDialogComponent,
 	DeleteEntityDialogData,

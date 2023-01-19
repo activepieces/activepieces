@@ -1,6 +1,6 @@
 import { EntitySchema } from "typeorm";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
-import { StoreEntry } from "shared";
+import { StoreEntry } from "@activepieces/shared";
 
 interface StoreEntrySchema extends StoreEntry {}
 

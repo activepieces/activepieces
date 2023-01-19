@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
-import { ExecuteCodeRequest } from "shared";
+import { ExecuteCodeRequest } from "@activepieces/shared";
 import { codeRunner } from "./code-runner";
 
 export const codeController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {

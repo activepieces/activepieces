@@ -11,7 +11,7 @@ import { RightSideBarType } from '../../../../../common/model/enum/right-side-ba
 import { Component, Input, OnInit } from '@angular/core';
 
 import { ComponentItemDetails } from './step-type-item/component-item-details';
-import { StoreOperation, Trigger, ActionType, TriggerType, Flow, AddActionRequest, FlowVersion } from 'shared';
+import { StoreOperation, Trigger, ActionType, TriggerType, Flow, AddActionRequest, FlowVersion } from '@activepieces/shared';
 import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
 import { FlowStructureUtil } from 'src/app/modules/flow-builder/service/flowStructureUtil';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';

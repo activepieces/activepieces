@@ -7,7 +7,7 @@ import { FlowsActions } from '../../../../store/flow/flows.action';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateEditConfigModalComponent } from '../create-or-edit-config-modal/create-or-edit-config-modal.component';
 import { __values } from 'tslib';
-import { Config } from 'shared';
+import { Config } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-configs-sidebar',

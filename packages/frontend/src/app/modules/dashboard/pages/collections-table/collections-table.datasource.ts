@@ -1,7 +1,7 @@
 import { DataSource } from '@angular/cdk/collections';
 
 import { Observable, combineLatest, switchMap, tap, map, catchError } from 'rxjs';
-import { Collection } from 'shared';
+import { Collection } from '@activepieces/shared';
 import { ApPaginatorComponent } from 'src/app/modules/common/components/pagination/ap-paginator.component';
 import { CollectionService } from 'src/app/modules/common/service/collection.service';
 import { ProjectService } from 'src/app/modules/common/service/project.service';

@@ -1,7 +1,7 @@
 import { AbstractControl } from '@angular/forms';
 
 import { map, Observable } from 'rxjs';
-import { AppConnection } from 'shared';
+import { AppConnection } from '@activepieces/shared';
 
 export class ConnectionValidator {
 	static createValidator(allConnections$: Observable<AppConnection[]>, connectionToUpdateName: string | undefined) {

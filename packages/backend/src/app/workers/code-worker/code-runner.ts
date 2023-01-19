@@ -1,5 +1,5 @@
 import { sandboxManager } from "../sandbox";
-import { CodeExecutionResult, CodeRunStatus } from "shared";
+import { CodeExecutionResult, CodeRunStatus } from "@activepieces/shared";
 import { codeBuilder } from "./code-builder";
 import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";

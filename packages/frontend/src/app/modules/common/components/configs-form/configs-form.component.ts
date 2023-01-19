@@ -33,7 +33,7 @@ import {
 	USE_CLOUD_CREDENTIALS,
 } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 import { MatDialog } from '@angular/material/dialog';
-import { AppConnection, AppConnectionType, CloudAuth2Connection, OAuth2AppConnection } from 'shared';
+import { AppConnection, AppConnectionType, CloudAuth2Connection, OAuth2AppConnection } from '@activepieces/shared';
 import { DropdownItem } from '../../model/dropdown-item.interface';
 import {
 	NewCloudAuthenticationModalComponent,

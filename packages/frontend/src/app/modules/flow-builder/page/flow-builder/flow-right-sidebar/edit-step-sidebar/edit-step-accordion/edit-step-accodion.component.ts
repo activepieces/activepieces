@@ -6,7 +6,7 @@ import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { Store } from '@ngrx/store';
 import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActionType, TriggerType, UpdateActionRequest, UpdateTriggerRequest } from 'shared';
+import { ActionType, TriggerType, UpdateActionRequest, UpdateTriggerRequest } from '@activepieces/shared';
 import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
 import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
 import { FlowsActions } from 'src/app/modules/flow-builder/store/flow/flows.action';

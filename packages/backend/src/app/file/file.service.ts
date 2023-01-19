@@ -1,4 +1,4 @@
-import { apId, File, FileId } from "shared";
+import { apId, File, FileId } from "@activepieces/shared";
 import { databaseConnection } from "../database/database-connection";
 import { FileEntity } from "./file-entity";
 

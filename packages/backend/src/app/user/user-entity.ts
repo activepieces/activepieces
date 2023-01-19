@@ -1,5 +1,5 @@
 import { EntitySchema } from "typeorm";
-import { Project, User } from "shared";
+import { Project, User } from "@activepieces/shared";
 import { BaseColumnSchemaPart } from "../helper/base-entity";
 
 export interface UserSchema extends User {

@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { Store } from 'pieces';
-import { PutStoreEntryRequest, StoreEntry } from 'shared';
+import { Store } from '@activepieces/pieces';
+import { PutStoreEntryRequest, StoreEntry } from '@activepieces/shared';
 import { globals } from '../globals';
 
 export const storageService = {
@@ -50,4 +50,3 @@ export function createContextStore(): Store {
       },
     };
   }
-  

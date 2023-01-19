@@ -1,4 +1,4 @@
-import { AppConnection } from 'shared';
+import { AppConnection } from '@activepieces/shared';
 
 export interface AppConnectionsState {
 	loaded: boolean;

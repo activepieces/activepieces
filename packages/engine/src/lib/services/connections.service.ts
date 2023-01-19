@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AppConnection, SeekPage } from 'shared';
+import { AppConnection, SeekPage } from '@activepieces/shared';
 import { globals } from '../globals';
 
 export const connectionService = {

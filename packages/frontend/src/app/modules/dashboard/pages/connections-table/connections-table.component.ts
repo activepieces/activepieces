@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { map, Observable, startWith, Subject, tap } from 'rxjs';
-import { AppConnection, SeekPage } from 'shared';
+import { AppConnection, SeekPage } from '@activepieces/shared';
 import { ApPaginatorComponent } from 'src/app/modules/common/components/pagination/ap-paginator.component';
 import { DEFAULT_PAGE_SIZE } from 'src/app/modules/common/components/pagination/tables.utils';
 import { AppConnectionsService } from 'src/app/modules/common/service/app-connections.service';

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { filter, forkJoin, from, map, Observable, of, shareReplay, Subject, switchMap, tap } from 'rxjs';
-import { CodeActionSettings } from 'shared';
+import { CodeActionSettings } from '@activepieces/shared';
 import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
 import { FlowItemDetails } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { CodeService } from 'src/app/modules/flow-builder/service/code.service';

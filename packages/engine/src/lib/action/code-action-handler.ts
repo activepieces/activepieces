@@ -6,7 +6,7 @@ import {
   ExecutionState,
   StepOutput,
   StepOutputStatus
-} from 'shared';
+} from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 
 export class CodeActionHandler extends BaseActionHandler<CodeAction> {

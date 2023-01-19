@@ -14,12 +14,12 @@ import {
   FlowVersionState,
   SeekPage,
   TriggerType,
-} from "shared";
+} from "@activepieces/shared";
 import { flowVersionService } from "./flow-version/flow-version.service";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { redisLock } from "../database/redis-connection";
-import { ActivepiecesError, ErrorCode } from "shared";
+import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 
 const flowRepo = databaseConnection.getRepository(FlowEntity);
 
@@ -49,7 +49,7 @@ export const flowService = {
   },
   async getOneOrThrow(id: FlowId): Promise<Flow> {
     const flow = await flowService.getOne(id, undefined);
-  
+
     if (flow === null) {
       throw new ActivepiecesError({
         code: ErrorCode.FLOW_NOT_FOUND,
@@ -58,7 +58,7 @@ export const flowService = {
         },
       });
     }
-  
+
     return flow;
   },
   async list(collectionId: CollectionId, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<Flow>> {

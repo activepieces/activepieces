@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, ViewChild } from '@angular/core';
-import { ExecutionOutputStatus, FlowRun, SeekPage } from 'shared';
+import { ExecutionOutputStatus, FlowRun, SeekPage } from '@activepieces/shared';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, Observable } from 'rxjs';
 import { RunsTableDataSource } from './runs-table.datasource';

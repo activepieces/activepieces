@@ -28,7 +28,7 @@ import {
 import { AddButtonType } from '../../../../../../../common/model/enum/add-button-type';
 import { FlowsActions } from '../../../../../../store/flow/flows.action';
 import { Observable } from 'rxjs';
-import { LoopOnItemsAction } from 'shared';
+import { LoopOnItemsAction } from '@activepieces/shared';
 import { FlowItem, FlowItemRenderInfo } from 'src/app/modules/common/model/flow-builder/flow-item';
 
 @Component({

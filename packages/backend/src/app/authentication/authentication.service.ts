@@ -1,8 +1,8 @@
-import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest } from "shared";
+import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest } from "@activepieces/shared";
 import { userService } from "../user/user-service";
 import { passwordHasher } from "./lib/password-hasher";
 import { tokenUtils } from "./lib/token-utils";
-import { ActivepiecesError, ErrorCode } from "shared";
+import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { projectService } from "../project/project.service";
 import { FlagId, flagService } from "../flags/flag.service";
 import { QueryFailedError } from "typeorm";

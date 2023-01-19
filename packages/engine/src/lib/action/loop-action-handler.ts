@@ -1,8 +1,8 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { ExecutionState, LoopOnItemsAction } from 'shared';
+import { ExecutionState, LoopOnItemsAction } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
-import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from 'shared';
+import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from '@activepieces/shared';
 import { globals } from '../globals';
 
 export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction> {

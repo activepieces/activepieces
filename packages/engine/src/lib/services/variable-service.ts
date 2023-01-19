@@ -1,6 +1,6 @@
 import { get } from 'lodash';
 import { isString } from 'lodash';
-import { ExecutionState } from 'shared';
+import { ExecutionState } from '@activepieces/shared';
 import { connectionService } from './connections.service';
 import replaceAsync from "string-replace-async";
 

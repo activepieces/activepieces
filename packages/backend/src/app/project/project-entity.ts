@@ -1,5 +1,5 @@
 import { EntitySchema } from "typeorm";
-import { AppConnection, Collection, Project, User } from "shared";
+import { AppConnection, Collection, Project, User } from "@activepieces/shared";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 
 interface ProjectSchema extends Project {

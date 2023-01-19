@@ -1,5 +1,5 @@
-import { DropdownProperty, DropdownState, getPiece, pieces, PropertyType, Store, Trigger } from "pieces";
-import { ActivepiecesError, ErrorCode, ExecuteDropdownOptions, ExecuteTriggerOperation, ExecutionState, PieceTrigger } from "shared";
+import { DropdownProperty, DropdownState, getPiece, pieces, PropertyType, Store, Trigger } from "@activepieces/pieces";
+import { ActivepiecesError, ErrorCode, ExecuteDropdownOptions, ExecuteTriggerOperation, ExecutionState, PieceTrigger } from "@activepieces/shared";
 import { storageService } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 
@@ -44,7 +44,7 @@ export const pieceHelper = {
             const resolvedInput = await variableService.resolve(params.input, executionState);
             return await (property as DropdownProperty<unknown>).options(resolvedInput);
         } catch (e) {
-            console.error(e);   
+            console.error(e);
             return {
                 disabled: true,
                 options: [],

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Observable, tap } from 'rxjs';
-import { Instance, InstanceStatus } from 'shared';
+import { Instance, InstanceStatus } from '@activepieces/shared';
 import { disableInstance, enableInstance } from 'src/app/modules/flow-builder/store/collection/collection.action';
 
 @Component({

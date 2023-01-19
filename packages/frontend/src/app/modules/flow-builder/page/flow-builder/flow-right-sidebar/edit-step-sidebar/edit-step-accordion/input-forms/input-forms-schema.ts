@@ -1,4 +1,4 @@
-import { StoreOperation, TriggerType, ActionType } from 'shared';
+import { StoreOperation, TriggerType, ActionType } from '@activepieces/shared';
 declare type ConfigsAndTheirValues = { [key: string]: any };
 interface InputFormsSchemaBase {
 	type?: ActionType | TriggerType;

@@ -1,8 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { promisify } from "node:util";
 import jwt, { SignOptions, VerifyOptions } from "jsonwebtoken";
-import { Principal } from "shared";
-import { ActivepiecesError, ErrorCode } from "shared";
+import { Principal } from "@activepieces/shared";
+import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";
 import { store } from "../../helper/store";

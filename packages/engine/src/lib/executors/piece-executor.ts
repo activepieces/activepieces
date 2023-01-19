@@ -1,5 +1,5 @@
-import { pieces } from 'pieces';
-import { Piece } from 'pieces';
+import { pieces } from '@activepieces/pieces';
+import { Piece } from '@activepieces/pieces';
 import { createContextStore } from '../services/storage.service';
 
 export class PieceExecutor {

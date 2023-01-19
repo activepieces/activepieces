@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
-import { CollectionId, Cursor, InstanceId, ProjectId, UpsertInstanceRequest } from "shared";
+import { CollectionId, Cursor, InstanceId, ProjectId, UpsertInstanceRequest } from "@activepieces/shared";
 import { instanceService as service } from "./instance-service";
 
 const DEFAULT_PAGING_LIMIT = 10;

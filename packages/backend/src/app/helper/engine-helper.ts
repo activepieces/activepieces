@@ -1,10 +1,10 @@
-import { ExecuteFlowOperation, ExecuteDropdownOptions, EngineOperationType, CollectionId, PrincipalType, apId, EngineOperation, ExecutionOutput, ExecuteTriggerOperation, TriggerHookType } from "shared";
+import { ExecuteFlowOperation, ExecuteDropdownOptions, EngineOperationType, CollectionId, PrincipalType, apId, EngineOperation, ExecutionOutput, ExecuteTriggerOperation, TriggerHookType } from "@activepieces/shared";
 import { Sandbox, sandboxManager } from "../workers/sandbox";
 import fs from "node:fs";
 import { system } from "./system/system";
 import { SystemProp } from "./system/system-prop";
 import { tokenUtils } from "../authentication/lib/token-utils";
-import { DropdownState } from "pieces";
+import { DropdownState } from "@activepieces/pieces";
 import { logger } from "../app";
 import chalk from "chalk";
 

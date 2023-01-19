@@ -1,4 +1,4 @@
-import { CollectionId, CollectionVersionId, FlowRunId, FlowVersion, FlowVersionId, RunEnvironment, TriggerType } from "shared";
+import { CollectionId, CollectionVersionId, FlowRunId, FlowVersion, FlowVersionId, RunEnvironment, TriggerType } from "@activepieces/shared";
 
 interface BaseJobData {
   environment: RunEnvironment;

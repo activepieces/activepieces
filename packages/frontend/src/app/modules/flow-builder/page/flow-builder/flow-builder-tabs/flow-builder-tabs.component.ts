@@ -8,7 +8,7 @@ import { UUID } from 'angular2-uuid';
 import { FlowService } from 'src/app/modules/common/service/flow.service';
 import { ViewModeEnum } from '../../../store/model/enums/view-mode.enum';
 import { BuilderSelectors } from '../../../store/builder/builder.selector';
-import { Flow } from 'shared';
+import { Flow } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-flow-builder-tabs',

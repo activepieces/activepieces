@@ -1,4 +1,4 @@
-import { getPiece, pieces, Trigger, TriggerStrategy } from "pieces";
+import { getPiece, pieces, Trigger, TriggerStrategy } from "@activepieces/pieces";
 import {
   CollectionId,
   CollectionVersion,
@@ -10,8 +10,8 @@ import {
   RunEnvironment,
   TriggerHookType,
   TriggerType,
-} from "shared";
-import { ActivepiecesError, ErrorCode } from "shared";
+} from "@activepieces/shared";
+import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
 import { createContextStore } from "../store-entry/store-entry.service";
 import { getBackendUrl } from "./public-ip-utils";

@@ -7,7 +7,7 @@ import { BuilderSelectors } from '../../../../store/builder/builder.selector';
 import { Store } from '@ngrx/store';
 import { RunDetailsService } from './iteration-details.service';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
-import { ExecutionOutputStatus, FlowRun, StepOutput, StepOutputStatus } from 'shared';
+import { ExecutionOutputStatus, FlowRun, StepOutput, StepOutputStatus } from '@activepieces/shared';
 import { FlowsActions } from 'src/app/modules/flow-builder/store/flow/flows.action';
 
 @Component({

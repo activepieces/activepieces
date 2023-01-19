@@ -4,7 +4,7 @@ import {
   PieceAction,
   StepOutput,
   StepOutputStatus
-} from 'shared';
+} from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { PieceExecutor } from '../executors/piece-executor';
 import { globals } from '../globals';

@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { catchError, map, Observable, of, take, tap } from 'rxjs';
-import { AppConnection, AppConnectionType, OAuth2AppConnection, Project, UpsertOAuth2Request } from 'shared';
+import { AppConnection, AppConnectionType, OAuth2AppConnection, Project, UpsertOAuth2Request } from '@activepieces/shared';
 import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
 import { AppConnectionsService } from 'src/app/modules/common/service/app-connections.service';
@@ -170,7 +170,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 		);
 	}
 	get authenticationSettingsControlsValid() {
-		
+
 		return Object.keys(this.settingsForm.controls)
 			.filter(k => k !== 'value' && !this.settingsForm.controls[k].disabled)
 			.map(key => {

@@ -5,9 +5,9 @@ import {
   FlowOperationRequest,
   FlowVersionId,
   ListFlowsRequest,
-} from "shared";
+} from "@activepieces/shared";
 import { StatusCodes } from "http-status-codes";
-import { ActivepiecesError, ErrorCode } from "shared";
+import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowService } from "./flow-service";
 
 const DEFUALT_PAGE_SIZE = 10;

@@ -1,4 +1,4 @@
-import { apId, SignUpRequest, User, UserStatus } from "shared";
+import { apId, SignUpRequest, User, UserStatus } from "@activepieces/shared";
 import { passwordHasher } from "../authentication/lib/password-hasher";
 import { databaseConnection } from "../database/database-connection";
 import { UserEntity } from "./user-entity";

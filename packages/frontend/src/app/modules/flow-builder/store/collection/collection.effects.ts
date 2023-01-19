@@ -14,7 +14,7 @@ import { BuilderActions } from '../builder/builder.action';
 import { autoSaveDebounceTime } from 'src/app/modules/common/utils';
 import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
 import { PosthogService } from 'src/app/modules/common/service/posthog.service';
-import { CollectionVersionState, InstanceStatus } from 'shared';
+import { CollectionVersionState, InstanceStatus } from '@activepieces/shared';
 import { InstanceService } from 'src/app/modules/common/service/instance.service';
 
 @Injectable()

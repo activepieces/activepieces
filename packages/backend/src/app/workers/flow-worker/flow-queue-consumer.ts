@@ -1,5 +1,5 @@
 import { Worker } from "bullmq";
-import { ApId, RunEnvironment, TriggerType } from "shared";
+import { ApId, RunEnvironment, TriggerType } from "@activepieces/shared";
 import { collectionService } from "../../collections/collection.service";
 import { createRedisClient } from "../../database/redis-connection";
 import { flowRunService } from "../../flow-run/flow-run-service";
@@ -58,7 +58,7 @@ const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
 
   console.info(`[flowQueueConsumer#consumePieceTrigger] payloads.length=${payloads.length}`);
 
-  const createFlowRuns = payloads.map((payload) => 
+  const createFlowRuns = payloads.map((payload) =>
     flowRunService.start({
       environment: RunEnvironment.PRODUCTION,
       collectionVersionId: data.collectionVersionId,

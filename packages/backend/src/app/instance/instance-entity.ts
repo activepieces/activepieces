@@ -1,5 +1,5 @@
 import { EntitySchema } from "typeorm";
-import { Collection, CollectionVersion, Instance } from "shared";
+import { Collection, CollectionVersion, Instance } from "@activepieces/shared";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 
 export interface InstanceSchema extends Instance {
