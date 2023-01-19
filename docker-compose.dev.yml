@@ -2,7 +2,7 @@ version: '3.0'
 
 services:
   backend:
-    image: activepieces/backend-base:0.0.7
+    image: activepieces/ap-base:1
     environment:
       AP_JWT_SECRET: super-secret
       AP_POSTGRES_HOST: postgres
@@ -26,7 +26,7 @@ services:
      - redis
 
   frontend:
-    image: node:18.13.0-bullseye
+    image: activepieces/ap-base:1
     ports:
      - "4200:4200"
      - "9222:9222"
