@@ -1,7 +1,6 @@
 name: Release AP base
 
 on:
-  push:
   workflow_dispatch:
     inputs:
       tag:
