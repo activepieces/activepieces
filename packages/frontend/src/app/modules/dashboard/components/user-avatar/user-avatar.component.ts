@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
+import { AuthenticationService } from 'packages/frontend/src/app/modules/common/service/authentication.service';
 
 @Component({
 	selector: 'app-user-avatar',

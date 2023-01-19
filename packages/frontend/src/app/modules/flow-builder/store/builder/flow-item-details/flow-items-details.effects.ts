@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { forkJoin, map, of, switchMap } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
-import { AppPiece } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
+import { AppPiece } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
 import { FlowItemDetails } from '../../../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionMetaService } from '../../../service/action-meta.service';
 import { FlowItemDetailsActions } from './flow-items-details.action';

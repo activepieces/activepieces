@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { Store } from '@ngrx/store';
 import { map, Observable, of, Subject, tap } from 'rxjs';
 import { ActionType, PieceAction, PieceTrigger, TriggerType } from '@activepieces/shared';
-import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
-import { FlowItemDetails } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
+import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
+import { FlowItemDetails } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
+import { ActionMetaService } from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
+import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import { MentionListItem, MentionTreeNode, traverseStepOutputAndReturnMentionTree } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 

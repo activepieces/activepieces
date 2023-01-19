@@ -11,11 +11,11 @@ import { BuilderSelectors } from '../builder/builder.selector';
 import { SingleFlowModifyingState } from '../flow/flows.action';
 import { BuilderActions } from '../builder/builder.action';
 
-import { autoSaveDebounceTime } from 'src/app/modules/common/utils';
-import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
-import { PosthogService } from 'src/app/modules/common/service/posthog.service';
+import { autoSaveDebounceTime } from 'packages/frontend/src/app/modules/common/utils';
+import { AuthenticationService } from 'packages/frontend/src/app/modules/common/service/authentication.service';
+import { PosthogService } from 'packages/frontend/src/app/modules/common/service/posthog.service';
 import { CollectionVersionState, InstanceStatus } from '@activepieces/shared';
-import { InstanceService } from 'src/app/modules/common/service/instance.service';
+import { InstanceService } from 'packages/frontend/src/app/modules/common/service/instance.service';
 
 @Injectable()
 export class CollectionEffects {

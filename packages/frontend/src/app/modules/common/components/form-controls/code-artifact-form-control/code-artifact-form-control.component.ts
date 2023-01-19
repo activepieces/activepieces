@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, tap } from 'rxjs';
-import { Artifact } from 'src/app/modules/flow-builder/model/artifact.interface';
+import { Artifact } from 'packages/frontend/src/app/modules/flow-builder/model/artifact.interface';
 import { CodeArtifactControlFullscreenComponent } from './code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 
 export interface CodeArtifactForm {

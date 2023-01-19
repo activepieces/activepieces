@@ -1,9 +1,9 @@
 import { DataSource } from '@angular/cdk/collections';
 import { Observable, combineLatest, switchMap, tap, map } from 'rxjs';
 import { FlowRun } from '@activepieces/shared';
-import { ApPaginatorComponent } from 'src/app/modules/common/components/pagination/ap-paginator.component';
-import { InstanceRunService } from 'src/app/modules/common/service/flow-run.service';
-import { ProjectService } from 'src/app/modules/common/service/project.service';
+import { ApPaginatorComponent } from 'packages/frontend/src/app/modules/common/components/pagination/ap-paginator.component';
+import { InstanceRunService } from 'packages/frontend/src/app/modules/common/service/flow-run.service';
+import { ProjectService } from 'packages/frontend/src/app/modules/common/service/project.service';
 
 /**
  * Data source for the LogsTable view. This class should

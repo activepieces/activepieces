@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Inject, Output } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
-import { jsonValidator } from 'src/app/modules/common/validators/json-validator';
-import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
+import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
+import { jsonValidator } from 'packages/frontend/src/app/modules/common/validators/json-validator';
+import { CodeService } from 'packages/frontend/src/app/modules/flow-builder/service/code.service';
 
 @Component({
 	selector: 'app-test-code-form-modal',

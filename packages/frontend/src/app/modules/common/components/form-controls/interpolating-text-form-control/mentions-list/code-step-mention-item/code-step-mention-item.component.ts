@@ -3,10 +3,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { filter, forkJoin, from, map, Observable, of, shareReplay, Subject, switchMap, tap } from 'rxjs';
 import { CodeActionSettings } from '@activepieces/shared';
-import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
-import { FlowItemDetails } from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
+import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
+import { FlowItemDetails } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
+import { CodeService } from 'packages/frontend/src/app/modules/flow-builder/service/code.service';
+import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 
 import { TestCodeFormModalComponent } from '../../../code-artifact-form-control/code-artifact-control-fullscreen/test-code-form-modal/test-code-form-modal.component';
 import { MentionListItem, MentionTreeNode, traverseStepOutputAndReturnMentionTree } from '../../utils';

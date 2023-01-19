@@ -4,8 +4,8 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { Observable, take } from 'rxjs';
 import { Flow } from '@activepieces/shared';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
-import { FlowsActions } from 'src/app/modules/flow-builder/store/flow/flows.action';
+import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
+import { FlowsActions } from 'packages/frontend/src/app/modules/flow-builder/store/flow/flows.action';
 import { DeleteFlowValidator } from '../../../validators/deleteFlowValidator';
 
 @Component({

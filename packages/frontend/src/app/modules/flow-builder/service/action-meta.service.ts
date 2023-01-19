@@ -3,7 +3,7 @@ import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-ty
 import { ActionType, PieceOptionRequest, TriggerType } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import { AppPiece } from '../../common/components/configs-form/connector-action-or-config';
-import { environment } from 'src/environments/environment';
+import { environment } from 'packages/frontend/src/environments/environment';
 import { Observable, shareReplay, tap } from 'rxjs';
 
 @Injectable({

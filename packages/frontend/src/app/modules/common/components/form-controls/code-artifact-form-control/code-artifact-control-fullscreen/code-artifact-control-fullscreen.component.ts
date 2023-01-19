@@ -3,7 +3,7 @@ import { FormControl, FormGroup, UntypedFormBuilder } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { filter, Observable, switchMap, tap } from 'rxjs';
 import { CodeExecutionResult } from '@activepieces/shared';
-import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
+import { CodeService } from 'packages/frontend/src/app/modules/flow-builder/service/code.service';
 import { CodeArtifactForm } from '../code-artifact-form-control.component';
 import { SelectedFileInFullscreenCodeEditor } from '../selected-file-in-fullscreeen-code-editor.enum';
 import { AddNpmPackageModalComponent } from './add-npm-package-modal/add-npm-package-modal.component';

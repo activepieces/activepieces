@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar-type.enum';
+import { LeftSideBarType } from 'packages/frontend/src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { BuilderSelectors } from '../../../../store/builder/builder.selector';
 import { Observable } from 'rxjs';
 import { Store } from '@ngrx/store';

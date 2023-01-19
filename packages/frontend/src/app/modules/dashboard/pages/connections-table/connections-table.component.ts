@@ -3,10 +3,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { map, Observable, startWith, Subject, tap } from 'rxjs';
 import { AppConnection, SeekPage } from '@activepieces/shared';
-import { ApPaginatorComponent } from 'src/app/modules/common/components/pagination/ap-paginator.component';
-import { DEFAULT_PAGE_SIZE } from 'src/app/modules/common/components/pagination/tables.utils';
-import { AppConnectionsService } from 'src/app/modules/common/service/app-connections.service';
-import { ProjectService } from 'src/app/modules/common/service/project.service';
+import { ApPaginatorComponent } from 'packages/frontend/src/app/modules/common/components/pagination/ap-paginator.component';
+import { DEFAULT_PAGE_SIZE } from 'packages/frontend/src/app/modules/common/components/pagination/tables.utils';
+import { AppConnectionsService } from 'packages/frontend/src/app/modules/common/service/app-connections.service';
+import { ProjectService } from 'packages/frontend/src/app/modules/common/service/project.service';
 import {
 	DeleteEntityDialogComponent,
 	DeleteEntityDialogData,

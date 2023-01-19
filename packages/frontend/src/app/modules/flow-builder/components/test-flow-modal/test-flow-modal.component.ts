@@ -9,15 +9,15 @@ import { FlowsActions } from '../../store/flow/flows.action';
 import { InstanceRunService } from '../../../common/service/flow-run.service';
 import { HttpStatusCode } from '@angular/common/http';
 import { UntypedFormControl } from '@angular/forms';
-import { jsonValidator } from 'src/app/modules/common/validators/json-validator';
+import { jsonValidator } from 'packages/frontend/src/app/modules/common/validators/json-validator';
 import jsonlint from 'jsonlint-mod';
-import { PosthogService } from 'src/app/modules/common/service/posthog.service';
-import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
+import { PosthogService } from 'packages/frontend/src/app/modules/common/service/posthog.service';
+import { AuthenticationService } from 'packages/frontend/src/app/modules/common/service/authentication.service';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { CodeService } from '../../service/code.service';
 import { Collection, ExecutionOutputStatus, Flow, FlowRun, TriggerType } from '@activepieces/shared';
-import { initializedRun } from 'src/app/modules/common/model/flow-run.interface';
+import { initializedRun } from 'packages/frontend/src/app/modules/common/model/flow-run.interface';
 
 @Component({
 	selector: 'app-test-flow-modal',

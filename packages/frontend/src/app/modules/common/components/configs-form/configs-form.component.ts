@@ -24,25 +24,25 @@ import {
 	take,
 	tap,
 } from 'rxjs';
-import { ActionMetaService, DropdownState } from 'src/app/modules/flow-builder/service/action-meta.service';
+import { ActionMetaService, DropdownState } from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
 import { PieceConfig, InputType } from './connector-action-or-config';
 import {
 	NewAuthenticationModalComponent,
 	USE_CLOUD_CREDENTIALS,
-} from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
+} from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AppConnection, AppConnectionType, CloudAuth2Connection, OAuth2AppConnection } from '@activepieces/shared';
 import { DropdownItem } from '../../model/dropdown-item.interface';
 import {
 	NewCloudAuthenticationModalComponent,
 	USE_MY_OWN_CREDENTIALS,
-} from 'src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-cloud-authentication-modal/new-cloud-authentication-modal.component';
+} from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-cloud-authentication-modal/new-cloud-authentication-modal.component';
 import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.service';
 import { AuthenticationService } from '../../service/authentication.service';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
+import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import deepEqual from 'deep-equal';
 type ConfigKey = string;
 

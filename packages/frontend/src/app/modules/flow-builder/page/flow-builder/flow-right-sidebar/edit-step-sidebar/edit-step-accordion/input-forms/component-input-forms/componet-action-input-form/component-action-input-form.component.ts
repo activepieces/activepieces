@@ -10,12 +10,12 @@ import {
 } from '@angular/forms';
 
 import { map, Observable, of, tap } from 'rxjs';
-import { environment } from 'src/environments/environment';
-import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
-import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
+import { environment } from 'packages/frontend/src/environments/environment';
+import { ActionMetaService } from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
+import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
 import { ComponentActionInputFormSchema } from '../../input-forms-schema';
-import { DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
-import { PieceConfig, propsConvertor } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
+import { DropdownItem } from 'packages/frontend/src/app/modules/common/model/dropdown-item.interface';
+import { PieceConfig, propsConvertor } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
 import { Config } from '@activepieces/shared';
 declare type ActionDropdownOption = {
 	label: {

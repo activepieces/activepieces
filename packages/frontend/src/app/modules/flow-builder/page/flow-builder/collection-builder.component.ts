@@ -2,7 +2,7 @@ import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild } from '@an
 import { ActivatedRoute } from '@angular/router';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
-import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar-type.enum';
+import { LeftSideBarType } from 'packages/frontend/src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/builder/builder.selector';
 import { map, Observable, tap } from 'rxjs';

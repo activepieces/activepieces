@@ -3,8 +3,8 @@ import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { combineLatest, distinctUntilChanged, map, Observable, shareReplay, startWith, take } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
-import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
+import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
+import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import { InsertMentionOperation, MentionListItem } from '../utils';
 
 @Component({

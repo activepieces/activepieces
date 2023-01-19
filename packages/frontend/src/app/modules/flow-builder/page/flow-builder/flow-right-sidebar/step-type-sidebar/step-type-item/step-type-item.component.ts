@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@a
 import { FlowItemDetails } from './flow-item-details';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { Observable, tap } from 'rxjs';
-import { fadeIn400ms } from 'src/app/modules/common/animation/fade-in.animations';
+import { fadeIn400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in.animations';
 
 @Component({
 	selector: 'app-step-type-item',

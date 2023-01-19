@@ -2,8 +2,8 @@ import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Observable, tap } from 'rxjs';
-import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
-import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
+import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
+import { CodeService } from 'packages/frontend/src/app/modules/flow-builder/service/code.service';
 type PackageName = string;
 type PackageVersion = string;
 @Component({

@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormGroup, FormBuilder, FormControl } from '@angular/forms';
 import { from, Observable, switchMap, tap } from 'rxjs';
 import { ActionType } from '@activepieces/shared';
-import { Artifact } from 'src/app/modules/flow-builder/model/artifact.interface';
-import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
+import { Artifact } from 'packages/frontend/src/app/modules/flow-builder/model/artifact.interface';
+import { CodeService } from 'packages/frontend/src/app/modules/flow-builder/service/code.service';
 import { CodeStepInputFormSchema } from '../input-forms-schema';
 
 @Component({

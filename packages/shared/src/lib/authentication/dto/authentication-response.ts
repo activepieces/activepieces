@@ -1,4 +1,4 @@
-import { User, UserId, UserStatus } from "../../user/user";
+import { User } from "../../user/user";
 
 export type AuthenticationResponse = Omit<User, "password"> & {
     token: string;

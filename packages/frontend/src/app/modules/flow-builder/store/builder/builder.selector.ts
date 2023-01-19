@@ -10,9 +10,9 @@ import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
 import { FlowsState } from '../model/flows-state.model';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { ActionType, Collection, TriggerType } from '@activepieces/shared';
-import { ConnectionDropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
+import { ConnectionDropdownItem } from 'packages/frontend/src/app/modules/common/model/dropdown-item.interface';
 import { FlowStructureUtil } from '../../service/flowStructureUtil';
-import { MentionListItem } from 'src/app/modules/common/components/form-controls/interpolating-text-form-control/utils';
+import { MentionListItem } from 'packages/frontend/src/app/modules/common/components/form-controls/interpolating-text-form-control/utils';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
