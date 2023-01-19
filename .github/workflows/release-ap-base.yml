@@ -34,7 +34,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: ./ap-base.Dockerfile
+          file: ./ap-base.dockerfile
           platforms: |
             linux/amd64
             linux/arm64
