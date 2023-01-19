@@ -51,33 +51,9 @@ export class InterpolatingTextFormControlComponent
 	@Input() insideMatField: boolean = true;
 	readonly modules: QuillModules = {
 		mention: {
+			spaceAfterInsert: false,
 			mentionDenotationChars: ['@'],
-			allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
-			onSelect: (item: any, insertItem: (arg0: any) => void) => {
-				const editor = this.editor.quillEditor;
-				insertItem(item);
-				// necessary because quill-mention triggers changes as 'api' instead of 'user'
-				editor.insertText(editor.getLength() - 1, '', 'user');
-			},
-			source: (searchTerm: string, renderList: (arg0: any[], arg1: any) => void) => {
-				const values = [
-					{ id: 1, value: 'Fredrik Sundqvist' },
-					{ id: 2, value: 'Patrik Sjölin' },
-				];
-
-				if (searchTerm.length === 0) {
-					renderList(values, searchTerm);
-				} else {
-					const matches: any[] = [];
-
-					values.forEach(entry => {
-						if (entry.value.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1) {
-							matches.push(entry);
-						}
-					});
-					renderList(matches, searchTerm);
-				}
-			},
+			allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/
 		},
 		toolbar: false,
 	};
@@ -131,7 +107,6 @@ export class InterpolatingTextFormControlComponent
 		this.valueChanges$ = this.editorFormControl.valueChanges.pipe(
 			skip(1),
 			tap(val => {
-				debugger;
 				if (val.ops.length === 1 && val.ops[0].insert === '\n') {
 					this._value = '';
 					this.onChange('');

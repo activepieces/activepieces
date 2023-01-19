@@ -4,7 +4,7 @@ import { ActionType, PieceOptionRequest, TriggerType } from '@activepieces/share
 import { HttpClient } from '@angular/common/http';
 import { AppPiece } from '../../common/components/configs-form/connector-action-or-config';
 import { environment } from 'packages/frontend/src/environments/environment';
-import { Observable, shareReplay, tap } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
 
 @Injectable({
 	providedIn: 'root',
@@ -51,10 +51,7 @@ export class ActionMetaService {
 	public getPieces() {
 		if (!this.pieces$) {
 			this.pieces$ = this.http.get<AppPiece[]>(environment.apiUrl + '/pieces').pipe(
-				shareReplay(1),
-				tap(val => {
-					console.log(val);
-				})
+				shareReplay(1)
 			);
 		}
 		return this.pieces$;
