@@ -1,4 +1,4 @@
-import { environment } from 'src/environments/environment';
+import { environment } from 'packages/frontend/src/environments/environment';
 
 export function tokenGetter() {
 	const jwtToken: any = localStorage.getItem(environment.jwtTokenName);

@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, OnInit, ViewChild } from '@angular/core';
-import { ExecutionOutputStatus, FlowRun, SeekPage } from 'shared';
+import { ExecutionOutputStatus, FlowRun, SeekPage } from '@activepieces/shared';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, Observable } from 'rxjs';
 import { RunsTableDataSource } from './runs-table.datasource';
-import { ApPaginatorComponent } from 'src/app/modules/common/components/pagination/ap-paginator.component';
-import { DEFAULT_PAGE_SIZE } from 'src/app/modules/common/components/pagination/tables.utils';
-import { ProjectService } from 'src/app/modules/common/service/project.service';
-import { InstanceRunService } from 'src/app/modules/common/service/flow-run.service';
+import { ApPaginatorComponent } from 'packages/frontend/src/app/modules/common/components/pagination/ap-paginator.component';
+import { DEFAULT_PAGE_SIZE } from 'packages/frontend/src/app/modules/common/components/pagination/tables.utils';
+import { ProjectService } from 'packages/frontend/src/app/modules/common/service/project.service';
+import { InstanceRunService } from 'packages/frontend/src/app/modules/common/service/flow-run.service';
 @Component({
 	templateUrl: './runs-table.component.html',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RunsComponent implements OnInit {
+export class RunsTableComponent implements OnInit {
 	@ViewChild(ApPaginatorComponent, { static: true }) paginator!: ApPaginatorComponent;
 	runsPage$: Observable<SeekPage<FlowRun>>;
 	dataSource!: RunsTableDataSource;

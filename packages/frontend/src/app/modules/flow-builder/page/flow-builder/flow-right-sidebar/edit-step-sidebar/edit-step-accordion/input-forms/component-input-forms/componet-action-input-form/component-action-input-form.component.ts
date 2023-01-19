@@ -10,13 +10,13 @@ import {
 } from '@angular/forms';
 
 import { map, Observable, of, tap } from 'rxjs';
-import { environment } from 'src/environments/environment';
-import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
-import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
+import { environment } from 'packages/frontend/src/environments/environment';
+import { ActionMetaService } from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
+import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
 import { ComponentActionInputFormSchema } from '../../input-forms-schema';
-import { DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
-import { PieceConfig, propsConvertor } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
-import { Config } from 'shared';
+import { DropdownItem } from 'packages/frontend/src/app/modules/common/model/dropdown-item.interface';
+import { PieceConfig, propsConvertor } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
+import { Config } from '@activepieces/shared';
 declare type ActionDropdownOption = {
 	label: {
 		name: string;
@@ -117,17 +117,17 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 		);
 	}
 
-	fetchActions(componentName: string) {
-		const component$ = this.actionMetaDataService.connectorComponents().pipe(
-			map(comps => {
-				const component = comps.find(c => c.name === componentName);
+	fetchActions(pieceName: string) {
+		const pieces$ = this.actionMetaDataService.getPieces().pipe(
+			map(pieces => {
+				const component = pieces.find(c => c.name === pieceName);
 				if (!component) {
-					throw new Error(`Activepieces- component not found: ${componentName}`);
+					throw new Error(`Activepieces- piece not found: ${pieceName}`);
 				}
 				return component;
 			})
 		);
-		this.actions$ = component$.pipe(
+		this.actions$ = pieces$.pipe(
 			map(component => {
 				const actionsKeys = Object.keys(component.actions);
 				return actionsKeys.map(actionName => {
@@ -236,7 +236,6 @@ export class ComponentActionInputFormComponent implements ControlValueAccessor {
 			}
 			this.selectedAction$ = this.actions$.pipe(
 				map(items => {
-					console.log(items.find(it => it.value.actionName === selectedActionValue.actionName));
 					return items.find(it => it.value.actionName === selectedActionValue.actionName);
 				})
 			);

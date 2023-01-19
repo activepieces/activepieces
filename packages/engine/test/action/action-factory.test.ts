@@ -1,6 +1,6 @@
 import {createAction} from '../../src/action/action-factory';
 import {PieceActionHandler} from "../../src/action/piece-action-handler";
-import {ActionType, PieceAction} from "shared";
+import {ActionType, PieceAction} from "@activepieces/shared";
 import {CodeActionHandler} from "../../src/action/code-action-handler";
 import exp = require("constants");
 import {ActionHandler} from "../../src/action/action-handler";

@@ -1,19 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { CollectionBuilderService } from '../../../service/collection-builder.service';
 import { RightSideBarType } from '../../../../common/model/enum/right-side-bar-type.enum';
-import { ThemeService } from 'src/app/modules/common/service/theme.service';
+import { ThemeService } from 'packages/frontend/src/app/modules/common/service/theme.service';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { CollectionActions } from '../../../store/collection/collection.action';
 import { map, Observable, tap } from 'rxjs';
 import { BuilderSelectors } from '../../../store/builder/builder.selector';
-import { fadeIn400ms } from 'src/app/modules/common/animation/fade-in.animations';
+import { fadeIn400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in.animations';
 import { FlowsActions } from '../../../store/flow/flows.action';
 import {
 	ChevronDropdownOption,
 	ChevronDropdownOptionType,
 } from '../../../components/chevron-dropdown-menu/chevron-dropdown-option';
-import { Collection, Instance } from 'shared';
+import { Collection, Instance } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 
 @Component({

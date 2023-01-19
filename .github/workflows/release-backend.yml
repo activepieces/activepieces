@@ -3,7 +3,7 @@ name: Release backend
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   Release-Backend:
@@ -17,6 +17,12 @@ jobs:
 
       - name: Fail if tag already exists
         run: "! docker manifest inspect activepieces/backend:${{ env.RELEASE }}"
+
+      - name: install npm deps
+        run: npm ci
+
+      - name: build backend
+        run: npx nx build backend
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2

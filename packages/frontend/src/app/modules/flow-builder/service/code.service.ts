@@ -4,7 +4,7 @@ import { environment } from '../../../../environments/environment';
 import * as JSZip from 'jszip';
 import { catchError, from, map, Observable, of, switchMap } from 'rxjs';
 import { Artifact } from '../model/artifact.interface';
-import { CodeExecutionResult } from 'shared';
+import { CodeExecutionResult } from '@activepieces/shared';
 
 type NpmPkg = {
 	'dist-tags': {
@@ -26,7 +26,7 @@ type ArtifactsCache = Map<string, ArtifactCacheResult>;
 export class CodeService {
 	artifactsCacheForFlowConfigs: ArtifactsCache = new Map();
 	artifactsCacheForSteps: ArtifactsCache = new Map();
-	cachedFile: Map<String, any> = new Map<String, any>();
+	cachedFile: Map<String, any> = new Map<String, Observable<ArrayBuffer>>();
 
 	constructor(private http: HttpClient) {}
 
@@ -80,9 +80,10 @@ export class CodeService {
 
 	public downloadAndReadFile(filename: string): Observable<Artifact> {
 		return this.downloadFile(filename).pipe(
-			switchMap(async file => {
+			switchMap(async (file: ArrayBuffer) => {
 				const content = { content: '', package: '' };
 				// @ts-ignore
+
 				const zipFile = await JSZip.loadAsync(file);
 				for (const filename of Object.keys(zipFile.files)) {
 					if (filename.split('/').length > 2) continue;

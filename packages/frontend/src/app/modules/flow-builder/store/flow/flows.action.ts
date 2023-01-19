@@ -11,7 +11,7 @@ import {
 	FlowRun,
 	FlowId,
 	FlowOperationRequest,
-} from 'shared';
+} from '@activepieces/shared';
 
 export enum FlowsActionType {
 	// Flow Version Modifying Action

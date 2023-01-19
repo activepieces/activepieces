@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { forkJoin, map, of, switchMap } from 'rxjs';
-import { ActionType, TriggerType } from 'shared';
-import { AppPiece } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
+import { ActionType, TriggerType } from '@activepieces/shared';
+import { AppPiece } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
 import { FlowItemDetails } from '../../../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionMetaService } from '../../../service/action-meta.service';
 import { FlowItemDetailsActions } from './flow-items-details.action';
@@ -13,12 +13,11 @@ export class FlowItemsDetailsEffects {
 		return this.actions$.pipe(
 			ofType(FlowItemDetailsActions.loadFlowItemsDetails),
 			switchMap(() => {
-				const components$ = this.flowItemsDetailsService.connectorComponents();
+				const components$ = this.flowItemsDetailsService.getPieces();
 				const coreTriggersFlowItemsDetails$ = of(this.flowItemsDetailsService.triggerItemsDetails);
 				const connectorComponentsTriggersFlowItemDetails$ = components$.pipe(
 					map(this.createFlowItemDetailsForComponents(true))
 				);
-
 				const connectorComponentsActions$ = components$.pipe(map(this.createFlowItemDetailsForComponents(false)));
 				const coreFlowItemsDetails$ = of(this.flowItemsDetailsService.coreFlowItemsDetails);
 				return forkJoin({
@@ -45,7 +44,7 @@ export class FlowItemsDetailsEffects {
 						return new FlowItemDetails(
 							ActionType.PIECE,
 							c.displayName,
-							`Connect to ${c.displayName} and use its api to make requests`,
+							c.description ? c.description : `Connect to ${c.displayName} and use its api to make requests`,
 							c.logoUrl,
 							{ appName: c.name }
 						);

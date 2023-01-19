@@ -10,7 +10,7 @@ import {
 } from '@angular/forms';
 import { tap } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
-import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
+import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
 
 interface DescribeForm {
 	displayName: FormControl<string>;

@@ -15,7 +15,7 @@ import {
 	FlowRun,
 	FlowVersionId,
 	SeekPage,
-} from 'shared';
+} from '@activepieces/shared';
 import { BuilderSelectors } from '../../flow-builder/store/builder/builder.selector';
 import { findDefaultFlowDisplayName } from '../utils';
 import { Store } from '@ngrx/store';

@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { AppConnection } from 'shared';
+import { AppConnection } from '@activepieces/shared';
 
 export enum AppConectionActionType {
 	LOAD_INITIAL = '[APP_CONNECTION] LOAD_INITIAL',

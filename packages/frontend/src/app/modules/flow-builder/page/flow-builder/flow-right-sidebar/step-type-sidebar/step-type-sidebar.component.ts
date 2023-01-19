@@ -2,7 +2,7 @@ import {
 	defaultCronJobForScheduleTrigger,
 	getDefaultDisplayNameForPiece,
 	getDisplayNameForTrigger,
-} from 'src/app/modules/common/utils';
+} from 'packages/frontend/src/app/modules/common/utils';
 import { Store } from '@ngrx/store';
 import { combineLatest, forkJoin, map, Observable, take, tap } from 'rxjs';
 import { FlowItemDetails } from './step-type-item/flow-item-details';
@@ -11,10 +11,10 @@ import { RightSideBarType } from '../../../../../common/model/enum/right-side-ba
 import { Component, Input, OnInit } from '@angular/core';
 
 import { ComponentItemDetails } from './step-type-item/component-item-details';
-import { StoreOperation, Trigger, ActionType, TriggerType, Flow, AddActionRequest, FlowVersion } from 'shared';
-import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
-import { FlowStructureUtil } from 'src/app/modules/flow-builder/service/flowStructureUtil';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
+import { StoreOperation, Trigger, ActionType, TriggerType, Flow, AddActionRequest, FlowVersion } from '@activepieces/shared';
+import { CodeService } from 'packages/frontend/src/app/modules/flow-builder/service/code.service';
+import { FlowStructureUtil } from 'packages/frontend/src/app/modules/flow-builder/service/flowStructureUtil';
+import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 @Component({
 	selector: 'app-step-type-sidebar',
 	templateUrl: './step-type-sidebar.component.html',

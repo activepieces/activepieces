@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
-import { Collection } from 'shared';
+import { Collection } from '@activepieces/shared';
 import { CollectionService } from '../../common/service/collection.service';
 
 @Injectable({

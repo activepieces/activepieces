@@ -9,7 +9,7 @@ import {
 import { BodyType } from './body-type.enum';
 import jsonlint from 'jsonlint-mod';
 import { Observable, tap } from 'rxjs';
-import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
+import { CodeService } from 'packages/frontend/src/app/modules/flow-builder/service/code.service';
 import { HttpMethod } from '../../configs-form/connector-action-or-config';
 interface CustomRequestFormSchema {
 	endpoint: { url: string; method: HttpMethod };

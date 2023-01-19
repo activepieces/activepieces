@@ -9,11 +9,11 @@ import {
 } from '@angular/forms';
 import { Config } from '@fortawesome/fontawesome-svg-core';
 import { map, Observable, of, tap } from 'rxjs';
-import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
-import { PieceConfig, propsConvertor } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
+import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
+import { PieceConfig, propsConvertor } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
 
-import { DropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
-import { ActionMetaService } from 'src/app/modules/flow-builder/service/action-meta.service';
+import { DropdownItem } from 'packages/frontend/src/app/modules/common/model/dropdown-item.interface';
+import { ActionMetaService } from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
 import { ComponentTriggerInputFormSchema } from '../../input-forms-schema';
 
 declare type TriggerDropdownOption = {
@@ -98,9 +98,9 @@ export class ComponentTriggerInputFormComponent {
 	}
 
 	fetchTriggers(pieceName: string) {
-		const component$ = this.actionMetaDataService.connectorComponents().pipe(
-			map(comps => {
-				const component = comps.find(c => c.name === pieceName);
+		const component$ = this.actionMetaDataService.getPieces().pipe(
+			map(pieces => {
+				const component = pieces.find(c => c.name === pieceName);
 				if (!component) {
 					throw new Error(`Activepieces- piece not found: ${pieceName}`);
 				}

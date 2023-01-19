@@ -1,5 +1,5 @@
 import { FlowItem } from '../../common/model/flow-builder/flow-item';
-import { ActionType, Flow, LoopOnItemsAction, Trigger } from 'shared';
+import { ActionType, Flow, LoopOnItemsAction, Trigger } from '@activepieces/shared';
 import { FlowStructureUtil } from './flowStructureUtil';
 import {
 	FLOW_ITEM_HEIGHT,

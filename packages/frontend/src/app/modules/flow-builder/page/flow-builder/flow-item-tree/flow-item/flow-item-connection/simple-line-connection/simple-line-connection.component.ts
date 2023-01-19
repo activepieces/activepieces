@@ -10,10 +10,10 @@ import {
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 
-import { RightSideBarType } from 'src/app/modules/common/model/enum/right-side-bar-type.enum';
-import { AddButtonAndFlowItemNameContainer } from 'src/app/modules/common/model/flow-builder/flow-add-button';
-import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
-import { FlowRendererService } from 'src/app/modules/flow-builder/service/flow-renderer.service';
+import { RightSideBarType } from 'packages/frontend/src/app/modules/common/model/enum/right-side-bar-type.enum';
+import { AddButtonAndFlowItemNameContainer } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-add-button';
+import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
+import { FlowRendererService } from 'packages/frontend/src/app/modules/flow-builder/service/flow-renderer.service';
 import {
 	ADD_BUTTON_SIZE,
 	ARROW_HEAD_SIZE,

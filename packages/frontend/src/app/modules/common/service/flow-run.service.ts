@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { map, Observable, of, switchMap } from 'rxjs';
-import { ExecutionOutput, FlowRun, SeekPage } from 'shared';
+import { ExecutionOutput, FlowRun, SeekPage } from '@activepieces/shared';
 
 @Injectable({
 	providedIn: 'root',

@@ -1,4 +1,4 @@
-import { ExecutionOutputStatus, FlowRun, RunEnvironment } from 'shared';
+import { ExecutionOutputStatus, FlowRun, RunEnvironment } from '@activepieces/shared';
 
 export const initializedRun: FlowRun = {
 	id: '',

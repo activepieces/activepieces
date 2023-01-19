@@ -1,5 +1,5 @@
 import { map, Observable } from 'rxjs';
-import { Flow } from 'shared';
+import { Flow } from '@activepieces/shared';
 
 export class DeleteFlowValidator {
 	static createValidator(allFlows$: Observable<Flow[]>) {

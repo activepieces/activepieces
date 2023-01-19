@@ -4,7 +4,7 @@ import { Action, createReducer, on } from '@ngrx/store';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { CollectionState } from '../model/collection-state.model';
 import { FlowsActions } from '../flow/flows.action';
-import { Collection, CollectionVersionState } from 'shared';
+import { Collection, CollectionVersionState } from '@activepieces/shared';
 
 const initialState: CollectionState = {
 	state: CollectionStateEnum.NONE,

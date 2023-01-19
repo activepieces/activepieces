@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { StepOutput, StepOutputStatus } from 'shared';
+import { StepOutput, StepOutputStatus } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-selected-step-result',

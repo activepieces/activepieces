@@ -1,8 +1,8 @@
-export { Context, Store } from './framework/context';
-export * from './framework/property';
-export { Piece } from './framework/piece';
+export { Context, Store } from './lib/framework/context';
+export * from './lib/framework/property';
+export { Piece } from './lib/framework/piece';
 
-export { Trigger, TriggerStrategy } from './framework/trigger/trigger';
-export * from './apps';
+export { Trigger, TriggerStrategy } from './lib/framework/trigger/trigger';
+export * from './lib/apps';
 
-export { Action } from './framework/action/action';
+export { Action } from './lib/framework/action/action';

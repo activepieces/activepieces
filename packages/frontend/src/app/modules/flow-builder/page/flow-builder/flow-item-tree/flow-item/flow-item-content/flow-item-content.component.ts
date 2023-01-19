@@ -7,11 +7,11 @@ import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
 import { FlowsActions } from '../../../../../store/flow/flows.action';
 import { FlowItemDetails } from '../../../flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { fadeIn400ms } from 'src/app/modules/common/animation/fade-in.animations';
+import { fadeIn400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in.animations';
 import { RunDetailsService } from '../../../flow-left-sidebar/run-details/iteration-details.service';
 import { DeleteStepDialogComponent } from './delete-step-dialog/delete-step-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { ExecutionOutputStatus, FlowRun, StepOutput, StepOutputStatus, TriggerType } from 'shared';
+import { ExecutionOutputStatus, FlowRun, StepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-flow-item-content',

@@ -1,6 +1,6 @@
 import { map, Observable } from 'rxjs';
-import { Artifact } from 'src/app/modules/flow-builder/model/artifact.interface';
-import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
+import { Artifact } from 'packages/frontend/src/app/modules/flow-builder/model/artifact.interface';
+import { CodeService } from 'packages/frontend/src/app/modules/flow-builder/service/code.service';
 
 export type ArtifactAndItsNameInFormData = {
 	name: string;

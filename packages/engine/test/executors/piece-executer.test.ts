@@ -1,6 +1,6 @@
 import {ConfigurationValue} from "pieces/dist/src/framework/config/configuration-value.model";
 import {PieceExecutor} from "../../src/executors/piece-executor";
-import {pieces} from "pieces";
+import {pieces} from "@activepieces/pieces";
 
 
 describe('Component Executor', () => {

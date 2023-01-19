@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Resolve, RouterStateSnapshot, ActivatedRouteSnapshot } from '@angular/router';
 import { map, Observable, switchMap } from 'rxjs';
-import { AppConnection } from 'shared';
+import { AppConnection } from '@activepieces/shared';
 import { AppConnectionsService } from '../../common/service/app-connections.service';
 import { ProjectService } from '../../common/service/project.service';
 

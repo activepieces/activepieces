@@ -1,16 +1,16 @@
 import { Injectable } from '@angular/core';
 import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { ActionType, PieceOptionRequest, TriggerType } from 'shared';
+import { ActionType, PieceOptionRequest, TriggerType } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import { AppPiece } from '../../common/components/configs-form/connector-action-or-config';
-import { environment } from 'src/environments/environment';
-import { Observable, shareReplay } from 'rxjs';
+import { environment } from 'packages/frontend/src/environments/environment';
+import { Observable, shareReplay, tap } from 'rxjs';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class ActionMetaService {
-	private connectorComponents$: Observable<AppPiece[]>;
+	private pieces$: Observable<AppPiece[]>;
 	public coreFlowItemsDetails: FlowItemDetails[] = [
 		{
 			type: ActionType.CODE,
@@ -46,20 +46,20 @@ export class ActionMetaService {
 			logoUrl: '/assets/img/custom/piece/empty-trigger.svg',
 		},
 	];
-	constructor(private http: HttpClient) { }
-	private getPieces() {
-		return this.http.get<AppPiece[]>(environment.apiUrl + '/pieces');
-	}
-	public connectorComponents() {
-		if (!this.connectorComponents$) {
-			this.connectorComponents$ = this.getPieces().pipe(shareReplay(1));
+	constructor(private http: HttpClient) {}
+
+	public getPieces() {
+		if (!this.pieces$) {
+			this.pieces$ = this.http.get<AppPiece[]>(environment.apiUrl + '/pieces').pipe(
+				shareReplay(1),
+				tap(val => {
+					console.log(val);
+				})
+			);
 		}
-		return this.connectorComponents$;
+		return this.pieces$;
 	}
-	getConnectorActionConfigOptions(
-		req: PieceOptionRequest,
-		pieceName: string
-	) {
+	getPieceActionConfigOptions(req: PieceOptionRequest, pieceName: string) {
 		return this.http.post<DropdownState<any>>(environment.apiUrl + `/pieces/${pieceName}/options`, req);
 	}
 }

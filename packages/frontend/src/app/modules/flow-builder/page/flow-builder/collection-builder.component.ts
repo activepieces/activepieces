@@ -2,7 +2,7 @@ import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild } from '@an
 import { ActivatedRoute } from '@angular/router';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
-import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar-type.enum';
+import { LeftSideBarType } from 'packages/frontend/src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/builder/builder.selector';
 import { map, Observable, tap } from 'rxjs';
@@ -15,7 +15,7 @@ import { BuilderActions } from '../../store/builder/builder.action';
 import { FlowItemDetailsActions } from '../../store/builder/flow-item-details/flow-items-details.action';
 import { RunDetailsService } from './flow-left-sidebar/run-details/iteration-details.service';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
-import { Collection, ExecutionOutputStatus, Instance } from 'shared';
+import { Collection, ExecutionOutputStatus, Instance } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 
 @Component({

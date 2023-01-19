@@ -7,7 +7,7 @@ import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../store/builder/builder.selector';
 import { FlowsActions } from '../../../../store/flow/flows.action';
 import { map, Observable, switchMap, take } from 'rxjs';
-import { CollectionVersion, CollectionVersionState } from 'shared';
+import { CollectionVersion, CollectionVersionState } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-piece-version-sidebar',

@@ -6,8 +6,8 @@ import { RightSideBarType } from '../../../../../common/model/enum/right-side-ba
 import { BuilderSelectors } from '../../../../store/builder/builder.selector';
 import { FlowsActions } from '../../../../store/flow/flows.action';
 import { UUID } from 'angular2-uuid';
-import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
-import { ActionType } from 'shared';
+import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
+import { ActionType } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-edit-step-sidebar',

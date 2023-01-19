@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { ThemeService } from '../../../../../../common/service/theme.service';
 import { FlowItem } from '../../../../../../common/model/flow-builder/flow-item';
-import { ActionType, LoopOnItemsAction } from 'shared';
+import { ActionType, LoopOnItemsAction } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-flow-item-connection',

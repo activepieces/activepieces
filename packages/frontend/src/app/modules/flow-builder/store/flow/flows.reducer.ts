@@ -5,8 +5,8 @@ import { TabState } from '../model/tab-state';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { FlowStructureUtil } from '../../service/flowStructureUtil';
-import { Flow, flowHelper, FlowOperationType } from 'shared';
-import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
+import { Flow, flowHelper, FlowOperationType } from '@activepieces/shared';
+import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
 
 type FlowsState = {
 	flows: Flow[];

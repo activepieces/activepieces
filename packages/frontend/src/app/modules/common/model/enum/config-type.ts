@@ -1,4 +1,4 @@
-import { ConfigType } from 'shared';
+import { ConfigType } from '@activepieces/shared';
 
 export const configTypesDropdownOptions = [
 	{

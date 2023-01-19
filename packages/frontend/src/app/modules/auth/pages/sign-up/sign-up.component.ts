@@ -8,11 +8,11 @@ import {
 	containsNumber,
 	containsSpecialCharacter,
 	containsUppercaseCharacter,
-} from 'src/app/modules/common/validators';
+} from 'packages/frontend/src/app/modules/common/validators';
 import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
 
 import { HttpErrorResponse } from '@angular/common/http';
-import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
+import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
 export interface UserInfo {
 	firstName: FormControl<string>;
 	lastName: FormControl<string>;

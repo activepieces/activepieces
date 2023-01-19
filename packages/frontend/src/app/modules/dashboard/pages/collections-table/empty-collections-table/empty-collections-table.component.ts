@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { CollectionService } from 'src/app/modules/common/service/collection.service';
-import { ProjectService } from 'src/app/modules/common/service/project.service';
+import { CollectionService } from 'packages/frontend/src/app/modules/common/service/collection.service';
+import { ProjectService } from 'packages/frontend/src/app/modules/common/service/project.service';
 import { Observable, switchMap, tap } from 'rxjs';
-import { FlowService } from 'src/app/modules/common/service/flow.service';
-import { PosthogService } from 'src/app/modules/common/service/posthog.service';
-import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
-import { Flow } from 'shared';
+import { FlowService } from 'packages/frontend/src/app/modules/common/service/flow.service';
+import { PosthogService } from 'packages/frontend/src/app/modules/common/service/posthog.service';
+import { AuthenticationService } from 'packages/frontend/src/app/modules/common/service/authentication.service';
+import { Flow } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-empty-collections-table',

@@ -14,7 +14,7 @@ import { TestRunBarComponent } from '../../page/flow-builder/test-run-bar/test-r
 import { UUID } from 'angular2-uuid';
 import { BuilderActions } from '../builder/builder.action';
 import { TabState } from '../model/tab-state';
-import { CollectionService } from 'src/app/modules/common/service/collection.service';
+import { CollectionService } from 'packages/frontend/src/app/modules/common/service/collection.service';
 import { RunDetailsService } from '../../page/flow-builder/flow-left-sidebar/run-details/iteration-details.service';
 import {
 	Collection,
@@ -24,7 +24,7 @@ import {
 	FlowOperationRequest,
 	FlowOperationType,
 	TriggerType,
-} from 'shared';
+} from '@activepieces/shared';
 
 @Injectable()
 export class FlowsEffects {

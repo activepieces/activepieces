@@ -2,8 +2,8 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, UntypedFormBuilder } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { filter, Observable, switchMap, tap } from 'rxjs';
-import { CodeExecutionResult } from 'shared';
-import { CodeService } from 'src/app/modules/flow-builder/service/code.service';
+import { CodeExecutionResult } from '@activepieces/shared';
+import { CodeService } from 'packages/frontend/src/app/modules/flow-builder/service/code.service';
 import { CodeArtifactForm } from '../code-artifact-form-control.component';
 import { SelectedFileInFullscreenCodeEditor } from '../selected-file-in-fullscreeen-code-editor.enum';
 import { AddNpmPackageModalComponent } from './add-npm-package-modal/add-npm-package-modal.component';
@@ -131,7 +131,10 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 				tap(result => {
 					const outputResult = this.codeService.beautifyJson(result.output);
 					const consoleResult = this.getConsoleResult(result);
-					this.testResultForm.setValue({ outputResult: outputResult, consoleResult: consoleResult });
+					this.testResultForm.patchValue({
+						outputResult: outputResult ? outputResult : 'No output returned, check logs in case of errors',
+						consoleResult: consoleResult,
+					});
 					this.testLoading = false;
 				})
 			);

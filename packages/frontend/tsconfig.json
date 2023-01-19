@@ -1,10 +1,12 @@
-/* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
-  "compileOnSave": false,
   "compilerOptions": {
+    "target": "ES2022",
+    "module": "es2020",
+    "lib": [
+      "es2021",
+      "dom"
+    ],
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "./",
-    "outDir": "./dist/out-tsc",
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -21,14 +23,22 @@
     "noUnusedLocals": true,
     "moduleResolution": "node",
     "importHelpers": true,
-    "target": "ES2022",
-    "module": "es2020",
-    "lib": [
-      "es2021",
-      "dom"
-    ],
     "useDefineForClassFields": false
   },
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    },
+    {
+      "path": "./tsconfig.editor.json"
+    }
+  ],
+  "extends": "../../tsconfig.base.json",
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,

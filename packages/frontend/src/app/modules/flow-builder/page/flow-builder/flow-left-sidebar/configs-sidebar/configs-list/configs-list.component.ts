@@ -3,7 +3,7 @@ import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
 import { CollectionActions } from '../../../../../store/collection/collection.action';
-import { Config } from 'shared';
+import { Config } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-configs-list',

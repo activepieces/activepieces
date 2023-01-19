@@ -1,5 +1,5 @@
 /**import { UUID } from 'angular2-uuid';
-import { ConfigType } from 'shared';
+import { ConfigType } from '@activepieces/shared';
 import { OAuth2ConfigSettings } from './config-settings';
 
 export class Config {

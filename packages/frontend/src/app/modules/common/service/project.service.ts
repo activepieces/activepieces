@@ -5,7 +5,7 @@ import { map, Observable, of, switchMap, take, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../store/project/project.selector';
 import { ProjectActions } from '../store/project/project.action';
-import { Project } from 'shared';
+import { Project } from '@activepieces/shared';
 
 @Injectable({
 	providedIn: 'root',

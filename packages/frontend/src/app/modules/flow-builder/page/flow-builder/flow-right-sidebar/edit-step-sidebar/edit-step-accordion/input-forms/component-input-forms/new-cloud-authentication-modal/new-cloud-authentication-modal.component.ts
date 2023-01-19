@@ -4,15 +4,15 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { catchError, Observable, of, take, tap } from 'rxjs';
-import { AppConnection, AppConnectionType, UpsertCloudOAuth2Request, Project } from 'shared';
-import { fadeInUp400ms } from 'src/app/modules/common/animation/fade-in-up.animation';
-import { PieceConfig } from 'src/app/modules/common/components/configs-form/connector-action-or-config';
-import { CloudConnectionPopupSettings } from 'src/app/modules/common/components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
-import { AppConnectionsService } from 'src/app/modules/common/service/app-connections.service';
-import { ProjectService } from 'src/app/modules/common/service/project.service';
-import { ConnectionValidator } from 'src/app/modules/flow-builder/page/flow-builder/validators/connectionNameValidator';
-import { appConnectionsActions } from 'src/app/modules/flow-builder/store/app-connections/app-connections.action';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/builder/builder.selector';
+import { AppConnection, AppConnectionType, UpsertCloudOAuth2Request, Project } from '@activepieces/shared';
+import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
+import { PieceConfig } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
+import { CloudConnectionPopupSettings } from 'packages/frontend/src/app/modules/common/components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
+import { AppConnectionsService } from 'packages/frontend/src/app/modules/common/service/app-connections.service';
+import { ProjectService } from 'packages/frontend/src/app/modules/common/service/project.service';
+import { ConnectionValidator } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/validators/connectionNameValidator';
+import { appConnectionsActions } from 'packages/frontend/src/app/modules/flow-builder/store/app-connections/app-connections.action';
+import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 
 interface AuthConfigSettings {
 	appName: FormControl<string | null>;

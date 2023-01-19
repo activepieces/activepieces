@@ -1,4 +1,4 @@
-import { ActionType, TriggerType } from 'shared';
+import { ActionType, TriggerType } from '@activepieces/shared';
 
 export class FlowItemDetails {
 	constructor(

@@ -1,28 +1,28 @@
 <div class="ap-typography-headline-5 ap-text-center ap-mb-4">Welcome Back</div>
 <form [formGroup]="loginForm" (ngSubmit)="signIn()" class="ap-flex ap-flex-col ap-gap-2">
-    <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label>Email</mat-label>
-        <input matInput placeholder="Email" formControlName="email" />
-        <mat-error *ngIf="loginForm.controls.email!.invalid">
-            <ng-container *ngIf="loginForm.controls.email!.getError('email'); else emailRequired">
-                Email is invalid
-            </ng-container>
-            <ng-template #emailRequired>Email is required</ng-template>
-        </mat-error>
-    </mat-form-field>
-    <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label>Password</mat-label>
-        <input type="password" matInput placeholder="Password" formControlName="password" />
-        <mat-error *ngIf="loginForm.controls.password!.invalid">Password is required</mat-error>
-    </mat-form-field>
-    <mat-error *ngIf="showInvalidEmailOrPasswordMessage" class="ap-text-center">Invalid email or password</mat-error>
-    <div class="text-center ap-mt-2 ap-flex ap-flex-col ap-gap-2">
-        <app-button [loading]="loading" (buttonClicked)="signIn()" btnColor="primary" btnSize="large"
-            [fullWidthOfContainer]="true">
-            Sign in
-        </app-button>
-    </div>
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Email</mat-label>
+    <input matInput placeholder="Email" formControlName="email" />
+    <mat-error *ngIf="loginForm.controls.email!.invalid">
+      <ng-container *ngIf="loginForm.controls.email!.getError('email'); else emailRequired">
+        Email is invalid
+      </ng-container>
+      <ng-template #emailRequired>Email is required</ng-template>
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>Password</mat-label>
+    <input type="password" matInput placeholder="Password" formControlName="password" />
+    <mat-error *ngIf="loginForm.controls.password!.invalid">Password is required</mat-error>
+  </mat-form-field>
+  <mat-error *ngIf="showInvalidEmailOrPasswordMessage" class="ap-text-center">Invalid email or password</mat-error>
+  <div class="text-center ap-mt-2 ap-flex ap-flex-col ap-gap-2">
+    <app-button [loading]="loading" (buttonClicked)="signIn()" btnColor="primary" btnSize="large"
+      [fullWidthOfContainer]="true">
+      Sign in
+    </app-button>
+  </div>
 </form>
-<div class="ap-typography-caption ap-text-body ap-text-center ap-mt-2">Don't have an account? <a routerLink="/sign-up">Get yours now</a></div>
+<div class="ap-typography-caption ap-text-body ap-text-center ap-mt-2">Don't have an account? <a
+    routerLink="/sign-up">Get yours now</a></div>
 <ng-container *ngIf="authenticate$ | async"></ng-container>
-

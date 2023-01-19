@@ -2,15 +2,17 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../model/builder-state.model';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
-import { AppConnection, Config, Flow, FlowRun } from 'shared';
+import { AppConnection, Config, Flow, FlowRun } from '@activepieces/shared';
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
 import { FlowItem } from '../../../common/model/flow-builder/flow-item';
 import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
 import { FlowsState } from '../model/flows-state.model';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
-import { ActionType, Collection, TriggerType } from 'shared';
-import { ConnectionDropdownItem } from 'src/app/modules/common/model/dropdown-item.interface';
+import { ActionType, Collection, TriggerType } from '@activepieces/shared';
+import { ConnectionDropdownItem } from 'packages/frontend/src/app/modules/common/model/dropdown-item.interface';
+import { FlowStructureUtil } from '../../service/flowStructureUtil';
+import { MentionListItem } from 'packages/frontend/src/app/modules/common/components/form-controls/interpolating-text-form-control/utils';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -295,6 +297,58 @@ const selectAppConnectionsDropdownOptions = createSelector(selectAllAppConnectio
 	});
 });
 
+const selectAllConfigsForMentionsDropdown = createSelector(
+	selectCurrentCollectionConfigs,
+	(collectionConfigs: Config[]): MentionListItem[] => {
+		return [...collectionConfigs].map(c => {
+			const result = {
+				label: c.key,
+				value: `\${configs.${c.key}}`,
+			};
+			return result;
+		});
+	}
+);
+
+const selectAllFlowSteps = createSelector(selectCurrentFlow, (flow: Flow | undefined) => {
+	if (flow && flow.version) {
+		return FlowStructureUtil.traverseAllSteps(flow.version.trigger);
+	}
+	return [];
+});
+const selectAllFlowStepsNamesAndDisplayNames = createSelector(selectAllFlowSteps, steps => {
+	return steps.map(s => {
+		return {
+			displayName: s.displayName,
+			name: s.name,
+		};
+	});
+});
+const selectAllStepsForMentionsDropdown = createSelector(
+	selectAllFlowSteps,
+	(steps): (MentionListItem & { step: FlowItem })[] => {
+		return steps.map(s => {
+			return {
+				label: s.displayName,
+				value: `\${${s.name}}`,
+				step: s,
+			};
+		});
+	}
+);
+const selectAppConnectionsForMentionsDropdown = createSelector(
+	selectAllAppConnections,
+	(connections: AppConnection[]) => {
+		return [...connections].map(c => {
+			const result: MentionListItem = {
+				label: c.name,
+				value: `\${connections.${c.name}}`,
+			};
+			return result;
+		});
+	}
+);
+
 export const BuilderSelectors = {
 	selectCurrentCollection,
 	selectCurrentCollectionId,
@@ -337,4 +391,9 @@ export const BuilderSelectors = {
 	selectIsPublishing,
 	selectFlowItemDetailsForConnectorComponentsTriggers,
 	selectAllAppConnections,
+	selectAllConfigsForMentionsDropdown,
+	selectAllFlowSteps,
+	selectAllFlowStepsNamesAndDisplayNames,
+	selectAllStepsForMentionsDropdown,
+	selectAppConnectionsForMentionsDropdown,
 };
