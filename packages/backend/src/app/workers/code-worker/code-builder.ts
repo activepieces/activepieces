@@ -37,8 +37,8 @@ async function build(artifact: Buffer): Promise<Buffer> {
 
     await downloadFiles(artifact, buildPath);
 
-    logger.info(Buffer.from(await execSync("npm --prefix " + buildPath + " install")).toString());
-    logger.info(Buffer.from(await execSync("npm --prefix " + buildPath + " run build").tostring()));
+    await execSync("npm --prefix " + buildPath + " install");
+    await execSync(`(cd ${buildPath} && /usr/local/lib/node_modules/webpack/bin/webpack.js --mode production)`);
 
     const bundledFilePath = buildPath + "/dist/index.js";
     bundledFile = fs.readFileSync(bundledFilePath);
@@ -63,7 +63,6 @@ async function downloadFiles(artifact: Buffer, buildPath: string) {
   if (packageJson.scripts === undefined) {
     packageJson.scripts = {};
   }
-  packageJson.scripts.build = "webpack --mode production";
   fs.writeFileSync(buildPath + "/package.json", JSON.stringify(packageJson));
   fs.writeFileSync(buildPath + "/webpack.config.js", webpackConfig);
 }
