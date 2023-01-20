@@ -37,7 +37,7 @@
       "!{projectRoot}/**/*.spec.[jt]s",
       "!{projectRoot}/karma.conf.js"
     ],
-    "sharedGlobals": []
+  "sharedGlobals": []
   },
   "workspaceLayout": {
     "appsDir": "packages",

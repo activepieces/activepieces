@@ -6,7 +6,6 @@ import { discord } from './discord';
 import { hackernews } from './hackernews';
 import { hubspot } from './hubspot';
 import { mailchimp } from './mailchimp';
-import { cloudVisionAI } from './cloud-vision';
 import { openai } from './openai';
 import { stripe } from './stripe';
 
@@ -18,11 +17,10 @@ export const pieces: Piece[] = [
 	hubspot,
 	hackernews,
 	mailchimp,
-  cloudVisionAI,
-  openai,
+	openai,
 	stripe
 ];
 
 export const getPiece = (name: string): Piece | undefined => {
-  return pieces.find((f) => name.toLowerCase() === f.name.toLowerCase());
+	return pieces.find((f) => name.toLowerCase() === f.name.toLowerCase());
 };
