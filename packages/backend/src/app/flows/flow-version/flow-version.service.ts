@@ -184,7 +184,8 @@ function buildSchema(props: PieceProperty): TSchema {
         propsSchema[name] = Type.Boolean({});
         break;
       case PropertyType.NUMBER:
-        propsSchema[name] = Type.Number({});
+        // Because it could be a variable
+        propsSchema[name] = Type.String({});
         break;
       case PropertyType.DROPDOWN:
         propsSchema[name] = Type.Any({});

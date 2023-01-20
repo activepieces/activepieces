@@ -39,7 +39,7 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx nodemon -e ts,js,mjs,json -x 'npx nx build pieces' --watch packages/pieces/src & npx nodemon -e ts,js,mjs,json -x 'npx nx build engine && cp dist/packages/engine/main.js packages/backend/src/assets/activepieces-engine.js' --watch packages/engine/src & npx nx serve backend"
+        "command": "npx nodemon -e ts,js,mjs,json -x 'npx nx bundle engine' --watch packages/engine/src --watch packages/pieces/src & npx nx serve backend"
       }
     },
     "lint": {
