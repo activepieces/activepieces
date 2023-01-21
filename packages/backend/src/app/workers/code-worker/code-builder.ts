@@ -38,7 +38,7 @@ async function build(artifact: Buffer): Promise<Buffer> {
     await downloadFiles(artifact, buildPath);
 
     await execSync("npm --prefix " + buildPath + " install");
-    await execSync(`(cd ${buildPath} && /usr/local/lib/node_modules/webpack/bin/webpack.js --mode production)`);
+    await execSync(`(cd ${buildPath} && /usr/local/share/npm-global/lib/node_modules/webpack/bin/webpack.js --mode production)`);
 
     const bundledFilePath = buildPath + "/dist/index.js";
     bundledFile = fs.readFileSync(bundledFilePath);
