@@ -27,7 +27,7 @@
     "bundle": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx nx build engine && cp dist/packages/engine/main.js packages/backend/src/assets/activepieces-engine.js"
+        "command": "nx build engine && cp dist/packages/engine/main.js packages/backend/src/assets/activepieces-engine.js"
       },
       "dependsOn": ["build"]
     },
