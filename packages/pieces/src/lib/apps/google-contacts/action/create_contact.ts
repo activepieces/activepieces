@@ -55,35 +55,28 @@ export const googleContactsAddContactAction = createAction({
         }),
     },
     async run(context) {
-        const requestBody = {
-            resource: {
-                names: [
-                    {
-                        givenName: context.propsValue['firstName'],
-                        middleName: context.propsValue['middleName'],
-                        familyName: context.propsValue['lastName'],
-                    }
-                ],
-                emailAddresses: [
-                    {
-                        value: context.propsValue['email'],
-                        primary: true
-                    }
-                ],
-                phoneNumbers: [
-                    {
-                        value: context.propsValue['phoneNumber'],
-                        primary: true
-                    }
-                ],
-                organizations: [
-                    {
-                        name: context.propsValue['company'],
-                        title: context.propsValue['jobTitle']
-                    }
-                ]
-            }
+        let requestBody = {
+            names: [
+                {
+                    givenName: context.propsValue['firstName'],
+                    middleName: context.propsValue['middleName'],
+                    familyName: context.propsValue['lastName'],
+                }
+            ]
         };
+        const contact: Record<string, unknown> = {};
+        if (context.propsValue['email']) {
+            contact['emailAddresses'] = [{ value: context.propsValue['email'], primary: true }];
+        }
+
+        if (context.propsValue['phoneNumber']) {
+            contact['phoneNumbers'] = [{ value: context.propsValue['phoneNumber'], primary: true }];
+        }
+
+        if (context.propsValue['company'] || context.propsValue['jobTitle']) {
+            contact['organizations'] = [{ name: context.propsValue['company'] || undefined, title: context.propsValue['jobTitle'] || undefined }];
+        }
+        requestBody = { ...requestBody, ...contact }
         const request: HttpRequest<Record<string, unknown>> = {
             method: HttpMethod.POST,
             url: `https://people.googleapis.com/v1/people:createContact`,
@@ -93,6 +86,6 @@ export const googleContactsAddContactAction = createAction({
                 token: context.propsValue['authentication']!['access_token'],
             }
         }
-        return await httpClient.sendRequest(request);
+        return (await httpClient.sendRequest(request)).body;
     }
 });

@@ -8,7 +8,7 @@ import { hubspot } from './hubspot';
 import { mailchimp } from './mailchimp';
 import { openai } from './openai';
 import { stripe } from './stripe';
-import { googleContacts } from './google_contacts';
+import { googleContacts } from './google-contacts';
 
 export const pieces: Piece[] = [
 	slack,
