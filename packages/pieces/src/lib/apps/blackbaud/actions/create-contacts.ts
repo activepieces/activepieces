@@ -27,6 +27,11 @@ export const blackbaudCreateContacts = createAction({
             required: true
         })
     },
+    sampleData: [
+        {
+            "id": "625717"
+        }
+    ],
     async run(configValue) {
         let contacts = parseContacts(configValue.propsValue['contacts']!);
         let validation = ajv.compile(schema);
