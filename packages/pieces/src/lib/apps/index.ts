@@ -8,6 +8,7 @@ import { hubspot } from './hubspot';
 import { mailchimp } from './mailchimp';
 import { openai } from './openai';
 import { stripe } from './stripe';
+import { pipedrive } from './pipedrive';
 
 export const pieces: Piece[] = [
 	slack,
@@ -18,7 +19,8 @@ export const pieces: Piece[] = [
 	hackernews,
 	mailchimp,
 	openai,
-	stripe
+	stripe,
+	pipedrive
 ];
 
 export const getPiece = (name: string): Piece | undefined => {
