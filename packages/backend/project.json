@@ -24,7 +24,7 @@
         }
       }
     },
-    "dev": {
+    "serve": {
       "executor": "@nrwl/js:node",
       "options": {
         "buildTarget": "backend:build",
@@ -36,7 +36,7 @@
         }
       }
     },
-    "serve": {
+    "dev": {
       "executor": "nx:run-commands",
       "options": {
         "command": "nodemon -e ts,js,mjs,json -x 'nx bundle engine' --watch packages/engine/src --watch packages/pieces/src & nx dev backend"
