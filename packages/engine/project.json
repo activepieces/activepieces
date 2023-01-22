@@ -3,6 +3,9 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/engine/src",
   "projectType": "library",
+  "namedInputs": {
+    "bundle": ["{workspaceRoot}/dist/packages/engine/main.js"]
+  },
   "targets": {
     "build": {
       "executor": "@nrwl/webpack:webpack",
@@ -22,6 +25,13 @@
           "extractLicenses": true,
           "inspect": false
         }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/js:node",
+      "options": {
+        "buildTarget": "engine:build",
+        "inspect": false
       }
     },
     "bundle": {

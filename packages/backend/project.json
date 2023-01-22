@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/backend/src",
   "projectType": "application",
+  "implicitDependencies": ["engine"],
   "targets": {
     "build": {
       "executor": "@nrwl/webpack:webpack",
@@ -24,7 +25,7 @@
         }
       }
     },
-    "serve": {
+    "watch": {
       "executor": "@nrwl/js:node",
       "options": {
         "buildTarget": "backend:build",
@@ -39,7 +40,17 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nodemon -e ts,js,mjs,json -x 'nx bundle engine' --watch packages/engine/src --watch packages/pieces/src & nx dev backend"
+        "commands": [
+          "nx watch backend",
+          "nx serve engine"
+        ],
+        "envFile": "packages/backend/.env"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nodemon -e ts,js,mjs,json -x 'nx bundle engine' --watch packages/engine/src --watch packages/pieces/src & nx watch backend"
       }
     },
     "lint": {
