@@ -117,3 +117,32 @@ ap.init({
   host: "ACTIVEPIECES_SERVER_URL"
 })
 ```
+
+## Connect
+
+<Warning>
+You must contact activepieces to register your app credentials. Once this is done, you can provide the appName to connect.
+</Warning>
+
+To open authentication for certian app use the following:
+
+```javascript
+ap.connect({
+  appName: "gmail"
+})
+```
+
+When this is successful, you will see the following screen and the app will be available in the connections tab of the activepieces dashboard.
+
+![Connection success](../resources/screenshots/multi-tenancy-connection-success.png)
+
+
+## Disconnect
+
+To disconnect from the app, you can use the following code:
+
+```javascript
+ap.disconnect({
+  appName: "gmail"
+})
+```
