@@ -23,7 +23,7 @@ export const oauth2Service = {
           }
         )
       ).data;
-      return { ...formatOAuth2Response(response), clientId: request.clientId, client_secret: request.clientSecret };
+      return { ...formatOAuth2Response(response), client_id: request.clientId, client_secret: request.clientSecret };
     } catch (e: unknown | AxiosError) {
       if (axios.isAxiosError(e)) {
         return e.response?.data;
