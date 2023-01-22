@@ -85,6 +85,7 @@ export class NewCloudAuthenticationModalComponent implements OnInit {
 			this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
 			this.settingsForm.controls.name.disable();
 		}
+		this.settingsForm.controls.name.markAllAsTouched();
 	}
 	submit(projectId: string) {
 		this.settingsForm.markAllAsTouched();
