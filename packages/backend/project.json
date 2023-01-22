@@ -25,7 +25,7 @@
         }
       }
     },
-    "watch": {
+    "build-watch": {
       "executor": "@nrwl/js:node",
       "options": {
         "buildTarget": "backend:build",
@@ -41,7 +41,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "nx watch backend",
+          "nx build-watch backend",
           "nx serve engine"
         ],
         "envFile": "packages/backend/.env"
@@ -50,7 +50,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nodemon -e ts,js,mjs,json -x 'nx bundle engine' --watch packages/engine/src --watch packages/pieces/src & nx watch backend"
+        "command": "nodemon -e ts,js,mjs,json -x 'nx bundle engine' --watch packages/engine/src --watch packages/pieces/src & nx build-watch backend"
       }
     },
     "lint": {
