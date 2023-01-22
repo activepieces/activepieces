@@ -28,23 +28,17 @@ import { ActionMetaService, DropdownState } from 'packages/frontend/src/app/modu
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
 import { PieceConfig } from './connector-action-or-config';
-import {
-	NewAuthenticationModalComponent,
-	USE_CLOUD_CREDENTIALS,
-} from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-oauth2-connection-dialog/new-authentication-modal.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AppConnection, AppConnectionType,  OAuth2AppConnection } from '@activepieces/shared';
 import { DropdownItem } from '../../model/dropdown-item.interface';
-import {
-	NewCloudAuthenticationModalComponent,
-	USE_MY_OWN_CREDENTIALS,
-} from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-cloud-oauth2-connection-dialog/new-cloud-authentication-modal.component';
-import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.service';
 import { AuthenticationService } from '../../service/authentication.service';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import deepEqual from 'deep-equal';
 import { PropertyType } from '@activepieces/pieces';
+import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.service';
+import { OAuth2ConnectionDialogComponent, USE_CLOUD_CREDENTIALS } from '../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/oauth2-connection-dialog/oauth2-connection-dialog.component';
+import { CloudOAuth2ConnectionDialogComponent, USE_MY_OWN_CREDENTIALS } from '../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
 type ConfigKey = string;
 
 @Component({
@@ -252,7 +246,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		this.updateOrAddConfigModalClosed$ = this.authenticationService.getFrontendUrl().pipe(
 			switchMap(serverUrl => {
 				return this.dialogService
-					.open(NewAuthenticationModalComponent, {
+					.open(OAuth2ConnectionDialogComponent, {
 						data: {
 							pieceAuthConfig: this.configs.find(c => c.type === PropertyType.OAUTH2),
 							pieceName: this.pieceName,
@@ -293,7 +287,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
 	openNewCloudOAuth2ConnectionModal(authConfigKey: string, clientId: string) {
 		this.updateOrAddConfigModalClosed$ = this.dialogService
-			.open(NewCloudAuthenticationModalComponent, {
+			.open(CloudOAuth2ConnectionDialogComponent, {
 				data: {
 					pieceAuthConfig: this.configs.find(c => c.type === PropertyType.OAUTH2),
 					pieceName: this.pieceName,
@@ -329,7 +323,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 					debugger;
 					if (connection.value.type === AppConnectionType.OAUTH2) {
 						this.updateOrAddConfigModalClosed$ = this.dialogService
-							.open(NewAuthenticationModalComponent, {
+							.open(OAuth2ConnectionDialogComponent, {
 								data: {
 									connectionToUpdate: connection,
 									pieceAuthConfig: this.configs.find(c => c.type === PropertyType.OAUTH2),
@@ -350,7 +344,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 								switchMap(res => {
 									const clientId = res[this.pieceName].clientId;
 									return this.dialogService
-										.open(NewCloudAuthenticationModalComponent, {
+										.open(CloudOAuth2ConnectionDialogComponent, {
 											data: {
 												connectionToUpdate: connection,
 												pieceAuthConfig: this.configs.find(c => c.type === PropertyType.OAUTH2),
