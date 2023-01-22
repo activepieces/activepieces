@@ -76,7 +76,7 @@ export class Oauth2Service {
 						tokenUrl: request.token_url,
 					}).pipe(
 						map(value => {
-							debugger;
+						
 							if (value['error']) {
 								throw Error(value['error']);
 							}

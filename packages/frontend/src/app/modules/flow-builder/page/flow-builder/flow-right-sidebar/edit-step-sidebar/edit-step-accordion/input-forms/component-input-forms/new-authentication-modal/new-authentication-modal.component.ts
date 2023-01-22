@@ -119,7 +119,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 			value: new FormControl(undefined as any, Validators.required),
 			refresh_url: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
 		});
-
+		this.settingsForm.controls.name.markAllAsTouched();
 		if (this.connectionToUpdate) {
 			this.settingsForm.controls.value.setValue(this.connectionToUpdate.value);			
 			this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
