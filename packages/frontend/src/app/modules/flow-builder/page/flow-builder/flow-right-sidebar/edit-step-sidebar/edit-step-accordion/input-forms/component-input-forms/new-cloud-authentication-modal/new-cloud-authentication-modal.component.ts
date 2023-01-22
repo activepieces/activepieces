@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { catchError, Observable, of, take, tap } from 'rxjs';
-import { AppConnection, AppConnectionType, UpsertCloudOAuth2Request, Project } from '@activepieces/shared';
+import { AppConnection,  UpsertCloudOAuth2Request, Project,  CloudOAuth2ConnectionValue, CloudAuth2Connection } from '@activepieces/shared';
 import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
 import { CloudConnectionPopupSettings } from 'packages/frontend/src/app/modules/common/components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
@@ -17,7 +17,7 @@ import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder
 interface AuthConfigSettings {
 	appName: FormControl<string | null>;
 	name: FormControl<string>;
-	value: FormControl<any>;
+	value: FormControl<CloudOAuth2ConnectionValue>;
 }
 export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
 @Component({
@@ -29,7 +29,7 @@ export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
 export class NewCloudAuthenticationModalComponent implements OnInit {
 	@Input() pieceAuthConfig: PieceConfig;
 	@Input() pieceName: string;
-	@Input() connectionToUpdate: AppConnection | undefined;
+	@Input() connectionToUpdate: CloudAuth2Connection | undefined;
 	cloudConnectionPopupSettings: CloudConnectionPopupSettings;
 	settingsForm: FormGroup<AuthConfigSettings>;
 	project$: Observable<Project>;
@@ -48,7 +48,7 @@ export class NewCloudAuthenticationModalComponent implements OnInit {
 		dialogData: {
 			pieceAuthConfig: PieceConfig;
 			pieceName: string;
-			connectionToUpdate: AppConnection | undefined;
+			connectionToUpdate: CloudAuth2Connection | undefined;
 			clientId: string;
 		}
 	) {
@@ -98,26 +98,25 @@ export class NewCloudAuthenticationModalComponent implements OnInit {
 		const connectionName = this.connectionToUpdate
 			? this.connectionToUpdate.name
 			: this.settingsForm.controls.name.value;
-		const settingsFormValue: any = { ...this.settingsForm.getRawValue() };
-		const connectionValue = settingsFormValue['value'];
-		delete settingsFormValue['value'];
-		delete settingsFormValue.key;
-		const newConfig: UpsertCloudOAuth2Request = {
+		const settingsFormValue = { ...this.settingsForm.getRawValue() };
+		const connectionValue = settingsFormValue.value;
+		
+		const newConnection: UpsertCloudOAuth2Request = {
 			appName: this.pieceName,
-			value: { type: AppConnectionType.CLOUD_OAUTH2, ...connectionValue },
+			value: {...connectionValue },
 			name: connectionName,
 			projectId: projectId,
 		};
-		return newConfig;
+		return newConnection;
 	}
 
 	saveConnection(connection: UpsertCloudOAuth2Request): void {
 		this.upsert$ = this.appConnectionsService.upsert(connection).pipe(
 			catchError(err => {
 				console.error(err);
-				this.snackbar.open('Connection operation failed please check your console.', '', {
+				this.snackbar.open('Connection operation failed please check your console.', 'Close', {
 					panelClass: 'error',
-					duration: 50000000,
+					duration: 5000,
 				});
 				return of(null);
 			}),
