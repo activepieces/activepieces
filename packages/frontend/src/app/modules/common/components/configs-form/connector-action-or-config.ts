@@ -1,3 +1,5 @@
+import { PropertyType } from "@activepieces/pieces";
+
 export enum HttpMethod {
 	CONNECT = 'CONNECT',
 	DELETE = 'DELETE',
@@ -12,7 +14,7 @@ export enum HttpMethod {
 
 export interface PieceConfig {
 	key: string;
-	type: InputType;
+	type: PropertyType;
 	label: string;
 	value?: any;
 	description?: string;
@@ -28,7 +30,7 @@ export interface PieceConfig {
 export class PieceProperty {
 	name: string;
 	description: string;
-	type: InputType;
+	type: PropertyType;
 	required: boolean;
 	displayName: string;
 	authUrl?: string;
@@ -73,12 +75,3 @@ type propMap = Record<
 		sampleData?: Object;
 	}
 >;
-
-export enum InputType {
-	SHORT_TEXT = 'SHORT_TEXT',
-	LONG_TEXT = 'LONG_TEXT',
-	DROPDOWN = 'DROPDOWN',
-	NUMBER = 'NUMBER',
-	CHECKBOX = 'CHECKBOX',
-	OAUTH2 = 'OAUTH2',
-}

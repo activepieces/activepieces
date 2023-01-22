@@ -30,25 +30,25 @@ const CUSTOM_REQUEST_FORM_CONTROL_NAME = 'customRequest';
 const ACTION_FORM_CONTROL_NAME = 'action';
 const CONFIGS_FORM_CONTROL_NAME = 'configs';
 @Component({
-	selector: 'app-component-action-input-form',
-	templateUrl: './component-action-input-form.component.html',
-	styleUrls: ['./component-action-input-form.component.scss'],
+	selector: 'app-piece-action-input-form',
+	templateUrl: './piece-action-input-form.component.html',
+	styleUrls: ['./piece-action-input-form.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
 			multi: true,
-			useExisting: ComponentActionInputFormComponent,
+			useExisting: PieceActionInputFormComponent,
 		},
 		{
 			provide: NG_VALIDATORS,
 			multi: true,
-			useExisting: ComponentActionInputFormComponent,
+			useExisting: PieceActionInputFormComponent,
 		},
 	],
 	animations: [fadeInUp400ms],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ComponentActionInputFormComponent implements ControlValueAccessor {
+export class PieceActionInputFormComponent implements ControlValueAccessor {
 	readonly ACTION_FORM_CONTROL_NAME = ACTION_FORM_CONTROL_NAME;
 	readonly CUSTOM_REQUEST_FORM_CONTROL_NAME = CUSTOM_REQUEST_FORM_CONTROL_NAME;
 	readonly CONFIGS_FORM_CONTROL_NAME = CONFIGS_FORM_CONTROL_NAME;

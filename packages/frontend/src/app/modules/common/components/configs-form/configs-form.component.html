@@ -40,12 +40,12 @@
 
   <ng-container [ngSwitch]="config.type" [formGroup]="formGroup">
 
-    <ng-container *ngSwitchCase="configType.CHECKBOX">
+    <ng-container *ngSwitchCase="PropertyType.CHECKBOX">
       <mat-slide-toggle [formControlName]="config.key" color="primary"
         [matTooltip]="config.description">{{config.label}}</mat-slide-toggle>
     </ng-container>
 
-    <mat-form-field *ngIf="config.type === configType.SHORT_TEXT || config.type === configType.NUMBER" class="ap-w-full"
+    <mat-form-field *ngIf="config.type === PropertyType.SHORT_TEXT || config.type === PropertyType.NUMBER" class="ap-w-full"
       appearance="outline">
       <mat-label>{{config.label}}</mat-label>
       <app-interpolating-text-form-control [matTooltip]="config.description"
@@ -55,7 +55,7 @@
       </mat-error>
     </mat-form-field>
 
-    <mat-form-field *ngSwitchCase="configType.LONG_TEXT" class="ap-w-full" appearance="outline">
+    <mat-form-field *ngSwitchCase="PropertyType.LONG_TEXT" class="ap-w-full" appearance="outline">
       <mat-label>{{config.label}}</mat-label>
       <app-interpolating-text-form-control [matTooltip]="config.description"
         [formControlName]="config.key"></app-interpolating-text-form-control>
@@ -64,7 +64,7 @@
       </mat-error>
     </mat-form-field>
 
-    <ng-container *ngSwitchCase="configType.DROPDOWN">
+    <ng-container *ngSwitchCase="PropertyType.DROPDOWN">
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }} </mat-label>
         <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
@@ -83,7 +83,7 @@
       </mat-form-field>
 
     </ng-container>
-    <ng-container *ngSwitchCase="configType.OAUTH2">
+    <ng-container *ngSwitchCase="PropertyType.OAUTH2 || PropertyType.SECRET_TEXT">
       <div class="ap-relative">
         <app-button btnColor="primary" btnStyle="basic" btnSize="extraSmall"
           *ngIf="formGroup.enabled && formGroup.get(config.key)!.value"

@@ -29,12 +29,12 @@ interface AuthConfigSettings {
 }
 export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
 @Component({
-	selector: 'app-new-authentication-modal',
-	templateUrl: './new-authentication-modal.component.html',
-	styleUrls: ['./new-authentication-modal.component.scss'],
+	selector: 'app-oauth2-connection-dialog',
+	templateUrl: './oauth2-connection-dialog.component.html',
+	styleUrls: ['./oauth2-connection-dialog.component.scss'],
 	animations: [fadeInUp400ms],
 })
-export class NewAuthenticationModalComponent implements OnInit {
+export class OAuth2ConnectionDialogComponent implements OnInit {
 	@Input() pieceAuthConfig: PieceConfig;
 	@Input() pieceName: string;
 	@Input() connectionToUpdate: OAuth2AppConnection | undefined;
@@ -56,7 +56,7 @@ export class NewAuthenticationModalComponent implements OnInit {
 	constructor(
 		private fb: FormBuilder,
 		private store: Store,
-		public dialogRef: MatDialogRef<NewAuthenticationModalComponent>,
+		public dialogRef: MatDialogRef<OAuth2ConnectionDialogComponent>,
 		private cloudAuthConfigsService: CloudAuthConfigsService,
 		private appConnectionsService: AppConnectionsService,
 		private snackbar: MatSnackBar,

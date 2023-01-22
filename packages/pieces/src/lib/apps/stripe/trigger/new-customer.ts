@@ -2,7 +2,6 @@ import {
   createTrigger,
   TriggerStrategy,
 } from '../../../framework/trigger/trigger';
-import { Property } from '../../../framework/property';
 import { stripeCommon } from '../common';
 
 export const stripeNewCustomer = createTrigger({
@@ -10,11 +9,7 @@ export const stripeNewCustomer = createTrigger({
   displayName: 'New Customer',
   description: 'Triggers when a new customer is created',
   props: {
-    api_key: Property.ShortText({
-			displayName: 'API Key',
-			description: undefined,
-			required: true,
-		})
+    api_key: stripeCommon.authentication
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {

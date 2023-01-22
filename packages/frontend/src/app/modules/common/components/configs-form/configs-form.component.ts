@@ -27,23 +27,24 @@ import {
 import { ActionMetaService, DropdownState } from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
-import { PieceConfig, InputType } from './connector-action-or-config';
+import { PieceConfig } from './connector-action-or-config';
 import {
 	NewAuthenticationModalComponent,
 	USE_CLOUD_CREDENTIALS,
-} from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
+} from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-oauth2-connection-dialog/new-authentication-modal.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AppConnection, AppConnectionType,  OAuth2AppConnection } from '@activepieces/shared';
 import { DropdownItem } from '../../model/dropdown-item.interface';
 import {
 	NewCloudAuthenticationModalComponent,
 	USE_MY_OWN_CREDENTIALS,
-} from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-cloud-authentication-modal/new-cloud-authentication-modal.component';
+} from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-cloud-oauth2-connection-dialog/new-cloud-authentication-modal.component';
 import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.service';
 import { AuthenticationService } from '../../service/authentication.service';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import deepEqual from 'deep-equal';
+import { PropertyType } from '@activepieces/pieces';
 type ConfigKey = string;
 
 @Component({
@@ -81,7 +82,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 	OnTouched = () => {};
 	updateValueOnChange$: Observable<void> = new Observable<void>();
 	updateAuthConfig$: Observable<void>;
-	configType = InputType;
+	PropertyType = PropertyType;
 	optionsObservables$: {
 		[key: ConfigKey]: Observable<DropdownState<any>>;
 	} = {};
@@ -145,7 +146,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
 	createDropdownConfigsObservables() {
 		this.configs.forEach(c => {
-			if (c.type === InputType.DROPDOWN) {
+			if (c.type === PropertyType.DROPDOWN) {
 				const refreshers$ = {};
 				c.refreshers!.forEach(r => {
 					refreshers$[r] = this.form.controls[r].valueChanges.pipe(
@@ -253,7 +254,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 				return this.dialogService
 					.open(NewAuthenticationModalComponent, {
 						data: {
-							pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
+							pieceAuthConfig: this.configs.find(c => c.type === PropertyType.OAUTH2),
 							pieceName: this.pieceName,
 							serverUrl: serverUrl,
 						},
@@ -294,7 +295,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 		this.updateOrAddConfigModalClosed$ = this.dialogService
 			.open(NewCloudAuthenticationModalComponent, {
 				data: {
-					pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
+					pieceAuthConfig: this.configs.find(c => c.type === PropertyType.OAUTH2),
 					pieceName: this.pieceName,
 					clientId: clientId,
 				},
@@ -331,7 +332,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 							.open(NewAuthenticationModalComponent, {
 								data: {
 									connectionToUpdate: connection,
-									pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
+									pieceAuthConfig: this.configs.find(c => c.type === PropertyType.OAUTH2),
 									pieceName: this.pieceName,
 								},
 							})
@@ -352,7 +353,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 										.open(NewCloudAuthenticationModalComponent, {
 											data: {
 												connectionToUpdate: connection,
-												pieceAuthConfig: this.configs.find(c => c.type === InputType.OAUTH2),
+												pieceAuthConfig: this.configs.find(c => c.type === PropertyType.OAUTH2),
 												pieceName: this.pieceName,
 												clientId: clientId,
 											},
