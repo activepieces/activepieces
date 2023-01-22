@@ -1,7 +1,18 @@
+import { AxiosError } from 'axios';
+
 export class HttpError extends Error {
 	constructor(
-		public readonly url: string,
+		public readonly requestBody: unknown,
+		public readonly err: AxiosError,
 	) {
-		super(`HTTP request failed: ${url}`);
+		super(JSON.stringify({
+			response: {
+				status: err?.response?.status || 500,
+				body: err?.response?.data
+			},
+			request: {
+				body: requestBody
+			}
+		}));
 	}
 }

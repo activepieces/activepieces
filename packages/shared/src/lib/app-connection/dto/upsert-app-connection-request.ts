@@ -46,7 +46,7 @@ export const UpsertOAuth2Request = Type.Object({
 });
 
 export type UpsertCloudOAuth2Request = Static<typeof UpsertCloudOAuth2Request>;
-export type UpsertOAuth2Request = Static<typeof UpsertCloudOAuth2Request>;
+export type UpsertOAuth2Request = Static<typeof UpsertOAuth2Request>;
 export type UpsertSecretTextRequest = Static<typeof UpsertSecretTextRequest>;
 
 export const UpsertConnectionRequest = Type.Union([UpsertSecretTextRequest, UpsertOAuth2Request, UpsertCloudOAuth2Request]);

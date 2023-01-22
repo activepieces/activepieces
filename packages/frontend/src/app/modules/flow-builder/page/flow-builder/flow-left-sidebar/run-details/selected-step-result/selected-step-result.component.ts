@@ -6,7 +6,7 @@ import { StepOutput, StepOutputStatus } from '@activepieces/shared';
 	templateUrl: './selected-step-result.component.html',
 	styleUrls: ['./selected-step-result.component.scss'],
 })
-export class SelectedStepResultComponent  {
+export class SelectedStepResultComponent {
 	@Input() selectedStepResult: StepOutput;
 	@Input() selectedStepName: string;
 	constructor() {}

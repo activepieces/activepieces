@@ -8,6 +8,7 @@ import { triggerUtils } from "../../helper/trigger-utils";
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from "./flow-queue";
 import { flowWorker } from "./flow-worker";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
+import { collectionVersionService } from "../../collections/collection-version/collection-version.service";
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
   ONE_TIME_JOB_QUEUE,
@@ -50,8 +51,10 @@ const consumeScheduleTrigger = async (data: RepeatableJobData): Promise<void> =>
 };
 
 const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
+  const collectionVersion = await collectionVersionService.getOneOrThrow(data.collectionVersionId);
   const payloads: unknown[] = await triggerUtils.executeTrigger({
-    collectionId: data.collectionId,
+    collectionVersion: collectionVersion,
+    projectId: data.projectId,
     flowVersion: data.flowVersion,
     payload: null,
   });

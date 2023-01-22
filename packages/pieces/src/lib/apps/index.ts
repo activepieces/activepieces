@@ -9,6 +9,7 @@ import { mailchimp } from './mailchimp';
 import { openai } from './openai';
 import { stripe } from './stripe';
 import { blackbaud } from './blackbaud';
+import { googleContacts } from './google-contacts';
 
 export const pieces: Piece[] = [
 	slack,
@@ -20,7 +21,8 @@ export const pieces: Piece[] = [
 	mailchimp,
 	openai,
 	stripe,
-	blackbaud
+	blackbaud,
+	googleContacts
 ];
 
 export const getPiece = (name: string): Piece | undefined => {

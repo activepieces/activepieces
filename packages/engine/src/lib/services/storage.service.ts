@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Store } from '@activepieces/pieces';
-import { PutStoreEntryRequest, StoreEntry } from '@activepieces/shared';
+import { FlowId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared';
 import { globals } from '../globals';
 
 export const storageService = {
@@ -32,21 +32,25 @@ export const storageService = {
     }
 
 }
-export function createContextStore(): Store {
+export function createContextStore(flowId: FlowId): Store {
     return {
-      save: async function <T>(key: string, value: T): Promise<T> {
-        const storeEntry = await storageService.put({
-          key: key,
-          value: value,
-        });
-        return value;
-      },
-      get: async function <T>(key: string): Promise<T | null> {
-        const storeEntry = await storageService.get(key);
-        if (storeEntry === null) {
-          return null;
-        }
-        return storeEntry.value as T;
-      },
+        save: async function <T>(key: string, value: T): Promise<T> {
+            const storeEntry = await storageService.put({
+                key: createKey(flowId, key),
+                value: value,
+            });
+            return value;
+        },
+        get: async function <T>(key: string): Promise<T | null> {
+            const storeEntry = await storageService.get(createKey(flowId, key));
+            if (storeEntry === null) {
+                return null;
+            }
+            return storeEntry.value as T;
+        },
     };
-  }
+}
+
+function createKey(flowId: FlowId, key: string): string {
+    return "flow_" + flowId + "/" + key;
+}
