@@ -13,25 +13,24 @@ import {
 } from "@activepieces/shared";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
-import { createContextStore } from "../store-entry/store-entry.service";
 import { getBackendUrl } from "./public-ip-utils";
 import { engineHelper } from "./engine-helper";
 
 const EVERY_FIFTEEN_MINUTES = "* 15 * * * *";
 
 export const triggerUtils = {
-  async executeTrigger({ collectionId, payload, flowVersion }: ExecuteTrigger): Promise<any[]> {
+  async executeTrigger({ collectionVersion, payload, flowVersion, projectId }: ExecuteTrigger): Promise<any[]> {
     const flowTrigger = flowVersion.trigger;
     let payloads = [];
     switch (flowTrigger.type) {
       case TriggerType.PIECE:
-        const pieceTrigger = getPieceTrigger(flowTrigger);
-        payloads = await pieceTrigger.run({
-          store: createContextStore(collectionId),
+        payload = await engineHelper.executeTrigger({
+          hookType: TriggerHookType.RUN,
+          flowVersion: flowVersion,
           webhookUrl: await getWebhookUrl(flowVersion.flowId),
-          propsValue: flowTrigger.settings.input,
-          payload: payload,
-        });
+          collectionVersion: collectionVersion,
+          projectId: projectId
+        });;
         break;
       default:
         payloads = [payload];
@@ -53,6 +52,7 @@ export const triggerUtils = {
           id: flowVersion.id,
           data: {
             environment: RunEnvironment.PRODUCTION,
+            projectId: projectId,
             collectionId,
             collectionVersionId: collectionVersion.id,
             flowVersion,
@@ -129,6 +129,7 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId, collec
       await flowQueue.add({
         id: flowVersion.id,
         data: {
+          projectId,
           environment: RunEnvironment.PRODUCTION,
           collectionId,
           collectionVersionId: collectionVersion.id,
@@ -182,6 +183,7 @@ interface EnableOrDisableParams {
 
 interface ExecuteTrigger {
   payload: any;
-  collectionId: CollectionId;
+  projectId: ProjectId;
+  collectionVersion: CollectionVersion;
   flowVersion: FlowVersion;
 }
