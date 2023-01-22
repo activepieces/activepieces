@@ -21,7 +21,7 @@ export const stripePaymentFailed = createTrigger({
   async onDisable(context) {
     const response = await context.store?.get<WebhookInformation>('_payment_failed_trigger');
     if (response !== null && response !== undefined) {
-      const webhook = await stripeCommon.unsubscribeWebhook(response.webhookId, context.propsValue['api_key']!);
+      await stripeCommon.unsubscribeWebhook(response.webhookId, context.propsValue['api_key']!);
     }
   },
   async run(context) {

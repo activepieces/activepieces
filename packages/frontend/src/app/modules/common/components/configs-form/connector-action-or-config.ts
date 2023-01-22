@@ -1,4 +1,4 @@
-import { PropertyType } from "@activepieces/pieces";
+
 
 export enum HttpMethod {
 	CONNECT = 'CONNECT',
@@ -39,6 +39,17 @@ export class PieceProperty {
 	extra?: Record<string, unknown>;
 	refreshers?: string[];
 }
+export enum PropertyType {
+	SHORT_TEXT = 'SHORT_TEXT',
+	LONG_TEXT = 'LONG_TEXT',
+	DROPDOWN = 'DROPDOWN',
+	NUMBER = 'NUMBER',
+	CHECKBOX = 'CHECKBOX',
+	OAUTH2 = 'OAUTH2',
+	SECRET_TEXT = 'SECRET_TEXT',
+	CUSTOM_AUTH = 'CUSTOM_AUTH',
+}
+
 
 export const propsConvertor = {
 	convertToFrontEndConfig: (name: string, prop: PieceProperty): PieceConfig => {
