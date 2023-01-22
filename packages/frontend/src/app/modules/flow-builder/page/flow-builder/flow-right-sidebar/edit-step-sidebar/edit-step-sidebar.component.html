@@ -10,15 +10,14 @@
 </div>
 <ng-container *ngIf="selectedStepAndFlowId$ | async as selectedStepAndFlowId; else loading">
   <ng-container *ngIf="selectedFlowItemDetails$  | async; else loading"> <app-edit-step-accodion
-      [selectedStep]="selectedStepAndFlowId.step!"
-      [displayNameChanged$]="displayNameChanged$"></app-edit-step-accodion>
+      [selectedStep]="selectedStepAndFlowId.step!" [displayNameChanged$]="displayNameChanged$"></app-edit-step-accodion>
   </ng-container>
 
 </ng-container>
 
 
 <ng-template #loading>
-  <div class="d-column ap-flex-grow ap-justify-center ap-items-center">
+  <div class="ap-flex ap-flex-grow ap-justify-center ap-items-center ap-h-[500px]">
     <app-loading-icon> </app-loading-icon>
   </div>
 </ng-template>

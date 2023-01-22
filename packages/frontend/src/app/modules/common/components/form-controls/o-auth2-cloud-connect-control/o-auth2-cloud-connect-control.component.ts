@@ -1,3 +1,4 @@
+import { AppConnectionType } from '@activepieces/shared';
 import { Component, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { catchError, Observable, tap, throwError } from 'rxjs';
@@ -51,8 +52,9 @@ export class OAuth2CloudConnectControlComponent implements ControlValueAccessor 
 	openPopup(): void {
 		this.popupOpened$ = this.oauth2Service.openCloudAuthPopup(this.cloudConnectionPopupSettings).pipe(
 			tap(value => {
+				this.popUpError=false;
 				this.responseData = value;
-				this.onChange(value);
+				this.onChange({...value, type:AppConnectionType.CLOUD_OAUTH2});
 			}),
 			catchError(err => {
 				this.responseData = null;

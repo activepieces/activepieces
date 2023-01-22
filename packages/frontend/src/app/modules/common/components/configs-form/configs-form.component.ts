@@ -33,7 +33,7 @@ import {
 	USE_CLOUD_CREDENTIALS,
 } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/component-input-forms/new-authentication-modal/new-authentication-modal.component';
 import { MatDialog } from '@angular/material/dialog';
-import { AppConnection, AppConnectionType, CloudAuth2Connection, OAuth2AppConnection } from '@activepieces/shared';
+import { AppConnection, AppConnectionType,  OAuth2AppConnection } from '@activepieces/shared';
 import { DropdownItem } from '../../model/dropdown-item.interface';
 import {
 	NewCloudAuthenticationModalComponent,
@@ -325,6 +325,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 			}),
 			tap(connection => {
 				if (connection) {
+					debugger;
 					if (connection.value.type === AppConnectionType.OAUTH2) {
 						this.updateOrAddConfigModalClosed$ = this.dialogService
 							.open(NewAuthenticationModalComponent, {
@@ -336,12 +337,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 							})
 							.afterClosed()
 							.pipe(
-								tap((newOAuth2Connection: OAuth2AppConnection) => {
-									if (newOAuth2Connection) {
-										const connectionValue = newOAuth2Connection.value;
-										this.form.get(authConfigKey)!.setValue(connectionValue);
-									}
-								}),
 								map(() => void 0)
 							);
 					} else {
@@ -364,12 +359,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 										})
 										.afterClosed()
 										.pipe(
-											tap((cloudOAuth2Connection: CloudAuth2Connection) => {
-												if (cloudOAuth2Connection) {
-													const authConfigOptionValue = cloudOAuth2Connection.value;
-													this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
-												}
-											}),
 											map(() => void 0)
 										);
 								})

@@ -8,7 +8,7 @@ import { formatOAuth2Response } from "../app-connection/app-connection-service";
 export const oauth2Service = {
   claim: async (request: ClaimTokenWithSecretRequest): Promise<unknown> => {
     try {
-      let response = (
+      const response = (
         await axios.post(
           request.tokenUrl,
           new URLSearchParams({
@@ -23,7 +23,7 @@ export const oauth2Service = {
           }
         )
       ).data;
-      return formatOAuth2Response(response);
+      return { ...formatOAuth2Response(response), client_id: request.clientId, client_secret: request.clientSecret };
     } catch (e: unknown | AxiosError) {
       if (axios.isAxiosError(e)) {
         return e.response?.data;
