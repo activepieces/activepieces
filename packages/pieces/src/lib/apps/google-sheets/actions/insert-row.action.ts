@@ -1,21 +1,15 @@
-import {createAction} from '../../../framework/action/action';
+import { createAction } from '../../../framework/action/action';
 
-import {appendGoogleSheetValues, Dimension, ValueInputOption} from './utils';
-import {Property} from "../../../framework/property";
+import { Dimension, ValueInputOption } from '../common/common';
+import { Property } from "../../../framework/property";
+import { googleSheetsCommon } from '../common/common';
 
 export const insertRowAction = createAction({
     name: 'insert_row',
     description: 'Append values to an existing sheet you have access to',
     displayName: 'Insert Row',
     props: {
-        authentication: Property.OAuth2({
-            description: "",
-            displayName: 'Authentication',
-            authUrl: "https://accounts.google.com/o/oauth2/auth",
-            tokenUrl: "https://oauth2.googleapis.com/token",
-            required: true,
-            scope: ["https://www.googleapis.com/auth/spreadsheets"]
-        }),
+        authentication: googleSheetsCommon.authentication,
         range: Property.LongText({
             displayName: 'Range',
             description: 'The A1 notation of a range to search for a logical table of data. Values are appended after the last row of the table.\n https://developers.google.com/sheets/api/guides/concepts#cell',
@@ -42,7 +36,7 @@ export const insertRowAction = createAction({
         if (typeof (values) === "string") {
             try {
                 const jsonValues = JSON.parse(values);
-                await appendGoogleSheetValues({
+                await googleSheetsCommon.appendGoogleSheetValues({
                     accessToken: context.propsValue.authentication!.access_token,
                     majorDimension: Dimension.COLUMNS,
                     range: context.propsValue['range']!,
