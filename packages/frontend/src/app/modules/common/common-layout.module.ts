@@ -67,6 +67,7 @@ import { MentionsListComponent } from './components/form-controls/interpolating-
 import { GenericStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/generic-step-mention-item/generic-step-mention-item.component';
 import { PieceStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component';
 import { WebhookTriggerMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component';
+import { ImgFallbackDirective } from './helper/image-fallback.directive';
 
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 	showDelay: 0,
@@ -114,7 +115,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MentionsListComponent,
 		GenericStepMentionItemComponent,
 		PieceStepMentionItemComponent,
-  WebhookTriggerMentionItemComponent,
+ 		WebhookTriggerMentionItemComponent,
+		ImgFallbackDirective
 	],
 	imports: [
 		FontAwesomeModule,
@@ -190,6 +192,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		InterpolatingTextFormControlComponent,
 		MatIconModule,
 		StepMentionsListComponent,
+		ImgFallbackDirective
 	],
 	providers: [
 		HighlightService,

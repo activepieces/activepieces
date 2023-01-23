@@ -29,25 +29,25 @@ const TRIGGER_FORM_CONTROL_NAME = 'triggers';
 const CONFIGS_FORM_CONTROL_NAME = 'configs';
 
 @Component({
-	selector: 'app-component-trigger-input-form',
-	templateUrl: './component-trigger-input-form.component.html',
-	styleUrls: ['./component-trigger-input-form.component.css'],
+	selector: 'app-piece-trigger-input-form',
+	templateUrl: './piece-trigger-input-form.component.html',
+	styleUrls: ['./piece-trigger-input-form.component.css'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
 			multi: true,
-			useExisting: ComponentTriggerInputFormComponent,
+			useExisting: PieceTriggerInputFormComponent,
 		},
 		{
 			provide: NG_VALIDATORS,
 			multi: true,
-			useExisting: ComponentTriggerInputFormComponent,
+			useExisting: PieceTriggerInputFormComponent,
 		},
 	],
 	animations: [fadeInUp400ms],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ComponentTriggerInputFormComponent {
+export class PieceTriggerInputFormComponent {
 	readonly TRIGGER_FORM_CONTROL_NAME = TRIGGER_FORM_CONTROL_NAME;
 	readonly CONFIGS_FORM_CONTROL_NAME = CONFIGS_FORM_CONTROL_NAME;
 	componentForm: UntypedFormGroup;
