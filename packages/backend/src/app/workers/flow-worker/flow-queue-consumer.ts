@@ -1,14 +1,13 @@
 import { Worker } from "bullmq";
 import { ApId, RunEnvironment, TriggerType } from "@activepieces/shared";
-import { collectionService } from "../../collections/collection.service";
 import { createRedisClient } from "../../database/redis-connection";
 import { flowRunService } from "../../flow-run/flow-run-service";
-import { flowVersionService } from "../../flows/flow-version/flow-version.service";
 import { triggerUtils } from "../../helper/trigger-utils";
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from "./flow-queue";
 import { flowWorker } from "./flow-worker";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
 import { logger } from "packages/backend/src/main";
+import { collectionVersionService } from "../../collections/collection-version/collection-version.service";
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
   ONE_TIME_JOB_QUEUE,
@@ -35,6 +34,7 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
         await consumePieceTrigger(data);
         break;
     }
+    logger.info(`[repeatableJobConsumer] done job.id=${job.name} job.type=${job.data.triggerType}`);
   },
   {
     connection: createRedisClient(),
@@ -51,8 +51,10 @@ const consumeScheduleTrigger = async (data: RepeatableJobData): Promise<void> =>
 };
 
 const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
+  const collectionVersion = await collectionVersionService.getOneOrThrow(data.collectionVersionId);
   const payloads: unknown[] = await triggerUtils.executeTrigger({
-    collectionId: data.collectionId,
+    collectionVersion: collectionVersion,
+    projectId: data.projectId,
     flowVersion: data.flowVersion,
     payload: null,
   });

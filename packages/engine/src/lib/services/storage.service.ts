@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Store } from '@activepieces/pieces';
-import { PutStoreEntryRequest, StoreEntry } from '@activepieces/shared';
+import { FlowId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared';
 import { globals } from '../globals';
 
 export const storageService = {
@@ -32,7 +32,7 @@ export const storageService = {
     }
 
 }
-export function createContextStore(): Store {
+export function createContextStore(flowId: FlowId): Store {
     return {
       put: async function <T>(key: string, value: T): Promise<T> {
         const storeEntry = await storageService.put({
@@ -49,4 +49,8 @@ export function createContextStore(): Store {
         return storeEntry.value as T;
       },
     };
-  }
+}
+
+function createKey(flowId: FlowId, key: string): string {
+    return "flow_" + flowId + "/" + key;
+}

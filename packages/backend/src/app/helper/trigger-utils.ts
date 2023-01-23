@@ -2,7 +2,6 @@ import { getPiece, pieces, Trigger, TriggerStrategy } from "@activepieces/pieces
 import {
   CollectionId,
   CollectionVersion,
-  CollectionVersionId,
   FlowId,
   FlowVersion,
   PieceTrigger,
@@ -13,27 +12,27 @@ import {
 } from "@activepieces/shared";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
-import { createContextStore } from "../store-entry/store-entry.service";
 import { getBackendUrl } from "./public-ip-utils";
 import { engineHelper } from "./engine-helper";
 import { logger } from "../../main";
 
-const EVERY_FIFTEEN_MINUTES = "*/30 * * * * *";
+const EVERY_TEN_MINUTES = "* */10 * * * *";
 
 export const triggerUtils = {
-  async executeTrigger({ collectionId, payload, flowVersion }: ExecuteTrigger): Promise<any[]> {
+  async executeTrigger({ collectionVersion, payload, flowVersion, projectId }: ExecuteTrigger): Promise<any[]> {
     const flowTrigger = flowVersion.trigger;
     let payloads = [];
     switch (flowTrigger.type) {
       case TriggerType.PIECE:
         const pieceTrigger = getPieceTrigger(flowTrigger);
         try {
-          payloads = await pieceTrigger.run({
-            store: createContextStore(collectionId),
+          payloads = await engineHelper.executeTrigger({
+            hookType: TriggerHookType.RUN,
+            flowVersion: flowVersion,
             webhookUrl: await getWebhookUrl(flowVersion.flowId),
-            propsValue: flowTrigger.settings.input,
-            payload: payload,
-          });
+            collectionVersion: collectionVersion,
+            projectId: projectId
+          }) as unknown[];
         } catch (e) {
           logger.error(`Flow ${flowTrigger.name} with ${pieceTrigger.name} trigger throws and error, returning as zero payload `);
           payloads = [];
@@ -59,6 +58,7 @@ export const triggerUtils = {
           id: flowVersion.id,
           data: {
             environment: RunEnvironment.PRODUCTION,
+            projectId: projectId,
             collectionId,
             collectionVersionId: collectionVersion.id,
             flowVersion,
@@ -133,13 +133,14 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId, collec
       await flowQueue.add({
         id: flowVersion.id,
         data: {
+          projectId,
           environment: RunEnvironment.PRODUCTION,
           collectionId,
           collectionVersionId: collectionVersion.id,
           flowVersion,
           triggerType: TriggerType.PIECE,
         },
-        cronExpression: EVERY_FIFTEEN_MINUTES,
+        cronExpression: EVERY_TEN_MINUTES,
       });
 
       break;
@@ -186,6 +187,7 @@ interface EnableOrDisableParams {
 
 interface ExecuteTrigger {
   payload: any;
-  collectionId: CollectionId;
+  projectId: ProjectId;
+  collectionVersion: CollectionVersion;
   flowVersion: FlowVersion;
 }
