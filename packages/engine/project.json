@@ -24,6 +24,13 @@
         }
       }
     },
+    "serve": {
+      "executor": "@nrwl/js:node",
+      "options": {
+        "buildTarget": "engine:build",
+        "inspect": false
+      }
+    },
     "bundle": {
       "executor": "nx:run-commands",
       "options": {

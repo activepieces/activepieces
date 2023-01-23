@@ -1,5 +1,7 @@
 import fastify, { FastifyRequest } from "fastify";
 import cors from "@fastify/cors";
+import formBody from "@fastify/formbody";
+import qs from 'qs';
 import { databaseModule } from "./app/database/database-module";
 import { authenticationModule } from "./app/authentication/authentication.module";
 import { collectionModule } from "./app/collections/collection.module";
@@ -53,6 +55,7 @@ app.register(cors, {
   origin: "*",
   methods: ["*"]
 });
+app.register(formBody, { parser: str => qs.parse(str) });
 app.addHook("onRequest", tokenVerifyMiddleware);
 app.register(databaseModule);
 app.register(authenticationModule);

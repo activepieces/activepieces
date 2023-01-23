@@ -9,6 +9,7 @@ import { logger } from "../../main";
 import chalk from "chalk";
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
+const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH);
 
 export const engineHelper = {
     async executeFlow(sandbox: Sandbox, operation: ExecuteFlowOperation): Promise<ExecutionOutput> {
@@ -61,14 +62,14 @@ function workerToken(collectonId: CollectionId): Promise<string> {
 async function execute(operation: EngineOperationType, sandbox: Sandbox, input: EngineOperation): Promise<unknown> {
     console.log(`Executing ${operation} inside sandbox number ${sandbox.boxId}`)
     const sandboxPath = sandbox.getSandboxFolderPath();
-    fs.writeFileSync(sandboxPath + "/activepieces-engine.js", fs.readFileSync("packages/backend/src/assets/activepieces-engine.js"));
+    fs.writeFileSync(sandboxPath + "/activepieces-engine.js", fs.readFileSync(engineExecutablePath));
     fs.writeFileSync(sandboxPath + "/input.json", JSON.stringify({
         ...input,
         apiUrl: "http://localhost:3000"
     }));
     await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ` + operation);
-    let standardOutput = await sandbox.parseStandardOutput();
-    let standardError = await sandbox.parseStandardError();
+    const standardOutput = await sandbox.parseStandardOutput();
+    const standardError = await sandbox.parseStandardError();
     standardOutput.split("\n").forEach(f => {
         if (f.trim().length > 0) logger.info({}, chalk.yellow(f))
     });

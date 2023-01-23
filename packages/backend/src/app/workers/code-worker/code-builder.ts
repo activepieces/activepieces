@@ -1,35 +1,33 @@
-import decompress = require("decompress");
-import { logger } from "packages/backend/src/main";
-import { cwd } from "process";
+import fs from "node:fs";
+import { execSync, ExecSyncOptionsWithBufferEncoding } from "node:child_process";
+import decompress from "decompress";
 import { sandboxManager } from "../sandbox";
 
-const { execSync } = require("child_process");
-const fs = require("fs");
-
-const webpackConfig: string =
-  "const path = require('path');\n" +
-  "module.exports = {\n" +
-  "  target: 'node',\n" +
-  "  externalsPresets: { node: true },\n" +
-  "  entry: './index.js', // make sure this matches the main root of your code \n" +
-  "  resolve: {\n" +
-  "     preferRelative: true,\n" +
-  "     extensions: ['.js']\n" +
-  "  },\n" +
-  "  output: {\n" +
-  "    libraryTarget: 'commonjs2',\n" +
-  "    path: path.join(__dirname, 'dist'), // this can be any path and directory you want\n" +
-  "    filename: 'index.js',\n" +
-  "  },\n" +
-  "  optimization: {\n" +
-  "    minimize: true, // enabling this reduces file size and readability\n" +
-  "  },\n" +
-  "};\n";
+const webpackConfig = `
+  const path = require("node:path");
+  module.exports = {
+    target: "node",
+    externalsPresets: { node: true },
+    entry: "./index.js",
+    resolve: {
+      preferRelative: true,
+      extensions: [".js"]
+    },
+    output: {
+      libraryTarget: "commonjs2",
+      path: path.join(__dirname, "dist"),
+      filename: "index.js",
+    },
+    optimization: {
+      minimize: true,
+    },
+  };
+`;
 
 async function build(artifact: Buffer): Promise<Buffer> {
   const sandbox = sandboxManager.obtainSandbox();
   const buildPath = sandbox.getSandboxFolderPath();
-  let bundledFile;
+  let bundledFile: Buffer;
   try {
     console.log("Started Building in sandbox " + buildPath);
 
@@ -37,8 +35,12 @@ async function build(artifact: Buffer): Promise<Buffer> {
 
     await downloadFiles(artifact, buildPath);
 
-    await execSync("npm --prefix " + buildPath + " install");
-    await execSync(`(cd ${buildPath} && /usr/local/share/npm-global/lib/node_modules/webpack/bin/webpack.js --mode production)`);
+    const execOptions: ExecSyncOptionsWithBufferEncoding = {
+      cwd: buildPath,
+    };
+
+    execSync('npm install', execOptions);
+    execSync('npm exec -g webpack -- --mode production', execOptions);
 
     const bundledFilePath = buildPath + "/dist/index.js";
     bundledFile = fs.readFileSync(bundledFilePath);
@@ -48,7 +50,7 @@ async function build(artifact: Buffer): Promise<Buffer> {
     const invalidArtifactFile = fs
       .readFileSync("./packages/backend/src/assets/invalid-code.js")
       .toString("utf-8")
-      .replace("${ERROR_MESSAGE}", JSON.stringify(consoleError.stdout.toString()).replace(/\"/g, '\\"'));
+      .replace("${ERROR_MESSAGE}", JSON.stringify(consoleError.stdout.toString()).replace(/"/g, '\\"'));
     bundledFile = Buffer.from(invalidArtifactFile, "utf-8");
   } finally {
     sandboxManager.returnSandbox(sandbox.boxId);
@@ -57,14 +59,24 @@ async function build(artifact: Buffer): Promise<Buffer> {
 }
 
 async function downloadFiles(artifact: Buffer, buildPath: string) {
+  const packageJsonPath = `${buildPath}/package.json`;
+  const webpackConfigPath = `${buildPath}/webpack.config.js`;
+
   await decompress(artifact, buildPath, {});
 
-  const packageJson = JSON.parse(fs.readFileSync(buildPath + "/package.json", { encoding: "utf8", flag: "r" }));
+  const packageJson = JSON.parse(
+    fs.readFileSync(packageJsonPath, {
+      encoding: "utf8",
+      flag: "r",
+    })
+  );
+
   if (packageJson.scripts === undefined) {
     packageJson.scripts = {};
   }
-  fs.writeFileSync(buildPath + "/package.json", JSON.stringify(packageJson));
-  fs.writeFileSync(buildPath + "/webpack.config.js", webpackConfig);
+
+  fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson));
+  fs.writeFileSync(webpackConfigPath, webpackConfig);
 }
 
 export const codeBuilder = {
