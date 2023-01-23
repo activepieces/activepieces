@@ -22,7 +22,7 @@ export const pieces: Piece[] = [
 	mailchimp,
 	openai,
 	stripe,
-	pipedrive
+	pipedrive,
 	googleContacts
 ];
 
