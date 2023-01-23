@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
-import { AppConnectionId, ListAppConnectionRequest, UpsertConnectionRequest } from "@activepieces/shared";
+import { AppConnectionId, getAppConnectionRequest, ListAppConnectionRequest, ProjectId, UpsertConnectionRequest } from "@activepieces/shared";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { appConnectionService } from "./app-connection-service";
 
@@ -26,20 +26,28 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
 
 
   fastify.get(
-    "/:connectionId",
+    "/:connectionName",
+    {
+      schema: {
+
+        querystring: getAppConnectionRequest
+      }
+    }
+    ,
     async (
       request: FastifyRequest<{
+        Querystring: getAppConnectionRequest,
         Params: {
-          connectionId: AppConnectionId;
+          connectionName: string;
         };
       }>,
       _reply
     ) => {
-      const appCredential = await appConnectionService.getOne(request.params.connectionId);
+      const appCredential = await appConnectionService.getOne(request.query.projectId, request.params.connectionName);
       if (appCredential === null) {
         throw new ActivepiecesError({
           code: ErrorCode.APP_CONNECTION_NOT_FOUND,
-          params: { id: request.params.connectionId },
+          params: { id: request.params.connectionName },
         });
       }
       return appCredential;
@@ -62,8 +70,7 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
       const query = request.query;
       return await appConnectionService.list(query.projectId,
         query.appName,
-        query.name,
-        query.cursor??null, query.limit?? DEFAULT_PAGE_SIZE);
+        query.cursor ?? null, query.limit ?? DEFAULT_PAGE_SIZE);
     }
   );
 

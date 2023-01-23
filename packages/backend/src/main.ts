@@ -20,7 +20,6 @@ import { errorHandler } from "./app/helper/error-handler";
 import { appConnectionModule } from "./app/app-connection/app-connection.module";
 import { system } from "./app/helper/system/system";
 import { SystemProp } from "./app/helper/system/system-prop";
-import chalk from 'chalk';
 
 const envToLogger = {
   development: {
@@ -106,7 +105,6 @@ const start = async () => {
 
 started on ${system.get(SystemProp.FRONTEND_URL)}
     `);
-
   } catch (err) {
     app.log.error(err);
     process.exit(1);

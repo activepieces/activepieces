@@ -6,33 +6,50 @@ import { httpClient } from '../../../common/http/core/http-client';
 import { HttpRequest } from '../../../common/http/core/http-request';
 import { HttpMethod } from '../../../common/http/core/http-method';
 import { AuthenticationType } from '../../../common/authentication/core/authentication-type';
-import { Property } from '../../../framework/property';
 import { githubCommon } from '../common';
 
 export const githubNewRepoEvent = createTrigger({
-  name: 'new_repo_event',
-  displayName: 'New Repository Event',
-  description: 'Triggers when there is a new event on the repository',
+  name: 'new_star',
+  displayName: 'New Star',
+  description: 'Triggers when there is a new star on the repository',
   props: {
     authentication: githubCommon.authentication,
-    repository: githubCommon.repositoryDropdown,
-    events: Property.Dropdown({
-      displayName: 'Event',
-      description: 'List of repository events',
-      required: true,
-      refreshers: [],
-      options: async (request) => {
-        return {
-          disabled: false,
-          options: [
-            {
-              label: 'New star',
-              value: ['star'],
-            },
-          ],
-        };
+    repository: githubCommon.repositoryDropdown
+  },
+  sampleData: {
+    "action": "created",
+    "starred_at": "2023-01-23T13:23:24Z",
+    "repository": {
+      "id": 573661753,
+      "name": "activepieces",
+      "full_name": "activepieces/activepieces",
+      "owner": {
+        "login": "activepieces",
+        "id": 99494700,
       },
-    }),
+      "topics": [
+        "automation",
+        "low-code",
+        "no-code",
+        "workflows",
+        "zapier"
+      ],
+      "visibility": "public",
+      "forks": 10,
+      "open_issues": 49,
+      "watchers": 155,
+      "default_branch": "main"
+    },
+    "organization": {
+      "login": "activepieces",
+      "id": 99494700,
+      "description": "Automate your work, Open source alternative to Zapier, Tray.io, make"
+    },
+    "sender": {
+      "login": "abuaboud",
+      "id": 1812998,
+      "avatar_url": "https://avatars.githubusercontent.com/u/31868364?v=4",
+    }
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -44,7 +61,7 @@ export const githubNewRepoEvent = createTrigger({
         owner: owner,
         repo: repo,
         active: true,
-        events: context.propsValue['events'],
+        events: ['star'],
         config: {
           url: context.webhookUrl,
           content_type: 'json',
@@ -58,7 +75,7 @@ export const githubNewRepoEvent = createTrigger({
       queryParams: {},
     };
     let { body: webhook } = await httpClient.sendRequest<{ id: string }>(request);
-    await context.store?.save<WebhookInformation>('_trigger', {
+    await context.store?.put<WebhookInformation>('_trigger', {
       webhookId: webhook.id,
       owner: owner,
       repo: repo,
