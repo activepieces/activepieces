@@ -8,6 +8,7 @@ import { hubspot } from './hubspot';
 import { mailchimp } from './mailchimp';
 import { openai } from './openai';
 import { stripe } from './stripe';
+import { blackbaud } from './blackbaud';
 import { pipedrive } from './pipedrive';
 import { googleContacts } from './google-contacts';
 import { googleSheets } from './google-sheets';
@@ -22,6 +23,7 @@ export const pieces: Piece[] = [
 	mailchimp,
 	openai,
 	stripe,
+  blackbaud,
 	googleSheets,
 	pipedrive,
 	googleContacts
