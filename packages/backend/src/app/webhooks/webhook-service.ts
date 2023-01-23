@@ -6,16 +6,19 @@ import { flowVersionService } from "../flows/flow-version/flow-version.service";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { triggerUtils } from "../helper/trigger-utils";
 import { instanceService } from "../instance/instance-service";
+import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 
 export const webhookService = {
   async callback({ flowId, payload }: CallbackParams): Promise<void> {
     const flow = await flowService.getOneOrThrow(flowId);
     const collection = await collectionService.getOneOrThrow(flow.collectionId);
     const instance = await getInstanceOrThrow(collection.id);
+    const collectionVersion = await collectionVersionService.getOneOrThrow(instance.collectionVersionId);
 
     const flowVersion = await flowVersionService.getOneOrThrow(instance.flowIdToVersionId[flow.id]);
     let payloads: any[] = await triggerUtils.executeTrigger({
-      collectionId: collection.id,
+      projectId: collection.projectId,
+      collectionVersion: collectionVersion,
       flowVersion: flowVersion,
       payload: payload,
     });

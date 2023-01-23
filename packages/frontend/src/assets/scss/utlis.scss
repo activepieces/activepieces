@@ -33,12 +33,26 @@
     border: 1px solid #CED4DA;
     border-radius: 0.25rem;
     box-shadow: none;
-    &:hover
+    &:hover, &:focus
     {
-      outline: black solid 1px ;
+       outline: black solid 0px ;
     }
+ 
 }
 
 a{
   @apply ap-underline ap-text-blueLink ap-typography-caption
+}
+
+app-builder-autocomplete-mentions-dropdown
+{
+  *
+  {
+    scrollbar-width: thin;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+  }
+  
 }
