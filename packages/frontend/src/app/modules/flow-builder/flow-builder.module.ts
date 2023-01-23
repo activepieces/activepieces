@@ -69,7 +69,7 @@ import { DeleteStepDialogComponent } from './page/flow-builder/flow-item-tree/fl
 import { ToggleInstanceStateComponent } from './page/flow-builder/flow-builder-header/toggle-instance-state/toggle-instance-state.component';
 import { CloudOAuth2ConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
 import { appConnectionsReducer } from './store/app-connections/app-connections.reducer';
-import { SecretKeyConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-key-connection-dialog/secret-key-connection-dialog.component';
+import { SecretTextConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
 @NgModule({
   imports: [
     CommonModule,
@@ -151,7 +151,7 @@ import { SecretKeyConnectionDialogComponent } from './page/flow-builder/flow-rig
     DeleteStepDialogComponent,
     ToggleInstanceStateComponent,
     CloudOAuth2ConnectionDialogComponent,
-    SecretKeyConnectionDialogComponent,
+    SecretTextConnectionDialogComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [FlowBuilderHeaderComponent],

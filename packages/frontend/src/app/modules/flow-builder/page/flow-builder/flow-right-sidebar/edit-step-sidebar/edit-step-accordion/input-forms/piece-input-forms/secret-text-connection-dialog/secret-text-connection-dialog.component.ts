@@ -20,27 +20,26 @@ import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder
 import { catchError, Observable, of, take, tap } from 'rxjs';
 import { ConnectionValidator } from '../../../../../../validators/connectionNameValidator';
 
-interface SecretKeyForm {
-  secretKey: FormControl<string>;
+interface SecretTextForm {
+  secretText: FormControl<string>;
   name: FormControl<string>;
 }
-export interface SecretKeyConnectionDialogData {
+export interface SecretTextConnectionDialogData {
   pieceName: string;
   connectionName?: string;
   displayName: string;
   description: string;
-  secretKey?: string;
+  secretText?: string;
 }
 
 @Component({
-  selector: 'app-secret-key-connection-dialog',
-  templateUrl: './secret-key-connection-dialog.component.html',
-  styleUrls: ['./secret-key-connection-dialog.component.scss'],
+  selector: 'app-secret-text-connection-dialog',
+  templateUrl: './secret-text-connection-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SecretKeyConnectionDialogComponent {
+export class SecretTextConnectionDialogComponent {
   project$: Observable<Project>;
-  settingsForm: FormGroup<SecretKeyForm>;
+  settingsForm: FormGroup<SecretTextForm>;
   keyTooltip =
     'The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.';
   loading = false;
@@ -48,16 +47,16 @@ export class SecretKeyConnectionDialogComponent {
   constructor(
     private projectService: ProjectService,
     @Inject(MAT_DIALOG_DATA)
-    public dialogData: SecretKeyConnectionDialogData,
+    public dialogData: SecretTextConnectionDialogData,
     private fb: FormBuilder,
     private store: Store,
     private appConnectionsService: AppConnectionsService,
     private snackbar: MatSnackBar,
-    public dialogRef: MatDialogRef<SecretKeyConnectionDialogComponent>
+    public dialogRef: MatDialogRef<SecretTextConnectionDialogComponent>
   ) {
     this.project$ = this.projectService.selectedProjectAndTakeOne();
     this.settingsForm = this.fb.group({
-      secretKey: new FormControl(this.dialogData.secretKey || '', {
+      secretText: new FormControl(this.dialogData.secretText || '', {
         nonNullable: true,
         validators: [Validators.required],
       }),
@@ -96,7 +95,7 @@ export class SecretKeyConnectionDialogComponent {
           appName: this.dialogData.pieceName,
           name: this.settingsForm.controls.name.value,
           value: {
-            secret_key: this.settingsForm.controls.secretKey.value,
+            secret_text: this.settingsForm.controls.secretText.value,
             type: AppConnectionType.SECRET_TEXT,
           },
         })

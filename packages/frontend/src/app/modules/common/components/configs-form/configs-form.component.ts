@@ -53,9 +53,9 @@ import {
   USE_MY_OWN_CREDENTIALS,
 } from '../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
 import {
-  SecretKeyConnectionDialogComponent,
-  SecretKeyConnectionDialogData,
-} from '../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-key-connection-dialog/secret-key-connection-dialog.component';
+  SecretTextConnectionDialogComponent,
+  SecretTextConnectionDialogData,
+} from '../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
 type ConfigKey = string;
 
 @Component({
@@ -267,13 +267,13 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   }
   private openNewSecretKeyConnection(pieceConfigName: string) {
     const authConfig = this.configs.find((c) => c.key === pieceConfigName)!;
-    const dialogData: SecretKeyConnectionDialogData = {
+    const dialogData: SecretTextConnectionDialogData = {
       pieceName: this.pieceName,
       displayName: authConfig.label,
       description: authConfig.description || '',
     };
     this.updateOrAddConnectionDialogClosed$ = this.dialogService
-      .open(SecretKeyConnectionDialogComponent, {
+      .open(SecretTextConnectionDialogComponent, {
         data: dialogData,
       })
       .afterClosed()
@@ -470,15 +470,15 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(switchMap(connection=>{
       const secretKeyConnection = connection as ApiKeyAppConnection;
       const authConfig = this.configs.find((c) => c.key === authConfigKey)!;
-      const dialogData: SecretKeyConnectionDialogData = {
+      const dialogData: SecretTextConnectionDialogData = {
         pieceName: this.pieceName,
         displayName: authConfig.label,
         description: authConfig.description || '',
         connectionName:connection!.name,
-        secretKey:secretKeyConnection!.value.secret_key
+        secretText:secretKeyConnection!.value.secret_text
       };
         return this.dialogService
-        .open(SecretKeyConnectionDialogComponent, {
+        .open(SecretTextConnectionDialogComponent, {
           data: dialogData,
         })
         .afterClosed()
