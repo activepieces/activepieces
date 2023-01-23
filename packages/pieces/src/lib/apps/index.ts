@@ -9,6 +9,8 @@ import { mailchimp } from './mailchimp';
 import { openai } from './openai';
 import { stripe } from './stripe';
 import { pipedrive } from './pipedrive';
+import { googleContacts } from './google-contacts';
+
 
 export const pieces: Piece[] = [
 	slack,
@@ -21,6 +23,7 @@ export const pieces: Piece[] = [
 	openai,
 	stripe,
 	pipedrive
+	googleContacts
 ];
 
 export const getPiece = (name: string): Piece | undefined => {

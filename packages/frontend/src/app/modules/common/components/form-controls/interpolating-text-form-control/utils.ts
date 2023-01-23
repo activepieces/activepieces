@@ -27,7 +27,7 @@ export const QuillMaterialBase = mixinErrorState(
 
 export class CustomErrorMatcher implements ErrorStateMatcher {
 	isErrorState(control: FormControl): boolean {
-		return control.dirty && control.invalid;
+		return control.touched && control.invalid;
 	}
 }
 

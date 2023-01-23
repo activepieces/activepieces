@@ -3,7 +3,7 @@
 <app-button *ngIf="responseData" btnColor="warn" class="ap-w-full" (buttonClicked)="clearControlValue()"
   [fullWidthOfContainer]="true" type="button" [disabled]="isDisabled">Disconnect</app-button>
 <p *ngIf="popUpError" class="ap-typography-caption ap-text-danger" @fadeInUp>
-  Please make sure this config's credentials are correct.
+  Please make sure this connections's credentials are correct.
 </p>
 
 <ng-container *ngIf="popupOpened$ | async"></ng-container>

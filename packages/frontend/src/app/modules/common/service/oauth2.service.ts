@@ -47,18 +47,20 @@ export class Oauth2Service {
 		const popup = window.open(url, winTarget, winFeatures);
 		this.currentlyOpenPopUp = popup;
 		const codeObs$ = new Observable<any>(observer => {
-			window.addEventListener('message', function (event) {
+			window.addEventListener('message', function handler (event) {
 				if (redirect_uri.startsWith(event.origin)) {
 					if (event.data != undefined) {
 						event.data.code = decodeURIComponent(event.data.code);
 						observer.next(event.data);
 						popup?.close();
 						observer.complete();
+						
 					} else {
 						observer.error('No code returned');
 						popup?.close();
 						observer.complete();
 					}
+					window.removeEventListener('message',handler);
 				}
 			});
 		});
@@ -74,6 +76,7 @@ export class Oauth2Service {
 						tokenUrl: request.token_url,
 					}).pipe(
 						map(value => {
+						
 							if (value['error']) {
 								throw Error(value['error']);
 							}
@@ -124,7 +127,7 @@ export class Oauth2Service {
 		const popup = window.open(url, winTarget, winFeatures);
 		this.currentlyOpenPopUp = popup;
 		const codeObs$ = new Observable<any>(observer => {
-			window.addEventListener('message', function (event) {
+			window.addEventListener('message', function handler (event) {
 				if (redirect_uri.startsWith(event.origin)) {
 					if (event.data != undefined) {
 						event.data.code = decodeURIComponent(event.data.code);
@@ -136,6 +139,7 @@ export class Oauth2Service {
 						popup?.close();
 						observer.complete();
 					}
+					window.removeEventListener('message',handler);
 				}
 			});
 		});

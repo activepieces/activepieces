@@ -16,7 +16,7 @@ export const triggerHelper = {
     const resolvedInput = await variableService.resolve(flowTrigger.settings.input, executionState);
 
     let context = {
-      store: createContextStore(),
+      store: createContextStore(params.flowVersion.flowId),
       webhookUrl: params.webhookUrl,
       propsValue: resolvedInput,
       payload: params.triggerPayload,

@@ -4,8 +4,8 @@
     <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Runs">
       <ng-container matColumnDef="app">
         <th mat-header-cell *matHeaderCellDef>App</th>
-        <td mat-cell *matCellDef="let connection"><img class="ap-w-[24px] ap-h-[24px] ap-object-contain"
-            [matTooltip]="connection.appName"
+        <td mat-cell *matCellDef="let connection"><img appImgFallback="assets/img/custom/connections.svg "
+            class="ap-w-[24px] ap-h-[24px] ap-object-contain" [matTooltip]="connection.appName"
             [src]="'https://cdn.activepieces.com/pieces/' + connection.appName+'.png'"> </td>
       </ng-container>
       <ng-container matColumnDef="name">
