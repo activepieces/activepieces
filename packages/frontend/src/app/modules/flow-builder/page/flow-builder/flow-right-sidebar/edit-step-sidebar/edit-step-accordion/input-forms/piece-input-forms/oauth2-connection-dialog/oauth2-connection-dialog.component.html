@@ -54,7 +54,8 @@
         </p>
       </div>
     </form>
-    <a class="ap-cursor-pointer ap-mt-2" *ngIf="hasCloudAuthCred$ | async " (click)="useCloudCreds()">I would like to
+    <a class="ap-cursor-pointer ap-mt-2" *ngIf="(hasCloudAuthCred$ | async) && !connectionToUpdate"
+      (click)="useCloudCreds()">I would like to
       use activepieces app credentials </a>
   </mat-dialog-content>
 

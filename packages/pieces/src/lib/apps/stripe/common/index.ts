@@ -6,12 +6,11 @@ import { AuthenticationType } from '../../../common/authentication/core/authenti
 
 export const stripeCommon = {
     baseUrl:  "https://api.stripe.com/v1",
-    authentication: Property.OAuth2({
-        displayName: "Authentication",
-        required: true,
-        authUrl: 'https://connect.stripe.com/oauth/authorize',
-        tokenUrl: 'https://connect.stripe.com/oauth/token',
-        scope: ['read_write'],
+    authentication: Property.SecretText({
+        displayName:"API Key",
+        required:true,
+        description:"API key acquired from your Stripe dashboard"
+
     }),
     subscribeWebhook: async (eventName: string, webhookUrl: string, apiKey: string) => {
         const request: HttpRequest<any> = {
@@ -33,7 +32,7 @@ export const stripeCommon = {
             queryParams: {},
         };
 
-        let { body: webhook } = await httpClient.sendRequest<{ id: string }>(request);
+        const { body: webhook } = await httpClient.sendRequest<{ id: string }>(request);
         return webhook;
     },
     unsubscribeWebhook: async (webhookId: string, apiKey: string) => {

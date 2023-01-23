@@ -23,7 +23,7 @@ const routes: Routes = [
 		children: [
 			{
 				path: '',
-				loadChildren: () => import('./modules/flow-builder/flow-builder.module').then(m => m.FlowLayoutModule),
+				loadChildren: () => import('./modules/flow-builder/flow-builder.module').then(m => m.FlowBuilderModule),
 			},
 		],
 	},
