@@ -49,7 +49,6 @@ async function getUserLists(authProp: OAuth2PropertyValue): Promise<{ lists: Mai
     server: mailChimpServerPrefix
   });
 
-  console.log(`token:${access_token}`);
   console.log(`server ${mailChimpServerPrefix}`);
 
   // mailchimp types are not complete this is from the docs.
