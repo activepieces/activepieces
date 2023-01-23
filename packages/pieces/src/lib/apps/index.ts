@@ -12,6 +12,7 @@ import { blackbaud } from './blackbaud';
 import { pipedrive } from './pipedrive';
 import { googleContacts } from './google-contacts';
 import { googleSheets } from './google-sheets';
+import { sendgrid } from './sendgrid';
 
 export const pieces: Piece[] = [
 	slack,
@@ -23,10 +24,11 @@ export const pieces: Piece[] = [
 	mailchimp,
 	openai,
 	stripe,
-  blackbaud,
+	blackbaud,
 	googleSheets,
 	pipedrive,
-	googleContacts
+	googleContacts,
+	sendgrid
 ];
 
 export const getPiece = (name: string): Piece | undefined => {
