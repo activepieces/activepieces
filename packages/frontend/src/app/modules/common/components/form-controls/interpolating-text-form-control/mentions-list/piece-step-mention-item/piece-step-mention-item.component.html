@@ -3,15 +3,26 @@
     [matTooltip]="_stepMention.step.type === TriggerType.PIECE? 'Piece Trigger': 'Piece Step'">
     <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"></app-generic-step-mention-item>
   </div>
-</button>
-<ng-container *ngIf="sampleData$ | async as result">
-  <app-step-mentions-tree *ngIf="result.children" [stepOutputObjectChildNodes]="result.children"
-    [stepDisplayName]="_stepMention.step.displayName"
-    (mentionClicked)="mentionClicked.emit($event)"></app-step-mentions-tree>
-  <ng-container *ngIf="result.error">
-    <div class="ap-pl-6 ap-py-2">
-      {{result.error}}
-    </div>
+  <ng-container *ngIf="sampleData$ | async as result">
+    <button mat-icon-button *ngIf="result.children && result.children.length>0"
+      (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true">
+      <mat-icon class="mat-icon-rtl-mirror">
+        {{expandSample ? 'expand_more' : 'chevron_left'}}
+      </mat-icon>
+    </button>
   </ng-container>
 
+</button>
+<ng-container *ngIf="expandSample">
+  <ng-container *ngIf="sampleData$ | async as result">
+    <app-step-mentions-tree *ngIf="result.children" [stepOutputObjectChildNodes]="result.children"
+      [stepDisplayName]="_stepMention.step.displayName"
+      (mentionClicked)="mentionClicked.emit($event)"></app-step-mentions-tree>
+    <ng-container *ngIf="result.error">
+      <div class="ap-pl-6 ap-py-2">
+        {{result.error}}
+      </div>
+    </ng-container>
+
+  </ng-container>
 </ng-container>

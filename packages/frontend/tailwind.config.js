@@ -38,6 +38,7 @@ module.exports = {
 				description: '#8C8C8C',
 				hover: '#fafafa',
 				success: '#209e34',
+				dividers:'#e0e4e8'
 			},
 		},
 		container: {

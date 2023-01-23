@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { map, Observable, of, Subject, tap } from 'rxjs';
+import { map, Observable, of, shareReplay, Subject, tap } from 'rxjs';
 import { ActionType, PieceAction, PieceTrigger, TriggerType } from '@activepieces/shared';
 import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
 import { FlowItemDetails } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
@@ -15,6 +15,7 @@ import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PieceStepMentionItemComponent {
+	expandSample=false;
 	@Input()
 	set stepMention(val: MentionListItem & { step: FlowItem }) {
 		if (val.step.type !== ActionType.PIECE && val.step.type !== TriggerType.PIECE) {
@@ -40,9 +41,13 @@ export class PieceStepMentionItemComponent {
 		if (cacheResult) {
 			this.sampleData$ = of({ children: cacheResult, error: '' });
 		}
+		else
+		{
+			this.fetchSampleData();
+		}
 
 		this.flowItemDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetails(this._stepMention.step));
-		this.fetchSampleData();
+		
 	}
 	fetchSampleData() {
 		this.sampleData$ = this.actionMetaDataService.getPieces().pipe(
@@ -81,7 +86,8 @@ export class PieceStepMentionItemComponent {
 			tap(res => {
 				this.mentionsTreeCache.setStepMentionsTree(this._stepMention.step.name, res.children);
 				this.fetching$.next(false);
-			})
+			}),
+			shareReplay(1)
 		);
 	}
 

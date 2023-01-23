@@ -21,12 +21,12 @@
   }
 
   &:hover {
-    z-index: 99;
+    // @apply ap-z-40;
     border-radius: 4px;
   }
 
   &:focus {
-    z-index: 999;
+    @apply ap-z-50;
     border-radius: 4px;
   }
 
@@ -57,12 +57,10 @@
   margin-bottom: -1px;
 
   &:hover {
-    z-index: 99;
     border-radius: 4px;
   }
 
   &:focus {
-    z-index: 999;
     border-radius: 4px;
   }
 }
