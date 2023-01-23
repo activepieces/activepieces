@@ -1,6 +1,7 @@
 <div @fadeIn
     class="ap-px-2  ap-absolute ap-z-50 ap-bg-white ap-border ap-border-divider ap-border-solid ap-rounded ap-border-dividers"
-    *ngIf="showMenu$ | async" [style.width]="width" [style.left]="left">
-    <app-mentions-list (click)=" $event.stopPropagation()" (addMention)="addMention.emit($event)"
-        (closeMenu)="menuClosed.emit(); showMenu$.next(false)"></app-mentions-list>
+    *ngIf="(editorFocused$ | async) ||  searchInputIsFocused" [style.width]="width" [style.left]="left">
+    <app-mentions-list #mentionsList (click)=" $event.stopPropagation()"
+        (searchInputFocused)="searchInputIsFocused=$event" (addMention)="addMention.emit($event)"
+        (closeMenu)="menuClosed.emit(); searchInputIsFocused=false; editorFocused$.next(false)"></app-mentions-list>
 </div>

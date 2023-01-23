@@ -4,7 +4,8 @@
 </div>
 <mat-form-field (click)="$event.stopPropagation();" appearance="outline" class="ap-w-full">
   <mat-icon matPrefix svgIcon="search"></mat-icon>
-  <input [formControl]="searchFormControl" matInput placeholder="Search" autocomplete="off">
+  <input [formControl]="searchFormControl" matInput placeholder="Search" autocomplete="off"
+    (focus)="searchInputFocused.emit(true)">
 </mat-form-field>
 <div class="ap-max-h-[240px] ap-overflow-scroll ">
 
@@ -39,13 +40,14 @@
 
 
   </ng-container>
-  <div *ngIf="(configsMentions$|async)?.length" class="mat-tree-node ap-text-body">
+  <div *ngIf="(configsMentions$|async)?.length" class="mat-tree-node ap-flex ap-text-body ap-items-center ap-px-4">
+
+    <app-mention-list-item-template itemLabel="Configs" class="ap-flex-grow"></app-mention-list-item-template>
     <button mat-icon-button (click)="expandConfigs? expandConfigs=false : expandConfigs=true">
       <mat-icon class="mat-icon-rtl-mirror">
-        {{expandConfigs ? 'expand_more' : 'chevron_right'}}
+        {{expandConfigs ? 'expand_more' : 'chevron_left'}}
       </mat-icon>
     </button>
-    <app-mention-list-item-template itemLabel="Configs"></app-mention-list-item-template>
   </div>
   <ng-container *ngIf="expandConfigs">
     <div class="ap-pl-10">
@@ -57,13 +59,14 @@
   </ng-container>
   <mat-divider *ngIf="(configsMentions$|async)?.length"></mat-divider>
 
-  <div class="mat-tree-node" *ngIf="(connectionsMentions$|async)?.length">
+  <div class="mat-tree-node ap-flex ap-items-center ap-px-4" *ngIf="(connectionsMentions$|async)?.length">
+
+    <app-mention-list-item-template itemLabel="Connections" class="ap-flex-grow"></app-mention-list-item-template>
     <button mat-icon-button (click)="expandConnections? expandConnections=false : expandConnections=true">
       <mat-icon class="mat-icon-rtl-mirror">
-        {{expandConnections ? 'expand_more' : 'chevron_right'}}
+        {{expandConnections ? 'expand_more' : 'chevron_left'}}
       </mat-icon>
     </button>
-    <app-mention-list-item-template itemLabel="Connections"></app-mention-list-item-template>
   </div>
   <ng-container *ngIf="expandConnections">
     <div class="ap-pl-10">

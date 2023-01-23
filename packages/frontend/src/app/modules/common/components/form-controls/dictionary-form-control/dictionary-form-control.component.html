@@ -19,9 +19,9 @@
         [class.last]="isLast && pairs.controls.length>1" [class.only-one]="pairs.controls.length === 1" appTrackHover
         #valueInput="hoverTrackerDirective">
         <app-interpolating-text-form-control #textControl [insideMatField]="false" formControlName="value"
-          placeholder="Value" (editorFocused)="mentionsDropdown.showMenu$.next($event)"
-          (click)="mentionsDropdown.showMenu$.next(true)"
-          (keyup)="$event.key ==='Escape'? mentionsDropdown.showMenu$.next(false) : null"></app-interpolating-text-form-control>
+          placeholder="Value" (editorFocused)="mentionsDropdown.editorFocused$.next($event)"
+          (click)="mentionsDropdown.editorFocused$.next(true)"
+          (keyup)="$event.key ==='Escape'? mentionsDropdown.editorFocused$.next(false) : null"></app-interpolating-text-form-control>
         <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
           width="120%" left="-14%" right="10%"></app-builder-autocomplete-mentions-dropdown>
 
