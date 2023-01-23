@@ -16,7 +16,7 @@ import { getBackendUrl } from "./public-ip-utils";
 import { engineHelper } from "./engine-helper";
 import { logger } from "../../main";
 
-const EVERY_TEN_MINUTES = "*/10 * * * *";
+const EVERY_FIVE_MINUTES = "*/5 * * * *";
 
 export const triggerUtils = {
   async executeTrigger({ collectionVersion, payload, flowVersion, projectId }: ExecuteTrigger): Promise<any[]> {
@@ -140,7 +140,7 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId, collec
           flowVersion,
           triggerType: TriggerType.PIECE,
         },
-        cronExpression: EVERY_TEN_MINUTES,
+        cronExpression: EVERY_FIVE_MINUTES,
       });
 
       break;
