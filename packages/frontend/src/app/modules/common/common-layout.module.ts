@@ -22,9 +22,16 @@ import { OutputLogPipe } from './pipe/output-log';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { StoreModule } from '@ngrx/store';
 import { AngularSvgIconModule } from 'angular-svg-icon';
-import { MatTooltipDefaultOptions, MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
+import {
+  MatTooltipDefaultOptions,
+  MatTooltipModule,
+  MAT_TOOLTIP_DEFAULT_OPTIONS,
+} from '@angular/material/tooltip';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
-import { MatSnackBarModule, MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
+import {
+  MatSnackBarModule,
+  MAT_SNACK_BAR_DEFAULT_OPTIONS,
+} from '@angular/material/snack-bar';
 import { LongTextFormControlComponent } from './components/form-controls/long-text-form-control/long-text-form-control.component';
 import { DictionaryFormControlComponent } from './components/form-controls/dictionary-form-control/dictionary-form-control.component';
 import { OAuth2ConnectControlComponent } from './components/form-controls/o-auth2-connect-control/o-auth2-connect-control.component';
@@ -39,7 +46,10 @@ import { RequestTypeTemplateComponent } from './components/form-controls/request
 import { EndpointFormControlComponent } from './components/form-controls/endpoint-form-control/endpoint-form-control.component';
 import { ConnectorCustomRequestFormControlComponent } from './components/form-controls/connector-custom-request-form-control/connector-custom-request-form-control.component';
 import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule, MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
+import {
+  MatFormFieldModule,
+  MAT_FORM_FIELD_DEFAULT_OPTIONS,
+} from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
@@ -67,11 +77,13 @@ import { MentionsListComponent } from './components/form-controls/interpolating-
 import { GenericStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/generic-step-mention-item/generic-step-mention-item.component';
 import { PieceStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component';
 import { WebhookTriggerMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component';
+import { BuilderAutocompleteMentionsDropdownComponent } from './components/form-controls/interpolating-text-form-control/builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.component';
+import { ImgFallbackDirective } from './helper/image-fallback.directive';
 
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
-	showDelay: 0,
-	hideDelay: 0,
-	touchendHideDelay: 0,
+  showDelay: 0,
+  hideDelay: 0,
+  touchendHideDelay: 0,
 };
 
 @NgModule({
@@ -114,7 +126,9 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		MentionsListComponent,
 		GenericStepMentionItemComponent,
 		PieceStepMentionItemComponent,
-  WebhookTriggerMentionItemComponent,
+ 		WebhookTriggerMentionItemComponent,
+		ImgFallbackDirective,
+		BuilderAutocompleteMentionsDropdownComponent
 	],
 	imports: [
 		FontAwesomeModule,
@@ -190,6 +204,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 		InterpolatingTextFormControlComponent,
 		MatIconModule,
 		StepMentionsListComponent,
+		ImgFallbackDirective,
+		BuilderAutocompleteMentionsDropdownComponent
 	],
 	providers: [
 		HighlightService,

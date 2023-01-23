@@ -18,7 +18,7 @@ export enum AppConnectionType {
 
 export interface SecretTextConnectionValue {
   type: AppConnectionType.SECRET_TEXT,
-  secret_key: string;
+  secret_text: string;
 }
 
 
