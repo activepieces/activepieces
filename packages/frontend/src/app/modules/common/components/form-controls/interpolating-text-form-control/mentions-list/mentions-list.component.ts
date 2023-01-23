@@ -19,6 +19,8 @@ export class MentionsListComponent {
 	connectionsMentions$: Observable<MentionListItem[]>;
 	expandConfigs = false;
 	expandConnections = false;
+	@Output()
+	searchInputFocused:EventEmitter<boolean>=new EventEmitter();
 	readonly ActionType = ActionType;
 	readonly TriggerType = TriggerType;
 	@Output()

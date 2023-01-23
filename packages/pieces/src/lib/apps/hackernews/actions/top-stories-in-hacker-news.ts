@@ -22,7 +22,7 @@ export const fetchTopStories = createAction({
 			url: `${HACKER_NEWS_API_URL}topstories.json`
 		});
         const topStoryIds: string[] = topStoryIdsResponse.body;
-        const topStories = [];
+        const topStories:Object[] = [];
         for (let i = 0; i < Math.min(configValue.propsValue['number_of_stories']!, topStoryIds.length); i++) {
           const storyId = topStoryIds[i];
           const storyResponse = await httpClient.sendRequest({

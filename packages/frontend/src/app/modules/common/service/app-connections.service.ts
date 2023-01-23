@@ -21,6 +21,10 @@ export class AppConnectionsService {
 		if (params.cursor) {
 			queryParams['cursor'] = params.cursor;
 		}
+		if(params.limit)
+		{
+			queryParams['limit']=params.limit;
+		}
 		return this.http.get<SeekPage<AppConnection>>(environment.apiUrl + '/app-connections', {
 			params: queryParams,
 		});

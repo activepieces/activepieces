@@ -8,7 +8,7 @@ export const askOpenAI = createAction({
   displayName: 'Ask ChatGPT',
   description: 'Using OpenAI will answer your question  .',
   props: {
-    apiKey: Property.ShortText({
+    apiKey: Property.SecretText({
       displayName: 'Api Key',
       required: true,
     }),

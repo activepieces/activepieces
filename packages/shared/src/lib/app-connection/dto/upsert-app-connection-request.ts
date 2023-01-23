@@ -29,7 +29,7 @@ export const UpsertSecretTextRequest = Type.Object({
     ...commonAuthProps,
     value: Type.Object({
         type: Type.Literal(AppConnectionType.SECRET_TEXT),
-        secret_key: Type.String({})
+        secret_text: Type.String({})
     })
 });
 
