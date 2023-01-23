@@ -16,7 +16,7 @@ import { getBackendUrl } from "./public-ip-utils";
 import { engineHelper } from "./engine-helper";
 import { logger } from "../../main";
 
-const EVERY_TEN_MINUTES = "*/1 * * * *";
+const EVERY_TEN_MINUTES = "*/10 * * * *";
 
 export const triggerUtils = {
   async executeTrigger({ collectionVersion, payload, flowVersion, projectId }: ExecuteTrigger): Promise<any[]> {
