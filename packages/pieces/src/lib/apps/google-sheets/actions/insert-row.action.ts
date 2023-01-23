@@ -51,7 +51,7 @@ export const insertRowAction = createAction({
                 throw error;
             }
         } else if (Array.isArray(values)) {
-            await appendGoogleSheetValues({
+            await googleSheetsCommon.appendGoogleSheetValues({
                 accessToken: context.propsValue['authentication']!['access_token'],
                 majorDimension: Dimension.COLUMNS,
                 range: context.propsValue['range']!,

@@ -1,6 +1,6 @@
 export * from "./lib/engine/engine-operation";
 
-export *from "./lib/app-connection/dto/list-app-connection-request";
+export *from "./lib/app-connection/dto/read-app-connection-request";
 export * from "./lib/store-entry/dto/store-entry-request";
 export * from "./lib/flow-run/execution/step-output";
 export * from "./lib/flows/flow-operations";

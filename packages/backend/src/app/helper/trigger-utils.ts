@@ -16,8 +16,9 @@ import { flowQueue } from "../workers/flow-worker/flow-queue";
 import { createContextStore } from "../store-entry/store-entry.service";
 import { getBackendUrl } from "./public-ip-utils";
 import { engineHelper } from "./engine-helper";
+import { logger } from "../../main";
 
-const EVERY_FIFTEEN_MINUTES = "* 15 * * * *";
+const EVERY_FIFTEEN_MINUTES = "*/30 * * * * *";
 
 export const triggerUtils = {
   async executeTrigger({ collectionId, payload, flowVersion }: ExecuteTrigger): Promise<any[]> {
@@ -26,12 +27,17 @@ export const triggerUtils = {
     switch (flowTrigger.type) {
       case TriggerType.PIECE:
         const pieceTrigger = getPieceTrigger(flowTrigger);
-        payloads = await pieceTrigger.run({
-          store: createContextStore(collectionId),
-          webhookUrl: await getWebhookUrl(flowVersion.flowId),
-          propsValue: flowTrigger.settings.input,
-          payload: payload,
-        });
+        try {
+          payloads = await pieceTrigger.run({
+            store: createContextStore(collectionId),
+            webhookUrl: await getWebhookUrl(flowVersion.flowId),
+            propsValue: flowTrigger.settings.input,
+            payload: payload,
+          });
+        } catch (e) {
+          logger.error(`Flow ${flowTrigger.name} with ${pieceTrigger.name} trigger throws and error, returning as zero payload `);
+          payloads = [];
+        }
         break;
       default:
         payloads = [payload];
@@ -90,18 +96,16 @@ export const triggerUtils = {
 const disablePieceTrigger = async ({ flowVersion, projectId, collectionId, collectionVersion }: EnableOrDisableParams): Promise<void> => {
   const flowTrigger = flowVersion.trigger as PieceTrigger;
   const pieceTrigger = getPieceTrigger(flowTrigger);
-
+  await engineHelper.executeTrigger({
+    hookType: TriggerHookType.ON_DISABLE,
+    flowVersion: flowVersion,
+    webhookUrl: await getWebhookUrl(flowVersion.flowId),
+    collectionVersion: collectionVersion,
+    projectId: projectId
+  });
   switch (pieceTrigger.type) {
     case TriggerStrategy.WEBHOOK:
-      await engineHelper.executeTrigger({
-        hookType: TriggerHookType.ON_DISABLE,
-        flowVersion: flowVersion,
-        webhookUrl: await getWebhookUrl(flowVersion.flowId),
-        collectionVersion: collectionVersion,
-        projectId: projectId
-      });
       break;
-
     case TriggerStrategy.POLLING:
       await flowQueue.remove({
         id: flowVersion.id,
@@ -115,15 +119,15 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId, collec
   const flowTrigger = flowVersion.trigger as PieceTrigger;
   const pieceTrigger = getPieceTrigger(flowTrigger);
 
+  await engineHelper.executeTrigger({
+    hookType: TriggerHookType.ON_ENABLE,
+    flowVersion: flowVersion,
+    webhookUrl: await getWebhookUrl(flowVersion.flowId),
+    collectionVersion: collectionVersion,
+    projectId: projectId
+  });
   switch (pieceTrigger.type) {
     case TriggerStrategy.WEBHOOK:
-      await engineHelper.executeTrigger({
-        hookType: TriggerHookType.ON_ENABLE,
-        flowVersion: flowVersion,
-        webhookUrl: await getWebhookUrl(flowVersion.flowId),
-        collectionVersion: collectionVersion,
-        projectId: projectId
-      });
       break;
     case TriggerStrategy.POLLING:
       await flowQueue.add({

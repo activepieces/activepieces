@@ -34,7 +34,7 @@ export const storageService = {
 }
 export function createContextStore(): Store {
     return {
-      save: async function <T>(key: string, value: T): Promise<T> {
+      put: async function <T>(key: string, value: T): Promise<T> {
         const storeEntry = await storageService.put({
           key: key,
           value: value,

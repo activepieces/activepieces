@@ -8,11 +8,12 @@ import { triggerUtils } from "../../helper/trigger-utils";
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from "./flow-queue";
 import { flowWorker } from "./flow-worker";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
+import { logger } from "packages/backend/src/main";
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
   ONE_TIME_JOB_QUEUE,
   async (job) => {
-    console.info(`[oneTimeJobConsumer] job.id=${job.name}`);
+    logger.info(`[oneTimeJobConsumer] job.id=${job.name}`);
     const data = job.data;
     return await flowWorker.executeFlow(data);
   },
@@ -24,7 +25,7 @@ const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
 const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
   REPEATABLE_JOB_QUEUE,
   async (job) => {
-    console.info(`[repeatableJobConsumer] job.id=${job.name}`);
+    logger.info(`[repeatableJobConsumer] job.id=${job.name} job.type=${job.data.triggerType}`);
     const { data } = job;
     switch (data.triggerType) {
       case TriggerType.SCHEDULE:
@@ -56,7 +57,7 @@ const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
     payload: null,
   });
 
-  console.info(`[flowQueueConsumer#consumePieceTrigger] payloads.length=${payloads.length}`);
+  logger.info(`[flowQueueConsumer#consumePieceTrigger] payloads.length=${payloads.length}`);
 
   const createFlowRuns = payloads.map((payload) =>
     flowRunService.start({

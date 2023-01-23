@@ -31,7 +31,7 @@ export const storeEntryService = {
 
 export function createContextStore(collectionId: CollectionId): Store {
   return {
-    save: async function <T>(key: string, value: T): Promise<T> {
+    put: async function <T>(key: string, value: T): Promise<T> {
       const storeEntry = await storeEntryService.upsert(collectionId, {
         key: key,
         value: value,

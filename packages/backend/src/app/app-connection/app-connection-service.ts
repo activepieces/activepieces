@@ -15,21 +15,22 @@ export const appConnectionService = {
             appName: request.appName
         })
     },
-    async getOne(id: AppConnectionId): Promise<AppConnection | null> {
+    async getOne(projectId: ProjectId, name: string): Promise<AppConnection | null> {
         const appConnection = await appConnectionRepo.findOneBy({
-            id: id
+            projectId: projectId,
+            name: name
         });
         if (appConnection === null) {
             return null;
         }
         const refreshedAppConnection = await refresh(appConnection);
-        await appConnectionRepo.update(id, refreshedAppConnection);
+        await appConnectionRepo.update(refreshedAppConnection.id, refreshedAppConnection);
         return refreshedAppConnection;
     },
     async delete(id: AppConnectionId): Promise<void> {
         await appConnectionRepo.delete({ id: id });
     },
-    async list(projectId: ProjectId, appName: string | undefined, name: string | undefined, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<AppConnection>> {
+    async list(projectId: ProjectId, appName: string | undefined, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
         const paginator = buildPaginator({
             entity: AppConnectionEntity,
@@ -42,9 +43,6 @@ export const appConnectionService = {
             },
         });
         let queryBuilder = appConnectionRepo.createQueryBuilder("app_connection").where({ projectId });
-        if (name !== undefined) {
-            queryBuilder = queryBuilder.where({ name });
-        }
         if (appName !== undefined) {
             queryBuilder = queryBuilder.where({ appName });
         }
@@ -93,14 +91,13 @@ function isExpired(connection: BaseOAuth2ConnectionValue) {
         return false;
     }
 
-    return (connection.claimed_at + connection.expires_in + REFRESH_THRESHOLD <= secondsSinceEpoch)
+    return (secondsSinceEpoch >= connection.claimed_at + connection.expires_in + REFRESH_THRESHOLD)
 }
 
 async function refreshCloud(appName: string, connectionValue: CloudOAuth2ConnectionValue): Promise<CloudOAuth2ConnectionValue> {
     if (!isExpired(connectionValue)) {
         return connectionValue;
     }
-
     const response = (
         await axios.post("https://secrets.activepieces.com/refresh", {
             refreshToken: connectionValue.refresh_token,
@@ -109,6 +106,7 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
     ).data;;
 
     return {
+        ...connectionValue,
         ...response,
         type: AppConnectionType.CLOUD_OAUTH2
     }

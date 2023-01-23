@@ -29,35 +29,35 @@ function executeFlow() {
 }
 
 function dropdownOptions() {
-  try {
-    const input: ExecuteDropdownOptions = Utils.parseJsonFile(globals.inputFile);
+  const input: ExecuteDropdownOptions = Utils.parseJsonFile(globals.inputFile);
 
-    globals.workerToken = input.workerToken!;
-    globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
+  globals.workerToken = input.workerToken!;
+  globals.projectId = input.projectId;
+  globals.apiUrl = input.apiUrl!;
 
-    pieceHelper.dropdownOptions(input).then((output) => {
-      Utils.writeToJsonFile(globals.outputFile, output);
-    });
-  } catch (e) {
+  pieceHelper.dropdownOptions(input).then((output) => {
+    Utils.writeToJsonFile(globals.outputFile, output);
+  }).catch(e => {
+    console.error(e);
     Utils.writeToJsonFile(globals.outputFile, (e as Error).message);
-  }
+  });;
+
 }
 
 function executeTrigger() {
-  try {
-    const input: ExecuteTriggerOperation = Utils.parseJsonFile(globals.inputFile);
+  const input: ExecuteTriggerOperation = Utils.parseJsonFile(globals.inputFile);
 
-    globals.workerToken = input.workerToken!;
-    globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
+  globals.workerToken = input.workerToken!;
+  globals.projectId = input.projectId;
+  globals.apiUrl = input.apiUrl!;
 
-    triggerHelper.executeTrigger(input).then((output) => {
-      Utils.writeToJsonFile(globals.outputFile, output??"");
-    });
-  } catch (e) {
+  triggerHelper.executeTrigger(input).then((output) => {
+    Utils.writeToJsonFile(globals.outputFile, output ?? "");
+  }).catch(e => {
+    console.error(e);
     Utils.writeToJsonFile(globals.outputFile, (e as Error).message);
-  }
+  });
+
 }
 
 
