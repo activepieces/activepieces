@@ -70,10 +70,10 @@ async function execute(operation: EngineOperationType, sandbox: Sandbox, input: 
     let standardOutput = await sandbox.parseStandardOutput();
     let standardError = await sandbox.parseStandardError();
     standardOutput.split("\n").forEach(f => {
-        if (f.trim().length > 0) logger.info(chalk.yellow(f))
+        if (f.trim().length > 0) logger.info({}, chalk.yellow(f))
     });
     standardError.split("\n").forEach(f => {
-        if (f.trim().length > 0) logger.error(chalk.red(f))
+        if (f.trim().length > 0) logger.error({}, chalk.red(f))
     });
     return JSON.parse(fs.readFileSync(sandbox.getSandboxFilePath("output.json")).toString());
 }

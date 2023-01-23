@@ -1,6 +1,6 @@
-<div [formGroup]="form" class="ap-flex ap-flex-col pairs-form-container">
+<div [formGroup]="form" class="ap-flex ap-flex-col">
   <ng-container *ngFor="let pair of pairs.controls; let idx = index; let isLast = last; let isFirst=first">
-    <div class="ap-flex pair-container" *ngIf="!(isLast && disabled && idx>0)" [formGroup]="getPair(idx)">
+    <div class="ap-flex" *ngIf="!(isLast && disabled && idx>0)" [formGroup]="getPair(idx)">
       <div class="delete-btn-container">
 
         <app-icon-button [width]="9" [height]="9" iconFilename="delete.svg"
@@ -23,7 +23,8 @@
           (click)="mentionsDropdown.editorFocused$.next(true)"
           (keyup)="$event.key ==='Escape'? mentionsDropdown.editorFocused$.next(false) : null"></app-interpolating-text-form-control>
         <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
-          width="120%" left="-14%" right="10%"></app-builder-autocomplete-mentions-dropdown>
+          (addMention)="textControl.addMention($event)" width="120%" left="-14%"
+          right="10%"></app-builder-autocomplete-mentions-dropdown>
 
       </div>
     </div>
