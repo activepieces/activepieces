@@ -63,7 +63,7 @@ export class VariableService {
       let connectioName = paths[1];
       paths.splice(0, 2);
       let newPath = paths.join(".");
-      const connection = (await connectionService.obtain(connectioName))?.value;
+      const connection = (await connectionService.obtain(connectioName));
       if (paths.length === 0) {
         return connection;
       }
