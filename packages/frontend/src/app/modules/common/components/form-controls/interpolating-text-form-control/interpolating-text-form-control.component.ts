@@ -3,11 +3,13 @@ import {
 	ChangeDetectionStrategy,
 	Component,
 	DoCheck,
+	EventEmitter,
 	HostBinding,
 	Input,
 	OnDestroy,
 	OnInit,
 	Optional,
+	Output,
 	Self,
 	ViewChild,
 } from '@angular/core';
@@ -48,6 +50,7 @@ export class InterpolatingTextFormControlComponent
 	extends QuillMaterialBase
 	implements OnInit, OnDestroy, DoCheck, MatFormFieldControl<string>, ControlValueAccessor
 {
+	@Output() editorFocused:EventEmitter<boolean>= new EventEmitter();
 	@Input() insideMatField: boolean = true;
 	readonly modules: QuillModules = {
 		mention: {
@@ -211,7 +214,7 @@ export class InterpolatingTextFormControlComponent
 		this.focusEditor();
 	}
 
-	focusEditor() {
+	public focusEditor() {
 		this.editor.quillEditor.focus();
 	}
 
@@ -230,14 +233,16 @@ export class InterpolatingTextFormControlComponent
 	onBlur() {
 		this.focused = false;
 		this.stateChanges.next();
+		this.editorFocused.emit(false);
 	}
 	onFocus() {
 		this.onTouch();
 		this.focused = true;
 		this.stateChanges.next();
+		this.editorFocused.emit(true);
 	}
 
-	addMention(mentionOp: InsertMentionOperation) {
+	public addMention(mentionOp: InsertMentionOperation) {
 		this.editor.quillEditor.getModule('mention').insertItem(mentionOp.insert.mention, true);
 	}
 }

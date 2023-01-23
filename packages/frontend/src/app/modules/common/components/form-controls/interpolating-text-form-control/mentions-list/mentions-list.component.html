@@ -6,7 +6,7 @@
   <mat-icon matPrefix svgIcon="search"></mat-icon>
   <input [formControl]="searchFormControl" matInput placeholder="Search" autocomplete="off">
 </mat-form-field>
-<div class="ap-max-h-[220px] ap-overflow-scroll ">
+<div class="ap-max-h-[240px] ap-overflow-scroll ">
 
   <ng-container *ngFor="let stepMention of stepsMentions$|async;let idx=index" #stepsListTemplate>
     <ng-container [ngSwitch]="stepMention.step.type">

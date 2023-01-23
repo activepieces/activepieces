@@ -481,7 +481,6 @@ $main-theme: material-theme-helper.modify-background($ap-theme-light, $white, $w
 .mat-tab-body-content,
 .mat-drawer-inner-container {
 	scrollbar-width: thin;
-
 	&::-webkit-scrollbar {
 		width: 4px;
 	}
@@ -627,4 +626,11 @@ app-mentions-list
 .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix
 {
   padding-bottom:unset;
+}
+
+app-collection-builder{
+	mat-expansion-panel
+	{
+		overflow:visible !important;
+	}
 }

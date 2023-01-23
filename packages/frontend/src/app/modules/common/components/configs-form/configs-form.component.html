@@ -44,25 +44,24 @@
       <mat-slide-toggle [formControlName]="config.key" color="primary"
         [matTooltip]="config.description">{{config.label}}</mat-slide-toggle>
     </ng-container>
+    <div
+      *ngIf="config.type === configType.SHORT_TEXT || config.type === configType.NUMBER || config.type === configType.LONG_TEXT">
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label>{{config.label}}</mat-label>
 
-    <mat-form-field *ngIf="config.type === configType.SHORT_TEXT || config.type === configType.NUMBER" class="ap-w-full"
-      appearance="outline">
-      <mat-label>{{config.label}}</mat-label>
-      <app-interpolating-text-form-control [matTooltip]="config.description"
-        [formControlName]="config.key"></app-interpolating-text-form-control>
-      <mat-error *ngIf="formGroup.get(config.key)?.invalid">
-        {{config.label}} is required
-      </mat-error>
-    </mat-form-field>
+        <app-interpolating-text-form-control #textControl [matTooltip]="config.description"
+          [formControlName]="config.key" (editorFocused)="mentionsDropdown.showMenu$.next($event)"
+          (click)="mentionsDropdown.showMenu$.next(true)"
+          (keyup)="$event.key ==='Escape'? mentionsDropdown.showMenu$.next(false) : null"></app-interpolating-text-form-control>
 
-    <mat-form-field *ngSwitchCase="configType.LONG_TEXT" class="ap-w-full" appearance="outline">
-      <mat-label>{{config.label}}</mat-label>
-      <app-interpolating-text-form-control [matTooltip]="config.description"
-        [formControlName]="config.key"></app-interpolating-text-form-control>
-      <mat-error *ngIf="formGroup.get(config.key)?.invalid">
-        {{config.label}} is required
-      </mat-error>
-    </mat-form-field>
+        <mat-error *ngIf="formGroup.get(config.key)?.invalid">
+          {{config.label}} is required
+        </mat-error>
+      </mat-form-field>
+      <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
+        (addMention)="textControl.addMention($event)"></app-builder-autocomplete-mentions-dropdown>
+    </div>
+
 
     <ng-container *ngSwitchCase="configType.DROPDOWN">
       <mat-form-field class="ap-w-full" appearance="outline">
