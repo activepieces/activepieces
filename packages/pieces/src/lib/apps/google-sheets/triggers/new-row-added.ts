@@ -14,6 +14,13 @@ export const newRowAdded = createTrigger({
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     sheet_id: googleSheetsCommon.sheet_id
   },
+  sampleData: {
+    "value": [
+      "1",
+      "1",
+      "1"
+    ]
+  },
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
     const sheetId = context.propsValue['sheet_id']!;
@@ -23,17 +30,21 @@ export const newRowAdded = createTrigger({
     console.log(`The spreadsheet ${spreadSheetId} started with ${currentValues.length} rows`);
     context.store?.put("rowCount", currentValues.length);
   },
-  async onDisable(context) {},
+  async onDisable(context) { },
   async run(context) {
     const sheetId = context.propsValue['sheet_id']!;
     const accessToken = context.propsValue['authentication']!['access_token'];
     const spreadSheetId = context.propsValue['spreadsheet_id']!;
-    let rowCount = (await context.store?.get<number>("rowCount"))??0;
+    let rowCount = (await context.store?.get<number>("rowCount")) ?? 0;
     let currentValues = await googleSheetsCommon.getValues(spreadSheetId, accessToken, sheetId)
     let payloads: any[] = [];
     console.log(`The spreadsheet ${spreadSheetId} has now ${currentValues.length} rows, previous # of rows ${rowCount}`);
-    if(currentValues.length > rowCount){
-      payloads = currentValues.slice(rowCount);
+    if (currentValues.length > rowCount) {
+      payloads = currentValues.slice(rowCount).map(value => {
+        return {
+          value: value
+        }
+      });
     }
     context.store?.put("rowCount", currentValues.length);
     return payloads;
