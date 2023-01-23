@@ -1,4 +1,3 @@
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
 import { AuthenticationType } from '../../../common/authentication/core/authentication-type';
 import { httpClient } from '../../../common/http/core/http-client';
 import { HttpMethod } from '../../../common/http/core/http-method';
@@ -126,10 +125,7 @@ const getAccessTokenOrThrow = (auth: OAuth2PropertyValue | undefined): string =>
   const accessToken = auth?.access_token;
 
   if (accessToken === undefined) {
-    throw new ActivepiecesError({
-      code: ErrorCode.INVALID_BEARER_TOKEN,
-      params: {}
-    });
+    throw new Error("Invalid bearer token");
   }
 
   return accessToken;
