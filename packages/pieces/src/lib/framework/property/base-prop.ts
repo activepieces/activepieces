@@ -13,6 +13,7 @@ export enum PropertyType {
 	OAUTH2 = 'OAUTH2',
 	SECRET_TEXT = 'SECRET_TEXT',
 	CUSTOM_AUTH = 'CUSTOM_AUTH',
+	ARRAY = 'ARRAY',
 }
 
 export type TPropertyValue<T, U> = {
@@ -29,3 +30,5 @@ export interface SecretTextProperty extends BasePropertySchema, TPropertyValue<s
 export interface CheckboxProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.CHECKBOX> {}
 
 export interface NumberProperty extends BasePropertySchema, TPropertyValue<number, PropertyType.NUMBER> {}
+
+export interface ArrayProperty extends BasePropertySchema, TPropertyValue<unknown[], PropertyType.ARRAY> {}

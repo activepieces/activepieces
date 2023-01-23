@@ -5,6 +5,8 @@ import { flowService } from "../flows/flow-service";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { InstanceEntity } from "./instance-entity";
 import { instanceSideEffects } from "./instance-side-effects";
+import { EventSubscriber, EntitySubscriberInterface, RemoveEvent } from "typeorm";
+import { logger } from "../../main";
 
 export const instanceRepo = databaseConnection.getRepository(InstanceEntity);
 
@@ -56,10 +58,6 @@ export const instanceService = {
   },
 
   async deleteOne({ id }: DeleteOneParams): Promise<void> {
-    const oldInstance: Partial<Instance | null> = await instanceRepo.findOneBy({ id });
-    if (oldInstance !== null) {
-      await instanceSideEffects.disable(oldInstance);
-    }
     await instanceRepo.delete({
       id,
     });

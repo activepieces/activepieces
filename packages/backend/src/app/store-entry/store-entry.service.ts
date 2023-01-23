@@ -1,4 +1,3 @@
-import { Store } from "@activepieces/pieces";
 import { apId, CollectionId, PutStoreEntryRequest, StoreEntry } from "@activepieces/shared";
 import { databaseConnection } from "../database/database-connection";
 import { StoreEntryEntity } from "./store-entry-entity";

@@ -11,7 +11,7 @@ import { stripe } from './stripe';
 import { blackbaud } from './blackbaud';
 import { pipedrive } from './pipedrive';
 import { googleContacts } from './google-contacts';
-
+import { googleSheets } from './google-sheets';
 
 export const pieces: Piece[] = [
 	slack,
@@ -24,6 +24,7 @@ export const pieces: Piece[] = [
 	openai,
 	stripe,
   blackbaud,
+	googleSheets,
 	pipedrive,
 	googleContacts
 ];

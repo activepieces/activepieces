@@ -1,4 +1,5 @@
 import {
+	ArrayProperty,
 	BasePropertySchema,
 	CheckboxProperty,
 	LongTextProperty,
@@ -19,7 +20,8 @@ export interface PieceProperty {
 		| DropdownProperty<any>
 		| NumberProperty
 		| SecretTextProperty
-		| CustomAuthProperty;
+		| CustomAuthProperty
+		| ArrayProperty;
 }
 
 export type StaticPropsValue<T extends PieceProperty> = {
@@ -50,5 +52,8 @@ export const Property = {
 	},
 	CustomAuth(request: CustomAuthPropertySchema): CustomAuthProperty {
 		return {...request, valueSchema: undefined, type: PropertyType.CUSTOM_AUTH};
+	},
+	Array(request: BasePropertySchema): ArrayProperty {
+		return {...request, valueSchema: undefined, type: PropertyType.ARRAY};
 	},
 }

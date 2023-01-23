@@ -1,5 +1,4 @@
 import { createAction } from '../../../framework/action/action';
-import { assertNotNullOrUndefined } from '../../../common/helpers/assertions';
 import { Configuration, OpenAIApi } from 'openai';
 import { Property } from '../../../framework/property';
 
@@ -8,7 +7,7 @@ export const askOpenAI = createAction({
   displayName: 'Ask ChatGPT',
   description: 'Using OpenAI will answer your question  .',
   props: {
-    apiKey: Property.ShortText({
+    apiKey: Property.SecretText({
       displayName: 'Api Key',
       required: true,
     }),
@@ -31,7 +30,7 @@ export const askOpenAI = createAction({
   },
   async run({ propsValue }) {
     const configuration = new Configuration({
-      apiKey: propsValue.apiKey!,
+      apiKey: propsValue.apiKey,
     });
     const openai = new OpenAIApi(configuration);
 
@@ -52,7 +51,6 @@ export const askOpenAI = createAction({
       frequency_penalty: 0.0,
       presence_penalty: 0.6,
     });
-    assertNotNullOrUndefined(response, 'Error generating text from OpenAI.', 0);
     return response.data.choices[0].text?.trim();
   },
 });

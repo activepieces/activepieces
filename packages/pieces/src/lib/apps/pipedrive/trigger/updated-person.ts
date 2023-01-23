@@ -14,7 +14,7 @@ export const updatedPerson = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhook = await pipedriveCommon.subscribeWebhook('person', 'updated', context.webhookUrl!, context.propsValue['authentication']!.data['api_domain'], context.propsValue['authentication']!.access_token);
-    await context.store?.save<WebhookInformation>('_updated_person_trigger', {
+    await context.store?.put<WebhookInformation>('_updated_person_trigger', {
       webhookId: webhook.data.id
     });
   },

@@ -17,6 +17,7 @@ import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { databaseConnection } from "../database/database-connection";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
+import { instanceSideEffects } from "../instance/instance-side-effects";
 
 export const collectionRepo = databaseConnection.getRepository(CollectionEntity);
 
@@ -107,6 +108,7 @@ export const collectionService = {
   },
 
   async delete(collectionId: CollectionId): Promise<void> {
+    instanceSideEffects.onCollectionDelete(collectionId);
     await collectionRepo.delete({ id: collectionId });
   },
 };

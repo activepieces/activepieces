@@ -22,6 +22,7 @@ import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity
 import { fileService } from "../../file/file.service";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowVersionRepo } from "./flow-version-repo";
+import { type } from "os";
 
 export const flowVersionService = {
   async overwriteVersion(flowVersionId: FlowVersionId, mutatedFlowVersion: FlowVersion) {
@@ -32,7 +33,7 @@ export const flowVersionService = {
   },
   async applyOperation(flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowVersion | null> {
     request = await prepareRequest(flowVersion, request);
-    let mutatedFlowVersion: FlowVersion = flowHelper.apply(flowVersion, request);
+    const mutatedFlowVersion: FlowVersion = flowHelper.apply(flowVersion, request);
     await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>);
     return await flowVersionRepo.findOneBy({
       id: flowVersion.id,
@@ -135,11 +136,11 @@ function validateAction(settings: PieceActionSettings) {
   if (settings.pieceName === undefined || settings.actionName === undefined || settings.input === undefined) {
     return false;
   }
-  let piece = getPiece(settings.pieceName);
+  const piece = getPiece(settings.pieceName);
   if (piece === undefined) {
     return false;
   }
-  let action = piece.getAction(settings.actionName);
+  const action = piece.getAction(settings.actionName);
   if (action === undefined) {
     return false;
   }
@@ -150,11 +151,11 @@ function validateTrigger(settings: PieceTriggerSettings) {
   if (settings.pieceName === undefined || settings.triggerName === undefined || settings.input === undefined) {
     return false;
   }
-  let piece = getPiece(settings.pieceName);
+  const piece = getPiece(settings.pieceName);
   if (piece === undefined) {
     return false;
   }
-  let trigger = piece.getTrigger(settings.triggerName);
+  const trigger = piece.getTrigger(settings.triggerName);
   if (trigger === undefined) {
     return false;
   }
@@ -169,7 +170,7 @@ function validateProps(props: PieceProperty, input: Record<string, unknown>) {
 
 function buildSchema(props: PieceProperty): TSchema {
   const entries = Object.entries(props);
-  let propsSchema: Record<string, TSchema> = {};
+  const propsSchema: Record<string, TSchema> = {};
   for (let i = 0; i < entries.length; ++i) {
     const property = entries[i][1];
     const name: string = entries[i][0];
@@ -194,6 +195,10 @@ function buildSchema(props: PieceProperty): TSchema {
         // Only accepts connections variable.
         propsSchema[name] = Type.RegEx(RegExp('[$]{1}\{connections.(.*?)\}'));
         break;
+        case PropertyType.ARRAY:
+          // Only accepts connections variable.
+          propsSchema[name] = Type.Array(Type.String({}));
+          break;
     }
     if (!property.required) {
       propsSchema[name] = Type.Optional(propsSchema[name]);

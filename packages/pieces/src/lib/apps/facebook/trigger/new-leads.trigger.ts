@@ -18,8 +18,6 @@ export const newLeads = createTrigger(
             })**/
         },
         onDisable: async (context) => {
-            context.store?.save("hello", "Magorium");
-            console.log(await context.store?.get("hello"));
         },
         onEnable: async (context) => {
         },

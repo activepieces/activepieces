@@ -61,10 +61,16 @@
         "pieces/apps/discord",
         "pieces/apps/github",
         "pieces/apps/gmail",
+        "pieces/apps/google_contacts",
+        "pieces/apps/google_contacts",
+        "pieces/apps/google_sheets",
         "pieces/apps/hackernews",
         "pieces/apps/hubspot",
         "pieces/apps/mailchimp",
-        "pieces/apps/slack"
+        "pieces/apps/openai",
+        "pieces/apps/pipedrive",
+        "pieces/apps/slack",
+        "pieces/apps/stripe"
       ]
     },
     {
