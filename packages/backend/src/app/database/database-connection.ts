@@ -29,6 +29,7 @@ export const databaseConnection = new DataSource({
   password,
   database,
   synchronize: true,
+  subscribers: [],
   migrations: ['src/database/migration/**/*.ts'],
   entities: [
     CollectionEntity,

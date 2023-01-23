@@ -14,7 +14,7 @@ export const stripeNewPayment = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhook = await stripeCommon.subscribeWebhook('charge.succeeded', context.webhookUrl!, context.propsValue['api_key']!);
-    await context.store?.save<WebhookInformation>('_new_payment_trigger', {
+    await context.store?.put<WebhookInformation>('_new_payment_trigger', {
       webhookId: webhook.id
     });
   },

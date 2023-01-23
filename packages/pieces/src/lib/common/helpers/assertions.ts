@@ -4,39 +4,21 @@ type NotUndefined<T> = T extends undefined ? never : T;
 
 export function assertNotNullOrUndefined<T>(
   value: T,
-  message: string,
-  level: number
+  fieldName: string,
 ): asserts value is NotNullOrUndefined<typeof value> {
-  // Use tslog to log the message
-  if (level === 0) {
-    console.log(message);
-    return;
-  }
-  throw new Error(message);
+  throw new Error(`${fieldName} is null or undefined`);
 }
 
 export function assertNotNull<T>(
   value: T,
-  message: string,
-  level: number
+  fieldName: string
 ): asserts value is NotNull<typeof value> {
-  // Use tslog to log the message
-  if (level === 0) {
-    console.log(message);
-    return;
-  }
-  throw new Error(message);
+  throw new Error(`${fieldName} is null`);
 }
 
 export function assertNotUndefined<T>(
   value: T,
-  message: string,
-  level: number
+  fieldName: string
 ): asserts value is NotUndefined<typeof value> {
-  // Use tslog to log the message
-  if (level === 0) {
-    console.log(message);
-    return;
-  }
-  throw new Error(message);
+  throw new Error(`${fieldName} is undefined`);
 }
