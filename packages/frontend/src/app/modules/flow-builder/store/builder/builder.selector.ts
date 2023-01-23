@@ -328,7 +328,9 @@ const selectAllStepsForMentionsDropdown = createSelector(
 	selectCurrentStepName,
 	selectAllFlowSteps,
 	(currentStepName,steps): (MentionListItem & { step: FlowItem })[] => {
-		return steps.filter(s=>s.name !== currentStepName).map(s => {
+		const currentStepIndex = steps.findIndex(s=>s.name===currentStepName);
+	
+		return steps.slice(0,currentStepIndex).filter(s=>s.name !== currentStepName).map(s => {
 			return {
 				label: s.displayName,
 				value: `\${${s.name}}`,
