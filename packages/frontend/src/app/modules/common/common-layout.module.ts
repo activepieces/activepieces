@@ -202,6 +202,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     InterpolatingTextFormControlComponent,
     MatIconModule,
     StepMentionsListComponent,
+    BuilderAutocompleteMentionsDropdownComponent
   ],
   providers: [
     HighlightService,
