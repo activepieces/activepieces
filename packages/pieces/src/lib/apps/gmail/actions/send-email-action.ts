@@ -41,10 +41,10 @@ export const gmailSendEmailAction = createAction({
 	},
 	async run(context) {
 		const mailOptions = {
-			to: context.propsValue['receiver'],
-			subject: context.propsValue['subject'],
-			text: context.propsValue['body_text'],
-			html: context.propsValue['body_html'],
+			to: context.propsValue['receiver']?.replaceAll("\n",""),
+			subject: context.propsValue['subject']?.replaceAll("\n",""),
+			text: context.propsValue['body_text']?.replaceAll("\n","<br>"),
+			html: context.propsValue['body_html']?.replaceAll("\n","<br>"),
 		};
 		const emailText = `To: ${mailOptions.to}
 Subject: ${mailOptions.subject}

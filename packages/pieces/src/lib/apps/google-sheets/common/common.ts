@@ -22,7 +22,8 @@ export const googleSheetsCommon = {
             if (propsValue['authentication'] === undefined) {
                 return {
                     disabled: true,
-                    options: []
+                    options: [],
+                    placeholder:'Please authenticate first'
                 }
             }
             const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
@@ -49,14 +50,15 @@ export const googleSheetsCommon = {
         }
     }),
     sheet_id: Property.Dropdown({
-        displayName: "Spreadsheet",
+        displayName: "Sheet",
         required: true,
         refreshers: ['authentication', 'spreadsheet_id'],
         options: async (propsValue) => {
             if (propsValue['authentication'] === undefined || (propsValue['spreadsheet_id'] ?? '').toString().length === 0) {
                 return {
                     disabled: true,
-                    options: []
+                    options: [],
+                    placeholder:'Please select a spreadsheet first'
                 }
             }
             const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
@@ -73,7 +75,8 @@ export const googleSheetsCommon = {
         }
     }),
     getValues: getValues,
-    appendGoogleSheetValues: appendGoogleSheetValues
+    appendGoogleSheetValues: appendGoogleSheetValues,
+    findSheetName:findSheetName
 }
 
 

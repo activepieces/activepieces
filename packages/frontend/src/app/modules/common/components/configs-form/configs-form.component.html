@@ -1,11 +1,3 @@
-<!-- <div class="ap-px-4  ap-py-2 expansion-panel-body">
-  <p class="ap-my-2 doc-container ap-cursor-default" placement="bottom">
-    <fa-icon class="ap-mr-2 info-icon" matTooltipShowDelay="100" matTooltip="Connector Documentation"
-      [icon]="faInfoCircle"></fa-icon>
-    <a > </a>
-  </p>
-</div> -->
-
 <form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col ap-gap-2">
   <div *ngFor="let config of requiredConfigs; let i = index">
     <ng-container
@@ -81,7 +73,13 @@
         </mat-error>
       </mat-form-field>
 
+
     </ng-container>
+    <ng-container *ngSwitchCase="PropertyType.ARRAY">
+      <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="config.description">{{config.label}}</div>
+      <app-array-form-control [formControlName]="config.key"></app-array-form-control>
+    </ng-container>
+
     <ng-container *ngIf="config.type === PropertyType.OAUTH2 || config.type === PropertyType.SECRET_TEXT">
       <div class="ap-relative">
         <app-button btnColor="primary" btnStyle="basic" btnSize="extraSmall"

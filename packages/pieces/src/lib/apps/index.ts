@@ -12,7 +12,6 @@ import { pipedrive } from './pipedrive';
 import { googleContacts } from './google-contacts';
 import { googleSheets } from './google-sheets';
 
-
 export const pieces: Piece[] = [
 	slack,
 	gmail,
@@ -23,7 +22,6 @@ export const pieces: Piece[] = [
 	mailchimp,
 	openai,
 	stripe,
-	googleContacts,
 	googleSheets,
 	pipedrive,
 	googleContacts

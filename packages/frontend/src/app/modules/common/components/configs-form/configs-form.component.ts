@@ -171,6 +171,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       if (c.type === PropertyType.DROPDOWN) {
         const refreshers$ = {};
         c.refreshers!.forEach((r) => {
+          console.log(this.form.controls[r],r, this.form.controls);
           refreshers$[r] = this.form.controls[r].valueChanges.pipe(
             distinctUntilChanged((prev, curr) => {
               return JSON.stringify(prev) === JSON.stringify(curr);
@@ -236,7 +237,10 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       if (c.required) {
         validators.push(Validators.required);
       }
-      controls[c.key] = new UntypedFormControl(c.value, validators);
+      if(c.type !== PropertyType.ARRAY)
+      {controls[c.key] = new UntypedFormControl(c.value, validators);}
+      else
+      {controls[c.key] = new UntypedFormControl([''], validators);}
     });
     return controls;
   }
