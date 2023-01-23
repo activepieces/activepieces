@@ -22,7 +22,6 @@ export const pieces: Piece[] = [
 	mailchimp,
 	openai,
 	stripe,
-	googleContacts,
 	googleSheets,
 	pipedrive,
 	googleContacts
