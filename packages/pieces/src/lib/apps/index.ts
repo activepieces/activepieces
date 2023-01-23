@@ -10,6 +10,7 @@ import { openai } from './openai';
 import { stripe } from './stripe';
 import { pipedrive } from './pipedrive';
 import { googleContacts } from './google-contacts';
+import { googleSheets } from './google-sheets';
 
 
 export const pieces: Piece[] = [
@@ -22,6 +23,8 @@ export const pieces: Piece[] = [
 	mailchimp,
 	openai,
 	stripe,
+	googleContacts,
+	googleSheets,
 	pipedrive,
 	googleContacts
 ];

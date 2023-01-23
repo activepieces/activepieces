@@ -14,7 +14,7 @@ export const stripeNewCustomer = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhook = await stripeCommon.subscribeWebhook('customer.created', context.webhookUrl!, context.propsValue['api_key']!);
-    await context.store?.save<WebhookInformation>('_new_customer_trigger', {
+    await context.store?.put<WebhookInformation>('_new_customer_trigger', {
       webhookId: webhook.id
     });
   },
