@@ -51,7 +51,7 @@ export const mailChimpSubscribeTrigger = createTrigger({
       webhookUrl: context.webhookUrl!,
     });
 
-    await context.store?.save<WebhookData>(WEBHOOK_DATA_STORE_KEY, {
+    await context.store?.put<WebhookData>(WEBHOOK_DATA_STORE_KEY, {
       id: enabledWebhookId,
       listId: context.propsValue.listId!,
     });
