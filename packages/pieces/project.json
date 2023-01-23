@@ -14,6 +14,13 @@
         "assets": ["packages/pieces/*.md"]
       }
     },
+    "refresh-docs": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node dist/packages/pieces/src/lib/docs-generator/index.js"
+      },
+      "dependsOn": ["build"]
+    },
     "publish": {
       "executor": "nx:run-commands",
       "options": {

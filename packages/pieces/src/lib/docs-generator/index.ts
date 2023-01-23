@@ -6,7 +6,7 @@ import { Piece } from '../framework/piece';
 import { Trigger } from '../framework/trigger/trigger';
 
 const mintJson: { navigation: { group: string; pages: string[] }[] } =
-  JSON.parse(fs.readFileSync('../../../../docs/mint.json', 'utf8'));
+  JSON.parse(fs.readFileSync('./docs/mint.json', 'utf8'));
 const appsDocsFolderPath = 'pieces/apps';
 function getCardTemplate(title: string, description: string) {
   const CARD_TEMPLATE = `
@@ -48,17 +48,17 @@ function writePieceDoc(p: Piece, mdxTemplate:string) {
   docsFile = docsFile.replace('ACTIONS', actionsCards);
   docsFile = docsFile.replace('TRIGGERS', triggerCards);
   fs.writeFileSync(
-    `../../../../docs/${appsDocsFolderPath}/${p.metadata().name}.mdx`,
+    `./docs/${appsDocsFolderPath}/${p.metadata().name}.mdx`,
     docsFile
   );
   return `${appsDocsFolderPath}/${p.metadata().name}`;
 }
 
 
-const TEMPLATE_MDX = fs.readFileSync('../../src/docs-generator/template.mdx', 'utf8');
+const TEMPLATE_MDX = fs.readFileSync('packages/pieces/src/lib/docs-generator/template.mdx', 'utf8');
 const appsDocsFilesPaths: string[] = [];
 pieces.forEach((p) => {
-  const predefinedMdxPath =`../../src/apps/${p.name}/${p.name}.mdx`;
+  const predefinedMdxPath =`packages/pieces/src/lib/apps/${p.name}/${p.name}.mdx`;
   if(fs.existsSync(predefinedMdxPath))
   {
     const predfinedMdxFile= fs.readFileSync(predefinedMdxPath,'utf8');
@@ -81,6 +81,6 @@ if (appsGroupIndex === -1) {
 } else {
   mintJson.navigation[appsGroupIndex] = appsGroup;
 }
-fs.writeFileSync('../../../../docs/mint.json', JSON.stringify(mintJson, null, 2));
+fs.writeFileSync('./docs/mint.json', JSON.stringify(mintJson, null, 2));
 
 console.log('docs generated');
