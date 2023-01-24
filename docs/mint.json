@@ -16,6 +16,7 @@
   },
   "topbarCtaButton": {
     "type": "link",
+    "name": "Playground",
     "url": "https://demo.activepieces.com"
   },
   "topbarLinks": [
