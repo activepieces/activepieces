@@ -16,7 +16,7 @@ jobs:
         run: echo RELEASE=$(node --print "require('./packages/frontend/package.json').version") >> $GITHUB_ENV
 
       - name: Fail if tag already exists
-        run: "! docker manifest inspect activepieces/frontend-ee:${{ env.RELEASE }}"
+        run: "! docker manifest inspect activepieces/frontend:${{ env.RELEASE }}"
 
       - name: install npm deps
         run: npm ci
