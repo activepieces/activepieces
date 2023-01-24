@@ -5,8 +5,9 @@
         <span class="ap-text-white">Index.js</span>
       </div>
       <div>
-        <svg-icon src="/assets/img/custom/maximize.svg" [svgStyle]="{width:'16px', height:'16px'}"
-          matTooltip="Fullscreen" class="ap-cursor-pointer" (click)="showFullscreenEditor()"> </svg-icon>
+        <svg-icon src="/assets/img/custom/maximize.svg" [svgStyle]="{width:'16px', height:'16px'}" #tooltip="matTooltip"
+          matTooltip="Fullscreen" class="ap-cursor-pointer" [matTooltipHideDelay]="hideDelayForFullscreenTooltip"
+          (click)="showFullscreenEditor()"> </svg-icon>
 
       </div>
     </div>

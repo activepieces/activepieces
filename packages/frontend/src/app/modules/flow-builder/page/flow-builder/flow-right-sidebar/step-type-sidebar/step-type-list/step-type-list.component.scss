@@ -1,7 +1,11 @@
 .list-container {
   padding: 7.5px 0px;
 
-  height: calc(100vh - 204px) !important;
+  height: calc(100vh - 204px - 76px) !important;
+  scrollbar-width: thin;
+  &::-webkit-scrollbar {
+    width: 4px;
+  }  
 }
 
 .list-item {
