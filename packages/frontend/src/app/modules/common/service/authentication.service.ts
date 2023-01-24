@@ -88,7 +88,7 @@ export class AuthenticationService {
 
 	getAllFlags() {
 		if (!this.flags$) {
-			this.flags$ = this.http.get<FlagsMap>(environment.apiUrl + '/flags').pipe(shareReplay(1000));
+			this.flags$ = this.http.get<FlagsMap>(environment.apiUrl + '/flags').pipe(shareReplay(1));
 		}
 		return this.flags$;
 	}
