@@ -1,8 +1,5 @@
 {
   "name": "@activepieces/backend",
   "version": "0.2.0",
-  "private": true,
-  "dependencies": {
-    "posthog-node": "^2.2.3"
-  }
+  "private": true
 }
