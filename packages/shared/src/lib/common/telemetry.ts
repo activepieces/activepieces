@@ -48,10 +48,9 @@ interface BaseTelemetryEvent<T, P> {
     payload: P
 }
 
-
 export type TelemetryEvent = BaseTelemetryEvent<TelemetryEventName.FLOW_TESTED, FlowTested>
     | BaseTelemetryEvent<TelemetryEventName.COLLECTION_CREATED, CollectionCreated>
-    | BaseTelemetryEvent<TelemetryEventName.START_BUILDING, unknown>
+    | BaseTelemetryEvent<TelemetryEventName.START_BUILDING, Record<string, never>>
     | BaseTelemetryEvent<TelemetryEventName.COLLECTION_ENABLED, CollectionEnabled>
     | BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, SignedUp>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_CREATED, FlowCreated>;
