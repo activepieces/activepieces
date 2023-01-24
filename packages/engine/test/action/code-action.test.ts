@@ -3,7 +3,7 @@ import {ExecutionState} from '../../src/model/execution/execution-state';
 import {StepOutputStatus} from '../../src/model/output/step-output';
 import {CodeExecutor} from '../../src/executors/code-executer';
 import {CodeActionHandler} from "../../src/action/code-action-handler";
-import {ActionType, CodeAction} from "shared";
+import {ActionType, CodeAction} from "@activepieces/shared";
 
 
 let executionState: ExecutionState;

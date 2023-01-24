@@ -3,11 +3,11 @@ import { BehaviorSubject, combineLatest, distinctUntilChanged, Observable, of, t
 import { FlowItemDetails } from '../step-type-sidebar/step-type-item/flow-item-details';
 import { Store } from '@ngrx/store';
 import { RightSideBarType } from '../../../../../common/model/enum/right-side-bar-type.enum';
-import { BuilderSelectors } from '../../../../store/selector/flow-builder.selector';
-import { FlowsActions } from '../../../../store/action/flows.action';
+import { BuilderSelectors } from '../../../../store/builder/builder.selector';
+import { FlowsActions } from '../../../../store/flow/flows.action';
 import { UUID } from 'angular2-uuid';
-import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
-import { ActionType } from 'shared';
+import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
+import { ActionType } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-edit-step-sidebar',

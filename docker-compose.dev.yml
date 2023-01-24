@@ -1,0 +1,69 @@
+version: '3.0'
+
+services:
+  backend:
+    image: activepieces/ap-base:1
+    environment:
+      AP_JWT_SECRET: super-secret
+      AP_POSTGRES_HOST: postgres
+      AP_REDIS_HOST: redis
+    privileged: true
+    ports:
+     - "3000:3000"
+     - "9229:9229"
+    networks:
+      - activepieces_dev
+    volumes:
+     - ./:/usr/src/app
+    working_dir: /usr/src/app
+    entrypoint:
+     - npx
+     - nx
+     - dev
+     - backend
+    depends_on:
+     - postgres
+     - redis
+
+  frontend:
+    image: activepieces/ap-base:1
+    ports:
+     - "4200:4200"
+     - "9222:9222"
+    networks:
+      - activepieces_dev
+    volumes:
+     - ./:/usr/src/app
+    working_dir: /usr/src/app
+    entrypoint:
+     - npx
+     - nx
+     - serve
+     - frontend
+    depends_on:
+     - backend
+
+  postgres:
+    image: postgres:14.4
+    environment:
+      POSTGRES_DB: activepieces
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: A79Vm5D4p2VQHOp2gd5
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    networks:
+      - activepieces_dev
+
+  redis:
+    image: redis:7.0.7
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - activepieces_dev
+
+volumes:
+  postgres_data_dev:
+  redis_data_dev:
+
+networks:
+  activepieces_dev:

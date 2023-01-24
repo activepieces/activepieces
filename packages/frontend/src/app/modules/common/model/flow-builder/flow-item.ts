@@ -1,4 +1,4 @@
-import { Action, Trigger } from 'shared';
+import { Action, Trigger } from '@activepieces/shared';
 
 export type FlowItemRenderInfo = {
 	boundingBox?: BoundingBox;

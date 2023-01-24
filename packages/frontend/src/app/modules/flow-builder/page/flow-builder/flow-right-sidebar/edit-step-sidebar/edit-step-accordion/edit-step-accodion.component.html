@@ -97,10 +97,10 @@
       </app-loop-step-input-form>
       <app-code-step-input-form *ngSwitchCase="ActionType.CODE" formControlName="input">
       </app-code-step-input-form>
-      <app-component-action-input-form *ngSwitchCase="ActionType.PIECE" formControlName="input">
-      </app-component-action-input-form>
-      <app-component-trigger-input-form *ngSwitchCase="TriggerType.PIECE" formControlName="input">
-      </app-component-trigger-input-form>
+      <app-piece-action-input-form *ngSwitchCase="ActionType.PIECE" formControlName="input">
+      </app-piece-action-input-form>
+      <app-piece-trigger-input-form *ngSwitchCase="TriggerType.PIECE" formControlName="input">
+      </app-piece-trigger-input-form>
     </ng-container>
 
   </div>

@@ -9,7 +9,7 @@ import {
 	SimpleChanges,
 } from '@angular/core';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
-import { ThemeService } from 'src/app/modules/common/service/theme.service';
+import { ThemeService } from 'packages/frontend/src/app/modules/common/service/theme.service';
 
 @Component({
 	selector: 'app-sidebar-header',

@@ -1,18 +1,19 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CollectionService } from '../../../common/service/collection.service';
-import { AuthenticationService } from '../../../common/service/authentication.service';
-import { ProjectService } from 'src/app/modules/common/service/project.service';
+import { ProjectService } from 'packages/frontend/src/app/modules/common/service/project.service';
 import { map, Observable, startWith, Subject, switchMap, tap } from 'rxjs';
-import { FlowService } from 'src/app/modules/common/service/flow.service';
-import { PosthogService } from 'src/app/modules/common/service/posthog.service';
-import { ApPaginatorComponent } from 'src/app/modules/common/components/pagination/ap-paginator.component';
+import { FlowService } from 'packages/frontend/src/app/modules/common/service/flow.service';
+import { ApPaginatorComponent } from 'packages/frontend/src/app/modules/common/components/pagination/ap-paginator.component';
 import { CollectionsTableDataSource } from './collections-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import { DeleteCollectionDialogComponent } from './delete-collection-dialog/delete-collection-dialog.component';
 import { ARE_THERE_COLLECTIONS_FLAG } from '../../dashboard.routing';
-import { DEFAULT_PAGE_SIZE } from 'src/app/modules/common/components/pagination/tables.utils';
-import { Collection, Flow } from 'shared';
+import { DEFAULT_PAGE_SIZE } from 'packages/frontend/src/app/modules/common/components/pagination/tables.utils';
+import { Collection, Flow } from '@activepieces/shared';
+import {
+	DeleteEntityDialogComponent,
+	DeleteEntityDialogData,
+} from '../../components/delete-enity-dialog/delete-collection-dialog.component';
 @Component({
 	templateUrl: './collections-table.component.html',
 })
@@ -28,12 +29,10 @@ export class CollectionsTableComponent implements OnInit {
 	constructor(
 		private router: Router,
 		private activatedRoute: ActivatedRoute,
-		private authenticationService: AuthenticationService,
 		private collectionService: CollectionService,
 		private dialogService: MatDialog,
 		private projectService: ProjectService,
 		private flowService: FlowService,
-		private posthogService: PosthogService
 	) {}
 
 	ngOnInit(): void {
@@ -58,7 +57,12 @@ export class CollectionsTableComponent implements OnInit {
 	}
 
 	deleteCollection(collection: Collection) {
-		const dialogRef = this.dialogService.open(DeleteCollectionDialogComponent, { data: { ...collection } });
+		const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
+			data: {
+				deleteEntity$: this.collectionService.delete(collection.id),
+				entityName: collection.version?.displayName,
+			} as DeleteEntityDialogData,
+		});
 		this.archiveCollectionDialogClosed$ = dialogRef.beforeClosed().pipe(
 			tap(res => {
 				if (res) {
@@ -83,16 +87,9 @@ export class CollectionsTableComponent implements OnInit {
 					});
 				}),
 				switchMap(collection => {
-					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
-						this.posthogService.captureEvent('collection.created [Builder]', collection);
-					}
 					return this.flowService.create({ collectionId: collection.id, displayName: 'Flow 1' });
 				}),
 				tap(flow => {
-					debugger;
-					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
-						this.posthogService.captureEvent('flow.created [Builder]', flow);
-					}
 					this.router.navigate(['/flows/', flow.collectionId], { queryParams: { newCollection: true } });
 				})
 			);

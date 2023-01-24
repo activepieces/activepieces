@@ -419,23 +419,8 @@ $main-theme: material-theme-helper.modify-background($ap-theme-light, $white, $w
 	stroke-width: 15% !important;
 }
 
-.mat-snack-bar-container {
-	background-color: rgba($title, 0.85);
-	color: $white;
-	border-radius: 8px !important;
-	padding: 0.8125rem 0.9375rem !important;
-	border: 1px solid $title;
-	box-shadow: unset;
-	min-width: unset !important;
-	min-height: unset !important;
-	max-width: unset !important;
-	font-weight: 500;
-	z-index: 999999;
+.mat-mdc-snack-bar-container {
 
-	.mat-simple-snackbar {
-		font-family: unset;
-		line-height: unset;
-	}
 
 	button {
 		color: $white;
@@ -444,16 +429,36 @@ $main-theme: material-theme-helper.modify-background($ap-theme-light, $white, $w
 		padding: 0.1875rem 0.625rem !important;
 		background-color: #5d5d5d;
 		outline: 0px !important;
-		margin-left: 50px;
 	}
 
-	&.error {
-		background-color: rgba($danger, 0.85);
-		border: 1px solid $danger;
+  .mdc-snackbar__surface
+  {
+    background-color: rgba($title, 0.85);
+    color: $white;
+    border-radius: 8px !important;
+    border: 1px solid $title;
+    box-shadow: unset;
+    min-width: unset !important;
+    min-height: unset !important;
+    max-width: unset !important;
+    font-weight: 500;
+    z-index: 999999;
 
-		button {
-			background-color: rgba($danger, 0.55);
-		}
+	.mat-simple-snackbar {
+		font-family: unset;
+		line-height: unset;
+	}
+  }
+	&.error {
+    .mdc-snackbar__surface
+    {
+      background-color: rgba($danger, 0.85);
+      border: 1px solid $danger;
+
+      button {
+        background-color: rgba($danger, 0.55);
+      }
+    }
 	}
 }
 
@@ -476,7 +481,6 @@ $main-theme: material-theme-helper.modify-background($ap-theme-light, $white, $w
 .mat-tab-body-content,
 .mat-drawer-inner-container {
 	scrollbar-width: thin;
-
 	&::-webkit-scrollbar {
 		width: 4px;
 	}
@@ -591,4 +595,42 @@ mat-option.add-auth{
   {
     flex-grow:1 !important;
   }
+}
+
+.ql-editor {
+  padding: 0px !important;
+  @include mat.typography-level($ap-typography, "body-1");
+  line-height:  1.9rem;
+}
+
+.mat-mdc-menu-panel.mat-mdc-menu-panel
+{
+  max-width: unset !important;
+}
+
+app-mentions-list
+{
+  mat-tree
+  {
+   padding-left:20px;
+  }
+  .mdc-list-item__primary-text
+  {
+    display: flex;
+    align-items: center;
+    width:100%;
+  }
+
+}
+
+.mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix
+{
+  padding-bottom:unset;
+}
+
+app-collection-builder{
+	mat-expansion-panel
+	{
+		overflow:visible !important;
+	}
 }

@@ -4,7 +4,7 @@ import { Observable, of, switchMap } from 'rxjs';
 import { CollectionService } from '../../common/service/collection.service';
 import { FlowService } from '../../common/service/flow.service';
 import { InstanceRunService } from '../../common/service/flow-run.service';
-import { Collection, Flow, FlowRun } from 'shared';
+import { Collection, Flow, FlowRun } from '@activepieces/shared';
 
 export type InstanceRunInfo = {
 	collection: Collection;

@@ -9,7 +9,7 @@ import {
 	SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
 	VERTICAL_LINE_LENGTH,
 } from '../page/flow-builder/flow-item-tree/flow-item/flow-item-connection/draw-utils';
-import { ActionType, LoopOnItemsAction } from 'shared';
+import { ActionType, LoopOnItemsAction } from '@activepieces/shared';
 
 export class FlowRenderUtil {
 	constructor() {}

@@ -1,17 +1,15 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Input } from '@angular/core';
-
 import { delay, forkJoin, map, Observable, of, skipWhile, Subject, take, takeUntil, tap } from 'rxjs';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { Store } from '@ngrx/store';
-import { FlowItem } from 'src/app/modules/common/model/flow-builder/flow-item';
-import { BuilderSelectors } from 'src/app/modules/flow-builder/store/selector/flow-builder.selector';
+import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActionType, TriggerType, UpdateActionRequest, UpdateTriggerRequest } from 'shared';
-import { FlowsActions } from 'src/app/modules/flow-builder/store/action/flows.action';
-import { AuthenticationService } from 'src/app/modules/common/service/authentication.service';
+import { ActionType, TriggerType, UpdateActionRequest, UpdateTriggerRequest } from '@activepieces/shared';
+import { AuthenticationService } from 'packages/frontend/src/app/modules/common/service/authentication.service';
+import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
+import { FlowsActions } from 'packages/frontend/src/app/modules/flow-builder/store/flow/flows.action';
 
 @Component({
 	selector: 'app-edit-step-accodion',
@@ -65,7 +63,6 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(
 			tap(readOnly => {
 				if (readOnly) {
-					console.log('readonly');
 					this.stepForm.disable();
 				} else if (!this.stepForm.enabled) {
 					this.stepForm.enable();

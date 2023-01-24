@@ -1,0 +1,32 @@
+<app-dialog-title-template>
+  Delete {{data.entityName}}
+</app-dialog-title-template>
+<mat-dialog-content>
+  <div class="ap-typography-body-1 ap-text-description ap-mb-4">
+    Please type "DELETE" to confirm delete this collection
+  </div>
+  <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" (submit)="deleteCollection()">
+    <mat-form-field class="ap-w-full" appearance="outline">
+      <input formControlName="confirmation" matInput type="text" placeholder="DELETE" />
+      <mat-error *ngIf="confirmationForm.controls.confirmation.invalid">Please write the confirmation message
+        correctly</mat-error>
+    </mat-form-field>
+  </form>
+  <div *ngIf="data.note" [class.ap-text-danger]="data.note.danger" class="ap-typography-caption">
+    {{data.note.text}}
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="!!deleteOperation$">
+      Cancel
+    </app-button>
+    <app-button cdkFocusInitial btnSize="default" type="submit" (click)="deleteCollection();"
+      [loading]="!!deleteOperation$" btnColor="warn">
+      Confirm
+    </app-button>
+  </div>
+</mat-dialog-actions>
+
+<ng-container *ngIf="deleteOperation$ | async"></ng-container>

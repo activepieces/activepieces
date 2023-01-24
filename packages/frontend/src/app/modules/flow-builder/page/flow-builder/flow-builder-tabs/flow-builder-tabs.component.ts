@@ -1,14 +1,14 @@
 import { AfterViewInit, Component, ElementRef, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ThemeService } from '../../../../common/service/theme.service';
-import { LeftSideBarType } from 'src/app/modules/common/model/enum/left-side-bar-type.enum';
+import { LeftSideBarType } from 'packages/frontend/src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { exhaustMap, fromEvent, map, Observable, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { FlowsActions } from '../../../store/action/flows.action';
+import { FlowsActions } from '../../../store/flow/flows.action';
 import { UUID } from 'angular2-uuid';
-import { FlowService } from 'src/app/modules/common/service/flow.service';
+import { FlowService } from 'packages/frontend/src/app/modules/common/service/flow.service';
 import { ViewModeEnum } from '../../../store/model/enums/view-mode.enum';
-import { BuilderSelectors } from '../../../store/selector/flow-builder.selector';
-import { Flow } from 'shared';
+import { BuilderSelectors } from '../../../store/builder/builder.selector';
+import { Flow } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-flow-builder-tabs',

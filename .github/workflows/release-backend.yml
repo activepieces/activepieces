@@ -18,6 +18,12 @@ jobs:
       - name: Fail if tag already exists
         run: "! docker manifest inspect activepieces/backend:${{ env.RELEASE }}"
 
+      - name: install npm deps
+        run: npm ci
+
+      - name: build backend
+        run: npx nx build backend
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
@@ -34,7 +40,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: ./backend.Dockerfile
+          file: ./backend.dockerfile
           platforms: |
             linux/amd64
             linux/arm64

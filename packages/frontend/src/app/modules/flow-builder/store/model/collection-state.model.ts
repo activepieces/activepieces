@@ -1,5 +1,5 @@
 import { UUID } from 'angular2-uuid';
-import { Collection, Instance } from 'shared';
+import { Collection, Instance } from '@activepieces/shared';
 import { CollectionStateEnum } from './enums/collection-state.enum';
 
 export interface CollectionState {

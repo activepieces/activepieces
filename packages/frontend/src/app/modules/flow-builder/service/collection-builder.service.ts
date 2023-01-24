@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { FlowRendererService } from './flow-renderer.service';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '../store/selector/flow-builder.selector';
+import { BuilderSelectors } from '../store/builder/builder.selector';
 import { distinctUntilChanged } from 'rxjs';
 import { FlowFactoryUtil } from './flowFactoryUtil';
 

@@ -1,3 +1,5 @@
+
+
 export enum HttpMethod {
 	CONNECT = 'CONNECT',
 	DELETE = 'DELETE',
@@ -12,7 +14,7 @@ export enum HttpMethod {
 
 export interface PieceConfig {
 	key: string;
-	type: InputType;
+	type: PropertyType;
 	label: string;
 	value?: any;
 	description?: string;
@@ -28,7 +30,7 @@ export interface PieceConfig {
 export class PieceProperty {
 	name: string;
 	description: string;
-	type: InputType;
+	type: PropertyType;
 	required: boolean;
 	displayName: string;
 	authUrl?: string;
@@ -37,6 +39,18 @@ export class PieceProperty {
 	extra?: Record<string, unknown>;
 	refreshers?: string[];
 }
+export enum PropertyType {
+	SHORT_TEXT = 'SHORT_TEXT',
+	LONG_TEXT = 'LONG_TEXT',
+	DROPDOWN = 'DROPDOWN',
+	NUMBER = 'NUMBER',
+	CHECKBOX = 'CHECKBOX',
+	OAUTH2 = 'OAUTH2',
+	SECRET_TEXT = 'SECRET_TEXT',
+	CUSTOM_AUTH = 'CUSTOM_AUTH',
+	ARRAY= 'ARRAY'
+}
+
 
 export const propsConvertor = {
 	convertToFrontEndConfig: (name: string, prop: PieceProperty): PieceConfig => {
@@ -61,6 +75,7 @@ export interface AppPiece {
 	actions: propMap;
 	triggers: propMap;
 	displayName: string;
+	description?: string;
 }
 
 type propMap = Record<
@@ -69,14 +84,6 @@ type propMap = Record<
 		displayName: string;
 		description: string;
 		props: Record<string, PieceProperty>;
+		sampleData?: Object;
 	}
 >;
-
-export enum InputType {
-	SHORT_TEXT = 'SHORT_TEXT',
-	LONG_TEXT = 'LONG_TEXT',
-	DROPDOWN = 'DROPDOWN',
-	NUMBER = 'NUMBER',
-	CHECKBOX = 'CHECKBOX',
-	OAUTH2 = 'OAUTH2',
-}

@@ -30,6 +30,12 @@ export class SidenavRoutesListComponent implements OnInit {
 			caption: 'Runs',
 			route: 'runs',
 		},
+		{
+			icon: 'assets/img/custom/connections.svg',
+			borderColorInTailwind: '!ap-border-blueBorder',
+			caption: 'Connections',
+			route: 'connections',
+		},
 	];
 	ngOnInit(): void {}
 	openDocs() {

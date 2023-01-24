@@ -1,0 +1,37 @@
+<form [formGroup]="componentForm" class="ap-flex ap-flex-col ap-gap-2">
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label> Trigger </mat-label>
+    <mat-select placeholder="Select an Trigger" [formControlName]="TRIGGER_FORM_CONTROL_NAME"
+      [compareWith]="triggerDropdownCompareFn">
+      <mat-select-trigger>
+        <ng-container *ngIf="selectedTrigger$ | async as selectedTrigger">
+          {{selectedTrigger?.label.name}}
+        </ng-container>
+      </mat-select-trigger>
+      <mat-option *ngFor="let opt of triggers$ | async" [value]="opt.value" [matTooltip]="opt.label.description">
+        <div>{{opt.label.name}}</div>
+        <div class="ap-typography-caption ap-text-description ap-truncate"> {{opt.label.description}}</div>
+      </mat-option>
+      <mat-option [disabled]="true" *ngIf=" ( triggers$ | async) === undefined ||  (triggers$ | async)?.length === 0">
+        No options available
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="componentForm.get(TRIGGER_FORM_CONTROL_NAME)?.invalid">
+      Trigger is required
+    </mat-error>
+  </mat-form-field>
+  <ng-container
+    *ngIf="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value && componentForm.get(CONFIGS_FORM_CONTROL_NAME)">
+    <div>
+      <app-configs-form [stepName]="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value?.triggerName"
+        [pieceName]="componentName" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
+      </app-configs-form>
+    </div>
+  </ng-container>
+</form>
+
+<ng-container *ngIf="valueChanges$ | async"></ng-container>
+<ng-container *ngIf="triggerDropdownValueChanged$ | async"></ng-container>
+<ng-container *ngIf="updateOrAddConfigModalClosed$ | async"></ng-container>
+<ng-container *ngIf="initialSetup$ | async"> </ng-container>
+<ng-container *ngIf="selectedTrigger$ | async"></ng-container>

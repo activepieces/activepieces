@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { FlowsActions } from '../../../../store/action/flows.action';
+import { FlowsActions } from '../../../../store/flow/flows.action';
 
 import {
 	ChevronDropdownOption,
@@ -8,7 +8,7 @@ import {
 } from '../../../../components/chevron-dropdown-menu/chevron-dropdown-option';
 import { DeleteFlowDialogComponent } from './delete-flow-dialog/delete-flow-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { Flow } from 'shared';
+import { Flow } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-flow-builder-tab',

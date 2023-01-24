@@ -4,7 +4,7 @@ import { environment } from '../../../../environments/environment';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { User } from 'shared';
+import { User } from '@activepieces/shared';
 
 type FlagsMap = Record<string, boolean | string | Object | undefined>;
 
@@ -85,6 +85,7 @@ export class AuthenticationService {
 	saveNewsLetterSubscriber(email: string) {
 		return this.http.post('https://us-central1-activepieces-b3803.cloudfunctions.net/addContact', { email: email });
 	}
+
 	getAllFlags() {
 		if (!this.flags$) {
 			this.flags$ = this.http.get<FlagsMap>(environment.apiUrl + '/flags').pipe(shareReplay(1));
@@ -97,7 +98,6 @@ export class AuthenticationService {
 			map(flags => {
 				const warningTitle: string | undefined = flags['WARNING_TEXT_HEADER'] as string | undefined;
 				const warningBody: string | undefined = flags['WARNING_TEXT_BODY'] as string | undefined;
-				debugger;
 				if (warningTitle || warningBody) {
 					return {
 						title: warningTitle,
@@ -108,6 +108,15 @@ export class AuthenticationService {
 			})
 		);
 	}
+	
+	isTelemetryEnabled(): Observable<boolean> {
+		return this.getAllFlags().pipe(
+			map(flags => {
+				return flags['TELEMETRY_ENABLED'] as boolean;
+			})
+		);
+	}
+
 	getBackendUrl(): Observable<string> {
 		return this.getAllFlags().pipe(
 			map(flags => {

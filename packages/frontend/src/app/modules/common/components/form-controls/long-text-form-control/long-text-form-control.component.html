@@ -1,9 +1,0 @@
-<div
-  [attr.contenteditable]="!disabled"
-  class="form-control long-text-input"
-  [class.disabled]="disabled"
-  (input)="valueChanged($event)"
-  [textContent]="value"
-  [attr.placeholder]="placeholder"
-  [class.invalid-form-control]="applyInvalidFormControlCss"
-></div>

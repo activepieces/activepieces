@@ -42,9 +42,6 @@
         Type is required.
       </mat-error>
     </mat-form-field>
-    <div *ngIf="configForm.controls.type.value === ConfigType.OAUTH2">
-      <app-o-auth2-config-settings [submitted]="submitted" formControlName="settings"></app-o-auth2-config-settings>
-    </div>
     <mat-form-field class="ap-w-full" appearance="outline" *ngIf="configForm.controls.type.value === ConfigType.LONG_TEXT ||
      configForm.controls.type.value === ConfigType.SHORT_TEXT ||
      configForm.controls.type.value === ConfigType.NUMBER">
@@ -66,13 +63,6 @@
 
     <mat-checkbox color="primary" *ngIf=" configForm.controls.type.value=== ConfigType.CHECKBOX"
       formControlName="value">Value</mat-checkbox>
-    <app-o-auth2-connect-control [settingsValid]="configForm.controls.settings.valid"
-      [configSettings]="configForm.controls.settings.value" formControlName="value"
-      *ngIf="configForm.controls.type.value === ConfigType.OAUTH2"></app-o-auth2-connect-control>
-    <p @fadeInUp class="ap-text-danger ap-typography-caption"
-      *ngIf="submitted && configForm.controls.value.invalid  && configForm.controls.type.value === ConfigType.OAUTH2">
-      You have to connect an account to continue
-    </p>
   </form>
 </mat-dialog-content>
 <ng-container *ngIf="configTypeChanged$ | async"></ng-container>

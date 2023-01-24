@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
 import { FlowService } from '../../common/service/flow.service';
-import { Flow, FlowId, SeekPage } from 'shared';
+import { Flow, FlowId, SeekPage } from '@activepieces/shared';
 
 @Injectable({
 	providedIn: 'root',

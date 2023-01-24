@@ -1,4 +1,4 @@
-name: Release frontend
+name: Release Frontend
 
 on:
   push:
@@ -16,7 +16,13 @@ jobs:
         run: echo RELEASE=$(node --print "require('./packages/frontend/package.json').version") >> $GITHUB_ENV
 
       - name: Fail if tag already exists
-        run: "! docker manifest inspect activepieces/frontend:${{ env.RELEASE }}"
+        run: "! docker manifest inspect activepieces/frontend-ee:${{ env.RELEASE }}"
+
+      - name: install npm deps
+        run: npm ci
+
+      - name: build frontend
+        run: npx nx build frontend
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -34,7 +40,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: ./frontend.Dockerfile
+          file: ./frontend.dockerfile
           platforms: |
             linux/amd64
             linux/arm64

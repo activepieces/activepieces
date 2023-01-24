@@ -1,0 +1,8 @@
+<div #quill>
+  <quill-editor [formControl]="editorFormControl" [style]="{width:'100%'}" format="object" [modules]="modules"
+    [preserveWhitespace]="true" trackChanges="all" (onBlur)="onBlur()"
+    [placeholder]="!insideMatField || shouldLabelFloat? placeholder: ''" (onFocus)="onFocus()"
+    (onEditorCreated)="editorCreated()" [debounceTime]="0">
+  </quill-editor>
+</div>
+<ng-container *ngIf="valueChanges$|async"></ng-container>

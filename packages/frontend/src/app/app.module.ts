@@ -3,7 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FlowLayoutModule } from './modules/flow-builder/flow-builder.module';
+import { FlowBuilderModule } from './modules/flow-builder/flow-builder.module';
 import { HttpClientModule } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { environment } from '../environments/environment';
@@ -22,7 +22,7 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 	imports: [
 		CommonModule,
 		BrowserModule,
-		FlowLayoutModule,
+		FlowBuilderModule,
 		AppRoutingModule,
 		BrowserAnimationsModule,
 		StoreModule.forRoot({}),

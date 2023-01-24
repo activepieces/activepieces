@@ -1,0 +1,73 @@
+{
+  "name": "backend",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/backend/src",
+  "projectType": "application",
+  "implicitDependencies": ["engine"],
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/packages/backend",
+        "main": "packages/backend/src/main.ts",
+        "tsConfig": "packages/backend/tsconfig.app.json",
+        "assets": ["packages/backend/src/assets"],
+        "webpackConfig": "packages/backend/webpack.config.js"
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false
+        }
+      }
+    },
+    "build-watch": {
+      "executor": "@nrwl/js:node",
+      "options": {
+        "buildTarget": "backend:build",
+        "host": "0.0.0.0"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "backend:build:production"
+        }
+      }
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx build-watch backend",
+          "nx serve engine"
+        ],
+        "envFile": "packages/backend/.env"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nodemon -e ts,js,mjs,json -x 'nx bundle engine' --watch packages/engine/src --watch packages/pieces/src & nx build-watch backend"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/backend/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/backend/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}

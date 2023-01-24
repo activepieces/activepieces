@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Config } from 'shared';
+import { Config } from '@activepieces/shared';
 import { ThemeService } from '../../../../../../common/service/theme.service';
 
 @Component({

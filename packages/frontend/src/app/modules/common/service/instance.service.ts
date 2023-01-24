@@ -1,17 +1,26 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
-import { Observable } from 'rxjs';
-import { CollectionId, Instance, InstanceId, UpsertInstanceRequest } from 'shared';
+import { Observable, tap } from 'rxjs';
+import { CollectionId, Instance, InstanceId, TelemetryEventName, UpsertInstanceRequest } from '@activepieces/shared';
+import { TelemetryService } from './telemetry.service';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class InstanceService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient, private posthogService: TelemetryService) { }
 
 	publish(request: UpsertInstanceRequest): Observable<Instance> {
-		return this.http.post<Instance>(environment.apiUrl + `/instances`, request);
+		return this.http.post<Instance>(environment.apiUrl + `/instances`, request).pipe(tap(instance => {
+			this.posthogService.captureEvent({
+				name: TelemetryEventName.COLLECTION_ENABLED,
+				payload: {
+					collectionId: instance.collectionId,
+					projectId: instance.projectId
+				}
+			});
+		}));
 	}
 
 	get(collectionId: CollectionId): Observable<Instance> {

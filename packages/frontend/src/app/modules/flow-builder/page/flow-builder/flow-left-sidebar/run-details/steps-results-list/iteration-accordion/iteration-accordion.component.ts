@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { StepOutput } from 'shared';
+import { StepOutput } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-iteration-accordion',

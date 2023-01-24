@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Point } from '../../../../../common/model/helper/point';
 import { FlowItem } from '../../../../../common/model/flow-builder/flow-item';
 import { map, Observable, of } from 'rxjs';
-import { BuilderSelectors } from '../../../../store/selector/flow-builder.selector';
+import { BuilderSelectors } from '../../../../store/builder/builder.selector';
 import { Store } from '@ngrx/store';
 import { FlowStructureUtil } from '../../../../service/flowStructureUtil';
 import {

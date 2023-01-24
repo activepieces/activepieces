@@ -60,15 +60,20 @@
     {
       "group": "Apps",
       "pages": [
-        "pieces/apps/cloudVisionAI",
+        "pieces/apps/blackbaud",
         "pieces/apps/discord",
         "pieces/apps/github",
         "pieces/apps/gmail",
+        "pieces/apps/google_contacts",
+        "pieces/apps/google_sheets",
         "pieces/apps/hackernews",
         "pieces/apps/hubspot",
         "pieces/apps/mailchimp",
         "pieces/apps/openai",
-        "pieces/apps/slack"
+        "pieces/apps/pipedrive",
+        "pieces/apps/sendgrid",
+        "pieces/apps/slack",
+        "pieces/apps/stripe"
       ]
     },
     {

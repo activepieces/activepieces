@@ -4,14 +4,14 @@ import { filter, map, Observable, of, Subject, switchMap, takeUntil, tap } from 
 import { FlowItem } from '../../../../../../common/model/flow-builder/flow-item';
 import { RightSideBarType } from '../../../../../../common/model/enum/right-side-bar-type.enum';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '../../../../../store/selector/flow-builder.selector';
-import { FlowsActions } from '../../../../../store/action/flows.action';
+import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
+import { FlowsActions } from '../../../../../store/flow/flows.action';
 import { FlowItemDetails } from '../../../flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { fadeIn400ms } from 'src/app/modules/common/animation/fade-in.animations';
+import { fadeIn400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in.animations';
 import { RunDetailsService } from '../../../flow-left-sidebar/run-details/iteration-details.service';
 import { DeleteStepDialogComponent } from './delete-step-dialog/delete-step-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { ExecutionOutputStatus, FlowRun, StepOutput, StepOutputStatus, TriggerType } from 'shared';
+import { ExecutionOutputStatus, FlowRun, StepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared';
 
 @Component({
 	selector: 'app-flow-item-content',
@@ -29,6 +29,7 @@ export class FlowItemContentComponent implements OnInit {
 	stepIconUrl: string;
 	_flowItem: FlowItem;
 	selectedRun$: Observable<FlowRun | undefined>;
+	readonly$:Observable<boolean>;
 	@Input() selected: boolean;
 	@Input() trigger = false;
 	@Input() viewMode: boolean;
@@ -50,6 +51,7 @@ export class FlowItemContentComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
+		this.readonly$= this.store.select(BuilderSelectors.selectReadOnly);
 		this.selectedRun$ = this.store.select(BuilderSelectors.selectCurrentFlowRun);
 		this.stepStatus$ = this.getStepStatusIfItsNotInsideLoop();
 		this.stepInsideLoopStatus$ = this.runDetailsService.iterationStepResultState$.pipe(
