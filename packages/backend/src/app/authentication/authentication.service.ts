@@ -1,4 +1,4 @@
-import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest } from "@activepieces/shared";
+import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName } from "@activepieces/shared";
 import { userService } from "../user/user-service";
 import { passwordHasher } from "./lib/password-hasher";
 import { tokenUtils } from "./lib/token-utils";
@@ -6,6 +6,7 @@ import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { projectService } from "../project/project.service";
 import { FlagId, flagService } from "../flags/flag.service";
 import { QueryFailedError } from "typeorm";
+import { telemetry } from "../helper/telemetry.utils";
 
 export const authenticationService = {
   signUp: async (request: SignUpRequest): Promise<AuthenticationResponse> => {
@@ -14,7 +15,7 @@ export const authenticationService = {
 
       await flagService.save({ id: FlagId.USER_CREATED, value: true });
 
-      await projectService.create({
+      const project = await projectService.create({
         displayName: "Project",
         ownerId: user.id,
       });
@@ -24,7 +25,18 @@ export const authenticationService = {
         type: PrincipalType.USER,
       });
 
-      const { password, ...userResponse } = user;
+      telemetry.identify(user, project.id);
+      telemetry.track(user.id, {
+        name: TelemetryEventName.SIGNED_UP,
+        payload: {
+          userId: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          projectId: project.id
+        }
+      });
+      const { ...userResponse } = user;
 
       return {
         ...userResponse,

@@ -3,7 +3,7 @@ import { map, Observable, tap } from 'rxjs';
 import { AuthenticationService } from './modules/common/service/authentication.service';
 import { Store } from '@ngrx/store';
 import { NavigationStart, Router } from '@angular/router';
-import { PosthogService } from './modules/common/service/posthog.service';
+import { TelemetryService } from './modules/common/service/telemetry.service';
 import { fadeInUp400ms } from './modules/common/animation/fade-in-up.animation';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -23,7 +23,7 @@ export class AppComponent implements OnInit {
 		private store: Store,
 		private authenticationService: AuthenticationService,
 		private router: Router,
-		private posthogService: PosthogService,
+		private posthogService: TelemetryService,
 		private maticonRegistry: MatIconRegistry,
 		private domSanitizer: DomSanitizer
 	) {
@@ -50,9 +50,7 @@ export class AppComponent implements OnInit {
 					return;
 				}
 				this.store.dispatch(CommonActions.loadInitial({ user: user }));
-				if (user.trackEvents) {
-					this.posthogService.init();
-				}
+				this.posthogService.init(user);
 			}),
 			map(() => void 0)
 		);

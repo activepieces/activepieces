@@ -56,3 +56,4 @@ export {SeekPage, Cursor} from './lib/common/seek-page';
 export {apId, ApId} from './lib/common/id-generator'
 export {Flag} from './lib/flag/flag';
 export * from './lib/common/activepieces-error';
+export * from './lib/common/telemetry';

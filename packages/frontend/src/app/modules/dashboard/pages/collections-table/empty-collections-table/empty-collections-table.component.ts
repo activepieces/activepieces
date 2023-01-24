@@ -4,9 +4,8 @@ import { CollectionService } from 'packages/frontend/src/app/modules/common/serv
 import { ProjectService } from 'packages/frontend/src/app/modules/common/service/project.service';
 import { Observable, switchMap, tap } from 'rxjs';
 import { FlowService } from 'packages/frontend/src/app/modules/common/service/flow.service';
-import { PosthogService } from 'packages/frontend/src/app/modules/common/service/posthog.service';
-import { AuthenticationService } from 'packages/frontend/src/app/modules/common/service/authentication.service';
-import { Flow } from '@activepieces/shared';
+import { Flow, TelemetryEventName } from '@activepieces/shared';
+import { TelemetryService } from '../../../../common/service/telemetry.service';
 
 @Component({
 	selector: 'app-empty-collections-table',
@@ -19,16 +18,19 @@ export class EmptyCollectionsTableComponent {
 	piecesPage: any;
 	createCollection$: Observable<Flow>;
 	constructor(
+		private telemetryService: TelemetryService,
 		private router: Router,
 		private collectionService: CollectionService,
 		private projectService: ProjectService,
-		private flowService: FlowService,
-		private posthogService: PosthogService,
-		private authenticationService: AuthenticationService
+		private flowService: FlowService
 	) {}
 
 	createCollection() {
 		if (!this.creatingCollection) {
+			this.telemetryService.captureEvent({
+				name: TelemetryEventName.START_BUILDING,
+				payload: {}
+			});
 			this.creatingCollection = true;
 			const collectionDiplayName = 'Untitled';
 			this.createCollection$ = this.projectService.selectedProjectAndTakeOne().pipe(
@@ -39,15 +41,9 @@ export class EmptyCollectionsTableComponent {
 					});
 				}),
 				switchMap(collection => {
-					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
-						this.posthogService.captureEvent('collection.created [Start building]', collection);
-					}
 					return this.flowService.create({ collectionId: collection.id, displayName: 'Flow 1' });
 				}),
 				tap(flow => {
-					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
-						this.posthogService.captureEvent('flow.created [Start building]', flow);
-					}
 					this.router.navigate(['/flows/', flow.collectionId], { queryParams: { newCollection: true } });
 				})
 			);

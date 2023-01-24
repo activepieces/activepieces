@@ -85,6 +85,7 @@ export class AuthenticationService {
 	saveNewsLetterSubscriber(email: string) {
 		return this.http.post('https://us-central1-activepieces-b3803.cloudfunctions.net/addContact', { email: email });
 	}
+
 	getAllFlags() {
 		if (!this.flags$) {
 			this.flags$ = this.http.get<FlagsMap>(environment.apiUrl + '/flags').pipe(shareReplay(1));
@@ -107,6 +108,15 @@ export class AuthenticationService {
 			})
 		);
 	}
+	
+	isTelemetryEnabled(): Observable<boolean> {
+		return this.getAllFlags().pipe(
+			map(flags => {
+				return flags['TELEMETRY_ENABLED'] as boolean;
+			})
+		);
+	}
+
 	getBackendUrl(): Observable<string> {
 		return this.getAllFlags().pipe(
 			map(flags => {
