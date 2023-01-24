@@ -1,4 +1,4 @@
-import { FastifyPluginCallback, FastifyRequest } from "fastify";
+import { FastifyPluginCallback, FastifyReply, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
 import { Static, Type } from "@sinclair/typebox";
 import { ApId } from "@activepieces/shared";
@@ -21,6 +21,11 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
       await reply.status(StatusCodes.OK).send();
     }
   );
+
+  /**
+   * Used by applications to test webhooks
+   */
+  app.get("/", (_req: FastifyRequest, res: FastifyReply) => res.status(StatusCodes.OK).send());
 
   done();
 };
