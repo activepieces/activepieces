@@ -39,35 +39,16 @@ export const gmailSendEmailAction = createAction({
 			required: false,
 		})
 	},
-	async run(context) {
-		const mailOptions = {
-			to: context.propsValue['receiver']?.replaceAll("\n",""),
-			subject: context.propsValue['subject']?.replaceAll("\n",""),
-			text: context.propsValue['body_text']?.replaceAll("\n","<br>"),
-			html: context.propsValue['body_html']?.replaceAll("\n","<br>"),
-		};
-		const emailText = `To: ${mailOptions.to}
-Subject: ${mailOptions.subject}
-Content-Type: text/html
-Content-Transfer-Encoding: base64
-
-${mailOptions.html ? mailOptions.html : mailOptions.text}`;
-
+	async run(configValue) {
+		const headers = [
+			"subject: " + configValue.propsValue['subject'],
+			"to: " + configValue.propsValue['receiver'],
+			"mime-version: 1.0",
+			"content-type: text/html"
+		];
+		const message = headers.join("\n") + "\n\n" + (configValue.propsValue['body_html']?? configValue.propsValue['body_text'])
 		const requestBody: SendEmailRequestBody = {
-			raw: Buffer.from(emailText).toString('base64'),
-			payload: {
-				headers: [
-					{
-						name: 'to',
-						value: mailOptions.to!,
-					},
-					{
-						name: 'subject',
-						value: mailOptions.subject!,
-					},
-				],
-				mimeType: 'text/html',
-			},
+			raw: Buffer.from(message).toString("base64").replace(/\+/g, '-').replace(/\//g, '_'),
 		};
 		const request: HttpRequest<Record<string, unknown>> = {
 			method: HttpMethod.POST,
@@ -75,7 +56,7 @@ ${mailOptions.html ? mailOptions.html : mailOptions.text}`;
 			body: requestBody,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.propsValue['authentication']!['access_token'],
+				token: configValue.propsValue['authentication']!['access_token'],
 			},
 			queryParams: {},
 		};
@@ -88,6 +69,4 @@ type SendEmailRequestBody = {
 	 * This is a base64 encoding of the email
 	 */
 	raw: string;
-	payload: {headers: Array<{name: string; value: string}>;
-		mimeType: string;};
 };
