@@ -29,6 +29,7 @@ export const triggerUtils = {
           payloads = await engineHelper.executeTrigger({
             hookType: TriggerHookType.RUN,
             flowVersion: flowVersion,
+            triggerPayload: payload,
             webhookUrl: await getWebhookUrl(flowVersion.flowId),
             collectionVersion: collectionVersion,
             projectId: projectId
