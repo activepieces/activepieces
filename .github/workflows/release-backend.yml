@@ -3,7 +3,8 @@ name: Release backend
 on:
   push:
     branches:
-      - main
+      - dev
+      - feature-integrated-repo-pipeline
 
 jobs:
   Release-Backend:

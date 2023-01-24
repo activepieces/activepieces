@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - feature-integrated-repo-pipeline
 
 jobs:
   Release-Frontend:
