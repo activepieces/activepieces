@@ -21,7 +21,7 @@ export const slackSendMessageAction = createAction({
       authUrl: 'https://slack.com/oauth/authorize',
       tokenUrl: 'https://slack.com/api/oauth.access',
       required: true,
-      scope: ['channels:read', 'channels:write', 'chat:write:bot'],
+      scope: ['channels:read', 'channels:write', 'chat:write:bot', 'groups:read', 'mpim:read'],
     }),
     channel: Property.Dropdown({
       displayName: 'Channel',
@@ -43,7 +43,7 @@ export const slackSendMessageAction = createAction({
         const accessToken = authentication['access_token'];
         const request: HttpRequest<never> = {
           method: HttpMethod.GET,
-          url: `https://slack.com/api/conversations.list`,
+          url: `https://slack.com/api/conversations.list?types=public_channel,private_channel`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: accessToken,
