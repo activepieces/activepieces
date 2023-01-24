@@ -30,7 +30,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
-      - uses: depot/build-push-action@v1
+        uses: depot/build-push-action@v1
         with:
           project: du7O4b0e8P
           token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
