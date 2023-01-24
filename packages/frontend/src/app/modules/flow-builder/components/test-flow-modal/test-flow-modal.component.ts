@@ -11,8 +11,6 @@ import { HttpStatusCode } from '@angular/common/http';
 import { UntypedFormControl } from '@angular/forms';
 import { jsonValidator } from 'packages/frontend/src/app/modules/common/validators/json-validator';
 import jsonlint from 'jsonlint-mod';
-import { PosthogService } from 'packages/frontend/src/app/modules/common/service/posthog.service';
-import { AuthenticationService } from 'packages/frontend/src/app/modules/common/service/authentication.service';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { CodeService } from '../../service/code.service';
@@ -52,8 +50,6 @@ export class TestFlowModalComponent implements OnInit {
 		private store: Store,
 		private instanceRunService: InstanceRunService,
 		private snackbar: MatSnackBar,
-		private posthogService: PosthogService,
-		private authenticationService: AuthenticationService,
 		private dialogService: MatDialog,
 		private codeService: CodeService,
 		private cd: ChangeDetectorRef
@@ -163,9 +159,6 @@ export class TestFlowModalComponent implements OnInit {
 			switchMap(() => this.instanceRunService.get(runId)),
 			switchMap(instanceRun => {
 				if (instanceRun.status !== ExecutionOutputStatus.RUNNING && instanceRun.logsFileId !== null) {
-					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
-						this.posthogService.captureEvent('flow.tested', instanceRun);
-					}
 					return this.flowService.loadStateLogs(instanceRun.logsFileId).pipe(
 						map(state => {
 							return { ...instanceRun, state: state };

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import {
 	Collection,
 	CollectionVersion,
@@ -9,16 +9,26 @@ import {
 	UpdateCollectionRequest,
 	CollectionId,
 	CreateCollectionRequest,
+	TelemetryEventName,
 } from '@activepieces/shared';
+import { TelemetryService } from './telemetry.service';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class CollectionService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient, private posthogService: TelemetryService) { }
 
 	create(request: CreateCollectionRequest): Observable<Collection> {
-		return this.http.post<Collection>(environment.apiUrl + '/collections', request);
+		return this.http.post<Collection>(environment.apiUrl + '/collections', request).pipe(tap(collection => {
+			this.posthogService.captureEvent({
+				name: TelemetryEventName.COLLECTION_CREATED,
+				payload: {
+					collectionId: collection.id,
+					projectId: collection.projectId
+				}
+			});
+		}));
 	}
 
 	update(collectionId: CollectionId, request: UpdateCollectionRequest): Observable<Collection> {

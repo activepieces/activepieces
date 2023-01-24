@@ -1,11 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CollectionService } from '../../../common/service/collection.service';
-import { AuthenticationService } from '../../../common/service/authentication.service';
 import { ProjectService } from 'packages/frontend/src/app/modules/common/service/project.service';
 import { map, Observable, startWith, Subject, switchMap, tap } from 'rxjs';
 import { FlowService } from 'packages/frontend/src/app/modules/common/service/flow.service';
-import { PosthogService } from 'packages/frontend/src/app/modules/common/service/posthog.service';
 import { ApPaginatorComponent } from 'packages/frontend/src/app/modules/common/components/pagination/ap-paginator.component';
 import { CollectionsTableDataSource } from './collections-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
@@ -31,12 +29,10 @@ export class CollectionsTableComponent implements OnInit {
 	constructor(
 		private router: Router,
 		private activatedRoute: ActivatedRoute,
-		private authenticationService: AuthenticationService,
 		private collectionService: CollectionService,
 		private dialogService: MatDialog,
 		private projectService: ProjectService,
 		private flowService: FlowService,
-		private posthogService: PosthogService
 	) {}
 
 	ngOnInit(): void {
@@ -91,15 +87,9 @@ export class CollectionsTableComponent implements OnInit {
 					});
 				}),
 				switchMap(collection => {
-					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
-						this.posthogService.captureEvent('collection.created [Builder]', collection);
-					}
 					return this.flowService.create({ collectionId: collection.id, displayName: 'Flow 1' });
 				}),
 				tap(flow => {
-					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
-						this.posthogService.captureEvent('flow.created [Builder]', flow);
-					}
 					this.router.navigate(['/flows/', flow.collectionId], { queryParams: { newCollection: true } });
 				})
 			);

@@ -34,6 +34,12 @@ export const flagService = {
         updated,
       },
       {
+        id: FlagId.TELEMETRY_ENABLED,
+        value: system.get(SystemProp.TELEMETRY_ENABLED) ?? true,
+        created,
+        updated,
+      },
+      {
         id: FlagId.FRONTEND_URL,
         value: system.get(SystemProp.FRONTEND_URL),
         created,
@@ -61,6 +67,7 @@ export enum FlagId {
   FRONTEND_URL = "FRONTEND_URL",
   BACKEND_URL = "BACKEND_URL",
   USER_CREATED = "USER_CREATED",
+  TELEMETRY_ENABLED = "TELEMETRY_ENABLED",
   WARNING_TEXT_BODY = "WARNING_TEXT_BODY",
   WARNING_TEXT_HEADER = "WARNING_TEXT_HEADER",
 }
@@ -69,6 +76,7 @@ export type FlagType =
   | BaseFlagStructure<FlagId.FRONTEND_URL, string>
   | BaseFlagStructure<FlagId.BACKEND_URL, string>
   | BaseFlagStructure<FlagId.USER_CREATED, boolean>
+  | BaseFlagStructure<FlagId.TELEMETRY_ENABLED, boolean>
   | BaseFlagStructure<FlagId.WARNING_TEXT_BODY, string>
   | BaseFlagStructure<FlagId.WARNING_TEXT_HEADER, string>;
 

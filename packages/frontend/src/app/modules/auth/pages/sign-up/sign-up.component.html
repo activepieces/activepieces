@@ -33,7 +33,7 @@
   </mat-form-field>
   <p @fadeInUp class="ap-text-danger ap-typography-caption -ap-mt-5 ap-px-4" *ngIf="emailExists && !emailChanged">
     Email is used
-   </p>
+  </p>
   <mat-form-field class="ap-w-full" appearance="outline">
     <mat-label>Password</mat-label>
     <input (focus)="menuTrigger.openMenu()" (blur)="menuTrigger.closeMenu()" type="password" matInput
@@ -106,9 +106,6 @@
   <mat-checkbox id="news_letter" class="news_letter" color="primary" formControlName="newsLetter">Recieve updates and
     newsletters from activepieces</mat-checkbox>
 
-  <mat-checkbox id="trackEvents" color="primary" formControlName="trackEvents">Help improve activepieces by sending
-    data anonymously</mat-checkbox>
-
   <div class="text-center">
     <app-button [loading]="loading" (buttonClicked)="signUp()" btnColor="primary" [fullWidthOfContainer]="true">
       Sign up
@@ -116,7 +113,13 @@
   </div>
 </form>
 <div class="ap-text-center ap-typography-caption ap-mt-2">
-  <a routerLink="/sign-in" >Already have an account? </a>
+  <p>
+    By creating an account, you agree to our <a href="https://www.activepieces.com/terms" target="_blank">Terms of
+      Service</a> and <a href="https://www.activepieces.com/privacy" target="_blank"> Privacy Policy</a>.
+  </p>
+</div>
+<div class="ap-text-center ap-typography-caption ap-mt-2">
+  <a routerLink="/sign-in">Already have an account? </a>
 </div>
 
 

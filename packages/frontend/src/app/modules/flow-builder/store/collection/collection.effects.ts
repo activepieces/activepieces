@@ -12,8 +12,6 @@ import { SingleFlowModifyingState } from '../flow/flows.action';
 import { BuilderActions } from '../builder/builder.action';
 
 import { autoSaveDebounceTime } from 'packages/frontend/src/app/modules/common/utils';
-import { AuthenticationService } from 'packages/frontend/src/app/modules/common/service/authentication.service';
-import { PosthogService } from 'packages/frontend/src/app/modules/common/service/posthog.service';
 import { CollectionVersionState, InstanceStatus } from '@activepieces/shared';
 import { InstanceService } from 'packages/frontend/src/app/modules/common/service/instance.service';
 
@@ -125,9 +123,6 @@ export class CollectionEffects {
 			return this.actions$.pipe(
 				ofType(CollectionActions.publishSuccess),
 				tap(action => {
-					if (this.authenticationService.currentUserSubject.value?.trackEvents) {
-						this.posthogService.captureEvent('collection.enable', action.instance);
-					}
 					if (action.showSnackbar) {
 						this.snackBar.open(`Publishing finished`);
 					}
@@ -212,8 +207,6 @@ export class CollectionEffects {
 		private instanceService: InstanceService,
 		private store: Store,
 		private actions$: Actions,
-		private snackBar: MatSnackBar,
-		private authenticationService: AuthenticationService,
-		private posthogService: PosthogService
+		private snackBar: MatSnackBar
 	) {}
 }
