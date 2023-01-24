@@ -3,7 +3,18 @@ title: "Piece"
 description: ""
 ---
 
-This is the structure of an piece, and this should be placed inside `app_name/index.ts`
+The piece folder structure should be this:
+
+```
+.
+├── app_name
+│   ├── common
+│   ├── actions
+│   ├── trigger
+│   ├── index.ts
+```
+
+This contains piece metadata and should be placed into `app_name/index.ts`
 
 ```typescript
 export const pieceName = createPiece({

@@ -2,7 +2,8 @@
   "name": "Activepieces",
   "logo": {
     "light": "./resources/logo/light.svg",
-    "dark": "./resources/logo/dark.svg"
+    "dark": "./resources/logo/dark.svg",
+    "href": "https://www.activepieces.com"
   },
   "favicon": "./resources/favicon.png",
   "colors": {
@@ -77,9 +78,7 @@
     {
       "group": "Helpers",
       "pages": [
-        "pieces/helpers/http-request",
-        "pieces/helpers/code",
-        "pieces/helpers/storage"
+        "pieces/helpers/code"
       ]
     },
     {
@@ -90,11 +89,12 @@
       ]
     },
     {
-      "group": "Self Hosting",
+      "group": "Installing",
       "pages": [
-        "self-hosting/overview",
-        "self-hosting/docker",
-        "self-hosting/configurations"
+        "install/overview",
+        "install/docker",
+        "install/digitalocean",
+        "install/configurations"
       ]
     },
     {
@@ -122,6 +122,15 @@
       ]
     },
     {
+      "group": "Pieces Reference",
+      "pages": [
+        "contributing/pieces-reference/piece",
+        "contributing/pieces-reference/property",
+        "contributing/pieces-reference/action",
+        "contributing/pieces-reference/trigger"
+      ]
+    },
+    {
       "group": "Other",
       "pages": [
         "changelog",
@@ -133,5 +142,10 @@
     "posthog": {
       "apiKey": "phc_TXdpocbYTeZVm5VJmMzHTMrCofBQu3e0kN7HGMNGTVW"
     }
+  },
+  "footerSocials": {
+    "website": "https://www.activepieces.com",
+    "github": "https://github.com/activepieces/activepieces",
+    "discord": "https://discord.gg/2jUXBKDdP8"
   }
 }

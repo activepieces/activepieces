@@ -3,7 +3,7 @@ title: "Action"
 description: ""
 ---
 
-Action structure.
+The action structure.
 
 ```typescript
 export const createNewIssue = createAction({
@@ -11,7 +11,7 @@ export const createNewIssue = createAction({
     displayName: string, // Display name on the interface.
 	description: string, // Description for the action
 	props: Property[]; // Required properties from the user.
-    // Action implementation, It takes configs value as parameter.
-    run: async run(propsValue: Record<string, unknown>) => {}
+    // Action implementation, It takes context value as parameter.
+    run: async run(context) => {}
 })
 ```

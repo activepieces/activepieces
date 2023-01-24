@@ -76,7 +76,7 @@ export const fetchTopStories = createAction({
 			required: true,
 		})
 	},
-	async run(configValue) {
+	async run(context) {
         const HACKER_NEWS_API_URL = "https://hacker-news.firebaseio.com/v0/";
         const topStoryIdsResponse = await httpClient.sendRequest<string[]>({
 			method: HttpMethod.GET,
@@ -84,7 +84,7 @@ export const fetchTopStories = createAction({
 		});
         const topStoryIds: string[] = topStoryIdsResponse.body;
         const topStories = [];
-        for (let i = 0; i < Math.min(configValue.propsValue['number_of_stories']!, topStoryIds.length); i++) {
+        for (let i = 0; i < Math.min(context.propsValue['number_of_stories']!, topStoryIds.length); i++) {
           const storyId = topStoryIds[i];
           const storyResponse = await httpClient.sendRequest({
             method: HttpMethod.GET,
@@ -106,7 +106,7 @@ The `name` property is a unique identifier for the action. The `displayName` and
 
 The `props` property is an object that defines the properties that the action requires from the user. In this case, the action requires a single property called `number_of_stories`, which is a number representing the number of stories to fetch.
 
-The `run` function is the function that is called when the action is executed. It takes a single argument, configValue, which contains the values of the action's properties.
+The `run` function is the function that is called when the action is executed. It takes a single argument, context, which contains the values of the action's properties.
 
 The `run` function first defines the URL of the Hacker News API, and then makes a GET request to the topstories.json endpoint using the httpClient.sendRequest function to fetch the top story IDs. It then iterates over the top story IDs and makes a GET request to the `item/{id}.json` endpoint for each story ID to fetch the details of each story. Finally, it returns the top stories as an array.
 

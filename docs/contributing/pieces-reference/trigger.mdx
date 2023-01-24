@@ -3,7 +3,7 @@ title: "Trigger"
 description: ""
 ---
 
-Trigger structure
+The trigger structure.
 
 ```typescript
 export const createNewIssue = createTrigger({
@@ -14,18 +14,12 @@ export const createNewIssue = createTrigger({
 	props: {}; // Required properties from the user.
     // Run when the user disable the collection or
     // the old collection is deleted after new one is published.
-	onEnable: (context, propsValue) => {};
+	onEnable: (context) => {};
     // Run when the user enable or publish the collection.
-	onDisable: (context, propsValue) => {};
-    // Trigger implementation, It takes configs value as parameter.
+	onDisable: (context) => {};
+    // Trigger implementation, It takes context as parameter.
     // should returns an array of payload, each payload considered
     // a seperate flow run.
-    run: async run(context, propsValue): unknown[] => {}
+    run: async run(context): unknown[] => {}
 })
 ```
-
-# Examples
-
-## Webhook Trigger
-
-## Polling Trigger
