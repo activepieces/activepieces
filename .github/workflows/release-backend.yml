@@ -18,7 +18,8 @@ jobs:
       - name: Fail if tag already exists
         run: "! docker manifest inspect activepieces/test:${{ env.RELEASE }}"
 
-      - uses: depot/setup-action@v1
+      - name: Set up Depot CLI
+        uses: depot/setup-action@v1
 
       - name: build backend
         run: npx nx build backend
@@ -30,7 +31,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
-      - uses: depot/build-push-action@v1
+        uses: depot/build-push-action@v1
         with:
           project: du7O4b0e8P
           token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
