@@ -41,7 +41,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: ./backend.Dockerfile
+          file: ./backend.dockerfile
           platforms: |
             linux/amd64
             linux/arm64
