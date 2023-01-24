@@ -44,7 +44,6 @@ jobs:
           file: ./backend.dockerfile
           platforms: |
             linux/amd64
-            linux/arm64
           push: true
           tags: |
             activepieces/backend:${{ env.RELEASE }}
