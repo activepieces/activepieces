@@ -21,9 +21,6 @@ jobs:
       - name: Set up Depot CLI
         uses: depot/setup-action@v1
 
-      - name: build backend
-        run: npx nx build backend
-
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
