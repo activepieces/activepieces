@@ -3,7 +3,7 @@ FROM activepieces/ap-base:1
 WORKDIR /usr/src/app
 COPY . .
 
-RUN npm ci
+RUN npm ci --omit=dev
 
 EXPOSE 3000
 
