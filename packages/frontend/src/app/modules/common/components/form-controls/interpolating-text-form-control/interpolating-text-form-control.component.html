@@ -6,15 +6,3 @@
   </quill-editor>
 </div>
 <ng-container *ngIf="valueChanges$|async"></ng-container>
-
-<!-- <div #menuTrigger="matMenuTrigger" [matMenuTriggerFor]="menu"></div>
-<mat-menu yPosition="below" xPosition="before" #menu="matMenu" [overlapTrigger]="true">
-  <ng-template matMenuContent>
-    <div class="ap-px-2">
-      <div [style]="{width:quill.getBoundingClientRect().width+'px'}">
-      </div>
-      <app-mentions-list (click)=" $event.stopPropagation()" (addMention)="addMention($event)"
-        (closeMenu)="menuTrigger.closeMenu(); focusEditor()"></app-mentions-list>
-    </div>
-  </ng-template>
-</mat-menu> -->

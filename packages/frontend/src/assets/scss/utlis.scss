@@ -12,6 +12,8 @@
 ::-webkit-scrollbar-thumb {
 	background: $border;
 	border-radius: 40px;
+  scrollbar-width: thin;
+
 }
 
 /* Handle on hover */
@@ -55,4 +57,12 @@ app-builder-autocomplete-mentions-dropdown
     }
   }
   
+}
+.mat-mdc-tab-body-content
+{
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
 }

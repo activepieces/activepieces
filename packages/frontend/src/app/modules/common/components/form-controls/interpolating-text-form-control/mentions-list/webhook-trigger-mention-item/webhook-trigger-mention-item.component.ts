@@ -4,6 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { TriggerType, WebhookTrigger } from '@activepieces/shared';
 import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
 import { MentionListItem, replaceArrayNotationsWithSpaces, replaceDotsWithSpaces } from '../../utils';
+
 const pathRegex = /\$\{trigger((\.[a-zA-Z_$][a-zA-Z_$0-9]*)(\[([0-9])+\])*)*\}/;
 @Component({
 	selector: 'app-webhook-trigger-mention-item',
@@ -24,7 +25,7 @@ export class WebhookTriggerMentionItemComponent {
 	pathFormGroup: FormGroup<{ path: FormControl<string> }>;
 	constructor(formBuilder: FormBuilder, private dialogService: MatDialog) {
 		this.pathFormGroup = formBuilder.group({
-			path: new FormControl<string>('${trigger.value}', {
+			path: new FormControl<string>('${trigger.property}', {
 				validators: Validators.pattern(pathRegex),
 				nonNullable: true,
 			}),
