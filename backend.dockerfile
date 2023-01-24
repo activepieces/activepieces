@@ -5,7 +5,6 @@ COPY . .
 
 RUN npm ci
 RUN npx nx build backend
-RUN npx nx build engine
 
 EXPOSE 3000
 
