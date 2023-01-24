@@ -1,9 +1,9 @@
-name: Release backend
+name: Release Backend with Depot
 
 on:
   push:
     branches:
-      - dev
+      - depot
 
 jobs:
   Release-Backend:
@@ -16,19 +16,12 @@ jobs:
         run: echo RELEASE=$(node --print "require('./packages/backend/package.json').version") >> $GITHUB_ENV
 
       - name: Fail if tag already exists
-        run: "! docker manifest inspect activepieces/backend:${{ env.RELEASE }}"
+        run: "! docker manifest inspect activepieces/test:${{ env.RELEASE }}"
 
-      - name: install npm deps
-        run: npm ci
+      - uses: depot/setup-action@v1
 
       - name: build backend
         run: npx nx build backend
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -37,7 +30,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@v3
+      - uses: depot/build-push-action@v1
         with:
           context: .
           file: ./backend.dockerfile
@@ -46,5 +39,5 @@ jobs:
             linux/arm64
           push: true
           tags: |
-            activepieces/backend:${{ env.RELEASE }}
-            activepieces/backend:latest
+            activepieces/test:${{ env.RELEASE }}
+            activepieces/test:latest
