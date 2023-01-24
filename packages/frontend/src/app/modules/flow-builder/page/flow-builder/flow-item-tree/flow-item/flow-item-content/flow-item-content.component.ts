@@ -29,6 +29,7 @@ export class FlowItemContentComponent implements OnInit {
 	stepIconUrl: string;
 	_flowItem: FlowItem;
 	selectedRun$: Observable<FlowRun | undefined>;
+	readonly$:Observable<boolean>;
 	@Input() selected: boolean;
 	@Input() trigger = false;
 	@Input() viewMode: boolean;
@@ -50,6 +51,7 @@ export class FlowItemContentComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
+		this.readonly$= this.store.select(BuilderSelectors.selectReadOnly);
 		this.selectedRun$ = this.store.select(BuilderSelectors.selectCurrentFlowRun);
 		this.stepStatus$ = this.getStepStatusIfItsNotInsideLoop();
 		this.stepInsideLoopStatus$ = this.runDetailsService.iterationStepResultState$.pipe(
