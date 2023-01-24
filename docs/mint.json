@@ -15,13 +15,14 @@
     }
   },
   "topbarCtaButton": {
-    "type": "github",
-    "url": "https://github.com/activepieces/activepieces"
+    "type": "link",
+    "name": "Playground",
+    "url": "https://demo.activepieces.com/sign-up"
   },
   "topbarLinks": [
     {
-      "name": "Main Site",
-      "url": "https://www.activepieces.com"
+      "name": "Github",
+      "url": "https://github.com/activepieces/activepieces"
     }
   ],
   "anchors": [
