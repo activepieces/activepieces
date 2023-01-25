@@ -1,9 +1,10 @@
 name: Release Backend with Depot
 
 on:
-  push:
+  pull_request:
     branches:
-      - depot
+      - main
+  workflow_dispatch:
 
 jobs:
   Release-Backend:
@@ -16,7 +17,7 @@ jobs:
         run: echo RELEASE=$(node --print "require('./packages/backend/package.json').version") >> $GITHUB_ENV
 
       - name: Fail if tag already exists
-        run: "! docker manifest inspect activepieces/test:${{ env.RELEASE }}"
+        run: "! docker manifest inspect activepieces/backend:${{ env.RELEASE }}"
 
       - name: Set up Depot CLI
         uses: depot/setup-action@v1
@@ -39,5 +40,5 @@ jobs:
             linux/arm64
           push: true
           tags: |
-            activepieces/test:${{ env.RELEASE }}
-            activepieces/test:latest
+            activepieces/backend:${{ env.RELEASE }}
+            activepieces/backend:latest
