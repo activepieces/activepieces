@@ -7,6 +7,7 @@ import { OAuth2PropertyValue, Property } from '../../../framework/property';
 import { getAccessTokenOrThrow } from '../../../common/helpers';
 import { slackSendMessage } from '../common/utils';
 import { assertNotUndefined } from '../../../common/helpers/assertions';
+import { slackAuthWithScopes } from '../common/props';
 
 export const slackSendMessageAction = createAction({
   name: 'send_channel_message',
@@ -18,14 +19,13 @@ export const slackSendMessageAction = createAction({
     results: [1, 2, 3, 4],
   },
   props: {
-    authentication: Property.OAuth2({
-      description: '',
-      displayName: 'Authentication',
-      authUrl: 'https://slack.com/oauth/authorize',
-      tokenUrl: 'https://slack.com/api/oauth.access',
-      required: true,
-      scope: ['channels:read', 'channels:write', 'chat:write:bot', 'groups:read', 'mpim:read'],
-    }),
+    authentication: slackAuthWithScopes(
+      'channels:read',
+      'channels:write',
+      'chat:write:bot',
+      'groups:read',
+      'mpim:read',
+    ),
     channel: Property.Dropdown({
       displayName: 'Channel',
       description:
