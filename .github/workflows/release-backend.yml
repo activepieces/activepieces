@@ -1,4 +1,4 @@
-name: Release Backend with Depot
+name: Release Backend
 
 on:
   pull_request:
