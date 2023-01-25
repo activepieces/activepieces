@@ -4,6 +4,7 @@ WORKDIR /usr/src/app
 COPY . .
 
 RUN npm ci
+RUN npx nx build backend
 
 EXPOSE 3000
 
