@@ -10,7 +10,10 @@
 * Self-host with a simple Docker command
 * An alternative to Zapier, Make.com and Tray
 
-Read [Activepieces docs](https://www.activepieces.com/docs) to learn the key concepts and browse the pieces.
+## Quicklinks
+- Website: https://www.activepieces.com
+- Discord: https://discord.gg/2jUXBKDdP8
+- Docs: https://www.activepieces.com/docs
 
 
 ## Get started for free
