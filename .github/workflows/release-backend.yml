@@ -1,9 +1,10 @@
-name: Release backend
+name: Release Backend with Depot
 
 on:
-  push:
+  pull_request:
     branches:
-      - dev
+      - main
+  workflow_dispatch:
 
 jobs:
   Release-Backend:
@@ -18,17 +19,8 @@ jobs:
       - name: Fail if tag already exists
         run: "! docker manifest inspect activepieces/backend:${{ env.RELEASE }}"
 
-      - name: install npm deps
-        run: npm ci
-
-      - name: build backend
-        run: npx nx build backend
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      - name: Set up Depot CLI
+        uses: depot/setup-action@v1
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -37,8 +29,10 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: depot/build-push-action@v1
         with:
+          project: du7O4b0e8P
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           context: .
           file: ./backend.dockerfile
           platforms: |
