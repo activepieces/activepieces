@@ -4,6 +4,9 @@ import type { HttpRequest } from '../../../common/http/core/http-request';
 import { createAction } from '../../../framework/action/action';
 import { httpClient } from '../../../common/http/core/http-client';
 import { OAuth2PropertyValue, Property } from '../../../framework/property';
+import { getAccessTokenOrThrow } from '../../../common/helpers';
+import { slackSendMessage } from '../common/utils';
+import { assertNotUndefined } from '../../../common/helpers/assertions';
 
 export const slackSendMessageAction = createAction({
   name: 'send_channel_message',
@@ -71,28 +74,16 @@ export const slackSendMessageAction = createAction({
     }),
   },
   async run(context) {
-    let configValue = context.propsValue;
-    let body: Record<string, unknown> = {
-      text: configValue['text'],
-      channel: configValue['channel'],
-    };
-    const request: HttpRequest<Record<string, unknown>> = {
-      method: HttpMethod.POST,
-      url: 'https://slack.com/api/chat.postMessage',
-      body: body,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: configValue['authentication']!['access_token'],
-      },
-      queryParams: {},
-    };
+    const token = getAccessTokenOrThrow(context.propsValue.authentication);
+    const { text, channel } = context.propsValue;
 
-    let result = await httpClient.sendRequest(request);
+    assertNotUndefined(text, 'text');
+    assertNotUndefined(channel, 'channel');
 
-    return {
-      success: true,
-      request_body: body,
-      response_body: result,
-    };
+    return slackSendMessage({
+      text,
+      channel,
+      token,
+    });
   },
 });
