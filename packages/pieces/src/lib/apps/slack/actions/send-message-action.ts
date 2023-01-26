@@ -47,14 +47,6 @@ export const slackSendMessageAction = createAction({
         const response = await httpClient.sendRequest<{
           channels: { id: string; name: string }[];
         }>(request);
-        console.log('###################################################')
-        console.log('###################################################')
-        console.log('###################################################')
-        console.log('###################################################')
-        console.log(response.body);
-        console.log('###################################################')
-        console.log('###################################################')
-        console.log('###################################################')
         return {
           disabled: false,
           placeholder: 'Select channel',
