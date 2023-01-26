@@ -1,6 +1,5 @@
 import { AuthenticationType } from "../../../common/authentication/core/authentication-type";
-import { getAccessTokenOrThrow } from "../../../common/helpers";
-import { assertNotUndefined } from "../../../common/helpers/assertions";
+import { assertNotNullOrUndefined } from "../../../common/helpers/assertions";
 import { httpClient } from "../../../common/http/core/http-client";
 import { HttpMethod } from "../../../common/http/core/http-method";
 import { HttpRequest } from "../../../common/http/core/http-request";
@@ -71,13 +70,17 @@ export const slackSendDirectMessageAction = createAction({
     }),
   },
   async run(context) {
-    const token = getAccessTokenOrThrow(context.propsValue.authentication);
+    const token = context.propsValue.authentication?.access_token;
     const { text, userId } = context.propsValue;
+
+    assertNotNullOrUndefined(token, 'token');
+    assertNotNullOrUndefined(text, 'text');
+    assertNotNullOrUndefined(userId, 'userId');
 
     return slackSendMessage({
       token,
-      text: text!,
-      channel: userId!,
+      text,
+      channel: userId,
     });
   },
 });

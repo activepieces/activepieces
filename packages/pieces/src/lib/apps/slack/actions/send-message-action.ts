@@ -4,9 +4,8 @@ import type { HttpRequest } from '../../../common/http/core/http-request';
 import { createAction } from '../../../framework/action/action';
 import { httpClient } from '../../../common/http/core/http-client';
 import { OAuth2PropertyValue, Property } from '../../../framework/property';
-import { getAccessTokenOrThrow } from '../../../common/helpers';
 import { slackSendMessage } from '../common/utils';
-import { assertNotUndefined } from '../../../common/helpers/assertions';
+import { assertNotNullOrUndefined } from '../../../common/helpers/assertions';
 import { slackAuthWithScopes } from '../common/props';
 
 export const slackSendMessageAction = createAction({
@@ -74,16 +73,17 @@ export const slackSendMessageAction = createAction({
     }),
   },
   async run(context) {
-    const token = getAccessTokenOrThrow(context.propsValue.authentication);
+    const token = context.propsValue.authentication?.access_token;
     const { text, channel } = context.propsValue;
 
-    assertNotUndefined(text, 'text');
-    assertNotUndefined(channel, 'channel');
+    assertNotNullOrUndefined(token, 'token');
+    assertNotNullOrUndefined(text, 'text');
+    assertNotNullOrUndefined(channel, 'channel');
 
     return slackSendMessage({
+      token,
       text,
       channel,
-      token,
     });
   },
 });
