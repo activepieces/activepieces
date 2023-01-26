@@ -1,7 +1,7 @@
 import { AuthenticationType } from '../../../common/authentication/core/authentication-type';
+import { getAccessTokenOrThrow } from '../../../common/helpers';
 import { httpClient } from '../../../common/http/core/http-client';
 import { HttpMethod } from '../../../common/http/core/http-method';
-import { OAuth2PropertyValue } from '../../../framework/property';
 import { createTrigger, TriggerStrategy } from '../../../framework/trigger/trigger';
 import { getMailChimpServerPrefix, mailChimpAuth, mailChimpListIdDropdown } from '../common';
 import { MailChimpSubscribeWebhookRequest } from '../common/types';
@@ -119,16 +119,6 @@ const disableWebhookRequest = async ({ server, token, listId, webhookId }: Disab
       token,
     },
   });
-};
-
-const getAccessTokenOrThrow = (auth: OAuth2PropertyValue | undefined): string => {
-  const accessToken = auth?.access_token;
-
-  if (accessToken === undefined) {
-    throw new Error("Invalid bearer token");
-  }
-
-  return accessToken;
 };
 
 type TriggerRequestParams = {

@@ -18,7 +18,7 @@ import {
 import { flowVersionService } from "./flow-version/flow-version.service";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { buildPaginator } from "../helper/pagination/build-paginator";
-import { redisLock } from "../database/redis-connection";
+import { createRedisLock } from "../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 
 const flowRepo = databaseConnection.getRepository(FlowEntity);
@@ -100,13 +100,13 @@ export const flowService = {
     };
   },
   async update(flowId: FlowId, request: FlowOperationRequest): Promise<Flow | null> {
-    const flowLock = await redisLock(flowId);
+    const flowLock = await createRedisLock(flowId);
     let lastVersion = (await flowVersionService.getFlowVersion(flowId, undefined))!;
     if (lastVersion.state === FlowVersionState.LOCKED) {
       lastVersion = await flowVersionService.createVersion(flowId, lastVersion);
     }
     await flowVersionService.applyOperation(lastVersion, request);
-    await flowLock();
+    await flowLock.release();
     return await this.getOne(flowId, undefined);
   },
   async delete(flowId: FlowId): Promise<void> {

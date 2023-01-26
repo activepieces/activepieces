@@ -6,8 +6,8 @@ import { triggerUtils } from "../../helper/trigger-utils";
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from "./flow-queue";
 import { flowWorker } from "./flow-worker";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
-import { logger } from "packages/backend/src/main";
 import { collectionVersionService } from "../../collections/collection-version/collection-version.service";
+import { logger } from "packages/backend/src/main";
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
   ONE_TIME_JOB_QUEUE,

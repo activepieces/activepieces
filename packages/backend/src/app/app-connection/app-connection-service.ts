@@ -3,7 +3,8 @@ import { databaseConnection } from "../database/database-connection";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { AppConnectionEntity } from "./app-connection-entity";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
+import { createRedisLock } from "../database/redis-connection";
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 
@@ -16,6 +17,9 @@ export const appConnectionService = {
         })
     },
     async getOne(projectId: ProjectId, name: string): Promise<AppConnection | null> {
+        // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
+        // which could result in the wrong request saving incorrect data.
+        const refreshLock = await createRedisLock(`${projectId}_${name}`);
         const appConnection = await appConnectionRepo.findOneBy({
             projectId: projectId,
             name: name
@@ -25,6 +29,7 @@ export const appConnectionService = {
         }
         const refreshedAppConnection = await refresh(appConnection);
         await appConnectionRepo.update(refreshedAppConnection.id, refreshedAppConnection);
+        refreshLock.release();
         return refreshedAppConnection;
     },
     async delete(id: AppConnectionId): Promise<void> {
@@ -63,7 +68,7 @@ async function refresh(connection: AppConnection): Promise<AppConnection> {
             for (const key in Object.keys(connection.value)) {
                 let connectionValue = connection.value[key];
                 if (typeof connectionValue === 'object' && connectionValue.hasOwnProperty('type')) {
-                    let type: AppConnectionType = connectionValue.type;
+                    const type: AppConnectionType = connectionValue.type;
                     switch (type) {
                         case AppConnectionType.CLOUD_OAUTH2:
                             connectionValue = await refreshCloud(connection.appName, connectionValue as CloudOAuth2ConnectionValue);
@@ -76,6 +81,7 @@ async function refresh(connection: AppConnection): Promise<AppConnection> {
                     }
                 }
             }
+            break;
         default:
             break;
     }
@@ -137,7 +143,7 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
 
 export function formatOAuth2Response(response: Record<string, any>) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000);
-    let formattedResponse: BaseOAuth2ConnectionValue = {
+    const formattedResponse: BaseOAuth2ConnectionValue = {
         access_token: response["access_token"],
         expires_in: response["expires_in"],
         claimed_at: secondsSinceEpoch,
