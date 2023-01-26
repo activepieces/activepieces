@@ -1,9 +1,6 @@
 name: Build Everything
 
 on:
-  pull_request:
-    branches:
-      - dev
   push:
 
 jobs:
