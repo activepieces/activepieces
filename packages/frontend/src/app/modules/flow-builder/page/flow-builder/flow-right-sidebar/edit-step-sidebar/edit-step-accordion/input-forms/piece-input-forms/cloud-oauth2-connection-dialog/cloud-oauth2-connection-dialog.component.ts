@@ -120,7 +120,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
 
     const newConnection: UpsertCloudOAuth2Request = {
       appName: this.pieceName,
-      value: { ...connectionValue },
+      value: { ...connectionValue, scope: this.cloudConnectionPopupSettings.scope },
       name: connectionName,
       projectId: projectId,
     };

@@ -48,7 +48,7 @@ export const pieceHelper = {
             return {
                 disabled: true,
                 options: [],
-                placeholder: "The piece throws an error"
+                placeholder: "Throws an error, reconnect or refresh the page"
             } as DropdownState<unknown>;
         }
     }

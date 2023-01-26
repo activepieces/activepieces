@@ -3,9 +3,7 @@ import {
   Action,
   ActionType,
   CodeActionSettings,
-  Collection,
   CollectionVersion,
-  EngineOperationType,
   ExecutionOutputStatus,
   File,
   FlowVersion,
@@ -15,13 +13,13 @@ import {
 import { Sandbox, sandboxManager } from "../sandbox";
 import { flowVersionService } from "../../flows/flow-version/flow-version.service";
 import { collectionVersionService } from "../../collections/collection-version/collection-version.service";
-import { redisLock } from "../../database/redis-connection";
 import { fileService } from "../../file/file.service";
 import { codeBuilder } from "../code-worker/code-builder";
 import { flowRunService } from "../../flow-run/flow-run-service";
 import { OneTimeJobData } from "./job-data";
 import { collectionService } from "../../collections/collection.service";
 import { engineHelper } from "../../helper/engine-helper";
+import { createRedisLock } from "../../database/redis-connection";
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
   const flowVersion = (await flowVersionService.getOne(jobData.flowVersionId))!;
@@ -29,7 +27,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
   const collection = await collectionService.getOneOrThrow(collectionVersion.collectionId);
 
   const sandbox = sandboxManager.obtainSandbox();
-  const flowLock = await redisLock(flowVersion.id);
+  const flowLock = await createRedisLock(flowVersion.id);
   console.log(`[${jobData.runId}] Executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`);
   try {
     await sandbox.cleanAndInit();
@@ -57,7 +55,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null);
   } finally {
     sandboxManager.returnSandbox(sandbox.boxId);
-    await flowLock();
+    await flowLock.release();
   }
   console.log(`[${jobData.runId}] Finished executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`);
 }
