@@ -13,41 +13,10 @@ export const dripApplyTagToSubscriber = createAction({
         authentication: dripCommon.authentication,
         account_id: dripCommon.account_id,
         subscriber: dripCommon.subscribers,
-        tag: Property.Dropdown({
+        tag: Property.ShortText({
             displayName: "Tag",
-            refreshers: ["authentication", "account_id"],
             required: true,
-            options: async (props) => {
-                if (props['authentication'] === undefined) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: "Please fill in API key first"
-                    }
-                }
-                if (props['account_id'] === undefined) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: "Please select an account first"
-                    }
-                }
-                const request: HttpRequest<never> = {
-                    method: HttpMethod.GET,
-                    url: `${dripCommon.baseUrl(props['account_id'] as string)}/tags`,
-                    headers: {
-                        Authorization: `Basic ${Buffer.from(props["authentication"] as string).toString("base64")}`,
-                    },
-                };
-                let response = await httpClient.sendRequest<{ tags: string[] }>(request);
-                const opts = response.body.tags.map((tag) => {
-                    return { value: tag, label: tag };
-                });
-                return {
-                    disabled: false,
-                    options: opts,
-                }
-            }
+            description: "Tag to apply"
         })
     },
     sampleData: {},
