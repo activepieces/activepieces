@@ -134,6 +134,7 @@
     {
       "group": "Other",
       "pages": [
+        "telemetry",
         "changelog",
         "license"
       ]

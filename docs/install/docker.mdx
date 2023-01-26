@@ -31,6 +31,11 @@ cd activepieces
 docker compose -p activepieces up
 ```
 
+<Warning>
+Please ensure the instance is accessible from the internet so that third-party services can send payloads to activepieces. 
+Review the [configurations guide]:(https://activepieces.com/docs/install/configurations) to make any necessary adjustments.
+</Warning>
+
 ## Upgrading
 
 To upgrade to new versions, which are installed using docker compose, perform the following steps. First, open a terminal in the activepieces repository directory and run the following commands.
