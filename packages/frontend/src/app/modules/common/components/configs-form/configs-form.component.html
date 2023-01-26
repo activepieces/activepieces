@@ -78,6 +78,10 @@
       <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="config.description">{{config.label}}</div>
       <app-array-form-control [formControlName]="config.key"></app-array-form-control>
     </ng-container>
+    <ng-container *ngSwitchCase="PropertyType.OBJECT">
+      <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="config.description">{{config.label}}</div>
+      <app-dictonary-form-control [formControlName]="config.key"></app-dictonary-form-control>
+    </ng-container>
 
     <ng-container *ngIf="config.type === PropertyType.OAUTH2 || config.type === PropertyType.SECRET_TEXT">
       <div class="ap-relative">

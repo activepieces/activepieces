@@ -53,6 +53,11 @@ export const dripAddSubscriberToCampaign = createAction({
             displayName: "tags",
             required: false,
             description: "Tags to apply to subscriber"
+        }),
+        custom_fields: Property.Object({
+            displayName: "Custom Fields",
+            required: false,
+            description: "Custom field data about the subscriber"
         })
     },
     sampleData: {},
@@ -63,7 +68,8 @@ export const dripAddSubscriberToCampaign = createAction({
             body: {
                 subscribers: [{
                     email: context.propsValue["subscriber"],
-                    tags: context.propsValue["tags"]
+                    tags: context.propsValue["tags"],
+                    custom_fields: context.propsValue["custom_fields"]
                 }]
             },
             headers: {

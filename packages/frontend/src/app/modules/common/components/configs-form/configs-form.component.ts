@@ -89,8 +89,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   @Input() pieceName: string;
   @Input() pieceDisplayName: string;
   form!: UntypedFormGroup;
-  OnChange = (value) => {};
-  OnTouched = () => {};
+  OnChange = (value) => { };
+  OnTouched = () => { };
   updateValueOnChange$: Observable<void> = new Observable<void>();
   updateAuthConfig$: Observable<void>;
   PropertyType = PropertyType;
@@ -142,6 +142,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   createForm() {
     this.requiredConfigs = this.configs.filter((c) => c.required);
     this.allOptionalConfigs = this.configs.filter((c) => !c.required);
+    debugger;
     this.selectedOptionalConfigs = this.allOptionalConfigs.filter(
       (c) => c.value !== undefined
     );
@@ -171,7 +172,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       if (c.type === PropertyType.DROPDOWN) {
         const refreshers$ = {};
         c.refreshers!.forEach((r) => {
-          console.log(this.form.controls[r],r, this.form.controls);
+          console.log(this.form.controls[r], r, this.form.controls);
           refreshers$[r] = this.form.controls[r].valueChanges.pipe(
             distinctUntilChanged((prev, curr) => {
               return JSON.stringify(prev) === JSON.stringify(curr);
@@ -237,10 +238,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       if (c.required) {
         validators.push(Validators.required);
       }
-      if(c.type !== PropertyType.ARRAY)
-      {controls[c.key] = new UntypedFormControl(c.value, validators);}
-      else
-      {controls[c.key] = new UntypedFormControl([''], validators);}
+      if (c.type !== PropertyType.ARRAY) { controls[c.key] = new UntypedFormControl(c.value, validators); }
+      else { controls[c.key] = new UntypedFormControl(c.value || [''], validators); }
     });
     return controls;
   }
@@ -408,19 +407,18 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     const allConnections$ = this.store.select(
       BuilderSelectors.selectAllAppConnections
     );
-    const currentConnection$=allConnections$.pipe(
+    const currentConnection$ = allConnections$.pipe(
       take(1),
       map((connections) => {
         const connection = connections.find(
           (c) =>
             selectedValue &&
             c.name ===
-              this.getConnectionNameFromInterpolatedString(selectedValue)
+            this.getConnectionNameFromInterpolatedString(selectedValue)
         );
         return connection;
       }));
-    if(pieceConfigType === PropertyType.OAUTH2)
-    {
+    if (pieceConfigType === PropertyType.OAUTH2) {
       this.updateAuthConfig$ = currentConnection$.pipe(
         tap((connection) => {
           if (connection) {
@@ -469,26 +467,25 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         map(() => void 0)
       );
     }
-    else
-    {
-      this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(switchMap(connection=>{
-      const secretKeyConnection = connection as ApiKeyAppConnection;
-      const authConfig = this.configs.find((c) => c.key === authConfigKey)!;
-      const dialogData: SecretTextConnectionDialogData = {
-        pieceName: this.pieceName,
-        displayName: authConfig.label,
-        description: authConfig.description || '',
-        connectionName:connection!.name,
-        secretText:secretKeyConnection!.value.secret_text
-      };
+    else {
+      this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(switchMap(connection => {
+        const secretKeyConnection = connection as ApiKeyAppConnection;
+        const authConfig = this.configs.find((c) => c.key === authConfigKey)!;
+        const dialogData: SecretTextConnectionDialogData = {
+          pieceName: this.pieceName,
+          displayName: authConfig.label,
+          description: authConfig.description || '',
+          connectionName: connection!.name,
+          secretText: secretKeyConnection!.value.secret_text
+        };
         return this.dialogService
-        .open(SecretTextConnectionDialogComponent, {
-          data: dialogData,
-        })
-        .afterClosed()
+          .open(SecretTextConnectionDialogComponent, {
+            data: dialogData,
+          })
+          .afterClosed()
       }))
     }
-    
+
   }
 
   dropdownCompareWithFunction = (opt: string, formControlValue: string) => {

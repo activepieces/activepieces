@@ -5,70 +5,63 @@ import { map, Observable, tap } from 'rxjs';
 @Component({
   selector: 'app-array-form-control',
   templateUrl: './array-form-control.component.html',
-  styleUrls:['./array-form-control.component.scss'],
+  styleUrls: ['./array-form-control.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			multi: true,
-			useExisting: ArrayFormControlComponent,
-		},
-	],
+    {
+      provide: NG_VALUE_ACCESSOR,
+      multi: true,
+      useExisting: ArrayFormControlComponent,
+    },
+  ],
 })
 export class ArrayFormControlComponent implements ControlValueAccessor {
-  onChange = val => {};
-	onTouched = () => {};
-	valueChanges$: Observable<void>;
-  formArray:FormArray<FormControl>;
-  constructor(private fb:FormBuilder)
-  {
-    this.formArray= this.fb.array([new FormControl('')]);
-    this.valueChanges$=this.formArray.valueChanges.pipe(tap(val=>{
+  onChange = val => { };
+  onTouched = () => { };
+  valueChanges$: Observable<void>;
+  formArray: FormArray<FormControl>;
+  constructor(private fb: FormBuilder) {
+    this.formArray = this.fb.array([new FormControl('')]);
+    this.valueChanges$ = this.formArray.valueChanges.pipe(tap(val => {
       this.onChange(val);
-    }),map(()=>{return void 0;}))
+    }), map(() => { return void 0; }))
   }
   writeValue(obj: string[]): void {
     debugger;
-    if(obj)
-    {
+    if (obj) {
       this.formArray.clear();
-      obj.forEach(val=>{
-        this.formArray.push(new FormControl(val),{emitEvent:false});
+      obj.forEach(val => {
+        this.formArray.push(new FormControl(val), { emitEvent: false });
       });
-      if(this.formArray.controls[this.formArray.length-1].value)
-      {
+      if (this.formArray.controls[this.formArray.length - 1].value) {
         this.formArray.push(new FormControl(''));
       }
-     
+
     }
-   
+
   }
   registerOnChange(fn: any): void {
-   this.onChange=fn;
+    this.onChange = fn;
   }
   registerOnTouched(fn: any): void {
-    this.onTouched=fn;
+    this.onTouched = fn;
   }
   setDisabledState?(isDisabled: boolean): void {
-    if(isDisabled){
+    if (isDisabled) {
       this.formArray.disable();
-      }
-      else
-      {
-        this.formArray.enable();
-      }
+    }
+    else {
+      this.formArray.enable();
+    }
   }
-  addValue()
-  {
+  addValue() {
     this.formArray.push(new FormControl(''));
   }
-  removeValue(index:number)
-  {
-    if(this.formArray.controls.length>1)
-    {
+  removeValue(index: number) {
+    if (this.formArray.controls.length > 1) {
       this.formArray.removeAt(index);
     }
   }
-  
+
 
 }
