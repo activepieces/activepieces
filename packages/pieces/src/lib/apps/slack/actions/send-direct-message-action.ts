@@ -5,23 +5,20 @@ import { HttpMethod } from "../../../common/http/core/http-method";
 import { HttpRequest } from "../../../common/http/core/http-request";
 import { createAction } from "../../../framework/action/action";
 import { OAuth2PropertyValue, Property } from "../../../framework/property";
-import { slackAuthWithScopes } from "../common/props";
+import { slackAuth } from "../common/props";
 import { slackSendMessage } from "../common/utils";
 
 export const slackSendDirectMessageAction = createAction({
   name: 'send_direct_message',
-  displayName: 'Send direct message',
-  description: 'Send direct message',
+  displayName: 'Send message to a user',
+  description: 'Send message to a user',
   sampleData: {
     success: true,
     message: 'sample message',
     results: [1, 2, 3, 4],
   },
   props: {
-    authentication: slackAuthWithScopes(
-      'chat:write:bot',
-      'users:read',
-    ),
+    authentication: slackAuth,
     userId: Property.Dropdown<string>({
       displayName: 'User',
       description: 'Message receiver',
@@ -80,7 +77,7 @@ export const slackSendDirectMessageAction = createAction({
     return slackSendMessage({
       token,
       text,
-      channel: userId,
+      conversationId: userId,
     });
   },
 });
