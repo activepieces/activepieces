@@ -41,43 +41,17 @@ export const dripCommon = {
         }
 
     }),
-    subscribers: Property.Dropdown({
-        displayName: 'Person',
-        required: true,
-        refreshers: ["authentication", "account_id"],
-        options: async (props) => {
-            if (props['authentication'] === undefined) {
-                return {
-                    disabled: true,
-                    options: [],
-                    placeholder: "Please fill in API key first"
-                }
-            }
-            if (props['account_id'] === undefined) {
-                return {
-                    disabled: true,
-                    options: [],
-                    placeholder: "Please select an account first"
-                }
-            }
-            const request: HttpRequest<never> = {
-                method: HttpMethod.GET,
-                url: dripCommon.baseUrl(props['account_id'] as string) + '/subscribers',
-                headers: {
-                    Authorization: `Basic ${Buffer.from(props["authentication"] as string).toString("base64")}`,
-                },
-
-            };
-            let response = await httpClient.sendRequest<{ subscribers: { id: string, email: string }[] }>(request);
-            const opts = response.body.subscribers.map((sub) => {
-                return { value: sub.email, label: sub.email };
-            });
-            return {
-                disabled: false,
-                options: opts,
-            }
-        }
+    subscriber: Property.ShortText({ required: true, displayName: "Subscriber Email", description: "Email of the subscriber" }),
+    tags: Property.Array({
+        displayName: "tags",
+        required: false,
+        description: "Tags to apply to subscriber"
     }),
+    custom_fields: Property.Object({
+        displayName: "Custom Fields",
+        required: false,
+        description: "Custom field data about the subscriber"
+    })
 
 }
 

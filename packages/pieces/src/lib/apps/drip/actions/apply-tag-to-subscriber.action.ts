@@ -12,7 +12,7 @@ export const dripApplyTagToSubscriber = createAction({
     props: {
         authentication: dripCommon.authentication,
         account_id: dripCommon.account_id,
-        subscriber: dripCommon.subscribers,
+        subscriber: dripCommon.subscriber,
         tag: Property.ShortText({
             displayName: "Tag",
             required: true,

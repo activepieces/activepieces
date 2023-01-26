@@ -48,17 +48,9 @@ export const dripAddSubscriberToCampaign = createAction({
                 }
             }
         }),
-        subscriber: Property.ShortText({ required: true, displayName: "Subscriber Email", description: "Email of the subscriber" }),
-        tags: Property.Array({
-            displayName: "tags",
-            required: false,
-            description: "Tags to apply to subscriber"
-        }),
-        custom_fields: Property.Object({
-            displayName: "Custom Fields",
-            required: false,
-            description: "Custom field data about the subscriber"
-        })
+        subscriber: dripCommon.subscriber,
+        tags: dripCommon.tags,
+        custom_fields: dripCommon.custom_fields,
     },
     sampleData: {},
     async run(context) {
