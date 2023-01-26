@@ -4,8 +4,9 @@ import { HttpRequest } from '../../../common/http/core/http-request';
 import { createAction } from '../../../framework/action/action';
 import { Property } from '../../../framework/property';
 import { blackbaudCommon } from '../common/common';
-import Ajv, { JSONSchemaType } from "ajv"
-const ajv = new Ajv()
+import * as  Ajv from "ajv";
+
+const ajv = Ajv()
 
 const schema = {
     type: 'array',
