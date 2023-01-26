@@ -7,20 +7,23 @@ import { HttpRequest } from '../../../common/http/core/http-request';
 import { HttpMethod } from '../../../common/http/core/http-method';
 import { dripCommon } from '../common';
 
-const triggerNameInStore = 'drip_new_subscriber_trigger';
-export const dripNewSubscriberEvent = createTrigger({
-  name: 'new_subscriber',
-  displayName: 'New Subscriber',
-  description: 'Triggers when a subscriber is created in your Drip account.',
+const triggerNameInStore = 'drip_tag_applied_to_subscriber_trigger';
+export const dripTagAppliedEvent = createTrigger({
+  name: 'tag_applied_to_subscribers',
+  displayName: 'Tag Applied',
+  description: 'Triggers when a tag is applied.',
   props: {
     authentication: dripCommon.authentication,
     account_id: dripCommon.account_id
   },
   sampleData: {
-    "event": "subscriber.created",
+    "event": "subscriber.applied_tag",
     "data": {
       "account_id": "9999999",
-      "subscriber": {}
+      "subscriber": {},
+      "properties": {
+        "tag": "Customer"
+      }
     },
     "occurred_at": "2013-06-21T10:31:58Z"
   },
@@ -31,7 +34,7 @@ export const dripNewSubscriberEvent = createTrigger({
       method: HttpMethod.POST,
       url: `${dripCommon.baseUrl(context.propsValue["account_id"]!)}/webhooks`,
       body: {
-        webhooks: [{ post_url: context.webhookUrl, events: ["subscriber.created"] }],
+        webhooks: [{ post_url: context.webhookUrl, events: ["subscriber.applied_tag"] }],
       },
       headers: {
         'Authorization': `Basic ${Buffer.from(context.propsValue["authentication"]!).toString('base64')}`

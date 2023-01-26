@@ -1,3 +1,6 @@
+import { httpClient } from "../../../common/http/core/http-client";
+import { HttpMethod } from "../../../common/http/core/http-method";
+import { HttpRequest } from "../../../common/http/core/http-request";
 import { Property } from "../../../framework/property"
 
 export const dripCommon = {
@@ -7,10 +10,36 @@ export const dripCommon = {
         required: true,
         description: "Get it from https://www.getdrip.com/user/edit"
     }),
-    account_id: Property.ShortText({
-        displayName: 'Account ID',
+    account_id: Property.Dropdown({
+        displayName: 'Account',
         required: true,
-        description: "Get it from https://www.getdrip.com/settings/general"
+        refreshers: ["authentication"],
+        options: async (props) => {
+            if (props['authentication'] === undefined) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: "Please fill in API key first"
+                }
+            }
+
+            const request: HttpRequest<never> = {
+                method: HttpMethod.GET,
+                url: "https://api.getdrip.com/v2/accounts",
+                headers: {
+                    Authorization: `Basic ${Buffer.from(props["authentication"] as string).toString("base64")}`,
+                },
+            };
+            let response = await httpClient.sendRequest<{ accounts: { id: string, name: string }[] }>(request);
+            const opts = response.body.accounts.map((acc) => {
+                return { value: acc.id, label: acc.name };
+            });
+            return {
+                disabled: false,
+                options: opts,
+            }
+        }
+
     })
 }
 
