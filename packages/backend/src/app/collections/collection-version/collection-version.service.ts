@@ -25,7 +25,7 @@ export const collectionVersionService = {
   },
 
   async getOne(id: CollectionVersionId): Promise<CollectionVersion | null> {
-    let version = await collectionVersionRepo.findOneBy({
+    const version = await collectionVersionRepo.findOneBy({
       id,
     });
     if (version === null) {
@@ -52,7 +52,7 @@ export const collectionVersionService = {
     collectionId: CollectionId,
     versionId: CollectionVersionId | null
   ): Promise<CollectionVersion | null> {
-    let version = await collectionVersionRepo.findOne({
+    const version = await collectionVersionRepo.findOne({
       where: {
         collectionId,
         id: versionId ?? undefined,

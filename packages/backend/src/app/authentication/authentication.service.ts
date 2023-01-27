@@ -23,6 +23,7 @@ export const authenticationService = {
       const token = await tokenUtils.encode({
         id: user.id,
         type: PrincipalType.USER,
+        projectId: project.id
       });
 
       telemetry.identify(user, project.id);
@@ -81,9 +82,13 @@ export const authenticationService = {
       });
     }
 
+    // Currently each user have exactly one project.
+    const projects = await projectService.getAll(user.id);
+
     const token = await tokenUtils.encode({
       id: user.id,
       type: PrincipalType.USER,
+      projectId: projects[0].id
     });
 
     return {

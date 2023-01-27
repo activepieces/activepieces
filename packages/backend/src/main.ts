@@ -2,7 +2,7 @@ import fastify, { FastifyRequest } from "fastify";
 import cors from "@fastify/cors";
 import formBody from "@fastify/formbody";
 import qs from 'qs';
-import { databaseModule } from "./app/database/database-module";
+import { databaseModule } from "./app/database/database.module";
 import { authenticationModule } from "./app/authentication/authentication.module";
 import { collectionModule } from "./app/collections/collection.module";
 import { projectModule } from "./app/project/project.module";
@@ -12,7 +12,7 @@ import { piecesController } from "./app/pieces/pieces.controller";
 import { oauth2Module } from "./app/oauth2/oauth2.module";
 import { tokenVerifyMiddleware } from "./app/authentication/token-verify-middleware";
 import { storeEntryModule } from "./app/store-entry/store-entry.module";
-import { instanceModule } from "./app/instance/instance-module";
+import { instanceModule } from "./app/instance/instance.module";
 import { flowRunModule } from "./app/flow-run/flow-run-module";
 import { flagModule } from "./app/flags/flag.module";
 import { codeModule } from "./app/workers/code-worker/code.module";
@@ -79,7 +79,7 @@ app.get(
   async (
     request: FastifyRequest<{ Querystring: { code: string; } }>, reply
   ) => {
-    let params = {
+    const params = {
       "code": request.query.code
     };
     if (params.code === undefined) {

@@ -1,7 +1,6 @@
 import {
   AppConnection,
   AppConnectionType,
-  Project,
 } from '@activepieces/shared';
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import {
@@ -14,7 +13,6 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { AppConnectionsService } from 'packages/frontend/src/app/modules/common/service/app-connections.service';
-import { ProjectService } from 'packages/frontend/src/app/modules/common/service/project.service';
 import { appConnectionsActions } from 'packages/frontend/src/app/modules/flow-builder/store/app-connections/app-connections.action';
 import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import { catchError, Observable, of, take, tap } from 'rxjs';
@@ -38,14 +36,12 @@ export interface SecretTextConnectionDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SecretTextConnectionDialogComponent {
-  project$: Observable<Project>;
   settingsForm: FormGroup<SecretTextForm>;
   keyTooltip =
     'The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.';
   loading = false;
   upsert$: Observable<AppConnection | null>;
   constructor(
-    private projectService: ProjectService,
     @Inject(MAT_DIALOG_DATA)
     public dialogData: SecretTextConnectionDialogData,
     private fb: FormBuilder,
@@ -54,7 +50,6 @@ export class SecretTextConnectionDialogComponent {
     private snackbar: MatSnackBar,
     public dialogRef: MatDialogRef<SecretTextConnectionDialogComponent>
   ) {
-    this.project$ = this.projectService.selectedProjectAndTakeOne();
     this.settingsForm = this.fb.group({
       secretText: new FormControl(this.dialogData.secretText || '', {
         nonNullable: true,
@@ -79,19 +74,17 @@ export class SecretTextConnectionDialogComponent {
         }
       ),
     });
-    if(this.dialogData.connectionName)
-    {
+    if (this.dialogData.connectionName) {
       this.settingsForm.controls.name.disable();
 
     }
   }
-  submit(projectId: string) {
+  submit() {
     this.settingsForm.markAllAsTouched();
     if (!this.loading && this.settingsForm.valid) {
       this.loading = true;
       this.upsert$ = this.appConnectionsService
         .upsert({
-          projectId: projectId,
           appName: this.dialogData.pieceName,
           name: this.settingsForm.controls.name.value,
           value: {

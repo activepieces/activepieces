@@ -33,7 +33,7 @@ export class CollectionsTableComponent implements OnInit {
 		private dialogService: MatDialog,
 		private projectService: ProjectService,
 		private flowService: FlowService,
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		this.dataSource = new CollectionsTableDataSource(
@@ -79,13 +79,9 @@ export class CollectionsTableComponent implements OnInit {
 		if (!this.creatingCollection) {
 			this.creatingCollection = true;
 			const collectionDiplayName = 'Untitled';
-			this.createCollection$ = this.projectService.selectedProjectAndTakeOne().pipe(
-				switchMap(project => {
-					return this.collectionService.create({
-						projectId: project.id,
-						displayName: collectionDiplayName,
-					});
-				}),
+			this.createCollection$ = this.collectionService.create({
+				displayName: collectionDiplayName,
+			}).pipe(
 				switchMap(collection => {
 					return this.flowService.create({ collectionId: collection.id, displayName: 'Flow 1' });
 				}),

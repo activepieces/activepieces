@@ -12,8 +12,8 @@ export class ConnectionsResolver implements Resolve<AppConnection[]> {
 	constructor(private appConnectionsService: AppConnectionsService, private projectService: ProjectService) {}
 	resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<AppConnection[]> {
 		return this.projectService.selectedProjectAndTakeOne().pipe(
-			switchMap(project => {
-				return this.appConnectionsService.list({ projectId: project.id, limit: 999999 });
+			switchMap(() => {
+				return this.appConnectionsService.list({ limit: 999999 });
 			}),
 			map(res => {
 				return res.data;

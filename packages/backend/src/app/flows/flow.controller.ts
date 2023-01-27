@@ -8,7 +8,7 @@ import {
 } from "@activepieces/shared";
 import { StatusCodes } from "http-status-codes";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { flowService } from "./flow-service";
+import { flowService } from "./flow.service";
 
 const DEFUALT_PAGE_SIZE = 10;
 
@@ -21,12 +21,12 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
       },
     },
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Body: CreateFlowRequest;
       }>,
       _reply
     ) => {
-      return await flowService.create(_request.body);
+      return await flowService.create({ projectId: request.principal.projectId, request: request.body });
     }
   );
 
@@ -46,11 +46,11 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
       }>,
       _reply
     ) => {
-      const flow = await flowService.getOne(request.params.flowId, undefined);
+      const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId });
       if (flow === null) {
         throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } });
       }
-      return await flowService.update(request.params.flowId, request.body);
+      return await flowService.update({ flowId: request.params.flowId, request: request.body, projectId: request.principal.projectId });
     }
   );
 
@@ -62,19 +62,19 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
       },
     },
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Querystring: ListFlowsRequest;
       }>,
       _reply
     ) => {
-      return await flowService.list(_request.query.collectionId, _request.query.cursor, _request.query.limit??DEFUALT_PAGE_SIZE);
+      return await flowService.list({ projectId: request.principal.projectId, collectionId: request.query.collectionId, cursorRequest: request.query.cursor ?? null, limit: request.query.limit ?? DEFUALT_PAGE_SIZE });
     }
   );
 
   fastify.get(
     "/:flowId",
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Params: {
           flowId: FlowId;
         };
@@ -84,10 +84,10 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
       }>,
       _reply
     ) => {
-      const versionId: FlowVersionId | undefined = _request.query.versionId;
-      const flow = await flowService.getOne(_request.params.flowId, versionId);
+      const versionId: FlowVersionId | undefined = request.query.versionId;
+      const flow = await flowService.getOne({ id: request.params.flowId, versionId: versionId, projectId: request.principal.projectId });
       if (flow === null) {
-        throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: _request.params.flowId } });
+        throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } });
       }
       return flow;
     }
@@ -96,14 +96,14 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
   fastify.delete(
     "/:flowId",
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Params: {
           flowId: FlowId;
         };
       }>,
       _reply
     ) => {
-      await flowService.delete(_request.params.flowId);
+      await flowService.delete({ projectId: request.principal.projectId, flowId: request.params.flowId });
       _reply.status(StatusCodes.OK).send();
     }
   );

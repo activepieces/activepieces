@@ -3,7 +3,7 @@ import {
   ClaimTokenFromCloudRequest,
   ClaimTokenWithSecretRequest,
 } from "@activepieces/shared";
-import { formatOAuth2Response } from "../app-connection/app-connection-service";
+import { formatOAuth2Response } from "../app-connection/app-connection.service";
 
 export const oauth2Service = {
   claim: async (request: ClaimTokenWithSecretRequest): Promise<unknown> => {

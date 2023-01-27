@@ -13,7 +13,7 @@ import { logger } from "../../main";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 import { flowVersionRepo } from "../flows/flow-version/flow-version-repo";
 import { triggerUtils } from "../helper/trigger-utils";
-import { instanceService } from "./instance-service";
+import { instanceService } from "./instance.service";
 
 export const instanceSideEffects = {
   async enable(instance: Instance): Promise<void> {
@@ -64,11 +64,11 @@ export const instanceSideEffects = {
     const disableTriggers = flowVersions.map((version) => triggerUtils.disable({ collectionId: instance.collectionId!, flowVersion: version, projectId: instance.projectId!, collectionVersion }));
     await Promise.all(disableTriggers);
   },
-  async onCollectionDelete(collectionId: CollectionId) {
-    let instace = await instanceService.getByCollectionId({ collectionId });
-    if (instace !== null) {
+  async onCollectionDelete({projectId, collectionId}: {projectId: ProjectId, collectionId: CollectionId}) {
+    const instance = await instanceService.getByCollectionId({ projectId, collectionId });
+    if (instance !== null) {
       logger.info(`Collection ${collectionId} is deleted, running intstance side effects first`);
-      await this.disable(instace);
+      await this.disable(instance);
     }
   }
 };

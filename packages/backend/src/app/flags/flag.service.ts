@@ -3,7 +3,7 @@ import { databaseConnection } from "../database/database-connection";
 import { getBackendUrl } from "../helper/public-ip-utils";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
-import { FlagEntity } from "./flag-entity";
+import { FlagEntity } from "./flag.entity";
 
 const flagRepo = databaseConnection.getRepository(FlagEntity);
 

@@ -36,7 +36,7 @@ export class ConnectionsTableDataSource extends DataSource<FlowRun> {
 			refresh: this.refresh$,
 		}).pipe(
 			switchMap(res => {
-				return this.connectionsService.list({ projectId: res.project.id, limit: res.pageSize, cursor: res.pageCursor });
+				return this.connectionsService.list({limit: res.pageSize, cursor: res.pageCursor });
 			}),
 			tap(res => {
 				this.paginator.next = res.next;

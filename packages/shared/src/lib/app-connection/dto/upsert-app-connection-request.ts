@@ -4,7 +4,6 @@ import { AppConnectionType } from "../app-connection";
 const commonAuthProps = {
     name: Type.String({}),
     appName: Type.String({}),
-    projectId: Type.String({}),
 };
 
 const OAuth2ConnectionValue = {

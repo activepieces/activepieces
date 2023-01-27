@@ -2,21 +2,21 @@ import { apId, AppConnection, AppConnectionId, AppConnectionType, BaseOAuth2Conn
 import { databaseConnection } from "../database/database-connection";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
-import { AppConnectionEntity } from "./app-connection-entity";
+import { AppConnectionEntity } from "./app-connection.entity";
 import axios from "axios";
 import { createRedisLock } from "../database/redis-connection";
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 
 export const appConnectionService = {
-    async upsert(request: UpsertConnectionRequest): Promise<AppConnection> {
-        await appConnectionRepo.upsert({ ...request, id: apId() }, ["name", "projectId"]);
+    async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertConnectionRequest }): Promise<AppConnection> {
+        await appConnectionRepo.upsert({ ...request, id: apId(), projectId: projectId }, ["name", "projectId"]);
         return appConnectionRepo.findOneByOrFail({
-            name: request.name,
-            appName: request.appName
+            projectId: projectId,
+            name: request.name
         })
     },
-    async getOne(projectId: ProjectId, name: string): Promise<AppConnection | null> {
+    async getOne({projectId, name}: {projectId: ProjectId, name: string}): Promise<AppConnection | null> {
         // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
         // which could result in the wrong request saving incorrect data.
         const refreshLock = await createRedisLock(`${projectId}_${name}`);
@@ -32,8 +32,8 @@ export const appConnectionService = {
         refreshLock.release();
         return refreshedAppConnection;
     },
-    async delete(id: AppConnectionId): Promise<void> {
-        await appConnectionRepo.delete({ id: id });
+    async delete({ projectId, id }: { projectId: ProjectId, id: AppConnectionId }): Promise<void> {
+        await appConnectionRepo.delete({ id: id, projectId: projectId });
     },
     async list(projectId: ProjectId, appName: string | undefined, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
