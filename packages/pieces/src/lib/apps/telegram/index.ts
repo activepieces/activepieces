@@ -1,5 +1,5 @@
 import {createPiece} from '../../framework/piece';
-import { telegramSendMessageAction } from './action/send_message-action';
+import { telegramSendMessageAction } from './action/send-text-message.action';
 
 export const telegramBot = createPiece({
 	name: 'telegram_bot',
