@@ -1,4 +1,3 @@
-import { blackbaud } from "..";
 import { Property } from "../../../framework/property";
 
 export const blackbaudCommon = {
