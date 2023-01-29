@@ -1,8 +1,7 @@
-import { blackbaud } from "..";
 import { Property } from "../../../framework/property";
 
 export const blackbaudCommon = {
-    baseUrl:  "https://api.sky.blackbaud.com",
+    baseUrl: "https://api.sky.blackbaud.com",
     auth_props: {
         authentication: Property.OAuth2({
             description: "",

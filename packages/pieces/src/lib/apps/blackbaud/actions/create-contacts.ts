@@ -4,7 +4,7 @@ import { HttpRequest } from '../../../common/http/core/http-request';
 import { createAction } from '../../../framework/action/action';
 import { Property } from '../../../framework/property';
 import { blackbaudCommon } from '../common/common';
-import * as  Ajv from "ajv";
+import Ajv from "ajv";
 
 const ajv = new Ajv()
 
@@ -34,12 +34,12 @@ export const blackbaudCreateContacts = createAction({
         }
     ],
     async run(configValue) {
-        let contacts = parseContacts(configValue.propsValue['contacts']!);
-        let validation = ajv.compile(schema);
+        const contacts = parseContacts(configValue.propsValue['contacts']!);
+        const validation = ajv.compile(schema);
         if (!validation(contacts)) {
             throw new Error("The input is not an json array, check contacts field in the input");
         }
-        let responses = [];
+        const responses = [];
         const accessToken = configValue.propsValue['authentication']?.access_token;
         for (let i = 0; i < contacts.length; ++i) {
             const request: HttpRequest<any> = {
