@@ -76,22 +76,12 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
-<table>
-  <tbody>
-    <tr>
-          <td align="center"><a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4" width="100px;" alt="Mohammad Abu Aboud"/><br /><sub><b>Mohammad Abu Aboud</b></sub></a><br /><a href="#maintenance-abuaboud" title="Maintenance">🚧</a></td>
-      <td align="center"><a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="Khaled Mashaly"/><br /><sub><b>Khaled Mashaly</b></sub></a><br /><a href="#maintenance-khaledmashaly" title="Maintenance">🚧</a></td>
-      <td align="center"><a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4" width="100px;" alt="Abdulrahman Al Hussein"/><br /><sub><b>Abdulrahman Al Hussein</b></sub></a><br /><a href="#maintenance-AbdulTheActivePiecer" title="Maintenance">🚧</a></td>
-            <td align="center"><a href="https://steercampaign.com"><img src="https://avatars.githubusercontent.com/u/12627658?v=4?s=100" width="100px;" alt="Mohammad Abu Musa"/><br /><sub><b>Mohammad Abu Musa</b></sub></a><br /><a href="#maintenance-mabumusa1" title="Maintenance">🚧</a></td>
-<td align="center"><a href="https://github.com/aboudzein"><img src="https://avatars.githubusercontent.com/u/12976630?v=4" width="100px;" alt="Abdurahman Zeineddin"/><br /><sub><b>Abdurahman Zeineddin</b></sub></a><br /><a href="#maintenance-aboudzein" title="Maintenance">🚧</a></td>
-    </tr>
-  </tbody>
-</table>
 
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
 
 This project follows the [all-contributors](https://allcontributors.org) specification.
 Contributions of any kind are welcome!
