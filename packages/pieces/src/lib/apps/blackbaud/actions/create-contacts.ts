@@ -6,7 +6,7 @@ import { Property } from '../../../framework/property';
 import { blackbaudCommon } from '../common/common';
 import Ajv from "ajv";
 
-const ajv = new Ajv()
+const ajv = new Ajv();
 
 const schema = {
     type: 'array',

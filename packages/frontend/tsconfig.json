@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
+    "esModuleInterop": false,
     "target": "ES2022",
     "module": "es2020",
     "lib": [
       "es2021",
       "dom"
     ],
-    "allowSyntheticDefaultImports": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,

@@ -14,6 +14,7 @@ import { googleContacts } from './google-contacts';
 import { googleSheets } from './google-sheets';
 import { sendgrid } from './sendgrid';
 import { drip } from './drip';
+import { calendly } from './calendly';
 
 export const pieces: Piece[] = [
 	slack,
@@ -30,7 +31,8 @@ export const pieces: Piece[] = [
 	pipedrive,
 	googleContacts,
 	sendgrid,
-	drip
+	drip,
+	calendly
 ];
 
 export const getPiece = (name: string): Piece | undefined => {
