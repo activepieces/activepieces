@@ -4,7 +4,7 @@ import {HttpMethod} from "../../../common/http/core/http-method";
 import {HttpRequest} from "../../../common/http/core/http-request";
 import {createAction} from "../../../framework/action/action";
 import {Property} from "../../../framework/property";
-import { hubspotCommons } from "../common";
+import { hubSpotAuthentication } from "../common";
 
 
 export const createHubspotContact = createAction({
@@ -12,7 +12,7 @@ export const createHubspotContact = createAction({
     displayName: "Create Contact",
     description: "Creates a contact on hubspot",
     props: {
-        authentication: hubspotCommons.authentication,
+        authentication: hubSpotAuthentication,
         firstName: Property.ShortText({
             displayName: 'First Name',
             description: 'First name of the new contact',
