@@ -84,6 +84,7 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="Khaled Mashaly"/><br /><sub><b>Khaled Mashaly</b></sub></a><br /><a href="#maintenance-khaledmashaly" title="Maintenance">🚧</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/><br /><sub><b>Mohammed Abu Aboud</b></sub></a><br /><a href="#maintenance-abuaboud" title="Maintenance">🚧</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://aboudzein.github.io"><img src="https://avatars.githubusercontent.com/u/12976630?v=4?s=100" width="100px;" alt="Abdulrahman Zeineddin"/><br /><sub><b>Abdulrahman Zeineddin</b></sub></a><br /><a href="#plugin-aboudzein" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/creed983"><img src="https://avatars.githubusercontent.com/u/62152944?v=4?s=100" width="100px;" alt="ahmad jaber"/><br /><sub><b>ahmad jaber</b></sub></a><br /><a href="#plugin-creed983" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
