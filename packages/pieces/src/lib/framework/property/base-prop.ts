@@ -34,4 +34,4 @@ export interface NumberProperty extends BasePropertySchema, TPropertyValue<numbe
 
 export interface ArrayProperty extends BasePropertySchema, TPropertyValue<unknown[], PropertyType.ARRAY> { }
 
-export interface ObjectProperty extends BasePropertySchema, TPropertyValue<Object, PropertyType.OBJECT> { }
+export interface ObjectProperty extends BasePropertySchema, TPropertyValue<object, PropertyType.OBJECT> { }

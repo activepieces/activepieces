@@ -34,11 +34,11 @@ export const dripNewSubscriberEvent = createTrigger({
         webhooks: [{ post_url: context.webhookUrl, events: ["subscriber.created"] }],
       },
       headers: {
-        'Authorization': `Basic ${Buffer.from(context.propsValue["authentication"]!).toString('base64')}`
+        'Authorization': dripCommon.authorizationHeader(context.propsValue["authentication"]!)
       },
       queryParams: {},
     };
-    let { body } = await httpClient.sendRequest<{ webhooks: { id: string }[] }>(request);
+    const { body } = await httpClient.sendRequest<{ webhooks: { id: string }[] }>(request);
     await context.store?.put<DripWebhookInformation>(triggerNameInStore, {
       webhookId: body.webhooks[0].id,
       userId: context.propsValue["account_id"]!
@@ -53,7 +53,7 @@ export const dripNewSubscriberEvent = createTrigger({
         method: HttpMethod.DELETE,
         url: `${dripCommon.baseUrl(response.userId)}/webhooks/${response.webhookId}`,
         headers: {
-          'Authorization': `Basic ${Buffer.from(context.propsValue["authentication"]!).toString('base64')}`
+          'Authorization': dripCommon.authorizationHeader(context.propsValue["authentication"]!)
         },
       };
       await httpClient.sendRequest(request);

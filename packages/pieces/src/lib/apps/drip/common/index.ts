@@ -30,7 +30,7 @@ export const dripCommon = {
                     Authorization: `Basic ${Buffer.from(props["authentication"] as string).toString("base64")}`,
                 },
             };
-            let response = await httpClient.sendRequest<{ accounts: { id: string, name: string }[] }>(request);
+            const response = await httpClient.sendRequest<{ accounts: { id: string, name: string }[] }>(request);
             const opts = response.body.accounts.map((acc) => {
                 return { value: acc.id, label: acc.name };
             });
@@ -51,7 +51,8 @@ export const dripCommon = {
         displayName: "Custom Fields",
         required: false,
         description: "Custom field data about the subscriber"
-    })
+    }),
+    authorizationHeader: (apiKey: string) => `Basic ${Buffer.from(apiKey).toString('base64')}`
 
 }
 

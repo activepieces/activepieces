@@ -8,8 +8,8 @@ import { dripTagAppliedEvent } from './trigger/new-tag.trigger';
 
 export const drip = createPiece({
 	name: 'drip',
-	displayName: "Drip",
-	logoUrl: 'https://1445333.fs1.hubspotusercontent-na1.net/hubfs/1445333/raw_assets/public/drip/images/logos/og-logo.png',
+	displayName: 'Drip',
+	logoUrl: 'https://cdn.activepieces.com/pieces/drip.png',
 	actions: [dripApplyTagToSubscriber, dripAddSubscriberToCampaign, dripUpsertSubscriberAction],
 	triggers: [dripNewSubscriberEvent, dripTagAppliedEvent],
 });

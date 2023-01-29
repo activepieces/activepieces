@@ -27,7 +27,6 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
     }), map(() => { return void 0; }))
   }
   writeValue(obj: string[]): void {
-    debugger;
     if (obj) {
       this.formArray.clear();
       obj.forEach(val => {

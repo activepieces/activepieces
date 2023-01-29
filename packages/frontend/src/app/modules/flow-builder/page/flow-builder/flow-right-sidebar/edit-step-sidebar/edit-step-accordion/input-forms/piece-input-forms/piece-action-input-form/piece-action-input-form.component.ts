@@ -74,8 +74,8 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 	actions$: Observable<ActionDropdownOption[]>;
 	valueChanges$: Observable<void>;
 	actionDropdownValueChanged$: Observable<{ actionName: string; configs: PieceConfig[] }>;
-	onChange = (value: any) => {};
-	onTouch = () => {};
+	onChange = (value: any) => { };
+	onTouch = () => { };
 	updateOrAddConfigModalClosed$: Observable<Config>;
 	allAuthConfigs$: Observable<DropdownItem[]>;
 	constructor(
@@ -183,8 +183,8 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 										}
 									});
 								}
-								this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new UntypedFormControl([...configs]), {
-									emitEvent: false,
+								this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new UntypedFormControl({ value: [...configs], disabled: this.componentForm.disabled }), {
+									emitEvent: false
 								});
 								this.cd.detectChanges();
 							}
@@ -300,6 +300,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 		return item.actionName === selected.actionName;
 	}
 	setDisabledState?(isDisabled: boolean): void {
+
 		if (isDisabled) {
 			this.componentForm.disable();
 		} else {

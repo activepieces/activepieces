@@ -38,7 +38,7 @@ export const dripAddSubscriberToCampaign = createAction({
                         Authorization: `Basic ${Buffer.from(props["authentication"] as string).toString("base64")}`,
                     },
                 };
-                let response = await httpClient.sendRequest<{ campaigns: { name: string, id: string }[] }>(request);
+                const response = await httpClient.sendRequest<{ campaigns: { name: string, id: string }[] }>(request);
                 const opts = response.body.campaigns.map((campaign) => {
                     return { value: campaign.id, label: campaign.name };
                 });
@@ -65,10 +65,10 @@ export const dripAddSubscriberToCampaign = createAction({
                 }]
             },
             headers: {
-                'Authorization': `Basic ${Buffer.from(context.propsValue["authentication"]!).toString('base64')}`
+                'Authorization': dripCommon.authorizationHeader(context.propsValue["authentication"]!)
             },
             queryParams: {},
         };
-        return await httpClient.sendRequest<{}>(request);
+        return await httpClient.sendRequest<Record<string, never>>(request);
     }
 });

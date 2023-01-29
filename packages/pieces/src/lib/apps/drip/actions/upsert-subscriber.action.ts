@@ -46,10 +46,10 @@ export const dripUpsertSubscriberAction = createAction({
 
             },
             headers: {
-                'Authorization': `Basic ${Buffer.from(context.propsValue["authentication"]!).toString('base64')}`
+                'Authorization': dripCommon.authorizationHeader(context.propsValue["authentication"]!)
             },
             queryParams: {},
         };
-        return await httpClient.sendRequest<{}>(request);
+        return await httpClient.sendRequest<Record<string, never>>(request);
     }
 });
