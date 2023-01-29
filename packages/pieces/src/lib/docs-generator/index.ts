@@ -92,12 +92,14 @@ function writeAppsOverView() {
   let appsSnippet = "<CardGroup cols={3}>";
   pieces.forEach(piece => {
     appsSnippet += `
-    <Card>
-      <p align="center">
-        <strong>${piece.displayName}</strong>
-        <img height="75" src="https://cdn.activepieces.com/pieces/${piece.name}.png" />
-      </p>
-    </Card>
+    <a href="https://activepieces.com/docs/apps/${piece.name}">
+      <Card>
+          <p align="center">
+            <strong>${piece.displayName}</strong>
+            <img height="75px" width="75px" src="https://cdn.activepieces.com/pieces/${piece.name}.png" />
+          </p>
+      </Card>
+    </a>
       `
   });
   appsSnippet += "</CardGroup>";
