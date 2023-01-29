@@ -92,7 +92,7 @@ function writeAppsOverView() {
   let appsSnippet = "<CardGroup cols={3}>";
   pieces.forEach(piece => {
     appsSnippet += `
-    <a href="https://activepieces.com/docs/apps/${piece.name}">
+    <a href="https://activepieces.com/docs/pieces/apps/${piece.name}">
       <Card>
           <p align="center">
             <strong>${piece.displayName}</strong>
