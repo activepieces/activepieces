@@ -82,6 +82,7 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ShahedAlMashni"><img src="https://avatars.githubusercontent.com/u/41443850?v=4?s=100" width="100px;" alt="ShahedAlMashni"/><br /><sub><b>ShahedAlMashni</b></sub></a><br /><a href="#plugin-ShahedAlMashni" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4?s=100" width="100px;" alt="AbdulTheActivePiecer"/><br /><sub><b>AbdulTheActivePiecer</b></sub></a><br /><a href="#maintenance-AbdulTheActivePiecer" title="Maintenance">🚧</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="Khaled Mashaly"/><br /><sub><b>Khaled Mashaly</b></sub></a><br /><a href="#maintenance-khaledmashaly" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/><br /><sub><b>Mohammed Abu Aboud</b></sub></a><br /><a href="#maintenance-abuaboud" title="Maintenance">🚧</a></td>
     </tr>
   </tbody>
 </table>
