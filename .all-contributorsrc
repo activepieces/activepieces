@@ -12,23 +12,5 @@
   "skipCi": true,
   "commitConvention": "angular",
   "contributors": [
-    {
-      "login": "khaledmashaly",
-      "name": "Khaled Mashaly",
-      "avatar_url": "https://avatars.githubusercontent.com/u/61781545?v=4",
-      "profile": "https://github.com/khaledmashaly",
-      "contributions": [
-        "maintenance"
-      ]
-    },
-    {
-      "login": "mabumusa1",
-      "name": "Mohammad Abu Musa",
-      "avatar_url": "https://avatars.githubusercontent.com/u/12627658?v=4",
-      "profile": "https://steercampaign.com",
-      "contributions": [
-        "repository setup"
-      ]
-    }
   ]
 }
