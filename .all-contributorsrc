@@ -12,5 +12,14 @@
   "skipCi": true,
   "commitConvention": "angular",
   "contributors": [
+    {
+      "login": "ShahedAlMashni",
+      "name": "ShahedAlMashni",
+      "avatar_url": "https://avatars.githubusercontent.com/u/41443850?v=4",
+      "profile": "https://github.com/ShahedAlMashni",
+      "contributions": [
+        "plugin"
+      ]
+    }
   ]
 }
