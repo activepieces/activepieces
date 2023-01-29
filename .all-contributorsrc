@@ -38,6 +38,15 @@
       "contributions": [
         "maintenance"
       ]
+    },
+    {
+      "login": "aboudzein",
+      "name": "Abdulrahman Zeineddin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12976630?v=4",
+      "profile": "https://aboudzein.github.io",
+      "contributions": [
+        "plugin"
+      ]
     }
   ]
 }
