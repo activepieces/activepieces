@@ -28,7 +28,7 @@ export class CodeService {
 	artifactsCacheForSteps: ArtifactsCache = new Map();
 	cachedFile: Map<String, any> = new Map<String, Observable<ArrayBuffer>>();
 
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	public beautifyJson(content: any) {
 		return JSON.stringify(content, null, 2);
@@ -68,7 +68,7 @@ export class CodeService {
 
 	static zipFile(artifact: Artifact): Observable<string> {
 		const zip = new JSZip();
-		zip.file('index.js', artifact.content, {
+		zip.file('index.ts', artifact.content, {
 			createFolders: false,
 		});
 		zip.file('package.json', artifact.package, {
@@ -83,13 +83,12 @@ export class CodeService {
 			switchMap(async (file: ArrayBuffer) => {
 				const content = { content: '', package: '' };
 				// @ts-ignore
-
 				const zipFile = await JSZip.loadAsync(file);
 				for (const filename of Object.keys(zipFile.files)) {
 					if (filename.split('/').length > 2) continue;
-					if (filename.endsWith('index.js') || filename.endsWith('package.json')) {
+					if (filename.endsWith('index.ts') || filename.endsWith('index.js') || filename.endsWith('package.json')) {
 						const fileData = await zipFile.files[filename].async('string');
-						if (filename.endsWith('index.js')) {
+						if (filename.endsWith('index.js') || filename.endsWith('index.ts')) {
 							content.content = fileData;
 						} else if (filename.endsWith('package.json')) {
 							content.package = fileData;
@@ -106,9 +105,9 @@ export class CodeService {
 		const zipFile = await JSZip.loadAsync(file);
 		for (const filename of Object.keys(zipFile.files)) {
 			if (filename.split('/').length > 2) continue;
-			if (filename.endsWith('index.js') || filename.endsWith('package.json')) {
+			if (filename.endsWith('index.ts') || filename.endsWith('index.js') || filename.endsWith('package.json')) {
 				const fileData = await zipFile.files[filename].async('string');
-				if (filename.endsWith('index.js')) {
+				if (filename.endsWith('index.js') || filename.endsWith('index.ts')) {
 					content.content = fileData;
 				} else if (filename.endsWith('package.json')) {
 					content.package = fileData;

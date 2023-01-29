@@ -13,13 +13,14 @@ FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:0-${VARIANT}
 # [Optional] Uncomment if you want to install more global node modules
 # RUN su node -c "npm install -g <your-package-list-here>"
 
-RUN npm install -g pnpm
 RUN npm install --global --unsafe-perm webpack@5.74.0
 RUN npm install --global --unsafe-perm webpack-cli@^4.10.0
 RUN npm install --global --unsafe-perm webpack-node-externals@^3.0.0
 RUN npm install -g @angular/cli
 RUN npm install -g nx
 RUN apt-get update && apt-get install -y git
+RUN npm cache add typescript@^4.0.3
+RUN npm cache add ts-loader@^8.3.0
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \

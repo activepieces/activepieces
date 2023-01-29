@@ -2,16 +2,26 @@ import fs from "node:fs";
 import { execSync, ExecSyncOptionsWithBufferEncoding } from "node:child_process";
 import decompress from "decompress";
 import { sandboxManager } from "../sandbox";
+import { logger } from "packages/backend/src/main";
 
 const webpackConfig = `
   const path = require("node:path");
   module.exports = {
     target: "node",
+    devtool: false,
     externalsPresets: { node: true },
-    entry: "./index.js",
+    entry: "./index.ts",
+    module: {
+      rules: [
+        {
+         use: 'ts-loader',
+         exclude: /node_modules/
+        }
+      ]
+    },
     resolve: {
       preferRelative: true,
-      extensions: [".js"]
+      extensions: ['.ts', '.js', 'jsx', 'tsx']
     },
     output: {
       libraryTarget: "commonjs2",
@@ -24,12 +34,26 @@ const webpackConfig = `
   };
 `;
 
+const tsConfig = `
+{
+  "compilerOptions": {
+    "lib" : ["es2019"],
+    "module": "commonjs",
+    "moduleResolution": "Node",
+    "sourceMap": true,
+    "rootDir": ".",
+    "outDir": "dist"
+  }
+}
+`;
+
 async function build(artifact: Buffer): Promise<Buffer> {
   const sandbox = sandboxManager.obtainSandbox();
   const buildPath = sandbox.getSandboxFolderPath();
   let bundledFile: Buffer;
   try {
-    console.log("Started Building in sandbox " + buildPath);
+    const startTime = new Date().getTime();
+    logger.info("Started Building in sandbox " + buildPath);
 
     await sandbox.cleanAndInit();
 
@@ -39,12 +63,13 @@ async function build(artifact: Buffer): Promise<Buffer> {
       cwd: buildPath,
     };
 
-    execSync('npm install', execOptions);
+    execSync('npm install --prefer-offline', execOptions);
+    logger.info(`npm installation in sandbox ${buildPath} took ${new Date().getTime() - startTime} ms`);
     execSync('npm exec -g webpack -- --mode production', execOptions);
 
     const bundledFilePath = buildPath + "/dist/index.js";
     bundledFile = fs.readFileSync(bundledFilePath);
-    console.log("Finished Building in sandbox " + buildPath);
+    logger.info(`Finished Building in sandbox ${buildPath} took ${new Date().getTime() - startTime} ms`);
   } catch (e) {
     const consoleError = e as { stdout: string };
     const invalidArtifactFile = fs
@@ -61,6 +86,7 @@ async function build(artifact: Buffer): Promise<Buffer> {
 async function downloadFiles(artifact: Buffer, buildPath: string) {
   const packageJsonPath = `${buildPath}/package.json`;
   const webpackConfigPath = `${buildPath}/webpack.config.js`;
+  const tsConfigPath = `${buildPath}/tsconfig.json`;
 
   await decompress(artifact, buildPath, {});
 
@@ -74,9 +100,16 @@ async function downloadFiles(artifact: Buffer, buildPath: string) {
   if (packageJson.scripts === undefined) {
     packageJson.scripts = {};
   }
+  if (packageJson.devDependencies === undefined) {
+    packageJson.devDependencies = {};
+  }
+
+  packageJson.devDependencies['typescript'] = "4.0.3";
+  packageJson.devDependencies['ts-loader'] = "8.3.0";
 
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson));
   fs.writeFileSync(webpackConfigPath, webpackConfig);
+  fs.writeFileSync(tsConfigPath, tsConfig);
 }
 
 export const codeBuilder = {
