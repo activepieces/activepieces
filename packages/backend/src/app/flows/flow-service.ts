@@ -20,6 +20,7 @@ import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { createRedisLock } from "../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
+import { instanceSideEffects } from "../instance/instance-side-effects";
 
 const flowRepo = databaseConnection.getRepository(FlowEntity);
 
@@ -110,6 +111,7 @@ export const flowService = {
     return await this.getOne(flowId, undefined);
   },
   async delete(flowId: FlowId): Promise<void> {
+    await instanceSideEffects.onFlowDelete(flowId);
     await flowRepo.delete({ id: flowId });
   },
 };

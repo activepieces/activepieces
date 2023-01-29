@@ -3,6 +3,7 @@ import { ApId } from "@activepieces/shared";
 import { createRedisClient } from "../../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
+import { logger } from "packages/backend/src/main";
 
 interface BaseAddParams {
   id: ApId;
@@ -54,7 +55,7 @@ export const flowQueue = {
 
       const client = await repeatableJobQueue.client;
 
-      await client.set(repeatableJobKey(id), job.repeatJobKey!);
+      await client.set(repeatableJobKey(id), job.repeatJobKey);
     } else {
       const { id, data } = params;
 
@@ -70,24 +71,22 @@ export const flowQueue = {
       const jobKey = await client.get(repeatableJobKey(id));
 
       if (jobKey === null) {
-        throw new ActivepiecesError({
-          code: ErrorCode.JOB_REMOVAL_FAILURE,
-          params: {
-            jobId: id,
-          },
-        });
-      }
+        // If the trigger activation failed, don't let the function fail. 
+        // Just ignore the action. Log an error message indicating that the job with key "${jobKey}" couldn't be found, even though it should exist, and proceed to skip the deletion.
+        logger.error(`Couldn't find job ${jobKey}, even though It should exists, skipping delete`);
+      } else {
 
-      const result = await repeatableJobQueue.removeRepeatableByKey(jobKey);
-      await client.del(repeatableJobKey(id));
+        const result = await repeatableJobQueue.removeRepeatableByKey(jobKey);
+        await client.del(repeatableJobKey(id));
 
-      if (!result) {
-        throw new ActivepiecesError({
-          code: ErrorCode.JOB_REMOVAL_FAILURE,
-          params: {
-            jobId: id,
-          },
-        });
+        if (!result) {
+          throw new ActivepiecesError({
+            code: ErrorCode.JOB_REMOVAL_FAILURE,
+            params: {
+              jobId: id,
+            },
+          });
+        }
       }
     } else {
       const result = await oneTimeJobQueue.remove(id);
