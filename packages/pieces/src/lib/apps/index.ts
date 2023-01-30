@@ -13,7 +13,9 @@ import { pipedrive } from './pipedrive';
 import { googleContacts } from './google-contacts';
 import { googleSheets } from './google-sheets';
 import { sendgrid } from './sendgrid';
+import { clickup } from './clickup';
 import { drip } from './drip';
+
 
 export const pieces: Piece[] = [
 	slack,
@@ -26,6 +28,7 @@ export const pieces: Piece[] = [
 	openai,
 	stripe,
 	blackbaud,
+	clickup,
 	googleSheets,
 	pipedrive,
 	googleContacts,
