@@ -101,12 +101,17 @@ export const flowService = {
   },
   async update(flowId: FlowId, request: FlowOperationRequest): Promise<Flow | null> {
     const flowLock = await createRedisLock(flowId);
-    let lastVersion = (await flowVersionService.getFlowVersion(flowId, undefined))!;
-    if (lastVersion.state === FlowVersionState.LOCKED) {
-      lastVersion = await flowVersionService.createVersion(flowId, lastVersion);
+    try {
+      let lastVersion = (await flowVersionService.getFlowVersion(flowId, undefined))!;
+      if (lastVersion.state === FlowVersionState.LOCKED) {
+        lastVersion = await flowVersionService.createVersion(flowId, lastVersion);
+      }
+      await flowVersionService.applyOperation(lastVersion, request);
     }
-    await flowVersionService.applyOperation(lastVersion, request);
-    await flowLock.release();
+    finally {
+      await flowLock.release();
+    }
+
     return await this.getOne(flowId, undefined);
   },
   async delete(flowId: FlowId): Promise<void> {
