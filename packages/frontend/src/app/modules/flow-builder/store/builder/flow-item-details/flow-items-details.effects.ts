@@ -52,7 +52,7 @@ export class FlowItemsDetailsEffects {
 						return new FlowItemDetails(
 							TriggerType.PIECE,
 							c.displayName,
-							`Trigger this flow following a specific event on ${c.displayName}`,
+							``,
 							c.logoUrl,
 							{ appName: c.name }
 						);
