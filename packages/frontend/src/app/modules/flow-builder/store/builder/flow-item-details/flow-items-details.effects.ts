@@ -44,7 +44,7 @@ export class FlowItemsDetailsEffects {
 						return new FlowItemDetails(
 							ActionType.PIECE,
 							c.displayName,
-							c.description ? c.description : `Connect to ${c.displayName} and use its api to make requests`,
+							c.description ? c.description : ``,
 							c.logoUrl,
 							{ appName: c.name }
 						);
