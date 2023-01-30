@@ -4,7 +4,7 @@ import {HttpMethod} from "../../../common/http/core/http-method";
 import {HttpRequest} from "../../../common/http/core/http-request";
 import {createAction} from "../../../framework/action/action";
 import {Property} from "../../../framework/property";
-import { hubSpotAuthentication } from "../common";
+import { hubSpotAuthentication } from "../common/props";
 
 
 export const createHubspotContact = createAction({

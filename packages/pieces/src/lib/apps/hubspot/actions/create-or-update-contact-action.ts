@@ -1,7 +1,7 @@
 import { assertNotNullOrUndefined } from '../../../common/helpers/assertions';
 import { createAction } from '../../../framework/action/action';
 import { Property } from '../../../framework/property';
-import { hubSpotAuthentication } from '../common';
+import { hubSpotAuthentication } from '../common/props';
 import { hubSpotClient } from '../common/client';
 
 export const hubSpotContactsCreateOrUpdateAction = createAction({
@@ -9,7 +9,7 @@ export const hubSpotContactsCreateOrUpdateAction = createAction({
   displayName: 'Create or update contact',
   description: 'Create or update contact',
   sampleData: {
-    'vid': '12345',
+    'vid': 12345,
     'isNew': true,
   },
   props: {
