@@ -13,7 +13,7 @@ export const dripAddSubscriberToCampaign = createAction({
         authentication: dripCommon.authentication,
         account_id: dripCommon.account_id,
         campaign_id: Property.Dropdown({
-            displayName: "Campaign",
+            displayName: "Email Series Campaign",
             refreshers: ["authentication", "account_id"],
             required: true,
             options: async (props) => {
@@ -42,6 +42,13 @@ export const dripAddSubscriberToCampaign = createAction({
                 const opts = response.body.campaigns.map((campaign) => {
                     return { value: campaign.id, label: campaign.name };
                 });
+                if (opts.length === 0) {
+                    return {
+                        disabled: false,
+                        options: [],
+                        placeholder: "Please create an email series campaign"
+                    }
+                }
                 return {
                     disabled: false,
                     options: opts,
@@ -52,7 +59,50 @@ export const dripAddSubscriberToCampaign = createAction({
         tags: dripCommon.tags,
         custom_fields: dripCommon.custom_fields,
     },
-    sampleData: {},
+    sampleData: {
+        "links": {
+            "subscribers.account": "https://api.getdrip.com/v2/accounts/{subscribers.account}"
+        },
+        "subscribers": [
+            {
+                "id": "1e0ukqg4yzqo1bxyy18f",
+                "href": "https://api.getdrip.com/v2/AAAAAAA/subscribers/AAAAAAA",
+                "status": "active",
+                "email": "yrdd@ggg.com",
+                "first_name": "joe",
+                "last_name": "doe",
+                "address1": "Iraq,Baghdad",
+                "address2": "Amman,Jordan",
+                "city": "Baghdad",
+                "state": "Baghdad",
+                "zip": "10011",
+                "phone": "079123123123",
+                "country": "Iraq",
+                "time_zone": "Baghdad GMT+3",
+                "utc_offset": 3,
+                "visitor_uuid": null,
+                "custom_fields": {},
+                "tags": [],
+                "created_at": "2023-01-30T07:42:12Z",
+                "ip_address": "000.000.00",
+                "user_agent": "Mozilla Firefox",
+                "lifetime_value": null,
+                "original_referrer": null,
+                "landing_url": null,
+                "prospect": false,
+                "base_lead_score": null,
+                "eu_consent": "unknown",
+                "sms_number": "079123123123",
+                "sms_consent": false,
+                "lead_score": null,
+                "user_id": null,
+                "links": {
+                    "account": "00000000"
+                }
+            }
+        ]
+    }
+    ,
     async run(context) {
         const request: HttpRequest<any> = {
             method: HttpMethod.POST,
