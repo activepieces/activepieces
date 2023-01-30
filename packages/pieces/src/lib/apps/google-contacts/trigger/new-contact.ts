@@ -4,6 +4,7 @@ import { getAccessTokenOrThrow } from '../../../common/helpers';
 import { httpClient } from '../../../common/http/core/http-client';
 import { HttpMethod } from '../../../common/http/core/http-method';
 import { HttpResponse } from '../../../common/http/core/http-response';
+
 import {
     createTrigger,
     TriggerStrategy,
