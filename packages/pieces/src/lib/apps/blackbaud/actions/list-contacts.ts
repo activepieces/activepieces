@@ -2,7 +2,6 @@ import { httpClient } from '../../../common/http/core/http-client';
 import { HttpMethod } from '../../../common/http/core/http-method';
 import { HttpRequest } from '../../../common/http/core/http-request';
 import { createAction } from '../../../framework/action/action';
-import { Property } from '../../../framework/property';
 import { blackbaudCommon } from '../common/common';
 
 
@@ -44,7 +43,7 @@ export const blackbaudListContacts = createAction({
                     Authorization: `Bearer ${accessToken}`,
                 },
             };
-            let response = await httpClient.sendRequest<{ count: number; next_link: string; value: unknown[] }>(request);
+            const response = await httpClient.sendRequest<{ count: number; next_link: string; value: unknown[] }>(request);
             contacts = contacts.concat(response.body?.value)
             nextLink = response.body?.next_link;
         }

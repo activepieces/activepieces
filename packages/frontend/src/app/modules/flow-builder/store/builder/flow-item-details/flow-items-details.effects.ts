@@ -44,7 +44,7 @@ export class FlowItemsDetailsEffects {
 						return new FlowItemDetails(
 							ActionType.PIECE,
 							c.displayName,
-							c.description ? c.description : `Connect to ${c.displayName} and use its api to make requests`,
+							c.description ? c.description : ``,
 							c.logoUrl,
 							{ appName: c.name }
 						);
@@ -52,7 +52,7 @@ export class FlowItemsDetailsEffects {
 						return new FlowItemDetails(
 							TriggerType.PIECE,
 							c.displayName,
-							`Trigger this flow following a specific event on ${c.displayName}`,
+							``,
 							c.logoUrl,
 							{ appName: c.name }
 						);

@@ -6,6 +6,7 @@
       "es2021",
       "dom"
     ],
+    "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,

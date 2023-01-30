@@ -14,6 +14,11 @@ import { googleContacts } from './google-contacts';
 import { googleSheets } from './google-sheets';
 import { sendgrid } from './sendgrid';
 import { asana } from './asana';
+import { typeform } from './typeform';
+import { telegramBot } from './telegram';
+import { clickup } from './clickup';
+import { drip } from './drip';
+import { calendly } from './calendly';
 
 export const pieces: Piece[] = [
 	slack,
@@ -26,11 +31,16 @@ export const pieces: Piece[] = [
 	openai,
 	stripe,
 	blackbaud,
+	clickup,
 	googleSheets,
 	pipedrive,
 	googleContacts,
 	sendgrid,
-	asana
+	asana,
+	drip,
+	calendly,
+	typeform,
+	telegramBot,
 ];
 
 export const getPiece = (name: string): Piece | undefined => {
