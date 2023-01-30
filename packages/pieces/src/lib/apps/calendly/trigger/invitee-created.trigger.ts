@@ -6,6 +6,7 @@ import { httpClient } from '../../../common/http/core/http-client';
 import { HttpRequest } from '../../../common/http/core/http-request';
 import { HttpMethod } from '../../../common/http/core/http-method';
 import { calendlyCommon, CalendlyWebhookInformation } from '../common';
+import { AuthenticationType } from '../../../common/authentication/core/authentication-type';
 
 const triggerNameInStore = 'calendly_invitee_created_trigger';
 
@@ -60,8 +61,9 @@ export const calendlyInviteeCreated = createTrigger({
         events: ["invitee.created"],
 
       },
-      headers: {
-        'Authorization': calendlyCommon.authorizationHeader(context.propsValue["authentication"]!)
+      authentication: {
+        token: context.propsValue["authentication"]!,
+        type: AuthenticationType.BEARER_TOKEN
       },
       queryParams: {},
     };
@@ -78,8 +80,9 @@ export const calendlyInviteeCreated = createTrigger({
       const request: HttpRequest<never> = {
         method: HttpMethod.DELETE,
         url: `${calendlyCommon.baseUrl}/webhook_subscriptions/${response.webhookId}`,
-        headers: {
-          'Authorization': calendlyCommon.authorizationHeader(context.propsValue["authentication"]!)
+        authentication: {
+          token: context.propsValue["authentication"]!,
+          type: AuthenticationType.BEARER_TOKEN
         },
       };
       await httpClient.sendRequest(request);

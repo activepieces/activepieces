@@ -21,7 +21,7 @@ export const calendlyCommon = {
     scope: Property.Dropdown({
         displayName: 'Scope',
         required: true,
-        refreshers: ["authentication"],
+        refreshers: [],
         options: async () => {
             return {
                 options: [{ value: "user", label: "User" }, { value: "organization", label: "Organization" }],
