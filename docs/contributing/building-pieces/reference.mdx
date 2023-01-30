@@ -1,0 +1,156 @@
+---
+title: "Piece Reference"
+description: ""
+---
+
+The piece folder structure should be this:
+
+```
+.
+├── app_name
+│   ├── common
+│   ├── actions
+│   ├── trigger
+│   ├── index.ts
+```
+
+# Piece
+
+This contains piece metadata and should be placed into `app_name/index.ts`
+
+```typescript
+export const pieceName = createPiece({
+	name: string, // Unique name across all pieces
+	logoUrl: string, // Logo URL
+	actions: Action[], // List of actions
+	triggers: Trigger[], // List of triggers
+});
+```
+
+# Trigger
+
+
+The trigger structure.
+
+```typescript
+export const createNewIssue = createTrigger({
+    name: string, // Unique name across the piece.
+    displayName: string, // Display name on the interface.
+	description: string, // Description for the action
+    triggerType: POLLING | WEBHOOK,
+	props: {}; // Required properties from the user.
+    // Run when the user disable the collection or
+    // the old collection is deleted after new one is published.
+	onEnable: (ctx) => {};
+    // Run when the user enable or publish the collection.
+	onDisable: (ctx) => {};
+    // Trigger implementation, It takes context as parameter.
+    // should returns an array of payload, each payload considered
+    // a seperate flow run.
+    run: async run(ctx): unknown[] => {}
+})
+```
+
+# Action
+
+The action structure.
+
+```typescript
+export const createNewIssue = createAction({
+    name: string, // Unique name across the piece.
+    displayName: string, // Display name on the interface.
+	description: string, // Description for the action
+	props: Property[]; // Required properties from the user.
+    // Action implementation, It takes context value as parameter.
+    run: async run(context) => {}
+})
+```
+
+# Property
+
+
+Properties are used to collect from the user information to execute an action or an trigger, a property could be `short text`, `long text`, `checkbox`, `number`, `dropdown`, or `auth2`.
+
+All properties `name` should be a snake case.
+
+#### Short text
+
+```typescript
+Property.ShortText({
+	displayName: string;
+	description: string | undefined;
+	required: boolean;
+})
+```
+
+
+#### Long text
+
+```typescript
+Property.LongText({
+	displayName: string;
+	description: string | undefined;
+	required: boolean;
+})
+```
+
+#### Checkbox 
+
+```typescript
+Property.Checkbox({
+	displayName: string;
+	description: string | undefined;
+	required: boolean;
+})
+```
+
+
+#### OAuth2 
+
+```typescript
+Property.Number({
+    displayName: string,
+    required: boolean,
+    authUrl: string, // The url used for redirection
+    tokenUrl: string, // The url used for claiming token
+    scope: string[],
+})
+```
+
+
+#### Number 
+
+```typescript
+Property.Number({
+	displayName: string;
+	description: string | undefined;
+	required: boolean;
+})
+```
+
+#### Dropdown 
+
+Options can be loaded dynamically based on the user's props value.
+
+```typescript
+Property.Dropdown({
+    displayName: string;
+    description: string | undefined;
+    required: boolean;
+    refreshers: string[], // properties that when changed, will trigger the options function to execute
+    options: async (propsValue): DropdownState {
+        if (props['authentication'] === undefined) {
+            return {
+                disabled: true;
+            }
+        }
+        return {
+            options: [{
+                label: "Option One",
+                value: "1"
+            }]
+        }
+    }
+})
+```
+

@@ -122,17 +122,10 @@
     {
       "group": "Building Pieces",
       "pages": [
+        "contributing/building-pieces/overview",
         "contributing/building-pieces/quickstart",
+        "contributing/building-pieces/reference",
         "contributing/building-pieces/examples"
-      ]
-    },
-    {
-      "group": "Pieces Reference",
-      "pages": [
-        "contributing/pieces-reference/piece",
-        "contributing/pieces-reference/property",
-        "contributing/pieces-reference/action",
-        "contributing/pieces-reference/trigger"
       ]
     },
     {

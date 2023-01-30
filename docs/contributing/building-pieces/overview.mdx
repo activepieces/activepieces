@@ -1,0 +1,32 @@
+---
+title: "Get Started"
+description: ""
+---
+
+
+## 1. Read the Tutorial
+
+To get the full benefit, it is recommended to read the [quickstart guide](quickstart) first.
+
+## 2. Configure Webhook URL (Important for Triggers)
+
+You must configure the backend URL so that the webhook is accessible from the internet. 
+Check the section below for instructions.
+
+The easiest way to expose your webhook URL on localhost is by using a service like [ngrok](https://ngrok.com/). To set this up, follow these steps:
+
+1. Install ngrok
+2. Run the following command:
+```bash
+ngrok http 3000
+```
+
+3. Replace `AP_BACKEND_URL` environment variable in `packages/backend/.env` with the ngrok url.
+
+Once you have completed these configurations, you are ready to go!
+
+
+## 3. Checkout Examples & Reference 
+
+- [Piece Reference](./reference.mdx)
+- [Examples](./examples.mdx)
