@@ -42,6 +42,7 @@ export const authenticationService = {
       return {
         ...userResponse,
         token,
+        projectId: project.id
       };
     } catch (e: unknown) {
       if (e instanceof QueryFailedError) {
@@ -94,6 +95,7 @@ export const authenticationService = {
     return {
       ...user,
       token,
+      projectId: projects[0].id
     };
   },
 };
