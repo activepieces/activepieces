@@ -1,11 +1,14 @@
 import {slackSendMessageAction} from './actions/send-message-action';
 import {createPiece} from "../../framework/piece";
+import { slackSendDirectMessageAction } from './actions/send-direct-message-action';
 
 export const slack = createPiece({
 	name: 'slack',
 	displayName: "Slack",
 	logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
-	actions: [slackSendMessageAction],
-	triggers: [],
-	description:"Connect to Slack and integrate it into your flow"
+	actions: [
+    slackSendMessageAction,
+    slackSendDirectMessageAction,
+  ],
+	triggers: []
 });

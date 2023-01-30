@@ -3,6 +3,7 @@ import { AuthenticationConverter } from '../core/authentication/authentication-c
 import { DelegatingAuthenticationConverter } from '../core/authentication/delegating-authentication-converter';
 import { BaseHttpClient } from '../core/base-http-client';
 import { HttpError } from '../core/http-error';
+import { HttpHeaders } from '../core/http-headers';
 import { HttpMessageBody } from '../core/http-message-body';
 import { HttpMethod } from '../core/http-method';
 import { HttpRequest } from '../core/http-request';
@@ -34,7 +35,7 @@ export class AxiosHttpClient extends BaseHttpClient {
 
 			return {
 				status: response.status,
-				headers: response.headers,
+				headers: response.headers as HttpHeaders,
 				body: response.data,
 			};
 		} catch (e) {

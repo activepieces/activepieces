@@ -63,7 +63,7 @@ export const dripTagAppliedEvent = createTrigger({
     }
   },
   async run(context) {
-    return [context];
+    return [context.payload];
   },
 });
 
