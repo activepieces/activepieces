@@ -17,6 +17,7 @@ import { typeform } from './typeform';
 import { telegramBot } from './telegram';
 import { clickup } from './clickup';
 import { drip } from './drip';
+import { calendly } from './calendly';
 
 
 export const pieces: Piece[] = [
@@ -35,9 +36,10 @@ export const pieces: Piece[] = [
 	pipedrive,
 	googleContacts,
 	sendgrid,
+	drip,
+	calendly,
 	typeform,
 	telegramBot,
-	drip
 ];
 
 export const getPiece = (name: string): Piece | undefined => {
