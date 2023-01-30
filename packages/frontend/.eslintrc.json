@@ -1,19 +1,14 @@
 {
-  "extends": [
-    "../../.eslintrc.json"
-  ],
-  "ignorePatterns": [
-    "!**/*"
-  ],
+  "extends": ["../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*"],
   "overrides": [
     {
-      "files": [
-        "*.ts"
-      ],
+      "files": ["*.ts"],
       "rules": {
         "rxjs/no-async-subscribe": "error",
         "rxjs/no-nested-subscribe": "error",
         "rxjs-angular/prefer-async-pipe": "error",
+        "@typescript-eslint/adjacent-overload-signatures": "silent",
         "@angular-eslint/directive-selector": [
           "error",
           {
@@ -36,19 +31,11 @@
         "plugin:@angular-eslint/template/process-inline-templates",
         "plugin:@ngrx/strict-requiring-type-checking"
       ],
-      "plugins": [
-        "rxjs-angular",
-        "rxjs",
-        "prettier"
-      ],
+      "plugins": ["rxjs-angular", "rxjs", "prettier"]
     },
     {
-      "files": [
-        "*.html"
-      ],
-      "extends": [
-        "plugin:@nrwl/nx/angular-template"
-      ],
+      "files": ["*.html"],
+      "extends": ["plugin:@nrwl/nx/angular-template"],
       "rules": {}
     }
   ]

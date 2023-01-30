@@ -34,7 +34,8 @@ import {
 } from './utils';
 import 'quill-mention';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
+import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
+
 
 @Component({
   selector: 'app-interpolating-text-form-control',
@@ -54,13 +55,15 @@ import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder
 export class InterpolatingTextFormControlComponent
   extends QuillMaterialBase
   implements
-    OnInit,
-    OnDestroy,
-    DoCheck,
-    MatFormFieldControl<string>,
-    ControlValueAccessor
-{
-  @Input() insideMatField: boolean = true;
+  OnInit,
+  OnDestroy,
+  DoCheck,
+  MatFormFieldControl<string>,
+  ControlValueAccessor {
+  static nextId = 0;
+  @Input() insideMatField = true;
+  private _placeholder = '';
+  focused = false;
   readonly modules: QuillModules = {
     mention: {
       spaceAfterInsert: false,
@@ -73,9 +76,9 @@ export class InterpolatingTextFormControlComponent
   onTouch!: () => void;
   editorFormControl: FormControl<QuillEditorOperationsObject>;
   valueChanges$!: Observable<any>;
-  static nextId = 0;
-  private _value: string = '';
-
+  private _value = '';
+  autofilled?: boolean | undefined = false;
+  userAriaDescribedBy?: string | undefined;
   override stateChanges = new Subject<void>();
   @ViewChild(QuillEditorComponent, { static: true })
   editor!: QuillEditorComponent;
@@ -131,13 +134,13 @@ export class InterpolatingTextFormControlComponent
           this.onChange('');
         } else {
           //quill always ads \n at the end of the last operation so we must remove it
-          let lastOp = val.ops.pop();
+          const lastOp = val.ops.pop();
           if (lastOp) {
-            if (typeof lastOp!.insert === 'string') {
-              if (lastOp!.insert.endsWith('\n')) {
-                lastOp!.insert = lastOp!.insert.slice(
+            if (typeof lastOp.insert === 'string') {
+              if (lastOp.insert.endsWith('\n')) {
+                lastOp.insert = lastOp.insert.slice(
                   0,
-                  lastOp!.insert.length - 1
+                  lastOp.insert.length - 1
                 );
               }
             }
@@ -154,7 +157,7 @@ export class InterpolatingTextFormControlComponent
     this.editor.quillEditor.clipboard.addMatcher(
       Node.ELEMENT_NODE,
       (node, delta) => {
-        let ops: TextInsertOperation[] = [];
+        const ops: TextInsertOperation[] = [];
         delta.ops.forEach((op: TextInsertOperation) => {
           if (op.insert && typeof op.insert === 'string') {
             ops.push({
@@ -167,17 +170,15 @@ export class InterpolatingTextFormControlComponent
       }
     );
   }
+  get placeholder() {
+    return this._placeholder;
+  }
 
   get value() {
     return this._value;
   }
 
-  get placeholder() {
-    return this._placeholder;
-  }
-  private _placeholder: string = '';
 
-  focused: boolean = false;
 
   get empty(): boolean {
     return !this.value;
@@ -201,7 +202,7 @@ export class InterpolatingTextFormControlComponent
   }
   protected _required: boolean | undefined;
   @Input()
-  disabled: boolean = false;
+  disabled = false;
 
   controlType = 'custom-form-field';
 
@@ -227,13 +228,13 @@ export class InterpolatingTextFormControlComponent
   }
   setDisabledState?(isDisabled: boolean): void {
     this.disabled = isDisabled;
+
     this.disabled
       ? this.editorFormControl.disable({ emitEvent: false })
       : this.editorFormControl.enable({ emitEvent: false });
     this.stateChanges.next();
   }
-  autofilled?: boolean | undefined = false;
-  userAriaDescribedBy?: string | undefined;
+
 
   setDescribedByIds(ids: string[]): void {
     this.describedBy = ids.join(' ');
