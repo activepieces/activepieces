@@ -5,7 +5,6 @@ import { flowService } from "../flows/flow.service";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { InstanceEntity } from "./instance.entity";
 import { instanceSideEffects } from "./instance-side-effects";
-import { EventSubscriber, EntitySubscriberInterface, RemoveEvent } from "typeorm";
 import { logger } from "../../main";
 
 export const instanceRepo = databaseConnection.getRepository(InstanceEntity);

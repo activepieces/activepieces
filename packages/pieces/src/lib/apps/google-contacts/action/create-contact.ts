@@ -4,20 +4,14 @@ import { HttpMethod } from "../../../common/http/core/http-method";
 import { HttpRequest } from "../../../common/http/core/http-request";
 import { createAction } from "../../../framework/action/action";
 import { Property } from "../../../framework/property";
+import { googleContactsCommon } from "../common";
 
 export const googleContactsAddContactAction = createAction({
     name: 'add_contact',
     description: 'Add a contact to a Google Contacts account',
     displayName: 'Add Contact',
     props: {
-        authentication: Property.OAuth2({
-            description: "",
-            displayName: 'Authentication',
-            authUrl: "https://accounts.google.com/o/oauth2/auth",
-            tokenUrl: "https://oauth2.googleapis.com/token",
-            required: true,
-            scope: ["https://www.googleapis.com/auth/contacts"]
-        }),
+        authentication: googleContactsCommon.authentication,
         firstName: Property.ShortText({
             displayName: 'First Name',
             description: 'The first name of the contact',
@@ -79,7 +73,7 @@ export const googleContactsAddContactAction = createAction({
         requestBody = { ...requestBody, ...contact }
         const request: HttpRequest<Record<string, unknown>> = {
             method: HttpMethod.POST,
-            url: `https://people.googleapis.com/v1/people:createContact`,
+            url: `${googleContactsCommon.baseUrl}:createContact`,
             body: requestBody,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,

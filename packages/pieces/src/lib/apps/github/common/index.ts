@@ -1,11 +1,11 @@
-import {OAuth2PropertyValue, Property} from "../../../framework/property";
-import {HttpRequest} from "../../../common/http/core/http-request";
-import {HttpMethod} from "../../../common/http/core/http-method";
-import {AuthenticationType} from "../../../common/authentication/core/authentication-type";
-import {httpClient} from "../../../common/http/core/http-client";
+import { OAuth2PropertyValue, Property } from "../../../framework/property";
+import { HttpRequest } from "../../../common/http/core/http-request";
+import { HttpMethod } from "../../../common/http/core/http-method";
+import { AuthenticationType } from "../../../common/authentication/core/authentication-type";
+import { httpClient } from "../../../common/http/core/http-client";
 
 export const githubCommon = {
-    baseUrl:  "https://api.github.com",
+    baseUrl: "https://api.github.com",
     authentication: Property.OAuth2({
         displayName: "Authentication",
         required: true,
@@ -21,7 +21,8 @@ export const githubCommon = {
             if (propsValue['authentication'] === undefined) {
                 return {
                     disabled: true,
-                    options: []
+                    options: [],
+                    placeholder: "please authenticate first"
                 }
             }
             const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;

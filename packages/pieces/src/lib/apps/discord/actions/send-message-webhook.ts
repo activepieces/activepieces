@@ -3,16 +3,16 @@ import { HttpMethod } from '../../../common/http/core/http-method';
 import { HttpRequest } from '../../../common/http/core/http-request';
 import { createAction } from '../../../framework/action/action';
 import { Property } from '../../../framework/property';
-import { discordCommon } from '../common';
 
-export const discordSendMessage = createAction({
-  name: 'send_message',
-  description: 'Send a discord message',
-  displayName: 'Send Message',
+export const discordSendMessageWebhook = createAction({
+name: 'send_message_webhook',
+  description: 'Send a discord message via webhook',
+  displayName: 'Send Message Webhook',
   props: {
-    authentication: discordCommon.authentication,
-    bot_token: discordCommon.bot_token,
-    channel: discordCommon.channel,
+    webhook_url: Property.ShortText({
+      displayName: 'Weebhook URL',
+      required: true,
+    }),
     content: Property.LongText({
       displayName: 'Message',
       required: true,
@@ -21,10 +21,7 @@ export const discordSendMessage = createAction({
   async run(configValue) {
     const request: HttpRequest<{ content: string }> = {
       method: HttpMethod.POST,
-      url: `${discordCommon.baseUrl}/channels/${configValue.propsValue['channel']}/messages`,
-      headers: {
-        Authorization: `Bot ${configValue.propsValue['bot_token']}`,
-      },
+      url: configValue.propsValue['webhook_url']!,
       body: {
         content: configValue.propsValue['content']!,
       },

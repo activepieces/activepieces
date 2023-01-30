@@ -142,6 +142,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   createForm() {
     this.requiredConfigs = this.configs.filter((c) => c.required);
     this.allOptionalConfigs = this.configs.filter((c) => !c.required);
+
     this.selectedOptionalConfigs = this.allOptionalConfigs.filter(
       (c) => c.value !== undefined
     );
@@ -171,7 +172,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       if (c.type === PropertyType.DROPDOWN) {
         const refreshers$ = {};
         c.refreshers!.forEach((r) => {
-          console.log(this.form.controls[r], r, this.form.controls);
           refreshers$[r] = this.form.controls[r].valueChanges.pipe(
             distinctUntilChanged((prev, curr) => {
               return JSON.stringify(prev) === JSON.stringify(curr);

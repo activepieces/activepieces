@@ -199,6 +199,9 @@ function buildSchema(props: PieceProperty): TSchema {
         // Only accepts connections variable.
         propsSchema[name] = Type.Array(Type.String({}));
         break;
+      case PropertyType.OBJECT:
+        propsSchema[name] = Type.Record(Type.String(), Type.Any());
+        break;
     }
     if (!property.required) {
       propsSchema[name] = Type.Optional(propsSchema[name]);

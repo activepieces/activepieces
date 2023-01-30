@@ -21,6 +21,8 @@ import { buildPaginator } from "../helper/pagination/build-paginator";
 import { createRedisLock } from "../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowRepo } from "./flow.repo";
+import { instanceSideEffects } from "../instance/instance-side-effects";
+
 
 export const flowService = {
   async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
@@ -102,15 +104,21 @@ export const flowService = {
   },
   async update({ flowId, projectId, request }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
     const flowLock = await createRedisLock(flowId);
-    let lastVersion = (await flowVersionService.getFlowVersion(flowId, undefined))!;
-    if (lastVersion.state === FlowVersionState.LOCKED) {
-      lastVersion = await flowVersionService.createVersion(flowId, lastVersion);
+    try {
+      let lastVersion = (await flowVersionService.getFlowVersion(flowId, undefined))!;
+      if (lastVersion.state === FlowVersionState.LOCKED) {
+        lastVersion = await flowVersionService.createVersion(flowId, lastVersion);
+      }
+
+      await flowVersionService.applyOperation(projectId, lastVersion, request);
+    } finally {
+      await flowLock.release();
     }
-    await flowVersionService.applyOperation(projectId, lastVersion, request);
-    await flowLock.release();
     return await flowService.getOne({ id: flowId, versionId: undefined, projectId: projectId });
   },
   async delete({ projectId, flowId }: { projectId: ProjectId, flowId: FlowId }): Promise<void> {
+    await instanceSideEffects.onFlowDelete({ projectId, flowId });
+
     await flowRepo.delete({ projectId: projectId, id: flowId });
   },
 };
