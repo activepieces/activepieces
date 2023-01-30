@@ -12,7 +12,7 @@ export const telegramSendMessageAction = createAction({
         bot_token: telegramCommons.bot_token,
         chat_id: Property.ShortText({
             displayName: 'Chat Id',
-            description: "To send a message to a specific chat, you will need to provide either the unique identifier for the chat or the username of a public chat (formatted as @channelusername). If you want to send a message to a private user, check activepieces docs on how to obtain the chat id",
+            description: "To send a message to a specific chat, you will need to provide either the unique identifier for the chat or the username of a public chat (formatted as @channelusername). If you want to send a message to a private user, check (https://activepieces.com/docs/pieces/apps/telegram) on how to obtain the chat id",
             required: true,
         }),
         message: Property.LongText({
