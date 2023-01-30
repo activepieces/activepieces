@@ -16,14 +16,14 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
   fastify.delete(
     "/:collectionId",
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Params: {
           collectionId: CollectionId;
         };
       }>,
       _reply
     ) => {
-      await collectionService.delete(_request.params.collectionId);
+      await collectionService.delete({ projectId: request.principal.projectId, collectionId: request.params.collectionId });
       _reply.status(StatusCodes.OK).send();
     }
   );
@@ -31,7 +31,7 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
   fastify.get(
     "/:collectionId",
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Params: {
           collectionId: CollectionId;
         };
@@ -41,12 +41,12 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
       }>,
       _reply
     ) => {
-      const versionId: CollectionVersionId | undefined = _request.query.versionId;
-      const collection = await collectionService.getOne(_request.params.collectionId, versionId ?? null);
+      const versionId: CollectionVersionId | undefined = request.query.versionId;
+      const collection = await collectionService.getOne({ id: request.params.collectionId, versionId: versionId ?? null, projectId: request.principal.projectId });
       if (collection === null) {
         throw new ActivepiecesError({
           code: ErrorCode.COLLECTION_NOT_FOUND,
-          params: { id: _request.params.collectionId },
+          params: { id: request.params.collectionId },
         });
       }
       return collection;
@@ -61,7 +61,7 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
       },
     },
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Params: {
           collectionId: CollectionId;
         };
@@ -69,14 +69,14 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
       }>,
       _reply
     ) => {
-      const collection = await collectionService.getOne(_request.params.collectionId, null);
+      const collection = await collectionService.getOne({ id: request.params.collectionId, versionId: null, projectId: request.principal.projectId });
       if (collection === null) {
         throw new ActivepiecesError({
           code: ErrorCode.COLLECTION_NOT_FOUND,
-          params: { id: _request.params.collectionId },
+          params: { id: request.params.collectionId },
         });
       }
-      return await collectionService.update(_request.params.collectionId, _request.body);
+      return await collectionService.update({ projectId: request.principal.projectId, collectionId: request.params.collectionId, request: request.body });
     }
   );
 
@@ -88,12 +88,12 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
       },
     },
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Querystring: ListCollectionsRequest;
       }>,
       _reply
     ) => {
-      return await collectionService.list(_request.query.projectId, _request.query.cursor, _request.query.limit??DEFAULT_PAGE_SIZE);
+      return await collectionService.list(request.query.projectId, request.query.cursor, request.query.limit ?? DEFAULT_PAGE_SIZE);
     }
   );
 
@@ -105,12 +105,12 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
       },
     },
     async (
-      _request: FastifyRequest<{
+      request: FastifyRequest<{
         Body: CreateCollectionRequest;
       }>,
       _reply
     ) => {
-      return await collectionService.create(_request.body);
+      return await collectionService.create({ projectId: request.principal.projectId, request: request.body });
     }
   );
 };

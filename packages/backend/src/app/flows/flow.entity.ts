@@ -1,10 +1,11 @@
 import { EntitySchema } from "typeorm";
-import { Collection, Flow, FlowRun, FlowVersion } from "@activepieces/shared";
+import { Collection, Flow, FlowRun, FlowVersion, Project } from "@activepieces/shared";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 
 interface FlowSchema extends Flow {
   versions: FlowVersion[];
   collection: Collection;
+  project: Project;
   runs: FlowRun[];
 }
 
@@ -12,6 +13,7 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
   name: "flow",
   columns: {
     ...BaseColumnSchemaPart,
+    projectId: ApIdSchema,
     collectionId: ApIdSchema,
   },
   indices: [
@@ -31,6 +33,16 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
       type: "one-to-many",
       target: "flow_version",
       inverseSide: "flow",
+    },
+    project: {
+      type: "many-to-one",
+      target: "project",
+      cascade: true,
+      onDelete: "CASCADE",
+      joinColumn: {
+        name: "projectId",
+        foreignKeyConstraintName: "fk_flow_project_id",
+      },
     },
     collection: {
       type: "many-to-one",

@@ -1,5 +1,5 @@
 import { databaseConnection } from "../database/database-connection";
-import { ProjectEntity } from "./project-entity";
+import { ProjectEntity } from "./project.entity";
 import { apId, Project, UserId } from "@activepieces/shared";
 
 const projectRepo = databaseConnection.getRepository(ProjectEntity);

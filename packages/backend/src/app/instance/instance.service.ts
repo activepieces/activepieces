@@ -1,33 +1,32 @@
-import { apId, CollectionId, Instance, InstanceId, UpsertInstanceRequest } from "@activepieces/shared";
+import { apId, CollectionId, Instance, InstanceId, ProjectId, UpsertInstanceRequest } from "@activepieces/shared";
 import { collectionService } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
-import { flowService } from "../flows/flow-service";
+import { flowService } from "../flows/flow.service";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { InstanceEntity } from "./instance-entity";
+import { InstanceEntity } from "./instance.entity";
 import { instanceSideEffects } from "./instance-side-effects";
-import { EventSubscriber, EntitySubscriberInterface, RemoveEvent } from "typeorm";
 import { logger } from "../../main";
 
 export const instanceRepo = databaseConnection.getRepository(InstanceEntity);
 
 export const instanceService = {
-  async upsert({ collectionId, status }: UpsertInstanceRequest): Promise<Instance> {
-    const collection = await collectionService.getOne(collectionId, null);
+  async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertInstanceRequest }): Promise<Instance> {
+    const collection = await collectionService.getOne({ projectId: projectId, id: request.collectionId, versionId: null });
 
     if (collection == null) {
       throw new ActivepiecesError({
         code: ErrorCode.COLLECTION_NOT_FOUND,
         params: {
-          id: collectionId,
+          id: request.collectionId,
         },
       });
     }
 
-    const flowPage = await flowService.list(collectionId, null, Number.MAX_SAFE_INTEGER);
+    const flowPage = await flowService.list({ projectId: projectId, collectionId: request.collectionId, cursorRequest: null, limit: Number.MAX_SAFE_INTEGER });
 
     const flowIdToVersionId = Object.fromEntries(flowPage.data.map((flow) => [flow.id, flow.version!.id]));
 
-    const oldInstance: Partial<Instance | null> = await instanceRepo.findOneBy({ collectionId });
+    const oldInstance: Partial<Instance | null> = await instanceRepo.findOneBy({ projectId, collectionId: request.collectionId });
 
     if (oldInstance !== null && oldInstance !== undefined) {
       await instanceRepo.delete(oldInstance.id!);
@@ -36,10 +35,10 @@ export const instanceService = {
     const newInstance: Partial<Instance> = {
       id: apId(),
       projectId: collection.projectId,
-      collectionId,
+      collectionId: request.collectionId,
       collectionVersionId: collection.version!.id,
       flowIdToVersionId,
-      status,
+      status: request.status,
     };
 
     const savedInstance = await instanceRepo.save(newInstance);
@@ -51,23 +50,27 @@ export const instanceService = {
     return savedInstance;
   },
 
-  async getByCollectionId({ collectionId }: GetOneParams): Promise<Instance | null> {
+  async getByCollectionId({ projectId, collectionId }: GetOneParams): Promise<Instance | null> {
     return await instanceRepo.findOneBy({
+      projectId,
       collectionId,
     });
   },
 
-  async deleteOne({ id }: DeleteOneParams): Promise<void> {
+  async deleteOne({ id, projectId }: DeleteOneParams): Promise<void> {
     await instanceRepo.delete({
       id,
+      projectId
     });
   },
 };
 
 interface GetOneParams {
+  projectId: ProjectId,
   collectionId: CollectionId;
 }
 
 interface DeleteOneParams {
   id: InstanceId;
+  projectId: ProjectId;
 }

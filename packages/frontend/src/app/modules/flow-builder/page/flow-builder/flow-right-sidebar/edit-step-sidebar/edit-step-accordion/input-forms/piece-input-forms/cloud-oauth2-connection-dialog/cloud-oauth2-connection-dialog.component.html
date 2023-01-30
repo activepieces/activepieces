@@ -1,4 +1,3 @@
-<ng-container *ngIf="project$ | async as project">
   <app-dialog-title-template>
     <ng-container *ngIf="!connectionToUpdate; else editConnectionHeader">New Connection</ng-container>
     <ng-template #editConnectionHeader>Edit {{connectionToUpdate!.name}}</ng-template>
@@ -6,7 +5,7 @@
 
   <mat-dialog-content>
 
-    <form class="ap-flex ap-flex-col ap-gap-2 ap-w-[430px]" [formGroup]="settingsForm" (submit)="submit(project.id)">
+    <form class="ap-flex ap-flex-col ap-gap-2 ap-w-[430px]" [formGroup]="settingsForm" (submit)="submit()">
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label>Name</mat-label>
         <input [matTooltip]="keyTooltip" formControlName="name" matInput type="text" />
@@ -41,11 +40,10 @@
       <app-button btnColor="basic" mat-dialog-close btnSize="default">
         Cancel
       </app-button>
-      <app-button cdkFocusInitial btnSize="default" (click)="submit(project.id)" btnColor="primary" type="submit"
+      <app-button cdkFocusInitial btnSize="default" (click)="submit()" btnColor="primary" type="submit"
         [loading]="loading">
         Save
       </app-button>
     </div>
   </mat-dialog-actions>
   <ng-container *ngIf="upsert$ |async"></ng-container>
-</ng-container>

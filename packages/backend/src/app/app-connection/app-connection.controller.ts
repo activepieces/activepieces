@@ -1,8 +1,8 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
-import { AppConnectionId, getAppConnectionRequest, ListAppConnectionRequest, ProjectId, UpsertConnectionRequest } from "@activepieces/shared";
+import { AppConnectionId, ListAppConnectionRequest, UpsertConnectionRequest } from "@activepieces/shared";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { appConnectionService } from "./app-connection-service";
+import { appConnectionService } from "./app-connection.service";
 
 const DEFAULT_PAGE_SIZE = 10;
 export const appConnectionController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
@@ -20,30 +20,22 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
       }>,
       _reply
     ) => {
-      return await appConnectionService.upsert(request.body);
+      return await appConnectionService.upsert({projectId: request.principal.projectId, request: request.body});
     }
   );
 
 
   fastify.get(
     "/:connectionName",
-    {
-      schema: {
-
-        querystring: getAppConnectionRequest
-      }
-    }
-    ,
     async (
       request: FastifyRequest<{
-        Querystring: getAppConnectionRequest,
         Params: {
           connectionName: string;
         };
       }>,
       _reply
     ) => {
-      const appCredential = await appConnectionService.getOne(request.query.projectId, request.params.connectionName);
+      const appCredential = await appConnectionService.getOne({projectId: request.principal.projectId, name: request.params.connectionName});
       if (appCredential === null) {
         throw new ActivepiecesError({
           code: ErrorCode.APP_CONNECTION_NOT_FOUND,
@@ -68,7 +60,7 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
       _reply
     ) => {
       const query = request.query;
-      return await appConnectionService.list(query.projectId,
+      return await appConnectionService.list(request.principal.projectId,
         query.appName,
         query.cursor ?? null, query.limit ?? DEFAULT_PAGE_SIZE);
     }
@@ -84,7 +76,7 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
       }>,
       _reply
     ) => {
-      await appConnectionService.delete(request.params.connectionId);
+      await appConnectionService.delete({ id: request.params.connectionId, projectId: request.principal.projectId });
       _reply.status(StatusCodes.OK).send();
     }
   );

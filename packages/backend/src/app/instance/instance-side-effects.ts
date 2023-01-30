@@ -7,15 +7,16 @@ import {
   FlowVersionState,
   Instance,
   InstanceStatus,
+  ProjectId,
 } from "@activepieces/shared";
 import { In } from "typeorm";
 import { logger } from "../../main";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
-import { flowService } from "../flows/flow-service";
 import { flowVersionRepo } from "../flows/flow-version/flow-version-repo";
 import { flowVersionService } from "../flows/flow-version/flow-version.service";
+import { flowService } from "../flows/flow.service";
 import { triggerUtils } from "../helper/trigger-utils";
-import { instanceService } from "./instance-service";
+import { instanceService } from "./instance.service";
 
 export const instanceSideEffects = {
   async enable(instance: Instance): Promise<void> {
@@ -66,16 +67,16 @@ export const instanceSideEffects = {
     const disableTriggers = flowVersions.map((version) => triggerUtils.disable({ collectionId: instance.collectionId, flowVersion: version, projectId: instance.projectId, collectionVersion }));
     await Promise.all(disableTriggers);
   },
-  async onCollectionDelete(collectionId: CollectionId) {
-    const instace = await instanceService.getByCollectionId({ collectionId });
-    if (instace !== null) {
+  async onCollectionDelete({projectId, collectionId}: {projectId: ProjectId, collectionId: CollectionId}) {
+    const instance = await instanceService.getByCollectionId({ projectId, collectionId });
+    if (instance !== null) {
       logger.info(`Collection ${collectionId} is deleted, running intstance side effects first`);
-      await this.disable(instace);
+      await this.disable(instance);
     }
   },
-  async onFlowDelete(flowId: FlowId) {
-    const flow = await flowService.getOneOrThrow(flowId);
-    const instance = await instanceService.getByCollectionId({ collectionId: flow.collectionId });
+  async onFlowDelete({projectId, flowId}: {projectId: ProjectId, flowId: FlowId}) {
+    const flow = await flowService.getOneOrThrow({projectId, id: flowId});
+    const instance = await instanceService.getByCollectionId({ projectId: projectId, collectionId: flow.collectionId });
     const flowVersionId = instance.flowIdToVersionId[flow.id];
     if (instance !== null && flowVersionId != null) {
       const collectionVersion = (await collectionVersionService.getOneOrThrow(instance.collectionVersionId));
