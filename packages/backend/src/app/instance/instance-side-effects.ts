@@ -2,16 +2,18 @@ import {
   CollectionId,
   CollectionVersion,
   CollectionVersionState,
+  FlowId,
   FlowVersion,
   FlowVersionState,
   Instance,
   InstanceStatus,
-  ProjectId,
 } from "@activepieces/shared";
 import { In } from "typeorm";
 import { logger } from "../../main";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
+import { flowService } from "../flows/flow-service";
 import { flowVersionRepo } from "../flows/flow-version/flow-version-repo";
+import { flowVersionService } from "../flows/flow-version/flow-version.service";
 import { triggerUtils } from "../helper/trigger-utils";
 import { instanceService } from "./instance-service";
 
@@ -24,7 +26,7 @@ export const instanceSideEffects = {
     ) {
       return;
     }
-    const collectionVersion = (await collectionVersionService.getOne(instance.collectionVersionId))!;
+    const collectionVersion = (await collectionVersionService.getOne(instance.collectionVersionId));
 
     const flowVersionIds = Object.values(instance.flowIdToVersionId);
 
@@ -55,20 +57,31 @@ export const instanceSideEffects = {
       return;
     }
 
-    const collectionVersion = (await collectionVersionService.getOne(instance.collectionVersionId!))!;
+    const collectionVersion = (await collectionVersionService.getOneOrThrow(instance.collectionVersionId));
     const flowVersionIds = Object.values(instance.flowIdToVersionId);
 
     const flowVersions = await flowVersionRepo.findBy({
       id: In(flowVersionIds),
     });
-    const disableTriggers = flowVersions.map((version) => triggerUtils.disable({ collectionId: instance.collectionId!, flowVersion: version, projectId: instance.projectId!, collectionVersion }));
+    const disableTriggers = flowVersions.map((version) => triggerUtils.disable({ collectionId: instance.collectionId, flowVersion: version, projectId: instance.projectId, collectionVersion }));
     await Promise.all(disableTriggers);
   },
   async onCollectionDelete(collectionId: CollectionId) {
-    let instace = await instanceService.getByCollectionId({ collectionId });
+    const instace = await instanceService.getByCollectionId({ collectionId });
     if (instace !== null) {
       logger.info(`Collection ${collectionId} is deleted, running intstance side effects first`);
       await this.disable(instace);
+    }
+  },
+  async onFlowDelete(flowId: FlowId) {
+    const flow = await flowService.getOneOrThrow(flowId);
+    const instance = await instanceService.getByCollectionId({ collectionId: flow.collectionId });
+    const flowVersionId = instance.flowIdToVersionId[flow.id];
+    if (instance !== null && flowVersionId != null) {
+      const collectionVersion = (await collectionVersionService.getOneOrThrow(instance.collectionVersionId));
+      const flowVersion = (await flowVersionService.getOneOrThrow(flowVersionId));
+      logger.info(`Flow ${flowId} is deleted, running intstance side effects first`);
+      await triggerUtils.disable({ collectionId: instance.collectionId, flowVersion: flowVersion, projectId: instance.projectId, collectionVersion })
     }
   }
 };
