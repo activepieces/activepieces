@@ -4,29 +4,24 @@ import type { HttpRequest } from '../../../common/http/core/http-request';
 import { createAction } from '../../../framework/action/action';
 import { httpClient } from '../../../common/http/core/http-client';
 import { OAuth2PropertyValue, Property } from '../../../framework/property';
+import { slackSendMessage } from '../common/utils';
+import { assertNotNullOrUndefined } from '../../../common/helpers/assertions';
+import { slackAuth } from '../common/props';
 
 export const slackSendMessageAction = createAction({
   name: 'send_channel_message',
-  displayName: 'Send slack message',
-  description: 'Send slack message',
+  displayName: 'Send message to a channel',
+  description: 'Send message to a channel',
   sampleData: {
     success: true,
     message: 'sample message',
     results: [1, 2, 3, 4],
   },
   props: {
-    authentication: Property.OAuth2({
-      description: '',
-      displayName: 'Authentication',
-      authUrl: 'https://slack.com/oauth/authorize',
-      tokenUrl: 'https://slack.com/api/oauth.access',
-      required: true,
-      scope: ['channels:read', 'channels:write', 'chat:write:bot', 'groups:read', 'mpim:read'],
-    }),
+    authentication: slackAuth,
     channel: Property.Dropdown({
       displayName: 'Channel',
-      description:
-        'Channel, private group, or IM channel to send message to. Can be an encoded ID, or a name. See [below](#channels) for more details.',
+      description: 'Channel, private group, or IM channel to send message to.',
       required: true,
       refreshers: ['authentication'],
       async options(value) {
@@ -71,28 +66,17 @@ export const slackSendMessageAction = createAction({
     }),
   },
   async run(context) {
-    let configValue = context.propsValue;
-    let body: Record<string, unknown> = {
-      text: configValue['text'],
-      channel: configValue['channel'],
-    };
-    const request: HttpRequest<Record<string, unknown>> = {
-      method: HttpMethod.POST,
-      url: 'https://slack.com/api/chat.postMessage',
-      body: body,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: configValue['authentication']!['access_token'],
-      },
-      queryParams: {},
-    };
+    const token = context.propsValue.authentication?.access_token;
+    const { text, channel } = context.propsValue;
 
-    let result = await httpClient.sendRequest(request);
+    assertNotNullOrUndefined(token, 'token');
+    assertNotNullOrUndefined(text, 'text');
+    assertNotNullOrUndefined(channel, 'channel');
 
-    return {
-      success: true,
-      request_body: body,
-      response_body: result,
-    };
+    return slackSendMessage({
+      token,
+      text,
+      conversationId: channel,
+    });
   },
 });
