@@ -10,6 +10,5 @@ export const slack = createPiece({
     slackSendMessageAction,
     slackSendDirectMessageAction,
   ],
-	triggers: [],
-	description:"Connect to Slack and integrate it into your flow"
+	triggers: []
 });
