@@ -18,46 +18,46 @@ export const calendlyInviteeCanceled = createTrigger({
     scope: calendlyCommon.scope
   },
   sampleData: {
+
+    "created_at": "2023-01-29T13:57:17.000000Z",
+    "created_by": "https://api.calendly.com/users/AAAAAAA",
+    "event": "invitee.canceled",
     "payload": {
-      "created_at": "2023-01-29T13:57:17.000000Z",
-      "created_by": "https://api.calendly.com/users/AAAAAAA",
-      "event": "invitee.canceled",
-      "payload": {
-        "cancel_url": "https://calendly.com/cancellations/AAAAAAAA",
-        "cancellation": {
-          "canceler_type": "host",
-          "canceled_by": "Ashraf Samhouri",
-          "reason": "testing"
-        },
-        "created_at": "2023-01-29T13:56:46.894198Z",
-        "email": "test@test.com",
-        "event": "https://api.calendly.com/scheduled_events/AAAAAAAAA",
-        "first_name": null,
-        "last_name": null,
-        "name": "abdul",
-        "new_invitee": null,
-        "no_show": null,
-        "old_invitee": null,
-        "payment": null,
-        "questions_and_answers": [],
-        "reconfirmation": null,
-        "reschedule_url": "https://calendly.com/reschedulings/AAAAAAAA",
-        "rescheduled": false,
-        "routing_form_submission": null,
-        "status": "canceled",
-        "text_reminder_number": null,
-        "timezone": "Asia/Baghdad",
-        "tracking": {
-          "utm_campaign": null,
-          "utm_source": null,
-          "utm_medium": null,
-          "utm_content": null,
-          "utm_term": null,
-          "salesforce_uuid": null
-        },
-        "updated_at": "2023-01-29T13:57:17.466943Z",
-        "uri": "https://api.calendly.com/scheduled_events/AAAAAAAAAAAaA/invitees/AAAAAAAA"
-      }
+      "cancel_url": "https://calendly.com/cancellations/AAAAAAAA",
+      "cancellation": {
+        "canceler_type": "host",
+        "canceled_by": "Ashraf Samhouri",
+        "reason": "testing"
+      },
+      "created_at": "2023-01-29T13:56:46.894198Z",
+      "email": "test@test.com",
+      "event": "https://api.calendly.com/scheduled_events/AAAAAAAAA",
+      "first_name": null,
+      "last_name": null,
+      "name": "abdul",
+      "new_invitee": null,
+      "no_show": null,
+      "old_invitee": null,
+      "payment": null,
+      "questions_and_answers": [],
+      "reconfirmation": null,
+      "reschedule_url": "https://calendly.com/reschedulings/AAAAAAAA",
+      "rescheduled": false,
+      "routing_form_submission": null,
+      "status": "canceled",
+      "text_reminder_number": null,
+      "timezone": "Asia/Baghdad",
+      "tracking": {
+        "utm_campaign": null,
+        "utm_source": null,
+        "utm_medium": null,
+        "utm_content": null,
+        "utm_term": null,
+        "salesforce_uuid": null
+      },
+      "updated_at": "2023-01-29T13:57:17.466943Z",
+      "uri": "https://api.calendly.com/scheduled_events/AAAAAAAAAAAaA/invitees/AAAAAAAA"
+
     }
   },
   type: TriggerStrategy.WEBHOOK,
@@ -97,7 +97,7 @@ export const calendlyInviteeCanceled = createTrigger({
     }
   },
   async run(context) {
-    return [context];
+    return [context.payload];
   },
 });
 

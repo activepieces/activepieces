@@ -18,33 +18,33 @@ export const calendlyInviteeCreated = createTrigger({
     scope: calendlyCommon.scope
   },
   sampleData: {
+
+    "created_at": "2023-01-29T13:50:13.000000Z",
+    "created_by": "https://api.calendly.com/users/AAAAAAAAAAAA",
     "payload": {
-      "created_at": "2023-01-29T13:50:13.000000Z",
-      "created_by": "https://api.calendly.com/users/AAAAAAAAAAAA",
-      "payload": {
-        "cancel_url": "https://calendly.com/cancellations/AAAAAAAAAAA",
-        "created_at": "2023-01-29T13:50:13.072950Z",
-        "email": "abdulyki@activepieces.com",
-        "event": "https://api.calendly.com/scheduled_events/AAAAAAAAAAAA",
-        "first_name": null,
-        "last_name": null,
-        "name": "abdul",
-        "new_invitee": null,
-        "no_show": null,
-        "old_invitee": null,
-        "payment": null,
-        "questions_and_answers": [],
-        "reconfirmation": null,
-        "reschedule_url": "https://calendly.com/reschedulings/AAAAAAAAAAAA",
-        "rescheduled": false,
-        "routing_form_submission": null,
-        "status": "active",
-        "text_reminder_number": null,
-        "timezone": "Asia/Baghdad",
-        "updated_at": "2023-01-29T13:50:13.072950Z",
-        "uri": "https://api.calendly.com/scheduled_events/AAAAAAAAAAAaA/invitees/AAAAAAAAAAAA"
-      }
+      "cancel_url": "https://calendly.com/cancellations/AAAAAAAAAAA",
+      "created_at": "2023-01-29T13:50:13.072950Z",
+      "email": "abdulyki@activepieces.com",
+      "event": "https://api.calendly.com/scheduled_events/AAAAAAAAAAAA",
+      "first_name": null,
+      "last_name": null,
+      "name": "abdul",
+      "new_invitee": null,
+      "no_show": null,
+      "old_invitee": null,
+      "payment": null,
+      "questions_and_answers": [],
+      "reconfirmation": null,
+      "reschedule_url": "https://calendly.com/reschedulings/AAAAAAAAAAAA",
+      "rescheduled": false,
+      "routing_form_submission": null,
+      "status": "active",
+      "text_reminder_number": null,
+      "timezone": "Asia/Baghdad",
+      "updated_at": "2023-01-29T13:50:13.072950Z",
+      "uri": "https://api.calendly.com/scheduled_events/AAAAAAAAAAAaA/invitees/AAAAAAAAAAAA"
     }
+
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -90,7 +90,7 @@ export const calendlyInviteeCreated = createTrigger({
 
   },
   async run(context) {
-    return [context];
+    return [context.payload];
   },
 });
 
