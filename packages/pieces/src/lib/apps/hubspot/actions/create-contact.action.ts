@@ -10,7 +10,7 @@ import { hubSpotAuthentication } from "../common/props";
 export const createHubspotContact = createAction({
     name: 'create_contact',
     displayName: "Create Contact",
-    description: "Creates a contact on hubspot",
+    description: "Fails on duplicate email addresses",
     props: {
         authentication: hubSpotAuthentication,
         firstName: Property.ShortText({
