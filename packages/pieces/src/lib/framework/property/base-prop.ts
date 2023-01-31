@@ -35,6 +35,6 @@ export interface NumberProperty extends BasePropertySchema, TPropertyValue<numbe
 
 export interface ArrayProperty extends BasePropertySchema, TPropertyValue<unknown[], PropertyType.ARRAY> { }
 
-export interface ObjectProperty extends BasePropertySchema, TPropertyValue<object, PropertyType.OBJECT> { }
+export interface ObjectProperty extends BasePropertySchema, TPropertyValue<Record<string, unknown>, PropertyType.OBJECT> { }
 
 export interface JsonProperty extends BasePropertySchema, TPropertyValue<Record<string, unknown>, PropertyType.JSON> { }
