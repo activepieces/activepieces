@@ -3,22 +3,40 @@
   <!-- This is the tree node template for leaf nodes -->
   <!-- There is inline padding applied to this node using styles.
     This padding value depends on the mat-icon-button width. -->
-  <mat-tree-node (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)" mat-menu-item
+  <mat-tree-node appTrackHover #treeNodeHoverTracker="hoverTrackerDirective"
+    (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)" mat-menu-item #treeNode="matTreeNode"
     *matTreeNodeDef="let node" matTreeNodeToggle>
-    {{node.key}}
+    <div [style.padding-left]="treeNode.level === 0? '40px': (treeNode.level * 20 + 40)+'px'" class=" ap-min-w-[0]">
+      <div class=" ap-flex ap-gap-1  ap-min-h-[27px]">
+        {{node.key}} <span class="ap-text-primary ap-truncate ap-flex-grow ap-transition-all">: <span
+            class="ap-transition-all" [matTooltip]="node.value">{{node.value}}
+          </span></span>
+        <app-button @fadeIn *ngIf="treeNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
+          btnSize="small">Select
+        </app-button>
+      </div>
+
+    </div>
   </mat-tree-node>
   <!-- This is the tree node template for expandable nodes -->
-  <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild">
-    <div (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)"
-      class="mat-tree-node ap-flex ap-items-center ap-typography-body-2" mat-menu-item>
-      <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'Toggle ' +
-        node.name">
-        <mat-icon class="mat-icon-rtl-mirror">
-          {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
-        </mat-icon>
-      </button>
-      {{node.key}}
+  <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild" #nestedTreeNode="matNestedTreeNode">
+    <div matTreeNodeToggle appTrackHover #nestedTreeNodeHoverTracker="hoverTrackerDirective"
+      (click)="$event.stopPropagation();"
+      class="mat-tree-node ap-min-w-[0] ap-min-h-[27px]  ap-flex ap-items-center ap-typography-body-2"
+      [style.padding-left]="nestedTreeNode.level === 0? '40px': (nestedTreeNode.level * 20 + 40)+'px'" mat-menu-item>
+
+      <mat-icon class="mat-icon-rtl-mirror">
+        {{treeControl.isExpanded(node) ? 'expand_less ' : 'expand_more'}}
+      </mat-icon>
+      <div class="ap-flex-grow ap-truncate" [matTooltip]="node.key">
+        {{node.key}}
+      </div>
+
+      <app-button @fadeIn *ngIf="nestedTreeNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
+        btnSize="small" (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)">Select
+      </app-button>
     </div>
+
     <!-- There is inline padding applied to this div using styles.
           This padding value depends on the mat-icon-button width.  -->
     <div [class.step-result-tree-invisible]="!treeControl.isExpanded(node)" role="group">

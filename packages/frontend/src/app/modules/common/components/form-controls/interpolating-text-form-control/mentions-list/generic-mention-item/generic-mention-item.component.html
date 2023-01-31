@@ -1,3 +1,3 @@
-<button (click)="mentionClicked.emit(mention)" mat-menu-item>
+<button (click)="mentionClicked.emit(mention)" mat-menu-item [style.padding-left]="leftPadding">
   <app-mention-list-item-template [itemLabel]="mention.label"></app-mention-list-item-template>
 </button>

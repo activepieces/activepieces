@@ -9,4 +9,5 @@ import { MentionListItem } from '../../utils';
 export class GenericMentionItemComponent {
 	@Input() mention: MentionListItem;
 	@Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
+	@Input() leftPadding = "0px"
 }

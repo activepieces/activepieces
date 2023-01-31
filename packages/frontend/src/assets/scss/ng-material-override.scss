@@ -610,15 +610,16 @@ mat-option.add-auth{
 
 app-mentions-list
 {
-  mat-tree
-  {
-   padding-left:20px;
-  }
+
   .mdc-list-item__primary-text
   {
     display: flex;
     align-items: center;
     width:100%;
+	div 
+	{
+		flex-grow:1;
+	}
   }
 
 }

@@ -8,14 +8,16 @@ import { ActionMetaService } from 'packages/frontend/src/app/modules/flow-builde
 import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import { MentionListItem, MentionTreeNode, traverseStepOutputAndReturnMentionTree } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
+import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
 
 @Component({
 	selector: 'app-piece-step-mention-item',
 	templateUrl: './piece-step-mention-item.component.html',
 	changeDetection: ChangeDetectionStrategy.OnPush,
+	animations: [fadeIn400ms]
 })
 export class PieceStepMentionItemComponent {
-	expandSample=false;
+	expandSample = false;
 	@Input()
 	set stepMention(val: MentionListItem & { step: FlowItem }) {
 		if (val.step.type !== ActionType.PIECE && val.step.type !== TriggerType.PIECE) {
@@ -35,19 +37,18 @@ export class PieceStepMentionItemComponent {
 		private store: Store,
 		private actionMetaDataService: ActionMetaService,
 		private mentionsTreeCache: MentionsTreeCacheService
-	) {}
+	) { }
 	ngOnInit(): void {
 		const cacheResult = this.mentionsTreeCache.getStepMentionsTree(this._stepMention.step.name);
 		if (cacheResult) {
 			this.sampleData$ = of({ children: cacheResult, error: '' });
 		}
-		else
-		{
+		else {
 			this.fetchSampleData();
 		}
 
 		this.flowItemDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetails(this._stepMention.step));
-		
+
 	}
 	fetchSampleData() {
 		this.sampleData$ = this.actionMetaDataService.getPieces().pipe(

@@ -1,6 +1,7 @@
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
+import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
 import {
 	arrayNotationRegex,
 	MentionListItem,
@@ -14,6 +15,7 @@ import {
 	templateUrl: './step-mentions-tree.component.html',
 	styleUrls: ['./step-mentions-tree.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
+	animations: [fadeIn400ms]
 })
 export class StepMentionsListComponent implements OnInit {
 	@Input() stepOutputObjectChildNodes: MentionTreeNode[] = [];
