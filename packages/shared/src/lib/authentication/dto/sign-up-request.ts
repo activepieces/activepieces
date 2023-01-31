@@ -6,7 +6,7 @@ export const SignUpRequest = Type.Object({
     }),
     password: Type.String({
         minLength: 8,
-        maxLength: 25,
+        maxLength: 64,
     }),
     firstName: Type.String(),
     lastName: Type.String(),
