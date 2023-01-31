@@ -56,6 +56,9 @@ import {
   SecretTextConnectionDialogComponent,
   SecretTextConnectionDialogData,
 } from '../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
+import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
+import { InsertMentionOperation } from '../form-controls/interpolating-text-form-control/utils';
+import { jsonValidator } from '../../validators/json-validator';
 type ConfigKey = string;
 
 @Component({
@@ -78,6 +81,11 @@ type ConfigKey = string;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfigsFormComponent implements ControlValueAccessor {
+  editorOptions = {
+    lineNumbers: true,
+    theme: 'lucario',
+    mode: 'javascript',
+  };
   faInfoCircle = faInfoCircle;
   checkingOAuth2CloudManager = false;
   configs: PieceConfig[] = [];
@@ -159,7 +167,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     this.createDropdownConfigsObservables();
     this.updateValueOnChange$ = this.form.valueChanges.pipe(
       tap((value) => {
-        this.OnChange(value);
+        this.OnChange(this.formValueMiddleWare(value));
       }),
       map(() => void 0)
     );
@@ -237,8 +245,22 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       if (c.required) {
         validators.push(Validators.required);
       }
-      if (c.type !== PropertyType.ARRAY) { controls[c.key] = new UntypedFormControl(c.value, validators); }
-      else { controls[c.key] = new UntypedFormControl(c.value || [''], validators); }
+      if (c.type === PropertyType.ARRAY) {
+        controls[c.key] = new UntypedFormControl(c.value || [''], validators);
+      }
+      else if (c.type === PropertyType.JSON) {
+        validators.push(jsonValidator);
+        if (typeof c.value === "object") {
+          controls[c.key] = new UntypedFormControl(JSON.stringify(c.value), validators);
+        }
+        else {
+          controls[c.key] = new UntypedFormControl(c.value, validators);
+        }
+      }
+      else {
+        controls[c.key] = new UntypedFormControl(c.value, validators);
+      }
+
     });
     return controls;
   }
@@ -495,5 +517,22 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     //eg. ${connections.google}
     const result = interpolatedString.split('${connections.')[1];
     return result.slice(0, result.length - 1);
+  }
+  addMentionToJsonControl(jsonControl: CodemirrorComponent, mention: InsertMentionOperation) {
+    var doc = jsonControl.codeMirror!.getDoc();
+    var cursor = doc.getCursor();
+    doc.replaceRange(mention.insert.mention.serverValue, cursor);
+  }
+
+  formValueMiddleWare(formValue: object) {
+    const formattedValue = { ...formValue };
+    Object.keys(formValue).forEach(configKey => {
+      if (this.configs.find(c => c.key === configKey)!.type === PropertyType.JSON) {
+        try {
+          formattedValue[configKey] = JSON.parse(formValue[configKey]);
+        } catch (_) { }
+      }
+    });
+    return formattedValue;
   }
 }
