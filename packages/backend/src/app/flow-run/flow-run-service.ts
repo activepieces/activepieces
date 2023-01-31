@@ -13,7 +13,8 @@ import {
   CollectionId,
   ActivepiecesError,
   ErrorCode,
-  Collection
+  Collection,
+  TelemetryEventName
 } from "@activepieces/shared";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 import { collectionRepo } from "../collections/collection.service";
@@ -22,6 +23,7 @@ import { flowVersionService } from "../flows/flow-version/flow-version.service";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { Order } from "../helper/pagination/paginator";
+import { telemetry } from "../helper/telemetry.utils";
 import { FlowRunEntity } from "./flow-run-entity";
 import { flowRunSideEffects } from "./flow-run-side-effects";
 
@@ -85,6 +87,15 @@ export const flowRunService = {
 
     const savedFlowRun = await repo.save(flowRun);
 
+    telemetry.trackProject(flowRun.projectId, {
+      name: TelemetryEventName.FLOW_RUN_CREATED,
+      payload: {
+        projectId: flowRun.projectId,
+        collectionId: flowRun.collectionId,
+        flowId: flowVersion.flowId,
+        environment: flowRun.environment
+      }
+    })
     await flowRunSideEffects.start({
       flowRun: savedFlowRun,
       payload,
