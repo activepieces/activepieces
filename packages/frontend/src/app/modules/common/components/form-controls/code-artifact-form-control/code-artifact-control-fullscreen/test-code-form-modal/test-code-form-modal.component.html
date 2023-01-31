@@ -15,17 +15,18 @@
         </div>
       </div>
       <ngx-codemirror id="context" formControlName="context" [options]="editorOptions"></ngx-codemirror>
+
     </div>
     <p class="ap-typography-caption ap-mt-2">Remember that you are testing the code independently of the flow,<br> and
       this object will only live for the period of this testing session.</p>
-    <div *ngIf="submitted && testCodeForm.controls.context.invalid">
+    <div *ngIf="submitted && testCodeForm.controls.context.invalid" class="ap-p-2">
       <p @fadeInUp *ngIf="testCodeForm.controls.context.hasError('required');else invalidJson"
         class="ap-text-danger ap-typography-caption">
         Context is required
       </p>
       <ng-template #invalidJson>
         <p @fadeInUp class="ap-text-danger ap-typography-caption">
-          Context is not a valid JSON object, please use double quotations.
+          Context is not a valid JSON object.
         </p>
       </ng-template>
     </div>

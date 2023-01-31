@@ -49,7 +49,8 @@ export enum PropertyType {
 	SECRET_TEXT = 'SECRET_TEXT',
 	CUSTOM_AUTH = 'CUSTOM_AUTH',
 	ARRAY = 'ARRAY',
-	OBJECT = 'OBJECT'
+	OBJECT = 'OBJECT',
+	JSON = "JSON"
 }
 
 
