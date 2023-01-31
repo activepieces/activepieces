@@ -1,3 +1,7 @@
-<button (click)="mentionClicked.emit(mention)" mat-menu-item [style.padding-left]="leftPadding">
-  <app-mention-list-item-template [itemLabel]="mention.label"></app-mention-list-item-template>
+<button (click)="mentionClicked.emit(mention)" class="ap-flex" mat-menu-item [style.padding-left]="leftPadding"
+  #buttonHover="hoverTrackerDirective" appTrackHover>
+  <app-mention-list-item-template class="ap-flex-grow" [itemLabel]="mention.label"></app-mention-list-item-template>
+  <app-button @fadeIn *ngIf="buttonHover.isHovered" btnColor="primary" btnStyle="basic" type="button"
+    btnSize="small">Select
+  </app-button>
 </button>
