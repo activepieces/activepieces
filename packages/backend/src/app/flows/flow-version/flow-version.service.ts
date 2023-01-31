@@ -165,6 +165,12 @@ function validateTrigger(settings: PieceTriggerSettings) {
 function validateProps(props: PieceProperty, input: Record<string, unknown>) {
   const propsSchema = buildSchema(props);
   const propsValidator = TypeCompiler.Compile(propsSchema);
+  if (propsValidator.Check(input)) {
+    console.log("FUCK YOU");
+    console.log(propsValidator.Errors(input))
+    console.log(input);
+    console.log(propsSchema);
+  }
   return propsValidator.Check(input);
 }
 
@@ -205,7 +211,7 @@ function buildSchema(props: PieceProperty): TSchema {
         break;
     }
     if (!property.required) {
-      propsSchema[name] = Type.Optional(propsSchema[name]);
+      propsSchema[name] = Type.Union([Type.Null(), Type.Undefined(), propsSchema[name]]);
     }
   }
 

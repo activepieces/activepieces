@@ -19,15 +19,15 @@ export const httpSendRequestAction = createAction({
     }),
     headers: Property.Object({
       displayName: 'Headers',
-      required: false,
+      required: true,
     }),
     queryParams: Property.Object({
       displayName: 'Query params',
-      required: false,
+      required: true,
     }),
     body: Property.Json({
       displayName: 'Body',
-      required: false,
+      required: true,
     }),
   },
 

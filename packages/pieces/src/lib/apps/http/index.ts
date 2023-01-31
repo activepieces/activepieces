@@ -3,7 +3,7 @@ import { httpSendRequestAction } from './actions/send-http-request-action';
 
 export const http = createPiece({
 	name: 'http',
-	displayName: 'HTTP requests',
+	displayName: 'HTTP Request',
 	logoUrl: 'https://cdn.activepieces.com/pieces/http.png',
 	actions: [
     httpSendRequestAction,
