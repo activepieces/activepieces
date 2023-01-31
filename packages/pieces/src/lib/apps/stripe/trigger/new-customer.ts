@@ -11,6 +11,36 @@ export const stripeNewCustomer = createTrigger({
   props: {
     api_key: stripeCommon.authentication
   },
+  sampleData: {
+    "id": "cus_NGtyEf4hNGTj3p",
+    "object": "customer",
+    "address": null,
+    "balance": 0,
+    "created": 1675180509,
+    "currency": null,
+    "default_currency": null,
+    "default_source": null,
+    "delinquent": false,
+    "description": null,
+    "discount": null,
+    "email": "jane@example.com",
+    "invoice_prefix": "B7162248",
+    "invoice_settings": {
+      "custom_fields": null,
+      "default_payment_method": null,
+      "footer": null,
+      "rendering_options": null
+    },
+    "livemode": false,
+    "metadata": {},
+    "name": "John Doe",
+    "next_invoice_sequence": 1,
+    "phone": null,
+    "preferred_locales": [],
+    "shipping": null,
+    "tax_exempt": "none",
+    "test_clock": null
+  },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhook = await stripeCommon.subscribeWebhook('customer.created', context.webhookUrl!, context.propsValue['api_key']!);
