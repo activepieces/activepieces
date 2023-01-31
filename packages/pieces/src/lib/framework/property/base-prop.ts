@@ -14,7 +14,8 @@ export enum PropertyType {
 	SECRET_TEXT = 'SECRET_TEXT',
 	CUSTOM_AUTH = 'CUSTOM_AUTH',
 	ARRAY = 'ARRAY',
-	OBJECT = 'OBJECT'
+	OBJECT = 'OBJECT',
+  JSON = 'JSON',
 }
 
 export type TPropertyValue<T, U> = {
@@ -35,3 +36,5 @@ export interface NumberProperty extends BasePropertySchema, TPropertyValue<numbe
 export interface ArrayProperty extends BasePropertySchema, TPropertyValue<unknown[], PropertyType.ARRAY> { }
 
 export interface ObjectProperty extends BasePropertySchema, TPropertyValue<object, PropertyType.OBJECT> { }
+
+export interface JsonProperty extends BasePropertySchema, TPropertyValue<Record<string, unknown>, PropertyType.JSON> { }

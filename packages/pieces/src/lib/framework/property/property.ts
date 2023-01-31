@@ -2,6 +2,7 @@ import {
 	ArrayProperty,
 	BasePropertySchema,
 	CheckboxProperty,
+	JsonProperty,
 	LongTextProperty,
 	NumberProperty,
 	ObjectProperty,
@@ -23,7 +24,8 @@ export interface PieceProperty {
 	| SecretTextProperty
 	| CustomAuthProperty
 	| ArrayProperty
-	| ObjectProperty;
+	| ObjectProperty
+  | JsonProperty;
 }
 
 export type StaticPropsValue<T extends PieceProperty> = {
@@ -60,5 +62,8 @@ export const Property = {
 	},
 	Object(request: BasePropertySchema): ObjectProperty {
 		return { ...request, valueSchema: undefined, type: PropertyType.OBJECT };
+	},
+	Json(request: BasePropertySchema): JsonProperty {
+		return { ...request, valueSchema: undefined, type: PropertyType.JSON };
 	},
 }
