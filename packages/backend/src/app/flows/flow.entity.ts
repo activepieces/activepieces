@@ -13,7 +13,7 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
   name: "flow",
   columns: {
     ...BaseColumnSchemaPart,
-    projectId: ApIdSchema,
+    projectId: {...ApIdSchema, nullable: true},
     collectionId: ApIdSchema,
   },
   indices: [

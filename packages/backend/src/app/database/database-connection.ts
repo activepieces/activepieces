@@ -13,7 +13,6 @@ import { FlagEntity } from "../flags/flag.entity";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
 import { AppConnectionEntity } from "../app-connection/app-connection.entity";
-import { configToConnection1673388102509 } from "./migration/1673388102509-config-to-connection.ts";
 import { FlowAndFileProjectId1674788714498 } from "./migration/1674788714498-FlowAndFileProjectId";
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
@@ -37,7 +36,7 @@ export const databaseConnection = new DataSource({
   ssl: useSsl ? {
     ca: ca,
   } : false,
-  migrations: [configToConnection1673388102509, FlowAndFileProjectId1674788714498],
+  migrations: [FlowAndFileProjectId1674788714498],
   entities: [
     CollectionEntity,
     CollectionVersionEntity,
