@@ -45,7 +45,7 @@
         This step needs to be tested in order to view its data.
       </div>
       <div class="ap-text-center">
-        <app-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="true"
+        <app-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
           [loading]="(testing$|async)!" (click)="$event.stopPropagation();" (buttonClicked)="openTestCodeModal();">Test
         </app-button>
       </div>
