@@ -25,6 +25,12 @@ interface FlowCreated {
     flowId: FlowId
 }
 
+interface RunCreated {
+    projectId: ProjectId;
+    flowId: FlowId
+    collectionId: CollectionId;
+}
+
 interface SignedUp {
     userId: UserId;
     email: string;
@@ -39,7 +45,8 @@ export enum TelemetryEventName {
     FLOW_TESTED = "flow.tested",
     FLOW_CREATED = "flow.created",
     START_BUILDING = "start.building",
-    COLLECTION_CREATED = "collection.created"
+    COLLECTION_CREATED = "collection.created",
+    FLOW_RUN_CREATED = "run.created"
 }
 
 
@@ -53,4 +60,5 @@ export type TelemetryEvent = BaseTelemetryEvent<TelemetryEventName.FLOW_TESTED, 
     | BaseTelemetryEvent<TelemetryEventName.START_BUILDING, Record<string, never>>
     | BaseTelemetryEvent<TelemetryEventName.COLLECTION_ENABLED, CollectionEnabled>
     | BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, SignedUp>
+    | BaseTelemetryEvent<TelemetryEventName.FLOW_RUN_CREATED, RunCreated>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_CREATED, FlowCreated>;
