@@ -1,4 +1,5 @@
 import { CollectionId } from "../collections/collection"
+import { RunEnvironment } from "../flow-run/flow-run";
 import { FlowId } from "../flows/flow"
 import { ProjectId } from "../project/project"
 import { UserId } from "../user/user"
@@ -29,6 +30,7 @@ interface RunCreated {
     projectId: ProjectId;
     flowId: FlowId
     collectionId: CollectionId;
+    environment: RunEnvironment;
 }
 
 interface SignedUp {

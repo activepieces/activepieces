@@ -92,7 +92,8 @@ export const flowRunService = {
       payload: {
         projectId: flowRun.projectId,
         collectionId: flowRun.collectionId,
-        flowId: flowVersion.flowId
+        flowId: flowVersion.flowId,
+        environment: flowRun.environment
       }
     })
     await flowRunSideEffects.start({
