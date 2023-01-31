@@ -41,7 +41,7 @@ export const pieces: Piece[] = [
 	calendly,
 	typeform,
 	telegramBot,
-];
+].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
 	return pieces.find((f) => name.toLowerCase() === f.name.toLowerCase());
