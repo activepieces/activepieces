@@ -41,7 +41,7 @@ export class PieceStepMentionItemComponent {
 	ngOnInit(): void {
 		const cacheResult = this.mentionsTreeCache.getStepMentionsTree(this._stepMention.step.name);
 		if (cacheResult) {
-			this.sampleData$ = of({ children: cacheResult, error: '' });
+			this.sampleData$ = of({ children: cacheResult.children, error: '' });
 		}
 		else {
 			this.fetchSampleData();
@@ -85,7 +85,7 @@ export class PieceStepMentionItemComponent {
 				return { children: res, error: '' };
 			}),
 			tap(res => {
-				this.mentionsTreeCache.setStepMentionsTree(this._stepMention.step.name, res.children);
+				this.mentionsTreeCache.setStepMentionsTree(this._stepMention.step.name, { children: res.children });
 				this.fetching$.next(false);
 			}),
 			shareReplay(1)

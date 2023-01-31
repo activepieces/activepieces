@@ -1,6 +1,5 @@
 <button mat-menu-item appTrackHover #hoverTracker="hoverTrackerDirective">
-  <div class="ap-flex" (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true"
-    [matTooltip]="_stepMention.step.type === TriggerType.PIECE? 'Piece Trigger': 'Piece Step'">
+  <div class="ap-flex" (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true">
     <ng-container *ngIf="sampleData$ | async as result">
       <mat-icon class="mat-icon-rtl-mirror" *ngIf="result.children && result.children.length>0">
         {{expandSample ? 'expand_less' : 'expand_more'}}

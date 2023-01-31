@@ -28,10 +28,10 @@
       <mat-icon class="mat-icon-rtl-mirror">
         {{treeControl.isExpanded(node) ? 'expand_less ' : 'expand_more'}}
       </mat-icon>
-      <div class="ap-flex-grow ap-truncate" [matTooltip]="node.key">
+      <div class="ap-truncate" [matTooltip]="node.key">
         {{node.key}}
       </div>
-
+      <div class=" ap-flex-grow "></div>
       <app-button @fadeIn *ngIf="nestedTreeNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
         btnSize="small" (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)">Select
       </app-button>

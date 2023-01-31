@@ -1,16 +1,58 @@
-<button (click)="emitMention(stepMention)" mat-menu-item>
-  <div class="ap-flex ap-flex-grow" matTooltip="Code Step">
+<button mat-menu-item (click)="expandCodeCollapse = !expandCodeCollapse">
+  <div appTrackHover #hoverTracker="hoverTrackerDirective" class="ap-flex ap-flex-grow ap-min-h-[27px]">
+    <mat-icon class="mat-icon-rtl-mirror">
+      {{expandCodeCollapse ? 'expand_less' : 'expand_more'}}
+    </mat-icon>
     <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="stepMention"></app-generic-step-mention-item>
+    <ng-container *ngIf="hoverTracker.isHovered">
+      <mat-icon @fadeIn *ngIf="(codeStepTest$ | async)?.value || (codeStepTest$ | async)?.children"
+        class="mat-icon-rtl-mirror ap-scale-[0.7]" (click)="$event.stopPropagation(); openTestCodeModal()">
+        cached
+      </mat-icon>
+    </ng-container>
     <div class="ap-flex-grow"></div>
-    <app-button btnColor="primary" btnStyle="basic" type="button" btnSize="small" [darkLoadingSpinner]="true"
-      [loading]="(testing$|async)!" (click)="$event.stopPropagation();" (buttonClicked)="openTestCodeModal();">Test
+    <app-button @fadeIn *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+      [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
+      (buttonClicked)="mentionClicked.emit(stepMention)">Select
     </app-button>
   </div>
 </button>
+
 <ng-container *ngIf="codeStepTest$ | async as result">
-  <app-step-mentions-tree *ngIf="result.children" [stepOutputObjectChildNodes]="result.children"
+  <app-step-mentions-tree *ngIf="result.children && expandCodeCollapse" [stepOutputObjectChildNodes]="result.children"
     [stepDisplayName]="stepMention.step.displayName" (mentionClicked)=" emitMention($event)"></app-step-mentions-tree>
-  <div class="ap-pl-6" *ngIf="result.error">
+  <div class="ap-pl-6" *ngIf="result.error && expandCodeCollapse">
     <app-state-icon [showStatusText]="true" [succeeded]="false" textAfter="Step failed"></app-state-icon>
   </div>
 </ng-container>
+<ng-container *ngIf="codeStepTest$ | async as result">
+  <button *ngIf="result.value && expandCodeCollapse" mat-menu-item (click)="mentionClicked.emit(stepMention)">
+    <span class="ap-pl-6 ap-truncate ap-flex-grow ap-transition-all">result:
+      <span class="ap-transition-all ap-text-primary" [matTooltip]="result.value">{{result.value}}
+      </span></span>
+  </button>
+
+</ng-container>
+
+<ng-container
+  *ngIf="!codeStepTest$ || (!(codeStepTest$ | async)?.value && !(codeStepTest$ | async)?.children) && !(testing$ | async)">
+  <ng-container *ngIf="expandCodeCollapse">
+    <div class="ap-my-3 ap-px-2">
+      <div class="ap-typography-body-1 ap-text-center ap-mb-1">
+        Test Code First
+      </div>
+      <div class="ap-typography-body-2 ap-text-center ap-mb-3">
+        This step needs to be tested in order to view its data.
+      </div>
+      <div class="ap-text-center">
+        <app-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="true"
+          [loading]="(testing$|async)!" (click)="$event.stopPropagation();" (buttonClicked)="openTestCodeModal();">Test
+        </app-button>
+      </div>
+    </div>
+
+  </ng-container>
+
+</ng-container>
+
+<ng-container *ngIf="testDialogClosed$|async"></ng-container>
