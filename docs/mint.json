@@ -60,20 +60,27 @@
     {
       "group": "Apps",
       "pages": [
+        "pieces/apps/asana",
         "pieces/apps/blackbaud",
+        "pieces/apps/calendly",
+        "pieces/apps/clickup",
         "pieces/apps/discord",
+        "pieces/apps/drip",
         "pieces/apps/github",
         "pieces/apps/gmail",
         "pieces/apps/google_contacts",
         "pieces/apps/google_sheets",
         "pieces/apps/hackernews",
+        "pieces/apps/http",
         "pieces/apps/hubspot",
         "pieces/apps/mailchimp",
         "pieces/apps/openai",
         "pieces/apps/pipedrive",
         "pieces/apps/sendgrid",
         "pieces/apps/slack",
-        "pieces/apps/stripe"
+        "pieces/apps/stripe",
+        "pieces/apps/telegram_bot",
+        "pieces/apps/typeform"
       ]
     },
     {
