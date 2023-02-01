@@ -22,6 +22,7 @@ import { errorHandler } from "./app/helper/error-handler";
 import { appConnectionModule } from "./app/app-connection/app-connection.module";
 import { system } from "./app/helper/system/system";
 import { SystemProp } from "./app/helper/system/system-prop";
+import { databaseConnection } from "./app/database/database-connection";
 
 const envToLogger = {
   development: {
@@ -97,6 +98,7 @@ const start = async () => {
       host: "0.0.0.0",
       port: 3000,
     });
+    await databaseConnection.runMigrations();
 
     console.log(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____

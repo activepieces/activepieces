@@ -3,5 +3,4 @@ import { databaseConnection } from "./database-connection";
 
 export const databaseModule: FastifyPluginAsync = async (_app, _opts) => {
   await databaseConnection.initialize();
-  await databaseConnection.runMigrations();
 };
