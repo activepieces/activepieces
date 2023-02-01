@@ -44,7 +44,6 @@ export class PieceStepMentionItemComponent {
 		if (cacheResult) {
 			this.sampleData$ = combineLatest({ stepTree: of({ children: cacheResult.children, error: '' }), search: this.mentionsTreeCache.listSearchBarObs$ }).pipe(map(res => {
 				const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(this._stepMention.step.name, res.search);
-				console.log(res.search);
 				return {
 					children: res.stepTree.children,
 					error: '',

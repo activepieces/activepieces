@@ -35,8 +35,6 @@ export class MentionsTreeCacheService {
 		if (tree) {
 			const markedNodesToShow = new Map<string, boolean>();
 			this._markNodesToShow(tree.children, substr, markedNodesToShow);
-			console.log(markedNodesToShow);
-			console.log(substr);
 			return markedNodesToShow;
 		}
 		return new Map<string, boolean>();

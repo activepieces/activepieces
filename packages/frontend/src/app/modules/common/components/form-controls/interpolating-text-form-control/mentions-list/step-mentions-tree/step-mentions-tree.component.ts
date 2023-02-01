@@ -41,9 +41,7 @@ export class StepMentionsListComponent implements OnInit {
 		return !!node.children && node.children.length > 0 && (this.nodeMarkedToShow(_, node) || this.stepDisplayName.toLowerCase().includes(this.currentlyTypedTextInSearchBar.toLowerCase()));
 	};
 	nodeMarkedToShow = (_: number, node: MentionTreeNode) => {
-		if (this.markedNodesToShow)
-			return this.markedNodesToShow.get(node.propertyPath);
-		return true;
+		return this.markedNodesToShow.get(node.propertyPath);
 	}
 	ngOnInit() {
 		this.dataSource.data = this.stepOutputObjectChildNodes;

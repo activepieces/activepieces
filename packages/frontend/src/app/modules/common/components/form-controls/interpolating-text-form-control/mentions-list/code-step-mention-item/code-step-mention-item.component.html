@@ -1,15 +1,16 @@
 <button mat-menu-item (click)="expandCodeCollapse = !expandCodeCollapse">
-  <div appTrackHover #hoverTracker="hoverTrackerDirective" class="ap-flex ap-flex-grow ap-min-h-[27px]">
+  <div appTrackHover #hoverTracker="hoverTrackerDirective" class="ap-flex ap-flex-grow ap-min-h-[27px] ap-items-center">
     <mat-icon class="mat-icon-rtl-mirror">
       {{expandCodeCollapse ? 'expand_less' : 'expand_more'}}
     </mat-icon>
     <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="stepMention"></app-generic-step-mention-item>
-    <ng-container *ngIf="hoverTracker.isHovered">
-      <mat-icon @fadeIn *ngIf="(codeStepTest$ | async)?.value || (codeStepTest$ | async)?.children"
-        class="mat-icon-rtl-mirror ap-scale-[0.7]" (click)="$event.stopPropagation(); openTestCodeModal()">
-        cached
-      </mat-icon>
-    </ng-container>
+
+    <mat-icon *ngIf="(codeStepTest$ | async)?.value || (codeStepTest$ | async)?.children"
+      class="mat-icon-rtl-mirror ap-scale-[0.7]" (click)="$event.stopPropagation(); openTestCodeModal()">
+      cached
+    </mat-icon>
+    <span *ngIf="testing$|async" class="spinner-border dark-spinner ap-w-[16px] ap-h-[16px] ap-ml-1"
+      role="status"></span>
     <div class="ap-flex-grow"></div>
     <app-button @fadeIn *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
       [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
@@ -20,7 +21,8 @@
 
 <ng-container *ngIf="codeStepTest$ | async as result">
   <app-step-mentions-tree *ngIf="result.children && expandCodeCollapse" [stepOutputObjectChildNodes]="result.children"
-    [stepDisplayName]="stepMention.step.displayName" (mentionClicked)=" emitMention($event)"></app-step-mentions-tree>
+    [markedNodesToShow]="result.markedNodesToShow" [stepDisplayName]="stepMention.step.displayName"
+    (mentionClicked)=" emitMention($event)"></app-step-mentions-tree>
   <div class="ap-pl-6" *ngIf="result.error && expandCodeCollapse">
     <app-state-icon [showStatusText]="true" [succeeded]="false" textAfter="Step failed"></app-state-icon>
   </div>
@@ -34,8 +36,7 @@
 
 </ng-container>
 
-<ng-container
-  *ngIf="!codeStepTest$ || (!(codeStepTest$ | async)?.value && !(codeStepTest$ | async)?.children) && !(testing$ | async)">
+<ng-container *ngIf="!codeStepTest$ && !(testing$ | async)">
   <ng-container *ngIf="expandCodeCollapse">
     <div class="ap-my-3 ap-px-2">
       <div class="ap-typography-body-1 ap-text-center ap-mb-1">

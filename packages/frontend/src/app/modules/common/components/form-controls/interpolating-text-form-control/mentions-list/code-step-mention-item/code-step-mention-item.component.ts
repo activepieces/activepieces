@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
-import { filter, forkJoin, from, map, Observable, of, shareReplay, Subject, switchMap, tap } from 'rxjs';
+import { combineLatest, filter, forkJoin, from, map, Observable, of, shareReplay, Subject, switchMap, tap } from 'rxjs';
 import { CodeActionSettings } from '@activepieces/shared';
 import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
 import { FlowItemDetails } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
@@ -27,7 +27,7 @@ export class CodeStepMentionItemComponent implements OnInit {
 	testDialogClosed$: Observable<object>;
 	expandCodeCollapse: boolean = false;
 	flowItemDetails$: Observable<FlowItemDetails | undefined>;
-	codeStepTest$: Observable<{ children: MentionTreeNode[] | undefined; error?: boolean, value?: any }>;
+	codeStepTest$: Observable<{ children?: MentionTreeNode[]; error?: boolean, value?: any, markedNodesToShow: Map<string, boolean> }>;
 	testing$: Subject<boolean> = new Subject();
 	constructor(
 		private store: Store,
@@ -39,7 +39,15 @@ export class CodeStepMentionItemComponent implements OnInit {
 	ngOnInit(): void {
 		const cacheResult = this.mentionsTreeCache.getStepMentionsTree(this.stepMention.step.name);
 		if (cacheResult) {
-			this.codeStepTest$ = of({ children: cacheResult.children, error: false, value: cacheResult.value });
+			this.codeStepTest$ = combineLatest({ stepTree: of({ children: cacheResult.children, value: cacheResult.value }), search: this.mentionsTreeCache.listSearchBarObs$ }).pipe(map(res => {
+				const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(this.stepMention.step.name, res.search);
+				return {
+					children: res.stepTree.children,
+					error: false,
+					markedNodesToShow: markedNodesToShow,
+					value: res.stepTree.value
+				}
+			}));
 		}
 		this.flowItemDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetails(this.stepMention.step));
 	}
@@ -63,9 +71,6 @@ export class CodeStepMentionItemComponent implements OnInit {
 					}).pipe(switchMap(res => {
 						return this.codeService.executeTest(res.artifact, res.context);
 					}),
-						tap(() => {
-							this.testing$.next(false);
-						}),
 						map(result => {
 							if (result.standardError) {
 								return { error: true, children: [] };
@@ -84,7 +89,21 @@ export class CodeStepMentionItemComponent implements OnInit {
 								this.mentionsTreeCache.setStepMentionsTree(this.stepMention.step.name, { children: res.children || [], value: res.value });
 							}
 						}),
-						shareReplay(1));
+						switchMap(res => {
+							return combineLatest({ stepTree: of({ children: res.children, value: res.value }), search: this.mentionsTreeCache.listSearchBarObs$ }).pipe(map(res => {
+								const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(this.stepMention.step.name, res.search);
+								return {
+									children: res.stepTree.children,
+									error: false,
+									markedNodesToShow: markedNodesToShow,
+									value: res.stepTree.value
+								}
+							}));
+						}),
+						tap(() => {
+							this.testing$.next(false);
+						}),
+					);
 				}),
 				shareReplay(1)
 			);

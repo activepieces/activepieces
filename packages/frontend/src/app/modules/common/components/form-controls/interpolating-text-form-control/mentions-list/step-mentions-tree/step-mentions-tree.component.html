@@ -7,10 +7,9 @@
 
   <mat-tree-node appTrackHover #treeNodeHoverTracker="hoverTrackerDirective"
     [style.display]="markedNodesToShow?.get(node.propertyPath) || (searchContainsStepDisplayName$|async) ? '':'none'"
-    (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)" #treeNode="matTreeNode"
-    *matTreeNodeDef="let node; ">
+    #treeNode="matTreeNode" *matTreeNodeDef="let node; ">
 
-    <div matTreeNodeToggle mat-menu-item
+    <div matTreeNodeToggle mat-menu-item (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)"
       [style.padding-left]="treeNode.level === 0? '50px': (treeNode.level * 20 + 50)+'px'" class=" ap-min-w-[0]">
       <div class=" ap-flex ap-gap-1  ap-min-h-[27px]">
         {{node.key}}<span class="ap-text-primary ap-truncate ap-flex-grow ap-transition-all">:

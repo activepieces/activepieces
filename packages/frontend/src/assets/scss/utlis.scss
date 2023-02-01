@@ -72,3 +72,8 @@ app-builder-autocomplete-mentions-dropdown
     width: 4px;
   }
 }
+ .dark-spinner
+{
+  border-color:$title;
+  border-right-color: transparent;
+}
