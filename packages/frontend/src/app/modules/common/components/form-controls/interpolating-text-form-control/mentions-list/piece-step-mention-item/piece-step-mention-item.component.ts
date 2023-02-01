@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { map, Observable, of, shareReplay, Subject, tap } from 'rxjs';
+import { combineLatest, map, Observable, of, shareReplay, Subject, switchMap, tap } from 'rxjs';
 import { ActionType, PieceAction, PieceTrigger, TriggerType } from '@activepieces/shared';
 import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
 import { FlowItemDetails } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
@@ -9,6 +9,7 @@ import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder
 import { MentionListItem, MentionTreeNode, traverseStepOutputAndReturnMentionTree } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
+
 
 @Component({
 	selector: 'app-piece-step-mention-item',
@@ -29,7 +30,7 @@ export class PieceStepMentionItemComponent {
 	@Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
 	@Input() stepIndex: number;
 	flowItemDetails$: Observable<FlowItemDetails | undefined>;
-	sampleData$: Observable<{ children: MentionTreeNode[] | undefined; error: string }>;
+	sampleData$: Observable<{ children: MentionTreeNode[] | undefined; error: string; markedNodesToShow: Map<string, boolean> }>;
 	fetching$: Subject<boolean> = new Subject();
 	noSampleDataNote$: Observable<string>;
 
@@ -41,7 +42,15 @@ export class PieceStepMentionItemComponent {
 	ngOnInit(): void {
 		const cacheResult = this.mentionsTreeCache.getStepMentionsTree(this._stepMention.step.name);
 		if (cacheResult) {
-			this.sampleData$ = of({ children: cacheResult.children, error: '' });
+			this.sampleData$ = combineLatest({ stepTree: of({ children: cacheResult.children, error: '' }), search: this.mentionsTreeCache.listSearchBarObs$ }).pipe(map(res => {
+				const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(this._stepMention.step.name, res.search);
+				console.log(res.search);
+				return {
+					children: res.stepTree.children,
+					error: '',
+					markedNodesToShow: markedNodesToShow
+				}
+			}));
 		}
 		else {
 			this.fetchSampleData();
@@ -85,8 +94,24 @@ export class PieceStepMentionItemComponent {
 				return { children: res, error: '' };
 			}),
 			tap(res => {
-				this.mentionsTreeCache.setStepMentionsTree(this._stepMention.step.name, { children: res.children });
+				if (!res.error) {
+					this.mentionsTreeCache.setStepMentionsTree(this._stepMention.step.name, { children: res.children });
+				}
 				this.fetching$.next(false);
+			}),
+			switchMap(res => {
+				if (res.error) {
+					return combineLatest({ stepTree: of({ children: [], error: res.error }), search: this.mentionsTreeCache.listSearchBarObs$ })
+				}
+				return combineLatest({ stepTree: of({ children: res.children, error: res.error }), search: this.mentionsTreeCache.listSearchBarObs$ })
+			}),
+			map(res => {
+				const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(this._stepMention.step.name, res.search);
+				return {
+					children: res.stepTree.children,
+					error: '',
+					markedNodesToShow: markedNodesToShow
+				}
 			}),
 			shareReplay(1)
 		);

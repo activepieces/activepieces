@@ -15,7 +15,7 @@
 <ng-container *ngIf="expandSample">
   <ng-container *ngIf="sampleData$ | async as result">
     <app-step-mentions-tree *ngIf="result.children" [stepOutputObjectChildNodes]="result.children"
-      [stepDisplayName]="_stepMention.step.displayName"
+      [markedNodesToShow]="result.markedNodesToShow" [stepDisplayName]="_stepMention.step.displayName"
       (mentionClicked)="mentionClicked.emit($event)"></app-step-mentions-tree>
     <ng-container *ngIf="result.error">
       <div class="ap-pl-6 ap-py-2">

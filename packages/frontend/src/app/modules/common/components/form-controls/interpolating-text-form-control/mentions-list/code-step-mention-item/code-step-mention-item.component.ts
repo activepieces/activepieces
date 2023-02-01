@@ -80,7 +80,9 @@ export class CodeStepMentionItemComponent implements OnInit {
 							return { children: childrenNodes };
 						}),
 						tap(res => {
-							this.mentionsTreeCache.setStepMentionsTree(this.stepMention.step.name, { children: res.children || [], value: res.value });
+							if (!res.error) {
+								this.mentionsTreeCache.setStepMentionsTree(this.stepMention.step.name, { children: res.children || [], value: res.value });
+							}
 						}),
 						shareReplay(1));
 				}),

@@ -1,6 +1,7 @@
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
+import { map, Observable, tap } from 'rxjs';
 import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
 import {
 	arrayNotationRegex,
@@ -9,6 +10,7 @@ import {
 	replaceArrayNotationsWithSpaces,
 	replaceDotsWithSpaces,
 } from '../../utils';
+import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 
 @Component({
 	selector: 'app-step-mentions-tree',
@@ -21,11 +23,28 @@ export class StepMentionsListComponent implements OnInit {
 	@Input() stepOutputObjectChildNodes: MentionTreeNode[] = [];
 	@Input() stepDisplayName: string;
 	@Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
+	@Input() markedNodesToShow: Map<string, boolean>;
 	treeControl = new NestedTreeControl<MentionTreeNode>(node => node.children);
 	dataSource = new MatTreeNestedDataSource<MentionTreeNode>();
+	searchContainsStepDisplayName$: Observable<boolean>
+	currentlyTypedTextInSearchBar = "";
+	constructor(public mentionsTreeCacheService: MentionsTreeCacheService) {
+		this.searchContainsStepDisplayName$ = this.mentionsTreeCacheService.listSearchBarObs$.pipe(tap(
+			(search) => {
+				this.currentlyTypedTextInSearchBar = search;
+			}
+		), map(search => {
+			return this.stepDisplayName.toLowerCase().includes(search.toLowerCase())
+		}))
+	}
 	hasChild = (_: number, node: MentionTreeNode) => {
-		return !!node.children && node.children.length > 0;
+		return !!node.children && node.children.length > 0 && (this.nodeMarkedToShow(_, node) || this.stepDisplayName.toLowerCase().includes(this.currentlyTypedTextInSearchBar.toLowerCase()));
 	};
+	nodeMarkedToShow = (_: number, node: MentionTreeNode) => {
+		if (this.markedNodesToShow)
+			return this.markedNodesToShow.get(node.propertyPath);
+		return true;
+	}
 	ngOnInit() {
 		this.dataSource.data = this.stepOutputObjectChildNodes;
 	}
