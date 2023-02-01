@@ -7,6 +7,7 @@ import {
   ExecutionOutputStatus,
   File,
   FlowVersion,
+  ProjectId,
   StepOutputStatus,
   Trigger,
 } from "@activepieces/shared";
@@ -22,9 +23,9 @@ import { engineHelper } from "../../helper/engine-helper";
 import { createRedisLock } from "../../database/redis-connection";
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
-  const flowVersion = (await flowVersionService.getOne(jobData.flowVersionId))!;
-  const collectionVersion = (await collectionVersionService.getOne(jobData.collectionVersionId))!;
-  const collection = await collectionService.getOneOrThrow(collectionVersion.collectionId);
+  const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId);
+  const collectionVersion = await collectionVersionService.getOneOrThrow(jobData.collectionVersionId);
+  const collection = await collectionService.getOneOrThrow({ projectId: jobData.projectId, id: collectionVersion.collectionId });
 
   const sandbox = sandboxManager.obtainSandbox();
   const flowLock = await createRedisLock(flowVersion.id);
@@ -33,7 +34,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     await sandbox.cleanAndInit();
 
     console.log("[" + jobData.runId + "] Downloading Files");
-    await downloadFiles(sandbox, flowVersion, collectionVersion);
+    await downloadFiles(sandbox, jobData.projectId, flowVersion, collectionVersion);
 
     const executionOutput = await engineHelper.executeFlow(sandbox, {
       flowVersionId: flowVersion.id,
@@ -48,7 +49,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
       },
     });
 
-    const logsFile = await fileService.save(Buffer.from(JSON.stringify(executionOutput)));
+    const logsFile = await fileService.save(jobData.projectId, Buffer.from(JSON.stringify(executionOutput)));
     await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id);
   } catch (e: unknown) {
     console.error(`[${jobData.runId}] error`, e);
@@ -62,6 +63,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
 
 async function downloadFiles(
   sandbox: Sandbox,
+  projectId: ProjectId,
   flowVersion: FlowVersion,
   collectionVersion: CollectionVersion,
 ): Promise<void> {
@@ -69,7 +71,7 @@ async function downloadFiles(
 
   // This has to be before flows, since it does modify code settings and fill it with packaged file id.
   fs.mkdirSync(buildPath + "/codes/");
-  const artifacts: File[] = await buildCodes(flowVersion);
+  const artifacts: File[] = await buildCodes(projectId, flowVersion);
   artifacts.forEach((artifact) => {
     fs.writeFileSync(buildPath + "/codes/" + artifact.id + ".js", artifact.data);
   });
@@ -83,13 +85,13 @@ async function downloadFiles(
 }
 
 
-async function buildCodes(flowVersion: FlowVersion): Promise<File[]> {
+async function buildCodes(projectId: ProjectId, flowVersion: FlowVersion): Promise<File[]> {
   const buildRequests: Array<Promise<File>> = [];
   let currentStep: Trigger | Action | undefined = flowVersion.trigger;
   while (currentStep !== undefined) {
     if (currentStep.type === ActionType.CODE) {
       const codeActionSettings: CodeActionSettings = currentStep.settings;
-      buildRequests.push(getFile(codeActionSettings));
+      buildRequests.push(getArtifactFile(projectId, codeActionSettings));
     }
     currentStep = currentStep.nextAction;
   }
@@ -100,16 +102,16 @@ async function buildCodes(flowVersion: FlowVersion): Promise<File[]> {
   return files;
 }
 
-const getFile = async (codeActionSettings: CodeActionSettings): Promise<File> => {
+const getArtifactFile = async (projectId: ProjectId, codeActionSettings: CodeActionSettings): Promise<File> => {
   if (codeActionSettings.artifactPackagedId === undefined) {
     console.log(`Building package for file id ${codeActionSettings.artifactSourceId}`);
     const sourceId = codeActionSettings.artifactSourceId!;
-    const fileEntity = await fileService.getOne(sourceId);
+    const fileEntity = await fileService.getOne({ projectId: projectId, fileId: sourceId });
     const builtFile = await codeBuilder.build(fileEntity!.data);
-    const savedPackagedFile: File = await fileService.save(builtFile);
+    const savedPackagedFile: File = await fileService.save(projectId, builtFile);
     codeActionSettings.artifactPackagedId = savedPackagedFile.id;
   }
-  const file: File = (await fileService.getOne(codeActionSettings.artifactPackagedId))!;
+  const file: File = (await fileService.getOne({ projectId: projectId, fileId: codeActionSettings.artifactPackagedId }))!;
   return file;
 };
 

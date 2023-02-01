@@ -5,7 +5,7 @@ import { Principal } from "@activepieces/shared";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";
-import { store } from "../../helper/store";
+import { redisStore } from "../../helper/store";
 
 const ALGORITHM = "HS256";
 const KEY_ID = "1";
@@ -29,14 +29,14 @@ const getSecretFromEnvironment = (): string | undefined => {
 };
 
 const getSecretFromStore = async (): Promise<string | null> => {
-  return await store.load(SystemProp.JWT_SECRET);
+  return await redisStore.load(SystemProp.JWT_SECRET);
 };
 
 const generateAndStoreSecret = async (): Promise<string> => {
   const secretLengthInBytes = 32;
   const secretBuffer = await promisify(randomBytes)(secretLengthInBytes);
   const secret = secretBuffer.toString("base64");
-  await store.save(SystemProp.JWT_SECRET, secret);
+  await redisStore.save(SystemProp.JWT_SECRET, secret);
   return secret;
 };
 

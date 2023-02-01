@@ -26,8 +26,7 @@
     display: block;
     width: 100%;
     padding: 2px 0.5rem 0px 0.5rem ;
-    font-size: .875rem;
-    font-weight: 400;
+    font:400 1rem / 1.9rem "Open Sans";
     line-height: 1.375rem;
     color: #4f4f4f;
     background-color: #fff;
@@ -38,8 +37,15 @@
     &:hover, &:focus
     {
        outline: black solid 0px ;
-    }
- 
+    } 
+}
+input.form-control 
+{
+  padding-bottom:.3125rem;
+  &:disabled
+  {
+    color:rgba(0, 0, 0, 0.38);
+  }
 }
 
 a{
@@ -65,4 +71,9 @@ app-builder-autocomplete-mentions-dropdown
   &::-webkit-scrollbar {
     width: 4px;
   }
+}
+ .dark-spinner
+{
+  border-color:$title;
+  border-right-color: transparent;
 }

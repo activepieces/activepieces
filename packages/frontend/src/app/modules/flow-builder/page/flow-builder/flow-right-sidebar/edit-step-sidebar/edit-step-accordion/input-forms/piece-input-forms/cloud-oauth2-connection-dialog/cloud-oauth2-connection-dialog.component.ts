@@ -12,7 +12,6 @@ import { catchError, Observable, of, take, tap } from 'rxjs';
 import {
   AppConnection,
   UpsertCloudOAuth2Request,
-  Project,
   CloudOAuth2ConnectionValue,
   CloudAuth2Connection,
 } from '@activepieces/shared';
@@ -20,7 +19,6 @@ import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animatio
 import { PieceConfig } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
 import { CloudConnectionPopupSettings } from 'packages/frontend/src/app/modules/common/components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
 import { AppConnectionsService } from 'packages/frontend/src/app/modules/common/service/app-connections.service';
-import { ProjectService } from 'packages/frontend/src/app/modules/common/service/project.service';
 import { ConnectionValidator } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/validators/connectionNameValidator';
 import { appConnectionsActions } from 'packages/frontend/src/app/modules/flow-builder/store/app-connections/app-connections.action';
 import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
@@ -43,7 +41,6 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   @Input() connectionToUpdate: CloudAuth2Connection | undefined;
   cloudConnectionPopupSettings: CloudConnectionPopupSettings;
   settingsForm: FormGroup<AuthConfigSettings>;
-  project$: Observable<Project>;
   loading = false;
   upsert$: Observable<AppConnection | null>;
   keyTooltip =
@@ -54,7 +51,6 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     public dialogRef: MatDialogRef<CloudOAuth2ConnectionDialogComponent>,
     private appConnectionsService: AppConnectionsService,
     private snackbar: MatSnackBar,
-    private projectService: ProjectService,
     @Inject(MAT_DIALOG_DATA)
     dialogData: {
       pieceAuthConfig: PieceConfig;
@@ -76,7 +72,6 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.project$ = this.projectService.selectedProjectAndTakeOne();
     this.settingsForm = this.fb.group({
       appName: new FormControl<string | null>(this.pieceName, {
         nonNullable: false,
@@ -103,15 +98,15 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     }
     this.settingsForm.controls.name.markAllAsTouched();
   }
-  submit(projectId: string) {
+  submit() {
     this.settingsForm.markAllAsTouched();
     if (this.settingsForm.valid && !this.loading) {
       this.loading = true;
-      const config = this.constructConnection(projectId);
+      const config = this.constructConnection();
       this.saveConnection(config);
     }
   }
-  constructConnection(projectId: string) {
+  constructConnection() {
     const connectionName = this.connectionToUpdate
       ? this.connectionToUpdate.name
       : this.settingsForm.controls.name.value;
@@ -122,7 +117,6 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       appName: this.pieceName,
       value: { ...connectionValue, scope: this.cloudConnectionPopupSettings.scope },
       name: connectionName,
-      projectId: projectId,
     };
     return newConnection;
   }

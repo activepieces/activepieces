@@ -8,4 +8,4 @@ export const ListFlowsRequest = Type.Object({
     cursor: Type.Optional(Type.String({})),
 });
 
-export type ListFlowsRequest = Omit<Omit<Static<typeof ListFlowsRequest>, "collectionId">, "cursor"> & { collectionId: CollectionId, cursor: Cursor };
+export type ListFlowsRequest = Omit<Omit<Static<typeof ListFlowsRequest>, "collectionId">, "cursor"> & { collectionId: CollectionId, cursor: Cursor | undefined };
