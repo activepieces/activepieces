@@ -1,5 +1,8 @@
 {
   "name": "@activepieces/pieces",
   "version": "0.0.1",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "drip-nodejs": "^3.1.1"
+  }
 }

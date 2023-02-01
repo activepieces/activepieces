@@ -6,6 +6,7 @@ import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
 import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import { InsertMentionOperation, MentionListItem } from '../utils';
+import { MentionsTreeCacheService } from './mentions-tree-cache.service';
 
 @Component({
 	selector: 'app-mentions-list',
@@ -20,25 +21,26 @@ export class MentionsListComponent {
 	expandConfigs = false;
 	expandConnections = false;
 	@Output()
-	searchInputFocused:EventEmitter<boolean>=new EventEmitter();
+	searchInputFocused: EventEmitter<boolean> = new EventEmitter();
 	readonly ActionType = ActionType;
 	readonly TriggerType = TriggerType;
 	@Output()
 	addMention: EventEmitter<InsertMentionOperation> = new EventEmitter();
 	@Output()
 	closeMenu: EventEmitter<void> = new EventEmitter();
-	constructor(private store: Store) {
+	constructor(private store: Store, private mentionsTreeCache: MentionsTreeCacheService) {
+		this.mentionsTreeCache.listSearchBarObs$ = this.searchFormControl.valueChanges.pipe(startWith(''), distinctUntilChanged(), shareReplay(1));
 		this.stepsMentions$ = combineLatest({
 			steps: this.store.select(BuilderSelectors.selectAllStepsForMentionsDropdown).pipe(take(1)),
-			search: this.searchFormControl.valueChanges.pipe(startWith(''), distinctUntilChanged()),
+			search: this.mentionsTreeCache.listSearchBarObs$,
 		}).pipe(
 			map(res => {
-				return res.steps.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()));
+				return res.steps.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()) || this.mentionsTreeCache.searchForSubstringInKeyOrValue(item.step.name, res.search));
 			})
 		);
 		this.configsMentions$ = combineLatest({
 			configs: this.store.select(BuilderSelectors.selectAllConfigsForMentionsDropdown).pipe(take(1)),
-			search: this.searchFormControl.valueChanges.pipe(startWith(''), distinctUntilChanged()),
+			search: this.mentionsTreeCache.listSearchBarObs$,
 		}).pipe(
 			map(res => {
 				return res.configs.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()));
@@ -47,7 +49,7 @@ export class MentionsListComponent {
 		);
 		this.connectionsMentions$ = combineLatest({
 			connections: this.store.select(BuilderSelectors.selectAppConnectionsForMentionsDropdown).pipe(take(1)),
-			search: this.searchFormControl.valueChanges.pipe(startWith(''), distinctUntilChanged()),
+			search: this.mentionsTreeCache.listSearchBarObs$,
 		}).pipe(
 			map(res => {
 				return res.connections.filter(item => item.label.toLowerCase().includes(res.search.toLowerCase()));
@@ -60,4 +62,5 @@ export class MentionsListComponent {
 			insert: { mention: { serverValue: mention.value, value: mention.label, denotationChar: '' } },
 		});
 	}
+
 }

@@ -15,9 +15,7 @@ export class AppConnectionsService {
 	}
 
 	list(params: ListAppConnectionRequest): Observable<SeekPage<AppConnection>> {
-		const queryParams: { [key: string]: string | number } = {
-			projectId: params.projectId,
-		};
+		const queryParams: { [key: string]: string | number } = {};
 		if (params.cursor) {
 			queryParams['cursor'] = params.cursor;
 		}

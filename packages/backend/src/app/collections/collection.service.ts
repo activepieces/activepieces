@@ -12,7 +12,7 @@ import {
   UpdateCollectionRequest,
 } from "@activepieces/shared";
 import { collectionVersionService } from "./collection-version/collection-version.service";
-import { CollectionEntity } from "./collection-entity";
+import { CollectionEntity } from "./collection.entity";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { databaseConnection } from "../database/database-connection";
@@ -28,8 +28,9 @@ export const collectionService = {
    * @param versionId versionId of collection to get, use 'null' for the latest version
    * @returns collection if it exists, else null
    */
-  async getOne(id: CollectionId, versionId: CollectionVersionId | null): Promise<Collection | null> {
+  async getOne({projectId, id, versionId}: {projectId: ProjectId, id: CollectionId, versionId: CollectionVersionId | null}): Promise<Collection | null> {
     const collection: Collection | null = await collectionRepo.findOneBy({
+      projectId,
       id,
     });
     if (collection === null) {
@@ -40,8 +41,8 @@ export const collectionService = {
       version: await collectionVersionService.getCollectionVersionId(id, versionId),
     };
   },
-  async getOneOrThrow(id: CollectionId): Promise<Collection> {
-    const collection = await collectionService.getOne(id, null);
+  async getOneOrThrow({projectId, id}: {projectId: ProjectId, id: CollectionId}): Promise<Collection> {
+    const collection = await collectionService.getOne({projectId, id, versionId: null});
 
     if (collection === null) {
       throw new ActivepiecesError({
@@ -80,7 +81,7 @@ export const collectionService = {
     return paginationHelper.createPage<Collection>(data, cursor);
   },
 
-  async update(collectionId: CollectionId, request: UpdateCollectionRequest): Promise<Collection | null> {
+  async update({projectId, collectionId, request}: {projectId: ProjectId, collectionId: CollectionId, request: UpdateCollectionRequest}): Promise<Collection | null> {
     let lastVersion = await collectionVersionService.getCollectionVersionId(collectionId, null);
     if (lastVersion === null) {
       throw new Error("There is no latest version of collection id " + collectionId);
@@ -90,13 +91,13 @@ export const collectionService = {
     } else {
       await collectionVersionService.updateVersion(lastVersion.id, request);
     }
-    return await collectionService.getOne(collectionId, null);
+    return await collectionService.getOne({projectId, id: collectionId, versionId: null});
   },
 
-  async create(request: CreateCollectionRequest): Promise<Collection> {
+  async create({projectId, request}: {projectId: ProjectId, request: CreateCollectionRequest}): Promise<Collection> {
     const collection: Partial<Collection> = {
       id: apId(),
-      projectId: request.projectId,
+      projectId: projectId,
     };
 
     const savedCollection = await collectionRepo.save(collection);
@@ -107,8 +108,8 @@ export const collectionService = {
     return savedCollection;
   },
 
-  async delete(collectionId: CollectionId): Promise<void> {
-    instanceSideEffects.onCollectionDelete(collectionId);
-    await collectionRepo.delete({ id: collectionId });
+  async delete({projectId, collectionId} : {projectId: ProjectId, collectionId: CollectionId}): Promise<void> {
+    instanceSideEffects.onCollectionDelete({projectId, collectionId});
+    await collectionRepo.delete({ projectId: projectId, id: collectionId });
   },
 };

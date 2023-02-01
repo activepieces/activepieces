@@ -1,4 +1,4 @@
-import { ExecuteFlowOperation, ExecuteDropdownOptions, EngineOperationType, CollectionId, PrincipalType, apId, EngineOperation, ExecutionOutput, ExecuteTriggerOperation, TriggerHookType } from "@activepieces/shared";
+import { ExecuteFlowOperation, ExecuteDropdownOptions, EngineOperationType, CollectionId, PrincipalType, apId, EngineOperation, ExecutionOutput, ExecuteTriggerOperation, TriggerHookType, ProjectId } from "@activepieces/shared";
 import { Sandbox, sandboxManager } from "../workers/sandbox";
 import fs from "node:fs";
 import { system } from "./system/system";
@@ -15,7 +15,7 @@ export const engineHelper = {
     async executeFlow(sandbox: Sandbox, operation: ExecuteFlowOperation): Promise<ExecutionOutput> {
         return await execute(EngineOperationType.EXECUTE_FLOW, sandbox, {
             ...operation,
-            workerToken: await workerToken(operation.collectionId)
+            workerToken: await workerToken({ collectionId: operation.collectionId, projectId: operation.projectId })
         }) as ExecutionOutput;
     },
     async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[]> {
@@ -25,7 +25,7 @@ export const engineHelper = {
             await sandbox.cleanAndInit();
             result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
-                workerToken: await workerToken(operation.collectionVersion.collectionId)
+                workerToken: await workerToken({ collectionId: operation.collectionVersion.collectionId, projectId: operation.projectId })
             });
         } finally {
             sandboxManager.returnSandbox(sandbox.boxId);
@@ -42,7 +42,7 @@ export const engineHelper = {
             await sandbox.cleanAndInit();
             result = await execute(EngineOperationType.DROPDOWN_OPTION, sandbox, {
                 ...operation,
-                workerToken: await workerToken(operation.collectionVersion.collectionId)
+                workerToken: await workerToken({ collectionId: operation.collectionVersion.collectionId, projectId: operation.projectId })
             }) as DropdownState<any>
         } finally {
             sandboxManager.returnSandbox(sandbox.boxId);
@@ -51,11 +51,12 @@ export const engineHelper = {
     }
 }
 
-function workerToken(collectonId: CollectionId): Promise<string> {
+function workerToken(request: { projectId: ProjectId, collectionId: CollectionId }): Promise<string> {
     return tokenUtils.encode({
         type: PrincipalType.WORKER,
         id: apId(),
-        collectionId: collectonId
+        projectId: request.projectId,
+        collectionId: request.collectionId
     })
 }
 

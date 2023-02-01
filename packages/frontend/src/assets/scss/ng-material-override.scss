@@ -423,7 +423,7 @@ $main-theme: material-theme-helper.modify-background($ap-theme-light, $white, $w
 
 
 	button {
-		color: $white;
+		color: $white !important;
 		font-weight: 400;
 		line-height: 1.375rem;
 		padding: 0.1875rem 0.625rem !important;
@@ -610,15 +610,16 @@ mat-option.add-auth{
 
 app-mentions-list
 {
-  mat-tree
-  {
-   padding-left:20px;
-  }
+
   .mdc-list-item__primary-text
   {
     display: flex;
     align-items: center;
     width:100%;
+	div 
+	{
+		flex-grow:1;
+	}
   }
 
 }

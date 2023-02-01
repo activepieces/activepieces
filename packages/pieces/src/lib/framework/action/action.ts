@@ -10,7 +10,7 @@ class IAction<T extends PieceProperty> {
     public readonly run: (
       context: Context<StaticPropsValue<T>>
     ) => Promise<unknown | void>,
-    public readonly sampleData: Object = {}
+    public readonly sampleData: unknown = {}
   ) {}
 }
 
@@ -22,7 +22,7 @@ export function createAction<T extends PieceProperty>(request: {
   description: string;
   props: T;
   run: (context: Context<StaticPropsValue<T>>) => Promise<unknown | void>;
-  sampleData?: Object;
+  sampleData?: unknown;
 }): Action {
   return new IAction(
     request.name,

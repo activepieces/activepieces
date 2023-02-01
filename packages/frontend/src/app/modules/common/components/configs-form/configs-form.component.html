@@ -75,9 +75,19 @@
 
     </ng-container>
     <ng-container *ngSwitchCase="PropertyType.ARRAY">
-      <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="config.description">{{config.label}}</div>
-      <app-array-form-control [formControlName]="config.key"></app-array-form-control>
+      <div [class.ap-mb-5]="form.disabled">
+        <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="config.description">{{config.label}}</div>
+        <app-array-form-control [formControlName]="config.key"></app-array-form-control>
+      </div>
     </ng-container>
+    <ng-container *ngSwitchCase="PropertyType.OBJECT">
+      <div [class.ap-mb-5]="form.disabled">
+        <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="config.description">{{config.label}}</div>
+        <app-dictonary-form-control [formControlName]="config.key"></app-dictonary-form-control>
+      </div>
+
+    </ng-container>
+
 
     <ng-container *ngIf="config.type === PropertyType.OAUTH2 || config.type === PropertyType.SECRET_TEXT">
       <div class="ap-relative">
@@ -116,11 +126,40 @@
       </div>
 
     </ng-container>
+    <ng-container *ngIf="config.type === PropertyType.JSON">
+      <div class="code-font-sm code-size-200 code-block">
+        <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
+          <div class="ap-flex-grow">
+            <span class="ap-text-white">{{config.label}}</span>
+          </div>
+          <div>
+            <svg-icon src="/assets/img/custom/beautify.svg" [svgStyle]="{width:'16px', height:'16px'}"
+              (click)="beautify(config.key)" matTooltip="beautify" class="ap-cursor-pointer"> </svg-icon>
+          </div>
+        </div>
+        <ngx-codemirror [formControlName]="config.key" #jsonControl [options]="editorOptions"
+          (focusChange)="$event? mentionsDropdown.showMenuSubject$.next(true): null"></ngx-codemirror>
+        <app-builder-autocomplete-mentions-dropdown #mentionsDropdown
+          (addMention)="addMentionToJsonControl(jsonControl,$event)"></app-builder-autocomplete-mentions-dropdown>
+      </div>
+      <div *ngIf="getControl(config.key)!.invalid" class="ap-p-2">
+        <p @fadeInUp *ngIf="getControl(config.key)!.hasError('required');else invalidJson"
+          class="ap-text-danger ap-typography-caption">
+          {{config.label}} is required
+        </p>
+        <ng-template #invalidJson>
+          <p @fadeInUp class="ap-text-danger ap-typography-caption">
+            {{config.label}} is not a valid JSON object.
+          </p>
+        </ng-template>
+      </div>
+    </ng-container>
 
   </ng-container>
 
 
 </ng-template>
+
 <ng-container *ngIf="updateValueOnChange$ | async"></ng-container>
 <ng-container *ngFor="let obs$  of 	optionsObservables$ | keyvalue">
   <ng-container *ngIf=" obs$.value | async "></ng-container>

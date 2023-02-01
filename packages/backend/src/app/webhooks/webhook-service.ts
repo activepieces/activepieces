@@ -2,23 +2,31 @@ import {
   CollectionId,
   FlowId,
   Instance,
+  ProjectId,
   RunEnvironment,
-  TriggerType,
 } from '@activepieces/shared';
 import { collectionService } from '../collections/collection.service';
 import { flowRunService } from '../flow-run/flow-run-service';
-import { flowService } from '../flows/flow-service';
 import { flowVersionService } from '../flows/flow-version/flow-version.service';
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
 import { triggerUtils } from '../helper/trigger-utils';
-import { instanceService } from '../instance/instance-service';
+import { instanceService } from '../instance/instance.service';
 import { collectionVersionService } from '../collections/collection-version/collection-version.service';
+import { flowRepo } from '../flows/flow.repo';
 
 export const webhookService = {
   async callback({ flowId, payload }: CallbackParams): Promise<void> {
-    const flow = await flowService.getOneOrThrow(flowId);
-    const collection = await collectionService.getOneOrThrow(flow.collectionId);
-    const instance = await getInstanceOrThrow(collection.id);
+    const flow = await flowRepo.findOneBy({ id: flowId });
+    if (flow === null) {
+      throw new ActivepiecesError({
+        code: ErrorCode.FLOW_NOT_FOUND,
+        params: {
+          id: flowId,
+        },
+      });
+    }
+    const collection = await collectionService.getOneOrThrow({projectId: flow.projectId, id: flow.collectionId});
+    const instance = await getInstanceOrThrow(flow.projectId, collection.id);
     const collectionVersion = await collectionVersionService.getOneOrThrow(
       instance.collectionVersionId
     );
@@ -48,9 +56,10 @@ export const webhookService = {
 };
 
 const getInstanceOrThrow = async (
+  projectId: ProjectId,
   collectionId: CollectionId
 ): Promise<Instance> => {
-  const instance = await instanceService.getByCollectionId({ collectionId });
+  const instance = await instanceService.getByCollectionId({ projectId, collectionId });
 
   if (instance === null) {
     throw new ActivepiecesError({

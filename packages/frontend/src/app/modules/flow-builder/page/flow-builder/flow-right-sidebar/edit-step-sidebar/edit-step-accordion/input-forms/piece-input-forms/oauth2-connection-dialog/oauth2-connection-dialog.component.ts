@@ -76,7 +76,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		debugger;
 		this.hasCloudAuthCred$ = this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
 			map(res => {
 				return !!res[this.pieceName];
@@ -121,7 +120,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 		});
 		this.settingsForm.controls.name.markAllAsTouched();
 		if (this.connectionToUpdate) {
-			this.settingsForm.controls.value.setValue(this.connectionToUpdate.value);			
+			this.settingsForm.controls.value.setValue(this.connectionToUpdate.value);
 			this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
 			this.settingsForm.controls.client_id.setValue(this.connectionToUpdate.value.client_id);
 			this.settingsForm.controls.client_secret.setValue(this.connectionToUpdate.value.client_secret);
@@ -143,30 +142,30 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 			: this.settingsForm.controls.name.value;
 		const settingsFormValue = { ...this.settingsForm.getRawValue() };
 		const connectionValue = settingsFormValue.value;
-		
+
 		delete connectionValue['name'];
 		delete connectionValue['appName'];
 		const newConnection: UpsertOAuth2Request = {
 			name: connectionName,
 			appName: this.pieceName,
-			value: { ...connectionValue,
-				client_id:this.settingsForm.controls.client_id.value, 
-				client_secret:this.settingsForm.controls.client_secret.value,
-				redirect_url:this.settingsForm.controls.redirect_url.value,
-				scope:this.settingsForm.controls.scope.value,
-				token_url:this.settingsForm.controls.token_url.value,				
+			value: {
+				...connectionValue,
+				client_id: this.settingsForm.controls.client_id.value,
+				client_secret: this.settingsForm.controls.client_secret.value,
+				redirect_url: this.settingsForm.controls.redirect_url.value,
+				scope: this.settingsForm.controls.scope.value,
+				token_url: this.settingsForm.controls.token_url.value,
 			},
-			projectId: projectId,
 		};
 		return newConnection;
 	}
 
-	saveConnection(connection: UpsertOAuth2Request): void { 
-		debugger;
+	saveConnection(connection: UpsertOAuth2Request): void {
+
 		this.upsert$ = this.appConnectionsService.upsert(connection).pipe(
 			catchError(err => {
 				console.error(err);
-				this.snackbar.open('Connection operation failed please check your console.', 'Close', { panelClass: 'error',duration:5000 });
+				this.snackbar.open('Connection operation failed please check your console.', 'Close', { panelClass: 'error', duration: 5000 });
 				return of(null);
 			}),
 			tap(connection => {

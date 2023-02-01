@@ -175,7 +175,7 @@ const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
 
 const getWebhookUrl = async (flowId: FlowId): Promise<string> => {
   const webhookPath = `v1/webhooks?flowId=${flowId}`;
-  let serverUrl = await getBackendUrl();
+  const serverUrl = await getBackendUrl();
   return `${serverUrl}/${webhookPath}`;
 };
 

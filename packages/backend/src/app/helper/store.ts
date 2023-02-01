@@ -6,7 +6,7 @@ const getKey = (keySuffix: string): string => {
   return `ACTIVEPIECES:SYSTEM_PROP:${keySuffix}`;
 };
 
-export const store = {
+export const redisStore = {
   async save(keySuffix: string, value: string): Promise<void> {
     const key = getKey(keySuffix);
     await redis.set(key, value);

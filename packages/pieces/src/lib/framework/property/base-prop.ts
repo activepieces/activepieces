@@ -14,6 +14,8 @@ export enum PropertyType {
 	SECRET_TEXT = 'SECRET_TEXT',
 	CUSTOM_AUTH = 'CUSTOM_AUTH',
 	ARRAY = 'ARRAY',
+	OBJECT = 'OBJECT',
+  JSON = 'JSON',
 }
 
 export type TPropertyValue<T, U> = {
@@ -21,14 +23,18 @@ export type TPropertyValue<T, U> = {
 	type: U;
 }
 
-export interface ShortTextProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.SHORT_TEXT> {}
+export interface ShortTextProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.SHORT_TEXT> { }
 
-export interface LongTextProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.LONG_TEXT> {}
+export interface LongTextProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.LONG_TEXT> { }
 
-export interface SecretTextProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.SECRET_TEXT> {}
+export interface SecretTextProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.SECRET_TEXT> { }
 
-export interface CheckboxProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.CHECKBOX> {}
+export interface CheckboxProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.CHECKBOX> { }
 
-export interface NumberProperty extends BasePropertySchema, TPropertyValue<number, PropertyType.NUMBER> {}
+export interface NumberProperty extends BasePropertySchema, TPropertyValue<number, PropertyType.NUMBER> { }
 
-export interface ArrayProperty extends BasePropertySchema, TPropertyValue<unknown[], PropertyType.ARRAY> {}
+export interface ArrayProperty extends BasePropertySchema, TPropertyValue<unknown[], PropertyType.ARRAY> { }
+
+export interface ObjectProperty extends BasePropertySchema, TPropertyValue<Record<string, unknown>, PropertyType.OBJECT> { }
+
+export interface JsonProperty extends BasePropertySchema, TPropertyValue<Record<string, unknown>, PropertyType.JSON> { }

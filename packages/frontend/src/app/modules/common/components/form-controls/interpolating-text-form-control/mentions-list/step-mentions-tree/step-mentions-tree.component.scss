@@ -12,15 +12,17 @@
 /*
  * This padding sets alignment of the nested nodes.
  */
-.step-result-tree .mat-nested-tree-node div[role=group] {
-  padding-left: 60px;
-}
+
 
 /*
  * Padding for leaf nodes.
  * Leaf nodes need to have padding so as to align with other non-leaf nodes
  * under the same parent.
  */
-.step-result-tree div[role=group] > .mat-tree-node {
-  padding-left: 60px;
-}
+
+
+
+// .step-result-tree >.mat-nested-tree-node div[role=group] > .mat-tree-node , 
+// .step-result-tree >.mat-nested-tree-node div[role=group] > .mat-nested-tree-node > div[role=menuitem] {
+//   padding-left:60px;
+// }
