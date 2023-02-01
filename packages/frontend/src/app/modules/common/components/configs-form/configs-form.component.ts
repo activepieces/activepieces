@@ -59,6 +59,7 @@ import {
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
 import { InsertMentionOperation } from '../form-controls/interpolating-text-form-control/utils';
 import { jsonValidator } from '../../validators/json-validator';
+import { CodeService } from '../../../flow-builder/service/code.service';
 type ConfigKey = string;
 
 @Component({
@@ -117,7 +118,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     private dialogService: MatDialog,
     private store: Store,
     private cloudAuthConfigsService: CloudAuthConfigsService,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private codeService: CodeService
   ) {
     this.allAuthConfigs$ = this.store.select(
       BuilderSelectors.selectAppConnectionsDropdownOptions
@@ -254,7 +256,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
           controls[c.key] = new UntypedFormControl(JSON.stringify(c.value), validators);
         }
         else {
-          controls[c.key] = new UntypedFormControl(c.value, validators);
+          controls[c.key] = new UntypedFormControl(c.value || "{}", validators);
         }
       }
       else {
@@ -534,5 +536,12 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       }
     });
     return formattedValue;
+  }
+
+  beautify(configKey: string) {
+    try {
+      const ctrl = this.form.get(configKey)!;
+      ctrl.setValue(this.codeService.beautifyJson(JSON.parse(ctrl.value)));
+    } catch { }
   }
 }

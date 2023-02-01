@@ -134,7 +134,7 @@
           </div>
           <div>
             <svg-icon src="/assets/img/custom/beautify.svg" [svgStyle]="{width:'16px', height:'16px'}"
-              matTooltip="beautify" class="ap-cursor-pointer"> </svg-icon>
+              (click)="beautify(config.key)" matTooltip="beautify" class="ap-cursor-pointer"> </svg-icon>
           </div>
         </div>
         <ngx-codemirror [formControlName]="config.key" #jsonControl [options]="editorOptions"
