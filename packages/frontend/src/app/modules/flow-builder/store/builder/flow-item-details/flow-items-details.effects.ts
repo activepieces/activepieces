@@ -63,5 +63,5 @@ export class FlowItemsDetailsEffects {
 				.filter(res => res !== null) as FlowItemDetails[];
 		};
 	}
-	constructor(private actions$: Actions, private flowItemsDetailsService: ActionMetaService) {}
+	constructor(private actions$: Actions, private flowItemsDetailsService: ActionMetaService) { }
 }

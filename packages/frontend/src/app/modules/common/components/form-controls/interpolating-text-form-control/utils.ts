@@ -21,7 +21,7 @@ export const QuillMaterialBase = mixinErrorState(
 			 * @docs-private
 			 */
 			public ngControl: NgControl
-		) {}
+		) { }
 	}
 );
 
@@ -134,6 +134,7 @@ export interface MentionTreeNode {
 	propertyPath: string;
 	key: string;
 	children?: MentionTreeNode[];
+	value?: string | unknown;
 }
 /**Traverses an object to find its child properties and their paths, stepOutput has to be an object on first invocation */
 export function traverseStepOutputAndReturnMentionTree(
@@ -150,13 +151,29 @@ export function traverseStepOutputAndReturnMentionTree(
 				const newKey = Array.isArray(stepOutput) ? `${lastKey} ${k}` : k;
 				return traverseStepOutputAndReturnMentionTree(stepOutput[k], newPath, newKey);
 			}),
+			value: Object.keys(stepOutput).length === 0 ? "Empty List" : undefined
 		};
 	} else {
-		return { propertyPath: path, key: lastKey };
+		const value = formatStepOutput(stepOutput);
+		return { propertyPath: path, key: lastKey, value: value };
 	}
 }
 
 export interface MentionListItem {
 	label: string;
 	value: string;
+}
+
+function formatStepOutput(stepOutput: unknown) {
+	if (stepOutput === null) {
+		return "null";
+	}
+	if (stepOutput === undefined) {
+		return "undefined";
+	}
+	if (typeof stepOutput === "string") {
+		return `\"${stepOutput}\"`;
+	}
+
+	return stepOutput;
 }

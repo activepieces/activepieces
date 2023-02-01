@@ -205,7 +205,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     StepMentionsListComponent,
     ImgFallbackDirective,
     BuilderAutocompleteMentionsDropdownComponent,
-    ArrayFormControlComponent
+    ArrayFormControlComponent,
+
   ],
   providers: [
     HighlightService,
@@ -220,4 +221,4 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     },
   ],
 })
-export class CommonLayoutModule {}
+export class CommonLayoutModule { }
