@@ -10,7 +10,10 @@
 * Self-host with a simple Docker command
 * An alternative to Zapier, Make.com and Tray
 
-Read [Activepieces docs](https://www.activepieces.com/docs) to learn the key concepts and browse the pieces.
+## Quicklinks
+- Website: https://www.activepieces.com
+- Discord: https://discord.gg/2jUXBKDdP8
+- Docs: https://www.activepieces.com/docs
 
 
 ## Get started for free
@@ -76,11 +79,16 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
 <table>
   <tbody>
     <tr>
-          <td align="center"><a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4" width="100px;" alt="Mohammad Abu Aboud"/><br /><sub><b>Mohammad Abu Aboud</b></sub></a><br /><a href="#maintenance-abuaboud" title="Maintenance">🚧</a></td>
-      <td align="center"><a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="Khaled Mashaly"/><br /><sub><b>Khaled Mashaly</b></sub></a><br /><a href="#maintenance-khaledmashaly" title="Maintenance">🚧</a></td>
-      <td align="center"><a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4" width="100px;" alt="Abdulrahman Al Hussein"/><br /><sub><b>Abdulrahman Al Hussein</b></sub></a><br /><a href="#maintenance-AbdulTheActivePiecer" title="Maintenance">🚧</a></td>
-            <td align="center"><a href="https://steercampaign.com"><img src="https://avatars.githubusercontent.com/u/12627658?v=4?s=100" width="100px;" alt="Mohammad Abu Musa"/><br /><sub><b>Mohammad Abu Musa</b></sub></a><br /><a href="#maintenance-mabumusa1" title="Maintenance">🚧</a></td>
-<td align="center"><a href="https://github.com/aboudzein"><img src="https://avatars.githubusercontent.com/u/12976630?v=4" width="100px;" alt="Abdurahman Zeineddin"/><br /><sub><b>Abdurahman Zeineddin</b></sub></a><br /><a href="#maintenance-aboudzein" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ShahedAlMashni"><img src="https://avatars.githubusercontent.com/u/41443850?v=4?s=100" width="100px;" alt="ShahedAlMashni"/><br /><sub><b>ShahedAlMashni</b></sub></a><br /><a href="#plugin-ShahedAlMashni" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4?s=100" width="100px;" alt="AbdulTheActivePiecer"/><br /><sub><b>AbdulTheActivePiecer</b></sub></a><br /><a href="#maintenance-AbdulTheActivePiecer" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="Khaled Mashaly"/><br /><sub><b>Khaled Mashaly</b></sub></a><br /><a href="#maintenance-khaledmashaly" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/><br /><sub><b>Mohammed Abu Aboud</b></sub></a><br /><a href="#maintenance-abuaboud" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://aboudzein.github.io"><img src="https://avatars.githubusercontent.com/u/12976630?v=4?s=100" width="100px;" alt="Abdulrahman Zeineddin"/><br /><sub><b>Abdulrahman Zeineddin</b></sub></a><br /><a href="#plugin-aboudzein" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/creed983"><img src="https://avatars.githubusercontent.com/u/62152944?v=4?s=100" width="100px;" alt="ahmad jaber"/><br /><sub><b>ahmad jaber</b></sub></a><br /><a href="#plugin-creed983" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ashrafsamhouri"><img src="https://avatars.githubusercontent.com/u/97393596?v=4?s=100" width="100px;" alt="ashrafsamhouri"/><br /><sub><b>ashrafsamhouri</b></sub></a><br /><a href="#plugin-ashrafsamhouri" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://steercampaign.com"><img src="https://avatars.githubusercontent.com/u/12627658?v=4?s=100" width="100px;" alt="Mohammad Abu Musa"/><br /><sub><b>Mohammad Abu Musa</b></sub></a><br /><a href="#projectManagement-mabumusa1" title="Project Management">📆</a></td>
     </tr>
   </tbody>
 </table>
@@ -89,6 +97,7 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
 
 This project follows the [all-contributors](https://allcontributors.org) specification.
 Contributions of any kind are welcome!
