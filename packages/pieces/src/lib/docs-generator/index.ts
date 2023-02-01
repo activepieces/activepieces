@@ -8,6 +8,7 @@ import { Trigger } from '../framework/trigger/trigger';
 const mintJson: { navigation: { group: string; pages: string[] }[] } =
   JSON.parse(fs.readFileSync('./docs/mint.json', 'utf8'));
 const appsDocsFolderPath = 'pieces/apps';
+
 function getCardTemplate(title: string, description: string) {
   const CARD_TEMPLATE = `
     <CardGroup cols={2}>
@@ -33,7 +34,7 @@ function getPieceCards(
   return itemsCards;
 }
 /** returns the mint.json navigation path for the docs */
-function writePieceDoc(p: Piece, mdxTemplate:string) {
+function writePieceDoc(p: Piece, mdxTemplate: string) {
   let docsFile = mdxTemplate.replace('TITLE', p.displayName);
   let actionsCards = getPieceCards(p.metadata().actions);
   if (!actionsCards) {
@@ -58,16 +59,14 @@ function writePieceDoc(p: Piece, mdxTemplate:string) {
 const TEMPLATE_MDX = fs.readFileSync('packages/pieces/src/lib/docs-generator/template.mdx', 'utf8');
 const appsDocsFilesPaths: string[] = [];
 pieces.forEach((p) => {
-  const predefinedMdxPath =`packages/pieces/src/lib/apps/${p.name}/${p.name}.mdx`;
-  if(fs.existsSync(predefinedMdxPath))
-  {
-    const predfinedMdxFile= fs.readFileSync(predefinedMdxPath,'utf8');
-    appsDocsFilesPaths.push(writePieceDoc(p,predfinedMdxFile));
+  const predefinedMdxPath = `packages/pieces/src/lib/apps/${p.name}/${p.name}.mdx`;
+  if (fs.existsSync(predefinedMdxPath)) {
+    const predfinedMdxFile = fs.readFileSync(predefinedMdxPath, 'utf8');
+    appsDocsFilesPaths.push(writePieceDoc(p, predfinedMdxFile));
     console.log(p.displayName);
   }
-  else
-  {
-    appsDocsFilesPaths.push(writePieceDoc(p,TEMPLATE_MDX));
+  else {
+    appsDocsFilesPaths.push(writePieceDoc(p, TEMPLATE_MDX));
   }
 });
 if (!mintJson['navigation']) {
@@ -83,4 +82,27 @@ if (appsGroupIndex === -1) {
 }
 fs.writeFileSync('./docs/mint.json', JSON.stringify(mintJson, null, 2));
 
+//////// Update Overview
+
+
+writeAppsOverView();
 console.log('docs generated');
+
+function writeAppsOverView() {
+  let appsSnippet = "<CardGroup cols={3}>";
+  pieces.forEach(piece => {
+    appsSnippet += `
+    <a href="https://activepieces.com/docs/pieces/apps/${piece.name}">
+      <Card>
+          <p align="center">
+            <strong>${piece.displayName}</strong>
+            <img height="75px" width="75px" src="https://cdn.activepieces.com/pieces/${piece.name}.png" />
+          </p>
+      </Card>
+    </a>
+      `
+  });
+  appsSnippet += "</CardGroup>";
+  console.log('Overview is generated');
+  fs.writeFileSync('./docs/_snippets/apps.mdx', appsSnippet);
+}

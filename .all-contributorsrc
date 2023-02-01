@@ -13,6 +13,24 @@
   "commitConvention": "angular",
   "contributors": [
     {
+      "login": "ShahedAlMashni",
+      "name": "ShahedAlMashni",
+      "avatar_url": "https://avatars.githubusercontent.com/u/41443850?v=4",
+      "profile": "https://github.com/ShahedAlMashni",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "AbdulTheActivePiecer",
+      "name": "AbdulTheActivePiecer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/106555838?v=4",
+      "profile": "https://github.com/AbdulTheActivePiecer",
+      "contributions": [
+        "maintenance"
+      ]
+    },
+    {
       "login": "khaledmashaly",
       "name": "Khaled Mashaly",
       "avatar_url": "https://avatars.githubusercontent.com/u/61781545?v=4",
@@ -22,12 +40,48 @@
       ]
     },
     {
+      "login": "abuaboud",
+      "name": "Mohammed Abu Aboud",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1812998?v=4",
+      "profile": "https://github.com/abuaboud",
+      "contributions": [
+        "maintenance"
+      ]
+    },
+    {
+      "login": "aboudzein",
+      "name": "Abdulrahman Zeineddin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12976630?v=4",
+      "profile": "https://aboudzein.github.io",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "creed983",
+      "name": "ahmad jaber",
+      "avatar_url": "https://avatars.githubusercontent.com/u/62152944?v=4",
+      "profile": "https://github.com/creed983",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "ashrafsamhouri",
+      "name": "ashrafsamhouri",
+      "avatar_url": "https://avatars.githubusercontent.com/u/97393596?v=4",
+      "profile": "https://github.com/ashrafsamhouri",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
       "login": "mabumusa1",
       "name": "Mohammad Abu Musa",
       "avatar_url": "https://avatars.githubusercontent.com/u/12627658?v=4",
       "profile": "https://steercampaign.com",
       "contributions": [
-        "repository setup"
+        "projectManagement"
       ]
     }
   ]
