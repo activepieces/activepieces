@@ -45,6 +45,7 @@ export const pieces: Piece[] = [
 	telegramBot,
   http,
   todoist,
+  zoom
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
