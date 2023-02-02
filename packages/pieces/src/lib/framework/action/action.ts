@@ -1,4 +1,4 @@
-import { Context } from '../context';
+import { ActionContext } from '../context';
 import { PieceProperty, StaticPropsValue } from '../property/property';
 
 class IAction<T extends PieceProperty> {
@@ -8,7 +8,7 @@ class IAction<T extends PieceProperty> {
     public readonly description: string,
     public readonly props: T,
     public readonly run: (
-      context: Context<StaticPropsValue<T>>
+      ctx: ActionContext<StaticPropsValue<T>>
     ) => Promise<unknown | void>,
     public readonly sampleData: unknown = {}
   ) {}
@@ -21,7 +21,7 @@ export function createAction<T extends PieceProperty>(request: {
   displayName: string;
   description: string;
   props: T;
-  run: (context: Context<StaticPropsValue<T>>) => Promise<unknown | void>;
+  run: (context: ActionContext<StaticPropsValue<T>>) => Promise<unknown | void>;
   sampleData?: unknown;
 }): Action {
   return new IAction(

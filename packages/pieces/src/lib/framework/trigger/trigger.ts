@@ -1,4 +1,4 @@
-import { Context } from '../context';
+import { TriggerContext } from '../context';
 import { PieceProperty, StaticPropsValue } from '../property/property';
 
 export enum TriggerStrategy {
@@ -14,15 +14,15 @@ class ITrigger<T extends PieceProperty> {
     public readonly props: T,
     public readonly type: TriggerStrategy,
     public readonly onEnable: (
-      context: Context<StaticPropsValue<T>>
+      ctx: TriggerContext<StaticPropsValue<T>>
     ) => Promise<void>,
     public readonly onDisable: (
-      context: Context<StaticPropsValue<T>>
+      ctx: TriggerContext<StaticPropsValue<T>>
     ) => Promise<void>,
     public readonly run: (
-      context: Context<StaticPropsValue<T>>
+      ctx: TriggerContext<StaticPropsValue<T>>
     ) => Promise<unknown[]>,
-    public readonly sampleData: Object = {}
+    public readonly sampleData: unknown
   ) {}
 }
 
@@ -34,10 +34,10 @@ export function createTrigger<T extends PieceProperty>(request: {
   description: string;
   props: T;
   type: TriggerStrategy;
-  onEnable: (context: Context<StaticPropsValue<T>>) => Promise<void>;
-  onDisable: (context: Context<StaticPropsValue<T>>) => Promise<void>;
-  run: (context: Context<StaticPropsValue<T>>) => Promise<unknown[]>;
-  sampleData?: Object;
+  onEnable: (context: TriggerContext<StaticPropsValue<T>>) => Promise<void>;
+  onDisable: (context: TriggerContext<StaticPropsValue<T>>) => Promise<void>;
+  run: (context: TriggerContext<StaticPropsValue<T>>) => Promise<unknown[]>;
+  sampleData?: unknown;
 }): Trigger {
   return new ITrigger<T>(
     request.name,

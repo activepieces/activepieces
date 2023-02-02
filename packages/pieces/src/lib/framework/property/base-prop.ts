@@ -15,7 +15,7 @@ export enum PropertyType {
 	CUSTOM_AUTH = 'CUSTOM_AUTH',
 	ARRAY = 'ARRAY',
 	OBJECT = 'OBJECT',
-  JSON = 'JSON',
+	JSON = 'JSON',
 }
 
 export type TPropertyValue<T, U> = {

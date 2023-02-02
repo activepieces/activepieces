@@ -19,7 +19,6 @@ export const calendlyInviteeCanceled = createTrigger({
     scope: calendlyCommon.scope
   },
   sampleData: {
-
     "created_at": "2023-01-29T13:57:17.000000Z",
     "created_by": "https://api.calendly.com/users/AAAAAAA",
     "event": "invitee.canceled",
@@ -101,7 +100,7 @@ export const calendlyInviteeCanceled = createTrigger({
     }
   },
   async run(context) {
-    return [context.payload];
+    return [context.payload.body];
   },
 });
 

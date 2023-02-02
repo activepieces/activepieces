@@ -25,7 +25,7 @@ export const newActivity = createTrigger({
     }
   },
   async run(context) {
-    return [context.payload.current];
+    return [context.payload.body.current];
   },
   sampleData:
   {
