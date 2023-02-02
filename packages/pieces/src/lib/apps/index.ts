@@ -20,6 +20,7 @@ import { clickup } from './clickup';
 import { drip } from './drip';
 import { calendly } from './calendly';
 import { http } from './http';
+import { twilio } from './twilio';
 
 export const pieces: Piece[] = [
 	slack,
@@ -42,7 +43,8 @@ export const pieces: Piece[] = [
 	calendly,
 	typeform,
 	telegramBot,
-  http,
+	http,
+	twilio
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
