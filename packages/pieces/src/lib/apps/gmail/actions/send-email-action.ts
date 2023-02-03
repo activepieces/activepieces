@@ -39,6 +39,7 @@ export const gmailSendEmailAction = createAction({
 			required: false,
 		})
 	},
+	sampleData: {},
 	async run(configValue) {
 		const headers = [
 			"subject: " + configValue.propsValue['subject'],

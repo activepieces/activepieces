@@ -75,7 +75,7 @@ export const mailChimpSubscribeTrigger = createTrigger({
   },
 
   async run(context): Promise<unknown[]> {
-    const request = context.payload as MailChimpSubscribeWebhookRequest;
+    const request = context.payload.body as MailChimpSubscribeWebhookRequest;
 
     if (request === undefined) {
       return [];

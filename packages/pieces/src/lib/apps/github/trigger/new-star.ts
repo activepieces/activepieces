@@ -74,15 +74,15 @@ export const githubNewRepoEvent = createTrigger({
       },
       queryParams: {},
     };
-    let { body: webhook } = await httpClient.sendRequest<{ id: string }>(request);
-    await context.store?.put<WebhookInformation>('_trigger', {
+    const { body: webhook } = await httpClient.sendRequest<{ id: string }>(request);
+    await context.store.put<WebhookInformation>('_trigger', {
       webhookId: webhook.id,
       owner: owner,
       repo: repo,
     });
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>('_trigger');
+    const response = await context.store.get<WebhookInformation>('_trigger');
     if (response !== null && response !== undefined) {
       const request: HttpRequest<never> = {
         method: HttpMethod.DELETE,
@@ -96,10 +96,10 @@ export const githubNewRepoEvent = createTrigger({
     }
   },
   async run(context) {
-    if (isVerficationCall(context.payload)) {
+    if (isVerficationCall(context.payload.body)) {
       return [];
     }
-    return [context.payload];
+    return [context.payload.body];
   },
 });
 

@@ -120,7 +120,7 @@ export const stripeNewPayment = createTrigger({
     }
   },
   async run(context) {
-    return [context.payload.data.object];
+    return [context.payload.body.data.object];
   },
 });
 

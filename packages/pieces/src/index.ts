@@ -1,4 +1,4 @@
-export { Context, Store } from './lib/framework/context';
+export { ActionContext, TriggerContext, Store } from './lib/framework/context';
 export * from './lib/framework/property';
 export { Piece } from './lib/framework/piece';
 
