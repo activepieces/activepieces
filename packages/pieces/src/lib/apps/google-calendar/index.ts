@@ -1,6 +1,6 @@
 import { createPiece } from '../../framework/piece';
 import { createQuickCalendarEvent } from './actions/create-quick-event';
-import { calendarEventUpdatedOrCreatedOrDeleted } from './triggers/calendar-event';
+import { calendarEventChanged } from './triggers/calendar-event';
 
 
 export const googleCalendar = createPiece({
@@ -8,5 +8,5 @@ export const googleCalendar = createPiece({
 	logoUrl: 'https://cdn.activepieces.com/pieces/google_calendar.png',
 	displayName: "Google Calendar",
 	actions: [createQuickCalendarEvent],
-	triggers: [calendarEventUpdatedOrCreatedOrDeleted],
+	triggers: [calendarEventChanged],
 });

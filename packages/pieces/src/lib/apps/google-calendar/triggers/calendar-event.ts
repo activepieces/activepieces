@@ -7,19 +7,24 @@ import { googleCalendarCommon } from '../common';
 import { getLatestEvent, stopWatchEvent, watchEvent } from '../common/helper';
 import { GoogleWatchResponse } from '../common/types';
 
-export const calendarEventUpdatedOrCreatedOrDeleted = createTrigger({
+export const calendarEventChanged = createTrigger({
   // docs: https://developers.google.com/calendar/api/guides/push
-  name: 'new_event_added',
-  displayName: 'New Event',
-  description: 'Triggers when there is a new event added',
+  name: 'new_or_updated_event',
+  displayName: 'New Or updated Event',
+  description: 'Triggers when there is an event added or updated',
   props: {
     authentication: googleCalendarCommon.authentication,
-    calendarId: googleCalendarCommon.calendarDropdown,
+    calendar_id: googleCalendarCommon.calendarDropdown,
   },
   sampleData: {
     kind: 'calendar#event',
+    etag: "3350849506974000",
+    id: "0nsfi5ttd2b17ac76ma2f37oi9",
     htmlLink: 'https://www.google.com/calendar/event?eid=kgjb90uioj4klrgfmdsnjsjvlgkm',
     summary: 'ap-event-test',
+    created: "2023-02-03T11:36:36.000Z",
+    updated: "2023-02-03T11:45:53.487Z",
+    status: 'canceled',
     organizer: {
       email: 'test@test.com',
     },
@@ -30,6 +35,11 @@ export const calendarEventUpdatedOrCreatedOrDeleted = createTrigger({
     end: {
       dateTime: '2023-02-02T23:30:00+03:00',
       timeZone: 'Asia/Amman',
+    },
+    iCalUID: "0nsfi5ttd2b17ac76ma2f37oi9@google.com",
+    sequence: 1,
+    reminders: {
+      useDefault: true
     },
     eventType: 'default',
   },
@@ -43,7 +53,7 @@ export const calendarEventUpdatedOrCreatedOrDeleted = createTrigger({
     if (currentChannel?.id) {
       await stopWatchEvent(currentChannel, authProp); // to avoid creating multiple watchers
     }
-    const calendarId = context.propsValue['calendarId']!;
+    const calendarId = context.propsValue['calendar_id']!;
 
     const channel = await watchEvent(calendarId, context.webhookUrl!, authProp);
 
@@ -63,7 +73,7 @@ export const calendarEventUpdatedOrCreatedOrDeleted = createTrigger({
       'authentication'
     ] as OAuth2PropertyValue;
     const event = await getLatestEvent(
-      context.propsValue['calendarId']!,
+      context.propsValue['calendar_id']!,
       authProp,
     );
     return [event];

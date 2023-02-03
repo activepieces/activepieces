@@ -12,13 +12,13 @@ export const createQuickCalendarEvent = createAction({
   displayName: 'Quick Event',
   props: {
     authentication: googleCalendarCommon.authentication,
-    calendarId: googleCalendarCommon.calendarDropdown,
+    calendar_id: googleCalendarCommon.calendarDropdown,
     text: Property.LongText({
       displayName: 'Summary',
       description: 'The text describing the event to be created',
       required: true,
     }),
-    sendUpdates: Property.Dropdown<string>({
+    send_updates: Property.Dropdown<string>({
       displayName: "Send Updates",
       description: "Guests who should receive notifications about the creation of the new event.",
       refreshers: [],
@@ -46,11 +46,11 @@ export const createQuickCalendarEvent = createAction({
   },
   async run(configValue) {
     // docs: https://developers.google.com/calendar/api/v3/reference/events/quickAdd
-    const calendarId = configValue.propsValue['calendarId'];
+    const calendarId = configValue.propsValue['calendar_id'];
     const url = `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events/quickAdd`;
     const qParams: Record<string, string> = {
       text: configValue.propsValue['text']!,
-      sendUpdates: configValue.propsValue['sendUpdates'] || "none",
+      sendUpdates: configValue.propsValue['send_updates'] || "none",
     };
     const request: HttpRequest<Record<string, unknown>> = {
       method: HttpMethod.POST,
