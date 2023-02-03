@@ -247,10 +247,11 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       if (c.required) {
         validators.push(Validators.required);
       }
-      if (c.type === PropertyType.ARRAY) {
+      if (c.type === PropertyType.OBJECT) {
+        controls[c.key] = new UntypedFormControl(c.value || {}, validators);
+      } else if (c.type === PropertyType.ARRAY) {
         controls[c.key] = new UntypedFormControl(c.value || [''], validators);
-      }
-      else if (c.type === PropertyType.JSON) {
+      } else if (c.type === PropertyType.JSON) {
         validators.push(jsonValidator);
         if (typeof c.value === "object") {
           controls[c.key] = new UntypedFormControl(JSON.stringify(c.value), validators);
