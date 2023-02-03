@@ -29,7 +29,7 @@ export const pipedriveCommon = {
             queryParams: {},
         };
 
-        let { body: webhook } = await httpClient.sendRequest<{ data: { id: string } }>(request);
+        const { body: webhook } = await httpClient.sendRequest<{ data: { id: string } }>(request);
         return webhook;
     },
     unsubscribeWebhook: async (webhookId: string, apiDomain: string, accessToken: string) => {

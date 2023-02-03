@@ -21,7 +21,7 @@ export const updatedDeal = createTrigger({
   async onDisable(context) {
     const response = await context.store?.get<WebhookInformation>('_updated_deal_trigger');
     if (response !== null && response !== undefined) {
-      const webhook = await pipedriveCommon.unsubscribeWebhook(response.webhookId, context.propsValue['authentication']!.data['api_domain'], context.propsValue['authentication']!.access_token);
+      await pipedriveCommon.unsubscribeWebhook(response.webhookId, context.propsValue['authentication']!.data['api_domain'], context.propsValue['authentication']!.access_token);
     }
   },
   async run(context) {
