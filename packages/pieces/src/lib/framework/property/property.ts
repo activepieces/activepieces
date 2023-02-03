@@ -25,7 +25,7 @@ export interface PieceProperty {
 	| CustomAuthProperty
 	| ArrayProperty
 	| ObjectProperty
-  | JsonProperty;
+  	| JsonProperty;
 }
 
 export type StaticPropsValue<T extends PieceProperty> = {
