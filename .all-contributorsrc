@@ -83,6 +83,15 @@
       "contributions": [
         "projectManagement"
       ]
+    },
+    {
+      "login": "kanarelo",
+      "name": "Mukewa Wekalao",
+      "avatar_url": "https://avatars.githubusercontent.com/u/393261?v=4",
+      "profile": "https://github.com/kanarelo",
+      "contributions": [
+        "plugin"
+      ]
     }
   ]
 }
