@@ -21,6 +21,7 @@ import { drip } from './drip';
 import { calendly } from './calendly';
 import { http } from './http';
 import { todoist } from './todoist';
+import { zoom } from './zoom';
 
 export const pieces: Piece[] = [
 	slack,
