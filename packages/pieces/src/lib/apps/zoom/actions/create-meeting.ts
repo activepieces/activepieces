@@ -5,17 +5,7 @@ import { HttpRequest } from "../../../common/http/core/http-request";
 import { createAction } from "../../../framework/action/action";
 import { Property } from "../../../framework/property";
 import { MeetingMessageBody, MeetingResponseBody } from "../common/models";
-
-export const zoomAuth = Property.OAuth2({
-  description: "",
-  displayName: 'Authentication',
-  authUrl: "https://zoom.us/oauth/authorize",
-  tokenUrl: "https://zoom.us/oauth/token",
-  required: true,
-  scope: [
-    "meeting:write:admin", "meeting:write"
-  ]
-});
+import { zoomAuth } from "../common/props";
 
 const defaults = {
   "agenda": "My Meeting",
