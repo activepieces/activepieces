@@ -3,7 +3,7 @@ import { httpClient } from "../../../common/http/core/http-client";
 import { HttpMethod } from "../../../common/http/core/http-method";
 import { HttpRequest } from "../../../common/http/core/http-request";
 import { createAction } from "../../../framework/action/action";
-import { MeetingRegistrant, RegistrationResponse } from "../common/models";
+import { RegistrationResponse } from "../common/models";
 import { getRegistarantProps } from "../common/props";
 
 export const zoomCreateMeetingRegistrant = createAction({
@@ -12,43 +12,31 @@ export const zoomCreateMeetingRegistrant = createAction({
   description: "Create and submit a user's registration to a meeting.",
   props: getRegistarantProps(),
   sampleData: {
-    "first_name": "Jill",
-    "last_name": "Chill",
-    "email": "jchill@example.com",
-    "address": "1800 Amphibious Blvd.",
-    "city": "Mountain View",
-    "state": "CA",
-    "zip": "94045",
-    "country": "US",
-    "phone": "5550100",
-    "comments": "Looking forward to the discussion.",
-    "custom_questions": [
+    "id": 85746065,
+    "join_url": "https://example.com/j/11111",
+    "registrant_id": "fdgsfh2ey82fuh",
+    "start_time": "2021-07-13T21:44:51Z",
+    "topic": "My Meeting",
+    "occurrences": [
       {
-        "title": "What do you hope to learn from this?",
-        "value": "Look forward to learning how you come up with new recipes and what other services you offer."
+        "duration": 60,
+        "occurrence_id": "1648194360000",
+        "start_time": "2022-03-25T07:46:00Z",
+        "status": "available"
       }
     ],
-    "industry": "Food",
-    "job_title": "Chef",
-    "no_of_employees": "1-20",
-    "org": "Cooking Org",
-    "purchasing_time_frame": "1-3 months",
-    "role_in_purchase_process": "Influencer",
-    "language": "en-US",
-    "auto_approve": true
+    "participant_pin_code": 380303
   },
 
   async run(context) {
-    const body = {
-      ...context.propsValue
-    }
+    const body = { ...context.propsValue }
     delete body['authentication']
     delete body['meeting_id']
 
-    const request: HttpRequest<MeetingRegistrant> = {
+    const request: HttpRequest<any> = {
       method: HttpMethod.POST,
       url: `https://api.zoom.us/v2/meetings/${context.propsValue.meeting_id}/registrants`,
-      body: body as MeetingRegistrant,
+      body,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.propsValue.authentication!.access_token
