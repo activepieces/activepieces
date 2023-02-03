@@ -203,7 +203,7 @@ function buildSchema(props: PieceProperty): TSchema {
         propsSchema[name] = Type.Record(Type.String(), Type.Any());
         break;
       case PropertyType.JSON:
-        propsSchema[name] = Type.Union([Type.Array(Type.Any()), Type.Record(Type.String(), Type.Any())]);
+        propsSchema[name] = Type.Record(Type.String(), Type.Any());
         break;
     }
     if (!property.required) {
