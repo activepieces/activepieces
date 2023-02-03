@@ -1,7 +1,17 @@
 
-export interface TriggerContext<T> {
-    payload: any;
+
+export interface TriggerHookContext<T> {
     webhookUrl: string,
+    propsValue: T,
+    store: Store
+}
+
+export interface TriggerContext<T> {
+    payload: Record<string, never> | {
+        body: any,
+        headers: Record<string, string>,
+        queryParams: Record<string, string>,
+    };
     propsValue: T,
     store: Store
 }

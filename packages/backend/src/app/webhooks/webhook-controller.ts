@@ -17,10 +17,10 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
         flowId: request.query.flowId,
         payload: {
           headers: request.headers,
-          body: request.body
+          body: request.body,
+          queryParams: request.query
         },
       });
-
       await reply.status(StatusCodes.OK).send();
     }
   );

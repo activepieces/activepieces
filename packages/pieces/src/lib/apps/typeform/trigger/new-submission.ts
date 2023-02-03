@@ -84,7 +84,8 @@ export const typeformNewSubmission = createTrigger({
         }
     },
     async run(context) {
-        return [context.payload.body.form_response];
+        const body = context.payload.body as { form_response: unknown };
+        return [body.form_response];
     },
 });
 
