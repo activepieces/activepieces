@@ -21,6 +21,7 @@ import { drip } from './drip';
 import { calendly } from './calendly';
 import { http } from './http';
 import { todoist } from './todoist';
+import { googleCalendar } from './google-calendar';
 
 export const pieces: Piece[] = [
 	slack,
@@ -45,6 +46,7 @@ export const pieces: Piece[] = [
 	telegramBot,
   http,
   todoist,
+  googleCalendar,
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
