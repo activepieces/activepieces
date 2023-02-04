@@ -31,7 +31,7 @@ export const dripAddSubscriberToCampaign = createAction({
                         placeholder: "Please select an account first"
                     }
                 }
-                const request: HttpRequest<never> = {
+                const request: HttpRequest = {
                     method: HttpMethod.GET,
                     url: `${dripCommon.baseUrl(props['account_id'] as string)}/campaigns`,
                     headers: {
@@ -104,7 +104,7 @@ export const dripAddSubscriberToCampaign = createAction({
     }
     ,
     async run(context) {
-        const request: HttpRequest<any> = {
+        const request: HttpRequest = {
             method: HttpMethod.POST,
             url: `${dripCommon.baseUrl(context.propsValue["account_id"]!)}/campaigns/${context.propsValue["campaign_id"]}/subscribers`,
             body: {

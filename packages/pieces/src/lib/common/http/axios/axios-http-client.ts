@@ -19,7 +19,7 @@ export class AxiosHttpClient extends BaseHttpClient {
 	}
 
 	async sendRequest<ResponseBody extends HttpMessageBody>(
-		request: HttpRequest<HttpMessageBody>
+		request: HttpRequest
 	): Promise<HttpResponse<ResponseBody>> {
 		try {
 			const url = this.getUrl(request);

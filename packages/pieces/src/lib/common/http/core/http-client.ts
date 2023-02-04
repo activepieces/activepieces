@@ -4,8 +4,8 @@ import type {HttpRequest} from './http-request';
 import { HttpResponse } from './http-response';
 
 export type HttpClient = {
-	sendRequest<RequestBody extends HttpMessageBody, ResponseBody extends HttpMessageBody>(
-		request: HttpRequest<RequestBody>,
+	sendRequest<ResponseBody extends HttpMessageBody>(
+		request: HttpRequest,
 	): Promise<HttpResponse<ResponseBody>>;
 };
 

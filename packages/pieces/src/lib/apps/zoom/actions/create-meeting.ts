@@ -227,7 +227,7 @@ const action = () => {
         ...context.propsValue
       }
       delete body['authentication']
-      const request: HttpRequest<MeetingMessageBody> = {
+      const request: HttpRequest = {
         method: HttpMethod.POST,
         url: `https://api.zoom.us/v2/users/me/meetings`,
         body: body,

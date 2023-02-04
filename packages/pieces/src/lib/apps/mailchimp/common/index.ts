@@ -59,7 +59,7 @@ async function getUserLists(authProp: OAuth2PropertyValue): Promise<{ lists: Mai
 }
 
 export async function getMailChimpServerPrefix(access_token: string) {
-  const mailChimpMetaDataRequest: HttpRequest<{ dc: string }> = {
+  const mailChimpMetaDataRequest: HttpRequest = {
     method: HttpMethod.GET,
     url: 'https://login.mailchimp.com/oauth2/metadata',
     headers: {

@@ -4,10 +4,10 @@ import type {HttpMethod} from './http-method';
 import type {QueryParams} from './query-params';
 import { HttpHeaders } from './http-headers';
 
-export type HttpRequest<RequestBody extends HttpMessageBody> = {
+export type HttpRequest = {
 	method: HttpMethod;
 	url: string;
-	body?: RequestBody | undefined;
+	body?: HttpMessageBody | undefined;
 	headers?: HttpHeaders;
 	authentication?: Authentication | undefined;
 	queryParams?: QueryParams | undefined;

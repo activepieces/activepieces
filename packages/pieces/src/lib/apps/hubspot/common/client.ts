@@ -9,17 +9,16 @@ const API = 'https://api.hubapi.com';
 export const hubSpotClient = {
   contacts: {
     async createOrUpdate({ token, email, contact }: ContactsCreateOrUpdateParams): Promise<HubSpotContactsCreateOrUpdateResponse> {
-      const properties = Object.entries(contact).map(([property, value]) => ({
-        property,
-        value,
-      }));
-
-      const request: HttpRequest<HubSpotRequest> = {
+      const requestBody: HubSpotRequest = {
+        properties: Object.entries(contact).map(([property, value]) => ({
+          property,
+          value,
+        }))
+      }
+      const request: HttpRequest = {
         method: HttpMethod.POST,
         url: `${API}/contacts/v1/contact/createOrUpdate/email/${email}`,
-        body: {
-          properties,
-        },
+        body: requestBody,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token,
@@ -33,7 +32,7 @@ export const hubSpotClient = {
 
   lists: {
     async getStaticLists({ token }: GetStaticListsParams): Promise<HubSpotListsResponse> {
-      const request: HttpRequest<never> = {
+      const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${API}/contacts/v1/lists/static`,
         queryParams: {
@@ -51,12 +50,13 @@ export const hubSpotClient = {
     },
 
     async addContact({ token, listId, email }: ListsAddContactParams): Promise<HubSpotAddContactsToListResponse> {
-      const request: HttpRequest<HubSpotAddContactsToListRequest> = {
+      const requestbody: HubSpotAddContactsToListRequest = {
+        emails: [email]
+      }
+      const request: HttpRequest = {
         method: HttpMethod.POST,
         url: `${API}/contacts/v1/lists/${listId}/add`,
-        body: {
-          emails: [email],
-        },
+        body: requestbody,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token,

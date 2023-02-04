@@ -112,7 +112,7 @@ async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
         range: params.range,
         values: params.values.map(val => ({ values: val })),
     };
-    const request: HttpRequest<typeof requestBody> = {
+    const request: HttpRequest = {
         method: HttpMethod.POST,
         url: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadSheetId}/values/${params.range}:append`,
         body: requestBody,
@@ -131,7 +131,7 @@ async function getValues(spreadsheetId: string, accessToken: string, sheetId: nu
     // Define the API endpoint and headers
     // Send the API request
     const sheetName = await findSheetName(accessToken, spreadsheetId, sheetId);
-    const request: HttpRequest<never> = {
+    const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${sheetName}`,
         authentication: {

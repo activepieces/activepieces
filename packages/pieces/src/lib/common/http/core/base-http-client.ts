@@ -15,11 +15,11 @@ export abstract class BaseHttpClient implements HttpClient {
 		private readonly authenticationConverter: AuthenticationConverter,
 	) {}
 
-	abstract sendRequest<RequestBody extends HttpMessageBody, ResponseBody extends HttpMessageBody>(
-		request: HttpRequest<RequestBody>,
+	abstract sendRequest<ResponseBody extends HttpMessageBody>(
+		request: HttpRequest,
 	): Promise<HttpResponse<ResponseBody>>;
 
-	protected getUrl<RequestBody extends HttpMessageBody>(request: HttpRequest<RequestBody>): string {
+	protected getUrl(request: HttpRequest): string {
 		const url = new URL(`${this.baseUrl}${request.url}`);
 
 		if (request.queryParams) {
@@ -31,8 +31,8 @@ export abstract class BaseHttpClient implements HttpClient {
 		return url.toString();
 	}
 
-	protected getHeaders<RequestBody extends HttpMessageBody>(
-		request: HttpRequest<RequestBody>,
+	protected getHeaders(
+		request: HttpRequest,
 	): HttpHeaders {
 		let requestHeaders: HttpHeaders = {
 			[HttpHeader.ACCEPT]: MediaType.APPLICATION_JSON,

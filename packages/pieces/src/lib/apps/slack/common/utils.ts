@@ -4,13 +4,13 @@ import { HttpMethod } from "../../../common/http/core/http-method";
 import { HttpRequest } from "../../../common/http/core/http-request";
 
 export const slackSendMessage = async ({ text, conversationId, token }: SlackSendMessageParams) => {
-  const request: HttpRequest<SlackSendMessageRequestBody> = {
+  const request: HttpRequest = {
     method: HttpMethod.POST,
     url: 'https://slack.com/api/chat.postMessage',
     body: {
       text,
       channel: conversationId,
-    },
+    } as SlackSendMessageRequestBody,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token,

@@ -46,7 +46,7 @@ export const createHubspotContact = createAction({
                 }
             }),
         }
-        const request: HttpRequest<{ properties: { property: string, value: any }[] }> = {
+        const request: HttpRequest = {
             method: HttpMethod.POST,
             url: 'https://api.hubapi.com/contacts/v1/contact/',
             body: body,

@@ -19,7 +19,7 @@ name: 'send_message_webhook',
     }),
   },
   async run(configValue) {
-    const request: HttpRequest<{ content: string }> = {
+    const request: HttpRequest = {
       method: HttpMethod.POST,
       url: configValue.propsValue['webhook_url']!,
       body: {

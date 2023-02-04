@@ -36,7 +36,7 @@ export const slackSendMessageAction = createAction({
           'authentication'
         ] as OAuth2PropertyValue;
         const accessToken = authentication['access_token'];
-        const request: HttpRequest<never> = {
+        const request: HttpRequest = {
           method: HttpMethod.GET,
           url: `https://slack.com/api/conversations.list?types=public_channel,private_channel`,
           authentication: {

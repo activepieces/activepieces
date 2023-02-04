@@ -52,7 +52,7 @@ export const createQuickCalendarEvent = createAction({
       text: configValue.propsValue['text']!,
       sendUpdates: configValue.propsValue['send_updates'] || "none",
     };
-    const request: HttpRequest<Record<string, unknown>> = {
+    const request: HttpRequest = {
       method: HttpMethod.POST,
       url,
       body: {},

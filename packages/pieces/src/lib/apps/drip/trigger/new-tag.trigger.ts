@@ -30,7 +30,7 @@ export const dripTagAppliedEvent = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
 
-    const request: HttpRequest<any> = {
+    const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${dripCommon.baseUrl(context.propsValue["account_id"]!)}/webhooks`,
       body: {
@@ -52,7 +52,7 @@ export const dripTagAppliedEvent = createTrigger({
   async onDisable(context) {
     const response = await context.store?.get<DripWebhookInformation>(triggerNameInStore);
     if (response !== null && response !== undefined) {
-      const request: HttpRequest<never> = {
+      const request: HttpRequest = {
         method: HttpMethod.DELETE,
         url: `${dripCommon.baseUrl(response.userId)}/webhooks/${response.webhookId}`,
         headers: {

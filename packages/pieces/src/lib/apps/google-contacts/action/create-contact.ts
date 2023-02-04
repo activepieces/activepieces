@@ -71,7 +71,7 @@ export const googleContactsAddContactAction = createAction({
             contact['organizations'] = [{ name: context.propsValue['company'] || undefined, title: context.propsValue['jobTitle'] || undefined }];
         }
         requestBody = { ...requestBody, ...contact }
-        const request: HttpRequest<Record<string, unknown>> = {
+        const request: HttpRequest = {
             method: HttpMethod.POST,
             url: `${googleContactsCommon.baseUrl}:createContact`,
             body: requestBody,

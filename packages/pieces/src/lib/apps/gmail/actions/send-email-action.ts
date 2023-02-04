@@ -51,7 +51,7 @@ export const gmailSendEmailAction = createAction({
 		const requestBody: SendEmailRequestBody = {
 			raw: Buffer.from(message).toString("base64").replace(/\+/g, '-').replace(/\//g, '_'),
 		};
-		const request: HttpRequest<Record<string, unknown>> = {
+		const request: HttpRequest = {
 			method: HttpMethod.POST,
 			url: `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`,
 			body: requestBody,

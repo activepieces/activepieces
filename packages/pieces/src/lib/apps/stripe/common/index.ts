@@ -13,7 +13,7 @@ export const stripeCommon = {
 
     }),
     subscribeWebhook: async (eventName: string, webhookUrl: string, apiKey: string) => {
-        const request: HttpRequest<any> = {
+        const request: HttpRequest = {
             method: HttpMethod.POST,
             url: `${stripeCommon.baseUrl}/webhook_endpoints`,
             headers: {
@@ -36,7 +36,7 @@ export const stripeCommon = {
         return webhook;
     },
     unsubscribeWebhook: async (webhookId: string, apiKey: string) => {
-        const request: HttpRequest<never> = {
+        const request: HttpRequest = {
             method: HttpMethod.DELETE,
             url: `${stripeCommon.baseUrl}/webhook_endpoints/${webhookId}`,
             headers: {

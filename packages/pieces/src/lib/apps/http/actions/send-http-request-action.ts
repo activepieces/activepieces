@@ -37,7 +37,7 @@ export const httpSendRequestAction = createAction({
     assertNotNullOrUndefined(method, 'Method');
     assertNotNullOrUndefined(url, 'URL');
 
-    const request: HttpRequest<Record<string, unknown>> = {
+    const request: HttpRequest = {
       method,
       url,
       headers: headers as HttpHeaders,
