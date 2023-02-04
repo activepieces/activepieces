@@ -222,16 +222,15 @@ const action = () => {
     },
 
     async run(context) {
-      const body = {
+      const body: MeetingMessageBody = {
         ...defaults,
         ...context.propsValue
       }
       delete body['authentication']
-
       const request: HttpRequest<MeetingMessageBody> = {
         method: HttpMethod.POST,
         url: `https://api.zoom.us/v2/users/me/meetings`,
-        body: body as MeetingMessageBody,
+        body: body,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: context.propsValue.authentication!.access_token
