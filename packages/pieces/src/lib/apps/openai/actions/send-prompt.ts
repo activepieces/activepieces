@@ -28,6 +28,7 @@ export const askOpenAI = createAction({
       description: 'The maximum number of tokens in the generated text.',
     }),
   },
+  sampleData: {},
   async run({ propsValue }) {
     const configuration = new Configuration({
       apiKey: propsValue.apiKey,

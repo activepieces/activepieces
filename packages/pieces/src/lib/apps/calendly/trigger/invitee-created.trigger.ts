@@ -93,7 +93,7 @@ export const calendlyInviteeCreated = createTrigger({
 
   },
   async run(context) {
-    return [context.payload];
+    return [context.payload.body];
   },
 });
 

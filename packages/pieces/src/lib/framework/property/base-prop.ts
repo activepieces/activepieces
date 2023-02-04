@@ -15,7 +15,7 @@ export enum PropertyType {
 	CUSTOM_AUTH = 'CUSTOM_AUTH',
 	ARRAY = 'ARRAY',
 	OBJECT = 'OBJECT',
-  JSON = 'JSON',
+	JSON = 'JSON',
 }
 
 export type TPropertyValue<T, U> = {
@@ -29,7 +29,7 @@ export interface LongTextProperty extends BasePropertySchema, TPropertyValue<str
 
 export interface SecretTextProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.SECRET_TEXT> { }
 
-export interface CheckboxProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.CHECKBOX> { }
+export interface CheckboxProperty extends BasePropertySchema, TPropertyValue<boolean, PropertyType.CHECKBOX> { }
 
 export interface NumberProperty extends BasePropertySchema, TPropertyValue<number, PropertyType.NUMBER> { }
 

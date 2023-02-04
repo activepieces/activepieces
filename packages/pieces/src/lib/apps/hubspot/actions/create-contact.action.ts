@@ -34,6 +34,7 @@ export const createHubspotContact = createAction({
             required: false,
         })
     },
+    sampleData: {},
     async run(context) {
         const configsWithoutAuthentication = {...context.propsValue};
         delete configsWithoutAuthentication['authentication'];
