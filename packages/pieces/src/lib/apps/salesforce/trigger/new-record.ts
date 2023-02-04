@@ -43,7 +43,7 @@ export const newRecord = createTrigger({
       records = [...records, ...response.body['records']];
       hasMore = response.body['records'].length === limit;
     }
-    console.log("Salesforce found " + records.length + " records");
+    console.log("Salesforce found " + records.length + " new records");
     ctx.store.put("nextDate", endDate);
     return records;
   }

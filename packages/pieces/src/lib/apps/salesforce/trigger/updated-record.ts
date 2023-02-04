@@ -19,14 +19,14 @@ export const updatedRecord = createTrigger({
   async onEnable(ctx) {
     const publishDate = new Date().toISOString();
     await ctx.store.put("publishDate", publishDate);
-    await ctx.store.put("nextDate", publishDate);
+    await ctx.store.put("nextUpdatedDate", publishDate);
   },
   async onDisable(ctx) { },
   async run(ctx) {
     let offset = 0;
     let hasMore = true;
     let records: unknown[] = [];
-    const startDate = (await ctx.store.get<string>("nextDate"))!;
+    const startDate = (await ctx.store.get<string>("nextUpdatedDate"))!;
     const publishDate = (await ctx.store.get<string>("publishDate"))!;
     const endDate = new Date().toISOString();
     const limit = 200;
@@ -47,8 +47,8 @@ export const updatedRecord = createTrigger({
       records = [...records, ...response.body['records']];
       hasMore = response.body['records'].length === limit;
     }
-    console.log("Salesforce found " + records.length + " records");
-    ctx.store.put("nextDate", endDate);
+    console.log("Salesforce found " + records.length + " updated records");
+    ctx.store.put("nextUpdatedDate", endDate);
     return records;
   }
 });
