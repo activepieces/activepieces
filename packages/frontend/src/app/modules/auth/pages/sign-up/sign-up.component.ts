@@ -35,6 +35,7 @@ export class SignUpComponent {
 	emailChanged = false;
 	emailValueChanged$: Observable<string>;
 	signUp$: Observable<void>;
+	signedUpEnabled$: Observable<boolean>;
 	constructor(
 		private formBuilder: FormBuilder,
 		private router: Router,
@@ -62,6 +63,8 @@ export class SignUpComponent {
 			trackEvents: new FormControl<boolean>(true, { nonNullable: true }),
 			newsLetter: new FormControl<boolean>(true, { nonNullable: true }),
 		});
+		this.signedUpEnabled$ = this.authenticationService.isSignedUpEnabled();
+	
 		this.emailValueChanged$ = this.registrationForm.controls.email.valueChanges.pipe(
 			tap(() => {
 				this.emailChanged = true;
