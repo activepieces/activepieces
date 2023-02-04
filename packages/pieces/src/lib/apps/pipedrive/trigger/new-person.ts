@@ -21,12 +21,12 @@ export const newPerson = createTrigger({
   async onDisable(context) {
     const response = await context.store?.get<WebhookInformation>('_new_person_trigger');
     if (response !== null && response !== undefined) {
-      const webhook = await pipedriveCommon.unsubscribeWebhook(response.webhookId, context.propsValue['authentication']!.data['api_domain'], context.propsValue['authentication']!.access_token);
+       await pipedriveCommon.unsubscribeWebhook(response.webhookId, context.propsValue['authentication']!.data['api_domain'], context.propsValue['authentication']!.access_token);
     }
   },
   async run(context) {
     // Pipedrive will always return a list of Persons even if we are looking up a specific person
-    return [context.payload.current];
+    return [context.payload.body.current];
   },
   sampleData:
   {

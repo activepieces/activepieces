@@ -60,7 +60,7 @@ export const dripNewSubscriberEvent = createTrigger({
     }
   },
   async run(context) {
-    return [context.payload];
+    return [context.payload.body];
   },
 });
 

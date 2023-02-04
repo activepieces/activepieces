@@ -22,6 +22,7 @@ import { calendly } from './calendly';
 import { http } from './http';
 import { todoist } from './todoist';
 import { zoom } from './zoom';
+import { googleCalendar } from './google-calendar';
 
 export const pieces: Piece[] = [
 	slack,
@@ -45,7 +46,8 @@ export const pieces: Piece[] = [
 	typeform,
 	telegramBot,
 	http,
-	todoist,
+  todoist,
+  googleCalendar,
 	zoom
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 

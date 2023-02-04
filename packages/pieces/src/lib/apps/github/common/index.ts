@@ -26,7 +26,7 @@ export const githubCommon = {
                 }
             }
             const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
-            let repositories = await getUserRepo(authProp);
+            const repositories = await getUserRepo(authProp);
             return {
                 disabled: false,
                 options: repositories.map(repo => {

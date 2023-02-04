@@ -144,7 +144,7 @@ export interface MeetingResponseBody extends HttpMessageBody {
   start_url: string
   timezone: string
   topic: string
-  type: 2
+  type: number
   tracking_fields: {
     field: string
     value: string
@@ -243,7 +243,7 @@ export interface MeetingMessageBody extends HttpMessageBody {
   start_url?: string
   timezone?: string
   topic?: string
-  type?: 2,
+  type?: number,
   tracking_fields?: {
     field: string
     value?: string

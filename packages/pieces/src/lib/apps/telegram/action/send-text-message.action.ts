@@ -21,6 +21,7 @@ export const telegramSendMessageAction = createAction({
             required: true,
         })
     },
+    sampleData: {},
     async run(ctx) {
         return await httpClient.sendRequest<never>({
             method: HttpMethod.POST,
