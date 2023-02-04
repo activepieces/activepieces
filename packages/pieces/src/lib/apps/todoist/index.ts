@@ -4,7 +4,7 @@ import { todoistCreateTaskAction } from './actions/create-task-action';
 export const todoist = createPiece({
 	name: 'todoist',
 	displayName: 'Todoist',
-	logoUrl: 'https://cdn.activepieces.com/pieces/todist.png',
+	logoUrl: 'https://cdn.activepieces.com/pieces/todoist.png',
 	actions: [
     todoistCreateTaskAction,
   ],
