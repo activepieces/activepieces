@@ -1,7 +1,7 @@
 import {createAction} from "../../../../framework/action/action";
 import { Property } from "../../../../framework/property";
 import {getMailChimpServerPrefix, mailChimpAuth, mailChimpListIdDropdown} from "../../common";
-import * as mailchimp from "@mailchimp/mailchimp_marketing";
+import mailchimp from "@mailchimp/mailchimp_marketing";
 
 
 export const addMemberToList = createAction({
@@ -15,7 +15,7 @@ export const addMemberToList = createAction({
             description: 'Email of the new contact',
             required: true,
         }),
-        listId: mailChimpListIdDropdown,
+        list_id: mailChimpListIdDropdown,
         status: Property.Dropdown<'subscribed' | 'unsubscribed' | 'cleaned' | 'pending' | 'transactional'>({
             displayName: "Status",
             refreshers: [],
@@ -40,6 +40,6 @@ export const addMemberToList = createAction({
             server: mailChimpServerPrefix
           });
 
-       return await mailchimp.lists.addListMember(context.propsValue.listId!,{email_address:context.propsValue.email!, status:context.propsValue.status!})
+       return await mailchimp.lists.addListMember(context.propsValue.list_id!,{email_address:context.propsValue.email!, status:context.propsValue.status!})
     },
 });

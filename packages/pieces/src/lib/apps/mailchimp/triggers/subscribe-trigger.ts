@@ -15,7 +15,7 @@ export const mailChimpSubscribeTrigger = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   props: {
     authentication: mailChimpAuth,
-    listId: mailChimpListIdDropdown,
+    list_id: mailChimpListIdDropdown,
   },
   sampleData: {
     'type': 'subscribe',
@@ -45,14 +45,14 @@ export const mailChimpSubscribeTrigger = createTrigger({
 
     const enabledWebhookId = await enableWebhookRequest({
       server,
-      listId: context.propsValue.listId!,
+      listId: context.propsValue.list_id!,
       token: accessToken,
       webhookUrl: context.webhookUrl!,
     });
 
     await context.store?.put<WebhookData>(WEBHOOK_DATA_STORE_KEY, {
       id: enabledWebhookId,
-      listId: context.propsValue.listId!,
+      listId: context.propsValue.list_id!,
     });
   },
 

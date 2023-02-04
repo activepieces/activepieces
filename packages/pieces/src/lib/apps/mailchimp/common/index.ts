@@ -1,4 +1,4 @@
-import * as mailchimp from "@mailchimp/mailchimp_marketing";
+import mailchimp from "@mailchimp/mailchimp_marketing";
 import {httpClient} from "../../../common/http/core/http-client";
 import {HttpMethod} from "../../../common/http/core/http-method";
 import {HttpRequest} from "../../../common/http/core/http-request";
