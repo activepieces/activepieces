@@ -56,6 +56,11 @@ const action = () => {
         description: 'Meeting start date-time',
         required: false,
       }),
+      duration: Property.Number({
+        displayName: 'Duration (in Minutes)',
+        description: 'Duration of the meeting',
+        required: false,
+      }),
       agenda: Property.LongText({
         displayName: 'Agenda',
         description: "The meeting's agenda",
@@ -64,11 +69,6 @@ const action = () => {
       password: Property.ShortText({
         displayName: 'Password',
         description: "The password required to join the meeting. By default, a password can only have a maximum length of 10 characters and only contain alphanumeric characters and the @, -, _, and * characters.",
-        required: false,
-      }),
-      duration: Property.Number({
-        displayName: 'Start Time',
-        description: 'Meeting start date-time',
         required: false,
       }),
       pre_schedule: Property.Checkbox({
