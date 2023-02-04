@@ -83,6 +83,24 @@
       "contributions": [
         "projectManagement"
       ]
+    },
+    {
+      "login": "kanarelo",
+      "name": "Mukewa Wekalao",
+      "avatar_url": "https://avatars.githubusercontent.com/u/393261?v=4",
+      "profile": "https://github.com/kanarelo",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "OsamaHaikal",
+      "name": "Osama Abdallah Essa Haikal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/72370395?v=4",
+      "profile": "http://osamahaikal.pythonanywhere.com/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ]
 }
