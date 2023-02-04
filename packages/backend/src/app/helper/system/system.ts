@@ -6,6 +6,10 @@ export const system = {
     return getEnvVar(prop);
   },
 
+  getBoolean(prop: SystemProp): boolean | undefined {
+    return getEnvVar(prop) === "true";
+  },
+
   getOrThrow(prop: SystemProp): string {
     const value = getEnvVar(prop);
 

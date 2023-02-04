@@ -18,7 +18,7 @@ export class AuthenticationService {
 
 	private jwtHelper = new JwtHelperService();
 	flags$: Observable<FlagsMap>;
-	constructor(private router: Router, private http: HttpClient) {}
+	constructor(private router: Router, private http: HttpClient) { }
 
 	get currentUser(): User {
 		return JSON.parse(localStorage.getItem(environment.userPropertyNameInLocalStorage) || '{}');
@@ -108,7 +108,19 @@ export class AuthenticationService {
 			})
 		);
 	}
-	
+
+	isSignedUpEnabled(): Observable<boolean> {
+		return this.getAllFlags().pipe(
+			map(flags => {
+				const firstUser = (flags['USER_CREATED'] as boolean);
+				if (!firstUser) {
+					return true;
+				}
+				return (flags['SIGN_UP_ENABLED'] as boolean);
+			})
+		);
+	}
+
 	isTelemetryEnabled(): Observable<boolean> {
 		return this.getAllFlags().pipe(
 			map(flags => {
