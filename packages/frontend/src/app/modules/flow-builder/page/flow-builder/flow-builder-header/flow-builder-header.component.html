@@ -25,6 +25,7 @@
           <app-toggle-instance-state [collectionId]="collection.id"
             [collectionInstance]="instance"></app-toggle-instance-state>
         </ng-container></ng-container>
+      <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
       <app-publish-button *ngIf="(viewMode$ | async) === false"></app-publish-button>
     </div>
   </div>

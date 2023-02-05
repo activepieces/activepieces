@@ -1,0 +1,25 @@
+<mat-icon class="ap-cursor-pointer ap-z-50" [matMenuTriggerFor]="menu" #menuTrigger="matMenuTrigger">help</mat-icon>
+<mat-menu #menu="matMenu" xPosition="before">
+    <div (click)="$event.stopPropagation()"
+        class="ap-flex ap-flex-col ap-gap-2 ap-min-w-[250px] md:ap-min-w-[325px] -ap-mt-2">
+        <mat-form-field appearance="fill" class="ap-w-full" subscriptSizing="dynamic">
+            <textarea rows="4" matInput placeholder="Feedback"></textarea>
+        </mat-form-field>
+        <div class="ap-flex ap-px-4">
+            <app-button btnSize="medium" btnColor="basic" btnStyle="stroked" placement="bottom"
+                (click)="menuTrigger.closeMenu()">
+                Close
+            </app-button>
+            <div class="ap-flex-grow"></div>
+            <app-button btnSize="medium" placement="bottom">
+                Send Feedback
+            </app-button>
+        </div>
+        <div class="ap-px-4 ap-typography-body-2 ap-text-description">
+            <span class="ap-font-semibold">Need Help?</span>&nbsp; <span><a class="!ap-typography-body-2"
+                    href="https://google.com">Email our
+                    team</a>
+                or <a class="!ap-typography-body-2" href="https://google.com">visit our docs</a></span>
+        </div>
+    </div>
+</mat-menu>
