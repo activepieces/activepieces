@@ -4,6 +4,7 @@ import { MatMenuTrigger } from '@angular/material/menu';
 import { AuthenticationService } from '../../../../../common/service/authentication.service';
 
 import { map, Observable, tap } from 'rxjs';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-feedback',
@@ -14,7 +15,7 @@ export class FeedbackComponent {
   feedbackControl = new FormControl<string>('', { nonNullable: true });
   sendFeedback$: Observable<void>;
   sendingFeedback = false;
-  constructor(public authenticationService: AuthenticationService) { }
+  constructor(public authenticationService: AuthenticationService, private snackbarService: MatSnackBar) { }
   sendFeedback(matTrigger: MatMenuTrigger) {
     if (this.feedbackControl.value) {
       this.sendingFeedback = true;
@@ -24,6 +25,7 @@ export class FeedbackComponent {
           matTrigger.closeMenu();
           this.sendingFeedback = false;
           this.feedbackControl.setValue('');
+          this.snackbarService.open("Feedback submitted");
         }));
     }
     else {
