@@ -6,6 +6,7 @@ import { databaseModule } from "./app/database/database-module";
 import { authenticationModule } from "./app/authentication/authentication.module";
 import { collectionModule } from "./app/collections/collection.module";
 import { projectModule } from "./app/project/project.module";
+import { openapiModule } from "./app/helper/openapi/openapi.module";
 import { flowModule } from "./app/flows/flow.module";
 import { fileModule } from "./app/file/file.module";
 import { piecesController } from "./app/pieces/pieces.controller";
@@ -22,6 +23,7 @@ import { errorHandler } from "./app/helper/error-handler";
 import { appConnectionModule } from "./app/app-connection/app-connection.module";
 import { system } from "./app/helper/system/system";
 import { SystemProp } from "./app/helper/system/system-prop";
+import swagger from "@fastify/swagger";
 
 const envToLogger = {
   development: {
@@ -49,6 +51,19 @@ const app = fastify({
   }
 });
 
+app.register(swagger, {
+  openapi: {
+    info: {
+      title: 'Activepieces OpenAPI Documentation',
+      version: '1.0.0'
+    },
+    externalDocs: {
+      url: 'https://www.activepieces.com/docs',
+      description: 'Find more info here'
+    },
+  }
+});
+
 export const logger = app.log;
 
 app.register(cors, {
@@ -73,6 +88,7 @@ app.register(instanceModule);
 app.register(flowRunModule);
 app.register(webhookModule);
 app.register(appConnectionModule);
+app.register(openapiModule);
 
 app.get(
   "/redirect",
