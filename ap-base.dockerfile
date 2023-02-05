@@ -1,4 +1,4 @@
-FROM node:18.13.0-bullseye
+FROM node:18.13-bullseye-slim
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
