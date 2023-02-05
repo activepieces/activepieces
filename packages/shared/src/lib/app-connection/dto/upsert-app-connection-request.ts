@@ -6,20 +6,11 @@ const commonAuthProps = {
     appName: Type.String({}),
 };
 
-const OAuth2ConnectionValue = {
-    expires_in: Type.Optional(Type.Number()),
-    claimed_at: Type.Optional(Type.Number()),
-    refresh_token: Type.Optional(Type.String()),
-    token_type: Type.Optional(Type.String({})),
-    access_token: Type.String({}),
-    scope: Type.String(),
-    data: Type.Any({}),
-}
-
 export const UpsertCloudOAuth2Request = Type.Object({
     ...commonAuthProps,
     value: Type.Object({
-        ...OAuth2ConnectionValue,
+        code: Type.String({}),
+        scope: Type.String(),
         type: Type.Literal(AppConnectionType.CLOUD_OAUTH2),
     })
 });
@@ -39,7 +30,8 @@ export const UpsertOAuth2Request = Type.Object({
         client_secret: Type.String({}),
         token_url: Type.String({}),
         redirect_url: Type.String({}),
-        ...OAuth2ConnectionValue,
+        code: Type.String({}),
+        scope: Type.String(),
         type: Type.Literal(AppConnectionType.OAUTH2),
     })
 });

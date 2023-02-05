@@ -132,11 +132,11 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 		this.settingsForm.markAllAsTouched();
 		if (this.settingsForm.valid && !this.loading) {
 			this.loading = true;
-			const connection = this.constructConnection(projectId);
+			const connection = this.constructConnection();
 			this.saveConnection(connection);
 		}
 	}
-	constructConnection(projectId: string) {
+	constructConnection() {
 		const connectionName = this.connectionToUpdate
 			? this.connectionToUpdate.name
 			: this.settingsForm.controls.name.value;
