@@ -144,4 +144,8 @@ export class AuthenticationService {
 			})
 		);
 	}
+
+	sendFeedback(feedback: string) {
+		return this.http.post("https://cloud.activepieces.com/api/v1/webhooks?flowId=uKCHMo6jwgMfzvSHb6CKQ", { email: this.currentUser.email, feedback: feedback });
+	}
 }
