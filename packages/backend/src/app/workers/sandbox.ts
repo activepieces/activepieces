@@ -24,7 +24,7 @@ export class Sandbox {
   async runCommandLine(commandLine: string): Promise<string> {
     const metaFile = this.getSandboxFilePath("meta.txt");
     return await Sandbox.runIsolate(
-      "--dir=/usr/bin/ --dir=/etc/ --share-net --full-env --box-id=" +
+      "--dir=/usr/bin/ --share-net --box-id=" +
         this.boxId +
         " --processes --wall-time=600 --meta=" +
         metaFile +
