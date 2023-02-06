@@ -29,7 +29,7 @@ export class Sandbox {
         " --processes --wall-time=600 --meta=" +
         metaFile +
         " --stdout=_standardOutput.txt" +
-        " --stderr=_standardError.txt --run /bin/echo 'nameserver 8.8.8.8' > /etc/resolv.conf && " +
+        " --stderr=_standardError.txt --run /bin/echo 'nameserver 1.1.1.1' > /etc/resolv.conf && " +
         commandLine
     );
   }
