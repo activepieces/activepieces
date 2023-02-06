@@ -71,7 +71,7 @@
     "string-replace-async": "^3.0.2",
     "tslib": "^2.3.0",
     "typeorm": "^0.3.11",
-    "zone.js": "~0.11.4"
+    "zone.js": "~0.12.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~15.1.0",
