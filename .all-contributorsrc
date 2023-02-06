@@ -101,6 +101,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "M-Arman",
+      "name": "Arman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54455592?v=4",
+      "profile": "https://github.com/M-Arman",
+      "contributions": [
+        "security"
+      ]
     }
   ]
 }
