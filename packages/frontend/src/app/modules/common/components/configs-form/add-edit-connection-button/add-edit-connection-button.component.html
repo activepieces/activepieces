@@ -1,3 +1,7 @@
 <app-button btnColor="primary" btnStyle="basic" [btnSize]="btnSize" [darkLoadingSpinner]="true"
-    [loading]="checkingOAuth2CloudManager"> <ng-content></ng-content>
+    [loading]="checkingOAuth2CloudManager" (buttonClicked)="buttonClicked()"> <ng-content></ng-content>
 </app-button>
+
+<ng-container *ngIf="updateOrAddConnectionDialogClosed$ | async "></ng-container>
+<ng-container *ngIf="updateAuthConfig$ | async"> </ng-container>
+<ng-container *ngIf="cloudAuthCheck$ | async"></ng-container>

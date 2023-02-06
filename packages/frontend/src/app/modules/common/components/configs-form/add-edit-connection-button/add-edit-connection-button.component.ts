@@ -1,12 +1,13 @@
-import { ApiKeyAppConnection, AppConnection, AppConnectionType } from '@activepieces/shared';
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ApiKeyAppConnection, AppConnection, AppConnectionType, OAuth2AppConnection } from '@activepieces/shared';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
-import { map, Observable, switchMap, take, tap } from 'rxjs';
-import { CloudOAuth2ConnectionDialogComponent } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
-import { OAuth2ConnectionDialogComponent } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/oauth2-connection-dialog/oauth2-connection-dialog.component';
+import { catchError, map, Observable, of, switchMap, take, tap } from 'rxjs';
+import { CloudOAuth2ConnectionDialogComponent, USE_MY_OWN_CREDENTIALS } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
+import { OAuth2ConnectionDialogComponent, USE_CLOUD_CREDENTIALS } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/oauth2-connection-dialog/oauth2-connection-dialog.component';
 import { SecretTextConnectionDialogComponent, SecretTextConnectionDialogData } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
+import { AuthenticationService } from '../../../service/authentication.service';
 import { CloudAuthConfigsService } from '../../../service/cloud-auth-configs.service';
 import { PieceConfig, PropertyType } from '../connector-action-or-config';
 
@@ -26,11 +27,162 @@ export class AddEditConnectionButtonComponent {
   selectedConnectionInterpolatedString: string;
   @Input()
   pieceName: string;
+  @Input()
+  isEditConnectionButton: boolean = false;
+  @Output()
+  connectionPropertyValueChanged: EventEmitter<{ configKey: string, value: `\${connections.${string}}` }> = new EventEmitter();
   updateOrAddConnectionDialogClosed$: Observable<void>;
   updateAuthConfig$: Observable<void>;
-  constructor(private store: Store, private dialogService: MatDialog, private cloudAuthConfigsService: CloudAuthConfigsService) { }
+  cloudAuthCheck$: Observable<void>;
+  constructor(private store: Store, private dialogService: MatDialog, private cloudAuthConfigsService: CloudAuthConfigsService, private authenticationService: AuthenticationService) { }
 
-  editConnection() {
+
+  buttonClicked() {
+    if (this.isEditConnectionButton) {
+      this.editConnection();
+    }
+    else {
+      this.newConnectionDialogProcess();
+    }
+  }
+
+  private newConnectionDialogProcess() {
+    if (this.config.type === PropertyType.OAUTH2) {
+      this.newOAuth2AuthenticationDialogProcess(this.config.key);
+    } else {
+      this.openNewSecretKeyConnection(this.config.key);
+    }
+  }
+  private openNewSecretKeyConnection(pieceConfigKey: string) {
+
+    const dialogData: SecretTextConnectionDialogData = {
+      pieceName: this.pieceName,
+      displayName: this.config.label,
+      description: this.config.description || '',
+    };
+    this.updateOrAddConnectionDialogClosed$ = this.dialogService
+      .open(SecretTextConnectionDialogComponent, {
+        data: dialogData,
+      })
+      .afterClosed()
+      .pipe(
+        tap((result: AppConnection | null) => {
+          if (result) {
+            const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
+            this.connectionPropertyValueChanged.emit({ configKey: this.config.key, value: authConfigOptionValue })
+          }
+        }),
+        map(() => void 0)
+      );
+  }
+
+  private newOAuth2AuthenticationDialogProcess(pieceConfigName: string) {
+    if (!this.checkingOAuth2CloudManager) {
+      this.checkingOAuth2CloudManager = true;
+      this.cloudAuthCheck$ = this.cloudAuthConfigsService
+        .getAppsAndTheirClientIds()
+        .pipe(
+          catchError((err) => {
+            console.error(err);
+            return of({});
+          }),
+          tap(() => {
+            this.checkingOAuth2CloudManager = false;
+          }),
+          map((res) => {
+            return res[this.pieceName];
+          }),
+          tap((cloudAuth2Config: { clientId: string }) => {
+            if (cloudAuth2Config) {
+              this.openNewCloudOAuth2ConnectionModal(
+                pieceConfigName,
+                cloudAuth2Config.clientId
+              );
+            } else {
+              this.openNewOAuth2ConnectionDialog(pieceConfigName);
+            }
+          }),
+          map(() => void 0)
+        );
+    }
+  }
+  private openNewOAuth2ConnectionDialog(authConfigName: string) {
+    this.updateOrAddConnectionDialogClosed$ = this.authenticationService
+      .getFrontendUrl()
+      .pipe(
+        switchMap((serverUrl) => {
+          return this.dialogService
+            .open(OAuth2ConnectionDialogComponent, {
+              data: {
+                pieceAuthConfig: this.config,
+                pieceName: this.pieceName,
+                serverUrl: serverUrl,
+              },
+            })
+            .afterClosed()
+            .pipe(
+              tap((result: OAuth2AppConnection | string) => {
+                if (
+                  typeof result === 'string' &&
+                  result === USE_CLOUD_CREDENTIALS
+                ) {
+                  this.checkingOAuth2CloudManager = true;
+                  this.cloudAuthCheck$ = this.cloudAuthConfigsService
+                    .getAppsAndTheirClientIds()
+                    .pipe(
+                      catchError((err) => {
+                        console.error(err);
+                        return of({});
+                      }),
+                      tap(() => {
+                        this.checkingOAuth2CloudManager = false;
+                      }),
+                      map((res) => {
+                        return res[this.pieceName];
+                      }),
+                      tap((cloudAuth2Config: { clientId: string }) => {
+                        this.openNewCloudOAuth2ConnectionModal(
+                          authConfigName,
+                          cloudAuth2Config.clientId
+                        );
+                      }),
+                      map(() => void 0)
+                    );
+                } else if (typeof result === 'object') {
+                  const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
+                  this.connectionPropertyValueChanged.emit({ configKey: this.config.key, value: authConfigOptionValue })
+                }
+              }),
+              map(() => void 0)
+            );
+        })
+      );
+  }
+
+  private openNewCloudOAuth2ConnectionModal(authConfigKey: string, clientId: string) {
+    this.updateOrAddConnectionDialogClosed$ = this.dialogService
+      .open(CloudOAuth2ConnectionDialogComponent, {
+        data: {
+          pieceAuthConfig: this.config,
+          pieceName: this.pieceName,
+          clientId: clientId,
+        },
+      })
+      .afterClosed()
+      .pipe(
+        tap((result: AppConnection | string) => {
+          if (typeof result === 'object') {
+            const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
+            this.connectionPropertyValueChanged.emit({ configKey: this.config.key, value: authConfigOptionValue })
+          } else if (result === USE_MY_OWN_CREDENTIALS) {
+            this.openNewOAuth2ConnectionDialog(authConfigKey);
+          }
+        }),
+        map(() => void 0)
+      );
+  }
+
+  private editConnection() {
     const allConnections$ = this.store.select(
       BuilderSelectors.selectAllAppConnections
     );
@@ -115,6 +267,7 @@ export class AddEditConnectionButtonComponent {
       map(() => void 0)
     );
   }
+
 
   getConnectionNameFromInterpolatedString(interpolatedString: string) {
     //eg. ${connections.google}
