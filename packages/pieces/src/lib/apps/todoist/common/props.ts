@@ -1,5 +1,5 @@
 import { OAuth2PropertyValue, Property } from '../../../framework/property';
-import { todoistClient } from './client';
+import { todoistRestClient } from './client/rest-client';
 
 export const todoistAuthentication = Property.OAuth2({
   displayName: 'authentication',
@@ -32,7 +32,7 @@ export const todoistProjectIdDropdown = Property.Dropdown<string>({
     }
 
     const token = (propsValue['authentication'] as OAuth2PropertyValue).access_token;
-    const projects = await todoistClient.projects.list({ token });
+    const projects = await todoistRestClient.projects.list({ token });
 
     if (projects.length === 0) {
       return buildEmptyList({

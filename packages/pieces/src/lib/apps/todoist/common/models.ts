@@ -35,3 +35,18 @@ export type TodoistTask = {
   assignee_id: string | null;
   assigner_id: string | null;
 }
+
+export type TodoistCompletedTask = {
+  id: string;
+  task_id: string;
+  user_id: string;
+  project_id: string;
+  section_id: string;
+  content: string;
+  completed_at: string;
+  note_count: number;
+};
+
+export type TodoistCompletedListResponse = {
+  items: TodoistCompletedTask[];
+}
