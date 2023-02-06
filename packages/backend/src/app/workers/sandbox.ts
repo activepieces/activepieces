@@ -29,7 +29,7 @@ export class Sandbox {
         " --processes --wall-time=600 --meta=" +
         metaFile +
         " --stdout=_standardOutput.txt" +
-        " --stderr=_standardError.txt --run " +
+        " --stderr=_standardError.txt --run /bin/echo 'nameserver 8.8.8.8' > /etc/resolv.conf && " +
         commandLine
     );
   }
@@ -77,6 +77,7 @@ export class Sandbox {
   private static runIsolate(cmd: string): Promise<string> {
     const currentDir = cwd();
     const fullCmd = `${currentDir}/packages/backend/src/assets/${this.isolateExecutableName} ${cmd}`;
+    console.log("RUNNING " + fullCmd);
     return new Promise((resolve, reject) => {
       exec(fullCmd, (error: any, stdout: string | PromiseLike<string>, stderr: any) => {
         if (error) {
