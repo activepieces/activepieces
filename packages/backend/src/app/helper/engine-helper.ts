@@ -66,7 +66,7 @@ async function execute(operation: EngineOperationType, sandbox: Sandbox, input: 
     fs.writeFileSync(sandboxPath + "/activepieces-engine.js", fs.readFileSync(engineExecutablePath));
     fs.writeFileSync(sandboxPath + "/input.json", JSON.stringify({
         ...input,
-        apiUrl: "http://localhost:3000"
+        apiUrl: "http://127.0.0.1:3000"
     }));
     await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ` + operation);
     const standardOutput = await sandbox.parseStandardOutput();
