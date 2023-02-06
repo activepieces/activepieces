@@ -1,6 +1,7 @@
 import { arch, cwd } from "node:process";
 import { exec } from "node:child_process";
 import fs from "node:fs";
+import path from "node:path";
 
 const getIsolateExecutableName = () => {
   const defaultName = "isolate";
@@ -23,13 +24,14 @@ export class Sandbox {
 
   async runCommandLine(commandLine: string): Promise<string> {
     const metaFile = this.getSandboxFilePath("meta.txt");
+    const etcDir = path.resolve("./packages/backend/src/assets/etc/");
     return await Sandbox.runIsolate(
-      "--dir=/usr/bin/ --share-net --box-id=" +
+      `--dir=/usr/bin/ --dir=/etc/=${etcDir} --share-net --box-id=` +
         this.boxId +
         " --processes --wall-time=600 --meta=" +
         metaFile +
         " --stdout=_standardOutput.txt" +
-        " --stderr=_standardError.txt --run /bin/echo 'nameserver 1.1.1.1' > /etc/resolv.conf && " +
+        " --stderr=_standardError.txt --run " +
         commandLine
     );
   }
@@ -77,7 +79,7 @@ export class Sandbox {
   private static runIsolate(cmd: string): Promise<string> {
     const currentDir = cwd();
     const fullCmd = `${currentDir}/packages/backend/src/assets/${this.isolateExecutableName} ${cmd}`;
-    console.log("RUNNING " + fullCmd);
+    console.log(fullCmd);
     return new Promise((resolve, reject) => {
       exec(fullCmd, (error: any, stdout: string | PromiseLike<string>, stderr: any) => {
         if (error) {
