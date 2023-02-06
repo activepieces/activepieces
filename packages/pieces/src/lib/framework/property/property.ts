@@ -10,7 +10,7 @@ import {
 	SecretTextProperty,
 	ShortTextProperty,
 } from "./base-prop";
-import { BasicAuthProperty, BasicAuthPropertySchema } from "./basic-auth";
+import { BasicAuthProperty, BasicAuthPropertySchema } from "./basic-auth-prop";
 import { DropdownProperty, DropdownPropertySchema } from "./dropdown-prop";
 import { OAuth2Property, OAuth2PropertySchema } from "./oauth2-prop";
 
