@@ -91,12 +91,12 @@
 
     <ng-container *ngIf="config.type === PropertyType.OAUTH2 || config.type === PropertyType.SECRET_TEXT">
       <div class="ap-relative">
-        <app-button btnColor="primary" btnStyle="basic" btnSize="extraSmall"
-          *ngIf="formGroup.enabled && formGroup.get(config.key)!.value"
-          (buttonClicked)="editSelectedAuthConfig(config.key, config.type)" class="edit-selected-auth"
-          [darkLoadingSpinner]="true" [loading]="checkingOAuth2CloudManager"> Edit
-        </app-button>
-
+        <app-add-edit-connection-button class="edit-selected-auth"
+          *ngIf="formGroup.enabled && formGroup.get(config.key)!.value" btnSize="extraSmall"
+          [isEditConnectionButton]="true" [config]="config" [pieceName]="pieceName"
+          [selectedConnectionInterpolatedString]="formGroup.get(config.key)!.value">
+          Edit
+        </app-add-edit-connection-button>
         <mat-form-field class="ap-w-full" appearance="outline">
           <mat-label> {{ config.label }} </mat-label>
           <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
@@ -108,10 +108,11 @@
               class="add-auth">
               <div class="ap-flex">
                 <div class="ap-flex-grow">No connections</div>
-                <app-button btnColor="primary" btnStyle="basic"
-                  (buttonClicked)="newConnectionDialogProcess(config.key,config.type)" type="button" btnSize="small"
-                  *ngIf="formGroup.enabled" [darkLoadingSpinner]="true" [loading]="checkingOAuth2CloudManager">+ Add
-                </app-button>
+                <app-add-edit-connection-button class="edit-selected-auth" btnSize="small" *ngIf="formGroup.enabled"
+                  [isEditConnectionButton]="false" [config]="config" [pieceName]="pieceName"
+                  (connectionPropertyValueChanged)="connectionValueChanged($event)">
+                  + Add
+                </app-add-edit-connection-button>
               </div>
             </mat-option>
           </mat-select>
@@ -119,10 +120,10 @@
             {{config.label}} is required
           </mat-error>
         </mat-form-field>
-        <app-button btnColor="primary" btnStyle="basic"
-          (buttonClicked)="newConnectionDialogProcess(config.key,config.type)" type="button" btnSize="medium"
-          *ngIf="formGroup.enabled" [darkLoadingSpinner]="true" [loading]="checkingOAuth2CloudManager"> + New Connection
-        </app-button>
+        <app-add-edit-connection-button btnSize="medium" *ngIf="formGroup.enabled" [isEditConnectionButton]="false"
+          [config]="config" [pieceName]="pieceName" (connectionPropertyValueChanged)="connectionValueChanged($event)">
+          + New Connection
+        </app-add-edit-connection-button>
       </div>
 
     </ng-container>
