@@ -10,9 +10,9 @@ import {
 	SecretTextProperty,
 	ShortTextProperty,
 } from "./base-prop";
-import { CustomAuthProperty, CustomAuthPropertySchema } from "./custom-auth-prop";
+import { BasicAuthProperty, BasicAuthPropertySchema } from "./basic-auth";
 import { DropdownProperty, DropdownPropertySchema } from "./dropdown-prop";
-import { OAuth2Property, OAuth2PropertySchema } from "./oauth-prop";
+import { OAuth2Property, OAuth2PropertySchema } from "./oauth2-prop";
 
 export interface PieceProperty {
 	[name: string]: ShortTextProperty
@@ -22,10 +22,9 @@ export interface PieceProperty {
 	| DropdownProperty<any>
 	| NumberProperty
 	| SecretTextProperty
-	| CustomAuthProperty
 	| ArrayProperty
 	| ObjectProperty
-  | JsonProperty;
+	| JsonProperty;
 }
 
 export type StaticPropsValue<T extends PieceProperty> = {
@@ -48,14 +47,14 @@ export const Property = {
 	OAuth2(request: OAuth2PropertySchema): OAuth2Property {
 		return { ...request, valueSchema: undefined, type: PropertyType.OAUTH2 };
 	},
+	BasicAuth(request: BasicAuthPropertySchema): BasicAuthProperty {
+		return { ...request, valueSchema: undefined, type: PropertyType.BASIC_AUTH };
+	},
 	Dropdown<T>(request: DropdownPropertySchema<T>): DropdownProperty<T> {
 		return { ...request, valueSchema: undefined, type: PropertyType.DROPDOWN };
 	},
 	SecretText(request: BasePropertySchema): SecretTextProperty {
 		return { ...request, valueSchema: undefined, type: PropertyType.SECRET_TEXT };
-	},
-	CustomAuth(request: CustomAuthPropertySchema): CustomAuthProperty {
-		return { ...request, valueSchema: undefined, type: PropertyType.CUSTOM_AUTH };
 	},
 	Array(request: BasePropertySchema): ArrayProperty {
 		return { ...request, valueSchema: undefined, type: PropertyType.ARRAY };

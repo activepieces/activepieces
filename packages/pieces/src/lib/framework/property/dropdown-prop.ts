@@ -1,5 +1,5 @@
 import { BasePropertySchema, PropertyType, TPropertyValue } from "./base-prop";
-import { OAuth2PropertyValue } from "./oauth-prop";
+import { OAuth2PropertyValue } from "./oauth2-prop";
 
 export type DropdownState<T> = {
 	disabled?: boolean;
