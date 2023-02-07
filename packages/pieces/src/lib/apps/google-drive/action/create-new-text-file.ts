@@ -36,7 +36,6 @@ export const googleDriveCreateNewTextFile = createAction({
     }),
   },
   async run(context) {
-    console.log("PROPS >>>>>>>>>>>>>>>>", context.propsValue)
     if (context.propsValue.text) {
 
       const meta = {
