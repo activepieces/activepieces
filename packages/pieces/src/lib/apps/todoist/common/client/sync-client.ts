@@ -10,10 +10,11 @@ const API = 'https://api.todoist.com/sync/v9'
 
 export const todoistSyncClient = {
   completed: {
-    async list({ token, since, project_id }: CompletedListParams): Promise<TodoistCompletedListResponse> {
+    async list({ token, since, project_id, until }: CompletedListParams): Promise<TodoistCompletedListResponse> {
       const queryParams = {
         limit: '200',
         since,
+        until,
         project_id,
       }
 
@@ -35,6 +36,7 @@ export const todoistSyncClient = {
 
 type CompletedListParams = {
   token: string
-  since: string | undefined
+  since: string,
+  until: string,
   project_id: string | undefined
 }

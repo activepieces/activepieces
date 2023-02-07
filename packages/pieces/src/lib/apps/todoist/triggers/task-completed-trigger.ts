@@ -56,15 +56,18 @@ export const todoistTaskCompletedTrigger = createTrigger({
 
     const triggerData = await store.get<TriggerData>(TRIGGER_DATA_STORE_KEY)
     const since = triggerData?.lastChecked ?? fiveMinutesAgo()
+    const until = now();
 
     const response = await todoistSyncClient.completed.list({
       token,
       since,
+      until,
       project_id,
     })
 
     await store.put<TriggerData>(TRIGGER_DATA_STORE_KEY, {
-      lastChecked: now(),
+      // It returns data newer than the since parameter, and not equal.
+      lastChecked: until,
     })
 
     return response.items;
