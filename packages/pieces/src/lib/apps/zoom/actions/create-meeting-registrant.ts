@@ -33,7 +33,7 @@ export const zoomCreateMeetingRegistrant = createAction({
     delete body['authentication']
     delete body['meeting_id']
 
-    const request: HttpRequest<any> = {
+    const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.zoom.us/v2/meetings/${context.propsValue.meeting_id}/registrants`,
       body,

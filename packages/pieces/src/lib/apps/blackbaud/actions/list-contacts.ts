@@ -35,7 +35,7 @@ export const blackbaudListContacts = createAction({
         let contacts: any[] = [];
         let nextLink: string | undefined = `${blackbaudCommon.baseUrl}/constituent/v1/constituents?limit=500`;
         while (nextLink !== undefined) {
-            const request: HttpRequest<never> = {
+            const request: HttpRequest = {
                 method: HttpMethod.GET,
                 url: nextLink,
                 headers: {

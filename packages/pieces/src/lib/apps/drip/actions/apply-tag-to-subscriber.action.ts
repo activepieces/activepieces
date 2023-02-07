@@ -21,7 +21,7 @@ export const dripApplyTagToSubscriber = createAction({
     },
     sampleData: {},
     async run(context) {
-        const request: HttpRequest<any> = {
+        const request: HttpRequest = {
             method: HttpMethod.POST,
             url: `${dripCommon.baseUrl(context.propsValue["account_id"]!)}/tags`,
             body: {

@@ -9,7 +9,7 @@ const API = 'https://api.todoist.com/rest/v2';
 export const todoistClient = {
   projects: {
     async list({ token }: ProjectsListParams): Promise<TodoistProject[]> {
-      const request: HttpRequest<never> = {
+      const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${API}/projects`,
         authentication: {

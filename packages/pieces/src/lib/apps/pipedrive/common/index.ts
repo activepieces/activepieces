@@ -14,7 +14,7 @@ export const pipedriveCommon = {
         scope: ["admin", "contacts:full", "users:read"]
     }),
     subscribeWebhook: async (object: string, action: string, webhookUrl: string, apiDomain: string, accessToken: string) => {
-        const request: HttpRequest<any> = {
+        const request: HttpRequest = {
             method: HttpMethod.POST,
             url: `${apiDomain}/api/v1/webhooks`,
             body: {
@@ -33,7 +33,7 @@ export const pipedriveCommon = {
         return webhook;
     },
     unsubscribeWebhook: async (webhookId: string, apiDomain: string, accessToken: string) => {
-        const request: HttpRequest<never> = {
+        const request: HttpRequest = {
             method: HttpMethod.DELETE,
             url: `${apiDomain}/api/v1/webhooks/${webhookId}`,
             authentication: {
