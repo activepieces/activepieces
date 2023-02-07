@@ -89,7 +89,8 @@
     </ng-container>
 
 
-    <ng-container *ngIf="config.type === PropertyType.OAUTH2 || config.type === PropertyType.SECRET_TEXT">
+    <ng-container
+      *ngIf="config.type === PropertyType.OAUTH2 || config.type === PropertyType.SECRET_TEXT || config.type === PropertyType.BASIC_AUTH">
       <div class="ap-relative">
         <app-add-edit-connection-button class="edit-selected-auth"
           *ngIf="formGroup.enabled && formGroup.get(config.key)!.value" btnSize="extraSmall"

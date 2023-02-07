@@ -30,7 +30,7 @@ import {
 } from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
-import { PieceConfig, PropertyType } from './connector-action-or-config';
+import { PieceConfig } from './connector-action-or-config';
 import { DropdownItem } from '../../model/dropdown-item.interface';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
@@ -39,6 +39,7 @@ import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
 import { InsertMentionOperation } from '../form-controls/interpolating-text-form-control/utils';
 import { jsonValidator } from '../../validators/json-validator';
 import { CodeService } from '../../../flow-builder/service/code.service';
+import { PropertyType } from 'packages/pieces/src/lib/framework/property';
 type ConfigKey = string;
 
 @Component({

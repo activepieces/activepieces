@@ -1,15 +1,17 @@
-import { ApiKeyAppConnection, AppConnection, AppConnectionType, OAuth2AppConnection } from '@activepieces/shared';
+import { ApiKeyAppConnection, AppConnection, AppConnectionType, BasicAuthConnection, OAuth2AppConnection } from '@activepieces/shared';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
+import { PropertyType } from 'packages/pieces/src/lib/framework/property';
 import { BehaviorSubject, catchError, map, Observable, of, switchMap, take, tap } from 'rxjs';
+import { BasicAuthConnectionDialogComponent, BasicAuthDialogData } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/basic-auth-connection-dialog/basic-auth-connection-dialog.component';
 import { CloudOAuth2ConnectionDialogComponent, USE_MY_OWN_CREDENTIALS } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
 import { OAuth2ConnectionDialogComponent, USE_CLOUD_CREDENTIALS } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/oauth2-connection-dialog/oauth2-connection-dialog.component';
 import { SecretTextConnectionDialogComponent, SecretTextConnectionDialogData } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
 import { AuthenticationService } from '../../../service/authentication.service';
 import { CloudAuthConfigsService } from '../../../service/cloud-auth-configs.service';
-import { PieceConfig, PropertyType } from '../connector-action-or-config';
+import { PieceConfig } from '../connector-action-or-config';
 
 @Component({
   selector: 'app-add-edit-connection-button',
@@ -49,12 +51,37 @@ export class AddEditConnectionButtonComponent {
   private newConnectionDialogProcess() {
     if (this.config.type === PropertyType.OAUTH2) {
       this.newOAuth2AuthenticationDialogProcess();
-    } else {
+    } else if (this.config.type === PropertyType.SECRET_TEXT) {
       this.openNewSecretKeyConnection();
     }
+    else {
+      this.openNewBasicAuthConnection();
+    }
+  }
+
+
+  private openNewBasicAuthConnection() {
+    const dialogData: BasicAuthDialogData = {
+      pieceAuthConfig: this.config,
+      pieceName: this.pieceName
+    }
+    this.updateOrAddConnectionDialogClosed$ = this.dialogService
+      .open(BasicAuthConnectionDialogComponent, {
+        data: dialogData,
+      })
+      .afterClosed()
+      .pipe(
+        tap((result: AppConnection | null) => {
+          if (result) {
+            const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
+            this.connectionPropertyValueChanged.emit({ configKey: this.config.key, value: authConfigOptionValue })
+          }
+        }),
+        map(() => void 0)
+      );
+
   }
   private openNewSecretKeyConnection() {
-
     const dialogData: SecretTextConnectionDialogData = {
       pieceName: this.pieceName,
       displayName: this.config.label,
@@ -197,10 +224,12 @@ export class AddEditConnectionButtonComponent {
     if (this.config.type === PropertyType.OAUTH2) {
       this.editOAuth2Property(currentConnection$);
     }
-    else {
+    else if (this.config.type === PropertyType.SECRET_TEXT) {
       this.editSecretKeyConnection(currentConnection$);
     }
-
+    else {
+      this.editBasicAuthConnection(currentConnection$);
+    }
   }
 
   private editSecretKeyConnection(currentConnection$: Observable<AppConnection>) {
@@ -215,6 +244,21 @@ export class AddEditConnectionButtonComponent {
       };
       return this.dialogService
         .open(SecretTextConnectionDialogComponent, {
+          data: dialogData,
+        })
+        .afterClosed();
+    }));
+  }
+  private editBasicAuthConnection(currentConnection$: Observable<AppConnection>) {
+    this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(switchMap(connection => {
+      const dialogData: BasicAuthDialogData = {
+        pieceName: this.pieceName,
+        pieceAuthConfig: this.config,
+        connectionToUpdate: connection as BasicAuthConnection
+      };
+      debugger;
+      return this.dialogService
+        .open(BasicAuthConnectionDialogComponent, {
           data: dialogData,
         })
         .afterClosed();
