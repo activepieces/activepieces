@@ -40,9 +40,10 @@ export class BasicAuthConnectionDialogComponent {
     @Inject(MAT_DIALOG_DATA)
     public readonly dialogData: BasicAuthDialogData) {
     this.settingsForm = this.formBuilder.group({
-      username: new FormControl<string>('', { nonNullable: true, validators: this.dialogData.pieceAuthConfig.basicAuthConfigs!.username.required ? [Validators.required] : [] }),
-      password: new FormControl<string>('', { nonNullable: true, validators: this.dialogData.pieceAuthConfig.basicAuthConfigs!.password.required ? [Validators.required] : [] }),
-      name: new FormControl(this.dialogData.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
+      username: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+      password: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+      name: new FormControl(
+        this.dialogData.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
         nonNullable: true,
         validators: [Validators.required, Validators.pattern('[A-Za-z0-9_]*')],
         asyncValidators: [

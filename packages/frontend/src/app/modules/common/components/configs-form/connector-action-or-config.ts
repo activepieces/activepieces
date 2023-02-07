@@ -27,8 +27,8 @@ export interface PieceConfig {
 	extra?: Record<string, unknown>;
 	refreshers?: string[];
 	basicAuthConfigs?: {
-		password: Pick<PieceProperty, "required" | "displayName" | "description">,
-		username: Pick<PieceProperty, "required" | "displayName" | "description">,
+		password: Pick<PieceProperty, "displayName" | "description">,
+		username: Pick<PieceProperty, "displayName" | "description">,
 	}
 }
 
