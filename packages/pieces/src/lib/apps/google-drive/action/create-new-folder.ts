@@ -5,8 +5,8 @@ import { HttpRequest } from "../../../common/http/core/http-request";
 import { createAction } from "../../../framework/action/action";
 import { Property } from "../../../framework/property";
 
-export const googleDriveCeateNewFolder = createAction({
-  name: 'add_contact',
+export const googleDriveCreateNewFolder = createAction({
+  name: 'create_new_gdrive_folder',
   description: 'Create a new empty folder in your Google Drive',
   displayName: 'Create new folder',
   props: {
@@ -29,6 +29,12 @@ export const googleDriveCeateNewFolder = createAction({
       required: false,
     }),
   },
+  sampleData: {
+    "kind": "drive#file",
+    "id": "1zBGDdjasE4A63269CXhqOvAe3odTsplF",
+    "name": "New Folder",
+    "mimeType": "application/vnd.google-apps.folder"
+  },
   async run(context) {
     const body: Record<string, string | string[] | undefined> = {
       'mimeType': "application/vnd.google-apps.folder",
@@ -49,9 +55,8 @@ export const googleDriveCeateNewFolder = createAction({
       }
     }
 
-
     const result = await httpClient.sendRequest(request)
-    console.debug("Meeting registration response", result)
+    console.debug("Folder creation response", result)
 
     if (result.status == 200) {
       return result.body;
