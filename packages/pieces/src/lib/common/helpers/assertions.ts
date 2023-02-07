@@ -6,3 +6,7 @@ export function assertNotNullOrUndefined<T>(
     throw new Error(`${fieldName} is null or undefined`);
   }
 }
+
+export const isNotUndefined = <T>(value: T | undefined): value is T => {
+  return value !== undefined;
+}
