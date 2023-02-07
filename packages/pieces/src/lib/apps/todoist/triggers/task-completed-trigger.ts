@@ -5,6 +5,16 @@ import { todoistSyncClient } from '../common/client/sync-client'
 import { TodoistCompletedTask } from '../common/models'
 import { todoistAuthentication, todoistProjectIdDropdown } from '../common/props'
 
+type TriggerData = {
+  lastChecked: string;
+}
+
+const TRIGGER_DATA_STORE_KEY = 'todoist_task_completed_trigger_data'
+const ISO_FORMAT = 'YYYY-MM-DDTHH:mm:ss'
+
+const fiveMinutesAgo = () => dayjs().subtract(5, 'minutes').format(ISO_FORMAT)
+const now = () => dayjs().format(ISO_FORMAT)
+
 export const todoistTaskCompletedTrigger = createTrigger({
   name: 'task_completed',
   displayName: 'Task completed',
@@ -28,24 +38,33 @@ export const todoistTaskCompletedTrigger = createTrigger({
     projectId: todoistProjectIdDropdown,
   },
 
-  async onEnable(): Promise<void> {
+  async onEnable({ store }): Promise<void> {
+    await store.put<TriggerData>(TRIGGER_DATA_STORE_KEY, {
+      lastChecked: now(),
+    })
   },
 
-  async onDisable(): Promise<void> {
+  async onDisable({ store }): Promise<void> {
+    await store.put(TRIGGER_DATA_STORE_KEY, null);
   },
 
-  async run({ propsValue }): Promise<TodoistCompletedTask[]> {
+  async run({ propsValue, store }): Promise<TodoistCompletedTask[]> {
     const token = propsValue.authentication?.access_token
     const { projectId } = propsValue
 
     assertNotNullOrUndefined(token, 'token')
 
-    const fiveMinutesAgo = dayjs().subtract(5, 'minutes').format('YYYY-MM-DDTHH:mm:ss')
+    const triggerData = await store.get<TriggerData>(TRIGGER_DATA_STORE_KEY)
+    const since = triggerData?.lastChecked ?? fiveMinutesAgo()
 
     const response = await todoistSyncClient.completed.list({
       token,
-      since: fiveMinutesAgo,
+      since,
       projectId,
+    })
+
+    await store.put<TriggerData>(TRIGGER_DATA_STORE_KEY, {
+      lastChecked: now(),
     })
 
     return response.items;
