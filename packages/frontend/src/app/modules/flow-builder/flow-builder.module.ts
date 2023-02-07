@@ -70,6 +70,9 @@ import { ToggleInstanceStateComponent } from './page/flow-builder/flow-builder-h
 import { CloudOAuth2ConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
 import { appConnectionsReducer } from './store/app-connections/app-connections.reducer';
 import { SecretTextConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
+import { BasicAuthConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/basic-auth-connection-dialog/basic-auth-connection-dialog.component';
+import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedback/feedback.component';
+
 @NgModule({
   imports: [
     CommonModule,
@@ -152,8 +155,10 @@ import { SecretTextConnectionDialogComponent } from './page/flow-builder/flow-ri
     ToggleInstanceStateComponent,
     CloudOAuth2ConnectionDialogComponent,
     SecretTextConnectionDialogComponent,
+    BasicAuthConnectionDialogComponent,
+    FeedbackComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [FlowBuilderHeaderComponent],
 })
-export class FlowBuilderModule {}
+export class FlowBuilderModule { }

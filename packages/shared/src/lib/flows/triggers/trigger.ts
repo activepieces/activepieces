@@ -37,7 +37,7 @@ export type ScheduleTriggerSettings = {
 export interface ScheduleTrigger
   extends BaseTrigger<TriggerType.SCHEDULE, ScheduleTriggerSettings> {}
 
-Format.Set('cronexpression', (value) => isValidCron(value, {seconds: true}));
+Format.Set('cronexpression', (value) => isValidCron(value, {seconds: false}));
 
 export const ScheduleTriggerSchema = Type.Object({
   name: Type.String({}),

@@ -13,12 +13,17 @@ export enum AppConnectionType {
   OAUTH2 = "OAUTH2",
   CLOUD_OAUTH2 = "CLOUD_OAUTH2",
   SECRET_TEXT = "SECRET_TEXT",
-  CUSTOM = "CUSTOM"
+  BASIC_AUTH = "BASIC_AUTH",
 }
 
 export interface SecretTextConnectionValue {
   type: AppConnectionType.SECRET_TEXT,
   secret_text: string;
+}
+export interface BasicAuthConnectionValue {
+  username: string;
+  password: string;
+  type: AppConnectionType.BASIC_AUTH
 }
 
 
@@ -58,14 +63,9 @@ export interface OAuth2ConnectionValueWithApp extends BaseOAuth2ConnectionValue,
   redirect_url: string;
 }
 
-export interface CustomConnectionValue {
-  type: AppConnectionType.CUSTOM,
-  [P: string]: string | number | CloudOAuth2ConnectionValue | SecretTextConnectionValue | OAuth2ConnectionValueWithApp;
-}
 
-export type OAuth2AppConnection = (BaseAppConnection<OAuth2ConnectionValueWithApp>);
-export type ApiKeyAppConnection = BaseAppConnection<SecretTextConnectionValue>
-export type CloudAuth2Connection = BaseAppConnection<CloudOAuth2ConnectionValue>
-export type CustomAuthentication = BaseAppConnection<CustomConnectionValue>
-
-export type AppConnection = CustomAuthentication | ApiKeyAppConnection | OAuth2AppConnection | CloudAuth2Connection;
+export type OAuth2AppConnection = BaseAppConnection<OAuth2ConnectionValueWithApp>;
+export type ApiKeyAppConnection = BaseAppConnection<SecretTextConnectionValue>;
+export type CloudAuth2Connection = BaseAppConnection<CloudOAuth2ConnectionValue>;
+export type BasicAuthConnection = BaseAppConnection<BasicAuthConnectionValue>;
+export type AppConnection = BasicAuthConnection | ApiKeyAppConnection | OAuth2AppConnection | CloudAuth2Connection;

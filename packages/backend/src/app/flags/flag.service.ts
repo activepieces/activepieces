@@ -34,8 +34,14 @@ export const flagService = {
         updated,
       },
       {
+        id: FlagId.SIGN_UP_ENABLED,
+        value: system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false,
+        created,
+        updated,
+      },
+      {
         id: FlagId.TELEMETRY_ENABLED,
-        value: system.get(SystemProp.TELEMETRY_ENABLED) ?? true,
+        value: system.getBoolean(SystemProp.TELEMETRY_ENABLED) ?? true,
         created,
         updated,
       },
@@ -67,7 +73,9 @@ export enum FlagId {
   FRONTEND_URL = "FRONTEND_URL",
   BACKEND_URL = "BACKEND_URL",
   USER_CREATED = "USER_CREATED",
+  SIGN_UP_ENABLED = "SIGN_UP_ENABLED",
   TELEMETRY_ENABLED = "TELEMETRY_ENABLED",
+
   WARNING_TEXT_BODY = "WARNING_TEXT_BODY",
   WARNING_TEXT_HEADER = "WARNING_TEXT_HEADER",
 }

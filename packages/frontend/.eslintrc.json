@@ -8,7 +8,8 @@
         "rxjs/no-async-subscribe": "error",
         "rxjs/no-nested-subscribe": "error",
         "rxjs-angular/prefer-async-pipe": "error",
-        "@typescript-eslint/adjacent-overload-signatures": "silent",
+        "@typescript-eslint/adjacent-overload-signatures": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
         "@angular-eslint/directive-selector": [
           "error",
           {

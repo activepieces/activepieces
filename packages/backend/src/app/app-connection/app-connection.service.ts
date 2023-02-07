@@ -16,7 +16,7 @@ export const appConnectionService = {
             name: request.name
         })
     },
-    async getOne({projectId, name}: {projectId: ProjectId, name: string}): Promise<AppConnection | null> {
+    async getOne({ projectId, name }: { projectId: ProjectId, name: string }): Promise<AppConnection | null> {
         // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
         // which could result in the wrong request saving incorrect data.
         const refreshLock = await createRedisLock(`${projectId}_${name}`);
@@ -63,24 +63,6 @@ async function refresh(connection: AppConnection): Promise<AppConnection> {
             break;
         case AppConnectionType.OAUTH2:
             connection.value = await refreshWithCredentials(connection.value);
-            break;
-        case AppConnectionType.CUSTOM:
-            for (const key in Object.keys(connection.value)) {
-                let connectionValue = connection.value[key];
-                if (typeof connectionValue === 'object' && connectionValue.hasOwnProperty('type')) {
-                    const type: AppConnectionType = connectionValue.type;
-                    switch (type) {
-                        case AppConnectionType.CLOUD_OAUTH2:
-                            connectionValue = await refreshCloud(connection.appName, connectionValue as CloudOAuth2ConnectionValue);
-                            break;
-                        case AppConnectionType.OAUTH2:
-                            connectionValue = await refreshWithCredentials(connectionValue as OAuth2ConnectionValueWithApp);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
             break;
         default:
             break;

@@ -15,9 +15,12 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
     async (request: FastifyRequest<{ Querystring: WebhookQueryParams }>, reply) => {
       await webhookService.callback({
         flowId: request.query.flowId,
-        payload: request.body,
+        payload: {
+          headers: request.headers,
+          body: request.body,
+          queryParams: request.query
+        },
       });
-
       await reply.status(StatusCodes.OK).send();
     }
   );

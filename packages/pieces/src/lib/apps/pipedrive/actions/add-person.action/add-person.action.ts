@@ -31,7 +31,7 @@ export const addPerson = createAction({
                     }
                 }
                 const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
-                let users = (await getUsers(authProp)).users;
+                const users = (await getUsers(authProp)).users;
                 return {
                     disabled: false,
                     options: users.map(u => {
@@ -57,7 +57,7 @@ export const addPerson = createAction({
                     }
                 }
                 const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
-                let orgs = (await getOrganizations(authProp)).orgs;
+                const orgs = (await getOrganizations(authProp)).orgs;
                 return {
                     disabled: false,
                     options: orgs.map(o => {

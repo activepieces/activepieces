@@ -15,7 +15,7 @@
             Name is required
           </ng-container>
           <ng-template #patternErrorOrAlreadyUsed>
-            <ng-container *ngIf="settingsForm.controls.name.getError('requiredPattern');">
+            <ng-container *ngIf="settingsForm.controls.name.getError('pattern');">
               Name can only contain letters, numbers and underscores
             </ng-container>
             <ng-container *ngIf="settingsForm.controls.name.getError('nameUsed');">
