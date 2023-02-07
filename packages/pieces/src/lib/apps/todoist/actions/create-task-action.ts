@@ -36,7 +36,7 @@ export const todoistCreateTaskAction = createAction({
 
   props: {
     authentication: todoistAuthentication,
-    projectId: todoistProjectIdDropdown,
+    project_id: todoistProjectIdDropdown,
     content: Property.LongText({
       displayName: 'content',
       required: true,
@@ -45,14 +45,14 @@ export const todoistCreateTaskAction = createAction({
 
   async run({ propsValue }) {
     const token = propsValue.authentication?.access_token;
-    const { projectId, content } = propsValue;
+    const { project_id, content } = propsValue;
 
     assertNotNullOrUndefined(token, 'token');
     assertNotNullOrUndefined(content, 'content');
 
     return await todoistRestClient.tasks.create({
       token,
-      projectId,
+      project_id,
       content,
     });
   },

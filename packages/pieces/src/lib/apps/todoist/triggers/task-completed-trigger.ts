@@ -35,7 +35,7 @@ export const todoistTaskCompletedTrigger = createTrigger({
 
   props: {
     authentication: todoistAuthentication,
-    projectId: todoistProjectIdDropdown,
+    project_id: todoistProjectIdDropdown,
   },
 
   async onEnable({ store }): Promise<void> {
@@ -50,7 +50,7 @@ export const todoistTaskCompletedTrigger = createTrigger({
 
   async run({ propsValue, store }): Promise<TodoistCompletedTask[]> {
     const token = propsValue.authentication?.access_token
-    const { projectId } = propsValue
+    const { project_id } = propsValue
 
     assertNotNullOrUndefined(token, 'token')
 
@@ -60,7 +60,7 @@ export const todoistTaskCompletedTrigger = createTrigger({
     const response = await todoistSyncClient.completed.list({
       token,
       since,
-      projectId,
+      project_id,
     })
 
     await store.put<TriggerData>(TRIGGER_DATA_STORE_KEY, {
