@@ -1,9 +1,15 @@
-import { BasePropertySchema, PropertyType, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
+import { BasePropertySchema, PropertyType, TPropertyValue } from "./base-prop";
 
 
 export type BasicAuthPropertySchema = BasePropertySchema & {
-	username: ShortTextProperty;
-	password: SecretTextProperty,
+	username: {
+		displayName: string;
+		description?: string;
+	};
+	password: {
+		displayName: string;
+		description?: string;
+	},
 }
 
 export type BasicAuthPropertyValue = {

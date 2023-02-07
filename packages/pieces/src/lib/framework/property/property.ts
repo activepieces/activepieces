@@ -22,6 +22,7 @@ export interface PieceProperty {
 	| DropdownProperty<any>
 	| NumberProperty
 	| SecretTextProperty
+	| BasicAuthProperty
 	| ArrayProperty
 	| ObjectProperty
 	| JsonProperty;
