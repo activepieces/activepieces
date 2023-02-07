@@ -17,7 +17,7 @@ export const todoistSyncClient = {
         project_id,
       }
 
-      const request: HttpRequest<never> = {
+      const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${API}/completed/get_all`,
         queryParams: pickBy(queryParams, isNotUndefined),

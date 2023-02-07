@@ -114,7 +114,7 @@ export const addPerson = createAction({
         delete configsWithoutAuthentication['authentication'];
         const body = configsWithoutAuthentication;
 
-        const request: HttpRequest<any> = {
+        const request: HttpRequest = {
             method: HttpMethod.POST,
             url: `${context.propsValue.authentication!.data['api_domain']}/api/v1/persons`,
             body: body,
@@ -223,7 +223,7 @@ export const addPerson = createAction({
     }
 });
 async function getUsers(authProp: OAuth2PropertyValue): Promise<{ users: PipedriveUser[] }> {
-    const request: HttpRequest<any> = {
+    const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${authProp.data['api_domain']}/api/v1/users`,
         authentication: {
@@ -241,7 +241,7 @@ async function getUsers(authProp: OAuth2PropertyValue): Promise<{ users: Pipedri
 }
 
 async function getOrganizations(authProp: OAuth2PropertyValue): Promise<{ orgs: PipedriveOrganization[] }> {
-    const request: HttpRequest<any> = {
+    const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${authProp.data['api_domain']}/api/v1/organizations`,
         authentication: {

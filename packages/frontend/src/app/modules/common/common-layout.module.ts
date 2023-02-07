@@ -79,6 +79,7 @@ import { WebhookTriggerMentionItemComponent } from './components/form-controls/i
 import { BuilderAutocompleteMentionsDropdownComponent } from './components/form-controls/interpolating-text-form-control/builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.component';
 import { ImgFallbackDirective } from './helper/image-fallback.directive';
 import { ArrayFormControlComponent } from './components/form-controls/array-form-control/array-form-control.component';
+import { AddEditConnectionButtonComponent } from './components/configs-form/add-edit-connection-button/add-edit-connection-button.component';
 
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -129,6 +130,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     ImgFallbackDirective,
     BuilderAutocompleteMentionsDropdownComponent,
     ArrayFormControlComponent,
+    AddEditConnectionButtonComponent,
   ],
   imports: [
     FontAwesomeModule,
@@ -206,7 +208,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     ImgFallbackDirective,
     BuilderAutocompleteMentionsDropdownComponent,
     ArrayFormControlComponent,
-
   ],
   providers: [
     HighlightService,
@@ -221,4 +222,4 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     },
   ],
 })
-export class CommonLayoutModule { }
+export class CommonLayoutModule {}
