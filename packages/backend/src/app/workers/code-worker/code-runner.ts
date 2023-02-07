@@ -5,8 +5,6 @@ import { codeBuilder } from "./code-builder";
 import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";
 
-const fs = require("fs");
-
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 
 function fromStatus(code: string): CodeRunStatus {
