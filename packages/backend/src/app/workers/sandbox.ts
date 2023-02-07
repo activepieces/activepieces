@@ -25,10 +25,12 @@ export class Sandbox {
   async runCommandLine(commandLine: string): Promise<string> {
     const metaFile = this.getSandboxFilePath("meta.txt");
     const etcDir = path.resolve("./packages/backend/src/assets/etc/");
+    const maxTimeInSeconds = 60;
+
     return await Sandbox.runIsolate(
       `--dir=/usr/bin/ --dir=/etc/=${etcDir} --share-net --box-id=` +
         this.boxId +
-        " --processes --wall-time=600 --meta=" +
+        ` --processes --wall-time=${maxTimeInSeconds} --meta=` +
         metaFile +
         " --stdout=_standardOutput.txt" +
         " --stderr=_standardError.txt --run " +
