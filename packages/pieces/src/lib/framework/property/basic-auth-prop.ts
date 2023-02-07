@@ -2,8 +2,14 @@ import { BasePropertySchema, PropertyType, SecretTextProperty, ShortTextProperty
 
 
 export type BasicAuthPropertySchema = BasePropertySchema & {
-	username: ShortTextProperty;
-	password: SecretTextProperty,
+	username: {
+		displayName: string;
+		description?: string;
+	};
+	password: {
+		displayName: string;
+		description?: string;
+	},
 }
 
 export type BasicAuthPropertyValue = {
