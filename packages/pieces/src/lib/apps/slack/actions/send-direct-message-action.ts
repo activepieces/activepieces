@@ -37,7 +37,7 @@ export const slackSendDirectMessageAction = createAction({
 
         const accessToken = auth.access_token;
 
-        const request: HttpRequest<never> = {
+        const request: HttpRequest = {
           method: HttpMethod.GET,
           url: 'https://slack.com/api/users.list',
           authentication: {

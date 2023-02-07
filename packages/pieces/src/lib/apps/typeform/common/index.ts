@@ -29,7 +29,7 @@ export const formsDropdown = Property.Dropdown<string>({
 
         const accessToken = auth.access_token;
 
-        const request: HttpRequest<never> = {
+        const request: HttpRequest = {
             method: HttpMethod.GET,
             url: 'https://api.typeform.com/forms',
             authentication: {
@@ -62,7 +62,7 @@ export const typeformCommon = {
         scope: ['webhooks:write', 'forms:read'],
     }),
     subscribeWebhook: async (formId: string, tag: string, webhookUrl: string, accessToken: string) => {
-        const request: HttpRequest<any> = {
+        const request: HttpRequest = {
             method: HttpMethod.PUT,
             url: `${typeformCommon.baseUrl}/forms/${formId}/webhooks/${tag}`,
             headers: {
@@ -82,7 +82,7 @@ export const typeformCommon = {
         await httpClient.sendRequest(request);
     },
     unsubscribeWebhook: async (formId: string, tag: string, accessToken: string) => {
-        const request: HttpRequest<never> = {
+        const request: HttpRequest = {
             method: HttpMethod.DELETE,
             url: `${typeformCommon.baseUrl}/forms/${formId}/webhooks/${tag}`,
             headers: {

@@ -30,7 +30,7 @@ export const dripTagAppliedEvent = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
 
-    const request: HttpRequest<any> = {
+    const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${dripCommon.baseUrl(context.propsValue["account_id"]!)}/webhooks`,
       body: {

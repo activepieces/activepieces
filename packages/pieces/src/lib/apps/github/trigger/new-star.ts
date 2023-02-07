@@ -54,7 +54,7 @@ export const githubNewRepoEvent = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const { repo, owner } = context.propsValue['repository']!;
-    const request: HttpRequest<any> = {
+    const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${githubCommon.baseUrl}/repos/${owner}/${repo}/hooks`,
       body: {
@@ -84,7 +84,7 @@ export const githubNewRepoEvent = createTrigger({
   async onDisable(context) {
     const response = await context.store.get<WebhookInformation>('_trigger');
     if (response !== null && response !== undefined) {
-      const request: HttpRequest<never> = {
+      const request: HttpRequest = {
         method: HttpMethod.DELETE,
         url: `${githubCommon.baseUrl}/repos/${response.owner}/${response.repo}/hooks/${response.webhookId}`,
         authentication: {
