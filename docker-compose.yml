@@ -12,7 +12,6 @@ services:
       - postgres
       - redis
     environment:
-##      - AP_BACKEND_URL=http://localhost:8080/api
       - AP_ENGINE_EXECUTABLE_PATH=dist/packages/engine/main.js
       - AP_FRONTEND_URL=http://localhost:8080
       - AP_NODE_EXECUTABLE_PATH=/usr/local/bin/node
@@ -23,6 +22,7 @@ services:
       - AP_POSTGRES_USERNAME=postgres
       - AP_REDIS_HOST=redis
       - AP_REDIS_PORT=6379
+      - AP_SANDBOX_RUN_TIME_SECONDS=600
     networks:
       - activepieces
     entrypoint:
