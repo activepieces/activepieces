@@ -1,4 +1,4 @@
-import { BasePropertySchema, PropertyType, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
+import { BasePropertySchema, PropertyType, TPropertyValue } from "./base-prop";
 
 
 export type BasicAuthPropertySchema = BasePropertySchema & {

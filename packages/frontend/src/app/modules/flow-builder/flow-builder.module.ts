@@ -155,8 +155,8 @@ import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedb
     ToggleInstanceStateComponent,
     CloudOAuth2ConnectionDialogComponent,
     SecretTextConnectionDialogComponent,
-    BasicAuthConnectionDialogComponent
-    FeedbackComponent,
+    BasicAuthConnectionDialogComponent,
+    FeedbackComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [FlowBuilderHeaderComponent],
