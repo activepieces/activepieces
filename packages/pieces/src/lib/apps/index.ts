@@ -23,6 +23,7 @@ import { http } from './http';
 import { todoist } from './todoist';
 import { zoom } from './zoom';
 import { googleCalendar } from './google-calendar';
+import { googleDrive } from './google-drive';
 
 export const pieces: Piece[] = [
 	slack,
@@ -48,6 +49,7 @@ export const pieces: Piece[] = [
 	http,
   todoist,
   googleCalendar,
+  googleDrive,
 	zoom
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
