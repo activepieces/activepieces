@@ -1,10 +1,10 @@
 import { AuthenticationType } from "../../../common/authentication/core/authentication-type";
-import { httpClient } from "../../../common/http/core/http-client";
-import { HttpMessageBody } from "../../../common/http/core/http-message-body";
+import { httpClient } from "../../../common/http/core/http-client";;
 import { HttpMethod } from "../../../common/http/core/http-method";
-import { HttpRequest } from "../../../common/http/core/http-request";
 import { createAction } from "../../../framework/action/action";
 import { Property } from "../../../framework/property";
+
+import FormData from "form-data";
 
 export const googleDriveCreateNewTextFile = createAction({
   name: 'create_new_gdrive_file',
@@ -36,37 +36,33 @@ export const googleDriveCreateNewTextFile = createAction({
     }),
   },
   async run(context) {
-    if (context.propsValue.text) {
-
-      const meta = {
-        'mimeType': "plain/text",
-        'name': context.propsValue.fileName, 
-        ...(context.propsValue.parentFolder ? {'parents': [context.propsValue.parentFolder]}: {})
-      }
-
-      const formData = new FormData()
-      formData.append("Metadata", new Blob([JSON.stringify(meta)], {type: 'application/json'}))
-      formData.append("Media", new Blob([context.propsValue.text], {type: 'plain/text'}))
-      
-      const request: HttpRequest<HttpMessageBody> = {
-        method: HttpMethod.POST,
-        url: `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`,
-        body: formData,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.propsValue['authentication']!['access_token'],
-        }
-      }
-  
-      const result = await httpClient.sendRequest(request)
-      console.debug("File creation response", result)
-  
-      if (result.status == 200) {
-        return result.body;
-      } else {
-        return result;
-      }
+    const meta = {
+      'mimeType': "plain/text",
+      'name': context.propsValue.fileName,
+      ...(context.propsValue.parentFolder ? { 'parents': [context.propsValue.parentFolder] } : {})
     }
 
+    const metaBuffer = Buffer.from(JSON.stringify(meta), 'utf-8');
+    const textBuffer = Buffer.from(context.propsValue.text!, 'utf-8');
+
+    const form = new FormData()
+    form.append("Metadata", metaBuffer, { contentType: 'application/json' });
+    form.append("Media", textBuffer, { contentType: 'plain/text' });
+
+    const result = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`,
+      body: form,
+      headers: {
+        ...form.getHeaders(),
+      },
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.propsValue['authentication']!['access_token'],
+      }
+    })
+
+    console.debug("File creation response", result)
+    return result.body;
   }
 });

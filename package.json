@@ -45,6 +45,7 @@
     "fastify": "4.11.0",
     "flatpickr": "^4.6.13",
     "font-awesome": "^4.7.0",
+    "form-data": "^4.0.0",
     "google-auth-library": "^8.7.0",
     "http-status-codes": "^2.2.0",
     "ioredis": "^5.2.5",
