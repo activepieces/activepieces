@@ -1,6 +1,5 @@
 import { URL } from 'node:url';
 import type {Authentication} from '../../authentication/core/authentication';
-import type {AuthenticationConverter} from './authentication/authentication-converter';
 import type {HttpClient} from './http-client';
 import {HttpHeader} from './http-header';
 import type {HttpMessageBody} from './http-message-body';
@@ -8,11 +7,12 @@ import type {HttpRequest} from './http-request';
 import {MediaType} from './media-type';
 import type {HttpHeaders} from './http-headers';
 import { HttpResponse } from './http-response';
+import { DelegatingAuthenticationConverter } from './delegating-authentication-converter';
 
 export abstract class BaseHttpClient implements HttpClient {
 	constructor(
 		private readonly baseUrl: string,
-		private readonly authenticationConverter: AuthenticationConverter,
+		private readonly authenticationConverter: DelegatingAuthenticationConverter,
 	) {}
 
 	abstract sendRequest<RequestBody extends HttpMessageBody, ResponseBody extends HttpMessageBody>(

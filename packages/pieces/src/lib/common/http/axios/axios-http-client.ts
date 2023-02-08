@@ -1,6 +1,5 @@
 import axios, { AxiosStatic } from 'axios';
-import { AuthenticationConverter } from '../core/authentication/authentication-converter';
-import { DelegatingAuthenticationConverter } from '../core/authentication/delegating-authentication-converter';
+import { DelegatingAuthenticationConverter } from '../core/delegating-authentication-converter';
 import { BaseHttpClient } from '../core/base-http-client';
 import { HttpError } from '../core/http-error';
 import { HttpHeaders } from '../core/http-headers';
@@ -12,7 +11,7 @@ import { HttpResponse } from '../core/http-response';
 export class AxiosHttpClient extends BaseHttpClient {
 	constructor(
 		baseUrl = '',
-		authenticationConverter: AuthenticationConverter = new DelegatingAuthenticationConverter(),
+		authenticationConverter: DelegatingAuthenticationConverter = new DelegatingAuthenticationConverter(),
 		private readonly client: AxiosStatic = axios,
 	) {
 		super(baseUrl, authenticationConverter);
