@@ -15,7 +15,6 @@ import { googleSheets } from './google-sheets';
 import { sendgrid } from './sendgrid';
 import { asana } from './asana';
 import { typeform } from './typeform';
-import { telegramBot } from './telegram';
 import { clickup } from './clickup';
 import { drip } from './drip';
 import { calendly } from './calendly';
@@ -24,6 +23,7 @@ import { twilio } from './twilio';
 import { todoist } from './todoist';
 import { zoom } from './zoom';
 import { googleCalendar } from './google-calendar';
+import { telegramBot } from './telegram_bot';
 
 export const pieces: Piece[] = [
 	slack,
