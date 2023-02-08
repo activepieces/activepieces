@@ -44,7 +44,7 @@ export const githubCommon = {
 }
 
 async function getUserRepo(authProp: OAuth2PropertyValue): Promise<GithubRepository[]> {
-    const request: HttpRequest<never> = {
+    const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${githubCommon.baseUrl}/user/repos`,
         queryParams: {

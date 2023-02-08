@@ -635,3 +635,15 @@ app-collection-builder{
 		overflow:visible !important;
 	}
 }
+
+mat-form-field.\!ap-bg-white
+{
+	.mat-mdc-form-field-focus-overlay
+	{
+		background-color: $white !important;
+	}
+	.mdc-text-field--filled:not(.mdc-text-field--disabled)
+	{
+		background-color: $white !important;
+	}
+}

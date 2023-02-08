@@ -33,7 +33,7 @@ export const hubSpotClient = {
 
   lists: {
     async getStaticLists({ token }: GetStaticListsParams): Promise<HubSpotListsResponse> {
-      const request: HttpRequest<never> = {
+      const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${API}/contacts/v1/lists/static`,
         queryParams: {

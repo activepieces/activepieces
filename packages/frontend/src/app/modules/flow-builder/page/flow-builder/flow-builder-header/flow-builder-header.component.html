@@ -20,6 +20,7 @@
       (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></app-icon-button>
     <div class="ap-flex-grow" #spacer></div>
     <div class="ap-flex ap-items-center ap-gap-2">
+      <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
       <ng-container *ngIf=" (viewMode$ | async)===false">
         <ng-container *ngIf="collectionInstance$| async as instance">
           <app-toggle-instance-state [collectionId]="collection.id"

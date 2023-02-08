@@ -1,10 +1,9 @@
+import fs from "node:fs";
 import { sandboxManager } from "../sandbox";
 import { CodeExecutionResult, CodeRunStatus } from "@activepieces/shared";
 import { codeBuilder } from "./code-builder";
 import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";
-
-const fs = require("fs");
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 
