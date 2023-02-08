@@ -67,15 +67,12 @@ export const googleDriveCreateNewFolder = createAction({
     "mimeType": "application/vnd.google-apps.folder"
   },
   async run(context) {
-    const body: Record<string, string | string[] | undefined> = {
+    const body: Record<string, (string | string[] | undefined)> = {
       'mimeType': "application/vnd.google-apps.folder",
       'name': context.propsValue.folderName,
+      ...(context.propsValue.parentFolder ? { 'parents': [context.propsValue.parentFolder] } : {})
     }
-
-    if (context.propsValue?.parentFolder) {
-      body['parents'] = [context.propsValue.parentFolder]
-    }
-
+    
     const request: HttpRequest<Record<string, unknown>> = {
       method: HttpMethod.POST,
       url: `https://www.googleapis.com/drive/v3/files`,
