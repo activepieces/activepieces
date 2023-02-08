@@ -39,6 +39,7 @@ export const twilioNewIncomingSms = createTrigger({
             "feedback": "/2010-04-01/Accounts/ACc0ea716d61fe90d78a69a3de71d45619/Messages/SM8c3920d3f2ac481ba83e639a69dadd63/Feedback.json"
         }
     },
+    // Twilio API only allows one webhook per phone number, so we need to poll
     type: TriggerStrategy.POLLING,
     async onEnable(context) {
         const { phone_number } = context.propsValue;
