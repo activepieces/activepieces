@@ -61,6 +61,7 @@ export interface OAuth2ConnectionValueWithApp extends BaseOAuth2ConnectionValue,
   client_secret: string;
   token_url: string;
   redirect_url: string;
+  props?: Record<string, any>;
 }
 
 

@@ -261,7 +261,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
 
   connectionValueChanged(event: { configKey: string, value: `\${connections.${string}}` }) {
-    debugger;
+
     this.form.get(event.configKey)!.setValue(event.value);
   }
   dropdownCompareWithFunction = (opt: string, formControlValue: string) => {

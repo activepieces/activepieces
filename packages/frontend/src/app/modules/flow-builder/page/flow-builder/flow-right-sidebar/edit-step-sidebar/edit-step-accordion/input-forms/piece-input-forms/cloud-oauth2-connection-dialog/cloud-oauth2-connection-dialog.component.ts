@@ -158,6 +158,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
         return prev && next;
       }, true);
   }
+
   useOwnCred() {
     this.dialogRef.close(USE_MY_OWN_CREDENTIALS);
   }

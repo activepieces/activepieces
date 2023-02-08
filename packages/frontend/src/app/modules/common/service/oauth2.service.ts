@@ -11,14 +11,14 @@ import { BaseOAuth2ConnectionValue, ClaimTokenWithSecretRequest, OAuth2AppDetail
 export class Oauth2Service {
 	private currentlyOpenPopUp: Window | null = null;
 
-	constructor(private httpClient: HttpClient) {}
+	constructor(private httpClient: HttpClient) { }
 
 	public claimWithSecret(request: ClaimTokenWithSecretRequest) {
 		return this.httpClient.post<BaseOAuth2ConnectionValue>(environment.apiUrl + '/oauth2/claim', request);
 	}
 
 	public openPopup(
-		request: OAuth2AppDetails & { scope: string; auth_url: string,  extraParams: Record<string, unknown> }
+		request: OAuth2AppDetails & { scope: string; auth_url: string, extraParams: Record<string, unknown> }
 	): Observable<any> {
 		this.currentlyOpenPopUp?.close();
 		const winTarget = '_blank';
@@ -47,20 +47,20 @@ export class Oauth2Service {
 		const popup = window.open(url, winTarget, winFeatures);
 		this.currentlyOpenPopUp = popup;
 		const codeObs$ = new Observable<any>(observer => {
-			window.addEventListener('message', function handler (event) {
+			window.addEventListener('message', function handler(event) {
 				if (redirect_uri.startsWith(event.origin)) {
 					if (event.data != undefined) {
 						event.data.code = decodeURIComponent(event.data.code);
 						observer.next(event.data);
 						popup?.close();
 						observer.complete();
-						
+
 					} else {
 						observer.error('No code returned');
 						popup?.close();
 						observer.complete();
 					}
-					window.removeEventListener('message',handler);
+					window.removeEventListener('message', handler);
 				}
 			});
 		});
@@ -76,7 +76,7 @@ export class Oauth2Service {
 						tokenUrl: request.token_url,
 					}).pipe(
 						map(value => {
-						
+
 							if (value['error']) {
 								throw Error(value['error']);
 							}
@@ -127,7 +127,7 @@ export class Oauth2Service {
 		const popup = window.open(url, winTarget, winFeatures);
 		this.currentlyOpenPopUp = popup;
 		const codeObs$ = new Observable<any>(observer => {
-			window.addEventListener('message', function handler (event) {
+			window.addEventListener('message', function handler(event) {
 				if (redirect_uri.startsWith(event.origin)) {
 					if (event.data != undefined) {
 						event.data.code = decodeURIComponent(event.data.code);
@@ -139,7 +139,7 @@ export class Oauth2Service {
 						popup?.close();
 						observer.complete();
 					}
-					window.removeEventListener('message',handler);
+					window.removeEventListener('message', handler);
 				}
 			});
 		});

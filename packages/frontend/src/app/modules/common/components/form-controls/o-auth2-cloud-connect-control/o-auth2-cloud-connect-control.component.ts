@@ -27,12 +27,14 @@ export interface CloudConnectionPopupSettings {
 })
 export class OAuth2CloudConnectControlComponent implements ControlValueAccessor {
 	@Input() cloudConnectionPopupSettings: CloudConnectionPopupSettings;
+	popUpError = false;
+
 	responseData: any = null;
 	isDisabled = false;
 	popupOpened$: Observable<any>;
-	onChange = (newValue: any) => {};
-	onTouched = () => {};
-	constructor(private oauth2Service: Oauth2Service) {}
+	onChange = (newValue: any) => { };
+	onTouched = () => { };
+	constructor(private oauth2Service: Oauth2Service) { }
 
 	setDisabledState?(isDisabled: boolean): void {
 		this.isDisabled = isDisabled;
@@ -47,14 +49,13 @@ export class OAuth2CloudConnectControlComponent implements ControlValueAccessor 
 	registerOnTouched(fn: any): void {
 		this.onTouched = fn;
 	}
-	popUpError = false;
 
 	openPopup(): void {
 		this.popupOpened$ = this.oauth2Service.openCloudAuthPopup(this.cloudConnectionPopupSettings).pipe(
 			tap(value => {
-				this.popUpError=false;
+				this.popUpError = false;
 				this.responseData = value;
-				this.onChange({...value, type:AppConnectionType.CLOUD_OAUTH2});
+				this.onChange({ ...value, type: AppConnectionType.CLOUD_OAUTH2 });
 			}),
 			catchError(err => {
 				this.responseData = null;
