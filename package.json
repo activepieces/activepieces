@@ -25,7 +25,7 @@
     "@fortawesome/angular-fontawesome": "^0.12.1",
     "@fortawesome/fontawesome-svg-core": "^6.2.1",
     "@fortawesome/free-solid-svg-icons": "^6.2.1",
-    "@google-cloud/vision": "^3.0.1",
+    "@google-cloud/vision": "^3.1.0",
     "@mailchimp/mailchimp_marketing": "^3.0.80",
     "@materia-ui/ngx-monaco-editor": "^6.0.0",
     "@microfleet/ioredis-lock": "^5.1.0",
