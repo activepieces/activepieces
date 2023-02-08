@@ -1,5 +1,4 @@
-import { PropertyType } from "packages/pieces/src/lib/framework/property";
-
+import { PropertyType } from "@activepieces/shared";
 
 export enum HttpMethod {
 	CONNECT = 'CONNECT',

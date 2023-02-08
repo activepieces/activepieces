@@ -1,4 +1,4 @@
-import { DropdownProperty, DropdownState, getPiece, pieces, PropertyType, Store, Trigger } from "@activepieces/pieces";
+import { DropdownProperty, DropdownState, getPiece, pieces, PropertyType, Store, Trigger } from "@activepieces/framework";
 import { ActivepiecesError, ErrorCode, ExecuteDropdownOptions, ExecuteTriggerOperation, ExecutionState, PieceTrigger } from "@activepieces/shared";
 import { storageService } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";

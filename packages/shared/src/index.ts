@@ -37,6 +37,7 @@ export {Trigger, EmptyTrigger, PieceTriggerSettings, ScheduleTriggerSettings, Pi
 export {Collection, CollectionId} from './lib/collections/collection';
 export {CollectionVersion, CollectionVersionState, CollectionVersionId} from './lib/collections/collection-version';
 export {PieceOptionRequest} from './lib/pieces/dto/piece-option-request';
+export {PropertyType} from './lib/pieces/model/property-type';
 export {FlowVersion, FlowVersionState, FlowVersionId} from './lib/flows/flow-version';
 export {Flow, FlowId} from './lib/flows/flow';
 export {File, FileId} from './lib/file/file'
