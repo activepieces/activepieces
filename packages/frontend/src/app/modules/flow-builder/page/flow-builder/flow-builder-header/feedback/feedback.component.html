@@ -18,7 +18,7 @@
             </app-button>
             <div class="ap-flex-grow"></div>
             <app-button btnSize="medium" placement="bottom" [loading]="sendingFeedback"
-                (buttonClicked)="sendFeedback(menuTrigger)">
+                (buttonClicked)="sendFeedback()">
                 Send Feedback
             </app-button>
         </div>
@@ -33,3 +33,4 @@
 <ng-container *ngIf="sendFeedback$ | async">
 
 </ng-container>
+<ng-container *ngIf="openFeedbackPopOver$ | async"></ng-container>
