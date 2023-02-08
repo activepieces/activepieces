@@ -4,7 +4,7 @@ import fs from "node:fs";
 import { system } from "./system/system";
 import { SystemProp } from "./system/system-prop";
 import { tokenUtils } from "../authentication/lib/token-utils";
-import { DropdownState } from "@activepieces/pieces";
+import { DropdownState } from "@activepieces/framework";
 import { logger } from "../../main";
 import chalk from "chalk";
 

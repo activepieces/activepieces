@@ -50,7 +50,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nodemon -e ts,js,mjs,json -x 'nx bundle engine' --watch packages/engine/src --watch packages/pieces/src & nx build-watch backend"
+        "command": "nodemon -e ts,js,mjs,json -x 'nx bundle engine' --watch packages/engine/src --watch packages/pieces/framework/src & nx build-watch backend"
       }
     },
     "lint": {
