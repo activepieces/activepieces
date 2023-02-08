@@ -2,7 +2,7 @@ import { AuthenticationType } from "../../../common/authentication/core/authenti
 import { httpClient } from "../../../common/http/core/http-client";;
 import { HttpMethod } from "../../../common/http/core/http-method";
 import { createAction } from "../../../framework/action/action";
-import { Property } from "../../../framework/property";
+import { OAuth2PropertyValue, Property } from "../../../framework/property";
 
 import FormData from "form-data";
 
@@ -29,11 +29,48 @@ export const googleDriveCreateNewTextFile = createAction({
       description: 'The text content to add to file',
       required: true,
     }),
-    parentFolder: Property.ShortText({
-      displayName: 'Parent folder',
-      description: 'Id of the folder to create new folder inside',
+    parentFolder: Property.Dropdown({
+      displayName: "Parent Folder",
       required: false,
+      refreshers: ['authentication'],
+      options: async (propsValue) => {
+        if (propsValue['authentication'] === undefined) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first'
+          }
+        }
+        const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
+        const folders = (await httpClient.sendRequest<{ files: { id: string, name: string }[] }>({
+          method: HttpMethod.GET,
+          url: `https://www.googleapis.com/drive/v3/files`,
+          queryParams: {
+            q: "mimeType='application/vnd.google-apps.folder'"
+          },
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: authProp!['access_token'],
+          }
+        })).body.files;
+
+        return {
+          disabled: false,
+          options: folders.map((sheet: { id: string, name: string }) => {
+            return {
+              label: sheet.name,
+              value: sheet.id
+            }
+          })
+        };
+      }
     }),
+  },
+  sampleData: {
+    "kind": "drive#file",
+    "id": "1VjCR4-747AvKH7KeQ6GclFpCnu_41ZDX",
+    "name": "text.txt",
+    "mimeType": "plain/text"
   },
   async run(context) {
     const meta = {
