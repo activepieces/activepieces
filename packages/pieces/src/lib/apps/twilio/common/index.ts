@@ -2,19 +2,50 @@ import { AuthenticationType } from "../../../common/authentication/core/authenti
 import { httpClient } from "../../../common/http/core/http-client";
 import { HttpMessageBody } from "../../../common/http/core/http-message-body";
 import { HttpMethod } from "../../../common/http/core/http-method";
-import { Property } from "../../../framework/property";
+import { BasicAuthPropertyValue, Property } from "../../../framework/property";
 
 export const twilioCommon = {
-    auth_token: Property.ShortText({
-        description: "",
-        displayName: 'Auth token',
+    authentication: Property.BasicAuth({
+        description: 'The authentication to use to connect to Twilio',
+        displayName: 'Authentication',
         required: true,
+        username: {
+            displayName: 'Account SID',
+            description: 'The account SID to use to connect to Twilio',
+        },
+        password: {
+            displayName: 'Auth token',
+            description: 'The auth token to use to connect to Twilio',
+        }
     }),
-    account_sid: Property.ShortText({
-        description: "",
-        displayName: 'Account SID',
+    phone_number: Property.Dropdown({
+        description: 'The phone number to send the message from',
+        displayName: 'From',
         required: true,
-    }),
+        refreshers: ['authentication'],
+        options: async (propsValue) => {
+            if (propsValue['authentication'] === undefined) {
+                return {
+                    disabled: true,
+                    placeholder: 'connect your account first',
+                    options: [],
+                };
+            }
+
+            const basicAuthProperty = propsValue['authentication'] as BasicAuthPropertyValue;
+            const response = await callTwilioApi<{ incoming_phone_numbers: { phone_number: string, friendly_name: string }[] }>(HttpMethod.GET, 'IncomingPhoneNumbers.json', {
+                account_sid: basicAuthProperty.username,
+                auth_token: basicAuthProperty.password
+            });
+            return {
+                disabled: false,
+                options: response.body.incoming_phone_numbers.map((number: any) => ({
+                    value: number.phone_number,
+                    label: number.friendly_name,
+                })),
+            }
+        }
+    })
 }
 
 export const callTwilioApi = async <T extends HttpMessageBody>(method: HttpMethod, path: string, auth: { account_sid: string, auth_token: string }, body?: any) => {
