@@ -45,12 +45,12 @@ export const twilioNewIncomingSms = createTrigger({
         const account_sid = context.propsValue['authentication']!['username']!;
         const auth_token = context.propsValue['authentication']!['password']!;
         const response = await callTwilioApi<MessagePaginationResponse>(HttpMethod.GET, `Messages.json?PageSize=20&To=${phone_number}`, { account_sid, auth_token, }, {});
-        await context.store?.put<LastMessage>('_new_incoming_sms_trigger', {
+        await context.store.put<LastMessage>('_new_incoming_sms_trigger', {
             lastMessageId: response.body.messages.length === 0 ? null : response.body.messages[0].sid,
         });
     },
     async onDisable(context) {
-        await context.store?.put('_new_incoming_sms_trigger', null);
+        await context.store.put('_new_incoming_sms_trigger', null);
     },
     async run(context) {
         const account_sid = context.propsValue['authentication']!['username']!;
@@ -85,7 +85,7 @@ export const twilioNewIncomingSms = createTrigger({
                 }
             }
         }
-        await context.store?.put<LastMessage>('_new_incoming_sms_trigger', {
+        await context.store.put<LastMessage>('_new_incoming_sms_trigger', {
             lastMessageId: firstMessageId ?? lastMessage!.lastMessageId,
         });
         return newMessages;
