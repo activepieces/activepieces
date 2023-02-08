@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "license": "MIT",
   "scripts": {
     "prepare": "husky install"
@@ -43,6 +43,7 @@
     "dayjs": "^1.11.7",
     "decompress": "^4.2.1",
     "deep-equal": "^2.2.0",
+    "drip-nodejs": "^3.1.1",
     "fastify": "4.11.0",
     "flatpickr": "^4.6.13",
     "font-awesome": "^4.7.0",
