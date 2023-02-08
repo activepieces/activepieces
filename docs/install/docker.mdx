@@ -25,16 +25,19 @@ git clone https://github.com/activepieces/activepieces.git
 cd activepieces
 ```
 
+<Warning>
+Please ensure the instance is accessible from the internet so that third-party services can send payloads to activepieces. 
+
+When deploying for production, ensure that you update the database credentials and properly set the environment variables.
+
+Review the [configurations guide](configurations.mdx) to make any necessary adjustments.
+</Warning>
+
 **3. Run Activepieces.**
 
 ```bash
 docker compose -p activepieces up
 ```
-
-<Warning>
-Please ensure the instance is accessible from the internet so that third-party services can send payloads to activepieces. 
-Review the [configurations guide]:(https://activepieces.com/docs/install/configurations) to make any necessary adjustments.
-</Warning>
 
 ## Upgrading
 
