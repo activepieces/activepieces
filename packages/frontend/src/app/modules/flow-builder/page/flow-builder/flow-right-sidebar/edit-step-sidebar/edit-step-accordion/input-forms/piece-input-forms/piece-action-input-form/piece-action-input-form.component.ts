@@ -34,7 +34,7 @@ const ACTION_FORM_CONTROL_NAME = 'action';
 const CONFIGS_FORM_CONTROL_NAME = 'configs';
 declare type ConfigsFormControlValue = {
 	input: Record<string, string | Array<any> | object>;
-	customizedInputs: Map<string, boolean>;
+	customizedInputs: Record<string, boolean>;
 };
 
 declare type ComponentFormValue = {
@@ -149,6 +149,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 							if (selectedAction) {
 								const configs = [...selectedAction.value.configs];
 								const configsValues = this.intialComponentInputFormValue!.input;
+								debugger;
 								if (configsValues) {
 									Object.keys(configsValues).forEach(key => {
 										const config = configs.find(c => c.key === key);
@@ -173,6 +174,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 		);
 	}
 	writeValue(obj: ComponentActionInputFormSchema): void {
+		debugger;
 		this.intialComponentInputFormValue = obj;
 		this.pieceName = obj.pieceName;
 		this.componentForm.get(ACTION_FORM_CONTROL_NAME)?.setValue(undefined, { emitEvent: false });
@@ -210,10 +212,10 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 		if (!configsForm) {
 			this.componentForm.addControl(
 				CONFIGS_FORM_CONTROL_NAME,
-				new UntypedFormControl([...selectedActionValue.configs])
+				new UntypedFormControl({ configs: [...selectedActionValue.configs], customizedInputs: new Map<string, boolean>() })
 			);
 		} else {
-			configsForm.setValue([...selectedActionValue.configs]);
+			configsForm.setValue({ configs: [...selectedActionValue.configs], customizedInputs: new Map<string, boolean>() });
 		}
 
 		this.cd.detectChanges();
@@ -221,9 +223,9 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 	}
 
 	getFormattedFormData(oldAndCurrentValues: [ComponentFormValue | null, ComponentFormValue]): PieceActionSettings {
-		let customizedInputs: Map<string, boolean>;
+		let customizedInputs: Record<string, boolean>;
 		if (oldAndCurrentValues[0] === null || oldAndCurrentValues[0][ACTION_FORM_CONTROL_NAME] !== oldAndCurrentValues[1][ACTION_FORM_CONTROL_NAME]) {
-			customizedInputs = new Map();
+			customizedInputs = {};
 		}
 		else {
 			customizedInputs = oldAndCurrentValues[1][CONFIGS_FORM_CONTROL_NAME].customizedInputs;
@@ -238,6 +240,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 			pieceName: this.pieceName,
 			customizedInputs: customizedInputs
 		};
+		debugger;
 		return res;
 	}
 	actionDropdownCompareFn(item, selected) {

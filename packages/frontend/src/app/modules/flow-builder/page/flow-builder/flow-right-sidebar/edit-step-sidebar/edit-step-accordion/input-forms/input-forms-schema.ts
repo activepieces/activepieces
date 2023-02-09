@@ -28,7 +28,7 @@ export interface ComponentActionInputFormSchema extends InputFormsSchemaBase {
 	pieceName: string;
 	actionName: string;
 	input: ConfigsAndTheirValues;
-	customizedInputs: Map<string, boolean>
+	customizedInputs: Record<string, boolean>
 }
 export interface ComponentTriggerInputFormSchema extends InputFormsSchemaBase {
 	pieceName: string;

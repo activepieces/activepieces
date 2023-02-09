@@ -273,7 +273,7 @@ export class StepTypeSidebarComponent implements OnInit {
               pieceName: componentDetails.extra!.appName,
               actionName: undefined,
               input: {},
-              customizedInputs: new Map<string, boolean>()
+              customizedInputs: {}
             },
           },
         };

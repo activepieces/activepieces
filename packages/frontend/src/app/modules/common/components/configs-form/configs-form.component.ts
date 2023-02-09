@@ -76,7 +76,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     theme: 'lucario',
     mode: 'javascript',
   };
-  customizedInputs: Map<string, boolean> | undefined;
+  customizedInputs: Record<string, boolean> | undefined;
   faInfoCircle = faInfoCircle;
   checkingOAuth2CloudManager = false;
   configs: PieceConfig[] = [];
@@ -104,7 +104,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     );
   }
 
-  writeValue(obj: { configs: PieceConfig[], customizedInputs: Map<string, boolean> } | PieceConfig[]): void {
+  writeValue(obj: { configs: PieceConfig[], customizedInputs: Record<string, boolean> } | PieceConfig[]): void {
+    debugger;
     if (Array.isArray(obj)) {
       this.configs = obj;
     }
@@ -112,6 +113,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       this.configs = obj.configs;
       this.customizedInputs = obj.customizedInputs;
     }
+    debugger;
     this.createForm();
   }
   registerOnChange(fn: any): void {
@@ -236,7 +238,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       } else if (c.type === PropertyType.ARRAY) {
         controls[c.key] = new UntypedFormControl(c.value || [''], validators);
       } else if (c.type === PropertyType.JSON) {
-        validators.push(jsonValidator);
+        if (!this.customizedInputs || !this.customizedInputs[c.key]) { validators.push(jsonValidator); }
         if (typeof c.value === "object") {
           controls[c.key] = new UntypedFormControl(JSON.stringify(c.value), validators);
         }
@@ -245,7 +247,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         }
       }
       else {
-        controls[c.key] = new UntypedFormControl(c.value, validators);
+        controls[c.key] = new UntypedFormControl(c.value === undefined || null ? undefined : c.value, validators);
       }
 
     });
@@ -308,5 +310,36 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       const ctrl = this.form.get(configKey)!;
       ctrl.setValue(this.codeService.beautifyJson(JSON.parse(ctrl.value)));
     } catch { ; }
+  }
+  toggleCustomizedInputFlag(configKey: string) {
+    if (!this.customizedInputs) {
+      throw new Error("Activepieces-customized inputs map is not initialized");
+    }
+    const isCustomized = !this.customizedInputs[configKey];
+    this.customizedInputs = { ...this.customizedInputs, [configKey]: isCustomized };
+    const config = this.configs.find(c => c.key === configKey);
+    const ctrl = this.form.get(configKey);
+    if (!config || !ctrl) {
+      throw new Error("Activepieces-config not found: " + configKey);
+    }
+    if (config.type === PropertyType.JSON) {
+      if (isCustomized) {
+        ctrl.removeValidators([jsonValidator]);
+      }
+      else {
+        ctrl.addValidators([jsonValidator]);
+        ctrl.setValue("{}");
+      }
+    }
+    else if (config.type === PropertyType.OBJECT) {
+      ctrl.setValue({});
+    }
+    else if (config.type === PropertyType.ARRAY) {
+      ctrl.setValue(['']);
+    }
+    else {
+      ctrl.setValue(undefined);
+    }
+
   }
 }

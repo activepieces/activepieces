@@ -42,7 +42,7 @@ export type PieceActionSettings = {
   pieceName: string;
   actionName: string | undefined;
   input: Record<string, unknown>;
-  customizedInputs: Map<string, boolean>
+  customizedInputs: Record<string, boolean>
 };
 
 export type PieceAction = BaseAction<ActionType.PIECE, PieceActionSettings>
