@@ -50,7 +50,7 @@ export const calendlyInviteeCreated = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const calendlyUser = await calendlyCommon.getUser(context.propsValue["authentication"]!);
-    const request: HttpRequest<any> = {
+    const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${calendlyCommon.baseUrl}/webhook_subscriptions`,
       body: {
@@ -77,7 +77,7 @@ export const calendlyInviteeCreated = createTrigger({
     const response = await context.store?.get<CalendlyWebhookInformation>(triggerNameInStore);
     console.log(response || "nothing");
     if (response !== null && response !== undefined) {
-      const request: HttpRequest<never> = {
+      const request: HttpRequest = {
         method: HttpMethod.DELETE,
         url: `${calendlyCommon.baseUrl}/webhook_subscriptions/${response.webhookId}`,
         authentication: {

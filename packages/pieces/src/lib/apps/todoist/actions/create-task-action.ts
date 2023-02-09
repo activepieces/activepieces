@@ -1,7 +1,7 @@
 import { assertNotNullOrUndefined } from '../../../common/helpers/assertions';
 import { createAction } from '../../../framework/action/action';
 import { Property } from '../../../framework/property';
-import { todoistClient } from '../common/client';
+import { todoistRestClient } from '../common/client/rest-client';
 import { todoistAuthentication, todoistProjectIdDropdown } from '../common/props';
 
 export const todoistCreateTaskAction = createAction({
@@ -36,7 +36,7 @@ export const todoistCreateTaskAction = createAction({
 
   props: {
     authentication: todoistAuthentication,
-    projectId: todoistProjectIdDropdown,
+    project_id: todoistProjectIdDropdown,
     content: Property.LongText({
       displayName: 'content',
       required: true,
@@ -45,14 +45,14 @@ export const todoistCreateTaskAction = createAction({
 
   async run({ propsValue }) {
     const token = propsValue.authentication?.access_token;
-    const { projectId, content } = propsValue;
+    const { project_id, content } = propsValue;
 
     assertNotNullOrUndefined(token, 'token');
     assertNotNullOrUndefined(content, 'content');
 
-    return await todoistClient.tasks.create({
+    return await todoistRestClient.tasks.create({
       token,
-      projectId,
+      project_id,
       content,
     });
   },

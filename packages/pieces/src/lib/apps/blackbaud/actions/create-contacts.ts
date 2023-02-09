@@ -42,7 +42,7 @@ export const blackbaudCreateContacts = createAction({
         const responses = [];
         const accessToken = configValue.propsValue['authentication']?.access_token;
         for (let i = 0; i < contacts.length; ++i) {
-            const request: HttpRequest<any> = {
+            const request: HttpRequest = {
                 method: HttpMethod.POST,
                 url: `${blackbaudCommon.baseUrl}/constituent/v1/constituents`,
                 body: contacts[i],

@@ -15,14 +15,15 @@ import { googleSheets } from './google-sheets';
 import { sendgrid } from './sendgrid';
 import { asana } from './asana';
 import { typeform } from './typeform';
-import { telegramBot } from './telegram';
 import { clickup } from './clickup';
 import { drip } from './drip';
 import { calendly } from './calendly';
 import { http } from './http';
+import { twilio } from './twilio';
 import { todoist } from './todoist';
 import { zoom } from './zoom';
 import { googleCalendar } from './google-calendar';
+import { telegramBot } from './telegram_bot';
 
 export const pieces: Piece[] = [
 	slack,
@@ -46,8 +47,9 @@ export const pieces: Piece[] = [
 	typeform,
 	telegramBot,
 	http,
-  todoist,
-  googleCalendar,
+	twilio,
+  	todoist,
+  	googleCalendar,
 	zoom
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 

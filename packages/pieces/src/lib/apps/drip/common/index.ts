@@ -23,7 +23,7 @@ export const dripCommon = {
                 }
             }
 
-            const request: HttpRequest<never> = {
+            const request: HttpRequest = {
                 method: HttpMethod.GET,
                 url: "https://api.getdrip.com/v2/accounts",
                 headers: {

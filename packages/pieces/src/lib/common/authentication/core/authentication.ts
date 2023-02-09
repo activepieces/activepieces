@@ -1,3 +1,3 @@
-import type {BearerTokenAuthentication} from '../bearer-token/bearer-token-authentication';
+import type {BasicAuthentication, BearerTokenAuthentication} from '../bearer-token/bearer-token-authentication';
 
-export type Authentication = BearerTokenAuthentication;
+export type Authentication = BearerTokenAuthentication | BasicAuthentication;

@@ -1,5 +1,6 @@
 import {createPiece} from '../../framework/piece';
 import { todoistCreateTaskAction } from './actions/create-task-action';
+import { todoistTaskCompletedTrigger } from './triggers/task-completed-trigger';
 
 export const todoist = createPiece({
 	name: 'todoist',
@@ -9,5 +10,6 @@ export const todoist = createPiece({
     todoistCreateTaskAction,
   ],
 	triggers: [
+    todoistTaskCompletedTrigger,
   ],
 });

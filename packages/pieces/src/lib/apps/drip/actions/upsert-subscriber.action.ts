@@ -68,7 +68,7 @@ export const dripUpsertSubscriberAction = createAction({
         ]
     },
     async run(context) {
-        const request: HttpRequest<any> = {
+        const request: HttpRequest = {
             method: HttpMethod.POST,
             url: `${dripCommon.baseUrl(context.propsValue["account_id"]!)}/subscribers`,
             body: {
