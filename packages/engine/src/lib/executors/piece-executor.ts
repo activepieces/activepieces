@@ -11,7 +11,7 @@ export class PieceExecutor {
     const piece = this.getPiece(pieceName);
 
     return await piece.getAction(actionName)!.run({
-      store: createContextStore(),
+      store: createContextStore(''),
       propsValue: config
     });
   }
