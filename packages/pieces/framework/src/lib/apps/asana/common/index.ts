@@ -21,6 +21,7 @@ export const asanaCommon = {
         required: true,
         refreshers: ['authentication'],
         options: async (value) => {
+            console.debug("test");
             if (value['authentication'] === undefined) {
                 return {
                     disabled: true,

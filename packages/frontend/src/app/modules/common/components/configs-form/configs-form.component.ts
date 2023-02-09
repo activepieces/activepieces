@@ -76,6 +76,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     theme: 'lucario',
     mode: 'javascript',
   };
+  customizedInputs: Map<string, boolean> | undefined;
   faInfoCircle = faInfoCircle;
   checkingOAuth2CloudManager = false;
   configs: PieceConfig[] = [];
@@ -103,8 +104,14 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     );
   }
 
-  writeValue(obj: PieceConfig[]): void {
-    this.configs = obj;
+  writeValue(obj: { configs: PieceConfig[], customizedInputs: Map<string, boolean> } | PieceConfig[]): void {
+    if (Array.isArray(obj)) {
+      this.configs = obj;
+    }
+    else {
+      this.configs = obj.configs;
+      this.customizedInputs = obj.customizedInputs;
+    }
     this.createForm();
   }
   registerOnChange(fn: any): void {
@@ -261,7 +268,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
 
   connectionValueChanged(event: { configKey: string, value: `\${connections.${string}}` }) {
-    debugger;
     this.form.get(event.configKey)!.setValue(event.value);
   }
   dropdownCompareWithFunction = (opt: string, formControlValue: string) => {
@@ -280,10 +286,21 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       if (this.configs.find(c => c.key === configKey)!.type === PropertyType.JSON) {
         try {
           formattedValue[configKey] = JSON.parse(formValue[configKey]);
-        } catch (_) { ; }
+        }
+        //incase it is an invalid json
+        catch (_) { ; }
       }
     });
-    return formattedValue;
+
+    if (this.customizedInputs) {
+      return {
+        input: formattedValue,
+        customizedInputs: this.customizedInputs
+      }
+    }
+    else {
+      return formattedValue
+    }
   }
 
   beautify(configKey: string) {

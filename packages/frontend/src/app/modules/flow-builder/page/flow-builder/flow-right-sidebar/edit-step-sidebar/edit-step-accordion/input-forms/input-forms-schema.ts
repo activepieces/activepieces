@@ -27,19 +27,15 @@ export interface ScheduledTriggerInputFormSchema extends InputFormsSchemaBase {
 export interface ComponentActionInputFormSchema extends InputFormsSchemaBase {
 	pieceName: string;
 	actionName: string;
-	input: ConfigsAndTheirValues | CustomRequestForComponentFormSchema;
+	input: ConfigsAndTheirValues;
+	customizedInputs: Map<string, boolean>
 }
 export interface ComponentTriggerInputFormSchema extends InputFormsSchemaBase {
 	pieceName: string;
 	triggerName: string;
 	input: ConfigsAndTheirValues;
 }
-interface CustomRequestForComponentFormSchema {
-	endpoint: string;
-	parameters: { [key: string]: any };
-	headers: { [key: string]: any };
-	body: { [key: string]: any };
-}
+
 
 export type InputFormsSchema =
 	| LoopStepInputFormSchema

@@ -25,8 +25,7 @@ export type CodeActionSettings = {
   input: Record<string, unknown>;
 };
 
-export interface CodeAction
-  extends BaseAction<ActionType.CODE, CodeActionSettings> {}
+export type CodeAction = BaseAction<ActionType.CODE, CodeActionSettings>
 
 export const CodeActionSchema = Type.Object({
   name: Type.String({}),
@@ -43,10 +42,10 @@ export type PieceActionSettings = {
   pieceName: string;
   actionName: string | undefined;
   input: Record<string, unknown>;
+  customizedInputs: Map<string, boolean>
 };
 
-export interface PieceAction
-  extends BaseAction<ActionType.PIECE, PieceActionSettings> {}
+export type PieceAction = BaseAction<ActionType.PIECE, PieceActionSettings>
 
 export const PieceActionSchema = Type.Object({
   name: Type.String({}),
@@ -72,8 +71,7 @@ export type StorageActionSettings = {
   value?: unknown;
 };
 
-export interface StorageAction
-  extends BaseAction<ActionType.STORAGE, StorageActionSettings> {}
+export type StorageAction = BaseAction<ActionType.STORAGE, StorageActionSettings>
 
 export const StorageActionSchema = Type.Union([
   Type.Object({
