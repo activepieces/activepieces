@@ -18,7 +18,7 @@
           Key is required
         </ng-container>
         <ng-template #patternErrorOrAlreadyUsed>
-          <ng-container *ngIf="configForm.controls.key.getError('requiredPattern');">
+          <ng-container *ngIf="configForm.controls.key.getError('pattern');">
             Keys can only contain letters, numbers and underscores
           </ng-container>
           <ng-container *ngIf="configForm.controls.key.getError('keyUsed');">

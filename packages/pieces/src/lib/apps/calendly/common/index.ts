@@ -36,7 +36,7 @@ export const calendlyCommon = {
         description: "Get it from https://calendly.com/integrations/api_webhooks"
     }),
     getUser: async (personalToken: string) => {
-        const request: HttpRequest<never> = {
+        const request: HttpRequest = {
             method: HttpMethod.GET,
             url: `${calendlyCommon.baseUrl}/users/me`,
             headers: {

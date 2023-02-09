@@ -131,7 +131,7 @@ async function getValues(spreadsheetId: string, accessToken: string, sheetId: nu
     // Define the API endpoint and headers
     // Send the API request
     const sheetName = await findSheetName(accessToken, spreadsheetId, sheetId);
-    const request: HttpRequest<never> = {
+    const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${sheetName}`,
         authentication: {

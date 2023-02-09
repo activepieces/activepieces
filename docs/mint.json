@@ -20,8 +20,8 @@
   },
   "topbarCtaButton": {
     "type": "link",
-    "name": "Playground",
-    "url": "https://demo.activepieces.com/sign-up"
+    "name": "Get Started",
+    "url": "https://www.activepieces.com/plans"
   },
   "topbarLinks": [
     {
@@ -72,6 +72,7 @@
         "pieces/apps/drip",
         "pieces/apps/github",
         "pieces/apps/gmail",
+        "pieces/apps/google_calendar",
         "pieces/apps/google_contacts",
         "pieces/apps/google_sheets",
         "pieces/apps/hackernews",
@@ -84,7 +85,10 @@
         "pieces/apps/slack",
         "pieces/apps/stripe",
         "pieces/apps/telegram_bot",
-        "pieces/apps/typeform"
+        "pieces/apps/todoist",
+        "pieces/apps/twilio",
+        "pieces/apps/typeform",
+        "pieces/apps/zoom"
       ]
     },
     {

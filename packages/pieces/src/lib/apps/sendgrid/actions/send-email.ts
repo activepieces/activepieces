@@ -86,7 +86,7 @@ export const sendEmail = createAction({
           ],
         };
 
-        const request: HttpRequest<any> = {
+        const request: HttpRequest = {
             method: HttpMethod.POST,
             url: `${sendgridCommon.baseUrl}/mail/send`,
             body: message,
