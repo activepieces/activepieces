@@ -27,7 +27,8 @@ export const triggerHelper = {
       case TriggerHookType.ON_ENABLE:
         return trigger.onEnable(context);
       case TriggerHookType.RUN:
-        return trigger.run(context);
+        // TODO: fix types to remove use of any
+        return trigger.run(context as any);
     }
   },
 }
