@@ -32,10 +32,6 @@ services:
     image: postgres:14.4
     container_name: activepieces-postgres
     restart: unless-stopped
-    environment:
-      - POSTGRES_DB=activepieces
-      - POSTGRES_PASSWORD=A79Vm5D4p2VQHOp2gd5
-      - POSTGRES_USER=postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
