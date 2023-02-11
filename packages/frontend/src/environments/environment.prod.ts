@@ -1,6 +1,5 @@
 export const environment = {
 	production: true,
-	apiDomainUrl: '',
 	apiUrl: '/api/v1',
 	jwtTokenName: 'token',
 	stageName: 'prod',
