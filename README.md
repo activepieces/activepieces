@@ -92,6 +92,7 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/kanarelo"><img src="https://avatars.githubusercontent.com/u/393261?v=4?s=100" width="100px;" alt="Mukewa Wekalao"/><br /><sub><b>Mukewa Wekalao</b></sub></a><br /><a href="#plugin-kanarelo" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://osamahaikal.pythonanywhere.com/"><img src="https://avatars.githubusercontent.com/u/72370395?v=4?s=100" width="100px;" alt="Osama Abdallah Essa Haikal"/><br /><sub><b>Osama Abdallah Essa Haikal</b></sub></a><br /><a href="#plugin-OsamaHaikal" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/M-Arman"><img src="https://avatars.githubusercontent.com/u/54455592?v=4?s=100" width="100px;" alt="Arman"/><br /><sub><b>Arman</b></sub></a><br /><a href="#security-M-Arman" title="Security">🛡️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/oskarkraemer"><img src="https://avatars.githubusercontent.com/u/42745862?v=4?s=100" width="100px;" alt="Oskar Krämer"/><br /><sub><b>Oskar Krämer</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=oskarkraemer" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
