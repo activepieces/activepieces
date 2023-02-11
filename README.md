@@ -96,6 +96,9 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
       <td align="center" valign="top" width="14.28%"><a href="https://thibpat.com"><img src="https://avatars.githubusercontent.com/u/494686?v=4?s=100" width="100px;" alt="Thibaut Patel"/><br /><sub><b>Thibaut Patel</b></sub></a><br /><a href="#ideas-tpatel" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Applesaucesomer"><img src="https://avatars.githubusercontent.com/u/18318905?v=4?s=100" width="100px;" alt="Applesaucesomer"/><br /><sub><b>Applesaucesomer</b></sub></a><br /><a href="#ideas-Applesaucesomer" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/crazyTweek"><img src="https://avatars.githubusercontent.com/u/6828237?v=4?s=100" width="100px;" alt="crazyTweek"/><br /><sub><b>crazyTweek</b></sub></a><br /><a href="#ideas-crazyTweek" title="Ideas, Planning, & Feedback">🤔</a></td>
+    </tr>
   </tbody>
 </table>
 
