@@ -98,6 +98,7 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/crazyTweek"><img src="https://avatars.githubusercontent.com/u/6828237?v=4?s=100" width="100px;" alt="crazyTweek"/><br /><sub><b>crazyTweek</b></sub></a><br /><a href="#ideas-crazyTweek" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://linkedin.com/in/muhammad-tabaza"><img src="https://avatars.githubusercontent.com/u/23503983?v=4?s=100" width="100px;" alt="Muhammad Tabaza"/><br /><sub><b>Muhammad Tabaza</b></sub></a><br /><a href="#plugin-m-tabaza" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
