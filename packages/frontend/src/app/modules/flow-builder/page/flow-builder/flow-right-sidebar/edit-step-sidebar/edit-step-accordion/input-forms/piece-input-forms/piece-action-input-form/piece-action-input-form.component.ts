@@ -212,10 +212,10 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 		if (!configsForm) {
 			this.componentForm.addControl(
 				CONFIGS_FORM_CONTROL_NAME,
-				new UntypedFormControl({ configs: [...selectedActionValue.configs], customizedInputs: new Map<string, boolean>() })
+				new UntypedFormControl({ configs: [...selectedActionValue.configs], customizedInputs: {} })
 			);
 		} else {
-			configsForm.setValue({ configs: [...selectedActionValue.configs], customizedInputs: new Map<string, boolean>() });
+			configsForm.setValue({ configs: [...selectedActionValue.configs], customizedInputs: {} });
 		}
 
 		this.cd.detectChanges();
