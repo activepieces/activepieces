@@ -194,7 +194,7 @@ function buildSchema(props: PieceProperty): TSchema {
         break;
       case PropertyType.OAUTH2:
         // Only accepts connections variable.
-        propsSchema[name] = Type.Union([Type.RegEx(RegExp('[$]{1}\{connections.(.*?)\}')), Type.String()]);
+        propsSchema[name] = Type.Union([Type.RegEx(RegExp('[$]{1}{connections.(.*?)}')), Type.String()]);
         break;
       case PropertyType.ARRAY:
         // Only accepts connections variable.
