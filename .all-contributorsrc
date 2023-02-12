@@ -146,6 +146,15 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "m-tabaza",
+      "name": "Muhammad Tabaza",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23503983?v=4",
+      "profile": "https://linkedin.com/in/muhammad-tabaza",
+      "contributions": [
+        "plugin"
+      ]
     }
   ]
 }
