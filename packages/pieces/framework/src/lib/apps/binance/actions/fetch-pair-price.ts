@@ -8,22 +8,22 @@ export const fetchCryptoPairPrice = createAction({
   displayName: 'Fetch Pair Price',
   description: 'Fetch the current price of a pair (e.g. BTC/USDT)',
   props: {
-    symbol: Property.ShortText({
-      displayName: 'Symbol',
+    first_coin: Property.ShortText({
+      displayName: 'First Coin Symbol',
       description:
         "The currency to fetch the price for (e.g. 'BTC' in 'BTC/USDT')",
       required: true,
     }),
-    vol: Property.ShortText({
-      displayName: 'Vol',
+    second_coin: Property.ShortText({
+      displayName: 'Second Coin Symbol',
       description:
         "The currency to fetch the price in (e.g. 'USDT' in 'BTC/USDT')",
       required: true,
     }),
   },
   async run(context) {
-    const { symbol, vol } = context.propsValue;
-    if (symbol && vol) return await fetchCryptoPairPriceImpl(`${symbol}${vol}`);
+    const { first_coin, second_coin } = context.propsValue;
+    if (first_coin && second_coin) return await fetchCryptoPairPriceImpl(`${first_coin}${second_coin}`);
     throw Error('Missing parameter(s)');
   },
 });
