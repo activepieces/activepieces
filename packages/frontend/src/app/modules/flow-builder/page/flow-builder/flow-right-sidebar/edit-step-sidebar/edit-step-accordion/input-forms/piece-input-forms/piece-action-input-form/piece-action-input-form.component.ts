@@ -149,7 +149,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 							if (selectedAction) {
 								const configs = [...selectedAction.value.configs];
 								const configsValues = this.intialComponentInputFormValue!.input;
-								debugger;
+
 								if (configsValues) {
 									Object.keys(configsValues).forEach(key => {
 										const config = configs.find(c => c.key === key);
@@ -174,7 +174,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 		);
 	}
 	writeValue(obj: ComponentActionInputFormSchema): void {
-		debugger;
+
 		this.intialComponentInputFormValue = obj;
 		this.pieceName = obj.pieceName;
 		this.componentForm.get(ACTION_FORM_CONTROL_NAME)?.setValue(undefined, { emitEvent: false });
@@ -224,7 +224,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 
 	getFormattedFormData(oldAndCurrentValues: [ComponentFormValue | null, ComponentFormValue]): PieceActionSettings {
 		let customizedInputs: Record<string, boolean>;
-		if (oldAndCurrentValues[0] === null || oldAndCurrentValues[0][ACTION_FORM_CONTROL_NAME] !== oldAndCurrentValues[1][ACTION_FORM_CONTROL_NAME]) {
+		if (oldAndCurrentValues[0] && oldAndCurrentValues[0][ACTION_FORM_CONTROL_NAME] !== oldAndCurrentValues[1][ACTION_FORM_CONTROL_NAME]) {
 			customizedInputs = {};
 		}
 		else {
@@ -240,7 +240,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 			pieceName: this.pieceName,
 			customizedInputs: customizedInputs
 		};
-		debugger;
+
 		return res;
 	}
 	actionDropdownCompareFn(item, selected) {

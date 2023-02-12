@@ -105,7 +105,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   }
 
   writeValue(obj: { configs: PieceConfig[], customizedInputs: Record<string, boolean> } | PieceConfig[]): void {
-    debugger;
     if (Array.isArray(obj)) {
       this.configs = obj;
     }
@@ -113,7 +112,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       this.configs = obj.configs;
       this.customizedInputs = obj.customizedInputs;
     }
-    debugger;
     this.createForm();
   }
   registerOnChange(fn: any): void {
@@ -230,7 +228,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     const controls: { [key: string]: UntypedFormControl } = {};
     configs.forEach((c) => {
       const validators: ValidatorFn[] = [];
-      if (c.required) {
+      if (c.required && c.type !== PropertyType.OBJECT && c.type !== PropertyType.ARRAY) {
         validators.push(Validators.required);
       }
       if (c.type === PropertyType.OBJECT) {
@@ -284,6 +282,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
   formValueMiddleWare(formValue: object) {
     const formattedValue = { ...formValue };
+
     Object.keys(formValue).forEach(configKey => {
       if (this.configs.find(c => c.key === configKey)!.type === PropertyType.JSON) {
         try {
@@ -322,24 +321,40 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     if (!config || !ctrl) {
       throw new Error("Activepieces-config not found: " + configKey);
     }
-    if (config.type === PropertyType.JSON) {
-      if (isCustomized) {
-        ctrl.removeValidators([jsonValidator]);
+    switch (config.type) {
+      case PropertyType.JSON: {
+        if (isCustomized) {
+          ctrl.removeValidators([jsonValidator]);
+          ctrl.setValue("");
+        }
+        else {
+          ctrl.addValidators([jsonValidator]);
+          ctrl.setValue("{}");
+        }
+        break;
       }
-      else {
-        ctrl.addValidators([jsonValidator]);
-        ctrl.setValue("{}");
+      case PropertyType.OBJECT: {
+        if (isCustomized) {
+          ctrl.setValue('');
+        }
+        else {
+          ctrl.setValue({});
+        }
+        break;
       }
+      case PropertyType.ARRAY: {
+        if (isCustomized) {
+          ctrl.setValue('');
+        }
+        else {
+          ctrl.setValue(['']);
+        }
+        break;
+      }
+      default:
+        {
+          ctrl.setValue(undefined);
+        }
     }
-    else if (config.type === PropertyType.OBJECT) {
-      ctrl.setValue({});
-    }
-    else if (config.type === PropertyType.ARRAY) {
-      ctrl.setValue(['']);
-    }
-    else {
-      ctrl.setValue(undefined);
-    }
-
   }
 }

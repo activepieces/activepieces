@@ -92,9 +92,10 @@ export class InterpolatingTextFormControlComponent
             .select(BuilderSelectors.selectAllFlowStepsNamesAndDisplayNames)
             .pipe(take(1))
         );
-        this.editorFormControl.setValue(
-          fromTextToOps(this._value, stepsNamesAndDisplayNames)
-        );
+        if (typeof this._value === "string")
+          this.editorFormControl.setValue(
+            fromTextToOps(this._value, stepsNamesAndDisplayNames)
+          );
       }
       this.stateChanges.next();
     }, 1);
@@ -214,7 +215,7 @@ export class InterpolatingTextFormControlComponent
         .select(BuilderSelectors.selectAllFlowStepsNamesAndDisplayNames)
         .pipe(take(1))
     );
-    if (value) {
+    if (value && typeof value === "string") {
       const parsedTextToOps = fromTextToOps(value, stepsNamesAndDisplayNames);
       this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
     }

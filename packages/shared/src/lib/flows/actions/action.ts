@@ -55,6 +55,7 @@ export const PieceActionSchema = Type.Object({
     pieceName: Type.String({}),
     actionName: Type.String({}),
     input: Type.Object({}),
+    customizedInputs: Type.Record(Type.String({}), Type.Boolean({}))
   }),
 });
 
