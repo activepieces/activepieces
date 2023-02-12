@@ -20,8 +20,8 @@
   },
   "topbarCtaButton": {
     "type": "link",
-    "name": "Playground",
-    "url": "https://demo.activepieces.com/sign-up"
+    "name": "Get Started",
+    "url": "https://www.activepieces.com/plans"
   },
   "topbarLinks": [
     {

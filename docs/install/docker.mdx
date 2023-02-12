@@ -31,9 +31,25 @@ cd activepieces
 docker compose -p activepieces up
 ```
 
+## 4. Configure Webhook URL (Important for Triggers, Optional If you have public IP)
+
+By default, the backend will try to use your public IP. If you are self-hosting on a personal machine, you must configure the backend URL so that the webhook is accessible from the internet.
+
+The easiest way to expose your webhook URL on localhost is by using a service like [ngrok](https://ngrok.com/). To set this up, follow these steps:
+
+1. Install ngrok
+2. Run the following command:
+```bash
+ngrok http 3000
+```
+3. Replace `AP_BACKEND_URL` environment variable in `packages/.env` with the ngrok url.
+
+![Ngrock](../resources/screenshots/docker-ngrok.png)
+
 <Warning>
-Please ensure the instance is accessible from the internet so that third-party services can send payloads to activepieces. 
-Review the [configurations guide]:(https://activepieces.com/docs/install/configurations) to make any necessary adjustments.
+When deploying for production, ensure that you update the database credentials and properly set the environment variables.
+
+Review the [configurations guide](configurations.mdx) to make any necessary adjustments.
 </Warning>
 
 ## Upgrading
