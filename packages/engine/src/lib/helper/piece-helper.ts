@@ -1,4 +1,4 @@
-import { DropdownProperty, DropdownState, getPiece, } from "@activepieces/framework";
+import { DropdownProperty, DropdownState, getPiece } from "@activepieces/framework";
 import { ActivepiecesError, ErrorCode, ExecuteDropdownOptions, ExecutionState, PropertyType } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
 
