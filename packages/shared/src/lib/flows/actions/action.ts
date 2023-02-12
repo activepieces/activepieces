@@ -42,7 +42,7 @@ export type PieceActionSettings = {
   pieceName: string;
   actionName: string | undefined;
   input: Record<string, unknown>;
-  customizedInputs: Record<string, boolean>
+  inputUiInfo: Record<string, unknown>
 };
 
 export type PieceAction = BaseAction<ActionType.PIECE, PieceActionSettings>
@@ -55,7 +55,7 @@ export const PieceActionSchema = Type.Object({
     pieceName: Type.String({}),
     actionName: Type.String({}),
     input: Type.Object({}),
-    customizedInputs: Type.Record(Type.String({}), Type.Boolean({}))
+    inputUiInfo: Type.Record(Type.String({}), Type.Any())
   }),
 });
 

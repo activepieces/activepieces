@@ -273,7 +273,9 @@ export class StepTypeSidebarComponent implements OnInit {
               pieceName: componentDetails.extra!.appName,
               actionName: undefined,
               input: {},
-              customizedInputs: {}
+              inputUiInfo: {
+                customizedInputs: {}
+              }
             },
           },
         };
