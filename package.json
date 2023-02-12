@@ -44,7 +44,7 @@
     "decompress": "^4.2.1",
     "deep-equal": "^2.2.0",
     "drip-nodejs": "^3.1.1",
-    "fastify": "4.11.0",
+    "fastify": "4.12.0",
     "flatpickr": "^4.6.13",
     "font-awesome": "^4.7.0",
     "google-auth-library": "^8.7.0",
