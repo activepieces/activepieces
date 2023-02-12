@@ -15,6 +15,7 @@ export class StepTypItemComponent {
 	_flowItemDetails: FlowItemDetails;
 	_flowItemDetails$: Observable<FlowItemDetails | undefined>;
 	@Input() clickable = true;
+	@Input() showDocsLink = false;
 	@Input() set flowItemDetails(value: FlowItemDetails) {
 		this._flowItemDetails = value;
 		this.loadStepIcon(this._flowItemDetails.logoUrl || '');
@@ -29,10 +30,10 @@ export class StepTypItemComponent {
 			);
 		}
 	}
-	stepIconUrl: string = '';
+	stepIconUrl = '';
 	faInfo = faInfoCircle;
-	hover: boolean = false;
-	constructor(private cd: ChangeDetectorRef) {}
+	hover = false;
+	constructor(private cd: ChangeDetectorRef) { }
 
 	loadStepIcon(url: string) {
 		const itemIcon = new Image();
@@ -41,5 +42,8 @@ export class StepTypItemComponent {
 			this.stepIconUrl = url;
 			this.cd.detectChanges();
 		};
+	}
+	openDocs(url) {
+		window.open(url, "_blank");
 	}
 }
