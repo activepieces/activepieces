@@ -36,17 +36,17 @@
       <div class="description">{{ itemDetails.description }}</div>
     </div>
     <div class="ap-flex-grow"></div>
-    <ng-cotnainer *ngIf="itemDetails.extra && showDocsLink">
+    <ng-container *ngIf="itemDetails.extra && showDocsLink">
       <svg-icon [svgStyle]="{ width: '24px', height: '24px' }" src="assets/img/custom/external-link.svg"
         class="ap-cursor-pointer"
         (click)="openDocs('https://www.activepieces.com/docs/pieces/apps/'+ itemDetails.extra.appName)">
       </svg-icon>
-    </ng-cotnainer>
-    <ng-cotnainer *ngIf="itemDetails.name ==='Code' && showDocsLink">
+    </ng-container>
+    <ng-container *ngIf="itemDetails.name ==='Code' && showDocsLink">
       <svg-icon [svgStyle]="{ width: '24px', height: '24px' }" src="assets/img/custom/external-link.svg"
         class="ap-cursor-pointer" (click)="openDocs('https://www.activepieces.com/docs/pieces/helpers/code')">
       </svg-icon>
-    </ng-cotnainer>
+    </ng-container>
   </div>
 </ng-template>
 
