@@ -67,6 +67,12 @@
         "jestConfig": "packages/backend/jest.config.ts",
         "passWithNoTests": true
       }
+    },
+    "db": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "DOTENV_CONFIG_PATH=packages/backend/.env ts-node -r dotenv/config -r tsconfig-paths/register -P packages/backend/tsconfig.app.json --files ./node_modules/typeorm/cli.js"
+      }
     }
   },
   "tags": []
