@@ -1,5 +1,5 @@
-import { pieces } from '@activepieces/pieces';
-import { Piece } from '@activepieces/pieces';
+import { pieces } from '@activepieces/framework';
+import { Piece } from '@activepieces/framework';
 import { createContextStore } from '../services/storage.service';
 
 export class PieceExecutor {
@@ -11,7 +11,7 @@ export class PieceExecutor {
     const piece = this.getPiece(pieceName);
 
     return await piece.getAction(actionName)!.run({
-      store: createContextStore(),
+      store: createContextStore(''),
       propsValue: config
     });
   }

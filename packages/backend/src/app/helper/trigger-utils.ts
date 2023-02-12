@@ -1,4 +1,4 @@
-import { getPiece, pieces, Trigger, TriggerStrategy } from "@activepieces/pieces";
+import { getPiece, pieces, Trigger, TriggerStrategy } from "@activepieces/framework";
 import {
   CollectionId,
   CollectionVersion,

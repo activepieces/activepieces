@@ -39,7 +39,7 @@ import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
 import { InsertMentionOperation } from '../form-controls/interpolating-text-form-control/utils';
 import { jsonValidator } from '../../validators/json-validator';
 import { CodeService } from '../../../flow-builder/service/code.service';
-import { PropertyType } from 'packages/pieces/src/lib/framework/property';
+import { PropertyType } from '@activepieces/shared';
 type ConfigKey = string;
 
 @Component({
