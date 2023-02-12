@@ -14,7 +14,7 @@ import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
 import { getBackendUrl } from "./public-ip-utils";
 import { engineHelper } from "./engine-helper";
-import { logger } from "../../main";
+import { logger } from "../helper/logger";
 
 const EVERY_FIVE_MINUTES = "*/5 * * * *";
 
