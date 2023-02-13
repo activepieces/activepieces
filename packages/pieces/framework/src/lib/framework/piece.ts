@@ -9,6 +9,7 @@ export class Piece {
     public readonly name: string,
     public readonly displayName: string,
     public readonly logoUrl: string,
+    public readonly authors: string[],
     actions: Action[],
     triggers: Trigger[],
     public readonly description: string = ''
@@ -52,6 +53,7 @@ export const createPiece = (request: {
   name: string;
   displayName: string;
   logoUrl: string;
+  authors?: string[],
   actions: Action[];
   triggers: Trigger[];
   description?: string;
@@ -60,6 +62,7 @@ export const createPiece = (request: {
     request.name,
     request.displayName,
     request.logoUrl,
+    request.authors ?? [],
     request.actions,
     request.triggers,
     request.description
