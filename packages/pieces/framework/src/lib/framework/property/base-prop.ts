@@ -3,26 +3,26 @@ import { PropertyType } from "@activepieces/shared";
 export type BasePropertySchema = {
 	displayName: string;
 	description?: string;
-	required: boolean;
-};
-
-export type TPropertyValue<T, U> = {
-	valueSchema: T | undefined
-	type: U;
 }
 
-export interface ShortTextProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.SHORT_TEXT> { }
+export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> = {
+	valueSchema: T;
+	type: U;
+	required: REQUIRED;
+};
 
-export interface LongTextProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.LONG_TEXT> { }
+export type ShortTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.SHORT_TEXT, R>;
 
-export interface SecretTextProperty extends BasePropertySchema, TPropertyValue<string, PropertyType.SECRET_TEXT> { }
+export type LongTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.LONG_TEXT, R>;
 
-export interface CheckboxProperty extends BasePropertySchema, TPropertyValue<boolean, PropertyType.CHECKBOX> { }
+export type SecretTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.SECRET_TEXT, R>;
 
-export interface NumberProperty extends BasePropertySchema, TPropertyValue<number, PropertyType.NUMBER> { }
+export type CheckboxProperty<R extends boolean> = BasePropertySchema & TPropertyValue<boolean, PropertyType.CHECKBOX, R>;
 
-export interface ArrayProperty extends BasePropertySchema, TPropertyValue<unknown[], PropertyType.ARRAY> { }
+export type NumberProperty<R extends boolean> = BasePropertySchema & TPropertyValue<number, PropertyType.NUMBER, R>;
 
-export interface ObjectProperty extends BasePropertySchema, TPropertyValue<Record<string, unknown>, PropertyType.OBJECT> { }
+export type ArrayProperty<R extends boolean> = BasePropertySchema & TPropertyValue<unknown[], PropertyType.ARRAY, R>;
 
-export interface JsonProperty extends BasePropertySchema, TPropertyValue<Record<string, unknown>, PropertyType.JSON> { }
+export type ObjectProperty<R extends boolean> = BasePropertySchema & TPropertyValue<Record<string, unknown>, PropertyType.OBJECT, R>;
+
+export type JsonProperty<R extends boolean> = BasePropertySchema & TPropertyValue<Record<string, unknown>, PropertyType.JSON, R>;

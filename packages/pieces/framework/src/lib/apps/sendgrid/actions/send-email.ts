@@ -1,10 +1,10 @@
-import {createAction} from "../../../framework/action/action";
-import {Property} from "../../../framework/property";
+import { createAction } from "../../../framework/action/action";
+import { Property } from "../../../framework/property";
 import { httpClient } from '../../../common/http/core/http-client';
 import { HttpRequest } from '../../../common/http/core/http-request';
 import { HttpMethod } from '../../../common/http/core/http-method';
 import { AuthenticationType } from '../../../common/authentication/core/authentication-type';
-import {sendgridCommon} from "../common";
+import { sendgridCommon } from "../common";
 
 export const sendEmail = createAction({
     name: 'send_email',
@@ -45,11 +45,11 @@ export const sendEmail = createAction({
                 return {
                     disabled: false,
                     options:
-                    [
-                        { label: 'Plain Text', value: 'text' },
-                        { label: 'HTML', value: 'html' },
-                    ]
-                } ;
+                        [
+                            { label: 'Plain Text', value: 'text' },
+                            { label: 'HTML', value: 'html' },
+                        ]
+                };
             }
         }),
         content: Property.ShortText({
@@ -59,31 +59,31 @@ export const sendEmail = createAction({
         }),
     },
     async run(context) {
-        const configsWithoutAuthentication = {...context.propsValue};
+        const configsWithoutAuthentication: Record<string, unknown> = { ...context.propsValue };
         delete configsWithoutAuthentication['authentication'];
 
         const message = {
-          personalizations: (configsWithoutAuthentication.to as string).split(',').map(x => {
-                    return {
-                        to: [{
-                            email: x.trim()
-                        }]
-                    }
-                }),
-          from: {
-            email: configsWithoutAuthentication.from,
-            name: configsWithoutAuthentication.from_name
-          },
-          reply_to: {
-            email: configsWithoutAuthentication.reply_to
-          },
-          subject: configsWithoutAuthentication.subject,
-          content: [
-            {
-              type: configsWithoutAuthentication.content_type == 'text' ? 'text/plain' : 'text/html',
-              value: configsWithoutAuthentication.content
-            }
-          ],
+            personalizations: (configsWithoutAuthentication['to'] as string).split(',').map(x => {
+                return {
+                    to: [{
+                        email: x.trim()
+                    }]
+                }
+            }),
+            from: {
+                email: configsWithoutAuthentication['from'],
+                name: configsWithoutAuthentication['from_name']
+            },
+            reply_to: {
+                email: configsWithoutAuthentication['reply_to']
+            },
+            subject: configsWithoutAuthentication['subject'],
+            content: [
+                {
+                    type: configsWithoutAuthentication['content_type'] == 'text' ? 'text/plain' : 'text/html',
+                    value: configsWithoutAuthentication['content']
+                }
+            ],
         };
 
         const request: HttpRequest = {
@@ -92,7 +92,7 @@ export const sendEmail = createAction({
             body: message,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: context.propsValue.authentication!,
+                token: context.propsValue.authentication,
             },
             queryParams: {},
         };

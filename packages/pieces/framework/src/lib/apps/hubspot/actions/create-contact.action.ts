@@ -1,9 +1,9 @@
-import {AuthenticationType} from "../../../common/authentication/core/authentication-type";
-import {httpClient} from "../../../common/http/core/http-client";
-import {HttpMethod} from "../../../common/http/core/http-method";
-import {HttpRequest} from "../../../common/http/core/http-request";
-import {createAction} from "../../../framework/action/action";
-import {Property} from "../../../framework/property";
+import { AuthenticationType } from "../../../common/authentication/core/authentication-type";
+import { httpClient } from "../../../common/http/core/http-client";
+import { HttpMethod } from "../../../common/http/core/http-method";
+import { HttpRequest } from "../../../common/http/core/http-request";
+import { createAction } from "../../../framework/action/action";
+import { Property } from "../../../framework/property";
 import { hubSpotAuthentication } from "../common/props";
 
 
@@ -36,7 +36,7 @@ export const createHubspotContact = createAction({
     },
     sampleData: {},
     async run(context) {
-        const configsWithoutAuthentication = {...context.propsValue};
+        const configsWithoutAuthentication: Record<string, unknown> = { ...context.propsValue };
         delete configsWithoutAuthentication['authentication'];
         const body = {
             properties: Object.entries(configsWithoutAuthentication).map(f => {
@@ -52,7 +52,7 @@ export const createHubspotContact = createAction({
             body: body,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: context.propsValue.authentication!.access_token,
+                token: context.propsValue.authentication.access_token,
             },
             queryParams: {},
         };
