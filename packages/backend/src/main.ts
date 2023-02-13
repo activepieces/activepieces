@@ -2,7 +2,6 @@ import fastify, { FastifyRequest } from "fastify";
 import cors from "@fastify/cors";
 import formBody from "@fastify/formbody";
 import qs from 'qs';
-import { databaseModule } from "./app/database/database.module";
 import { authenticationModule } from "./app/authentication/authentication.module";
 import { collectionModule } from "./app/collections/collection.module";
 import { projectModule } from "./app/project/project.module";
@@ -42,7 +41,6 @@ app.register(cors, {
 });
 app.register(formBody, { parser: str => qs.parse(str) });
 app.addHook("onRequest", tokenVerifyMiddleware);
-app.register(databaseModule);
 app.register(authenticationModule);
 app.register(projectModule);
 app.register(collectionModule);
@@ -78,11 +76,13 @@ app.setErrorHandler(errorHandler);
 
 const start = async () => {
   try {
+    await databaseConnection.initialize();
+    await databaseConnection.runMigrations();
+
     await app.listen({
       host: "0.0.0.0",
       port: 3000,
     });
-    await databaseConnection.runMigrations();
 
     console.log(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
@@ -96,7 +96,9 @@ started on ${system.get(SystemProp.FRONTEND_URL)}
     `);
   } catch (err) {
     app.log.error(err);
-    process.exit(1);
+  }
+  finally {
+    await databaseConnection.destroy();
   }
 };
 
