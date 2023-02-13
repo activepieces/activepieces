@@ -17,7 +17,7 @@ export const addPerson = createAction({
             description: undefined,
             required: true,
         }),
-        owner_id: Property.Dropdown<string, false>({
+        owner_id: Property.Dropdown<string>({
             displayName: "Owner",
             refreshers: ["authentication"],
             description: "The user who owns this Person's record",
@@ -43,7 +43,7 @@ export const addPerson = createAction({
                 };
             }
         }),
-        org_id: Property.Dropdown<string, false>({
+        org_id: Property.Dropdown<string>({
             displayName: "Organization",
             refreshers: ["authentication"],
             description: "The Org of this Person",
@@ -79,7 +79,7 @@ export const addPerson = createAction({
             description: undefined,
             required: false,
         }),
-        marketing_status: Property.Dropdown<string, false>({
+        marketing_status: Property.Dropdown<string>({
             displayName: "Marketing Status",
             refreshers: ["authentication"],
             description: "Marketing opt-in status",

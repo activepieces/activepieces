@@ -19,7 +19,7 @@ const buildEmptyList = ({ placeholder }: { placeholder: string }) => {
   }
 };
 
-export const todoistProjectIdDropdown = Property.Dropdown<string, false>({
+export const todoistProjectIdDropdown = Property.Dropdown<string>({
   displayName: 'Project',
   refreshers: ['authentication'],
   description: 'Task project ID. If not set, task is put to user\'s Inbox.',
