@@ -43,8 +43,7 @@
         "commands": [
           "nx build-watch backend",
           "nx serve engine"
-        ],
-        "envFile": "packages/backend/.env"
+        ]
       }
     },
     "serve": {
@@ -71,7 +70,7 @@
     "db": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "DOTENV_CONFIG_PATH=packages/backend/.env ts-node -r dotenv/config -r tsconfig-paths/register -P packages/backend/tsconfig.app.json ./node_modules/typeorm/cli.js"
+        "command": "ts-node -r tsconfig-paths/register -P packages/backend/tsconfig.app.json ./node_modules/typeorm/cli.js"
       }
     }
   },
