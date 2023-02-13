@@ -25,10 +25,10 @@ export const telegramSendMessageAction = createAction({
     async run(ctx) {
         return await httpClient.sendRequest<never>({
             method: HttpMethod.POST,
-            url: telegramCommons.getApiUrl(ctx.propsValue['bot_token']!, 'sendMessage'),
+            url: telegramCommons.getApiUrl(ctx.propsValue['bot_token'], 'sendMessage'),
             body: {
-                chat_id: ctx.propsValue['chat_id']!,
-                text: ctx.propsValue['message']!,
+                chat_id: ctx.propsValue['chat_id'],
+                text: ctx.propsValue['message'],
             },
         });
     },
