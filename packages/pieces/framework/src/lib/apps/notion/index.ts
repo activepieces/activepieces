@@ -1,4 +1,5 @@
 import { createPiece } from '../../framework/piece';
+import { notionCreateDatabasePage } from './actions/create-database-page';
 
 export const notion = createPiece({
 	name: 'notion',

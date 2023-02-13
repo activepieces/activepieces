@@ -1,6 +1,7 @@
 import { AuthenticationType } from '../../../common/authentication/core/authentication-type';
 import { httpClient } from '../../../common/http/core/http-client';
 import { HttpMethod } from '../../../common/http/core/http-method';
+import { HttpRequest } from '../../../common/http/core/http-request';
 import { createAction } from '../../../framework/action/action';
 import { Property } from '../../../framework/property';
 
@@ -13,7 +14,7 @@ export const notionCreateDatabasePage = createAction({
     authentication: Property.OAuth2({
       displayName: 'Authentication',
       description: "",
-      authUrl: "https://api.notion.com/v1/oauth/authorize?client_id=a5162711-eadc-41b0-9ea7-422bc009d74d&response_type=code&owner=user&redirect_uri=https%3A%2F%2Fdemo.activepieces.com%2Fredirect",
+      authUrl: "https://api.notion.com/v1/oauth/authorize?response_type=code&owner=user",
       tokenUrl: "https://api.notion.com/v1/oauth/token",
       required: true,
       scope: []
@@ -29,19 +30,19 @@ export const notionCreateDatabasePage = createAction({
       required: false
     }),
     parent_database_id: Property.ShortText({
-      displayName: "Meeting's topic",
-      description: "The meeting's topic",
+      displayName: "Parent database Id",
+      description: "The database to create this page under",
       required: true
     }),
-    properties: Property.Object({
-      displayName: "Meeting's topic",
+    properties: Property.Json({
+      displayName: "Page Properties",
       description: "The values of the page's properties. The schema must match the parent database's properties.",
       required: true
     }),
     children: Property.Array({
       displayName: "Children",
       description: "The content to be rendered on the new page, represented as an array of block objects.",
-      required: true
+      required: false
     })
   },
 
@@ -50,13 +51,13 @@ export const notionCreateDatabasePage = createAction({
       cover: {
         type: "external",
         external: {
-          url: "https://upload.wikimedia.org/wikipedia/commons/6/62/Tuscankale.jpg"
+          url: context.propsValue.cover_url
         }
       },
       icon: {
         type: "external",
         external: {
-          url: "https://upload.wikimedia.org/wikipedia/commons/6/62/Tuscankale.jpg"
+          url: context.propsValue.icon_url 
         }
       },
       parent: {
@@ -65,18 +66,20 @@ export const notionCreateDatabasePage = createAction({
       }
     }
 
-    const request = {
+    const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.notion.com/v1/pages`,
-      body: body,
+      body,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.propsValue.authentication!.access_token
       },
-      queryParams: {}
+      headers: {
+        'Notion-Version': '1'
+      }
     }
 
-    const result = await httpClient.sendRequest(request)
+    const result = await httpClient.sendRequest<any>(request)
     console.debug("Page creation response", result)
 
     if (result.status === 201) {
