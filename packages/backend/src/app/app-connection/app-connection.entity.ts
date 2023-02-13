@@ -21,11 +21,6 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
   },
   indices: [
     {
-      name: "idx_app_connection_project_id_and_app_name_and_name",
-      columns: ["projectId", "appName", "name"],
-      unique: true,
-    },
-    {
       name: "idx_app_connection_project_id_and_name",
       columns: ["projectId", "name"],
       unique: true,
