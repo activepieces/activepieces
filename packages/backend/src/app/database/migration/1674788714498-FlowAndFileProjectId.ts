@@ -1,4 +1,4 @@
-import { logger } from "packages/backend/src/main";
+import { logger } from "../../helper/logger";
 import { MigrationInterface, QueryRunner } from "typeorm"
 
 export class FlowAndFileProjectId1674788714498 implements MigrationInterface {

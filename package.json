@@ -71,6 +71,7 @@
     "quill-mention": "^3.1.0",
     "rxjs": "~7.8.0",
     "string-replace-async": "^3.0.2",
+    "tsconfig-paths": "^4.1.2",
     "tslib": "^2.3.0",
     "typeorm": "^0.3.11",
     "zone.js": "~0.12.0"
