@@ -27,17 +27,17 @@ export const createImageFromTemplate = createAction({
     transparent: Property.Checkbox({
       displayName: 'Transparent background',
       description: 'Render a PNG with a transparent background. Default is false.',
-      required: true,
+      required: false,
     }),
     render_pdf: Property.Checkbox({
       displayName: 'Render a PDF',
       description: 'Render a PDF instead of a PNG. Default is false.',
-      required: true,
+      required: false,
     }),
     metadata: Property.Json({
       displayName: 'Metadata',
       description: 'Any metadata that you need to store e.g. ID of a record in your DB.',
-      required: true,
+      required: false,
     }),
   },
   async run(context) {
