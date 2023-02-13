@@ -17,8 +17,12 @@
         <th mat-header-cell *matHeaderCellDef>Status</th>
         <td mat-cell *matCellDef="let connection">
           <ng-container [ngSwitch]="connection.status">
-            <span *ngSwitchCase="connectionStatus.ACTIVE" class="ap-text-success" [matTooltip]="connection.status">{{ connection.status}}</span>
-            <span *ngSwitchCase="connectionStatus.EXPIRED" class="ap-text-danger" [matTooltip]="connection.status">{{ connection.status}}</span>
+            <app-state-icon *ngSwitchCase="connectionStatus.ACTIVE" textAfter="Active"
+              [succeeded]="true"></app-state-icon>
+            <app-state-icon *ngSwitchCase="connectionStatus.EXPIRED" textAfter="Expired"
+              [succeeded]="false"></app-state-icon>
+
+
             <span *ngSwitchDefault [matTooltip]="connection.status">{{ connection.status}}</span>
           </ng-container>
         </td>
