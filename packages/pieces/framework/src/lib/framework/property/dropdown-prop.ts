@@ -14,9 +14,9 @@ export type DropdownOption<T> = {
 	value: T;
 };
 
-export type DropdownPropertySchema<T> = BasePropertySchema & {
+type DropdownPropertySchema<T> = BasePropertySchema & {
 	refreshers: string[];
 	options: (propsValue: Record<string, OAuth2PropertyValue | number | string | DropdownState<any> | BasicAuthPropertyValue>) => Promise<DropdownState<T>>
 }
 
-export interface DropdownProperty<T> extends DropdownPropertySchema<T>, TPropertyValue<T, PropertyType.DROPDOWN> {}
+export type DropdownProperty<T, R extends boolean> =  DropdownPropertySchema<T> & TPropertyValue<T, PropertyType.DROPDOWN, R>;

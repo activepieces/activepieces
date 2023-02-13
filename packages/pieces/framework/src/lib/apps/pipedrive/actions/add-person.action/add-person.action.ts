@@ -110,17 +110,16 @@ export const addPerson = createAction({
         }),
     },
     async run(context) {
-        const configsWithoutAuthentication = { ...context.propsValue };
+        const configsWithoutAuthentication: Record<string, unknown> = { ...context.propsValue };
         delete configsWithoutAuthentication['authentication'];
-        const body = configsWithoutAuthentication;
 
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: `${context.propsValue.authentication!.data['api_domain']}/api/v1/persons`,
-            body: body,
+            url: `${context.propsValue.authentication.data['api_domain']}/api/v1/persons`,
+            body: configsWithoutAuthentication,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: context.propsValue.authentication!.access_token,
+                token: context.propsValue.authentication.access_token,
             },
             queryParams: {},
         };

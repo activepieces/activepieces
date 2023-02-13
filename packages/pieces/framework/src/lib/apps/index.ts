@@ -23,8 +23,12 @@ import { twilio } from './twilio';
 import { todoist } from './todoist';
 import { zoom } from './zoom';
 import { googleCalendar } from './google-calendar';
+<<<<<<< HEAD:packages/pieces/framework/src/lib/apps/index.ts
 import { telegramBot } from './telegram_bot';
 import { binance } from './binance';
+=======
+import { googleDrive } from './google-drive';
+>>>>>>> f50a4c4086b6495462d5c95c23a0113656922578:packages/pieces/src/lib/apps/index.ts
 
 export const pieces: Piece[] = [
 	slack,
@@ -48,11 +52,18 @@ export const pieces: Piece[] = [
 	typeform,
 	telegramBot,
 	http,
+<<<<<<< HEAD:packages/pieces/framework/src/lib/apps/index.ts
 	twilio,
   	todoist,
   	googleCalendar,
 	zoom,
 	binance
+=======
+  todoist,
+  googleCalendar,
+  googleDrive,
+	zoom
+>>>>>>> f50a4c4086b6495462d5c95c23a0113656922578:packages/pieces/src/lib/apps/index.ts
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
