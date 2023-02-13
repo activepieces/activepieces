@@ -62,7 +62,7 @@ export const Property = {
 	OAuth2<R extends boolean>(request: Properties<OAuth2Property<R>>): R extends true ? OAuth2Property<true> : OAuth2Property<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.OAUTH2 } as unknown as R extends true ? OAuth2Property<true> : OAuth2Property<false>;
 	},
-	Dropdown<T, R extends boolean>(request: Properties<DropdownProperty<T, R>>): R extends true ? DropdownProperty<T, true> : DropdownProperty<T, false> {
+	Dropdown<T, R extends boolean = true>(request: Properties<DropdownProperty<T, R>>): R extends true ? DropdownProperty<T, true> : DropdownProperty<T, false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.DROPDOWN } as unknown as R extends true ? DropdownProperty<T, true> : DropdownProperty<T, false>;
 	}
 };

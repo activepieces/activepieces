@@ -17,7 +17,7 @@ export const addPerson = createAction({
             description: undefined,
             required: true,
         }),
-        owner_id: Property.Dropdown<string>({
+        owner_id: Property.Dropdown<string, false>({
             displayName: "Owner",
             refreshers: ["authentication"],
             description: "The user who owns this Person's record",
@@ -43,7 +43,7 @@ export const addPerson = createAction({
                 };
             }
         }),
-        org_id: Property.Dropdown<string>({
+        org_id: Property.Dropdown<string, false>({
             displayName: "Organization",
             refreshers: ["authentication"],
             description: "The Org of this Person",
@@ -79,7 +79,7 @@ export const addPerson = createAction({
             description: undefined,
             required: false,
         }),
-        marketing_status: Property.Dropdown<string>({
+        marketing_status: Property.Dropdown<string, false>({
             displayName: "Marketing Status",
             refreshers: ["authentication"],
             description: "Marketing opt-in status",
@@ -110,17 +110,16 @@ export const addPerson = createAction({
         }),
     },
     async run(context) {
-        const configsWithoutAuthentication = { ...context.propsValue };
+        const configsWithoutAuthentication: Record<string, unknown> = { ...context.propsValue };
         delete configsWithoutAuthentication['authentication'];
-        const body = configsWithoutAuthentication;
 
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: `${context.propsValue.authentication!.data['api_domain']}/api/v1/persons`,
-            body: body,
+            url: `${context.propsValue.authentication.data['api_domain']}/api/v1/persons`,
+            body: configsWithoutAuthentication,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: context.propsValue.authentication!.access_token,
+                token: context.propsValue.authentication.access_token,
             },
             queryParams: {},
         };

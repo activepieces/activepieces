@@ -18,7 +18,7 @@ export const createQuickCalendarEvent = createAction({
       description: 'The text describing the event to be created',
       required: true,
     }),
-    send_updates: Property.Dropdown<string>({
+    send_updates: Property.Dropdown<string, false>({
       displayName: "Send Updates",
       description: "Guests who should receive notifications about the creation of the new event.",
       refreshers: [],
