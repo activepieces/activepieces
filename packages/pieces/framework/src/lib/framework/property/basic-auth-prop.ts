@@ -18,7 +18,8 @@ export type BasicAuthPropertyValue = {
 	password: string,
 }
 
-export interface BasicAuthProperty extends BasicAuthPropertySchema, TPropertyValue<
+export type BasicAuthProperty<R extends boolean> = BasicAuthPropertySchema & TPropertyValue<
 	BasicAuthPropertyValue,
-    PropertyType.BASIC_AUTH
-> {}
+    PropertyType.BASIC_AUTH,
+	R
+>;
