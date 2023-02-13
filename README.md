@@ -18,27 +18,7 @@
 
 ## Get started for free
 
-### Option #1: Play around with the Demo App
-Go to [Activepieces Demo Website](https://demo.activepieces.com) and play around with the app features.
-
-### Option #2: Self Host
-Clone Activepieces to your machine and run it with 1 command
-
- ```bash 
-# Clone the repository
-git clone https://github.com/activepieces/activepieces.git
-
-# Go to the repository folder
-cd activepieces
-
-# Run
-docker compose -p activepieces up
- ``` 
- 
-Vist `http://localhost:8080`
-
-### Other Options
-We're planning to launch a cloud edition of Activepieces soon.
+Visit https://www.activepieces.com/docs/install/overview
 
 ## Features
 
