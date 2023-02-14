@@ -7,9 +7,9 @@ import { Store } from '@ngrx/store';
 import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActionType, TriggerType, UpdateActionRequest, UpdateTriggerRequest } from '@activepieces/shared';
-import { AuthenticationService } from 'packages/frontend/src/app/modules/common/service/authentication.service';
 import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import { FlowsActions } from 'packages/frontend/src/app/modules/flow-builder/store/flow/flows.action';
+import { FlagService } from 'packages/frontend/src/app/modules/common/service/flag.service';
 
 @Component({
 	selector: 'app-edit-step-accodion',
@@ -50,11 +50,11 @@ export class EditStepAccordionComponent implements AfterViewInit {
 		private cd: ChangeDetectorRef,
 		private store: Store,
 		private snackbar: MatSnackBar,
-		private authenticationService: AuthenticationService
+		private flagService: FlagService
 	) {
 		this.webhookUrl$ = forkJoin({
 			flowId: this.store.select(BuilderSelectors.selectCurrentFlowId).pipe(take(1)),
-			serverUrl: this.authenticationService.getBackendUrl(),
+			serverUrl: this.flagService.getBackendUrl(),
 		}).pipe(
 			map(res => {
 				return `${res.serverUrl}/v1/webhooks?flowId=${res.flowId}`;

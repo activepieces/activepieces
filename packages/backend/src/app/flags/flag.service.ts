@@ -34,6 +34,12 @@ export const flagService = {
         updated,
       },
       {
+        id: FlagId.ENVIRONMENT,
+        value: system.get(SystemProp.ENVIRONMENT),
+        created,
+        updated,
+      },
+      {
         id: FlagId.SIGN_UP_ENABLED,
         value: system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false,
         created,
@@ -72,6 +78,7 @@ export const flagService = {
 export enum FlagId {
   FRONTEND_URL = "FRONTEND_URL",
   BACKEND_URL = "BACKEND_URL",
+  ENVIRONMENT = "ENVIRONMENT",
   USER_CREATED = "USER_CREATED",
   SIGN_UP_ENABLED = "SIGN_UP_ENABLED",
   TELEMETRY_ENABLED = "TELEMETRY_ENABLED",
@@ -81,6 +88,7 @@ export enum FlagId {
 }
 
 export type FlagType =
+  | BaseFlagStructure<FlagId.ENVIRONMENT, string>
   | BaseFlagStructure<FlagId.FRONTEND_URL, string>
   | BaseFlagStructure<FlagId.BACKEND_URL, string>
   | BaseFlagStructure<FlagId.USER_CREATED, boolean>
