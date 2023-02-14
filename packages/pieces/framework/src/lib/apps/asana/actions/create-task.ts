@@ -24,6 +24,18 @@ export const createAsanaTask = createAction({
             displayName: 'Task Description',
             required: true,
         }),
+        test: Property.StaticDropdown({
+            options: {
+                disabled: false,
+                options: [
+                    { value: 1, label: "One" },
+                    { value: 2, label: "Two" },
+                    { value: 3, label: "Three" }
+                ]
+            },
+            displayName: "Test",
+            required: true
+        })
     },
     sampleData: {
 

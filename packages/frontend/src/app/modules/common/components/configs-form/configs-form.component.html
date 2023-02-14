@@ -74,6 +74,22 @@
 
 
     </ng-container>
+
+    <ng-container *ngSwitchCase="PropertyType.STATIC_DROPDOWN">
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label> {{ config.label }} </mat-label>
+        <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
+          <mat-option *ngFor="let opt of config.staticDropdownState.options" [value]="opt.value">
+            {{opt.label}}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="formGroup.get(config.key)?.invalid">
+          {{config.label}} is required
+        </mat-error>
+      </mat-form-field>
+
+
+    </ng-container>
     <ng-container *ngSwitchCase="PropertyType.ARRAY">
       <div [class.ap-mb-5]="form.disabled">
         <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="config.description">{{config.label}}</div>
