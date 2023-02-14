@@ -155,6 +155,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "ShayPunter",
+      "name": "Shay Punter",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18310437?v=4",
+      "profile": "https://shaypunter.co.uk",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }
