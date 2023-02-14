@@ -1,12 +1,9 @@
-import { AuthenticationType } from '../../../common/authentication/core/authentication-type';
-import { httpClient } from '../../../common/http/core/http-client';
-import { HttpMethod } from '../../../common/http/core/http-method';
-import { HttpRequest } from '../../../common/http/core/http-request';
 import {
   createTrigger,
   TriggerStrategy,
 } from '../../../framework/trigger/trigger';
-import { airtableCommon, AirtableWebhookInformation } from '../common';
+import { airtableCommon, AirtableRecord } from '../common';
+import { deepStrictEqual } from 'assert';
 
 const triggerNameInStore = 'airtable_new_record_trigger';
 export const airtableNewRecord = createTrigger({
@@ -19,64 +16,38 @@ export const airtableNewRecord = createTrigger({
     table: airtableCommon.table
   },
   sampleData: {},
-  type: TriggerStrategy.WEBHOOK,
+  type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `https://api.airtable.com/v0/bases/${context.propsValue["base"]}/webhooks`,
-      body: {
-        notificationUrl: context.webhookUrl,
-        specification: {
-          options: {
-            filters: {
-              dataTypes: [
-                "tableData"
-              ],
-              recordChangeScope: context.propsValue["table"],
-              changeTypes: ["add"]
-            }
-          }
-        }
-      },
-      authentication:
-      {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.propsValue["authentication"]!
-      }
-    };
+    const currentTableSnapshot = await airtableCommon.getTableSnapshot({
+      personalToken: context.propsValue['authentication']!,
+      baseId: context.propsValue['base']!,
+      tableId: context.propsValue['table']!
+    })
 
-    const { body } = await httpClient.sendRequest<AirtableWebhookInformation>(request);
-    console.debug("RUN AIRTABLE");
-    console.debug(JSON.stringify(body));
-    await context.store?.put<AirtableWebhookInformation>(triggerNameInStore, body);
+    await context.store?.put<AirtableRecord[]>(triggerNameInStore, currentTableSnapshot);
 
   },
   async onDisable(context) {
-    const response = await context.store?.get<AirtableWebhookInformation>(triggerNameInStore);
-    if (response) {
-      const request: HttpRequest = {
-        method: HttpMethod.DELETE,
-        url: `https://api.airtable.com/v0/bases/${context.propsValue["base"]}/webhooks/${response.id}`,
-        authentication:
-        {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.propsValue["authentication"]!
-        }
-      };
-      await httpClient.sendRequest(request);
-    }
+    await context.store?.put<undefined>(triggerNameInStore, undefined);
   },
   async run(context) {
-    console.debug("RUN ---- ");;
-    const response = await context.store?.get<AirtableWebhookInformation>(triggerNameInStore);
-    const webhookPayload = await airtableCommon.getWebhookPayload({ baseId: context.propsValue["base"]!, personalToken: context.propsValue["authentication"]!, webhookId: response!.id, cursor: undefined });
-    const payloads: unknown[] = [...webhookPayload.payloads];
-    console.debug('------------');
-    console.debug(JSON.stringify(webhookPayload));
-    console.debug('------------');
-    console.debug(JSON.stringify(payloads));
+    const currentTableSnapshot = await airtableCommon.getTableSnapshot({
+      personalToken: context.propsValue['authentication']!,
+      baseId: context.propsValue['base']!,
+      tableId: context.propsValue['table']!
+    });
+    const lastSnapshot = await context.store?.get<AirtableRecord[]>(triggerNameInStore) || [];
+    const payloads = currentTableSnapshot.filter(r => !lastSnapshot.find(or => {
+      try {
+        deepStrictEqual(r, or);
+        return true;
+      }
+      catch (err) {
+        return false;
+      }
+    }));
+    await context.store?.put<AirtableRecord[]>(triggerNameInStore, currentTableSnapshot);
     return payloads;
-
   },
 });
 

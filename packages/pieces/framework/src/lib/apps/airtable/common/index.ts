@@ -1,3 +1,4 @@
+import Airtable from "airtable";
 import { AuthenticationType } from "../../../common/authentication/core/authentication-type";
 import { httpClient } from "../../../common/http/core/http-client";
 import { HttpMethod } from "../../../common/http/core/http-method";
@@ -16,10 +17,7 @@ export interface AirtableRecord {
     createdTime: Date,
     id: string;
 }
-export interface AirtableWebhookInformation {
-    id: string;
-    macSecretBase64: string;
-}
+
 export const airtableCommon = {
     baseUrl: (accountId: string) => { return `https://api.getdrip.com/v2/${accountId}` },
     authentication: Property.SecretText({
@@ -97,33 +95,18 @@ export const airtableCommon = {
         }
 
     }),
-    async getRecord(params: { recordId: string, accessToken: string, baseId: string, tableId: string }): Promise<AirtableRecord | null> {
-        const request: HttpRequest = {
-            method: HttpMethod.POST,
-            url: `https://api.airtable.com/v0/bases/${params.baseId}/${params.tableId}/${params.recordId}}`,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: params.accessToken
-            }
-        };
-        const { body } = await httpClient.sendRequest<AirtableRecord>(request);
-        return body;
-
-    },
-    async getWebhookPayload(params: { webhookId: string, baseId: string, personalToken: string, cursor: number | undefined }) {
-
-        const request: HttpRequest = {
-            method: HttpMethod.GET,
-            url: ` https://api.airtable.com/v0/bases/${params.baseId}/webhooks/${params.webhookId}/payloads`,
-            authentication:
-            {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: params.personalToken
-            },
-            queryParams: params.cursor ? { cursor: params.cursor.toString() } : undefined
-        };
-        const { body } = await httpClient.sendRequest<{ payloads: unknown[], cursor: number | undefined }>(request);
-        return body;
+    async getTableSnapshot(params: { personalToken: string, baseId: string, tableId: string }) {
+        Airtable.configure({
+            apiKey: params.personalToken,
+        });
+        const airtable = new Airtable();
+        const currentTablleSnapshot = (await airtable
+            .base(params.baseId)
+            .table(params.tableId)
+            .select()
+            .all()).map((r) => r._rawJson)
+            .sort((x, y) => new Date(x.createdTime).getTime() - new Date(y.createdTime).getTime());
+        return currentTablleSnapshot;
     }
 
 }
