@@ -1,5 +1,5 @@
-import {BaseModel} from "../common/base-model";
-import {ApId} from "../common/id-generator";
+import { BaseModel } from "../common/base-model";
+import { ApId } from "../common/id-generator";
 
 export type FlagId = ApId;
 
@@ -16,4 +16,6 @@ export enum ApFlagId {
     TELEMETRY_ENABLED = "TELEMETRY_ENABLED",
     WARNING_TEXT_BODY = "WARNING_TEXT_BODY",
     WARNING_TEXT_HEADER = "WARNING_TEXT_HEADER",
-  }
+    CURRENT_VERSION = "CURRENT_VERSION",
+    LATEST_VERSION = "LATEST_VERSION",
+}

@@ -1,10 +1,10 @@
-import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName } from "@activepieces/shared";
+import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName, ApFlagId } from "@activepieces/shared";
 import { userService } from "../user/user-service";
 import { passwordHasher } from "./lib/password-hasher";
 import { tokenUtils } from "./lib/token-utils";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { projectService } from "../project/project.service";
-import { ApFlagId, flagService } from "../flags/flag.service";
+import { flagService } from "../flags/flag.service";
 import { QueryFailedError } from "typeorm";
 import { telemetry } from "../helper/telemetry.utils";
 

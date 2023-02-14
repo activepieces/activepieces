@@ -1,3 +1,4 @@
+import { ApFlagId } from "@activepieces/shared";
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { environment } from "packages/frontend/src/environments/environment";
@@ -68,7 +69,7 @@ export class FlagService {
 	getWebhookUrlPrefix(): Observable<string> {
 		return this.getAllFlags().pipe(
 			map(flags => {
-				return flags['WEBHOOK_URL_PREFIX'] as string;
+				return flags[ApFlagId.WEBHOOK_URL_PREFIX] as string;
 			})
 		);
 	}
@@ -76,7 +77,7 @@ export class FlagService {
 	getEnvironment(): Observable<string> {
 		return this.getAllFlags().pipe(
 			map(flags => {
-				return flags['ENVIRONMENT'] as string;
+				return flags[ApFlagId.ENVIRONMENT] as string;
 			})
 		);
 	}
@@ -84,7 +85,7 @@ export class FlagService {
 	getFrontendUrl(): Observable<string> {
 		return this.getAllFlags().pipe(
 			map(flags => {
-				return flags['FRONTEND_URL'] as string;
+				return flags[ApFlagId.FRONTEND_URL] as string;
 			})
 		);
 	}
