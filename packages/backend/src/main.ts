@@ -96,9 +96,7 @@ started on ${system.get(SystemProp.FRONTEND_URL)}
     `);
   } catch (err) {
     app.log.error(err);
-  }
-  finally {
-    await databaseConnection.destroy();
+    process.exit(1);
   }
 };
 
