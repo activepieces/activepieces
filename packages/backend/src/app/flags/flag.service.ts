@@ -34,6 +34,12 @@ export const flagService = {
         updated,
       },
       {
+        id: FlagId.ENVIRONMENT,
+        value: system.get(SystemProp.ENVIRONMENT),
+        created,
+        updated,
+      },
+      {
         id: FlagId.SIGN_UP_ENABLED,
         value: system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false,
         created,
