@@ -30,7 +30,7 @@ export interface PieceConfig {
 		password: Pick<PieceProperty, "displayName" | "description">,
 		username: Pick<PieceProperty, "displayName" | "description">,
 	}
-	oAuthProps?: Record<string, Pick<PieceProperty, "displayName" | "description">>
+	oAuthProps?: Record<string, Pick<PieceProperty, "displayName" | "description" | "type" | "options">>
 	staticDropdownState?: DropdownState<unknown>;
 }
 

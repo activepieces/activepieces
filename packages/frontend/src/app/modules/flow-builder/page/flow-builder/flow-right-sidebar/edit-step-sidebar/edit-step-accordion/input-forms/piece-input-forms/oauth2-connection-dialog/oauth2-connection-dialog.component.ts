@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { catchError, map, Observable, of, take, tap } from 'rxjs';
-import { AppConnection, OAuth2AppConnection, OAuth2ConnectionValueWithApp, UpsertOAuth2Request } from '@activepieces/shared';
+import { AppConnection, OAuth2AppConnection, OAuth2ConnectionValueWithApp, PropertyType, UpsertOAuth2Request } from '@activepieces/shared';
 import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
 import { AppConnectionsService } from 'packages/frontend/src/app/modules/common/service/app-connections.service';
@@ -12,6 +12,7 @@ import { CloudAuthConfigsService } from 'packages/frontend/src/app/modules/commo
 import { ConnectionValidator } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/validators/connectionNameValidator';
 import { appConnectionsActions } from 'packages/frontend/src/app/modules/flow-builder/store/app-connections/app-connections.action';
 import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
+import deepEqual from 'deep-equal';
 
 interface AuthConfigSettings {
 	appName: FormControl<string | null>;
@@ -35,6 +36,7 @@ export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
 	animations: [fadeInUp400ms],
 })
 export class OAuth2ConnectionDialogComponent implements OnInit {
+	PropertyType = PropertyType;
 	@Input() pieceAuthConfig: PieceConfig;
 	@Input() pieceName: string;
 	@Input() connectionToUpdate: OAuth2AppConnection | undefined;
@@ -158,8 +160,13 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 				props: this.pieceAuthConfig.oAuthProps ? this.settingsForm.controls.props.value : undefined
 			},
 		};
+
 		return newConnection;
 	}
+
+	dropdownCompareWithFunction = (opt: any, formControlValue: any) => {
+		return formControlValue && deepEqual(opt, formControlValue);
+	};
 
 	saveConnection(connection: UpsertOAuth2Request): void {
 
