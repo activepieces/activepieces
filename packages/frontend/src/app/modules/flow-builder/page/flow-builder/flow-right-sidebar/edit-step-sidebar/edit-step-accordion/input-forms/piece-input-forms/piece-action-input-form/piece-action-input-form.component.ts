@@ -160,7 +160,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 								}
 								this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME,
 									new UntypedFormControl({
-										value: { configs: [...configs], customizedInputs: this.intialComponentInputFormValue!.inputUiInfo.customizedInputs },
+										value: { configs: [...configs], customizedInputs: this.intialComponentInputFormValue!.inputUiInfo?.customizedInputs || {} },
 										disabled: this.componentForm.disabled
 									}), {
 									emitEvent: false

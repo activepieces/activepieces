@@ -11,6 +11,7 @@ import {
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import {
+  BehaviorSubject,
   catchError,
   combineLatest,
   debounceTime,
@@ -67,7 +68,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   optionsObservables$: {
     [key: ConfigKey]: Observable<DropdownState<any>>;
   } = {};
-  dropdownsLoadingFlags$: { [key: ConfigKey]: Observable<boolean> } = {};
+  dropdownsLoadingFlags$: { [key: ConfigKey]: BehaviorSubject<boolean> } = {};
   allAuthConfigs$: Observable<DropdownItem[]>;
   configDropdownChanged$: Observable<any>;
   cloudAuthCheck$: Observable<void>;
@@ -164,6 +165,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   createDropdownConfigsObservables() {
     this.configs.forEach((c) => {
       if (c.type === PropertyType.DROPDOWN) {
+        this.dropdownsLoadingFlags$[c.key] = new BehaviorSubject(true);
         const refreshers$ = {};
         c.refreshers!.forEach((r) => {
           refreshers$[r] = this.form.controls[r].valueChanges.pipe(
@@ -171,12 +173,16 @@ export class ConfigsFormComponent implements ControlValueAccessor {
               return JSON.stringify(prev) === JSON.stringify(curr);
             }),
             startWith(this.configs.find((c) => c.key === r)!.value),
+            tap(() => {
+              this.dropdownsLoadingFlags$[c.key].next(true);
+            }),
             debounceTime(150)
           );
         });
         if (c.refreshers!.length === 0) {
           refreshers$['oneTimeRefresh'] = of(true);
         }
+
         this.optionsObservables$[c.key] = combineLatest(refreshers$).pipe(
           switchMap((res) => {
             return this.store
@@ -204,22 +210,13 @@ export class ConfigsFormComponent implements ControlValueAccessor {
               disabled: true,
               placeholder: 'unknown server erro happend, check console',
             });
+          }),
+          tap(() => {
+
+            this.dropdownsLoadingFlags$[c.key].next(false);
           })
         );
-        this.dropdownsLoadingFlags$[c.key] = this.optionsObservables$[
-          c.key
-        ].pipe(
-          startWith(null),
-          map((val) => {
-            if (val === null) return true;
-            if (!Array.isArray(val.options)) {
-              console.error(
-                `Activepieces- Config ${c.label} options are not returned in array form--> ${val}`
-              );
-            }
-            return false;
-          })
-        );
+
       }
     });
   }

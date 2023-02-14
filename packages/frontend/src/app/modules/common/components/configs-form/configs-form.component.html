@@ -76,6 +76,7 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:dropdownInputTemplate ;context:{$implicit:config, formGroup:form}">
         </ng-container>
         <ng-template #dropdownInputTemplate>
+
           <mat-form-field class="ap-w-full" appearance="outline">
             <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }} </mat-label>
             <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
@@ -83,7 +84,7 @@
                 <mat-option *ngFor="let opt of state.options" [value]="opt.value">
                   {{opt.label}}
                 </mat-option>
-                <mat-option [disabled]="true" *ngIf="state.disabled">
+                <mat-option [disabled]="true" *ngIf="state.disabled && !(dropdownsLoadingFlags$[config.key] | async)">
                   <div> {{state.placeholder}} </div>
                 </mat-option>
               </ng-container>
