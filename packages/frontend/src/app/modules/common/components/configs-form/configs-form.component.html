@@ -57,7 +57,8 @@
     <ng-container *ngSwitchCase="PropertyType.DROPDOWN">
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }} </mat-label>
-        <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
+        <mat-select [matTooltip]="config.description" [formControlName]="config.key"
+          [compareWith]="dropdownCompareWithFunction">
           <ng-container *ngIf="optionsObservables$[config.key]| async as state">
             <mat-option *ngFor="let opt of state.options" [value]="opt.value">
               {{opt.label}}
@@ -78,7 +79,8 @@
     <ng-container *ngSwitchCase="PropertyType.STATIC_DROPDOWN">
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label> {{ config.label }} </mat-label>
-        <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
+        <mat-select [matTooltip]="config.description" [formControlName]="config.key"
+          [compareWith]="dropdownCompareWithFunction">
           <mat-option *ngFor="let opt of config.staticDropdownState.options" [value]="opt.value">
             {{opt.label}}
           </mat-option>
@@ -116,7 +118,8 @@
         </app-add-edit-connection-button>
         <mat-form-field class="ap-w-full" appearance="outline">
           <mat-label> {{ config.label }} </mat-label>
-          <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
+          <mat-select [matTooltip]="config.description" [formControlName]="config.key"
+            [compareWith]="dropdownCompareWithFunction">
             <mat-option *ngFor="let opt of ((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)"
               [value]="opt.value">
               {{opt.label.name}}
