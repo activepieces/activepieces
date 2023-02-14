@@ -14,10 +14,6 @@ export const asanaCommon = {
         tokenUrl: "https://app.asana.com/-/oauth_token",
         required: true,
         scope: ['default'],
-        props: {
-            testing: Property.ShortText({ displayName: "testing besting", required: false, description: "testing besting questing" })
-        }
-
     }),
     workspace: Property.Dropdown({
         description: 'Asana workspace to create the task in',
