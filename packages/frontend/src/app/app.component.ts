@@ -8,6 +8,7 @@ import { fadeInUp400ms } from './modules/common/animation/fade-in-up.animation';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { CommonActions } from './modules/common/store/common.action';
+import { FlagService } from './modules/common/service/flag.service';
 @Component({
 	selector: 'app-root',
 	templateUrl: './app.component.html',
@@ -22,6 +23,7 @@ export class AppComponent implements OnInit {
 	constructor(
 		private store: Store,
 		private authenticationService: AuthenticationService,
+		private flagService: FlagService,
 		private router: Router,
 		private posthogService: TelemetryService,
 		private maticonRegistry: MatIconRegistry,
@@ -42,7 +44,7 @@ export class AppComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		this.warningMessage$ = this.authenticationService.getWarningMessage();
+		this.warningMessage$ = this.flagService.getWarningMessage();
 		this.loggedInUser$ = this.authenticationService.currentUserSubject.pipe(
 			tap(user => {
 				if (user == undefined || Object.keys(user).length == 0) {

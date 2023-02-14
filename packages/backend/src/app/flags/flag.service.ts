@@ -28,8 +28,8 @@ export const flagService = {
 
     flags.push(
       {
-        id: FlagId.BACKEND_URL,
-        value: await getBackendUrl(),
+        id: FlagId.ENVIRONMENT,
+        value: system.get(SystemProp.ENVIRONMENT),
         created,
         updated,
       },
@@ -71,18 +71,19 @@ export const flagService = {
 
 export enum FlagId {
   FRONTEND_URL = "FRONTEND_URL",
-  BACKEND_URL = "BACKEND_URL",
+  ENVIRONMENT = "ENVIRONMENT",
+  WEBHOOK_URL_PREFIX = "WEBHOOK_URL_PREFIX",
   USER_CREATED = "USER_CREATED",
   SIGN_UP_ENABLED = "SIGN_UP_ENABLED",
   TELEMETRY_ENABLED = "TELEMETRY_ENABLED",
-
   WARNING_TEXT_BODY = "WARNING_TEXT_BODY",
   WARNING_TEXT_HEADER = "WARNING_TEXT_HEADER",
 }
 
 export type FlagType =
+  | BaseFlagStructure<FlagId.ENVIRONMENT, string>
   | BaseFlagStructure<FlagId.FRONTEND_URL, string>
-  | BaseFlagStructure<FlagId.BACKEND_URL, string>
+  | BaseFlagStructure<FlagId.WEBHOOK_URL_PREFIX, string>
   | BaseFlagStructure<FlagId.USER_CREATED, boolean>
   | BaseFlagStructure<FlagId.TELEMETRY_ENABLED, boolean>
   | BaseFlagStructure<FlagId.WARNING_TEXT_BODY, string>

@@ -13,6 +13,7 @@ import { triggerUtils } from '../helper/trigger-utils';
 import { instanceService } from '../instance/instance.service';
 import { collectionVersionService } from '../collections/collection-version/collection-version.service';
 import { flowRepo } from '../flows/flow.repo';
+import { getBackendUrl } from '../helper/public-ip-utils';
 
 export const webhookService = {
   async callback({ flowId, payload }: CallbackParams): Promise<void> {
@@ -25,7 +26,7 @@ export const webhookService = {
         },
       });
     }
-    const collection = await collectionService.getOneOrThrow({projectId: flow.projectId, id: flow.collectionId});
+    const collection = await collectionService.getOneOrThrow({ projectId: flow.projectId, id: flow.collectionId });
     const instance = await getInstanceOrThrow(flow.projectId, collection.id);
     const collectionVersion = await collectionVersionService.getOneOrThrow(
       instance.collectionVersionId
@@ -53,6 +54,15 @@ export const webhookService = {
 
     await Promise.all(createFlowRuns);
   },
+  async getWebhookPrefix(): Promise<string> {
+    const webhookPath = `v1/webhooks`;
+    const serverUrl = await getBackendUrl();
+    return `${serverUrl}/${webhookPath}`;
+  },
+  async getWebhookUrl(flowId: FlowId): Promise<string> {
+    const webhookPrefix = await this.getWebhookPrefix();
+    return `${webhookPrefix}?flowId=${flowId}`;
+  }
 };
 
 const getInstanceOrThrow = async (

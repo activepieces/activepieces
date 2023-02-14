@@ -4,7 +4,7 @@ import { passwordHasher } from "./lib/password-hasher";
 import { tokenUtils } from "./lib/token-utils";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { projectService } from "../project/project.service";
-import { FlagId, flagService } from "../flags/flag.service";
+import { ApFlagId, flagService } from "../flags/flag.service";
 import { QueryFailedError } from "typeorm";
 import { telemetry } from "../helper/telemetry.utils";
 
@@ -13,7 +13,7 @@ export const authenticationService = {
     try {
       const user = await userService.create(request);
 
-      await flagService.save({ id: FlagId.USER_CREATED, value: true });
+      await flagService.save({ id: ApFlagId.USER_CREATED, value: true });
 
       const project = await projectService.create({
         displayName: "Project",
