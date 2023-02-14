@@ -56,7 +56,7 @@ export const dropboxCreateNewFolder = createAction({
   },
   async run(context) {
     const body = {
-      autorename: context.propsValue.autorename,
+      autorename: context.propsValue.autorename ? true : false,
       path: context.propsValue.path,
     }
 
