@@ -57,6 +57,7 @@ export class AppComponent implements OnInit {
 				return compareVersions(latestVersion, currentVersion) === 1;
 			}
 			else {
+				localStorage.setItem(upgradeNotificationMetadataKeyInLocalStorage, JSON.stringify({ latestVersion: latestVersion, ignoreNotification: upgradeNotificationMetadataInLocalStorage.ignoreNotification }));
 				return (!upgradeNotificationMetadataInLocalStorage.ignoreNotification && compareVersions(latestVersion, currentVersion) === 1) ||
 					(compareVersions(latestVersion, upgradeNotificationMetadataInLocalStorage.latestVersion) === 1 && compareVersions(latestVersion, currentVersion) === 1);
 			}
