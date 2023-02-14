@@ -7,7 +7,7 @@ import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from "./flow-queue";
 import { flowWorker } from "./flow-worker";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
 import { collectionVersionService } from "../../collections/collection-version/collection-version.service";
-import { logger } from "packages/backend/src/main";
+import { logger } from "../../helper/logger";
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
   ONE_TIME_JOB_QUEUE,

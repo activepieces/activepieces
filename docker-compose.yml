@@ -2,7 +2,7 @@ version: '3.0'
 
 services:
   backend:
-    image: activepieces/backend:0.2.15
+    image: activepieces/backend:0.3.0
     container_name: activepieces-backend
     restart: unless-stopped
     privileged: true
@@ -19,7 +19,7 @@ services:
      - dist/packages/backend/main.js
 
   frontend:
-    image: activepieces/frontend:0.2.10
+    image: activepieces/frontend:0.3.0
     container_name: activepieces-frontend
     restart: unless-stopped
     depends_on: [ backend ]
@@ -33,9 +33,9 @@ services:
     container_name: activepieces-postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=activepieces
-      - POSTGRES_PASSWORD=A79Vm5D4p2VQHOp2gd5
-      - POSTGRES_USER=postgres
+      - POSTGRES_DB=${AP_POSTGRES_DATABASE}
+      - POSTGRES_PASSWORD=${AP_POSTGRES_PASSWORD}
+      - POSTGRES_USER=${AP_POSTGRES_USERNAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:

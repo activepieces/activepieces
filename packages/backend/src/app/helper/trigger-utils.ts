@@ -1,4 +1,4 @@
-import { getPiece, pieces, Trigger, TriggerStrategy } from "@activepieces/pieces";
+import { getPiece, pieces, Trigger, TriggerStrategy } from "@activepieces/framework";
 import {
   CollectionId,
   CollectionVersion,
@@ -14,7 +14,7 @@ import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
 import { getBackendUrl } from "./public-ip-utils";
 import { engineHelper } from "./engine-helper";
-import { logger } from "../../main";
+import { logger } from "../helper/logger";
 
 const EVERY_FIVE_MINUTES = "*/5 * * * *";
 

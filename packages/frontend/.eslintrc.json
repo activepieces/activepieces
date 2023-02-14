@@ -4,6 +4,9 @@
   "overrides": [
     {
       "files": ["*.ts"],
+      "parserOptions": {
+        "project":["packages/frontend/tsconfig.*?.json"]
+      },
       "rules": {
         "rxjs/no-async-subscribe": "error",
         "rxjs/no-nested-subscribe": "error",

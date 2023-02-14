@@ -3,7 +3,7 @@ import { ExecSyncOptionsWithBufferEncoding } from "node:child_process";
 import decompress from "decompress";
 import { sandboxManager } from "../sandbox";
 import { exec } from "node:child_process";
-import { logger } from "packages/backend/src/main";
+import { logger } from "../../helper/logger";
 
 const webpackConfig = `
   const path = require("node:path");

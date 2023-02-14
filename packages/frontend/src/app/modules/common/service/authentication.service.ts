@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable, shareReplay } from 'rxjs';
+import { BehaviorSubject, map, Observable, shareReplay, Subject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { User } from '@activepieces/shared';
 
-type FlagsMap = Record<string, boolean | string | Object | undefined>;
+type FlagsMap = Record<string, boolean | string | object | undefined>;
 
 @Injectable({
 	providedIn: 'root',
@@ -15,7 +15,7 @@ export class AuthenticationService {
 	public currentUserSubject: BehaviorSubject<User | undefined> = new BehaviorSubject<User | undefined>(
 		this.currentUser
 	);
-
+	public openFeedbackPopover$: Subject<void> = new Subject();
 	private jwtHelper = new JwtHelperService();
 	flags$: Observable<FlagsMap>;
 	constructor(private router: Router, private http: HttpClient) { }

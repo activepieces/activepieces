@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { map, Observable, startWith, Subject, tap } from 'rxjs';
-import { AppConnection, SeekPage } from '@activepieces/shared';
+import { AppConnection, AppConnectionStatus, SeekPage } from '@activepieces/shared';
 import { ApPaginatorComponent } from 'packages/frontend/src/app/modules/common/components/pagination/ap-paginator.component';
 import { DEFAULT_PAGE_SIZE } from 'packages/frontend/src/app/modules/common/components/pagination/tables.utils';
 import { AppConnectionsService } from 'packages/frontend/src/app/modules/common/service/app-connections.service';
@@ -21,7 +21,7 @@ export class ConnectionsTableComponent {
 	@ViewChild(ApPaginatorComponent, { static: true }) paginator!: ApPaginatorComponent;
 	connectionPage$: Observable<SeekPage<AppConnection>>;
 	dataSource!: ConnectionsTableDataSource;
-	displayedColumns = ['app', 'name', 'created', 'updated', 'action'];
+	displayedColumns = ['app', 'name', 'status', 'created', 'updated', 'action'];
 	connectionDeleted$: Subject<boolean> = new Subject();
 	deleteConnectionDialogClosed$: Observable<void>;
 	constructor(
@@ -29,7 +29,7 @@ export class ConnectionsTableComponent {
 		private projectService: ProjectService,
 		private connectionService: AppConnectionsService,
 		private dialogService: MatDialog
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		this.dataSource = new ConnectionsTableDataSource(
@@ -41,6 +41,11 @@ export class ConnectionsTableComponent {
 			this.connectionDeleted$.asObservable().pipe(startWith(true))
 		);
 	}
+
+	get connectionStatus() {
+		return AppConnectionStatus;
+	}
+
 	deleteConnection(connection: AppConnection) {
 		const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
 			data: {

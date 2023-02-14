@@ -1,8 +1,7 @@
-import { ApiKeyAppConnection, AppConnection, AppConnectionType, BasicAuthConnection, OAuth2AppConnection } from '@activepieces/shared';
+import { ApiKeyAppConnection, AppConnection, AppConnectionType, BasicAuthConnection, OAuth2AppConnection, PropertyType } from '@activepieces/shared';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
-import { PropertyType } from 'packages/pieces/src/lib/framework/property';
 import { BehaviorSubject, catchError, map, Observable, of, switchMap, take, tap } from 'rxjs';
 import { BasicAuthConnectionDialogComponent, BasicAuthDialogData } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/basic-auth-connection-dialog/basic-auth-connection-dialog.component';
 import { CloudOAuth2ConnectionDialogComponent, USE_MY_OWN_CREDENTIALS } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';

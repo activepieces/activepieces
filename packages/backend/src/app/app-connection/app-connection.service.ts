@@ -1,4 +1,4 @@
-import { apId, AppConnection, AppConnectionId, AppConnectionType, BaseOAuth2ConnectionValue, CloudOAuth2ConnectionValue, Cursor, OAuth2ConnectionValueWithApp, ProjectId, RefreshTokenFromCloudRequest, SeekPage, UpsertConnectionRequest } from "@activepieces/shared";
+import { apId, AppConnection, AppConnectionId, AppConnectionStatus, AppConnectionType, BaseOAuth2ConnectionValue, CloudOAuth2ConnectionValue, Cursor, OAuth2ConnectionValueWithApp, ProjectId, RefreshTokenFromCloudRequest, SeekPage, UpsertConnectionRequest } from "@activepieces/shared";
 import { databaseConnection } from "../database/database-connection";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
@@ -30,6 +30,7 @@ export const appConnectionService = {
         const refreshedAppConnection = await refresh(appConnection);
         await appConnectionRepo.update(refreshedAppConnection.id, refreshedAppConnection);
         refreshLock.release();
+        refreshedAppConnection.status = getStatus(refreshedAppConnection);
         return refreshedAppConnection;
     },
     async delete({ projectId, id }: { projectId: ProjectId, id: AppConnectionId }): Promise<void> {
@@ -52,7 +53,19 @@ export const appConnectionService = {
             queryBuilder = queryBuilder.where({ appName });
         }
         const { data, cursor } = await paginator.paginate(queryBuilder);
-        return paginationHelper.createPage<AppConnection>(data, cursor);
+        const promises: Promise<AppConnection>[] = [];
+        data.forEach(connection => {
+            connection.status = getStatus(connection);
+            if (connection.status === AppConnectionStatus.ACTIVE) {
+                promises.push(new Promise((resolve) => {
+                    return resolve(connection);
+                }));
+            } else {
+                promises.push(this.getOne({ projectId: connection.projectId, name: connection.name }));
+            }
+        });
+        const refreshConnections = await Promise.all(promises);
+        return paginationHelper.createPage<AppConnection>(refreshConnections, cursor);
     }
 };
 
@@ -144,4 +157,18 @@ function deleteProps(obj: Record<string, any>, prop: string[]) {
         delete obj[p];
     }
 }
-``
+
+function getStatus(connection: AppConnection): AppConnectionStatus {
+    const connectionStatus = AppConnectionStatus.ACTIVE;
+    switch (connection.value.type) {
+        case AppConnectionType.CLOUD_OAUTH2:
+        case AppConnectionType.OAUTH2:
+            if (isExpired(connection.value)) {
+                return AppConnectionStatus.EXPIRED;
+            }
+            break;
+        default:
+            break;
+    }
+    return connectionStatus;
+}

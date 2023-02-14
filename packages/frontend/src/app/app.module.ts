@@ -36,7 +36,7 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 		JwtModule.forRoot({
 			config: {
 				tokenGetter,
-				allowedDomains: [environment.apiDomainUrl],
+				allowedDomains: [extractHostname(environment.apiUrl)],
 			},
 		}),
 		AngularSvgIconModule,
@@ -47,3 +47,15 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 	bootstrap: [AppComponent],
 })
 export class AppModule {}
+
+function extractHostname(url: string): string {
+	// for relative urls we should return empty string
+	if(url.startsWith("/")){
+	  return "";
+	}
+	const parsedUrl = new URL(url);;
+	if(parsedUrl.port.length > 0){
+		return parsedUrl.hostname + ":" + parsedUrl.port;
+	}
+	return parsedUrl.host;
+}

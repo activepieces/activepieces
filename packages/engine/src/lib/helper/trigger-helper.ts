@@ -1,4 +1,4 @@
-import { pieces, Store } from "@activepieces/pieces";
+import { pieces, Store } from "@activepieces/framework";
 import { ExecuteTriggerOperation, ExecutionState, PieceTrigger, TriggerHookType } from "@activepieces/shared";
 import { createContextStore, storageService } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
@@ -27,7 +27,8 @@ export const triggerHelper = {
       case TriggerHookType.ON_ENABLE:
         return trigger.onEnable(context);
       case TriggerHookType.RUN:
-        return trigger.run(context);
+        // TODO: fix types to remove use of any
+        return trigger.run(context as any);
     }
   },
 }

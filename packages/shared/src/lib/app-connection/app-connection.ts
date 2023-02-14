@@ -2,11 +2,17 @@ import { BaseModel } from "../common/base-model";
 
 export type AppConnectionId = string;
 
+export enum AppConnectionStatus {
+  EXPIRED = "EXPIRED",
+  ACTIVE = "ACTIVE"
+}
+
 interface BaseAppConnection<S> extends BaseModel<AppConnectionId> {
   name: string;
   appName: string;
   projectId: string;
   value: S;
+  status: AppConnectionStatus;
 }
 
 export enum AppConnectionType {
