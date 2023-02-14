@@ -7,7 +7,7 @@ export interface Flag extends BaseModel<FlagId> {
     value: unknown;
 }
 
-export enum FlagIds {
+export enum ApFlagId {
     FRONTEND_URL = "FRONTEND_URL",
     BACKEND_URL = "BACKEND_URL",
     USER_CREATED = "USER_CREATED",

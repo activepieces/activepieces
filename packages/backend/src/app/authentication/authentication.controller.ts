@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } from "fastify";
-import { FlagIds, SignInRequest, SignUpRequest } from "@activepieces/shared";
+import { ApFlagId, SignInRequest, SignUpRequest } from "@activepieces/shared";
 import { authenticationService } from "./authentication.service";
 import { flagService } from "../flags/flag.service";
 import { system } from "../helper/system/system";
@@ -14,7 +14,7 @@ export const authenticationController = async (app: FastifyInstance, _options: F
       },
     },
     async (request: FastifyRequest<{ Body: SignUpRequest }>, reply: FastifyReply) => {
-      const userCreated = await flagService.getOne(FlagIds.USER_CREATED);
+      const userCreated = await flagService.getOne(ApFlagId.USER_CREATED);
       const signUpEnabled = (await system.getBoolean(SystemProp.SIGN_UP_ENABLED)) ?? false;
       if (userCreated && !signUpEnabled) {
         reply.code(403).send({

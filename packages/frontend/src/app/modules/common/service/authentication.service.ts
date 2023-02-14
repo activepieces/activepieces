@@ -4,9 +4,9 @@ import { environment } from '../../../../environments/environment';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { FlagIds, User } from '@activepieces/shared';
+import { ApFlagId, User } from '@activepieces/shared';
 
-type FlagsMap = Record<FlagIds, boolean | string | object | undefined>;
+type FlagsMap = Record<ApFlagId, boolean | string | object | undefined>;
 
 @Injectable({
 	providedIn: 'root',

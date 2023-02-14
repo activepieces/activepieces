@@ -1,4 +1,4 @@
-import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName, FlagIds } from "@activepieces/shared";
+import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName, ApFlagId } from "@activepieces/shared";
 import { userService } from "../user/user-service";
 import { passwordHasher } from "./lib/password-hasher";
 import { tokenUtils } from "./lib/token-utils";
@@ -13,7 +13,7 @@ export const authenticationService = {
     try {
       const user = await userService.create(request);
 
-      await flagService.save({ id: FlagIds.USER_CREATED, value: true });
+      await flagService.save({ id: ApFlagId.USER_CREATED, value: true });
 
       const project = await projectService.create({
         displayName: "Project",

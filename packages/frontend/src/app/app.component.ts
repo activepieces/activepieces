@@ -9,7 +9,7 @@ import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { CommonActions } from './modules/common/store/common.action';
 import { compareVersions } from 'compare-versions';
-import { FlagIds } from '@activepieces/shared';
+import { ApFlagId } from '@activepieces/shared';
 interface UpgradeNotificationMetaDataInLocalStorage {
 	latestVersion: string,
 	ignoreNotification: boolean
@@ -49,8 +49,8 @@ export class AppComponent implements OnInit {
 			})
 		);
 		this.showUpgradeNotification$ = this.authenticationService.getAllFlags().pipe(map(res => {
-			const currentVersion = res[FlagIds.CURRENT_VERSION] as string || '0.0.0';
-			const latestVersion = res[FlagIds.LATEST_VERSION] as string || '0.0.0';
+			const currentVersion = res[ApFlagId.CURRENT_VERSION] as string || '0.0.0';
+			const latestVersion = res[ApFlagId.LATEST_VERSION] as string || '0.0.0';
 			const upgradeNotificationMetadataInLocalStorage = this.getUpgradeNotificationMetadataInLocalStorage();
 			if (!upgradeNotificationMetadataInLocalStorage) {
 				localStorage.setItem(upgradeNotificationMetadataKeyInLocalStorage, JSON.stringify({ latestVersion: latestVersion, ignoreNotification: false }));
