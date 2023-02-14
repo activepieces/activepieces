@@ -6,9 +6,9 @@
 </mat-toolbar>
 <mat-toolbar @fadeInUp class="!ap-bg-primary" *ngIf="showUpgradeNotification$ |async">
   <div class="ap-typography-body-1 ap-flex ap-flex-col ap-items-center ap-flex ap-flex-grow ap-justify-center ">
-    <div class="ap-typography-body-2 ap-text-white !ap-font-bold ap-flex ap-gap-2.5 ap-items-center">Your current
+    <div class="ap-typography-body-2 ap-text-white !ap-font-bold ap-flex ap-gap-1 ap-items-center">
       Upgrade Activepieces to enjoy the latest added features and pieces! <app-button btnColor="white" btnStyle="basic"
-        btnSize="small" (buttonClicked)="openUpgradeDocs()">
+        class="ap-ml-1" btnSize="small" (buttonClicked)="openUpgradeDocs()">
         Upgrade</app-button> <app-button btnColor="basic" btnStyle="basic" btnSize="small"
         (buttonClicked)="ignoreUpgradeNotification()">
         Ignore</app-button></div>

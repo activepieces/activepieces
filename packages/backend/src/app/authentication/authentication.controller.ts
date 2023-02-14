@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } from "fastify";
-import { SignInRequest, SignUpRequest } from "@activepieces/shared";
+import { FlagIds, SignInRequest, SignUpRequest } from "@activepieces/shared";
 import { authenticationService } from "./authentication.service";
-import { FlagIds, flagService } from "../flags/flag.service";
+import { flagService } from "../flags/flag.service";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
 
