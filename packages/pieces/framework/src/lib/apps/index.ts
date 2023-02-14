@@ -26,6 +26,7 @@ import { googleCalendar } from './google-calendar';
 import { telegramBot } from './telegram_bot';
 import { binance } from './binance';
 import { bannerbear } from './bannerbear';
+import { googleDrive } from './google-drive';
 
 export const pieces: Piece[] = [
 	slack,
@@ -50,11 +51,13 @@ export const pieces: Piece[] = [
 	telegramBot,
 	http,
 	twilio,
-  	todoist,
-  	googleCalendar,
+	todoist,
+	googleCalendar,
 	zoom,
 	binance,
-	bannerbear
+	bannerbear,
+	googleDrive,
+	zoom
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {

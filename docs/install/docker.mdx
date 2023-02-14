@@ -25,7 +25,19 @@ git clone https://github.com/activepieces/activepieces.git
 cd activepieces
 ```
 
-**3. Run Activepieces.**
+**3.Generate Environment variable**
+
+Run the following command from the command prompt / terminal
+
+```bash
+sh tools/deploy.sh
+```
+
+<Tip>
+If none of the above methods work, you can rename the .env.example file in the root directory to .env and fill in the necessary information within the file.
+</Tip>
+
+**4. Run Activepieces.**
 
 ```bash
 docker compose -p activepieces up

@@ -3,7 +3,7 @@ import { ApId } from "@activepieces/shared";
 import { createRedisClient } from "../../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
-import { logger } from "packages/backend/src/main";
+import { logger } from "../../helper/logger";
 
 interface BaseAddParams {
   id: ApId;
@@ -71,7 +71,7 @@ export const flowQueue = {
       const jobKey = await client.get(repeatableJobKey(id));
 
       if (jobKey === null) {
-        // If the trigger activation failed, don't let the function fail. 
+        // If the trigger activation failed, don't let the function fail.
         // Just ignore the action. Log an error message indicating that the job with key "${jobKey}" couldn't be found, even though it should exist, and proceed to skip the deletion.
         logger.error(`Couldn't find job ${jobKey}, even though It should exists, skipping delete`);
       } else {
