@@ -13,7 +13,7 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
       },
     },
     async (request: FastifyRequest<{ Querystring: WebhookQueryParams }>, reply) => {
-      await webhookService.callback({
+      webhookService.callback({
         flowId: request.query.flowId,
         payload: {
           headers: request.headers,
