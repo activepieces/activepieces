@@ -55,7 +55,6 @@ export const pieces: Piece[] = [
 	zoom,
 	binance,
 	googleDrive,
-	zoom
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
