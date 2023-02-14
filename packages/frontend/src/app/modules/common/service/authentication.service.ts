@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable, shareReplay, Subject, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, shareReplay, Subject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { User } from '@activepieces/shared';
+import { FlagIds, User } from '@activepieces/shared';
 
-type FlagsMap = Record<string, boolean | string | object | undefined>;
+type FlagsMap = Record<FlagIds, boolean | string | object | undefined>;
 
 @Injectable({
 	providedIn: 'root',
@@ -88,10 +88,7 @@ export class AuthenticationService {
 
 	getAllFlags() {
 		if (!this.flags$) {
-			this.flags$ = this.http.get<FlagsMap>(environment.apiUrl + '/flags').pipe(shareReplay(1), tap(res => {
-				debugger;
-				console.log(res);
-			}));
+			this.flags$ = this.http.get<FlagsMap>(environment.apiUrl + '/flags').pipe(shareReplay(1));
 		}
 		return this.flags$;
 	}
