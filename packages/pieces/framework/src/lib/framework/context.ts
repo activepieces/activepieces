@@ -22,8 +22,8 @@ export interface ActionContext<T> {
 }
 
 export interface Store {
-    put<T>(key: string, value: T, scope: StoreScope): Promise<T>;
-    get<T>(key: string, scope: StoreScope): Promise<T | null>;
+    put<T>(key: string, value: T, scope?: StoreScope): Promise<T>;
+    get<T>(key: string, scope?: StoreScope): Promise<T | null>;
 }
 
 export enum StoreScope {
