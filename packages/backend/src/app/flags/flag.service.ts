@@ -4,7 +4,7 @@ import { getBackendUrl } from "../helper/public-ip-utils";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
 import { FlagEntity } from "./flag.entity";
-
+import axios from "axios";
 const flagRepo = databaseConnection.getRepository(FlagEntity);
 
 export const flagService = {
@@ -21,11 +21,11 @@ export const flagService = {
   },
   async getAll(): Promise<Flag[]> {
     const flags = await flagRepo.find({});
-
     const now = new Date().toISOString();
     const created = now;
     const updated = now;
-
+    const currentVersion = require('../../../../../package.json').version;
+    const latestVersion = (await flagService.getLatestPackageDotJson()).version;
     flags.push(
       {
         id: FlagId.BACKEND_URL,
@@ -62,11 +62,31 @@ export const flagService = {
         value: system.get(SystemProp.WARNING_TEXT_HEADER),
         created,
         updated,
+      },
+      {
+        id: FlagId.CURRENT_VERSION,
+        value: currentVersion,
+        created,
+        updated,
+      },
+      {
+        id: FlagId.LATEST_VERSION,
+        value: latestVersion,
+        created,
+        updated,
       }
     );
 
     return flags;
   },
+  async getLatestPackageDotJson() {
+    try {
+      const pkgJson = (await axios.get("https://raw.githubusercontent.com/activepieces/activepieces/main/package.json")).data;
+      return pkgJson;
+    } catch (ex) {
+      return { version: '0.0.0' }
+    }
+  }
 };
 
 export enum FlagId {
@@ -75,7 +95,8 @@ export enum FlagId {
   USER_CREATED = "USER_CREATED",
   SIGN_UP_ENABLED = "SIGN_UP_ENABLED",
   TELEMETRY_ENABLED = "TELEMETRY_ENABLED",
-
+  CURRENT_VERSION = "CURRENT_VERSION",
+  LATEST_VERSION = "LATEST_VERSION",
   WARNING_TEXT_BODY = "WARNING_TEXT_BODY",
   WARNING_TEXT_HEADER = "WARNING_TEXT_HEADER",
 }

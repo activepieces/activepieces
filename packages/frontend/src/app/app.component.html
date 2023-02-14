@@ -1,9 +1,20 @@
-<mat-toolbar *ngIf="warningMessage$|async as warning" @fadeInUp>
+<mat-toolbar @fadeInUp>
   <div class="ap-bg-primary-light ap-typography-body-1 ap-flex ap-flex-col ap-items-center ap-p-1">
-    <div class="ap-typography-body-1 ap-text-primary !ap-font-bold">{{warning.title}}</div>
-    <div class="ap-typography-body-2 ap-text-title ap-text-center">{{warning.body}}</div>
+    <div class="ap-typography-body-1 ap-text-primary !ap-font-bold">WARNING</div>
+    <div class="ap-typography-body-2 ap-text-title ap-text-center">body body body body body body body body body body
+    </div>
   </div>
 </mat-toolbar>
+<!-- <mat-toolbar class="!ap-bg-primary">
+  <div class="ap-typography-body-1 ap-flex ap-flex-col ap-items-center ap-flex ap-flex-grow ap-justify-center ">
+    <div class="ap-typography-body-2 ap-text-white !ap-font-bold ap-flex ap-gap-2.5 ap-items-center">Your current
+      version
+      is outdated,
+      would you like to
+      upgrade? <app-button btnColor="white" btnStyle="basic" btnSize="small"> Upgrade</app-button> <app-button
+        btnColor="basic" btnStyle="basic" btnSize="small"> Ignore</app-button></div>
+  </div>
+</mat-toolbar> -->
 <div class="ap-text-body ap-h-full">
   <router-outlet></router-outlet>
 </div>

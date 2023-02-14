@@ -28,7 +28,7 @@
     line-height: 1.5 !important;
   }
   .mat-button-base.mat-basic {
-    background-color: transparent;
+    background-color: $white;
   }
   .mat-button.mat-success,
   .mat-stroked-button.mat-success:not([disabled]) {
@@ -55,6 +55,33 @@
       color: #14ae5c;
     }
   }
+  .mat-button.mat-white,
+  .mat-stroked-button.mat-white:not([disabled]) {
+    &:not([disabled]) {
+      color: $white
+    }
+  }
+  .mdc-button.mat-white:hover,
+  .mat-stroked-button.mat-white:hover:not([disabled]) {
+    &:not([disabled]) {
+      color: $title;
+      background-color: $white;
+    }
+  }
+
+  .mdc-button.mat-white{
+    &:not([disabled]) {
+      color: $title;
+      background-color: $white;
+    }
+  }
+
+  .mat-icon-button.mat-white {
+    &:not([disabled]) {
+      color: $white;
+    }
+  }
+
 
   .mat-button,
   .mat-icon-button,

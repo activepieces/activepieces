@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable, shareReplay, Subject } from 'rxjs';
+import { BehaviorSubject, map, Observable, shareReplay, Subject, tap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -88,7 +88,10 @@ export class AuthenticationService {
 
 	getAllFlags() {
 		if (!this.flags$) {
-			this.flags$ = this.http.get<FlagsMap>(environment.apiUrl + '/flags').pipe(shareReplay(1));
+			this.flags$ = this.http.get<FlagsMap>(environment.apiUrl + '/flags').pipe(shareReplay(1), tap(res => {
+				debugger;
+				console.log(res);
+			}));
 		}
 		return this.flags$;
 	}
