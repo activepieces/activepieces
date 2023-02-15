@@ -16,6 +16,7 @@ import { EffectsModule } from '@ngrx/effects';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { CommonModule } from '@angular/common';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import { CommonLayoutModule } from './modules/common/common-layout.module';
 
 @NgModule({
 	declarations: [AppComponent, NotFoundComponent, RedirectUrlComponent],
@@ -40,21 +41,22 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 			},
 		}),
 		AngularSvgIconModule,
+		CommonLayoutModule
 	],
 	providers: [],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 	exports: [],
 	bootstrap: [AppComponent],
 })
-export class AppModule {}
+export class AppModule { }
 
 function extractHostname(url: string): string {
 	// for relative urls we should return empty string
-	if(url.startsWith("/")){
-	  return "";
+	if (url.startsWith("/")) {
+		return "";
 	}
 	const parsedUrl = new URL(url);;
-	if(parsedUrl.port.length > 0){
+	if (parsedUrl.port.length > 0) {
 		return parsedUrl.hostname + ":" + parsedUrl.port;
 	}
 	return parsedUrl.host;

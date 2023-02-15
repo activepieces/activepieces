@@ -6,13 +6,13 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 	styleUrls: ['./ap-button.component.scss'],
 })
 export class ApButtonComponent {
-	@Input() loading: boolean = false;
+	@Input() loading = false;
 	@Input() btnStyle: 'flat' | 'raised' | 'stroked' | 'basic' = 'flat';
-	@Input() btnColor: 'primary' | 'warn' | 'success' | 'basic' = 'primary';
+	@Input() btnColor: 'primary' | 'warn' | 'success' | 'basic' | 'white' = 'primary';
 	@Input() disabled: true | false | null = false;
 	@Input() darkLoadingSpinner = false;
 	@Input() fullWidthOfContainer = false;
-	@Input() tooltipDisabled: boolean = false;
+	@Input() tooltipDisabled = false;
 	@Input() tooltipText = '';
 	@Input() type: 'submit' | 'button' = 'submit';
 	@Input() set btnSize(value: 'extraSmall' | 'small' | 'medium' | 'large' | 'default') {
@@ -29,7 +29,7 @@ export class ApButtonComponent {
 	);
 	btnSizeClass = 'ap-btn-l';
 	@Output() buttonClicked: EventEmitter<Event> = new EventEmitter<Event>();
-	constructor() {}
+	constructor() { }
 
 	click() {
 		if (!this.loading) {
