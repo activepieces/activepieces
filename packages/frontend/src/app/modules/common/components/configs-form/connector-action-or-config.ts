@@ -1,4 +1,5 @@
 import { PropertyType } from "@activepieces/shared";
+import { DropdownState } from "../../../flow-builder/service/action-meta.service";
 
 export enum HttpMethod {
 	CONNECT = 'CONNECT',
@@ -29,6 +30,7 @@ export interface PieceConfig {
 		password: Pick<PieceProperty, "displayName" | "description">,
 		username: Pick<PieceProperty, "displayName" | "description">,
 	}
+	staticDropdownState?: DropdownState<unknown>;
 }
 
 export class PieceProperty {
@@ -44,6 +46,7 @@ export class PieceProperty {
 	refreshers?: string[];
 	password?: PieceProperty
 	username?: PieceProperty
+	options?: DropdownState<unknown>;
 }
 
 
@@ -61,7 +64,7 @@ export const propsConvertor = {
 			required: prop.required,
 			extra: prop.extra,
 			refreshers: prop.refreshers,
-
+			staticDropdownState: prop.options
 		};
 		if (prop.username && prop.password) {
 			pieceConfig.basicAuthConfigs = {

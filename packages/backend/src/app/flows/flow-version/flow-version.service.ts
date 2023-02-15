@@ -189,6 +189,9 @@ function buildSchema(props: PieceProperty): TSchema {
         // Because it could be a variable
         propsSchema[name] = Type.String({});
         break;
+      case PropertyType.STATIC_DROPDOWN:
+          propsSchema[name] = Type.Any({});
+          break;
       case PropertyType.DROPDOWN:
         propsSchema[name] = Type.Any({});
         break;
