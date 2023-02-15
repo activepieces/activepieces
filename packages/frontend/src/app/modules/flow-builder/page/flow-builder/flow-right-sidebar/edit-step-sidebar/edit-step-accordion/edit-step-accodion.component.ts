@@ -54,15 +54,10 @@ export class EditStepAccordionComponent implements AfterViewInit {
 	) {
 		this.webhookUrl$ = forkJoin({
 			flowId: this.store.select(BuilderSelectors.selectCurrentFlowId).pipe(take(1)),
-			backendUrl: this.flagService.getBackendUrl(),
-			frontendUrl: this.flagService.getFrontendUrl(),
-			environment: this.flagService.getEnvironment()
+			webhookPrefix: this.flagService.getWebhookUrlPrefix(),
 		}).pipe(
 			map(res => {
-				if (res.environment === 'dev') {
-					return `${res.backendUrl}/v1/webhooks?flowId=${res.flowId}`;
-				}
-				return `${res.frontendUrl}/v1/webhooks?flowId=${res.flowId}`;
+				return `${res.webhookPrefix}?flowId=${res.flowId}`;
 			})
 		);
 		this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(

@@ -7,6 +7,11 @@ export interface Flag extends BaseModel<FlagId> {
     value: unknown;
 }
 
+export const enum ApEnvironment {
+    PRODUCTION = "prod",
+    DEVELOPMENT = "dev"
+}
+
 export enum ApFlagId {
     FRONTEND_URL = "FRONTEND_URL",
     ENVIRONMENT = "ENVIRONMENT",

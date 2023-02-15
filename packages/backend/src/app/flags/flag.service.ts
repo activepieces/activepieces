@@ -5,6 +5,7 @@ import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
 import { FlagEntity } from "./flag.entity";
 import axios from "axios";
+import { webhookService } from "../webhooks/webhook-service";
 
 const flagRepo = databaseConnection.getRepository(FlagEntity);
 
@@ -44,6 +45,12 @@ export const flagService = {
       {
         id: ApFlagId.TELEMETRY_ENABLED,
         value: system.getBoolean(SystemProp.TELEMETRY_ENABLED) ?? true,
+        created,
+        updated,
+      },
+      {
+        id: ApFlagId.WEBHOOK_URL_PREFIX,
+        value: await webhookService.getWebhookPrefix(),
         created,
         updated,
       },

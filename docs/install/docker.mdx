@@ -68,10 +68,6 @@ Review the [configurations guide](configurations.mdx) to make any necessary adju
 
 To upgrade to new versions, which are installed using docker compose, perform the following steps. First, open a terminal in the activepieces repository directory and run the following commands.
 
-<Tip>
-Please review the [Changelog](https://activepieces.com/docs/changelog) for any breaking changes.
-</Tip>
-
 **1. Pull the new docker compose file**
 ```bash
 git pull
@@ -82,7 +78,13 @@ git pull
 docker compose pull
 ```
 
-3. Run the updated docker images
+3. Review changelog for breaking changes
+
+<Warning>
+Please review the [Changelog](https://activepieces.com/docs/changelog) for any breaking changes.
+</Warning>
+
+4. Run the updated docker images
 ```
 docker compose up -d --remove-orphans
 ```
