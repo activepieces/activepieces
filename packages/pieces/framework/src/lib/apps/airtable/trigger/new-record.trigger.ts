@@ -19,24 +19,24 @@ export const airtableNewRecord = createTrigger({
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
     const currentTableSnapshot = await airtableCommon.getTableSnapshot({
-      personalToken: context.propsValue['authentication']!,
-      baseId: context.propsValue['base']!,
-      tableId: context.propsValue['table']!
+      personalToken: context.propsValue['authentication'],
+      baseId: context.propsValue['base'],
+      tableId: context.propsValue['table']
     })
 
     await context.store?.put<AirtableRecord[]>(triggerNameInStore, currentTableSnapshot);
 
   },
   async onDisable(context) {
-    await context.store?.put<undefined>(triggerNameInStore, undefined);
+    await context.store.put<undefined>(triggerNameInStore, undefined);
   },
   async run(context) {
     const currentTableSnapshot = await airtableCommon.getTableSnapshot({
-      personalToken: context.propsValue['authentication']!,
-      baseId: context.propsValue['base']!,
-      tableId: context.propsValue['table']!
+      personalToken: context.propsValue['authentication'],
+      baseId: context.propsValue['base'],
+      tableId: context.propsValue['table']
     });
-    const lastSnapshot = await context.store?.get<AirtableRecord[]>(triggerNameInStore) || [];
+    const lastSnapshot = await context.store.get<AirtableRecord[]>(triggerNameInStore) || [];
     const payloads = currentTableSnapshot.filter(r => !lastSnapshot.find(or => {
       try {
         deepStrictEqual(r, or);

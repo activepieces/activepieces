@@ -42,7 +42,7 @@ export const airtableCommon = {
                 url: "https://api.airtable.com/v0/meta/bases",
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,
-                    token: props["authentication"]! as string
+                    token: props["authentication"] as string
                 }
             };
             const response = await httpClient.sendRequest<{ bases: AirtableBase[] }>(request);
@@ -81,7 +81,7 @@ export const airtableCommon = {
                 url: `https://api.airtable.com/v0/meta/bases/${props['base']}/tables`,
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,
-                    token: props["authentication"]! as string
+                    token: props["authentication"] as string
                 }
             };
             const response = await httpClient.sendRequest<{ tables: { id: string, name: string }[] }>(request);
