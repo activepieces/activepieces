@@ -6,12 +6,20 @@ export const system = {
     return getEnvVar(prop);
   },
 
-  getNumber(prop: SystemProp): number | undefined {
-    const number = getEnvVar(prop);
-    if(number === undefined) {
-      return undefined;
+  getNumber(prop: SystemProp): number | null {
+    const stringNumber = getEnvVar(prop);
+  
+    if (!stringNumber) {
+      return null;
     }
-    return Number(number);
+  
+    const parsedNumber = Number.parseInt(stringNumber, 10);
+  
+    if (Number.isNaN(parsedNumber)) {
+      return null;
+    }
+  
+    return parsedNumber;
   },
 
   getBoolean(prop: SystemProp): boolean | undefined {
