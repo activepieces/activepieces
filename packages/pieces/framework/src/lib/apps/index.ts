@@ -54,7 +54,6 @@ export const pieces: Piece[] = [
 	twilio,
 	todoist,
 	googleCalendar,
-	zoom,
 	binance,
 	airtable,
 	googleDrive,
