@@ -66,13 +66,8 @@ export const posthogCreateProject = createAction({
   },
   props: {
     api_key: Property.ShortText({ 
-      displayName: "API Key", 
-      description: "Your personal or project API key" , 
-      required: true
-    }),
-    project_id: Property.ShortText({ 
-      displayName: "Project ID", 
-      description: "The project id." , 
+      displayName: "Personal API Key", 
+      description: "Your personal API key" , 
       required: true
     }),
     name: Property.ShortText({ 
@@ -113,6 +108,11 @@ export const posthogCreateProject = createAction({
 
     const result = await httpClient.sendRequest<ProjectCreateResponse>(request)
     console.debug("Project creation response", result)
+
+    if (result.status === 200) {
+      return result.body
+    }
+    
     return result
   }
 });
