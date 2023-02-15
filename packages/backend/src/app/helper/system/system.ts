@@ -6,6 +6,14 @@ export const system = {
     return getEnvVar(prop);
   },
 
+  getNumber(prop: SystemProp): number | undefined {
+    const number = getEnvVar(prop);
+    if(number === undefined) {
+      return undefined;
+    }
+    return Number(number);
+  },
+
   getBoolean(prop: SystemProp): boolean | undefined {
     return getEnvVar(prop) === "true";
   },
