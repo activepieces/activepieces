@@ -24,7 +24,7 @@ export const dropboxCreateNewFolder = createAction({
       required: true
     }),
     autorename: Property.Checkbox({
-      displayName: 'Autorename',
+      displayName: 'Auto Rename',
       description: "If there's a conflict, have the Dropbox server try to autorename the folder to avoid the conflict. The default for this field is False.",
       required: false
     })
