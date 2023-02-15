@@ -7,9 +7,9 @@ import { Property } from "../../../framework/property";
 import { ProjectCreateRequest, ProjectCreateResponse } from "../common/models";
 
 export const posthogCreateProject = createAction({
-  name: 'posthog_event_create',
-  displayName: 'Create a posthog event',
-  description: 'Create an event inside a project',
+  name: 'posthog_create_project',
+  displayName: 'Create a posthog project',
+  description: 'Create a posthog project',
   sampleData: {
     "id": 0,
     "uuid": "095be615-a8ad-4c33-8e9c-c7612fbf6c9f",
@@ -82,16 +82,16 @@ export const posthogCreateProject = createAction({
     }),
     slack_incoming_webhook: Property.ShortText({ 
       displayName: "Slack Incoming Webhook", 
-      description: "The project id." , 
+      description: "Slack incoming webhook" , 
       required: false
     }),
     anonymize_ips: Property.Checkbox({ 
-      displayName: "Slack Incoming Webhook", 
-      description: "The project id." , 
+      displayName: "Anonymize IPs", 
+      description: "Whether to anonymize incoming IP addresses." , 
       required: false
     }),
     is_demo: Property.Checkbox({ 
-      displayName: "Demo project", 
+      displayName: "Is demo project", 
       description: "If this is a demo project" , 
       required: false
     })
