@@ -245,7 +245,9 @@ export class InterpolatingTextFormControlComponent
   }
 
   public focusEditor() {
-    this.editor.quillEditor.focus();
+    setTimeout(() => {
+      this.editor.quillEditor.focus();
+    })
   }
 
   ngDoCheck(): void {

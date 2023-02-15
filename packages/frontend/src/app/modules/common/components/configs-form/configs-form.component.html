@@ -78,13 +78,14 @@
         <ng-template #dropdownInputTemplate>
 
           <mat-form-field class="ap-w-full" appearance="outline">
-            <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }} </mat-label>
+            <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }}</mat-label>
             <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
               <ng-container *ngIf="optionsObservables$[config.key]| async as state">
                 <mat-option *ngFor="let opt of state.options" [value]="opt.value">
                   {{opt.label}}
                 </mat-option>
-                <mat-option [disabled]="true" *ngIf="state.disabled && !(dropdownsLoadingFlags$[config.key] | async)">
+                <mat-option [disabled]="true"
+                  *ngIf="state.disabled && ((dropdownsLoadingFlags$[config.key] | async) === false || !dropdownsLoadingFlags$[config.key])">
                   <div> {{state.placeholder}} </div>
                 </mat-option>
               </ng-container>
@@ -247,11 +248,9 @@
   <div [formGroup]="formGroup">
     <mat-form-field class="ap-w-full" appearance="outline">
       <mat-label>{{config.label}}</mat-label>
-
       <app-interpolating-text-form-control #textControl [matTooltip]="config.description" [formControlName]="config.key"
-        (click)="mentionsDropdown.showMenuSubject$.next(true)"
+        [attr.name]="config.key" (click)="mentionsDropdown.showMenuSubject$.next(true)"
         (keyup)="$event.key ==='Escape'? mentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
-
       <mat-error *ngIf="formGroup.get(config.key)?.invalid">
         {{config.label}} is required
       </mat-error>
@@ -264,8 +263,9 @@
 
 
 <ng-template #dynamicVariableIcon let-config>
-  <svg-icon [svgStyle]="{width:'24px', height:'24px'}" *ngIf="form.enabled"
-    [class.ap-opacity-60]="customizedInputs && !customizedInputs[config.key]" src="assets/img/custom/variable.svg"
+  <svg-icon [svgStyle]="{width:'22px', height:'22px'}" *ngIf="form.enabled" class="ap-mb-[3px]" appTrackHover
+    [class.!ap-opacity-100]="hoverTracker.isHovered" #hoverTracker="hoverTrackerDirective"
+    [class.ap-opacity-40]="customizedInputs && !customizedInputs[config.key]" src="assets/img/custom/variable.svg"
     matTooltip="Dynamic Value" (click)="toggleCustomizedInputFlag(config.key)">
   </svg-icon>
 </ng-template>

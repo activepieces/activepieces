@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, QueryList, ViewChildren } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -41,6 +41,7 @@ import { InsertMentionOperation } from '../form-controls/interpolating-text-form
 import { jsonValidator } from '../../validators/json-validator';
 import { CodeService } from '../../../flow-builder/service/code.service';
 import { PropertyType } from '@activepieces/shared';
+
 type ConfigKey = string;
 
 @Component({
@@ -88,7 +89,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   @Input() stepName: string;
   @Input() pieceName: string;
   @Input() pieceDisplayName: string;
+  @ViewChildren('textControl', { read: ElementRef }) theInputs: QueryList<ElementRef>;
   form!: UntypedFormGroup;
+
   OnChange = (value) => { ; };
   OnTouched = () => { ; };
 
@@ -98,7 +101,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     public themeService: ThemeService,
     private actionMetaDataService: ActionMetaService,
     private store: Store,
-    private codeService: CodeService
+    private codeService: CodeService,
+    private cd: ChangeDetectorRef
   ) {
     this.allAuthConfigs$ = this.store.select(
       BuilderSelectors.selectAppConnectionsDropdownOptions
@@ -318,40 +322,52 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     if (!config || !ctrl) {
       throw new Error("Activepieces-config not found: " + configKey);
     }
+
+    const silentChange = { emitEvent: false };
     switch (config.type) {
       case PropertyType.JSON: {
         if (isCustomized) {
           ctrl.removeValidators([jsonValidator]);
-          ctrl.setValue("");
+          ctrl.setValue("", silentChange);
         }
         else {
           ctrl.addValidators([jsonValidator]);
-          ctrl.setValue("{}");
+          ctrl.setValue("{}", silentChange);
         }
         break;
       }
       case PropertyType.OBJECT: {
         if (isCustomized) {
-          ctrl.setValue('');
+          ctrl.setValue('', silentChange);
         }
         else {
-          ctrl.setValue({});
+          ctrl.setValue({}, silentChange);
         }
         break;
       }
       case PropertyType.ARRAY: {
         if (isCustomized) {
-          ctrl.setValue('');
+
+          ctrl.setValue('', silentChange);
         }
         else {
-          ctrl.setValue(['']);
+          ctrl.setValue([''], silentChange);
         }
         break;
       }
       default:
         {
-          ctrl.setValue(undefined);
+          ctrl.setValue(undefined, silentChange);
         }
     }
+    this.cd.detectChanges();
+
+    const input = this.theInputs.find(input => input.nativeElement.getAttribute('name') === configKey);
+    debugger;
+    if (input) {
+      this.cd.detectChanges();
+      input.nativeElement.click();
+    }
+
   }
 }
