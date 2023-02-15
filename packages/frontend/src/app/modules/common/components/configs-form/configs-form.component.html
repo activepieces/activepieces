@@ -100,6 +100,34 @@
 
     </ng-container>
 
+    <ng-container *ngSwitchCase="PropertyType.STATIC_DROPDOWN">
+      <div>
+        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:config} ">
+          </ng-container>
+        </span>
+        <ng-container
+          *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:staticDropdownInputTemplate ;context:{$implicit:config, formGroup:form}">
+        </ng-container>
+        <ng-template #staticDropdownInputTemplate>
+          <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label> {{ config.label }} </mat-label>
+            <mat-select [matTooltip]="config.description" [formControlName]="config.key"
+              [compareWith]="dropdownCompareWithFunction">
+              <mat-option *ngFor="let opt of config.staticDropdownState.options" [value]="opt.value">
+                {{opt.label}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="formGroup.get(config.key)?.invalid">
+              {{config.label}} is required
+            </mat-error>
+          </mat-form-field>
+        </ng-template>
+
+      </div>
+
+    </ng-container>
+
     <ng-container *ngSwitchCase="PropertyType.ARRAY">
       <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
         <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:config} ">

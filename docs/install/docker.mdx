@@ -25,7 +25,19 @@ git clone https://github.com/activepieces/activepieces.git
 cd activepieces
 ```
 
-**3. Run Activepieces.**
+**3.Generate Environment variable**
+
+Run the following command from the command prompt / terminal
+
+```bash
+sh tools/deploy.sh
+```
+
+<Tip>
+If none of the above methods work, you can rename the .env.example file in the root directory to .env and fill in the necessary information within the file.
+</Tip>
+
+**4. Run Activepieces.**
 
 ```bash
 docker compose -p activepieces up
@@ -44,7 +56,7 @@ ngrok http 3000
 ```
 3. Replace `AP_BACKEND_URL` environment variable in `packages/.env` with the ngrok url.
 
-![Ngrock](../resources/screenshots/docker-ngrok.png)
+![Ngrok](../resources/screenshots/docker-ngrok.png)
 
 <Warning>
 When deploying for production, ensure that you update the database credentials and properly set the environment variables.

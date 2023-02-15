@@ -29,7 +29,7 @@ export const zoomCreateMeetingRegistrant = createAction({
   },
 
   async run(context) {
-    const body = { ...context.propsValue }
+    const body: Record<string, unknown> = { ...context.propsValue }
     delete body['authentication']
     delete body['meeting_id']
 
@@ -39,7 +39,7 @@ export const zoomCreateMeetingRegistrant = createAction({
       body,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.propsValue.authentication!.access_token
+        token: context.propsValue.authentication.access_token
       },
       queryParams: {}
     }

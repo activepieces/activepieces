@@ -27,7 +27,7 @@ export const httpSendRequestAction = createAction({
     }),
     body: Property.Json({
       displayName: 'Body',
-      required: true,
+      required: false,
     }),
   },
 

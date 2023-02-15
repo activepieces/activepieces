@@ -1,8 +1,8 @@
 import { PropertyType } from "@activepieces/shared";
-import { BasePropertySchema, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
-import { DropdownProperty } from "./dropdown-prop";
+import { BasePropertySchema, NumberProperty, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
+import { StaticDropdownProperty } from "./dropdown-prop";
 
-export type OAuthProp = OAuth2Property | ShortTextProperty | SecretTextProperty | DropdownProperty<any>;
+export type OAuthProp = ShortTextProperty<true> | SecretTextProperty<true> | NumberProperty<true> | StaticDropdownProperty<any, true>;
 
 export type OAuthPropValue = OAuthProp extends any ? OAuthProp['valueSchema'] : never;
 
@@ -22,7 +22,8 @@ export type OAuth2PropertyValue = {
 	data: Record<string, any>;
 }
 
-export interface OAuth2Property extends OAuth2PropertySchema, TPropertyValue<
-    OAuth2PropertyValue,
-    PropertyType.OAUTH2
-> {}
+export type OAuth2Property<R extends boolean> = OAuth2PropertySchema & TPropertyValue<
+	OAuth2PropertyValue,
+	PropertyType.OAUTH2,
+	R
+>;
