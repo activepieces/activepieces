@@ -27,7 +27,7 @@ export const flagService = {
     const created = now;
     const updated = now;
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const currentVersion = require('../../../../../package.json').version;
+    const currentVersion = (await import('../../../../../package.json')).version;
     const latestVersion = (await flagService.getLatestPackageDotJson()).version;
     flags.push(
       {
