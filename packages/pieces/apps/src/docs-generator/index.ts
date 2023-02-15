@@ -52,11 +52,10 @@ function writePieceDoc(p: Piece, mdxTemplate: string) {
   return `${appsDocsFolderPath}/${p.metadata().name}`;
 }
 
-
-const TEMPLATE_MDX = fs.readFileSync('packages/pieces/framework/src/lib/docs-generator/template.mdx', 'utf8');
+const TEMPLATE_MDX = fs.readFileSync('packages/pieces/apps/src/docs-generator/template.mdx', 'utf8');
 const appsDocsFilesPaths: string[] = [];
 pieces.forEach((p) => {
-  const predefinedMdxPath = `packages/pieces/framework/src/lib/apps/${p.name}/${p.name}.mdx`;
+  const predefinedMdxPath = `packages/pieces/apps/src/lib/${p.name}/${p.name}.mdx`;
   if (fs.existsSync(predefinedMdxPath)) {
     const predfinedMdxFile = fs.readFileSync(predefinedMdxPath, 'utf8');
     appsDocsFilesPaths.push(writePieceDoc(p, predfinedMdxFile));
