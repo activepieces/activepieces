@@ -28,6 +28,7 @@ import { binance } from './binance';
 import { airtable } from './airtable';
 import { googleDrive } from './google-drive';
 import { dropbox } from './dropbox';
+import { rssFeed } from './rss';
 
 export const pieces: Piece[] = [
 	slack,
@@ -58,7 +59,8 @@ export const pieces: Piece[] = [
 	airtable,
 	googleDrive,
 	zoom,
-	dropbox
+	dropbox,
+	rssFeed,
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {

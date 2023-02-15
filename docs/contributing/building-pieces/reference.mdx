@@ -39,10 +39,10 @@ export const createNewIssue = createTrigger({
 	description: string, // Description for the action
     triggerType: POLLING | WEBHOOK,
 	props: {}; // Required properties from the user.
+    // Run when the user enable or publish the collection.
+	onEnable: (ctx) => {};
     // Run when the user disable the collection or
     // the old collection is deleted after new one is published.
-	onEnable: (ctx) => {};
-    // Run when the user enable or publish the collection.
 	onDisable: (ctx) => {};
     // Trigger implementation, It takes context as parameter.
     // should returns an array of payload, each payload considered
