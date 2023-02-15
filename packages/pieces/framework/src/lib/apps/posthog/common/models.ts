@@ -7,8 +7,8 @@ export interface EventBody extends HttpMessageBody {
   distinct_id?: string
   context?: Record<string, unknown>
   properties?: Record<string, unknown>
-  type:  "page"|"screen"|"capture"|"alias"
-  event: "$create_alias"|"$event"|"$page"|"$screen"|"$identify"
+  type:  string
+  event: string
   name?: string
   messageId?: string
 }
