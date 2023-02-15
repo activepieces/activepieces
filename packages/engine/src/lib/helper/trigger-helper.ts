@@ -1,4 +1,4 @@
-import { pieces } from "@activepieces/framework";
+import { pieces } from "@activepieces/pieces-apps";
 import { ExecuteTriggerOperation, ExecutionState, PieceTrigger, TriggerHookType } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";

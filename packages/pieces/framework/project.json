@@ -18,15 +18,6 @@
         ]
       }
     },
-    "refresh-docs": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node dist/packages/pieces/framework/src/lib/docs-generator/index.js"
-      },
-      "dependsOn": [
-        "build"
-      ]
-    },
     "publish": {
       "executor": "nx:run-commands",
       "options": {

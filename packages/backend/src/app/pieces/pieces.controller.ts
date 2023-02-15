@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
 import { PieceOptionRequest } from "@activepieces/shared";
-import { pieces } from "@activepieces/framework";
+import { pieces } from "@activepieces/pieces-apps";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 import { collectionService } from "../collections/collection.service";
 import { engineHelper } from "../helper/engine-helper";

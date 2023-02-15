@@ -1,4 +1,4 @@
-import { pieces } from '@activepieces/framework';
+import { pieces } from '@activepieces/pieces-apps';
 import { Piece } from '@activepieces/framework';
 import { globals } from '../globals';
 import { createContextStore } from '../services/storage.service';
