@@ -15,18 +15,39 @@ export const posthogCreateEvent = createAction({
   },
   props: {
     api_key: Property.ShortText({ 
-      displayName: "API Key", 
-      description: "Your personal or project API key" , 
+      displayName: "Project API key", 
+      description: "Your project API key" , 
+      required: true
+    }),
+    event_type: Property.Dropdown({
+      displayName: "Event type",
+      required: true,
+      refreshers: [],
+      options: async (props) => {
+        return {
+          options: [
+            {label: "Alias", value: {event: "$create_alias", type: "alias"}},
+            {label: "Capture", value: {event: "$event", type: "capture"}},
+            {label: "Identify", value: {event: "$identify", type: "screen"}},
+            {label: "Page", value: {event: "$page", type: "page"}},
+            {label: "Screen", value: {event: "$screen", type: "screen"}},
+          ]
+        };
+      }
+    }),
+    distinct_id: Property.ShortText({ 
+      displayName: "Distinct Id", 
+      description: "User's Distinct Id" , 
       required: true
     }),
     properties: Property.Object({ 
-      displayName: "Project ID", 
-      description: "The project id." , 
+      displayName: "Properties", 
+      description: "The event properties" , 
       required: false
     }),
     context: Property.Object({ 
       displayName: "Context", 
-      description: "The context," , 
+      description: "The event context," , 
       required: false
     }),
     message_id: Property.ShortText({ 
@@ -38,17 +59,17 @@ export const posthogCreateEvent = createAction({
       displayName: "Category", 
       description: "The event category." , 
       required: false
-    })
+    }),
   },
   async run(context) {
-    const body: EventBody = {
-      type: "capture",
-      event: "$event",
+    let body: EventBody = {
+      ...context.propsValue.event_type,
       api_key: context.propsValue.api_key!,
-      properties: context.propsValue.properties,
-      context: context.propsValue.context,
       messageId: context.propsValue.message_id,
-      category: context.propsValue.category,
+      context: context.propsValue.context || {},
+      properties: context.propsValue.properties || {},
+      distinct_id: context.propsValue.distinct_id!,
+      category: context.propsValue.category
     }
 
     const request: HttpRequest<EventBody> = {
@@ -63,6 +84,11 @@ export const posthogCreateEvent = createAction({
 
     const result = await httpClient.sendRequest<EventCaptureResponse>(request)
     console.debug("Event creation response", result)
+
+    if (result.status === 200) {
+      return result.body
+    }
+
     return result
   }
 });
