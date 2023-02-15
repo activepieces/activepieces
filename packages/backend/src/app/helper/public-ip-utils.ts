@@ -7,7 +7,7 @@ const PUBLIC_IP_ADDRESS_QUERY = "o-o.myaddr.l.google.com";
 
 let ipMetadata: IpMetadata | undefined;
 
-const getPublicIp = async (): Promise<IpMetadata> => {
+export const getPublicIp = async (): Promise<IpMetadata> => {
   if (ipMetadata !== undefined) {
     return ipMetadata;
   }
@@ -25,13 +25,4 @@ const getPublicIp = async (): Promise<IpMetadata> => {
 
 interface IpMetadata {
   ip: string;
-}
-
-export const getBackendUrl = async (): Promise<string> => {
-  let backendUrl = system.get(SystemProp.BACKEND_URL);
-  if (backendUrl === undefined) {
-    const { ip } = await getPublicIp();
-    backendUrl = `http://${ip}:3000`
-  }
-  return backendUrl;
 }

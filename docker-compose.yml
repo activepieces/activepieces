@@ -23,6 +23,9 @@ services:
     container_name: activepieces-frontend
     restart: unless-stopped
     depends_on: [ backend ]
+    environment:
+      - AP_BACKEND_URL=${AP_BACKEND_URL}
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
     ports:
       - 8080:80
     networks:

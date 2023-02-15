@@ -23,6 +23,10 @@ export const system = {
   },
 
   getBoolean(prop: SystemProp): boolean | undefined {
+    const env = getEnvVar(prop);
+    if(env === undefined){
+      return undefined;
+    }
     return getEnvVar(prop) === "true";
   },
 

@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
-import { Router, Resolve, RouterStateSnapshot, ActivatedRouteSnapshot } from '@angular/router';
+import { Router, Resolve } from '@angular/router';
 import { Observable, tap } from 'rxjs';
-import { AuthenticationService } from '../../common/service/authentication.service';
+import { FlagService } from '../../common/service/flag.service';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class IsFirstSignInResolver implements Resolve<boolean> {
-	resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
-		return this.auth.isFirstSignIn().pipe(
+	resolve(): Observable<boolean> {
+		return this.flagService.isFirstSignIn().pipe(
 			tap(isFirstSignIn => {
 				if (isFirstSignIn) {
 					this.router.navigate(['/sign-up']);
@@ -16,5 +16,5 @@ export class IsFirstSignInResolver implements Resolve<boolean> {
 			})
 		);
 	}
-	constructor(private auth: AuthenticationService, private router: Router) {}
+	constructor(private flagService: FlagService, private router: Router) { }
 }

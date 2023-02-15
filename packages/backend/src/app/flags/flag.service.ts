@@ -1,11 +1,11 @@
 import { Flag } from "@activepieces/shared";
 import { ApFlagId } from "@activepieces/shared";
 import { databaseConnection } from "../database/database-connection";
-import { getBackendUrl } from "../helper/public-ip-utils";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
 import { FlagEntity } from "./flag.entity";
 import axios from "axios";
+import { webhookService } from "../webhooks/webhook-service";
 
 const flagRepo = databaseConnection.getRepository(FlagEntity);
 
@@ -27,12 +27,12 @@ export const flagService = {
     const created = now;
     const updated = now;
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const currentVersion = require('../../../../../package.json').version;
+    const currentVersion = (await import('../../../../../package.json')).version;
     const latestVersion = (await flagService.getLatestPackageDotJson()).version;
     flags.push(
       {
-        id: ApFlagId.BACKEND_URL,
-        value: await getBackendUrl(),
+        id: ApFlagId.ENVIRONMENT,
+        value: system.get(SystemProp.ENVIRONMENT),
         created,
         updated,
       },
@@ -45,6 +45,12 @@ export const flagService = {
       {
         id: ApFlagId.TELEMETRY_ENABLED,
         value: system.getBoolean(SystemProp.TELEMETRY_ENABLED) ?? true,
+        created,
+        updated,
+      },
+      {
+        id: ApFlagId.WEBHOOK_URL_PREFIX,
+        value: await webhookService.getWebhookPrefix(),
         created,
         updated,
       },
@@ -92,10 +98,9 @@ export const flagService = {
   }
 };
 
-
 export type FlagType =
   | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>
-  | BaseFlagStructure<ApFlagId.BACKEND_URL, string>
+  | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
   | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
   | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
   | BaseFlagStructure<ApFlagId.WARNING_TEXT_BODY, string>
