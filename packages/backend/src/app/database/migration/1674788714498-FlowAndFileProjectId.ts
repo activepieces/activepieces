@@ -1,9 +1,29 @@
-import { logger } from "packages/backend/src/main";
+import { logger } from "../../helper/logger";
 import { MigrationInterface, QueryRunner } from "typeorm"
 
 export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        logger.info('FlowAndFileProjectId1674788714498: started')
+
+        const flowTableExistsQueryResponse: { exists: boolean }[] = await queryRunner.query(
+          `SELECT exists (
+            SELECT FROM information_schema.tables
+              WHERE  table_schema = 'public'
+              AND    table_name   = 'flow'
+          )`
+        )
+
+        const flowTableNotExist =
+          flowTableExistsQueryResponse &&
+          flowTableExistsQueryResponse.length > 0 &&
+          flowTableExistsQueryResponse[0].exists == false
+
+        if (flowTableNotExist) {
+          logger.info('FlowAndFileProjectId1674788714498: skipped')
+          return
+        }
+
         const flowRepo = queryRunner.connection.getRepository("flow");
         const fileRepo = queryRunner.connection.getRepository("file");
         const flowRunRepo = queryRunner.connection.getRepository("flow_run");

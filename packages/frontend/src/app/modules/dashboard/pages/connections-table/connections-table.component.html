@@ -13,6 +13,21 @@
         <td mat-cell *matCellDef="let connection">{{ connection.name }}</td>
       </ng-container>
 
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let connection">
+          <ng-container [ngSwitch]="connection.status">
+            <app-state-icon *ngSwitchCase="connectionStatus.ACTIVE" textAfter="Active"
+              [succeeded]="true"></app-state-icon>
+            <app-state-icon *ngSwitchCase="connectionStatus.EXPIRED" textAfter="Expired"
+              [succeeded]="false"></app-state-icon>
+
+
+            <span *ngSwitchDefault [matTooltip]="connection.status">{{ connection.status}}</span>
+          </ng-container>
+        </td>
+      </ng-container>
+
       <ng-container matColumnDef="created">
         <th mat-header-cell *matHeaderCellDef>created</th>
         <td mat-cell *matCellDef="let connection">

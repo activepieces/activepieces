@@ -41,9 +41,6 @@ import { TestCodeFormModalComponent } from './components/form-controls/code-arti
 import { AddNpmPackageModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component';
 import { projectReducer } from './store/project/project.reducer';
 import { TrackHoverDirective } from './components/form-controls/dictionary-form-control/track-hover.directive';
-import { RequestTypeTemplateComponent } from './components/form-controls/request-type-template/request-type-template.component';
-import { EndpointFormControlComponent } from './components/form-controls/endpoint-form-control/endpoint-form-control.component';
-import { ConnectorCustomRequestFormControlComponent } from './components/form-controls/connector-custom-request-form-control/connector-custom-request-form-control.component';
 import { MatCardModule } from '@angular/material/card';
 import {
   MatFormFieldModule,
@@ -111,9 +108,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     TestCodeFormModalComponent,
     AddNpmPackageModalComponent,
     TrackHoverDirective,
-    RequestTypeTemplateComponent,
-    EndpointFormControlComponent,
-    ConnectorCustomRequestFormControlComponent,
     DialogTitleTemplateComponent,
     JsonViewDialogComponent,
     AuthConfigsPipe,
@@ -188,8 +182,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     CodeArtifactFormControlComponent,
     MatTooltipModule,
     MatSlideToggleModule,
-    EndpointFormControlComponent,
-    ConnectorCustomRequestFormControlComponent,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
