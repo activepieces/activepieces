@@ -7,7 +7,8 @@ import { Trigger } from '../framework/trigger/trigger';
 
 const mintJson: { navigation: { group: string; pages: string[] }[] } =
   JSON.parse(fs.readFileSync('./docs/mint.json', 'utf8'));
-const appsDocsFolderPath = 'pieces/apps';
+
+const appsDocsFolderPath = 'pieces/framework/apps';
 
 function getCardTemplate(title: string, description: string) {
   const CARD_TEMPLATE = `
