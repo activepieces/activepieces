@@ -92,7 +92,7 @@ function isExpired(connection: BaseOAuth2ConnectionValue) {
         return false;
     }
 
-    return (secondsSinceEpoch >= connection.claimed_at + connection.expires_in + REFRESH_THRESHOLD)
+    return (secondsSinceEpoch + REFRESH_THRESHOLD >= connection.claimed_at + connection.expires_in)
 }
 
 async function refreshCloud(appName: string, connectionValue: CloudOAuth2ConnectionValue): Promise<CloudOAuth2ConnectionValue> {

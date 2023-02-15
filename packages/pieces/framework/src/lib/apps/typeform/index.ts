@@ -6,5 +6,6 @@ export const typeform = createPiece({
   displayName: 'TypeForm',
   logoUrl: 'https://cdn.activepieces.com/pieces/typeform.png',
   actions: [],
+  authors: ['ShahedAlMashni'],
   triggers: [typeformNewSubmission],
 });

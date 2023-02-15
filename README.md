@@ -18,27 +18,7 @@
 
 ## Get started for free
 
-### Option #1: Play around with the Demo App
-Go to [Activepieces Demo Website](https://demo.activepieces.com) and play around with the app features.
-
-### Option #2: Self Host
-Clone Activepieces to your machine and run it with 1 command
-
- ```bash 
-# Clone the repository
-git clone https://github.com/activepieces/activepieces.git
-
-# Go to the repository folder
-cd activepieces
-
-# Run
-docker compose -p activepieces up
- ``` 
- 
-Vist `http://localhost:8080`
-
-### Other Options
-We're planning to launch a cloud edition of Activepieces soon.
+Visit https://www.activepieces.com/docs/install/overview
 
 ## Features
 
@@ -99,6 +79,7 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/crazyTweek"><img src="https://avatars.githubusercontent.com/u/6828237?v=4?s=100" width="100px;" alt="crazyTweek"/><br /><sub><b>crazyTweek</b></sub></a><br /><a href="#ideas-crazyTweek" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://linkedin.com/in/muhammad-tabaza"><img src="https://avatars.githubusercontent.com/u/23503983?v=4?s=100" width="100px;" alt="Muhammad Tabaza"/><br /><sub><b>Muhammad Tabaza</b></sub></a><br /><a href="#plugin-m-tabaza" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://shaypunter.co.uk"><img src="https://avatars.githubusercontent.com/u/18310437?v=4?s=100" width="100px;" alt="Shay Punter"/><br /><sub><b>Shay Punter</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=ShayPunter" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

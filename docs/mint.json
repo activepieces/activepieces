@@ -127,7 +127,13 @@
       "pages": [
         "contributing/overview",
         "contributing/repo-structure",
-        "contributing/local-development"
+        {
+          "group": "Development Setup",
+          "pages": [
+            "contributing/development-setup/codespaces",
+            "contributing/development-setup/local-development"
+          ]
+        }
       ]
     },
     {

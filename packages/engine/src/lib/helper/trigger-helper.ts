@@ -1,6 +1,6 @@
-import { pieces, Store } from "@activepieces/framework";
+import { pieces } from "@activepieces/framework";
 import { ExecuteTriggerOperation, ExecutionState, PieceTrigger, TriggerHookType } from "@activepieces/shared";
-import { createContextStore, storageService } from "../services/storage.service";
+import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 
 export const triggerHelper = {
@@ -15,7 +15,7 @@ export const triggerHelper = {
     executionState.insertConfigs(params.collectionVersion);
     const resolvedInput = await variableService.resolve(flowTrigger.settings.input, executionState);
 
-    let context = {
+    const context = {
       store: createContextStore(params.flowVersion.flowId),
       webhookUrl: params.webhookUrl,
       propsValue: resolvedInput,

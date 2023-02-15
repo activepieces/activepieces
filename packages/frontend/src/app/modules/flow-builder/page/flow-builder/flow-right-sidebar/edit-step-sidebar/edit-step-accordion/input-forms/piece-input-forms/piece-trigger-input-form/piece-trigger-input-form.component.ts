@@ -58,8 +58,8 @@ export class PieceTriggerInputFormComponent {
 	triggers$: Observable<TriggerDropdownOption[]>;
 	valueChanges$: Observable<void>;
 	triggerDropdownValueChanged$: Observable<{ triggerName: string; configs: PieceConfig[] }>;
-	onChange = (value: any) => {};
-	onTouch = () => {};
+	onChange = (value: any) => { };
+	onTouch = () => { };
 	updateOrAddConfigModalClosed$: Observable<Config>;
 	allAuthConfigs$: Observable<DropdownItem[]>;
 	constructor(
@@ -151,7 +151,7 @@ export class PieceTriggerInputFormComponent {
 										}
 									});
 								}
-								this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new UntypedFormControl([...configs]), {
+								this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME, new UntypedFormControl({ value: [...configs], disabled: this.componentForm.disabled }), {
 									emitEvent: false,
 								});
 								this.cd.detectChanges();

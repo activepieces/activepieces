@@ -22,10 +22,11 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
   }
 
   private getError(stepOutput: LoopOnItemsStepOutput) {
-    if (stepOutput.output?.iterations === undefined) {
+    const iterations = stepOutput.output?.iterations;
+    if (iterations === undefined) {
       throw new Error("Iteration can't be undefined");
     }
-    for (const iteration of stepOutput.output?.iterations) {
+    for (const iteration of iterations) {
       for (const stepOutput of Object.values(iteration)) {
         if (stepOutput.status === StepOutputStatus.FAILED) {
           return stepOutput.errorMessage;
