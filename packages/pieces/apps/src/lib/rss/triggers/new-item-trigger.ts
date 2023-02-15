@@ -1,3 +1,4 @@
+import { XMLParser } from 'fast-xml-parser';
 import { createTrigger, TriggerStrategy, httpClient, HttpMethod } from '@activepieces/framework';
 import { rssFeedUrl } from '../common/props';
 
