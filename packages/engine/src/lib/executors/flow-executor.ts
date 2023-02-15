@@ -20,13 +20,13 @@ export class FlowExecutor {
   }
 
   public async executeFlow(
-    collectionId: string,
-    flowId: string
+    collectionVersionId: string,
+    flowVersionId: string
   ): Promise<ExecutionOutput> {
     try {
       const startTime = new Date().getTime();
 
-      const flowVersion: FlowVersion = this.prepareFlow(collectionId, flowId);
+      const flowVersion: FlowVersion = this.prepareFlow(collectionVersionId, flowVersionId);
       const flowStatus = await this.iterateFlow(
         createAction(flowVersion.trigger?.nextAction),
         []
@@ -107,16 +107,17 @@ export class FlowExecutor {
     return await this.iterateFlow(handler.nextAction, ancestors);
   }
 
-  private prepareFlow(collectionId: string, flowId: string) {
+  private prepareFlow(collectionVersionId: string, flowVersionId: string) {
     try {
       // Parse all required files.
       const collectionVersion: CollectionVersion = Utils.parseJsonFile(
-        `${globals.collectionDirectory}/${collectionId}.json`
+        `${globals.collectionDirectory}/${collectionVersionId}.json`
       );
       const flowVersion: FlowVersion = Utils.parseJsonFile(
-        `${globals.flowDirectory}/${flowId}.json`
+        `${globals.flowDirectory}/${flowVersionId}.json`
       );
-
+      
+      globals.flowId = flowVersion.id;
       // Add predefined configs to Execution State.
       this.executionState.insertConfigs(collectionVersion);
 

@@ -25,7 +25,9 @@ import { zoom } from './zoom';
 import { googleCalendar } from './google-calendar';
 import { telegramBot } from './telegram_bot';
 import { binance } from './binance';
+import { airtable } from './airtable';
 import { googleDrive } from './google-drive';
+import { dropbox } from './dropbox';
 
 export const pieces: Piece[] = [
 	slack,
@@ -54,7 +56,10 @@ export const pieces: Piece[] = [
 	googleCalendar,
 	zoom,
 	binance,
+	airtable,
 	googleDrive,
+	zoom,
+	dropbox
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {

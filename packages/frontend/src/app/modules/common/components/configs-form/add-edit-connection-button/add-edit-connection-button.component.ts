@@ -40,7 +40,7 @@ export class AddEditConnectionButtonComponent {
 
 
   buttonClicked() {
-    debugger;
+
     if (this.isEditConnectionButton) {
       this.editConnection();
     }
@@ -257,7 +257,7 @@ export class AddEditConnectionButtonComponent {
         pieceAuthConfig: this.config,
         connectionToUpdate: connection as BasicAuthConnection
       };
-      debugger;
+
       return this.dialogService
         .open(BasicAuthConnectionDialogComponent, {
           data: dialogData,

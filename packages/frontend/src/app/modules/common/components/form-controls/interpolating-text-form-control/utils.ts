@@ -37,28 +37,35 @@ export function fromTextToOps(
 ): {
 	ops: (TextInsertOperation | InsertMentionOperation)[];
 } {
-	var regex = /(\$\{.*?\})/;
-	var matched = text.split(regex).filter(el => el);
-	var ops: (TextInsertOperation | InsertMentionOperation)[] = matched.map(item => {
-		if (item.length > 3 && item[0] === '$' && item[1] === '{' && item[item.length - 1] === '}') {
-			const itemPathWithoutInterpolationDenotation = item.slice(2, item.length - 1);
-			const mentionText = replaceArrayNotationsWithSpaces(
-				replaceDotsWithSpaces(adjustItemPath(itemPathWithoutInterpolationDenotation, allStepsNamesAndDisplayNames))
-			);
-			return {
-				insert: {
-					mention: {
-						value: mentionText,
-						denotationChar: '',
-						serverValue: item,
+	try {
+		const regex = /(\$\{.*?\})/;
+		const matched = text.split(regex).filter(el => el);
+		const ops: (TextInsertOperation | InsertMentionOperation)[] = matched.map(item => {
+			if (item.length > 3 && item[0] === '$' && item[1] === '{' && item[item.length - 1] === '}') {
+				const itemPathWithoutInterpolationDenotation = item.slice(2, item.length - 1);
+				const mentionText = replaceArrayNotationsWithSpaces(
+					replaceDotsWithSpaces(adjustItemPath(itemPathWithoutInterpolationDenotation, allStepsNamesAndDisplayNames))
+				);
+				return {
+					insert: {
+						mention: {
+							value: mentionText,
+							denotationChar: '',
+							serverValue: item,
+						},
 					},
-				},
-			};
-		} else {
-			return { insert: item };
-		}
-	});
-	return { ops: ops };
+				};
+			} else {
+				return { insert: item };
+			}
+		});
+		return { ops: ops };
+	} catch (err) {
+		console.error(text);
+		console.error(err);
+		throw err;
+	}
+
 }
 
 function adjustItemPath(itemPath: string, allStepsNamesAndDisplayNames: { displayName: string; name: string }[]) {
