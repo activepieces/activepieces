@@ -5,7 +5,8 @@ import { zoomCreateMeetingRegistrant } from './actions/create-meeting-registrant
 export const zoom = createPiece({
   name: 'zoom',
   displayName: "Zoom",
-  logoUrl: 'https://explore.zoom.us/media/logo-zoom-blue.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/zoom.png',
   actions: [zoomCreateMeeting, zoomCreateMeetingRegistrant],
+  authors: ['kanarelo'],
   triggers: [],
 });

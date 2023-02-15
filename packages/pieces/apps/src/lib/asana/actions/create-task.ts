@@ -18,7 +18,7 @@ export const createAsanaTask = createAction({
             description: 'Free-form textual information associated with the task (i.e. its description).',
             displayName: 'Task Description',
             required: true,
-        }),
+        })
     },
     sampleData: {
 

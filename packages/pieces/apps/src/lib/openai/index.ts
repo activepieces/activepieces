@@ -6,5 +6,6 @@ export const openai = createPiece({
   displayName: 'Open AI',
   logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   actions: [askOpenAI],
+  authors: ['aboudzein'],
   triggers: [],
 });

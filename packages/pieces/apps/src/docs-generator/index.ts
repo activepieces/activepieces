@@ -4,6 +4,7 @@ import { pieces } from '..';
 
 const mintJson: { navigation: { group: string; pages: string[] }[] } =
   JSON.parse(fs.readFileSync('./docs/mint.json', 'utf8'));
+
 const appsDocsFolderPath = 'pieces/apps';
 
 function getCardTemplate(title: string, description: string) {

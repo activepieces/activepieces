@@ -9,7 +9,7 @@ import { DEFAULT_PAGE_SIZE } from '../../common/components/pagination/tables.uti
 	providedIn: 'root',
 })
 export class AreThereCollectionsResovler implements Resolve<Observable<boolean>> {
-	constructor(private projectService: ProjectService, private collectionService: CollectionService) {}
+	constructor(private projectService: ProjectService, private collectionService: CollectionService) { }
 
 	resolve(): Observable<boolean> {
 		return this.projectService.selectedProjectAndTakeOne().pipe(

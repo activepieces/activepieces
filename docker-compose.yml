@@ -2,7 +2,7 @@ version: '3.0'
 
 services:
   backend:
-    image: activepieces/backend:0.3.0
+    image: activepieces/backend:0.3.1
     container_name: activepieces-backend
     restart: unless-stopped
     privileged: true
@@ -19,10 +19,13 @@ services:
      - dist/packages/backend/main.js
 
   frontend:
-    image: activepieces/frontend:0.3.0
+    image: activepieces/frontend:0.3.1
     container_name: activepieces-frontend
     restart: unless-stopped
     depends_on: [ backend ]
+    environment:
+      - AP_BACKEND_URL=${AP_BACKEND_URL}
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
     ports:
       - 8080:80
     networks:
