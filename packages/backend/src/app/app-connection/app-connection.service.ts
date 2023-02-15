@@ -99,11 +99,14 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
     if (!isExpired(connectionValue)) {
         return connectionValue;
     }
+
+    const requestBody: RefreshTokenFromCloudRequest = {
+        refreshToken: connectionValue.refresh_token,
+        pieceName: appName,
+        tokenUrl: connectionValue.token_url,
+    };
     const response = (
-        await axios.post("https://secrets.activepieces.com/refresh", {
-            refreshToken: connectionValue.refresh_token,
-            pieceName: appName,
-        } as RefreshTokenFromCloudRequest)
+        await axios.post("https://localhost:4000/refresh", requestBody)
     ).data;;
 
     return {
@@ -116,6 +119,7 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
 async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithApp): Promise<OAuth2ConnectionValueWithApp> {
     if (!isExpired(appConnection)) {
         return appConnection;
+
     }
     const settings = appConnection;
     const response = (

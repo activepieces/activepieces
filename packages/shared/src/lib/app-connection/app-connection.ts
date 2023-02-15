@@ -52,6 +52,8 @@ export interface CloudOAuth2ConnectionValue extends BaseOAuth2ConnectionValue {
   refresh_token: string;
   scope: string;
   data: Record<string, any>
+  props?: Record<string, any>;
+  token_url?: string;
 }
 
 export interface OAuth2AppDetails {

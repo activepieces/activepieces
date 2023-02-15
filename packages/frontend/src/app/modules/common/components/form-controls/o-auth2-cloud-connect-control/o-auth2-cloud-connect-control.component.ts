@@ -7,10 +7,11 @@ import { Oauth2Service } from '../../../service/oauth2.service';
 
 export interface CloudConnectionPopupSettings {
 	clientId: string;
-	authUrl: string;
+	auth_url: string;
 	extraParams: Record<string, unknown>;
 	scope: string;
 	pieceName: string;
+	token_url?: string;
 }
 
 @Component({

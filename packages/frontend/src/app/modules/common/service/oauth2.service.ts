@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { UUID } from 'angular2-uuid';
 import { map, Observable, switchMap } from 'rxjs';
 import { BaseOAuth2ConnectionValue, ClaimTokenWithSecretRequest, OAuth2AppDetails } from '@activepieces/shared';
+import { CloudConnectionPopupSettings } from '../components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
 
 @Injectable({
 	providedIn: 'root',
@@ -90,23 +91,17 @@ export class Oauth2Service {
 		);
 	}
 
-	private claimWithScretForCloud(request: { pieceName: string; code: string }) {
+	private claimWithScretForCloud(request: { pieceName: string; code: string, tokenUrl: string | undefined }) {
 		return this.httpClient.post<BaseOAuth2ConnectionValue>(environment.apiUrl + '/oauth2/claim-with-cloud', request);
 	}
-	public openCloudAuthPopup(request: {
-		clientId: string;
-		authUrl: string;
-		extraParams: Record<string, unknown>;
-		scope: string;
-		pieceName: string;
-	}): Observable<any> {
+	public openCloudAuthPopup(request: CloudConnectionPopupSettings): Observable<any> {
 		this.currentlyOpenPopUp?.close();
 		const winTarget = '_blank';
 		const winFeatures =
 			'resizable=no, toolbar=no,left=100, top=100, scrollbars=no, menubar=no, status=no, directories=no, location=no, width=600, height=800';
 		const redirect_uri = 'https://secrets.activepieces.com/redirect';
 		let url =
-			request.authUrl +
+			request.auth_url +
 			'?response_type=code' +
 			'&client_id=' +
 			request.clientId +
@@ -150,6 +145,7 @@ export class Oauth2Service {
 					return this.claimWithScretForCloud({
 						code: decodeURIComponent(params.code),
 						pieceName: request.pieceName,
+						tokenUrl: request.token_url,
 					}).pipe(
 						map(value => {
 							if (value['error']) {

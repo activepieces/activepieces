@@ -6,14 +6,21 @@ import { HttpMethod } from "../../../common/http/core/http-method";
 import { HttpResponse } from "../../../common/http/core/http-response";
 import { AuthenticationType } from "../../../common/authentication/core/authentication-type";
 
+
 export const asanaCommon = {
     authentication: Property.OAuth2({
         description: "",
         displayName: 'Authentication',
-        authUrl: "https://app.asana.com/-/oauth_authorize",
-        tokenUrl: "https://app.asana.com/-/oauth_token",
+        authUrl: "https://{test}.asana.com/-/oauth_authorize",
+        tokenUrl: "https://{test}.asana.com/-/oauth_token",
         required: true,
         scope: ['default'],
+        props: {
+            test: Property.ShortText({
+                displayName: 'Test',
+                required: true
+            })
+        }
     }),
     workspace: Property.Dropdown({
         description: 'Asana workspace to create the task in',
