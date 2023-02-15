@@ -1,0 +1,27 @@
+{
+  "name": "pieces-slack",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/slack/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/slack/**/*.ts"]
+      }
+    },
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/slack",
+        "tsConfig": "packages/pieces/slack/tsconfig.lib.json",
+        "packageJson": "packages/pieces/slack/package.json",
+        "main": "packages/pieces/slack/src/index.ts",
+        "assets": ["packages/pieces/slack/*.md"]
+      }
+    }
+  },
+  "tags": []
+}
