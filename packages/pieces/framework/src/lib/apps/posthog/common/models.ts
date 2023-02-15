@@ -1,7 +1,7 @@
 import { HttpMessageBody } from "../../../common/http/core/http-message-body"
 
 export interface EventBody extends HttpMessageBody {
-  api_key: string
+  api_key?: string
   timestamp?: string
   category?: string
   distinct_id?: string
