@@ -69,7 +69,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     this.connectionToUpdate = dialogData.connectionToUpdate;
     debugger;
     this._cloudConnectionPopupSettings = {
-      authUrl: this.pieceAuthConfig.authUrl!,
+      auth_url: this.pieceAuthConfig.authUrl!,
       scope: this.pieceAuthConfig.scope!.join(' '),
       extraParams: this.pieceAuthConfig.extra!,
       pieceName: this.pieceName,
@@ -202,8 +202,8 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   }
   get cloudConnectionPopupSettings() {
     if (this.pieceAuthConfig.oAuthProps && this.getOAuth2Settings()['auth_url']) {
-      this._cloudConnectionPopupSettings.authUrl = this.getOAuth2Settings()['auth_url'];
-      this._cloudConnectionPopupSettings.tokenUrl = this.getOAuth2Settings()['token_url'];
+      this._cloudConnectionPopupSettings.auth_url = this.getOAuth2Settings()['auth_url'];
+      this._cloudConnectionPopupSettings.token_url = this.getOAuth2Settings()['token_url'];
     }
     return this._cloudConnectionPopupSettings;
   }
