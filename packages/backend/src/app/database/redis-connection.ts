@@ -27,7 +27,7 @@ const redisConection = createRedisClient();
 export const createRedisLock = (key: string) => {
   return createLock(redisConection, {
     timeout: 2 * 60 * 1000,
-    retries: 3,
-    delay: 100,
+    retries: 10,
+    delay: 2000,
   }).acquire(key);
 };
