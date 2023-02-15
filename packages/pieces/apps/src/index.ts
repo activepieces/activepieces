@@ -1,5 +1,6 @@
 import { Piece } from '@activepieces/framework';
 import { slack } from '@activepieces/piece-slack';
+import { airtable } from './lib/airtable';
 import { asana } from './lib/asana';
 import { binance } from './lib/binance';
 import { blackbaud } from './lib/blackbaud';
@@ -7,6 +8,7 @@ import { calendly } from './lib/calendly';
 import { clickup } from './lib/clickup';
 import { discord } from './lib/discord';
 import { drip } from './lib/drip';
+import { dropbox } from './lib/dropbox';
 import { github } from './lib/github';
 import { gmail } from './lib/gmail';
 import { googleCalendar } from './lib/google-calendar';
@@ -19,6 +21,7 @@ import { hubspot } from './lib/hubspot';
 import { mailchimp } from './lib/mailchimp';
 import { openai } from './lib/openai';
 import { pipedrive } from './lib/pipedrive';
+import { rssFeed } from './lib/rss';
 import { sendgrid } from './lib/sendgrid';
 import { stripe } from './lib/stripe';
 import { telegramBot } from './lib/telegram_bot';
@@ -28,6 +31,7 @@ import { typeform } from './lib/typeform';
 import { zoom } from './lib/zoom';
 
 export const pieces: Piece[] = [
+    airtable,
     asana,
     binance,
     blackbaud,
@@ -35,6 +39,7 @@ export const pieces: Piece[] = [
     clickup,
     discord,
     drip,
+    dropbox,
     github,
     gmail,
     googleCalendar,
@@ -47,6 +52,7 @@ export const pieces: Piece[] = [
     mailchimp,
     openai,
     pipedrive,
+    rssFeed,
     sendgrid,
     slack,
     stripe,

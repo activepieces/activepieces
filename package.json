@@ -46,6 +46,7 @@
     "decompress": "^4.2.1",
     "deep-equal": "^2.2.0",
     "drip-nodejs": "^3.1.1",
+    "fast-xml-parser": "^4.1.2",
     "fastify": "4.12.0",
     "flatpickr": "^4.6.13",
     "font-awesome": "^4.7.0",
