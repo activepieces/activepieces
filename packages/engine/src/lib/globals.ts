@@ -8,6 +8,16 @@ class Globals {
   private _workerToken = '';
   private _projectId = '';
   private _apiUrl = '';
+  private _flowId = '';
+
+  set flowId(_flowId: string) {
+    this._flowId = _flowId;
+  }
+
+  get flowId() {
+    return this._flowId;
+  }
+
 
   set apiUrl(_apiUrl: string) {
     this._apiUrl = _apiUrl;

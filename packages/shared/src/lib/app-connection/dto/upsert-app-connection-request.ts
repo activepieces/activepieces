@@ -4,7 +4,6 @@ import { AppConnectionType } from "../app-connection";
 const commonAuthProps = {
     name: Type.String({}),
     appName: Type.String({}),
-    projectId: Type.String({}),
 };
 
 const OAuth2ConnectionValue = {
@@ -45,9 +44,18 @@ export const UpsertOAuth2Request = Type.Object({
     })
 });
 
+export const UpsertBasicAuthRequest = Type.Object({
+    ...commonAuthProps,
+    value: Type.Object({
+        username: Type.String({}),
+        password: Type.String({}),
+        type: Type.Literal(AppConnectionType.BASIC_AUTH),
+    })
+});
+
 export type UpsertCloudOAuth2Request = Static<typeof UpsertCloudOAuth2Request>;
 export type UpsertOAuth2Request = Static<typeof UpsertOAuth2Request>;
 export type UpsertSecretTextRequest = Static<typeof UpsertSecretTextRequest>;
-
-export const UpsertConnectionRequest = Type.Union([UpsertSecretTextRequest, UpsertOAuth2Request, UpsertCloudOAuth2Request]);
+export type UpsertBasicAuthRequest = Static<typeof UpsertBasicAuthRequest>;
 export type UpsertConnectionRequest = Static<typeof UpsertConnectionRequest>;
+export const UpsertConnectionRequest = Type.Union([UpsertSecretTextRequest, UpsertOAuth2Request, UpsertCloudOAuth2Request, UpsertBasicAuthRequest]);

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, QueryList, ViewChildren } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -11,6 +11,7 @@ import {
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import {
+  BehaviorSubject,
   catchError,
   combineLatest,
   debounceTime,
@@ -30,32 +31,17 @@ import {
 } from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
-import { PieceConfig, PropertyType } from './connector-action-or-config';
-import { MatDialog } from '@angular/material/dialog';
-import {
-  ApiKeyAppConnection,
-  AppConnection,
-  AppConnectionType,
-  OAuth2AppConnection,
-} from '@activepieces/shared';
+import { PieceConfig } from './connector-action-or-config';
 import { DropdownItem } from '../../model/dropdown-item.interface';
-import { AuthenticationService } from '../../service/authentication.service';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import deepEqual from 'deep-equal';
-import { CloudAuthConfigsService } from '../../service/cloud-auth-configs.service';
-import {
-  OAuth2ConnectionDialogComponent,
-  USE_CLOUD_CREDENTIALS,
-} from '../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/oauth2-connection-dialog/oauth2-connection-dialog.component';
-import {
-  CloudOAuth2ConnectionDialogComponent,
-  USE_MY_OWN_CREDENTIALS,
-} from '../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
-import {
-  SecretTextConnectionDialogComponent,
-  SecretTextConnectionDialogData,
-} from '../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
+import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
+import { InsertMentionOperation } from '../form-controls/interpolating-text-form-control/utils';
+import { jsonValidator } from '../../validators/json-validator';
+import { CodeService } from '../../../flow-builder/service/code.service';
+import { PropertyType } from '@activepieces/shared';
+
 type ConfigKey = string;
 
 @Component({
@@ -78,6 +64,21 @@ type ConfigKey = string;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfigsFormComponent implements ControlValueAccessor {
+  updateValueOnChange$: Observable<void> = new Observable<void>();
+  PropertyType = PropertyType;
+  optionsObservables$: {
+    [key: ConfigKey]: Observable<DropdownState<any>>;
+  } = {};
+  dropdownsLoadingFlags$: { [key: ConfigKey]: BehaviorSubject<boolean> } = {};
+  allAuthConfigs$: Observable<DropdownItem[]>;
+  configDropdownChanged$: Observable<any>;
+  cloudAuthCheck$: Observable<void>;
+  editorOptions = {
+    lineNumbers: true,
+    theme: 'lucario',
+    mode: 'javascript',
+  };
+  customizedInputs: Record<string, boolean> | undefined;
   faInfoCircle = faInfoCircle;
   checkingOAuth2CloudManager = false;
   configs: PieceConfig[] = [];
@@ -88,36 +89,34 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   @Input() stepName: string;
   @Input() pieceName: string;
   @Input() pieceDisplayName: string;
+  @ViewChildren('textControl', { read: ElementRef }) theInputs: QueryList<ElementRef>;
   form!: UntypedFormGroup;
-  OnChange = (value) => { };
-  OnTouched = () => { };
-  updateValueOnChange$: Observable<void> = new Observable<void>();
-  updateAuthConfig$: Observable<void>;
-  PropertyType = PropertyType;
-  optionsObservables$: {
-    [key: ConfigKey]: Observable<DropdownState<any>>;
-  } = {};
-  dropdownsLoadingFlags$: { [key: ConfigKey]: Observable<boolean> } = {};
-  allAuthConfigs$: Observable<DropdownItem[]>;
-  updateOrAddConnectionDialogClosed$: Observable<void>;
-  configDropdownChanged$: Observable<any>;
-  cloudAuthCheck$: Observable<void>;
+
+  OnChange = (value) => { ; };
+  OnTouched = () => { ; };
+
+
   constructor(
     private fb: UntypedFormBuilder,
     public themeService: ThemeService,
     private actionMetaDataService: ActionMetaService,
-    private dialogService: MatDialog,
     private store: Store,
-    private cloudAuthConfigsService: CloudAuthConfigsService,
-    private authenticationService: AuthenticationService
+    private codeService: CodeService,
+    private cd: ChangeDetectorRef
   ) {
     this.allAuthConfigs$ = this.store.select(
       BuilderSelectors.selectAppConnectionsDropdownOptions
     );
   }
 
-  writeValue(obj: PieceConfig[]): void {
-    this.configs = obj;
+  writeValue(obj: { configs: PieceConfig[], customizedInputs: Record<string, boolean> } | PieceConfig[]): void {
+    if (Array.isArray(obj)) {
+      this.configs = obj;
+    }
+    else {
+      this.configs = obj.configs;
+      this.customizedInputs = obj.customizedInputs;
+    }
     this.createForm();
   }
   registerOnChange(fn: any): void {
@@ -159,7 +158,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     this.createDropdownConfigsObservables();
     this.updateValueOnChange$ = this.form.valueChanges.pipe(
       tap((value) => {
-        this.OnChange(value);
+        this.OnChange(this.formValueMiddleWare(value));
       }),
       map(() => void 0)
     );
@@ -170,6 +169,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   createDropdownConfigsObservables() {
     this.configs.forEach((c) => {
       if (c.type === PropertyType.DROPDOWN) {
+        this.dropdownsLoadingFlags$[c.key] = new BehaviorSubject(true);
         const refreshers$ = {};
         c.refreshers!.forEach((r) => {
           refreshers$[r] = this.form.controls[r].valueChanges.pipe(
@@ -177,12 +177,16 @@ export class ConfigsFormComponent implements ControlValueAccessor {
               return JSON.stringify(prev) === JSON.stringify(curr);
             }),
             startWith(this.configs.find((c) => c.key === r)!.value),
+            tap(() => {
+              this.dropdownsLoadingFlags$[c.key].next(true);
+            }),
             debounceTime(150)
           );
         });
         if (c.refreshers!.length === 0) {
           refreshers$['oneTimeRefresh'] = of(true);
         }
+
         this.optionsObservables$[c.key] = combineLatest(refreshers$).pipe(
           switchMap((res) => {
             return this.store
@@ -210,22 +214,13 @@ export class ConfigsFormComponent implements ControlValueAccessor {
               disabled: true,
               placeholder: 'unknown server erro happend, check console',
             });
+          }),
+          tap(() => {
+
+            this.dropdownsLoadingFlags$[c.key].next(false);
           })
         );
-        this.dropdownsLoadingFlags$[c.key] = this.optionsObservables$[
-          c.key
-        ].pipe(
-          startWith(null),
-          map((val) => {
-            if (val === null) return true;
-            if (!Array.isArray(val.options)) {
-              console.error(
-                `Activepieces- Config ${c.label} options are not returned in array form--> ${val}`
-              );
-            }
-            return false;
-          })
-        );
+
       }
     });
   }
@@ -234,11 +229,26 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     const controls: { [key: string]: UntypedFormControl } = {};
     configs.forEach((c) => {
       const validators: ValidatorFn[] = [];
-      if (c.required) {
+      if (c.required && c.type !== PropertyType.OBJECT && c.type !== PropertyType.ARRAY) {
         validators.push(Validators.required);
       }
-      if (c.type !== PropertyType.ARRAY) { controls[c.key] = new UntypedFormControl(c.value, validators); }
-      else { controls[c.key] = new UntypedFormControl(c.value || [''], validators); }
+      if (c.type === PropertyType.OBJECT) {
+        controls[c.key] = new UntypedFormControl(c.value || {}, validators);
+      } else if (c.type === PropertyType.ARRAY) {
+        controls[c.key] = new UntypedFormControl(c.value || [''], validators);
+      } else if (c.type === PropertyType.JSON) {
+        if (!this.customizedInputs || !this.customizedInputs[c.key]) { validators.push(jsonValidator); }
+        if (typeof c.value === "object") {
+          controls[c.key] = new UntypedFormControl(JSON.stringify(c.value), validators);
+        }
+        else {
+          controls[c.key] = new UntypedFormControl(c.value || "{}", validators);
+        }
+      }
+      else {
+        controls[c.key] = new UntypedFormControl(c.value === undefined || null ? undefined : c.value, validators);
+      }
+
     });
     return controls;
   }
@@ -257,243 +267,107 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     this.selectedOptionalConfigs.push(config);
   }
 
-  newConnectionDialogProcess(
-    pieceConfigName: string,
-    pieceConfigType: PropertyType.OAUTH2 | PropertyType.SECRET_TEXT
-  ) {
-    if (pieceConfigType === PropertyType.OAUTH2) {
-      this.newOAuth2AuthenticationDialogProcess(pieceConfigName);
-    } else {
-      this.openNewSecretKeyConnection(pieceConfigName);
-    }
-  }
-  private openNewSecretKeyConnection(pieceConfigName: string) {
-    const authConfig = this.configs.find((c) => c.key === pieceConfigName)!;
-    const dialogData: SecretTextConnectionDialogData = {
-      pieceName: this.pieceName,
-      displayName: authConfig.label,
-      description: authConfig.description || '',
-    };
-    this.updateOrAddConnectionDialogClosed$ = this.dialogService
-      .open(SecretTextConnectionDialogComponent, {
-        data: dialogData,
-      })
-      .afterClosed()
-      .pipe(
-        tap((result: AppConnection | null) => {
-          if (result) {
-            const authConfigOptionValue = `\${connections.${result.name}}`;
-            this.form.get(pieceConfigName)!.setValue(authConfigOptionValue);
-          }
-        }),
-        map(() => void 0)
-      );
-  }
 
-  newOAuth2AuthenticationDialogProcess(pieceConfigName: string) {
-    if (!this.checkingOAuth2CloudManager) {
-      this.checkingOAuth2CloudManager = true;
-      this.cloudAuthCheck$ = this.cloudAuthConfigsService
-        .getAppsAndTheirClientIds()
-        .pipe(
-          catchError((err) => {
-            console.error(err);
-            return of({});
-          }),
-          tap(() => {
-            this.checkingOAuth2CloudManager = false;
-          }),
-          map((res) => {
-            return res[this.pieceName];
-          }),
-          tap((cloudAuth2Config: { clientId: string }) => {
-            if (cloudAuth2Config) {
-              this.openNewCloudOAuth2ConnectionModal(
-                pieceConfigName,
-                cloudAuth2Config.clientId
-              );
-            } else {
-              this.openNewOAuth2ConnectionDialog(pieceConfigName);
-            }
-          }),
-          map(() => void 0)
-        );
-    }
+  connectionValueChanged(event: { configKey: string, value: `\${connections.${string}}` }) {
+    this.form.get(event.configKey)!.setValue(event.value);
   }
-  openNewOAuth2ConnectionDialog(authConfigName: string) {
-    this.updateOrAddConnectionDialogClosed$ = this.authenticationService
-      .getFrontendUrl()
-      .pipe(
-        switchMap((serverUrl) => {
-          return this.dialogService
-            .open(OAuth2ConnectionDialogComponent, {
-              data: {
-                pieceAuthConfig: this.configs.find(
-                  (c) => c.type === PropertyType.OAUTH2
-                ),
-                pieceName: this.pieceName,
-                serverUrl: serverUrl,
-              },
-            })
-            .afterClosed()
-            .pipe(
-              tap((result: OAuth2AppConnection | string) => {
-                if (
-                  typeof result === 'string' &&
-                  result === USE_CLOUD_CREDENTIALS
-                ) {
-                  this.checkingOAuth2CloudManager = true;
-                  this.cloudAuthCheck$ = this.cloudAuthConfigsService
-                    .getAppsAndTheirClientIds()
-                    .pipe(
-                      catchError((err) => {
-                        console.error(err);
-                        return of({});
-                      }),
-                      tap(() => {
-                        this.checkingOAuth2CloudManager = false;
-                      }),
-                      map((res) => {
-                        return res[this.pieceName];
-                      }),
-                      tap((cloudAuth2Config: { clientId: string }) => {
-                        this.openNewCloudOAuth2ConnectionModal(
-                          authConfigName,
-                          cloudAuth2Config.clientId
-                        );
-                      }),
-                      map(() => void 0)
-                    );
-                } else if (typeof result === 'object') {
-                  const authConfigOptionValue = `\${connections.${result.name}}`;
-                  this.form
-                    .get(authConfigName)!
-                    .setValue(authConfigOptionValue);
-                }
-              }),
-              map(() => void 0)
-            );
-        })
-      );
-  }
-
-  openNewCloudOAuth2ConnectionModal(authConfigKey: string, clientId: string) {
-    this.updateOrAddConnectionDialogClosed$ = this.dialogService
-      .open(CloudOAuth2ConnectionDialogComponent, {
-        data: {
-          pieceAuthConfig: this.configs.find(
-            (c) => c.type === PropertyType.OAUTH2
-          ),
-          pieceName: this.pieceName,
-          clientId: clientId,
-        },
-      })
-      .afterClosed()
-      .pipe(
-        tap((result: AppConnection | string) => {
-          if (typeof result === 'object') {
-            const authConfigOptionValue = `\${connections.${result.name}}`;
-            this.form.get(authConfigKey)!.setValue(authConfigOptionValue);
-          } else if (result === USE_MY_OWN_CREDENTIALS) {
-            this.openNewOAuth2ConnectionDialog(authConfigKey);
-          }
-        }),
-        map(() => void 0)
-      );
-  }
-  editSelectedAuthConfig(authConfigKey: string, pieceConfigType: PropertyType.OAUTH2 | PropertyType.SECRET_TEXT) {
-    const selectedValue: any = this.form.get(authConfigKey)!.value;
-    const allConnections$ = this.store.select(
-      BuilderSelectors.selectAllAppConnections
-    );
-    const currentConnection$ = allConnections$.pipe(
-      take(1),
-      map((connections) => {
-        const connection = connections.find(
-          (c) =>
-            selectedValue &&
-            c.name ===
-            this.getConnectionNameFromInterpolatedString(selectedValue)
-        );
-        return connection;
-      }));
-    if (pieceConfigType === PropertyType.OAUTH2) {
-      this.updateAuthConfig$ = currentConnection$.pipe(
-        tap((connection) => {
-          if (connection) {
-            if (connection.value.type === AppConnectionType.OAUTH2) {
-              this.updateOrAddConnectionDialogClosed$ = this.dialogService
-                .open(OAuth2ConnectionDialogComponent, {
-                  data: {
-                    connectionToUpdate: connection,
-                    pieceAuthConfig: this.configs.find(
-                      (c) => c.type === PropertyType.OAUTH2
-                    ),
-                    pieceName: this.pieceName,
-                  },
-                })
-                .afterClosed()
-                .pipe(map(() => void 0));
-            } else {
-              if (!this.checkingOAuth2CloudManager) {
-                this.checkingOAuth2CloudManager = true;
-                this.updateOrAddConnectionDialogClosed$ =
-                  this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
-                    tap(() => {
-                      this.checkingOAuth2CloudManager = false;
-                    }),
-                    switchMap((res) => {
-                      const clientId = res[this.pieceName].clientId;
-                      return this.dialogService
-                        .open(CloudOAuth2ConnectionDialogComponent, {
-                          data: {
-                            connectionToUpdate: connection,
-                            pieceAuthConfig: this.configs.find(
-                              (c) => c.type === PropertyType.OAUTH2
-                            ),
-                            pieceName: this.pieceName,
-                            clientId: clientId,
-                          },
-                        })
-                        .afterClosed()
-                        .pipe(map(() => void 0));
-                    })
-                  );
-              }
-            }
-          }
-        }),
-        map(() => void 0)
-      );
-    }
-    else {
-      this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(switchMap(connection => {
-        const secretKeyConnection = connection as ApiKeyAppConnection;
-        const authConfig = this.configs.find((c) => c.key === authConfigKey)!;
-        const dialogData: SecretTextConnectionDialogData = {
-          pieceName: this.pieceName,
-          displayName: authConfig.label,
-          description: authConfig.description || '',
-          connectionName: connection!.name,
-          secretText: secretKeyConnection!.value.secret_text
-        };
-        return this.dialogService
-          .open(SecretTextConnectionDialogComponent, {
-            data: dialogData,
-          })
-          .afterClosed()
-      }))
-    }
-
-  }
-
   dropdownCompareWithFunction = (opt: string, formControlValue: string) => {
     return formControlValue !== undefined && deepEqual(opt, formControlValue);
   };
 
-  getConnectionNameFromInterpolatedString(interpolatedString: string) {
-    //eg. ${connections.google}
-    const result = interpolatedString.split('${connections.')[1];
-    return result.slice(0, result.length - 1);
+  addMentionToJsonControl(jsonControl: CodemirrorComponent, mention: InsertMentionOperation) {
+    const doc = jsonControl.codeMirror!.getDoc();
+    const cursor = doc.getCursor();
+    doc.replaceRange(mention.insert.mention.serverValue, cursor);
+  }
+
+  formValueMiddleWare(formValue: object) {
+    const formattedValue = { ...formValue };
+
+    Object.keys(formValue).forEach(configKey => {
+      if (this.configs.find(c => c.key === configKey)!.type === PropertyType.JSON) {
+        try {
+          formattedValue[configKey] = JSON.parse(formValue[configKey]);
+        }
+        //incase it is an invalid json
+        catch (_) { ; }
+      }
+    });
+
+    if (this.customizedInputs) {
+      return {
+        input: formattedValue,
+        customizedInputs: this.customizedInputs
+      }
+    }
+    else {
+      return formattedValue
+    }
+  }
+
+  beautify(configKey: string) {
+    try {
+      const ctrl = this.form.get(configKey)!;
+      ctrl.setValue(this.codeService.beautifyJson(JSON.parse(ctrl.value)));
+    } catch { ; }
+  }
+  toggleCustomizedInputFlag(configKey: string) {
+    if (!this.customizedInputs) {
+      throw new Error("Activepieces-customized inputs map is not initialized");
+    }
+    const isCustomized = !this.customizedInputs[configKey];
+    this.customizedInputs = { ...this.customizedInputs, [configKey]: isCustomized };
+    const config = this.configs.find(c => c.key === configKey);
+    const ctrl = this.form.get(configKey);
+    if (!config || !ctrl) {
+      throw new Error("Activepieces-config not found: " + configKey);
+    }
+
+    const silentChange = { emitEvent: false };
+    switch (config.type) {
+      case PropertyType.JSON: {
+        if (isCustomized) {
+          ctrl.removeValidators([jsonValidator]);
+          ctrl.setValue("", silentChange);
+        }
+        else {
+          ctrl.addValidators([jsonValidator]);
+          ctrl.setValue("{}", silentChange);
+        }
+        break;
+      }
+      case PropertyType.OBJECT: {
+        if (isCustomized) {
+          ctrl.setValue('', silentChange);
+        }
+        else {
+          ctrl.setValue({}, silentChange);
+        }
+        break;
+      }
+      case PropertyType.ARRAY: {
+        if (isCustomized) {
+
+          ctrl.setValue('', silentChange);
+        }
+        else {
+          ctrl.setValue([''], silentChange);
+        }
+        break;
+      }
+      default:
+        {
+          ctrl.setValue(undefined, silentChange);
+        }
+    }
+    this.cd.detectChanges();
+
+    const input = this.theInputs.find(input => input.nativeElement.getAttribute('name') === configKey);
+    debugger;
+    if (input) {
+      this.cd.detectChanges();
+      input.nativeElement.click();
+    }
+
   }
 }

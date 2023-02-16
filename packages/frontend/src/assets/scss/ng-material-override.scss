@@ -610,15 +610,16 @@ mat-option.add-auth{
 
 app-mentions-list
 {
-  mat-tree
-  {
-   padding-left:20px;
-  }
+
   .mdc-list-item__primary-text
   {
     display: flex;
     align-items: center;
     width:100%;
+	div 
+	{
+		flex-grow:1;
+	}
   }
 
 }
@@ -632,5 +633,17 @@ app-collection-builder{
 	mat-expansion-panel
 	{
 		overflow:visible !important;
+	}
+}
+
+mat-form-field.\!ap-bg-white
+{
+	.mat-mdc-form-field-focus-overlay
+	{
+		background-color: $white !important;
+	}
+	.mdc-text-field--filled:not(.mdc-text-field--disabled)
+	{
+		background-color: $white !important;
 	}
 }

@@ -6,19 +6,32 @@ description: ""
 To configure activepieces, you will need to set some environment variables, There is file called `docker-compose.yml` at the root directory for our main repo.
 
 
-| Variable                     | Description                                                                                                 | Default Value    |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------- |
-| `AP_JWT_SECRET`              | ❗️ Encryption key used for generating JWT tokens                                                            | `None`           |
-| `AP_FRONTEND_URL`            | ❗️ Url that will be used to specify redirect url.                                                           | `None`           |
-| `AP_BACKEND_URL`             | ❗️ Url that will be used to generate webhook url.                                                           | `None`           |
-| `AP_POSTGRES_DATABASE`       | The name of the PostgreSQL database                                                                         | `activepieces`   |
-| `AP_POSTGRES_HOST`           | The hostname or IP address of the PostgreSQL server                                                         | `postgres`       |
-| `AP_POSTGRES_PASSWORD`       | The password for the PostgreSQL user                                                                        | `A79Vm5D4p2VQHOp2gd5` |
-| `AP_POSTGRES_PORT`           | The port number for the PostgreSQL server                                                                   | `5432`           |
-| `AP_POSTGRES_USERNAME`       | The username for the PostgreSQL user                                                                        | `postgres`       |
-| `AP_REDIS_HOST`              | The hostname or IP address of the Redis server                                                              | `redis`          |
-| `AP_REDIS_PORT`              | The port number for the Redis server                                                                        | `6379`           |
+| Variable                     | Description                                                                                                 | Default Value          | Example
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------  | --------
+| `AP_JWT_SECRET`              | ❗️ Encryption key used for generating JWT tokens                                                            | `None`                 | https://demo.activepieces.com
+| `AP_FRONTEND_URL`            | ❗️ Url that will be used to specify redirect url and webhook url.                                           | `None`                 | https://demo.activepieces.com/api
+| `AP_BACKEND_URL`             | Url that frontend use to call the backend.                                                                  | `http://backend:3000`  |
+| `AP_POSTGRES_DATABASE`       | The name of the PostgreSQL database                                                                         | `activepieces`         |
+| `AP_POSTGRES_HOST`           | The hostname or IP address of the PostgreSQL server                                                         | `postgres`             |
+| `AP_POSTGRES_PASSWORD`       | ❗️ The password for the PostgreSQL user                                                                     | `None`                 |
+| `AP_POSTGRES_PORT`           | The port number for the PostgreSQL server                                                                   | `5432`                 |
+| `AP_POSTGRES_USERNAME`       | The username for the PostgreSQL user                                                                        | `postgres`             |
+| `AP_POSTGRES_USE_SSL`        | Use SSL to connect the postgres database                                                                    | `false`                |
+| `AP_REDIS_USER`              | Username to use when connect to redis                                                                       | `None`                 |
+| `AP_REDIS_PASSWORD`          | Password to use when connect to redis                                                                       | `None`                 |
+| `AP_REDIS_HOST`              | The hostname or IP address of the Redis server                                                              | `redis`                |
+| `AP_REDIS_PORT`              | The port number for the Redis server                                                                        | `6379`                 |
+| `AP_REDIS_USE_SSL`           | Connect to Redis with SSL                                                                                   | `false`                |
+| `AP_TELEMETRY_ENABLED`       | Collect telemetry information                                                                               | `false`                |
+| `AP_SIGN_UP_ENABLED`         | Enable Signed Up                                                                                            | `false`                |
 
 <Warning>
-The backend URL plays a crucial role in the functioning of webhooks and app triggers. By default, the URL is set to the machine's IP address. To ensure proper operation, ensure that this address is accessible or specify a different URL. One possible solution for this is using a service like ngrok (https://ngrok.com/), which can be used to expose the backend port (3000) to the internet.
+The frontend URL is essential for webhooks and app triggers to work. 
+It must be accessible to third parties to send data. 
 </Warning>
+
+### Setting Webhook (Frontend URL):
+
+The default URL is set to the machine's IP address. To ensure proper operation, ensure that this address is accessible or specify an `AP_FRONTEND_URL` environment variable.
+
+One possible solution for this is using a service like ngrok (https://ngrok.com/), which can be used to expose the frontend port (4200) to the internet.

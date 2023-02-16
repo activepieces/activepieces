@@ -25,12 +25,13 @@ export class VariableService {
   private async resolveInput(input: string, valuesMap: any): Promise<any> {
 
     // If input contains only a variable token, return the value of the variable while maintaining the variable type.
+    const matchedTokens = input.match(this.VARIABLE_TOKEN);
     if (
-      input.match(this.VARIABLE_TOKEN) !== null &&
-      input.match(this.VARIABLE_TOKEN)!.length === 1 &&
-      input.match(this.VARIABLE_TOKEN)![0] === input
+      matchedTokens !== null &&
+      matchedTokens.length === 1 &&
+      matchedTokens[0] === input
     ) {
-      let resolvedInput = await this.handleTypeAndResolving(
+      const resolvedInput = await this.handleTypeAndResolving(
         valuesMap,
         this.findPath(input.substring(2, input.length - 1))
       )
@@ -53,16 +54,16 @@ export class VariableService {
   }
 
   private async handleTypeAndResolving(valuesMap: any, path: string): Promise<any> {
-    let paths = path.split(".");
+    const paths = path.split(".");
     if (paths[0] === VariableService.CONNECTIONS) {
       // Invalid naming return nothing
       if (paths.length < 2) {
         return '';
       }
       // Need to be resolved dynamically
-      let connectioName = paths[1];
+      const connectioName = paths[1];
       paths.splice(0, 2);
-      let newPath = paths.join(".");
+      const newPath = paths.join(".");
       const connection = (await connectionService.obtain(connectioName));
       if (paths.length === 0) {
         return connection;

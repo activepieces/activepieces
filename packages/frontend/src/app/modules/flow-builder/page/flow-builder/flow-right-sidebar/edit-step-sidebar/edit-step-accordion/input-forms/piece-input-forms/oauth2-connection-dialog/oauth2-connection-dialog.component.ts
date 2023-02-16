@@ -156,7 +156,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 				scope: this.settingsForm.controls.scope.value,
 				token_url: this.settingsForm.controls.token_url.value,
 			},
-			projectId: projectId,
 		};
 		return newConnection;
 	}

@@ -6,7 +6,7 @@ export const SignInRequest = Type.Object({
     }),
     password: Type.String({
         minLength: 8,
-        maxLength: 25,
+        maxLength: 64,
     }),
 });
 

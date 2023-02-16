@@ -5,7 +5,7 @@
     "dark": "./resources/logo/dark.svg",
     "href": "https://www.activepieces.com"
   },
-  "favicon": "./resources/favicon.png",
+  "favicon": "./favicon.svg",
   "colors": {
     "primary": "#5155D7",
     "dark": "#3033A6",
@@ -14,10 +14,14 @@
       "dark": "#121212"
     }
   },
+  "metadata": {
+    "og:image": "https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/62c4ecbe6b2d76719d890ae7_Screenshot%202022-07-06%20at%2004.59.45-p-2600.png",
+    "description": "Open source alternative to zapier"
+  },
   "topbarCtaButton": {
     "type": "link",
-    "name": "Playground",
-    "url": "https://demo.activepieces.com/sign-up"
+    "name": "Get Started",
+    "url": "https://www.activepieces.com/plans"
   },
   "topbarLinks": [
     {
@@ -60,20 +64,31 @@
     {
       "group": "Apps",
       "pages": [
+        "pieces/apps/asana",
         "pieces/apps/blackbaud",
+        "pieces/apps/calendly",
+        "pieces/apps/clickup",
         "pieces/apps/discord",
+        "pieces/apps/drip",
         "pieces/apps/github",
         "pieces/apps/gmail",
+        "pieces/apps/google_calendar",
         "pieces/apps/google_contacts",
         "pieces/apps/google_sheets",
         "pieces/apps/hackernews",
+        "pieces/apps/http",
         "pieces/apps/hubspot",
         "pieces/apps/mailchimp",
         "pieces/apps/openai",
         "pieces/apps/pipedrive",
         "pieces/apps/sendgrid",
         "pieces/apps/slack",
-        "pieces/apps/stripe"
+        "pieces/apps/stripe",
+        "pieces/apps/telegram_bot",
+        "pieces/apps/todoist",
+        "pieces/apps/twilio",
+        "pieces/apps/typeform",
+        "pieces/apps/zoom"
       ]
     },
     {
@@ -112,28 +127,28 @@
       "pages": [
         "contributing/overview",
         "contributing/repo-structure",
-        "contributing/local-development"
+        {
+          "group": "Development Setup",
+          "pages": [
+            "contributing/development-setup/codespaces",
+            "contributing/development-setup/local-development"
+          ]
+        }
       ]
     },
     {
       "group": "Building Pieces",
       "pages": [
+        "contributing/building-pieces/overview",
         "contributing/building-pieces/quickstart",
+        "contributing/building-pieces/reference",
         "contributing/building-pieces/examples"
-      ]
-    },
-    {
-      "group": "Pieces Reference",
-      "pages": [
-        "contributing/pieces-reference/piece",
-        "contributing/pieces-reference/property",
-        "contributing/pieces-reference/action",
-        "contributing/pieces-reference/trigger"
       ]
     },
     {
       "group": "Other",
       "pages": [
+        "telemetry",
         "changelog",
         "license"
       ]

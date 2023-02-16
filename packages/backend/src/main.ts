@@ -2,7 +2,6 @@ import fastify, { FastifyRequest } from "fastify";
 import cors from "@fastify/cors";
 import formBody from "@fastify/formbody";
 import qs from 'qs';
-import { databaseModule } from "./app/database/database-module";
 import { authenticationModule } from "./app/authentication/authentication.module";
 import { collectionModule } from "./app/collections/collection.module";
 import { projectModule } from "./app/project/project.module";
@@ -13,7 +12,7 @@ import { piecesController } from "./app/pieces/pieces.controller";
 import { oauth2Module } from "./app/oauth2/oauth2.module";
 import { tokenVerifyMiddleware } from "./app/authentication/token-verify-middleware";
 import { storeEntryModule } from "./app/store-entry/store-entry.module";
-import { instanceModule } from "./app/instance/instance-module";
+import { instanceModule } from "./app/instance/instance.module";
 import { flowRunModule } from "./app/flow-run/flow-run-module";
 import { flagModule } from "./app/flags/flag.module";
 import { codeModule } from "./app/workers/code-worker/code.module";
@@ -24,24 +23,11 @@ import { appConnectionModule } from "./app/app-connection/app-connection.module"
 import { system } from "./app/helper/system/system";
 import { SystemProp } from "./app/helper/system/system-prop";
 import swagger from "@fastify/swagger";
-
-const envToLogger = {
-  development: {
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        translateTime: 'HH:MM:ss Z',
-        colorize: true,
-        ignore: 'pid,hostname'
-      },
-    }
-  },
-  production: true
-}
+import { databaseConnection } from "./app/database/database-connection";
+import { logger } from './app/helper/logger';
 
 const app = fastify({
-  // TODO we need variable to switch to production mode.
-  logger: envToLogger['development'],
+  logger,
   ajv: {
     customOptions: {
       removeAdditional: 'all',
@@ -64,15 +50,12 @@ app.register(swagger, {
   }
 });
 
-export const logger = app.log;
-
 app.register(cors, {
   origin: "*",
   methods: ["*"]
 });
 app.register(formBody, { parser: str => qs.parse(str) });
 app.addHook("onRequest", tokenVerifyMiddleware);
-app.register(databaseModule);
 app.register(authenticationModule);
 app.register(projectModule);
 app.register(collectionModule);
@@ -95,7 +78,7 @@ app.get(
   async (
     request: FastifyRequest<{ Querystring: { code: string; } }>, reply
   ) => {
-    let params = {
+    const params = {
       "code": request.query.code
     };
     if (params.code === undefined) {
@@ -109,6 +92,9 @@ app.setErrorHandler(errorHandler);
 
 const start = async () => {
   try {
+    await databaseConnection.initialize();
+    await databaseConnection.runMigrations();
+
     await app.listen({
       host: "0.0.0.0",
       port: 3000,

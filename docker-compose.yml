@@ -2,7 +2,7 @@ version: '3.0'
 
 services:
   backend:
-    image: activepieces/backend:0.2.10
+    image: activepieces/backend:0.3.1
     container_name: activepieces-backend
     restart: unless-stopped
     privileged: true
@@ -11,18 +11,7 @@ services:
     depends_on:
       - postgres
       - redis
-    environment:
-##      - AP_BACKEND_URL=http://localhost:8080/api
-      - AP_ENGINE_EXECUTABLE_PATH=dist/packages/engine/main.js
-      - AP_FRONTEND_URL=http://localhost:8080
-      - AP_NODE_EXECUTABLE_PATH=/usr/local/bin/node
-      - AP_POSTGRES_DATABASE=activepieces
-      - AP_POSTGRES_HOST=postgres
-      - AP_POSTGRES_PASSWORD=A79Vm5D4p2VQHOp2gd5
-      - AP_POSTGRES_PORT=5432
-      - AP_POSTGRES_USERNAME=postgres
-      - AP_REDIS_HOST=redis
-      - AP_REDIS_PORT=6379
+    env_file: .env
     networks:
       - activepieces
     entrypoint:
@@ -30,10 +19,13 @@ services:
      - dist/packages/backend/main.js
 
   frontend:
-    image: activepieces/frontend:0.2.5
+    image: activepieces/frontend:0.3.1
     container_name: activepieces-frontend
     restart: unless-stopped
     depends_on: [ backend ]
+    environment:
+      - AP_BACKEND_URL=${AP_BACKEND_URL}
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
     ports:
       - 8080:80
     networks:
@@ -44,9 +36,9 @@ services:
     container_name: activepieces-postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=activepieces
-      - POSTGRES_PASSWORD=A79Vm5D4p2VQHOp2gd5
-      - POSTGRES_USER=postgres
+      - POSTGRES_DB=${AP_POSTGRES_DATABASE}
+      - POSTGRES_PASSWORD=${AP_POSTGRES_PASSWORD}
+      - POSTGRES_USER=${AP_POSTGRES_USERNAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:

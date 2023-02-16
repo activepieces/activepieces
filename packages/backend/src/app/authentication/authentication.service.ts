@@ -1,10 +1,10 @@
-import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName } from "@activepieces/shared";
+import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName, ApFlagId } from "@activepieces/shared";
 import { userService } from "../user/user-service";
 import { passwordHasher } from "./lib/password-hasher";
 import { tokenUtils } from "./lib/token-utils";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { projectService } from "../project/project.service";
-import { FlagId, flagService } from "../flags/flag.service";
+import { flagService } from "../flags/flag.service";
 import { QueryFailedError } from "typeorm";
 import { telemetry } from "../helper/telemetry.utils";
 
@@ -13,7 +13,7 @@ export const authenticationService = {
     try {
       const user = await userService.create(request);
 
-      await flagService.save({ id: FlagId.USER_CREATED, value: true });
+      await flagService.save({ id: ApFlagId.USER_CREATED, value: true });
 
       const project = await projectService.create({
         displayName: "Project",
@@ -23,6 +23,7 @@ export const authenticationService = {
       const token = await tokenUtils.encode({
         id: user.id,
         type: PrincipalType.USER,
+        projectId: project.id
       });
 
       telemetry.identify(user, project.id);
@@ -41,6 +42,7 @@ export const authenticationService = {
       return {
         ...userResponse,
         token,
+        projectId: project.id
       };
     } catch (e: unknown) {
       if (e instanceof QueryFailedError) {
@@ -81,14 +83,19 @@ export const authenticationService = {
       });
     }
 
+    // Currently each user have exactly one project.
+    const projects = await projectService.getAll(user.id);
+
     const token = await tokenUtils.encode({
       id: user.id,
       type: PrincipalType.USER,
+      projectId: projects[0].id
     });
 
     return {
       ...user,
       token,
+      projectId: projects[0].id
     };
   },
 };

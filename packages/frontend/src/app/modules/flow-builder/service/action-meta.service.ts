@@ -46,7 +46,7 @@ export class ActionMetaService {
 			logoUrl: '/assets/img/custom/piece/empty-trigger.svg',
 		},
 	];
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	public getPieces() {
 		if (!this.pieces$) {

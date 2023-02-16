@@ -1,6 +1,6 @@
 import { TSchema, Type } from "@sinclair/typebox";
 import { TypeCompiler } from '@sinclair/typebox/compiler';
-import { getPiece, PieceProperty, PropertyType } from "@activepieces/pieces";
+import { PieceProperty } from "@activepieces/framework";
 import {
   ActionType,
   apId,
@@ -16,13 +16,15 @@ import {
   getStep,
   PieceActionSettings,
   PieceTriggerSettings,
+  ProjectId,
+  PropertyType,
   TriggerType,
 } from "@activepieces/shared";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { fileService } from "../../file/file.service";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowVersionRepo } from "./flow-version-repo";
-import { type } from "os";
+import { getPiece } from "@activepieces/pieces-apps";
 
 export const flowVersionService = {
   async overwriteVersion(flowVersionId: FlowVersionId, mutatedFlowVersion: FlowVersion) {
@@ -31,8 +33,8 @@ export const flowVersionService = {
       id: flowVersionId,
     });
   },
-  async applyOperation(flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowVersion | null> {
-    request = await prepareRequest(flowVersion, request);
+  async applyOperation(projectId: ProjectId, flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowVersion | null> {
+    request = await prepareRequest(projectId, flowVersion, request);
     const mutatedFlowVersion: FlowVersion = flowHelper.apply(flowVersion, request);
     await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>);
     return await flowVersionRepo.findOneBy({
@@ -84,7 +86,7 @@ export const flowVersionService = {
   },
 };
 
-async function prepareRequest(flowVersion: FlowVersion, request: FlowOperationRequest) {
+async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, request: FlowOperationRequest) {
   const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request));
   switch (clonedRequest.type) {
     case FlowOperationType.ADD_ACTION:
@@ -93,7 +95,7 @@ async function prepareRequest(flowVersion: FlowVersion, request: FlowOperationRe
         clonedRequest.request.action.valid = validateAction(clonedRequest.request.action.settings);
       } else if (clonedRequest.request.action.type === ActionType.CODE) {
         const codeSettings: CodeActionSettings = clonedRequest.request.action.settings;
-        await uploadArtifact(codeSettings);
+        await uploadArtifact(projectId, codeSettings);
       }
       break;
     case FlowOperationType.UPDATE_ACTION:
@@ -102,24 +104,26 @@ async function prepareRequest(flowVersion: FlowVersion, request: FlowOperationRe
         clonedRequest.request.valid = validateAction(clonedRequest.request.settings);
       } else if (clonedRequest.request.type === ActionType.CODE) {
         const codeSettings: CodeActionSettings = clonedRequest.request.settings;
-        await uploadArtifact(codeSettings);
+        await uploadArtifact(projectId, codeSettings);
         const previousStep = getStep(flowVersion, clonedRequest.request.name);
         if (
           previousStep !== undefined &&
           previousStep.type === ActionType.CODE &&
           codeSettings.artifactSourceId !== previousStep.settings.artifactSourceId
         ) {
-          await deleteArtifact(previousStep.settings);
+          await deleteArtifact(projectId, previousStep.settings);
         }
       }
       break;
 
-    case FlowOperationType.DELETE_ACTION:
+    case FlowOperationType.DELETE_ACTION: {
       const previousStep = getStep(flowVersion, clonedRequest.request.name);
       if (previousStep !== undefined && previousStep.type === ActionType.CODE) {
-        await deleteArtifact(previousStep.settings);
+        await deleteArtifact(projectId, previousStep.settings);
       }
       break;
+    }
+
     case FlowOperationType.UPDATE_TRIGGER:
       clonedRequest.request.valid = true;
       if (clonedRequest.request.type === TriggerType.PIECE) {
@@ -188,45 +192,51 @@ function buildSchema(props: PieceProperty): TSchema {
         // Because it could be a variable
         propsSchema[name] = Type.String({});
         break;
+      case PropertyType.STATIC_DROPDOWN:
+          propsSchema[name] = Type.Any({});
+          break;
       case PropertyType.DROPDOWN:
         propsSchema[name] = Type.Any({});
         break;
       case PropertyType.OAUTH2:
         // Only accepts connections variable.
-        propsSchema[name] = Type.RegEx(RegExp('[$]{1}\{connections.(.*?)\}'));
+        propsSchema[name] = Type.Union([Type.RegEx(RegExp('[$]{1}{connections.(.*?)}')), Type.String()]);
         break;
       case PropertyType.ARRAY:
         // Only accepts connections variable.
-        propsSchema[name] = Type.Array(Type.String({}));
+        propsSchema[name] = Type.Union([Type.Array(Type.String({})), Type.String()]);
         break;
       case PropertyType.OBJECT:
-        propsSchema[name] = Type.Record(Type.String(), Type.Any());
+        propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()]);
+        break;
+      case PropertyType.JSON:
+        propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()]);
         break;
     }
     if (!property.required) {
-      propsSchema[name] = Type.Optional(propsSchema[name]);
+      propsSchema[name] = Type.Union([Type.Null(), Type.Undefined(), propsSchema[name]]);
     }
   }
 
   return Type.Object(propsSchema);
 }
 
-async function deleteArtifact(codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
+async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
   const requests: Array<Promise<void>> = [];
   if (codeSettings.artifactSourceId !== undefined) {
-    requests.push(fileService.delete(codeSettings.artifactSourceId));
+    requests.push(fileService.delete({ projectId: projectId, fileId: codeSettings.artifactSourceId }));
   }
   if (codeSettings.artifactPackagedId !== undefined) {
-    requests.push(fileService.delete(codeSettings.artifactPackagedId));
+    requests.push(fileService.delete({ projectId: projectId, fileId: codeSettings.artifactPackagedId }));
   }
   await Promise.all(requests);
   return codeSettings;
 }
 
-async function uploadArtifact(codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
+async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
   if (codeSettings.artifact !== undefined) {
     const bufferFromBase64 = Buffer.from(codeSettings.artifact, "base64");
-    const savedFile = await fileService.save(bufferFromBase64);
+    const savedFile = await fileService.save(projectId, bufferFromBase64);
     codeSettings.artifact = undefined;
     codeSettings.artifactSourceId = savedFile.id;
     codeSettings.artifactPackagedId = undefined;

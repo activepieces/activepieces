@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
 import { PieceOptionRequest } from "@activepieces/shared";
-import { pieces } from "@activepieces/pieces";
+import { pieces } from "@activepieces/pieces-apps";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 import { collectionService } from "../collections/collection.service";
 import { engineHelper } from "../helper/engine-helper";
@@ -24,8 +24,8 @@ export const piecesController = async (fastify: FastifyInstance, options: Fastif
       }>,
       _reply
     ) => {
-      let collectionVersion = await collectionVersionService.getOneOrThrow(request.body.collectionVersionId);
-      let collection = await collectionService.getOneOrThrow(collectionVersion.collectionId);
+      const collectionVersion = await collectionVersionService.getOneOrThrow(request.body.collectionVersionId);
+      const collection = await collectionService.getOneOrThrow({id: collectionVersion.collectionId, projectId: request.principal.projectId});
       return engineHelper.dropdownOptions({
         pieceName: request.params.pieceName,
         propertyName: request.body.propertyName,

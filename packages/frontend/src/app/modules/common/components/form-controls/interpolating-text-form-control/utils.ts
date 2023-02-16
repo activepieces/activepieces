@@ -21,7 +21,7 @@ export const QuillMaterialBase = mixinErrorState(
 			 * @docs-private
 			 */
 			public ngControl: NgControl
-		) {}
+		) { }
 	}
 );
 
@@ -37,28 +37,35 @@ export function fromTextToOps(
 ): {
 	ops: (TextInsertOperation | InsertMentionOperation)[];
 } {
-	var regex = /(\$\{.*?\})/;
-	var matched = text.split(regex).filter(el => el);
-	var ops: (TextInsertOperation | InsertMentionOperation)[] = matched.map(item => {
-		if (item.length > 3 && item[0] === '$' && item[1] === '{' && item[item.length - 1] === '}') {
-			const itemPathWithoutInterpolationDenotation = item.slice(2, item.length - 1);
-			const mentionText = replaceArrayNotationsWithSpaces(
-				replaceDotsWithSpaces(adjustItemPath(itemPathWithoutInterpolationDenotation, allStepsNamesAndDisplayNames))
-			);
-			return {
-				insert: {
-					mention: {
-						value: mentionText,
-						denotationChar: '',
-						serverValue: item,
+	try {
+		const regex = /(\$\{.*?\})/;
+		const matched = text.split(regex).filter(el => el);
+		const ops: (TextInsertOperation | InsertMentionOperation)[] = matched.map(item => {
+			if (item.length > 3 && item[0] === '$' && item[1] === '{' && item[item.length - 1] === '}') {
+				const itemPathWithoutInterpolationDenotation = item.slice(2, item.length - 1);
+				const mentionText = replaceArrayNotationsWithSpaces(
+					replaceDotsWithSpaces(adjustItemPath(itemPathWithoutInterpolationDenotation, allStepsNamesAndDisplayNames))
+				);
+				return {
+					insert: {
+						mention: {
+							value: mentionText,
+							denotationChar: '',
+							serverValue: item,
+						},
 					},
-				},
-			};
-		} else {
-			return { insert: item };
-		}
-	});
-	return { ops: ops };
+				};
+			} else {
+				return { insert: item };
+			}
+		});
+		return { ops: ops };
+	} catch (err) {
+		console.error(text);
+		console.error(err);
+		throw err;
+	}
+
 }
 
 function adjustItemPath(itemPath: string, allStepsNamesAndDisplayNames: { displayName: string; name: string }[]) {
@@ -134,6 +141,7 @@ export interface MentionTreeNode {
 	propertyPath: string;
 	key: string;
 	children?: MentionTreeNode[];
+	value?: string | unknown;
 }
 /**Traverses an object to find its child properties and their paths, stepOutput has to be an object on first invocation */
 export function traverseStepOutputAndReturnMentionTree(
@@ -150,13 +158,29 @@ export function traverseStepOutputAndReturnMentionTree(
 				const newKey = Array.isArray(stepOutput) ? `${lastKey} ${k}` : k;
 				return traverseStepOutputAndReturnMentionTree(stepOutput[k], newPath, newKey);
 			}),
+			value: Object.keys(stepOutput).length === 0 ? "Empty List" : undefined
 		};
 	} else {
-		return { propertyPath: path, key: lastKey };
+		const value = formatStepOutput(stepOutput);
+		return { propertyPath: path, key: lastKey, value: value };
 	}
 }
 
 export interface MentionListItem {
 	label: string;
 	value: string;
+}
+
+function formatStepOutput(stepOutput: unknown) {
+	if (stepOutput === null) {
+		return "null";
+	}
+	if (stepOutput === undefined) {
+		return "undefined";
+	}
+	if (typeof stepOutput === "string") {
+		return `\"${stepOutput}\"`;
+	}
+
+	return stepOutput;
 }

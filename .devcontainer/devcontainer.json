@@ -15,11 +15,16 @@
 			]
 		}
 	},
+	"hostRequirements": {
+  	  "cpus": 4,
+  	  "memory": "8gb"
+  	},
+
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// This can be used to network with other containers or with the host.
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
 	"remoteUser": "root",
-	"postCreateCommand": "npm ci"
+	"postCreateCommand": "npm ci && sh tools/codespaces.sh"
 }

@@ -6,6 +6,30 @@ export const system = {
     return getEnvVar(prop);
   },
 
+  getNumber(prop: SystemProp): number | null {
+    const stringNumber = getEnvVar(prop);
+  
+    if (!stringNumber) {
+      return null;
+    }
+  
+    const parsedNumber = Number.parseInt(stringNumber, 10);
+  
+    if (Number.isNaN(parsedNumber)) {
+      return null;
+    }
+  
+    return parsedNumber;
+  },
+
+  getBoolean(prop: SystemProp): boolean | undefined {
+    const env = getEnvVar(prop);
+    if(env === undefined){
+      return undefined;
+    }
+    return getEnvVar(prop) === "true";
+  },
+
   getOrThrow(prop: SystemProp): string {
     const value = getEnvVar(prop);
 

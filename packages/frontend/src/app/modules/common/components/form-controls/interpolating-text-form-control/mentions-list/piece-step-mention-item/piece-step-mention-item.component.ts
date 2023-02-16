@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { map, Observable, of, shareReplay, Subject, tap } from 'rxjs';
+import { combineLatest, map, Observable, of, shareReplay, Subject, switchMap, tap } from 'rxjs';
 import { ActionType, PieceAction, PieceTrigger, TriggerType } from '@activepieces/shared';
 import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
 import { FlowItemDetails } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
@@ -8,14 +8,17 @@ import { ActionMetaService } from 'packages/frontend/src/app/modules/flow-builde
 import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import { MentionListItem, MentionTreeNode, traverseStepOutputAndReturnMentionTree } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
+import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
+
 
 @Component({
 	selector: 'app-piece-step-mention-item',
 	templateUrl: './piece-step-mention-item.component.html',
 	changeDetection: ChangeDetectionStrategy.OnPush,
+	animations: [fadeIn400ms]
 })
 export class PieceStepMentionItemComponent {
-	expandSample=false;
+	expandSample = false;
 	@Input()
 	set stepMention(val: MentionListItem & { step: FlowItem }) {
 		if (val.step.type !== ActionType.PIECE && val.step.type !== TriggerType.PIECE) {
@@ -27,7 +30,7 @@ export class PieceStepMentionItemComponent {
 	@Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
 	@Input() stepIndex: number;
 	flowItemDetails$: Observable<FlowItemDetails | undefined>;
-	sampleData$: Observable<{ children: MentionTreeNode[] | undefined; error: string }>;
+	sampleData$: Observable<{ children: MentionTreeNode[] | undefined; error: string; markedNodesToShow: Map<string, boolean> }>;
 	fetching$: Subject<boolean> = new Subject();
 	noSampleDataNote$: Observable<string>;
 
@@ -35,19 +38,25 @@ export class PieceStepMentionItemComponent {
 		private store: Store,
 		private actionMetaDataService: ActionMetaService,
 		private mentionsTreeCache: MentionsTreeCacheService
-	) {}
+	) { }
 	ngOnInit(): void {
 		const cacheResult = this.mentionsTreeCache.getStepMentionsTree(this._stepMention.step.name);
 		if (cacheResult) {
-			this.sampleData$ = of({ children: cacheResult, error: '' });
+			this.sampleData$ = combineLatest({ stepTree: of({ children: cacheResult.children, error: '' }), search: this.mentionsTreeCache.listSearchBarObs$ }).pipe(map(res => {
+				const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(this._stepMention.step.name, res.search);
+				return {
+					children: res.stepTree.children,
+					error: '',
+					markedNodesToShow: markedNodesToShow
+				}
+			}));
 		}
-		else
-		{
+		else {
 			this.fetchSampleData();
 		}
 
 		this.flowItemDetails$ = this.store.select(BuilderSelectors.selectFlowItemDetails(this._stepMention.step));
-		
+
 	}
 	fetchSampleData() {
 		this.sampleData$ = this.actionMetaDataService.getPieces().pipe(
@@ -84,8 +93,24 @@ export class PieceStepMentionItemComponent {
 				return { children: res, error: '' };
 			}),
 			tap(res => {
-				this.mentionsTreeCache.setStepMentionsTree(this._stepMention.step.name, res.children);
+				if (!res.error) {
+					this.mentionsTreeCache.setStepMentionsTree(this._stepMention.step.name, { children: res.children });
+				}
 				this.fetching$.next(false);
+			}),
+			switchMap(res => {
+				if (res.error) {
+					return combineLatest({ stepTree: of({ children: [], error: res.error }), search: this.mentionsTreeCache.listSearchBarObs$ })
+				}
+				return combineLatest({ stepTree: of({ children: res.children, error: res.error }), search: this.mentionsTreeCache.listSearchBarObs$ })
+			}),
+			map(res => {
+				const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(this._stepMention.step.name, res.search);
+				return {
+					children: res.stepTree.children,
+					error: '',
+					markedNodesToShow: markedNodesToShow
+				}
 			}),
 			shareReplay(1)
 		);

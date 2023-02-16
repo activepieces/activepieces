@@ -10,32 +10,15 @@
 * Self-host with a simple Docker command
 * An alternative to Zapier, Make.com and Tray
 
-Read [Activepieces docs](https://www.activepieces.com/docs) to learn the key concepts and browse the pieces.
+## Quicklinks
+- Website: https://www.activepieces.com
+- Discord: https://discord.gg/2jUXBKDdP8
+- Docs: https://www.activepieces.com/docs
 
 
 ## Get started for free
 
-### Option #1: Play around with the Demo App
-Go to [Activepieces Demo Website](https://demo.activepieces.com) and play around with the app features.
-
-### Option #2: Self Host
-Clone Activepieces to your machine and run it with 1 command
-
- ```bash 
-# Clone the repository
-git clone https://github.com/activepieces/activepieces.git
-
-# Go to the repository folder
-cd activepieces
-
-# Run
-docker compose -p activepieces up
- ``` 
- 
-Vist `http://localhost:8080`
-
-### Other Options
-We're planning to launch a cloud edition of Activepieces soon.
+Visit https://www.activepieces.com/docs/install/overview
 
 ## Features
 
@@ -76,11 +59,28 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
 <table>
   <tbody>
     <tr>
-          <td align="center"><a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4" width="100px;" alt="Mohammad Abu Aboud"/><br /><sub><b>Mohammad Abu Aboud</b></sub></a><br /><a href="#maintenance-abuaboud" title="Maintenance">🚧</a></td>
-      <td align="center"><a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="Khaled Mashaly"/><br /><sub><b>Khaled Mashaly</b></sub></a><br /><a href="#maintenance-khaledmashaly" title="Maintenance">🚧</a></td>
-      <td align="center"><a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4" width="100px;" alt="Abdulrahman Al Hussein"/><br /><sub><b>Abdulrahman Al Hussein</b></sub></a><br /><a href="#maintenance-AbdulTheActivePiecer" title="Maintenance">🚧</a></td>
-            <td align="center"><a href="https://steercampaign.com"><img src="https://avatars.githubusercontent.com/u/12627658?v=4?s=100" width="100px;" alt="Mohammad Abu Musa"/><br /><sub><b>Mohammad Abu Musa</b></sub></a><br /><a href="#maintenance-mabumusa1" title="Maintenance">🚧</a></td>
-<td align="center"><a href="https://github.com/aboudzein"><img src="https://avatars.githubusercontent.com/u/12976630?v=4" width="100px;" alt="Abdurahman Zeineddin"/><br /><sub><b>Abdurahman Zeineddin</b></sub></a><br /><a href="#maintenance-aboudzein" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ShahedAlMashni"><img src="https://avatars.githubusercontent.com/u/41443850?v=4?s=100" width="100px;" alt="ShahedAlMashni"/><br /><sub><b>ShahedAlMashni</b></sub></a><br /><a href="#plugin-ShahedAlMashni" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4?s=100" width="100px;" alt="AbdulTheActivePiecer"/><br /><sub><b>AbdulTheActivePiecer</b></sub></a><br /><a href="#maintenance-AbdulTheActivePiecer" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="Khaled Mashaly"/><br /><sub><b>Khaled Mashaly</b></sub></a><br /><a href="#maintenance-khaledmashaly" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/><br /><sub><b>Mohammed Abu Aboud</b></sub></a><br /><a href="#maintenance-abuaboud" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://aboudzein.github.io"><img src="https://avatars.githubusercontent.com/u/12976630?v=4?s=100" width="100px;" alt="Abdulrahman Zeineddin"/><br /><sub><b>Abdulrahman Zeineddin</b></sub></a><br /><a href="#plugin-aboudzein" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/creed983"><img src="https://avatars.githubusercontent.com/u/62152944?v=4?s=100" width="100px;" alt="ahmad jaber"/><br /><sub><b>ahmad jaber</b></sub></a><br /><a href="#plugin-creed983" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ashrafsamhouri"><img src="https://avatars.githubusercontent.com/u/97393596?v=4?s=100" width="100px;" alt="ashrafsamhouri"/><br /><sub><b>ashrafsamhouri</b></sub></a><br /><a href="#plugin-ashrafsamhouri" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://steercampaign.com"><img src="https://avatars.githubusercontent.com/u/12627658?v=4?s=100" width="100px;" alt="Mohammad Abu Musa"/><br /><sub><b>Mohammad Abu Musa</b></sub></a><br /><a href="#projectManagement-mabumusa1" title="Project Management">📆</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/kanarelo"><img src="https://avatars.githubusercontent.com/u/393261?v=4?s=100" width="100px;" alt="Mukewa Wekalao"/><br /><sub><b>Mukewa Wekalao</b></sub></a><br /><a href="#plugin-kanarelo" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://osamahaikal.pythonanywhere.com/"><img src="https://avatars.githubusercontent.com/u/72370395?v=4?s=100" width="100px;" alt="Osama Abdallah Essa Haikal"/><br /><sub><b>Osama Abdallah Essa Haikal</b></sub></a><br /><a href="#plugin-OsamaHaikal" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/M-Arman"><img src="https://avatars.githubusercontent.com/u/54455592?v=4?s=100" width="100px;" alt="Arman"/><br /><sub><b>Arman</b></sub></a><br /><a href="#security-M-Arman" title="Security">🛡️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/oskarkraemer"><img src="https://avatars.githubusercontent.com/u/42745862?v=4?s=100" width="100px;" alt="Oskar Krämer"/><br /><sub><b>Oskar Krämer</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=oskarkraemer" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://thibpat.com"><img src="https://avatars.githubusercontent.com/u/494686?v=4?s=100" width="100px;" alt="Thibaut Patel"/><br /><sub><b>Thibaut Patel</b></sub></a><br /><a href="#ideas-tpatel" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Applesaucesomer"><img src="https://avatars.githubusercontent.com/u/18318905?v=4?s=100" width="100px;" alt="Applesaucesomer"/><br /><sub><b>Applesaucesomer</b></sub></a><br /><a href="#ideas-Applesaucesomer" title="Ideas, Planning, & Feedback">🤔</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/crazyTweek"><img src="https://avatars.githubusercontent.com/u/6828237?v=4?s=100" width="100px;" alt="crazyTweek"/><br /><sub><b>crazyTweek</b></sub></a><br /><a href="#ideas-crazyTweek" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://linkedin.com/in/muhammad-tabaza"><img src="https://avatars.githubusercontent.com/u/23503983?v=4?s=100" width="100px;" alt="Muhammad Tabaza"/><br /><sub><b>Muhammad Tabaza</b></sub></a><br /><a href="#plugin-m-tabaza" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://shaypunter.co.uk"><img src="https://avatars.githubusercontent.com/u/18310437?v=4?s=100" width="100px;" alt="Shay Punter"/><br /><sub><b>Shay Punter</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=ShayPunter" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/abaza738"><img src="https://avatars.githubusercontent.com/u/50132270?v=4?s=100" width="100px;" alt="abaza738"/><br /><sub><b>abaza738</b></sub></a><br /><a href="#plugin-abaza738" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
@@ -89,6 +89,7 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
 
 This project follows the [all-contributors](https://allcontributors.org) specification.
 Contributions of any kind are welcome!

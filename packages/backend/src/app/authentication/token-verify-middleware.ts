@@ -27,6 +27,10 @@ export const tokenVerifyMiddleware = async (request: FastifyRequest, _reply: Fas
     try {
       const token = rawToken.substring(HEADER_PREFIX.length);
       const principal = await tokenUtils.decode(token);
+      // Todo remove in the future, as the old JWT token doesn't contain project id.
+      if (principal.projectId === undefined) {
+        throw new ActivepiecesError({ code: ErrorCode.INVALID_BEARER_TOKEN, params: {} });
+      }
       request.principal = principal;
     } catch (e) {
       throw new ActivepiecesError({ code: ErrorCode.INVALID_BEARER_TOKEN, params: {} });

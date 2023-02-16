@@ -1,4 +1,5 @@
-
+import { PropertyType } from "@activepieces/shared";
+import { DropdownState } from "../../../flow-builder/service/action-meta.service";
 
 export enum HttpMethod {
 	CONNECT = 'CONNECT',
@@ -25,6 +26,11 @@ export interface PieceConfig {
 	required: boolean;
 	extra?: Record<string, unknown>;
 	refreshers?: string[];
+	basicAuthConfigs?: {
+		password: Pick<PieceProperty, "displayName" | "description">,
+		username: Pick<PieceProperty, "displayName" | "description">,
+	}
+	staticDropdownState?: DropdownState<unknown>;
 }
 
 export class PieceProperty {
@@ -38,24 +44,16 @@ export class PieceProperty {
 	scope?: string[];
 	extra?: Record<string, unknown>;
 	refreshers?: string[];
+	password?: PieceProperty
+	username?: PieceProperty
+	options?: DropdownState<unknown>;
 }
-export enum PropertyType {
-	SHORT_TEXT = 'SHORT_TEXT',
-	LONG_TEXT = 'LONG_TEXT',
-	DROPDOWN = 'DROPDOWN',
-	NUMBER = 'NUMBER',
-	CHECKBOX = 'CHECKBOX',
-	OAUTH2 = 'OAUTH2',
-	SECRET_TEXT = 'SECRET_TEXT',
-	CUSTOM_AUTH = 'CUSTOM_AUTH',
-	ARRAY = 'ARRAY',
-	OBJECT = 'OBJECT'
-}
+
 
 
 export const propsConvertor = {
 	convertToFrontEndConfig: (name: string, prop: PieceProperty): PieceConfig => {
-		return {
+		const pieceConfig: PieceConfig = {
 			key: name,
 			type: prop.type,
 			label: prop.displayName,
@@ -66,7 +64,15 @@ export const propsConvertor = {
 			required: prop.required,
 			extra: prop.extra,
 			refreshers: prop.refreshers,
+			staticDropdownState: prop.options
 		};
+		if (prop.username && prop.password) {
+			pieceConfig.basicAuthConfigs = {
+				password: prop.password,
+				username: prop.username
+			}
+		}
+		return pieceConfig;
 	},
 };
 

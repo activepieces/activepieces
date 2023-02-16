@@ -1,6 +1,9 @@
 import { arch, cwd } from "node:process";
 import { exec } from "node:child_process";
 import fs from "node:fs";
+import path from "node:path";
+import { system } from "../helper/system/system";
+import { SystemProp } from "../helper/system/system-prop";
 
 const getIsolateExecutableName = () => {
   const defaultName = "isolate";
@@ -11,8 +14,11 @@ const getIsolateExecutableName = () => {
   return executableNameMap[arch] ?? defaultName;
 };
 
+const TWO_MINUTES = 120;
+
 export class Sandbox {
   private static readonly isolateExecutableName = getIsolateExecutableName();
+  private static readonly sandboxRunTimeSeconds = system.get(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? TWO_MINUTES;
 
   constructor(public readonly boxId: number) {}
 
@@ -23,10 +29,12 @@ export class Sandbox {
 
   async runCommandLine(commandLine: string): Promise<string> {
     const metaFile = this.getSandboxFilePath("meta.txt");
+    const etcDir = path.resolve("./packages/backend/src/assets/etc/");
+
     return await Sandbox.runIsolate(
-      "--dir=/usr/bin/ --dir=/etc/ --share-net --full-env --box-id=" +
+      `--dir=/usr/bin/ --dir=/etc/=${etcDir} --share-net --box-id=` +
         this.boxId +
-        " --processes --wall-time=600 --meta=" +
+        ` --processes --wall-time=${Sandbox.sandboxRunTimeSeconds} --meta=` +
         metaFile +
         " --stdout=_standardOutput.txt" +
         " --stderr=_standardError.txt --run " +
@@ -39,7 +47,7 @@ export class Sandbox {
     if (!fs.existsSync(outputFile)) {
       return undefined;
     }
-    let str = fs.readFileSync(outputFile).toString("utf-8");
+    const str = fs.readFileSync(outputFile).toString("utf-8");
     if (this.isJson(str)) {
       return JSON.parse(str);
     }
@@ -77,6 +85,7 @@ export class Sandbox {
   private static runIsolate(cmd: string): Promise<string> {
     const currentDir = cwd();
     const fullCmd = `${currentDir}/packages/backend/src/assets/${this.isolateExecutableName} ${cmd}`;
+    console.log(fullCmd);
     return new Promise((resolve, reject) => {
       exec(fullCmd, (error: any, stdout: string | PromiseLike<string>, stderr: any) => {
         if (error) {

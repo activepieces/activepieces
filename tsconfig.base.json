@@ -1,8 +1,8 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "rootDir": ".",
     "sourceMap": true,
     "declaration": false,
@@ -18,7 +18,9 @@
     "baseUrl": ".",
     "paths": {
       "@activepieces/engine": ["packages/engine/src/index.ts"],
-      "@activepieces/pieces": ["packages/pieces/src/index.ts"],
+      "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
+      "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
+      "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"]
     }
   },

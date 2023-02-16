@@ -1,7 +1,9 @@
 import fs from "node:fs";
-import { execSync, ExecSyncOptionsWithBufferEncoding } from "node:child_process";
+import { ExecSyncOptionsWithBufferEncoding } from "node:child_process";
 import decompress from "decompress";
 import { sandboxManager } from "../sandbox";
+import { exec } from "node:child_process";
+import { logger } from "../../helper/logger";
 
 const webpackConfig = `
   const path = require("node:path");
@@ -39,23 +41,43 @@ async function build(artifact: Buffer): Promise<Buffer> {
       cwd: buildPath,
     };
 
-    execSync('npm install', execOptions);
-    execSync('npm exec -g webpack -- --mode production', execOptions);
+    logger.info("Installing npm");
+    await execPromise('npm install', execOptions);
+
+    logger.info("Finished npm depdencies");
+    await execPromise('npm exec -g webpack -- --mode production', execOptions);
 
     const bundledFilePath = buildPath + "/dist/index.js";
     bundledFile = fs.readFileSync(bundledFilePath);
     console.log("Finished Building in sandbox " + buildPath);
   } catch (e) {
+    logger.error(e);
     const consoleError = e as { stdout: string };
     const invalidArtifactFile = fs
       .readFileSync("./packages/backend/src/assets/invalid-code.js")
       .toString("utf-8")
-      .replace("${ERROR_MESSAGE}", JSON.stringify(consoleError.stdout.toString()).replace(/"/g, '\\"'));
+      .replace("${ERROR_MESSAGE}", JSON.stringify(consoleError.toString()).replace(/"/g, '\\"'));
     bundledFile = Buffer.from(invalidArtifactFile, "utf-8");
   } finally {
     sandboxManager.returnSandbox(sandbox.boxId);
   }
   return bundledFile;
+}
+
+async function execPromise(cmd: string, options: ExecSyncOptionsWithBufferEncoding): Promise<string> {
+  return new Promise((resolve, reject) => {
+    exec(cmd, options, (error: any, stdout: string | PromiseLike<string>, stderr: any) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      if (stderr) {
+        resolve(stderr);
+        return;
+      }
+      resolve(stdout);
+    });
+  });
 }
 
 async function downloadFiles(artifact: Buffer, buildPath: string) {

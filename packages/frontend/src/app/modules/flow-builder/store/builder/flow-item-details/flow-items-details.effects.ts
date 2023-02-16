@@ -52,7 +52,7 @@ export class FlowItemsDetailsEffects {
 						return new FlowItemDetails(
 							TriggerType.PIECE,
 							c.displayName,
-							`Trigger this flow following a specific event on ${c.displayName}`,
+							``,
 							c.logoUrl,
 							{ appName: c.name }
 						);
@@ -63,5 +63,5 @@ export class FlowItemsDetailsEffects {
 				.filter(res => res !== null) as FlowItemDetails[];
 		};
 	}
-	constructor(private actions$: Actions, private flowItemsDetailsService: ActionMetaService) {}
+	constructor(private actions$: Actions, private flowItemsDetailsService: ActionMetaService) { }
 }

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Store } from '@activepieces/pieces';
+import { Store, StoreScope } from '@activepieces/framework';
 import { FlowId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared';
 import { globals } from '../globals';
 
@@ -34,23 +34,34 @@ export const storageService = {
 }
 export function createContextStore(flowId: FlowId): Store {
     return {
-      put: async function <T>(key: string, value: T): Promise<T> {
-        const storeEntry = await storageService.put({
-          key: key,
-          value: value,
-        });
-        return value;
-      },
-      get: async function <T>(key: string): Promise<T | null> {
-        const storeEntry = await storageService.get(key);
-        if (storeEntry === null) {
-          return null;
-        }
-        return storeEntry.value as T;
-      },
+        put: async function <T>(key: string, value: T, scope = StoreScope.FLOW): Promise<T> {
+            const modifiedKey = createKey(scope, flowId, key);
+            await storageService.put({
+                key: modifiedKey,
+                value: value,
+            });
+            return value;
+        },
+        get: async function <T>(key: string, scope = StoreScope.FLOW): Promise<T | null> {
+            const modifiedKey = createKey(scope, flowId, key);
+            const storeEntry = await storageService.get(modifiedKey);
+            if (storeEntry === null) {
+                // TODO remove in three months (May) as old triggers are storing as collection, while it should store as flow
+                if (scope === StoreScope.FLOW) {
+                    return this.get(key, StoreScope.COLLECTION);
+                }
+                return null;
+            }
+            return storeEntry.value as T;
+        },
     };
 }
 
-function createKey(flowId: FlowId, key: string): string {
-    return "flow_" + flowId + "/" + key;
+function createKey(scope: StoreScope, flowId: FlowId, key: string): string {
+    switch (scope) {
+        case StoreScope.COLLECTION:
+            return key;
+        case StoreScope.FLOW:
+            return "flow_" + flowId + "/" + key;
+    }
 }
