@@ -173,6 +173,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "jonaboe",
+      "name": "Jona Boeddinghaus",
+      "avatar_url": "https://avatars.githubusercontent.com/u/51358680?v=4",
+      "profile": "https://github.com/jonaboe",
+      "contributions": [
+        "plugin"
+      ]
     }
   ]
 }
