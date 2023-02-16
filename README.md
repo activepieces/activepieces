@@ -81,6 +81,7 @@ This repo is entirely [MIT licensed](/LICENSE). You have the permission to use o
       <td align="center" valign="top" width="14.28%"><a href="https://linkedin.com/in/muhammad-tabaza"><img src="https://avatars.githubusercontent.com/u/23503983?v=4?s=100" width="100px;" alt="Muhammad Tabaza"/><br /><sub><b>Muhammad Tabaza</b></sub></a><br /><a href="#plugin-m-tabaza" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://shaypunter.co.uk"><img src="https://avatars.githubusercontent.com/u/18310437?v=4?s=100" width="100px;" alt="Shay Punter"/><br /><sub><b>Shay Punter</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=ShayPunter" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/abaza738"><img src="https://avatars.githubusercontent.com/u/50132270?v=4?s=100" width="100px;" alt="abaza738"/><br /><sub><b>abaza738</b></sub></a><br /><a href="#plugin-abaza738" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jonaboe"><img src="https://avatars.githubusercontent.com/u/51358680?v=4?s=100" width="100px;" alt="Jona Boeddinghaus"/><br /><sub><b>Jona Boeddinghaus</b></sub></a><br /><a href="#plugin-jonaboe" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
