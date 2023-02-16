@@ -9,6 +9,7 @@ import { clickup } from './lib/clickup';
 import { discord } from './lib/discord';
 import { drip } from './lib/drip';
 import { dropbox } from './lib/dropbox';
+import { figma } from './lib/figma';
 import { github } from './lib/github';
 import { gmail } from './lib/gmail';
 import { googleCalendar } from './lib/google-calendar';
@@ -40,6 +41,7 @@ export const pieces: Piece[] = [
     discord,
     drip,
     dropbox,
+    figma,
     github,
     gmail,
     googleCalendar,
