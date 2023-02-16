@@ -7,7 +7,7 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
         logger.info('FlowAndFileProjectId1674788714498: started')
 
         const flowTableExistsQueryResponse: { exists: boolean }[] = await queryRunner.query(
-          `SELECT exists (
+            `SELECT exists (
             SELECT FROM information_schema.tables
               WHERE  table_schema = 'public'
               AND    table_name   = 'flow'
@@ -20,8 +20,8 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
           flowTableExistsQueryResponse[0].exists == false
 
         if (flowTableNotExist) {
-          logger.info('FlowAndFileProjectId1674788714498: skipped')
-          return
+            logger.info('FlowAndFileProjectId1674788714498: skipped')
+            return
         }
 
         const flowRepo = queryRunner.connection.getRepository("flow");
@@ -52,7 +52,8 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
                         const packagedFileToUpdate = await fileRepo.findOneBy({ id: packagedFileId });
                         if (packagedFileToUpdate === null) {
                             logger.error("Found an old packaged artifact file id without file " + packagedFileId + " and for flow " + currentFlow.id);
-                        } else {
+                        }
+                        else {
                             packagedFileToUpdate.projectId = currentFlow.projectId;
                             await fileRepo.update(packagedFileId, packagedFileToUpdate);
                         }
@@ -62,7 +63,8 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
                         const sourceFileToUpdate = await fileRepo.findOneBy({ id: sourceFileId });
                         if (sourceFileToUpdate === null) {
                             logger.error("Found an old source artifact file id without file " + sourceFileId + " and for flow " + currentFlow.id);
-                        } else {
+                        }
+                        else {
                             sourceFileToUpdate.projectId = currentFlow.projectId;
                             await fileRepo.update(sourceFileId, sourceFileToUpdate);
                         }

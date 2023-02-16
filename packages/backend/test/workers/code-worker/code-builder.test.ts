@@ -1,7 +1,6 @@
-import {codeBuilder} from "../../../src/workers/code-worker/code-builder";
-import SandboxManager, {Sandbox} from "../../../src/workers/sandbox";
-
-const fs = require("fs");
+import fs from "fs";
+import {codeBuilder} from "../../../src/app/workers/code-worker/code-builder";
+import SandboxManager, {Sandbox} from "../../../src/app/workers/sandbox";
 
 describe('Code Builder', () => {
 
@@ -9,8 +8,8 @@ describe('Code Builder', () => {
         jest
             .spyOn(SandboxManager.prototype, 'obtainSandbox')
             .mockImplementation(() => new Sandbox(1));
-        let resourceFile = fs.readFileSync('test/resources/simple-code.zip');
-        let bundledJs = await codeBuilder.build(resourceFile);
+        const resourceFile = fs.readFileSync('test/resources/simple-code.zip');
+        const bundledJs = await codeBuilder.build(resourceFile);
         expect(bundledJs.toString("utf-8")).toEqual('module.exports={code:async e=>!0};');
     });
 
@@ -18,8 +17,8 @@ describe('Code Builder', () => {
         jest
             .spyOn(SandboxManager.prototype, 'obtainSandbox')
             .mockImplementation(() => new Sandbox(2));
-        let resourceFile = fs.readFileSync('test/resources/compilation-error.zip');
-        let bundledJs = await codeBuilder.build(resourceFile);
+        const resourceFile = fs.readFileSync('test/resources/compilation-error.zip');
+        const bundledJs = await codeBuilder.build(resourceFile);
         expect(bundledJs.toString("utf-8")).toMatch(/(1 error)/);
     });
 
