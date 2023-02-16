@@ -1,6 +1,6 @@
 import { TSchema, Type } from "@sinclair/typebox";
 import { TypeCompiler } from '@sinclair/typebox/compiler';
-import { getPiece, PieceProperty } from "@activepieces/framework";
+import { PieceProperty } from "@activepieces/framework";
 import {
   ActionType,
   apId,
@@ -24,6 +24,7 @@ import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity
 import { fileService } from "../../file/file.service";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowVersionRepo } from "./flow-version-repo";
+import { getPiece } from "@activepieces/pieces-apps";
 
 export const flowVersionService = {
   async overwriteVersion(flowVersionId: FlowVersionId, mutatedFlowVersion: FlowVersion) {
@@ -115,12 +116,14 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
       }
       break;
 
-    case FlowOperationType.DELETE_ACTION:
+    case FlowOperationType.DELETE_ACTION: {
       const previousStep = getStep(flowVersion, clonedRequest.request.name);
       if (previousStep !== undefined && previousStep.type === ActionType.CODE) {
         await deleteArtifact(projectId, previousStep.settings);
       }
       break;
+    }
+
     case FlowOperationType.UPDATE_TRIGGER:
       clonedRequest.request.valid = true;
       if (clonedRequest.request.type === TriggerType.PIECE) {
@@ -197,17 +200,17 @@ function buildSchema(props: PieceProperty): TSchema {
         break;
       case PropertyType.OAUTH2:
         // Only accepts connections variable.
-        propsSchema[name] = Type.RegEx(RegExp('[$]{1}\{connections.(.*?)\}'));
+        propsSchema[name] = Type.Union([Type.RegEx(RegExp('[$]{1}{connections.(.*?)}')), Type.String()]);
         break;
       case PropertyType.ARRAY:
         // Only accepts connections variable.
-        propsSchema[name] = Type.Array(Type.String({}));
+        propsSchema[name] = Type.Union([Type.Array(Type.String({})), Type.String()]);
         break;
       case PropertyType.OBJECT:
-        propsSchema[name] = Type.Record(Type.String(), Type.Any());
+        propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()]);
         break;
       case PropertyType.JSON:
-        propsSchema[name] = Type.Record(Type.String(), Type.Any());
+        propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()]);
         break;
     }
     if (!property.required) {

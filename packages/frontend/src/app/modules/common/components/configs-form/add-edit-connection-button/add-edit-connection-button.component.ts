@@ -8,8 +8,8 @@ import { CloudOAuth2ConnectionDialogComponent, USE_MY_OWN_CREDENTIALS } from '..
 import { OAuth2ConnectionDialogComponent, USE_CLOUD_CREDENTIALS } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/oauth2-connection-dialog/oauth2-connection-dialog.component';
 import { SecretTextConnectionDialogComponent, SecretTextConnectionDialogData } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
-import { AuthenticationService } from '../../../service/authentication.service';
 import { CloudAuthConfigsService } from '../../../service/cloud-auth-configs.service';
+import { FlagService } from '../../../service/flag.service';
 import { PieceConfig } from '../connector-action-or-config';
 
 @Component({
@@ -34,7 +34,9 @@ export class AddEditConnectionButtonComponent {
   connectionPropertyValueChanged: EventEmitter<{ configKey: string, value: `\${connections.${string}}` }> = new EventEmitter();
   updateOrAddConnectionDialogClosed$: Observable<void>;
   cloudAuthCheck$: Observable<void>;
-  constructor(private store: Store, private dialogService: MatDialog, private cloudAuthConfigsService: CloudAuthConfigsService, private authenticationService: AuthenticationService) { }
+  constructor(private store: Store, private dialogService: MatDialog,
+     private cloudAuthConfigsService: CloudAuthConfigsService,
+     private flagService: FlagService) { }
 
 
   buttonClicked() {
@@ -132,7 +134,7 @@ export class AddEditConnectionButtonComponent {
     }
   }
   private openNewOAuth2ConnectionDialog() {
-    this.updateOrAddConnectionDialogClosed$ = this.authenticationService
+    this.updateOrAddConnectionDialogClosed$ = this.flagService
       .getFrontendUrl()
       .pipe(
         switchMap((serverUrl) => {

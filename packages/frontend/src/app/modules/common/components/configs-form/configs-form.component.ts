@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, QueryList, ViewChildren } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -11,6 +11,7 @@ import {
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import {
+  BehaviorSubject,
   catchError,
   combineLatest,
   debounceTime,
@@ -40,6 +41,7 @@ import { InsertMentionOperation } from '../form-controls/interpolating-text-form
 import { jsonValidator } from '../../validators/json-validator';
 import { CodeService } from '../../../flow-builder/service/code.service';
 import { PropertyType } from '@activepieces/shared';
+
 type ConfigKey = string;
 
 @Component({
@@ -67,7 +69,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   optionsObservables$: {
     [key: ConfigKey]: Observable<DropdownState<any>>;
   } = {};
-  dropdownsLoadingFlags$: { [key: ConfigKey]: Observable<boolean> } = {};
+  dropdownsLoadingFlags$: { [key: ConfigKey]: BehaviorSubject<boolean> } = {};
   allAuthConfigs$: Observable<DropdownItem[]>;
   configDropdownChanged$: Observable<any>;
   cloudAuthCheck$: Observable<void>;
@@ -76,6 +78,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     theme: 'lucario',
     mode: 'javascript',
   };
+  customizedInputs: Record<string, boolean> | undefined;
   faInfoCircle = faInfoCircle;
   checkingOAuth2CloudManager = false;
   configs: PieceConfig[] = [];
@@ -86,7 +89,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   @Input() stepName: string;
   @Input() pieceName: string;
   @Input() pieceDisplayName: string;
+  @ViewChildren('textControl', { read: ElementRef }) theInputs: QueryList<ElementRef>;
   form!: UntypedFormGroup;
+
   OnChange = (value) => { ; };
   OnTouched = () => { ; };
 
@@ -96,15 +101,22 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     public themeService: ThemeService,
     private actionMetaDataService: ActionMetaService,
     private store: Store,
-    private codeService: CodeService
+    private codeService: CodeService,
+    private cd: ChangeDetectorRef
   ) {
     this.allAuthConfigs$ = this.store.select(
       BuilderSelectors.selectAppConnectionsDropdownOptions
     );
   }
 
-  writeValue(obj: PieceConfig[]): void {
-    this.configs = obj;
+  writeValue(obj: { configs: PieceConfig[], customizedInputs: Record<string, boolean> } | PieceConfig[]): void {
+    if (Array.isArray(obj)) {
+      this.configs = obj;
+    }
+    else {
+      this.configs = obj.configs;
+      this.customizedInputs = obj.customizedInputs;
+    }
     this.createForm();
   }
   registerOnChange(fn: any): void {
@@ -157,6 +169,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   createDropdownConfigsObservables() {
     this.configs.forEach((c) => {
       if (c.type === PropertyType.DROPDOWN) {
+        this.dropdownsLoadingFlags$[c.key] = new BehaviorSubject(true);
         const refreshers$ = {};
         c.refreshers!.forEach((r) => {
           refreshers$[r] = this.form.controls[r].valueChanges.pipe(
@@ -164,12 +177,16 @@ export class ConfigsFormComponent implements ControlValueAccessor {
               return JSON.stringify(prev) === JSON.stringify(curr);
             }),
             startWith(this.configs.find((c) => c.key === r)!.value),
+            tap(() => {
+              this.dropdownsLoadingFlags$[c.key].next(true);
+            }),
             debounceTime(150)
           );
         });
         if (c.refreshers!.length === 0) {
           refreshers$['oneTimeRefresh'] = of(true);
         }
+
         this.optionsObservables$[c.key] = combineLatest(refreshers$).pipe(
           switchMap((res) => {
             return this.store
@@ -197,22 +214,13 @@ export class ConfigsFormComponent implements ControlValueAccessor {
               disabled: true,
               placeholder: 'unknown server erro happend, check console',
             });
+          }),
+          tap(() => {
+
+            this.dropdownsLoadingFlags$[c.key].next(false);
           })
         );
-        this.dropdownsLoadingFlags$[c.key] = this.optionsObservables$[
-          c.key
-        ].pipe(
-          startWith(null),
-          map((val) => {
-            if (val === null) return true;
-            if (!Array.isArray(val.options)) {
-              console.error(
-                `Activepieces- Config ${c.label} options are not returned in array form--> ${val}`
-              );
-            }
-            return false;
-          })
-        );
+
       }
     });
   }
@@ -221,7 +229,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     const controls: { [key: string]: UntypedFormControl } = {};
     configs.forEach((c) => {
       const validators: ValidatorFn[] = [];
-      if (c.required) {
+      if (c.required && c.type !== PropertyType.OBJECT && c.type !== PropertyType.ARRAY) {
         validators.push(Validators.required);
       }
       if (c.type === PropertyType.OBJECT) {
@@ -229,7 +237,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       } else if (c.type === PropertyType.ARRAY) {
         controls[c.key] = new UntypedFormControl(c.value || [''], validators);
       } else if (c.type === PropertyType.JSON) {
-        validators.push(jsonValidator);
+        if (!this.customizedInputs || !this.customizedInputs[c.key]) { validators.push(jsonValidator); }
         if (typeof c.value === "object") {
           controls[c.key] = new UntypedFormControl(JSON.stringify(c.value), validators);
         }
@@ -238,7 +246,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         }
       }
       else {
-        controls[c.key] = new UntypedFormControl(c.value, validators);
+        controls[c.key] = new UntypedFormControl(c.value === undefined || null ? undefined : c.value, validators);
       }
 
     });
@@ -261,7 +269,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
 
   connectionValueChanged(event: { configKey: string, value: `\${connections.${string}}` }) {
-
     this.form.get(event.configKey)!.setValue(event.value);
   }
   dropdownCompareWithFunction = (opt: string, formControlValue: string) => {
@@ -276,14 +283,26 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
   formValueMiddleWare(formValue: object) {
     const formattedValue = { ...formValue };
+
     Object.keys(formValue).forEach(configKey => {
       if (this.configs.find(c => c.key === configKey)!.type === PropertyType.JSON) {
         try {
           formattedValue[configKey] = JSON.parse(formValue[configKey]);
-        } catch (_) { ; }
+        }
+        //incase it is an invalid json
+        catch (_) { ; }
       }
     });
-    return formattedValue;
+
+    if (this.customizedInputs) {
+      return {
+        input: formattedValue,
+        customizedInputs: this.customizedInputs
+      }
+    }
+    else {
+      return formattedValue
+    }
   }
 
   beautify(configKey: string) {
@@ -291,5 +310,64 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       const ctrl = this.form.get(configKey)!;
       ctrl.setValue(this.codeService.beautifyJson(JSON.parse(ctrl.value)));
     } catch { ; }
+  }
+  toggleCustomizedInputFlag(configKey: string) {
+    if (!this.customizedInputs) {
+      throw new Error("Activepieces-customized inputs map is not initialized");
+    }
+    const isCustomized = !this.customizedInputs[configKey];
+    this.customizedInputs = { ...this.customizedInputs, [configKey]: isCustomized };
+    const config = this.configs.find(c => c.key === configKey);
+    const ctrl = this.form.get(configKey);
+    if (!config || !ctrl) {
+      throw new Error("Activepieces-config not found: " + configKey);
+    }
+
+    const silentChange = { emitEvent: false };
+    switch (config.type) {
+      case PropertyType.JSON: {
+        if (isCustomized) {
+          ctrl.removeValidators([jsonValidator]);
+          ctrl.setValue("", silentChange);
+        }
+        else {
+          ctrl.addValidators([jsonValidator]);
+          ctrl.setValue("{}", silentChange);
+        }
+        break;
+      }
+      case PropertyType.OBJECT: {
+        if (isCustomized) {
+          ctrl.setValue('', silentChange);
+        }
+        else {
+          ctrl.setValue({}, silentChange);
+        }
+        break;
+      }
+      case PropertyType.ARRAY: {
+        if (isCustomized) {
+
+          ctrl.setValue('', silentChange);
+        }
+        else {
+          ctrl.setValue([''], silentChange);
+        }
+        break;
+      }
+      default:
+        {
+          ctrl.setValue(undefined, silentChange);
+        }
+    }
+    this.cd.detectChanges();
+
+    const input = this.theInputs.find(input => input.nativeElement.getAttribute('name') === configKey);
+    debugger;
+    if (input) {
+      this.cd.detectChanges();
+      input.nativeElement.click();
+    }
+
   }
 }

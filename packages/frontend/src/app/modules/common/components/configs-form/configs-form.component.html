@@ -33,147 +33,232 @@
   <ng-container [ngSwitch]="config.type" [formGroup]="formGroup">
 
     <ng-container *ngSwitchCase="PropertyType.CHECKBOX">
-      <mat-slide-toggle [formControlName]="config.key" color="primary"
-        [matTooltip]="config.description">{{config.label}}</mat-slide-toggle>
+      <ng-container
+        *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? dynamicValueTemplate:checkboxInputTemplate ;context:{$implicit:config, formGroup:form}">
+      </ng-container>
+
+      <ng-template #checkboxInputTemplate>
+        <div class="ap-flex">
+          <mat-slide-toggle [formControlName]="config.key" color="primary"
+            [matTooltip]="config.description">{{config.label}}</mat-slide-toggle>
+          <div class="ap-flex-grow"></div>
+          <div class="ap-cursor-pointer">
+            <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:config} ">
+            </ng-container>
+          </div>
+        </div>
+      </ng-template>
+      <ng-template #dynamicValueTemplate let-config>
+        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:config} ">
+          </ng-container>
+        </span>
+        <ng-container>
+          <ng-container *ngTemplateOutlet="textInputTemplate;context:{$implicit:config, formGroup:form}">
+          </ng-container>
+        </ng-container>
+      </ng-template>
+
     </ng-container>
     <div
       *ngIf="config.type === PropertyType.SHORT_TEXT || config.type === PropertyType.NUMBER || config.type === PropertyType.LONG_TEXT">
-      <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label>{{config.label}}</mat-label>
-
-        <app-interpolating-text-form-control #textControl [matTooltip]="config.description"
-          [formControlName]="config.key" (click)="mentionsDropdown.showMenuSubject$.next(true)"
-          (keyup)="$event.key ==='Escape'? mentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
-
-        <mat-error *ngIf="formGroup.get(config.key)?.invalid">
-          {{config.label}} is required
-        </mat-error>
-      </mat-form-field>
-      <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
-        (addMention)="textControl.addMention($event)"></app-builder-autocomplete-mentions-dropdown>
+      <ng-container *ngTemplateOutlet="textInputTemplate;context:{$implicit:config, formGroup:form}">
+      </ng-container>
     </div>
 
-
     <ng-container *ngSwitchCase="PropertyType.DROPDOWN">
-      <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }} </mat-label>
-        <mat-select [matTooltip]="config.description" [formControlName]="config.key"
-          [compareWith]="dropdownCompareWithFunction">
-          <ng-container *ngIf="optionsObservables$[config.key]| async as state">
-            <mat-option *ngFor="let opt of state.options" [value]="opt.value">
-              {{opt.label}}
-            </mat-option>
-            <mat-option [disabled]="true" *ngIf="state.disabled">
-              <div> {{state.placeholder}} </div>
-            </mat-option>
+      <div>
+        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:config} ">
           </ng-container>
-        </mat-select>
-        <mat-error *ngIf="formGroup.get(config.key)?.invalid">
-          {{config.label}} is required
-        </mat-error>
-      </mat-form-field>
+        </span>
+        <ng-container
+          *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:dropdownInputTemplate ;context:{$implicit:config, formGroup:form}">
+        </ng-container>
+        <ng-template #dropdownInputTemplate>
 
+          <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }}</mat-label>
+            <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
+              <ng-container *ngIf="optionsObservables$[config.key]| async as state">
+                <mat-option *ngFor="let opt of state.options" [value]="opt.value">
+                  {{opt.label}}
+                </mat-option>
+                <mat-option [disabled]="true"
+                  *ngIf="state.disabled && ((dropdownsLoadingFlags$[config.key] | async) === false || !dropdownsLoadingFlags$[config.key])">
+                  <div> {{state.placeholder}} </div>
+                </mat-option>
+              </ng-container>
+            </mat-select>
+            <mat-error *ngIf="formGroup.get(config.key)?.invalid">
+              {{config.label}} is required
+            </mat-error>
+          </mat-form-field>
+        </ng-template>
+
+      </div>
 
     </ng-container>
 
     <ng-container *ngSwitchCase="PropertyType.STATIC_DROPDOWN">
-      <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label> {{ config.label }} </mat-label>
-        <mat-select [matTooltip]="config.description" [formControlName]="config.key"
-          [compareWith]="dropdownCompareWithFunction">
-          <mat-option *ngFor="let opt of config.staticDropdownState.options" [value]="opt.value">
-            {{opt.label}}
-          </mat-option>
-        </mat-select>
-        <mat-error *ngIf="formGroup.get(config.key)?.invalid">
-          {{config.label}} is required
-        </mat-error>
-      </mat-form-field>
+      <div>
+        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:config} ">
+          </ng-container>
+        </span>
+        <ng-container
+          *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:staticDropdownInputTemplate ;context:{$implicit:config, formGroup:form}">
+        </ng-container>
+        <ng-template #staticDropdownInputTemplate>
+          <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label> {{ config.label }} </mat-label>
+            <mat-select [matTooltip]="config.description" [formControlName]="config.key"
+              [compareWith]="dropdownCompareWithFunction">
+              <mat-option *ngFor="let opt of config.staticDropdownState.options" [value]="opt.value">
+                {{opt.label}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="formGroup.get(config.key)?.invalid">
+              {{config.label}} is required
+            </mat-error>
+          </mat-form-field>
+        </ng-template>
 
+      </div>
 
     </ng-container>
+
     <ng-container *ngSwitchCase="PropertyType.ARRAY">
-      <div [class.ap-mb-5]="form.disabled">
-        <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="config.description">{{config.label}}</div>
-        <app-array-form-control [formControlName]="config.key"></app-array-form-control>
-      </div>
+      <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+        <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:config} ">
+        </ng-container>
+      </span>
+      <ng-container
+        *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:arrayInputTemplate ;context:{$implicit:config, formGroup:form}">
+      </ng-container>
+
+      <ng-template #arrayInputTemplate>
+        <div [class.ap-mb-5]="form.disabled">
+          <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="config.description">{{config.label}}</div>
+          <app-array-form-control [formControlName]="config.key"></app-array-form-control>
+        </div>
+      </ng-template>
+
     </ng-container>
     <ng-container *ngSwitchCase="PropertyType.OBJECT">
-      <div [class.ap-mb-5]="form.disabled">
-        <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="config.description">{{config.label}}</div>
-        <app-dictonary-form-control [formControlName]="config.key"></app-dictonary-form-control>
-      </div>
+      <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+        <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:config} ">
+        </ng-container>
+      </span>
+
+      <ng-container
+        *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:objectInputTemplate ;context:{$implicit:config, formGroup:form}">
+      </ng-container>
+
+      <ng-template #objectInputTemplate>
+        <div [class.ap-mb-5]="form.disabled">
+          <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="config.description">{{config.label}}</div>
+          <app-dictonary-form-control [formControlName]="config.key"></app-dictonary-form-control>
+        </div>
+      </ng-template>
 
     </ng-container>
 
 
     <ng-container
       *ngIf="config.type === PropertyType.OAUTH2 || config.type === PropertyType.SECRET_TEXT || config.type === PropertyType.BASIC_AUTH">
-      <div class="ap-relative">
-        <app-add-edit-connection-button class="edit-selected-auth"
-          *ngIf="formGroup.enabled && formGroup.get(config.key)!.value" btnSize="extraSmall"
-          [isEditConnectionButton]="true" [config]="config" [pieceName]="pieceName"
-          [selectedConnectionInterpolatedString]="formGroup.get(config.key)!.value">
-          Edit
-        </app-add-edit-connection-button>
-        <mat-form-field class="ap-w-full" appearance="outline">
-          <mat-label> {{ config.label }} </mat-label>
-          <mat-select [matTooltip]="config.description" [formControlName]="config.key"
-            [compareWith]="dropdownCompareWithFunction">
-            <mat-option *ngFor="let opt of ((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)"
-              [value]="opt.value">
-              {{opt.label.name}}
-            </mat-option>
-            <mat-option *ngIf="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0"
-              class="add-auth">
-              <div class="ap-flex">
-                <div class="ap-flex-grow">No connections</div>
-                <app-add-edit-connection-button class="edit-selected-auth" btnSize="small" *ngIf="formGroup.enabled"
-                  [isEditConnectionButton]="false" [config]="config" [pieceName]="pieceName"
-                  (connectionPropertyValueChanged)="connectionValueChanged($event)">
-                  + Add
-                </app-add-edit-connection-button>
-              </div>
-            </mat-option>
-          </mat-select>
-          <mat-error *ngIf="formGroup.get(config.key)!.invalid">
-            {{config.label}} is required
-          </mat-error>
-        </mat-form-field>
-        <app-add-edit-connection-button btnSize="medium" *ngIf="formGroup.enabled" [isEditConnectionButton]="false"
-          [config]="config" [pieceName]="pieceName" (connectionPropertyValueChanged)="connectionValueChanged($event)">
-          + New Connection
-        </app-add-edit-connection-button>
+      <div class="ap-flex">
+        <div class="ap-flex-grow"></div>
+        <div class="ap-cursor-pointer">
+          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:config} ">
+          </ng-container>
+        </div>
       </div>
+
+      <ng-container
+        *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:connectionDropdownInputTemplate ;context:{$implicit:config, formGroup:form}">
+      </ng-container>
+      <ng-template #connectionDropdownInputTemplate>
+        <div class="ap-relative">
+          <app-add-edit-connection-button class="edit-selected-auth"
+            *ngIf="formGroup.enabled && formGroup.get(config.key)!.value" btnSize="extraSmall"
+            [isEditConnectionButton]="true" [config]="config" [pieceName]="pieceName"
+            [selectedConnectionInterpolatedString]="formGroup.get(config.key)!.value">
+            Edit
+          </app-add-edit-connection-button>
+          <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label> {{ config.label }} </mat-label>
+            <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
+              <mat-option *ngFor="let opt of ((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)"
+                [value]="opt.value">
+                {{opt.label.name}}
+              </mat-option>
+              <mat-option *ngIf="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0"
+                class="add-auth">
+                <div class="ap-flex">
+                  <div class="ap-flex-grow">No connections</div>
+                  <app-add-edit-connection-button class="edit-selected-auth" btnSize="small" *ngIf="formGroup.enabled"
+                    [isEditConnectionButton]="false" [config]="config" [pieceName]="pieceName"
+                    (connectionPropertyValueChanged)="connectionValueChanged($event)">
+                    + Add
+                  </app-add-edit-connection-button>
+                </div>
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="formGroup.get(config.key)!.invalid">
+              {{config.label}} is required
+            </mat-error>
+          </mat-form-field>
+          <app-add-edit-connection-button btnSize="medium" *ngIf="formGroup.enabled" [isEditConnectionButton]="false"
+            [config]="config" [pieceName]="pieceName" (connectionPropertyValueChanged)="connectionValueChanged($event)">
+            + New Connection
+          </app-add-edit-connection-button>
+        </div>
+      </ng-template>
+
 
     </ng-container>
     <ng-container *ngIf="config.type === PropertyType.JSON">
-      <div class="code-font-sm code-size-200 code-block">
-        <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
-          <div class="ap-flex-grow">
-            <span class="ap-text-white">{{config.label}}</span>
+      <div class="ap-flex">
+        <div class="ap-flex-grow"></div>
+        <span class="ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:config} ">
+          </ng-container>
+        </span>
+      </div>
+
+      <ng-container
+        *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:jsonInputTemplate ;context:{$implicit:config, formGroup:form}">
+      </ng-container>
+
+      <ng-template #jsonInputTemplate>
+        <div class="code-font-sm code-size-200 code-block">
+          <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
+            <div class="ap-flex-grow">
+              <span class="ap-text-white">{{config.label}}</span>
+            </div>
+            <div>
+              <svg-icon src="/assets/img/custom/beautify.svg" [svgStyle]="{width:'16px', height:'16px'}"
+                (click)="beautify(config.key)" matTooltip="beautify" class="ap-cursor-pointer"> </svg-icon>
+            </div>
           </div>
-          <div>
-            <svg-icon src="/assets/img/custom/beautify.svg" [svgStyle]="{width:'16px', height:'16px'}"
-              (click)="beautify(config.key)" matTooltip="beautify" class="ap-cursor-pointer"> </svg-icon>
-          </div>
+          <ngx-codemirror [formControlName]="config.key" #jsonControl [options]="editorOptions"
+            (focusChange)="$event? mentionsDropdown.showMenuSubject$.next(true): null"></ngx-codemirror>
+          <app-builder-autocomplete-mentions-dropdown #mentionsDropdown
+            (addMention)="addMentionToJsonControl(jsonControl,$event)"></app-builder-autocomplete-mentions-dropdown>
         </div>
-        <ngx-codemirror [formControlName]="config.key" #jsonControl [options]="editorOptions"
-          (focusChange)="$event? mentionsDropdown.showMenuSubject$.next(true): null"></ngx-codemirror>
-        <app-builder-autocomplete-mentions-dropdown #mentionsDropdown
-          (addMention)="addMentionToJsonControl(jsonControl,$event)"></app-builder-autocomplete-mentions-dropdown>
-      </div>
-      <div *ngIf="getControl(config.key)!.invalid" class="ap-p-2">
-        <p @fadeInUp *ngIf="getControl(config.key)!.hasError('required');else invalidJson"
-          class="ap-text-danger ap-typography-caption">
-          {{config.label}} is required
-        </p>
-        <ng-template #invalidJson>
-          <p @fadeInUp class="ap-text-danger ap-typography-caption">
-            {{config.label}} is not a valid JSON object.
+        <div *ngIf="getControl(config.key)!.invalid" class="ap-p-2">
+          <p @fadeInUp *ngIf="getControl(config.key)!.hasError('required');else invalidJson"
+            class="ap-text-danger ap-typography-caption">
+            {{config.label}} is required
           </p>
-        </ng-template>
-      </div>
+          <ng-template #invalidJson>
+            <p @fadeInUp class="ap-text-danger ap-typography-caption">
+              {{config.label}} is not a valid JSON object.
+            </p>
+          </ng-template>
+        </div>
+      </ng-template>
     </ng-container>
 
   </ng-container>
@@ -186,3 +271,29 @@
   <ng-container *ngIf=" obs$.value | async "></ng-container>
 </ng-container>
 <ng-container *ngIf="configDropdownChanged$  | async"></ng-container>
+
+<ng-template #textInputTemplate let-config let-formGroup="formGroup">
+  <div [formGroup]="formGroup">
+    <mat-form-field class="ap-w-full" appearance="outline">
+      <mat-label>{{config.label}}</mat-label>
+      <app-interpolating-text-form-control #textControl [matTooltip]="config.description" [formControlName]="config.key"
+        [attr.name]="config.key" (click)="mentionsDropdown.showMenuSubject$.next(true)"
+        (keyup)="$event.key ==='Escape'? mentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
+      <mat-error *ngIf="formGroup.get(config.key)?.invalid">
+        {{config.label}} is required
+      </mat-error>
+    </mat-form-field>
+    <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
+      (addMention)="textControl.addMention($event)"></app-builder-autocomplete-mentions-dropdown>
+  </div>
+
+</ng-template>
+
+
+<ng-template #dynamicVariableIcon let-config>
+  <svg-icon [svgStyle]="{width:'22px', height:'22px'}" *ngIf="form.enabled" class="ap-mb-[3px]" appTrackHover
+    [class.!ap-opacity-100]="hoverTracker.isHovered" #hoverTracker="hoverTrackerDirective"
+    [class.ap-opacity-40]="customizedInputs && !customizedInputs[config.key]" src="assets/img/custom/variable.svg"
+    matTooltip="Dynamic Value" (click)="toggleCustomizedInputFlag(config.key)">
+  </svg-icon>
+</ng-template>

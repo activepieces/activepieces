@@ -11,6 +11,33 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+### 02/15/2023
+**Version 0.3.1** [GitHub](https://github.com/activepieces/activepieces/pull/583)
+
+<Warning>
+**Breaking Changes:** The webhook URL is now constructed from `AP_FRONTEND_URL`. Please ensure that your `docker-compose.yml` is up to date as well. 
+</Warning>
+
+* **Pieces:**
+    - Dropbox: Create File from Text / Create Folder
+    - Google Drive: Create File From Text / Create Folder
+    - Airtable: New Record
+
+* **Features:**
+    - Added Docuemntation link in Trigger / Action, So you can easily open the documenation.
+    - Created deployment scripts that generate database crednenetials
+    - Add upgrade notification inside the app to be notified
+
+* **Fixes:**
+    - Login now accepts password longer than 25 characters.
+    - Fix refreshing oauth2, sometime they failed due to bug in isExpired method.
+    - Flow worker concurency were set to 1 flow, now it's 10 by default.
+    - Reorded http methods and remove connect due it to error it make
+
+* **Contributors**
+    - @kanarelo created Dropbox and Google Drive Pieces
+
+
 ### 02/08/2023
 **Version 0.3.0** [GitHub](https://github.com/activepieces/activepieces/pull/508)
 

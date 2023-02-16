@@ -13,6 +13,7 @@ import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
 
 import { HttpErrorResponse } from '@angular/common/http';
 import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
+import { FlagService } from '../../../common/service/flag.service';
 export interface UserInfo {
 	firstName: FormControl<string>;
 	lastName: FormControl<string>;
@@ -39,6 +40,7 @@ export class SignUpComponent {
 	constructor(
 		private formBuilder: FormBuilder,
 		private router: Router,
+		public flagService: FlagService,
 		public authenticationService: AuthenticationService
 	) {
 		this.registrationForm = this.formBuilder.group({
@@ -63,7 +65,7 @@ export class SignUpComponent {
 			trackEvents: new FormControl<boolean>(true, { nonNullable: true }),
 			newsLetter: new FormControl<boolean>(true, { nonNullable: true }),
 		});
-		this.signedUpEnabled$ = this.authenticationService.isSignedUpEnabled();
+		this.signedUpEnabled$ = this.flagService.isSignedUpEnabled();
 	
 		this.emailValueChanged$ = this.registrationForm.controls.email.valueChanges.pipe(
 			tap(() => {
