@@ -92,7 +92,7 @@ function isExpired(connection: BaseOAuth2ConnectionValue) {
         return false;
     }
 
-    return (secondsSinceEpoch >= connection.claimed_at + connection.expires_in + REFRESH_THRESHOLD)
+    return (secondsSinceEpoch + REFRESH_THRESHOLD >= connection.claimed_at + connection.expires_in)
 }
 
 async function refreshCloud(appName: string, connectionValue: CloudOAuth2ConnectionValue): Promise<CloudOAuth2ConnectionValue> {
@@ -106,7 +106,7 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
         tokenUrl: connectionValue.token_url,
     };
     const response = (
-        await axios.post("https://localhost:4000/refresh", requestBody)
+        await axios.post("https://secrets.activepieces.com/refresh", requestBody)
     ).data;;
 
     return {

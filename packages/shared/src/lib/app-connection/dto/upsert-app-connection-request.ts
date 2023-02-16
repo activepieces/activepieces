@@ -22,6 +22,7 @@ export const UpsertCloudOAuth2Request = Type.Object({
     value: Type.Object({
         ...OAuth2ConnectionValue,
         type: Type.Literal(AppConnectionType.CLOUD_OAUTH2),
+        token_url: Type.Optional(Type.String({})),
     })
 });
 

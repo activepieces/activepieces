@@ -33,7 +33,7 @@ export const oauth2Service = {
   },
   claimWithCloud: async (request: ClaimTokenFromCloudRequest): Promise<unknown> => {
     try {
-      return (await axios.post("https://localhost:4000/claim", request)).data;
+      return (await axios.post("https://secrets.activepieces.com/claim", request)).data;
     } catch (e: unknown | AxiosError) {
       if (axios.isAxiosError(e)) {
         return e.response?.data;
