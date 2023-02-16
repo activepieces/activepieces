@@ -27,6 +27,7 @@ import { telegramBot } from './telegram_bot';
 import { binance } from './binance';
 import { googleDrive } from './google-drive';
 import { dropbox } from './dropbox';
+import { calcom } from './cal-com';
 
 export const pieces: Piece[] = [
 	slack,
@@ -57,7 +58,8 @@ export const pieces: Piece[] = [
 	binance,
 	googleDrive,
 	zoom,
-	dropbox
+	dropbox,
+	calcom
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
