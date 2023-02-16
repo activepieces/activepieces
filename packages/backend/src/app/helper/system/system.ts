@@ -39,7 +39,7 @@ export const system = {
         params: {
           prop,
         },
-      });
+      }, `System property ${prop} is not defined, please check the documentation`);
     }
 
     return value;

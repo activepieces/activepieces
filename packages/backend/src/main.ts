@@ -23,6 +23,7 @@ import { system } from "./app/helper/system/system";
 import { SystemProp } from "./app/helper/system/system-prop";
 import { databaseConnection } from "./app/database/database-connection";
 import { logger } from './app/helper/logger';
+import { encryptObject } from "./app/helper/encryption";
 
 const app = fastify({
   logger,
