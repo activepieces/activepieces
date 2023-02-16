@@ -5,10 +5,10 @@ export class initializeSchema1676238396411 implements MigrationInterface {
     name = 'initializeSchema1676238396411'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-      logger.info('initializeSchema1676238396411: started')
+        logger.info('initializeSchema1676238396411: started')
 
         const userTableExistsQueryResponse: { exists: boolean }[] = await queryRunner.query(
-          `SELECT exists (
+            `SELECT exists (
             SELECT FROM information_schema.tables
               WHERE  table_schema = 'public'
               AND    table_name   = 'user'
@@ -21,8 +21,8 @@ export class initializeSchema1676238396411 implements MigrationInterface {
           userTableExistsQueryResponse[0].exists
 
         if (userTableExists) {
-          logger.info('initializeSchema1676238396411: skipped')
-          return
+            logger.info('initializeSchema1676238396411: skipped')
+            return
         }
 
         await queryRunner.query(`CREATE TABLE "collection" ("id" character varying(21) NOT NULL, "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "projectId" character varying(21) NOT NULL, CONSTRAINT "PK_ad3f485bbc99d875491f44d7c85" PRIMARY KEY ("id"))`)

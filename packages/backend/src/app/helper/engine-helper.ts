@@ -27,7 +27,8 @@ export const engineHelper = {
                 ...operation,
                 workerToken: await workerToken({ collectionId: operation.collectionVersion.collectionId, projectId: operation.projectId })
             });
-        } finally {
+        }
+        finally {
             sandboxManager.returnSandbox(sandbox.boxId);
         }
         if (operation.hookType === TriggerHookType.RUN) {
@@ -44,7 +45,8 @@ export const engineHelper = {
                 ...operation,
                 workerToken: await workerToken({ collectionId: operation.collectionVersion.collectionId, projectId: operation.projectId })
             }) as DropdownState<any>
-        } finally {
+        }
+        finally {
             sandboxManager.returnSandbox(sandbox.boxId);
         }
         return result;

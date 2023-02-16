@@ -27,32 +27,32 @@ import { databaseConnection } from "./app/database/database-connection";
 import { logger } from './app/helper/logger';
 
 const app = fastify({
-  logger,
-  ajv: {
-    customOptions: {
-      removeAdditional: 'all',
-      useDefaults: true,
-      coerceTypes: true,
+    logger,
+    ajv: {
+        customOptions: {
+            removeAdditional: 'all',
+            useDefaults: true,
+            coerceTypes: true,
+        }
     }
-  }
 });
 
 app.register(swagger, {
-  openapi: {
-    info: {
-      title: 'Activepieces OpenAPI Documentation',
-      version: '1.0.0'
-    },
-    externalDocs: {
-      url: 'https://www.activepieces.com/docs',
-      description: 'Find more info here'
-    },
-  }
+    openapi: {
+        info: {
+            title: 'Activepieces OpenAPI Documentation',
+            version: '1.0.0'
+        },
+        externalDocs: {
+            url: 'https://www.activepieces.com/docs',
+            description: 'Find more info here'
+        },
+    }
 });
 
 app.register(cors, {
-  origin: "*",
-  methods: ["*"]
+    origin: "*",
+    methods: ["*"]
 });
 app.register(formBody, { parser: str => qs.parse(str) });
 app.addHook("onRequest", tokenVerifyMiddleware);
@@ -74,33 +74,34 @@ app.register(appConnectionModule);
 app.register(openapiModule);
 
 app.get(
-  "/redirect",
-  async (
-    request: FastifyRequest<{ Querystring: { code: string; } }>, reply
-  ) => {
-    const params = {
-      "code": request.query.code
-    };
-    if (params.code === undefined) {
-      reply.send("The code is missing in url");
-    } else {
-      reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${params['code']}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
+    "/redirect",
+    async (
+        request: FastifyRequest<{ Querystring: { code: string; } }>, reply
+    ) => {
+        const params = {
+            "code": request.query.code
+        };
+        if (params.code === undefined) {
+            reply.send("The code is missing in url");
+        }
+        else {
+            reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${params['code']}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
+        }
     }
-  }
 );
 app.setErrorHandler(errorHandler);
 
 const start = async () => {
-  try {
-    await databaseConnection.initialize();
-    await databaseConnection.runMigrations();
+    try {
+        await databaseConnection.initialize();
+        await databaseConnection.runMigrations();
 
-    await app.listen({
-      host: "0.0.0.0",
-      port: 3000,
-    });
+        await app.listen({
+            host: "0.0.0.0",
+            port: 3000,
+        });
 
-    console.log(`
+        console.log(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
     /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
    /  \\    | |         | |      | |    \\ \\  / /  | |__    | |__) |   | |   | |__    | |      | |__    | (___
@@ -110,10 +111,11 @@ const start = async () => {
 
 started on ${system.get(SystemProp.FRONTEND_URL)}
     `);
-  } catch (err) {
-    app.log.error(err);
-    process.exit(1);
-  }
+    }
+    catch (err) {
+        app.log.error(err);
+        process.exit(1);
+    }
 };
 
 start();

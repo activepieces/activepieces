@@ -5,37 +5,37 @@ import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 export type AppConnectionSchema = AppConnection & { project: Project };
 
 export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
-  name: "app_connection",
-  columns: {
-    ...BaseColumnSchemaPart,
-    name: {
-      type: String,
+    name: "app_connection",
+    columns: {
+        ...BaseColumnSchemaPart,
+        name: {
+            type: String,
+        },
+        appName: {
+            type: String
+        },
+        projectId: ApIdSchema,
+        value: {
+            type: "jsonb"
+        }
     },
-    appName: {
-      type: String
+    indices: [
+        {
+            name: "idx_app_connection_project_id_and_name",
+            columns: ["projectId", "name"],
+            unique: true,
+        },
+    ],
+    relations: {
+        project: {
+            type: "many-to-one",
+            target: "project",
+            cascade: true,
+            onDelete: "CASCADE",
+            joinColumn: {
+                name: "projectId",
+                foreignKeyConstraintName: "fk_app_connection_app_project_id",
+            },
+        }
     },
-    projectId: ApIdSchema,
-    value: {
-      type: "jsonb"
-    }
-  },
-  indices: [
-    {
-      name: "idx_app_connection_project_id_and_name",
-      columns: ["projectId", "name"],
-      unique: true,
-    },
-  ],
-  relations: {
-    project: {
-      type: "many-to-one",
-      target: "project",
-      cascade: true,
-      onDelete: "CASCADE",
-      joinColumn: {
-        name: "projectId",
-        foreignKeyConstraintName: "fk_app_connection_app_project_id",
-      },
-    }
-  },
 });

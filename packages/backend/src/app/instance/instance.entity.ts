@@ -7,53 +7,53 @@ export interface InstanceSchema extends Instance {
 }
 
 export const InstanceEntity = new EntitySchema<InstanceSchema>({
-  name: "instance",
-  columns: {
-    ...BaseColumnSchemaPart,
-    projectId: ApIdSchema,
-    collectionId: ApIdSchema,
-    collectionVersionId: ApIdSchema,
-    flowIdToVersionId: {
-      type: "jsonb",
+    name: "instance",
+    columns: {
+        ...BaseColumnSchemaPart,
+        projectId: ApIdSchema,
+        collectionId: ApIdSchema,
+        collectionVersionId: ApIdSchema,
+        flowIdToVersionId: {
+            type: "jsonb",
+        },
+        status: {
+            type: String,
+        },
     },
-    status: {
-      type: String,
+    indices: [
+        {
+            name: "idx_instance_project_id",
+            columns: ["projectId"],
+            unique: false,
+        },
+        {
+            name: "idx_instance_collection_id",
+            columns: ["collectionId"],
+            unique: true,
+        },
+    ],
+    relations: {
+        collectionVersion: {
+            type: "one-to-one",
+            target: "collection_version",
+            cascade: true,
+            onDelete: "CASCADE",
+            joinColumn: {
+                name: "collectionVersionId",
+                referencedColumnName: "id",
+                foreignKeyConstraintName: "fk_instance_collection_version",
+            },
+        },
+        collection: {
+            type: "one-to-one",
+            target: "collection",
+            cascade: true,
+            onDelete: "CASCADE",
+            joinColumn: {
+                name: "collectionId",
+                referencedColumnName: "id",
+                foreignKeyConstraintName: "fk_instance_collection",
+            },
+        },
     },
-  },
-  indices: [
-    {
-      name: "idx_instance_project_id",
-      columns: ["projectId"],
-      unique: false,
-    },
-    {
-      name: "idx_instance_collection_id",
-      columns: ["collectionId"],
-      unique: true,
-    },
-  ],
-  relations: {
-    collectionVersion: {
-      type: "one-to-one",
-      target: "collection_version",
-      cascade: true,
-      onDelete: "CASCADE",
-      joinColumn: {
-        name: "collectionVersionId",
-        referencedColumnName: "id",
-        foreignKeyConstraintName: "fk_instance_collection_version",
-      },
-    },
-    collection: {
-      type: "one-to-one",
-      target: "collection",
-      cascade: true,
-      onDelete: "CASCADE",
-      joinColumn: {
-        name: "collectionId",
-        referencedColumnName: "id",
-        foreignKeyConstraintName: "fk_instance_collection",
-      },
-    },
-  },
 });
