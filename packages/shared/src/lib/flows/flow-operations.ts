@@ -1,7 +1,8 @@
 import {
-    ActionType, CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings, StorageActionSettings,
+    ActionType,
+    CodeAction, LoopOnItemsAction, PieceAction, StoreOperation,
 } from "./actions/action";
-import { PieceTriggerSettings, ScheduleTriggerSettings, TriggerType } from "./triggers/trigger";
+import { EmptyTrigger, PieceTrigger, ScheduleTrigger, WebhookTrigger } from "./triggers/trigger";
 import { Static, Type } from "@sinclair/typebox";
 
 
@@ -10,8 +11,16 @@ export enum FlowOperationType {
     UPDATE_TRIGGER = "UPDATE_TRIGGER",
     ADD_ACTION = "ADD_ACTION",
     UPDATE_ACTION = "UPDATE_ACTION",
-    DELETE_ACTION = "DELETE_ACTION"
+    DELETE_ACTION = "DELETE_ACTION",
+    IMPORT_FLOW = "IMPORT_FLOW"
 }
+
+export const ImportFlowRequest = Type.Object({
+    displayName: Type.String({}),
+    trigger: Type.Any({}),
+});
+
+export type ImportFlowRequest = Static<typeof ImportFlowRequest>;
 
 
 export const ChangeNameRequest = Type.Object({
@@ -26,40 +35,45 @@ export const DeleteActionRequest = Type.Object({
 
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>;
 
-export type AddActionRequest = {
-    parentAction: string | undefined,
+export const UpdateStorageAction = Type.Object({
+    name: Type.String({}),
+    valid: Type.Boolean({}),
+    displayName: Type.String({}),
+    type: Type.Literal(ActionType.STORAGE),
+    settings: Type.Object({
+        operation: Type.Optional(Type.Enum(StoreOperation)),
+        key: Type.Optional(Type.String({})),
+        value: Type.Optional(Type.Any({})),
+    })
+});
+
+export type UpdateStorageAction = Static<typeof UpdateStorageAction>;
+
+export const UpdateActionRequest = Type.Union([UpdateStorageAction, CodeAction, LoopOnItemsAction, PieceAction]);
+export type UpdateActionRequest = Static<typeof UpdateActionRequest>;
+
+export const AddActionRequest = Type.Object({
+    parentAction: Type.Optional(Type.String()),
     action: UpdateActionRequest
-}
+})
+export type AddActionRequest = Static<typeof AddActionRequest>;
 
-export type UpdateActionRequest = BasicActionStep<ActionType.STORAGE, StorageActionSettings>
-    | BasicActionStep<ActionType.CODE, CodeActionSettings>
-    | BasicActionStep<ActionType.LOOP_ON_ITEMS, LoopOnItemsActionSettings>
-    | BasicActionStep<ActionType.PIECE, PieceActionSettings>;
+export const UpdateScheduleTrigger = Type.Object({
+    ...ScheduleTrigger.properties,
+    settings: Type.Object({
+        cronExpression: Type.String()
+    })
+});
+export type UpdateScheduleTrigger = Static<typeof UpdateScheduleTrigger>;
 
-
-interface BasicActionStep<A, V> {
-    type: A;
-    settings: V;
-    name: string,
-    displayName: string;
-    valid?: boolean;
-}
-
-export type UpdateTriggerRequest = BasicTriggerRequest<TriggerType.WEBHOOK, {}>
-    | BasicTriggerRequest<TriggerType.SCHEDULE, ScheduleTriggerSettings>
-    | BasicTriggerRequest<TriggerType.EMPTY, {}>
-    | BasicTriggerRequest<TriggerType.PIECE, PieceTriggerSettings>
-
-
-interface BasicTriggerRequest<A, V> {
-    type: A;
-    settings: V;
-    displayName: string;
-    valid?: boolean;
-}
-
+export const UpdateTriggerRequest = Type.Union([EmptyTrigger, UpdateScheduleTrigger, PieceTrigger, WebhookTrigger]);
+export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>;
 
 export const FlowOperationRequest = Type.Union([
+    Type.Object({
+        type: Type.Literal(FlowOperationType.IMPORT_FLOW),
+        request: ImportFlowRequest
+    }),
     Type.Object({
         type: Type.Literal(FlowOperationType.CHANGE_NAME),
         request: ChangeNameRequest
@@ -70,15 +84,15 @@ export const FlowOperationRequest = Type.Union([
     }),
     Type.Object({
         type: Type.Literal(FlowOperationType.UPDATE_ACTION),
-        request: Type.Any({})
+        request: UpdateActionRequest
     }),
     Type.Object({
         type: Type.Literal(FlowOperationType.ADD_ACTION),
-        request: Type.Any({})
+        request: AddActionRequest
     }),
     Type.Object({
         type: Type.Literal(FlowOperationType.UPDATE_TRIGGER),
-        request: Type.Any({})
+        request: UpdateTriggerRequest
     })
 ]);
 

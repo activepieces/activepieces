@@ -244,7 +244,7 @@ export class StepTypeSidebarComponent implements OnInit {
             ...baseProps,
             type: ActionType.LOOP_ON_ITEMS,
             settings: {
-              items: '',
+              items: [],
             },
           },
         };
@@ -258,6 +258,7 @@ export class StepTypeSidebarComponent implements OnInit {
             settings: {
               operation: StoreOperation.GET,
               key: '',
+              value: ''
             },
           },
         };

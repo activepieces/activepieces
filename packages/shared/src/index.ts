@@ -26,7 +26,7 @@ export { SignInRequest } from './lib/authentication/dto/sign-in-request';
 export { PrincipalType } from "./lib/authentication/model/principal-type";
 export { Principal } from "./lib/authentication/model/principal";
 export {
-    CodeAction, PieceAction, LoopOnItemsAction, StorageAction, StorageActionSettings,
+    CodeAction, PieceAction, LoopOnItemsAction, StorageAction,
     PieceActionSettings, LoopOnItemsActionSettings, Action, ActionType, CodeActionSettings
 } from './lib/flows/actions/action'
 export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry';
