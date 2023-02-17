@@ -31,6 +31,8 @@ type ErrorParams =
   | PieceTriggerNotFoundErrorParams
   | StepNotFoundErrorParams
   | AppConnectionNotFoundErrorParams
+  | InvalidJwtTokenErrorParams
+  | FlowRunQuotaExeceededErrorParams
   | SystemPropNotDefinedErrorParams;
 
 export interface BaseErrorParams<T, V> {
@@ -167,6 +169,19 @@ export interface SystemPropNotDefinedErrorParams
     }
   > { }
 
+export interface InvalidJwtTokenErrorParams
+  extends BaseErrorParams<
+    ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
+    {
+      token: string;
+    }
+  > { }
+export interface FlowRunQuotaExeceededErrorParams
+  extends BaseErrorParams<
+    ErrorCode.FLOW_RUN_QUOTA_EXCEEDED,
+    {}
+  > { }
+
 export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
   COLLECTION_VERSION_NOT_FOUND = "COLLECTION_VERSION_NOT_FOUND",
@@ -185,4 +200,6 @@ export enum ErrorCode {
   PIECE_TRIGGER_NOT_FOUND = "PIECE_TRIGGER_NOT_FOUND",
   STEP_NOT_FOUND = "STEP_NOT_FOUND",
   SYSTEM_PROP_NOT_DEFINED = "SYSTEM_PROP_NOT_DEFINED",
+  INVALID_OR_EXPIRED_JWT_TOKEN = "INVALID_OR_EXPIRED_JWT_TOKEN",
+  FLOW_RUN_QUOTA_EXCEEDED = "FLOW_RUN_QUOTA_EXCEEDED",
 }
