@@ -3,7 +3,6 @@ import { BaseActionHandler } from './action-handler';
 import { CodeActionHandler } from './code-action-handler';
 import { PieceActionHandler } from './piece-action-handler';
 import { LoopOnItemActionHandler } from './loop-action-handler';
-import { StorageActionHandler } from './storage-action-handler';
 
 export function createAction(
   jsonData: any
@@ -16,8 +15,6 @@ export function createAction(
     jsonData['nextAction']
   );
   switch (currentAction.type) {
-    case ActionType.STORAGE:
-      return new StorageActionHandler(currentAction, nextAction);
     case ActionType.CODE:
       return new CodeActionHandler(currentAction, nextAction);
     case ActionType.PIECE:

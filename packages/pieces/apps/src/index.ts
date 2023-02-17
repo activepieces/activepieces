@@ -29,6 +29,7 @@ import { todoist } from './lib/todoist';
 import { twilio } from './lib/twilio';
 import { typeform } from './lib/typeform';
 import { zoom } from './lib/zoom';
+import { storage } from './lib/store';
 
 export const pieces: Piece[] = [
     airtable,
@@ -61,6 +62,7 @@ export const pieces: Piece[] = [
     twilio,
     typeform,
     zoom,
+    storage
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
