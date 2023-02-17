@@ -16,6 +16,7 @@ import { SystemProp } from "../helper/system/system-prop";
 import { AppConnectionEntity } from "../app-connection/app-connection.entity";
 import { FlowAndFileProjectId1674788714498 } from "./migration/1674788714498-FlowAndFileProjectId";
 import { initializeSchema1676238396411 } from "./migration/1676238396411-initialize-schema";
+import { removeStoreAction1676649852890 } from "./migration/1676649852890-remove-store-action";
 
 const env = system.get(SystemProp.ENVIRONMENT);
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
@@ -46,14 +47,15 @@ const getSslConfig = (): boolean | TlsOptions => {
 }
 
 const getMigrations = () => {
+    const commonMigration = [removeStoreAction1676649852890];
     if (env === 'prod') {
         return [
             FlowAndFileProjectId1674788714498,
             initializeSchema1676238396411,
+            ...commonMigration
         ];
     }
-
-    return [];
+    return commonMigration;
 }
 
 export const databaseConnection = new DataSource({
