@@ -10,6 +10,7 @@ export const drip = createPiece({
 	name: 'drip',
 	displayName: 'Drip',
 	logoUrl: 'https://cdn.activepieces.com/pieces/drip.png',
+	authors: ['AbdulTheActivePiecer'],
 	actions: [dripApplyTagToSubscriber, dripAddSubscriberToCampaign, dripUpsertSubscriberAction],
 	triggers: [dripNewSubscriberEvent, dripTagAppliedEvent],
 });

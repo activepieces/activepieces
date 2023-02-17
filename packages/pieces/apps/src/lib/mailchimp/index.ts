@@ -6,6 +6,7 @@ export const mailchimp = createPiece({
 	name: 'mailchimp',
 	displayName: "Mailchimp",
 	logoUrl: 'https://cdn.activepieces.com/pieces/mailchimp.png',
+	authors: ['AbdulTheActivePiecer'],
 	actions: [addMemberToList],
 	triggers: [mailChimpSubscribeTrigger],
 });
