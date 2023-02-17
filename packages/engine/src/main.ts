@@ -1,7 +1,7 @@
 import { FlowExecutor } from './lib/executors/flow-executor';
 import { Utils } from './lib/utils';
 import { globals } from './lib/globals';
-import { EngineOperationType, ExecuteDropdownOptions, ExecuteFlowOperation, ExecuteTriggerOperation, ExecutionState } from '@activepieces/shared';
+import { EngineOperationType, ExecutePropsOptions, ExecuteFlowOperation, ExecuteTriggerOperation, ExecutionState } from '@activepieces/shared';
 import { pieceHelper } from './lib/helper/piece-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
 
@@ -29,29 +29,13 @@ function executeFlow() {
 }
 
 function executeProps() {
-  const input: ExecuteDropdownOptions = Utils.parseJsonFile(globals.inputFile);
+  const input: ExecutePropsOptions = Utils.parseJsonFile(globals.inputFile);
 
   globals.workerToken = input.workerToken!;
   globals.projectId = input.projectId;
   globals.apiUrl = input.apiUrl!;
 
-  pieceHelper.dropdownOptions(input).then((output) => {
-    Utils.writeToJsonFile(globals.outputFile, output);
-  }).catch(e => {
-    console.error(e);
-    Utils.writeToJsonFile(globals.outputFile, (e as Error).message);
-  });;
-
-}
-
-function dropdownOptions() {
-  const input: ExecuteDropdownOptions = Utils.parseJsonFile(globals.inputFile);
-
-  globals.workerToken = input.workerToken!;
-  globals.projectId = input.projectId;
-  globals.apiUrl = input.apiUrl!;
-
-  pieceHelper.dropdownOptions(input).then((output) => {
+  pieceHelper.executeProps(input).then((output) => {
     Utils.writeToJsonFile(globals.outputFile, output);
   }).catch(e => {
     console.error(e);
@@ -76,15 +60,13 @@ function executeTrigger() {
 
 }
 
-
-
 async function execute() {
   switch (args[0]) {
     case EngineOperationType.EXECUTE_FLOW:
       executeFlow();
       break;
-    case EngineOperationType.DROPDOWN_OPTION:
-      dropdownOptions();
+    case EngineOperationType.EXECUTE_PROPERTY:
+      executeProps();
       break;
     case EngineOperationType.EXECUTE_TRIGGER_HOOK:
       executeTrigger();

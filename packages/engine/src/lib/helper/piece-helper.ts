@@ -1,10 +1,10 @@
-import { DropdownProperty, DropdownState, Property } from "@activepieces/framework";
+import { DropdownProperty, DropdownState, DynamicPropeties } from "@activepieces/framework";
 import { getPiece } from "@activepieces/pieces-apps";
-import { ActivepiecesError, ErrorCode, ExecuteDropdownOptions, ExecutionState, PropertyType } from "@activepieces/shared";
+import { ActivepiecesError, ErrorCode, ExecutePropsOptions, ExecutionState, PropertyType } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
 
 export const pieceHelper = {
-    async dropdownOptions(params: ExecuteDropdownOptions) {
+    async executeProps(params: ExecutePropsOptions) {
         const property = getProperty(params);
         if (property === undefined) {
             throw new ActivepiecesError({
@@ -36,7 +36,7 @@ export const pieceHelper = {
     }
 }
 
-function getProperty(params: ExecuteDropdownOptions){
+function getProperty(params: ExecutePropsOptions){
     const component = getPiece(params.pieceName);
     if (component === undefined) {
         throw new ActivepiecesError({

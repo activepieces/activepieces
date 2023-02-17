@@ -7,7 +7,7 @@ type DynamicProp = ShortTextProperty<true> | NumberProperty<true> | StaticDropdo
 export type DynamicPropsValue = Record<string, DynamicProp['valueSchema']>;
 
 export type DynamicPropsSchema = BasePropertySchema & {
-	props?: Record<string, DynamicProp>;
+	props: (propsValue: Record<string, DynamicPropsValue>) => Promise<Record<string, DynamicProp>>;
 	refreshers: string[];
 }
 
