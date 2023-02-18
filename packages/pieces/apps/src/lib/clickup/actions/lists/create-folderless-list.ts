@@ -1,5 +1,5 @@
 import { createAction, Property, HttpMethod, getAccessTokenOrThrow } from "@activepieces/framework";
-import { clickupCommon, callClickUpApi } from "../common";
+import { clickupCommon, callClickUpApi } from "../../common";
 
 
 export const createClickupFolderlessList = createAction({
