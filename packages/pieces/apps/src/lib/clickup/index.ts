@@ -2,6 +2,8 @@ import { createPiece } from "@activepieces/framework";
 import { createClickupList } from "./actions/create-list";
 import { createClickupTask } from "./actions/create-task";
 import { getClickupList } from "./actions/get-list";
+import { getClickupSpace } from "./actions/get-space";
+import { getClickupSpaces } from "./actions/get-spaces";
 
 export const clickup = createPiece({
     name: 'clickup',
@@ -11,6 +13,8 @@ export const clickup = createPiece({
         createClickupTask,
         createClickupList,
         getClickupList,
+        getClickupSpace,
+        getClickupSpaces,
     ],
     triggers: [],
 });
