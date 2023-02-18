@@ -1,10 +1,10 @@
 import {createPiece} from '../../framework/piece';
-import {githubNewRepoEvent} from "./trigger/new-star";
+import { githubTriggers } from './trigger';
 
 export const github = createPiece({
 	name: 'github',
 	displayName: "Github",
 	logoUrl: 'https://cdn.activepieces.com/pieces/github.png',
 	actions: [],
-	triggers: [githubNewRepoEvent],
+	triggers: githubTriggers,
 });
