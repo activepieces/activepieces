@@ -1,4 +1,5 @@
 import { createPiece } from "@activepieces/framework";
+import { getClickupTaskCommants } from "./actions/comments/get-task-comments";
 import { createClickupList } from "./actions/create-list";
 import { createClickupTask } from "./actions/create-task";
 import { getClickupList } from "./actions/get-list";
@@ -15,6 +16,7 @@ export const clickup = createPiece({
         getClickupList,
         getClickupSpace,
         getClickupSpaces,
+        getClickupTaskCommants,
     ],
     triggers: [],
 });
