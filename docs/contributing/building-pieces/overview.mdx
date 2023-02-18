@@ -3,30 +3,35 @@ title: "Get Started"
 description: ""
 ---
 
+When developing pieces, which consists of actions and triggers. It is generally easier to start contributing actions.
 
-## 1. Read the Tutorial
+## Tutorials
 
-To get the full benefit, it is recommended to read the [quickstart guide](quickstart) first.
+- [Create First Piece & Action](create-action).
+- Read [Piece Reference](./reference)
+- [How to Create Trigger](create-trigger).
 
-## 2. Configure Webhook URL (Important for Triggers)
+You can also check out other [examples](./examples).
 
-You must configure the backend URL so that the webhook is accessible from the internet. 
-Check the section below for instructions.
+<Tip>
+You can skip creating triggers part, and start with contributing actions.
+</Tip>
 
-The easiest way to expose your webhook URL on localhost is by using a service like [ngrok](https://ngrok.com/). To set this up, follow these steps:
+## Workflow
 
-1. Install ngrok
-2. Run the following command:
-```bash
-ngrok http 3000
-```
+1. Choose a Piece: 
 
-3. Replace `AP_BACKEND_URL` environment variable in `packages/backend/.env` with the ngrok url.
+If you don't have a particular piece in mind, you can refer to the [roadmap](https://github.com/orgs/activepieces/projects/5) to check the priorities. Once you have chosen a piece, comment on the issue to claim it, and it will be assigned to you to avoid duplicate work.
 
-Once you have completed these configurations, you are ready to go!
+2. Develop: 
 
+Develop the piece locally and test it end-to-end. 
 
-## 3. Checkout Examples & Reference 
+3. Documentation:
 
-- [Piece Reference](./reference)
-- [Examples](./examples)
+If your piece requires documentation, please add it to the same piece directory in a file called `piece_name.mdx`, look at this example: [discord.mdx](https://github.com/activepieces/activepieces/blob/main/packages/pieces/apps/src/lib/discord/discord.mdx)
+The auto-generator will move it to the `docs` folder.
+
+3. Review: 
+
+Open a pull request to the main branch, and we will review it as soon as possible.
