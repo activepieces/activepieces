@@ -8,7 +8,7 @@ import { HttpMethod } from '../../../common/http/core/http-method';
 import { AuthenticationType } from '../../../common/authentication/core/authentication-type';
 import { githubCommon } from '../common';
 
-export const registerTrigger = ({
+export const githubRegisterTrigger = ({
   name,
   displayName,
   description,
@@ -19,7 +19,7 @@ export const registerTrigger = ({
   description: string,
   sampleData: Object
 }) => createTrigger({
-  name,
+  name: `trigger_${name}`,
   displayName,
   description,
   props: {
@@ -37,7 +37,7 @@ export const registerTrigger = ({
         owner: owner,
         repo: repo,
         active: true,
-        events: ['star'],
+        events: [name],
         config: {
           url: context.webhookUrl,
           content_type: 'json',
@@ -51,14 +51,14 @@ export const registerTrigger = ({
       queryParams: {},
     };
     const { body: webhook } = await httpClient.sendRequest<{ id: string }>(request);
-    await context.store.put<WebhookInformation>('_trigger', {
+    await context.store.put<WebhookInformation>(`github_${name}_trigger`, {
       webhookId: webhook.id,
       owner: owner,
       repo: repo,
     });
   },
   async onDisable(context) {
-    const response = await context.store.get<WebhookInformation>('_trigger');
+    const response = await context.store.get<WebhookInformation>(`github_${name}_trigger`);
     if (response !== null && response !== undefined) {
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
