@@ -72,6 +72,8 @@ export const githubRegisterTrigger = ({
     }
   },
   async run(context) {
+    console.debug("payload received", context.payload.body)
+
     if (isVerficationCall(context.payload.body)) {
       return [];
     }
