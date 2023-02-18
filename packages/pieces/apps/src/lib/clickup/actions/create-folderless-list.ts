@@ -2,10 +2,10 @@ import { createAction, Property, HttpMethod, getAccessTokenOrThrow } from "@acti
 import { clickupCommon, callClickUpApi } from "../common";
 
 
-export const createClickupList = createAction({
-	name: 'create_list',
-	description: 'Create a new list in a ClickUp workspace and space',
-	displayName: 'Create List',
+export const createClickupFolderlessList = createAction({
+	name: 'create_folderless_list',
+	description: 'Create a new folderless list in a ClickUp workspace and space',
+	displayName: 'Create Folderless List',
 	props: {
 		authentication: clickupCommon.authentication,
 		workspace_id: clickupCommon.workspace_id,

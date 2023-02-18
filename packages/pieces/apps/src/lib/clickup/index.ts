@@ -1,6 +1,6 @@
 import { createPiece } from "@activepieces/framework";
 import { getClickupTaskCommants } from "./actions/comments/get-task-comments";
-import { createClickupList } from "./actions/create-list";
+import { createClickupFolderlessList } from "./actions/create-folderless-list";
 import { createClickupTask } from "./actions/create-task";
 import { getClickupList } from "./actions/get-list";
 import { getClickupSpace } from "./actions/get-space";
@@ -12,7 +12,7 @@ export const clickup = createPiece({
     logoUrl: 'https://cdn.activepieces.com/pieces/clickup.png',
     actions: [
         createClickupTask,
-        createClickupList,
+        createClickupFolderlessList,
         getClickupList,
         getClickupSpace,
         getClickupSpaces,
