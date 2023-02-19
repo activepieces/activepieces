@@ -12,7 +12,7 @@ export const postCommentAction = createAction({
   },
   props: {
     authentication: figmaAuth,
-    fileKey: Property.ShortText({
+    file_key: Property.ShortText({
       displayName: 'File Key',
       description: 'The Figma file key (copy from Figma file URL)',
       required: true,
@@ -25,13 +25,13 @@ export const postCommentAction = createAction({
   },
   async run(context) {
     const token = context.propsValue.authentication?.access_token;
-    const { fileKey, message } = context.propsValue;
+    const { file_key, message } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');
-    assertNotNullOrUndefined(fileKey, 'fileKey');
+    assertNotNullOrUndefined(file_key, 'file_key');
     assertNotNullOrUndefined(message, 'comment');
     
-    const url = `${figmaCommon.baseUrl}/${figmaCommon.comments}`.replace(':file_key', fileKey);
+    const url = `${figmaCommon.baseUrl}/${figmaCommon.comments}`.replace(':file_key', file_key);
 
     return figmaPostRequestWithMessage({ token, url, message });
   },

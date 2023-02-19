@@ -1,11 +1,11 @@
 import { createTrigger, TriggerStrategy, Property, assertNotNullOrUndefined } from "@activepieces/framework";
+import { nanoid } from 'nanoid'
 import { figmaAuth } from '../common/props';
-import { Comment } from '../common/models';
 import { figmaCommon } from "../common";
-import { figmaGetRequest } from '../common/utils';
+import { figmaWebhookPostRequest, figmaDeleteRequest } from '../common/utils';
 
 type TriggerData = {
-  lastCommentCreatedAt: string;
+  webhookId: string;
 }
 
 const TRIGGER_DATA_STORE_KEY = 'figma_new_comment_trigger_data'
@@ -14,92 +14,62 @@ export const newCommentTrigger = createTrigger({
   name: 'new_comment',
   displayName: 'New comment',
   description: 'Triggers when a new comment is posted',
-  // Update: There's a new Figma API v2 in open beta that supports webhooks!
-  // https://www.figma.com/developers/api#webhooks_v2
-  type: TriggerStrategy.POLLING,
+  type: TriggerStrategy.WEBHOOK,
   sampleData: [{
-    "id": "123456789",
-    "uuid": null,
-    "file_key": "abc123DEF456ghi789JKLm",
-    "parent_id": "",
-    "user": {
-      "handle": "User Name",
-      "img_url": "https://s3-alpha.figma.com/profile/profile-id",
-      "id": "123456789123"
-    },
-    "created_at": "2023-02-13T00:00:00.000Z",
-    "resolved_at": null,
-    "message": "New comment",
-    "reactions": [],
-    "client_meta": {
-      "x": 0,
-      "y": 0
-    },
-    "order_id": "1"
+    "id": "12345",
+    "team_id": "1234567890",
+    "event_type": "FILE_COMMENT",
+    "client_id": null,
+    "endpoint": "http://localhost:1234/webhook",
+    "passcode": "figma-passcode",
+    "status": "ACTIVE",
+    "description": null,
+    "protocol_version": "2"
   }],
   props: {
     authentication: figmaAuth,
-    file_key: Property.ShortText({
-      displayName: 'File Key',
-      description: 'The Figma file key (copy from Figma file URL)',
+    team_id: Property.ShortText({
+      displayName: 'Team ID',
+      description: 'The Figma team id to receive updates about',
       required: true,
     }),
   },
 
-  async onEnable({ store }): Promise<void> {
-    // trigger only for comments later than now
-    await store.put<TriggerData>(TRIGGER_DATA_STORE_KEY, {
-      lastCommentCreatedAt: new Date().toISOString(),
-    });
-  },
-
-  async onDisable({ store }): Promise<void> {
-    await store.put(TRIGGER_DATA_STORE_KEY, null);
-  },
-
-  async run({ propsValue, store }): Promise<Comment[][]> {
-    const token = propsValue.authentication?.access_token
-    const fileKey = propsValue.file_key;
-    const newComments: Comment[] = [];
+  async onEnable(context): Promise<void> {
+    const token = context.propsValue["authentication"]?.access_token
+    const teamId = context.propsValue["team_id"];
 
     assertNotNullOrUndefined(token, 'token');
-    assertNotNullOrUndefined(fileKey, 'file_key');
+    assertNotNullOrUndefined(teamId, 'teamId');
     
-    const url = `${figmaCommon.baseUrl}/${figmaCommon.comments}`.replace(':file_key', fileKey);
+    const url = `${figmaCommon.baseUrl}/${figmaCommon.webhooks}`;
+    const eventType = "FILE_COMMENT";
+    const passcode = `figma_passcode_${nanoid()}`;
+    const endpoint = context.webhookUrl;
 
-    const lastTriggerData = await store.get<TriggerData>(TRIGGER_DATA_STORE_KEY);
-    const lastCommentCreatedAt = Date.parse(`${lastTriggerData?.lastCommentCreatedAt}`);
-    if (isNaN(lastCommentCreatedAt)) return [];
+    const { response_body } = await figmaWebhookPostRequest({ token, url, eventType, teamId, endpoint, passcode });
 
-    const response = await figmaGetRequest({ token, url });
-    const comments = response.response_body['comments'];
-
-    let latestCommentCreatedAt = 0;
-    let latestCommentCreatedAtString = "";
-
-    if (!comments || comments.length < 1) return [];
-    
-    // find all new comments and store the created_at value of the latest comment
-    for (let i = 0; i < comments.length; i++) {
-      const commentCreatedAtString = `${comments[i].created_at}`
-      const commentCreatedAt = Date.parse(commentCreatedAtString);
-      if (isNaN(commentCreatedAt)) continue;
-      if (commentCreatedAt > lastCommentCreatedAt) {
-        newComments.push(comments[i]);
-        if (commentCreatedAt > latestCommentCreatedAt) {
-          latestCommentCreatedAt = commentCreatedAt;
-          latestCommentCreatedAtString = commentCreatedAtString;
-        }
-      }
-    }
-
-    if (newComments.length < 1) return [];
-
-    await store.put<TriggerData>(TRIGGER_DATA_STORE_KEY, {
-      lastCommentCreatedAt: latestCommentCreatedAtString,
+    await context.store?.put<TriggerData>(TRIGGER_DATA_STORE_KEY, {
+      webhookId: response_body["id"],
     });
+  },
 
-    // trigger one run with all new comments
-    return [newComments];
+  async onDisable(context): Promise<void> {
+    const token = context.propsValue["authentication"]?.access_token
+
+    assertNotNullOrUndefined(token, 'token');
+
+    const triggerData = await context.store?.get<TriggerData>(TRIGGER_DATA_STORE_KEY);
+    if (triggerData !== null && triggerData !== undefined) {
+      const url = `${figmaCommon.baseUrl}/${figmaCommon.webhook}`.replace(':webhook_id', triggerData.webhookId);
+      await figmaDeleteRequest({ token, url });
+    }
+  },
+
+  async run(context) {
+    if ('event_type' in context.payload.body && context.payload.body["event_type"] === "PING") {
+      return [];
+    }
+    return [context.payload.body];
   },
 })

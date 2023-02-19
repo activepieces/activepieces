@@ -1,6 +1,6 @@
 import { getFileAction } from './actions/get-file-action';
 import { getCommentsAction } from './actions/get-comments-action';
-import { createPiece } from "../../framework/piece";
+import { createPiece } from "@activepieces/framework";
 import { postCommentAction } from './actions/post-comment-action';
 import { newCommentTrigger } from './trigger/new-comment';
 

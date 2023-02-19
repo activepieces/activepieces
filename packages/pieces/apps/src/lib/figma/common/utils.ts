@@ -19,7 +19,7 @@ export const figmaGetRequest = async ( { token, url }: FigmaGetRequestParams ) =
       };
   };
 
-  export const figmaPostRequestWithMessage = async ( { token, url, message }: FigmaPostRequestWithMessageParams ) => {
+export const figmaPostRequestWithMessage = async ( { token, url, message }: FigmaPostRequestWithMessageParams ) => {
     const request: HttpRequest<FigmaPostRequestWithMessageBody> = {
         method: HttpMethod.POST,
         url: url,
@@ -39,19 +39,79 @@ export const figmaGetRequest = async ( { token, url }: FigmaGetRequestParams ) =
         request_body: request.body,
         response_body: response.body,
       };
-  };
+};
 
-  type FigmaGetRequestParams = {
+export const figmaWebhookPostRequest = async ( { token, url, eventType, teamId, endpoint, passcode }: FigmaWebhookPostRequestParams ) => {
+  const request: HttpRequest<FigmaWebhookPostRequestBody> = {
+      method: HttpMethod.POST,
+      url: url,
+      body: {
+        event_type: eventType,
+        team_id: teamId,
+        endpoint: endpoint,
+        passcode: passcode,
+      },
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+    };
+  
+    const response = await httpClient.sendRequest(request);
+  
+    return {
+      success: true,
+      request_body: request.body,
+      response_body: response.body,
+    };
+};
+
+export const figmaDeleteRequest = async ( { token, url }: FigmaGetRequestParams ) => {
+  const request: HttpRequest = {
+      method: HttpMethod.DELETE,
+      url: url,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+    };
+  
+    const response = await httpClient.sendRequest(request);
+  
+    return {
+      success: true,
+      request_body: request.body,
+      response_body: response.body,
+    };
+};
+
+type FigmaGetRequestParams = {
     token: string;
     url: string;
-  }
+}
 
-  type FigmaPostRequestWithMessageParams = {
+type FigmaPostRequestWithMessageParams = {
     token: string;
     url: string;
     message: string;
-  }
+}
 
-  type FigmaPostRequestWithMessageBody = {
+type FigmaPostRequestWithMessageBody = {
     message: string;
-  }
+}
+
+type FigmaWebhookPostRequestParams = {
+    token: string;
+    url: string;
+    eventType: string;
+    teamId: string;
+    endpoint: string;
+    passcode: string;
+}
+
+type FigmaWebhookPostRequestBody = {
+  event_type: string;
+  team_id: string;
+  endpoint: string;
+  passcode: string;
+}
