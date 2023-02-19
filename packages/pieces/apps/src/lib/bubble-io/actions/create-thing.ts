@@ -44,7 +44,7 @@ export const createThing = createAction({
           },
           queryParams: {}
         }
-        const {body: meta} = await httpClient.sendRequest<MetaResponse>(request)
+        const { body: meta } = await httpClient.sendRequest<MetaResponse>(request)
         const options = Object.keys(meta.types).map((key) => ({
           label: meta.types[key].display,
           value: key
@@ -68,13 +68,14 @@ export const createThing = createAction({
     })
   },
   sampleData: {
-    "d": "test"
+    "status": "success",
+    "id": "1676806107619x783812560224237200"
   },
 
   async run(context) {
     const { api_key, app_name, use_test_version, thing, fields } = context.propsValue
     const url = `https://${cleanName(app_name as string)}.bubbleapps.io${!use_test_version ? '/' : '/version-test/'}api/1.1/obj/${cleanName(thing as string)}`
-    
+
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url,
@@ -88,7 +89,7 @@ export const createThing = createAction({
 
     const result = await httpClient.sendRequest(request)
     console.debug("Thing creation response", result)
-    
+
     if (result.status === 201) {
       return result.body
     } else {
