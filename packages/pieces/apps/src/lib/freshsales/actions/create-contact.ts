@@ -137,7 +137,7 @@ export const freshSalesCreateContact = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `https://${app_name}.myfreshworks.com/crm/sales`,
+      url: `https://${app_name}.myfreshworks.com/crm/sales/api/contacts`,
       body: {
         contact
       },
