@@ -76,7 +76,9 @@ export const wordpressCommon = {
             queryParams: queryParams
         };
         const response = await httpClient.sendRequest<unknown[]>(request);
-        console.debug(JSON.stringify(response.body));
-        return response.body;
+        return {
+            posts: response.body,
+            totalPages: response.headers && response.headers['X-WP-TotalPages'] ? Number(response.headers['X-WP-TotalPages']) : 0
+        };
     }
 }
