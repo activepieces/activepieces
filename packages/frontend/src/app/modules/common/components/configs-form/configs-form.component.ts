@@ -361,9 +361,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         }
     }
     this.cd.detectChanges();
-
     const input = this.theInputs.find(input => input.nativeElement.getAttribute('name') === configKey);
-    debugger;
     if (input) {
       this.cd.detectChanges();
       input.nativeElement.click();

@@ -110,7 +110,7 @@ export const wordpressNewPost = createTrigger({
   description: 'Triggers when a new post is published.',
   props: {
     connection: wordpressCommon.connection,
-    websiteUrl: wordpressCommon.websiteUrl,
+    website_url: wordpressCommon.website_url,
     authors: wordpressCommon.authors
   },
   type: TriggerStrategy.POLLING,
@@ -129,14 +129,15 @@ export const wordpressNewPost = createTrigger({
     }
 
     let pageCursor = 1;
-    let newPosts = await wordpressCommon.getPosts({
-      websiteUrl: context.propsValue['websiteUrl'],
+    const getPostsParams = {
+      websiteUrl: context.propsValue['website_url'],
       username: context.propsValue['connection']['username'],
       password: context.propsValue['connection']['password'],
       authors: context.propsValue['authors'],
       afterDate: lastPollDate,
       page: pageCursor
-    });
+    };
+    let newPosts = await wordpressCommon.getPosts(getPostsParams);
     //This means there is only one page
     if (newPosts.totalPages === 0) {
       payloads = [...newPosts.posts];
@@ -144,14 +145,7 @@ export const wordpressNewPost = createTrigger({
     while (newPosts.posts.length > 0 && pageCursor <= newPosts.totalPages) {
       payloads = [...payloads, ...newPosts.posts];
       pageCursor++;
-      newPosts = await wordpressCommon.getPosts({
-        websiteUrl: context.propsValue['websiteUrl'],
-        username: context.propsValue['connection']['username'],
-        password: context.propsValue['connection']['password'],
-        authors: context.propsValue['authors'],
-        afterDate: lastPollDate,
-        page: pageCursor
-      });
+      newPosts = await wordpressCommon.getPosts({ ...getPostsParams, page: pageCursor });
     }
     const currentDate = (new Date()).toISOString();
     await context.store.put<string>(triggerNameInStore, currentDate);
