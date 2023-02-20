@@ -46,7 +46,8 @@ export const flowVersionService = {
         else {
             mutatedFlowVersion = await applySingleOperation(projectId, flowVersion, operation);
         }
-        await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>);
+        console.log(JSON.stringify(mutatedFlowVersion, null, 2));
+        await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion);
         return await flowVersionRepo.findOneBy({
             id: flowVersion.id,
         });
