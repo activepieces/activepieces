@@ -18,6 +18,6 @@ export const clickup = createPiece({
         getClickupSpaces,
         getClickupTaskCommants,
     ],
-    authors: ['abuaboud', 'Shay Punter'],
+    authors: ['abuaboud', 'ShayPunter'],
     triggers: [],
 });
