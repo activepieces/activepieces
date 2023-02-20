@@ -5,6 +5,7 @@ dist
 tmp
 /out-tsc
 .env
+firebase-admin-sdk.json
 
 # dependencies
 node_modules

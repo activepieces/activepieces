@@ -15,7 +15,6 @@ export interface AirtableRecord {
 }
 
 export const airtableCommon = {
-    baseUrl: (accountId: string) => { return `https://api.getdrip.com/v2/${accountId}` },
     authentication: Property.SecretText({
         displayName: "Personal Token",
         required: true,

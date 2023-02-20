@@ -2,11 +2,9 @@ import { PropertyType } from "@activepieces/shared";
 import { BasePropertySchema, NumberProperty, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
 import { StaticDropdownProperty } from "./dropdown-prop";
 
-export type OAuthProp = ShortTextProperty<true> | SecretTextProperty<true> | NumberProperty<true> | StaticDropdownProperty<any, true>;
+type OAuthProp = ShortTextProperty<true> | SecretTextProperty<true> | NumberProperty<true> | StaticDropdownProperty<any, true>;
 
-export type OAuthPropValue = OAuthProp extends any ? OAuthProp['valueSchema'] : never;
-
-export type OAuthPropsValue = Record<string, OAuthPropValue>;
+export type OAuthPropsValue = Record<string, OAuthProp['valueSchema']>;
 
 export type OAuth2PropertySchema = BasePropertySchema & {
 	props?: Record<string, OAuthProp>

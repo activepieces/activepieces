@@ -77,6 +77,7 @@ import { BuilderAutocompleteMentionsDropdownComponent } from './components/form-
 import { ImgFallbackDirective } from './helper/image-fallback.directive';
 import { ArrayFormControlComponent } from './components/form-controls/array-form-control/array-form-control.component';
 import { AddEditConnectionButtonComponent } from './components/configs-form/add-edit-connection-button/add-edit-connection-button.component';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -186,6 +187,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatFormFieldModule,
     MatInputModule,
     MatMenuModule,
+    MatProgressBarModule,
     MatCheckboxModule,
     MatSidenavModule,
     MatSelectModule,

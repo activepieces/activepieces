@@ -28,13 +28,13 @@ import {
 import {
   ActionMetaService,
   DropdownState,
-} from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
+} from '../../../flow-builder/service/action-meta.service';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
 import { PieceConfig } from './connector-action-or-config';
 import { DropdownItem } from '../../model/dropdown-item.interface';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
+import { BuilderSelectors } from '../../../flow-builder/store/builder/builder.selector';
 import deepEqual from 'deep-equal';
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
 import { InsertMentionOperation } from '../form-controls/interpolating-text-form-control/utils';
