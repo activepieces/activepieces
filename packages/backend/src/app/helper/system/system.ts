@@ -54,7 +54,8 @@ const getEnvVar = (prop: SystemProp): string | undefined => {
 
 export const validateEnvPropsOnStartup = () => {
   const encryptionKey = system.getOrThrow(SystemProp.ENCRYPTION_KEY);
-  if(encryptionKey.length !== 32) {
+  const encryptionKeyLength = Buffer.from(encryptionKey, "binary");
+  if(encryptionKeyLength.length !== 32) {
     throw new ActivepiecesError({
       code: ErrorCode.SYSTEM_PROP_INVALID,
       params: {
