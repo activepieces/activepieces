@@ -22,6 +22,30 @@
           </ng-container>
         </ng-template></mat-error>
     </mat-form-field>
+    <div *ngIf="pieceAuthConfig.oAuthProps" [formGroup]="settingsForm.controls.props">
+      <ng-container *ngFor="let prop of pieceAuthConfig.oAuthProps |keyvalue">
+        <mat-form-field *ngIf="prop.value.type !== PropertyType.STATIC_DROPDOWN" class="ap-w-full" appearance="outline">
+          <mat-label>{{prop.value.displayName}}</mat-label>
+          <input [matTooltip]="prop.value.description" [formControlName]="prop.key" matInput type="text" />
+          <mat-error *ngIf="settingsForm.controls.props.controls[prop.key]!.invalid">
+            {{prop.value.displayName}} is required</mat-error>
+        </mat-form-field>
+        <ng-container *ngIf="prop.value.type === PropertyType.STATIC_DROPDOWN">
+          <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label> {{prop.value.displayName}}</mat-label>
+            <mat-select [formControlName]="prop.key" [matTooltip]="prop.value.description"
+              [compareWith]="dropdownCompareWithFunction">
+              <mat-option *ngFor="let opt of prop.value.options!.options" [value]="opt.value">
+                {{opt.label}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="settingsForm.controls.props.controls[prop.key]!.invalid">
+              {{prop.value.displayName}} is required
+            </mat-error>
+          </mat-form-field>
+        </ng-container>
+      </ng-container>
+    </div>
     <div>
       <app-o-auth2-cloud-connect-control [cloudConnectionPopupSettings]="cloudConnectionPopupSettings"
         formControlName="value"></app-o-auth2-cloud-connect-control>
