@@ -10,7 +10,7 @@ import {
 	ShortTextProperty,
 } from "./base-prop";
 import { BasicAuthProperty } from "./basic-auth-prop";
-import { DropdownProperty, StaticDropdownProperty } from "./dropdown-prop";
+import { DropdownProperty, MultipleDropdownProperty, StaticDropdownProperty } from "./dropdown-prop";
 import { OAuth2Property } from "./oauth2-prop";
 
 export interface PieceProperty {
@@ -25,7 +25,8 @@ export interface PieceProperty {
 	| BasicAuthProperty<boolean>
 	| ArrayProperty<boolean>
 	| ObjectProperty<boolean>
-	| JsonProperty<boolean>;
+	| JsonProperty<boolean>
+	| MultipleDropdownProperty<unknown, boolean>;
 }
 
 export type StaticPropsValue<T extends PieceProperty> = {
@@ -68,7 +69,10 @@ export const Property = {
 	},
 	StaticDropdown<T, R extends boolean = boolean>(request: Properties<StaticDropdownProperty<T, R>>): R extends true ? StaticDropdownProperty<T, true> : StaticDropdownProperty<T, false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.STATIC_DROPDOWN } as unknown as R extends true ? StaticDropdownProperty<T, true> : StaticDropdownProperty<T, false>;
-	}
+	},
+	MultipleDropdwon<T, R extends boolean = boolean>(request: Properties<DropdownProperty<T, R>>): R extends true ? DropdownProperty<T, true> : DropdownProperty<T, false> {
+		return { ...request, valueSchema: undefined, type: PropertyType.MULTIPLE_DROPDOWN } as unknown as R extends true ? DropdownProperty<T, true> : DropdownProperty<T, false>;
+	},
 };
 
 type Properties<T> = Omit<T, "valueSchema" | "type">;

@@ -168,7 +168,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
   createDropdownConfigsObservables() {
     this.configs.forEach((c) => {
-      if (c.type === PropertyType.DROPDOWN) {
+      if (c.type === PropertyType.DROPDOWN || c.type === PropertyType.MULTIPLE_DROPDOWN) {
         this.dropdownsLoadingFlags$[c.key] = new BehaviorSubject(true);
         const refreshers$ = {};
         c.refreshers!.forEach((r) => {

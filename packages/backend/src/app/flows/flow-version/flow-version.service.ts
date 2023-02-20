@@ -110,8 +110,8 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
             const previousStep = getStep(flowVersion, clonedRequest.request.name);
             if (
                 previousStep !== undefined &&
-          previousStep.type === ActionType.CODE &&
-          codeSettings.artifactSourceId !== previousStep.settings.artifactSourceId
+                    previousStep.type === ActionType.CODE &&
+                    codeSettings.artifactSourceId !== previousStep.settings.artifactSourceId
             ) {
                 await deleteArtifact(projectId, previousStep.settings);
             }
@@ -191,7 +191,7 @@ function buildSchema(props: PieceProperty): TSchema {
             propsSchema[name] = Type.Boolean({});
             break;
         case PropertyType.NUMBER:
-        // Because it could be a variable
+            // Because it could be a variable
             propsSchema[name] = Type.String({});
             break;
         case PropertyType.STATIC_DROPDOWN:
@@ -201,11 +201,11 @@ function buildSchema(props: PieceProperty): TSchema {
             propsSchema[name] = Type.Any({});
             break;
         case PropertyType.OAUTH2:
-        // Only accepts connections variable.
+            // Only accepts connections variable.
             propsSchema[name] = Type.Union([Type.RegEx(RegExp('[$]{1}{connections.(.*?)}')), Type.String()]);
             break;
         case PropertyType.ARRAY:
-        // Only accepts connections variable.
+            // Only accepts connections variable.
             propsSchema[name] = Type.Union([Type.Array(Type.String({})), Type.String()]);
             break;
         case PropertyType.OBJECT:
@@ -214,7 +214,11 @@ function buildSchema(props: PieceProperty): TSchema {
         case PropertyType.JSON:
             propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()]);
             break;
+        case PropertyType.MULTIPLE_DROPDOWN:
+            propsSchema[name] = Type.Union([Type.Array(Type.Any()), Type.String()]);
+            break;
         }
+
         if (!property.required) {
             propsSchema[name] = Type.Union([Type.Null(), Type.Undefined(), propsSchema[name]]);
         }
