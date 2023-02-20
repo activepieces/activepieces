@@ -11,6 +11,7 @@ import {
 } from "./base-prop";
 import { BasicAuthProperty } from "./basic-auth-prop";
 import { DropdownProperty, StaticDropdownProperty } from "./dropdown-prop";
+import { DynamicPropeties } from "./dynamic-prop";
 import { OAuth2Property } from "./oauth2-prop";
 
 export interface PieceProperty {
@@ -68,6 +69,9 @@ export const Property = {
 	},
 	StaticDropdown<T, R extends boolean = boolean>(request: Properties<StaticDropdownProperty<T, R>>): R extends true ? StaticDropdownProperty<T, true> : StaticDropdownProperty<T, false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.STATIC_DROPDOWN } as unknown as R extends true ? StaticDropdownProperty<T, true> : StaticDropdownProperty<T, false>;
+	},
+	DynamicProperties<R extends boolean = boolean>(request: Properties<DynamicPropeties<R>>): R extends true ? DynamicPropeties<true> : DynamicPropeties<false> {
+		return { ...request, valueSchema: undefined, type: PropertyType.DYNAMIC } as unknown as R extends true ? DynamicPropeties<true> : DynamicPropeties<false>;
 	}
 };
 

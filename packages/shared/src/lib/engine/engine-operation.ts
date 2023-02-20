@@ -5,7 +5,7 @@ import { ProjectId } from "../project/project";
 
 export enum EngineOperationType {
     EXECUTE_FLOW = "EXECEUTE_FLOW",
-    DROPDOWN_OPTION = "DROPDOWN_OPTIONS",
+    EXECUTE_PROPERTY = "EXECUTE_PROPERTY",
     EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK"
 }
 
@@ -15,9 +15,9 @@ export enum TriggerHookType {
     RUN = "RUN"
 }
 
-export type EngineOperation = ExecuteFlowOperation | ExecuteDropdownOptions | ExecuteTriggerOperation;
+export type EngineOperation = ExecuteFlowOperation | ExecutePropsOptions | ExecuteTriggerOperation;
 
-export interface ExecuteDropdownOptions {
+export interface ExecutePropsOptions {
     pieceName: string;
     propertyName: string;
     stepName: string;
