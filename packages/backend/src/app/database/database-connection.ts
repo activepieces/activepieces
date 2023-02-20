@@ -16,6 +16,7 @@ import { SystemProp } from "../helper/system/system-prop";
 import { AppConnectionEntity } from "../app-connection/app-connection.entity";
 import { FlowAndFileProjectId1674788714498 } from "./migration/1674788714498-FlowAndFileProjectId";
 import { initializeSchema1676238396411 } from "./migration/1676238396411-initialize-schema";
+import { encryptCredentials1676505294811 } from "./migration/1676505294811-encrypt-credentials";
 
 const env = system.get(SystemProp.ENVIRONMENT);
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
@@ -50,10 +51,10 @@ const getMigrations = () => {
         return [
             FlowAndFileProjectId1674788714498,
             initializeSchema1676238396411,
+            encryptCredentials1676505294811
         ];
     }
-
-    return [];
+    return [encryptCredentials1676505294811];
 }
 
 export const databaseConnection = new DataSource({

@@ -5,12 +5,13 @@ import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { AppConnectionEntity } from "./app-connection.entity";
 import axios from "axios";
 import { createRedisLock } from "../database/redis-connection";
+import { decryptObject, encryptObject } from "../helper/encryption";
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 
 export const appConnectionService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertConnectionRequest }): Promise<AppConnection> {
-        await appConnectionRepo.upsert({ ...request, id: apId(), projectId: projectId }, ["name", "projectId"]);
+        await appConnectionRepo.upsert({ ...request, id: apId(), projectId: projectId, value: encryptObject(request.value) }, ["name", "projectId"]);
         return appConnectionRepo.findOneByOrFail({
             projectId: projectId,
             name: request.name
@@ -27,8 +28,9 @@ export const appConnectionService = {
         if (appConnection === null) {
             return null;
         }
+        appConnection.value = decryptObject(appConnection.value);
         const refreshedAppConnection = await refresh(appConnection);
-        await appConnectionRepo.update(refreshedAppConnection.id, refreshedAppConnection);
+        await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) });
         refreshLock.release();
         refreshedAppConnection.status = getStatus(refreshedAppConnection);
         return refreshedAppConnection;
@@ -55,6 +57,7 @@ export const appConnectionService = {
         const { data, cursor } = await paginator.paginate(queryBuilder);
         const promises: Promise<AppConnection>[] = [];
         data.forEach(connection => {
+            connection.value = decryptObject(connection.value);
             connection.status = getStatus(connection);
             if (connection.status === AppConnectionStatus.ACTIVE) {
                 promises.push(new Promise((resolve) => {
