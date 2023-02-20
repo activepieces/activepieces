@@ -12,7 +12,7 @@ const TRIGGER_DATA_STORE_KEY = 'figma_new_comment_trigger_data'
 
 export const newCommentTrigger = createTrigger({
   name: 'new_comment',
-  displayName: 'New comment',
+  displayName: 'New comment (Figma Professional plan only)',
   description: 'Triggers when a new comment is posted',
   type: TriggerStrategy.WEBHOOK,
   sampleData: [{

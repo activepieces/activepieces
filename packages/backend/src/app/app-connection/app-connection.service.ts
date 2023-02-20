@@ -28,12 +28,18 @@ export const appConnectionService = {
         if (appConnection === null) {
             return null;
         }
-        appConnection.value = decryptObject(appConnection.value);
-        const refreshedAppConnection = await refresh(appConnection);
-        await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) });
-        refreshLock.release();
-        refreshedAppConnection.status = getStatus(refreshedAppConnection);
-        return refreshedAppConnection;
+        try {
+            appConnection.value = decryptObject(appConnection.value);
+            const refreshedAppConnection = await refresh(appConnection);
+            await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) });
+            refreshedAppConnection.status = getStatus(refreshedAppConnection);
+            refreshLock.release();
+            return refreshedAppConnection;
+        }
+        catch (e) {
+            appConnection.status = AppConnectionStatus.ERROR;
+        }
+        return appConnection;
     },
     async delete({ projectId, id }: { projectId: ProjectId, id: AppConnectionId }): Promise<void> {
         await appConnectionRepo.delete({ id: id, projectId: projectId });
@@ -57,15 +63,23 @@ export const appConnectionService = {
         const { data, cursor } = await paginator.paginate(queryBuilder);
         const promises: Promise<AppConnection>[] = [];
         data.forEach(connection => {
-            connection.value = decryptObject(connection.value);
-            connection.status = getStatus(connection);
-            if (connection.status === AppConnectionStatus.ACTIVE) {
+            try {
+                connection.value = decryptObject(connection.value);
+                connection.status = getStatus(connection);
+                if (connection.status === AppConnectionStatus.ACTIVE) {
+                    promises.push(new Promise((resolve) => {
+                        return resolve(connection);
+                    }));
+                }
+                else {
+                    promises.push(this.getOne({ projectId: connection.projectId, name: connection.name }));
+                }
+            }
+            catch (e) {
+                connection.status = AppConnectionStatus.ERROR;
                 promises.push(new Promise((resolve) => {
                     return resolve(connection);
                 }));
-            }
-            else {
-                promises.push(this.getOne({ projectId: connection.projectId, name: connection.name }));
             }
         });
         const refreshConnections = await Promise.all(promises);
