@@ -20,7 +20,6 @@ import { Component, Input, OnInit } from '@angular/core';
 
 import { ComponentItemDetails } from './step-type-item/component-item-details';
 import {
-  StoreOperation,
   Trigger,
   ActionType,
   TriggerType,
@@ -245,19 +244,6 @@ export class StepTypeSidebarComponent implements OnInit {
             type: ActionType.LOOP_ON_ITEMS,
             settings: {
               items: '',
-            },
-          },
-        };
-      }
-      case ActionType.STORAGE: {
-        return {
-          parentAction: parentAction,
-          action: {
-            ...baseProps,
-            type: ActionType.STORAGE,
-            settings: {
-              operation: StoreOperation.GET,
-              key: '',
             },
           },
         };

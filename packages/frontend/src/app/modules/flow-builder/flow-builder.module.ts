@@ -49,7 +49,6 @@ import { FlowItemsDetailsEffects } from './store/builder/flow-item-details/flow-
 import { EditStepAccordionComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/edit-step-accodion.component';
 import { DescribeFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/describe-form/describe-form.component';
 import { CodeStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/code-step-input-form/code-step-input-form.component';
-import { StorageStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/storage-step-input-form/storage-step-input-form.component';
 import { LoopStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/loop-step-input-form/loop-step-input-form.component';
 import { ScheduleTriggerInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/schedule-trigger-input-form/schedule-trigger-input-form.component';
 import { ConfigCardComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/config-card/config-card.component';
@@ -140,7 +139,6 @@ import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedb
     EditStepAccordionComponent,
     DescribeFormComponent,
     LoopStepInputFormComponent,
-    StorageStepInputFormComponent,
     CodeStepInputFormComponent,
     ScheduleTriggerInputFormComponent,
     ConfigCardComponent,

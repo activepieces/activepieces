@@ -1,5 +1,5 @@
 import {
-    ActionType, CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings, StorageActionSettings,
+    ActionType, CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings,
 } from "./actions/action";
 import { PieceTriggerSettings, ScheduleTriggerSettings, TriggerType } from "./triggers/trigger";
 import { Static, Type } from "@sinclair/typebox";
@@ -31,8 +31,7 @@ export type AddActionRequest = {
     action: UpdateActionRequest
 }
 
-export type UpdateActionRequest = BasicActionStep<ActionType.STORAGE, StorageActionSettings>
-    | BasicActionStep<ActionType.CODE, CodeActionSettings>
+export type UpdateActionRequest = BasicActionStep<ActionType.CODE, CodeActionSettings>
     | BasicActionStep<ActionType.LOOP_ON_ITEMS, LoopOnItemsActionSettings>
     | BasicActionStep<ActionType.PIECE, PieceActionSettings>;
 
