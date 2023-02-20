@@ -50,7 +50,7 @@ export const createWordpressPost = createAction({
                         placeholder: 'Please input the correct url'
                     }
                 }
-                if (!wordpressCommon.urlExists(propsValues['website_url'] as string)) {
+                if (!(await wordpressCommon.urlExists((propsValues['website_url'] as string).trim()))) {
                     return {
                         disabled: true,
                         placeholder: 'Incorrect website url',
@@ -60,7 +60,7 @@ export const createWordpressPost = createAction({
 
                 let pageCursor = 1;
                 const getTagsParams = {
-                    websiteUrl: propsValues['website_url'] as string,
+                    websiteUrl: (propsValues['website_url'] as string).trim(),
                     username: connection.username,
                     password: connection.password,
                     page: pageCursor
@@ -115,7 +115,7 @@ export const createWordpressPost = createAction({
                         placeholder: 'Please input the correct url'
                     }
                 }
-                if (!wordpressCommon.urlExists(propsValues['website_url'] as string)) {
+                if (!(await wordpressCommon.urlExists((propsValues['website_url'] as string).trim()))) {
                     return {
                         disabled: true,
                         placeholder: 'Incorrect website url',
@@ -181,7 +181,7 @@ export const createWordpressPost = createAction({
                         placeholder: 'Please input the correct url'
                     }
                 }
-                if (!wordpressCommon.urlExists(propsValues['website_url'] as string)) {
+                if (!(await wordpressCommon.urlExists(propsValues['website_url'].toString().trim()))) {
                     return {
                         disabled: true,
                         placeholder: 'Incorrect website url',
@@ -244,10 +244,6 @@ export const createWordpressPost = createAction({
             displayName: 'Excerpt',
             required: false
         }),
-        meta: Property.Object({
-            displayName: "Meta Fields",
-            required: false
-        }),
         comment_status: Property.Checkbox({
             displayName: 'Enable Comments',
             required: false
@@ -258,7 +254,7 @@ export const createWordpressPost = createAction({
         }),
     },
     async run(context) {
-        if (!wordpressCommon.urlExists(context.propsValue.website_url)) {
+        if (!(await wordpressCommon.urlExists(context.propsValue.website_url.trim()))) {
             throw new Error('Website url is invalid: ' + context.propsValue.website_url);
         }
         const requestBody: Record<string, unknown> = {};
@@ -277,9 +273,6 @@ export const createWordpressPost = createAction({
         if (context.propsValue.excerpt) {
             requestBody['excerpt'] = context.propsValue.excerpt;
         }
-        if (context.propsValue.meta) {
-            requestBody['meta'] = context.propsValue.meta;
-        }
         if (context.propsValue.tags) {
             requestBody['tags'] = context.propsValue.tags;
         }
@@ -296,7 +289,7 @@ export const createWordpressPost = createAction({
         requestBody['title'] = context.propsValue.title;
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: `${context.propsValue.website_url}/wp-json/wp/v2/posts`,
+            url: `${context.propsValue.website_url.trim()}/wp-json/wp/v2/posts`,
             authentication: {
                 type: AuthenticationType.BASIC,
                 username: context.propsValue.connection.username,
@@ -305,6 +298,6 @@ export const createWordpressPost = createAction({
             body: requestBody
         };
         const response = await httpClient.sendRequest<{ id: string, name: string }[]>(request);
-        return response;
+        return requestBody;
     }
 });

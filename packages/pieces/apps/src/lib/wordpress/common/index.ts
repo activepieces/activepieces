@@ -39,7 +39,7 @@ export const wordpressCommon = {
                     options: [],
                 };
             }
-            if (!wordpressCommon.urlExists(props['website_url'] as string)) {
+            if (!wordpressCommon.urlExists((props['website_url'] as string).trim())) {
                 return {
                     disabled: true,
                     placeholder: 'Incorrect website url',
@@ -49,7 +49,7 @@ export const wordpressCommon = {
             const authProp: BasicAuthPropertyValue = props['connection'] as BasicAuthPropertyValue;
             const request: HttpRequest = {
                 method: HttpMethod.GET,
-                url: `${props['website_url']}/wp-json/wp/v2/users`,
+                url: `${props['website_url'].toString().trim()}/wp-json/wp/v2/users`,
                 authentication: {
                     type: AuthenticationType.BASIC,
                     username: authProp.username,

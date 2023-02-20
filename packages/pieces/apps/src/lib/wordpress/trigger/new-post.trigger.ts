@@ -130,7 +130,7 @@ export const wordpressNewPost = createTrigger({
 
     let pageCursor = 1;
     const getPostsParams = {
-      websiteUrl: context.propsValue['website_url'],
+      websiteUrl: context.propsValue['website_url'].toString().trim(),
       username: context.propsValue['connection']['username'],
       password: context.propsValue['connection']['password'],
       authors: context.propsValue['authors'],
