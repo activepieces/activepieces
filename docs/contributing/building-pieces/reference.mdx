@@ -22,6 +22,7 @@ This contains piece metadata and should be placed into `app_name/index.ts`
 export const pieceName = createPiece({
 	name: string, // Unique name across all pieces
 	logoUrl: string, // Logo URL
+    authors: [], // List of GitHub contributors' usernames.
 	actions: Action[], // List of actions
 	triggers: Trigger[], // List of triggers
 });
@@ -64,6 +65,24 @@ export const createNewIssue = createAction({
     // Action implementation, It takes context value as parameter.
     run: async run(context) => {}
 })
+```
+
+# Context Object
+The Context object contains multiple helpful pieces of information and tools that can be useful while developing.
+
+```typescript
+// Store: A simple, lightweight key-value store that is helpful when you are developing triggers that persist between runs, used to store information like the last polling date.
+await context.store.put("_lastFetchedDate", new Date());
+const lastFetchedData = await context.store.get("_lastFetchedDate", new Date());
+
+// Webhook URL: A unique, auto-generated URL that will trigger the flow. Useful when you need to develop a trigger based on webhooks.
+context.webhookUrl;
+
+// Payload: Contains information about the HTTP request sent by the third party. It has three properties: status, headers, and body.
+context.payload;
+
+// PropsValue: Contains the information filled by the user in defined properties.
+context.propsValue;
 ```
 
 # Property

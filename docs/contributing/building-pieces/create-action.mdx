@@ -1,5 +1,5 @@
 ---
-title: "Create First Piece"
+title: "Create Action & Piece"
 description: ""
 ---
 
@@ -8,14 +8,14 @@ This tutorial will guide you through the process of creating a Hacker News piece
 * [Activepieces Repo Structure](../repo-structure) and [Activepieces Local development](../development-setup/local-development) Or [Github Codespaces](../development-setup/codespaces).
 * TypeScript syntax.
 
-Hacker News is a social news website that allows users to submit and vote on stories related to computer science and entrepreneurship.
+HackerNews is a social news website that allows users to submit and vote on stories related to computer science and entrepreneurship.
 
 ## Piece Definition
 
 To get started, let's create a new folder for Hacker News and add the piece definition inside.
 
 ```bash
-mkdir packages/pieces/framework/src/lib/apps/hackernews && cd packages/pieces/framework/src/lib/apps/hackernews
+mkdir packages/pieces/apps/src/lib/hackernews_tutorial && cd packages/pieces/apps/src/lib/hackernews_tutorial
 ```
 
 Next, let's create the definition file:
@@ -27,12 +27,13 @@ touch index.ts
 Inside this file, paste the following code:
 
 ```ts
-import { createPiece } from '../../framework/piece';
+import { createPiece } from '@activepieces/framework';
 
-export const hackernews = createPiece({
-  name: 'hackernews',
-  displayName: 'Hackernews',
+export const hackernews_tutorial = createPiece({
+  name: 'hackernews_tutorial',
+  displayName: 'Hackernews Tutorial',
   logoUrl: 'https://cdn.activepieces.com/pieces/hackernews.png',
+  authors: ['your_github_username'],
   actions: [],
   triggers: [],
 });
@@ -43,7 +44,7 @@ export const hackernews = createPiece({
 Now let's create first action which fetch top stories from hackernews, The first step to do that is to create folder for the actions inside the hackernews folder.
 
 ```bash
-mkdir actions
+mkdir actions && cd actions
 ```
 
 Next, Let's create the action file:
@@ -59,10 +60,10 @@ You can ask ChatGPT3 to write the function to get top stories from hackernews.
 </Tip>
 
 ```typescript
-import {createAction} from '../../../framework/action/action';
-import {HttpMethod} from '../../../common/http/core/http-method';
-import {httpClient} from '../../../common/http/core/http-client';
-import {Property} from "../../../framework/property/prop.model";
+import { createAction } from '@activepieces/framework';
+import { HttpMethod } from '@activepieces/framework';
+import { httpClient } from '@activepieces/framework';
+import { Property } from '@activepieces/framework';
 
 export const fetchTopStories = createAction({
 	name: 'fetch_top_stories', // Must be a unique across the piece, this shouldn't be changed.
@@ -115,13 +116,13 @@ The `run` function first defines the URL of the Hacker News API, and then makes 
 To make the action readable by Activepieces, add it to the array of actions in the piece definition.
 
 ```typescript
-import { createPiece } from '../../framework/piece';
+import { createPiece } from '@activepieces/framework';
 // Don't forget to add the following import.
-import { fetchTopStories } from './actions/top-stories-in-hacker-news';
+import { fetchTopStories } from './actions/fetch-top-stories';
 
-export const hackernews = createPiece({
-  name: 'hackernews',
-  displayName: 'Hackernews',
+export const hackernews_tutorial = createPiece({
+  name: 'hackernews_tutorial',
+  displayName: 'Hackernews Tutorial',
   logoUrl: 'https://cdn.activepieces.com/pieces/hackernews.png',
   // Add the action here.
   actions: [fetchTopStories], // <--------
@@ -129,17 +130,17 @@ export const hackernews = createPiece({
 });
 ```
 
-To make the `hackernews` piece readable by Activepieces, add it to the pieces array in `/packages/pieces/apps/index.ts`.
+To make the `hackernews_tutorial` piece readable by Activepieces, add it to the pieces array in `/packages/pieces/apps/src/index.ts`.
 
-First, import the `hackernews` piece at the top of the file by adding the following line:
+First, import the `hackernews_tutorial` piece at the top of the file by adding the following line:
 
 
 ``` ts
-import { hackernews } from './hackernews'; // Import the hackernews piece
+import { hackernews_tutorial } from './lib/hackernews_tutorial'; // Import the hackernews piece
 
 export const pieces: Piece[] = [
   // other pieces
-  hackernews, // Add the hackernews piece to the array
+  hackernews_tutorial, // Add the hackernews piece to the array
   // more pieces
 ];
 
@@ -150,7 +151,6 @@ export const pieces: Piece[] = [
 The backend and frontend are running using `nodemon`, which will automatically refresh the server when any changes are made to the source code.
 
 To test the action, you can use the Flow Builder in Activepieces. It should be working as shown in the provided screenshot.
-
 
 <img src="/resources/screenshots/contributing-first-connector.png" />
 

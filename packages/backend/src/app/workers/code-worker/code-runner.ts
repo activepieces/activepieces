@@ -8,54 +8,58 @@ import { SystemProp } from "../../helper/system/system-prop";
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 
 function fromStatus(code: string): CodeRunStatus {
-  if (code === undefined) {
-    return CodeRunStatus.OK;
-  }
-  switch (code) {
+    if (code === undefined) {
+        return CodeRunStatus.OK;
+    }
+    switch (code) {
     case "XX":
-      return CodeRunStatus.INTERNAL_ERROR;
+        return CodeRunStatus.INTERNAL_ERROR;
     case "TO":
-      return CodeRunStatus.TIMEOUT;
+        return CodeRunStatus.TIMEOUT;
     case "RE":
-      return CodeRunStatus.RUNTIME_ERROR;
+        return CodeRunStatus.RUNTIME_ERROR;
     case "SG":
-      return CodeRunStatus.CRASHED;
+        return CodeRunStatus.CRASHED;
     default:
-      return CodeRunStatus.UNKNOWN_ERROR;
-  }
+        return CodeRunStatus.UNKNOWN_ERROR;
+    }
 }
 
 async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResult> {
-  const sandbox = sandboxManager.obtainSandbox();
-  const buildPath = sandbox.getSandboxFolderPath();
-  let executionResult: CodeExecutionResult;
-  try {
-    console.log("Started Executing Code in sandbox " + buildPath);
-    await sandbox.cleanAndInit();
-
-    const bundledCode = await codeBuilder.build(artifact);
-    const codeExecutor = fs.readFileSync("packages/backend/src/assets/code-executor.js");
-    fs.writeFileSync(buildPath + "/index.js", bundledCode);
-    fs.writeFileSync(buildPath + "/_input.txt", JSON.stringify(input));
-    fs.writeFileSync(buildPath + "/code-executor.js", codeExecutor);
+    const sandbox = sandboxManager.obtainSandbox();
+    const buildPath = sandbox.getSandboxFolderPath();
+    let executionResult: CodeExecutionResult;
     try {
-      await sandbox.runCommandLine(`${nodeExecutablePath} code-executor.js`);
-    } catch (ignored) {}
-    const metaResult = sandbox.parseMetaFile();
-    executionResult = {
-      verdict: fromStatus(metaResult.status as string),
-      timeInSeconds: Number.parseFloat(metaResult.time as string),
-      output: sandbox.parseFunctionOutput(),
-      standardOutput: sandbox.parseStandardOutput(),
-      standardError: sandbox.parseStandardError(),
-    };
-    console.log("Finished Executing in sandbox " + buildPath);
-  } finally {
-    sandboxManager.returnSandbox(sandbox.boxId);
-  }
-  return executionResult;
+        console.log("Started Executing Code in sandbox " + buildPath);
+        await sandbox.cleanAndInit();
+
+        const bundledCode = await codeBuilder.build(artifact);
+        const codeExecutor = fs.readFileSync("packages/backend/src/assets/code-executor.js");
+        fs.writeFileSync(buildPath + "/index.js", bundledCode);
+        fs.writeFileSync(buildPath + "/_input.txt", JSON.stringify(input));
+        fs.writeFileSync(buildPath + "/code-executor.js", codeExecutor);
+        try {
+            await sandbox.runCommandLine(`${nodeExecutablePath} code-executor.js`);
+        }
+        catch (e) {
+            console.error('error executing code', e);
+        }
+        const metaResult = sandbox.parseMetaFile();
+        executionResult = {
+            verdict: fromStatus(metaResult.status as string),
+            timeInSeconds: Number.parseFloat(metaResult.time as string),
+            output: sandbox.parseFunctionOutput(),
+            standardOutput: sandbox.parseStandardOutput(),
+            standardError: sandbox.parseStandardError(),
+        };
+        console.log("Finished Executing in sandbox " + buildPath);
+    }
+    finally {
+        sandboxManager.returnSandbox(sandbox.boxId);
+    }
+    return executionResult;
 }
 
 export const codeRunner = {
-  run,
+    run,
 };
