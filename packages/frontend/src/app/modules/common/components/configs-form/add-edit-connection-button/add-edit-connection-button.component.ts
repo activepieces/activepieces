@@ -35,8 +35,8 @@ export class AddEditConnectionButtonComponent {
   updateOrAddConnectionDialogClosed$: Observable<void>;
   cloudAuthCheck$: Observable<void>;
   constructor(private store: Store, private dialogService: MatDialog,
-     private cloudAuthConfigsService: CloudAuthConfigsService,
-     private flagService: FlagService) { }
+    private cloudAuthConfigsService: CloudAuthConfigsService,
+    private flagService: FlagService) { }
 
 
   buttonClicked() {
@@ -176,6 +176,8 @@ export class AddEditConnectionButtonComponent {
                     );
                 } else if (typeof result === 'object') {
                   const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
+                  console.log("emitted");
+                  console.log("emitted", { configKey: this.config.key, value: authConfigOptionValue });
                   this.connectionPropertyValueChanged.emit({ configKey: this.config.key, value: authConfigOptionValue })
                 }
               }),
@@ -199,6 +201,7 @@ export class AddEditConnectionButtonComponent {
         tap((result: AppConnection | string) => {
           if (typeof result === 'object') {
             const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
+            console.log("emitted", { configKey: this.config.key, value: authConfigOptionValue });
             this.connectionPropertyValueChanged.emit({ configKey: this.config.key, value: authConfigOptionValue })
           } else if (result === USE_MY_OWN_CREDENTIALS) {
             this.openNewOAuth2ConnectionDialog();
