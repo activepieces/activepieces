@@ -16,8 +16,10 @@ export const getClickupTaskCommants = createAction({
 	},
 	async run(configValue) {
 		const { task_id, authentication } = configValue.propsValue;
-		return await callClickUpApi(HttpMethod.GET,
+		const response = await callClickUpApi(HttpMethod.GET,
 			`/task/${task_id}/comment`, getAccessTokenOrThrow(authentication), {
 		});
+
+		return response.body;
 	},
 });

@@ -8,16 +8,14 @@ export const getClickupSpaces = createAction({
 	displayName: 'Get Spaces',
 	props: {
 		authentication: clickupCommon.authentication,
-		team_id: Property.ShortText({
-			description: 'The id of the space to get',
-			displayName: 'Team ID',
-			required: true,
-		}),
+		team_id: clickupCommon.workspace_id
 	},
 	async run(configValue) {
 		const { team_id, authentication } = configValue.propsValue;
-		return await callClickUpApi(HttpMethod.GET,
+		const response = await callClickUpApi(HttpMethod.GET,
 			`team/${team_id}/space`, getAccessTokenOrThrow(authentication), {
 		});
+
+		return response.body;
 	},
 });

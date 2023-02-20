@@ -16,8 +16,10 @@ export const getClickupList = createAction({
 	},
 	async run(configValue) {
 		const { list_id, authentication } = configValue.propsValue;
-		return await callClickUpApi(HttpMethod.GET,
+		const response = await callClickUpApi(HttpMethod.GET,
 			`list/${list_id}`, getAccessTokenOrThrow(authentication), {
 		});
+
+		return response.body;
 	},
 });

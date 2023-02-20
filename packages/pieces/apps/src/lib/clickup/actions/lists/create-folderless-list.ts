@@ -18,9 +18,11 @@ export const createClickupFolderlessList = createAction({
 	},
 	async run(configValue) {
 		const { space_id, name, authentication } = configValue.propsValue;
-		return await callClickUpApi(HttpMethod.POST,
+		const response = await callClickUpApi(HttpMethod.POST,
 			`space/${space_id}/list`, getAccessTokenOrThrow(authentication), {
 			name,
 		});
+
+		return response.body;
 	},
 });

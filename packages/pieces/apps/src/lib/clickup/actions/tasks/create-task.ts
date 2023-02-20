@@ -24,10 +24,12 @@ export const createClickupTask = createAction({
 	},
 	async run(configValue) {
 		const { list_id, name, description, authentication } = configValue.propsValue;
-		return await callClickUpApi(HttpMethod.POST,
+		const response = await callClickUpApi(HttpMethod.POST,
 			`list/${list_id}/task`, getAccessTokenOrThrow(authentication), {
 			name,
 			description
 		});
+
+		return response.body;
 	},
 });

@@ -16,8 +16,9 @@ export const getClickupSpace = createAction({
 	},
 	async run(configValue) {
 		const { space_id, authentication } = configValue.propsValue;
-		return await callClickUpApi(HttpMethod.GET,
+		const response = await callClickUpApi(HttpMethod.GET,
 			`space/${space_id}`, getAccessTokenOrThrow(authentication), {
 		});
+		return response.body;
 	},
 });
