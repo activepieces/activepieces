@@ -31,6 +31,7 @@ type ErrorParams =
   | PieceTriggerNotFoundErrorParams
   | StepNotFoundErrorParams
   | AppConnectionNotFoundErrorParams
+  | SystemInvalidErrorParams
   | SystemPropNotDefinedErrorParams;
 
 export interface BaseErrorParams<T, V> {
@@ -152,6 +153,13 @@ export type SystemPropNotDefinedErrorParams = BaseErrorParams<
   }
 >;
 
+export type SystemInvalidErrorParams = BaseErrorParams<
+  ErrorCode.SYSTEM_PROP_INVALID,
+  {
+    prop: string;
+  }
+>;
+
 export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
   COLLECTION_VERSION_NOT_FOUND = "COLLECTION_VERSION_NOT_FOUND",
@@ -170,4 +178,5 @@ export enum ErrorCode {
   PIECE_TRIGGER_NOT_FOUND = "PIECE_TRIGGER_NOT_FOUND",
   STEP_NOT_FOUND = "STEP_NOT_FOUND",
   SYSTEM_PROP_NOT_DEFINED = "SYSTEM_PROP_NOT_DEFINED",
+  SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
 }

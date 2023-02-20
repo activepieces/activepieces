@@ -3,6 +3,8 @@ import { system } from './system/system';
 import { SystemProp } from './system/system-prop';
 
 const encryptionKey = system.getOrThrow(SystemProp.ENCRYPTION_KEY);
+const algorithm = 'aes-256-cbc';
+const ivLength = 16;
 
 export interface EncryptedObject {
     iv: string;
@@ -10,9 +12,9 @@ export interface EncryptedObject {
 }
 
 export function encryptObject(object: unknown): EncryptedObject {
-    const iv = crypto.randomBytes(16); // Generate a random initialization vector
-    const key = Buffer.from(encryptionKey.padEnd(32, '\0'), 'binary'); // Create a key from the encryption key
-    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv); // Create a cipher with the key and initialization vector
+    const iv = crypto.randomBytes(ivLength); // Generate a random initialization vector
+    const key = Buffer.from(encryptionKey, 'binary');
+    const cipher = crypto.createCipheriv(algorithm, key, iv); // Create a cipher with the key and initialization vector
     let encrypted = cipher.update(JSON.stringify(object), 'utf8', 'hex');
     encrypted += cipher.final('hex');
     return {
@@ -24,8 +26,8 @@ export function encryptObject(object: unknown): EncryptedObject {
 
 export function decryptObject<T>(encryptedObject: EncryptedObject): T {
     const iv = Buffer.from(encryptedObject.iv, 'hex');
-    const key = Buffer.from(encryptionKey.padEnd(32, '\0'), 'binary'); // Create a key from the encryption key
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+    const key = Buffer.from(encryptionKey, 'binary'); 
+    const decipher = crypto.createDecipheriv(algorithm, key, iv);
     let decrypted = decipher.update(encryptedObject.data, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return JSON.parse(decrypted);
