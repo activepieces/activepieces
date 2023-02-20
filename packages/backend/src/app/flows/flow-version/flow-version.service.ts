@@ -176,50 +176,50 @@ async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersi
 async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, request: FlowOperationRequest) {
     const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request));
     switch (clonedRequest.type) {
-        case FlowOperationType.ADD_ACTION:
-            clonedRequest.request.action.valid = true;
-            if (clonedRequest.request.action.type === ActionType.PIECE) {
-                clonedRequest.request.action.valid = validateAction(clonedRequest.request.action.settings);
-            }
-            else if (clonedRequest.request.action.type === ActionType.CODE) {
-                const codeSettings: CodeActionSettings = clonedRequest.request.action.settings;
-                await uploadArtifact(projectId, codeSettings);
-            }
-            break;
-        case FlowOperationType.UPDATE_ACTION:
-            clonedRequest.request.valid = true;
-            if (clonedRequest.request.type === ActionType.PIECE) {
-                clonedRequest.request.valid = validateAction(clonedRequest.request.settings);
-            }
-            else if (clonedRequest.request.type === ActionType.CODE) {
-                const codeSettings: CodeActionSettings = clonedRequest.request.settings;
-                await uploadArtifact(projectId, codeSettings);
-                const previousStep = getStep(flowVersion, clonedRequest.request.name);
-                if (
-                    previousStep !== undefined &&
+    case FlowOperationType.ADD_ACTION:
+        clonedRequest.request.action.valid = true;
+        if (clonedRequest.request.action.type === ActionType.PIECE) {
+            clonedRequest.request.action.valid = validateAction(clonedRequest.request.action.settings);
+        }
+        else if (clonedRequest.request.action.type === ActionType.CODE) {
+            const codeSettings: CodeActionSettings = clonedRequest.request.action.settings;
+            await uploadArtifact(projectId, codeSettings);
+        }
+        break;
+    case FlowOperationType.UPDATE_ACTION:
+        clonedRequest.request.valid = true;
+        if (clonedRequest.request.type === ActionType.PIECE) {
+            clonedRequest.request.valid = validateAction(clonedRequest.request.settings);
+        }
+        else if (clonedRequest.request.type === ActionType.CODE) {
+            const codeSettings: CodeActionSettings = clonedRequest.request.settings;
+            await uploadArtifact(projectId, codeSettings);
+            const previousStep = getStep(flowVersion, clonedRequest.request.name);
+            if (
+                previousStep !== undefined &&
                     previousStep.type === ActionType.CODE &&
                     codeSettings.artifactSourceId !== previousStep.settings.artifactSourceId
-                ) {
-                    await deleteArtifact(projectId, previousStep.settings);
-                }
-            }
-            break;
-        case FlowOperationType.DELETE_ACTION: {
-            const previousStep = getStep(flowVersion, clonedRequest.request.name);
-            if (previousStep !== undefined && previousStep.type === ActionType.CODE) {
+            ) {
                 await deleteArtifact(projectId, previousStep.settings);
             }
-            break;
         }
+        break;
+    case FlowOperationType.DELETE_ACTION: {
+        const previousStep = getStep(flowVersion, clonedRequest.request.name);
+        if (previousStep !== undefined && previousStep.type === ActionType.CODE) {
+            await deleteArtifact(projectId, previousStep.settings);
+        }
+        break;
+    }
 
-        case FlowOperationType.UPDATE_TRIGGER:
-            clonedRequest.request.valid = true;
-            if (clonedRequest.request.type === TriggerType.PIECE) {
-                clonedRequest.request.valid = validateTrigger(clonedRequest.request.settings);
-            }
-            break;
-        default:
-            break;
+    case FlowOperationType.UPDATE_TRIGGER:
+        clonedRequest.request.valid = true;
+        if (clonedRequest.request.type === TriggerType.PIECE) {
+            clonedRequest.request.valid = validateTrigger(clonedRequest.request.settings);
+        }
+        break;
+    default:
+        break;
     }
     return clonedRequest;
 }
@@ -267,39 +267,39 @@ function buildSchema(props: PieceProperty): TSchema {
         const property = entries[i][1];
         const name: string = entries[i][0];
         switch (property.type) {
-            case PropertyType.SHORT_TEXT:
-            case PropertyType.LONG_TEXT:
-                propsSchema[name] = Type.String({
-                    minLength: property.required ? 1 : undefined
-                });
-                break;
-            case PropertyType.CHECKBOX:
-                propsSchema[name] = Type.Boolean({});
-                break;
-            case PropertyType.NUMBER:
-                // Because it could be a variable
-                propsSchema[name] = Type.String({});
-                break;
-            case PropertyType.STATIC_DROPDOWN:
-                propsSchema[name] = Type.Any({});
-                break;
-            case PropertyType.DROPDOWN:
-                propsSchema[name] = Type.Any({});
-                break;
-            case PropertyType.OAUTH2:
-                // Only accepts connections variable.
-                propsSchema[name] = Type.Union([Type.RegEx(RegExp('[$]{1}{connections.(.*?)}')), Type.String()]);
-                break;
-            case PropertyType.ARRAY:
-                // Only accepts connections variable.
-                propsSchema[name] = Type.Union([Type.Array(Type.String({})), Type.String()]);
-                break;
-            case PropertyType.OBJECT:
-                propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()]);
-                break;
-            case PropertyType.JSON:
-                propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()]);
-                break;
+        case PropertyType.SHORT_TEXT:
+        case PropertyType.LONG_TEXT:
+            propsSchema[name] = Type.String({
+                minLength: property.required ? 1 : undefined
+            });
+            break;
+        case PropertyType.CHECKBOX:
+            propsSchema[name] = Type.Boolean({});
+            break;
+        case PropertyType.NUMBER:
+            // Because it could be a variable
+            propsSchema[name] = Type.String({});
+            break;
+        case PropertyType.STATIC_DROPDOWN:
+            propsSchema[name] = Type.Any({});
+            break;
+        case PropertyType.DROPDOWN:
+            propsSchema[name] = Type.Any({});
+            break;
+        case PropertyType.OAUTH2:
+            // Only accepts connections variable.
+            propsSchema[name] = Type.Union([Type.RegEx(RegExp('[$]{1}{connections.(.*?)}')), Type.String()]);
+            break;
+        case PropertyType.ARRAY:
+            // Only accepts connections variable.
+            propsSchema[name] = Type.Union([Type.Array(Type.String({})), Type.String()]);
+            break;
+        case PropertyType.OBJECT:
+            propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()]);
+            break;
+        case PropertyType.JSON:
+            propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()]);
+            break;
         }
         if (!property.required) {
             propsSchema[name] = Type.Union([Type.Null(), Type.Undefined(), propsSchema[name]]);
