@@ -4,7 +4,6 @@ import { environment } from '../../../../environments/environment';
 import { Observable, tap } from 'rxjs';
 import {
 	Collection,
-	CollectionVersion,
 	SeekPage,
 	UpdateCollectionRequest,
 	CollectionId,
@@ -33,11 +32,6 @@ export class CollectionService {
 
 	update(collectionId: CollectionId, request: UpdateCollectionRequest): Observable<Collection> {
 		return this.http.post<Collection>(environment.apiUrl + '/collections/' + collectionId, request);
-	}
-
-	// TODO REMOVE
-	listVersions(collectionId: string): Observable<CollectionVersion[]> {
-		return this.http.get<CollectionVersion[]>(environment.apiUrl + '/collections/' + collectionId + '/versions/', {});
 	}
 
 	get(collectionId: string): Observable<Collection> {

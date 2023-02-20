@@ -2,7 +2,6 @@ import { Type } from '@sinclair/typebox';
 
 export enum ActionType {
   CODE = 'CODE',
-  STORAGE = 'STORAGE',
   PIECE = 'PIECE',
   LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
 }
@@ -59,46 +58,6 @@ export const PieceActionSchema = Type.Object({
   }),
 });
 
-// Storage Action
-
-export enum StoreOperation {
-  PUT = 'PUT',
-  GET = 'GET',
-}
-
-export type StorageActionSettings = {
-  operation: StoreOperation;
-  key: string;
-  value?: unknown;
-};
-
-export type StorageAction = BaseAction<ActionType.STORAGE, StorageActionSettings>
-
-export const StorageActionSchema = Type.Union([
-  Type.Object({
-    name: Type.String({}),
-    displayName: Type.String({}),
-    type: Type.Literal(ActionType.STORAGE),
-    settings: Type.Object({
-      operation: Type.Literal(StoreOperation.PUT),
-      key: Type.String({
-        minLength: 1,
-      }),
-      value: Type.Any({}),
-    }),
-  }),
-  Type.Object({
-    name: Type.String({}),
-    displayName: Type.String({}),
-    type: Type.Literal(ActionType.STORAGE),
-    settings: Type.Object({
-      operation: Type.Literal(StoreOperation.GET),
-      key: Type.String({
-        minLength: 1,
-      }),
-    }),
-  }),
-]);
 
 // Loop Items
 export type LoopOnItemsActionSettings = {
@@ -113,7 +72,7 @@ export interface LoopOnItemsAction
 export const LoopOnItemsActionSchema = Type.Object({
   name: Type.String({}),
   displayName: Type.String({}),
-  type: Type.Literal(ActionType.STORAGE),
+  type: Type.Literal(ActionType.LOOP_ON_ITEMS),
   settings: Type.Object({
     items: Type.Array(Type.Any({})),
   }),
@@ -122,11 +81,9 @@ export const LoopOnItemsActionSchema = Type.Object({
 export type Action =
   | CodeAction
   | PieceAction
-  | StorageAction
   | LoopOnItemsAction;
 export const ActionSchema = Type.Union([
   CodeActionSchema,
   PieceActionSchema,
-  StorageActionSchema,
   LoopOnItemsActionSchema,
 ]);

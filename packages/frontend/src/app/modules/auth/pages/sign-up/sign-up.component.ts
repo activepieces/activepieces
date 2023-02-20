@@ -2,18 +2,12 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../../common/service/authentication.service';
-
-import {
-	containsLowercaseCharacter,
-	containsNumber,
-	containsSpecialCharacter,
-	containsUppercaseCharacter,
-} from 'packages/frontend/src/app/modules/common/validators';
 import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
-
 import { HttpErrorResponse } from '@angular/common/http';
-import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
+import { fadeInUp400ms } from '../../../common/animation/fade-in-up.animation';
 import { FlagService } from '../../../common/service/flag.service';
+import { containsSpecialCharacter, containsUppercaseCharacter, containsLowercaseCharacter, containsNumber } from '../../../common/validators';
+
 export interface UserInfo {
 	firstName: FormControl<string>;
 	lastName: FormControl<string>;
@@ -66,7 +60,7 @@ export class SignUpComponent {
 			newsLetter: new FormControl<boolean>(true, { nonNullable: true }),
 		});
 		this.signedUpEnabled$ = this.flagService.isSignedUpEnabled();
-	
+
 		this.emailValueChanged$ = this.registrationForm.controls.email.valueChanges.pipe(
 			tap(() => {
 				this.emailChanged = true;
