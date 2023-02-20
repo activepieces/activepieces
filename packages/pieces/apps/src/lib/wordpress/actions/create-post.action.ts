@@ -29,7 +29,7 @@ export const createWordpressPost = createAction({
             displayName: 'Date',
             required: false,
         }),
-        tags: Property.MultipleDropdown<string, false>({
+        tags: Property.MultiSelectDropdown<string, false>({
             description: 'Post tags',
             displayName: 'Tags',
             required: false,
@@ -94,7 +94,7 @@ export const createWordpressPost = createAction({
                 }
             }
         }),
-        categories: Property.MultipleDropdown<string, false>({
+        categories: Property.MultiSelectDropdown<string, false>({
             description: 'Post categories',
             displayName: 'Categories',
             required: false,
@@ -298,6 +298,6 @@ export const createWordpressPost = createAction({
             body: requestBody
         };
         const response = await httpClient.sendRequest<{ id: string, name: string }[]>(request);
-        return requestBody;
+        return response;
     }
 });

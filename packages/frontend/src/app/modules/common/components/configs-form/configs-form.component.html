@@ -98,7 +98,7 @@
       </div>
 
     </ng-container>
-    <ng-container *ngSwitchCase="PropertyType.MULTIPLE_DROPDOWN">
+    <ng-container *ngSwitchCase="PropertyType.MULTI_SELECT_DROPDOWN">
       <div>
         <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
           <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:config} ">
@@ -111,7 +111,8 @@
           <mat-form-field class="ap-w-full" appearance="outline">
             <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }}</mat-label>
             <mat-select
-              [style.display]="(!(optionsObservables$[config.key] | async) ||  (optionsObservables$[config.key] | async)?.disabled === true)? 'none':'block' "
+              [style.display]="((optionsObservables$[config.key] | async)===undefined ||
+              (optionsObservables$[config.key] | async)===null  ||  (optionsObservables$[config.key] | async)?.disabled === true)? 'none':'block' "
               multiple [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
               <ng-container *ngIf="optionsObservables$[config.key]| async as state">
                 <mat-option *ngFor="let opt of state.options" [value]="opt.value">
