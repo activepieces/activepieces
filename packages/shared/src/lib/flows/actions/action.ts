@@ -39,7 +39,7 @@ export type CodeAction = Static<typeof CodeAction>;
 export const PieceActionSettings = Type.Object({
   pieceName: Type.String({}),
   actionName: Type.Optional(Type.String({})),
-  input: Type.Object({}),
+  input: Type.Record(Type.String({}), Type.Any()),
   inputUiInfo: Type.Record(Type.String({}), Type.Any())
 });
 
