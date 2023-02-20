@@ -1,4 +1,4 @@
-import { DropdownProperty, DropdownState, DynamicProperties } from "@activepieces/framework";
+import { DropdownProperty, DropdownState, DynamicProperties, MultiSelectDropdownProperty } from "@activepieces/framework";
 import { getPiece } from "@activepieces/pieces-apps";
 import { ActivepiecesError, ErrorCode, ExecutePropsOptions, ExecutionState, PropertyType } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
@@ -23,6 +23,9 @@ export const pieceHelper = {
             const resolvedInput = await variableService.resolve(params.input, executionState);
             if(property.type === PropertyType.DYNAMIC){
                 return await (property as DynamicProperties<boolean>).props(resolvedInput);
+            }
+            if(property.type === PropertyType.MULTI_SELECT_DROPDOWN){
+                return await (property as MultiSelectDropdownProperty<unknown, boolean>).options(resolvedInput);
             }
             return await (property as DropdownProperty<unknown, boolean>).options(resolvedInput);
         } catch (e) {
