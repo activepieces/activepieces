@@ -5,6 +5,7 @@ import qs from 'qs';
 import { authenticationModule } from "./app/authentication/authentication.module";
 import { collectionModule } from "./app/collections/collection.module";
 import { projectModule } from "./app/project/project.module";
+import { openapiModule } from "./app/helper/openapi/openapi.module";
 import { flowModule } from "./app/flows/flow.module";
 import { fileModule } from "./app/file/file.module";
 import { piecesController } from "./app/pieces/pieces.controller";
@@ -21,23 +22,37 @@ import { errorHandler } from "./app/helper/error-handler";
 import { appConnectionModule } from "./app/app-connection/app-connection.module";
 import { system, validateEnvPropsOnStartup } from "./app/helper/system/system";
 import { SystemProp } from "./app/helper/system/system-prop";
+import swagger from "@fastify/swagger";
 import { databaseConnection } from "./app/database/database-connection";
 import { logger } from './app/helper/logger';
 
 const app = fastify({
-  logger,
-  ajv: {
-    customOptions: {
-      removeAdditional: 'all',
-      useDefaults: true,
-      coerceTypes: true,
+    logger,
+    ajv: {
+        customOptions: {
+            removeAdditional: 'all',
+            useDefaults: true,
+            coerceTypes: true,
+        }
     }
-  }
+});
+
+app.register(swagger, {
+    openapi: {
+        info: {
+            title: 'Activepieces OpenAPI Documentation',
+            version: '1.0.0'
+        },
+        externalDocs: {
+            url: 'https://www.activepieces.com/docs',
+            description: 'Find more info here'
+        },
+    }
 });
 
 app.register(cors, {
-  origin: "*",
-  methods: ["*"]
+    origin: "*",
+    methods: ["*"]
 });
 app.register(formBody, { parser: str => qs.parse(str) });
 app.addHook("onRequest", tokenVerifyMiddleware);
@@ -56,36 +71,38 @@ app.register(instanceModule);
 app.register(flowRunModule);
 app.register(webhookModule);
 app.register(appConnectionModule);
+app.register(openapiModule);
 
 app.get(
-  "/redirect",
-  async (
-    request: FastifyRequest<{ Querystring: { code: string; } }>, reply
-  ) => {
-    const params = {
-      "code": request.query.code
-    };
-    if (params.code === undefined) {
-      reply.send("The code is missing in url");
-    } else {
-      reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${params['code']}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
+    "/redirect",
+    async (
+        request: FastifyRequest<{ Querystring: { code: string; } }>, reply
+    ) => {
+        const params = {
+            "code": request.query.code
+        };
+        if (params.code === undefined) {
+            reply.send("The code is missing in url");
+        }
+        else {
+            reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${params['code']}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
+        }
     }
-  }
 );
 app.setErrorHandler(errorHandler);
 
 const start = async () => {
-  try {
-    await validateEnvPropsOnStartup();
-    await databaseConnection.initialize();
-    await databaseConnection.runMigrations();
+    try {
+        await validateEnvPropsOnStartup();
+        await databaseConnection.initialize();
+        await databaseConnection.runMigrations();
 
-    await app.listen({
-      host: "0.0.0.0",
-      port: 3000,
-    });
+        await app.listen({
+            host: "0.0.0.0",
+            port: 3000,
+        });
 
-    console.log(`
+        console.log(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
     /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
    /  \\    | |         | |      | |    \\ \\  / /  | |__    | |__) |   | |   | |__    | |      | |__    | (___
@@ -95,10 +112,11 @@ const start = async () => {
 
 started on ${system.get(SystemProp.FRONTEND_URL)}
     `);
-  } catch (err) {
-    app.log.error(err);
-    process.exit(1);
-  }
+    }
+    catch (err) {
+        app.log.error(err);
+        process.exit(1);
+    }
 };
 
 start();

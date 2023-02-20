@@ -25,7 +25,8 @@ export class encryptCredentials1676505294811 implements MigrationInterface {
                 const currentConnection = connections[i];
                 currentConnection.value = decryptObject(currentConnection.value);
                 await appConnections.update(currentConnection.id, currentConnection);
-            } catch (e) {
+            }
+            catch (e) {
                 console.error(e);
             }
         }

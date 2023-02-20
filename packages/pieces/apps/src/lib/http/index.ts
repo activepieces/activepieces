@@ -5,9 +5,8 @@ export const http = createPiece({
 	name: 'http',
 	displayName: 'HTTP Request',
 	logoUrl: 'https://cdn.activepieces.com/pieces/http.png',
-	actions: [
-    httpSendRequestAction,
-  ],
+	actions: [ httpSendRequestAction,],
+	authors: ['khaledmashaly'],
 	triggers: [
   ],
 });

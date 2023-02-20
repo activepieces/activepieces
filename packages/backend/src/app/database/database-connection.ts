@@ -27,59 +27,59 @@ const port = Number.parseInt(serializedPort, 10);
 const username = system.getOrThrow(SystemProp.POSTGRES_USERNAME);
 
 const getSyncConfig = (): boolean => {
-  if (env === 'prod') {
-    return false;
-  }
+    if (env === 'prod') {
+        return false;
+    }
 
-  return true;
+    return true;
 }
 
 const getSslConfig = (): boolean | TlsOptions => {
-  const useSsl = system.get(SystemProp.POSTGRES_USE_SSL);
+    const useSsl = system.get(SystemProp.POSTGRES_USE_SSL);
 
-  if (useSsl === 'true') {
-    return {
-      ca: system.get(SystemProp.POSTGRES_SSL_CA),
+    if (useSsl === 'true') {
+        return {
+            ca: system.get(SystemProp.POSTGRES_SSL_CA),
+        }
     }
-  }
 
-  return false;
+    return false;
 }
 
 const getMigrations = () => {
-  if (env === 'prod') {
-    return [
-      FlowAndFileProjectId1674788714498,
-      initializeSchema1676238396411,
-      encryptCredentials1676505294811
-    ];
-  }
-  return [encryptCredentials1676505294811];
+    if (env === 'prod') {
+        return [
+            FlowAndFileProjectId1674788714498,
+            initializeSchema1676238396411,
+            encryptCredentials1676505294811
+        ];
+    }
+    return [encryptCredentials1676505294811];
 }
 
 export const databaseConnection = new DataSource({
-  type: "postgres",
-  host,
-  port,
-  username,
-  password,
-  database,
-  synchronize: getSyncConfig(),
-  subscribers: [],
-  ssl: getSslConfig(),
-  migrations: getMigrations(),
-  entities: [
-    CollectionEntity,
-    CollectionVersionEntity,
-    FileEntity,
-    FlagEntity,
-    FlowEntity,
-    FlowVersionEntity,
-    InstanceEntity,
-    FlowRunEntity,
-    ProjectEntity,
-    StoreEntryEntity,
-    UserEntity,
-    AppConnectionEntity
-  ],
+    type: "postgres",
+    host,
+    port,
+    username,
+    password,
+    database,
+    synchronize: getSyncConfig(),
+    subscribers: [],
+    ssl: getSslConfig(),
+    migrations: getMigrations(),
+    entities: [
+        CollectionEntity,
+        CollectionVersionEntity,
+        FileEntity,
+        FlagEntity,
+        FlowEntity,
+        FlowVersionEntity,
+        InstanceEntity,
+        FlowRunEntity,
+        ProjectEntity,
+        StoreEntryEntity,
+        UserEntity,
+        AppConnectionEntity
+    ],
 });

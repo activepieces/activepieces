@@ -22,6 +22,7 @@
     "@ctrl/ngx-codemirror": "^5.1.1",
     "@fastify/cors": "^8.2.0",
     "@fastify/formbody": "^7.4.0",
+    "@fastify/swagger": "^8.3.1",
     "@fortawesome/angular-fontawesome": "^0.12.1",
     "@fortawesome/fontawesome-svg-core": "^6.2.1",
     "@fortawesome/free-solid-svg-icons": "^6.2.1",

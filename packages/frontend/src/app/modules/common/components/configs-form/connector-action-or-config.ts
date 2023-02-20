@@ -30,6 +30,7 @@ export interface PieceConfig {
 		password: Pick<PieceProperty, "displayName" | "description">,
 		username: Pick<PieceProperty, "displayName" | "description">,
 	}
+	oAuthProps?: Record<string, Pick<PieceProperty, "displayName" | "description" | "type" | "options">>
 	staticDropdownState?: DropdownState<unknown>;
 }
 
@@ -46,6 +47,7 @@ export class PieceProperty {
 	refreshers?: string[];
 	password?: PieceProperty
 	username?: PieceProperty
+	props?: Record<string, PieceProperty>
 	options?: DropdownState<unknown>;
 }
 
@@ -71,6 +73,9 @@ export const propsConvertor = {
 				password: prop.password,
 				username: prop.username
 			}
+		}
+		if (prop.props) {
+			pieceConfig.oAuthProps = { ...prop.props };
 		}
 		return pieceConfig;
 	},

@@ -7,5 +7,6 @@ export const googleContacts = createPiece({
 	logoUrl: 'https://cdn.activepieces.com/pieces/google_contacts.png',
 	actions: [googleContactsAddContactAction],
 	displayName: "Google Contacts",
+	authors: ['abuaboud'],
 	triggers: [googleContactNewOrUpdatedContact],
 });

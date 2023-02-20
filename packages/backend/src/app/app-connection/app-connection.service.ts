@@ -63,7 +63,8 @@ export const appConnectionService = {
                 promises.push(new Promise((resolve) => {
                     return resolve(connection);
                 }));
-            } else {
+            }
+            else {
                 promises.push(this.getOne({ projectId: connection.projectId, name: connection.name }));
             }
         });
@@ -74,14 +75,14 @@ export const appConnectionService = {
 
 async function refresh(connection: AppConnection): Promise<AppConnection> {
     switch (connection.value.type) {
-        case AppConnectionType.CLOUD_OAUTH2:
-            connection.value = await refreshCloud(connection.appName, connection.value);
-            break;
-        case AppConnectionType.OAUTH2:
-            connection.value = await refreshWithCredentials(connection.value);
-            break;
-        default:
-            break;
+    case AppConnectionType.CLOUD_OAUTH2:
+        connection.value = await refreshCloud(connection.appName, connection.value);
+        break;
+    case AppConnectionType.OAUTH2:
+        connection.value = await refreshWithCredentials(connection.value);
+        break;
+    default:
+        break;
     }
     return connection;
 }
@@ -102,11 +103,14 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
     if (!isExpired(connectionValue)) {
         return connectionValue;
     }
+
+    const requestBody: RefreshTokenFromCloudRequest = {
+        refreshToken: connectionValue.refresh_token,
+        pieceName: appName,
+        tokenUrl: connectionValue.token_url,
+    };
     const response = (
-        await axios.post("https://secrets.activepieces.com/refresh", {
-            refreshToken: connectionValue.refresh_token,
-            pieceName: appName,
-        } as RefreshTokenFromCloudRequest)
+        await axios.post("https://secrets.activepieces.com/refresh", requestBody)
     ).data;;
 
     return {
@@ -119,6 +123,7 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
 async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithApp): Promise<OAuth2ConnectionValueWithApp> {
     if (!isExpired(appConnection)) {
         return appConnection;
+
     }
     const settings = appConnection;
     const response = (
@@ -164,14 +169,14 @@ function deleteProps(obj: Record<string, any>, prop: string[]) {
 function getStatus(connection: AppConnection): AppConnectionStatus {
     const connectionStatus = AppConnectionStatus.ACTIVE;
     switch (connection.value.type) {
-        case AppConnectionType.CLOUD_OAUTH2:
-        case AppConnectionType.OAUTH2:
-            if (isExpired(connection.value)) {
-                return AppConnectionStatus.EXPIRED;
-            }
-            break;
-        default:
-            break;
+    case AppConnectionType.CLOUD_OAUTH2:
+    case AppConnectionType.OAUTH2:
+        if (isExpired(connection.value)) {
+            return AppConnectionStatus.EXPIRED;
+        }
+        break;
+    default:
+        break;
     }
     return connectionStatus;
 }

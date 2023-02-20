@@ -6,6 +6,7 @@ export const calendly = createPiece({
 	name: 'calendly',
 	displayName: 'Calendly',
 	logoUrl: 'https://cdn.activepieces.com/pieces/calendly.png',
+	authors: ['AbdulTheActivePiecer'],
 	actions: [],
 	triggers: [calendlyInviteeCreated, calendlyInviteeCanceled],
 });
