@@ -16,14 +16,14 @@ export type DropdownOption<T> = {
 
 export type DropdownProperty<T, R extends boolean> = BasePropertySchema & {
 	refreshers: string[];
-	options: (propsValue: Record<string, OAuth2PropertyValue | number | string | object | BasicAuthPropertyValue | any[]>) => Promise<DropdownState<T>>
+	options: (propsValue: Record<string, OAuth2PropertyValue | number | string | object | BasicAuthPropertyValue | unknown[]>) => Promise<DropdownState<T>>
 } & TPropertyValue<T, PropertyType.DROPDOWN, R>;
 
 export type StaticDropdownProperty<T, R extends boolean> = BasePropertySchema & {
 	options: DropdownState<T>;
 } & TPropertyValue<T, PropertyType.STATIC_DROPDOWN, R>;
 
-export type MultipleDropdownProperty<T, R extends boolean> = BasePropertySchema & {
+export type MultiSelectDropdownProperty<T, R extends boolean> = BasePropertySchema & {
 	refreshers: string[];
-	options: (propsValue: Record<string, OAuth2PropertyValue | number | string | object | BasicAuthPropertyValue | any[]>) => Promise<DropdownState<T>>
-} & TPropertyValue<T, PropertyType.MULTIPLE_DROPDOWN, R>;
+	options: (propsValue: Record<string, OAuth2PropertyValue | number | string | object | BasicAuthPropertyValue | unknown[]>) => Promise<DropdownState<T>>
+} & TPropertyValue<T[], PropertyType.MULTI_SELECT_DROPDOWN, R>;

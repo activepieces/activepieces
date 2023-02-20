@@ -168,7 +168,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
   createDropdownConfigsObservables() {
     this.configs.forEach((c) => {
-      if (c.type === PropertyType.DROPDOWN || c.type === PropertyType.MULTIPLE_DROPDOWN) {
+      if (c.type === PropertyType.DROPDOWN || c.type === PropertyType.MULTI_SELECT_DROPDOWN) {
         this.dropdownsLoadingFlags$[c.key] = new BehaviorSubject(true);
         const refreshers$ = {};
         c.refreshers!.forEach((r) => {
@@ -363,7 +363,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     this.cd.detectChanges();
 
     const input = this.theInputs.find(input => input.nativeElement.getAttribute('name') === configKey);
-    debugger;
     if (input) {
       this.cd.detectChanges();
       input.nativeElement.click();
