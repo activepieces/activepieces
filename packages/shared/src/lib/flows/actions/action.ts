@@ -72,7 +72,7 @@ export const LoopOnItemsAction = Type.Object({
     items: Type.Array(Type.Any({})),
   }),
   firstLoopAction: Type.Optional(Type.Any({})),
-}
+});
 
 
 export type LoopOnItemsAction = Static<typeof LoopOnItemsAction> & {firstLoopAction?: Action};

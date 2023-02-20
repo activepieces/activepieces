@@ -11,7 +11,6 @@ import {
   ActionType,
   CodeAction,
   PieceAction,
-  StorageAction,
   LoopOnItemsAction,
 } from './actions/action';
 import { Trigger, TriggerType } from './triggers/trigger';

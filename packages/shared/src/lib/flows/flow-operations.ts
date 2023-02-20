@@ -1,7 +1,5 @@
 import {
-    ActionType,
-    CodeAction, LoopOnItemsAction, PieceAction, StoreOperation,
-    ActionType, CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings,
+    CodeAction, LoopOnItemsAction, PieceAction,
 } from "./actions/action";
 import { EmptyTrigger, PieceTrigger, ScheduleTrigger, WebhookTrigger } from "./triggers/trigger";
 import { Static, Type } from "@sinclair/typebox";
