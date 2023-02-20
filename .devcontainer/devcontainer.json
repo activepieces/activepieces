@@ -15,7 +15,7 @@
 			]
 		}
 	},
-        "hostRequirements": {
+	"hostRequirements": {
   	  "cpus": 4,
   	  "memory": "8gb"
   	},
@@ -26,5 +26,5 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
 	"remoteUser": "root",
-	"postCreateCommand": "npm ci"
+	"postCreateCommand": "npm ci && sh tools/codespaces.sh"
 }

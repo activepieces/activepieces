@@ -11,6 +11,76 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+### 02/15/2023
+**Version 0.3.1** [GitHub](https://github.com/activepieces/activepieces/pull/583)
+
+<Warning>
+**Breaking Changes:** The webhook URL is now constructed from `AP_FRONTEND_URL`. Please ensure that your `docker-compose.yml` is up to date as well. 
+</Warning>
+
+* **Pieces:**
+    - Dropbox: Create File from Text / Create Folder
+    - Google Drive: Create File From Text / Create Folder
+    - Airtable: New Record
+
+* **Features:**
+    - Added Docuemntation link in Trigger / Action, So you can easily open the documenation.
+    - Created deployment scripts that generate database crednenetials
+    - Add upgrade notification inside the app to be notified
+
+* **Fixes:**
+    - Login now accepts password longer than 25 characters.
+    - Fix refreshing oauth2, sometime they failed due to bug in isExpired method.
+    - Flow worker concurency were set to 1 flow, now it's 10 by default.
+    - Reorded http methods and remove connect due it to error it make
+
+* **Contributors**
+    - @kanarelo created Dropbox and Google Drive Pieces
+
+
+### 02/08/2023
+**Version 0.3.0** [GitHub](https://github.com/activepieces/activepieces/pull/508)
+
+* **Pieces:**
+    - Twilio: Send SMS / New Incoming SMS
+    - Todoist: Completed Task Trigger
+
+* **Features:**
+    - Add Basic Authentication Property to piece framework.
+    - Add request piece button when it's not found
+    - Add In give feedback from builder
+
+* **Fixes:**
+    - Delete Instance in API will also delete schedule now.
+
+* **Security:**
+    - [Snyk] Security upgrade nginx from 1.17.1-alpine to 1.23.3-alpine by @snyk-bot in https://github.com/activepieces/activepieces/pull/474
+    - [Snyk] Security upgrade node from 18.13.0-bullseye to 18.13-bullseye-slim by @snyk-bot in https://github.com/activepieces/activepieces/pull/473
+    - Code piece exposing environment variables is fixed.
+
+* **New Contributors**
+    - M-Arman as a security contributor for penetration testing code piece.
+
+* **Full Changelog**
+https://github.com/activepieces/activepieces/compare/0.2.5...0.3.0
+
+### 02/04/2023
+**Version 0.2.5** ([GitHub](https://github.com/activepieces/activepieces/pull/469))
+
+<Info>A big shoutout to Osama Haikal, Kanarelo for zoom & calendar pieces</Info>
+
+* **Pieces:**
+    - Google Calendar: Create Quick Event / New Event
+    - Zoom: Create new Meeting Action / New Meeting Registrant
+    - Todoist: Create Task Action
+
+* **Features:**
+    - Add Enable Sign up Environment Variable
+    - **Breaking Change**: Webhook Trigger now returns object contains body, headers and query params.
+
+* **Fixes:**
+    - Mailchimp: the dropdown options weren't loading.
+
 ### 02/01/2023
 **Version 0.2.4** ([GitHub](https://github.com/activepieces/activepieces/pull/431))
 
@@ -46,18 +116,18 @@ Semantic versioning is a standardized way of versioning software projects. It us
     * Send Grid: Send Email Action
     * Google Contact: Add Contact Action
     * MailChimp: New Subscriber Trigger.
-    * Stripe: New Payment Triggerr / New Customer Trigger / Payment Failed Trigger
+    * Stripe: New Payment Trigger / New Customer Trigger / Payment Failed Trigger
     * Pipedrive: New Person Trigger / New Deal Trigger / Updated Person Trigger / Updated Deal Trigger / Add Person Action
     * Blackbaud: Insert Contacts Action / List Contacts Action
 
 * **Features:**
-    * App Connections are centerlized in project dashboard.
+    * App Connections are centralized in project dashboard.
     * API Key are now considered connections instead of short text.
     * Auto Complete for variables.
     * Test Flow suggest sample data for app triggers.
 
 * **Fixes:**
-    * Full screen Code Editior is Fixed.
+    * Full screen Code Editor is Fixed.
     * Triggers schedule now get deleted when the collection is deleted.
     * Trigger / Action logs is streamed to backend logs now.
 
@@ -81,7 +151,7 @@ Semantic versioning is a standardized way of versioning software projects. It us
 * **Fixes:**
     * Breaking change: send http request wrapper now returns body,headers,status instead of body only.
     * Webhook Trigger fixed.
-    * Fullscreen code editior issue fixed, It wasn't loading.
+    * Fullscreen code editor issue fixed, It wasn't loading.
     * Webhook Url and Redirect url fixed on demo instance.
     * JWT Security key can now be supplied by environment variable or auto generated.
     * Docker Image now works on ARM architecture (MacOS).

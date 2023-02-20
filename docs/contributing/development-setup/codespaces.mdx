@@ -1,0 +1,28 @@
+---
+title: 'Github Codespaces'
+description: ''
+---
+
+GitHub Codespaces is a cloud development platform that enables developers to write, run, and debug code directly in their browser, seamlessly integrated with GitHub.
+
+### Steps to setup Codespaces
+
+1.Go to [Activepieces repo](https://github.com/activepieces/activepieces).
+
+2.Click Code `<>`, then under codespaces click create codespace on main.
+
+![Create Codespace](/resources/screenshots/development-setup_codespaces.png)
+
+3. Once the Codespace is ready, it will expose two ports: 4200 for the frontend and 3000 for the backend.
+
+4. Open the terminal and run `nx serve backend & nx serve frontend`
+
+5. To make the ports public, go to the 'Ports' tab, right-click, and change their visibility to 'public' for both port 4200 and 3000.
+
+6. Copy the backend URL (port 3000) and paste it into the `apiUrl` field. Then, append `/v1` to it in `packages/frontend/src/environments/environment.ts`, for example: `https://CODESPACES_NAME-5v694j5wwc7gr4-3000.preview.app.github.dev/v1`
+
+7. Go to the "Ports" tab and open the URL for port 4200.
+
+<Warning>
+Please note that each time the Codespaces environment is restarted, you need to modify the port's visibility to public.
+</Warning>

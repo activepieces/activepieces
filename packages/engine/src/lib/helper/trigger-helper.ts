@@ -1,6 +1,6 @@
-import { pieces, Store } from "@activepieces/pieces";
+import { pieces } from "@activepieces/pieces-apps";
 import { ExecuteTriggerOperation, ExecutionState, PieceTrigger, TriggerHookType } from "@activepieces/shared";
-import { createContextStore, storageService } from "../services/storage.service";
+import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 
 export const triggerHelper = {
@@ -15,7 +15,7 @@ export const triggerHelper = {
     executionState.insertConfigs(params.collectionVersion);
     const resolvedInput = await variableService.resolve(flowTrigger.settings.input, executionState);
 
-    let context = {
+    const context = {
       store: createContextStore(params.flowVersion.flowId),
       webhookUrl: params.webhookUrl,
       propsValue: resolvedInput,
@@ -27,7 +27,8 @@ export const triggerHelper = {
       case TriggerHookType.ON_ENABLE:
         return trigger.onEnable(context);
       case TriggerHookType.RUN:
-        return trigger.run(context);
+        // TODO: fix types to remove use of any
+        return trigger.run(context as any);
     }
   },
 }

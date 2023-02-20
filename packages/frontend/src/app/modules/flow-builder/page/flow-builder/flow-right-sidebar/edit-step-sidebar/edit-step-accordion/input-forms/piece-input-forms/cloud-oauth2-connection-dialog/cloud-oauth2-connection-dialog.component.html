@@ -1,49 +1,73 @@
-  <app-dialog-title-template>
-    <ng-container *ngIf="!connectionToUpdate; else editConnectionHeader">New Connection</ng-container>
-    <ng-template #editConnectionHeader>Edit {{connectionToUpdate!.name}}</ng-template>
-  </app-dialog-title-template>
+<app-dialog-title-template>
+  <ng-container *ngIf="!connectionToUpdate; else editConnectionHeader">New Connection</ng-container>
+  <ng-template #editConnectionHeader>Edit {{connectionToUpdate!.name}}</ng-template>
+</app-dialog-title-template>
 
-  <mat-dialog-content>
+<mat-dialog-content>
 
-    <form class="ap-flex ap-flex-col ap-gap-2 ap-w-[430px]" [formGroup]="settingsForm" (submit)="submit()">
-      <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label>Name</mat-label>
-        <input [matTooltip]="keyTooltip" formControlName="name" matInput type="text" />
-        <mat-error *ngIf="settingsForm.controls.name.invalid">
-          <ng-container *ngIf="settingsForm.controls.name.getError('required'); else patternErrorOrAlreadyUsed">
-            Name is required
+  <form class="ap-flex ap-flex-col ap-gap-2 ap-w-[430px]" [formGroup]="settingsForm" (submit)="submit()">
+    <mat-form-field class="ap-w-full" appearance="outline">
+      <mat-label>Name</mat-label>
+      <input [matTooltip]="keyTooltip" formControlName="name" matInput type="text" />
+      <mat-error *ngIf="settingsForm.controls.name.invalid">
+        <ng-container *ngIf="settingsForm.controls.name.getError('required'); else patternErrorOrAlreadyUsed">
+          Name is required
+        </ng-container>
+        <ng-template #patternErrorOrAlreadyUsed>
+          <ng-container *ngIf="settingsForm.controls.name.getError('pattern')">
+            Name can only contain letters, numbers and underscores
           </ng-container>
-          <ng-template #patternErrorOrAlreadyUsed>
-            <ng-container *ngIf="settingsForm.controls.name.getError('requiredPattern');">
-              Name can only contain letters, numbers and underscores
-            </ng-container>
-            <ng-container *ngIf="settingsForm.controls.name.getError('nameUsed');">
-              Name is already used
-            </ng-container>
-          </ng-template></mat-error>
-      </mat-form-field>
-      <div>
-        <app-o-auth2-cloud-connect-control [cloudConnectionPopupSettings]="cloudConnectionPopupSettings"
-          formControlName="value"></app-o-auth2-cloud-connect-control>
-        <p @fadeInUp class="ap-typography-caption ap-text-danger"
-          *ngIf="settingsForm.controls.value.invalid && settingsForm.controls.value.touched">
-          You have to connect an account to continue
-        </p>
-      </div>
-    </form>
-    <a class="ap-cursor-pointer ap-mt-2" *ngIf="!connectionToUpdate" (click)="useOwnCred()">I would like to use my own
-      app credentials </a>
-  </mat-dialog-content>
-
-  <mat-dialog-actions align="end">
-    <div class="ap-flex ap-gap-2.5">
-      <app-button btnColor="basic" mat-dialog-close btnSize="default">
-        Cancel
-      </app-button>
-      <app-button cdkFocusInitial btnSize="default" (click)="submit()" btnColor="primary" type="submit"
-        [loading]="loading">
-        Save
-      </app-button>
+          <ng-container *ngIf="settingsForm.controls.name.getError('nameUsed');">
+            Name is already used
+          </ng-container>
+        </ng-template></mat-error>
+    </mat-form-field>
+    <div *ngIf="pieceAuthConfig.oAuthProps" [formGroup]="settingsForm.controls.props">
+      <ng-container *ngFor="let prop of pieceAuthConfig.oAuthProps |keyvalue">
+        <mat-form-field *ngIf="prop.value.type !== PropertyType.STATIC_DROPDOWN" class="ap-w-full" appearance="outline">
+          <mat-label>{{prop.value.displayName}}</mat-label>
+          <input [matTooltip]="prop.value.description" [formControlName]="prop.key" matInput type="text" />
+          <mat-error *ngIf="settingsForm.controls.props.controls[prop.key]!.invalid">
+            {{prop.value.displayName}} is required</mat-error>
+        </mat-form-field>
+        <ng-container *ngIf="prop.value.type === PropertyType.STATIC_DROPDOWN">
+          <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label> {{prop.value.displayName}}</mat-label>
+            <mat-select [formControlName]="prop.key" [matTooltip]="prop.value.description"
+              [compareWith]="dropdownCompareWithFunction">
+              <mat-option *ngFor="let opt of prop.value.options!.options" [value]="opt.value">
+                {{opt.label}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="settingsForm.controls.props.controls[prop.key]!.invalid">
+              {{prop.value.displayName}} is required
+            </mat-error>
+          </mat-form-field>
+        </ng-container>
+      </ng-container>
     </div>
-  </mat-dialog-actions>
-  <ng-container *ngIf="upsert$ |async"></ng-container>
+    <div>
+      <app-o-auth2-cloud-connect-control [cloudConnectionPopupSettings]="cloudConnectionPopupSettings"
+        formControlName="value"></app-o-auth2-cloud-connect-control>
+      <p @fadeInUp class="ap-typography-caption ap-text-danger"
+        *ngIf="settingsForm.controls.value.invalid && settingsForm.controls.value.touched">
+        You have to connect an account to continue
+      </p>
+    </div>
+  </form>
+  <a class="ap-cursor-pointer ap-mt-2" *ngIf="!connectionToUpdate" (click)="useOwnCred()">I would like to use my own
+    app credentials </a>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <app-button btnColor="basic" mat-dialog-close btnSize="default">
+      Cancel
+    </app-button>
+    <app-button cdkFocusInitial btnSize="default" (click)="submit()" btnColor="primary" type="submit"
+      [loading]="loading">
+      Save
+    </app-button>
+  </div>
+</mat-dialog-actions>
+<ng-container *ngIf="upsert$ |async"></ng-container>

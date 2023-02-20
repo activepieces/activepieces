@@ -20,7 +20,6 @@ import { Component, Input, OnInit } from '@angular/core';
 
 import { ComponentItemDetails } from './step-type-item/component-item-details';
 import {
-  StoreOperation,
   Trigger,
   ActionType,
   TriggerType,
@@ -60,7 +59,7 @@ export class StepTypeSidebarComponent implements OnInit {
   flowTypeSelected$: Observable<Flow | undefined>;
   flowItemDetailsLoaded$: Observable<boolean>;
   triggersDetails$: Observable<FlowItemDetails[]>;
-  constructor(private store: Store, private codeService: CodeService) {}
+  constructor(private store: Store, private codeService: CodeService) { }
 
   ngOnInit(): void {
     this.flowItemDetailsLoaded$ = this.store
@@ -76,11 +75,11 @@ export class StepTypeSidebarComponent implements OnInit {
       : this.store.select(BuilderSelectors.selectCoreFlowItemsDetails);
     const connectorComponentsItemsDetails$ = this._showTriggers
       ? this.store.select(
-          BuilderSelectors.selectFlowItemDetailsForConnectorComponentsTriggers
-        )
+        BuilderSelectors.selectFlowItemDetailsForConnectorComponentsTriggers
+      )
       : this.store.select(
-          BuilderSelectors.selectFlowItemDetailsForConnectorComponents
-        );
+        BuilderSelectors.selectFlowItemDetailsForConnectorComponents
+      );
 
     const allItemDetails$ = forkJoin({
       apps: connectorComponentsItemsDetails$.pipe(take(1)),
@@ -93,19 +92,19 @@ export class StepTypeSidebarComponent implements OnInit {
     this.tabsAndTheirLists.push({
       displayName: 'All',
       list$: this.applySearchToObservable(allItemDetails$),
-      emptyListText: 'Please adjust your search',
+      emptyListText: 'Oops! We didn\'t find any results.',
     });
 
     this.tabsAndTheirLists.push({
       displayName: 'Core',
       list$: this.applySearchToObservable(coreItemsDetails$),
-      emptyListText: 'Please adjust your search',
+      emptyListText: 'Oops! We didn\'t find any results.',
     });
 
     this.tabsAndTheirLists.push({
       displayName: this._showTriggers ? 'App Events' : 'App Actions',
       list$: this.applySearchToObservable(connectorComponentsItemsDetails$),
-      emptyListText: 'Please adjust your search',
+      emptyListText: 'Oops! We didn\'t find any results.',
     });
   }
 
@@ -153,7 +152,7 @@ export class StepTypeSidebarComponent implements OnInit {
   }
 
   private replaceTrigger(triggerDetails: FlowItemDetails) {
-    let base = {
+    const base = {
       name: 'trigger',
       nextAction: undefined,
       displayName: getDisplayNameForTrigger(triggerDetails.type as TriggerType),
@@ -212,7 +211,7 @@ export class StepTypeSidebarComponent implements OnInit {
     actionType: ActionType,
     flowItemDetails: FlowItemDetails
   ): AddActionRequest {
-    let baseProps = {
+    const baseProps = {
       name: FlowStructureUtil.findAvailableName(flowVersion, 'step'),
       displayName: getDefaultDisplayNameForPiece(
         flowItemDetails.type as ActionType,
@@ -244,20 +243,7 @@ export class StepTypeSidebarComponent implements OnInit {
             ...baseProps,
             type: ActionType.LOOP_ON_ITEMS,
             settings: {
-              items: '',
-            },
-          },
-        };
-      }
-      case ActionType.STORAGE: {
-        return {
-          parentAction: parentAction,
-          action: {
-            ...baseProps,
-            type: ActionType.STORAGE,
-            settings: {
-              operation: StoreOperation.GET,
-              key: '',
+              items: [],
             },
           },
         };
@@ -273,6 +259,9 @@ export class StepTypeSidebarComponent implements OnInit {
               pieceName: componentDetails.extra!.appName,
               actionName: undefined,
               input: {},
+              inputUiInfo: {
+                customizedInputs: {}
+              }
             },
           },
         };

@@ -6,12 +6,14 @@ import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../store/project/project.selector';
 import { ProjectActions } from '../store/project/project.action';
 import { Project } from '@activepieces/shared';
+import { Router } from '@angular/router';
+import { AuthenticationService } from './authentication.service';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class ProjectService {
-	constructor(private http: HttpClient, private store: Store) {}
+	constructor(private http: HttpClient, private store: Store, private router: Router, private authenticationService: AuthenticationService) { }
 
 	selectedProjectAndTakeOne(): Observable<Project> {
 		return this.store.select(ProjectSelectors.selectProject).pipe(
@@ -24,6 +26,12 @@ export class ProjectService {
 					}),
 					map(projects => projects[0])
 				);
+			}),
+			tap((project) => {
+				if (!project) {
+					this.router.navigate(['sign-in']);
+					this.authenticationService.logout();
+				}
 			})
 		);
 	}

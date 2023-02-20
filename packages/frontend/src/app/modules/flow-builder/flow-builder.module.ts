@@ -43,13 +43,11 @@ import { TestFlowModalComponent } from './components/test-flow-modal/test-flow-m
 import { FlowLeftSidebarComponent } from './page/flow-builder/flow-left-sidebar/flow-left-sidebar.component';
 import { TestRunBarComponent } from './page/flow-builder/test-run-bar/test-run-bar.component';
 import { SidebarHeaderComponent } from './components/sidebar-header/sidebar-header.component';
-import { CollectionVersionSidebarComponent } from './page/flow-builder/flow-right-sidebar/collection-version-sidebar/collection-version-sidebar.component';
 import { flowItemsDetailsReducer } from './store/builder/flow-item-details/flow-items-details.reducer';
 import { FlowItemsDetailsEffects } from './store/builder/flow-item-details/flow-items-details.effects';
 import { EditStepAccordionComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/edit-step-accodion.component';
 import { DescribeFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/describe-form/describe-form.component';
 import { CodeStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/code-step-input-form/code-step-input-form.component';
-import { StorageStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/storage-step-input-form/storage-step-input-form.component';
 import { LoopStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/loop-step-input-form/loop-step-input-form.component';
 import { ScheduleTriggerInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/schedule-trigger-input-form/schedule-trigger-input-form.component';
 import { ConfigCardComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/config-card/config-card.component';
@@ -70,6 +68,9 @@ import { ToggleInstanceStateComponent } from './page/flow-builder/flow-builder-h
 import { CloudOAuth2ConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
 import { appConnectionsReducer } from './store/app-connections/app-connections.reducer';
 import { SecretTextConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
+import { BasicAuthConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/basic-auth-connection-dialog/basic-auth-connection-dialog.component';
+import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedback/feedback.component';
+
 @NgModule({
   imports: [
     CommonModule,
@@ -122,7 +123,6 @@ import { SecretTextConnectionDialogComponent } from './page/flow-builder/flow-ri
     RunDetailsComponent,
     TestRunBarComponent,
     SidebarHeaderComponent,
-    CollectionVersionSidebarComponent,
     NewEditPieceSidebarComponent,
     StepTypItemComponent,
     StepTypeListComponent,
@@ -137,7 +137,6 @@ import { SecretTextConnectionDialogComponent } from './page/flow-builder/flow-ri
     EditStepAccordionComponent,
     DescribeFormComponent,
     LoopStepInputFormComponent,
-    StorageStepInputFormComponent,
     CodeStepInputFormComponent,
     ScheduleTriggerInputFormComponent,
     ConfigCardComponent,
@@ -152,8 +151,10 @@ import { SecretTextConnectionDialogComponent } from './page/flow-builder/flow-ri
     ToggleInstanceStateComponent,
     CloudOAuth2ConnectionDialogComponent,
     SecretTextConnectionDialogComponent,
+    BasicAuthConnectionDialogComponent,
+    FeedbackComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [FlowBuilderHeaderComponent],
 })
-export class FlowBuilderModule {}
+export class FlowBuilderModule { }

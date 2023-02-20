@@ -1,22 +1,23 @@
-import { apId, AppConnection, AppConnectionId, AppConnectionType, BaseOAuth2ConnectionValue, CloudOAuth2ConnectionValue, Cursor, OAuth2ConnectionValueWithApp, ProjectId, RefreshTokenFromCloudRequest, SeekPage, UpsertConnectionRequest } from "@activepieces/shared";
+import { apId, AppConnection, AppConnectionId, AppConnectionStatus, AppConnectionType, BaseOAuth2ConnectionValue, CloudOAuth2ConnectionValue, Cursor, OAuth2ConnectionValueWithApp, ProjectId, RefreshTokenFromCloudRequest, SeekPage, UpsertConnectionRequest } from "@activepieces/shared";
 import { databaseConnection } from "../database/database-connection";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { AppConnectionEntity } from "./app-connection.entity";
 import axios from "axios";
 import { createRedisLock } from "../database/redis-connection";
+import { decryptObject, encryptObject } from "../helper/encryption";
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 
 export const appConnectionService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertConnectionRequest }): Promise<AppConnection> {
-        await appConnectionRepo.upsert({ ...request, id: apId(), projectId: projectId }, ["name", "projectId"]);
+        await appConnectionRepo.upsert({ ...request, id: apId(), projectId: projectId, value: encryptObject(request.value) }, ["name", "projectId"]);
         return appConnectionRepo.findOneByOrFail({
             projectId: projectId,
             name: request.name
         })
     },
-    async getOne({projectId, name}: {projectId: ProjectId, name: string}): Promise<AppConnection | null> {
+    async getOne({ projectId, name }: { projectId: ProjectId, name: string }): Promise<AppConnection | null> {
         // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
         // which could result in the wrong request saving incorrect data.
         const refreshLock = await createRedisLock(`${projectId}_${name}`);
@@ -27,10 +28,18 @@ export const appConnectionService = {
         if (appConnection === null) {
             return null;
         }
-        const refreshedAppConnection = await refresh(appConnection);
-        await appConnectionRepo.update(refreshedAppConnection.id, refreshedAppConnection);
-        refreshLock.release();
-        return refreshedAppConnection;
+        try {
+            appConnection.value = decryptObject(appConnection.value);
+            const refreshedAppConnection = await refresh(appConnection);
+            await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) });
+            refreshedAppConnection.status = getStatus(refreshedAppConnection);
+            refreshLock.release();
+            return refreshedAppConnection;
+        }
+        catch (e) {
+            appConnection.status = AppConnectionStatus.ERROR;
+        }
+        return appConnection;
     },
     async delete({ projectId, id }: { projectId: ProjectId, id: AppConnectionId }): Promise<void> {
         await appConnectionRepo.delete({ id: id, projectId: projectId });
@@ -52,38 +61,42 @@ export const appConnectionService = {
             queryBuilder = queryBuilder.where({ appName });
         }
         const { data, cursor } = await paginator.paginate(queryBuilder);
-        return paginationHelper.createPage<AppConnection>(data, cursor);
+        const promises: Promise<AppConnection>[] = [];
+        data.forEach(connection => {
+            try {
+                connection.value = decryptObject(connection.value);
+                connection.status = getStatus(connection);
+                if (connection.status === AppConnectionStatus.ACTIVE) {
+                    promises.push(new Promise((resolve) => {
+                        return resolve(connection);
+                    }));
+                }
+                else {
+                    promises.push(this.getOne({ projectId: connection.projectId, name: connection.name }));
+                }
+            }
+            catch (e) {
+                connection.status = AppConnectionStatus.ERROR;
+                promises.push(new Promise((resolve) => {
+                    return resolve(connection);
+                }));
+            }
+        });
+        const refreshConnections = await Promise.all(promises);
+        return paginationHelper.createPage<AppConnection>(refreshConnections, cursor);
     }
 };
 
 async function refresh(connection: AppConnection): Promise<AppConnection> {
     switch (connection.value.type) {
-        case AppConnectionType.CLOUD_OAUTH2:
-            connection.value = await refreshCloud(connection.appName, connection.value);
-            break;
-        case AppConnectionType.OAUTH2:
-            connection.value = await refreshWithCredentials(connection.value);
-            break;
-        case AppConnectionType.CUSTOM:
-            for (const key in Object.keys(connection.value)) {
-                let connectionValue = connection.value[key];
-                if (typeof connectionValue === 'object' && connectionValue.hasOwnProperty('type')) {
-                    const type: AppConnectionType = connectionValue.type;
-                    switch (type) {
-                        case AppConnectionType.CLOUD_OAUTH2:
-                            connectionValue = await refreshCloud(connection.appName, connectionValue as CloudOAuth2ConnectionValue);
-                            break;
-                        case AppConnectionType.OAUTH2:
-                            connectionValue = await refreshWithCredentials(connectionValue as OAuth2ConnectionValueWithApp);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-            break;
-        default:
-            break;
+    case AppConnectionType.CLOUD_OAUTH2:
+        connection.value = await refreshCloud(connection.appName, connection.value);
+        break;
+    case AppConnectionType.OAUTH2:
+        connection.value = await refreshWithCredentials(connection.value);
+        break;
+    default:
+        break;
     }
     return connection;
 }
@@ -97,18 +110,21 @@ function isExpired(connection: BaseOAuth2ConnectionValue) {
         return false;
     }
 
-    return (secondsSinceEpoch >= connection.claimed_at + connection.expires_in + REFRESH_THRESHOLD)
+    return (secondsSinceEpoch + REFRESH_THRESHOLD >= connection.claimed_at + connection.expires_in)
 }
 
 async function refreshCloud(appName: string, connectionValue: CloudOAuth2ConnectionValue): Promise<CloudOAuth2ConnectionValue> {
     if (!isExpired(connectionValue)) {
         return connectionValue;
     }
+
+    const requestBody: RefreshTokenFromCloudRequest = {
+        refreshToken: connectionValue.refresh_token,
+        pieceName: appName,
+        tokenUrl: connectionValue.token_url,
+    };
     const response = (
-        await axios.post("https://secrets.activepieces.com/refresh", {
-            refreshToken: connectionValue.refresh_token,
-            pieceName: appName,
-        } as RefreshTokenFromCloudRequest)
+        await axios.post("https://secrets.activepieces.com/refresh", requestBody)
     ).data;;
 
     return {
@@ -121,6 +137,7 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
 async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithApp): Promise<OAuth2ConnectionValueWithApp> {
     if (!isExpired(appConnection)) {
         return appConnection;
+
     }
     const settings = appConnection;
     const response = (
@@ -162,4 +179,18 @@ function deleteProps(obj: Record<string, any>, prop: string[]) {
         delete obj[p];
     }
 }
-``
+
+function getStatus(connection: AppConnection): AppConnectionStatus {
+    const connectionStatus = AppConnectionStatus.ACTIVE;
+    switch (connection.value.type) {
+    case AppConnectionType.CLOUD_OAUTH2:
+    case AppConnectionType.OAUTH2:
+        if (isExpired(connection.value)) {
+            return AppConnectionStatus.EXPIRED;
+        }
+        break;
+    default:
+        break;
+    }
+    return connectionStatus;
+}

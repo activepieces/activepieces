@@ -1,4 +1,4 @@
-import { StoreOperation, TriggerType, ActionType } from '@activepieces/shared';
+import { TriggerType, ActionType } from '@activepieces/shared';
 declare type ConfigsAndTheirValues = { [key: string]: any };
 interface InputFormsSchemaBase {
 	type?: ActionType | TriggerType;
@@ -13,12 +13,6 @@ export interface CodeStepInputFormSchema extends InputFormsSchemaBase {
 	input: Record<string, unknown>;
 }
 
-export interface StorageStepInputFormSchema extends InputFormsSchemaBase {
-	operation: StoreOperation;
-	key: string;
-	value: string;
-}
-
 export interface ScheduledTriggerInputFormSchema extends InputFormsSchemaBase {
 	cronExpression: string;
 }
@@ -27,23 +21,21 @@ export interface ScheduledTriggerInputFormSchema extends InputFormsSchemaBase {
 export interface ComponentActionInputFormSchema extends InputFormsSchemaBase {
 	pieceName: string;
 	actionName: string;
-	input: ConfigsAndTheirValues | CustomRequestForComponentFormSchema;
+	input: ConfigsAndTheirValues;
+	inputUiInfo:
+	{
+		customizedInputs: Record<string, boolean>
+	}
 }
 export interface ComponentTriggerInputFormSchema extends InputFormsSchemaBase {
 	pieceName: string;
 	triggerName: string;
 	input: ConfigsAndTheirValues;
 }
-interface CustomRequestForComponentFormSchema {
-	endpoint: string;
-	parameters: { [key: string]: any };
-	headers: { [key: string]: any };
-	body: { [key: string]: any };
-}
+
 
 export type InputFormsSchema =
 	| LoopStepInputFormSchema
-	| StorageStepInputFormSchema
 	| CodeStepInputFormSchema
 	| ScheduledTriggerInputFormSchema
 	| ComponentActionInputFormSchema;

@@ -6,10 +6,25 @@ description: ""
 To get the full benefit, it is recommended to read the [quickstart guide](quickstart) first.
 
 ## Triggers:
-- [New repository event on Github](https://github.com/activepieces/activepieces/tree/main/packages/pieces/src/lib/apps/discord)
+
+**Webhooks:**
+- [New Form Submission on Typeform](https://github.com/activepieces/activepieces/blob/main/packages/pieces/apps/src/lib/typeform/trigger/new-submission.ts)
+
+**Polling:**
+- [New Completed Task On Todoist](https://github.com/activepieces/activepieces/blob/main/packages/pieces/apps/src/lib/todoist/triggers/task-completed-trigger.ts)
 
 ## Actions:
+- [Send a message On Discord](https://github.com/activepieces/activepieces/blob/main/packages/pieces/apps/src/lib/discord/actions/send-message-webhook.ts)
+- [Send an mail On Gmail](https://github.com/activepieces/activepieces/blob/main/packages/pieces/apps/src/lib/gmail/actions/send-email-action.ts)
 
-- [Send a message on Discord](https://github.com/activepieces/activepieces/tree/main/packages/pieces/src/lib/apps/discord)
-- [Send a message on Slack](https://github.com/activepieces/activepieces/tree/main/packages/pieces/src/lib/apps/slack)
-- [Send an mail - Gmail](https://github.com/activepieces/activepieces/tree/main/packages/pieces/src/lib/apps/gmail)
+## Authentication
+
+**OAuth2:**
+- [Slack](https://github.com/activepieces/activepieces/tree/main/packages/pieces/apps/src/lib/slack)
+- [Gmail](https://github.com/activepieces/activepieces/tree/main/packages/pieces/apps/src/lib/gmail)
+
+**API Key:**
+- [Sendgrid](https://github.com/activepieces/activepieces/tree/main/packages/pieces/apps/src/lib/sendgrid)
+
+**Basic Authentication:**
+- [Twilio](https://github.com/activepieces/activepieces/tree/main/packages/pieces/apps/src/lib/twilio)

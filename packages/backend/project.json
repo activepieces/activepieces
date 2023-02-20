@@ -43,14 +43,13 @@
         "commands": [
           "nx build-watch backend",
           "nx serve engine"
-        ],
-        "envFile": "packages/backend/.env"
+        ]
       }
     },
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nodemon -e ts,js,mjs,json -x 'nx bundle engine' --watch packages/engine/src --watch packages/pieces/src & nx build-watch backend"
+        "command": "nodemon -e ts,js,mjs,json -x 'nx bundle engine' --watch packages/engine/src --watch packages/pieces/framework/src & nx build-watch backend"
       }
     },
     "lint": {
@@ -66,6 +65,12 @@
       "options": {
         "jestConfig": "packages/backend/jest.config.ts",
         "passWithNoTests": true
+      }
+    },
+    "db": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node -r tsconfig-paths/register -P packages/backend/tsconfig.app.json ./node_modules/typeorm/cli.js"
       }
     }
   },

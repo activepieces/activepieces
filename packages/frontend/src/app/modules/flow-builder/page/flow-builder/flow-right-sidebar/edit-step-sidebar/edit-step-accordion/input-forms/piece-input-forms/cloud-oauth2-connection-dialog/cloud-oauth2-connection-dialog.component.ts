@@ -3,6 +3,7 @@ import {
   FormBuilder,
   FormControl,
   FormGroup,
+  UntypedFormGroup,
   Validators,
 } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -14,6 +15,7 @@ import {
   UpsertCloudOAuth2Request,
   CloudOAuth2ConnectionValue,
   CloudAuth2Connection,
+  PropertyType,
 } from '@activepieces/shared';
 import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
@@ -22,11 +24,13 @@ import { AppConnectionsService } from 'packages/frontend/src/app/modules/common/
 import { ConnectionValidator } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/validators/connectionNameValidator';
 import { appConnectionsActions } from 'packages/frontend/src/app/modules/flow-builder/store/app-connections/app-connections.action';
 import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
+import deepEqual from 'deep-equal';
 
 interface AuthConfigSettings {
   appName: FormControl<string | null>;
   name: FormControl<string>;
   value: FormControl<CloudOAuth2ConnectionValue>;
+  props: UntypedFormGroup;
 }
 export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
 @Component({
@@ -39,7 +43,8 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   @Input() pieceAuthConfig: PieceConfig;
   @Input() pieceName: string;
   @Input() connectionToUpdate: CloudAuth2Connection | undefined;
-  cloudConnectionPopupSettings: CloudConnectionPopupSettings;
+  _cloudConnectionPopupSettings: CloudConnectionPopupSettings;
+  PropertyType = PropertyType;
   settingsForm: FormGroup<AuthConfigSettings>;
   loading = false;
   upsert$: Observable<AppConnection | null>;
@@ -62,16 +67,19 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     this.pieceName = dialogData.pieceName;
     this.pieceAuthConfig = dialogData.pieceAuthConfig;
     this.connectionToUpdate = dialogData.connectionToUpdate;
-    this.cloudConnectionPopupSettings = {
-      authUrl: this.pieceAuthConfig.authUrl!,
+    debugger;
+    this._cloudConnectionPopupSettings = {
+      auth_url: this.pieceAuthConfig.authUrl!,
       scope: this.pieceAuthConfig.scope!.join(' '),
       extraParams: this.pieceAuthConfig.extra!,
       pieceName: this.pieceName,
       clientId: dialogData.clientId,
+
     };
   }
 
   ngOnInit(): void {
+    const propsControls = this.createPropsFormGroup();
     this.settingsForm = this.fb.group({
       appName: new FormControl<string | null>(this.pieceName, {
         nonNullable: false,
@@ -90,11 +98,15 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
         ],
       }),
       value: new FormControl(undefined as any, Validators.required),
+      props: this.fb.group(propsControls)
     });
     if (this.connectionToUpdate) {
       this.settingsForm.controls.value.setValue(this.connectionToUpdate.value);
       this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
       this.settingsForm.controls.name.disable();
+      if (this.connectionToUpdate.value.props) {
+        this.settingsForm.controls.props.setValue(this.connectionToUpdate.value.props);
+      }
     }
     this.settingsForm.controls.name.markAllAsTouched();
   }
@@ -110,17 +122,30 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     const connectionName = this.connectionToUpdate
       ? this.connectionToUpdate.name
       : this.settingsForm.controls.name.value;
-    const settingsFormValue = { ...this.settingsForm.getRawValue() };
+    const settingsFormValue = this.getOAuth2Settings();
+    debugger;
     const connectionValue = settingsFormValue.value;
-
     const newConnection: UpsertCloudOAuth2Request = {
       appName: this.pieceName,
-      value: { ...connectionValue, scope: this.cloudConnectionPopupSettings.scope },
+      value: {
+        token_url: settingsFormValue['token_url'],
+        ...connectionValue, scope: this._cloudConnectionPopupSettings.scope,
+        props: this.pieceAuthConfig.oAuthProps ? this.settingsForm.controls.props.value : undefined
+      },
       name: connectionName,
+
     };
     return newConnection;
   }
-
+  createPropsFormGroup() {
+    const controls: Record<string, FormControl> = {};
+    if (this.pieceAuthConfig.oAuthProps) {
+      Object.keys(this.pieceAuthConfig.oAuthProps).forEach(key => {
+        controls[key] = new FormControl('', { validators: [Validators.required] })
+      })
+    }
+    return controls;
+  }
   saveConnection(connection: UpsertCloudOAuth2Request): void {
     this.upsert$ = this.appConnectionsService.upsert(connection).pipe(
       catchError((err) => {
@@ -158,7 +183,31 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
         return prev && next;
       }, true);
   }
+
   useOwnCred() {
     this.dialogRef.close(USE_MY_OWN_CREDENTIALS);
   }
+  getOAuth2Settings() {
+    const formValue = this.settingsForm.getRawValue();
+    if (this.pieceAuthConfig.oAuthProps) {
+      let authUrl = this.pieceAuthConfig.authUrl!;
+      let tokenUrl = this.pieceAuthConfig.tokenUrl!;
+      Object.keys(this.pieceAuthConfig.oAuthProps).forEach(key => {
+        authUrl = authUrl.replaceAll(`{${key}}`, this.settingsForm.controls.props.value[key]);
+        tokenUrl = tokenUrl.replaceAll(`{${key}}`, this.settingsForm.controls.props.value[key]);
+      })
+      return { ...formValue, auth_url: authUrl, token_url: tokenUrl }
+    }
+    return formValue;
+  }
+  get cloudConnectionPopupSettings() {
+    if (this.pieceAuthConfig.oAuthProps && this.getOAuth2Settings()['auth_url']) {
+      this._cloudConnectionPopupSettings.auth_url = this.getOAuth2Settings()['auth_url'];
+      this._cloudConnectionPopupSettings.token_url = this.getOAuth2Settings()['token_url'];
+    }
+    return this._cloudConnectionPopupSettings;
+  }
+  dropdownCompareWithFunction = (opt: any, formControlValue: any) => {
+    return formControlValue && deepEqual(opt, formControlValue);
+  };
 }

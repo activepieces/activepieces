@@ -83,6 +83,106 @@
       "contributions": [
         "projectManagement"
       ]
+    },
+    {
+      "login": "kanarelo",
+      "name": "Mukewa Wekalao",
+      "avatar_url": "https://avatars.githubusercontent.com/u/393261?v=4",
+      "profile": "https://github.com/kanarelo",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "OsamaHaikal",
+      "name": "Osama Abdallah Essa Haikal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/72370395?v=4",
+      "profile": "http://osamahaikal.pythonanywhere.com/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "M-Arman",
+      "name": "Arman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54455592?v=4",
+      "profile": "https://github.com/M-Arman",
+      "contributions": [
+        "security"
+      ]
+    },
+    {
+      "login": "oskarkraemer",
+      "name": "Oskar Krämer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42745862?v=4",
+      "profile": "https://github.com/oskarkraemer",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "tpatel",
+      "name": "Thibaut Patel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/494686?v=4",
+      "profile": "https://thibpat.com",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "Applesaucesomer",
+      "name": "Applesaucesomer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18318905?v=4",
+      "profile": "https://github.com/Applesaucesomer",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "crazyTweek",
+      "name": "crazyTweek",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6828237?v=4",
+      "profile": "https://github.com/crazyTweek",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "m-tabaza",
+      "name": "Muhammad Tabaza",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23503983?v=4",
+      "profile": "https://linkedin.com/in/muhammad-tabaza",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "ShayPunter",
+      "name": "Shay Punter",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18310437?v=4",
+      "profile": "https://shaypunter.co.uk",
+      "contributions": [
+        "doc",
+        "plugin"
+      ]
+    },
+    {
+      "login": "abaza738",
+      "name": "abaza738",
+      "avatar_url": "https://avatars.githubusercontent.com/u/50132270?v=4",
+      "profile": "https://github.com/abaza738",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "jonaboe",
+      "name": "Jona Boeddinghaus",
+      "avatar_url": "https://avatars.githubusercontent.com/u/51358680?v=4",
+      "profile": "https://github.com/jonaboe",
+      "contributions": [
+        "plugin"
+      ]
     }
   ]
 }
