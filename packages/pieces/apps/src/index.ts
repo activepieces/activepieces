@@ -9,6 +9,7 @@ import { clickup } from './lib/clickup';
 import { discord } from './lib/discord';
 import { drip } from './lib/drip';
 import { dropbox } from './lib/dropbox';
+import { figma } from './lib/figma';
 import { github } from './lib/github';
 import { gmail } from './lib/gmail';
 import { googleCalendar } from './lib/google-calendar';
@@ -29,6 +30,8 @@ import { todoist } from './lib/todoist';
 import { twilio } from './lib/twilio';
 import { typeform } from './lib/typeform';
 import { zoom } from './lib/zoom';
+import { storage } from './lib/store';
+import { calcom } from './lib/cal-com';
 
 export const pieces: Piece[] = [
     airtable,
@@ -40,6 +43,7 @@ export const pieces: Piece[] = [
     discord,
     drip,
     dropbox,
+    figma,
     github,
     gmail,
     googleCalendar,
@@ -61,6 +65,8 @@ export const pieces: Piece[] = [
     twilio,
     typeform,
     zoom,
+    storage,
+    calcom
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {

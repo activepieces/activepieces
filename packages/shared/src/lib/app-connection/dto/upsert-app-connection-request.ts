@@ -14,6 +14,7 @@ const OAuth2ConnectionValue = {
     access_token: Type.String({}),
     scope: Type.String(),
     data: Type.Any({}),
+    props: Type.Optional(Type.Record(Type.String(), Type.Any()))
 }
 
 export const UpsertCloudOAuth2Request = Type.Object({
@@ -21,6 +22,7 @@ export const UpsertCloudOAuth2Request = Type.Object({
     value: Type.Object({
         ...OAuth2ConnectionValue,
         type: Type.Literal(AppConnectionType.CLOUD_OAUTH2),
+        token_url: Type.Optional(Type.String({})),
     })
 });
 

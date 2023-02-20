@@ -21,11 +21,12 @@ export class OAuth2ConnectControlComponent implements ControlValueAccessor {
 	@Input() configSettings: OAuth2AppDetails;
 	@Input() settingsValid: boolean;
 	responseData: any = null;
+	popUpError = false;
 	isDisabled = false;
 	popupOpened$: Observable<any>;
-	onChange = (newValue: any) => {};
-	onTouched = () => {};
-	constructor(private oauth2Service: Oauth2Service) {}
+	onChange = (newValue: any) => { };
+	onTouched = () => { };
+	constructor(private oauth2Service: Oauth2Service) { }
 
 	setDisabledState?(isDisabled: boolean): void {
 		this.isDisabled = isDisabled;
@@ -40,16 +41,16 @@ export class OAuth2ConnectControlComponent implements ControlValueAccessor {
 	registerOnTouched(fn: any): void {
 		this.onTouched = fn;
 	}
-	popUpError = false;
+
 
 	openPopup(): void {
-	
+
 		const configSettings = this.configSettings as (OAuth2AppDetails & { extraParams: Record<string, unknown>, auth_url: string, scope: string });
 		this.popupOpened$ = this.oauth2Service.openPopup(configSettings).pipe(
 			tap(value => {
-				this.popUpError=false;
+				this.popUpError = false;
 				this.responseData = value;
-				this.onChange({...value, type:AppConnectionType.OAUTH2});
+				this.onChange({ ...value, type: AppConnectionType.OAUTH2 });
 			}),
 			catchError(err => {
 				this.responseData = null;

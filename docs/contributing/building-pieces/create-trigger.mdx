@@ -1,0 +1,96 @@
+---
+title: "Create Triggers"
+description: ""
+---
+
+This tutorial explains three techniques for creating triggers:
+
+- `Polling`: Periodically call endpoints to check for changes.
+- `Webhooks`: Listen to user events through a single URL.
+- `App Webhooks (Subscriptions)`: Use a developer app (using OAuth2) to receive all authorized user events at a single URL.
+
+# Trigger Structure
+
+```typescript
+export const createNewIssue = createTrigger({
+    name: string, // Unique name across the piece.
+    displayName: string, // Display name on the interface.
+	description: string, // Description for the action
+    triggerType: POLLING | WEBHOOK,
+	
+    props: {}; // Required properties from the user.
+    // Run when the user enable or publish the collection.
+
+	onEnable: (ctx) => {};
+    // Run when the user disable the collection or
+    // the old collection is deleted after new one is published.
+	onDisable: (ctx) => {};
+    
+    // Trigger implementation, It takes context as parameter.
+    // should returns an array of payload, each payload considered
+    // a separate flow run.
+    run: async run(ctx): unknown[] => {}
+})
+```
+
+<Tip>
+It's important to note that the `run` method returns an array. 
+The reason for this is that a single polling can contain multiple triggers, so each item in the array will trigger the flow to run.
+</Tip>
+
+# Techniques
+
+## Polling
+
+The way polling triggers usually work is as follows:
+
+**On Enable:**
+Store the last timestamp or most recent item id using the context store property.
+
+**Run:**
+This method runs every **5 minutes**, fetches the endpoint between a certain timestamp or traverses until it finds the last item id, and returns the new items as an array.
+
+**Testing:**
+You cannot test it with Test Flow, as it uses static sample data provided in the piece. 
+To test the trigger, publish the collection, perform the event, and wait for the run to be invoked (every 5 minutes) on the third party. Then check the flow runs from the main dashboard.
+
+**Examples:**
+- [New Completed Task On Todoist](https://github.com/activepieces/activepieces/blob/main/packages/pieces/apps/src/lib/todoist/triggers/task-completed-trigger.ts)
+
+## Webhooks
+
+The way webhook triggers usually work is as follows:
+
+**On Enable:**
+Use `context.webhookUrl` to perform an HTTP request to register the webhook in a third-party app, and store the webhook Id in the `store`.
+
+**Run:**
+You can find the HTTP body inside `context.payload.body`. If needed, alter the body; otherwise, return an array with a single item `context.payload.body`.
+
+**Disable:**
+Using the `context.store`, fetch the webhook ID from the enable step and delete the webhook on the third-party app.
+
+**Testing:**
+You cannot test it with Test Flow, as it uses static sample data provided in the piece. 
+To test the trigger, publish the collection, perform the event. Then check the flow runs from the main dashboard.
+
+**Examples:**
+- [New Form Submission on Typeform](https://github.com/activepieces/activepieces/blob/main/packages/pieces/apps/src/lib/typeform/trigger/new-submission.ts)
+
+<Warning>
+To make your webhook accessible from the internet, you need to configure the backend URL. Follow these steps:
+
+1. Install ngrok.
+2. Run the command `ngrok http 3000`.
+3. Replace the `AP_BACKEND_URL` environment variable in `packages/backend/.env` with the ngrok URL.
+
+Once you have completed these configurations, you are good to go!
+</Warning>
+
+## App Webhooks (Not Supported)
+
+Certain services, such as `Slack` and `Square`, only support webhooks at the developer app level. 
+This means that all authorized users for the app will be sent to the same endpoint. While this technique will be supported soon, for now, a workaround is to perform polling on the endpoint.
+
+
+
