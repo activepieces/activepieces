@@ -29,15 +29,135 @@ export const createWordpressPost = createAction({
             displayName: 'Date',
             required: false,
         }),
-        tags: Property.Array({
+        tags: Property.MultipleDropdown<string, false>({
             description: 'Post tags',
             displayName: 'Tags',
-            required: false
+            required: false,
+            refreshers: ["connection", "website_url"],
+            options: async (propsValues) => {
+                const connection = propsValues['connection'] as BasicAuthConnectionValue;
+                if (!connection) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please connect your account first'
+                    }
+                }
+                if (!propsValues['website_url']) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please input the correct url'
+                    }
+                }
+                if (!wordpressCommon.urlExists(propsValues['website_url'] as string)) {
+                    return {
+                        disabled: true,
+                        placeholder: 'Incorrect website url',
+                        options: [],
+                    };
+                }
+
+                let pageCursor = 1;
+                const getTagsParams = {
+                    websiteUrl: propsValues['website_url'] as string,
+                    username: connection.username,
+                    password: connection.password,
+                    page: pageCursor
+                };
+                const result: { id: string, name: string }[] = [];
+                let tags = await wordpressCommon.getTags(getTagsParams);
+                if (tags.totalPages === 0) {
+                    result.push(...tags.tags);
+                }
+                while (tags.tags.length > 0 && pageCursor <= tags.totalPages) {
+                    result.push(...tags.tags);
+                    pageCursor++;
+                    tags = await wordpressCommon.getTags(getTagsParams);
+                }
+                if (result.length === 0) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: "Please add tags from your admin dashboard"
+                    }
+                }
+                const options = result.map(res => {
+                    return {
+                        label: res.name,
+                        value: res.id
+                    }
+                });
+                return {
+                    options: options,
+                    disabled: false,
+                }
+            }
         }),
-        categories: Property.Array({
+        categories: Property.MultipleDropdown<string, false>({
             description: 'Post categories',
             displayName: 'Categories',
-            required: false
+            required: false,
+            refreshers: ["connection", "website_url"],
+            options: async (propsValues) => {
+                const connection = propsValues['connection'] as BasicAuthConnectionValue;
+                if (!connection) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please connect your account first'
+                    }
+                }
+                if (!propsValues['website_url']) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please input the correct url'
+                    }
+                }
+                if (!wordpressCommon.urlExists(propsValues['website_url'] as string)) {
+                    return {
+                        disabled: true,
+                        placeholder: 'Incorrect website url',
+                        options: [],
+                    };
+                }
+
+                let pageCursor = 1;
+                const getTagsParams = {
+                    websiteUrl: propsValues['website_url'] as string,
+                    username: connection.username,
+                    password: connection.password,
+                    page: pageCursor
+                };
+                const result: { id: string, name: string }[] = [];
+                let categories = await wordpressCommon.getCategories(getTagsParams);
+                if (categories.totalPages === 0) {
+                    result.push(...categories.categories);
+                }
+                while (categories.categories.length > 0 && pageCursor <= categories.totalPages) {
+                    result.push(...categories.categories);
+                    pageCursor++;
+                    categories = await wordpressCommon.getCategories(getTagsParams);
+                }
+                if (result.length === 0) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: "Please add categoreis from your admin dashboard"
+                    }
+                }
+                const options = result.map(res => {
+                    return {
+                        label: res.name,
+                        value: res.id
+                    }
+                });
+                return {
+                    options: options,
+                    disabled: false,
+                }
+            }
         }),
         featured_media: Property.Dropdown({
             description: 'Choose from one of your uploaded media files',
@@ -149,7 +269,7 @@ export const createWordpressPost = createAction({
             requestBody['comment_status'] = context.propsValue.comment_status ? 'open' : 'closed';
         }
         if (context.propsValue.categories) {
-            requestBody['categories'] = context.propsValue.categories.filter(c => !!c);
+            requestBody['categories'] = context.propsValue.categories;
         }
         if (context.propsValue.slug) {
             requestBody['slug'] = context.propsValue.slug;
@@ -161,13 +281,16 @@ export const createWordpressPost = createAction({
             requestBody['meta'] = context.propsValue.meta;
         }
         if (context.propsValue.tags) {
-            requestBody['tags'] = context.propsValue.tags.filter(t => !!t);
+            requestBody['tags'] = context.propsValue.tags;
         }
         if (context.propsValue.ping_status !== undefined) {
             requestBody['ping_status'] = context.propsValue.ping_status ? 'open' : 'closed';
         }
         if (context.propsValue.status !== undefined) {
             requestBody['status'] = context.propsValue.status;
+        }
+        if (context.propsValue.featured_media !== undefined) {
+            requestBody['featured_media'] = context.propsValue.featured_media;
         }
         requestBody['content'] = context.propsValue.content;
         requestBody['title'] = context.propsValue.title;
@@ -182,6 +305,6 @@ export const createWordpressPost = createAction({
             body: requestBody
         };
         const response = await httpClient.sendRequest<{ id: string, name: string }[]>(request);
-        return await wordpressCommon.getMedia({ websiteUrl: context.propsValue.website_url, page: 1, username: context.propsValue.connection.username, password: context.propsValue.connection.username });
+        return response;
     }
 });

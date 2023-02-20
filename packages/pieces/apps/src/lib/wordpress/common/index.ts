@@ -106,6 +106,40 @@ export const wordpressCommon = {
             totalPages: response.headers && response.headers['X-WP-TotalPages'] ? Number(response.headers['X-WP-TotalPages']) : 0
         };
     },
+    async getTags(params: { websiteUrl: string, username: string, password: string, page: number }) {
+        const request: HttpRequest = {
+            method: HttpMethod.GET,
+            url: `${params.websiteUrl}/wp-json/wp/v2/tags`,
+            authentication: {
+                type: AuthenticationType.BASIC,
+                username: params.username,
+                password: params.password
+            },
+
+        };
+        const response = await httpClient.sendRequest<{ id: string, name: string }[]>(request);
+        return {
+            tags: response.body,
+            totalPages: response.headers && response.headers['X-WP-TotalPages'] ? Number(response.headers['X-WP-TotalPages']) : 0
+        };
+    },
+    async getCategories(params: { websiteUrl: string, username: string, password: string, page: number }) {
+        const request: HttpRequest = {
+            method: HttpMethod.GET,
+            url: `${params.websiteUrl}/wp-json/wp/v2/categories`,
+            authentication: {
+                type: AuthenticationType.BASIC,
+                username: params.username,
+                password: params.password
+            },
+
+        };
+        const response = await httpClient.sendRequest<{ id: string, name: string }[]>(request);
+        return {
+            categories: response.body,
+            totalPages: response.headers && response.headers['X-WP-TotalPages'] ? Number(response.headers['X-WP-TotalPages']) : 0
+        };
+    },
     async urlExists(url: string) {
         try {
             const request: HttpRequest = {
