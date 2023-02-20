@@ -11,7 +11,6 @@ export * from "./lib/app-connection/app-connection";
 export * from "./lib/app-connection/dto/upsert-app-connection-request";
 export * from "./lib/flow-run/execution/execution-output";
 export { RefreshTokenFromCloudRequest } from "./lib/oauth2/dto/refresh-token-from-cloud";
-export { StoreOperation } from "./lib/flows/actions/action";
 export { StepOutputStatus } from "./lib/flow-run/execution/step-output";
 export { ClaimTokenWithSecretRequest } from "./lib/oauth2/dto/claim-token-with-secret";
 export { ClaimTokenFromCloudRequest } from "./lib/oauth2/dto/claim-token-from-cloud";
@@ -26,7 +25,7 @@ export { SignInRequest } from './lib/authentication/dto/sign-in-request';
 export { PrincipalType } from "./lib/authentication/model/principal-type";
 export { Principal } from "./lib/authentication/model/principal";
 export {
-    CodeAction, PieceAction, LoopOnItemsAction, StorageAction,
+    CodeAction, PieceAction, LoopOnItemsAction,
     PieceActionSettings, LoopOnItemsActionSettings, Action, ActionType, CodeActionSettings
 } from './lib/flows/actions/action'
 export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry';

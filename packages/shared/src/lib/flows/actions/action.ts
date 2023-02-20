@@ -2,7 +2,6 @@ import { Type, Static } from '@sinclair/typebox';
 
 export enum ActionType {
   CODE = 'CODE',
-  STORAGE = 'STORAGE',
   PIECE = 'PIECE',
   LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
 }
@@ -61,33 +60,6 @@ export enum StoreOperation {
   GET = 'GET',
 }
 
-export const StorageAction = Type.Union([
-  Type.Object({
-    ...commonActionProps,
-    nextAction: Type.Optional(Type.Any({})),
-    type: Type.Literal(ActionType.STORAGE),
-    settings: Type.Object({
-      operation: Type.Literal(StoreOperation.PUT),
-      key: Type.String({
-        minLength: 1,
-      }),
-      value: Type.Any({}),
-    }),
-  }),
-  Type.Object({
-    ...commonActionProps,
-    type: Type.Literal(ActionType.STORAGE),
-    settings: Type.Object({
-      operation: Type.Literal(StoreOperation.GET),
-      key: Type.String({
-        minLength: 1,
-      }),
-    }),
-  }),
-]);
-
-export type StorageAction = Static<typeof StorageAction>;
-
 // Loop Items
 export type LoopOnItemsActionSettings = {
   items: unknown;
@@ -100,7 +72,8 @@ export const LoopOnItemsAction = Type.Object({
     items: Type.Array(Type.Any({})),
   }),
   firstLoopAction: Type.Optional(Type.Any({})),
-});
+}
+
 
 export type LoopOnItemsAction = Static<typeof LoopOnItemsAction> & {firstLoopAction?: Action};
 
@@ -110,8 +83,7 @@ export type LoopOnItemsAction = Static<typeof LoopOnItemsAction> & {firstLoopAct
 export const Action = Type.Union([
   CodeAction,
   PieceAction,
-  StorageAction,
   LoopOnItemsAction
-]);
+ ]);
 
 export type Action = Static<typeof Action> & {nextAction?: Action};

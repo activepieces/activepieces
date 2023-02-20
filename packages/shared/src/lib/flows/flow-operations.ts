@@ -1,6 +1,7 @@
 import {
     ActionType,
     CodeAction, LoopOnItemsAction, PieceAction, StoreOperation,
+    ActionType, CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings,
 } from "./actions/action";
 import { EmptyTrigger, PieceTrigger, ScheduleTrigger, WebhookTrigger } from "./triggers/trigger";
 import { Static, Type } from "@sinclair/typebox";
@@ -35,21 +36,8 @@ export const DeleteActionRequest = Type.Object({
 
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>;
 
-export const UpdateStorageAction = Type.Object({
-    name: Type.String({}),
-    valid: Type.Boolean({}),
-    displayName: Type.String({}),
-    type: Type.Literal(ActionType.STORAGE),
-    settings: Type.Object({
-        operation: Type.Optional(Type.Enum(StoreOperation)),
-        key: Type.Optional(Type.String({})),
-        value: Type.Optional(Type.Any({})),
-    })
-});
 
-export type UpdateStorageAction = Static<typeof UpdateStorageAction>;
-
-export const UpdateActionRequest = Type.Union([UpdateStorageAction, CodeAction, LoopOnItemsAction, PieceAction]);
+export const UpdateActionRequest = Type.Union([CodeAction, LoopOnItemsAction, PieceAction]);
 export type UpdateActionRequest = Static<typeof UpdateActionRequest>;
 
 export const AddActionRequest = Type.Object({

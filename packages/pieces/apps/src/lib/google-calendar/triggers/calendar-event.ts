@@ -20,9 +20,15 @@ export const calendarEventChanged = createTrigger({
     summary: 'ap-event-test',
     created: "2023-02-03T11:36:36.000Z",
     updated: "2023-02-03T11:45:53.487Z",
+    description: 'Sample description',
     status: 'canceled',
+    creator: {
+      email: 'test@test.com',
+      self: true
+    },
     organizer: {
       email: 'test@test.com',
+      self: true
     },
     start: {
       dateTime: '2023-02-02T22:30:00+03:00',
@@ -32,8 +38,21 @@ export const calendarEventChanged = createTrigger({
       dateTime: '2023-02-02T23:30:00+03:00',
       timeZone: 'Asia/Amman',
     },
+    transparency: 'transparent',
     iCalUID: "0nsfi5ttd2b17ac76ma2f37oi9@google.com",
     sequence: 1,
+    attendees: [
+      {
+        email: 'attende@test.com',
+        responseStatus: 'needsAction'
+      },
+      {
+        email: 'test@test.com',
+        organizer: true,
+        self: true,
+        responseStatus: 'accepted'
+      },
+    ],
     reminders: {
       useDefault: true
     },

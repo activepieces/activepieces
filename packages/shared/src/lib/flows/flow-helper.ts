@@ -99,13 +99,6 @@ function createAction(
   };
   let action;
   switch (request.type) {
-    case ActionType.STORAGE:
-      action = {
-        ...baseProperties,
-        type: ActionType.STORAGE,
-        settings: request.settings,
-      } as StorageAction;
-      break;
     case ActionType.LOOP_ON_ITEMS:
       action = {
         ...baseProperties,

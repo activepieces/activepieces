@@ -26,7 +26,7 @@ export const piecesController = async (fastify: FastifyInstance, options: Fastif
         ) => {
             const collectionVersion = await collectionVersionService.getOneOrThrow(request.body.collectionVersionId);
             const collection = await collectionService.getOneOrThrow({id: collectionVersion.collectionId, projectId: request.principal.projectId});
-            return engineHelper.dropdownOptions({
+            return engineHelper.executeProp({
                 pieceName: request.params.pieceName,
                 propertyName: request.body.propertyName,
                 stepName: request.body.stepName,

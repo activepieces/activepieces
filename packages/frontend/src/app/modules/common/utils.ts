@@ -21,9 +21,6 @@ export function getDefaultDisplayNameForPiece(pieceType: ActionType, pieceName: 
 		case ActionType.CODE: {
 			return 'Code';
 		}
-		case ActionType.STORAGE: {
-			return 'Storage';
-		}
 		case ActionType.LOOP_ON_ITEMS: {
 			return 'Loop on Items';
 		}

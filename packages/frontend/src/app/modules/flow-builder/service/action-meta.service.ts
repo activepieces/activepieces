@@ -17,13 +17,7 @@ export class ActionMetaService {
 			name: 'Code',
 			description: 'Powerful nodejs code with npm',
 			logoUrl: '/assets/img/custom/piece/code.svg',
-		},
-		{
-			type: ActionType.STORAGE,
-			name: 'Storage',
-			description: 'Store or retrieve data from activepieces key/value database',
-			logoUrl: '/assets/img/custom/piece/storage.svg',
-		},
+		}
 	];
 
 	public triggerItemsDetails = [
