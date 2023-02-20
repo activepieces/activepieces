@@ -11,7 +11,7 @@ export type DynamicPropsSchema = BasePropertySchema & {
 	refreshers: string[];
 }
 
-export type DynamicPropeties<R extends boolean> = DynamicPropsSchema & TPropertyValue<
+export type DynamicProperties<R extends boolean> = DynamicPropsSchema & TPropertyValue<
 	DynamicPropsValue,
 	PropertyType.DYNAMIC,
 	R
