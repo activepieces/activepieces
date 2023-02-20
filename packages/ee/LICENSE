@@ -1,21 +1,18 @@
 The Activepieces Enterprise license (the “Enterprise License”)
-Copyright (c) 2022-2023 Activepieces Inc.
+Copyright (c) 2023-present Activepieces Inc.
 
 With regard to the Activepieces Software:
 
 This software and associated documentation files (the "Software") may only be
-used in production, if you (and any entity that you represent) have agreed to,
+used in production, if you (and any entity that you represent) hold a valid Activepieces Enterprise license corresponding to your usage, and you have agreed to,
 and are in compliance with, the Activepieces Subscription Terms of Service, available
-at https://activepieces.com/terms (the “Enterprise Terms”), or other
-agreement governing the use of the Software, as agreed by you and Activepieces,
-and otherwise have a valid Activepieces Enterprise license for the
-correct number of user seats. Subject to the foregoing sentence, you are free to
+at https://www.activepieces.com/terms (the “Enterprise Terms”), or other
+agreement governing the use of the Software, as agreed by you and Activepieces. Subject to the foregoing sentence, you are free to
 modify this Software and publish patches to the Software. You agree that Activepieces
 and/or its licensors (as applicable) retain all right, title and interest in and
 to all such modifications and/or patches, and all such modifications and/or
 patches may only be used, copied, modified, displayed, distributed, or otherwise
-exploited with a valid Activepieces Enterprise license for the correct
-number of user seats. Notwithstanding the foregoing, you may copy and modify
+exploited with a valid Activepieces Enterprise license corresponding to your usage. Notwithstanding the foregoing, you may copy and modify
 the Software for development and testing purposes, without requiring a
 subscription. You agree that Activepieces and/or its licensors (as applicable) retain
 all right, title and interest in and to all such modifications. You are not
