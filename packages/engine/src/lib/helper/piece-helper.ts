@@ -27,7 +27,7 @@ export const pieceHelper = {
         }
         const props = action !== undefined ? action.props : trigger!.props;
         const property = props[params.propertyName];
-        if (property === undefined || (property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTIPLE_DROPDOWN)) {
+        if (property === undefined || (property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN)) {
             throw new ActivepiecesError({
                 code: ErrorCode.CONFIG_NOT_FOUND,
                 params: {
