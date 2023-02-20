@@ -30,7 +30,7 @@ export const newCommentTrigger = createTrigger({
     authentication: figmaAuth,
     team_id: Property.ShortText({
       displayName: 'Team ID',
-      description: 'The Figma team id to receive updates about',
+      description: 'Naviate to team page, copy the Id from the URL after the word team/',
       required: true,
     }),
   },
