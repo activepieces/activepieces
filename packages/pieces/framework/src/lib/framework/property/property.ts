@@ -70,8 +70,8 @@ export const Property = {
 	StaticDropdown<T, R extends boolean = boolean>(request: Properties<StaticDropdownProperty<T, R>>): R extends true ? StaticDropdownProperty<T, true> : StaticDropdownProperty<T, false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.STATIC_DROPDOWN } as unknown as R extends true ? StaticDropdownProperty<T, true> : StaticDropdownProperty<T, false>;
 	},
-	MultipleDropdwon<T, R extends boolean = boolean>(request: Properties<DropdownProperty<T, R>>): R extends true ? DropdownProperty<T, true> : DropdownProperty<T, false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.MULTIPLE_DROPDOWN } as unknown as R extends true ? DropdownProperty<T, true> : DropdownProperty<T, false>;
+	MultipleDropdown<T, R extends boolean = boolean>(request: Properties<MultipleDropdownProperty<T, R>>): R extends true ? MultipleDropdownProperty<T, true> : MultipleDropdownProperty<T, false> {
+		return { ...request, valueSchema: undefined, type: PropertyType.MULTIPLE_DROPDOWN } as unknown as R extends true ? MultipleDropdownProperty<T, true> : MultipleDropdownProperty<T, false>;
 	},
 };
 
