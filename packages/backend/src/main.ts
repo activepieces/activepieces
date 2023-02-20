@@ -25,6 +25,10 @@ import { SystemProp } from "./app/helper/system/system-prop";
 import swagger from "@fastify/swagger";
 import { databaseConnection } from "./app/database/database-connection";
 import { logger } from './app/helper/logger';
+import { firebaseAuthenticationModule } from "@ee/firebase-auth/backend/firebase-authentication.module";
+import { usageModule } from "@ee/usage/backend/usage.module.ee";
+import { getEdition } from "./app/helper/license-helper";
+import { ApEdition } from "@activepieces/shared";
 
 const app = fastify({
     logger,
@@ -56,7 +60,6 @@ app.register(cors, {
 });
 app.register(formBody, { parser: str => qs.parse(str) });
 app.addHook("onRequest", tokenVerifyMiddleware);
-app.register(authenticationModule);
 app.register(projectModule);
 app.register(collectionModule);
 app.register(fileModule);
@@ -97,6 +100,15 @@ const start = async () => {
         await databaseConnection.initialize();
         await databaseConnection.runMigrations();
 
+        const edition = await getEdition();
+        logger.info("Activepieces " + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + " Edition");
+        if (edition === ApEdition.ENTERPRISE) {
+            app.register(firebaseAuthenticationModule);
+            app.register(usageModule);
+        }
+        else {
+            app.register(authenticationModule);
+        }
         await app.listen({
             host: "0.0.0.0",
             port: 3000,
