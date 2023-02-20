@@ -1,18 +1,18 @@
 import { Component, Inject, Input, OnInit } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { catchError, map, Observable, of, take, tap } from 'rxjs';
-import { AppConnection, OAuth2AppConnection, OAuth2ConnectionValueWithApp, Project, UpsertOAuth2Request } from '@activepieces/shared';
+import { AppConnection, OAuth2AppConnection, OAuth2ConnectionValueWithApp, PropertyType, UpsertOAuth2Request } from '@activepieces/shared';
 import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
 import { AppConnectionsService } from 'packages/frontend/src/app/modules/common/service/app-connections.service';
 import { CloudAuthConfigsService } from 'packages/frontend/src/app/modules/common/service/cloud-auth-configs.service';
-import { ProjectService } from 'packages/frontend/src/app/modules/common/service/project.service';
 import { ConnectionValidator } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/validators/connectionNameValidator';
 import { appConnectionsActions } from 'packages/frontend/src/app/modules/flow-builder/store/app-connections/app-connections.action';
 import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
+import deepEqual from 'deep-equal';
 
 interface AuthConfigSettings {
 	appName: FormControl<string | null>;
@@ -26,6 +26,7 @@ interface AuthConfigSettings {
 	value: FormControl<OAuth2ConnectionValueWithApp>;
 	refresh_url: FormControl<string>;
 	extraParams: FormControl<Record<string, unknown>>;
+	props: UntypedFormGroup;
 }
 export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
 @Component({
@@ -35,13 +36,13 @@ export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
 	animations: [fadeInUp400ms],
 })
 export class OAuth2ConnectionDialogComponent implements OnInit {
+	PropertyType = PropertyType;
 	@Input() pieceAuthConfig: PieceConfig;
 	@Input() pieceName: string;
 	@Input() connectionToUpdate: OAuth2AppConnection | undefined;
 	@Input() serverUrl: string;
 	settingsForm: FormGroup<AuthConfigSettings>;
 	loading = false;
-	project$: Observable<Project>;
 	submitted = false;
 	clientIdTooltip = 'Your App ID, Key or Client ID. You can find it if you go to your app on the 3rd party service.';
 	clientSecretTooltip =
@@ -67,7 +68,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 			connectionToUpdate: OAuth2AppConnection | undefined;
 			serverUrl: string;
 		},
-		private projectService: ProjectService
 	) {
 		this.pieceName = dialogData.pieceName;
 		this.pieceAuthConfig = dialogData.pieceAuthConfig;
@@ -81,7 +81,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 				return !!res[this.pieceName];
 			})
 		);
-		this.project$ = this.projectService.selectedProjectAndTakeOne();
+		const propsControls = this.createPropsFormGroup();
 		this.settingsForm = this.fb.group({
 			extraParams: new FormControl<Record<string, unknown>>(this.pieceAuthConfig.extra ?? {}, {
 				nonNullable: true,
@@ -117,6 +117,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 			}),
 			value: new FormControl(undefined as any, Validators.required),
 			refresh_url: new FormControl('code', { nonNullable: true, validators: [Validators.required] }),
+			props: this.fb.group(propsControls)
 		});
 		this.settingsForm.controls.name.markAllAsTouched();
 		if (this.connectionToUpdate) {
@@ -126,23 +127,24 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 			this.settingsForm.controls.client_secret.setValue(this.connectionToUpdate.value.client_secret);
 			this.settingsForm.controls.redirect_url.setValue(this.connectionToUpdate.value.redirect_url);
 			this.settingsForm.controls.name.disable();
+
+			this.connectionToUpdate.value.props ? this.settingsForm.controls.props.setValue(this.connectionToUpdate.value.props) : null;
 		}
 	}
-	submit(projectId: string) {
+	submit() {
 		this.settingsForm.markAllAsTouched();
 		if (this.settingsForm.valid && !this.loading) {
 			this.loading = true;
-			const connection = this.constructConnection(projectId);
+			const connection = this.constructConnection();
 			this.saveConnection(connection);
 		}
 	}
-	constructConnection(projectId: string) {
+	constructConnection() {
 		const connectionName = this.connectionToUpdate
 			? this.connectionToUpdate.name
 			: this.settingsForm.controls.name.value;
-		const settingsFormValue = { ...this.settingsForm.getRawValue() };
+		const settingsFormValue = this.getOAuth2Settings();
 		const connectionValue = settingsFormValue.value;
-
 		delete connectionValue['name'];
 		delete connectionValue['appName'];
 		const newConnection: UpsertOAuth2Request = {
@@ -155,10 +157,16 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 				redirect_url: this.settingsForm.controls.redirect_url.value,
 				scope: this.settingsForm.controls.scope.value,
 				token_url: this.settingsForm.controls.token_url.value,
+				props: this.pieceAuthConfig.oAuthProps ? this.settingsForm.controls.props.value : undefined
 			},
 		};
+
 		return newConnection;
 	}
+
+	dropdownCompareWithFunction = (opt: any, formControlValue: any) => {
+		return formControlValue && deepEqual(opt, formControlValue);
+	};
 
 	saveConnection(connection: UpsertOAuth2Request): void {
 
@@ -190,5 +198,29 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 	}
 	useCloudCreds() {
 		this.dialogRef.close(USE_CLOUD_CREDENTIALS);
+	}
+	createPropsFormGroup() {
+		const controls: Record<string, FormControl> = {};
+		if (this.pieceAuthConfig.oAuthProps) {
+			Object.keys(this.pieceAuthConfig.oAuthProps).forEach(key => {
+				controls[key] = new FormControl('', { validators: [Validators.required] })
+			})
+		}
+		return controls;
+	}
+
+	getOAuth2Settings() {
+		const formValue = this.settingsForm.getRawValue();
+		if (this.pieceAuthConfig.oAuthProps) {
+			let authUrl = formValue.auth_url;
+			let tokenUrl = formValue.token_url;
+			Object.keys(this.pieceAuthConfig.oAuthProps).forEach(key => {
+				authUrl = authUrl.replaceAll(`{${key}}`, this.settingsForm.controls.props.value[key]);
+				tokenUrl = tokenUrl.replaceAll(`{${key}}`, this.settingsForm.controls.props.value[key]);
+			})
+			return { ...formValue, auth_url: authUrl, token_url: tokenUrl }
+		}
+		return formValue;
+
 	}
 }

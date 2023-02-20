@@ -6,7 +6,7 @@ name: 'send_message_webhook',
   displayName: 'Send Message Webhook',
   props: {
     webhook_url: Property.ShortText({
-      displayName: 'Weebhook URL',
+      displayName: 'Webhook URL',
       required: true,
     }),
     content: Property.LongText({

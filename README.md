@@ -15,43 +15,90 @@
 - Discord: https://discord.gg/2jUXBKDdP8
 - Docs: https://www.activepieces.com/docs
 
-
 ## Get started for free
 
 Visit https://www.activepieces.com/docs/install/overview
 
 ## Features
 
-### Intuitive Flow Designer
-Automate your daily tasks or your entire business with clicks on the UI without interrupting your IT team.
+<table>
+  
+  <tr>
+    <th>
+      <a href="#">Intuitive Visual Flow Designer</a>
+    </th>
+    <th>
+      <a href="#">Powerful Logging</a>
+    </th>
 
-<img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201.png" width="100%">
+  </tr>
 
-### Powerful Logging
-Gain full visibility over your flow runs and easily fix what doesn't work with detailed step-by-step debugging tools.
+   <tr>
+    <td width="50%">
+      <a href="#">
+        <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201-p-1080.png" />
+      </a>
+    </td>
+    <td width="50%">
+        <a href="#">
+            <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f8e093a493043dc8ed633_Screenshot%202022-12-06%20at%2021.44%201-p-1080.png" />
+        </a>
+    </td>
+  </tr>
 
-<img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f8e093a493043dc8ed633_Screenshot%202022-12-06%20at%2021.44%201.png" width="100%">
+  <tr>
+    <th>
+      <a href="#">Custom NodeJS (with any npm)</a>
+    </th>
+    <th>
+      <a href="#">Self Hosted</a>
+    </th>
+</tr>
 
-### Writing Node.js for Full Flexibility
-Design your flow visually or write Node.js code if you feel like it. There are no limits to what you can build.
+ <tr>
+    <td width="50%">
+        <a href="#">
+            <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f902e016e13f712543baf_Screenshot%202022-12-06%20at%2021.54%201-p-1080.png" />
+        </a>
+    </td>
+    <td width="50%">
+      <a href="#">
+        <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638fc2f3d951ef60fb258a6e_Screenshot%202022-12-07%20at%2001.31%201-p-1080.png" />
+      </a>
+    </td>
+ </tr>
+</table>
 
-<img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f902e016e13f712543baf_Screenshot%202022-12-06%20at%2021.54%201.png" width="100%">
 
 ## Connectors
-We're building no-code connectors to make flow building a frictionless process. Go to the [Pieces](https://www.activepieces.com/docs/pieces) section of our docs to browse all available pieces.
+We're building no-code connectors to make flow building a frictionless process for non developers. Go to the [Pieces](https://www.activepieces.com/docs/pieces) section of our docs to browse all available pieces.
 
-> :warning: The list of connectors will keep chagning as we hear from our users, join [our Discord Server](https://discord.gg/2jUXBKDdP8) to shape the connectors roadmap.
+> :warning: The list of connectors will keep changing as we hear from our users, [request piece](https://github.com/activepieces/activepieces/issues/new/choose) if you can't find it on the [connectors roadmap](https://github.com/orgs/activepieces/projects/5).
 
-
-## Contributions
-
-We welcome contributions big or small and in different directions. The best way to do this is to talk to us on [our Discord Server](https://discord.gg/2jUXBKDdP8).
 
 ## Open-source
 
-This repo is entirely [MIT licensed](/LICENSE). You have the permission to use or distribute our source code freely in your projects.
+This repo is [MIT licensed](/LICENSE). You have the permission to use or distribute our source code freely in your projects.
 
-## Contributors 🦸
+## Contributions
+
+We welcome contributions big or small and in different directions. The best way to do this is to check this [document](https://www.activepieces.com/docs/contributing/building-pieces/overview) and we are always up to talk on [our Discord Server](https://discord.gg/2jUXBKDdP8).
+
+## Contributors 🦫
+
+### Legendary Beavers Club 🔥 
+This section is dedicated to individuals who have contributed to 10 or more actions/triggers.
+<br><br>
+<a href="https://github.com/kanarelo"><img src="https://avatars.githubusercontent.com/u/393261?v=4?s=100" width="100px;" alt="Mukewa Wekalao"/></a>
+<a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4?s=100" width="100px;" alt="AbdulTheActivePiecer"/> </a>
+<a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/></a>
+<a href="https://github.com/ashrafsamhouri"><img src="https://avatars.githubusercontent.com/u/97393596?v=4?s=100" width="100px;" alt="ashrafsamhouri"/></a>
+
+### Busy Beavers Club 🦸
+This section is dedicated to individuals who have contributed to 5 or more actions/triggers.
+<br><br>
+<a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="khaledmashaly"/></a>
+### Builder Beavers Club 🏗️
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

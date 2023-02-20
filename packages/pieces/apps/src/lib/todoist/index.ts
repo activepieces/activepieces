@@ -6,9 +6,8 @@ export const todoist = createPiece({
 	name: 'todoist',
 	displayName: 'Todoist',
 	logoUrl: 'https://cdn.activepieces.com/pieces/todoist.png',
-	actions: [
-    todoistCreateTaskAction,
-  ],
+	authors: ['khaledmashaly'],
+	actions: [todoistCreateTaskAction],
 	triggers: [
     todoistTaskCompletedTrigger,
   ],

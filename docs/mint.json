@@ -64,16 +64,20 @@
     {
       "group": "Apps",
       "pages": [
+        "pieces/apps/airtable",
         "pieces/apps/asana",
+        "pieces/apps/binance",
         "pieces/apps/blackbaud",
         "pieces/apps/calendly",
         "pieces/apps/clickup",
         "pieces/apps/discord",
         "pieces/apps/drip",
+        "pieces/apps/dropbox",
         "pieces/apps/github",
         "pieces/apps/gmail",
         "pieces/apps/google_calendar",
         "pieces/apps/google_contacts",
+        "pieces/apps/google_drive",
         "pieces/apps/google_sheets",
         "pieces/apps/hackernews",
         "pieces/apps/http",
@@ -110,7 +114,8 @@
         "install/overview",
         "install/docker",
         "install/digitalocean",
-        "install/configurations"
+        "install/configurations",
+        "install/breaking_changes"
       ]
     },
     {
@@ -140,7 +145,8 @@
       "group": "Building Pieces",
       "pages": [
         "contributing/building-pieces/overview",
-        "contributing/building-pieces/quickstart",
+        "contributing/building-pieces/create-action",
+        "contributing/building-pieces/create-trigger",
         "contributing/building-pieces/reference",
         "contributing/building-pieces/examples"
       ]

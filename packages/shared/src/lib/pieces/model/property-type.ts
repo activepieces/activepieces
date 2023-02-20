@@ -11,4 +11,5 @@ export enum PropertyType {
 	OBJECT = 'OBJECT',
 	BASIC_AUTH = "BASIC_AUTH",
 	JSON = 'JSON',
+	DYNAMIC = "DYNAMIC",
 }

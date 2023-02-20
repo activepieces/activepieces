@@ -20,7 +20,7 @@ import { flowWorkerModule } from "./app/workers/flow-worker/flow-worker-module";
 import { webhookModule } from "./app/webhooks/webhook-module";
 import { errorHandler } from "./app/helper/error-handler";
 import { appConnectionModule } from "./app/app-connection/app-connection.module";
-import { system } from "./app/helper/system/system";
+import { system, validateEnvPropsOnStartup } from "./app/helper/system/system";
 import { SystemProp } from "./app/helper/system/system-prop";
 import swagger from "@fastify/swagger";
 import { databaseConnection } from "./app/database/database-connection";
@@ -96,6 +96,7 @@ app.setErrorHandler(errorHandler);
 
 const start = async () => {
     try {
+        await validateEnvPropsOnStartup();
         await databaseConnection.initialize();
         await databaseConnection.runMigrations();
 
