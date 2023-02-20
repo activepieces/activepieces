@@ -34,7 +34,7 @@
         ]
       },
       "configurations": {
-        "staging": {
+        "ee": {
           "budgets": [
             {
               "type": "initial",
@@ -50,7 +50,7 @@
           "fileReplacements": [
             {
               "replace": "packages/frontend/src/environments/environment.ts",
-              "with": "packages/frontend/src/environments/environment.stg.ts"
+              "with": "packages/frontend/src/environments/environment.ee.ts"
             }
           ],
           "outputHashing": "all"

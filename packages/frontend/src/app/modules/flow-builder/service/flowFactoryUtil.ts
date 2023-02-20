@@ -26,7 +26,6 @@ export class FlowFactoryUtil {
 			const clonedContent: FlowItem = { ...content };
 			switch (clonedContent.type) {
 				case ActionType.CODE:
-				case ActionType.STORAGE:
 				case ActionType.LOOP_ON_ITEMS:
 				case ActionType.PIECE:
 					const simple = this.addCordDetails(clonedContent);

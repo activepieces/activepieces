@@ -74,6 +74,14 @@ export class FlagService {
 		);
 	}
 
+	getEdition(): Observable<string> {
+		return this.getAllFlags().pipe(
+			map(flags => {
+				return flags[ApFlagId.EDITION] as string;
+			})
+		);
+	}
+
 	getEnvironment(): Observable<string> {
 		return this.getAllFlags().pipe(
 			map(flags => {

@@ -12,8 +12,14 @@ export const enum ApEnvironment {
     DEVELOPMENT = "dev"
 }
 
+export const enum ApEdition {
+    COMMUNITY = "ce",
+    ENTERPRISE = "ee"
+}
+
 export enum ApFlagId {
     FRONTEND_URL = "FRONTEND_URL",
+    EDITION = "EDITION",
     ENVIRONMENT = "ENVIRONMENT",
     WEBHOOK_URL_PREFIX = "WEBHOOK_URL_PREFIX",
     USER_CREATED = "USER_CREATED",
