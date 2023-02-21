@@ -1,11 +1,7 @@
 import { cwd } from 'node:process'
 import { resolve } from 'node:path'
 import { readdir } from 'node:fs/promises'
-
-type Piece = {
-    displayName: string;
-    metadata(): unknown;
-}
+import { Piece, PieceMetadata } from './model'
 
 const byDisplayNameIgnoreCase = (a: Piece, b: Piece) => {
     const aName = a.displayName.toUpperCase()
@@ -13,7 +9,7 @@ const byDisplayNameIgnoreCase = (a: Piece, b: Piece) => {
     return aName.localeCompare(bName, 'en')
 }
 
-export const generateMetadata = async (): Promise<unknown[]> => {
+export const generateMetadata = async (): Promise<PieceMetadata[]> => {
     console.log('generateMetadata')
 
     const piecePath = resolve(cwd(), 'packages', 'pieces', 'apps', 'src', 'lib')
