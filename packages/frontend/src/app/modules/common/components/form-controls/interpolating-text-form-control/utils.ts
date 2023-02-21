@@ -58,6 +58,18 @@ export function fromTextToOps(
 					}
 					
 				}
+				else
+				{
+				  if(itemPrefix === "connections")
+				  {
+					imageTag = getImageTemplateForStepLogo('assets/img/custom/piece/connection.png');
+				  }
+				  else if(itemPrefix === "configs")
+				  {
+					imageTag = getImageTemplateForStepLogo('assets/img/custom/piece/config.png');
+				  }
+		
+				}
 				const mentionText = replaceArrayNotationsWithSpaces(
 					replaceDotsWithSpaces(adjustItemPath(itemPathWithoutInterpolationDenotation, allStepsMetaData))
 				);

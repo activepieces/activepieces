@@ -372,7 +372,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   }
   async addMention(textControl:InterpolatingTextFormControlComponent,mentionOp:InsertMentionOperation)
   {
-    debugger;
+    
      await textControl.addMention(mentionOp);
   }
 }

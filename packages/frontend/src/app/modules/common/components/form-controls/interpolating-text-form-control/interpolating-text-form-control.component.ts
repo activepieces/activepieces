@@ -291,6 +291,18 @@ export class InterpolatingTextFormControlComponent
             imageTag = getImageTemplateForStepLogo(allStepsMetaData[stepMetaDataIndex].logoUrl) +`${stepMetaDataIndex+1}. `;
           }
 				}
+        else
+        {
+          if(itemPrefix === "connections")
+          {
+            imageTag = getImageTemplateForStepLogo('assets/img/custom/piece/connection.png');
+          }
+          else if(itemPrefix === "configs")
+          {
+            imageTag = getImageTemplateForStepLogo('assets/img/custom/piece/config.png');
+          }
+
+        }
       mentionOp.insert.mention.value=" "+ imageTag+ mentionOp.insert.mention.value+" ";
       this.editor.quillEditor
         .getModule('mention')

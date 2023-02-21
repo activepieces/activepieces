@@ -86,7 +86,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 		private cd: ChangeDetectorRef,
 		private store:Store
 	) {
-		debugger;
+		
 		this.flowItemDetails$ = this.store
 		.select(BuilderSelectors.selectAllFlowItemsDetails);
 		this.buildForm();
