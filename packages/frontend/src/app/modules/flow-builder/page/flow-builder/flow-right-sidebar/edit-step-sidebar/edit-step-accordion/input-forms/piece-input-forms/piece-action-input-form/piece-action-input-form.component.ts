@@ -182,7 +182,6 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 		this.triggerInitialSetup$.next(true);
 	}
 	writeValue(obj: ComponentActionInputFormSchema): void {
-
 		this.intialComponentInputFormValue = obj;
 		this.pieceName = obj.pieceName;
 		this.componentForm.get(ACTION_FORM_CONTROL_NAME)?.setValue(undefined, { emitEvent: false });

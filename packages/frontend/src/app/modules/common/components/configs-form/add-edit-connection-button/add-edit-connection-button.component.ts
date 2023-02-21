@@ -35,8 +35,8 @@ export class AddEditConnectionButtonComponent {
   updateOrAddConnectionDialogClosed$: Observable<void>;
   cloudAuthCheck$: Observable<void>;
   constructor(private store: Store, private dialogService: MatDialog,
-     private cloudAuthConfigsService: CloudAuthConfigsService,
-     private flagService: FlagService) { }
+    private cloudAuthConfigsService: CloudAuthConfigsService,
+    private flagService: FlagService) { }
 
 
   buttonClicked() {

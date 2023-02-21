@@ -26,3 +26,5 @@ export type ArrayProperty<R extends boolean> = BasePropertySchema & TPropertyVal
 export type ObjectProperty<R extends boolean> = BasePropertySchema & TPropertyValue<Record<string, unknown>, PropertyType.OBJECT, R>;
 
 export type JsonProperty<R extends boolean> = BasePropertySchema & TPropertyValue<Record<string, unknown>, PropertyType.JSON, R>;
+
+

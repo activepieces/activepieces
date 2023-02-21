@@ -90,3 +90,18 @@ docker compose up -d --remove-orphans
 ```
 
 Congratulations! You have now successfully updated the version.
+
+## Deleting
+
+The following command is capable of deleting all Docker containers and associated data, and therefore should be used with caution:
+
+```
+sh tools/delete.sh
+```
+
+<Warning>
+Executing this command will result in the removal of all Docker containers and the data stored within them. It is important to be aware of the potentially hazardous nature of this command before proceeding.
+</Warning>
+
+
+
