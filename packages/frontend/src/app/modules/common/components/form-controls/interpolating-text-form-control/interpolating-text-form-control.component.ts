@@ -23,11 +23,12 @@ import {
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldControl } from '@angular/material/form-field';
 import { QuillEditorComponent, QuillModules } from 'ngx-quill';
-import { lastValueFrom, Observable, skip, Subject, take, tap } from 'rxjs';
+import { firstValueFrom, Observable, skip, Subject, take, tap } from 'rxjs';
 import {
   CustomErrorMatcher,
   fromOpsToText,
   fromTextToOps,
+  getImageTemplateForStepLogo,
   InsertMentionOperation,
   QuillEditorOperationsObject,
   QuillMaterialBase,
@@ -37,6 +38,7 @@ import 'quill-mention';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
 import { DomSanitizer } from '@angular/platform-browser';
+import { StepMetaData } from '@frontend/modules/flow-builder/store/model/flow-items-details-state.model';
 
 
 @Component({
@@ -79,6 +81,7 @@ export class InterpolatingTextFormControlComponent
   editorFormControl: FormControl<QuillEditorOperationsObject>;
   valueChanges$!: Observable<any>;
   private _value = '';
+  stepsMetaData$:Observable<StepMetaData[]>;
   autofilled?: boolean | undefined = false;
   userAriaDescribedBy?: string | undefined;
   override stateChanges = new Subject<void>();
@@ -89,7 +92,7 @@ export class InterpolatingTextFormControlComponent
     this._value = value;
     setTimeout(async () => {
       if (this._value) {
-        const stepsMetaData = await lastValueFrom(
+        const stepsMetaData = await firstValueFrom(
           this.store
             .select(BuilderSelectors.selectAllFlowStepsMetaData)
             .pipe(take(1))
@@ -134,6 +137,7 @@ export class InterpolatingTextFormControlComponent
       { ops: [] },
       { nonNullable: true }
     );
+    this.stepsMetaData$ = this.store.select(BuilderSelectors.selectAllFlowStepsMetaData);
   }
 
   ngOnInit(): void {
@@ -171,7 +175,6 @@ export class InterpolatingTextFormControlComponent
         const ops: TextInsertOperation[] = [];
         delta.ops.forEach((op) => {
           if (op.insert && typeof op.insert === 'string') {
-        
             ops.push({
               insert:this.sanitizer.sanitize(SecurityContext.HTML, op.insert) || '',
             });
@@ -213,10 +216,8 @@ export class InterpolatingTextFormControlComponent
     this._required = coerceBooleanProperty(value);
   }
 
- 
-
   async writeValue(value: string) {
-    const stepsMetaData = await lastValueFrom(
+    const stepsMetaData = await firstValueFrom(
       this.store
         .select(BuilderSelectors.selectAllFlowStepsMetaData)
         .pipe(take(1))
@@ -278,9 +279,21 @@ export class InterpolatingTextFormControlComponent
     this.stateChanges.next();
   }
 
-  public addMention(mentionOp: InsertMentionOperation) {
-    this.editor.quillEditor
-      .getModule('mention')
-      .insertItem(mentionOp.insert.mention, true);
+  public async addMention(mentionOp: InsertMentionOperation) {
+    const allStepsMetaData = await firstValueFrom(this.stepsMetaData$);
+    const itemPathWithoutInterpolationDenotation = mentionOp.insert.mention.serverValue.slice(2, mentionOp.insert.mention.serverValue.length - 1);
+		const itemPrefix =itemPathWithoutInterpolationDenotation.split('.')[0];
+		let imageTag ='';
+				if(itemPrefix !=='configs' && itemPrefix !== 'connections')
+				{ const stepMetaDataIndex = allStepsMetaData.findIndex(s => s.name === itemPrefix);
+          if(stepMetaDataIndex > -1)
+          {
+            imageTag = getImageTemplateForStepLogo(allStepsMetaData[stepMetaDataIndex].logoUrl) +`${stepMetaDataIndex+1}. `;
+          }
+				}
+      mentionOp.insert.mention.value=" "+ imageTag+ mentionOp.insert.mention.value+" ";
+      this.editor.quillEditor
+        .getModule('mention')
+        .insertItem(mentionOp.insert.mention, true);
   }
 }

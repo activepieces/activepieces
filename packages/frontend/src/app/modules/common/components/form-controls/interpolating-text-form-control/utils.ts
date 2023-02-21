@@ -2,6 +2,7 @@ import { SecurityContext } from '@angular/core';
 import { FormControl, FormGroupDirective, NgControl, NgForm } from '@angular/forms';
 import { ErrorStateMatcher, mixinErrorState } from '@angular/material/core';
 import { DomSanitizer } from '@angular/platform-browser';
+import { StepMetaData } from '@frontend/modules/flow-builder/store/model/flow-items-details-state.model';
 import { Subject } from 'rxjs';
 
 export const QuillMaterialBase = mixinErrorState(
@@ -35,7 +36,7 @@ export class CustomErrorMatcher implements ErrorStateMatcher {
 
 export function fromTextToOps(
 	text: string,
-	allStepsMetaData: { displayName: string; name: string, logoUrl:string }[],
+	allStepsMetaData: StepMetaData[],
 	sanitizer:DomSanitizer
 ): {
 	ops: (TextInsertOperation | InsertMentionOperation)[];
@@ -50,7 +51,12 @@ export function fromTextToOps(
 				let imageTag ='';
 				if(itemPrefix !=='configs' && itemPrefix !== 'connections')
 				{
-					imageTag = getImageTemplateForStepLogo(allStepsMetaData.find(s => s.name === itemPrefix)!.logoUrl);
+					const stepMetaDataIndex = allStepsMetaData.findIndex(s => s.name === itemPrefix);
+					if(stepMetaDataIndex > -1)
+					{
+						imageTag = getImageTemplateForStepLogo(allStepsMetaData[stepMetaDataIndex].logoUrl) + `${stepMetaDataIndex+1}. `;
+					}
+					
 				}
 				const mentionText = replaceArrayNotationsWithSpaces(
 					replaceDotsWithSpaces(adjustItemPath(itemPathWithoutInterpolationDenotation, allStepsMetaData))
@@ -59,7 +65,7 @@ export function fromTextToOps(
 				return {
 					insert: {
 						mention: {
-							value: " "+ imageTag+ sanitizer.sanitize(SecurityContext.HTML,mentionText)+" " || '',
+							value: "  "+ imageTag+ sanitizer.sanitize(SecurityContext.HTML,mentionText)+"  " || '',
 							denotationChar: '',
 							serverValue: item,
 						},
@@ -78,7 +84,7 @@ export function fromTextToOps(
 
 }
 
-function adjustItemPath(itemPath: string, allStepsMetaData: { displayName: string; name: string; logoUrl:string }[]) {
+function adjustItemPath(itemPath: string, allStepsMetaData:StepMetaData[]) {
 	const itemPrefix = itemPath.split('.')[0];
 	if (itemPrefix === 'configs') {
 		//remove configs prefix
@@ -93,10 +99,10 @@ function adjustItemPath(itemPath: string, allStepsMetaData: { displayName: strin
 }
 function replaceStepNameWithDisplayName(
 	stepName: string,
-	allStepsNamesAndDisplayNames: { displayName: string; name: string }[]
+	allStepsMetaData: StepMetaData[]
 ) {
 	//search without array notation
-	const stepDisplayName = allStepsNamesAndDisplayNames.find(
+	const stepDisplayName = allStepsMetaData.find(
 		s => s.name === stepName.replace(arrayNotationRegex, '')
 	)?.displayName;
 	if (stepDisplayName) {
@@ -180,6 +186,7 @@ export interface MentionListItem {
 	label: string;
 	value: string;
 }
+
 
 function formatStepOutput(stepOutput: unknown) {
 	if (stepOutput === null) {

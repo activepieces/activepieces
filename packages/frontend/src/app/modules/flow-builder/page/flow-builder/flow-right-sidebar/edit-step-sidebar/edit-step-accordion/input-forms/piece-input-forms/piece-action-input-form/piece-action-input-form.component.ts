@@ -162,7 +162,6 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 										if (selectedAction) {
 											const configs = [...selectedAction.value.configs];
 											const configsValues = this.intialComponentInputFormValue!.input;
-			
 											if (configsValues) {
 												Object.keys(configsValues).forEach(key => {
 													const config = configs.find(c => c.key === key);
