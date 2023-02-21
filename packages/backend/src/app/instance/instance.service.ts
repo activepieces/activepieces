@@ -1,10 +1,11 @@
-import { apId, CollectionId, Instance, InstanceId, ProjectId, UpsertInstanceRequest } from "@activepieces/shared";
+import { apId, CollectionId, Instance, InstanceId, ProjectId, TelemetryEventName, UpsertInstanceRequest } from "@activepieces/shared";
 import { collectionService } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
 import { flowService } from "../flows/flow.service";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { InstanceEntity } from "./instance.entity";
 import { instanceSideEffects } from "./instance-side-effects";
+import { telemetry } from "@backend/helper/telemetry.utils";
 
 export const instanceRepo = databaseConnection.getRepository(InstanceEntity);
 
@@ -45,6 +46,15 @@ export const instanceService = {
         if (oldInstance !== null) {
             await instanceSideEffects.disable(oldInstance);
         }
+        telemetry.trackProject(
+            savedInstance.projectId,
+            {
+                name: TelemetryEventName.COLLECTION_ENABLED,
+                payload: {
+                    collectionId: savedInstance.collectionId,
+                    projectId: savedInstance.projectId
+                }
+            });
         await instanceSideEffects.enable(savedInstance);
         return savedInstance;
     },
@@ -72,11 +82,11 @@ export const instanceService = {
 };
 
 interface GetOneParams {
-  projectId: ProjectId,
-  collectionId: CollectionId;
+    projectId: ProjectId,
+    collectionId: CollectionId;
 }
 
 interface DeleteOneParams {
-  id: InstanceId;
-  projectId: ProjectId;
+    id: InstanceId;
+    projectId: ProjectId;
 }

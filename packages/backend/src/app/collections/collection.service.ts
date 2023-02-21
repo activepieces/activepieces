@@ -9,6 +9,7 @@ import {
     Cursor,
     ProjectId,
     SeekPage,
+    TelemetryEventName,
     UpdateCollectionRequest,
 } from "@activepieces/shared";
 import { collectionVersionService } from "./collection-version/collection-version.service";
@@ -18,6 +19,7 @@ import { buildPaginator } from "../helper/pagination/build-paginator";
 import { databaseConnection } from "../database/database-connection";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { instanceSideEffects } from "../instance/instance-side-effects";
+import { telemetry } from "@backend/helper/telemetry.utils";
 
 export const collectionRepo = databaseConnection.getRepository(CollectionEntity);
 
@@ -105,6 +107,15 @@ export const collectionService = {
         await collectionVersionService.createVersion(savedCollection.id, {
             displayName: request.displayName,
             configs: [],
+        });
+        telemetry.trackProject(
+            collection.projectId,
+            {
+                name: TelemetryEventName.COLLECTION_CREATED,
+                payload: {
+                    collectionId: collection.id,
+                    projectId: collection.projectId
+                }
         });
         return savedCollection;
     },

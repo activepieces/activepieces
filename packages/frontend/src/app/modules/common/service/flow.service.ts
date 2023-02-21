@@ -15,19 +15,17 @@ import {
 	FlowRun,
 	FlowVersionId,
 	SeekPage,
-	TelemetryEventName,
 } from '@activepieces/shared';
 import { BuilderSelectors } from '../../flow-builder/store/builder/builder.selector';
 import { findDefaultFlowDisplayName } from '../utils';
 import { Store } from '@ngrx/store';
 import { FlowsActions } from '../../flow-builder/store/flow/flows.action';
-import { TelemetryService } from './telemetry.service';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class FlowService {
-	constructor(private store: Store, private http: HttpClient, private posthogService: TelemetryService) { }
+	constructor(private store: Store, private http: HttpClient) { }
 
 	createEmptyFlow() {
 		return forkJoin({
@@ -53,15 +51,7 @@ export class FlowService {
 		return this.http.post<Flow>(environment.apiUrl + '/flows', {
 			displayName: request.displayName,
 			collectionId: request.collectionId,
-		}).pipe(tap(flow => {
-			this.posthogService.captureEvent({
-				name: TelemetryEventName.FLOW_CREATED,
-				payload: {
-					collectionId: flow.collectionId,
-					flowId: flow.id
-				}
-			})
-		}));
+		});
 	}
 
 	get(flowId: FlowId, flowVersionId: undefined | FlowVersionId): Observable<Flow> {
@@ -93,16 +83,6 @@ export class FlowService {
 
 	execute(request: CreateFlowRunRequest): Observable<FlowRun> {
 		return this.http.post<FlowRun>(environment.apiUrl + '/flow-runs', request).pipe(
-			tap(run => {
-				this.posthogService.captureEvent({
-					name: TelemetryEventName.FLOW_TESTED,
-					payload: {
-						projectId: run.projectId,
-						flowId: run.flowId,
-						collectionId: run.collectionId
-					}
-				});
-			}),
 			switchMap(run => {
 				if (run.status !== ExecutionOutputStatus.RUNNING && run.logsFileId !== null) {
 					return this.loadStateLogs(run.logsFileId).pipe(

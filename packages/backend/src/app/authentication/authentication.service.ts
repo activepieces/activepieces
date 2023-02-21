@@ -27,7 +27,7 @@ export const authenticationService = {
             });
 
             telemetry.identify(user, project.id);
-            telemetry.track(user.id, {
+            telemetry.trackProject(project.id, {
                 name: TelemetryEventName.SIGNED_UP,
                 payload: {
                     userId: user.id,
