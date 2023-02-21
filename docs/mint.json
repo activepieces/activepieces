@@ -114,8 +114,7 @@
         "install/overview",
         "install/docker",
         "install/digitalocean",
-        "install/configurations",
-        "install/breaking_changes"
+        "install/configurations"
       ]
     },
     {
