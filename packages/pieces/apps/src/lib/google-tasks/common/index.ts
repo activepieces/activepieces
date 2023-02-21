@@ -70,6 +70,7 @@ export const googleTasksCommon = {
             if (propsValue['authentication'] === undefined) {
                 return {
                     disabled: true,
+                    placeholder: "Please connect your account first",
                     options: [],
                 };
             }

@@ -3,7 +3,7 @@ import { googleTasksAddNewTaskAction } from './actions/new-task';
 
 export const googleTasks = createPiece({
 	name: 'google_tasks',
-	logoUrl: 'https://fonts.gstatic.com/s/i/productlogos/tasks/v10/web-64dp/logo_tasks_color_2x_web_64dp.png',
+	logoUrl: 'https://cdn.activepieces.com/pieces/google_tasks.png',
 	actions: [googleTasksAddNewTaskAction],
 	displayName: "Google Tasks",
 	authors: ['abaza738'],
