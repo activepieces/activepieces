@@ -33,6 +33,7 @@ import { zoom } from './lib/zoom';
 import { storage } from './lib/store';
 import { calcom } from './lib/cal-com';
 import { posthog } from './lib/posthog';
+import { googleTasks } from './lib/google-tasks';
 
 export const pieces: Piece[] = [
     airtable,
@@ -51,6 +52,7 @@ export const pieces: Piece[] = [
     googleContacts,
     googleDrive,
     googleSheets,
+    googleTasks,
     hackernews,
     http,
     hubspot,
