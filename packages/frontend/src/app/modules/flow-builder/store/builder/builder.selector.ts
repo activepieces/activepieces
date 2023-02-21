@@ -316,11 +316,13 @@ const selectAllFlowSteps = createSelector(selectCurrentFlow, (flow: Flow | undef
 	}
 	return [];
 });
-const selectAllFlowStepsNamesAndDisplayNames = createSelector(selectAllFlowSteps, steps => {
+const selectAllFlowStepsMetaData = createSelector(selectAllFlowSteps,selectAllFlowItemsDetails , (steps,flowItemDetails) => {
 	return steps.map(s => {
+		const logoUrl = findStepLogoUrl(s,flowItemDetails);
 		return {
 			displayName: s.displayName,
 			name: s.name,
+			logoUrl:logoUrl
 		};
 	});
 });
@@ -352,6 +354,28 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
 	}
 );
 
+
+function findStepLogoUrl(step:FlowItem,flowItemsDetailsState:FlowItemsDetailsState)
+{
+	if(step.type === ActionType.PIECE )
+	{
+		return flowItemsDetailsState.connectorComponentsActionsFlowItemDetails.find(i => i.extra?.appName === step.settings.pieceName)!.logoUrl!;
+	}
+	else if(step.type === TriggerType.PIECE )
+	{
+		return flowItemsDetailsState.connectorComponentsTriggersFlowItemDetails.find(i => i.extra?.appName === step.settings.pieceName)!.logoUrl!;
+	}
+	else 
+	{
+		if(step.type === TriggerType.EMPTY || step.type === TriggerType.SCHEDULE || step.type === TriggerType.WEBHOOK)
+		{
+			return flowItemsDetailsState.coreTriggerFlowItemsDetails.find(i => i.type === step.type)!.logoUrl!;
+		}
+		return flowItemsDetailsState.coreFlowItemsDetails.find(i => i.type === step.type)!.logoUrl!;
+	}
+	
+
+}
 export const BuilderSelectors = {
 	selectCurrentCollection,
 	selectCurrentCollectionId,
@@ -396,7 +420,7 @@ export const BuilderSelectors = {
 	selectAllAppConnections,
 	selectAllConfigsForMentionsDropdown,
 	selectAllFlowSteps,
-	selectAllFlowStepsNamesAndDisplayNames,
+	selectAllFlowStepsMetaData,
 	selectAllStepsForMentionsDropdown,
 	selectAppConnectionsForMentionsDropdown,
 };

@@ -35,7 +35,7 @@ export class CustomErrorMatcher implements ErrorStateMatcher {
 
 export function fromTextToOps(
 	text: string,
-	allStepsNamesAndDisplayNames: { displayName: string; name: string }[],
+	allStepsMetaData: { displayName: string; name: string, logoUrl:string }[],
 	sanitizer:DomSanitizer
 ): {
 	ops: (TextInsertOperation | InsertMentionOperation)[];
@@ -46,14 +46,20 @@ export function fromTextToOps(
 		const ops: (TextInsertOperation | InsertMentionOperation)[] = matched.map(item => {
 			if (item.length > 3 && item[0] === '$' && item[1] === '{' && item[item.length - 1] === '}') {
 				const itemPathWithoutInterpolationDenotation = item.slice(2, item.length - 1);
+				const itemPrefix =itemPathWithoutInterpolationDenotation.split('.')[0];
+				let imageTag ='';
+				if(itemPrefix !=='configs' && itemPrefix !== 'connections')
+				{
+					imageTag = getImageTemplateForStepLogo(allStepsMetaData.find(s => s.name === itemPrefix)!.logoUrl);
+				}
 				const mentionText = replaceArrayNotationsWithSpaces(
-					replaceDotsWithSpaces(adjustItemPath(itemPathWithoutInterpolationDenotation, allStepsNamesAndDisplayNames))
+					replaceDotsWithSpaces(adjustItemPath(itemPathWithoutInterpolationDenotation, allStepsMetaData))
 				);
 			
 				return {
 					insert: {
 						mention: {
-							value: sanitizer.sanitize(SecurityContext.HTML,mentionText) || '',
+							value: " "+ imageTag+ sanitizer.sanitize(SecurityContext.HTML,mentionText)+" " || '',
 							denotationChar: '',
 							serverValue: item,
 						},
@@ -72,7 +78,7 @@ export function fromTextToOps(
 
 }
 
-function adjustItemPath(itemPath: string, allStepsNamesAndDisplayNames: { displayName: string; name: string }[]) {
+function adjustItemPath(itemPath: string, allStepsMetaData: { displayName: string; name: string; logoUrl:string }[]) {
 	const itemPrefix = itemPath.split('.')[0];
 	if (itemPrefix === 'configs') {
 		//remove configs prefix
@@ -81,7 +87,7 @@ function adjustItemPath(itemPath: string, allStepsNamesAndDisplayNames: { displa
 		return itemPath.replace('connections.', '');
 	} else {
 		//replace stepName with stepDisplayName
-		const stepDisplayName = replaceStepNameWithDisplayName(itemPrefix, allStepsNamesAndDisplayNames);
+		const stepDisplayName = replaceStepNameWithDisplayName(itemPrefix, allStepsMetaData);
 		return [stepDisplayName, ...itemPath.split('.').slice(1)].join('.');
 	}
 }
@@ -183,8 +189,13 @@ function formatStepOutput(stepOutput: unknown) {
 		return "undefined";
 	}
 	if (typeof stepOutput === "string") {
-		return `\"${stepOutput}\"`;
+		return `"${stepOutput}"`;
 	}
 
 	return stepOutput;
+}
+
+export function getImageTemplateForStepLogo(logoUrl:string)
+{
+	return `<img style="object-fit:contain; width:16px; height:16px; margin-right:5px; margin-bottom:2px; display:inline;" src="${logoUrl}">`
 }

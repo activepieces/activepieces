@@ -1,5 +1,4 @@
-<form [formGroup]="componentForm" class="ap-flex ap-flex-col ap-gap-2">
-
+<form [formGroup]="pieceActionForm" class="ap-flex ap-flex-col ap-gap-2">
   <mat-form-field class="ap-w-full" appearance="outline">
     <mat-label> Action </mat-label>
     <mat-select placeholder="Select an action" [formControlName]="ACTION_FORM_CONTROL_NAME"
@@ -19,14 +18,14 @@
         No options available
       </mat-option>
     </mat-select>
-    <mat-error *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)?.invalid">
+    <mat-error *ngIf="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)?.invalid">
       Action is required
     </mat-error>
   </mat-form-field>
   <ng-container
-    *ngIf="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value && componentForm.get(CONFIGS_FORM_CONTROL_NAME)">
+    *ngIf="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value && pieceActionForm.get(CONFIGS_FORM_CONTROL_NAME)">
     <div>
-      <app-configs-form [stepName]="componentForm.get(ACTION_FORM_CONTROL_NAME)!.value?.actionName"
+      <app-configs-form [stepName]="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value?.actionName"
         [pieceName]="pieceName" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
       </app-configs-form>
     </div>

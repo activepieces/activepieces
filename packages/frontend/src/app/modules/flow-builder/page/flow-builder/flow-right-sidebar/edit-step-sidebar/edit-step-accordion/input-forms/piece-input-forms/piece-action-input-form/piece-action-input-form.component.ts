@@ -16,6 +16,9 @@ import { ComponentActionInputFormSchema } from '../../input-forms-schema';
 import { DropdownItem } from 'packages/frontend/src/app/modules/common/model/dropdown-item.interface';
 import { PieceConfig, propsConvertor } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
 import { Config, PieceActionSettings } from '@activepieces/shared';
+import { Store } from '@ngrx/store';
+import { BuilderSelectors } from '@frontend/modules/flow-builder/store/builder/builder.selector';
+import { FlowItemsDetailsState } from '@frontend/modules/flow-builder/store/model/flow-items-details-state.model';
 declare type ActionDropdownOptionValue = {
 	actionName: string;
 	configs: PieceConfig[];
@@ -63,7 +66,7 @@ declare type ComponentFormValue = {
 export class PieceActionInputFormComponent implements ControlValueAccessor,AfterViewInit {
 	readonly ACTION_FORM_CONTROL_NAME = ACTION_FORM_CONTROL_NAME;
 	readonly CONFIGS_FORM_CONTROL_NAME = CONFIGS_FORM_CONTROL_NAME;
-	componentForm: UntypedFormGroup;
+	pieceActionForm: UntypedFormGroup;
 	initialSetup$: Observable<ActionDropdownOption[]>;
 	triggerInitialSetup$:Subject<true>= new Subject();
 	pieceName: string;
@@ -76,18 +79,23 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 	allAuthConfigs$: Observable<DropdownItem[]>;
 	onChange = (value: any) => { ; };
 	onTouch = () => { ; };
-
+	flowItemDetails$: Observable<FlowItemsDetailsState>;
 	constructor(
 		private fb: UntypedFormBuilder,
 		private actionMetaDataService: ActionMetaService,
-		private cd: ChangeDetectorRef
+		private cd: ChangeDetectorRef,
+		private store:Store
 	) {
+		debugger;
+		this.flowItemDetails$ = this.store
+		.select(BuilderSelectors.selectAllFlowItemsDetails);
 		this.buildForm();
-		this.actionDropdownValueChanged$ = this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.valueChanges.pipe(
+		this.actionDropdownValueChanged$ = this.pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.valueChanges.pipe(
 			tap(val => {
 				this.actionSelectValueChanged(val);
 			})
 		);
+
 	}
 	ngAfterViewInit(): void {
 		this.triggerInitialSetup$.next(true);
@@ -95,12 +103,12 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 
 
 	private buildForm() {
-		this.componentForm = this.fb.group({
+		this.pieceActionForm = this.fb.group({
 			[ACTION_FORM_CONTROL_NAME]: new UntypedFormControl(null, Validators.required),
 		});
-		this.componentForm.markAllAsTouched();
+		this.pieceActionForm.markAllAsTouched();
 
-		this.valueChanges$ = this.componentForm.valueChanges.pipe(
+		this.valueChanges$ = this.pieceActionForm.valueChanges.pipe(
 			startWith(null),
 			pairwise(),
 			tap((oldAndCurrentValues: [ComponentFormValue | null, ComponentFormValue]) => {
@@ -142,7 +150,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 			return	this.actions$.pipe(
 						tap(items => {
 							if (this.intialComponentInputFormValue && this.intialComponentInputFormValue.actionName) {
-								this.componentForm
+								this.pieceActionForm
 									.get(ACTION_FORM_CONTROL_NAME)!
 									.setValue(items.find(i => i.value.actionName === this.intialComponentInputFormValue?.actionName)?.value, {
 										emitEvent: false,
@@ -163,10 +171,10 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 													}
 												});
 											}
-											this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME,
+											this.pieceActionForm.addControl(CONFIGS_FORM_CONTROL_NAME,
 												new UntypedFormControl({
 													value: { configs: [...configs], customizedInputs: this.intialComponentInputFormValue!.inputUiInfo?.customizedInputs || {} },
-													disabled: this.componentForm.disabled
+													disabled: this.pieceActionForm.disabled
 												}), {
 												emitEvent: false
 											});
@@ -184,8 +192,8 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 	writeValue(obj: ComponentActionInputFormSchema): void {
 		this.intialComponentInputFormValue = obj;
 		this.pieceName = obj.pieceName;
-		this.componentForm.get(ACTION_FORM_CONTROL_NAME)?.setValue(undefined, { emitEvent: false });
-		this.componentForm.removeControl(CONFIGS_FORM_CONTROL_NAME, { emitEvent: false });
+		this.pieceActionForm.get(ACTION_FORM_CONTROL_NAME)?.setValue(undefined, { emitEvent: false });
+		this.pieceActionForm.removeControl(CONFIGS_FORM_CONTROL_NAME, { emitEvent: false });
 		this.fetchActions(obj.pieceName);
 	}
 
@@ -199,7 +207,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 	}
 
 	validate() {
-		if (this.componentForm.valid) return null;
+		if (this.pieceActionForm.valid) return null;
 		return { invalid: true };
 	}
 
@@ -215,9 +223,9 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 	}
 
 	private actionSelected(selectedActionValue: { actionName: string; configs: PieceConfig[] }) {
-		const configsForm = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME);
+		const configsForm = this.pieceActionForm.get(CONFIGS_FORM_CONTROL_NAME);
 		if (!configsForm) {
-			this.componentForm.addControl(
+			this.pieceActionForm.addControl(
 				CONFIGS_FORM_CONTROL_NAME,
 				new UntypedFormControl({ configs: [...selectedActionValue.configs], customizedInputs: {} })
 			);
@@ -226,7 +234,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 		}
 
 		this.cd.detectChanges();
-		this.componentForm.updateValueAndValidity();
+		this.pieceActionForm.updateValueAndValidity();
 	}
 
 	getFormattedFormData(oldAndCurrentValues: [ComponentFormValue | null, ComponentFormValue]): PieceActionSettings {
@@ -237,8 +245,8 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 		else {
 			customizedInputs = oldAndCurrentValues[1][CONFIGS_FORM_CONTROL_NAME].customizedInputs;
 		}
-		const action: ActionDropdownOptionValue = this.componentForm.get(ACTION_FORM_CONTROL_NAME)!.value;
-		const configs: ConfigsFormControlValue = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME)?.value || {};
+		const action: ActionDropdownOptionValue = this.pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value;
+		const configs: ConfigsFormControlValue = this.pieceActionForm.get(CONFIGS_FORM_CONTROL_NAME)?.value || {};
 		const res = {
 			actionName: action?.actionName,
 			input: {
@@ -256,9 +264,9 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 	setDisabledState?(isDisabled: boolean): void {
 
 		if (isDisabled) {
-			this.componentForm.disable();
+			this.pieceActionForm.disable();
 		} else {
-			this.componentForm.enable();
+			this.pieceActionForm.enable();
 		}
 	}
 }
