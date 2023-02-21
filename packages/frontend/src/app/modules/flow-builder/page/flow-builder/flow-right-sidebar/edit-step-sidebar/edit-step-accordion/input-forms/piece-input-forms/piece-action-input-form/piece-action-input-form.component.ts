@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import {
 	ControlValueAccessor,
 	UntypedFormBuilder,
@@ -9,7 +9,7 @@ import {
 	Validators,
 } from '@angular/forms';
 
-import { map, Observable, of, pairwise, startWith, tap } from 'rxjs';
+import {  map, Observable, of, pairwise, startWith, Subject, switchMap, tap } from 'rxjs';
 import { ActionMetaService } from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
 import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
 import { ComponentActionInputFormSchema } from '../../input-forms-schema';
@@ -60,11 +60,12 @@ declare type ComponentFormValue = {
 	animations: [fadeInUp400ms],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PieceActionInputFormComponent implements ControlValueAccessor {
+export class PieceActionInputFormComponent implements ControlValueAccessor,AfterViewInit {
 	readonly ACTION_FORM_CONTROL_NAME = ACTION_FORM_CONTROL_NAME;
 	readonly CONFIGS_FORM_CONTROL_NAME = CONFIGS_FORM_CONTROL_NAME;
 	componentForm: UntypedFormGroup;
 	initialSetup$: Observable<ActionDropdownOption[]>;
+	triggerInitialSetup$:Subject<true>= new Subject();
 	pieceName: string;
 	intialComponentInputFormValue: ComponentActionInputFormSchema | null;
 	selectedAction$: Observable<any>;
@@ -87,6 +88,9 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 				this.actionSelectValueChanged(val);
 			})
 		);
+	}
+	ngAfterViewInit(): void {
+		this.triggerInitialSetup$.next(true);
 	}
 
 
@@ -134,44 +138,48 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 				});
 			})
 		);
-		this.initialSetup$ = this.actions$.pipe(
-			tap(items => {
-				if (this.intialComponentInputFormValue && this.intialComponentInputFormValue.actionName) {
-					this.componentForm
-						.get(ACTION_FORM_CONTROL_NAME)!
-						.setValue(items.find(i => i.value.actionName === this.intialComponentInputFormValue?.actionName)?.value, {
-							emitEvent: false,
-						});
-					this.selectedAction$ = of(
-						items.find(it => it.value.actionName === this.intialComponentInputFormValue!.actionName)
-					).pipe(
-						tap(selectedAction => {
-							if (selectedAction) {
-								const configs = [...selectedAction.value.configs];
-								const configsValues = this.intialComponentInputFormValue!.input;
-
-								if (configsValues) {
-									Object.keys(configsValues).forEach(key => {
-										const config = configs.find(c => c.key === key);
-										if (config) {
-											config.value = configsValues[key];
-										}
+		this.initialSetup$ =this.triggerInitialSetup$.pipe(switchMap(()=>{
+			return	this.actions$.pipe(
+						tap(items => {
+							if (this.intialComponentInputFormValue && this.intialComponentInputFormValue.actionName) {
+								this.componentForm
+									.get(ACTION_FORM_CONTROL_NAME)!
+									.setValue(items.find(i => i.value.actionName === this.intialComponentInputFormValue?.actionName)?.value, {
+										emitEvent: false,
 									});
-								}
-								this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME,
-									new UntypedFormControl({
-										value: { configs: [...configs], customizedInputs: this.intialComponentInputFormValue!.inputUiInfo?.customizedInputs || {} },
-										disabled: this.componentForm.disabled
-									}), {
-									emitEvent: false
-								});
-								this.cd.detectChanges();
+								this.selectedAction$ = of(
+									items.find(it => it.value.actionName === this.intialComponentInputFormValue!.actionName)
+								).pipe(
+									tap(selectedAction => {
+										if (selectedAction) {
+											const configs = [...selectedAction.value.configs];
+											const configsValues = this.intialComponentInputFormValue!.input;
+			
+											if (configsValues) {
+												Object.keys(configsValues).forEach(key => {
+													const config = configs.find(c => c.key === key);
+													if (config) {
+														config.value = configsValues[key];
+													}
+												});
+											}
+											this.componentForm.addControl(CONFIGS_FORM_CONTROL_NAME,
+												new UntypedFormControl({
+													value: { configs: [...configs], customizedInputs: this.intialComponentInputFormValue!.inputUiInfo?.customizedInputs || {} },
+													disabled: this.componentForm.disabled
+												}), {
+												emitEvent: false
+											});
+											this.cd.detectChanges();
+										}
+									})
+							
+								);
 							}
 						})
 					);
-				}
-			})
-		);
+		}));
+		this.triggerInitialSetup$.next(true);
 	}
 	writeValue(obj: ComponentActionInputFormSchema): void {
 
@@ -244,7 +252,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 		return res;
 	}
 	actionDropdownCompareFn(item, selected) {
-		return item.actionName === selected.actionName;
+		return item.actionName === selected?.actionName;
 	}
 	setDisabledState?(isDisabled: boolean): void {
 

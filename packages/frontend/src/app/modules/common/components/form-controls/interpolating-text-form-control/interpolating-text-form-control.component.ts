@@ -8,6 +8,7 @@ import {
   OnDestroy,
   OnInit,
   Optional,
+  SecurityContext,
   Self,
   ViewChild,
 } from '@angular/core';
@@ -35,6 +36,7 @@ import {
 import 'quill-mention';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
+import { DomSanitizer } from '@angular/platform-browser';
 
 
 @Component({
@@ -94,7 +96,7 @@ export class InterpolatingTextFormControlComponent
         );
         if (typeof this._value === "string")
           this.editorFormControl.setValue(
-            fromTextToOps(this._value, stepsNamesAndDisplayNames)
+            fromTextToOps(this._value, stepsNamesAndDisplayNames,this.sanitizer)
           );
       }
       this.stateChanges.next();
@@ -109,12 +111,20 @@ export class InterpolatingTextFormControlComponent
     this._placeholder = value;
     this.stateChanges.next();
   }
+  @Input()
+  disabled = false;
+
+  controlType = 'custom-form-field';
+
+  @HostBinding('attr.aria-describedby') describedBy = '';
+  protected _required: boolean | undefined;
   constructor(
     _defaultErrorStateMatcher: ErrorStateMatcher,
     @Optional() _parentForm: NgForm,
     @Optional() _parentFormGroup: FormGroupDirective,
     @Optional() @Self() ngControl: NgControl,
-    private store: Store
+    private store: Store,
+    private sanitizer: DomSanitizer
   ) {
     super(_defaultErrorStateMatcher, _parentForm, _parentFormGroup, ngControl);
     if (this.ngControl != null) {
@@ -159,10 +169,11 @@ export class InterpolatingTextFormControlComponent
       Node.ELEMENT_NODE,
       (node, delta) => {
         const ops: TextInsertOperation[] = [];
-        delta.ops.forEach((op: TextInsertOperation) => {
+        delta.ops.forEach((op) => {
           if (op.insert && typeof op.insert === 'string') {
+        
             ops.push({
-              insert: op.insert,
+              insert:this.sanitizer.sanitize(SecurityContext.HTML, op.insert) || '',
             });
           }
         });
@@ -201,13 +212,8 @@ export class InterpolatingTextFormControlComponent
   set required(value: BooleanInput) {
     this._required = coerceBooleanProperty(value);
   }
-  protected _required: boolean | undefined;
-  @Input()
-  disabled = false;
 
-  controlType = 'custom-form-field';
-
-  @HostBinding('attr.aria-describedby') describedBy = '';
+ 
 
   async writeValue(value: string) {
     const stepsNamesAndDisplayNames = await lastValueFrom(
@@ -216,7 +222,7 @@ export class InterpolatingTextFormControlComponent
         .pipe(take(1))
     );
     if (value && typeof value === "string") {
-      const parsedTextToOps = fromTextToOps(value, stepsNamesAndDisplayNames);
+      const parsedTextToOps = fromTextToOps(value, stepsNamesAndDisplayNames,this.sanitizer);
       this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
     }
     this._value = value;

@@ -1,5 +1,7 @@
+import { SecurityContext } from '@angular/core';
 import { FormControl, FormGroupDirective, NgControl, NgForm } from '@angular/forms';
 import { ErrorStateMatcher, mixinErrorState } from '@angular/material/core';
+import { DomSanitizer } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
 
 export const QuillMaterialBase = mixinErrorState(
@@ -33,7 +35,8 @@ export class CustomErrorMatcher implements ErrorStateMatcher {
 
 export function fromTextToOps(
 	text: string,
-	allStepsNamesAndDisplayNames: { displayName: string; name: string }[]
+	allStepsNamesAndDisplayNames: { displayName: string; name: string }[],
+	sanitizer:DomSanitizer
 ): {
 	ops: (TextInsertOperation | InsertMentionOperation)[];
 } {
@@ -46,10 +49,11 @@ export function fromTextToOps(
 				const mentionText = replaceArrayNotationsWithSpaces(
 					replaceDotsWithSpaces(adjustItemPath(itemPathWithoutInterpolationDenotation, allStepsNamesAndDisplayNames))
 				);
+			
 				return {
 					insert: {
 						mention: {
-							value: mentionText,
+							value: sanitizer.sanitize(SecurityContext.HTML,mentionText) || '',
 							denotationChar: '',
 							serverValue: item,
 						},
@@ -94,7 +98,7 @@ function replaceStepNameWithDisplayName(
 		if (arrayNotationInStepName === null) return stepDisplayName;
 		return stepDisplayName + ' ' + arrayNotationInStepName[0].slice(1, arrayNotationInStepName[0].length - 1);
 	}
-	throw new Error(`step not found ${stepName}`);
+	return 'unknown step';
 }
 export interface InsertMentionOperation {
 	insert: {
