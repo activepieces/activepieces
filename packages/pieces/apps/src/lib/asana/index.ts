@@ -5,6 +5,7 @@ export const asana = createPiece({
     name: 'asana',
     displayName: "Asana",
     logoUrl: 'https://cdn.activepieces.com/pieces/asana.png',
+    version: '0.0.0',
     authors: ['abuaboud'],
     actions: [createAsanaTask],
     triggers: [],

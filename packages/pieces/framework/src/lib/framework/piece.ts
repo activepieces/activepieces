@@ -1,16 +1,20 @@
 import type { Trigger } from './trigger/trigger';
 import { Action } from './action/action';
 
-export type PieceMetadata = {
+type PieceBase = {
   name: string;
   displayName: string;
   logoUrl: string;
   description: string;
+  version: string;
+}
+
+export type PieceMetadata = PieceBase & {
   actions: Record<string, Action>;
   triggers: Record<string, Trigger>;
 };
 
-export class Piece {
+export class Piece implements PieceBase {
   private readonly _actions: Record<string, Action>;
   private readonly _triggers: Record<string, Trigger>;
 
@@ -19,6 +23,7 @@ export class Piece {
     public readonly displayName: string,
     public readonly logoUrl: string,
     public readonly authors: string[],
+    public readonly version: string,
     actions: Action[],
     triggers: Trigger[],
     public readonly description: string = ''
@@ -54,6 +59,7 @@ export class Piece {
       actions: this._actions,
       triggers: this._triggers,
       description: this.description,
+      version: this.version,
     };
   }
 }
@@ -66,12 +72,14 @@ export const createPiece = (request: {
   actions: Action[];
   triggers: Trigger[];
   description?: string;
+  version: string;
 }): Piece =>
   new Piece(
     request.name,
     request.displayName,
     request.logoUrl,
     request.authors ?? [],
+    request.version,
     request.actions,
     request.triggers,
     request.description
