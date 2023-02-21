@@ -1,6 +1,15 @@
 import type { Trigger } from './trigger/trigger';
 import { Action } from './action/action';
 
+export type PieceMetadata = {
+  name: string;
+  displayName: string;
+  logoUrl: string;
+  description: string;
+  actions: Record<string, Action>;
+  triggers: Record<string, Trigger>;
+};
+
 export class Piece {
   private readonly _actions: Record<string, Action>;
   private readonly _triggers: Record<string, Trigger>;
@@ -37,7 +46,7 @@ export class Piece {
     return this._triggers[triggerName];
   }
 
-  metadata() {
+  metadata(): PieceMetadata {
     return {
       name: this.name,
       displayName: this.displayName,
