@@ -23,7 +23,7 @@ import { createRedisLock } from "../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowRepo } from "./flow.repo";
 import { instanceSideEffects } from "../instance/instance-side-effects";
-import { telemetry } from "@backend/helper/telemetry.utils";
+import { telemetry } from "../helper/telemetry.utils";
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
@@ -50,8 +50,8 @@ export const flowService = {
             {
                 name: TelemetryEventName.FLOW_CREATED,
                 payload: {
-                 collectionId: flow.collectionId,
-                 flowId: flow.id
+                    collectionId: flow.collectionId,
+                    flowId: flow.id
                 }
             }
         );

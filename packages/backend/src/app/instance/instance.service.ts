@@ -5,7 +5,7 @@ import { flowService } from "../flows/flow.service";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { InstanceEntity } from "./instance.entity";
 import { instanceSideEffects } from "./instance-side-effects";
-import { telemetry } from "@backend/helper/telemetry.utils";
+import { telemetry } from "../helper/telemetry.utils";
 
 export const instanceRepo = databaseConnection.getRepository(InstanceEntity);
 

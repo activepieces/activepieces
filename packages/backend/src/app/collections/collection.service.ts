@@ -19,7 +19,7 @@ import { buildPaginator } from "../helper/pagination/build-paginator";
 import { databaseConnection } from "../database/database-connection";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { instanceSideEffects } from "../instance/instance-side-effects";
-import { telemetry } from "@backend/helper/telemetry.utils";
+import { telemetry } from "../helper/telemetry.utils";
 
 export const collectionRepo = databaseConnection.getRepository(CollectionEntity);
 
@@ -116,7 +116,7 @@ export const collectionService = {
                     collectionId: collection.id,
                     projectId: collection.projectId
                 }
-        });
+            });
         return savedCollection;
     },
 
