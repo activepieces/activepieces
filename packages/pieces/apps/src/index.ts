@@ -32,6 +32,7 @@ import { typeform } from './lib/typeform';
 import { zoom } from './lib/zoom';
 import { storage } from './lib/store';
 import { calcom } from './lib/cal-com';
+import { wordpress } from './lib/wordpress';
 import { posthog } from './lib/posthog';
 import { googleTasks } from './lib/google-tasks';
 
@@ -68,11 +69,13 @@ export const pieces: Piece[] = [
     twilio,
     typeform,
     zoom,
+    calcom,
+    wordpress,
     storage,
     calcom,
     posthog
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
-	return pieces.find((f) => name.toLowerCase() === f.name.toLowerCase());
+    return pieces.find((f) => name.toLowerCase() === f.name.toLowerCase());
 };
