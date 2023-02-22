@@ -12,14 +12,13 @@ import {
   CodeAction,
   PieceAction,
   LoopOnItemsAction,
-  ActionSchema,
 } from './actions/action';
-import { Trigger, TriggerSchema, TriggerType } from './triggers/trigger';
+import { Trigger, TriggerType } from './triggers/trigger';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { FlowVersion } from './flow-version';
 
-const actionSchemaValidator = TypeCompiler.Compile(ActionSchema);
-const triggerSchemaValidation = TypeCompiler.Compile(TriggerSchema);
+const actionSchemaValidator = TypeCompiler.Compile(Action);
+const triggerSchemaValidation = TypeCompiler.Compile(Trigger);
 
 function isValid(flowVersion: FlowVersion) {
   let valid = true;
@@ -199,6 +198,8 @@ export const flowHelper = {
           clonedVersion.trigger.nextAction
         );
         break;
+      default:
+        throw new Error('Unknown operation type');
     }
     clonedVersion.valid = isValid(clonedVersion);
     return clonedVersion;

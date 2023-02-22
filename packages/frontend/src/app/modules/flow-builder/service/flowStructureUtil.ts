@@ -2,7 +2,6 @@ import { FlowItem } from '../../common/model/flow-builder/flow-item';
 import { ActionType, FlowVersion, LoopOnItemsAction, Trigger, TriggerType } from '@activepieces/shared';
 
 export class FlowStructureUtil {
-	constructor() {}
 
 	static isAction(piece: FlowItem): boolean {
 		const type = piece.type;

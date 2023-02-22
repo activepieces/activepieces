@@ -238,7 +238,8 @@
                 [value]="opt.value">
                 {{opt.label.name}}
               </mat-option>
-              <mat-option *ngIf="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0"
+              <mat-option
+                [style.display]="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0 ? 'flex': 'none'"
                 class="add-auth">
                 <div class="ap-flex">
                   <div class="ap-flex-grow">No connections</div>
@@ -329,9 +330,8 @@
       </mat-error>
     </mat-form-field>
     <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
-      (addMention)="textControl.addMention($event)"></app-builder-autocomplete-mentions-dropdown>
+      marginTop="-20px" (addMention)="textControl.addMention($event)"></app-builder-autocomplete-mentions-dropdown>
   </div>
-
 </ng-template>
 
 

@@ -37,6 +37,9 @@ const app = fastify({
             removeAdditional: 'all',
             useDefaults: true,
             coerceTypes: true,
+            formats: {
+                
+            }
         }
     }
 });

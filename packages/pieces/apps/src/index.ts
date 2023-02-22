@@ -33,6 +33,7 @@ import { zoom } from './lib/zoom';
 import { storage } from './lib/store';
 import { calcom } from './lib/cal-com';
 import { wordpress } from './lib/wordpress';
+import { posthog } from './lib/posthog';
 
 export const pieces: Piece[] = [
     airtable,
@@ -69,7 +70,8 @@ export const pieces: Piece[] = [
     calcom,
     wordpress,
     storage,
-    calcom
+    calcom,
+    posthog
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
