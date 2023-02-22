@@ -4,13 +4,6 @@ import { FlowId } from "../flows/flow"
 import { ProjectId } from "../project/project"
 import { UserId } from "../user/user"
 
-
-interface FlowTested {
-    projectId: ProjectId;
-    collectionId: CollectionId,
-    flowId: FlowId
-}
-
 interface CollectionCreated {
     collectionId: CollectionId,
     projectId: ProjectId
@@ -44,9 +37,7 @@ interface SignedUp {
 export enum TelemetryEventName {
     COLLECTION_ENABLED = "collection.enabled",
     SIGNED_UP = "signed.up",
-    FLOW_TESTED = "flow.tested",
     FLOW_CREATED = "flow.created",
-    START_BUILDING = "start.building",
     COLLECTION_CREATED = "collection.created",
     FLOW_RUN_CREATED = "run.created"
 }
@@ -57,9 +48,7 @@ interface BaseTelemetryEvent<T, P> {
     payload: P
 }
 
-export type TelemetryEvent = BaseTelemetryEvent<TelemetryEventName.FLOW_TESTED, FlowTested>
-    | BaseTelemetryEvent<TelemetryEventName.COLLECTION_CREATED, CollectionCreated>
-    | BaseTelemetryEvent<TelemetryEventName.START_BUILDING, Record<string, never>>
+export type TelemetryEvent = BaseTelemetryEvent<TelemetryEventName.COLLECTION_CREATED, CollectionCreated>
     | BaseTelemetryEvent<TelemetryEventName.COLLECTION_ENABLED, CollectionEnabled>
     | BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, SignedUp>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_RUN_CREATED, RunCreated>

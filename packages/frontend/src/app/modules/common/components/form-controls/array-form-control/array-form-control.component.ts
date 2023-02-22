@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ControlValueAccessor, FormArray, FormBuilder, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
+import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
+import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
 
 @Component({
   selector: 'app-array-form-control',
@@ -62,5 +64,8 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
     }
   }
 
-
+ async addMention(textControl:InterpolatingTextFormControlComponent ,mention :InsertMentionOperation)
+ {
+   await textControl.addMention(mention);
+ }
 }

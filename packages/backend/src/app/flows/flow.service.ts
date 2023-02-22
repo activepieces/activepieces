@@ -13,6 +13,7 @@ import {
     FlowVersionState,
     ProjectId,
     SeekPage,
+    TelemetryEventName,
     TriggerType,
 } from "@activepieces/shared";
 import { flowVersionService } from "./flow-version/flow-version.service";
@@ -22,6 +23,7 @@ import { createRedisLock } from "../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowRepo } from "./flow.repo";
 import { instanceSideEffects } from "../instance/instance-side-effects";
+import { telemetry } from "../helper/telemetry.utils";
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
@@ -43,6 +45,16 @@ export const flowService = {
             } as EmptyTrigger,
         });
         const latestFlowVersion = await flowVersionService.getFlowVersion(projectId, savedFlow.id, undefined, false);
+        telemetry.trackProject(
+            savedFlow.projectId,
+            {
+                name: TelemetryEventName.FLOW_CREATED,
+                payload: {
+                    collectionId: flow.collectionId,
+                    flowId: flow.id
+                }
+            }
+        );
         return {
             ...savedFlow,
             version: latestFlowVersion,
