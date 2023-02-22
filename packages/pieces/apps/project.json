@@ -31,7 +31,7 @@
     "update-pieces-metadata": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx ts-node -r tsconfig-paths/register -P packages/pieces/apps/tsconfig.lib.json tools/scripts/update-pieces-metadata/main.ts"
+        "command": "ts-node -r tsconfig-paths/register -P packages/pieces/apps/tsconfig.lib.json tools/scripts/update-pieces-metadata/main.ts"
       }
     }
   },
