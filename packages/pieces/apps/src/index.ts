@@ -69,7 +69,6 @@ export const pieces: Piece[] = [
     twilio,
     typeform,
     zoom,
-    calcom,
     wordpress,
     storage,
     calcom,
