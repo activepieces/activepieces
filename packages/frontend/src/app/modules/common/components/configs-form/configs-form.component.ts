@@ -233,22 +233,21 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         validators.push(Validators.required);
       }
       if (c.type === PropertyType.OBJECT) {
-        controls[c.key] = new UntypedFormControl(c.value || {}, validators);
+        controls[c.key] = new UntypedFormControl(c.value ||c.defaultValue|| {}, validators);
       } else if (c.type === PropertyType.ARRAY) {
-        controls[c.key] = new UntypedFormControl(c.value || [''], validators);
+        controls[c.key] = new UntypedFormControl(c.value ||c.defaultValue || [''], validators);
       } else if (c.type === PropertyType.JSON) {
         if (!this.customizedInputs || !this.customizedInputs[c.key]) { validators.push(jsonValidator); }
         if (typeof c.value === "object") {
           controls[c.key] = new UntypedFormControl(JSON.stringify(c.value), validators);
         }
         else {
-          controls[c.key] = new UntypedFormControl(c.value || "{}", validators);
+          controls[c.key] = new UntypedFormControl(c.value ||c.defaultValue ||"{}", validators);
         }
       }
       else {
-        controls[c.key] = new UntypedFormControl(c.value === undefined || null ? undefined : c.value, validators);
+        controls[c.key] = new UntypedFormControl(c.value === undefined || null ? c.defaultValue : c.value, validators);
       }
-
     });
     return controls;
   }
