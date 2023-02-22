@@ -1,7 +1,9 @@
 name: Release Backend
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - chore/docker
 
 jobs:
   Release-Backend:
@@ -15,12 +17,6 @@ jobs:
 
       - name: Fail if tag already exists
         run: "! docker manifest inspect activepieces/activepieces:${{ env.RELEASE }}"
-
-      - name: install npm deps
-        run: npm ci
-
-      - name: build frontend
-        run: npx nx build frontend
 
       - name: Set up Depot CLI
         uses: depot/setup-action@v1
