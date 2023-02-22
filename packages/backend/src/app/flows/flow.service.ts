@@ -23,7 +23,6 @@ import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowRepo } from "./flow.repo";
 import { instanceSideEffects } from "../instance/instance-side-effects";
 
-
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
         const flow: Partial<Flow> = {
@@ -43,14 +42,14 @@ export const flowService = {
                 valid: false,
             } as EmptyTrigger,
         });
-        const latestFlowVersion = await flowVersionService.getFlowVersion(savedFlow.id, undefined);
+        const latestFlowVersion = await flowVersionService.getFlowVersion(projectId, savedFlow.id, undefined, false);
         return {
             ...savedFlow,
             version: latestFlowVersion,
         };
     },
     async getOneOrThrow({ projectId, id }: { projectId: ProjectId, id: FlowId }): Promise<Flow> {
-        const flow = await flowService.getOne({ projectId, id, versionId: undefined });
+        const flow = await flowService.getOne({ projectId, id, versionId: undefined, includeArtifacts: false });
 
         if (flow === null) {
             throw new ActivepiecesError({
@@ -80,7 +79,7 @@ export const flowService = {
         // TODO REPLACE WITH SQL QUERY
         const flowVersionsPromises: Array<Promise<FlowVersion | null>> = [];
         data.forEach((collection) => {
-            flowVersionsPromises.push(flowVersionService.getFlowVersion(collection.id, undefined));
+            flowVersionsPromises.push(flowVersionService.getFlowVersion(projectId, collection.id, undefined, false));
         });
         const versions: Array<FlowVersion | null> = await Promise.all(flowVersionsPromises);
         for (let i = 0; i < data.length; ++i) {
@@ -88,7 +87,7 @@ export const flowService = {
         }
         return paginationHelper.createPage<Flow>(data, cursor);
     },
-    async getOne({ projectId, id, versionId }: { projectId: ProjectId, id: FlowId, versionId: FlowVersionId | undefined }): Promise<Flow | null> {
+    async getOne({ projectId, id, versionId, includeArtifacts = true }: { projectId: ProjectId, id: FlowId, versionId: FlowVersionId | undefined, includeArtifacts: boolean }): Promise<Flow | null> {
         const flow: Flow | null = await flowRepo.findOneBy({
             projectId,
             id,
@@ -96,7 +95,7 @@ export const flowService = {
         if (flow === null) {
             return null;
         }
-        const flowVersion = await flowVersionService.getFlowVersion(id, versionId);
+        const flowVersion = await flowVersionService.getFlowVersion(projectId, id, versionId, includeArtifacts);
         return {
             ...flow,
             version: flowVersion,
@@ -105,17 +104,16 @@ export const flowService = {
     async update({ flowId, projectId, request }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
         const flowLock = await createRedisLock(flowId);
         try {
-            let lastVersion = (await flowVersionService.getFlowVersion(flowId, undefined))!;
+            let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, false));
             if (lastVersion.state === FlowVersionState.LOCKED) {
                 lastVersion = await flowVersionService.createVersion(flowId, lastVersion);
             }
-
             await flowVersionService.applyOperation(projectId, lastVersion, request);
         }
         finally {
             await flowLock.release();
         }
-        return await flowService.getOne({ id: flowId, versionId: undefined, projectId: projectId });
+        return await flowService.getOne({ id: flowId, versionId: undefined, projectId: projectId, includeArtifacts: false });
     },
     async delete({ projectId, flowId }: { projectId: ProjectId, flowId: FlowId }): Promise<void> {
         await instanceSideEffects.onFlowDelete({ projectId, flowId });

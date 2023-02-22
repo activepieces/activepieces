@@ -149,7 +149,6 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 							if (selectedAction) {
 								const configs = [...selectedAction.value.configs];
 								const configsValues = this.intialComponentInputFormValue!.input;
-
 								if (configsValues) {
 									Object.keys(configsValues).forEach(key => {
 										const config = configs.find(c => c.key === key);
@@ -174,7 +173,6 @@ export class PieceActionInputFormComponent implements ControlValueAccessor {
 		);
 	}
 	writeValue(obj: ComponentActionInputFormSchema): void {
-
 		this.intialComponentInputFormValue = obj;
 		this.pieceName = obj.pieceName;
 		this.componentForm.get(ACTION_FORM_CONTROL_NAME)?.setValue(undefined, { emitEvent: false });
