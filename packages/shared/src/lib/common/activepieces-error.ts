@@ -9,8 +9,8 @@ import { InstanceId } from "../instance";
 import { ApId } from "./id-generator";
 
 export class ActivepiecesError extends Error {
-  constructor(public error: ErrorParams) {
-    super(error.code);
+  constructor(public error: ErrorParams, message?: string) {
+    super(error.code + (message ? `: ${message}` : ""));
   }
 }
 
@@ -31,6 +31,9 @@ type ErrorParams =
   | PieceTriggerNotFoundErrorParams
   | StepNotFoundErrorParams
   | AppConnectionNotFoundErrorParams
+  | InvalidJwtTokenErrorParams
+  | FlowRunQuotaExeceededErrorParams
+  | SystemInvalidErrorParams
   | SystemPropNotDefinedErrorParams;
 
 export interface BaseErrorParams<T, V> {
@@ -38,133 +41,138 @@ export interface BaseErrorParams<T, V> {
   params: V;
 }
 
-export interface InvalidBearerTokenParams extends BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {}> { }
+export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, Record<string, null>>;
 
-export interface FileNotFoundErrorParams extends BaseErrorParams<ErrorCode.FILE_NOT_FOUND, { id: FileId }> { }
+export type FileNotFoundErrorParams = BaseErrorParams<ErrorCode.FILE_NOT_FOUND, { id: FileId }>;
 
-export interface AppConnectionNotFoundErrorParams
+export type AppConnectionNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.APP_CONNECTION_NOT_FOUND,
+  {
+    id: AppConnectionId;
+  }
+>;
+
+export type FlowNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.FLOW_NOT_FOUND,
+  {
+    id: FlowId;
+  }
+>;
+
+export type CollectionNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.COLLECTION_NOT_FOUND,
+  {
+    id: CollectionId;
+  }
+>;
+
+export type CollectionVersionNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.COLLECTION_VERSION_NOT_FOUND,
+  {
+    id: CollectionVersionId;
+  }
+>;
+
+export type InstanceNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.INSTANCE_NOT_FOUND,
+  {
+    id?: InstanceId;
+    collectionId?: CollectionId;
+  }
+>;
+
+export type FlowRunNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.INSTANCE_NOT_FOUND,
+  {
+    id: FlowRunId;
+  }
+>;
+
+export type FlowVersionNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.FLOW_VERSION_NOT_FOUND,
+  {
+    id: FlowVersionId;
+  }
+>;
+
+export type InvalidCredentialsErrorParams = BaseErrorParams<
+  ErrorCode.INVALID_CREDENTIALS,
+  {
+    email: string;
+  }
+>;
+
+export type ExistingUserErrorParams = BaseErrorParams<
+  ErrorCode.EXISTING_USER,
+  {
+    email: string;
+  }
+>;
+
+export type StepNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.STEP_NOT_FOUND,
+  {
+    pieceName: string;
+    stepName: string;
+  }
+>;
+
+export type PieceNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.PIECE_NOT_FOUND,
+  {
+    pieceName: string;
+  }
+>;
+
+export type PieceTriggerNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.PIECE_TRIGGER_NOT_FOUND,
+  {
+    pieceName: string;
+    triggerName: string;
+  }
+>;
+
+export type ConfigNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.CONFIG_NOT_FOUND,
+  {
+    pieceName: string;
+    stepName: string;
+    configName: string;
+  }
+>;
+
+export type JobRemovalFailureErrorParams = BaseErrorParams<
+  ErrorCode.JOB_REMOVAL_FAILURE,
+  {
+    jobId: ApId;
+  }
+>;
+
+export type SystemPropNotDefinedErrorParams = BaseErrorParams<
+  ErrorCode.SYSTEM_PROP_NOT_DEFINED,
+  {
+    prop: string;
+  }
+>;
+
+export type SystemInvalidErrorParams = BaseErrorParams<
+  ErrorCode.SYSTEM_PROP_INVALID,
+  {
+    prop: string;
+  }
+>;
+
+export interface InvalidJwtTokenErrorParams
   extends BaseErrorParams<
-    ErrorCode.APP_CONNECTION_NOT_FOUND,
+    ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
     {
-      id: AppConnectionId;
+      token: string;
     }
   > { }
-
-export interface FlowNotFoundErrorParams
+export interface FlowRunQuotaExeceededErrorParams
   extends BaseErrorParams<
-    ErrorCode.FLOW_NOT_FOUND,
-    {
-      id: FlowId;
-    }
-  > { }
-
-export interface CollectionNotFoundErrorParams
-  extends BaseErrorParams<
-    ErrorCode.COLLECTION_NOT_FOUND,
-    {
-      id: CollectionId;
-    }
-  > { }
-
-export interface CollectionVersionNotFoundErrorParams
-  extends BaseErrorParams<
-    ErrorCode.COLLECTION_VERSION_NOT_FOUND,
-    {
-      id: CollectionVersionId;
-    }
-  > { }
-
-export interface InstanceNotFoundErrorParams
-  extends BaseErrorParams<
-    ErrorCode.INSTANCE_NOT_FOUND,
-    {
-      id?: InstanceId;
-      collectionId?: CollectionId;
-    }
-  > { }
-
-export interface FlowRunNotFoundErrorParams
-  extends BaseErrorParams<
-    ErrorCode.INSTANCE_NOT_FOUND,
-    {
-      id: FlowRunId;
-    }
-  > { }
-
-export interface FlowVersionNotFoundErrorParams
-  extends BaseErrorParams<
-    ErrorCode.FLOW_VERSION_NOT_FOUND,
-    {
-      id: FlowVersionId;
-    }
-  > { }
-
-export interface InvalidCredentialsErrorParams
-  extends BaseErrorParams<
-    ErrorCode.INVALID_CREDENTIALS,
-    {
-      email: string;
-    }
-  > { }
-
-export interface ExistingUserErrorParams
-  extends BaseErrorParams<
-    ErrorCode.EXISTING_USER,
-    {
-      email: string;
-    }
-  > { }
-
-export interface StepNotFoundErrorParams
-  extends BaseErrorParams<
-    ErrorCode.STEP_NOT_FOUND,
-    {
-      pieceName: string;
-      stepName: string;
-    }
-  > { }
-
-export interface PieceNotFoundErrorParams
-  extends BaseErrorParams<
-    ErrorCode.PIECE_NOT_FOUND,
-    {
-      pieceName: string;
-    }
-  > { }
-
-export interface PieceTriggerNotFoundErrorParams
-  extends BaseErrorParams<
-    ErrorCode.PIECE_TRIGGER_NOT_FOUND,
-    {
-      pieceName: string;
-      triggerName: string;
-    }
-  > { }
-
-export interface ConfigNotFoundErrorParams
-  extends BaseErrorParams<
-    ErrorCode.CONFIG_NOT_FOUND,
-    {
-      pieceName: string;
-      stepName: string;
-      configName: string;
-    }
-  > { }
-
-export interface JobRemovalFailureErrorParams
-  extends BaseErrorParams<
-    ErrorCode.JOB_REMOVAL_FAILURE,
-    {
-      jobId: ApId;
-    }
-  > { }
-
-export interface SystemPropNotDefinedErrorParams
-  extends BaseErrorParams<
-    ErrorCode.SYSTEM_PROP_NOT_DEFINED,
-    {
-      prop: string;
-    }
+    ErrorCode.FLOW_RUN_QUOTA_EXCEEDED,
+    {}
   > { }
 
 export enum ErrorCode {
@@ -185,4 +193,7 @@ export enum ErrorCode {
   PIECE_TRIGGER_NOT_FOUND = "PIECE_TRIGGER_NOT_FOUND",
   STEP_NOT_FOUND = "STEP_NOT_FOUND",
   SYSTEM_PROP_NOT_DEFINED = "SYSTEM_PROP_NOT_DEFINED",
+  INVALID_OR_EXPIRED_JWT_TOKEN = "INVALID_OR_EXPIRED_JWT_TOKEN",
+  FLOW_RUN_QUOTA_EXCEEDED = "FLOW_RUN_QUOTA_EXCEEDED",
+  SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
 }

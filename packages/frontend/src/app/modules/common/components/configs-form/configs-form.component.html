@@ -99,6 +99,51 @@
       </div>
 
     </ng-container>
+    <ng-container *ngSwitchCase="PropertyType.MULTI_SELECT_DROPDOWN">
+      <div>
+        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:config} ">
+          </ng-container>
+        </span>
+        <ng-container
+          *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:multiDropdownInputTemplate ;context:{$implicit:config, formGroup:form}">
+        </ng-container>
+        <ng-template #multiDropdownInputTemplate>
+          <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }}</mat-label>
+            <mat-select
+              [style.display]="(!(optionsObservables$[config.key] | async) ||  (optionsObservables$[config.key] | async)?.disabled === true)? 'none':'block' "
+              multiple [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
+              <ng-container *ngIf="optionsObservables$[config.key]| async as state">
+                <mat-option *ngFor="let opt of state.options" [value]="opt.value">
+                  {{opt.label}}
+                </mat-option>
+              </ng-container>
+            </mat-select>
+            <ng-container
+              *ngIf="!!(optionsObservables$[config.key] | async) &&  (optionsObservables$[config.key] | async)?.disabled === true; ">
+              <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
+                <ng-container *ngIf="optionsObservables$[config.key]| async as state">
+                  <mat-option [disabled]="true"
+                    *ngIf="state.disabled && ((dropdownsLoadingFlags$[config.key] | async) === false || !dropdownsLoadingFlags$[config.key])">
+                    <div> {{state.placeholder}} </div>
+                  </mat-option>
+                </ng-container>
+              </mat-select>
+            </ng-container>
+
+
+
+            <mat-error *ngIf="formGroup.get(config.key)?.invalid">
+              {{config.label}} is required
+            </mat-error>
+          </mat-form-field>
+        </ng-template>
+
+      </div>
+
+    </ng-container>
+
 
     <ng-container *ngSwitchCase="PropertyType.STATIC_DROPDOWN">
       <div>
@@ -193,7 +238,8 @@
                 [value]="opt.value">
                 {{opt.label.name}}
               </mat-option>
-              <mat-option *ngIf="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0"
+              <mat-option
+                [style.display]="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0 ? 'flex': 'none'"
                 class="add-auth">
                 <div class="ap-flex">
                   <div class="ap-flex-grow">No connections</div>
@@ -284,9 +330,8 @@
       </mat-error>
     </mat-form-field>
     <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
-      (addMention)="textControl.addMention($event)"></app-builder-autocomplete-mentions-dropdown>
+      marginTop="-20px" (addMention)="addMention(textControl,$event)"></app-builder-autocomplete-mentions-dropdown>
   </div>
-
 </ng-template>
 
 

@@ -1,43 +1,27 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
-import { Observable, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
 	Collection,
-	CollectionVersion,
 	SeekPage,
 	UpdateCollectionRequest,
 	CollectionId,
 	CreateCollectionRequest,
-	TelemetryEventName,
 } from '@activepieces/shared';
-import { TelemetryService } from './telemetry.service';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class CollectionService {
-	constructor(private http: HttpClient, private posthogService: TelemetryService) { }
+	constructor(private http: HttpClient) { }
 
 	create(request: CreateCollectionRequest): Observable<Collection> {
-		return this.http.post<Collection>(environment.apiUrl + '/collections', request).pipe(tap(collection => {
-			this.posthogService.captureEvent({
-				name: TelemetryEventName.COLLECTION_CREATED,
-				payload: {
-					collectionId: collection.id,
-					projectId: collection.projectId
-				}
-			});
-		}));
+		return this.http.post<Collection>(environment.apiUrl + '/collections', request);
 	}
 
 	update(collectionId: CollectionId, request: UpdateCollectionRequest): Observable<Collection> {
 		return this.http.post<Collection>(environment.apiUrl + '/collections/' + collectionId, request);
-	}
-
-	// TODO REMOVE
-	listVersions(collectionId: string): Observable<CollectionVersion[]> {
-		return this.http.get<CollectionVersion[]>(environment.apiUrl + '/collections/' + collectionId + '/versions/', {});
 	}
 
 	get(collectionId: string): Observable<Collection> {

@@ -12,7 +12,7 @@ import { flowService } from "./flow.service";
 
 const DEFUALT_PAGE_SIZE = 10;
 
-export const flowController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
+export const flowController = async (fastify: FastifyInstance, _options: FastifyPluginOptions) => {
     fastify.post(
         "/",
         {
@@ -22,8 +22,8 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
         },
         async (
             request: FastifyRequest<{
-        Body: CreateFlowRequest;
-      }>,
+                Body: CreateFlowRequest;
+            }>,
             _reply
         ) => {
             return await flowService.create({ projectId: request.principal.projectId, request: request.body });
@@ -39,14 +39,14 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
         },
         async (
             request: FastifyRequest<{
-        Params: {
-          flowId: FlowId;
-        };
-        Body: FlowOperationRequest;
-      }>,
+                Params: {
+                    flowId: FlowId;
+                };
+                Body: FlowOperationRequest;
+            }>,
             _reply
         ) => {
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId });
+            const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, includeArtifacts: false });
             if (flow === null) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } });
             }
@@ -63,8 +63,8 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
         },
         async (
             request: FastifyRequest<{
-        Querystring: ListFlowsRequest;
-      }>,
+                Querystring: ListFlowsRequest;
+            }>,
             _reply
         ) => {
             return await flowService.list({ projectId: request.principal.projectId, collectionId: request.query.collectionId, cursorRequest: request.query.cursor ?? null, limit: request.query.limit ?? DEFUALT_PAGE_SIZE });
@@ -75,17 +75,19 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
         "/:flowId",
         async (
             request: FastifyRequest<{
-        Params: {
-          flowId: FlowId;
-        };
-        Querystring: {
-          versionId: FlowVersionId | undefined;
-        };
-      }>,
+                Params: {
+                    flowId: FlowId;
+                };
+                Querystring: {
+                    versionId: FlowVersionId | undefined;
+                    includeArtifacts: boolean | undefined;
+                };
+            }>,
             _reply
         ) => {
             const versionId: FlowVersionId | undefined = request.query.versionId;
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId: versionId, projectId: request.principal.projectId });
+            const includeArtifacts = request.query.includeArtifacts ?? false;
+            const flow = await flowService.getOne({ id: request.params.flowId, versionId: versionId, projectId: request.principal.projectId, includeArtifacts });
             if (flow === null) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } });
             }
@@ -97,10 +99,10 @@ export const flowController = async (fastify: FastifyInstance, options: FastifyP
         "/:flowId",
         async (
             request: FastifyRequest<{
-        Params: {
-          flowId: FlowId;
-        };
-      }>,
+                Params: {
+                    flowId: FlowId;
+                };
+            }>,
             _reply
         ) => {
             await flowService.delete({ projectId: request.principal.projectId, flowId: request.params.flowId });

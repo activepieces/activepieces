@@ -9,6 +9,8 @@ import {
 } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
 import { ThemeService } from '../../../service/theme.service';
+import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
+import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
 
 @Component({
 	selector: 'app-dictonary-form-control',
@@ -25,9 +27,10 @@ import { ThemeService } from '../../../service/theme.service';
 export class DictionaryFormControlComponent implements ControlValueAccessor, OnInit {
 	form!: UntypedFormGroup;
 	disabled = false;
+	valueChanges$: Observable<void>;
 	onChange = val => {};
 	onTouched = () => {};
-	valueChanges$: Observable<void>;
+	
 	constructor(private fb: UntypedFormBuilder, public themeService: ThemeService) {
 		this.form = this.fb.group({ pairs: this.fb.array([]) });
 		this.valueChanges$ = this.form.valueChanges.pipe(
@@ -107,4 +110,9 @@ export class DictionaryFormControlComponent implements ControlValueAccessor, OnI
 		});
 		return dictonaryControlValue;
 	}
+	async addMention(textControl:InterpolatingTextFormControlComponent ,mention :InsertMentionOperation)
+	{
+	  await textControl.addMention(mention);
+	}
+   
 }

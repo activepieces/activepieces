@@ -28,19 +28,20 @@ import {
 import {
   ActionMetaService,
   DropdownState,
-} from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
+} from '../../../flow-builder/service/action-meta.service';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
 import { PieceConfig } from './connector-action-or-config';
 import { DropdownItem } from '../../model/dropdown-item.interface';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
+import { BuilderSelectors } from '../../../flow-builder/store/builder/builder.selector';
 import deepEqual from 'deep-equal';
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
 import { InsertMentionOperation } from '../form-controls/interpolating-text-form-control/utils';
 import { jsonValidator } from '../../validators/json-validator';
 import { CodeService } from '../../../flow-builder/service/code.service';
 import { PropertyType } from '@activepieces/shared';
+import { InterpolatingTextFormControlComponent } from '../form-controls/interpolating-text-form-control/interpolating-text-form-control.component';
 
 type ConfigKey = string;
 
@@ -168,7 +169,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
   createDropdownConfigsObservables() {
     this.configs.forEach((c) => {
-      if (c.type === PropertyType.DROPDOWN) {
+      if (c.type === PropertyType.DROPDOWN || c.type === PropertyType.MULTI_SELECT_DROPDOWN) {
         this.dropdownsLoadingFlags$[c.key] = new BehaviorSubject(true);
         const refreshers$ = {};
         c.refreshers!.forEach((r) => {
@@ -363,11 +364,15 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     this.cd.detectChanges();
 
     const input = this.theInputs.find(input => input.nativeElement.getAttribute('name') === configKey);
-    debugger;
     if (input) {
       this.cd.detectChanges();
       input.nativeElement.click();
     }
 
+  }
+  async addMention(textControl:InterpolatingTextFormControlComponent,mentionOp:InsertMentionOperation)
+  {
+    
+     await textControl.addMention(mentionOp);
   }
 }

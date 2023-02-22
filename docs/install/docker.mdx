@@ -81,7 +81,7 @@ docker compose pull
 3. Review changelog for breaking changes
 
 <Warning>
-Please review the [Changelog](https://activepieces.com/docs/changelog) for any breaking changes.
+Please review the [Breaking changes](https://activepieces.com/docs/install/breaking_changes) document.
 </Warning>
 
 4. Run the updated docker images
@@ -90,3 +90,18 @@ docker compose up -d --remove-orphans
 ```
 
 Congratulations! You have now successfully updated the version.
+
+## Deleting
+
+The following command is capable of deleting all Docker containers and associated data, and therefore should be used with caution:
+
+```
+sh tools/delete.sh
+```
+
+<Warning>
+Executing this command will result in the removal of all Docker containers and the data stored within them. It is important to be aware of the potentially hazardous nature of this command before proceeding.
+</Warning>
+
+
+

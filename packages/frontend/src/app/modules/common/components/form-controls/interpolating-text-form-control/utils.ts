@@ -1,5 +1,8 @@
+import { SecurityContext } from '@angular/core';
 import { FormControl, FormGroupDirective, NgControl, NgForm } from '@angular/forms';
 import { ErrorStateMatcher, mixinErrorState } from '@angular/material/core';
+import { DomSanitizer } from '@angular/platform-browser';
+import { StepMetaData } from '@frontend/modules/flow-builder/store/model/flow-items-details-state.model';
 import { Subject } from 'rxjs';
 
 export const QuillMaterialBase = mixinErrorState(
@@ -33,7 +36,8 @@ export class CustomErrorMatcher implements ErrorStateMatcher {
 
 export function fromTextToOps(
 	text: string,
-	allStepsNamesAndDisplayNames: { displayName: string; name: string }[]
+	allStepsMetaData: StepMetaData[],
+	sanitizer:DomSanitizer
 ): {
 	ops: (TextInsertOperation | InsertMentionOperation)[];
 } {
@@ -43,13 +47,37 @@ export function fromTextToOps(
 		const ops: (TextInsertOperation | InsertMentionOperation)[] = matched.map(item => {
 			if (item.length > 3 && item[0] === '$' && item[1] === '{' && item[item.length - 1] === '}') {
 				const itemPathWithoutInterpolationDenotation = item.slice(2, item.length - 1);
+				const itemPrefix =itemPathWithoutInterpolationDenotation.split('.')[0];
+				let imageTag ='';
+				if(itemPrefix !=='configs' && itemPrefix !== 'connections')
+				{
+					const stepMetaDataIndex = allStepsMetaData.findIndex(s => s.name === itemPrefix);
+					if(stepMetaDataIndex > -1)
+					{
+						imageTag = getImageTemplateForStepLogo(allStepsMetaData[stepMetaDataIndex].logoUrl) + `${stepMetaDataIndex+1}. `;
+					}
+					
+				}
+				else
+				{
+				  if(itemPrefix === "connections")
+				  {
+					imageTag = getImageTemplateForStepLogo('assets/img/custom/piece/connection.png');
+				  }
+				  else if(itemPrefix === "configs")
+				  {
+					imageTag = getImageTemplateForStepLogo('assets/img/custom/piece/config.png');
+				  }
+		
+				}
 				const mentionText = replaceArrayNotationsWithSpaces(
-					replaceDotsWithSpaces(adjustItemPath(itemPathWithoutInterpolationDenotation, allStepsNamesAndDisplayNames))
+					replaceDotsWithSpaces(adjustItemPath(itemPathWithoutInterpolationDenotation, allStepsMetaData))
 				);
+			
 				return {
 					insert: {
 						mention: {
-							value: mentionText,
+							value: "  "+ imageTag+ sanitizer.sanitize(SecurityContext.HTML,mentionText)+"  " || '',
 							denotationChar: '',
 							serverValue: item,
 						},
@@ -68,7 +96,7 @@ export function fromTextToOps(
 
 }
 
-function adjustItemPath(itemPath: string, allStepsNamesAndDisplayNames: { displayName: string; name: string }[]) {
+function adjustItemPath(itemPath: string, allStepsMetaData:StepMetaData[]) {
 	const itemPrefix = itemPath.split('.')[0];
 	if (itemPrefix === 'configs') {
 		//remove configs prefix
@@ -77,16 +105,16 @@ function adjustItemPath(itemPath: string, allStepsNamesAndDisplayNames: { displa
 		return itemPath.replace('connections.', '');
 	} else {
 		//replace stepName with stepDisplayName
-		const stepDisplayName = replaceStepNameWithDisplayName(itemPrefix, allStepsNamesAndDisplayNames);
+		const stepDisplayName = replaceStepNameWithDisplayName(itemPrefix, allStepsMetaData);
 		return [stepDisplayName, ...itemPath.split('.').slice(1)].join('.');
 	}
 }
 function replaceStepNameWithDisplayName(
 	stepName: string,
-	allStepsNamesAndDisplayNames: { displayName: string; name: string }[]
+	allStepsMetaData: StepMetaData[]
 ) {
 	//search without array notation
-	const stepDisplayName = allStepsNamesAndDisplayNames.find(
+	const stepDisplayName = allStepsMetaData.find(
 		s => s.name === stepName.replace(arrayNotationRegex, '')
 	)?.displayName;
 	if (stepDisplayName) {
@@ -94,7 +122,7 @@ function replaceStepNameWithDisplayName(
 		if (arrayNotationInStepName === null) return stepDisplayName;
 		return stepDisplayName + ' ' + arrayNotationInStepName[0].slice(1, arrayNotationInStepName[0].length - 1);
 	}
-	throw new Error(`step not found ${stepName}`);
+	return 'unknown step';
 }
 export interface InsertMentionOperation {
 	insert: {
@@ -171,6 +199,7 @@ export interface MentionListItem {
 	value: string;
 }
 
+
 function formatStepOutput(stepOutput: unknown) {
 	if (stepOutput === null) {
 		return "null";
@@ -179,8 +208,13 @@ function formatStepOutput(stepOutput: unknown) {
 		return "undefined";
 	}
 	if (typeof stepOutput === "string") {
-		return `\"${stepOutput}\"`;
+		return `"${stepOutput}"`;
 	}
 
 	return stepOutput;
+}
+
+export function getImageTemplateForStepLogo(logoUrl:string)
+{
+	return `<img style="object-fit:contain; width:16px; height:16px; margin-right:5px; margin-bottom:2px; display:inline;" src="${logoUrl}">`
 }
