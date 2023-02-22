@@ -67,7 +67,6 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     this.pieceName = dialogData.pieceName;
     this.pieceAuthConfig = dialogData.pieceAuthConfig;
     this.connectionToUpdate = dialogData.connectionToUpdate;
-
     this._cloudConnectionPopupSettings = {
       auth_url: this.pieceAuthConfig.authUrl!,
       scope: this.pieceAuthConfig.scope!.join(' '),

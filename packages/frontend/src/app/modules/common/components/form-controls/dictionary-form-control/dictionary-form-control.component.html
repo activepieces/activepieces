@@ -22,7 +22,7 @@
           placeholder="Value" (click)="pairs.enabled? mentionsDropdown.showMenuSubject$.next(true):null"
           (keyup)="$event.key ==='Escape'? mentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
         <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
-          (addMention)="textControl.addMention($event)" width="100%" left="0%"
+          (addMention)="addMention(textControl,$event)" width="100%" left="0%"
           right="10%"></app-builder-autocomplete-mentions-dropdown>
 
       </div>

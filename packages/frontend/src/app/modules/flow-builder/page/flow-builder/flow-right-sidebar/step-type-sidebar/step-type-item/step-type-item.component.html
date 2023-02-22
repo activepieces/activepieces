@@ -37,15 +37,15 @@
     </div>
     <div class="ap-flex-grow"></div>
     <ng-container *ngIf="itemDetails.extra && showDocsLink">
-      <svg-icon [svgStyle]="{ width: '24px', height: '24px', fill:'#4f4f4f' }" src="assets/img/custom/piece_doc.svg"
-        [matTooltip]="'Read our docs about '+ itemDetails.name " class="ap-cursor-pointer"
-        (click)="openDocs('https://www.activepieces.com/docs/pieces/apps/'+ itemDetails.extra.appName)">
-      </svg-icon>
+      <app-icon-button [width]="24" [height]="24" iconFilename="piece_doc.svg"
+        [tooltipText]="'Read our docs about '+ itemDetails.name"
+        (click)="openDocs('https://www.activepieces.com/docs/pieces/apps/'+ itemDetails.extra.appName)"></app-icon-button>
     </ng-container>
     <ng-container *ngIf="itemDetails.name ==='Code' && showDocsLink">
-      <svg-icon [svgStyle]="{ width: '24px', height: '24px' }" src="assets/img/custom/external-link.svg"
-        class="ap-cursor-pointer" (click)="openDocs('https://www.activepieces.com/docs/pieces/helpers/code')">
-      </svg-icon>
+      <app-icon-button [width]="24" [height]="24" iconFilename="piece_doc.svg"
+        tooltipText="Read our docs about our nodejs piece"
+        (click)="openDocs('https://www.activepieces.com/docs/pieces/helpers/code')"></app-icon-button>
+
     </ng-container>
   </div>
 </ng-template>
