@@ -57,7 +57,7 @@ export type ScheduleTrigger = Static<typeof ScheduleTrigger>;
 export const PieceTriggerSettings = Type.Object({
   pieceName: Type.String({}),
   triggerName: Type.String({}),
-  input: Type.Object({}),
+  input: Type.Record(Type.String({}), Type.Any())
 });
 
 export type PieceTriggerSettings = Static<typeof PieceTriggerSettings>;
