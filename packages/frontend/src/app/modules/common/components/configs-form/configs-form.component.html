@@ -330,7 +330,7 @@
       </mat-error>
     </mat-form-field>
     <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
-      marginTop="-20px" (addMention)="textControl.addMention($event)"></app-builder-autocomplete-mentions-dropdown>
+      marginTop="-20px" (addMention)="addMention(textControl,$event)"></app-builder-autocomplete-mentions-dropdown>
   </div>
 </ng-template>
 
