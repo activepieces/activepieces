@@ -41,6 +41,7 @@ import { InsertMentionOperation } from '../form-controls/interpolating-text-form
 import { jsonValidator } from '../../validators/json-validator';
 import { CodeService } from '../../../flow-builder/service/code.service';
 import { PropertyType } from '@activepieces/shared';
+import { InterpolatingTextFormControlComponent } from '../form-controls/interpolating-text-form-control/interpolating-text-form-control.component';
 
 type ConfigKey = string;
 
@@ -361,12 +362,16 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         }
     }
     this.cd.detectChanges();
-
     const input = this.theInputs.find(input => input.nativeElement.getAttribute('name') === configKey);
     if (input) {
       this.cd.detectChanges();
       input.nativeElement.click();
     }
 
+  }
+  async addMention(textControl:InterpolatingTextFormControlComponent,mentionOp:InsertMentionOperation)
+  {
+    
+     await textControl.addMention(mentionOp);
   }
 }

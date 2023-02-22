@@ -1,61 +1,41 @@
 version: '3.0'
-
 services:
-  backend:
-    image: activepieces/backend:0.3.1
-    container_name: activepieces-backend
+  activepieces:
+    image: activepieces/activepieces:0.3.2
+    container_name: activepieces
     restart: unless-stopped
     privileged: true
     ports:
-      - 3000:3000
+      - '3000:3000'
+      - '8080:80'
     depends_on:
       - postgres
       - redis
     env_file: .env
     networks:
       - activepieces
-    entrypoint:
-     - node
-     - dist/packages/backend/main.js
-
-  frontend:
-    image: activepieces/frontend:0.3.1
-    container_name: activepieces-frontend
-    restart: unless-stopped
-    depends_on: [ backend ]
-    environment:
-      - AP_BACKEND_URL=${AP_BACKEND_URL}
-      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
-    ports:
-      - 8080:80
-    networks:
-      - activepieces
-
   postgres:
-    image: postgres:14.4
-    container_name: activepieces-postgres
+    image: 'postgres:14.4'
+    container_name: postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=${AP_POSTGRES_DATABASE}
-      - POSTGRES_PASSWORD=${AP_POSTGRES_PASSWORD}
-      - POSTGRES_USER=${AP_POSTGRES_USERNAME}
+      - 'POSTGRES_DB=${AP_POSTGRES_DATABASE}'
+      - 'POSTGRES_PASSWORD=${AP_POSTGRES_PASSWORD}'
+      - 'POSTGRES_USER=${AP_POSTGRES_USERNAME}'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - 'postgres_data:/var/lib/postgresql/data'
     networks:
       - activepieces
-
   redis:
-    image: redis:7.0.7
-    container_name: activepieces-redis
+    image: 'redis:7.0.7'
+    container_name: redis
     restart: unless-stopped
     volumes:
-      - redis_data:/data
+      - 'redis_data:/data'
     networks:
       - activepieces
-
 volumes:
   postgres_data:
   redis_data:
-
 networks:
   activepieces:

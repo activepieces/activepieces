@@ -7,3 +7,10 @@ export interface FlowItemsDetailsState {
 	connectorComponentsTriggersFlowItemDetails: FlowItemDetails[];
 	loaded: boolean;
 }
+
+export interface StepMetaData 
+{
+	logoUrl:string;
+	displayName:string;
+	name:string;
+}

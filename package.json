@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "license": "MIT",
   "scripts": {
     "prepare": "husky install"
@@ -72,7 +72,6 @@
     "ngx-skeleton-loader": "^6.0.0",
     "openai": "^3.1.0",
     "pg": "^8.8.0",
-    "posthog-js": "^1.40.1",
     "posthog-node": "^2.2.3",
     "prismjs": "^1.29.0",
     "qs": "^6.11.0",

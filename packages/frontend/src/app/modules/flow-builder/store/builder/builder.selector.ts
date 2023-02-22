@@ -2,11 +2,11 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../model/builder-state.model';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
-import { AppConnection, Config, Flow, FlowRun } from '@activepieces/shared';
+import { AppConnection,  Config, Flow, FlowRun } from '@activepieces/shared';
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
 import { FlowItem } from '../../../common/model/flow-builder/flow-item';
-import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
+import { FlowItemsDetailsState, StepMetaData } from '../model/flow-items-details-state.model';
 import { FlowsState } from '../model/flows-state.model';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { ActionType, Collection, TriggerType } from '@activepieces/shared';
@@ -316,11 +316,13 @@ const selectAllFlowSteps = createSelector(selectCurrentFlow, (flow: Flow | undef
 	}
 	return [];
 });
-const selectAllFlowStepsNamesAndDisplayNames = createSelector(selectAllFlowSteps, steps => {
+const selectAllFlowStepsMetaData = createSelector(selectAllFlowSteps,selectAllFlowItemsDetails , (steps,flowItemDetails) : StepMetaData[] => {
 	return steps.map(s => {
+		const logoUrl = findStepLogoUrl(s,flowItemDetails);
 		return {
 			displayName: s.displayName,
 			name: s.name,
+			logoUrl:logoUrl
 		};
 	});
 });
@@ -352,6 +354,35 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
 	}
 );
 
+
+function findStepLogoUrl(step:FlowItem,flowItemsDetailsState:FlowItemsDetailsState)
+{
+	if(step.type === ActionType.PIECE )
+	{
+		if(step.settings.pieceName === 'storage')
+		{
+			return 'assets/img/custom/piece/storage.png'
+		}
+		return flowItemsDetailsState.connectorComponentsActionsFlowItemDetails.find(i => i.extra?.appName === step.settings.pieceName)!.logoUrl!;
+	}
+	else if(step.type === TriggerType.PIECE )
+	{
+
+	
+		return flowItemsDetailsState.connectorComponentsTriggersFlowItemDetails.find(i => i.extra?.appName === step.settings.pieceName)!.logoUrl!;
+	}
+	else 
+	{
+		if(step.type === TriggerType.EMPTY || step.type === TriggerType.SCHEDULE || step.type === TriggerType.WEBHOOK)
+		{
+			const fileName = step.type === TriggerType.EMPTY ? 'emptyTrigger.png' :  step.type === TriggerType.SCHEDULE ? 'schedule.png': 'webhook.png'
+			return 'assets/img/custom/piece/' + fileName;
+		}
+		return 'assets/img/custom/piece/code.png'
+	}
+	
+
+}
 export const BuilderSelectors = {
 	selectCurrentCollection,
 	selectCurrentCollectionId,
@@ -396,7 +427,7 @@ export const BuilderSelectors = {
 	selectAllAppConnections,
 	selectAllConfigsForMentionsDropdown,
 	selectAllFlowSteps,
-	selectAllFlowStepsNamesAndDisplayNames,
+	selectAllFlowStepsMetaData,
 	selectAllStepsForMentionsDropdown,
 	selectAppConnectionsForMentionsDropdown,
 };
