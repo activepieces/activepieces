@@ -6,9 +6,20 @@ export type PieceBase = {
   version: string;
 }
 
+export type ActionBase = {
+  name: string,
+  displayName: string,
+  description: string,
+}
+
+export type TriggerBase = ActionBase;
+
 export type PieceMetadata = PieceBase & {
-  actions: Record<string, unknown>;
-  triggers: Record<string, unknown>;
+  actions: Map<string, ActionBase>;
+  triggers: Map<string, TriggerBase>;
 };
 
-export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers">;
+export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> & {
+  actions: number;
+  triggers: number;
+}

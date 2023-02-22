@@ -2,8 +2,8 @@ import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { cwd } from "node:process";
 import axios from "axios";
-import { Piece, PieceMetadata } from "@activepieces/framework";
-import { ActivepiecesError, ApEnvironment, ErrorCode, PieceMetadataSummary } from "@activepieces/shared";
+import { Piece } from "@activepieces/framework";
+import { ActivepiecesError, ApEnvironment, ErrorCode, PieceMetadata, PieceMetadataSummary } from "@activepieces/shared";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
 import { logger } from "../helper/logger";
@@ -62,7 +62,7 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
         return aName.localeCompare(bName, 'en')
     }
 
-    const loadPieces = async (): Promise<Piece[]> => {
+    const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
         const piecePath = resolve(cwd(), 'packages', 'pieces', 'apps', 'src', 'lib')
         const pieceDirectories = await readdir(piecePath)
 
@@ -88,27 +88,29 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
         }
 
         pieces.sort(byDisplayNameIgnoreCase);
-        return pieces;
+        return pieces.map(p => p.metadata());
     }
 
     return {
         async manifest() {
-            const pieces = await loadPieces();
+            const piecesMetadata = await loadPiecesMetadata();
 
-            return pieces.map(p => ({
+            return piecesMetadata.map(p => ({
                 name: p.name,
                 displayName: p.displayName,
                 description: p.description,
                 logoUrl: p.logoUrl,
                 version: p.version,
+                actions: p.actions.size,
+                triggers: p.triggers.size,
             }))
         },
 
         async pieceMetadata(pieceName: string) {
-            const pieces = await loadPieces();
-            const piece = pieces.find(p => p.name === pieceName);
+            const piecesMetadata = await loadPiecesMetadata();
+            const pieceMetadata = piecesMetadata.find(p => p.name === pieceName);
 
-            if (piece === undefined) {
+            if (pieceMetadata === undefined) {
                 throw new ActivepiecesError({
                     code: ErrorCode.PIECE_NOT_FOUND,
                     params: {
@@ -117,7 +119,7 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
                 });
             }
 
-            return piece.metadata();
+            return pieceMetadata;
         }
     }
 };

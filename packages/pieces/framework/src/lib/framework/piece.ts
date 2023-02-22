@@ -1,22 +1,10 @@
 import type { Trigger } from './trigger/trigger';
 import { Action } from './action/action';
-
-type PieceBase = {
-  name: string;
-  displayName: string;
-  logoUrl: string;
-  description: string;
-  version: string;
-}
-
-export type PieceMetadata = PieceBase & {
-  actions: Record<string, Action>;
-  triggers: Record<string, Trigger>;
-};
+import { PieceBase, PieceMetadata } from '@activepieces/shared';
 
 export class Piece implements PieceBase {
-  private readonly _actions: Record<string, Action>;
-  private readonly _triggers: Record<string, Trigger>;
+  private readonly _actions: Map<string, Action>;
+  private readonly _triggers: Map<string, Trigger>;
 
   constructor(
     public readonly name: string,
@@ -28,27 +16,27 @@ export class Piece implements PieceBase {
     triggers: Trigger[],
     public readonly description: string = ''
   ) {
-    this._actions = Object.fromEntries(
+    this._actions = new Map(
       actions.map((action) => [action.name, action])
     );
 
-    this._triggers = Object.fromEntries(
+    this._triggers = new Map(
       triggers.map((trigger) => [trigger.name, trigger])
     );
   }
 
   getAction(actionName: string): Action | undefined {
-    if (!(actionName in this._actions)) {
+    if (!(this._actions.has(actionName))) {
       return undefined;
     }
-    return this._actions[actionName];
+    return this._actions.get(actionName);
   }
 
   getTrigger(triggerName: string): Trigger | undefined {
-    if (!(triggerName in this._triggers)) {
+    if (!(this._triggers.has(triggerName))) {
       return undefined;
     }
-    return this._triggers[triggerName];
+    return this._triggers.get(triggerName);
   }
 
   metadata(): PieceMetadata {

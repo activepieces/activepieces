@@ -48,7 +48,7 @@ const fileExists = async (fileName: string): Promise<boolean> => {
     }
     catch (e: unknown) {
         if (e instanceof NotFound) {
-          return false
+            return false
         }
 
         throw e
@@ -84,6 +84,8 @@ const uploadPiecesManifest = async (piecesMetadata: PieceMetadata[]) => {
         description: p.description,
         logoUrl: p.logoUrl,
         version: p.version,
+        actions: p.actions.size,
+        triggers: p.triggers.size,
     }))
 
     const fileName = `pieces/metadata/latest.json`

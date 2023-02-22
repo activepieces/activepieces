@@ -1,3 +1,4 @@
+import { TriggerBase } from '@activepieces/shared';
 import { TriggerContext, TriggerHookContext } from '../context';
 import { PieceProperty, StaticPropsValue } from '../property/property';
 
@@ -6,7 +7,7 @@ export enum TriggerStrategy {
   WEBHOOK = 'WEBHOOK',
 }
 
-class ITrigger<T extends PieceProperty> {
+class ITrigger<T extends PieceProperty> implements TriggerBase {
   constructor(
     public readonly name: string,
     public readonly displayName: string,
