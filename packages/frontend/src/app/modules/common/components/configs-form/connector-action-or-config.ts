@@ -1,18 +1,6 @@
 import { PropertyType } from '@activepieces/shared';
 import { DropdownState } from '../../../flow-builder/service/action-meta.service';
 
-export enum HttpMethod {
-  CONNECT = 'CONNECT',
-  DELETE = 'DELETE',
-  GET = 'GET',
-  HEAD = 'HEAD',
-  OPTIONS = 'OPTIONS',
-  PATCH = 'PATCH',
-  POST = 'POST',
-  PUT = 'PUT',
-  TRACE = 'TRACE',
-}
-
 export interface PieceConfig {
   key: string;
   type: PropertyType;

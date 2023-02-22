@@ -15,8 +15,8 @@ export type ActionBase = {
 export type TriggerBase = ActionBase;
 
 export type PieceMetadata = PieceBase & {
-  actions: Map<string, ActionBase>;
-  triggers: Map<string, TriggerBase>;
+  actions: Record<string, ActionBase>;
+  triggers: Record<string, TriggerBase>;
 };
 
 export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> & {

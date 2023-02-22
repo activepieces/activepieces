@@ -19,10 +19,10 @@ function getCardTemplate(title: string, description: string) {
   return CARD_TEMPLATE;
 }
 
-function getPieceCards(items: Map<string, ActionBase>) {
+function getPieceCards(items: Record<string, ActionBase>) {
   const itemsCards: string[] = [];
 
-  items.forEach(item => {
+  Object.values(items).forEach(item => {
     const card = getCardTemplate(item.displayName, item.description);
     itemsCards.push(card);
   })
