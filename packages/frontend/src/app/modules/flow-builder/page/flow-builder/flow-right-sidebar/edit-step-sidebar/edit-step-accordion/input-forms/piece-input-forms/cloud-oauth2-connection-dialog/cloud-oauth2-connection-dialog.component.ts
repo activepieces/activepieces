@@ -122,7 +122,6 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       ? this.connectionToUpdate.name
       : this.settingsForm.controls.name.value;
     const settingsFormValue = this.getOAuth2Settings();
-
     const connectionValue = settingsFormValue.value;
     const newConnection: UpsertCloudOAuth2Request = {
       appName: this.pieceName,

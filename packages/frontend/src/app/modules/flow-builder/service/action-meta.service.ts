@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionType, PieceOptionRequest, TriggerType } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
-import { AppPiece } from '../../common/components/configs-form/connector-action-or-config';
+import { AppPiece, PieceProperty } from '../../common/components/configs-form/connector-action-or-config';
 import { environment } from 'packages/frontend/src/environments/environment';
 import { Observable, shareReplay } from 'rxjs';
 
@@ -50,8 +50,8 @@ export class ActionMetaService {
 		}
 		return this.pieces$;
 	}
-	getPieceActionConfigOptions(req: PieceOptionRequest, pieceName: string) {
-		return this.http.post<DropdownState<any>>(environment.apiUrl + `/pieces/${pieceName}/options`, req);
+	getPieceActionConfigOptions<T extends DropdownState<any> | Record<string,PieceProperty>>(req: PieceOptionRequest, pieceName: string ) {
+		return this.http.post<T>(environment.apiUrl + `/pieces/${pieceName}/options`, req);
 	}
 }
 export type DropdownState<T> = {
