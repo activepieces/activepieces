@@ -35,6 +35,7 @@ import { calcom } from './lib/cal-com';
 import { freshsales } from './lib/freshsales';
 import { googleTasks } from './lib/google-tasks';
 import { posthog } from './lib/posthog';
+import { wordpress } from './lib/wordpress';
 
 export const pieces: Piece[] = [
     airtable,
@@ -72,9 +73,10 @@ export const pieces: Piece[] = [
     todoist,
     twilio,
     typeform,
-    zoom,
+    wordpress,
+    zoom
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
-	return pieces.find((f) => name.toLowerCase() === f.name.toLowerCase());
+    return pieces.find((f) => name.toLowerCase() === f.name.toLowerCase());
 };
