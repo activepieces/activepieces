@@ -16,7 +16,7 @@ async function verifyLicense(licenseKey: string): Promise<boolean> {
     }
 }
 
-export async function getEdition() {
+export async function getEdition() : Promise<string>{
     if (edition === undefined) {
         const licenseKey = system.get(SystemProp.LICENSE_KEY);
         edition = (await verifyLicense(licenseKey)) ? 'ee' : 'ce';

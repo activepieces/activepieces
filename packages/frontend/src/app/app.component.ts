@@ -3,7 +3,6 @@ import { map, Observable, of, tap } from 'rxjs';
 import { AuthenticationService } from './modules/common/service/authentication.service';
 import { Store } from '@ngrx/store';
 import { NavigationStart, Router } from '@angular/router';
-import { TelemetryService } from './modules/common/service/telemetry.service';
 import { fadeInUp400ms } from './modules/common/animation/fade-in-up.animation';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -34,7 +33,6 @@ export class AppComponent implements OnInit {
 		private authenticationService: AuthenticationService,
 		private flagService: FlagService,
 		private router: Router,
-		private posthogService: TelemetryService,
 		private maticonRegistry: MatIconRegistry,
 		private domSanitizer: DomSanitizer,
 	) {
@@ -76,7 +74,6 @@ export class AppComponent implements OnInit {
 					return;
 				}
 				this.store.dispatch(CommonActions.loadInitial({ user: user }));
-				this.posthogService.init(user);
 			}),
 			map(() => void 0)
 		);
