@@ -1,9 +1,6 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - feature-auto-generate-pieces-manifest
   workflow_dispatch:
 
 jobs:
