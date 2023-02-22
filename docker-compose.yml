@@ -35,7 +35,7 @@ services:
     networks:
       - activepieces
 volumes:
-  postgres_data: null
-  redis_data: null
+  postgres_data:
+  redis_data:
 networks:
-  activepieces: null
+  activepieces:
