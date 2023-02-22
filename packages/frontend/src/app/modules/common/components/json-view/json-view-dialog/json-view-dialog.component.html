@@ -2,8 +2,8 @@
 <mat-dialog-content>
     <div class="code-container">
         <div class="code-area ap-min-w-[500px] ap-min-h-[500px] ap-max-h[500px] ap-max-w[700px] ">
-            <pre class="line-numbers ap-pb-1 "><code class="language-js"
-                                           >{{content | outputLog}}</code></pre>
+            <pre class="line-numbers ap-max-h-[300px] ap-pb-1"><code class="language-js"
+                [innerHTML]="content | outputLog"></code></pre>
         </div>
     </div>
 </mat-dialog-content>
