@@ -1,12 +1,10 @@
-name: Release Backend
+name: Release Everything
 
 on:
-  push:
-    branches:
-      - chore/docker
+  workflow_dispatch:
 
 jobs:
-  Release-Backend:
+  Release:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
