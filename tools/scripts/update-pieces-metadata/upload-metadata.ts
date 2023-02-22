@@ -8,7 +8,7 @@ import {
     HeadObjectCommandInput,
     NotFound
 } from '@aws-sdk/client-s3'
-import { PieceMetadata, PieceMetadataSummary } from './model'
+import { PieceMetadata, PieceMetadataSummary } from '../../../packages/shared/src'
 
 assert(process.env.DO_SPACES_KEY)
 assert(process.env.DO_SPACES_SECRET)

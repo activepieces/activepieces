@@ -1,7 +1,12 @@
 import { cwd } from 'node:process'
 import { resolve } from 'node:path'
 import { readdir } from 'node:fs/promises'
-import { Piece, PieceMetadata } from './model'
+import { PieceMetadata } from '../../../packages/shared/src'
+
+type Piece = {
+  displayName: string;
+  metadata(): PieceMetadata;
+}
 
 const byDisplayNameIgnoreCase = (a: Piece, b: Piece) => {
     const aName = a.displayName.toUpperCase()

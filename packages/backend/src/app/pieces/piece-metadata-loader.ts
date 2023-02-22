@@ -3,12 +3,10 @@ import { resolve } from "node:path";
 import { cwd } from "node:process";
 import axios from "axios";
 import { Piece, PieceMetadata } from "@activepieces/framework";
-import { ActivepiecesError, ApEnvironment, ErrorCode } from "@activepieces/shared";
+import { ActivepiecesError, ApEnvironment, ErrorCode, PieceMetadataSummary } from "@activepieces/shared";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
 import { logger } from "../helper/logger";
-
-type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers">;
 
 type PieceMetadataLoader = {
     /**
@@ -64,11 +62,11 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
         return aName.localeCompare(bName, 'en')
     }
 
-    const loadPieces = async () => {
+    const loadPieces = async (): Promise<Piece[]> => {
         const piecePath = resolve(cwd(), 'packages', 'pieces', 'apps', 'src', 'lib')
         const pieceDirectories = await readdir(piecePath)
 
-        const pieces = [];
+        const pieces: Piece[] = [];
 
         /* pieces that aren't yet migrated to a standalone package */
         for (const pieceDirectory of pieceDirectories) {
