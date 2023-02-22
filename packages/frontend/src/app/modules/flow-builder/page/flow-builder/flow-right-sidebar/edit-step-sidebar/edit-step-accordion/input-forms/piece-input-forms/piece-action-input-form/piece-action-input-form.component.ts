@@ -133,6 +133,7 @@ export class PieceActionInputFormComponent implements ControlValueAccessor,After
 				const actionsKeys = Object.keys(component.actions);
 				return actionsKeys.map(actionName => {
 					const action = component.actions[actionName];
+
 					const configs = Object.entries(action.props).map(keyEntry => {
 						return propsConvertor.convertToFrontEndConfig(keyEntry[0], keyEntry[1]);
 					});
