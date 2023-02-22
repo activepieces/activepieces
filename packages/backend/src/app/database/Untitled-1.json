@@ -1,0 +1,13 @@
+{
+	"CreatedAt": "2023-02-22T12:04:54+01:00",
+	"Driver": "local",
+	"Labels": {
+		"com.docker.compose.project": "activepieces_devcontainer",
+		"com.docker.compose.version": "1.29.2",
+		"com.docker.compose.volume": "postgres_data"
+	},
+	"Mountpoint": "/var/snap/docker/common/var-lib-docker/volumes/activepieces_devcontainer_postgres_data/_data",
+	"Name": "activepieces_devcontainer_postgres_data",
+	"Options": null,
+	"Scope": "local"
+}
