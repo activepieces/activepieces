@@ -44,7 +44,7 @@ export const engineHelper = {
             result = await execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, {
                 ...operation,
                 workerToken: await workerToken({ collectionId: operation.collectionVersion.collectionId, projectId: operation.projectId })
-            }) as DropdownState<any>
+            });
         }
         finally {
             sandboxManager.returnSandbox(sandbox.boxId);

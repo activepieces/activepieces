@@ -34,7 +34,7 @@
 
     <ng-container *ngSwitchCase="PropertyType.CHECKBOX">
       <ng-container
-        *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? dynamicValueTemplate:checkboxInputTemplate ;context:{$implicit:config, formGroup:form}">
+        *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? dynamicValueTemplate:checkboxInputTemplate ;context:{$implicit:config, formGroup:formGroup}">
       </ng-container>
 
       <ng-template #checkboxInputTemplate>
@@ -54,7 +54,7 @@
           </ng-container>
         </span>
         <ng-container>
-          <ng-container *ngTemplateOutlet="textInputTemplate;context:{$implicit:config, formGroup:form}">
+          <ng-container *ngTemplateOutlet="textInputTemplate;context:{$implicit:config, formGroup:formGroup}">
           </ng-container>
         </ng-container>
       </ng-template>
@@ -62,7 +62,7 @@
     </ng-container>
     <div
       *ngIf="config.type === PropertyType.SHORT_TEXT || config.type === PropertyType.NUMBER || config.type === PropertyType.LONG_TEXT">
-      <ng-container *ngTemplateOutlet="textInputTemplate;context:{$implicit:config, formGroup:form}">
+      <ng-container *ngTemplateOutlet="textInputTemplate;context:{$implicit:config, formGroup:formGroup}">
       </ng-container>
     </div>
 
@@ -73,19 +73,20 @@
           </ng-container>
         </span>
         <ng-container
-          *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:dropdownInputTemplate ;context:{$implicit:config, formGroup:form}">
+          *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:dropdownInputTemplate ;context:{$implicit:config, formGroup:formGroup}">
         </ng-container>
         <ng-template #dropdownInputTemplate>
 
           <mat-form-field class="ap-w-full" appearance="outline">
-            <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }}</mat-label>
+            <mat-label> {{ (refreshableConfigsLoadingFlags$[config.key] | async)? 'Loading...' : config.label
+              }}</mat-label>
             <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
-              <ng-container *ngIf="optionsObservables$[config.key]| async as state">
+              <ng-container *ngIf="dropdownOptionsObservables$[config.key]| async as state">
                 <mat-option *ngFor="let opt of state.options" [value]="opt.value">
                   {{opt.label}}
                 </mat-option>
                 <mat-option [disabled]="true"
-                  *ngIf="state.disabled && ((dropdownsLoadingFlags$[config.key] | async) === false || !dropdownsLoadingFlags$[config.key])">
+                  *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[config.key] | async) === false || !refreshableConfigsLoadingFlags$[config.key])">
                   <div> {{state.placeholder}} </div>
                 </mat-option>
               </ng-container>
@@ -106,34 +107,32 @@
           </ng-container>
         </span>
         <ng-container
-          *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:multiDropdownInputTemplate ;context:{$implicit:config, formGroup:form}">
+          *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:multiDropdownInputTemplate ;context:{$implicit:config, formGroup:formGroup}">
         </ng-container>
         <ng-template #multiDropdownInputTemplate>
           <mat-form-field class="ap-w-full" appearance="outline">
-            <mat-label> {{ (dropdownsLoadingFlags$[config.key] | async)? 'Loading...' : config.label }}</mat-label>
+            <mat-label> {{ (refreshableConfigsLoadingFlags$[config.key] | async)? 'Loading...' : config.label
+              }}</mat-label>
             <mat-select
-              [style.display]="(!(optionsObservables$[config.key] | async) ||  (optionsObservables$[config.key] | async)?.disabled === true)? 'none':'block' "
+              [style.display]="(!(dropdownOptionsObservables$[config.key] | async) ||  (dropdownOptionsObservables$[config.key] | async)?.disabled === true)? 'none':'block' "
               multiple [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
-              <ng-container *ngIf="optionsObservables$[config.key]| async as state">
+              <ng-container *ngIf="dropdownOptionsObservables$[config.key]| async as state">
                 <mat-option *ngFor="let opt of state.options" [value]="opt.value">
                   {{opt.label}}
                 </mat-option>
               </ng-container>
             </mat-select>
             <ng-container
-              *ngIf="!!(optionsObservables$[config.key] | async) &&  (optionsObservables$[config.key] | async)?.disabled === true; ">
+              *ngIf="!!(dropdownOptionsObservables$[config.key] | async) &&  (dropdownOptionsObservables$[config.key] | async)?.disabled === true; ">
               <mat-select [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
-                <ng-container *ngIf="optionsObservables$[config.key]| async as state">
+                <ng-container *ngIf="dropdownOptionsObservables$[config.key]| async as state">
                   <mat-option [disabled]="true"
-                    *ngIf="state.disabled && ((dropdownsLoadingFlags$[config.key] | async) === false || !dropdownsLoadingFlags$[config.key])">
+                    *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[config.key] | async) === false || !refreshableConfigsLoadingFlags$[config.key])">
                     <div> {{state.placeholder}} </div>
                   </mat-option>
                 </ng-container>
               </mat-select>
             </ng-container>
-
-
-
             <mat-error *ngIf="formGroup.get(config.key)?.invalid">
               {{config.label}} is required
             </mat-error>
@@ -152,7 +151,7 @@
           </ng-container>
         </span>
         <ng-container
-          *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:staticDropdownInputTemplate ;context:{$implicit:config, formGroup:form}">
+          *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:staticDropdownInputTemplate ;context:{$implicit:config, formGroup:formGroup}">
         </ng-container>
         <ng-template #staticDropdownInputTemplate>
           <mat-form-field class="ap-w-full" appearance="outline">
@@ -179,7 +178,7 @@
         </ng-container>
       </span>
       <ng-container
-        *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:arrayInputTemplate ;context:{$implicit:config, formGroup:form}">
+        *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:arrayInputTemplate ;context:{$implicit:config, formGroup:formGroup}">
       </ng-container>
 
       <ng-template #arrayInputTemplate>
@@ -264,7 +263,7 @@
 
 
     </ng-container>
-    <ng-container *ngIf="config.type === PropertyType.JSON">
+    <ng-container *ngSwitchCase="PropertyType.JSON">
       <div class="ap-flex">
         <div class="ap-flex-grow"></div>
         <span class="ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
@@ -307,13 +306,34 @@
       </ng-template>
     </ng-container>
 
+    <ng-container *ngSwitchCase="PropertyType.DYNAMIC">
+      <ng-container
+        *ngIf="(refreshableConfigsLoadingFlags$[config.key] | async) === false || (refreshableConfigsLoadingFlags$[config.key] | async) === undefined; else loading">
+
+        <div *ngFor="let c of dynamicPropsObservables$[config.key] | async; let i = index">
+          <ng-container
+            *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:c, configIndex:i, formGroup:formGroup.get(config.key)}">
+          </ng-container>
+        </div>
+
+      </ng-container>
+
+      <ng-template #loading>
+        <div class="ap-flex ap-flex-grow ap-justify-center ap-items-center ap-h-[250px]">
+          <app-loading-icon> </app-loading-icon>
+        </div>
+      </ng-template>
+    </ng-container>
   </ng-container>
 
 
 </ng-template>
 
 <ng-container *ngIf="updateValueOnChange$ | async"></ng-container>
-<ng-container *ngFor="let obs$  of 	optionsObservables$ | keyvalue">
+<ng-container *ngFor="let obs$  of 	dropdownOptionsObservables$ | keyvalue">
+  <ng-container *ngIf=" obs$.value | async "></ng-container>
+</ng-container>
+<ng-container *ngFor="let obs$  of 	dynamicPropsObservables$ | keyvalue">
   <ng-container *ngIf=" obs$.value | async "></ng-container>
 </ng-container>
 <ng-container *ngIf="configDropdownChanged$  | async"></ng-container>
