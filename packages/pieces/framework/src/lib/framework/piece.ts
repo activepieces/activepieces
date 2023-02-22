@@ -3,8 +3,8 @@ import { Action } from './action/action';
 import { PieceBase, PieceMetadata } from '@activepieces/shared';
 
 export class Piece implements PieceBase {
-  private readonly _actions: Map<string, Action>;
-  private readonly _triggers: Map<string, Trigger>;
+  private readonly _actions: Record<string, Action>;
+  private readonly _triggers: Record<string, Trigger>;
 
   constructor(
     public readonly name: string,
@@ -16,27 +16,27 @@ export class Piece implements PieceBase {
     triggers: Trigger[],
     public readonly description: string = ''
   ) {
-    this._actions = new Map(
+    this._actions = Object.fromEntries(
       actions.map((action) => [action.name, action])
     );
 
-    this._triggers = new Map(
+    this._triggers = Object.fromEntries(
       triggers.map((trigger) => [trigger.name, trigger])
     );
   }
 
   getAction(actionName: string): Action | undefined {
-    if (!(this._actions.has(actionName))) {
+    if (!(actionName in this._actions)) {
       return undefined;
     }
-    return this._actions.get(actionName);
+    return this._actions[actionName];
   }
 
   getTrigger(triggerName: string): Trigger | undefined {
-    if (!(this._triggers.has(triggerName))) {
+    if (!(triggerName in this._triggers)) {
       return undefined;
     }
-    return this._triggers.get(triggerName);
+    return this._triggers[triggerName];
   }
 
   metadata(): PieceMetadata {
