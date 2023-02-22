@@ -38,6 +38,8 @@ export class AxiosHttpClient extends BaseHttpClient {
 				body: response.data,
 			};
 		} catch (e) {
+			console.debug("Request error", e)
+
 			if (axios.isAxiosError(e)) {
 				throw new HttpError(request.body, e);
 			}
