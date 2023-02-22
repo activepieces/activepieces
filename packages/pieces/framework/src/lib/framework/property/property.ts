@@ -40,10 +40,10 @@ export const Property = {
 		return { ...request, valueSchema: undefined, type: PropertyType.SHORT_TEXT } as unknown as R extends true ? ShortTextProperty<true> : ShortTextProperty<false>;
 	},
 	Checkbox<R extends boolean>(request: Properties<CheckboxProperty<R>>): R extends true ? CheckboxProperty<true> : CheckboxProperty<false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.SHORT_TEXT } as unknown as R extends true ? CheckboxProperty<true> : CheckboxProperty<false>;
+		return { ...request, valueSchema: undefined, type: PropertyType.CHECKBOX } as unknown as R extends true ? CheckboxProperty<true> : CheckboxProperty<false>;
 	},
 	LongText<R extends boolean>(request: Properties<LongTextProperty<R>>): R extends true ? LongTextProperty<true> : LongTextProperty<false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.SHORT_TEXT } as unknown as R extends true ? LongTextProperty<true> : LongTextProperty<false>;
+		return { ...request, valueSchema: undefined, type: PropertyType.LONG_TEXT } as unknown as R extends true ? LongTextProperty<true> : LongTextProperty<false>;
 	},
 	Number<R extends boolean>(request: Properties<NumberProperty<R>>): R extends true ? NumberProperty<true> : NumberProperty<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.NUMBER } as unknown as R extends true ? NumberProperty<true> : NumberProperty<false>;

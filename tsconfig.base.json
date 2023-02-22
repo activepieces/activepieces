@@ -26,7 +26,8 @@
       "@backend/*": ["packages/backend/src/app/*"],
       "@frontend/*": ["packages/frontend/src/app/*"],
       "@/*": ["packages/*"]
-    }
+    },
+    "resolveJsonModule": true
   },
   "exclude": ["node_modules", "tmp"]
 }

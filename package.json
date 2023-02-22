@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.3.1",
+  "version": "0.3.3",
   "license": "MIT",
   "scripts": {
     "prepare": "husky install"
@@ -19,6 +19,7 @@
     "@angular/platform-browser-dynamic": "~15.1.0",
     "@angular/router": "~15.1.0",
     "@auth0/angular-jwt": "^5.1.2",
+    "@aws-sdk/client-s3": "^3.272.0",
     "@babel/runtime": "^7.20.13",
     "@ctrl/ngx-codemirror": "^5.1.1",
     "@fastify/cors": "^8.2.0",
@@ -71,7 +72,6 @@
     "ngx-skeleton-loader": "^6.0.0",
     "openai": "^3.1.0",
     "pg": "^8.8.0",
-    "posthog-js": "^1.40.1",
     "posthog-node": "^2.2.3",
     "prismjs": "^1.29.0",
     "qs": "^6.11.0",

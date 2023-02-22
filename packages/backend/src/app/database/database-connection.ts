@@ -18,6 +18,7 @@ import { FlowAndFileProjectId1674788714498 } from "./migration/1674788714498-Flo
 import { initializeSchema1676238396411 } from "./migration/1676238396411-initialize-schema";
 import { removeStoreAction1676649852890 } from "./migration/1676649852890-remove-store-action";
 import { encryptCredentials1676505294811 } from "./migration/1676505294811-encrypt-credentials";
+import { ApEnvironment } from "@activepieces/shared";
 
 const env = system.get(SystemProp.ENVIRONMENT);
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
@@ -48,17 +49,16 @@ const getSslConfig = (): boolean | TlsOptions => {
 }
 
 const getMigrations = () => {
-    const dataMigration = [removeStoreAction1676649852890, encryptCredentials1676505294811];
-    if (env === 'prod') {
+    if (env === ApEnvironment.PRODUCTION) {
         return [
             FlowAndFileProjectId1674788714498,
             initializeSchema1676238396411,
-            removeStoreAction1676649852890,
-            encryptCredentials1676505294811
+            encryptCredentials1676505294811,
+            removeStoreAction1676649852890
         ];
     }
     // These are data migrations, no schema is changed
-    return [removeStoreAction1676649852890, encryptCredentials1676505294811];
+    return [encryptCredentials1676505294811, removeStoreAction1676649852890];
 }
 
 export const databaseConnection = new DataSource({
@@ -70,6 +70,8 @@ export const databaseConnection = new DataSource({
     database,
     synchronize: getSyncConfig(),
     subscribers: [],
+    migrationsRun: true,
+    migrationsTransactionMode: 'each',
     ssl: getSslConfig(),
     migrations: getMigrations(),
     entities: [

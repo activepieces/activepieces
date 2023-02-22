@@ -67,7 +67,6 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     this.pieceName = dialogData.pieceName;
     this.pieceAuthConfig = dialogData.pieceAuthConfig;
     this.connectionToUpdate = dialogData.connectionToUpdate;
-    
     this._cloudConnectionPopupSettings = {
       auth_url: this.pieceAuthConfig.authUrl!,
       scope: this.pieceAuthConfig.scope!.join(' '),
@@ -123,7 +122,6 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       ? this.connectionToUpdate.name
       : this.settingsForm.controls.name.value;
     const settingsFormValue = this.getOAuth2Settings();
-    
     const connectionValue = settingsFormValue.value;
     const newConnection: UpsertCloudOAuth2Request = {
       appName: this.pieceName,

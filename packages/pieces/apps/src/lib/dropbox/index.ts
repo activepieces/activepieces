@@ -9,4 +9,5 @@ export const dropbox = createPiece({
   displayName: "DropBox",
   authors: ['kanarelo'],
   triggers: [],
+  version: '0.0.0',
 });

@@ -11,7 +11,7 @@ export class OutputLogPipe implements PipeTransform {
 		} else {
 			result = this.repr(value);
 		}
-		return result.length > 4098 ? result.substr(0, 4098) + ' (truncated)' : result;
+		return result.length > 8092 ? result.substr(0, 8092) + ' (truncated)' : result;
 	}
 
 	repr(obj) {

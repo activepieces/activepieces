@@ -38,7 +38,7 @@
       </ng-container>
 
       <ng-template #checkboxInputTemplate>
-        <div class="ap-flex">
+        <div class="ap-flex ap-mb-[20px] ap-mr-[5px]">
           <mat-slide-toggle [formControlName]="config.key" color="primary"
             [matTooltip]="config.description">{{config.label}}</mat-slide-toggle>
           <div class="ap-flex-grow"></div>
@@ -76,7 +76,6 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:dropdownInputTemplate ;context:{$implicit:config, formGroup:formGroup}">
         </ng-container>
         <ng-template #dropdownInputTemplate>
-
           <mat-form-field class="ap-w-full" appearance="outline">
             <mat-label> {{ (refreshableConfigsLoadingFlags$[config.key] | async)? 'Loading...' : config.label
               }}</mat-label>
@@ -350,7 +349,7 @@
       </mat-error>
     </mat-form-field>
     <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
-      marginTop="-20px" (addMention)="textControl.addMention($event)"></app-builder-autocomplete-mentions-dropdown>
+      marginTop="-20px" (addMention)="addMention(textControl,$event)"></app-builder-autocomplete-mentions-dropdown>
   </div>
 </ng-template>
 
