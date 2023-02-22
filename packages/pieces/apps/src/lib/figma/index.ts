@@ -8,6 +8,7 @@ export const figma = createPiece({
 	name: 'figma',
 	displayName: "Figma",
 	logoUrl: 'https://cdn.activepieces.com/pieces/figma.png',
+  version: '0.0.0',
 	actions: [
 		getFileAction,
 		getCommentsAction,

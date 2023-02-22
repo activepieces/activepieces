@@ -5,6 +5,7 @@ export const wordpress = createPiece({
 	name: 'wordpress',
 	displayName: 'Wordpress',
 	logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
+  version: '0.0.0',
 	actions: [createWordpressPost],
 	triggers: [wordpressNewPost],
 });

@@ -9,4 +9,5 @@ export const googleDrive = createPiece({
 	displayName: "Google Drive",
 	authors: ['kanarelo'],
 	triggers: [],
+  version: '0.0.0',
 });

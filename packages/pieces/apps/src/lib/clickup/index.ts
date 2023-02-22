@@ -20,4 +20,5 @@ export const clickup = createPiece({
     ],
     authors: ['abuaboud', 'ShayPunter'],
     triggers: [],
+    version: '0.0.0',
 });
