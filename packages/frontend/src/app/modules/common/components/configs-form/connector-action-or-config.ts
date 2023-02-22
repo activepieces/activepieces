@@ -35,6 +35,7 @@ export interface PieceConfig {
     Pick<PieceProperty, 'displayName' | 'description' | 'type' | 'options'>
   >;
   staticDropdownState?: DropdownState<unknown>;
+  defaultValue?: unknown;
 }
 
 export class PieceProperty {
@@ -52,6 +53,7 @@ export class PieceProperty {
   username?: PieceProperty;
   props?: Record<string, PieceProperty>;
   options?: DropdownState<unknown>;
+  defaultValue?: unknown;
 }
 
 export const propsConvertor = {
@@ -68,6 +70,7 @@ export const propsConvertor = {
       extra: prop.extra,
       refreshers: prop.refreshers,
       staticDropdownState: prop.options,
+      defaultValue: prop.defaultValue,
     };
     if (prop.username && prop.password) {
       pieceConfig.basicAuthConfigs = {

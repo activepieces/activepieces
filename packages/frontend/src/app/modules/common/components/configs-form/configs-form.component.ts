@@ -233,7 +233,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
                   fg.addControl(
                     childConfig.key,
                     new UntypedFormControl(
-                      undefined,
+                      childConfig.defaultValue,
                       childConfig.required ? Validators.required : []
                     ),
                     { emitEvent: false }
@@ -310,9 +310,15 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         validators.push(Validators.required);
       }
       if (c.type === PropertyType.OBJECT) {
-        controls[c.key] = new UntypedFormControl(c.value || {}, validators);
+        controls[c.key] = new UntypedFormControl(
+          c.value || c.defaultValue || {},
+          validators
+        );
       } else if (c.type === PropertyType.ARRAY) {
-        controls[c.key] = new UntypedFormControl(c.value || [''], validators);
+        controls[c.key] = new UntypedFormControl(
+          c.value || c.defaultValue || [''],
+          validators
+        );
       } else if (c.type === PropertyType.JSON) {
         if (!this.customizedInputs || !this.customizedInputs[c.key]) {
           validators.push(jsonValidator);
@@ -331,11 +337,16 @@ export class ConfigsFormComponent implements ControlValueAccessor {
           Object.keys(c.value).forEach((k) => {
             dynamicConfigControls[k] = new UntypedFormControl(c.value[k]);
           });
+        } else {
+          controls[c.key] = new UntypedFormControl(
+            c.value || c.defaultValue || '{}',
+            validators
+          );
         }
         controls[c.key] = this.fb.group(dynamicConfigControls);
       } else {
         controls[c.key] = new UntypedFormControl(
-          c.value === undefined || null ? undefined : c.value,
+          c.value === undefined || null ? c.defaultValue : c.value,
           validators
         );
       }
