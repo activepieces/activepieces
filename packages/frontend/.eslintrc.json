@@ -33,7 +33,8 @@
       "extends": [
         "plugin:@nrwl/nx/angular",
         "plugin:@angular-eslint/template/process-inline-templates",
-        "plugin:@ngrx/strict-requiring-type-checking"
+        "plugin:@ngrx/strict-requiring-type-checking",
+        "plugin:prettier/recommended"
       ],
       "plugins": ["rxjs-angular", "rxjs", "prettier"]
     },

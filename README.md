@@ -132,6 +132,7 @@ This section is dedicated to individuals who have contributed to 5 or more actio
       <td align="center" valign="top" width="14.28%"><a href="https://shaypunter.co.uk"><img src="https://avatars.githubusercontent.com/u/18310437?v=4?s=100" width="100px;" alt="Shay Punter"/><br /><sub><b>Shay Punter</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=ShayPunter" title="Documentation">📖</a> <a href="#plugin-ShayPunter" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/abaza738"><img src="https://avatars.githubusercontent.com/u/50132270?v=4?s=100" width="100px;" alt="abaza738"/><br /><sub><b>abaza738</b></sub></a><br /><a href="#plugin-abaza738" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jonaboe"><img src="https://avatars.githubusercontent.com/u/51358680?v=4?s=100" width="100px;" alt="Jona Boeddinghaus"/><br /><sub><b>Jona Boeddinghaus</b></sub></a><br /><a href="#plugin-jonaboe" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/fomojola"><img src="https://avatars.githubusercontent.com/u/264253?v=4?s=100" width="100px;" alt="fomojola"/><br /><sub><b>fomojola</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=fomojola" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
