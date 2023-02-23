@@ -68,7 +68,7 @@ async function build(artifact: Buffer): Promise<Buffer> {
 
 async function execPromise(cmd: string, options: ExecSyncOptionsWithBufferEncoding): Promise<string> {
     return new Promise((resolve, reject) => {
-        exec(cmd, options, (error: any, stdout: string | PromiseLike<string>, stderr: any) => {
+        exec(cmd, options, (error: unknown, stdout: string | PromiseLike<string>, stderr: string) => {
             if (error) {
                 reject(error);
                 return;
