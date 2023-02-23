@@ -1,4 +1,4 @@
-import fs from "node:fs";
+import fs from "node:fs/promises";
 import { ExecSyncOptionsWithBufferEncoding } from "node:child_process";
 import decompress from "decompress";
 import { sandboxManager } from "../sandbox";
@@ -48,14 +48,14 @@ async function build(artifact: Buffer): Promise<Buffer> {
         await execPromise('npm exec -g webpack -- --mode production', execOptions);
 
         const bundledFilePath = buildPath + "/dist/index.js";
-        bundledFile = fs.readFileSync(bundledFilePath);
+        bundledFile = await fs.readFile(bundledFilePath);
         console.log("Finished Building in sandbox " + buildPath);
     }
     catch (e) {
         logger.error(e);
         const consoleError = e as { stdout: string };
-        const invalidArtifactFile = fs
-            .readFileSync("./packages/backend/src/assets/invalid-code.js")
+        const invalidArtifactTemplate = await fs.readFile("./packages/backend/src/assets/invalid-code.js");
+        const invalidArtifactFile = invalidArtifactTemplate
             .toString("utf-8")
             .replace("${ERROR_MESSAGE}", JSON.stringify(consoleError.toString()).replace(/"/g, '\\"'));
         bundledFile = Buffer.from(invalidArtifactFile, "utf-8");
@@ -89,7 +89,7 @@ async function downloadFiles(artifact: Buffer, buildPath: string) {
     await decompress(artifact, buildPath, {});
 
     const packageJson = JSON.parse(
-        fs.readFileSync(packageJsonPath, {
+        await fs.readFile(packageJsonPath, {
             encoding: "utf8",
             flag: "r",
         })
@@ -99,8 +99,8 @@ async function downloadFiles(artifact: Buffer, buildPath: string) {
         packageJson.scripts = {};
     }
 
-    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson));
-    fs.writeFileSync(webpackConfigPath, webpackConfig);
+    await fs.writeFile(packageJsonPath, JSON.stringify(packageJson));
+    await fs.writeFile(webpackConfigPath, webpackConfig);
 }
 
 export const codeBuilder = {
