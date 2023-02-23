@@ -1,4 +1,4 @@
-import { parse, ParseResult } from "papaparse"
+import { parse, unparse, ParseResult, UnparseConfig } from "papaparse"
 
 export const parseCSVFile = (csvFile: string, config: Record<string, unknown>) => 
   new Promise((complete, error) => {
@@ -11,3 +11,6 @@ export const parseCSVFile = (csvFile: string, config: Record<string, unknown>) =
       error
     })
   })
+
+export const unparseCSVObject = 
+  (csvObject: any, config: UnparseConfig) => unparse(csvObject, config)
