@@ -9,4 +9,5 @@ export const posthog = createPiece({
   actions: [posthogCreateEvent, posthogCreateProject],
   authors: ['kanarelo'],
   triggers: [],
+  version: '0.0.0',
 });

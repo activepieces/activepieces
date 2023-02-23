@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.3.1",
+  "version": "0.3.3",
   "license": "MIT",
   "scripts": {
     "prepare": "husky install"
@@ -19,6 +19,7 @@
     "@angular/platform-browser-dynamic": "~15.1.0",
     "@angular/router": "~15.1.0",
     "@auth0/angular-jwt": "^5.1.2",
+    "@aws-sdk/client-s3": "^3.276.0",
     "@babel/runtime": "^7.20.13",
     "@ctrl/ngx-codemirror": "^5.1.1",
     "@fastify/cors": "^8.2.0",
@@ -121,7 +122,7 @@
     "chalk": "^4.1.2",
     "esbuild": "^0.15.7",
     "eslint": "~8.15.0",
-    "eslint-config-prettier": "8.1.0",
+    "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-rxjs": "^5.0.2",
     "eslint-plugin-rxjs-angular": "^2.0.0",
@@ -140,7 +141,7 @@
     "nx": "15.6.2",
     "pino-pretty": "^9.1.1",
     "postcss": "^8.4.21",
-    "prettier": "^2.6.2",
+    "prettier": "2.8.4",
     "tailwindcss": "^3.2.4",
     "ts-jest": "28.0.5",
     "ts-node": "10.9.1",

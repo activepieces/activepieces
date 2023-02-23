@@ -9,4 +9,5 @@ export const googleContacts = createPiece({
 	displayName: "Google Contacts",
 	authors: ['abuaboud'],
 	triggers: [googleContactNewOrUpdatedContact],
+  version: '0.0.0',
 });

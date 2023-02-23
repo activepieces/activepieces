@@ -8,4 +8,5 @@ export const googleTasks = createPiece({
 	displayName: "Google Tasks",
 	authors: ['abaza738'],
 	triggers: [],
+  version: '0.0.0',
 });

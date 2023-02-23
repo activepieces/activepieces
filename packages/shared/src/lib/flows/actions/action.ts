@@ -19,7 +19,7 @@ export const CodeActionSettings = Type.Object({
   artifactSourceId: Type.Optional(Type.String({})),
   artifactPackagedId: Type.Optional(Type.String({})),
   artifact: Type.Optional(Type.String({})),
-  input: Type.Object({}),
+  input: Type.Record(Type.String({}), Type.Any()),
 });
 
 

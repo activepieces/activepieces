@@ -27,14 +27,6 @@ const serializedPort = system.getOrThrow(SystemProp.POSTGRES_PORT);
 const port = Number.parseInt(serializedPort, 10);
 const username = system.getOrThrow(SystemProp.POSTGRES_USERNAME);
 
-const getSyncConfig = (): boolean => {
-    if (env === 'prod') {
-        return false;
-    }
-
-    return true;
-}
-
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL);
 
@@ -48,17 +40,12 @@ const getSslConfig = (): boolean | TlsOptions => {
 }
 
 const getMigrations = () => {
-    const dataMigration = [removeStoreAction1676649852890, encryptCredentials1676505294811];
-    if (env === 'prod') {
-        return [
-            FlowAndFileProjectId1674788714498,
-            initializeSchema1676238396411,
-            removeStoreAction1676649852890,
-            encryptCredentials1676505294811
-        ];
-    }
-    // These are data migrations, no schema is changed
-    return [removeStoreAction1676649852890, encryptCredentials1676505294811];
+    return [
+        FlowAndFileProjectId1674788714498,
+        initializeSchema1676238396411,
+        encryptCredentials1676505294811,
+        removeStoreAction1676649852890
+    ];
 }
 
 export const databaseConnection = new DataSource({
@@ -68,8 +55,10 @@ export const databaseConnection = new DataSource({
     username,
     password,
     database,
-    synchronize: getSyncConfig(),
+    synchronize: false,
     subscribers: [],
+    migrationsRun: true,
+    migrationsTransactionMode: 'each',
     ssl: getSslConfig(),
     migrations: getMigrations(),
     entities: [

@@ -27,7 +27,8 @@ export interface PieceProperty {
 	| ArrayProperty<boolean>
 	| ObjectProperty<boolean>
 	| JsonProperty<boolean>
-	| MultiSelectDropdownProperty<unknown, boolean>;
+	| MultiSelectDropdownProperty<unknown, boolean>
+	| DynamicProperties<boolean>
 }
 
 export type StaticPropsValue<T extends PieceProperty> = {
