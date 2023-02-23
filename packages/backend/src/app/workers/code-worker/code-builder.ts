@@ -44,7 +44,7 @@ async function build(artifact: Buffer): Promise<Buffer> {
         logger.info("Installing npm");
         await execPromise('npm install', execOptions);
 
-        logger.info("Finished npm depdencies");
+        logger.info("Finished npm dependencies");
         await execPromise('npm exec -g webpack -- --mode production', execOptions);
 
         const bundledFilePath = buildPath + "/dist/index.js";
