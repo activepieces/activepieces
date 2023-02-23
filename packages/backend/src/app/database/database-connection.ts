@@ -18,7 +18,6 @@ import { FlowAndFileProjectId1674788714498 } from "./migration/1674788714498-Flo
 import { initializeSchema1676238396411 } from "./migration/1676238396411-initialize-schema";
 import { removeStoreAction1676649852890 } from "./migration/1676649852890-remove-store-action";
 import { encryptCredentials1676505294811 } from "./migration/1676505294811-encrypt-credentials";
-import { ApEnvironment } from "@activepieces/shared";
 
 const env = system.get(SystemProp.ENVIRONMENT);
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
@@ -27,14 +26,6 @@ const password = system.getOrThrow(SystemProp.POSTGRES_PASSWORD);
 const serializedPort = system.getOrThrow(SystemProp.POSTGRES_PORT);
 const port = Number.parseInt(serializedPort, 10);
 const username = system.getOrThrow(SystemProp.POSTGRES_USERNAME);
-
-const getSyncConfig = (): boolean => {
-    if (env === 'prod') {
-        return false;
-    }
-
-    return true;
-}
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL);
@@ -49,16 +40,12 @@ const getSslConfig = (): boolean | TlsOptions => {
 }
 
 const getMigrations = () => {
-    if (env === ApEnvironment.PRODUCTION) {
-        return [
-            FlowAndFileProjectId1674788714498,
-            initializeSchema1676238396411,
-            encryptCredentials1676505294811,
-            removeStoreAction1676649852890
-        ];
-    }
-    // These are data migrations, no schema is changed
-    return [encryptCredentials1676505294811, removeStoreAction1676649852890];
+    return [
+        FlowAndFileProjectId1674788714498,
+        initializeSchema1676238396411,
+        encryptCredentials1676505294811,
+        removeStoreAction1676649852890
+    ];
 }
 
 export const databaseConnection = new DataSource({
@@ -68,7 +55,7 @@ export const databaseConnection = new DataSource({
     username,
     password,
     database,
-    synchronize: getSyncConfig(),
+    synchronize: false,
     subscribers: [],
     migrationsRun: true,
     migrationsTransactionMode: 'each',
