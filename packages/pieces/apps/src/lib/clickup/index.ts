@@ -5,6 +5,7 @@ import { createClickupTask } from "./actions/tasks/create-task";
 import { getClickupList } from "./actions/lists/get-list";
 import { getClickupSpace } from "./actions/spaces/get-space";
 import { getClickupSpaces } from "./actions/spaces/get-spaces";
+import { createClickupTaskComment } from "./actions/comments/create-task-comment";
 
 export const clickup = createPiece({
     name: 'clickup',
@@ -17,6 +18,7 @@ export const clickup = createPiece({
         getClickupSpace,
         getClickupSpaces,
         getClickupTaskCommants,
+        createClickupTaskComment,
     ],
     authors: ['abuaboud', 'ShayPunter'],
     triggers: [],
