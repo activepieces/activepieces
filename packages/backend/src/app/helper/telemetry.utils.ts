@@ -51,6 +51,6 @@ async function getMetadata() {
     return {
         activepiecesVersion: currentVersion,
         activepiecesEnvironment: system.get(SystemProp.ENVIRONMENT),
-        edition: edition,
+        activepiecesEdition: edition,
     }
 }
