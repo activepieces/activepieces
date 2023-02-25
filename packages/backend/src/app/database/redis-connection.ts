@@ -27,10 +27,10 @@ export const createRedisClient = (): Redis => {
 
 const redisConection = createRedisClient();
 
-export const createRedisLock = (key: string) => {
+export const createRedisLock = (timeout = 2 * 60 * 1000) => {
     return createLock(redisConection, {
-        timeout: 2 * 60 * 1000,
-        retries: 10,
+        timeout: timeout,
+        retries: 3,
         delay: 2000,
-    }).acquire(key);
+    });
 };
