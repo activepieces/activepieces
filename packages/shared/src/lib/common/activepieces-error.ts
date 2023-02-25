@@ -32,7 +32,7 @@ type ErrorParams =
   | StepNotFoundErrorParams
   | AppConnectionNotFoundErrorParams
   | InvalidJwtTokenErrorParams
-  | FlowRunQuotaExeceededErrorParams
+  | TaskQuotaExeceededErrorParams
   | SystemInvalidErrorParams
   | SystemPropNotDefinedErrorParams;
 
@@ -169,9 +169,9 @@ export interface InvalidJwtTokenErrorParams
       token: string;
     }
   > { }
-export interface FlowRunQuotaExeceededErrorParams
+export interface TaskQuotaExeceededErrorParams
   extends BaseErrorParams<
-    ErrorCode.FLOW_RUN_QUOTA_EXCEEDED,
+    ErrorCode.TASK_QUOTA_EXCEEDED,
     {}
   > { }
 
@@ -194,6 +194,6 @@ export enum ErrorCode {
   STEP_NOT_FOUND = "STEP_NOT_FOUND",
   SYSTEM_PROP_NOT_DEFINED = "SYSTEM_PROP_NOT_DEFINED",
   INVALID_OR_EXPIRED_JWT_TOKEN = "INVALID_OR_EXPIRED_JWT_TOKEN",
-  FLOW_RUN_QUOTA_EXCEEDED = "FLOW_RUN_QUOTA_EXCEEDED",
+  TASK_QUOTA_EXCEEDED = "FLOW_RUN_QUOTA_EXCEEDED",
   SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
 }

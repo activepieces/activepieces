@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { RunsLeftSnackbarComponent } from '@ee/usage/frontend/runs-left-snackbar/runs-left-snackbar.component';
+import { RunsLeftSnackbarComponent } from '@ee/billing/frontend/runs-left-snackbar/runs-left-snackbar.component';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { FlagService } from '../common/service/flag.service';
 import { map, Observable, tap } from 'rxjs';

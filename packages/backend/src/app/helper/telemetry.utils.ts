@@ -50,7 +50,7 @@ async function getMetadata() {
     const edition = await getEdition();
     return {
         activepiecesVersion: currentVersion,
-        environment: system.get(SystemProp.ENVIRONMENT),
+        activepieces_environment: system.get(SystemProp.ENVIRONMENT),
         edition: edition,
     }
 }

@@ -7,6 +7,7 @@ import axios from "axios";
 import { createRedisLock } from "../database/redis-connection";
 import { decryptObject, encryptObject } from "../helper/encryption";
 
+
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 
 export const appConnectionService = {
@@ -20,7 +21,6 @@ export const appConnectionService = {
     async getOne({ projectId, name }: { projectId: ProjectId, name: string }): Promise<AppConnection | null> {
         // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
         // which could result in the wrong request saving incorrect data.
-        const refreshLock = await createRedisLock(`${projectId}_${name}`);
         const appConnection = await appConnectionRepo.findOneBy({
             projectId: projectId,
             name: name
@@ -28,15 +28,20 @@ export const appConnectionService = {
         if (appConnection === null) {
             return null;
         }
+        const refreshLock = createRedisLock();
         try {
+            await refreshLock.acquire(`${projectId}_${name}`);
+
             appConnection.value = decryptObject(appConnection.value);
             const refreshedAppConnection = await refresh(appConnection);
             await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) });
             refreshedAppConnection.status = getStatus(refreshedAppConnection);
             refreshLock.release();
+            
             return refreshedAppConnection;
         }
         catch (e) {
+            refreshLock.release();
             appConnection.status = AppConnectionStatus.ERROR;
         }
         return appConnection;
@@ -89,14 +94,14 @@ export const appConnectionService = {
 
 async function refresh(connection: AppConnection): Promise<AppConnection> {
     switch (connection.value.type) {
-    case AppConnectionType.CLOUD_OAUTH2:
-        connection.value = await refreshCloud(connection.appName, connection.value);
-        break;
-    case AppConnectionType.OAUTH2:
-        connection.value = await refreshWithCredentials(connection.value);
-        break;
-    default:
-        break;
+        case AppConnectionType.CLOUD_OAUTH2:
+            connection.value = await refreshCloud(connection.appName, connection.value);
+            break;
+        case AppConnectionType.OAUTH2:
+            connection.value = await refreshWithCredentials(connection.value);
+            break;
+        default:
+            break;
     }
     return connection;
 }
@@ -183,14 +188,14 @@ function deleteProps(obj: Record<string, any>, prop: string[]) {
 function getStatus(connection: AppConnection): AppConnectionStatus {
     const connectionStatus = AppConnectionStatus.ACTIVE;
     switch (connection.value.type) {
-    case AppConnectionType.CLOUD_OAUTH2:
-    case AppConnectionType.OAUTH2:
-        if (isExpired(connection.value)) {
-            return AppConnectionStatus.EXPIRED;
-        }
-        break;
-    default:
-        break;
+        case AppConnectionType.CLOUD_OAUTH2:
+        case AppConnectionType.OAUTH2:
+            if (isExpired(connection.value)) {
+                return AppConnectionStatus.EXPIRED;
+            }
+            break;
+        default:
+            break;
     }
     return connectionStatus;
 }

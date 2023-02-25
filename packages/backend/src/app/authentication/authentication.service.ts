@@ -60,7 +60,7 @@ export const authenticationService = {
     },
 
     signIn: async (request: SignInRequest): Promise<AuthenticationResponse> => {
-        const user = await userService.getOne({
+        const user = await userService.getOneByEmail({
             email: request.email,
         });
 
