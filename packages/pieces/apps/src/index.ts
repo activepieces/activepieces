@@ -26,6 +26,7 @@ import { sendgrid } from './lib/sendgrid';
 import { stripe } from './lib/stripe';
 import { telegramBot } from './lib/telegram_bot';
 import { todoist } from './lib/todoist';
+import { trello } from './lib/trello';
 import { twilio } from './lib/twilio';
 import { typeform } from './lib/typeform';
 import { zoom } from './lib/zoom';
@@ -60,6 +61,7 @@ export const pieces: Piece[] = [
     todoist,
     twilio,
     typeform,
+    trello,
     zoom,
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
