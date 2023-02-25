@@ -94,14 +94,14 @@ export const appConnectionService = {
 
 async function refresh(connection: AppConnection): Promise<AppConnection> {
     switch (connection.value.type) {
-        case AppConnectionType.CLOUD_OAUTH2:
-            connection.value = await refreshCloud(connection.appName, connection.value);
-            break;
-        case AppConnectionType.OAUTH2:
-            connection.value = await refreshWithCredentials(connection.value);
-            break;
-        default:
-            break;
+    case AppConnectionType.CLOUD_OAUTH2:
+        connection.value = await refreshCloud(connection.appName, connection.value);
+        break;
+    case AppConnectionType.OAUTH2:
+        connection.value = await refreshWithCredentials(connection.value);
+        break;
+    default:
+        break;
     }
     return connection;
 }
@@ -188,14 +188,14 @@ function deleteProps(obj: Record<string, any>, prop: string[]) {
 function getStatus(connection: AppConnection): AppConnectionStatus {
     const connectionStatus = AppConnectionStatus.ACTIVE;
     switch (connection.value.type) {
-        case AppConnectionType.CLOUD_OAUTH2:
-        case AppConnectionType.OAUTH2:
-            if (isExpired(connection.value)) {
-                return AppConnectionStatus.EXPIRED;
-            }
-            break;
-        default:
-            break;
+    case AppConnectionType.CLOUD_OAUTH2:
+    case AppConnectionType.OAUTH2:
+        if (isExpired(connection.value)) {
+            return AppConnectionStatus.EXPIRED;
+        }
+        break;
+    default:
+        break;
     }
     return connectionStatus;
 }
