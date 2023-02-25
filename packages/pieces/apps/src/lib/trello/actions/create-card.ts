@@ -8,6 +8,7 @@ export const createCard = createAction({
     description: 'Create a new card in Trello',
 	props: {
         authentication: trelloCommon.authentication,
+        boardId: trelloCommon.boards,
         listId: Property.ShortText({
 			description: 'The list ID to create the card in',
 			displayName: 'List ID',
