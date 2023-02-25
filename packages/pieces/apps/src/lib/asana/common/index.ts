@@ -1,5 +1,6 @@
 import { Property, getAccessTokenOrThrow, OAuth2PropertyValue, HttpMethod, HttpMessageBody, HttpResponse, httpClient, AuthenticationType } from "@activepieces/framework";
 
+
 export const asanaCommon = {
     authentication: Property.OAuth2({
         description: "",
@@ -7,7 +8,7 @@ export const asanaCommon = {
         authUrl: "https://app.asana.com/-/oauth_authorize",
         tokenUrl: "https://app.asana.com/-/oauth_token",
         required: true,
-        scope: ['default']
+        scope: ['default'],
     }),
     workspace: Property.Dropdown({
         description: 'Asana workspace to create the task in',

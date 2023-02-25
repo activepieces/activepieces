@@ -162,7 +162,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/18310437?v=4",
       "profile": "https://shaypunter.co.uk",
       "contributions": [
-        "doc"
+        "doc",
+        "plugin"
       ]
     },
     {
@@ -181,6 +182,15 @@
       "profile": "https://github.com/jonaboe",
       "contributions": [
         "plugin"
+      ]
+    },
+    {
+      "login": "fomojola",
+      "name": "fomojola",
+      "avatar_url": "https://avatars.githubusercontent.com/u/264253?v=4",
+      "profile": "https://github.com/fomojola",
+      "contributions": [
+        "code"
       ]
     }
   ]

@@ -4,7 +4,8 @@ export type AppConnectionId = string;
 
 export enum AppConnectionStatus {
   EXPIRED = "EXPIRED",
-  ACTIVE = "ACTIVE"
+  ACTIVE = "ACTIVE",
+  ERROR = "ERROR"
 }
 
 interface BaseAppConnection<S> extends BaseModel<AppConnectionId> {
@@ -52,6 +53,8 @@ export interface CloudOAuth2ConnectionValue extends BaseOAuth2ConnectionValue {
   refresh_token: string;
   scope: string;
   data: Record<string, any>
+  props?: Record<string, any>;
+  token_url?: string;
 }
 
 export interface OAuth2AppDetails {
@@ -67,6 +70,7 @@ export interface OAuth2ConnectionValueWithApp extends BaseOAuth2ConnectionValue,
   client_secret: string;
   token_url: string;
   redirect_url: string;
+  props?: Record<string, any>;
 }
 
 

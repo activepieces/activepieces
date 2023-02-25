@@ -14,8 +14,11 @@ import {
     ActivepiecesError,
     ErrorCode,
     Collection,
-    TelemetryEventName
+    TelemetryEventName,
+    ApEdition
 } from "@activepieces/shared";
+import { getEdition } from "../helper/license-helper";
+import { RateLimitOperationType, usageService } from "@ee/usage/backend/usage.service.ee";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 import { collectionRepo } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
@@ -70,6 +73,15 @@ export const flowRunService = {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId);
         const collectionVersion = await collectionVersionService.getOneOrThrow(collectionVersionId);
         const collection = await getCollectionOrThrowWithoutProjectId(collectionVersion.collectionId);
+
+        const edition = await getEdition();
+        if (edition === ApEdition.ENTERPRISE) {
+            await usageService.limit({
+                operation: RateLimitOperationType.EXECUTE_RUN,
+                projectId: collection.projectId,
+                flowVersion: flowVersion
+            });
+        }
 
         const flowRun: Partial<FlowRun> = {
             id: apId(),
@@ -128,19 +140,19 @@ async function getCollectionOrThrowWithoutProjectId(collectionId: CollectionId):
 };
 
 interface ListParams {
-  projectId: ProjectId;
-  cursor: Cursor | null;
-  limit: number;
+    projectId: ProjectId;
+    cursor: Cursor | null;
+    limit: number;
 }
 
 interface GetOneParams {
-  id: FlowRunId;
-  projectId: ProjectId;
+    id: FlowRunId;
+    projectId: ProjectId;
 }
 
 interface StartParams {
-  environment: RunEnvironment;
-  flowVersionId: FlowVersionId;
-  collectionVersionId: CollectionVersionId;
-  payload: unknown;
+    environment: RunEnvironment;
+    flowVersionId: FlowVersionId;
+    collectionVersionId: CollectionVersionId;
+    payload: unknown;
 }

@@ -8,6 +8,7 @@ import {
   OnDestroy,
   OnInit,
   Optional,
+  SecurityContext,
   Self,
   ViewChild,
 } from '@angular/core';
@@ -22,11 +23,12 @@ import {
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldControl } from '@angular/material/form-field';
 import { QuillEditorComponent, QuillModules } from 'ngx-quill';
-import { lastValueFrom, Observable, skip, Subject, take, tap } from 'rxjs';
+import { firstValueFrom, Observable, skip, Subject, take, tap } from 'rxjs';
 import {
   CustomErrorMatcher,
   fromOpsToText,
   fromTextToOps,
+  getImageTemplateForStepLogo,
   InsertMentionOperation,
   QuillEditorOperationsObject,
   QuillMaterialBase,
@@ -35,6 +37,8 @@ import {
 import 'quill-mention';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
+import { DomSanitizer } from '@angular/platform-browser';
+import { StepMetaData } from '@frontend/modules/flow-builder/store/model/flow-items-details-state.model';
 
 
 @Component({
@@ -77,6 +81,7 @@ export class InterpolatingTextFormControlComponent
   editorFormControl: FormControl<QuillEditorOperationsObject>;
   valueChanges$!: Observable<any>;
   private _value = '';
+  stepsMetaData$:Observable<StepMetaData[]>;
   autofilled?: boolean | undefined = false;
   userAriaDescribedBy?: string | undefined;
   override stateChanges = new Subject<void>();
@@ -87,14 +92,14 @@ export class InterpolatingTextFormControlComponent
     this._value = value;
     setTimeout(async () => {
       if (this._value) {
-        const stepsNamesAndDisplayNames = await lastValueFrom(
+        const stepsMetaData = await firstValueFrom(
           this.store
-            .select(BuilderSelectors.selectAllFlowStepsNamesAndDisplayNames)
+            .select(BuilderSelectors.selectAllFlowStepsMetaData)
             .pipe(take(1))
         );
         if (typeof this._value === "string")
           this.editorFormControl.setValue(
-            fromTextToOps(this._value, stepsNamesAndDisplayNames)
+            fromTextToOps(this._value, stepsMetaData,this.sanitizer)
           );
       }
       this.stateChanges.next();
@@ -109,12 +114,20 @@ export class InterpolatingTextFormControlComponent
     this._placeholder = value;
     this.stateChanges.next();
   }
+  @Input()
+  disabled = false;
+
+  controlType = 'custom-form-field';
+
+  @HostBinding('attr.aria-describedby') describedBy = '';
+  protected _required: boolean | undefined;
   constructor(
     _defaultErrorStateMatcher: ErrorStateMatcher,
     @Optional() _parentForm: NgForm,
     @Optional() _parentFormGroup: FormGroupDirective,
     @Optional() @Self() ngControl: NgControl,
-    private store: Store
+    private store: Store,
+    private sanitizer: DomSanitizer
   ) {
     super(_defaultErrorStateMatcher, _parentForm, _parentFormGroup, ngControl);
     if (this.ngControl != null) {
@@ -124,6 +137,7 @@ export class InterpolatingTextFormControlComponent
       { ops: [] },
       { nonNullable: true }
     );
+    this.stepsMetaData$ = this.store.select(BuilderSelectors.selectAllFlowStepsMetaData);
   }
 
   ngOnInit(): void {
@@ -159,10 +173,10 @@ export class InterpolatingTextFormControlComponent
       Node.ELEMENT_NODE,
       (node, delta) => {
         const ops: TextInsertOperation[] = [];
-        delta.ops.forEach((op: TextInsertOperation) => {
+        delta.ops.forEach((op) => {
           if (op.insert && typeof op.insert === 'string') {
             ops.push({
-              insert: op.insert,
+              insert:this.sanitizer.sanitize(SecurityContext.HTML, op.insert) || '',
             });
           }
         });
@@ -201,22 +215,15 @@ export class InterpolatingTextFormControlComponent
   set required(value: BooleanInput) {
     this._required = coerceBooleanProperty(value);
   }
-  protected _required: boolean | undefined;
-  @Input()
-  disabled = false;
-
-  controlType = 'custom-form-field';
-
-  @HostBinding('attr.aria-describedby') describedBy = '';
 
   async writeValue(value: string) {
-    const stepsNamesAndDisplayNames = await lastValueFrom(
+    const stepsMetaData = await firstValueFrom(
       this.store
-        .select(BuilderSelectors.selectAllFlowStepsNamesAndDisplayNames)
+        .select(BuilderSelectors.selectAllFlowStepsMetaData)
         .pipe(take(1))
     );
     if (value && typeof value === "string") {
-      const parsedTextToOps = fromTextToOps(value, stepsNamesAndDisplayNames);
+      const parsedTextToOps = fromTextToOps(value, stepsMetaData,this.sanitizer);
       this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
     }
     this._value = value;
@@ -272,9 +279,33 @@ export class InterpolatingTextFormControlComponent
     this.stateChanges.next();
   }
 
-  public addMention(mentionOp: InsertMentionOperation) {
-    this.editor.quillEditor
-      .getModule('mention')
-      .insertItem(mentionOp.insert.mention, true);
+  public async addMention(mentionOp: InsertMentionOperation) {
+    const allStepsMetaData = await firstValueFrom(this.stepsMetaData$);
+    const itemPathWithoutInterpolationDenotation = mentionOp.insert.mention.serverValue.slice(2, mentionOp.insert.mention.serverValue.length - 1);
+		const itemPrefix =itemPathWithoutInterpolationDenotation.split('.')[0];
+		let imageTag ='';
+				if(itemPrefix !=='configs' && itemPrefix !== 'connections')
+				{ const stepMetaDataIndex = allStepsMetaData.findIndex(s => s.name === itemPrefix);
+          if(stepMetaDataIndex > -1)
+          {
+            imageTag = getImageTemplateForStepLogo(allStepsMetaData[stepMetaDataIndex].logoUrl) +`${stepMetaDataIndex+1}. `;
+          }
+				}
+        else
+        {
+          if(itemPrefix === "connections")
+          {
+            imageTag = getImageTemplateForStepLogo('assets/img/custom/piece/connection.png');
+          }
+          else if(itemPrefix === "configs")
+          {
+            imageTag = getImageTemplateForStepLogo('assets/img/custom/piece/config.png');
+          }
+
+        }
+      mentionOp.insert.mention.value=" "+ imageTag+ mentionOp.insert.mention.value+" ";
+      this.editor.quillEditor
+        .getModule('mention')
+        .insertItem(mentionOp.insert.mention, true);
   }
 }

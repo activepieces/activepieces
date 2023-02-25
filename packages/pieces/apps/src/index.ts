@@ -9,6 +9,7 @@ import { clickup } from './lib/clickup';
 import { discord } from './lib/discord';
 import { drip } from './lib/drip';
 import { dropbox } from './lib/dropbox';
+import { figma } from './lib/figma';
 import { github } from './lib/github';
 import { gmail } from './lib/gmail';
 import { googleCalendar } from './lib/google-calendar';
@@ -30,6 +31,11 @@ import { trello } from './lib/trello';
 import { twilio } from './lib/twilio';
 import { typeform } from './lib/typeform';
 import { zoom } from './lib/zoom';
+import { storage } from './lib/store';
+import { calcom } from './lib/cal-com';
+import { wordpress } from './lib/wordpress';
+import { posthog } from './lib/posthog';
+import { googleTasks } from './lib/google-tasks';
 
 export const pieces: Piece[] = [
     airtable,
@@ -41,12 +47,14 @@ export const pieces: Piece[] = [
     discord,
     drip,
     dropbox,
+    figma,
     github,
     gmail,
     googleCalendar,
     googleContacts,
     googleDrive,
     googleSheets,
+    googleTasks,
     hackernews,
     http,
     hubspot,
@@ -63,8 +71,12 @@ export const pieces: Piece[] = [
     typeform,
     trello,
     zoom,
+    wordpress,
+    storage,
+    calcom,
+    posthog
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
-	return pieces.find((f) => name.toLowerCase() === f.name.toLowerCase());
+    return pieces.find((f) => name.toLowerCase() === f.name.toLowerCase());
 };

@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
-import { Piece, Action, Trigger } from '@activepieces/framework';
+import { Piece } from '@activepieces/framework';
 import { pieces } from '..';
+import { ActionBase } from '@activepieces/shared';
 
 const mintJson: { navigation: { group: string; pages: string[] }[] } =
   JSON.parse(fs.readFileSync('./docs/mint.json', 'utf8'));
@@ -18,19 +19,17 @@ function getCardTemplate(title: string, description: string) {
   return CARD_TEMPLATE;
 }
 
-function getPieceCards(
-  items: Record<string, Action> | Record<string, Trigger>
-) {
-  const itemsNames = Object.keys(items);
-  const itemsCards = itemsNames
-    .map((itemName) => {
-      const title = items[itemName].displayName;
-      const description = items[itemName].description;
-      return getCardTemplate(title, description);
-    })
-    .join('');
-  return itemsCards;
+function getPieceCards(items: Record<string, ActionBase>) {
+  const itemsCards: string[] = [];
+
+  Object.values(items).forEach(item => {
+    const card = getCardTemplate(item.displayName, item.description);
+    itemsCards.push(card);
+  })
+
+  return itemsCards.join('');
 }
+
 /** returns the mint.json navigation path for the docs */
 function writePieceDoc(p: Piece, mdxTemplate: string) {
   let docsFile = mdxTemplate.replace('TITLE', p.displayName);
@@ -58,8 +57,8 @@ const appsDocsFilesPaths: string[] = [];
 pieces.forEach((p) => {
   const predefinedMdxPath = `packages/pieces/apps/src/lib/${p.name}/${p.name}.mdx`;
   if (fs.existsSync(predefinedMdxPath)) {
-    const predfinedMdxFile = fs.readFileSync(predefinedMdxPath, 'utf8');
-    appsDocsFilesPaths.push(writePieceDoc(p, predfinedMdxFile));
+    const predefinedMdxFile = fs.readFileSync(predefinedMdxPath, 'utf8');
+    appsDocsFilesPaths.push(writePieceDoc(p, predefinedMdxFile));
     console.log(p.displayName);
   }
   else {

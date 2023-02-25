@@ -5,12 +5,13 @@ import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { AppConnectionEntity } from "./app-connection.entity";
 import axios from "axios";
 import { createRedisLock } from "../database/redis-connection";
+import { decryptObject, encryptObject } from "../helper/encryption";
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 
 export const appConnectionService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertConnectionRequest }): Promise<AppConnection> {
-        await appConnectionRepo.upsert({ ...request, id: apId(), projectId: projectId }, ["name", "projectId"]);
+        await appConnectionRepo.upsert({ ...request, id: apId(), projectId: projectId, value: encryptObject(request.value) }, ["name", "projectId"]);
         return appConnectionRepo.findOneByOrFail({
             projectId: projectId,
             name: request.name
@@ -27,11 +28,18 @@ export const appConnectionService = {
         if (appConnection === null) {
             return null;
         }
-        const refreshedAppConnection = await refresh(appConnection);
-        await appConnectionRepo.update(refreshedAppConnection.id, refreshedAppConnection);
-        refreshLock.release();
-        refreshedAppConnection.status = getStatus(refreshedAppConnection);
-        return refreshedAppConnection;
+        try {
+            appConnection.value = decryptObject(appConnection.value);
+            const refreshedAppConnection = await refresh(appConnection);
+            await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) });
+            refreshedAppConnection.status = getStatus(refreshedAppConnection);
+            refreshLock.release();
+            return refreshedAppConnection;
+        }
+        catch (e) {
+            appConnection.status = AppConnectionStatus.ERROR;
+        }
+        return appConnection;
     },
     async delete({ projectId, id }: { projectId: ProjectId, id: AppConnectionId }): Promise<void> {
         await appConnectionRepo.delete({ id: id, projectId: projectId });
@@ -55,14 +63,23 @@ export const appConnectionService = {
         const { data, cursor } = await paginator.paginate(queryBuilder);
         const promises: Promise<AppConnection>[] = [];
         data.forEach(connection => {
-            connection.status = getStatus(connection);
-            if (connection.status === AppConnectionStatus.ACTIVE) {
+            try {
+                connection.value = decryptObject(connection.value);
+                connection.status = getStatus(connection);
+                if (connection.status === AppConnectionStatus.ACTIVE) {
+                    promises.push(new Promise((resolve) => {
+                        return resolve(connection);
+                    }));
+                }
+                else {
+                    promises.push(this.getOne({ projectId: connection.projectId, name: connection.name }));
+                }
+            }
+            catch (e) {
+                connection.status = AppConnectionStatus.ERROR;
                 promises.push(new Promise((resolve) => {
                     return resolve(connection);
                 }));
-            }
-            else {
-                promises.push(this.getOne({ projectId: connection.projectId, name: connection.name }));
             }
         });
         const refreshConnections = await Promise.all(promises);
@@ -100,11 +117,14 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
     if (!isExpired(connectionValue)) {
         return connectionValue;
     }
+
+    const requestBody: RefreshTokenFromCloudRequest = {
+        refreshToken: connectionValue.refresh_token,
+        pieceName: appName,
+        tokenUrl: connectionValue.token_url,
+    };
     const response = (
-        await axios.post("https://secrets.activepieces.com/refresh", {
-            refreshToken: connectionValue.refresh_token,
-            pieceName: appName,
-        } as RefreshTokenFromCloudRequest)
+        await axios.post("https://secrets.activepieces.com/refresh", requestBody)
     ).data;;
 
     return {
@@ -117,6 +137,7 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
 async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithApp): Promise<OAuth2ConnectionValueWithApp> {
     if (!isExpired(appConnection)) {
         return appConnection;
+
     }
     const settings = appConnection;
     const response = (

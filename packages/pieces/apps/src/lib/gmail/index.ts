@@ -5,6 +5,8 @@ export const gmail = createPiece({
 	name: 'gmail',
 	logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
 	actions: [gmailSendEmailAction],
-    displayName:'Gmail',
+  displayName:'Gmail',
+	authors: ['AbdulTheActivePiecer'],
 	triggers: [],
+  version: '0.0.0',
 });

@@ -3,6 +3,11 @@ import { tokenUtils } from "./lib/token-utils";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 
 const ignoredRoutes = new Set([
+    // BEGIN EE
+    "/v1/connection-keys/app-connections",
+    "/v1/firebase/users",
+    "/v1/firebase/sign-in",
+    // END EE
     "/v1/authentication/sign-in",
     "/v1/authentication/sign-up",
     "/v1/flags",
@@ -28,10 +33,6 @@ export const tokenVerifyMiddleware = async (request: FastifyRequest, _reply: Fas
         try {
             const token = rawToken.substring(HEADER_PREFIX.length);
             const principal = await tokenUtils.decode(token);
-            // Todo remove in the future, as the old JWT token doesn't contain project id.
-            if (principal.projectId === undefined) {
-                throw new ActivepiecesError({ code: ErrorCode.INVALID_BEARER_TOKEN, params: {} });
-            }
             request.principal = principal;
         }
         catch (e) {
