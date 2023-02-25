@@ -14,18 +14,32 @@ export const triggerHelper = {
     const executionState = new ExecutionState();
     executionState.insertConfigs(params.collectionVersion);
     const resolvedInput = await variableService.resolve(flowTrigger.settings.input, executionState);
-
+    let appEvent: { events: string[], identifierValue: string, identifierKey: string }[] = [];
     const context = {
       store: createContextStore(params.flowVersion.flowId),
+      // TODO
+      app: {
+        async registerListener({ events, identifierKey, identifierValue }: { events: string[], identifierValue: string, identifierKey: string }) {
+          appEvent = [{ events, identifierValue, identifierKey}];
+        }
+      },
       webhookUrl: params.webhookUrl,
       propsValue: resolvedInput,
       payload: params.triggerPayload,
     };
     switch (params.hookType) {
       case TriggerHookType.ON_DISABLE:
-        return trigger.onDisable(context);
+        await trigger.onDisable(context);
+        return {
+          events: appEvent
+        }
+      case TriggerHookType.EXTRACT_WEBHOOK_DATA:
+        return await trigger.extractWebhookEvent(context);
       case TriggerHookType.ON_ENABLE:
-        return trigger.onEnable(context);
+        await trigger.onEnable(context);
+        return {
+          events: appEvent
+        }
       case TriggerHookType.RUN:
         // TODO: fix types to remove use of any
         return trigger.run(context as any);

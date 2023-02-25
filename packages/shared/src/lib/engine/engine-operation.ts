@@ -12,6 +12,7 @@ export enum EngineOperationType {
 export enum TriggerHookType {
     ON_ENABLE = "ON_ENABLE",
     ON_DISABLE = "ON_DISABLE",
+    EXTRACT_WEBHOOK_DATA = "EXTRACT_WEBHOOK_DATA",
     RUN = "RUN"
 }
 

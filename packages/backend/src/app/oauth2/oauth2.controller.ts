@@ -14,7 +14,7 @@ export const oauth2Controller = async (fastify: FastifyInstance, options: Fastif
             request: FastifyRequest<{
         Body: ClaimTokenWithSecretRequest;
       }>,
-            reply
+            _reply
         ) => {
             const result = await oauth2Service.claim(request.body);
             return result;
@@ -32,7 +32,7 @@ export const oauth2Controller = async (fastify: FastifyInstance, options: Fastif
             request: FastifyRequest<{
         Body: ClaimTokenFromCloudRequest;
       }>,
-            reply
+            _reply
         ) => {
             const result = await oauth2Service.claimWithCloud(request.body);
             return result;

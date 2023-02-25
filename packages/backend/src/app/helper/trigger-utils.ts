@@ -2,7 +2,6 @@ import { Trigger, TriggerStrategy } from "@activepieces/framework";
 import {
     CollectionId,
     CollectionVersion,
-    FlowId,
     FlowVersion,
     PieceTrigger,
     ProjectId,
@@ -16,6 +15,7 @@ import { engineHelper } from "./engine-helper";
 import { logger } from "../helper/logger";
 import { getPiece } from "@activepieces/pieces-apps";
 import { webhookService } from "../webhooks/webhook-service";
+import { appEventService } from "../app-event-routing/app-event-routing.service";
 
 const EVERY_FIVE_MINUTES = "*/5 * * * *";
 
@@ -108,6 +108,9 @@ const disablePieceTrigger = async ({ flowVersion, projectId, collectionId, colle
         projectId: projectId
     });
     switch (pieceTrigger.type) {
+    case TriggerStrategy.APP_WEBHOOK:
+        await appEventService.deleteListeners({projectId, flowId: flowVersion.flowId });
+        break;
     case TriggerStrategy.WEBHOOK:
         break;
     case TriggerStrategy.POLLING:
@@ -131,6 +134,12 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId, collec
         projectId: projectId
     });
     switch (pieceTrigger.type) {
+    case TriggerStrategy.APP_WEBHOOK: {
+        const appName = flowTrigger.settings.pieceName;
+        // TODO: Add identifier value
+        await appEventService.createListeners({projectId, flowId: flowVersion.flowId, appName, events: [], identifierValue: "a" });
+    }
+        break;
     case TriggerStrategy.WEBHOOK:
         break;
     case TriggerStrategy.POLLING:

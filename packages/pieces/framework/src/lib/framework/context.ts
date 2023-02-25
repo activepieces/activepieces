@@ -1,7 +1,11 @@
+import { TriggerStrategy } from "./trigger/trigger";
 
 
-export interface TriggerHookContext<T> {
+export interface TriggerHookContext<T, S extends TriggerStrategy> {
     webhookUrl: string,
+    app: {
+        registerListener({ events, identifierKey, identifierValue }: { events: string[], identifierValue: string, identifierKey: string }): Promise<void>
+    }
     propsValue: T,
     store: Store
 }
