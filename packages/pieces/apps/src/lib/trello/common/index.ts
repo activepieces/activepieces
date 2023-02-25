@@ -35,10 +35,12 @@ export const trelloCommon = {
             const user = await getauthoriseduser(basicAuthProperty.username, basicAuthProperty.password);
             const boards = await listBoards(basicAuthProperty.username, basicAuthProperty.password, user.id);
         
-            return boards.map((board: { id: any; name: any; }) => ({
-            value: board.id,
-            label: board.name,
-            }));
+            return {
+                options: boards.map((board: { id: any; name: any; }) => ({
+                    value: board.id,
+                    label: board.name,
+                }))
+            }
         }
     })
 }
@@ -61,16 +63,6 @@ async function getauthoriseduser(apikey: string, token: string) {
     return response.body;
 }
 
-async function getBoardList(apikey: string, token: string) {
-    const user = await getauthoriseduser(apikey, token);
-    const boards = await listBoards(apikey, token, user.id);
-  
-    return boards.map((board: { id: any; name: any; }) => ({
-      value: board.id,
-      label: board.name,
-    }));
-  }
-
 async function listBoards(apikey: string, token: string, user_id: string) {
     
     const request: HttpRequest = {
@@ -84,7 +76,7 @@ async function listBoards(apikey: string, token: string, user_id: string) {
         body: {},
         queryParams: {},
     };
-    const response = await httpClient.sendRequest(request);
+    const response = await httpClient.sendRequest<{ id: any; name: any; }[]>(request);
 
     return response.body;
 }
