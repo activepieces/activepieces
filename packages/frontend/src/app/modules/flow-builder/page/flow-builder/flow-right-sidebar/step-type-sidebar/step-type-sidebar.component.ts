@@ -1,8 +1,3 @@
-import {
-  defaultCronJobForScheduleTrigger,
-  getDefaultDisplayNameForPiece,
-  getDisplayNameForTrigger,
-} from 'packages/frontend/src/app/modules/common/utils';
 import { Store } from '@ngrx/store';
 import {
   combineLatest,
@@ -27,10 +22,15 @@ import {
   AddActionRequest,
   FlowVersion,
 } from '@activepieces/shared';
-import { CodeService } from 'packages/frontend/src/app/modules/flow-builder/service/code.service';
-import { FlowStructureUtil } from 'packages/frontend/src/app/modules/flow-builder/service/flowStructureUtil';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import { FormControl } from '@angular/forms';
+import { CodeService } from '../../../../service/code.service';
+import { BuilderSelectors } from '../../../../store/builder/builder.selector';
+import { FlowStructureUtil } from '../../../../service/flowStructureUtil';
+import {
+  defaultCronJobForScheduleTrigger,
+  getDefaultDisplayNameForPiece,
+  getDisplayNameForTrigger,
+} from '../../../../../common/utils';
 
 @Component({
   selector: 'app-step-type-sidebar',
@@ -59,7 +59,7 @@ export class StepTypeSidebarComponent implements OnInit {
   flowTypeSelected$: Observable<Flow | undefined>;
   flowItemDetailsLoaded$: Observable<boolean>;
   triggersDetails$: Observable<FlowItemDetails[]>;
-  constructor(private store: Store, private codeService: CodeService) { }
+  constructor(private store: Store, private codeService: CodeService) {}
 
   ngOnInit(): void {
     this.flowItemDetailsLoaded$ = this.store
@@ -75,11 +75,11 @@ export class StepTypeSidebarComponent implements OnInit {
       : this.store.select(BuilderSelectors.selectCoreFlowItemsDetails);
     const customPiecesItemDetails$ = this._showTriggers
       ? this.store.select(
-        BuilderSelectors.selectFlowItemDetailsForCustomPiecesTriggers
-      )
+          BuilderSelectors.selectFlowItemDetailsForCustomPiecesTriggers
+        )
       : this.store.select(
-        BuilderSelectors.selectFlowItemDetailsForCustomPiecesActions
-      );
+          BuilderSelectors.selectFlowItemDetailsForCustomPiecesActions
+        );
 
     const allItemDetails$ = forkJoin({
       apps: customPiecesItemDetails$.pipe(take(1)),
@@ -92,19 +92,19 @@ export class StepTypeSidebarComponent implements OnInit {
     this.tabsAndTheirLists.push({
       displayName: 'All',
       list$: this.applySearchToObservable(allItemDetails$),
-      emptyListText: 'Oops! We didn\'t find any results.',
+      emptyListText: "Oops! We didn't find any results.",
     });
 
     this.tabsAndTheirLists.push({
       displayName: 'Core',
       list$: this.applySearchToObservable(coreItemsDetails$),
-      emptyListText: 'Oops! We didn\'t find any results.',
+      emptyListText: "Oops! We didn't find any results.",
     });
 
     this.tabsAndTheirLists.push({
       displayName: this._showTriggers ? 'App Events' : 'App Actions',
       list$: this.applySearchToObservable(customPiecesItemDetails$),
-      emptyListText: 'Oops! We didn\'t find any results.',
+      emptyListText: "Oops! We didn't find any results.",
     });
   }
 
@@ -260,8 +260,8 @@ export class StepTypeSidebarComponent implements OnInit {
               actionName: undefined,
               input: {},
               inputUiInfo: {
-                customizedInputs: {}
-              }
+                customizedInputs: {},
+              },
             },
           },
         };

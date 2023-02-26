@@ -1,4 +1,4 @@
 export enum SelectedTabInFullscreenCodeEditor {
-	OUTPUT = 'OUTPUT',
-	CONSOLE = 'CONSOLE',
+  OUTPUT = 'OUTPUT',
+  CONSOLE = 'CONSOLE',
 }

@@ -113,7 +113,7 @@
             <mat-label> {{ (refreshableConfigsLoadingFlags$[config.key] | async)? 'Loading...' : config.label
               }}</mat-label>
             <mat-select
-              [style.display]="(!(dropdownOptionsObservables$[config.key] | async) ||  (dropdownOptionsObservables$[config.key] | async)?.disabled === true)? 'none':'block' "
+              [style.display]="((dropdownOptionsObservables$[config.key] | async) === undefined ||  (dropdownOptionsObservables$[config.key] | async)?.disabled === true)? 'none':'block' "
               multiple [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
               <ng-container *ngIf="dropdownOptionsObservables$[config.key]| async as state">
                 <mat-option *ngFor="let opt of state.options" [value]="opt.value">
