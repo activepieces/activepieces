@@ -73,7 +73,6 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       extraParams: this.pieceAuthConfig.extra!,
       pieceName: this.pieceName,
       clientId: dialogData.clientId,
-
     };
   }
 
@@ -97,14 +96,16 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
         ],
       }),
       value: new FormControl(undefined as any, Validators.required),
-      props: this.fb.group(propsControls)
+      props: this.fb.group(propsControls),
     });
     if (this.connectionToUpdate) {
       this.settingsForm.controls.value.setValue(this.connectionToUpdate.value);
       this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
       this.settingsForm.controls.name.disable();
       if (this.connectionToUpdate.value.props) {
-        this.settingsForm.controls.props.setValue(this.connectionToUpdate.value.props);
+        this.settingsForm.controls.props.setValue(
+          this.connectionToUpdate.value.props
+        );
       }
     }
     this.settingsForm.controls.name.markAllAsTouched();
@@ -127,20 +128,24 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       appName: this.pieceName,
       value: {
         token_url: settingsFormValue['token_url'],
-        ...connectionValue, scope: this._cloudConnectionPopupSettings.scope,
-        props: this.pieceAuthConfig.oAuthProps ? this.settingsForm.controls.props.value : undefined
+        ...connectionValue,
+        scope: this._cloudConnectionPopupSettings.scope,
+        props: this.pieceAuthConfig.oAuthProps
+          ? this.settingsForm.controls.props.value
+          : undefined,
       },
       name: connectionName,
-
     };
     return newConnection;
   }
   createPropsFormGroup() {
     const controls: Record<string, FormControl> = {};
     if (this.pieceAuthConfig.oAuthProps) {
-      Object.keys(this.pieceAuthConfig.oAuthProps).forEach(key => {
-        controls[key] = new FormControl('', { validators: [Validators.required] })
-      })
+      Object.keys(this.pieceAuthConfig.oAuthProps).forEach((key) => {
+        controls[key] = new FormControl('', {
+          validators: [Validators.required],
+        });
+      });
     }
     return controls;
   }
@@ -190,18 +195,29 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     if (this.pieceAuthConfig.oAuthProps) {
       let authUrl = this.pieceAuthConfig.authUrl!;
       let tokenUrl = this.pieceAuthConfig.tokenUrl!;
-      Object.keys(this.pieceAuthConfig.oAuthProps).forEach(key => {
-        authUrl = authUrl.replaceAll(`{${key}}`, this.settingsForm.controls.props.value[key]);
-        tokenUrl = tokenUrl.replaceAll(`{${key}}`, this.settingsForm.controls.props.value[key]);
-      })
-      return { ...formValue, auth_url: authUrl, token_url: tokenUrl }
+      Object.keys(this.pieceAuthConfig.oAuthProps).forEach((key) => {
+        authUrl = authUrl.replaceAll(
+          `{${key}}`,
+          this.settingsForm.controls.props.value[key]
+        );
+        tokenUrl = tokenUrl.replaceAll(
+          `{${key}}`,
+          this.settingsForm.controls.props.value[key]
+        );
+      });
+      return { ...formValue, auth_url: authUrl, token_url: tokenUrl };
     }
     return formValue;
   }
   get cloudConnectionPopupSettings() {
-    if (this.pieceAuthConfig.oAuthProps && this.getOAuth2Settings()['auth_url']) {
-      this._cloudConnectionPopupSettings.auth_url = this.getOAuth2Settings()['auth_url'];
-      this._cloudConnectionPopupSettings.token_url = this.getOAuth2Settings()['token_url'];
+    if (
+      this.pieceAuthConfig.oAuthProps &&
+      this.getOAuth2Settings()['auth_url']
+    ) {
+      this._cloudConnectionPopupSettings.auth_url =
+        this.getOAuth2Settings()['auth_url'];
+      this._cloudConnectionPopupSettings.token_url =
+        this.getOAuth2Settings()['token_url'];
     }
     return this._cloudConnectionPopupSettings;
   }

@@ -1,7 +1,4 @@
-import {
-  AppConnection,
-  AppConnectionType,
-} from '@activepieces/shared';
+import { AppConnection, AppConnectionType } from '@activepieces/shared';
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import {
   FormBuilder,
@@ -76,7 +73,6 @@ export class SecretTextConnectionDialogComponent {
     });
     if (this.dialogData.connectionName) {
       this.settingsForm.controls.name.disable();
-
     }
   }
   submit() {

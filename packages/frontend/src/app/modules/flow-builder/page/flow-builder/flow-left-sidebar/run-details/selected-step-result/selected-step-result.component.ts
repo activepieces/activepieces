@@ -2,16 +2,16 @@ import { Component, Input } from '@angular/core';
 import { StepOutput, StepOutputStatus } from '@activepieces/shared';
 
 @Component({
-	selector: 'app-selected-step-result',
-	templateUrl: './selected-step-result.component.html',
-	styleUrls: ['./selected-step-result.component.scss'],
+  selector: 'app-selected-step-result',
+  templateUrl: './selected-step-result.component.html',
+  styleUrls: ['./selected-step-result.component.scss'],
 })
 export class SelectedStepResultComponent {
-	@Input() selectedStepResult: StepOutput;
-	@Input() selectedStepName: string;
-	constructor() {}
+  @Input() selectedStepResult: StepOutput;
+  @Input() selectedStepName: string;
+  constructor() {}
 
-	get ActionStatusEnum() {
-		return StepOutputStatus;
-	}
+  get ActionStatusEnum() {
+    return StepOutputStatus;
+  }
 }

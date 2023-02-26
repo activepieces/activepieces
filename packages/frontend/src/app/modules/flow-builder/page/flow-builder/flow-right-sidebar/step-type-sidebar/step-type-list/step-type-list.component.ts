@@ -20,7 +20,7 @@ export class StepTypeListComponent {
   @Output() typeSelected: EventEmitter<FlowItemDetails> = new EventEmitter();
   @Input() emptyListText: string;
 
-  constructor(private authenticationService: AuthenticationService) { }
+  constructor(private authenticationService: AuthenticationService) {}
   openFeedbackPopover() {
     this.authenticationService.openFeedbackPopover$.next();
   }

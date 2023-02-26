@@ -2,6 +2,6 @@ import { GlobalBuilderState } from '../modules/flow-builder/store/model/builder-
 import { CommonStateModel } from '../modules/common/store/common-state.model';
 
 export interface AppState {
-	readonly builderState: GlobalBuilderState;
-	readonly commonState: CommonStateModel;
+  readonly builderState: GlobalBuilderState;
+  readonly commonState: CommonStateModel;
 }

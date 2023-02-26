@@ -4,18 +4,20 @@ import { Store } from '@ngrx/store';
 import { FlowsActions } from 'packages/frontend/src/app/modules/flow-builder/store/flow/flows.action';
 
 @Component({
-	selector: 'app-delete-step-dialog',
-	templateUrl: './delete-step-dialog.component.html',
-	changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-delete-step-dialog',
+  templateUrl: './delete-step-dialog.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeleteStepDialogComponent {
-	constructor(
-		@Inject(MAT_DIALOG_DATA) public stepName: string,
-		private dialogRef: MatDialogRef<DeleteStepDialogComponent>,
-		private store: Store
-	) {}
-	deleteStep() {
-		this.store.dispatch(FlowsActions.deleteAction({ operation: { name: this.stepName } }));
-		this.dialogRef.close(true);
-	}
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public stepName: string,
+    private dialogRef: MatDialogRef<DeleteStepDialogComponent>,
+    private store: Store
+  ) {}
+  deleteStep() {
+    this.store.dispatch(
+      FlowsActions.deleteAction({ operation: { name: this.stepName } })
+    );
+    this.dialogRef.close(true);
+  }
 }

@@ -30,7 +30,8 @@ export interface CodeArtifactForm {
   ],
 })
 export class CodeArtifactFormControlComponent
-  implements ControlValueAccessor, OnInit, AfterViewInit {
+  implements ControlValueAccessor, OnInit, AfterViewInit
+{
   @ViewChild('tooltip') tooltip: MatTooltip;
   hideDelayForFullscreenTooltip = 2000;
   codeArtifactForm: FormGroup<CodeArtifactForm>;
@@ -66,8 +67,8 @@ export class CodeArtifactFormControlComponent
     }
   }
   updateComponentValue$: Observable<any>;
-  onChange = (val) => { };
-  onTouched = () => { };
+  onChange = (val) => {};
+  onTouched = () => {};
 
   writeValue(artifact: Artifact): void {
     if (artifact && (artifact.content || artifact.package)) {

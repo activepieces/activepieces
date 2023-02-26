@@ -40,7 +40,6 @@ import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder
 import { DomSanitizer } from '@angular/platform-browser';
 import { StepMetaData } from '@frontend/modules/flow-builder/store/model/flow-items-details-state.model';
 
-
 @Component({
   selector: 'app-interpolating-text-form-control',
   templateUrl: './interpolating-text-form-control.component.html',
@@ -59,11 +58,12 @@ import { StepMetaData } from '@frontend/modules/flow-builder/store/model/flow-it
 export class InterpolatingTextFormControlComponent
   extends QuillMaterialBase
   implements
-  OnInit,
-  OnDestroy,
-  DoCheck,
-  MatFormFieldControl<string>,
-  ControlValueAccessor {
+    OnInit,
+    OnDestroy,
+    DoCheck,
+    MatFormFieldControl<string>,
+    ControlValueAccessor
+{
   static nextId = 0;
   @Input() insideMatField = true;
   private _placeholder = '';
@@ -81,7 +81,7 @@ export class InterpolatingTextFormControlComponent
   editorFormControl: FormControl<QuillEditorOperationsObject>;
   valueChanges$!: Observable<any>;
   private _value = '';
-  stepsMetaData$:Observable<StepMetaData[]>;
+  stepsMetaData$: Observable<StepMetaData[]>;
   autofilled?: boolean | undefined = false;
   userAriaDescribedBy?: string | undefined;
   override stateChanges = new Subject<void>();
@@ -97,9 +97,9 @@ export class InterpolatingTextFormControlComponent
             .select(BuilderSelectors.selectAllFlowStepsMetaData)
             .pipe(take(1))
         );
-        if (typeof this._value === "string")
+        if (typeof this._value === 'string')
           this.editorFormControl.setValue(
-            fromTextToOps(this._value, stepsMetaData,this.sanitizer)
+            fromTextToOps(this._value, stepsMetaData, this.sanitizer)
           );
       }
       this.stateChanges.next();
@@ -137,7 +137,9 @@ export class InterpolatingTextFormControlComponent
       { ops: [] },
       { nonNullable: true }
     );
-    this.stepsMetaData$ = this.store.select(BuilderSelectors.selectAllFlowStepsMetaData);
+    this.stepsMetaData$ = this.store.select(
+      BuilderSelectors.selectAllFlowStepsMetaData
+    );
   }
 
   ngOnInit(): void {
@@ -176,7 +178,8 @@ export class InterpolatingTextFormControlComponent
         delta.ops.forEach((op) => {
           if (op.insert && typeof op.insert === 'string') {
             ops.push({
-              insert:this.sanitizer.sanitize(SecurityContext.HTML, op.insert) || '',
+              insert:
+                this.sanitizer.sanitize(SecurityContext.HTML, op.insert) || '',
             });
           }
         });
@@ -192,8 +195,6 @@ export class InterpolatingTextFormControlComponent
   get value() {
     return this._value;
   }
-
-
 
   get empty(): boolean {
     return !this.value;
@@ -222,8 +223,12 @@ export class InterpolatingTextFormControlComponent
         .select(BuilderSelectors.selectAllFlowStepsMetaData)
         .pipe(take(1))
     );
-    if (value && typeof value === "string") {
-      const parsedTextToOps = fromTextToOps(value, stepsMetaData,this.sanitizer);
+    if (value && typeof value === 'string') {
+      const parsedTextToOps = fromTextToOps(
+        value,
+        stepsMetaData,
+        this.sanitizer
+      );
       this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
     }
     this._value = value;
@@ -243,7 +248,6 @@ export class InterpolatingTextFormControlComponent
     this.stateChanges.next();
   }
 
-
   setDescribedByIds(ids: string[]): void {
     this.describedBy = ids.join(' ');
   }
@@ -254,7 +258,7 @@ export class InterpolatingTextFormControlComponent
   public focusEditor() {
     setTimeout(() => {
       this.editor.quillEditor.focus();
-    })
+    });
   }
 
   ngDoCheck(): void {
@@ -281,31 +285,38 @@ export class InterpolatingTextFormControlComponent
 
   public async addMention(mentionOp: InsertMentionOperation) {
     const allStepsMetaData = await firstValueFrom(this.stepsMetaData$);
-    const itemPathWithoutInterpolationDenotation = mentionOp.insert.mention.serverValue.slice(2, mentionOp.insert.mention.serverValue.length - 1);
-		const itemPrefix =itemPathWithoutInterpolationDenotation.split('.')[0];
-		let imageTag ='';
-				if(itemPrefix !=='configs' && itemPrefix !== 'connections')
-				{ const stepMetaDataIndex = allStepsMetaData.findIndex(s => s.name === itemPrefix);
-          if(stepMetaDataIndex > -1)
-          {
-            imageTag = getImageTemplateForStepLogo(allStepsMetaData[stepMetaDataIndex].logoUrl) +`${stepMetaDataIndex+1}. `;
-          }
-				}
-        else
-        {
-          if(itemPrefix === "connections")
-          {
-            imageTag = getImageTemplateForStepLogo('assets/img/custom/piece/connection.png');
-          }
-          else if(itemPrefix === "configs")
-          {
-            imageTag = getImageTemplateForStepLogo('assets/img/custom/piece/config.png');
-          }
-
-        }
-      mentionOp.insert.mention.value=" "+ imageTag+ mentionOp.insert.mention.value+" ";
-      this.editor.quillEditor
-        .getModule('mention')
-        .insertItem(mentionOp.insert.mention, true);
+    const itemPathWithoutInterpolationDenotation =
+      mentionOp.insert.mention.serverValue.slice(
+        2,
+        mentionOp.insert.mention.serverValue.length - 1
+      );
+    const itemPrefix = itemPathWithoutInterpolationDenotation.split('.')[0];
+    let imageTag = '';
+    if (itemPrefix !== 'configs' && itemPrefix !== 'connections') {
+      const stepMetaDataIndex = allStepsMetaData.findIndex(
+        (s) => s.name === itemPrefix
+      );
+      if (stepMetaDataIndex > -1) {
+        imageTag =
+          getImageTemplateForStepLogo(
+            allStepsMetaData[stepMetaDataIndex].logoUrl
+          ) + `${stepMetaDataIndex + 1}. `;
+      }
+    } else {
+      if (itemPrefix === 'connections') {
+        imageTag = getImageTemplateForStepLogo(
+          'assets/img/custom/piece/connection.png'
+        );
+      } else if (itemPrefix === 'configs') {
+        imageTag = getImageTemplateForStepLogo(
+          'assets/img/custom/piece/config.png'
+        );
+      }
+    }
+    mentionOp.insert.mention.value =
+      ' ' + imageTag + mentionOp.insert.mention.value + ' ';
+    this.editor.quillEditor
+      .getModule('mention')
+      .insertItem(mentionOp.insert.mention, true);
   }
 }

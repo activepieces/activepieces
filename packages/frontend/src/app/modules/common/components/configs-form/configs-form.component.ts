@@ -476,9 +476,10 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       input.nativeElement.click();
     }
   }
-  async addMention(textControl:InterpolatingTextFormControlComponent,mentionOp:InsertMentionOperation)
-  {
-    
-     await textControl.addMention(mentionOp);
+  async addMention(
+    textControl: InterpolatingTextFormControlComponent,
+    mentionOp: InsertMentionOperation
+  ) {
+    await textControl.addMention(mentionOp);
   }
 }

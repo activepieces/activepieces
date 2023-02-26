@@ -50,7 +50,6 @@ import { ActionMetaService } from '../../service/action-meta.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TestFlowModalComponent implements OnInit {
-
   submitted = false;
   dialogRef: MatDialogRef<TemplateRef<any>>;
   instanceRunStatus$: Observable<undefined | ExecutionOutputStatus>;
@@ -124,7 +123,6 @@ export class TestFlowModalComponent implements OnInit {
       BuilderSelectors.selectCurrentFlowRunStatus
     );
   }
-
 
   testFlowButtonClicked(
     flow: Flow,
@@ -262,7 +260,6 @@ export class TestFlowModalComponent implements OnInit {
       })
     );
   }
-
 
   public get triggerType() {
     return TriggerType;

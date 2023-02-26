@@ -10,28 +10,32 @@ import { __values } from 'tslib';
 import { Config } from '@activepieces/shared';
 
 @Component({
-	selector: 'app-configs-sidebar',
-	templateUrl: './configs-sidebar.component.html',
-	styleUrls: ['./configs-sidebar.component.css'],
+  selector: 'app-configs-sidebar',
+  templateUrl: './configs-sidebar.component.html',
+  styleUrls: ['./configs-sidebar.component.css'],
 })
 export class VariableSidebarComponent {
-	viewMode$: Observable<boolean>;
+  viewMode$: Observable<boolean>;
 
-	constructor(private store: Store, private dialogService: MatDialog) {
-		this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
-	}
+  constructor(private store: Store, private dialogService: MatDialog) {
+    this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
+  }
 
-	closeSidebar() {
-		this.store.dispatch(
-			FlowsActions.setLeftSidebar({
-				sidebarType: LeftSideBarType.NONE,
-			})
-		);
-	}
+  closeSidebar() {
+    this.store.dispatch(
+      FlowsActions.setLeftSidebar({
+        sidebarType: LeftSideBarType.NONE,
+      })
+    );
+  }
 
-	openConfigVariableModal($event: { value: Config; index: number } | undefined) {
-		this.dialogService.open(CreateEditConfigModalComponent, {
-			data: $event ? { config: $event?.value, index: $event?.index } : undefined,
-		});
-	}
+  openConfigVariableModal(
+    $event: { value: Config; index: number } | undefined
+  ) {
+    this.dialogService.open(CreateEditConfigModalComponent, {
+      data: $event
+        ? { config: $event?.value, index: $event?.index }
+        : undefined,
+    });
+  }
 }
