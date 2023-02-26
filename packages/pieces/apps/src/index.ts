@@ -35,7 +35,7 @@ import { calcom } from './lib/cal-com';
 import { wordpress } from './lib/wordpress';
 import { posthog } from './lib/posthog';
 import { googleTasks } from './lib/google-tasks';
-import { csv } from './lib/csv_parser';
+import { csv } from './lib/csv';
 
 export const pieces: Piece[] = [
     airtable,
