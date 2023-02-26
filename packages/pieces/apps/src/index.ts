@@ -35,6 +35,7 @@ import { calcom } from './lib/cal-com';
 import { wordpress } from './lib/wordpress';
 import { posthog } from './lib/posthog';
 import { googleTasks } from './lib/google-tasks';
+import { csv } from './lib/csv';
 
 export const pieces: Piece[] = [
     airtable,
@@ -42,6 +43,7 @@ export const pieces: Piece[] = [
     binance,
     blackbaud,
     calendly,
+    csv,
     clickup,
     discord,
     drip,
