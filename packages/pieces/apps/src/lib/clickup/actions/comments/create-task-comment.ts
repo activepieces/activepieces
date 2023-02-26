@@ -23,14 +23,14 @@ export const createClickupTaskComment = createAction({
 
 		const user_request = await callClickUpApi(HttpMethod.GET, `/user`, getAccessTokenOrThrow(authentication), {});
 
-		if (user_request.body.user === undefined) {
+		if (user_request.body['user'] === undefined) {
 			throw('Please connect to your ClickUp account')
 		}
 
 		const response = await callClickUpApi(HttpMethod.POST,
 			`/task/${task_id}/comment`, getAccessTokenOrThrow(authentication), {
 				"comment_text": comment,
-				"assignee": user_request.body.user.id,
+				"assignee": user_request.body['user']['id'],
 				"notify_all": true
 		});
 
