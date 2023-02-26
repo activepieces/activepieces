@@ -1,15 +1,15 @@
 import { Property } from "@activepieces/framework";
 
 export interface AirtableBase {
-  id: string;
-  name: string;
+  id: string
+  name: string
   permissionLevel: AirtablePermissionLevel
 }
 
 export interface AirtableRecord {
-  fields: Record<string, unknown>,
-  createdTime: Date,
-  id: string;
+  fields: Record<string, unknown>
+  createdTime: Date
+  id: string
 }
 export interface AirtableField {
   id: string
@@ -29,7 +29,7 @@ export interface AirtableChoice {
 export interface AirtableTable {
   id: string
   name: string
-  fields: AirtableField[],
+  fields: AirtableField[]
   description: string
   primaryFieldId: string
   views: {
@@ -39,7 +39,7 @@ export interface AirtableTable {
   }[]
 }
 export interface AirtableCreateRecordBody {
-  records?: AirtableRecord[],
+  records?: AirtableRecord[]
   fields?: Record<string, unknown>
 }
 
@@ -53,9 +53,9 @@ export type AirtableFieldType = "singleLineText"
   | "currency"
   | "singleSelect"
   | "multipleSelects"
+  | "multipleRecordLinks"
   | "singleCollaborator"
   | "multipleCollaborators"
-  | "multipleRecordLinks"
   | "date"
   | "dateTime"
   | "phoneNumber"
@@ -78,6 +78,11 @@ export type AirtableFieldType = "singleLineText"
   | "lastModifiedBy"
   | "externalSyncSource"
 
+export const AirtableEnterpriseFields = [
+  'singleCollaborator',
+  'multipleCollaborators'
+]
+
 export const AirtableFieldMapping = {
   singleLineText: Property.ShortText,
   email: Property.ShortText,
@@ -88,8 +93,6 @@ export const AirtableFieldMapping = {
   currency: Property.ShortText,
   singleSelect: Property.StaticDropdown,
   multipleSelects: Property.ShortText,
-  singleCollaborator: Property.ShortText,
-  multipleCollaborators: Property.ShortText,
   multipleRecordLinks: Property.ShortText,
   date: Property.ShortText,
   dateTime: Property.ShortText,

@@ -1,6 +1,6 @@
 import Airtable from "airtable";
-import { Property, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
-import { AirtableBase, AirtableFieldMapping, AirtableTable } from "./models";
+import { Property, HttpRequest, HttpMethod, AuthenticationType, httpClient, DynamicPropsValue } from "@activepieces/framework";
+import { AirtableBase, AirtableEnterpriseFields, AirtableField, AirtableFieldMapping, AirtableRecord, AirtableTable } from "./models";
 
 export const airtableCommon = {
   authentication: Property.SecretText({
@@ -116,15 +116,21 @@ export const airtableCommon = {
     required: true,
     refreshers: ["authentication", "base", "table"],
 
-    props: async (props) => {
-      const { authentication, base, table } = props
-
+    props: async ({ authentication, base, table }) => {
       if (!authentication) return {}
       if (!base) return {}
       if (!table) return {}
 
-      const fields = (table as AirtableTable).fields.map((field) => {
-        let params = {
+      let fields: DynamicPropsValue = {};
+
+      (table as AirtableTable).fields.map((field: AirtableField) => {
+        if (AirtableEnterpriseFields.includes(field.type)) {
+          console.debug("skipping type", field.type)
+          //skip these types
+          return
+        } 
+
+        const params = {
           displayName: field.name,
           description: field.description,
           required: false
@@ -136,15 +142,15 @@ export const airtableCommon = {
             label: option.name
           }))
 
-          return Property.StaticDropdown({
+          fields[field.id] = (AirtableFieldMapping[field.type])({
             ...params,
             options: {
               options
             }
           })
+        } else {
+          fields[field.id] = (AirtableFieldMapping[field.type])(params)
         }
-
-        return (AirtableFieldMapping[field.type])(params)
       })
 
       return fields
@@ -166,7 +172,7 @@ export const airtableCommon = {
     return currentTablleSnapshot;
   },
 
-  async createRecord({personalToken: token, fields, tableId}: Params) {
+  async createRecord({personalToken: token, fields, tableId, baseId}: Params) {
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
@@ -179,7 +185,7 @@ export const airtableCommon = {
       }
     }
 
-    const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>(request);
+    const response = await httpClient.sendRequest<AirtableRecord>(request);
     console.debug("Create record response", response.body)
     
     if (response.status === 200) {
