@@ -7,6 +7,7 @@ import { UsageService } from '@ee/usage/frontend/usage.service';
   selector: 'app-runs-left-snackbar',
   templateUrl: './runs-left-snackbar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrls:['./runs-left-snackbar.component.scss']
 })
 export class RunsLeftSnackbarComponent {
   runsStats$: Observable<{ runsCap: number, runsExecuted: number, daysLeftBeforeReset: number }>;
