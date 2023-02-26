@@ -8,9 +8,23 @@
           {{selectedTrigger?.label.name}}
         </ng-container>
       </mat-select-trigger>
-      <mat-option *ngFor="let opt of triggers$ | async" [value]="opt.value" [matTooltip]="opt.label.description">
-        <div>{{opt.label.name}}</div>
-        <div class="ap-typography-caption ap-text-description ap-truncate"> {{opt.label.description}}</div>
+      <mat-option *ngFor="let opt of triggers$ | async" [value]="opt.value">
+        <div class="ap-flex ap-items-center ap-gap-[2px]">
+          <div>
+            <div>{{opt.label.name}}</div>
+            <div class="ap-typography-caption ap-text-description"> {{opt.label.description}}</div>
+          </div>
+
+          <div class="ap-flex-grow"></div>
+          <div *ngIf="opt.label.isWebhook" matTooltip="Instantly triggered once change occurs"
+            class="ap-rounded-full ap-bg-body !ap-font-semibold ap-text-white ap-typography-caption ap-drop-shadow-md ap-h-[30px] ap-p-2 ap-flex ap-items-center">
+            Instant</div>
+          <div *ngIf="!opt.label.isWebhook" matTooltip="Checks for changes every 5 minutes"
+            class="ap-rounded-full ap-bg-body !ap-font-semibold ap-text-white ap-typography-caption ap-drop-shadow-md ap-h-[30px] ap-p-2 ap-flex ap-items-center">
+
+            Periodic</div>
+
+        </div>
       </mat-option>
       <mat-option [disabled]="true" *ngIf=" ( triggers$ | async) === undefined ||  (triggers$ | async)?.length === 0">
         No options available

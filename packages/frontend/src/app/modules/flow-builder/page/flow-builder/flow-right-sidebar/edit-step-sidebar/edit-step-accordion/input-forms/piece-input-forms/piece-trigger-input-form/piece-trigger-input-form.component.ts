@@ -9,17 +9,17 @@ import {
 } from '@angular/forms';
 import { Config } from '@fortawesome/fontawesome-svg-core';
 import { map, Observable, of, tap } from 'rxjs';
-import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
 import { PieceConfig, propsConvertor } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
-
 import { DropdownItem } from 'packages/frontend/src/app/modules/common/model/dropdown-item.interface';
 import { ActionMetaService } from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
 import { ComponentTriggerInputFormSchema } from '../../input-forms-schema';
+import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
 
 declare type TriggerDropdownOption = {
 	label: {
 		name: string;
 		description: string;
+		isWebhook:boolean;
 	};
 	value: { triggerName: string; configs: PieceConfig[]; separator?: boolean };
 	disabled?: boolean;
@@ -58,7 +58,7 @@ export class PieceTriggerInputFormComponent {
 	triggers$: Observable<TriggerDropdownOption[]>;
 	valueChanges$: Observable<void>;
 	triggerDropdownValueChanged$: Observable<{ triggerName: string; configs: PieceConfig[] }>;
-	onChange = (value: any) => { };
+	onChange :(value: any) => { };
 	onTouch = () => { };
 	updateOrAddConfigModalClosed$: Observable<Config>;
 	allAuthConfigs$: Observable<DropdownItem[]>;
@@ -98,7 +98,7 @@ export class PieceTriggerInputFormComponent {
 	}
 
 	fetchTriggers(pieceName: string) {
-		const component$ = this.actionMetaDataService.getPieces().pipe(
+		const piece$ = this.actionMetaDataService.getPieces().pipe(
 			map(pieces => {
 				const component = pieces.find(c => c.name === pieceName);
 				if (!component) {
@@ -107,8 +107,9 @@ export class PieceTriggerInputFormComponent {
 				return component;
 			})
 		);
-		this.triggers$ = component$.pipe(
+		this.triggers$ = piece$.pipe(
 			map(component => {
+				debugger;
 				const triggersKeys = Object.keys(component.triggers);
 				return triggersKeys.map(triggerName => {
 					const trigger = component.triggers[triggerName];
@@ -120,7 +121,7 @@ export class PieceTriggerInputFormComponent {
 							triggerName: triggerName,
 							configs: configs,
 						},
-						label: { name: trigger.displayName, description: trigger.description },
+						label: { name: trigger.displayName, description: trigger.description ,isWebhook:component.triggers[triggerName].type === "WEBHOOK" },
 					};
 				});
 			})
