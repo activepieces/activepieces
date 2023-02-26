@@ -28,7 +28,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 	codeEditorOptions = {
 		minimap: { enabled: false },
 		theme: 'vs',
-		language: 'javascript',
+		language: 'typescript',
 		readOnly: false,
 	};
 	packageDotJsonOptions = {
