@@ -202,3 +202,18 @@ Property.Dropdown({
 })
 ```
 
+
+```typescript
+Property.StaticDropdown({
+    displayName: string;
+    description: string | undefined;
+    required: boolean;
+    refreshers: string[], // properties that when changed, will trigger the options function to execute
+    options: {
+        options: [{
+            label: "Option One",
+            value: "1"
+        }]
+    }
+})
+```
