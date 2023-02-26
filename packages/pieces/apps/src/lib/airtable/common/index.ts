@@ -8,7 +8,7 @@ export const airtableCommon = {
     required: true,
     description: "Visit https://airtable.com/create/tokens/ to create one"
   }),
-  
+
   base: Property.Dropdown({
     displayName: 'Base',
     required: true,
@@ -136,7 +136,6 @@ export const airtableCommon = {
             label: option.name
           }))
 
-          //avoiding
           return Property.StaticDropdown({
             ...params,
             options: {
@@ -153,7 +152,7 @@ export const airtableCommon = {
   }),
 
 
-  async getTableSnapshot(params: { personalToken: string, baseId: string, tableId: string }) {
+  async getTableSnapshot(params: Params) {
     Airtable.configure({
       apiKey: params.personalToken,
     });
@@ -165,5 +164,35 @@ export const airtableCommon = {
       .all()).map((r) => r._rawJson)
       .sort((x, y) => new Date(x.createdTime).getTime() - new Date(y.createdTime).getTime());
     return currentTablleSnapshot;
+  },
+
+  async createRecord({personalToken: token, fields, tableId}: Params) {
+    const request: HttpRequest = {
+      method: HttpMethod.POST,
+      url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token
+      },
+      body: {
+        fields
+      }
+    }
+
+    const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>(request);
+    console.debug("Create record response", response.body)
+    
+    if (response.status === 200) {
+      return response.body
+    }
+
+    return response
   }
+}
+
+interface Params { 
+  personalToken: string
+  baseId: string
+  tableId: string
+  fields: Record<string, unknown> 
 }
