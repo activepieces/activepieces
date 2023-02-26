@@ -8,7 +8,6 @@ import {
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../../common/service/authentication.service';
 import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
 import { fadeInUp400ms } from '../../../common/animation/fade-in-up.animation';
 import { FlagService } from '../../../common/service/flag.service';
 import {
@@ -94,7 +93,7 @@ export class SignUpComponent {
       this.loading = true;
       const request = this.registrationForm.getRawValue();
       this.signUp$ = this.authenticationService.signUp(request).pipe(
-        catchError((err: HttpErrorResponse) => {
+        catchError(() => {
           this.emailExists = true;
           this.emailChanged = false;
           this.loading = false;

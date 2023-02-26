@@ -34,8 +34,12 @@ import { fadeInUp400ms } from '../../../../../../../../common/animation/fade-in-
 export class LoopStepInputFormComponent implements ControlValueAccessor {
   loopStepForm: FormGroup<{ items: FormControl<string> }>;
   updateComponentValue$: Observable<any>;
-  onChange = (value: LoopStepInputFormSchema) => {};
-  onTouch = () => {};
+  onChange: (val) => void = (value: LoopStepInputFormSchema) => {
+    value;
+  };
+  onTouch: () => void = () => {
+    //ignore
+  };
 
   constructor(private formBuilder: FormBuilder) {
     this.loopStepForm = this.formBuilder.group({
@@ -56,10 +60,10 @@ export class LoopStepInputFormComponent implements ControlValueAccessor {
       this.loopStepForm.patchValue(obj);
     }
   }
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (val) => void): void {
     this.onChange = fn;
   }
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouch = fn;
   }
 

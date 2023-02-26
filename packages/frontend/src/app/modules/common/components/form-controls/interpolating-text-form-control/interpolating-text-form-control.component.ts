@@ -38,8 +38,7 @@ import 'quill-mention';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
 import { DomSanitizer } from '@angular/platform-browser';
-import { StepMetaData } from '@frontend/modules/flow-builder/store/model/flow-items-details-state.model';
-
+import { StepMetaData } from '../../../../flow-builder/store/model/flow-items-details-state.model';
 @Component({
   selector: 'app-interpolating-text-form-control',
   templateUrl: './interpolating-text-form-control.component.html',
@@ -76,10 +75,9 @@ export class InterpolatingTextFormControlComponent
     },
     toolbar: false,
   };
-  onChange!: (value: any) => void;
-  onTouch!: () => void;
+
   editorFormControl: FormControl<QuillEditorOperationsObject>;
-  valueChanges$!: Observable<any>;
+  valueChanges$!: Observable<unknown>;
   private _value = '';
   stepsMetaData$: Observable<StepMetaData[]>;
   autofilled?: boolean | undefined = false;
@@ -87,6 +85,7 @@ export class InterpolatingTextFormControlComponent
   override stateChanges = new Subject<void>();
   @ViewChild(QuillEditorComponent, { static: true })
   editor!: QuillEditorComponent;
+
   @Input()
   set value(value: string) {
     this._value = value;
@@ -116,11 +115,15 @@ export class InterpolatingTextFormControlComponent
   }
   @Input()
   disabled = false;
-
   controlType = 'custom-form-field';
-
   @HostBinding('attr.aria-describedby') describedBy = '';
   protected _required: boolean | undefined;
+  onChange: (val) => void = () => {
+    //ignore
+  };
+  onTouched: () => void = () => {
+    //ignore
+  };
   constructor(
     _defaultErrorStateMatcher: ErrorStateMatcher,
     @Optional() _parentForm: NgForm,
@@ -233,11 +236,11 @@ export class InterpolatingTextFormControlComponent
     }
     this._value = value;
   }
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (val) => void): void {
     this.onChange = fn;
   }
-  registerOnTouched(fn: any): void {
-    this.onTouch = fn;
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
   }
   setDisabledState?(isDisabled: boolean): void {
     this.disabled = isDisabled;
@@ -278,7 +281,7 @@ export class InterpolatingTextFormControlComponent
     this.stateChanges.next();
   }
   onFocus() {
-    this.onTouch();
+    this.onTouched();
     this.focused = true;
     this.stateChanges.next();
   }

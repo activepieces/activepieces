@@ -22,7 +22,7 @@ import { CommonModule } from '@angular/common';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { CommonLayoutModule } from './modules/common/common-layout.module';
 import { FirebaseAuthLayoutModule } from '../../../ee/firebase-auth/frontend/firebase-auth.module';
-import { Router } from '@angular/router';
+import { Route, Router } from '@angular/router';
 import { FlagService } from './modules/common/service/flag.service';
 import { ApEdition } from '@activepieces/shared';
 import { FirebaseAuthContainerComponent } from '@ee/firebase-auth/frontend/auth-container/firebase-auth-container.component';
@@ -88,7 +88,7 @@ export function initializeAppCustomLogic(
 }
 
 function dynamicRoutes(edition: string) {
-  const coreRoutes = [
+  const coreRoutes: Route[] = [
     {
       path: '',
       component: DashboardContainerComponent,
@@ -116,7 +116,7 @@ function dynamicRoutes(edition: string) {
       ],
     },
   ];
-  const suffixRoutes = [
+  const suffixRoutes: Route[] = [
     {
       path: 'redirect',
       component: RedirectUrlComponent,
@@ -127,7 +127,7 @@ function dynamicRoutes(edition: string) {
       title: 'AP-404',
     },
   ];
-  let editionRoutes: any[] = [];
+  let editionRoutes: Route[] = [];
   switch (edition) {
     case ApEdition.ENTERPRISE:
       editionRoutes = [

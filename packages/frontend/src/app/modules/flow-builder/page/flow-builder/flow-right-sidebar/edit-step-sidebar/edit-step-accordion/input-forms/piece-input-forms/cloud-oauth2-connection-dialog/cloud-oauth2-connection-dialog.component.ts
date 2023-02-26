@@ -24,6 +24,7 @@ import { CloudConnectionPopupSettings } from '../../../../../../../../../common/
 import { ConnectionValidator } from '../../../../../../validators/connectionNameValidator';
 import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
 import { appConnectionsActions } from '../../../../../../../../store/app-connections/app-connections.action';
+import { AppConnectionsService } from '../../../../../../../../../common/service/app-connections.service';
 
 interface AuthConfigSettings {
   appName: FormControl<string | null>;

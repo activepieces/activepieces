@@ -20,25 +20,29 @@ import { Oauth2Service } from '../../../service/oauth2.service';
 export class OAuth2ConnectControlComponent implements ControlValueAccessor {
   @Input() configSettings: OAuth2AppDetails;
   @Input() settingsValid: boolean;
-  responseData: any = null;
+  responseData: unknown = null;
   popUpError = false;
   isDisabled = false;
-  popupOpened$: Observable<any>;
-  onChange = (newValue: any) => {};
-  onTouched = () => {};
+  popupOpened$: Observable<unknown>;
+  onChange: (val) => void = (newValue) => {
+    newValue;
+  };
+  onTouched: () => void = () => {
+    //ignored
+  };
   constructor(private oauth2Service: Oauth2Service) {}
 
   setDisabledState?(isDisabled: boolean): void {
     this.isDisabled = isDisabled;
   }
 
-  writeValue(obj: any): void {
+  writeValue(obj: unknown): void {
     this.responseData = obj;
   }
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (val) => void): void {
     this.onChange = fn;
   }
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
 

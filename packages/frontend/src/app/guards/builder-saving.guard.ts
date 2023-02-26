@@ -7,7 +7,7 @@ import { BuilderSelectors } from '../modules/flow-builder/store/builder/builder.
 @Injectable({
   providedIn: 'root',
 })
-export class BuilderSavingGuard implements CanDeactivate<any> {
+export class BuilderSavingGuard implements CanDeactivate<boolean> {
   constructor(private store: Store) {}
   canDeactivate(): Observable<boolean> {
     const isSaving$ = this.store.select(BuilderSelectors.selectIsSaving);

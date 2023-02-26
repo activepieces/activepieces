@@ -329,10 +329,6 @@ export const selectFlowItemDetailsForCustomPiecesTriggers = createSelector(
     return state.customPiecesTriggersFlowItemDetails;
   }
 );
-export const selectFlowItemDetailsForConnectorComponentsTriggers =
-  createSelector(selectAllFlowItemsDetails, (state: FlowItemsDetailsState) => {
-    return state.connectorComponentsTriggersFlowItemDetails;
-  });
 
 export const selectFlowItemDetails = (flowItem: FlowItem) =>
   createSelector(selectAllFlowItemsDetails, (state: FlowItemsDetailsState) => {

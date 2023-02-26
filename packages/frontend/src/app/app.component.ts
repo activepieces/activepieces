@@ -24,8 +24,8 @@ const upgradeNotificationMetadataKeyInLocalStorage =
   animations: [fadeInUp400ms],
 })
 export class AppComponent implements OnInit {
-  routeLoader$: Observable<any>;
-  loggedInUser$: Observable<any>;
+  routeLoader$: Observable<boolean>;
+  loggedInUser$: Observable<void>;
   warningMessage$: Observable<{ title?: string; body?: string } | undefined>;
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;

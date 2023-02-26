@@ -11,13 +11,12 @@ export class MentionsTreeCacheService {
   private cache: Map<StepName, { children: MentionTreeNode[]; value?: any }> =
     new Map();
   listSearchBarObs$: Observable<string>;
-  constructor() {}
   getStepMentionsTree(stepName: string) {
     return this.cache.get(stepName);
   }
   setStepMentionsTree(
     stepName: string,
-    val: { children: MentionTreeNode[]; value?: any }
+    val: { children: MentionTreeNode[]; value?: unknown }
   ) {
     this.cache.set(stepName, val);
   }

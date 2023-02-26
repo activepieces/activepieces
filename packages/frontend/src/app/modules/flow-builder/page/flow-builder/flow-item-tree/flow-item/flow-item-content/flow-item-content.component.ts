@@ -32,6 +32,7 @@ import {
   StepOutputStatus,
   TriggerType,
 } from '@activepieces/shared';
+import { fadeIn400ms } from '../../../../../../common/animation/fade-in.animations';
 
 @Component({
   selector: 'app-flow-item-content',

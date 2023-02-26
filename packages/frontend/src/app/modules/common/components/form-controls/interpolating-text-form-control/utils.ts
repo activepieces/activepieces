@@ -7,8 +7,9 @@ import {
 } from '@angular/forms';
 import { ErrorStateMatcher, mixinErrorState } from '@angular/material/core';
 import { DomSanitizer } from '@angular/platform-browser';
-import { StepMetaData } from '@frontend/modules/flow-builder/store/model/flow-items-details-state.model';
+
 import { Subject } from 'rxjs';
+import { StepMetaData } from '../../../../flow-builder/store/model/flow-items-details-state.model';
 
 export const QuillMaterialBase = mixinErrorState(
   class {

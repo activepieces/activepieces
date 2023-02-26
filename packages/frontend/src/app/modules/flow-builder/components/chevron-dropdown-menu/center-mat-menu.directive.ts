@@ -2,6 +2,7 @@ import { AfterViewInit, Directive } from '@angular/core';
 import { MatMenu } from '@angular/material/menu';
 
 @Directive({
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: 'mat-menu[ap-center]',
 })
 export class CenterMatMenuDirective implements AfterViewInit {

@@ -30,10 +30,13 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
     artifact: FormControl<Artifact>;
   }>;
   _stepArtifact$: Observable<Artifact>;
-  formValueChanged$: Observable<any>;
-  obs$: Observable<any>;
-  onChange = (value: CodeStepInputFormSchema) => {};
-  onTouch = () => {};
+  formValueChanged$: Observable<unknown>;
+  onChange: (val) => void = (value: CodeStepInputFormSchema) => {
+    value;
+  };
+  onTouch: () => void = () => {
+    //ignore
+  };
 
   constructor(
     private formBuilder: FormBuilder,

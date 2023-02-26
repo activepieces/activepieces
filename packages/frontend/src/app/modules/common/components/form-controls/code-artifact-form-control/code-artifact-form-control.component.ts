@@ -32,7 +32,12 @@ export interface CodeArtifactForm {
 export class CodeArtifactFormControlComponent
   implements ControlValueAccessor, OnInit, AfterViewInit
 {
-  updateComponentValue$: Observable<any>;
+  updateComponentValue$: Observable<
+    Partial<{
+      content: string;
+      package: string;
+    }>
+  >;
 
   @ViewChild('tooltip') tooltip: MatTooltip;
   hideDelayForFullscreenTooltip = 2000;
@@ -68,8 +73,13 @@ export class CodeArtifactFormControlComponent
       this.codeEditorOptions.readOnly = 'nocursor';
     }
   }
-  onChange = (val) => {};
-  onTouched = () => {};
+  onChange: (val) => void = (val) => {
+    val;
+    //ignored
+  };
+  onTouched: () => void = () => {
+    //ignored
+  };
 
   writeValue(artifact: Artifact): void {
     if (artifact && (artifact.content || artifact.package)) {
@@ -77,10 +87,10 @@ export class CodeArtifactFormControlComponent
     }
   }
 
-  registerOnChange(change: any): void {
+  registerOnChange(change: (val) => void): void {
     this.onChange = change;
   }
-  registerOnTouched(touched: any): void {
+  registerOnTouched(touched: () => void): void {
     this.onTouched = touched;
   }
   showFullscreenEditor() {

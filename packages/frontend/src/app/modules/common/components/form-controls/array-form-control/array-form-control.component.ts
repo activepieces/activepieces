@@ -27,8 +27,12 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
   valueChanges$: Observable<void>;
   formArray: FormArray<FormControl>;
 
-  onChange = (val) => {};
-  onTouched = () => {};
+  onChange: (val) => void = () => {
+    //ignore
+  };
+  onTouched: () => void = () => {
+    //ignore
+  };
 
   constructor(private fb: FormBuilder) {
     this.formArray = this.fb.array([new FormControl('')]);
@@ -52,10 +56,10 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
       }
     }
   }
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (val) => void): void {
     this.onChange = fn;
   }
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
   setDisabledState?(isDisabled: boolean): void {

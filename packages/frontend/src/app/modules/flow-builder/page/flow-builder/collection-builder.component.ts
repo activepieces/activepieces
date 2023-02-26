@@ -111,10 +111,16 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    document.addEventListener('mousemove', () => {}, {
-      passive: false,
-      capture: true,
-    });
+    document.addEventListener(
+      'mousemove',
+      () => {
+        //ignore
+      },
+      {
+        passive: false,
+        capture: true,
+      }
+    );
     this.store.dispatch(FlowItemDetailsActions.loadFlowItemsDetails());
   }
 

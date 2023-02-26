@@ -3,6 +3,7 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnInit,
   Output,
 } from '@angular/core';
 import { Store } from '@ngrx/store';
@@ -40,7 +41,7 @@ import { FlowItem } from '../../../../../model/flow-builder/flow-item';
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn400ms],
 })
-export class PieceStepMentionItemComponent {
+export class PieceStepMentionItemComponent implements OnInit {
   TriggerType = TriggerType;
 
   expandSample = false;

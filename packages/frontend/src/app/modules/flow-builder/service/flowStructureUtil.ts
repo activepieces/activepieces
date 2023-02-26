@@ -102,6 +102,7 @@ export class FlowStructureUtil {
   ) {
     const steps = FlowStructureUtil.traverseAllSteps(flowVersion.trigger);
     let number = 1;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       let exist = false;
       for (let i = 0; i < steps.length; ++i) {

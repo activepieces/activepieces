@@ -61,9 +61,9 @@ export class PieceTriggerInputFormComponent {
   componentName: string;
   intialComponentTriggerInputFormValue: {
     triggerName: string;
-    input: { [key: string]: any };
+    input: { [key: string]: unknown };
   } | null;
-  selectedTrigger$: Observable<any>;
+  selectedTrigger$: Observable<TriggerDropdownOption | undefined>;
   triggers$: Observable<TriggerDropdownOption[]>;
   valueChanges$: Observable<void>;
   triggerDropdownValueChanged$: Observable<{
@@ -73,8 +73,12 @@ export class PieceTriggerInputFormComponent {
   updateOrAddConfigModalClosed$: Observable<Config>;
   allAuthConfigs$: Observable<DropdownItem[]>;
 
-  onChange = (value: any) => {};
-  onTouch = () => {};
+  onChange: (value) => void = (value) => {
+    value;
+  };
+  onTouch: () => void = () => {
+    //ignore
+  };
   constructor(
     private fb: UntypedFormBuilder,
     private actionMetaDataService: ActionMetaService,
@@ -217,11 +221,11 @@ export class PieceTriggerInputFormComponent {
     this.fetchTriggers(obj.pieceName);
   }
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (val) => void): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouch = fn;
   }
 
@@ -269,7 +273,7 @@ export class PieceTriggerInputFormComponent {
 
   getFormattedFormData(): {
     triggerName: string;
-    input: { [configKey: string]: any };
+    input: { [configKey: string]: unknown };
   } {
     const trigger = this.componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value;
     const configs =

@@ -67,14 +67,14 @@ export class WebhookTriggerMentionItemComponent {
       this.dialogService.closeAll();
     }
   }
-  adjustItemPath(triggerPathWithoutInterpolationDenotation: string): any {
+  adjustItemPath(triggerPathWithoutInterpolationDenotation: string): string {
     const triggerDisplayName = this._stepMention.step.displayName;
     return [
       triggerDisplayName,
       ...triggerPathWithoutInterpolationDenotation.split('.').slice(1),
     ].join('.');
   }
-  openPathDialog(dialogTemplate: TemplateRef<any>) {
+  openPathDialog(dialogTemplate: TemplateRef<unknown>) {
     this.dialogService.open(dialogTemplate);
   }
 }

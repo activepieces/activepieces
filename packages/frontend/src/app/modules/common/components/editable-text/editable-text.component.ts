@@ -36,8 +36,6 @@ export class EditableTextComponent {
     }
   }
 
-  constructor() {}
-
   setEditableOff() {
     this._editing = false;
     this.editingChanges.emit(false);
@@ -52,7 +50,7 @@ export class EditableTextComponent {
     this.editingChanges.emit(true);
   }
 
-  saveTextOnEnter(event: any) {
+  saveTextOnEnter(event: KeyboardEvent) {
     if (event.key === 'Enter') {
       //do not allow new line to be put
       event.stopImmediatePropagation();

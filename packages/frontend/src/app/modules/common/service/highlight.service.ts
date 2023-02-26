@@ -6,11 +6,11 @@ import 'prismjs/plugins/line-numbers/prism-line-numbers';
 import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-javascript';
 
-declare let Prism: any;
+declare let Prism: { highlightAll: () => void };
 
 @Injectable()
 export class HighlightService {
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+  constructor(@Inject(PLATFORM_ID) private platformId: object) {}
 
   highlightAll() {
     if (isPlatformBrowser(this.platformId)) {

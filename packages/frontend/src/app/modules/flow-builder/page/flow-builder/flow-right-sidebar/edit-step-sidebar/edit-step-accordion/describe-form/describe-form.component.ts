@@ -37,8 +37,12 @@ export class DescribeFormComponent implements ControlValueAccessor {
   describeForm: FormGroup<DescribeForm>;
   updateComponentValue$: Observable<any>;
 
-  OnChange = (value) => {};
-  onTouched = () => {};
+  OnChange: (value) => void = (value) => {
+    value;
+  };
+  onTouched: () => void = () => {
+    //ignore
+  };
   constructor(private formBuilder: FormBuilder) {
     this.describeForm = this.formBuilder.group({
       displayName: new FormControl('', {
@@ -60,10 +64,10 @@ export class DescribeFormComponent implements ControlValueAccessor {
   writeValue(value: { name: string; displayName: string }): void {
     this.describeForm.patchValue(value);
   }
-  registerOnChange(changed: any): void {
+  registerOnChange(changed: (value) => void): void {
     this.OnChange = changed;
   }
-  registerOnTouched(tocuhed: any): void {
+  registerOnTouched(tocuhed: () => void): void {
     this.onTouched = tocuhed;
   }
   validate() {

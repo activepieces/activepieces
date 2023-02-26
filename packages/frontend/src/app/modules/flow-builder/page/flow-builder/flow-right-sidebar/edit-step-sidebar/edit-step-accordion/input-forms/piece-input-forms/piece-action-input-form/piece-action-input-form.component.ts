@@ -35,6 +35,7 @@ import {
 } from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
 import { ComponentActionInputFormSchema } from '../../input-forms-schema';
 import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
+import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
 declare type ActionDropdownOptionValue = {
   actionName: string;
   configs: PieceConfig[];
@@ -100,8 +101,12 @@ export class PieceActionInputFormComponent
   allAuthConfigs$: Observable<DropdownItem[]>;
   flowItemDetails$: Observable<FlowItemsDetailsState>;
 
-  onChange = (value: any) => {};
-  onTouch = () => {};
+  onChange: (val) => void = (value) => {
+    value;
+  };
+  onTouch: () => void = () => {
+    //ignore
+  };
   constructor(
     private fb: UntypedFormBuilder,
     private actionMetaDataService: ActionMetaService,
@@ -260,11 +265,11 @@ export class PieceActionInputFormComponent
     this.fetchActions(obj.pieceName);
   }
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value) => void): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouch = fn;
   }
 

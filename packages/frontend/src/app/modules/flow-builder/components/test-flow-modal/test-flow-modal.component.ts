@@ -51,7 +51,7 @@ import { initializedRun } from '../../../common/model/flow-run.interface';
 })
 export class TestFlowModalComponent implements OnInit {
   submitted = false;
-  dialogRef: MatDialogRef<TemplateRef<any>>;
+  dialogRef: MatDialogRef<TemplateRef<unknown>>;
   instanceRunStatus$: Observable<undefined | ExecutionOutputStatus>;
   isSaving$: Observable<boolean> = of(false);
   selectedFlow$: Observable<Flow | undefined>;
@@ -169,7 +169,7 @@ export class TestFlowModalComponent implements OnInit {
       this.cd.detectChanges();
     }
   }
-  executeTest(collection: Collection, flow: Flow, payload: Object) {
+  executeTest(collection: Collection, flow: Flow, payload: object) {
     return this.flowService
       .execute({
         collectionVersionId: collection.version!.id,
@@ -275,6 +275,8 @@ export class TestFlowModalComponent implements OnInit {
       payload.setValue(
         this.codeService.beautifyJson(JSON.parse(payload.value))
       );
-    } catch {}
+    } catch {
+      //ignore
+    }
   }
 }

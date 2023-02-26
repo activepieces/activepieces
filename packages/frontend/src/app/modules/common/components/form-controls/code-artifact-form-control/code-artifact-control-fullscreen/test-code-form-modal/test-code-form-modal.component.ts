@@ -57,6 +57,8 @@ export class TestCodeFormModalComponent {
       context.setValue(
         this.codeService.beautifyJson(JSON.parse(context.value))
       );
-    } catch {}
+    } catch {
+      //ignored
+    }
   }
 }

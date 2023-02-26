@@ -80,7 +80,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   updateValueOnChange$: Observable<void> = new Observable<void>();
   PropertyType = PropertyType;
   dropdownOptionsObservables$: {
-    [key: ConfigKey]: Observable<DropdownState<any>>;
+    [key: ConfigKey]: Observable<DropdownState<unknown>>;
   } = {};
   dynamicPropsObservables$: {
     [key: ConfigKey]: Observable<PieceConfig[]>;
@@ -90,7 +90,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   } = {};
 
   allAuthConfigs$: Observable<DropdownItem[]>;
-  configDropdownChanged$: Observable<any>;
+  configDropdownChanged$: Observable<unknown>;
   cloudAuthCheck$: Observable<void>;
   editorOptions = {
     lineNumbers: true,
@@ -111,9 +111,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   @ViewChildren('textControl', { read: ElementRef })
   theInputs: QueryList<ElementRef>;
   form!: UntypedFormGroup;
-
-  OnChange = (value) => {};
-  OnTouched = () => {};
+  OnChange: (value) => void;
+  OnTouched: () => void;
 
   constructor(
     private fb: UntypedFormBuilder,
@@ -141,10 +140,10 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     }
     this.createForm();
   }
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value) => void): void {
     this.OnChange = fn;
   }
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.OnTouched = fn;
   }
   setDisabledState(disabled: boolean) {
@@ -196,7 +195,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         c.type === PropertyType.MULTI_SELECT_DROPDOWN
       ) {
         this.dropdownOptionsObservables$[c.key] =
-          this.createRefreshableConfigObservables<DropdownState<any>>(c).pipe(
+          this.createRefreshableConfigObservables<DropdownState<unknown>>(
+            c
+          ).pipe(
             catchError(() => {
               return of({
                 options: [],
@@ -250,7 +251,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   }
 
   createRefreshableConfigObservables<
-    T extends DropdownState<any> | Record<string, PieceProperty>
+    T extends DropdownState<unknown> | Record<string, PieceProperty>
   >(c: PieceConfig) {
     this.refreshableConfigsLoadingFlags$[c.key] = new BehaviorSubject(true);
     const refreshers$ = {};
@@ -336,7 +337,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         const dynamicConfigControls = {};
         if (c.value) {
           Object.keys(c.value).forEach((k) => {
-            dynamicConfigControls[k] = new UntypedFormControl(c.value[k]);
+            dynamicConfigControls[k] = new UntypedFormControl(
+              (c.value as object)[k]
+            );
           });
         } else {
           controls[c.key] = new UntypedFormControl(
@@ -418,7 +421,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     try {
       const ctrl = this.form.get(configKey)!;
       ctrl.setValue(this.codeService.beautifyJson(JSON.parse(ctrl.value)));
-    } catch {}
+    } catch {
+      //ignore
+    }
   }
   toggleCustomizedInputFlag(configKey: string) {
     if (!this.customizedInputs) {

@@ -30,8 +30,12 @@ export class DictionaryFormControlComponent
   form!: UntypedFormGroup;
   disabled = false;
   valueChanges$: Observable<void>;
-  onChange = (val) => {};
-  onTouched = () => {};
+  onChange: (val) => void = (val) => {
+    val;
+  };
+  onTouched: () => void = () => {
+    //ignore
+  };
 
   constructor(
     private fb: UntypedFormBuilder,
@@ -48,7 +52,7 @@ export class DictionaryFormControlComponent
     this.addNewPair();
   }
 
-  writeValue(dictionaryValue: any): void {
+  writeValue(dictionaryValue: object): void {
     this.pairs.clear({ emitEvent: false });
     if (dictionaryValue) {
       const pairsKeys = Object.keys(dictionaryValue);
@@ -61,10 +65,10 @@ export class DictionaryFormControlComponent
     }
     this.addNewPair(false);
   }
-  registerOnChange(change: any): void {
+  registerOnChange(change: (val) => void): void {
     this.onChange = change;
   }
-  registerOnTouched(touched: any): void {
+  registerOnTouched(touched: () => void): void {
     this.onTouched = touched;
   }
 
@@ -108,7 +112,7 @@ export class DictionaryFormControlComponent
     }
   }
   formatControlValue() {
-    const dictonaryControlValue: { [key: string]: any } = {};
+    const dictonaryControlValue: { [key: string]: unknown } = {};
     this.pairs.controls.forEach((pairGroup) => {
       if (pairGroup.get('key')?.value && pairGroup.get('value')?.value) {
         const key = pairGroup.get('key')?.value;

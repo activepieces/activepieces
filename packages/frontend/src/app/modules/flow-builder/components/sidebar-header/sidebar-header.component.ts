@@ -6,10 +6,9 @@ import {
   Input,
   OnChanges,
   Output,
-  SimpleChanges,
 } from '@angular/core';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
-import { ThemeService } from 'packages/frontend/src/app/modules/common/service/theme.service';
+import { ThemeService } from '../../../common/service/theme.service';
 
 @Component({
   selector: 'app-sidebar-header',
@@ -29,7 +28,7 @@ export class SidebarHeaderComponent implements OnChanges {
     public themeService: ThemeService,
     private cd: ChangeDetectorRef
   ) {}
-  ngOnChanges(changes: SimpleChanges): void {
+  ngOnChanges(): void {
     setTimeout(() => {
       //trigger drawerTitle width change detection
       this.cd.detectChanges();

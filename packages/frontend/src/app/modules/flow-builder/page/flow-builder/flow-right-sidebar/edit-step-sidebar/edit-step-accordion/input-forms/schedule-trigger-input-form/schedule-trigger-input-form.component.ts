@@ -35,10 +35,17 @@ import { cronJobValidator } from '../../../../../../../../common/validators/cron
 })
 export class ScheduleTriggerInputFormComponent implements ControlValueAccessor {
   scheduledFrom: FormGroup<{ cronExpression: FormControl<string> }>;
-  updateComponentValue$: Observable<any>;
-
-  onChange = (value: InputFormsSchema) => {};
-  onTouch = () => {};
+  updateComponentValue$: Observable<
+    Partial<{
+      cronExpression: string;
+    }>
+  >;
+  onChange: (val) => void = (value: InputFormsSchema) => {
+    value;
+  };
+  onTouch: () => void = () => {
+    //ignore
+  };
   constructor(private formBuilder: FormBuilder) {
     this.scheduledFrom = this.formBuilder.group({
       cronExpression: new FormControl('', {
@@ -61,11 +68,11 @@ export class ScheduleTriggerInputFormComponent implements ControlValueAccessor {
     }
   }
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (val) => void): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouch = fn;
   }
 

@@ -10,10 +10,11 @@ const initialState: ProjectsState = {
 
 const _projectReducer = createReducer(
   initialState,
-  on(ProjectActions.setProjects, (state, { projects }): ProjectsState => {
+  on(ProjectActions.setProjects, (_state, { projects }): ProjectsState => {
     return { projects: projects, loaded: true, selectedIndex: 0 };
   }),
-  on(ProjectActions.clearProjects, (state, {}): ProjectsState => {
+  // eslint-disable-next-line no-empty-pattern, @typescript-eslint/no-unused-vars
+  on(ProjectActions.clearProjects, (_state, {}): ProjectsState => {
     return { projects: [], loaded: false, selectedIndex: 0 };
   })
 );

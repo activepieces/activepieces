@@ -32,24 +32,28 @@ export class OAuth2CloudConnectControlComponent
   @Input() cloudConnectionPopupSettings: CloudConnectionPopupSettings;
   popUpError = false;
 
-  responseData: any = null;
+  responseData: unknown = null;
   isDisabled = false;
-  popupOpened$: Observable<any>;
-  onChange = (newValue: any) => {};
-  onTouched = () => {};
+  popupOpened$: Observable<unknown>;
+  onChange: (val) => void = (newValue) => {
+    newValue;
+  };
+  onTouched: () => void = () => {
+    //ignored
+  };
   constructor(private oauth2Service: Oauth2Service) {}
 
   setDisabledState?(isDisabled: boolean): void {
     this.isDisabled = isDisabled;
   }
 
-  writeValue(obj: any): void {
+  writeValue(obj: unknown): void {
     this.responseData = obj;
   }
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (val) => void): void {
     this.onChange = fn;
   }
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
 

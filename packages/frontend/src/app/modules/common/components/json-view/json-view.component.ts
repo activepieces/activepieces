@@ -20,8 +20,8 @@ export class JsonViewComponent implements AfterViewInit {
   @Input() title: string;
   @Input() maxHeight: number | undefined = undefined;
 
-  _content: any;
-  @Input() set content(value: any) {
+  _content: unknown;
+  @Input() set content(value: unknown) {
     this.highlight = false;
     this._content = value;
     setTimeout(() => {

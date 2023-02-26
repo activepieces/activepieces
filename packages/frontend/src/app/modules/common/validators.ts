@@ -2,7 +2,7 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 export function containsSpecialCharacter(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
-    const specialCharacterRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
+    const specialCharacterRegex = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/;
     if (!control.value || !specialCharacterRegex.test(control.value)) {
       return { specialCharacter: true };
     }
