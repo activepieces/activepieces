@@ -8,9 +8,9 @@ import {
 } from '@angular/forms';
 import { from, Observable, switchMap, tap } from 'rxjs';
 import { ActionType } from '@activepieces/shared';
-import { Artifact } from 'packages/frontend/src/app/modules/flow-builder/model/artifact.interface';
-import { CodeService } from 'packages/frontend/src/app/modules/flow-builder/service/code.service';
 import { CodeStepInputFormSchema } from '../input-forms-schema';
+import { Artifact } from '../../../../../../../model/artifact.interface';
+import { CodeService } from '../../../../../../../service/code.service';
 
 @Component({
   selector: 'app-code-step-input-form',

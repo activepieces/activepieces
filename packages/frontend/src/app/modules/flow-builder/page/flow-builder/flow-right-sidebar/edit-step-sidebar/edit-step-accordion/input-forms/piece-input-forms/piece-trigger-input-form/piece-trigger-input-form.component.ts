@@ -11,16 +11,15 @@ import {
   NG_VALUE_ACCESSOR,
   Validators,
 } from '@angular/forms';
-import { Config } from '@fortawesome/fontawesome-svg-core';
 import { map, Observable, of, tap } from 'rxjs';
-import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
+import { Config } from '@activepieces/shared';
+import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
 import {
   PieceConfig,
   propsConvertor,
-} from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
-
-import { DropdownItem } from 'packages/frontend/src/app/modules/common/model/dropdown-item.interface';
-import { ActionMetaService } from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
+} from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
+import { DropdownItem } from '../../../../../../../../../common/model/dropdown-item.interface';
+import { ActionMetaService } from '../../../../../../../../service/action-meta.service';
 import { ComponentTriggerInputFormSchema } from '../../input-forms-schema';
 
 declare type TriggerDropdownOption = {
@@ -71,10 +70,11 @@ export class PieceTriggerInputFormComponent {
     triggerName: string;
     configs: PieceConfig[];
   }>;
-  onChange = (value: any) => {};
-  onTouch = () => {};
   updateOrAddConfigModalClosed$: Observable<Config>;
   allAuthConfigs$: Observable<DropdownItem[]>;
+
+  onChange = (value: any) => {};
+  onTouch = () => {};
   constructor(
     private fb: UntypedFormBuilder,
     private actionMetaDataService: ActionMetaService,

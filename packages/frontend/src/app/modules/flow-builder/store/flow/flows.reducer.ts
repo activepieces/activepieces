@@ -244,7 +244,7 @@ const _flowsReducer = createReducer(
     tabState.selectedRun = undefined;
     return clonedState;
   }),
-  on(FlowsActions.deselectStep, (state, {}): FlowsState => {
+  on(FlowsActions.deselectStep, (state): FlowsState => {
     if (state.selectedFlowId === undefined || state.selectedFlowId === null) {
       throw new Error('Flow id is not selected');
     }

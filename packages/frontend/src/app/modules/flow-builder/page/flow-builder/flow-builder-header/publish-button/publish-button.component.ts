@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { combineLatest, delay, map, Observable, of } from 'rxjs';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
-import { CollectionActions } from 'packages/frontend/src/app/modules/flow-builder/store/collection/collection.action';
+import { BuilderSelectors } from '../../../../store/builder/builder.selector';
+import { CollectionActions } from '../../../../store/collection/collection.action';
 
 @Component({
   selector: 'app-publish-button',

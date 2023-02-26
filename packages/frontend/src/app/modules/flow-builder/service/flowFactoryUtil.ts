@@ -12,8 +12,6 @@ import {
 } from '../page/flow-builder/flow-item-tree/flow-item/flow-item-connection/draw-utils';
 
 export class FlowFactoryUtil {
-  constructor() {}
-
   public static createRootStep(flow: Flow): FlowItem | undefined {
     const latestVersion = flow.version!;
     if (latestVersion.trigger) {
@@ -34,10 +32,11 @@ export class FlowFactoryUtil {
       switch (clonedContent.type) {
         case ActionType.CODE:
         case ActionType.LOOP_ON_ITEMS:
-        case ActionType.PIECE:
+        case ActionType.PIECE: {
           const simple = this.addCordDetails(clonedContent);
           FlowFactoryUtil.buildHelper(simple);
           return simple;
+        }
         default:
           throw new Error('UNSUPPORTED STEP TYPE !');
       }

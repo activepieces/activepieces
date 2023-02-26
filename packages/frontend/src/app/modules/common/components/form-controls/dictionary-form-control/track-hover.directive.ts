@@ -7,8 +7,6 @@ import { Directive, HostListener } from '@angular/core';
 export class TrackHoverDirective {
   isHovered = false;
 
-  constructor() {}
-
   @HostListener('mouseenter', ['$event']) onHover(e) {
     this.isHovered = true;
   }

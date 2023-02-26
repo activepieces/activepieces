@@ -11,8 +11,8 @@ import {
 
 import { Observable, tap } from 'rxjs';
 import { ActionType } from '@activepieces/shared';
-import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
 import { LoopStepInputFormSchema } from '../input-forms-schema';
+import { fadeInUp400ms } from '../../../../../../../../common/animation/fade-in-up.animation';
 
 @Component({
   selector: 'app-loop-step-input-form',

@@ -8,5 +8,4 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 })
 export class LoadingIconComponent {
   @Input() whiteLoader = false;
-  constructor() {}
 }

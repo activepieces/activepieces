@@ -9,9 +9,9 @@ import {
   catchError,
 } from 'rxjs';
 import { Collection } from '@activepieces/shared';
-import { ApPaginatorComponent } from 'packages/frontend/src/app/modules/common/components/pagination/ap-paginator.component';
-import { CollectionService } from 'packages/frontend/src/app/modules/common/service/collection.service';
-import { ProjectService } from 'packages/frontend/src/app/modules/common/service/project.service';
+import { ApPaginatorComponent } from '../../../common/components/pagination/ap-paginator.component';
+import { ProjectService } from '../../../common/service/project.service';
+import { CollectionService } from '../../../common/service/collection.service';
 
 /**
  * Data source for the LogsTable view. This class should

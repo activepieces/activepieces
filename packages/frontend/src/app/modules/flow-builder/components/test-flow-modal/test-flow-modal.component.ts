@@ -26,7 +26,6 @@ import { FlowsActions } from '../../store/flow/flows.action';
 import { InstanceRunService } from '../../../common/service/flow-run.service';
 import { HttpStatusCode } from '@angular/common/http';
 import { UntypedFormControl } from '@angular/forms';
-import { jsonValidator } from 'packages/frontend/src/app/modules/common/validators/json-validator';
 import jsonlint from 'jsonlint-mod';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -39,8 +38,9 @@ import {
   PieceTriggerSettings,
   TriggerType,
 } from '@activepieces/shared';
-import { initializedRun } from 'packages/frontend/src/app/modules/common/model/flow-run.interface';
 import { ActionMetaService } from '../../service/action-meta.service';
+import { jsonValidator } from '../../../common/validators/json-validator';
+import { initializedRun } from '../../../common/model/flow-run.interface';
 
 @Component({
   selector: 'app-test-flow-modal',

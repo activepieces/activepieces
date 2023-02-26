@@ -12,8 +12,6 @@ import {
 import { ActionType, LoopOnItemsAction } from '@activepieces/shared';
 
 export class FlowRenderUtil {
-  constructor() {}
-
   public static isButtonWithinCandidateDistance(
     addButton: AddButtonAndFlowItemNameContainer,
     dropPoint: Point

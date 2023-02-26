@@ -10,8 +10,8 @@ import {
   AppPiece,
   PieceProperty,
 } from '../../common/components/configs-form/connector-action-or-config';
-import { environment } from 'packages/frontend/src/environments/environment';
 import { Observable, shareReplay } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',

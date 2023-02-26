@@ -10,10 +10,6 @@ import {
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 
-import { RightSideBarType } from 'packages/frontend/src/app/modules/common/model/enum/right-side-bar-type.enum';
-import { AddButtonAndFlowItemNameContainer } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-add-button';
-import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
-import { FlowRendererService } from 'packages/frontend/src/app/modules/flow-builder/service/flow-renderer.service';
 import {
   ADD_BUTTON_SIZE,
   ARROW_HEAD_SIZE,
@@ -25,6 +21,10 @@ import {
 import { AddButtonType } from '../../../../../../../common/model/enum/add-button-type';
 import { FlowsActions } from '../../../../../../store/flow/flows.action';
 import { Observable } from 'rxjs';
+import { AddButtonAndFlowItemNameContainer } from '../../../../../../../common/model/flow-builder/flow-add-button';
+import { FlowItem } from '../../../../../../../common/model/flow-builder/flow-item';
+import { RightSideBarType } from '../../../../../../../common/model/enum/right-side-bar-type.enum';
+import { FlowRendererService } from '../../../../../../service/flow-renderer.service';
 
 @Component({
   selector: 'app-simple-line-connection',

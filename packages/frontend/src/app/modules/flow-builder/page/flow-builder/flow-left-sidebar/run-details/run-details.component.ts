@@ -2,7 +2,6 @@ import { Component, NgZone, OnInit } from '@angular/core';
 import { distinctUntilChanged, map, Observable } from 'rxjs';
 import { UUID } from 'angular2-uuid';
 import { TimeHelperService } from '../../../../../common/service/time-helper.service';
-import { LeftSideBarType } from 'packages/frontend/src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { BuilderSelectors } from '../../../../store/builder/builder.selector';
 import { Store } from '@ngrx/store';
 import { RunDetailsService } from './iteration-details.service';
@@ -13,7 +12,8 @@ import {
   StepOutput,
   StepOutputStatus,
 } from '@activepieces/shared';
-import { FlowsActions } from 'packages/frontend/src/app/modules/flow-builder/store/flow/flows.action';
+import { FlowsActions } from '../../../../store/flow/flows.action';
+import { LeftSideBarType } from '../../../../../common/model/enum/left-side-bar-type.enum';
 
 @Component({
   selector: 'app-run-details',

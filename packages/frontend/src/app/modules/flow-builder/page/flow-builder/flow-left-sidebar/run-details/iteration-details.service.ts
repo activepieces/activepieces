@@ -16,5 +16,4 @@ export class RunDetailsService {
     result: StepOutput | undefined;
   }> = new Subject();
   hideAllIterationsInput$: Subject<boolean> = new Subject();
-  constructor() {}
 }

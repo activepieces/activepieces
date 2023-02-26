@@ -9,9 +9,6 @@ import {
   ViewChild,
 } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { RightSideBarType } from 'packages/frontend/src/app/modules/common/model/enum/right-side-bar-type.enum';
-import { AddButtonAndFlowItemNameContainer } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-add-button';
-import { FlowRendererService } from 'packages/frontend/src/app/modules/flow-builder/service/flow-renderer.service';
 import {
   ADD_BUTTON_SIZE,
   ARC_LENGTH,
@@ -29,10 +26,13 @@ import { AddButtonType } from '../../../../../../../common/model/enum/add-button
 import { FlowsActions } from '../../../../../../store/flow/flows.action';
 import { Observable } from 'rxjs';
 import { LoopOnItemsAction } from '@activepieces/shared';
+import { AddButtonAndFlowItemNameContainer } from '../../../../../../../common/model/flow-builder/flow-add-button';
 import {
   FlowItem,
   FlowItemRenderInfo,
-} from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
+} from '../../../../../../../common/model/flow-builder/flow-item';
+import { RightSideBarType } from '../../../../../../../common/model/enum/right-side-bar-type.enum';
+import { FlowRendererService } from '../../../../../../service/flow-renderer.service';
 
 @Component({
   selector: 'app-loop-line-connection',

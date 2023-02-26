@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 
 type SideNavRoute = {
@@ -14,7 +14,7 @@ type SideNavRoute = {
   styleUrls: ['./sidenav-routes-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SidenavRoutesListComponent implements OnInit {
+export class SidenavRoutesListComponent {
   constructor(public router: Router) {}
 
   sideNavRoutes: SideNavRoute[] = [
@@ -37,7 +37,7 @@ export class SidenavRoutesListComponent implements OnInit {
       route: 'connections',
     },
   ];
-  ngOnInit(): void {}
+
   openDocs() {
     window.open('https://activepieces.com/docs', '_blank');
   }

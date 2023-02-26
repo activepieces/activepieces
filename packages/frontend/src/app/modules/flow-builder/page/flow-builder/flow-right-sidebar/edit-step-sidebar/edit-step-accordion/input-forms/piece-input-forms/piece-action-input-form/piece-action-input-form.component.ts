@@ -24,18 +24,17 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { ActionMetaService } from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
-import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
-import { ComponentActionInputFormSchema } from '../../input-forms-schema';
-import { DropdownItem } from 'packages/frontend/src/app/modules/common/model/dropdown-item.interface';
+import { Store } from '@ngrx/store';
+import { ActionMetaService } from '../../../../../../../../service/action-meta.service';
+import { FlowItemsDetailsState } from '../../../../../../../../store/model/flow-items-details-state.model';
+import { Config, PieceActionSettings } from '@activepieces/shared';
+import { DropdownItem } from '../../../../../../../../../common/model/dropdown-item.interface';
 import {
   PieceConfig,
   propsConvertor,
-} from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
-import { Config, PieceActionSettings } from '@activepieces/shared';
-import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '@frontend/modules/flow-builder/store/builder/builder.selector';
-import { FlowItemsDetailsState } from '@frontend/modules/flow-builder/store/model/flow-items-details-state.model';
+} from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
+import { ComponentActionInputFormSchema } from '../../input-forms-schema';
+import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
 declare type ActionDropdownOptionValue = {
   actionName: string;
   configs: PieceConfig[];
@@ -99,9 +98,10 @@ export class PieceActionInputFormComponent
   }>;
   updateOrAddConfigModalClosed$: Observable<Config>;
   allAuthConfigs$: Observable<DropdownItem[]>;
+  flowItemDetails$: Observable<FlowItemsDetailsState>;
+
   onChange = (value: any) => {};
   onTouch = () => {};
-  flowItemDetails$: Observable<FlowItemsDetailsState>;
   constructor(
     private fb: UntypedFormBuilder,
     private actionMetaDataService: ActionMetaService,

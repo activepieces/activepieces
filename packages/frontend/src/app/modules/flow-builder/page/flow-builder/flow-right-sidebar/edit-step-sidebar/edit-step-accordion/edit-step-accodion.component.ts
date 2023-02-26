@@ -24,7 +24,6 @@ import {
 } from '@angular/forms';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { Store } from '@ngrx/store';
-import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   ActionType,
@@ -32,9 +31,10 @@ import {
   UpdateActionRequest,
   UpdateTriggerRequest,
 } from '@activepieces/shared';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
-import { FlowsActions } from 'packages/frontend/src/app/modules/flow-builder/store/flow/flows.action';
-import { FlagService } from 'packages/frontend/src/app/modules/common/service/flag.service';
+import { FlowItem } from '../../../../../../common/model/flow-builder/flow-item';
+import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
+import { FlowsActions } from '../../../../../store/flow/flows.action';
+import { FlagService } from '../../../../../../common/service/flag.service';
 
 @Component({
   selector: 'app-edit-step-accodion',

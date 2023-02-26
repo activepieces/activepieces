@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { LeftSideBarType } from 'packages/frontend/src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { BuilderSelectors } from '../../../../store/builder/builder.selector';
 import { Observable } from 'rxjs';
 import { Store } from '@ngrx/store';
@@ -8,6 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { CreateEditConfigModalComponent } from '../create-or-edit-config-modal/create-or-edit-config-modal.component';
 import { __values } from 'tslib';
 import { Config } from '@activepieces/shared';
+import { LeftSideBarType } from '../../../../../common/model/enum/left-side-bar-type.enum';
 
 @Component({
   selector: 'app-configs-sidebar',

@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { CollectionService } from 'packages/frontend/src/app/modules/common/service/collection.service';
 import { Observable, switchMap, tap } from 'rxjs';
-import { FlowService } from 'packages/frontend/src/app/modules/common/service/flow.service';
 import { Flow } from '@activepieces/shared';
+import { FlowService } from '../../../../common/service/flow.service';
+import { CollectionService } from '../../../../common/service/collection.service';
 
 @Component({
   selector: 'app-empty-collections-table',

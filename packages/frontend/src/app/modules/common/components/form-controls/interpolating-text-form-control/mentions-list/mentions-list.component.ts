@@ -16,10 +16,10 @@ import {
   take,
 } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
-import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import { InsertMentionOperation, MentionListItem } from '../utils';
 import { MentionsTreeCacheService } from './mentions-tree-cache.service';
+import { FlowItem } from '../../../../model/flow-builder/flow-item';
+import { BuilderSelectors } from '../../../../../flow-builder/store/builder/builder.selector';
 
 @Component({
   selector: 'app-mentions-list',

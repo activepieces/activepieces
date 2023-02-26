@@ -9,7 +9,6 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
-import { LeftSideBarType } from 'packages/frontend/src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/builder/builder.selector';
 import { map, Observable, tap } from 'rxjs';
@@ -28,6 +27,7 @@ import {
   Instance,
 } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
+import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
 
 @Component({
   selector: 'app-collection-builder',

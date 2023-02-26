@@ -21,5 +21,4 @@ export class IconButtonComponent {
   @Input() buttonDisabled = false;
   @Input() ariaLabel = '';
   @Output() buttonClicked: EventEmitter<boolean> = new EventEmitter();
-  constructor() {}
 }

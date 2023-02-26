@@ -22,13 +22,13 @@ export class TestCodeFormModalComponent {
     theme: 'lucario',
     mode: 'javascript',
   };
-  @Output() contextSubmitted: EventEmitter<Object> = new EventEmitter();
+  @Output() contextSubmitted: EventEmitter<unknown> = new EventEmitter();
   submitted = false;
   constructor(
     private formBuilder: FormBuilder,
     private dialogRef: MatDialogRef<TestCodeFormModalComponent>,
     private codeService: CodeService,
-    @Inject(MAT_DIALOG_DATA) public data?: { testData: Object | undefined }
+    @Inject(MAT_DIALOG_DATA) public data?: { testData: unknown | undefined }
   ) {
     this.testCodeForm = this.formBuilder.group({
       context: new FormControl(

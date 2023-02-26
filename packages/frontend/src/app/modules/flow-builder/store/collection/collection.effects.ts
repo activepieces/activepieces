@@ -15,10 +15,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuilderSelectors } from '../builder/builder.selector';
 import { SingleFlowModifyingState } from '../flow/flows.action';
 import { BuilderActions } from '../builder/builder.action';
-
-import { autoSaveDebounceTime } from 'packages/frontend/src/app/modules/common/utils';
 import { CollectionVersionState, InstanceStatus } from '@activepieces/shared';
-import { InstanceService } from 'packages/frontend/src/app/modules/common/service/instance.service';
+import { InstanceService } from '../../../common/service/instance.service';
+import { autoSaveDebounceTime } from '../../../common/utils';
 
 @Injectable()
 export class CollectionEffects {

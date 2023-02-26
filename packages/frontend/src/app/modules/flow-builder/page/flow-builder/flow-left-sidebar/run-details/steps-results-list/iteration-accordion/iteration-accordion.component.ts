@@ -12,7 +12,6 @@ export class IterationAccordionComponent {
   @Input() selectedStepName: string | null;
   @Input() nestingLevel = 0;
   @Output() childStepSelected = new EventEmitter();
-  constructor() {}
 
   stopPropagation(event: MouseEvent) {
     event.stopPropagation();

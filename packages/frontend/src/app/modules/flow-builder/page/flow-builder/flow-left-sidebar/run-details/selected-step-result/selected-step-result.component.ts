@@ -9,7 +9,6 @@ import { StepOutput, StepOutputStatus } from '@activepieces/shared';
 export class SelectedStepResultComponent {
   @Input() selectedStepResult: StepOutput;
   @Input() selectedStepName: string;
-  constructor() {}
 
   get ActionStatusEnum() {
     return StepOutputStatus;

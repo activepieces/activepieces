@@ -24,10 +24,12 @@ import { InsertMentionOperation } from '../interpolating-text-form-control/utils
   ],
 })
 export class ArrayFormControlComponent implements ControlValueAccessor {
-  onChange = (val) => {};
-  onTouched = () => {};
   valueChanges$: Observable<void>;
   formArray: FormArray<FormControl>;
+
+  onChange = (val) => {};
+  onTouched = () => {};
+
   constructor(private fb: FormBuilder) {
     this.formArray = this.fb.array([new FormControl('')]);
     this.valueChanges$ = this.formArray.valueChanges.pipe(

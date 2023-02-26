@@ -43,175 +43,6 @@ import { CollectionService } from '../../../common/service/collection.service';
 
 @Injectable()
 export class FlowsEffects {
-  // We cannot merge deleteFlow with SingleFlowModifyingState,
-  // as usage of current flow selector to fetch flow id
-  // but after deletion instantly this will be another flow after deleted flow.
-  startDeleteFlow$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(FlowsActions.deleteFlow),
-      concatMap((action) => {
-        const genSavedId = UUID.UUID();
-        return of(
-          FlowsActions.deleteFlowStarted({
-            flowId: action.flowId,
-            saveRequestId: genSavedId,
-          })
-        );
-      })
-    );
-  });
-
-  deleteFlowStarted$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(FlowsActions.deleteFlowStarted),
-      concatMap((action: { flowId: FlowId; saveRequestId: UUID }) => {
-        return this.flowService.delete(action.flowId).pipe(
-          map(() => {
-            return FlowsActions.deleteSuccess({
-              saveRequestId: action.saveRequestId,
-            });
-          })
-        );
-      }),
-      catchError((error) => of(FlowsActions.savedFailed(error)))
-    );
-  });
-
-  flowModified$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(...SingleFlowModifyingState),
-      concatLatestFrom(() => [
-        this.store.select(BuilderSelectors.selectCurrentFlow),
-        this.store.select(BuilderSelectors.selectCurrentCollection),
-      ]),
-      concatMap(([action, flow, collection]) => {
-        let collection$: Observable<Collection> = of(collection);
-        if (collection.version!.state === CollectionVersionState.LOCKED) {
-          collection$ = this.collectionService.update(
-            collection.id,
-            collection.version!
-          );
-        }
-
-        return collection$.pipe(
-          map(() => {
-            const genSavedId = UUID.UUID();
-            let flowOperation: FlowOperationRequest;
-            switch (action.type) {
-              case FlowsActionType.UPDATE_TRIGGER:
-                flowOperation = {
-                  type: FlowOperationType.UPDATE_TRIGGER,
-                  request: action.operation,
-                };
-                break;
-              case FlowsActionType.ADD_ACTION:
-                flowOperation = {
-                  type: FlowOperationType.ADD_ACTION,
-                  request: action.operation,
-                };
-                break;
-              case FlowsActionType.UPDATE_ACTION:
-                flowOperation = {
-                  type: FlowOperationType.UPDATE_ACTION,
-                  request: action.operation,
-                };
-                break;
-              case FlowsActionType.DELETE_ACTION:
-                flowOperation = {
-                  type: FlowOperationType.DELETE_ACTION,
-                  request: action.operation,
-                };
-                break;
-              case FlowsActionType.CHANGE_NAME:
-                flowOperation = {
-                  type: FlowOperationType.CHANGE_NAME,
-                  request: {
-                    displayName: action.displayName,
-                  },
-                };
-                break;
-            }
-            return FlowsActions.applyUpdateOperation({
-              flow: flow!,
-              operation: flowOperation,
-              saveRequestId: genSavedId,
-            });
-          })
-        );
-      })
-    );
-  });
-
-  applyUpdateOperationS = createEffect(
-    () => {
-      return this.actions$.pipe(
-        ofType(FlowsActions.applyUpdateOperation),
-        groupBy((action) => action.flow.id),
-        mergeMap((changeFlowPendingAction$) => {
-          return changeFlowPendingAction$.pipe(
-            concatLatestFrom((action) => [
-              this.store.select(BuilderSelectors.selectFlow(action.flow.id)),
-              this.store.select(
-                BuilderSelectors.selectTabState(action.flow.id)
-              ),
-            ]),
-            concatMap(([action, flow, tabState]) => {
-              if (flow === undefined || tabState === undefined) {
-                return throwError(() => new Error('Flow is not selected'));
-              }
-              return this.processFlowUpdate({
-                operation: action.operation,
-                flow: flow,
-                tabState: tabState,
-                saveRequestId: action.saveRequestId,
-              });
-            }),
-            catchError((e) => {
-              console.error(e);
-              const shownBar = this.snackBar.open(
-                'You have unsaved changes on this page due to network disconnection.',
-                'Refresh',
-                { duration: undefined, panelClass: 'error' }
-              );
-              shownBar.afterDismissed().subscribe(() => location.reload());
-              return of(FlowsActions.savedFailed(e));
-            })
-          );
-        })
-      );
-    },
-    { dispatch: false }
-  );
-
-  private processFlowUpdate(request: {
-    operation: FlowOperationRequest;
-    flow: Flow;
-    tabState: TabState;
-    saveRequestId: UUID;
-  }): Observable<Flow> {
-    return this.flowService.update(request.flow.id, request.operation).pipe(
-      tap((updatedFlow) => {
-        this.store.dispatch(
-          FlowsActions.savedSuccess({
-            saveRequestId: request.saveRequestId,
-            flow: updatedFlow,
-          })
-        );
-        const now = new Date();
-        const nowDate = now.toLocaleDateString('en-us', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        });
-        const nowTime = `${now.getHours().toString().padEnd(2, '0')}:${now
-          .getMinutes()
-          .toString()
-          .padStart(2, '0')}`;
-        this.pieceBuilderService.lastSuccessfulSaveDate = `Last saved on ${nowDate} at ${nowTime}.`;
-      })
-    );
-  }
-
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(BuilderActions.loadInitial),
@@ -407,6 +238,175 @@ export class FlowsEffects {
       })
     );
   });
+
+  // We cannot merge deleteFlow with SingleFlowModifyingState,
+  // as usage of current flow selector to fetch flow id
+  // but after deletion instantly this will be another flow after deleted flow.
+  startDeleteFlow$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FlowsActions.deleteFlow),
+      concatMap((action) => {
+        const genSavedId = UUID.UUID();
+        return of(
+          FlowsActions.deleteFlowStarted({
+            flowId: action.flowId,
+            saveRequestId: genSavedId,
+          })
+        );
+      })
+    );
+  });
+
+  deleteFlowStarted$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FlowsActions.deleteFlowStarted),
+      concatMap((action: { flowId: FlowId; saveRequestId: UUID }) => {
+        return this.flowService.delete(action.flowId).pipe(
+          map(() => {
+            return FlowsActions.deleteSuccess({
+              saveRequestId: action.saveRequestId,
+            });
+          })
+        );
+      }),
+      catchError((error) => of(FlowsActions.savedFailed(error)))
+    );
+  });
+
+  flowModified$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(...SingleFlowModifyingState),
+      concatLatestFrom(() => [
+        this.store.select(BuilderSelectors.selectCurrentFlow),
+        this.store.select(BuilderSelectors.selectCurrentCollection),
+      ]),
+      concatMap(([action, flow, collection]) => {
+        let collection$: Observable<Collection> = of(collection);
+        if (collection.version!.state === CollectionVersionState.LOCKED) {
+          collection$ = this.collectionService.update(
+            collection.id,
+            collection.version!
+          );
+        }
+
+        return collection$.pipe(
+          map(() => {
+            const genSavedId = UUID.UUID();
+            let flowOperation: FlowOperationRequest;
+            switch (action.type) {
+              case FlowsActionType.UPDATE_TRIGGER:
+                flowOperation = {
+                  type: FlowOperationType.UPDATE_TRIGGER,
+                  request: action.operation,
+                };
+                break;
+              case FlowsActionType.ADD_ACTION:
+                flowOperation = {
+                  type: FlowOperationType.ADD_ACTION,
+                  request: action.operation,
+                };
+                break;
+              case FlowsActionType.UPDATE_ACTION:
+                flowOperation = {
+                  type: FlowOperationType.UPDATE_ACTION,
+                  request: action.operation,
+                };
+                break;
+              case FlowsActionType.DELETE_ACTION:
+                flowOperation = {
+                  type: FlowOperationType.DELETE_ACTION,
+                  request: action.operation,
+                };
+                break;
+              case FlowsActionType.CHANGE_NAME:
+                flowOperation = {
+                  type: FlowOperationType.CHANGE_NAME,
+                  request: {
+                    displayName: action.displayName,
+                  },
+                };
+                break;
+            }
+            return FlowsActions.applyUpdateOperation({
+              flow: flow!,
+              operation: flowOperation,
+              saveRequestId: genSavedId,
+            });
+          })
+        );
+      })
+    );
+  });
+
+  applyUpdateOperationS = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(FlowsActions.applyUpdateOperation),
+        groupBy((action) => action.flow.id),
+        mergeMap((changeFlowPendingAction$) => {
+          return changeFlowPendingAction$.pipe(
+            concatLatestFrom((action) => [
+              this.store.select(BuilderSelectors.selectFlow(action.flow.id)),
+              this.store.select(
+                BuilderSelectors.selectTabState(action.flow.id)
+              ),
+            ]),
+            concatMap(([action, flow, tabState]) => {
+              if (flow === undefined || tabState === undefined) {
+                return throwError(() => new Error('Flow is not selected'));
+              }
+              return this.processFlowUpdate({
+                operation: action.operation,
+                flow: flow,
+                tabState: tabState,
+                saveRequestId: action.saveRequestId,
+              });
+            }),
+            catchError((e) => {
+              console.error(e);
+              const shownBar = this.snackBar.open(
+                'You have unsaved changes on this page due to network disconnection.',
+                'Refresh',
+                { duration: undefined, panelClass: 'error' }
+              );
+              shownBar.afterDismissed().subscribe(() => location.reload());
+              return of(FlowsActions.savedFailed(e));
+            })
+          );
+        })
+      );
+    },
+    { dispatch: false }
+  );
+
+  private processFlowUpdate(request: {
+    operation: FlowOperationRequest;
+    flow: Flow;
+    tabState: TabState;
+    saveRequestId: UUID;
+  }): Observable<Flow> {
+    return this.flowService.update(request.flow.id, request.operation).pipe(
+      tap((updatedFlow) => {
+        this.store.dispatch(
+          FlowsActions.savedSuccess({
+            saveRequestId: request.saveRequestId,
+            flow: updatedFlow,
+          })
+        );
+        const now = new Date();
+        const nowDate = now.toLocaleDateString('en-us', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        });
+        const nowTime = `${now.getHours().toString().padEnd(2, '0')}:${now
+          .getMinutes()
+          .toString()
+          .padStart(2, '0')}`;
+        this.pieceBuilderService.lastSuccessfulSaveDate = `Last saved on ${nowDate} at ${nowTime}.`;
+      })
+    );
+  }
 
   constructor(
     private pieceBuilderService: CollectionBuilderService,

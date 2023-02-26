@@ -10,7 +10,7 @@ import {
 } from '@angular/forms';
 import { tap } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
-import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
+import { fadeInUp400ms } from '../../../../../../../common/animation/fade-in-up.animation';
 
 interface DescribeForm {
   displayName: FormControl<string>;
@@ -35,9 +35,10 @@ interface DescribeForm {
 })
 export class DescribeFormComponent implements ControlValueAccessor {
   describeForm: FormGroup<DescribeForm>;
+  updateComponentValue$: Observable<any>;
+
   OnChange = (value) => {};
   onTouched = () => {};
-  updateComponentValue$: Observable<any>;
   constructor(private formBuilder: FormBuilder) {
     this.describeForm = this.formBuilder.group({
       displayName: new FormControl('', {

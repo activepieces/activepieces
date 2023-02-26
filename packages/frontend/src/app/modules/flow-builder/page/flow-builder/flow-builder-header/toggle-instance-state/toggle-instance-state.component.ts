@@ -11,7 +11,7 @@ import { Instance, InstanceStatus } from '@activepieces/shared';
 import {
   disableInstance,
   enableInstance,
-} from 'packages/frontend/src/app/modules/flow-builder/store/collection/collection.action';
+} from '../../../../store/collection/collection.action';
 
 @Component({
   selector: 'app-toggle-instance-state',

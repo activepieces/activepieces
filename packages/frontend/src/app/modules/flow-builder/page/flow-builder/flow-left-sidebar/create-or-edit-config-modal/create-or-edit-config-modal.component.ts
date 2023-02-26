@@ -16,7 +16,7 @@ import { fadeInUp400ms } from '../../../../../common/animation/fade-in-up.animat
 import { ConfigKeyValidator } from '../../validators/configKeyValidator';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Config, ConfigType } from '@activepieces/shared';
-import { CollectionActions } from 'packages/frontend/src/app/modules/flow-builder/store/collection/collection.action';
+import { CollectionActions } from '../../../../store/collection/collection.action';
 interface ConfigForm {
   key: FormControl<string>;
   value: FormControl<any>;

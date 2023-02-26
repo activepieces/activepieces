@@ -4,9 +4,9 @@ import { CollectionResolver } from './resolvers/collection.resolver';
 import { UserLoggedIn } from '../../guards/user-logged-in.guard';
 import { GetInstanceRunResolver } from './resolvers/instance-run.resolver';
 import { ListFlowsResolver } from './resolvers/list-flows.resolver';
-import { BuilderSavingGuard } from 'packages/frontend/src/app/guards/builder-saving.guard';
 import { InstacneResolver } from './resolvers/instance.resolver';
 import { ConnectionsResolver } from './resolvers/connections.resolver';
+import { BuilderSavingGuard } from '../../guards/builder-saving.guard';
 
 export const FlowLayoutRouting: Routes = [
   {

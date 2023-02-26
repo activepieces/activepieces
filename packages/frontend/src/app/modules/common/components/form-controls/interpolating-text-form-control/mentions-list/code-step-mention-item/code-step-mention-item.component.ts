@@ -22,10 +22,6 @@ import {
   tap,
 } from 'rxjs';
 import { CodeActionSettings } from '@activepieces/shared';
-import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
-import { FlowItemDetails } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { CodeService } from 'packages/frontend/src/app/modules/flow-builder/service/code.service';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 
 import { TestCodeFormModalComponent } from '../../../code-artifact-form-control/code-artifact-control-fullscreen/test-code-form-modal/test-code-form-modal.component';
 import {
@@ -36,6 +32,10 @@ import {
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { CodeService } from '../../../../../../flow-builder/service/code.service';
+import { FlowItemDetails } from '../../../../../../flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
+import { BuilderSelectors } from '../../../../../../flow-builder/store/builder/builder.selector';
+import { FlowItem } from '../../../../../model/flow-builder/flow-item';
 
 @Component({
   selector: 'app-code-step-mention-item',

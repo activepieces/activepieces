@@ -11,5 +11,4 @@ export class ApImgComponent {
   @Input() defaultSrc: string;
   @Input() src: string | undefined;
   @Input() rounded = false;
-  constructor() {}
 }

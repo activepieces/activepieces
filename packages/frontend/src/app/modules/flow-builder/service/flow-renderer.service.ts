@@ -24,7 +24,6 @@ export class FlowRendererService {
   );
   private droppedPiece: FlowItem | null;
   candidateAddButton: AddButtonAndFlowItemNameContainer | undefined;
-  constructor() {}
 
   public getDraggedInformation(): {
     draggedPiece: FlowItem | null;

@@ -30,6 +30,22 @@ export class CodeService {
 
   constructor(private http: HttpClient) {}
 
+  static constructFileUrl(artifactSourceId: string): string {
+    return environment.apiUrl + `/files/${artifactSourceId}`;
+  }
+
+  static zipFile(artifact: Artifact): Observable<string> {
+    const zip = new JSZip();
+    zip.file('index.js', artifact.content, {
+      createFolders: false,
+    });
+    zip.file('package.json', artifact.package, {
+      createFolders: false,
+    });
+
+    return from(zip.generateAsync({ type: 'string' }));
+  }
+
   public beautifyJson(content: any) {
     return JSON.stringify(content, null, 2);
   }
@@ -73,24 +89,10 @@ export class CodeService {
     return 'UEsDBAoDAAAAANm8nlU2SH+AOAAAADgAAAAIAAAAaW5kZXguanNleHBvcnRzLmNvZGUgPSBhc3luYyAocGFyYW1zKSA9PiB7CiAgICByZXR1cm4gdHJ1ZTsKfQoKClBLAwQKAwAAAADTvJ5V0krbox0AAAAdAAAADAAAAHBhY2thZ2UuanNvbnsKICAiZGVwZW5kZW5jaWVzIjogewoKICB9Cn0KUEsBAj8DCgMAAAAA2byeVTZIf4A4AAAAOAAAAAgAJAAAAAAAAAAggLSBAAAAAGluZGV4LmpzCgAgAAAAAAABABgAgKIBfJ8c2QGAogF8nxzZAYCiAXyfHNkBUEsBAj8DCgMAAAAA07yeVdJK26MdAAAAHQAAAAwAJAAAAAAAAAAggLSBXgAAAHBhY2thZ2UuanNvbgoAIAAAAAAAAQAYAICU2nSfHNkBgJTadJ8c2QGAlNp0nxzZAVBLBQYAAAAAAgACALgAAAClAAAAAAA=';
   }
 
-  static zipFile(artifact: Artifact): Observable<string> {
-    const zip = new JSZip();
-    zip.file('index.js', artifact.content, {
-      createFolders: false,
-    });
-    zip.file('package.json', artifact.package, {
-      createFolders: false,
-    });
-
-    return from(zip.generateAsync({ type: 'string' }));
-  }
-
   public downloadAndReadFile(filename: string): Observable<Artifact> {
     return this.downloadFile(filename).pipe(
       switchMap(async (file: ArrayBuffer) => {
         const content = { content: '', package: '' };
-        // @ts-ignore
-
         const zipFile = await JSZip.loadAsync(file);
         for (const filename of Object.keys(zipFile.files)) {
           if (filename.split('/').length > 2) continue;
@@ -112,7 +114,6 @@ export class CodeService {
   }
   public async readFile(file) {
     const content = { content: '', package: '' };
-    // @ts-ignore
     const zipFile = await JSZip.loadAsync(file);
     for (const filename of Object.keys(zipFile.files)) {
       if (filename.split('/').length > 2) continue;
@@ -148,9 +149,5 @@ export class CodeService {
         return of(null);
       })
     );
-  }
-
-  static constructFileUrl(artifactSourceId: string): string {
-    return environment.apiUrl + `/files/${artifactSourceId}`;
   }
 }

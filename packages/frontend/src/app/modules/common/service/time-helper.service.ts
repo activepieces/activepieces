@@ -4,8 +4,6 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class TimeHelperService {
-  constructor() {}
-
   countDownTimeDaysOnly(epochTimestamp: number) {
     const now = new Date();
     const utcSecondsSinceEpoch = now.getTime() / 1000;

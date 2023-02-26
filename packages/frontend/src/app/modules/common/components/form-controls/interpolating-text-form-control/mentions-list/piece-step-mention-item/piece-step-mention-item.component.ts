@@ -22,10 +22,6 @@ import {
   PieceTrigger,
   TriggerType,
 } from '@activepieces/shared';
-import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
-import { FlowItemDetails } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { ActionMetaService } from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import {
   MentionListItem,
   MentionTreeNode,
@@ -33,6 +29,10 @@ import {
 } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
+import { ActionMetaService } from '../../../../../../flow-builder/service/action-meta.service';
+import { FlowItemDetails } from '../../../../../../flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
+import { BuilderSelectors } from '../../../../../../flow-builder/store/builder/builder.selector';
+import { FlowItem } from '../../../../../model/flow-builder/flow-item';
 
 @Component({
   selector: 'app-piece-step-mention-item',
@@ -41,6 +41,8 @@ import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
   animations: [fadeIn400ms],
 })
 export class PieceStepMentionItemComponent {
+  TriggerType = TriggerType;
+
   expandSample = false;
   @Input()
   set stepMention(val: MentionListItem & { step: FlowItem }) {
@@ -194,5 +196,4 @@ export class PieceStepMentionItemComponent {
         : noSampleData;
     return error;
   }
-  TriggerType = TriggerType;
 }

@@ -6,9 +6,9 @@ import {
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
-import { FlowItemDetails } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
+import { FlowItemDetails } from '../../../../../../flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
+import { BuilderSelectors } from '../../../../../../flow-builder/store/builder/builder.selector';
+import { FlowItem } from '../../../../../model/flow-builder/flow-item';
 import { MentionListItem } from '../../utils';
 
 @Component({

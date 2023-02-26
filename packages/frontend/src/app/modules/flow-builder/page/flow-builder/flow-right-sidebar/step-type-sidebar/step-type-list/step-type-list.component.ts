@@ -5,7 +5,7 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { AuthenticationService } from 'packages/frontend/src/app/modules/common/service/authentication.service';
+import { AuthenticationService } from '../../../../../../common/service/authentication.service';
 
 import { FlowItemDetails } from '../step-type-item/flow-item-details';
 

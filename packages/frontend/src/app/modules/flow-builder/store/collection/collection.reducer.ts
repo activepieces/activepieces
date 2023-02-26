@@ -130,7 +130,7 @@ const _collectionReducer = createReducer(
       };
     }
   ),
-  on(FlowsActions.savedFailed, (state, {}): CollectionState => {
+  on(FlowsActions.savedFailed, (state): CollectionState => {
     return { ...state, state: CollectionStateEnum.FAILED_SAVING_OR_PUBLISHING };
   }),
   on(

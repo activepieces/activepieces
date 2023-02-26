@@ -8,15 +8,15 @@ import {
   ViewChildren,
 } from '@angular/core';
 import { ThemeService } from '../../../../common/service/theme.service';
-import { LeftSideBarType } from 'packages/frontend/src/app/modules/common/model/enum/left-side-bar-type.enum';
 import { exhaustMap, fromEvent, map, Observable, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { FlowsActions } from '../../../store/flow/flows.action';
 import { UUID } from 'angular2-uuid';
-import { FlowService } from 'packages/frontend/src/app/modules/common/service/flow.service';
 import { ViewModeEnum } from '../../../store/model/enums/view-mode.enum';
 import { BuilderSelectors } from '../../../store/builder/builder.selector';
 import { Flow } from '@activepieces/shared';
+import { LeftSideBarType } from '../../../../common/model/enum/left-side-bar-type.enum';
+import { FlowService } from '../../../../common/service/flow.service';
 
 @Component({
   selector: 'app-flow-builder-tabs',

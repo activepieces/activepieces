@@ -32,7 +32,6 @@ export class ApButtonComponent {
   );
   btnSizeClass = 'ap-btn-l';
   @Output() buttonClicked: EventEmitter<Event> = new EventEmitter<Event>();
-  constructor() {}
 
   click() {
     if (!this.loading) {

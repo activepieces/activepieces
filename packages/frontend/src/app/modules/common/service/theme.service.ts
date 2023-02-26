@@ -15,11 +15,9 @@ export class ThemeService {
   public ICON_COLOR = '#555555';
   public WARNING_COLOR = '#fb6340';
   public SUCCESS_COLOR = '#209e34';
+  public DELAY_LOADING_DURATION = 500;
 
   BODY_COLOR_SVG_STYLE() {
     return { fill: this.BODY_COLOR };
   }
-  public DELAY_LOADING_DURATION = 500;
-
-  constructor() {}
 }

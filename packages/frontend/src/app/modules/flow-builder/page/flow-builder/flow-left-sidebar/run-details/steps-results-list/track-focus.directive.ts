@@ -7,8 +7,6 @@ import { Directive, HostListener } from '@angular/core';
 export class TrackFocusDirective {
   isFocused = false;
 
-  constructor() {}
-
   @HostListener('focus', ['$event']) onFocus(e) {
     this.isFocused = true;
   }

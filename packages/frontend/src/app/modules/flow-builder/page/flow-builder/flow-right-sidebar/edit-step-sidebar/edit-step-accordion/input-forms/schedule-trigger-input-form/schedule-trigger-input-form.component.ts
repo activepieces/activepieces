@@ -8,14 +8,14 @@ import {
   NG_VALUE_ACCESSOR,
 } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
-import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
-import { cronJobValidator } from 'packages/frontend/src/app/modules/common/validators/cronjob-validator';
 import {
   InputFormsSchema,
   ScheduledTriggerInputFormSchema,
 } from '../input-forms-schema';
 import cronstrue from 'cronstrue';
 import { TriggerType } from '@activepieces/shared';
+import { fadeInUp400ms } from '../../../../../../../../common/animation/fade-in-up.animation';
+import { cronJobValidator } from '../../../../../../../../common/validators/cronjob-validator';
 @Component({
   selector: 'app-schedule-trigger-input-form',
   templateUrl: './schedule-trigger-input-form.component.html',
@@ -35,9 +35,10 @@ import { TriggerType } from '@activepieces/shared';
 })
 export class ScheduleTriggerInputFormComponent implements ControlValueAccessor {
   scheduledFrom: FormGroup<{ cronExpression: FormControl<string> }>;
+  updateComponentValue$: Observable<any>;
+
   onChange = (value: InputFormsSchema) => {};
   onTouch = () => {};
-  updateComponentValue$: Observable<any>;
   constructor(private formBuilder: FormBuilder) {
     this.scheduledFrom = this.formBuilder.group({
       cronExpression: new FormControl('', {

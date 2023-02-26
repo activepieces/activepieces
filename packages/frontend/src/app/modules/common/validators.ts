@@ -28,20 +28,6 @@ export function containsUppercaseCharacter(): ValidatorFn {
   };
 }
 
-export function phoneNumberValidation(): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    // using complex regex, It will fail for a lot of cases such as germany number,
-    // as this will make them feels bad and try to find way around
-    // let just trust the user.
-    const phoneNumberRegex = /^[\+]?[0-9\(\)]{5,18}$/;
-    if (!control.value) return null;
-    if (!phoneNumberRegex.test(control.value)) {
-      return { invalidNumber: true };
-    }
-    return null;
-  };
-}
-
 export function containsNumber(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     const numberRegex = /[0-9]/;

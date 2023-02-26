@@ -14,12 +14,12 @@ import {
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { TriggerType, WebhookTrigger } from '@activepieces/shared';
-import { FlowItem } from 'packages/frontend/src/app/modules/common/model/flow-builder/flow-item';
 import {
   MentionListItem,
   replaceArrayNotationsWithSpaces,
   replaceDotsWithSpaces,
 } from '../../utils';
+import { FlowItem } from '../../../../../model/flow-builder/flow-item';
 
 const pathRegex = /\$\{trigger((\.[a-zA-Z_$][a-zA-Z_$0-9]*)(\[([0-9])+\])*)*\}/;
 @Component({

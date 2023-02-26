@@ -7,5 +7,4 @@ import { Subject } from 'rxjs';
 })
 export class BuilderAutocompleteMentionsDropdownService {
   lastOpenDropdownId$: Subject<UUID> = new Subject();
-  constructor() {}
 }

@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { forkJoin, map, of, switchMap } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
-import { AppPiece } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
 import { FlowItemDetails } from '../../../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionMetaService } from '../../../service/action-meta.service';
 import { FlowItemDetailsActions } from './flow-items-details.action';
+import { AppPiece } from '../../../../common/components/configs-form/connector-action-or-config';
 
 @Injectable()
 export class FlowItemsDetailsEffects {
@@ -17,10 +17,10 @@ export class FlowItemsDetailsEffects {
         const coreTriggersFlowItemsDetails$ = of(
           this.flowItemsDetailsService.triggerItemsDetails
         );
-        const connectorComponentsTriggersFlowItemDetails$ = components$.pipe(
+        const customPiecesTriggersFlowItemDetails$ = components$.pipe(
           map(this.createFlowItemDetailsForComponents(true))
         );
-        const connectorComponentsActions$ = components$.pipe(
+        const customPiecesActions$ = components$.pipe(
           map(this.createFlowItemDetailsForComponents(false))
         );
         const coreFlowItemsDetails$ = of(
@@ -29,11 +29,33 @@ export class FlowItemsDetailsEffects {
         return forkJoin({
           coreFlowItemsDetails: coreFlowItemsDetails$,
           coreTriggerFlowItemsDetails: coreTriggersFlowItemsDetails$,
-          connectorComponentsActionsFlowItemDetails:
-            connectorComponentsActions$,
-          connectorComponentsTriggersFlowItemDetails:
-            connectorComponentsTriggersFlowItemDetails$,
+          customPiecesActionsFlowItemDetails: customPiecesActions$,
+          customPiecesTriggersFlowItemDetails:
+            customPiecesTriggersFlowItemDetails$,
         });
+      }),
+      map((res) => {
+        const storagePiece = res.customPiecesActionsFlowItemDetails.find(
+          (p) => p.extra?.appName === 'storage'
+        );
+        const httpPiece = res.customPiecesActionsFlowItemDetails.find(
+          (p) => p.extra?.appName === 'http'
+        );
+        if (storagePiece) {
+          res.coreFlowItemsDetails.push(storagePiece);
+          const index = res.customPiecesActionsFlowItemDetails.findIndex(
+            (p) => p.extra?.appName === 'storage'
+          );
+          res.customPiecesActionsFlowItemDetails.splice(index, 1);
+        }
+        if (httpPiece) {
+          res.coreFlowItemsDetails.push(httpPiece);
+          const index = res.customPiecesActionsFlowItemDetails.findIndex(
+            (p) => p.extra?.appName === 'http'
+          );
+          res.customPiecesActionsFlowItemDetails.splice(index, 1);
+        }
+        return res;
       }),
       switchMap((res) => {
         return of(

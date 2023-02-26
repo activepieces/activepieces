@@ -17,14 +17,13 @@ import {
   CloudAuth2Connection,
   PropertyType,
 } from '@activepieces/shared';
-import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
-import { PieceConfig } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
-import { CloudConnectionPopupSettings } from 'packages/frontend/src/app/modules/common/components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
-import { AppConnectionsService } from 'packages/frontend/src/app/modules/common/service/app-connections.service';
-import { ConnectionValidator } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/validators/connectionNameValidator';
-import { appConnectionsActions } from 'packages/frontend/src/app/modules/flow-builder/store/app-connections/app-connections.action';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import deepEqual from 'deep-equal';
+import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
+import { PieceConfig } from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
+import { CloudConnectionPopupSettings } from '../../../../../../../../../common/components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
+import { ConnectionValidator } from '../../../../../../validators/connectionNameValidator';
+import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
+import { appConnectionsActions } from '../../../../../../../../store/app-connections/app-connections.action';
 
 interface AuthConfigSettings {
   appName: FormControl<string | null>;

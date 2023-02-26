@@ -14,6 +14,4 @@ export class ApInputComponent {
   @Input() hintText = '';
   @Input() required: boolean;
   @Input() inputType: string;
-
-  constructor() {}
 }
