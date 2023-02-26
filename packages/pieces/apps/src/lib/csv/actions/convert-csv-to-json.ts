@@ -3,9 +3,9 @@ import { UnparseConfig } from "papaparse";
 import { unparseCSVObject } from "../utils";
 
 export const unparseCSVTextAction = createAction({
-  name: 'unparse_csv_text',
-  displayName: 'Unparse JSON Text',
-  description: 'Read JSON and automatically parse it into a CSV:',
+  name: "convert_json_to_csv",
+  displayName: "Convert JSON to CSV",
+  description: "This function reads a JSON file and converts it into a CSV file format.",
   sampleData: [
     "Column 1,Column 2,Column 3,Column 4",
     "1-1,1-2,1-3,1-4"
