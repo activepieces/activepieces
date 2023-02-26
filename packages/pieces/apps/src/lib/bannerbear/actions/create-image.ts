@@ -44,12 +44,12 @@ export const createImageFromTemplate = createAction({
       required: true,
     }),
     template: Property.Dropdown({
-      displayName: 'Template Id',
-      description: 'The uid of the template to use in image creation.',
+      displayName: 'Template',
+      description: 'The template to use in image creation.',
       required: true,
       refreshers: ['authentication'],
       options: async ({ authentication }) => {
-        if (authentication === undefined) {
+        if (!authentication) {
           return {
             disabled: true,
             options: [],
@@ -59,7 +59,7 @@ export const createImageFromTemplate = createAction({
 
         const response = await httpClient.sendRequest<BannerbearTemplate[]>({
           method: HttpMethod.GET,
-          url: `https://sync.api.bannerbear.com/v2/templates`,
+          url: `https://api.bannerbear.com/v2/templates`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: (authentication as string)
@@ -94,15 +94,45 @@ export const createImageFromTemplate = createAction({
       displayName: 'Template modifications',
       description: 'A list of modifications you want to make on the template.',
       required: true,
-      refreshers: ["authentication", "template", "render_pdf"],
-      props: async ({ authentication, template, render_pdf }) => {
+      refreshers: ["authentication", "template"],
+      props: async ({ authentication, template }) => {
         if (!authentication) return {}
         if (!template) return {}
   
-        const fields: DynamicPropsValue = {};
+        let fields: DynamicPropsValue = {};
   
         (template as BannerbearTemplate).available_modifications.map((modification) => {
-          
+          if ('text' in modification) {
+            fields = {
+              ...BannerbearModificationsMapping.main,
+              ...BannerbearModificationsMapping.text,
+              ...BannerbearModificationsMapping.common,
+            }
+          } else if ('rating' in modification) {
+            fields = {
+              ...BannerbearModificationsMapping.main,
+              ...BannerbearModificationsMapping.star_rating,
+              ...BannerbearModificationsMapping.common,
+            }
+          } else if ('image_url' in modification) {
+            fields = {
+              ...BannerbearModificationsMapping.main,
+              ...BannerbearModificationsMapping.image,
+              ...BannerbearModificationsMapping.common,
+            }
+          } else if ('chart_data' in modification) {
+            fields = {
+              ...BannerbearModificationsMapping.main,
+              ...BannerbearModificationsMapping.barline_chart,
+              ...BannerbearModificationsMapping.common,
+            }
+          } else if ('bar_code_data' in modification) {
+            fields = {
+              ...BannerbearModificationsMapping.main,
+              ...BannerbearModificationsMapping.bar_code,
+              ...BannerbearModificationsMapping.common,
+            }
+          }
         })
   
         return fields
@@ -124,14 +154,14 @@ export const createImageFromTemplate = createAction({
       required: false
     }),
   },
-  async run(context) {
+  async run({ propsValue }) {
     const body = {
-      template: context.propsValue.template,
-      modifications: JSON.stringify(context.propsValue.modifications) === "{}" ? [] : context.propsValue.modifications,
-      template_version: context.propsValue.template_version,
-      transparent: context.propsValue.transparent,
-      render_pdf: context.propsValue.render_pdf,
-      metadata: context.propsValue.metadata
+      modifications: Object.keys(propsValue.modifications).length === 0 ? [] : propsValue.modifications,
+      template_version: propsValue.template_version,
+      transparent: propsValue.transparent,
+      render_pdf: propsValue.render_pdf,
+      template: propsValue.template,
+      metadata: propsValue.metadata
     }
 
     const request: HttpRequest = {
@@ -140,7 +170,7 @@ export const createImageFromTemplate = createAction({
       body,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.propsValue.authentication!
+        token: propsValue.authentication
       }
     }
 
@@ -167,12 +197,15 @@ interface BannerbearTemplate {
     name: string
     image_url?: string
     text?: string
+    chart_data: string
+    bar_code_data: number
+    rating: number
   }[]
   tags: string[]
 }
 
 const BannerbearModificationsMapping = {
-  common: {
+  main: {
     name: Property.ShortText({
       displayName: "Name",
       required: true,
@@ -183,6 +216,8 @@ const BannerbearModificationsMapping = {
       required: false,
       description: 'Color in hex format e.g. "#FF0000".',
     }),
+  },
+  common: {
     gradient: Property.ShortText({
       displayName: "Gradient",
       required: false,
