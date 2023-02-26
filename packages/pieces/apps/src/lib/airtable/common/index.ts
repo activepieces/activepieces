@@ -121,7 +121,7 @@ export const airtableCommon = {
       if (!base) return {}
       if (!table) return {}
 
-      let fields: DynamicPropsValue = {};
+      const fields: DynamicPropsValue = {};
 
       (table as AirtableTable).fields.map((field: AirtableField) => {
         if (AirtableEnterpriseFields.includes(field.type)) {
