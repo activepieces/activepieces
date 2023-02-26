@@ -42,14 +42,17 @@ export class FlowItemsDetailsEffects {
           (p) => p.extra?.appName === 'http'
         );
         if (storagePiece) {
-          res.coreFlowItemsDetails.push(storagePiece);
+          res.coreFlowItemsDetails = [
+            ...res.coreFlowItemsDetails,
+            storagePiece,
+          ];
           const index = res.customPiecesActionsFlowItemDetails.findIndex(
             (p) => p.extra?.appName === 'storage'
           );
           res.customPiecesActionsFlowItemDetails.splice(index, 1);
         }
         if (httpPiece) {
-          res.coreFlowItemsDetails.push(httpPiece);
+          res.coreFlowItemsDetails = [...res.coreFlowItemsDetails, httpPiece];
           const index = res.customPiecesActionsFlowItemDetails.findIndex(
             (p) => p.extra?.appName === 'http'
           );
