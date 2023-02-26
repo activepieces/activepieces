@@ -11,11 +11,7 @@ export const createClickupSubtask = createAction({
         workspace_id: clickupCommon.workspace_id,
 		space_id: clickupCommon.space_id,
         list_id: clickupCommon.list_id,
-		task_id: Property.ShortText({
-			description: 'The ID of the parent task to put a task under',
-			displayName: 'Parent Task ID',
-			required: true,
-		}),
+		task_id: clickupCommon.task_id,
         name: Property.ShortText({
 			description: 'The name of the task to create',
 			displayName: 'Task Name',
