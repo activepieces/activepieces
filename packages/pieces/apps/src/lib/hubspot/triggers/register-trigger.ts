@@ -1,5 +1,4 @@
 import { createTrigger, TriggerStrategy } from "@activepieces/framework"
-import { Trigger } from "@activepieces/shared";
 
 interface Props {
   name: string,
@@ -20,6 +19,13 @@ export const hubspotRegisterTrigger =
     sampleData,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
+      const { repo, owner } = context.propsValue['repository']!;
+      
+      await context.store.put<WebhookInformation>(`github_${name}_trigger`, {
+        webhookId: webhook.id,
+        owner: owner,
+        repo: repo,
+      });
     },
     async onDisable(context) {
     },

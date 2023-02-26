@@ -64,6 +64,25 @@ export const hubSpotClient = {
       return response.body;
     }
   },
+
+  webhooks: {
+    async registerWebhook({ }): Promise<HubSpotAddContactsToListResponse> {
+      const request: HttpRequest<HubSpotAddContactsToListRequest> = {
+        method: HttpMethod.POST,
+        url: `${API}/contacts/v1/lists/${listId}/add`,
+        body: {
+          emails: [email],
+        },
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token,
+        },
+      };
+
+      const response = await httpClient.sendRequest<HubSpotAddContactsToListResponse>(request);
+      return response.body;
+    }
+  }
 };
 
 type ContactsCreateOrUpdateParams = {
