@@ -3,166 +3,167 @@ import { Property, HttpRequest, HttpMethod, AuthenticationType, httpClient } fro
 import { AirtableBase, AirtableFieldMapping, AirtableTable } from "./models";
 
 export const airtableCommon = {
-    authentication: Property.SecretText({
-        displayName: "Personal Token",
-        required: true,
-        description: "Visit https://airtable.com/create/tokens/ to create one"
-    }),
-    base: Property.Dropdown({
-        displayName: 'Base',
-        required: true,
-        refreshers: ["authentication"],
-        options: async (props) => {
-            if (!props['authentication']) {
-                return {
-                    disabled: true,
-                    options: [],
-                    placeholder: "Please connect your account"
-                }
-            }
-            const request: HttpRequest = {
-                method: HttpMethod.GET,
-                url: "https://api.airtable.com/v0/meta/bases",
-                authentication: {
-                    type: AuthenticationType.BEARER_TOKEN,
-                    token: props["authentication"] as string
-                }
-            };
-
-            try {
-                const response = await httpClient.sendRequest<{ bases: AirtableBase[] }>(request)
-                if (response.status === 200) {
-                    return {
-                        disabled: false,
-                        options: response.body.bases.map((base) => {
-                            return { value: base.id, label: base.name };
-                        })
-                    }
-                }
-            } catch (e) {
-                console.debug(e)
-                return {
-                    disabled: true,
-                    options: [],
-                    placeholder: "Please check your permission scope"
-                }
-            }
-
-            return {
-                disabled: true,
-                options: []
-            }
+  authentication: Property.SecretText({
+    displayName: "Personal Token",
+    required: true,
+    description: "Visit https://airtable.com/create/tokens/ to create one"
+  }),
+  
+  base: Property.Dropdown({
+    displayName: 'Base',
+    required: true,
+    refreshers: ["authentication"],
+    options: async (props) => {
+      if (!props['authentication']) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Please connect your account"
         }
-
-    }),
-    table: Property.Dropdown({
-        displayName: 'Table',
-        required: true,
-        refreshers: ["authentication", "base"],
-        options: async (props) => {
-            if (!props['authentication']) {
-                return {
-                    disabled: true,
-                    options: [],
-                    placeholder: "Please connect your account"
-                }
-            }
-            if (!props['base']) {
-                return {
-                    disabled: true,
-                    options: [],
-                    placeholder: "Please select a base first"
-                }
-            }
-
-            const request: HttpRequest = {
-                method: HttpMethod.GET,
-                url: `https://api.airtable.com/v0/meta/bases/${props['base']}/tables`,
-                authentication: {
-                    type: AuthenticationType.BEARER_TOKEN,
-                    token: props["authentication"] as string
-                }
-            }
-
-            try {
-                const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>(request);
-                if (response.status === 200) {
-                    return {
-                        disabled: false,
-                        options: response.body.tables.map((table) => {
-                            return { value: table, label: table.name };
-                        })
-                    }
-                }
-            } catch (e) {
-                console.debug(e)
-                return {
-                    disabled: true,
-                    options: [],
-                    placeholder: "Please check your permission scope"
-                }
-            }
-
-            return {
-                disabled: true,
-                options: []
-            }
+      }
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: "https://api.airtable.com/v0/meta/bases",
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: props["authentication"] as string
         }
-    }),
+      };
 
-    fields: Property.DynamicProperties({
-        displayName: 'Table',
-        required: true,
-        refreshers: ["authentication", "base", "table"],
-
-        props: async (props) => {
-            const {authentication, base, table} = props
-
-            if (!authentication) return {}
-            if (!base) return {}
-            if (!table) return {}
-
-            const fields = (table as AirtableTable).fields.map((field) => {
-                let params = {
-                    displayName: field.name,
-                    description: field.description,
-                    required: false
-                }
-                
-                if (field.type === "singleSelect") {
-                    const options = field.options!.choices.map((option: {id: string, name: string}) => ({
-                        value: option.id,
-                        label: option.name
-                    }))
-
-                    //avoiding
-                    return Property.StaticDropdown({
-                        ...params, 
-                        options: {
-                            options
-                        }
-                    })
-                }
-                
-                return (AirtableFieldMapping[field.type])(params)
+      try {
+        const response = await httpClient.sendRequest<{ bases: AirtableBase[] }>(request)
+        if (response.status === 200) {
+          return {
+            disabled: false,
+            options: response.body.bases.map((base) => {
+              return { value: base.id, label: base.name };
             })
-
-            return fields
+          }
         }
-    }),
+      } catch (e) {
+        console.debug(e)
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Please check your permission scope"
+        }
+      }
 
-    
-    async getTableSnapshot(params: { personalToken: string, baseId: string, tableId: string }) {
-        Airtable.configure({
-            apiKey: params.personalToken,
-        });
-        const airtable = new Airtable();
-        const currentTablleSnapshot = (await airtable
-            .base(params.baseId)
-            .table(params.tableId)
-            .select()
-            .all()).map((r) => r._rawJson)
-            .sort((x, y) => new Date(x.createdTime).getTime() - new Date(y.createdTime).getTime());
-        return currentTablleSnapshot;
+      return {
+        disabled: true,
+        options: []
+      }
     }
+  }),
+
+  table: Property.Dropdown({
+    displayName: 'Table',
+    required: true,
+    refreshers: ["authentication", "base"],
+    options: async (props) => {
+      if (!props['authentication']) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Please connect your account"
+        }
+      }
+      if (!props['base']) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Please select a base first"
+        }
+      }
+
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `https://api.airtable.com/v0/meta/bases/${props['base']}/tables`,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: props["authentication"] as string
+        }
+      }
+
+      try {
+        const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>(request);
+        if (response.status === 200) {
+          return {
+            disabled: false,
+            options: response.body.tables.map((table) => {
+              return { value: table, label: table.name };
+            })
+          }
+        }
+      } catch (e) {
+        console.debug(e)
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Please check your permission scope"
+        }
+      }
+
+      return {
+        disabled: true,
+        options: []
+      }
+    }
+  }),
+
+  fields: Property.DynamicProperties({
+    displayName: 'Table',
+    required: true,
+    refreshers: ["authentication", "base", "table"],
+
+    props: async (props) => {
+      const { authentication, base, table } = props
+
+      if (!authentication) return {}
+      if (!base) return {}
+      if (!table) return {}
+
+      const fields = (table as AirtableTable).fields.map((field) => {
+        let params = {
+          displayName: field.name,
+          description: field.description,
+          required: false
+        }
+
+        if (field.type === "singleSelect") {
+          const options = field.options!.choices.map((option: { id: string, name: string }) => ({
+            value: option.id,
+            label: option.name
+          }))
+
+          //avoiding
+          return Property.StaticDropdown({
+            ...params,
+            options: {
+              options
+            }
+          })
+        }
+
+        return (AirtableFieldMapping[field.type])(params)
+      })
+
+      return fields
+    }
+  }),
+
+
+  async getTableSnapshot(params: { personalToken: string, baseId: string, tableId: string }) {
+    Airtable.configure({
+      apiKey: params.personalToken,
+    });
+    const airtable = new Airtable();
+    const currentTablleSnapshot = (await airtable
+      .base(params.baseId)
+      .table(params.tableId)
+      .select()
+      .all()).map((r) => r._rawJson)
+      .sort((x, y) => new Date(x.createdTime).getTime() - new Date(y.createdTime).getTime());
+    return currentTablleSnapshot;
+  }
 }
