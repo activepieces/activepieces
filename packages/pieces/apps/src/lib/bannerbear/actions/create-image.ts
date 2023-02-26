@@ -85,12 +85,17 @@ export const createImageFromTemplate = createAction({
         }
       }
     }),
+    template_version: Property.Number({
+      displayName: 'Template version',
+      description: 'Create image based on a specific version of the template.',
+      required: false
+    }),
     modifications: Property.DynamicProperties({
       displayName: 'Template modifications',
       description: 'A list of modifications you want to make on the template.',
       required: true,
-      refreshers: ["authentication", "template"],
-      props: async ({ authentication, template }) => {
+      refreshers: ["authentication", "template", "render_pdf"],
+      props: async ({ authentication, template, render_pdf }) => {
         if (!authentication) return {}
         if (!template) return {}
   
@@ -118,11 +123,6 @@ export const createImageFromTemplate = createAction({
       description: 'Any metadata that you need to store e.g. ID of a record in your DB.',
       required: false
     }),
-    template_version: Property.Number({
-      displayName: 'Template version',
-      description: 'Create image based on a specific version of the template.',
-      required: false
-    })
   },
   async run(context) {
     const body = {
@@ -169,4 +169,156 @@ interface BannerbearTemplate {
     text?: string
   }[]
   tags: string[]
+}
+
+const BannerbearModificationsMapping = {
+  common: {
+    name: Property.ShortText({
+      displayName: "Name",
+      required: true,
+      description: 'The name of the layer you want to change.'
+    }),
+    color: Property.ShortText({
+      displayName: "Color",
+      required: false,
+      description: 'Color in hex format e.g. "#FF0000".',
+    }),
+    gradient: Property.ShortText({
+      displayName: "Gradient",
+      required: false,
+      description: 'Fill with gradient e.g. ["#000", "#FFF"]'
+    }),
+    border_width: Property.Number({
+      displayName: "Border width",
+      required: false,
+      description: 'Width of the object border.'
+    }),
+    border_color: Property.ShortText({
+      displayName: "Border color",
+      required: false,
+      description: 'Border color in hex format e.g. "#FF0000".'
+    }),
+    shift_x: Property.Number({
+      displayName: "Shift x",
+      required: false,
+      description: 'Shift layer along the x axis.'
+    }),
+    shift_y: Property.Number({
+      displayName: "Shift y",
+      required: false,
+      description: 'Shift layer along the y axis.'
+    }),
+    target: Property.ShortText({
+      displayName: "Target",
+      required: false,
+      description: 'Add a clickable link to a URL on this object when rendering a PDF.'
+    }),
+    hide: Property.Checkbox({
+      displayName: "Hide",
+      required: false,
+      description: 'Set to true to hide a layer.'
+    })
+  },
+  text: {
+    text: Property.ShortText({
+      displayName: "Text",
+      required: false,
+      description: 'Replacement text you want to use.',
+    }),
+    background: Property.ShortText({
+      displayName: "Background",
+      required: false,
+      description: 'Background color in hex format e.g. "#FF0000".',
+    }),
+    font_family: Property.ShortText({
+      displayName: "Font family",
+      required: false,
+      description: 'Change the font.'
+    }),
+    text_align_h: Property.ShortText({
+      displayName: "Text align H",
+      required: false,
+      description: 'Horizontal alignment (left, center, right)',
+    }),
+    text_align_v: Property.ShortText({
+      displayName: "Text align V",
+      required: false,
+      description: 'Vertical alignment (top, center, bottom)',
+    }),
+    font_family_2: Property.ShortText({
+      displayName: "Font family 2",
+      required: false,
+      description: 'Change the secondary font.',
+    }),
+    color_2: Property.ShortText({
+      displayName: "Color 2",
+      required: false,
+      description: 'Change the secondary font color.',
+    })
+  },
+  image: {
+    image_url: Property.ShortText({
+      displayName: "Image url",
+      required: false,
+      description: 'Change the image.'
+    }),
+    effect: Property.ShortText({
+      displayName: "Effect",
+      required: false,
+      description: 'Change the effect.'
+    }),
+    anchor_x: Property.ShortText({
+      displayName: "Anchor x",
+      required: false,
+      description: "Change the anchor point (left, center, right)"
+    }),
+    anchor_y: Property.ShortText({
+      displayName: "Anchor y",
+      required: false,
+      description: "Change the anchor point (top, center, bottom).",
+    }),
+    fill_type: Property.ShortText({
+      displayName: "Fill type",
+      required: false,
+      description: "Change the fill type (fill, fit).",
+    }),
+    disable_face_detect: Property.Checkbox({
+      displayName: "Disable face detect",
+      required: false,
+      description: "Set to true to disable face detect for this request (if the image container is using face detect).",
+    }),
+    disable_smart_crop: Property.Checkbox({
+      displayName: "Disable smart crop",
+      required: false,
+      description: "Set to true to disable smart crop for this request (if the image container is using smart crop)"
+    })
+  },
+  barline_chart: {
+    chart_data: Property.ShortText({
+      displayName: "Chart data",
+      required: false,
+      description: 'Comma-delimited list of numbers to use as data.'
+    })
+  },
+  star_rating: {
+    rating: Property.Number({
+      displayName: "Rating",
+      required: false,
+      description: 'Number from 0 to 100 to use as the rating.'
+    })
+  },
+  qr_code: {
+    target: Property.ShortText({
+      displayName: "Target",
+      required: false,
+      description: 'URL or text to use as the code target.'
+    })
+  },
+  bar_code: {
+    bar_code_data: Property.ShortText({
+      displayName: "Barcode data",
+      required: false,
+      description: 'Text to encode as a bar code.'
+    })
+  }
 }
