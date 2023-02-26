@@ -24,7 +24,7 @@ import { system, validateEnvPropsOnStartup } from "./app/helper/system/system";
 import { SystemProp } from "./app/helper/system/system-prop";
 import swagger from "@fastify/swagger";
 import { databaseConnection } from "./app/database/database-connection";
-import { logger } from './app/helper/logger';
+import { initilizeSentry, logger } from './app/helper/logger';
 import { firebaseAuthenticationModule } from "@ee/firebase-auth/backend/firebase-authentication.module";
 import { billingModule } from "@ee/billing/backend/billing.module";
 import { getEdition } from "./app/helper/license-helper";
@@ -115,6 +115,7 @@ const start = async () => {
         if (edition === ApEdition.ENTERPRISE) {
             app.register(firebaseAuthenticationModule);
             app.register(billingModule);
+            initilizeSentry();
         }
         else {
             app.register(authenticationModule);

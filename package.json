@@ -36,6 +36,7 @@
     "@ngrx/effects": "^15.1.0",
     "@ngrx/store": "^15.1.0",
     "@ngrx/store-devtools": "^15.1.0",
+    "@sentry/node": "^7.38.0",
     "airtable": "^0.11.6",
     "ajv": "^8.12.0",
     "angular-svg-icon": "^15.0.0",

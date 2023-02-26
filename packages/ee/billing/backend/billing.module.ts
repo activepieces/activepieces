@@ -49,7 +49,7 @@ const billingController = async (fastify: FastifyInstance, options: FastifyPlugi
           stripeSecret
         );
         await billingService.handleWebhook({ webhook: event });
-        reply.status(StatusCodes.OK).send(`Invalid webhook signature`);
+        reply.status(StatusCodes.OK).send();
       } catch (err) {
         console.error(err);
         logger.warn(`⚠️  Webhook signature verification failed.`);

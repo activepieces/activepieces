@@ -4,7 +4,7 @@ import { databaseConnection } from "@backend/database/database-connection";
 import { createRedisLock } from "@backend/database/redis-connection";
 import { ProjectUsage } from "../shared/usage";
 import { ProjectUsageEntity } from "./usage.entity";
-import { logger } from "@backend/helper/logger";
+import { captureException, logger } from "@backend/helper/logger";
 import dayjs from "dayjs";
 
 const projectUsageRepo = databaseConnection.getRepository<ProjectUsage>(ProjectUsageEntity);
@@ -22,12 +22,12 @@ export const usageService = {
                     code: ErrorCode.TASK_QUOTA_EXCEEDED,
                     params: { id: request.projectId },
                 });
-            }
+        }
             projectUsage.consumedTasks += numberOfSteps;
             await projectUsageRepo.save(projectUsage);
         } catch (e) {
-            // TODO add sentry, Don't block for internal error, just continue and log it for now.
-            logger.error(e);
+            // Ignore quota errors for sake of user experience and log them instead
+            captureException(e);
         } finally {
             quotaLock.release();
         };

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { MatSnackBarRef, MAT_SNACK_BAR_DATA } from '@angular/material/snack-bar';
 import { map, Observable } from 'rxjs';
 import { BillingService } from '@ee/billing/frontend/billing.service';
+import dayjs from "dayjs";
 
 @Component({
   selector: 'app-runs-left-snackbar',
@@ -17,10 +18,12 @@ export class RunsLeftSnackbarComponent {
     private billingService: BillingService
   ) {
     this.runsStats$ = this.billingService.getUsage().pipe(map(res => {
+      const nextResetDatetime = dayjs(res.usage.nextResetDatetime);
+      const daysLeftBeforeReset = Math.round(nextResetDatetime.diff(dayjs(), 'day', true));
       return {
         runsCap: res.plan.tasks,
         runsExecuted: res.usage.consumedTasks,
-        daysLeftBeforeReset: Math.round((new Date(res.usage.nextResetDatetime ).getTime() - Date.now()) / 1000 / 60 / 60 / 24),
+        daysLeftBeforeReset: daysLeftBeforeReset,
         customerPortalUrl: res.customerPortalUrl
       }
     }));
