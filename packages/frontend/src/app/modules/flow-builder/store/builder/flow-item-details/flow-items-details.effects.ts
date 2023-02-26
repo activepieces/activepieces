@@ -15,17 +15,34 @@ export class FlowItemsDetailsEffects {
 			switchMap(() => {
 				const components$ = this.flowItemsDetailsService.getPieces();
 				const coreTriggersFlowItemsDetails$ = of(this.flowItemsDetailsService.triggerItemsDetails);
-				const connectorComponentsTriggersFlowItemDetails$ = components$.pipe(
+				const customPiecesTriggersFlowItemDetails$ = components$.pipe(
 					map(this.createFlowItemDetailsForComponents(true))
 				);
-				const connectorComponentsActions$ = components$.pipe(map(this.createFlowItemDetailsForComponents(false)));
+				const customPiecesActions$ = components$.pipe(map(this.createFlowItemDetailsForComponents(false)));
 				const coreFlowItemsDetails$ = of(this.flowItemsDetailsService.coreFlowItemsDetails);
 				return forkJoin({
 					coreFlowItemsDetails: coreFlowItemsDetails$,
 					coreTriggerFlowItemsDetails: coreTriggersFlowItemsDetails$,
-					connectorComponentsActionsFlowItemDetails: connectorComponentsActions$,
-					connectorComponentsTriggersFlowItemDetails: connectorComponentsTriggersFlowItemDetails$,
+					customPiecesActionsFlowItemDetails: customPiecesActions$,
+					customPiecesTriggersFlowItemDetails: customPiecesTriggersFlowItemDetails$,
 				});
+			}),
+			map(res=>{
+				const storagePiece= res.customPiecesActionsFlowItemDetails.find(p => p.extra?.appName === 'storage');
+				const httpPiece = res.customPiecesActionsFlowItemDetails.find(p => p.extra?.appName === 'http');
+				if(storagePiece)
+				{
+					res.coreFlowItemsDetails.push(storagePiece);
+					const index= res.customPiecesActionsFlowItemDetails.findIndex(p=> p.extra?.appName === 'storage');
+					res.customPiecesActionsFlowItemDetails.splice(index,1);
+				}
+				if(httpPiece)
+				{
+					res.coreFlowItemsDetails.push(httpPiece);
+					const index= res.customPiecesActionsFlowItemDetails.findIndex(p=> p.extra?.appName === 'http');
+					res.customPiecesActionsFlowItemDetails.splice(index,1);
+				}
+				return res;
 			}),
 			switchMap(res => {
 				return of(
