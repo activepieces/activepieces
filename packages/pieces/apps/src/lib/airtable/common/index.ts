@@ -40,13 +40,28 @@ export const airtableCommon = {
                     token: props["authentication"] as string
                 }
             };
-            const response = await httpClient.sendRequest<{ bases: AirtableBase[] }>(request);
-            const opts = response.body.bases.map((base) => {
-                return { value: base.id, label: base.name };
-            });
+
+            try {
+                const response = await httpClient.sendRequest<{ bases: AirtableBase[] }>(request)
+                if (response.status === 200) {
+                    return {
+                        disabled: false,
+                        options: response.body.bases.map((base) => {
+                            return { value: base.id, label: base.name };
+                        })
+                    }
+                }
+            } catch (e) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: "Please check your permission scope"
+                }
+            }
+
             return {
-                disabled: false,
-                options: opts,
+                disabled: true,
+                options: []
             }
         }
 
@@ -79,16 +94,30 @@ export const airtableCommon = {
                     token: props["authentication"] as string
                 }
             };
-            const response = await httpClient.sendRequest<{ tables: { id: string, name: string }[] }>(request);
-            const opts = response.body.tables.map((table) => {
-                return { value: table.id, label: table.name };
-            });
+
+            try {
+                const response = await httpClient.sendRequest<{ tables: { id: string, name: string }[] }>(request);
+                if (response.status === 200) {
+                    return {
+                        disabled: false,
+                        options: response.body.tables.map((table) => {
+                            return { value: table, label: table.name };
+                        })
+                    }
+                }
+            } catch (e) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: "Please check your permission scope"
+                }
+            }
+
             return {
-                disabled: false,
-                options: opts,
+                disabled: true,
+                options: []
             }
         }
-
     }),
     async getTableSnapshot(params: { personalToken: string, baseId: string, tableId: string }) {
         Airtable.configure({
@@ -103,6 +132,9 @@ export const airtableCommon = {
             .sort((x, y) => new Date(x.createdTime).getTime() - new Date(y.createdTime).getTime());
         return currentTablleSnapshot;
     }
-
 }
 
+interface AirtableCreateRecordBody {
+    records?: AirtableRecord[],
+    fields?: Record<string, unknown>
+}
