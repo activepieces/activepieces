@@ -45,16 +45,16 @@ docker compose -p activepieces up
 
 ## 4. Configure Webhook URL (Important for Triggers, Optional If you have public IP)
 
-By default, the backend will try to use your public IP. If you are self-hosting on a personal machine, you must configure the backend URL so that the webhook is accessible from the internet.
+By default, activepieces will try to use your public IP. If you are self-hosting on a personal machine, you must configure the frontend URL so that the webhook is accessible from the internet.
 
 The easiest way to expose your webhook URL on localhost is by using a service like [ngrok](https://ngrok.com/). To set this up, follow these steps:
 
 1. Install ngrok
 2. Run the following command:
 ```bash
-ngrok http 3000
+ngrok http 4200
 ```
-3. Replace `AP_BACKEND_URL` environment variable in `packages/.env` with the ngrok url.
+3. Replace `AP_FRONTEND_URL` environment variable in `packages/.env` with the ngrok url.
 
 ![Ngrok](../resources/screenshots/docker-ngrok.png)
 
@@ -68,10 +68,6 @@ Review the [configurations guide](configurations.mdx) to make any necessary adju
 
 To upgrade to new versions, which are installed using docker compose, perform the following steps. First, open a terminal in the activepieces repository directory and run the following commands.
 
-<Tip>
-Please review the [Changelog](https://activepieces.com/docs/changelog) for any breaking changes.
-</Tip>
-
 **1. Pull the new docker compose file**
 ```bash
 git pull
@@ -82,9 +78,30 @@ git pull
 docker compose pull
 ```
 
-3. Run the updated docker images
+3. Review changelog for breaking changes
+
+<Warning>
+Please review the [Breaking changes](https://activepieces.com/docs/install/breaking_changes) document.
+</Warning>
+
+4. Run the updated docker images
 ```
 docker compose up -d --remove-orphans
 ```
 
 Congratulations! You have now successfully updated the version.
+
+## Deleting
+
+The following command is capable of deleting all Docker containers and associated data, and therefore should be used with caution:
+
+```
+sh tools/delete.sh
+```
+
+<Warning>
+Executing this command will result in the removal of all Docker containers and the data stored within them. It is important to be aware of the potentially hazardous nature of this command before proceeding.
+</Warning>
+
+
+

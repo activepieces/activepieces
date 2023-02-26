@@ -9,13 +9,13 @@ import { AuthLayoutComponent } from './auth.component';
 import { SignUpComponent } from './pages/sign-up/sign-up.component';
 
 @NgModule({
-	imports: [
-		CommonModule,
-		RouterModule.forChild(AuthLayoutRoutes),
-		FormsModule,
-		ReactiveFormsModule,
-		CommonLayoutModule,
-	],
-	declarations: [AuthLayoutComponent, SignInComponent, SignUpComponent],
+  imports: [
+    CommonModule,
+    RouterModule.forChild(AuthLayoutRoutes),
+    FormsModule,
+    ReactiveFormsModule,
+    CommonLayoutModule,
+  ],
+  declarations: [AuthLayoutComponent, SignInComponent, SignUpComponent],
 })
 export class AuthLayoutModule {}

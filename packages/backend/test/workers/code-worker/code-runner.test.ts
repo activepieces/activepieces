@@ -1,25 +1,22 @@
-import {CodeRunner} from "../../../src/workers/code-worker/code-runner";
-import SandboxManager, {Sandbox} from "../../../src/workers/sandbox";
-
-const fs = require("fs");
+import fs from "fs";
+import {codeRunner} from "../../../src/app/workers/code-worker/code-runner";
+import SandboxManager, {Sandbox} from "../../../src/app/workers/sandbox";
 
 describe('Code Runner', () => {
-
-
     test('Running Code Successfully', async () => {
         jest
             .spyOn(SandboxManager.prototype, 'obtainSandbox')
             .mockImplementation(() => new Sandbox(3));
-        let resourceFile = fs.readFileSync('test/resources/simple-code.zip');
-        let bundledJs = await CodeRunner.run(resourceFile, {});
+        const resourceFile = fs.readFileSync('test/resources/simple-code.zip');
+        const bundledJs = await codeRunner.run(resourceFile, {});
         bundledJs.timeInSeconds = 1.0;
         expect(bundledJs).toEqual({
-                verdict: 'OK',
-                timeInSeconds: 1.0,
-                output: 'true',
-                standardOutput: '',
-                standardError: ''
-            }
+            verdict: 'OK',
+            timeInSeconds: 1.0,
+            output: 'true',
+            standardOutput: '',
+            standardError: ''
+        }
         );
     });
 
@@ -27,8 +24,8 @@ describe('Code Runner', () => {
         jest
             .spyOn(SandboxManager.prototype, 'obtainSandbox')
             .mockImplementation(() => new Sandbox(4));
-        let resourceFile = fs.readFileSync('test/resources/compilation-error.zip');
-        let bundledJs = await CodeRunner.run(resourceFile, {});
+        const resourceFile = fs.readFileSync('test/resources/compilation-error.zip');
+        const bundledJs = await codeRunner.run(resourceFile, {});
         bundledJs.timeInSeconds = 1.0;
         bundledJs.standardError = 'ERROR_MESSAGE';
         expect(bundledJs).toEqual(

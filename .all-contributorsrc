@@ -155,6 +155,43 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "ShayPunter",
+      "name": "Shay Punter",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18310437?v=4",
+      "profile": "https://shaypunter.co.uk",
+      "contributions": [
+        "doc",
+        "plugin"
+      ]
+    },
+    {
+      "login": "abaza738",
+      "name": "abaza738",
+      "avatar_url": "https://avatars.githubusercontent.com/u/50132270?v=4",
+      "profile": "https://github.com/abaza738",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "jonaboe",
+      "name": "Jona Boeddinghaus",
+      "avatar_url": "https://avatars.githubusercontent.com/u/51358680?v=4",
+      "profile": "https://github.com/jonaboe",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "fomojola",
+      "name": "fomojola",
+      "avatar_url": "https://avatars.githubusercontent.com/u/264253?v=4",
+      "profile": "https://github.com/fomojola",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }

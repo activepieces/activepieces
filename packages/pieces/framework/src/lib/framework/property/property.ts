@@ -10,7 +10,8 @@ import {
 	ShortTextProperty,
 } from "./base-prop";
 import { BasicAuthProperty } from "./basic-auth-prop";
-import { DropdownProperty } from "./dropdown-prop";
+import { DropdownProperty, MultiSelectDropdownProperty, StaticDropdownProperty } from "./dropdown-prop";
+import { DynamicProperties } from "./dynamic-prop";
 import { OAuth2Property } from "./oauth2-prop";
 
 export interface PieceProperty {
@@ -19,12 +20,15 @@ export interface PieceProperty {
 	| OAuth2Property<boolean>
 	| CheckboxProperty<boolean>
 	| DropdownProperty<any, boolean>
+	| StaticDropdownProperty<any, boolean>
 	| NumberProperty<boolean>
 	| SecretTextProperty<boolean>
 	| BasicAuthProperty<boolean>
 	| ArrayProperty<boolean>
 	| ObjectProperty<boolean>
-	| JsonProperty<boolean>;
+	| JsonProperty<boolean>
+	| MultiSelectDropdownProperty<unknown, boolean>
+	| DynamicProperties<boolean>
 }
 
 export type StaticPropsValue<T extends PieceProperty> = {
@@ -36,10 +40,10 @@ export const Property = {
 		return { ...request, valueSchema: undefined, type: PropertyType.SHORT_TEXT } as unknown as R extends true ? ShortTextProperty<true> : ShortTextProperty<false>;
 	},
 	Checkbox<R extends boolean>(request: Properties<CheckboxProperty<R>>): R extends true ? CheckboxProperty<true> : CheckboxProperty<false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.SHORT_TEXT } as unknown as R extends true ? CheckboxProperty<true> : CheckboxProperty<false>;
+		return { ...request, valueSchema: undefined, type: PropertyType.CHECKBOX } as unknown as R extends true ? CheckboxProperty<true> : CheckboxProperty<false>;
 	},
 	LongText<R extends boolean>(request: Properties<LongTextProperty<R>>): R extends true ? LongTextProperty<true> : LongTextProperty<false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.SHORT_TEXT } as unknown as R extends true ? LongTextProperty<true> : LongTextProperty<false>;
+		return { ...request, valueSchema: undefined, type: PropertyType.LONG_TEXT } as unknown as R extends true ? LongTextProperty<true> : LongTextProperty<false>;
 	},
 	Number<R extends boolean>(request: Properties<NumberProperty<R>>): R extends true ? NumberProperty<true> : NumberProperty<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.NUMBER } as unknown as R extends true ? NumberProperty<true> : NumberProperty<false>;
@@ -64,6 +68,15 @@ export const Property = {
 	},
 	Dropdown<T, R extends boolean = boolean>(request: Properties<DropdownProperty<T, R>>): R extends true ? DropdownProperty<T, true> : DropdownProperty<T, false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.DROPDOWN } as unknown as R extends true ? DropdownProperty<T, true> : DropdownProperty<T, false>;
+	},
+	StaticDropdown<T, R extends boolean = boolean>(request: Properties<StaticDropdownProperty<T, R>>): R extends true ? StaticDropdownProperty<T, true> : StaticDropdownProperty<T, false> {
+		return { ...request, valueSchema: undefined, type: PropertyType.STATIC_DROPDOWN } as unknown as R extends true ? StaticDropdownProperty<T, true> : StaticDropdownProperty<T, false>;
+	},
+	MultiSelectDropdown<T, R extends boolean = boolean>(request: Properties<MultiSelectDropdownProperty<T, R>>): R extends true ? MultiSelectDropdownProperty<T, true> : MultiSelectDropdownProperty<T, false> {
+		return { ...request, valueSchema: undefined, type: PropertyType.MULTI_SELECT_DROPDOWN } as unknown as R extends true ? MultiSelectDropdownProperty<T, true> : MultiSelectDropdownProperty<T, false>;
+	},
+	DynamicProperties<R extends boolean = boolean>(request: Properties<DynamicProperties<R>>): R extends true ? DynamicProperties<true> : DynamicProperties<false> {
+		return { ...request, valueSchema: undefined, type: PropertyType.DYNAMIC } as unknown as R extends true ? DynamicProperties<true> : DynamicProperties<false>;
 	}
 };
 

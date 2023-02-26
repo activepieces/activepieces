@@ -8,9 +8,9 @@ import {
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, tap } from 'rxjs';
-import { Artifact } from 'packages/frontend/src/app/modules/flow-builder/model/artifact.interface';
 import { CodeArtifactControlFullscreenComponent } from './code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { MatTooltip } from '@angular/material/tooltip';
+import { Artifact } from '../../../../flow-builder/model/artifact.interface';
 
 export interface CodeArtifactForm {
   content: FormControl<string>;
@@ -32,6 +32,13 @@ export interface CodeArtifactForm {
 export class CodeArtifactFormControlComponent
   implements ControlValueAccessor, OnInit, AfterViewInit
 {
+  updateComponentValue$: Observable<
+    Partial<{
+      content: string;
+      package: string;
+    }>
+  >;
+
   @ViewChild('tooltip') tooltip: MatTooltip;
   hideDelayForFullscreenTooltip = 2000;
   codeArtifactForm: FormGroup<CodeArtifactForm>;
@@ -66,9 +73,13 @@ export class CodeArtifactFormControlComponent
       this.codeEditorOptions.readOnly = 'nocursor';
     }
   }
-  updateComponentValue$: Observable<any>;
-  onChange = (val) => {};
-  onTouched = () => {};
+  onChange: (val) => void = (val) => {
+    val;
+    //ignored
+  };
+  onTouched: () => void = () => {
+    //ignored
+  };
 
   writeValue(artifact: Artifact): void {
     if (artifact && (artifact.content || artifact.package)) {
@@ -76,17 +87,17 @@ export class CodeArtifactFormControlComponent
     }
   }
 
-  registerOnChange(change: any): void {
+  registerOnChange(change: (val) => void): void {
     this.onChange = change;
   }
-  registerOnTouched(touched: any): void {
+  registerOnTouched(touched: () => void): void {
     this.onTouched = touched;
   }
   showFullscreenEditor() {
     this.dialogService.open(CodeArtifactControlFullscreenComponent, {
       data: {
         codeFilesForm: this.codeArtifactForm,
-        readonly: this.codeEditorOptions.readOnly === 'nocursor',
+        readOnly: this.codeEditorOptions.readOnly === 'nocursor',
       },
       panelClass: 'fullscreen-dialog',
     });

@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  QueryList,
+  ViewChildren,
+} from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -11,6 +19,7 @@ import {
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import {
+  BehaviorSubject,
   catchError,
   combineLatest,
   debounceTime,
@@ -27,19 +36,25 @@ import {
 import {
   ActionMetaService,
   DropdownState,
-} from 'packages/frontend/src/app/modules/flow-builder/service/action-meta.service';
+} from '../../../flow-builder/service/action-meta.service';
 import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
-import { PieceConfig } from './connector-action-or-config';
+import {
+  PieceConfig,
+  PieceProperty,
+  propsConvertor,
+} from './connector-action-or-config';
 import { DropdownItem } from '../../model/dropdown-item.interface';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
+import { BuilderSelectors } from '../../../flow-builder/store/builder/builder.selector';
 import deepEqual from 'deep-equal';
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
 import { InsertMentionOperation } from '../form-controls/interpolating-text-form-control/utils';
 import { jsonValidator } from '../../validators/json-validator';
 import { CodeService } from '../../../flow-builder/service/code.service';
 import { PropertyType } from '@activepieces/shared';
+import { InterpolatingTextFormControlComponent } from '../form-controls/interpolating-text-form-control/interpolating-text-form-control.component';
+
 type ConfigKey = string;
 
 @Component({
@@ -64,18 +79,25 @@ type ConfigKey = string;
 export class ConfigsFormComponent implements ControlValueAccessor {
   updateValueOnChange$: Observable<void> = new Observable<void>();
   PropertyType = PropertyType;
-  optionsObservables$: {
-    [key: ConfigKey]: Observable<DropdownState<any>>;
+  dropdownOptionsObservables$: {
+    [key: ConfigKey]: Observable<DropdownState<unknown>>;
   } = {};
-  dropdownsLoadingFlags$: { [key: ConfigKey]: Observable<boolean> } = {};
+  dynamicPropsObservables$: {
+    [key: ConfigKey]: Observable<PieceConfig[]>;
+  } = {};
+  refreshableConfigsLoadingFlags$: {
+    [key: ConfigKey]: BehaviorSubject<boolean>;
+  } = {};
+
   allAuthConfigs$: Observable<DropdownItem[]>;
-  configDropdownChanged$: Observable<any>;
+  configDropdownChanged$: Observable<unknown>;
   cloudAuthCheck$: Observable<void>;
   editorOptions = {
     lineNumbers: true,
     theme: 'lucario',
     mode: 'javascript',
   };
+  customizedInputs: Record<string, boolean> | undefined;
   faInfoCircle = faInfoCircle;
   checkingOAuth2CloudManager = false;
   configs: PieceConfig[] = [];
@@ -86,31 +108,42 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   @Input() stepName: string;
   @Input() pieceName: string;
   @Input() pieceDisplayName: string;
+  @ViewChildren('textControl', { read: ElementRef })
+  theInputs: QueryList<ElementRef>;
   form!: UntypedFormGroup;
-  OnChange = (value) => { ; };
-  OnTouched = () => { ; };
-
+  OnChange: (value) => void;
+  OnTouched: () => void;
 
   constructor(
     private fb: UntypedFormBuilder,
     public themeService: ThemeService,
     private actionMetaDataService: ActionMetaService,
     private store: Store,
-    private codeService: CodeService
+    private codeService: CodeService,
+    private cd: ChangeDetectorRef
   ) {
     this.allAuthConfigs$ = this.store.select(
       BuilderSelectors.selectAppConnectionsDropdownOptions
     );
   }
 
-  writeValue(obj: PieceConfig[]): void {
-    this.configs = obj;
+  writeValue(
+    obj:
+      | { configs: PieceConfig[]; customizedInputs: Record<string, boolean> }
+      | PieceConfig[]
+  ): void {
+    if (Array.isArray(obj)) {
+      this.configs = obj;
+    } else {
+      this.configs = obj.configs;
+      this.customizedInputs = obj.customizedInputs;
+    }
     this.createForm();
   }
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value) => void): void {
     this.OnChange = fn;
   }
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.OnTouched = fn;
   }
   setDisabledState(disabled: boolean) {
@@ -144,6 +177,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       ...optionalConfigsControls,
     });
     this.createDropdownConfigsObservables();
+    this.createDynamicConfigsObservables();
     this.updateValueOnChange$ = this.form.valueChanges.pipe(
       tap((value) => {
         this.OnChange(this.formValueMiddleWare(value));
@@ -156,91 +190,170 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
   createDropdownConfigsObservables() {
     this.configs.forEach((c) => {
-      if (c.type === PropertyType.DROPDOWN) {
-        const refreshers$ = {};
-        c.refreshers!.forEach((r) => {
-          refreshers$[r] = this.form.controls[r].valueChanges.pipe(
-            distinctUntilChanged((prev, curr) => {
-              return JSON.stringify(prev) === JSON.stringify(curr);
-            }),
-            startWith(this.configs.find((c) => c.key === r)!.value),
-            debounceTime(150)
+      if (
+        c.type === PropertyType.DROPDOWN ||
+        c.type === PropertyType.MULTI_SELECT_DROPDOWN
+      ) {
+        this.dropdownOptionsObservables$[c.key] =
+          this.createRefreshableConfigObservables<DropdownState<unknown>>(
+            c
+          ).pipe(
+            catchError(() => {
+              return of({
+                options: [],
+                disabled: true,
+                placeholder: 'unknown server erro happend, check console',
+              });
+            })
           );
-        });
-        if (c.refreshers!.length === 0) {
-          refreshers$['oneTimeRefresh'] = of(true);
-        }
-        this.optionsObservables$[c.key] = combineLatest(refreshers$).pipe(
-          switchMap((res) => {
-            return this.store
-              .select(BuilderSelectors.selectCurrentCollection)
-              .pipe(
-                take(1),
-                switchMap((collection) => {
-                  return this.actionMetaDataService.getPieceActionConfigOptions(
-                    {
-                      propertyName: c.key,
-                      stepName: this.stepName,
-                      input: res,
-                      collectionVersionId: collection.version!.id,
-                    },
-                    this.pieceName
+      }
+    });
+  }
+  createDynamicConfigsObservables() {
+    this.configs.forEach((parentConfig) => {
+      if (parentConfig.type === PropertyType.DYNAMIC) {
+        this.dynamicPropsObservables$[parentConfig.key] =
+          this.createRefreshableConfigObservables<
+            Record<string, PieceProperty>
+          >(parentConfig).pipe(
+            map((res) => {
+              return Object.entries(res).map(([name, prop]) => {
+                return propsConvertor.convertToFrontEndConfig(name, prop);
+              });
+            }),
+            tap((res) => {
+              res.forEach((childConfig) => {
+                const fg = this.form.get(parentConfig.key) as UntypedFormGroup;
+                const childConfigControl = fg.get(childConfig.key);
+                if (childConfigControl) {
+                  if (childConfig.required) {
+                    childConfigControl.addValidators(Validators.required);
+                  } else {
+                    childConfigControl.removeValidators(Validators.required);
+                  }
+                } else {
+                  fg.addControl(
+                    childConfig.key,
+                    new UntypedFormControl(
+                      childConfig.defaultValue,
+                      childConfig.required ? Validators.required : []
+                    ),
+                    { emitEvent: false }
                   );
-                })
-              );
-          }),
-          shareReplay(1),
-          catchError((err) => {
-            console.error(err);
-            return of({
-              options: [],
-              disabled: true,
-              placeholder: 'unknown server erro happend, check console',
-            });
-          })
-        );
-        this.dropdownsLoadingFlags$[c.key] = this.optionsObservables$[
-          c.key
-        ].pipe(
-          startWith(null),
-          map((val) => {
-            if (val === null) return true;
-            if (!Array.isArray(val.options)) {
-              console.error(
-                `Activepieces- Config ${c.label} options are not returned in array form--> ${val}`
-              );
-            }
-            return false;
-          })
-        );
+                }
+                fg.markAllAsTouched();
+              });
+            }),
+            shareReplay(1)
+          );
       }
     });
   }
 
+  createRefreshableConfigObservables<
+    T extends DropdownState<unknown> | Record<string, PieceProperty>
+  >(c: PieceConfig) {
+    this.refreshableConfigsLoadingFlags$[c.key] = new BehaviorSubject(true);
+    const refreshers$ = {};
+    c.refreshers!.forEach((r) => {
+      refreshers$[r] = this.form.controls[r].valueChanges.pipe(
+        distinctUntilChanged((prev, curr) => {
+          return JSON.stringify(prev) === JSON.stringify(curr);
+        }),
+        startWith(this.configs.find((c) => c.key === r)!.value),
+        tap(() => {
+          this.refreshableConfigsLoadingFlags$[c.key].next(true);
+        }),
+        debounceTime(150)
+      );
+    });
+    if (c.refreshers!.length === 0) {
+      refreshers$['oneTimeRefresh'] = of(true);
+    }
+    return combineLatest(refreshers$).pipe(
+      switchMap((res) => {
+        return this.store.select(BuilderSelectors.selectCurrentCollection).pipe(
+          take(1),
+          switchMap((collection) => {
+            return this.actionMetaDataService.getPieceActionConfigOptions<T>(
+              {
+                propertyName: c.key,
+                stepName: this.stepName,
+                input: res,
+                collectionVersionId: collection.version!.id,
+              },
+              this.pieceName
+            );
+          })
+        );
+      }),
+      catchError((err) => {
+        console.error(err);
+        throw err;
+      }),
+      tap(() => {
+        this.refreshableConfigsLoadingFlags$[c.key].next(false);
+      }),
+      shareReplay(1)
+    );
+  }
+
   private createConfigsFormControls(configs: PieceConfig[]) {
-    const controls: { [key: string]: UntypedFormControl } = {};
+    const controls: { [key: string]: UntypedFormControl | UntypedFormGroup } =
+      {};
+
     configs.forEach((c) => {
       const validators: ValidatorFn[] = [];
-      if (c.required) {
+      if (
+        c.required &&
+        c.type !== PropertyType.OBJECT &&
+        c.type !== PropertyType.ARRAY
+      ) {
         validators.push(Validators.required);
       }
       if (c.type === PropertyType.OBJECT) {
-        controls[c.key] = new UntypedFormControl(c.value || {}, validators);
+        controls[c.key] = new UntypedFormControl(
+          c.value || c.defaultValue || {},
+          validators
+        );
       } else if (c.type === PropertyType.ARRAY) {
-        controls[c.key] = new UntypedFormControl(c.value || [''], validators);
+        controls[c.key] = new UntypedFormControl(
+          c.value || c.defaultValue || [''],
+          validators
+        );
       } else if (c.type === PropertyType.JSON) {
-        validators.push(jsonValidator);
-        if (typeof c.value === "object") {
-          controls[c.key] = new UntypedFormControl(JSON.stringify(c.value), validators);
+        if (!this.customizedInputs || !this.customizedInputs[c.key]) {
+          validators.push(jsonValidator);
         }
-        else {
-          controls[c.key] = new UntypedFormControl(c.value || "{}", validators);
+        if (typeof c.value === 'object') {
+          controls[c.key] = new UntypedFormControl(
+            JSON.stringify(c.value),
+            validators
+          );
+        } else {
+          controls[c.key] = new UntypedFormControl(c.value || '{}', validators);
         }
+      } else if (c.type === PropertyType.DYNAMIC) {
+        const dynamicConfigControls = {};
+        if (c.value) {
+          Object.keys(c.value).forEach((k) => {
+            dynamicConfigControls[k] = new UntypedFormControl(
+              (c.value as object)[k]
+            );
+          });
+        } else {
+          controls[c.key] = new UntypedFormControl(
+            c.value || c.defaultValue || '{}',
+            validators
+          );
+        }
+        controls[c.key] = this.fb.group(dynamicConfigControls);
+      } else {
+        controls[c.key] = new UntypedFormControl(
+          c.value === undefined || null ? c.defaultValue : c.value,
+          validators
+        );
       }
-      else {
-        controls[c.key] = new UntypedFormControl(c.value, validators);
-      }
-
     });
     return controls;
   }
@@ -259,16 +372,20 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     this.selectedOptionalConfigs.push(config);
   }
 
-
-  connectionValueChanged(event: { configKey: string, value: `\${connections.${string}}` }) {
-    debugger;
+  connectionValueChanged(event: {
+    configKey: string;
+    value: `\${connections.${string}}`;
+  }) {
     this.form.get(event.configKey)!.setValue(event.value);
   }
   dropdownCompareWithFunction = (opt: string, formControlValue: string) => {
     return formControlValue !== undefined && deepEqual(opt, formControlValue);
   };
 
-  addMentionToJsonControl(jsonControl: CodemirrorComponent, mention: InsertMentionOperation) {
+  addMentionToJsonControl(
+    jsonControl: CodemirrorComponent,
+    mention: InsertMentionOperation
+  ) {
     const doc = jsonControl.codeMirror!.getDoc();
     const cursor = doc.getCursor();
     doc.replaceRange(mention.insert.mention.serverValue, cursor);
@@ -276,20 +393,98 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
   formValueMiddleWare(formValue: object) {
     const formattedValue = { ...formValue };
-    Object.keys(formValue).forEach(configKey => {
-      if (this.configs.find(c => c.key === configKey)!.type === PropertyType.JSON) {
+
+    Object.keys(formValue).forEach((configKey) => {
+      if (
+        this.configs.find((c) => c.key === configKey)!.type ===
+        PropertyType.JSON
+      ) {
         try {
           formattedValue[configKey] = JSON.parse(formValue[configKey]);
-        } catch (_) { ; }
+        } catch (_) {
+          //incase it is an invalid json
+        }
       }
     });
-    return formattedValue;
+
+    if (this.customizedInputs) {
+      return {
+        input: formattedValue,
+        customizedInputs: this.customizedInputs,
+      };
+    } else {
+      return formattedValue;
+    }
   }
 
   beautify(configKey: string) {
     try {
       const ctrl = this.form.get(configKey)!;
       ctrl.setValue(this.codeService.beautifyJson(JSON.parse(ctrl.value)));
-    } catch { ; }
+    } catch {
+      //ignore
+    }
+  }
+  toggleCustomizedInputFlag(configKey: string) {
+    if (!this.customizedInputs) {
+      throw new Error('Activepieces-customized inputs map is not initialized');
+    }
+    const isCustomized = !this.customizedInputs[configKey];
+    this.customizedInputs = {
+      ...this.customizedInputs,
+      [configKey]: isCustomized,
+    };
+    const config = this.configs.find((c) => c.key === configKey);
+    const ctrl = this.form.get(configKey);
+    if (!config || !ctrl) {
+      throw new Error('Activepieces-config not found: ' + configKey);
+    }
+
+    const silentChange = { emitEvent: false };
+    switch (config.type) {
+      case PropertyType.JSON: {
+        if (isCustomized) {
+          ctrl.removeValidators([jsonValidator]);
+          ctrl.setValue('', silentChange);
+        } else {
+          ctrl.addValidators([jsonValidator]);
+          ctrl.setValue('{}', silentChange);
+        }
+        break;
+      }
+      case PropertyType.OBJECT: {
+        if (isCustomized) {
+          ctrl.setValue('', silentChange);
+        } else {
+          ctrl.setValue({}, silentChange);
+        }
+        break;
+      }
+      case PropertyType.ARRAY: {
+        if (isCustomized) {
+          ctrl.setValue('', silentChange);
+        } else {
+          ctrl.setValue([''], silentChange);
+        }
+        break;
+      }
+      default: {
+        ctrl.setValue(undefined, silentChange);
+      }
+    }
+    this.cd.detectChanges();
+    const input = this.theInputs.find(
+      (input) => input.nativeElement.getAttribute('name') === configKey
+    );
+    if (input) {
+      this.cd.detectChanges();
+      input.nativeElement.click();
+    }
+  }
+  async addMention(
+    textControl: InterpolatingTextFormControlComponent,
+    mentionOp: InsertMentionOperation
+  ) {
+    await textControl.addMention(mentionOp);
   }
 }

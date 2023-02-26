@@ -1,63 +1,57 @@
-import { Type } from '@sinclair/typebox';
+import { Type, Static } from '@sinclair/typebox';
 
 export enum ActionType {
   CODE = 'CODE',
-  STORAGE = 'STORAGE',
   PIECE = 'PIECE',
   LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
 }
 
-interface BaseAction<T, V> {
-  type: T;
-  settings: V;
-  displayName: string;
-  name: string;
-  valid: boolean;
-  nextAction: BaseAction<any, any> | undefined;
+const commonActionProps = {
+  name: Type.String({}),
+  valid: Type.Boolean({}),
+  displayName: Type.String({}),
+  nextAction: Type.Optional(Type.Any({}))
 }
 
 // Code Action
 
-export type CodeActionSettings = {
-  artifact?: string;
-  artifactSourceId: string | undefined;
-  artifactPackagedId: string | undefined;
-  input: Record<string, unknown>;
-};
-
-export interface CodeAction
-  extends BaseAction<ActionType.CODE, CodeActionSettings> {}
-
-export const CodeActionSchema = Type.Object({
-  name: Type.String({}),
-  displayName: Type.String({}),
-  type: Type.Literal(ActionType.CODE),
-  settings: Type.Object({
-    artifactSourceId: Type.String({}),
-    input: Type.Object({}),
-  }),
+export const CodeActionSettings = Type.Object({
+  artifactSourceId: Type.Optional(Type.String({})),
+  artifactPackagedId: Type.Optional(Type.String({})),
+  artifact: Type.Optional(Type.String({})),
+  input: Type.Record(Type.String({}), Type.Any()),
 });
+
+
+export type CodeActionSettings = Static<typeof CodeActionSettings>;
+
+export const CodeAction = Type.Object({
+  ...commonActionProps,
+  type: Type.Literal(ActionType.CODE),
+  settings: CodeActionSettings
+});
+
+
+export type CodeAction = Static<typeof CodeAction>;
+
 
 // Piece Action
-export type PieceActionSettings = {
-  pieceName: string;
-  actionName: string | undefined;
-  input: Record<string, unknown>;
-};
-
-export interface PieceAction
-  extends BaseAction<ActionType.PIECE, PieceActionSettings> {}
-
-export const PieceActionSchema = Type.Object({
-  name: Type.String({}),
-  displayName: Type.String({}),
-  type: Type.Literal(ActionType.PIECE),
-  settings: Type.Object({
-    pieceName: Type.String({}),
-    actionName: Type.String({}),
-    input: Type.Object({}),
-  }),
+export const PieceActionSettings = Type.Object({
+  pieceName: Type.String({}),
+  actionName: Type.Optional(Type.String({})),
+  input: Type.Record(Type.String({}), Type.Any()),
+  inputUiInfo: Type.Record(Type.String({}), Type.Any())
 });
+
+export type PieceActionSettings = Static<typeof PieceActionSettings>;
+
+export const PieceAction = Type.Object({
+  ...commonActionProps,
+  type: Type.Literal(ActionType.PIECE),
+  settings: PieceActionSettings,
+});
+
+export type PieceAction = Static<typeof PieceAction>;
 
 // Storage Action
 
@@ -66,68 +60,30 @@ export enum StoreOperation {
   GET = 'GET',
 }
 
-export type StorageActionSettings = {
-  operation: StoreOperation;
-  key: string;
-  value?: unknown;
-};
-
-export interface StorageAction
-  extends BaseAction<ActionType.STORAGE, StorageActionSettings> {}
-
-export const StorageActionSchema = Type.Union([
-  Type.Object({
-    name: Type.String({}),
-    displayName: Type.String({}),
-    type: Type.Literal(ActionType.STORAGE),
-    settings: Type.Object({
-      operation: Type.Literal(StoreOperation.PUT),
-      key: Type.String({
-        minLength: 1,
-      }),
-      value: Type.Any({}),
-    }),
-  }),
-  Type.Object({
-    name: Type.String({}),
-    displayName: Type.String({}),
-    type: Type.Literal(ActionType.STORAGE),
-    settings: Type.Object({
-      operation: Type.Literal(StoreOperation.GET),
-      key: Type.String({
-        minLength: 1,
-      }),
-    }),
-  }),
-]);
-
 // Loop Items
 export type LoopOnItemsActionSettings = {
   items: unknown;
 };
 
-export interface LoopOnItemsAction
-  extends BaseAction<ActionType.LOOP_ON_ITEMS, LoopOnItemsActionSettings> {
-  firstLoopAction: BaseAction<any, any> | undefined;
-}
-
-export const LoopOnItemsActionSchema = Type.Object({
-  name: Type.String({}),
-  displayName: Type.String({}),
-  type: Type.Literal(ActionType.STORAGE),
+export const LoopOnItemsAction = Type.Object({
+  ...commonActionProps,
+  type: Type.Literal(ActionType.LOOP_ON_ITEMS),
   settings: Type.Object({
     items: Type.Array(Type.Any({})),
   }),
+  firstLoopAction: Type.Optional(Type.Any({})),
 });
 
-export type Action =
-  | CodeAction
-  | PieceAction
-  | StorageAction
-  | LoopOnItemsAction;
-export const ActionSchema = Type.Union([
-  CodeActionSchema,
-  PieceActionSchema,
-  StorageActionSchema,
-  LoopOnItemsActionSchema,
-]);
+
+export type LoopOnItemsAction = Static<typeof LoopOnItemsAction> & {firstLoopAction?: Action};
+
+
+// Union of all actions
+
+export const Action = Type.Union([
+  CodeAction,
+  PieceAction,
+  LoopOnItemsAction
+ ]);
+
+export type Action = Static<typeof Action> & {nextAction?: Action};

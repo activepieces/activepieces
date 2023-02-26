@@ -5,40 +5,45 @@ import { map, Observable, of, switchMap } from 'rxjs';
 import { ExecutionOutput, FlowRun, SeekPage } from '@activepieces/shared';
 
 @Injectable({
-	providedIn: 'root',
+  providedIn: 'root',
 })
 export class InstanceRunService {
-	constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {}
 
-	get(id: string): Observable<FlowRun> {
-		return this.http.get<FlowRun>(environment.apiUrl + '/flow-runs/' + id).pipe(
-			switchMap(instanceRun => {
-				if (instanceRun.logsFileId !== null) {
-					return this.logs(instanceRun.logsFileId).pipe(
-						map(output => {
-							return { ...instanceRun, executionOutput: output } as FlowRun;
-						})
-					);
-				}
-				return of(instanceRun);
-			})
-		);
-	}
+  get(id: string): Observable<FlowRun> {
+    return this.http.get<FlowRun>(environment.apiUrl + '/flow-runs/' + id).pipe(
+      switchMap((instanceRun) => {
+        if (instanceRun.logsFileId !== null) {
+          return this.logs(instanceRun.logsFileId).pipe(
+            map((output) => {
+              return { ...instanceRun, executionOutput: output } as FlowRun;
+            })
+          );
+        }
+        return of(instanceRun);
+      })
+    );
+  }
 
-	list(projectId: string, params: { limit: number; cursor: string }): Observable<SeekPage<FlowRun>> {
-		const queryParams: { [key: string]: string | number } = {
-			limit: params.limit,
-			projectId: projectId,
-		};
-		if (params.cursor) {
-			queryParams['cursor'] = params.cursor;
-		}
-		return this.http.get<SeekPage<FlowRun>>(environment.apiUrl + `/flow-runs`, {
-			params: queryParams,
-		});
-	}
+  list(
+    projectId: string,
+    params: { limit: number; cursor: string }
+  ): Observable<SeekPage<FlowRun>> {
+    const queryParams: { [key: string]: string | number } = {
+      limit: params.limit,
+      projectId: projectId,
+    };
+    if (params.cursor) {
+      queryParams['cursor'] = params.cursor;
+    }
+    return this.http.get<SeekPage<FlowRun>>(environment.apiUrl + `/flow-runs`, {
+      params: queryParams,
+    });
+  }
 
-	private logs(fileId: string): Observable<ExecutionOutput> {
-		return this.http.get<ExecutionOutput>(environment.apiUrl + `/files/${fileId}`);
-	}
+  private logs(fileId: string): Observable<ExecutionOutput> {
+    return this.http.get<ExecutionOutput>(
+      environment.apiUrl + `/files/${fileId}`
+    );
+  }
 }

@@ -1,5 +1,6 @@
-import { pieces } from '@activepieces/framework';
+import { pieces } from '@activepieces/pieces-apps';
 import { Piece } from '@activepieces/framework';
+import { globals } from '../globals';
 import { createContextStore } from '../services/storage.service';
 
 export class PieceExecutor {
@@ -11,7 +12,7 @@ export class PieceExecutor {
     const piece = this.getPiece(pieceName);
 
     return await piece.getAction(actionName)!.run({
-      store: createContextStore(''),
+      store: createContextStore(globals.flowId),
       propsValue: config
     });
   }

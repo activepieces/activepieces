@@ -1,10 +1,10 @@
-import { ExecuteFlowOperation, ExecuteDropdownOptions, EngineOperationType, CollectionId, PrincipalType, apId, EngineOperation, ExecutionOutput, ExecuteTriggerOperation, TriggerHookType, ProjectId } from "@activepieces/shared";
+import { ExecuteFlowOperation, EngineOperationType, CollectionId, PrincipalType, apId, EngineOperation, ExecutionOutput, ExecuteTriggerOperation, TriggerHookType, ProjectId, ExecutePropsOptions } from "@activepieces/shared";
 import { Sandbox, sandboxManager } from "../workers/sandbox";
 import fs from "node:fs";
 import { system } from "./system/system";
 import { SystemProp } from "./system/system-prop";
 import { tokenUtils } from "../authentication/lib/token-utils";
-import { DropdownState } from "@activepieces/framework";
+import { DropdownState, DynamicPropsValue } from "@activepieces/framework";
 import { logger } from "../helper/logger";
 import chalk from "chalk";
 
@@ -27,7 +27,8 @@ export const engineHelper = {
                 ...operation,
                 workerToken: await workerToken({ collectionId: operation.collectionVersion.collectionId, projectId: operation.projectId })
             });
-        } finally {
+        }
+        finally {
             sandboxManager.returnSandbox(sandbox.boxId);
         }
         if (operation.hookType === TriggerHookType.RUN) {
@@ -35,16 +36,17 @@ export const engineHelper = {
         }
         return result as void;
     },
-    async dropdownOptions(operation: ExecuteDropdownOptions): Promise<DropdownState<any>> {
+    async executeProp(operation: ExecutePropsOptions): Promise<DropdownState<any> | Record<string, DynamicPropsValue>> {
         const sandbox = sandboxManager.obtainSandbox();
         let result;
         try {
             await sandbox.cleanAndInit();
-            result = await execute(EngineOperationType.DROPDOWN_OPTION, sandbox, {
+            result = await execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, {
                 ...operation,
                 workerToken: await workerToken({ collectionId: operation.collectionVersion.collectionId, projectId: operation.projectId })
-            }) as DropdownState<any>
-        } finally {
+            });
+        }
+        finally {
             sandboxManager.returnSandbox(sandbox.boxId);
         }
         return result;

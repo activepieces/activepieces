@@ -4,9 +4,14 @@
   border: 0px solid transparent !important;
   .mention
     {
+      vertical-align: middle;
       background-color: $grayCard;
-      border: 1px solid $dividers;
-      padding:2px;
+      border: 1px solid #9e9e9e;
+      padding-top:2px;
+      padding-bottom:2px;
+      border-radius: 3px;
+      margin-right: 1.5px;
+      margin-left:1.5px;
     }
     p {
       margin-bottom: 5px;
