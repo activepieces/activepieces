@@ -1,4 +1,8 @@
-import { APP_INITIALIZER, CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import {
+  APP_INITIALIZER,
+  CUSTOM_ELEMENTS_SCHEMA,
+  NgModule,
+} from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -27,138 +31,154 @@ import { DashboardContainerComponent } from './modules/dashboard/dashboard-conta
 import { UserLoggedIn } from './guards/user-logged-in.guard';
 
 @NgModule({
-	declarations: [AppComponent, NotFoundComponent, RedirectUrlComponent],
-	imports: [
-		CommonModule,
-		BrowserModule,
-		FlowBuilderModule,
-		AppRoutingModule,
-		BrowserAnimationsModule,
-		StoreModule.forRoot({}),
-		StoreDevtoolsModule.instrument({
-			maxAge: 25, // Retains last 25 states
-			autoPause: true, // Pauses recording actions and state changes when the extension window is not open
-		}),
-		EffectsModule.forRoot(),
-		HttpClientModule,
-		FontAwesomeModule,
-		JwtModule.forRoot({
-			config: {
-				tokenGetter,
-				allowedDomains: [extractHostname(environment.apiUrl)],
-			},
-		}),
-		...dynamicModules(),
-		AngularSvgIconModule,
-		CommonLayoutModule
-	],
-	providers: [
-		{
-			provide: APP_INITIALIZER,
-			useFactory: initializeAppCustomLogic,
-			multi: true,
-			deps: [Router, FlagService],
-		},
-	],
-	schemas: [CUSTOM_ELEMENTS_SCHEMA],
-	exports: [],
-	bootstrap: [AppComponent],
+  declarations: [AppComponent, NotFoundComponent, RedirectUrlComponent],
+  imports: [
+    CommonModule,
+    BrowserModule,
+    FlowBuilderModule,
+    AppRoutingModule,
+    BrowserAnimationsModule,
+    StoreModule.forRoot({}),
+    StoreDevtoolsModule.instrument({
+      maxAge: 25, // Retains last 25 states
+      autoPause: true, // Pauses recording actions and state changes when the extension window is not open
+    }),
+    EffectsModule.forRoot(),
+    HttpClientModule,
+    FontAwesomeModule,
+    JwtModule.forRoot({
+      config: {
+        tokenGetter,
+        allowedDomains: [extractHostname(environment.apiUrl)],
+      },
+    }),
+    ...dynamicModules(),
+    AngularSvgIconModule,
+    CommonLayoutModule,
+  ],
+  providers: [
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeAppCustomLogic,
+      multi: true,
+      deps: [Router, FlagService],
+    },
+  ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  exports: [],
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}
 
-export function initializeAppCustomLogic(router: Router, flagService: FlagService): () => Promise<void> {
-	return () =>
-		new Promise((resolve) => {
-			console.log('***Angular init***');
+export function initializeAppCustomLogic(
+  router: Router,
+  flagService: FlagService
+): () => Promise<void> {
+  return () =>
+    new Promise((resolve) => {
+      console.log('***Angular init***');
 
-			flagService.getEdition().subscribe((edition) => {
-				console.log("edition " + edition);
-				router.resetConfig([
-					...dynamicRoutes(edition)
-				]);
-				console.log('***Angular Finished***');
-				resolve();
-			});
-		});
+      flagService.getEdition().subscribe((edition) => {
+        console.log('edition ' + edition);
+        router.resetConfig([...dynamicRoutes(edition)]);
+        console.log('***Angular Finished***');
+        resolve();
+      });
+    });
 }
 
 function dynamicRoutes(edition: string) {
-	const coreRoutes = [
-		{
-			path: '',
-			component: DashboardContainerComponent,
-			canActivate: [UserLoggedIn],
-			children: [
-				{
-					path: '',
-					loadChildren: () => import('./modules/dashboard/dashboard-layout.module').then(m => m.DashboardLayoutModule),
-				},
-			],
-		},
-		{
-			path: '',
-			children: [
-				{
-					path: '',
-					loadChildren: () => import('./modules/flow-builder/flow-builder.module').then(m => m.FlowBuilderModule),
-				},
-			],
-		}
-	];
-	const suffixRoutes = [{
-		path: 'redirect',
-		component: RedirectUrlComponent,
-	},
-	{
-		path: '**',
-		component: NotFoundComponent,
-		title: 'AP-404',
-	}];
-	let editionRoutes: any[] = [];
-	switch (edition) {
-		case ApEdition.ENTERPRISE:
-			editionRoutes = [
-				{
-					path: '',
-					component: FirebaseAuthContainerComponent,
-					children: [
-						{
-							path: '',
-							loadChildren: () => import('../../../ee/firebase-auth/frontend/firebase-auth.module').then(m => m.FirebaseAuthLayoutModule),
-						},
-					],
-				}
-			];
-			break;
-		case ApEdition.COMMUNITY:
-			editionRoutes = [{
-				path: '',
-				component: AuthLayoutComponent,
-				children: [
-					{
-						path: '',
-						loadChildren: () => import('./modules/auth/auth.module').then(m => m.AuthLayoutModule),
-					},
-				],
-			}];
-			break;
-	}
-	return [...coreRoutes, ...editionRoutes, ...suffixRoutes];
+  const coreRoutes = [
+    {
+      path: '',
+      component: DashboardContainerComponent,
+      canActivate: [UserLoggedIn],
+      children: [
+        {
+          path: '',
+          loadChildren: () =>
+            import('./modules/dashboard/dashboard-layout.module').then(
+              (m) => m.DashboardLayoutModule
+            ),
+        },
+      ],
+    },
+    {
+      path: '',
+      children: [
+        {
+          path: '',
+          loadChildren: () =>
+            import('./modules/flow-builder/flow-builder.module').then(
+              (m) => m.FlowBuilderModule
+            ),
+        },
+      ],
+    },
+  ];
+  const suffixRoutes = [
+    {
+      path: 'redirect',
+      component: RedirectUrlComponent,
+    },
+    {
+      path: '**',
+      component: NotFoundComponent,
+      title: 'AP-404',
+    },
+  ];
+  let editionRoutes: any[] = [];
+  switch (edition) {
+    case ApEdition.ENTERPRISE:
+      editionRoutes = [
+        {
+          path: '',
+          component: FirebaseAuthContainerComponent,
+          children: [
+            {
+              path: '',
+              loadChildren: () =>
+                import(
+                  '../../../ee/firebase-auth/frontend/firebase-auth.module'
+                ).then((m) => m.FirebaseAuthLayoutModule),
+            },
+          ],
+        },
+      ];
+      break;
+    case ApEdition.COMMUNITY:
+      editionRoutes = [
+        {
+          path: '',
+          component: AuthLayoutComponent,
+          children: [
+            {
+              path: '',
+              loadChildren: () =>
+                import('./modules/auth/auth.module').then(
+                  (m) => m.AuthLayoutModule
+                ),
+            },
+          ],
+        },
+      ];
+      break;
+  }
+  return [...coreRoutes, ...editionRoutes, ...suffixRoutes];
 }
 
-
 function dynamicModules() {
-	return [FirebaseAuthLayoutModule];
+  return [FirebaseAuthLayoutModule];
 }
 
 function extractHostname(url: string): string {
-	// for relative urls we should return empty string
-	if (url.startsWith("/")) {
-		return "";
-	}
-	const parsedUrl = new URL(url);;
-	if (parsedUrl.port.length > 0) {
-		return parsedUrl.hostname + ":" + parsedUrl.port;
-	}
-	return parsedUrl.host;
+  // for relative urls we should return empty string
+  if (url.startsWith('/')) {
+    return '';
+  }
+  const parsedUrl = new URL(url);
+  if (parsedUrl.port.length > 0) {
+    return parsedUrl.hostname + ':' + parsedUrl.port;
+  }
+  return parsedUrl.host;
 }
