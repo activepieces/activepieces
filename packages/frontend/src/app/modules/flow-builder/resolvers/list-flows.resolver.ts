@@ -5,13 +5,13 @@ import { FlowService } from '../../common/service/flow.service';
 import { Flow, FlowId, SeekPage } from '@activepieces/shared';
 
 @Injectable({
-	providedIn: 'root',
+  providedIn: 'root',
 })
 export class ListFlowsResolver implements Resolve<Observable<SeekPage<Flow>>> {
-	constructor(private flowService: FlowService) {}
+  constructor(private flowService: FlowService) {}
 
-	resolve(snapshot: ActivatedRouteSnapshot): Observable<SeekPage<Flow>> {
-		const pieceId = snapshot.paramMap.get('id') as FlowId;
-		return this.flowService.listByCollection(pieceId);
-	}
+  resolve(snapshot: ActivatedRouteSnapshot): Observable<SeekPage<Flow>> {
+    const pieceId = snapshot.paramMap.get('id') as FlowId;
+    return this.flowService.listByCollection(pieceId);
+  }
 }
