@@ -32,7 +32,7 @@ export const trelloCommon = {
             }
 
             const basicAuthProperty = propsValue['authentication'] as BasicAuthPropertyValue;
-            const user = await getauthoriseduser(basicAuthProperty.username, basicAuthProperty.password);
+            const user = await getAuthorisedUser(basicAuthProperty.username, basicAuthProperty.password);
             const boards = await listBoards(basicAuthProperty.username, basicAuthProperty.password, user.id);
         
             return {
@@ -71,7 +71,7 @@ export const trelloCommon = {
     })
 }
 
-async function getauthoriseduser(apikey: string, token: string) {
+async function getAuthorisedUser(apikey: string, token: string) {
     
     const request: HttpRequest = {
         method: HttpMethod.GET,
