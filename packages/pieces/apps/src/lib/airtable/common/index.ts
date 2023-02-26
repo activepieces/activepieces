@@ -1,6 +1,6 @@
 import Airtable from "airtable";
 import { Property, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
-import { AirtableBase, AirtableTable } from "./models";
+import { AirtableBase, AirtableFieldMapping, AirtableTable } from "./models";
 
 export const airtableCommon = {
     authentication: Property.SecretText({
@@ -40,6 +40,7 @@ export const airtableCommon = {
                     }
                 }
             } catch (e) {
+                console.debug(e)
                 return {
                     disabled: true,
                     options: [],
@@ -81,7 +82,7 @@ export const airtableCommon = {
                     type: AuthenticationType.BEARER_TOKEN,
                     token: props["authentication"] as string
                 }
-            };
+            }
 
             try {
                 const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>(request);
@@ -94,6 +95,7 @@ export const airtableCommon = {
                     }
                 }
             } catch (e) {
+                console.debug(e)
                 return {
                     disabled: true,
                     options: [],
@@ -107,6 +109,49 @@ export const airtableCommon = {
             }
         }
     }),
+
+    fields: Property.DynamicProperties({
+        displayName: 'Table',
+        required: true,
+        refreshers: ["authentication", "base", "table"],
+
+        props: async (props) => {
+            const {authentication, base, table} = props
+
+            if (!authentication) return {}
+            if (!base) return {}
+            if (!table) return {}
+
+            const fields = (table as AirtableTable).fields.map((field) => {
+                let params = {
+                    displayName: field.name,
+                    description: field.description,
+                    required: false
+                }
+                
+                if (field.type === "singleSelect") {
+                    const options = field.options!.choices.map((option: {id: string, name: string}) => ({
+                        value: option.id,
+                        label: option.name
+                    }))
+
+                    //avoiding
+                    return Property.StaticDropdown({
+                        ...params, 
+                        options: {
+                            options
+                        }
+                    })
+                }
+                
+                return (AirtableFieldMapping[field.type])(params)
+            })
+
+            return fields
+        }
+    }),
+
+    
     async getTableSnapshot(params: { personalToken: string, baseId: string, tableId: string }) {
         Airtable.configure({
             apiKey: params.personalToken,

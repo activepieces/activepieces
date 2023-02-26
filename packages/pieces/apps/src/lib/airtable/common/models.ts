@@ -16,8 +16,16 @@ export interface AirtableField {
   name: string
   description: string
   type: AirtableFieldType
-  options?: Record<string, unknown>
+  options?: {
+    choices: AirtableChoice[]
+  }
 }
+export interface AirtableChoice {
+  id: string
+  name: string
+  color: string
+}
+
 export interface AirtableTable {
   id: string
   name: string
@@ -30,7 +38,6 @@ export interface AirtableTable {
     type: string
   }[]
 }
-
 export interface AirtableCreateRecordBody {
   records?: AirtableRecord[],
   fields?: Record<string, unknown>
@@ -79,7 +86,7 @@ export const AirtableFieldMapping = {
   number: Property.Number,
   percent: Property.ShortText,
   currency: Property.ShortText,
-  singleSelect: Property.ShortText,
+  singleSelect: Property.StaticDropdown,
   multipleSelects: Property.ShortText,
   singleCollaborator: Property.ShortText,
   multipleCollaborators: Property.ShortText,
