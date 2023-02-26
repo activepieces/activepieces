@@ -94,7 +94,6 @@ This section is dedicated to individuals who have contributed to 10 or more acti
 <a href="https://github.com/kanarelo"><img src="https://avatars.githubusercontent.com/u/393261?v=4?s=100" width="100px;" alt="Mukewa Wekalao"/></a>
 <a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4?s=100" width="100px;" alt="AbdulTheActivePiecer"/> </a>
 <a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/></a>
-<a href="https://github.com/ashrafsamhouri"><img src="https://avatars.githubusercontent.com/u/97393596?v=4?s=100" width="100px;" alt="ashrafsamhouri"/></a>
 
 ### Busy Beavers Club 🦸
 This section is dedicated to individuals who have contributed to 5 or more actions/triggers.
@@ -115,6 +114,7 @@ This section is dedicated to individuals who have contributed to 5 or more actio
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/><br /><sub><b>Mohammed Abu Aboud</b></sub></a><br /><a href="#maintenance-abuaboud" title="Maintenance">🚧</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://aboudzein.github.io"><img src="https://avatars.githubusercontent.com/u/12976630?v=4?s=100" width="100px;" alt="Abdulrahman Zeineddin"/><br /><sub><b>Abdulrahman Zeineddin</b></sub></a><br /><a href="#plugin-aboudzein" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/creed983"><img src="https://avatars.githubusercontent.com/u/62152944?v=4?s=100" width="100px;" alt="ahmad jaber"/><br /><sub><b>ahmad jaber</b></sub></a><br /><a href="#plugin-creed983" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ashrafsamhouri"><img src="https://avatars.githubusercontent.com/u/97393596?v=4" width="100px;" alt="Ashraf Samhouri"/><br /><sub><b>Ashraf Samhouri</b></sub></a><br /><a href="#plugin-ashrafsamhouri" title="Plugin/utility libraries">🔌</a></td>
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://steercampaign.com"><img src="https://avatars.githubusercontent.com/u/12627658?v=4?s=100" width="100px;" alt="Mohammad Abu Musa"/><br /><sub><b>Mohammad Abu Musa</b></sub></a><br /><a href="#projectManagement-mabumusa1" title="Project Management">📆</a></td>
