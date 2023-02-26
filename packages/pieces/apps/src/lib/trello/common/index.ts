@@ -1,6 +1,4 @@
-import { BasicAuthentication, BasicAuthProperty, BasicAuthPropertyValue, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework"
-import { callClickUpApi } from "../../clickup/common";
-import { TrelloCard } from "./props/card";
+import { BasicAuthPropertyValue, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework"
 
 export const trelloCommon = {
     baseUrl: "https://api.trello.com/1/",
@@ -33,10 +31,10 @@ export const trelloCommon = {
 
             const basicAuthProperty = propsValue['authentication'] as BasicAuthPropertyValue;
             const user = await getAuthorisedUser(basicAuthProperty.username, basicAuthProperty.password);
-            const boards = await listBoards(basicAuthProperty.username, basicAuthProperty.password, user.id);
+            const boards = await listBoards(basicAuthProperty.username, basicAuthProperty.password, user['id']);
         
             return {
-                options: boards.map((board: { id: any; name: any; }) => ({
+                options: boards.map((board: { id: string; name: string; }) => ({
                     value: board.id,
                     label: board.name,
                 }))
@@ -48,9 +46,8 @@ export const trelloCommon = {
         description: 'Get lists from a board',
         required: true,
         refreshers: ['authentication', 'board_id'],
-        options: async (value) => {
-            const { board_id, authentication } = value;
-            if (authentication === undefined || board_id=== undefined) {
+        options: async (propsValue) => {
+            if (propsValue['authentication'] === undefined || propsValue['board_id'] === undefined) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first and select board',
@@ -58,17 +55,19 @@ export const trelloCommon = {
                 };
             }
 
-            const basicAuthProperty = authentication as BasicAuthPropertyValue;
-            const lists = await listBoardLists(basicAuthProperty.username, basicAuthProperty.password, board_id as string);
+            const basicAuthProperty = propsValue['authentication'] as BasicAuthPropertyValue;
+            const lists = await listBoardLists(basicAuthProperty.username, basicAuthProperty.password, propsValue['board_id'] as string);
         
+            console.log(lists);
+
             return {
-                options: lists.map((list: { id: any; name: any; }) => ({
+                options: lists.map((list: { id: string; name: string; }) => ({
                     value: list.id,
                     label: list.name,
                 }))
             }
         }
-    })
+    }),
 }
 
 /**
@@ -115,7 +114,7 @@ async function listBoards(apikey: string, token: string, user_id: string) {
         body: {},
         queryParams: {},
     };
-    const response = await httpClient.sendRequest<{ id: any; name: any; }[]>(request);
+    const response = await httpClient.sendRequest<{ id: string; name: string; }[]>(request);
 
     return response.body;
 }
@@ -140,7 +139,7 @@ async function listBoardLists(apikey: string, token: string, board_id: string) {
         body: {},
         queryParams: {},
     };
-    const response = await httpClient.sendRequest<{ id: any; name: any; }[]>(request);
+    const response = await httpClient.sendRequest(request);
 
     return response.body;
 }

@@ -12,4 +12,5 @@ export const trello = createPiece({
     getCard,
   ],
   triggers: [],
+  version: "1.0"
 });
