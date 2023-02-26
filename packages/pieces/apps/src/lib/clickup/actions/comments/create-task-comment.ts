@@ -8,11 +8,10 @@ export const createClickupTaskComment = createAction({
 	displayName: 'Create Task Comment',
 	props: {
 		authentication: clickupCommon.authentication,
-		task_id: Property.ShortText({
-			description: 'The ID of the task to comment on',
-			displayName: 'Task ID',
-			required: true,
-		}),
+        workspace_id: clickupCommon.workspace_id,
+		space_id: clickupCommon.space_id,
+        list_id: clickupCommon.list_id,
+		task_id: clickupCommon.task_id,
         comment: Property.LongText({
             description: 'Comment to make on the task',
             displayName: 'Comment',
