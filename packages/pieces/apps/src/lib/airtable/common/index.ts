@@ -1,18 +1,6 @@
 import Airtable from "airtable";
 import { Property, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
-
-declare type AirtablePermissionLevel = "none" | "read" | "comment" | "edit" | "create";
-interface AirtableBase {
-    id: string;
-    name: string;
-    permissionLevel: AirtablePermissionLevel
-}
-
-export interface AirtableRecord {
-    fields: Record<string, unknown>,
-    createdTime: Date,
-    id: string;
-}
+import { AirtableBase, AirtableTable } from "./models";
 
 export const airtableCommon = {
     authentication: Property.SecretText({
@@ -96,7 +84,7 @@ export const airtableCommon = {
             };
 
             try {
-                const response = await httpClient.sendRequest<{ tables: { id: string, name: string }[] }>(request);
+                const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>(request);
                 if (response.status === 200) {
                     return {
                         disabled: false,
@@ -132,9 +120,4 @@ export const airtableCommon = {
             .sort((x, y) => new Date(x.createdTime).getTime() - new Date(y.createdTime).getTime());
         return currentTablleSnapshot;
     }
-}
-
-interface AirtableCreateRecordBody {
-    records?: AirtableRecord[],
-    fields?: Record<string, unknown>
 }
