@@ -73,16 +73,16 @@ export class StepTypeSidebarComponent implements OnInit {
     const coreItemsDetails$ = this._showTriggers
       ? this.store.select(BuilderSelectors.selectFlowItemDetailsForCoreTriggers)
       : this.store.select(BuilderSelectors.selectCoreFlowItemsDetails);
-    const connectorComponentsItemsDetails$ = this._showTriggers
+    const customPiecesItemDetails$ = this._showTriggers
       ? this.store.select(
-        BuilderSelectors.selectFlowItemDetailsForConnectorComponentsTriggers
+        BuilderSelectors.selectFlowItemDetailsForCustomPiecesTriggers
       )
       : this.store.select(
-        BuilderSelectors.selectFlowItemDetailsForConnectorComponents
+        BuilderSelectors.selectFlowItemDetailsForCustomPiecesActions
       );
 
     const allItemDetails$ = forkJoin({
-      apps: connectorComponentsItemsDetails$.pipe(take(1)),
+      apps: customPiecesItemDetails$.pipe(take(1)),
       core: coreItemsDetails$.pipe(take(1)),
     }).pipe(
       map((res) => {
@@ -103,7 +103,7 @@ export class StepTypeSidebarComponent implements OnInit {
 
     this.tabsAndTheirLists.push({
       displayName: this._showTriggers ? 'App Events' : 'App Actions',
-      list$: this.applySearchToObservable(connectorComponentsItemsDetails$),
+      list$: this.applySearchToObservable(customPiecesItemDetails$),
       emptyListText: 'Oops! We didn\'t find any results.',
     });
   }

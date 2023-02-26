@@ -2,7 +2,7 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../model/builder-state.model';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
-import { AppConnection,  Config, Flow, FlowRun } from '@activepieces/shared';
+import { AppConnection,  Config, Flow, FlowRun, PieceActionSettings } from '@activepieces/shared';
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
 import { FlowItem } from '../../../common/model/flow-builder/flow-item';
@@ -227,16 +227,16 @@ export const selectFlowItemDetailsForCoreTriggers = createSelector(
 		return state.coreTriggerFlowItemsDetails.filter(details => details.type !== TriggerType.EMPTY);
 	}
 );
-export const selectFlowItemDetailsForConnectorComponents = createSelector(
+export const selectFlowItemDetailsForCustomPiecesActions = createSelector(
 	selectAllFlowItemsDetails,
 	(state: FlowItemsDetailsState) => {
-		return state.connectorComponentsActionsFlowItemDetails;
+		return state.customPiecesActionsFlowItemDetails;
 	}
 );
-export const selectFlowItemDetailsForConnectorComponentsTriggers = createSelector(
+export const selectFlowItemDetailsForCustomPiecesTriggers = createSelector(
 	selectAllFlowItemsDetails,
 	(state: FlowItemsDetailsState) => {
-		return state.connectorComponentsTriggersFlowItemDetails;
+		return state.customPiecesTriggersFlowItemDetails;
 	}
 );
 
@@ -246,13 +246,23 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
 		if (triggerItemDetails) {
 			return triggerItemDetails;
 		}
+		if((flowItem.settings as PieceActionSettings)?.pieceName == 'storage' || (flowItem.settings as PieceActionSettings)?.pieceName == 'http' )
+		{
+			const details = state.coreFlowItemsDetails.find(p => p.extra?.appName === (flowItem.settings as PieceActionSettings)?.pieceName )
+			if(!details)
+			{
+				throw new Error(`${(flowItem.settings as PieceActionSettings)?.pieceName } not found in core nor custom pieces details`)
+			}
+			return details;
+		}
+		debugger;
 		if (flowItem.type === ActionType.PIECE) {
-			return state.connectorComponentsActionsFlowItemDetails.find(
+			return state.customPiecesActionsFlowItemDetails.find(
 				f => f.extra!.appName === flowItem.settings.pieceName
 			);
 		}
 		if (flowItem.type === TriggerType.PIECE) {
-			return state.connectorComponentsTriggersFlowItemDetails.find(
+			return state.customPiecesTriggersFlowItemDetails.find(
 				f => f.extra!.appName === flowItem.settings.pieceName
 			);
 		}
@@ -363,13 +373,13 @@ function findStepLogoUrl(step:FlowItem,flowItemsDetailsState:FlowItemsDetailsSta
 		{
 			return 'assets/img/custom/piece/storage.png'
 		}
-		return flowItemsDetailsState.connectorComponentsActionsFlowItemDetails.find(i => i.extra?.appName === step.settings.pieceName)!.logoUrl!;
+		return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(i => i.extra?.appName === step.settings.pieceName)!.logoUrl!;
 	}
 	else if(step.type === TriggerType.PIECE )
 	{
 
 	
-		return flowItemsDetailsState.connectorComponentsTriggersFlowItemDetails.find(i => i.extra?.appName === step.settings.pieceName)!.logoUrl!;
+		return flowItemsDetailsState.customPiecesTriggersFlowItemDetails.find(i => i.extra?.appName === step.settings.pieceName)!.logoUrl!;
 	}
 	else 
 	{
@@ -419,11 +429,11 @@ export const BuilderSelectors = {
 	selectAllConfigs,
 	selectConfig,
 	selectFlowsValidity,
-	selectFlowItemDetailsForConnectorComponents,
+	selectFlowItemDetailsForCustomPiecesActions,
 	selectAppConnectionsDropdownOptions,
 	selectCurrentCollectionInstance,
 	selectIsPublishing,
-	selectFlowItemDetailsForConnectorComponentsTriggers,
+	selectFlowItemDetailsForCustomPiecesTriggers,
 	selectAllAppConnections,
 	selectAllConfigsForMentionsDropdown,
 	selectAllFlowSteps,
