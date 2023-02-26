@@ -1,38 +1,39 @@
 import { Property } from "@activepieces/framework";
 
 export interface AirtableBase {
-    id: string;
-    name: string;
-    permissionLevel: AirtablePermissionLevel
+  id: string;
+  name: string;
+  permissionLevel: AirtablePermissionLevel
 }
 
 export interface AirtableRecord {
-    fields: Record<string, unknown>,
-    createdTime: Date,
-    id: string;
+  fields: Record<string, unknown>,
+  createdTime: Date,
+  id: string;
+}
+export interface AirtableField {
+  id: string
+  name: string
+  description: string
+  type: AirtableFieldType
+  options?: Record<string, unknown>
 }
 export interface AirtableTable {
-    description: string
-    fields: {
-        id: string
-        name: string
-        type: AirtableFieldType
-        description: string,
-        options?: Record<string, unknown>
-    }[],
+  id: string
+  name: string
+  fields: AirtableField[],
+  description: string
+  primaryFieldId: string
+  views: {
     id: string
     name: string
-    primaryFieldId: string
-    views: {
-        id: string
-        name: string
-        type: string
-    }[]
+    type: string
+  }[]
 }
 
 export interface AirtableCreateRecordBody {
-    records?: AirtableRecord[],
-    fields?: Record<string, unknown>
+  records?: AirtableRecord[],
+  fields?: Record<string, unknown>
 }
 
 declare type AirtablePermissionLevel = "none" | "read" | "comment" | "edit" | "create";
