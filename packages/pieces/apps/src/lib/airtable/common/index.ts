@@ -194,5 +194,5 @@ interface Params {
   personalToken: string
   baseId: string
   tableId: string
-  fields: Record<string, unknown> 
+  fields?: Record<string, unknown> 
 }
