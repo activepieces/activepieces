@@ -71,6 +71,12 @@ export const trelloCommon = {
     })
 }
 
+/**
+ * Gets the authenticated user via API and token
+ * @param apikey API Key
+ * @param token  Token Key
+ * @returns JSON containing Trello user
+ */
 async function getAuthorisedUser(apikey: string, token: string) {
     
     const request: HttpRequest = {
@@ -89,6 +95,13 @@ async function getAuthorisedUser(apikey: string, token: string) {
     return response.body;
 }
 
+/**
+ * Lists all boards a member has access to in Trello
+ * @param apikey API Key
+ * @param token  API Token
+ * @param user_id ID of the user
+ * @returns JSON Array of boards user has access to
+ */
 async function listBoards(apikey: string, token: string, user_id: string) {
     
     const request: HttpRequest = {
@@ -107,6 +120,13 @@ async function listBoards(apikey: string, token: string, user_id: string) {
     return response.body;
 }
 
+/**
+ * Gets all the lists inside of a board
+ * @param apikey API Key
+ * @param token  API Token
+ * @param board_id Board to fetch lists from
+ * @returns JSON Array of lists
+ */
 async function listBoardLists(apikey: string, token: string, board_id: string) {
     
     const request: HttpRequest = {
