@@ -35,9 +35,7 @@ export const appConnectionService = {
             appConnection.value = decryptObject(appConnection.value);
             const refreshedAppConnection = await refresh(appConnection);
             await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) });
-            refreshedAppConnection.status = getStatus(refreshedAppConnection);
-            refreshLock.release();
-            
+            refreshedAppConnection.status = getStatus(refreshedAppConnection);            
             return refreshedAppConnection;
         }
         catch (e) {
