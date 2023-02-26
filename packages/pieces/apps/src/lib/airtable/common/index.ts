@@ -148,6 +148,8 @@ export const airtableCommon = {
               options
             }
           })
+        } else if (field.type === "multipleSelects") {
+          //TODO: implement multiselect
         } else {
           fields[field.id] = (AirtableFieldMapping[field.type])(params)
         }
