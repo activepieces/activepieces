@@ -17,12 +17,17 @@
 
           <div class="ap-flex-grow"></div>
           <div *ngIf="opt.label.isWebhook" matTooltip="Instantly triggered once change occurs"
-            class="ap-rounded-full ap-bg-body !ap-font-semibold ap-text-white ap-typography-caption ap-drop-shadow-md ap-h-[30px] ap-p-2 ap-flex ap-items-center">
-            Instant</div>
+            class="ap-rounded-full ap-drop-shadow-md ap-min-h-[30px] ap-min-w-[30px] ap-flex ap-items-center ap-justify-center">
+            <svg-icon src="assets/img/custom/triggers/instant.svg" class="ap-w-[25px] ap-h-[25px] ap-fill-body"
+              [applyClass]="true">
+            </svg-icon>
+          </div>
           <div *ngIf="!opt.label.isWebhook" matTooltip="Checks for changes every 5 minutes"
-            class="ap-rounded-full ap-bg-body !ap-font-semibold ap-text-white ap-typography-caption ap-drop-shadow-md ap-h-[30px] ap-p-2 ap-flex ap-items-center">
-
-            Periodic</div>
+            class="ap-rounded-full  ap-drop-shadow-md ap-min-h-[30px] ap-justify-center ap-min-w-[30px] ap-flex ap-items-center">
+            <svg-icon src="assets/img/custom/triggers/periodic.svg" class="ap-w-[25px] ap-h-[25px] ap-fill-body"
+              [applyClass]="true">
+            </svg-icon>
+          </div>
 
         </div>
       </mat-option>
