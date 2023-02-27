@@ -8,7 +8,7 @@ export const createThing = createAction({
   displayName: 'Create a thing',
   description: 'Creates a thing in bubble.io database',
   props: {
-    api_key: Property.ShortText({
+    api_key: Property.SecretText({
       displayName: "API Key",
       description: "The meeting's topic",
       required: true,
@@ -18,18 +18,24 @@ export const createThing = createAction({
       description: "The name of the bubble application",
       required: true,
     }),
-    thing: Property.Dropdown<string>({
+    thing: Property.Dropdown({
       displayName: "Thing",
       description: "The thing/object to create",
       required: true,
       refreshers: ["app_name", "api_key"],
-      options: async (propsValue) => {
-        const { app_name, api_key } = propsValue
-
-        if (app_name == null || api_key == null) {
+      options: async ({ app_name, api_key }) => {
+        if (!app_name) {
           return {
             disabled: true,
-            options: []
+            options: [],
+            placeholder: "Please enter your App name."
+          }
+        }
+        if (!api_key == null) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: "Please enter your API Key first."
           }
         }
 
@@ -37,22 +43,18 @@ export const createThing = createAction({
         const request: HttpRequest = {
           method: HttpMethod.GET,
           url,
-          body: {},
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: api_key as string
-          },
-          queryParams: {}
+          }
         }
         const { body: meta } = await httpClient.sendRequest<MetaResponse>(request)
-        const options = Object.keys(meta.types).map((key) => ({
-          label: meta.types[key].display,
-          value: key
-        }))
-
         return {
           disabled: false,
-          options
+          options: Object.keys(meta.types).map((key) => ({
+            label: meta.types[key].display,
+            value: meta.types[key]
+          }))
         };
       }
     }),
@@ -74,7 +76,7 @@ export const createThing = createAction({
 
   async run(context) {
     const { api_key, app_name, use_test_version, thing, fields } = context.propsValue
-    const url = `https://${cleanName(app_name as string)}.bubbleapps.io${!use_test_version ? '/' : '/version-test/'}api/1.1/obj/${cleanName(thing as string)}`
+    const url = `https://${cleanName(app_name as string)}.bubbleapps.io${!use_test_version ? '/' : '/version-test/'}api/1.1/obj/${cleanName(thing.display as string)}`
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
