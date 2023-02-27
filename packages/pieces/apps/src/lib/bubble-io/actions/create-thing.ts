@@ -121,7 +121,10 @@ export const createThing = createAction({
       }
     }
 
-    const result = await httpClient.sendRequest(request)
+    const result = await httpClient.sendRequest<{
+      status: string
+      id: string
+    }>(request)
     console.debug("Thing creation response", result)
 
     if (result.status === 201) {
@@ -134,6 +137,7 @@ export const createThing = createAction({
 
 const BUBBLE_INTERNAL_TYPES = [
   "_id",
+  "Slug",
   "Created Date", 
   "Modified Date", 
   "Created By", 
