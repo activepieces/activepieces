@@ -226,8 +226,14 @@ export class ConfigsFormComponent implements ControlValueAccessor {
               });
             }),
             tap((res) => {
+              const fg = this.form.get(parentConfig.key) as UntypedFormGroup;
+              const removedControlsKeys = Object.keys(fg.controls).filter(
+                (key) => res.find((c) => c.key === key) === undefined
+              );
+              removedControlsKeys.forEach((removedKey) => {
+                fg.removeControl(removedKey);
+              });
               res.forEach((childConfig) => {
-                const fg = this.form.get(parentConfig.key) as UntypedFormGroup;
                 const childConfigControl = fg.get(childConfig.key);
                 if (childConfigControl) {
                   if (childConfig.required) {
