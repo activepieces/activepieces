@@ -48,6 +48,9 @@ export class CodeArtifactFormControlComponent
     theme: 'lucario',
     readOnly: '',
     mode: 'javascript',
+    lint: { esversion: 8 },
+    matchBrackets: true,
+    gutters: ['CodeMirror-lint-markers'],
   };
   constructor(
     private formBuilder: FormBuilder,

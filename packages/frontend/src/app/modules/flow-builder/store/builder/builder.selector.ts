@@ -494,6 +494,9 @@ function findStepLogoUrl(
     if (step.settings.pieceName === 'storage') {
       return 'assets/img/custom/piece/storage.png';
     }
+    if (step.settings.pieceName === 'http') {
+      return 'assets/img/custom/piece/http.png';
+    }
     return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(
       (i) => i.extra?.appName === step.settings.pieceName
     )!.logoUrl!;

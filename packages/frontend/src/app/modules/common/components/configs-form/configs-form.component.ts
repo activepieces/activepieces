@@ -95,7 +95,11 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   editorOptions = {
     lineNumbers: true,
     theme: 'lucario',
-    mode: 'javascript',
+    lineWrapping: true,
+    matchBrackets: true,
+    gutters: ['CodeMirror-lint-markers'],
+    mode: 'application/json',
+    lint: true,
   };
   customizedInputs: Record<string, boolean> | undefined;
   faInfoCircle = faInfoCircle;
