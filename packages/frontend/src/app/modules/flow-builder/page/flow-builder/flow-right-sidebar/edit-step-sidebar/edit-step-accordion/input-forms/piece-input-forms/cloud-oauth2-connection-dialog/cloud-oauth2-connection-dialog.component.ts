@@ -154,7 +154,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       catchError((err) => {
         console.error(err);
         this.snackbar.open(
-          'Connection operation failed please check your console.',
+          'Connection failed, make sure client id and secret is correct.',
           'Close',
           {
             panelClass: 'error',

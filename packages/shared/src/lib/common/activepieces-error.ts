@@ -177,7 +177,9 @@ export type SystemPropNotDefinedErrorParams = BaseErrorParams<
 export type TaskQuotaExeceededErrorParams
   = BaseErrorParams<
     ErrorCode.TASK_QUOTA_EXCEEDED,
-    Record<string, never>
+    {
+      projectId: string;
+    }
   >;
 
 export enum ErrorCode {

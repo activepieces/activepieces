@@ -20,7 +20,7 @@ export const usageService = {
             if (projectUsage.consumedTasks + numberOfSteps > projectPlan.tasks) {
                 throw new ActivepiecesError({
                     code: ErrorCode.TASK_QUOTA_EXCEEDED,
-                    params: { id: request.projectId },
+                    params: { projectId: request.projectId },
                 });
             }
             projectUsage.consumedTasks += numberOfSteps;

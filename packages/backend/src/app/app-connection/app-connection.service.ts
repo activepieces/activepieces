@@ -33,7 +33,7 @@ export const appConnectionService = {
             break;
         }
         const claimedUpsertRequest = { ...request, value: { ...response, ...request.value }, id: apId(), projectId };
-        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId ,  value: encryptObject(request.value)}, ["name", "projectId"]);
+        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId ,  value: encryptObject(claimedUpsertRequest.value)}, ["name", "projectId"]);
         return appConnectionRepo.findOneByOrFail({
             projectId: projectId,
             name: request.name
