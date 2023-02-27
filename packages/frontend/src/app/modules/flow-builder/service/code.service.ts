@@ -36,7 +36,7 @@ export class CodeService {
 
   static zipFile(artifact: Artifact): Observable<string> {
     const zip = new JSZip();
-    zip.file('index.js', artifact.content, {
+    zip.file('index.ts', artifact.content, {
       createFolders: false,
     });
     zip.file('package.json', artifact.package, {
@@ -86,7 +86,7 @@ export class CodeService {
   }
 
   public helloWorldBase64(): string {
-    return 'UEsDBAoDAAAAANm8nlU2SH+AOAAAADgAAAAIAAAAaW5kZXguanNleHBvcnRzLmNvZGUgPSBhc3luYyAocGFyYW1zKSA9PiB7CiAgICByZXR1cm4gdHJ1ZTsKfQoKClBLAwQKAwAAAADTvJ5V0krbox0AAAAdAAAADAAAAHBhY2thZ2UuanNvbnsKICAiZGVwZW5kZW5jaWVzIjogewoKICB9Cn0KUEsBAj8DCgMAAAAA2byeVTZIf4A4AAAAOAAAAAgAJAAAAAAAAAAggLSBAAAAAGluZGV4LmpzCgAgAAAAAAABABgAgKIBfJ8c2QGAogF8nxzZAYCiAXyfHNkBUEsBAj8DCgMAAAAA07yeVdJK26MdAAAAHQAAAAwAJAAAAAAAAAAggLSBXgAAAHBhY2thZ2UuanNvbgoAIAAAAAAAAQAYAICU2nSfHNkBgJTadJ8c2QGAlNp0nxzZAVBLBQYAAAAAAgACALgAAAClAAAAAAA=';
+    return 'UEsDBAoAAAAAAIGZWlYSIpQ2PAAAADwAAAAIAAAAaW5kZXgudHNleHBvcnQgY29uc3QgY29kZSA9IGFzeW5jIChwYXJhbXMpID0+IHsKICAgIHJldHVybiB0cnVlOwp9OwpQSwMECgAAAAAAgZlaVhpS0QgcAAAAHAAAAAwAAABwYWNrYWdlLmpzb257CiAgImRlcGVuZGVuY2llcyI6IHsKICB9Cn0KUEsBAhQACgAAAAAAgZlaVhIilDY8AAAAPAAAAAgAAAAAAAAAAAAAAAAAAAAAAGluZGV4LnRzUEsBAhQACgAAAAAAgZlaVhpS0QgcAAAAHAAAAAwAAAAAAAAAAAAAAAAAYgAAAHBhY2thZ2UuanNvblBLBQYAAAAAAgACAHAAAACoAAAAAAA=';
   }
 
   public downloadAndReadFile(filename: string): Observable<Artifact> {
@@ -97,11 +97,15 @@ export class CodeService {
         for (const filename of Object.keys(zipFile.files)) {
           if (filename.split('/').length > 2) continue;
           if (
+            filename.endsWith('index.ts') ||
             filename.endsWith('index.js') ||
             filename.endsWith('package.json')
           ) {
             const fileData = await zipFile.files[filename].async('string');
-            if (filename.endsWith('index.js')) {
+            if (
+              filename.endsWith('index.ts') ||
+              filename.endsWith('index.js')
+            ) {
               content.content = fileData;
             } else if (filename.endsWith('package.json')) {
               content.package = fileData;
@@ -117,9 +121,13 @@ export class CodeService {
     const zipFile = await JSZip.loadAsync(file);
     for (const filename of Object.keys(zipFile.files)) {
       if (filename.split('/').length > 2) continue;
-      if (filename.endsWith('index.js') || filename.endsWith('package.json')) {
+      if (
+        filename.endsWith('index.ts') ||
+        filename.endsWith('index.js') ||
+        filename.endsWith('package.json')
+      ) {
         const fileData = await zipFile.files[filename].async('string');
-        if (filename.endsWith('index.js')) {
+        if (filename.endsWith('index.ts') || filename.endsWith('index.js')) {
           content.content = fileData;
         } else if (filename.endsWith('package.json')) {
           content.package = fileData;
