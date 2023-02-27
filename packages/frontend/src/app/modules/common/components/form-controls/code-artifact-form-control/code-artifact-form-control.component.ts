@@ -47,14 +47,10 @@ export class CodeArtifactFormControlComponent
     lineWrapping: true,
     theme: 'lucario',
     readOnly: '',
-<<<<<<< Updated upstream
-    mode: 'javascript',
+    mode: 'typescript',
     lint: { esversion: 8 },
     matchBrackets: true,
     gutters: ['CodeMirror-lint-markers'],
-=======
-    mode: 'typescript',
->>>>>>> Stashed changes
   };
   constructor(
     private formBuilder: FormBuilder,
