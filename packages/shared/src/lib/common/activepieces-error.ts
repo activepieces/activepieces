@@ -31,6 +31,8 @@ type ErrorParams =
   | PieceTriggerNotFoundErrorParams
   | StepNotFoundErrorParams
   | AppConnectionNotFoundErrorParams
+  | InvalidClaimParams
+  | InvalidCloudClaimParams
   | InvalidJwtTokenErrorParams
   | TaskQuotaExeceededErrorParams
   | SystemInvalidErrorParams
@@ -40,6 +42,9 @@ export interface BaseErrorParams<T, V> {
   code: T;
   params: V;
 }
+
+export type InvalidClaimParams = BaseErrorParams<ErrorCode.INVALID_CLAIM, { redirectUrl: string, tokenUrl: string, clientId: string }>
+export type InvalidCloudClaimParams = BaseErrorParams<ErrorCode.INVALID_CLOUD_CLAIM, { appName: string }>
 
 export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, Record<string, null>>;
 
@@ -52,26 +57,40 @@ export type AppConnectionNotFoundErrorParams = BaseErrorParams<
   }
 >;
 
+export type SystemInvalidErrorParams = BaseErrorParams<
+  ErrorCode.SYSTEM_PROP_INVALID,
+  {
+    prop: string;
+  }
+>;
+
+export type InvalidJwtTokenErrorParams = BaseErrorParams<
+  ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
+  {
+    token: string;
+  }
+>;
+
 export type FlowNotFoundErrorParams = BaseErrorParams<
   ErrorCode.FLOW_NOT_FOUND,
   {
     id: FlowId;
   }
->;
+>
 
 export type CollectionNotFoundErrorParams = BaseErrorParams<
   ErrorCode.COLLECTION_NOT_FOUND,
   {
     id: CollectionId;
   }
->;
+>
 
 export type CollectionVersionNotFoundErrorParams = BaseErrorParams<
   ErrorCode.COLLECTION_VERSION_NOT_FOUND,
   {
     id: CollectionVersionId;
   }
->;
+>
 
 export type InstanceNotFoundErrorParams = BaseErrorParams<
   ErrorCode.INSTANCE_NOT_FOUND,
@@ -79,35 +98,35 @@ export type InstanceNotFoundErrorParams = BaseErrorParams<
     id?: InstanceId;
     collectionId?: CollectionId;
   }
->;
+>
 
 export type FlowRunNotFoundErrorParams = BaseErrorParams<
   ErrorCode.INSTANCE_NOT_FOUND,
   {
     id: FlowRunId;
   }
->;
+>
 
 export type FlowVersionNotFoundErrorParams = BaseErrorParams<
   ErrorCode.FLOW_VERSION_NOT_FOUND,
   {
     id: FlowVersionId;
   }
->;
+>
 
 export type InvalidCredentialsErrorParams = BaseErrorParams<
   ErrorCode.INVALID_CREDENTIALS,
   {
     email: string;
   }
->;
+>
 
 export type ExistingUserErrorParams = BaseErrorParams<
   ErrorCode.EXISTING_USER,
   {
     email: string;
   }
->;
+>
 
 export type StepNotFoundErrorParams = BaseErrorParams<
   ErrorCode.STEP_NOT_FOUND,
@@ -115,14 +134,14 @@ export type StepNotFoundErrorParams = BaseErrorParams<
     pieceName: string;
     stepName: string;
   }
->;
+>
 
 export type PieceNotFoundErrorParams = BaseErrorParams<
   ErrorCode.PIECE_NOT_FOUND,
   {
     pieceName: string;
   }
->;
+>
 
 export type PieceTriggerNotFoundErrorParams = BaseErrorParams<
   ErrorCode.PIECE_TRIGGER_NOT_FOUND,
@@ -130,7 +149,7 @@ export type PieceTriggerNotFoundErrorParams = BaseErrorParams<
     pieceName: string;
     triggerName: string;
   }
->;
+>
 
 export type ConfigNotFoundErrorParams = BaseErrorParams<
   ErrorCode.CONFIG_NOT_FOUND,
@@ -139,14 +158,14 @@ export type ConfigNotFoundErrorParams = BaseErrorParams<
     stepName: string;
     configName: string;
   }
->;
+>
 
 export type JobRemovalFailureErrorParams = BaseErrorParams<
   ErrorCode.JOB_REMOVAL_FAILURE,
   {
     jobId: ApId;
   }
->;
+>
 
 export type SystemPropNotDefinedErrorParams = BaseErrorParams<
   ErrorCode.SYSTEM_PROP_NOT_DEFINED,
@@ -155,25 +174,13 @@ export type SystemPropNotDefinedErrorParams = BaseErrorParams<
   }
 >;
 
-export type SystemInvalidErrorParams = BaseErrorParams<
-  ErrorCode.SYSTEM_PROP_INVALID,
-  {
-    prop: string;
-  }
->;
-
-export interface InvalidJwtTokenErrorParams
-  extends BaseErrorParams<
-    ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
-    {
-      token: string;
-    }
-  > { }
-export interface TaskQuotaExeceededErrorParams
-  extends BaseErrorParams<
+export type TaskQuotaExeceededErrorParams
+  = BaseErrorParams<
     ErrorCode.TASK_QUOTA_EXCEEDED,
-    {}
-  > { }
+    {
+      projectId: string;
+    }
+  >;
 
 export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
@@ -193,6 +200,8 @@ export enum ErrorCode {
   PIECE_TRIGGER_NOT_FOUND = "PIECE_TRIGGER_NOT_FOUND",
   STEP_NOT_FOUND = "STEP_NOT_FOUND",
   SYSTEM_PROP_NOT_DEFINED = "SYSTEM_PROP_NOT_DEFINED",
+  INVALID_CLAIM = "INVALID_CLAIM",
+  INVALID_CLOUD_CLAIM = "INVALID_CLOUD_CLAIM",
   INVALID_OR_EXPIRED_JWT_TOKEN = "INVALID_OR_EXPIRED_JWT_TOKEN",
   TASK_QUOTA_EXCEEDED = "FLOW_RUN_QUOTA_EXCEEDED",
   SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
