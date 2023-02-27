@@ -38,8 +38,8 @@ export const twilioNewIncomingSms = createTrigger({
     type: TriggerStrategy.POLLING,
     async onEnable(context) {
         const { phone_number } = context.propsValue;
-        const account_sid = context.propsValue['authentication']!['username']!;
-        const auth_token = context.propsValue['authentication']!['password']!;
+        const account_sid = context.propsValue['authentication']['username'];
+        const auth_token = context.propsValue['authentication']['password'];
         const response = await callTwilioApi<MessagePaginationResponse>(HttpMethod.GET, `Messages.json?PageSize=20&To=${phone_number}`, { account_sid, auth_token, }, {});
         await context.store.put<LastMessage>('_new_incoming_sms_trigger', {
             lastMessageId: response.body.messages.length === 0 ? null : response.body.messages[0].sid,
@@ -49,8 +49,8 @@ export const twilioNewIncomingSms = createTrigger({
         await context.store.put('_new_incoming_sms_trigger', null);
     },
     async run(context) {
-        const account_sid = context.propsValue['authentication']!['username']!;
-        const auth_token = context.propsValue['authentication']!['password']!;
+        const account_sid = context.propsValue['authentication']['username'];
+        const auth_token = context.propsValue['authentication']['password'];
         const newMessages: unknown[] = [];
         const lastMessage = await context.store.get<LastMessage>('_new_incoming_sms_trigger');
         let currentUri: string | null = `2010-04-01/Accounts/${account_sid}/Messages.json?PageSize=20&To=${context.propsValue.phone_number}`;

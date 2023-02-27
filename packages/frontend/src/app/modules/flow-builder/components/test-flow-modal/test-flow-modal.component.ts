@@ -26,7 +26,6 @@ import { FlowsActions } from '../../store/flow/flows.action';
 import { InstanceRunService } from '../../../common/service/flow-run.service';
 import { HttpStatusCode } from '@angular/common/http';
 import { UntypedFormControl } from '@angular/forms';
-import { jsonValidator } from 'packages/frontend/src/app/modules/common/validators/json-validator';
 import jsonlint from 'jsonlint-mod';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -39,8 +38,9 @@ import {
   PieceTriggerSettings,
   TriggerType,
 } from '@activepieces/shared';
-import { initializedRun } from 'packages/frontend/src/app/modules/common/model/flow-run.interface';
 import { ActionMetaService } from '../../service/action-meta.service';
+import { jsonValidator } from '../../../common/validators/json-validator';
+import { initializedRun } from '../../../common/model/flow-run.interface';
 
 @Component({
   selector: 'app-test-flow-modal',
@@ -50,9 +50,8 @@ import { ActionMetaService } from '../../service/action-meta.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TestFlowModalComponent implements OnInit {
-
   submitted = false;
-  dialogRef: MatDialogRef<TemplateRef<any>>;
+  dialogRef: MatDialogRef<TemplateRef<unknown>>;
   instanceRunStatus$: Observable<undefined | ExecutionOutputStatus>;
   isSaving$: Observable<boolean> = of(false);
   selectedFlow$: Observable<Flow | undefined>;
@@ -63,7 +62,14 @@ export class TestFlowModalComponent implements OnInit {
   testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
   testFlowButtonDisabledTooltip = '';
   payloadControl: UntypedFormControl = new UntypedFormControl(
-    '{}',
+    JSON.stringify(
+      {
+        body: {},
+        headers: {},
+      },
+      null,
+      2
+    ),
     jsonValidator
   );
   codeEditorOptions = {
@@ -125,7 +131,6 @@ export class TestFlowModalComponent implements OnInit {
     );
   }
 
-
   testFlowButtonClicked(
     flow: Flow,
     collection: Collection,
@@ -171,7 +176,7 @@ export class TestFlowModalComponent implements OnInit {
       this.cd.detectChanges();
     }
   }
-  executeTest(collection: Collection, flow: Flow, payload: Object) {
+  executeTest(collection: Collection, flow: Flow, payload: object) {
     return this.flowService
       .execute({
         collectionVersionId: collection.version!.id,
@@ -263,7 +268,6 @@ export class TestFlowModalComponent implements OnInit {
     );
   }
 
-
   public get triggerType() {
     return TriggerType;
   }
@@ -278,6 +282,8 @@ export class TestFlowModalComponent implements OnInit {
       payload.setValue(
         this.codeService.beautifyJson(JSON.parse(payload.value))
       );
-    } catch {}
+    } catch {
+      //ignore
+    }
   }
 }

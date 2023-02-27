@@ -18,27 +18,27 @@ import { RunsLeftSnackbarComponent } from '@ee/billing/frontend/runs-left-snackb
 import { DeleteEntityDialogComponent } from './components/delete-enity-dialog/delete-collection-dialog.component';
 
 @NgModule({
-	declarations: [
-		DashboardContainerComponent,
-		SidenavRoutesListComponent,
-		RunsTableComponent,
-		CollectionsTableComponent,
-		EmptyCollectionsTableComponent,
-		UserAvatarComponent,
-		PageTitleComponent,
-		ConnectionsTableComponent,
-		DeleteEntityDialogComponent,
-		RunsLeftSnackbarComponent
-	],
-	imports: [
-		CommonModule,
-		CommonLayoutModule,
-		RouterModule.forChild(DashboardLayoutRouting),
-		ReactiveFormsModule,
-		FontAwesomeModule,
-		NgxSkeletonLoaderModule,
-	],
-	exports: [],
-	providers: [],
+  declarations: [
+    DashboardContainerComponent,
+    SidenavRoutesListComponent,
+    RunsTableComponent,
+    CollectionsTableComponent,
+    EmptyCollectionsTableComponent,
+    UserAvatarComponent,
+    PageTitleComponent,
+    ConnectionsTableComponent,
+    DeleteEntityDialogComponent,
+    RunsLeftSnackbarComponent,
+  ],
+  imports: [
+    CommonModule,
+    CommonLayoutModule,
+    RouterModule.forChild(DashboardLayoutRouting),
+    ReactiveFormsModule,
+    FontAwesomeModule,
+    NgxSkeletonLoaderModule,
+  ],
+  exports: [],
+  providers: [],
 })
 export class DashboardLayoutModule {}

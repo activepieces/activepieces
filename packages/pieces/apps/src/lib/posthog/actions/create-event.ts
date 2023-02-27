@@ -59,7 +59,7 @@ export const posthogCreateEvent = createAction({
     }),
   },
   async run(context) {
-    let body: EventBody = {
+    const body: EventBody = {
       event: context.propsValue.event,
       type: context.propsValue.event_type!,
       api_key: context.propsValue.project_api_key!,

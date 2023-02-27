@@ -16,5 +16,8 @@ jobs:
       - name: lint the backend
         run: npx nx lint backend
 
+      - name: lint the frontend
+        run: npx nx lint frontend
+
       - name: build everything
         run: npx nx run-many --target=build

@@ -6,31 +6,39 @@ import { map, Observable, tap } from 'rxjs';
 import { ApEdition } from '@activepieces/shared';
 
 @Component({
-	templateUrl: './dashboard-container.component.html',
-	styleUrls: ['./dashboard-container.component.scss'],
-	selector: 'app-dashboard-container',
+  templateUrl: './dashboard-container.component.html',
+  styleUrls: ['./dashboard-container.component.scss'],
+  selector: 'app-dashboard-container',
 })
 export class DashboardContainerComponent implements OnInit, OnDestroy {
-	runsLeftSnackBarRef: MatSnackBarRef<RunsLeftSnackbarComponent>;
+  runsLeftSnackBarRef: MatSnackBarRef<RunsLeftSnackbarComponent>;
 
-	showSnackbar$: Observable<void>;
+  showSnackbar$: Observable<void>;
 
-	constructor(private snackBar: MatSnackBar, private flagService: FlagService) { }
+  constructor(
+    private snackBar: MatSnackBar,
+    private flagService: FlagService
+  ) {}
 
-	ngOnInit(): void {
-		this.showSnackbar$ = this.flagService.getEdition().pipe(tap(edition => {
-			if (edition === ApEdition.ENTERPRISE) {
-				this.runsLeftSnackBarRef = this.snackBar.openFromComponent(RunsLeftSnackbarComponent, {
-					duration: undefined
-				});
-			}
-		}), map(() => void 0));
+  ngOnInit(): void {
+    this.showSnackbar$ = this.flagService.getEdition().pipe(
+      tap((edition) => {
+        if (edition === ApEdition.ENTERPRISE) {
+          this.runsLeftSnackBarRef = this.snackBar.openFromComponent(
+            RunsLeftSnackbarComponent,
+            {
+              duration: undefined,
+            }
+          );
+        }
+      }),
+      map(() => void 0)
+    );
+  }
 
-	}
-
-	ngOnDestroy(): void {
-		if (this.runsLeftSnackBarRef !== undefined) {
-			this.runsLeftSnackBarRef.dismiss();
-		}
-	}
+  ngOnDestroy(): void {
+    if (this.runsLeftSnackBarRef !== undefined) {
+      this.runsLeftSnackBarRef.dismiss();
+    }
+  }
 }
