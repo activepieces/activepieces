@@ -79,6 +79,53 @@ export const LoopOnItemsAction = Type.Object({
 export type LoopOnItemsAction = Static<typeof LoopOnItemsAction> & { firstLoopAction?: Action };
 
 // Loop Items
+
+export enum BranchOperator {
+  TEXT_CONTAINS = 'TEXT_CONTAINS',
+  TEXT_DOES_NOT_CONTAIN = 'TEXT_DOES_NOT_CONTAIN',
+  TEXT_IS = 'TEXT_IS',
+  TEXT_IS_NOT = 'TEXT_IS_NOT',
+  TEXT_START_WITH = 'TEXT_START_WITH',
+  TEXT_DOES_NOT_START_WITH = 'TEXT_DOES_NOT_START_WITH',
+  TEXT_END_WITH = 'TEXT_END_WITH',
+  TEXT_DOES_NOT_END_WITH = 'TEXT_DOES_NOT_END_WITH',
+  NUMBER_IS_GREATER_THAN = 'NUMBER_IS_GREATER_THAN',
+  NUMBER_IS_LESS_THAN = 'NUMBER_IS_LESS_THAN',
+  BOOLEAN_IS_TRUE = 'BOOLEAN_IS_TRUE',
+  BOOLEAN_IS_FALSE = 'BOOLEAN_IS_FALSE',
+  EXISTS = 'EXISTS',
+  DOES_NOT_EXIST = 'DOES_NOT_EXIST',
+}
+
+export const BranchCondition = Type.Union([
+  Type.Object({
+    firstValue: Type.String({}),
+    secondValue: Type.String({}),
+    operator: Type.Union([Type.Literal(BranchOperator.TEXT_CONTAINS), 
+      Type.Literal(BranchOperator.TEXT_DOES_NOT_CONTAIN),
+      Type.Literal(BranchOperator.TEXT_IS),
+      Type.Literal(BranchOperator.TEXT_IS_NOT),
+      Type.Literal(BranchOperator.TEXT_START_WITH),
+      Type.Literal(BranchOperator.TEXT_DOES_NOT_START_WITH),
+      Type.Literal(BranchOperator.TEXT_END_WITH),
+      Type.Literal(BranchOperator.TEXT_DOES_NOT_END_WITH),
+      Type.Literal(BranchOperator.NUMBER_IS_GREATER_THAN),
+      Type.Literal(BranchOperator.NUMBER_IS_LESS_THAN)
+    ])
+  }),
+  Type.Object({
+    firstValue: Type.String({}),
+    operator: Type.Union([
+      Type.Literal(BranchOperator.EXISTS),
+      Type.Literal(BranchOperator.DOES_NOT_EXIST),
+      Type.Literal(BranchOperator.BOOLEAN_IS_TRUE),
+      Type.Literal(BranchOperator.BOOLEAN_IS_FALSE)
+    ])
+  })
+]);
+
+export type BranchCondition = Static<typeof BranchCondition>;
+
 export type BranchActionSettings = {
   items: unknown;
 };
@@ -87,11 +134,7 @@ export const BranchAction = Type.Object({
   ...commonActionProps,
   type: Type.Literal(ActionType.BRANCH),
   settings: Type.Object({
-    conditions: Type.Array(Type.Array(Type.Object({
-      firstValue: Type.String({}),
-      secondValue: Type.String({}),
-      operator: Type.String({}),
-    }))),
+    conditions: Type.Array(Type.Array(BranchCondition)),
   }),
   onSuccessAction: Type.Optional(Type.Any({})),
   onFailureAction: Type.Optional(Type.Any({})),

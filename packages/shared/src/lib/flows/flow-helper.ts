@@ -9,6 +9,7 @@ import {
 import {
   Action,
   ActionType,
+  BranchAction,
 } from './actions/action';
 import { Trigger, TriggerType } from './triggers/trigger';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
@@ -96,19 +97,19 @@ function updateAction(
   for (let i = 0; i < steps.length; i++) {
     const parentStep = steps[i];
     if (parentStep.nextAction && parentStep.nextAction.name === request.name) {
-      const stepToUpdate: Action = parentStep.nextAction;
-      parentStep.nextAction = createAction(request, stepToUpdate.nextAction);
+      const { nextAction, onSuccessAction, onFailureAction } = extractActions(parentStep.nextAction);
+      parentStep.nextAction = createAction(request, nextAction, onFailureAction, onSuccessAction);
       updated = true;
     }
     if (parentStep.type === ActionType.BRANCH) {
       if (parentStep.onFailureAction && parentStep.onFailureAction.name === request.name) {
-        const stepToUpdate: Action = parentStep.nextAction;
-        parentStep.nextAction = createAction(request, stepToUpdate.nextAction);
+        const { nextAction, onSuccessAction, onFailureAction } = extractActions(parentStep.onFailureAction);
+        parentStep.onFailureAction = createAction(request, nextAction, onFailureAction, onSuccessAction);
         updated = true;
       }
       if (parentStep.onSuccessAction && parentStep.onSuccessAction.name === request.name) {
-        const stepToUpdate: Action = parentStep.nextAction;
-        parentStep.nextAction = createAction(request, stepToUpdate.nextAction);
+        const { nextAction, onSuccessAction, onFailureAction } = extractActions(parentStep.onSuccessAction);
+        parentStep.onSuccessAction = createAction(request, nextAction, onFailureAction, onSuccessAction);
         updated = true;
       }
     }
@@ -120,6 +121,14 @@ function updateAction(
     }, `Action ${request.name} not found`);
   }
 }
+
+function extractActions(step: Trigger | Action): { nextAction: Action, onSuccessAction?: Action, onFailureAction?: Action } {
+  const nextAction = step.nextAction;
+  const onSuccessAction = step.type === ActionType.BRANCH ? step.onSuccessAction : undefined;
+  const onFailureAction = step.type === ActionType.BRANCH ? step.onFailureAction : undefined;
+  return { nextAction, onSuccessAction, onFailureAction };
+}
+
 
 function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
   const parentStep = getAllSteps(flowVersion).find(step => step.name === request.parentStep);
@@ -147,7 +156,9 @@ function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
 
 function createAction(
   request: UpdateActionRequest,
-  nextAction: Action | undefined
+  nextAction: Action | undefined,
+  onFailureAction?: Action,
+  onSuccessAction?: Action
 ): Action {
   const baseProperties = {
     displayName: request.displayName,
@@ -160,8 +171,8 @@ function createAction(
     case ActionType.BRANCH:
       action = {
         ...baseProperties,
-        onFailureAction: request.onFailureAction,
-        onSuccessAction: request.onSuccessAction,
+        onFailureAction: onFailureAction,
+        onSuccessAction: onSuccessAction,
         type: ActionType.BRANCH,
         settings: request.settings,
       };

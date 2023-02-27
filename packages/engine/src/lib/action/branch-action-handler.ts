@@ -1,6 +1,6 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { ExecutionState, BranchAction, Action, BranchStepOutput } from '@activepieces/shared';
+import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { StepOutputStatus, StepOutput } from '@activepieces/shared';
 
@@ -36,8 +36,7 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction> {
     stepOutput.input = resolvedInput;
 
     try {
-      // TODO - implement the condition
-      const condition = true;
+      const condition = evaluateConditions(resolvedInput.conditions);
       stepOutput.output = {
         condition: condition,
       };
@@ -71,3 +70,65 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction> {
   }
 
 }
+function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
+  let orOperator = false;
+  for (const conditionGroup of conditionGroups) {
+    let andGroup = true;
+    for (const condition of conditionGroup) {
+      const castedCondition = condition as {
+        firstValue: any;
+        secondValue: any;
+        operator: BranchOperator;
+      };
+      switch (castedCondition.operator) {
+        case BranchOperator.TEXT_CONTAINS:
+          andGroup = andGroup && castedCondition.firstValue.includes(castedCondition.secondValue);
+          break;
+        case BranchOperator.TEXT_DOES_NOT_CONTAIN:
+          andGroup = andGroup && !castedCondition.firstValue.includes(castedCondition.secondValue);
+          break;
+        case BranchOperator.TEXT_IS:
+          andGroup = andGroup && castedCondition.firstValue === castedCondition.secondValue;
+          break;
+        case BranchOperator.TEXT_IS_NOT:
+          andGroup = andGroup && castedCondition.firstValue !== castedCondition.secondValue;
+          break;
+        case BranchOperator.TEXT_START_WITH:
+          andGroup = andGroup && castedCondition.firstValue.startsWith(castedCondition.secondValue);
+          break;
+        case BranchOperator.TEXT_END_WITH:
+          andGroup = andGroup && castedCondition.firstValue.endsWith(castedCondition.secondValue);
+          break;
+        case BranchOperator.TEXT_DOES_NOT_START_WITH:
+          andGroup = andGroup && !castedCondition.firstValue.startsWith(castedCondition.secondValue);
+          break;
+        case BranchOperator.TEXT_DOES_NOT_END_WITH:
+          andGroup = andGroup && !castedCondition.firstValue.endsWith(castedCondition.secondValue);
+          break;
+        case BranchOperator.NUMBER_IS_GREATER_THAN:
+          andGroup = andGroup && castedCondition.firstValue > castedCondition.secondValue;
+          break;
+        case BranchOperator.NUMBER_IS_LESS_THAN:
+          andGroup = andGroup && castedCondition.firstValue < castedCondition.secondValue;
+          break;
+        case BranchOperator.BOOLEAN_IS_TRUE:
+          andGroup = andGroup && castedCondition.firstValue;
+          break;
+        case BranchOperator.BOOLEAN_IS_FALSE:
+          andGroup = andGroup && !castedCondition.firstValue;
+          break;
+        case BranchOperator.EXISTS:
+          andGroup = andGroup && castedCondition.firstValue !== undefined && castedCondition.firstValue !== null;
+          break;
+        case BranchOperator.DOES_NOT_EXIST:
+          andGroup = andGroup && castedCondition.firstValue === undefined && castedCondition.firstValue === null;
+          break;
+        default:
+          throw new Error(`Unknown operator ${castedCondition.operator}`);
+      }
+      orOperator = orOperator || andGroup;
+    }
+  }
+  return orOperator;
+}
+
