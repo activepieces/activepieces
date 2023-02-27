@@ -47,8 +47,7 @@ export class CodeArtifactFormControlComponent
     lineWrapping: true,
     theme: 'lucario',
     readOnly: '',
-    mode: 'typescript',
-    lint: { esversion: 8 },
+    mode: 'text/typescript',
     matchBrackets: true,
     gutters: ['CodeMirror-lint-markers'],
   };
