@@ -76,11 +76,18 @@ async function build(artifact: Buffer): Promise<Buffer> {
             cwd: buildPath,
         };
 
-        logger.info("Installing npm");
-        await exec("npm install --package-lock=false", execOptions);
+        const pnpmInstallCommand = `
+          pnpm install \
+            --prefer-offline \
+            --config.lockfile=false \
+            --config.auto-install-peers=true
+        `;
 
-        logger.info("Finished npm dependencies");
-        await exec("npx webpack", execOptions);
+        logger.info("code builder, installing dependencies");
+        await exec(pnpmInstallCommand, execOptions);
+
+        logger.info("code builder, bundling code");
+        await exec("pnpm webpack", execOptions);
 
         const bundledFilePath = `${buildPath}/dist/index.js`;
         bundledFile = await fs.readFile(bundledFilePath);
