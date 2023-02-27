@@ -156,11 +156,11 @@ export const createImageFromTemplate = createAction({
   },
   async run({ propsValue }) {
     const body = {
-      modifications: Object.keys(propsValue.modifications).length === 0 ? [] : propsValue.modifications,
+      modifications: Object.keys(propsValue.modifications).length === 0 ? [] : [propsValue.modifications],
       template_version: propsValue.template_version,
       transparent: propsValue.transparent,
       render_pdf: propsValue.render_pdf,
-      template: propsValue.template,
+      template: propsValue.template.uid,
       metadata: propsValue.metadata
     }
 
