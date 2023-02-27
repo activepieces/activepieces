@@ -6,7 +6,6 @@ import { sandboxManager } from "../sandbox";
 import { logger } from "../../helper/logger";
 
 type PackageJson = {
-    scripts: Record<string, string>;
     dependencies: Record<string, string>;
 }
 
@@ -18,16 +17,11 @@ const webpackConfig = `
   module.exports = {
     mode: "production",
     target: "node",
-    externalsPresets: {
-      // don't bundle node.js builtin modules
-      node: true,
-    },
     entry: path.join(__dirname, "index.ts"),
     module: {
       rules: [
         {
           test: /\\.ts$/,
-          exclude: /node_modules/,
           use: [
             {
               loader: "ts-loader",
