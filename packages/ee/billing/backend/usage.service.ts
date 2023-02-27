@@ -13,7 +13,7 @@ export const usageService = {
     async limit(request: { projectId: ProjectId; flowVersion: FlowVersion; }): Promise<{ perform: true }> {
         const quotaLock = await createRedisLock(5 * 1000);
         try {
-            quotaLock.acquire(`usage_${request.projectId}}`);
+            await quotaLock.acquire(`usage_${request.projectId}}`);
             const projectUsage = await usageService.getUsage({ projectId: request.projectId });
             const numberOfSteps = countSteps(request.flowVersion);
             const projectPlan = await billingService.getPlan({ projectId: request.projectId });

@@ -30,7 +30,7 @@ const redisConection = createRedisClient();
 export const createRedisLock = (timeout = 2 * 60 * 1000) => {
     return createLock(redisConection, {
         timeout: timeout,
-        retries: 3,
+        retries: Math.ceil(timeout/2000),
         delay: 2000,
     });
 };
