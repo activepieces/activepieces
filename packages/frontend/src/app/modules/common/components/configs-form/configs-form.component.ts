@@ -281,6 +281,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
           switchMap((collection) => {
             return this.actionMetaDataService.getPieceActionConfigOptions<T>(
               {
+                pieceVersion: '0.0.0',
                 propertyName: c.key,
                 stepName: this.stepName,
                 input: res,

@@ -35,11 +35,12 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     try {
       const executer = new PieceExecutor();
 
-      stepOutput.output = await executer.exec(
-        this.action.settings.pieceName,
-        this.action.settings.actionName!,
-        config
-      );
+      stepOutput.output = await executer.exec({
+        pieceName: this.action.settings.pieceName,
+        pieceVersion: this.action.settings.pieceVersion,
+        actionName: this.action.settings.actionName!,
+        config,
+      });
 
       stepOutput.status = StepOutputStatus.SUCCEEDED;
       return stepOutput;
