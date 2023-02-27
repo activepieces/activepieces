@@ -26,7 +26,7 @@ export const usageService = {
             projectUsage.consumedTasks += numberOfSteps;
             await projectUsageRepo.save(projectUsage);
         } catch (e) {
-            if (e instanceof ActivepiecesError && e.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
+            if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
                 throw e;
             } else {
                 // Ignore quota errors for sake of user experience and log them instead
