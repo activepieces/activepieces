@@ -7,6 +7,7 @@ import axios from "axios";
 import { createRedisLock } from "../database/redis-connection";
 import { decryptObject, encryptObject } from "../helper/encryption";
 
+
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 
 export const appConnectionService = {
@@ -20,7 +21,6 @@ export const appConnectionService = {
     async getOne({ projectId, name }: { projectId: ProjectId, name: string }): Promise<AppConnection | null> {
         // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
         // which could result in the wrong request saving incorrect data.
-        const refreshLock = await createRedisLock(`${projectId}_${name}`);
         const appConnection = await appConnectionRepo.findOneBy({
             projectId: projectId,
             name: name
@@ -28,15 +28,18 @@ export const appConnectionService = {
         if (appConnection === null) {
             return null;
         }
+        const refreshLock = createRedisLock();
         try {
+            await refreshLock.acquire(`${projectId}_${name}`);
+
             appConnection.value = decryptObject(appConnection.value);
             const refreshedAppConnection = await refresh(appConnection);
             await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) });
-            refreshedAppConnection.status = getStatus(refreshedAppConnection);
-            refreshLock.release();
+            refreshedAppConnection.status = getStatus(refreshedAppConnection);            
             return refreshedAppConnection;
         }
         catch (e) {
+            refreshLock.release();
             appConnection.status = AppConnectionStatus.ERROR;
         }
         return appConnection;

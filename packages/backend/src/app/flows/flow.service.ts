@@ -114,8 +114,10 @@ export const flowService = {
         };
     },
     async update({ flowId, projectId, request }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
-        const flowLock = await createRedisLock(flowId);
+        const flowLock = await createRedisLock();
         try {
+            await flowLock.acquire(flowId);
+
             let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, false));
             if (lastVersion.state === FlowVersionState.LOCKED) {
                 lastVersion = await flowVersionService.createVersion(flowId, lastVersion);

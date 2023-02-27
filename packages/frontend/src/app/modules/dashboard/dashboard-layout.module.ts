@@ -14,7 +14,7 @@ import { UserAvatarComponent } from './components/user-avatar/user-avatar.compon
 import { SidenavRoutesListComponent } from './components/sidenav-routes-list/sidenav-routes-list.component';
 import { PageTitleComponent } from './components/page-title/page-title.component';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
-import { RunsLeftSnackbarComponent } from '@ee/usage/frontend/runs-left-snackbar/runs-left-snackbar.component';
+import { RunsLeftSnackbarComponent } from '@ee/billing/frontend/runs-left-snackbar/runs-left-snackbar.component';
 import { DeleteEntityDialogComponent } from './components/delete-enity-dialog/delete-collection-dialog.component';
 
 @NgModule({
