@@ -261,6 +261,7 @@ export class InterpolatingTextFormControlComponent
   public focusEditor() {
     setTimeout(() => {
       this.editor.quillEditor.focus();
+      this.editor.quillEditor.setSelection(99999999999999, 0, 'api');
     });
   }
 
