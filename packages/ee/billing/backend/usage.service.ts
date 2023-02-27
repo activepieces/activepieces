@@ -22,12 +22,16 @@ export const usageService = {
                     code: ErrorCode.TASK_QUOTA_EXCEEDED,
                     params: { id: request.projectId },
                 });
-        }
+            }
             projectUsage.consumedTasks += numberOfSteps;
             await projectUsageRepo.save(projectUsage);
         } catch (e) {
-            // Ignore quota errors for sake of user experience and log them instead
-            captureException(e);
+            if (e instanceof ActivepiecesError && e.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
+                throw e;
+            } else {
+                // Ignore quota errors for sake of user experience and log them instead
+                captureException(e);
+            }
         } finally {
             quotaLock.release();
         };
@@ -65,7 +69,7 @@ function isPastResetDate(datetime: string) {
     const date = dayjs(datetime);
     const currentDate = dayjs();
     return currentDate.isAfter(date);
-  }
+}
 
 function nextResetDatetime(datetime: string) {
     const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
@@ -73,5 +77,5 @@ function nextResetDatetime(datetime: string) {
     const currentDate = dayjs();
     const nextResetInMs = thirtyDaysInMs - (currentDate.diff(date, 'millisecond') % thirtyDaysInMs);
     return currentDate.add(nextResetInMs, 'millisecond').toISOString();
-  }
+}
 
