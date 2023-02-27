@@ -1,18 +1,10 @@
-import { AppConnectionType } from '@activepieces/shared';
 import { Component, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { catchError, Observable, tap, throwError } from 'rxjs';
 import { fadeInUp400ms } from '../../../animation/fade-in-up.animation';
+import { CloudOAuth2PopupParams } from '../../../model/oauth2-popup-params.interface';
 import { Oauth2Service } from '../../../service/oauth2.service';
 
-export interface CloudConnectionPopupSettings {
-	clientId: string;
-	auth_url: string;
-	extraParams: Record<string, unknown>;
-	scope: string;
-	pieceName: string;
-	token_url?: string;
-}
 
 @Component({
 	selector: 'app-o-auth2-cloud-connect-control',
@@ -27,7 +19,7 @@ export interface CloudConnectionPopupSettings {
 	animations: [fadeInUp400ms],
 })
 export class OAuth2CloudConnectControlComponent implements ControlValueAccessor {
-	@Input() cloudConnectionPopupSettings: CloudConnectionPopupSettings;
+	@Input() popupParams: CloudOAuth2PopupParams;
 	popUpError = false;
 
 	responseData: any = null;
@@ -52,11 +44,11 @@ export class OAuth2CloudConnectControlComponent implements ControlValueAccessor 
 	}
 
 	openPopup(): void {
-		this.popupOpened$ = this.oauth2Service.openCloudAuthPopup(this.cloudConnectionPopupSettings).pipe(
+		this.popupOpened$ = this.oauth2Service.openCloudAuthPopup(this.popupParams).pipe(
 			tap(value => {
 				this.popUpError = false;
 				this.responseData = value;
-				this.onChange({ ...value, type: AppConnectionType.CLOUD_OAUTH2 });
+				this.onChange(value);
 			}),
 			catchError(err => {
 				this.responseData = null;

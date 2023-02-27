@@ -1,4 +1,4 @@
-import { apId, AppConnection, AppConnectionId, AppConnectionStatus, AppConnectionType, BaseOAuth2ConnectionValue, CloudOAuth2ConnectionValue, Cursor, OAuth2ConnectionValueWithApp, ProjectId, SeekPage, UpsertConnectionRequest } from "@activepieces/shared";
+import { ActivepiecesError, apId, AppConnection, AppConnectionId, AppConnectionStatus, AppConnectionType, BaseOAuth2ConnectionValue, CloudOAuth2ConnectionValue, Cursor, ErrorCode, OAuth2ConnectionValueWithApp, ProjectId, SeekPage, UpsertConnectionRequest } from "@activepieces/shared";
 import { databaseConnection } from "../database/database-connection";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
@@ -188,10 +188,11 @@ async function claim(request: {
         return { ...formatOAuth2Response(response), client_id: request.clientId, client_secret: request.clientSecret };
     }
     catch (e: unknown | AxiosError) {
-        if (axios.isAxiosError(e)) {
-            return e.response?.data;
-        }
-        return e;
+        throw new ActivepiecesError({code:ErrorCode.INVALID_CLAIM,params:{
+            clientId:request.clientId,
+            tokenUrl:request.tokenUrl,
+            redirectUrl:request.redirectUrl
+        }})
     }
 }
 
@@ -200,10 +201,9 @@ async function claimWithCloud(request: { pieceName: string; code: string }): Pro
         return (await axios.post("https://secrets.activepieces.com/claim", request)).data;
     }
     catch (e: unknown | AxiosError) {
-        if (axios.isAxiosError(e)) {
-            return e.response?.data;
-        }
-        return e;
+        throw new ActivepiecesError({code:ErrorCode.INVALID_CLOUD_CLAIM,params:{
+            appName:request.pieceName
+        }})
     }
 }
 

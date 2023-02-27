@@ -15,6 +15,7 @@ export const errorHandler = async (
 
         await reply.status(statusCode).send({
             code: error.error.code,
+            params:error.error.params
         });
     }
     else {

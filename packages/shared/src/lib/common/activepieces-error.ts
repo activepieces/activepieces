@@ -31,141 +31,129 @@ type ErrorParams =
   | PieceTriggerNotFoundErrorParams
   | StepNotFoundErrorParams
   | AppConnectionNotFoundErrorParams
-  | SystemPropNotDefinedErrorParams;
+  | SystemPropNotDefinedErrorParams
+  | InvalidClaimParams
+  | InvalidCloudClaimParams;
 
 export interface BaseErrorParams<T, V> {
   code: T;
   params: V;
 }
 
-export interface InvalidBearerTokenParams extends BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {}> { }
+export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {}>
+export type InvalidClaimParams = BaseErrorParams<ErrorCode.INVALID_CLAIM, {redirectUrl:string, tokenUrl:string, clientId:string}>
+export type InvalidCloudClaimParams = BaseErrorParams<ErrorCode.INVALID_CLOUD_CLAIM, {appName:string}>
+export type FileNotFoundErrorParams = BaseErrorParams<ErrorCode.FILE_NOT_FOUND, { id: FileId }>
 
-export interface FileNotFoundErrorParams extends BaseErrorParams<ErrorCode.FILE_NOT_FOUND, { id: FileId }> { }
-
-export interface AppConnectionNotFoundErrorParams
-  extends BaseErrorParams<
+export type AppConnectionNotFoundErrorParams = BaseErrorParams<
     ErrorCode.APP_CONNECTION_NOT_FOUND,
     {
       id: AppConnectionId;
     }
-  > { }
+  >
 
-export interface FlowNotFoundErrorParams
-  extends BaseErrorParams<
+export type FlowNotFoundErrorParams = BaseErrorParams<
     ErrorCode.FLOW_NOT_FOUND,
     {
       id: FlowId;
     }
-  > { }
+  >
 
-export interface CollectionNotFoundErrorParams
-  extends BaseErrorParams<
+export type CollectionNotFoundErrorParams = BaseErrorParams<
     ErrorCode.COLLECTION_NOT_FOUND,
     {
       id: CollectionId;
     }
-  > { }
+  >
 
-export interface CollectionVersionNotFoundErrorParams
-  extends BaseErrorParams<
+export type CollectionVersionNotFoundErrorParams = BaseErrorParams<
     ErrorCode.COLLECTION_VERSION_NOT_FOUND,
     {
       id: CollectionVersionId;
     }
-  > { }
+  >
 
-export interface InstanceNotFoundErrorParams
-  extends BaseErrorParams<
+export type InstanceNotFoundErrorParams = BaseErrorParams<
     ErrorCode.INSTANCE_NOT_FOUND,
     {
       id?: InstanceId;
       collectionId?: CollectionId;
     }
-  > { }
+  >
 
-export interface FlowRunNotFoundErrorParams
-  extends BaseErrorParams<
+export type FlowRunNotFoundErrorParams = BaseErrorParams<
     ErrorCode.INSTANCE_NOT_FOUND,
     {
       id: FlowRunId;
     }
-  > { }
+  >
 
-export interface FlowVersionNotFoundErrorParams
-  extends BaseErrorParams<
+export type FlowVersionNotFoundErrorParams = BaseErrorParams<
     ErrorCode.FLOW_VERSION_NOT_FOUND,
     {
       id: FlowVersionId;
     }
-  > { }
+  >
 
-export interface InvalidCredentialsErrorParams
-  extends BaseErrorParams<
+export type InvalidCredentialsErrorParams = BaseErrorParams<
     ErrorCode.INVALID_CREDENTIALS,
     {
       email: string;
     }
-  > { }
+  >
 
-export interface ExistingUserErrorParams
-  extends BaseErrorParams<
+export type ExistingUserErrorParams = BaseErrorParams<
     ErrorCode.EXISTING_USER,
     {
       email: string;
     }
-  > { }
+  >
 
-export interface StepNotFoundErrorParams
-  extends BaseErrorParams<
+export type StepNotFoundErrorParams = BaseErrorParams<
     ErrorCode.STEP_NOT_FOUND,
     {
       pieceName: string;
       stepName: string;
     }
-  > { }
+  >
 
-export interface PieceNotFoundErrorParams
-  extends BaseErrorParams<
+export type PieceNotFoundErrorParams = BaseErrorParams<
     ErrorCode.PIECE_NOT_FOUND,
     {
       pieceName: string;
     }
-  > { }
+  >
 
-export interface PieceTriggerNotFoundErrorParams
-  extends BaseErrorParams<
+export type PieceTriggerNotFoundErrorParams = BaseErrorParams<
     ErrorCode.PIECE_TRIGGER_NOT_FOUND,
     {
       pieceName: string;
       triggerName: string;
     }
-  > { }
+  >
 
-export interface ConfigNotFoundErrorParams
-  extends BaseErrorParams<
+export type ConfigNotFoundErrorParams = BaseErrorParams<
     ErrorCode.CONFIG_NOT_FOUND,
     {
       pieceName: string;
       stepName: string;
       configName: string;
     }
-  > { }
+  >
 
-export interface JobRemovalFailureErrorParams
-  extends BaseErrorParams<
+export type JobRemovalFailureErrorParams = BaseErrorParams<
     ErrorCode.JOB_REMOVAL_FAILURE,
     {
       jobId: ApId;
     }
-  > { }
+  >
 
-export interface SystemPropNotDefinedErrorParams
-  extends BaseErrorParams<
+export type SystemPropNotDefinedErrorParams = BaseErrorParams<
     ErrorCode.SYSTEM_PROP_NOT_DEFINED,
     {
       prop: string;
     }
-  > { }
+  >
 
 export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
@@ -185,4 +173,6 @@ export enum ErrorCode {
   PIECE_TRIGGER_NOT_FOUND = "PIECE_TRIGGER_NOT_FOUND",
   STEP_NOT_FOUND = "STEP_NOT_FOUND",
   SYSTEM_PROP_NOT_DEFINED = "SYSTEM_PROP_NOT_DEFINED",
+  INVALID_CLAIM="INVALID_CLAIM",
+  INVALID_CLOUD_CLAIM="INVALID_CLOUD_CLAIM"
 }

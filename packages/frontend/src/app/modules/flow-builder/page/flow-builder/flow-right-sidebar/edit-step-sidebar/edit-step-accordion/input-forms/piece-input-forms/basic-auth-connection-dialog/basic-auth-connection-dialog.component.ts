@@ -4,11 +4,11 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
-import { PieceConfig } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
-import { AppConnectionsService } from 'packages/frontend/src/app/modules/common/service/app-connections.service';
-import { appConnectionsActions } from 'packages/frontend/src/app/modules/flow-builder/store/app-connections/app-connections.action';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import { catchError, Observable, of, take, tap } from 'rxjs';
+import { PieceConfig } from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
+import { AppConnectionsService } from '../../../../../../../../../common/service/app-connections.service';
+import { appConnectionsActions } from '../../../../../../../../store/app-connections/app-connections.action';
+import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
 import { ConnectionValidator } from '../../../../../../validators/connectionNameValidator';
 
 interface BasicAuthForm {

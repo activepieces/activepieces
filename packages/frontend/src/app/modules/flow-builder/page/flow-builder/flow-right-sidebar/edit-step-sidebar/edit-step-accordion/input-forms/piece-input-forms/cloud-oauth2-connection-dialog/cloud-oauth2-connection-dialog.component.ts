@@ -13,25 +13,25 @@ import { catchError, Observable, of, take, tap } from 'rxjs';
 import {
   AppConnection,
   UpsertCloudOAuth2Request,
-  CloudOAuth2ConnectionValue,
   CloudAuth2Connection,
   PropertyType,
+  AppConnectionType,
 } from '@activepieces/shared';
-import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
-import { PieceConfig } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
-import { CloudConnectionPopupSettings } from 'packages/frontend/src/app/modules/common/components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
-import { AppConnectionsService } from 'packages/frontend/src/app/modules/common/service/app-connections.service';
-import { ConnectionValidator } from 'packages/frontend/src/app/modules/flow-builder/page/flow-builder/validators/connectionNameValidator';
-import { appConnectionsActions } from 'packages/frontend/src/app/modules/flow-builder/store/app-connections/app-connections.action';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import deepEqual from 'deep-equal';
+import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
+import { PieceConfig } from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
+import { AppConnectionsService } from '../../../../../../../../../common/service/app-connections.service';
+import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
+import { ConnectionValidator } from '../../../../../../validators/connectionNameValidator';
+import { appConnectionsActions } from '../../../../../../../../store/app-connections/app-connections.action';
+import { CloudOAuth2PopupParams } from '../../../../../../../../../common/model/oauth2-popup-params.interface';
 
 interface AuthConfigSettings {
-  appName: FormControl<string | null>;
   name: FormControl<string>;
-  value: FormControl<CloudOAuth2ConnectionValue>;
+  value: FormControl<string>;
   props: UntypedFormGroup;
 }
+
 export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
 @Component({
   selector: 'app-cloud-authentication-modal',
@@ -43,7 +43,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   @Input() pieceAuthConfig: PieceConfig;
   @Input() pieceName: string;
   @Input() connectionToUpdate: CloudAuth2Connection | undefined;
-  _cloudConnectionPopupSettings: CloudConnectionPopupSettings;
+  _cloudConnectionPopupSettings: CloudOAuth2PopupParams;
   PropertyType = PropertyType;
   settingsForm: FormGroup<AuthConfigSettings>;
   loading = false;
@@ -67,24 +67,18 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     this.pieceName = dialogData.pieceName;
     this.pieceAuthConfig = dialogData.pieceAuthConfig;
     this.connectionToUpdate = dialogData.connectionToUpdate;
-    debugger;
     this._cloudConnectionPopupSettings = {
       auth_url: this.pieceAuthConfig.authUrl!,
       scope: this.pieceAuthConfig.scope!.join(' '),
       extraParams: this.pieceAuthConfig.extra!,
       pieceName: this.pieceName,
       clientId: dialogData.clientId,
-
     };
   }
 
   ngOnInit(): void {
     const propsControls = this.createPropsFormGroup();
     this.settingsForm = this.fb.group({
-      appName: new FormControl<string | null>(this.pieceName, {
-        nonNullable: false,
-        validators: [],
-      }),
       name: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
         nonNullable: true,
         validators: [Validators.required, Validators.pattern('[A-Za-z0-9_]*')],
@@ -97,15 +91,15 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
           ),
         ],
       }),
-      value: new FormControl(undefined as any, Validators.required),
+      value: new FormControl('',{nonNullable:true,validators:Validators.required}),
       props: this.fb.group(propsControls)
     });
     if (this.connectionToUpdate) {
-      this.settingsForm.controls.value.setValue(this.connectionToUpdate.value);
       this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
       this.settingsForm.controls.name.disable();
       if (this.connectionToUpdate.value.props) {
         this.settingsForm.controls.props.setValue(this.connectionToUpdate.value.props);
+        this.settingsForm.controls.props.disable();
       }
     }
     this.settingsForm.controls.name.markAllAsTouched();
@@ -123,13 +117,14 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       ? this.connectionToUpdate.name
       : this.settingsForm.controls.name.value;
     const settingsFormValue = this.getOAuth2Settings();
-    debugger;
-    const connectionValue = settingsFormValue.value;
+    const code = settingsFormValue.value;
     const newConnection: UpsertCloudOAuth2Request = {
       appName: this.pieceName,
       value: {
         token_url: settingsFormValue['token_url'],
-        ...connectionValue, scope: this._cloudConnectionPopupSettings.scope,
+        code:code, 
+        scope: this._cloudConnectionPopupSettings.scope,
+        type:AppConnectionType.CLOUD_OAUTH2,
         props: this.pieceAuthConfig.oAuthProps ? this.settingsForm.controls.props.value : undefined
       },
       name: connectionName,
@@ -187,7 +182,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   useOwnCred() {
     this.dialogRef.close(USE_MY_OWN_CREDENTIALS);
   }
-  getOAuth2Settings() {
+   getOAuth2Settings() {
     const formValue = this.settingsForm.getRawValue();
     if (this.pieceAuthConfig.oAuthProps) {
       let authUrl = this.pieceAuthConfig.authUrl!;
@@ -200,7 +195,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     }
     return formValue;
   }
-  get cloudConnectionPopupSettings() {
+  get cloudConnectionPopupSettings():CloudOAuth2PopupParams {
     if (this.pieceAuthConfig.oAuthProps && this.getOAuth2Settings()['auth_url']) {
       this._cloudConnectionPopupSettings.auth_url = this.getOAuth2Settings()['auth_url'];
       this._cloudConnectionPopupSettings.token_url = this.getOAuth2Settings()['token_url'];

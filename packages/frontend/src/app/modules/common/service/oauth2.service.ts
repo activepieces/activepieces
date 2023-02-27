@@ -1,26 +1,17 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../../../environments/environment';
-import { HttpClient } from '@angular/common/http';
 import { UUID } from 'angular2-uuid';
-import { map, Observable, switchMap } from 'rxjs';
-import { BaseOAuth2ConnectionValue, ClaimTokenWithSecretRequest, OAuth2AppDetails } from '@activepieces/shared';
-import { CloudConnectionPopupSettings } from '../components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
+import { map, Observable } from 'rxjs';
+import { CloudOAuth2PopupParams, OAuth2PopupParams } from '../model/oauth2-popup-params.interface';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class Oauth2Service {
 	private currentlyOpenPopUp: Window | null = null;
-
-	constructor(private httpClient: HttpClient) { }
-
-	public claimWithSecret(request: ClaimTokenWithSecretRequest) {
-		return this.httpClient.post<BaseOAuth2ConnectionValue>(environment.apiUrl + '/oauth2/claim', request);
-	}
-
 	public openPopup(
-		request: OAuth2AppDetails & { scope: string; auth_url: string, extraParams: Record<string, unknown> }
-	): Observable<any> {
+		request: OAuth2PopupParams
+	): Observable<string> {
 		this.currentlyOpenPopUp?.close();
 		const winTarget = '_blank';
 		const winFeatures =
@@ -67,23 +58,9 @@ export class Oauth2Service {
 		});
 
 		return codeObs$.pipe(
-			switchMap(params => {
+			map(params => {
 				if (params != undefined && params.code != undefined) {
-					return this.claimWithSecret({
-						code: decodeURIComponent(params.code),
-						clientId: request.client_id,
-						clientSecret: request.client_secret,
-						redirectUrl: redirect_uri,
-						tokenUrl: request.token_url,
-					}).pipe(
-						map(value => {
-
-							if (value['error']) {
-								throw Error(value['error']);
-							}
-							return value;
-						})
-					);
+					return  decodeURIComponent(params.code);
 				}
 
 				throw new Error(`params for openPopUp is empty or the code is, params:${params}`);
@@ -91,10 +68,8 @@ export class Oauth2Service {
 		);
 	}
 
-	private claimWithScretForCloud(request: { pieceName: string; code: string, tokenUrl: string | undefined }) {
-		return this.httpClient.post<BaseOAuth2ConnectionValue>(environment.apiUrl + '/oauth2/claim-with-cloud', request);
-	}
-	public openCloudAuthPopup(request: CloudConnectionPopupSettings): Observable<any> {
+	
+	public openCloudAuthPopup(request: CloudOAuth2PopupParams): Observable<string> {
 		this.currentlyOpenPopUp?.close();
 		const winTarget = '_blank';
 		const winFeatures =
@@ -140,20 +115,9 @@ export class Oauth2Service {
 		});
 
 		return codeObs$.pipe(
-			switchMap(params => {
+			map(params => {
 				if (params != undefined && params.code != undefined) {
-					return this.claimWithScretForCloud({
-						code: decodeURIComponent(params.code),
-						pieceName: request.pieceName,
-						tokenUrl: request.token_url,
-					}).pipe(
-						map(value => {
-							if (value['error']) {
-								throw Error(value['error']);
-							}
-							return value;
-						})
-					);
+					return  decodeURIComponent(params.code);
 				}
 
 				throw new Error(`params for openPopUp is empty or the code is, params:${params}`);
