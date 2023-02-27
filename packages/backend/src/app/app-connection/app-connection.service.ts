@@ -1,17 +1,39 @@
-import { apId, AppConnection, AppConnectionId, AppConnectionStatus, AppConnectionType, BaseOAuth2ConnectionValue, CloudOAuth2ConnectionValue, Cursor, OAuth2ConnectionValueWithApp, ProjectId, RefreshTokenFromCloudRequest, SeekPage, UpsertConnectionRequest } from "@activepieces/shared";
+import { ActivepiecesError, apId, AppConnection, AppConnectionId, AppConnectionStatus, AppConnectionType, BaseOAuth2ConnectionValue, CloudOAuth2ConnectionValue, Cursor, ErrorCode, OAuth2ConnectionValueWithApp, ProjectId, SeekPage, UpsertConnectionRequest } from "@activepieces/shared";
 import { databaseConnection } from "../database/database-connection";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { AppConnectionEntity } from "./app-connection.entity";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { createRedisLock } from "../database/redis-connection";
 import { decryptObject, encryptObject } from "../helper/encryption";
+
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 
 export const appConnectionService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertConnectionRequest }): Promise<AppConnection> {
-        await appConnectionRepo.upsert({ ...request, id: apId(), projectId: projectId, value: encryptObject(request.value) }, ["name", "projectId"]);
+        let response: any = request.value;
+        switch (request.value.type) {
+        case AppConnectionType.CLOUD_OAUTH2:
+            response = await claimWithCloud({
+                pieceName: request.appName,
+                code: request.value.code
+            })
+            break;
+        case AppConnectionType.OAUTH2:
+            response = await claim({
+                clientSecret: request.value.client_secret,
+                clientId: request.value.client_id,
+                tokenUrl: request.value.token_url,
+                redirectUrl: request.value.redirect_url,
+                code: request.value.code
+            })
+            break;
+        default:
+            break;
+        }
+        const claimedUpsertRequest = { ...request, value: { ...response, ...request.value }, id: apId(), projectId };
+        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId ,  value: encryptObject(claimedUpsertRequest.value)}, ["name", "projectId"]);
         return appConnectionRepo.findOneByOrFail({
             projectId: projectId,
             name: request.name
@@ -20,7 +42,6 @@ export const appConnectionService = {
     async getOne({ projectId, name }: { projectId: ProjectId, name: string }): Promise<AppConnection | null> {
         // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
         // which could result in the wrong request saving incorrect data.
-        const refreshLock = await createRedisLock(`${projectId}_${name}`);
         const appConnection = await appConnectionRepo.findOneBy({
             projectId: projectId,
             name: name
@@ -28,15 +49,18 @@ export const appConnectionService = {
         if (appConnection === null) {
             return null;
         }
+        const refreshLock = createRedisLock();
         try {
+            await refreshLock.acquire(`${projectId}_${name}`);
+
             appConnection.value = decryptObject(appConnection.value);
             const refreshedAppConnection = await refresh(appConnection);
             await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) });
-            refreshedAppConnection.status = getStatus(refreshedAppConnection);
-            refreshLock.release();
+            refreshedAppConnection.status = getStatus(refreshedAppConnection);            
             return refreshedAppConnection;
         }
         catch (e) {
+            refreshLock.release();
             appConnection.status = AppConnectionStatus.ERROR;
         }
         return appConnection;
@@ -118,7 +142,7 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
         return connectionValue;
     }
 
-    const requestBody: RefreshTokenFromCloudRequest = {
+    const requestBody = {
         refreshToken: connectionValue.refresh_token,
         pieceName: appName,
         tokenUrl: connectionValue.token_url,
@@ -158,7 +182,52 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
     return { ...appConnection, ...formatOAuth2Response(response) };
 }
 
-export function formatOAuth2Response(response: Record<string, any>) {
+async function claim(request: {
+    clientSecret: string,
+    clientId: string,
+    tokenUrl: string,
+    redirectUrl: string,
+    code: string
+}): Promise<unknown> {
+    try {
+        const response = (
+            await axios.post(
+                request.tokenUrl,
+                new URLSearchParams({
+                    client_id: request.clientId,
+                    client_secret: request.clientSecret,
+                    redirect_uri: request.redirectUrl,
+                    grant_type: "authorization_code",
+                    code: request.code,
+                }),
+                {
+                    headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
+                }
+            )
+        ).data;
+        return { ...formatOAuth2Response(response), client_id: request.clientId, client_secret: request.clientSecret };
+    }
+    catch (e: unknown | AxiosError) {
+        throw new ActivepiecesError({code:ErrorCode.INVALID_CLAIM,params:{
+            clientId:request.clientId,
+            tokenUrl:request.tokenUrl,
+            redirectUrl:request.redirectUrl
+        }})
+    }
+}
+
+async function claimWithCloud(request: { pieceName: string; code: string }): Promise<unknown> {
+    try {
+        return (await axios.post("https://secrets.activepieces.com/claim", request)).data;
+    }
+    catch (e: unknown | AxiosError) {
+        throw new ActivepiecesError({code:ErrorCode.INVALID_CLOUD_CLAIM,params:{
+            appName:request.pieceName
+        }})
+    }
+}
+
+function formatOAuth2Response(response: Record<string, any>) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000);
     const formattedResponse: BaseOAuth2ConnectionValue = {
         access_token: response["access_token"],

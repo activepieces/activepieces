@@ -29,9 +29,10 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     const collection = await collectionService.getOneOrThrow({ projectId: jobData.projectId, id: collectionVersion.collectionId });
 
     const sandbox = sandboxManager.obtainSandbox();
-    const flowLock = await createRedisLock(flowVersion.id);
+    const flowLock = await createRedisLock();
     console.log(`[${jobData.runId}] Executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`);
     try {
+        flowLock.acquire(flowVersion.id);
         await sandbox.cleanAndInit();
 
         console.log("[" + jobData.runId + "] Downloading Files");

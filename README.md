@@ -69,6 +69,8 @@ Visit https://www.activepieces.com/docs/install/overview
  </tr>
 </table>
 
+## Repo Activity
+![Alt](https://repobeats.axiom.co/api/embed/f3afe14b092263a6c76408043fd4fc2f72ed4cf3.svg "Repobeats analytics image")
 
 ## Connectors
 We're building no-code connectors to make flow building a frictionless process for non developers. Go to the [Pieces](https://www.activepieces.com/docs/pieces) section of our docs to browse all available pieces.
