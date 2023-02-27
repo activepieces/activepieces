@@ -11,6 +11,37 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+### 02/22/2023
+**Version 0.3.3** (0.3.2 with hotfix) [GitHub](https://github.com/activepieces/activepieces/pull/583)
+
+<Warning>
+**Breaking Changes:** You need to configure `AP_ENCRYPTION_KEY`, and merged activepieces docker images into one. Please ensure that your `docker-compose.yml` is up to date as well. 
+</Warning>
+
+* **Pieces:**
+    - Figma: Includes actions for getting file, getting comments, posting comments, and triggering new comments
+    - Cal.Com: Includes triggers for cancelled bookings, created bookings, and rescheduled bookings
+    - RSS: Includes a trigger for new items in the feed
+    - Clickup: Includes actions for getting lists, creating folderless lists, getting tasks, getting task comments, and getting spaces actions
+    - Wordpress: Includes actions for creating Wordpress posts and triggering new Wordpress posts
+    - Github: Includes triggers for new pull requests and new issues
+    - Posthog: Includes actions for capture events / creating project
+    - Google Tasks: Includes actions for creating task
+
+* **Features:**
+    - Auto Complete styling fixes
+    - Multi select option added
+    - App connections are now encrypted
+* **Fixes:**
+    - Added full sample for Google Calendar
+
+* **Contributors**
+    - @kanarelo: Enriched Github, created Posthog and Cal.Com pieces
+    - @ShayPunter: Enriched Clickup piece
+    - @abaza738: Created RSS feed trigger and Google Tasks piece
+    - @jonaboe: Created Figma piece
+
+
 ### 02/15/2023
 **Version 0.3.1** [GitHub](https://github.com/activepieces/activepieces/pull/583)
 

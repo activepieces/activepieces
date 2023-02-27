@@ -21,8 +21,13 @@
       "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
-      "@activepieces/shared": ["packages/shared/src/index.ts"]
-    }
+      "@activepieces/shared": ["packages/shared/src/index.ts"],
+      "@ee/*": ["packages/ee/*"],
+     "@backend/*": ["packages/backend/src/app/*"],
+      "@frontend/*": ["packages/frontend/src/app/*"],
+     "@/*": ["packages/*"]
+    },
+    "resolveJsonModule": true
   },
   "exclude": ["node_modules", "tmp"]
 }

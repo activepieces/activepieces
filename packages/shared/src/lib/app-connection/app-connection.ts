@@ -4,7 +4,8 @@ export type AppConnectionId = string;
 
 export enum AppConnectionStatus {
   EXPIRED = "EXPIRED",
-  ACTIVE = "ACTIVE"
+  ACTIVE = "ACTIVE",
+  ERROR = "ERROR"
 }
 
 interface BaseAppConnection<S> extends BaseModel<AppConnectionId> {

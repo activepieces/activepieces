@@ -8,4 +8,6 @@ export const bubble_io = createPiece({
   logoUrl: 'https://seeklogo.com/images/B/bubble-icon-logo-90ECCA2A26-seeklogo.com.png',
   actions: [createThing],
   triggers: [],
+  version: '0.0.0',
+  authors: ['kanarelo'],
 });

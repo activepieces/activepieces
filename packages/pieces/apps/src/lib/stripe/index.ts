@@ -8,6 +8,7 @@ export const stripe = createPiece({
 	name: 'stripe',
 	displayName: "Stripe",
 	logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
+  version: '0.0.0',
 	authors: ['ashrafsamhouri'],
 	actions: [],
 	triggers: [stripeNewPayment, stripeNewCustomer, stripePaymentFailed, stripeNewSubscription],

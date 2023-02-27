@@ -10,6 +10,7 @@ export const pipedrive = createPiece({
 	name: 'pipedrive',
 	displayName: "Pipedrive",
 	logoUrl: 'https://cdn.activepieces.com/pieces/pipedrive.png',
+  version: '0.0.0',
 	actions: [addPerson],
 	authors: ['ashrafsamhouri'],
 	triggers: [newPerson, newDeal, newActivity, updatedPerson, updatedDeal],

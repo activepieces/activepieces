@@ -7,6 +7,7 @@ export const hubspot = createPiece({
 	name: 'hubspot',
 	displayName: "HubSpot",
 	logoUrl: 'https://cdn.activepieces.com/pieces/hubspot.png',
+  version: '0.0.0',
 	authors: ['khaledmashaly'],
 	actions: [
     createHubspotContact,

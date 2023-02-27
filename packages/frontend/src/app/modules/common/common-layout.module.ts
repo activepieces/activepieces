@@ -13,7 +13,6 @@ import { ApButtonComponent } from './components/ap-button/ap-button.component';
 import { ApImgComponent } from './components/ap-img/ap-img.component';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { LoadingSkeletonComponent } from './components/loading-skeleton/loading-skeleton.component';
-import { ApInputComponent } from './components/ap-input/ap-input.component';
 import { LoadingIconComponent } from './components/loading-icon/loading-icon.component';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { DefaultFalsePipe } from './pipe/default-false.pipe';
@@ -77,6 +76,7 @@ import { BuilderAutocompleteMentionsDropdownComponent } from './components/form-
 import { ImgFallbackDirective } from './helper/image-fallback.directive';
 import { ArrayFormControlComponent } from './components/form-controls/array-form-control/array-form-control.component';
 import { AddEditConnectionButtonComponent } from './components/configs-form/add-edit-connection-button/add-edit-connection-button.component';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -94,7 +94,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     ApButtonComponent,
     ApImgComponent,
     LoadingSkeletonComponent,
-    ApInputComponent,
     LoadingIconComponent,
     DefaultFalsePipe,
     DefaultTruePipe,
@@ -168,7 +167,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     ApButtonComponent,
     ApImgComponent,
     LoadingSkeletonComponent,
-    ApInputComponent,
     LoadingIconComponent,
     DefaultFalsePipe,
     DefaultTruePipe,
@@ -186,6 +184,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatFormFieldModule,
     MatInputModule,
     MatMenuModule,
+    MatProgressBarModule,
     MatCheckboxModule,
     MatSidenavModule,
     MatSelectModule,

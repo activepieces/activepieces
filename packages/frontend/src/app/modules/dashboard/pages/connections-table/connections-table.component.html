@@ -21,8 +21,8 @@
               [succeeded]="true"></app-state-icon>
             <app-state-icon *ngSwitchCase="connectionStatus.EXPIRED" textAfter="Expired"
               [succeeded]="false"></app-state-icon>
-
-
+            <app-state-icon *ngSwitchCase="connectionStatus.ERROR" textAfter="Error"
+              [succeeded]="false"></app-state-icon>
             <span *ngSwitchDefault [matTooltip]="connection.status">{{ connection.status}}</span>
           </ng-container>
         </td>

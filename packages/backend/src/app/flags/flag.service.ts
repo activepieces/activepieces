@@ -1,11 +1,11 @@
-import { Flag } from "@activepieces/shared";
-import { ApFlagId } from "@activepieces/shared";
+import { ApFlagId, Flag } from "@activepieces/shared";
 import { databaseConnection } from "../database/database-connection";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
 import { FlagEntity } from "./flag.entity";
 import axios from "axios";
 import { webhookService } from "../webhooks/webhook-service";
+import { getEdition } from "../helper/license-helper";
 
 const flagRepo = databaseConnection.getRepository(FlagEntity);
 
@@ -33,6 +33,12 @@ export const flagService = {
             {
                 id: ApFlagId.ENVIRONMENT,
                 value: system.get(SystemProp.ENVIRONMENT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.EDITION,
+                value: await getEdition(),
                 created,
                 updated,
             },
@@ -100,14 +106,14 @@ export const flagService = {
 };
 
 export type FlagType =
-  | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>
-  | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
-  | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
-  | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
-  | BaseFlagStructure<ApFlagId.WARNING_TEXT_BODY, string>
-  | BaseFlagStructure<ApFlagId.WARNING_TEXT_HEADER, string>;
+    | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>
+    | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
+    | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
+    | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
+    | BaseFlagStructure<ApFlagId.WARNING_TEXT_BODY, string>
+    | BaseFlagStructure<ApFlagId.WARNING_TEXT_HEADER, string>;
 
 interface BaseFlagStructure<K extends ApFlagId, V> {
-  id: K;
-  value: V;
+    id: K;
+    value: V;
 }
