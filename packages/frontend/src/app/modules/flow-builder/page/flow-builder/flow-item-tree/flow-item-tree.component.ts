@@ -4,17 +4,17 @@ import { FlowItem } from '../../../../common/model/flow-builder/flow-item';
 import { Observable } from 'rxjs';
 
 @Component({
-	selector: 'app-flow-item-tree',
-	templateUrl: './flow-item-tree.component.html',
-	styleUrls: [],
+  selector: 'app-flow-item-tree',
+  templateUrl: './flow-item-tree.component.html',
+  styleUrls: [],
 })
 export class FlowItemTreeComponent implements OnInit {
-	activePiece$: Observable<FlowItem | undefined>;
-	navbarOpen: boolean = false;
+  activePiece$: Observable<FlowItem | undefined>;
+  navbarOpen = false;
 
-	constructor(private flowService: FlowRendererService) {}
+  constructor(private flowService: FlowRendererService) {}
 
-	ngOnInit(): void {
-		this.activePiece$ = this.flowService.structureChanged;
-	}
+  ngOnInit(): void {
+    this.activePiece$ = this.flowService.structureChanged;
+  }
 }

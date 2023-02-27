@@ -37,6 +37,6 @@ export class BuilderAutocompleteMentionsDropdownComponent {
   closePressed = false;
   constructor(
     public interpolatingTextFormControlService: BuilderAutocompleteMentionsDropdownService
-  ) { }
+  ) {}
   id = new UUID();
 }

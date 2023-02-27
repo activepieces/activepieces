@@ -11,7 +11,10 @@
     font-size: 0.75rem !important;
     padding: 0.25rem 0.5rem !important;
     line-height: 1.5 !important;
-    height: 26px !important
+    height: 26px !important;
+    @media screen and (max-width:640px) {
+      height: unset !important;
+    }
   }
 
   .ap-btn-xs {
