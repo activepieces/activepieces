@@ -1,8 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 import { logger } from "../../helper/logger";
 
-const FLOW_VERSION_TABLE = 'flow_version';
-const PIECE_TYPE = 'PIECE';
+const FLOW_VERSION_TABLE = "flow_version";
+const PIECE_TYPE = "PIECE";
 
 export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
 
@@ -18,7 +18,7 @@ export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
 
             while (step) {
                 if (step.type === PIECE_TYPE) {
-                    step.settings.version = "0.0.0";
+                    step.settings.pieceVersion = "0.0.0";
                     update = true;
                 }
 
@@ -45,7 +45,7 @@ export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
 
             while (step) {
                 if (step.type === PIECE_TYPE) {
-                    delete step.settings.version;
+                    delete step.settings.pieceVersion;
                     update = true;
                 }
 
