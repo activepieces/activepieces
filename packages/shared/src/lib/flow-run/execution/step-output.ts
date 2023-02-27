@@ -20,3 +20,9 @@ export class LoopOnItemsStepOutput extends StepOutput {
     iterations: Record<string, StepOutput>[];
   };
 }
+
+export class BranchStepOutput extends StepOutput {
+  override output!: {
+    condition: boolean;
+  };
+}

@@ -34,7 +34,9 @@ type ErrorParams =
   | InvalidJwtTokenErrorParams
   | FlowRunQuotaExeceededErrorParams
   | SystemInvalidErrorParams
-  | SystemPropNotDefinedErrorParams;
+  | SystemPropNotDefinedErrorParams
+  | FlowOperationErrorParams;
+
 
 export interface BaseErrorParams<T, V> {
   code: T;
@@ -162,18 +164,22 @@ export type SystemInvalidErrorParams = BaseErrorParams<
   }
 >;
 
-export interface InvalidJwtTokenErrorParams
-  extends BaseErrorParams<
-    ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
-    {
-      token: string;
-    }
-  > { }
-export interface FlowRunQuotaExeceededErrorParams
-  extends BaseErrorParams<
-    ErrorCode.FLOW_RUN_QUOTA_EXCEEDED,
-    {}
-  > { }
+export type InvalidJwtTokenErrorParams = BaseErrorParams<
+  ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN, {
+    token: string;
+  }
+>;
+
+export type FlowRunQuotaExeceededErrorParams = BaseErrorParams<
+  ErrorCode.FLOW_RUN_QUOTA_EXCEEDED,
+  Record<string, never>
+>;
+
+export type FlowOperationErrorParams = BaseErrorParams<
+  ErrorCode.FLOW_OPERATION_INVALID,
+  Record<string, never>
+>;
+
 
 export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
@@ -196,4 +202,5 @@ export enum ErrorCode {
   INVALID_OR_EXPIRED_JWT_TOKEN = "INVALID_OR_EXPIRED_JWT_TOKEN",
   FLOW_RUN_QUOTA_EXCEEDED = "FLOW_RUN_QUOTA_EXCEEDED",
   SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
+  FLOW_OPERATION_INVALID = "FLOW_OPERATION_INVALID",
 }

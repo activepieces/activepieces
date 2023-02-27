@@ -4,6 +4,7 @@ export enum ActionType {
   CODE = 'CODE',
   PIECE = 'PIECE',
   LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
+  BRANCH = 'BRANCH',
 }
 
 const commonActionProps = {
@@ -75,7 +76,28 @@ export const LoopOnItemsAction = Type.Object({
 });
 
 
-export type LoopOnItemsAction = Static<typeof LoopOnItemsAction> & {firstLoopAction?: Action};
+export type LoopOnItemsAction = Static<typeof LoopOnItemsAction> & { firstLoopAction?: Action };
+
+// Loop Items
+export type BranchActionSettings = {
+  items: unknown;
+};
+
+export const BranchAction = Type.Object({
+  ...commonActionProps,
+  type: Type.Literal(ActionType.BRANCH),
+  settings: Type.Object({
+    conditions: Type.Array(Type.Array(Type.Object({
+      firstValue: Type.String({}),
+      secondValue: Type.String({}),
+      operator: Type.String({}),
+    }))),
+  }),
+  onSuccessAction: Type.Optional(Type.Any({})),
+  onFailureAction: Type.Optional(Type.Any({})),
+});
+
+export type BranchAction = Static<typeof BranchAction> & { onSuccessAction?: Action, onFailureAction?: Action };
 
 
 // Union of all actions
@@ -83,7 +105,8 @@ export type LoopOnItemsAction = Static<typeof LoopOnItemsAction> & {firstLoopAct
 export const Action = Type.Union([
   CodeAction,
   PieceAction,
-  LoopOnItemsAction
- ]);
+  LoopOnItemsAction,
+  BranchAction
+]);
 
-export type Action = Static<typeof Action> & {nextAction?: Action};
+export type Action = Static<typeof Action> & { nextAction?: Action };

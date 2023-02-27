@@ -2,7 +2,6 @@ import { TSchema, Type } from "@sinclair/typebox";
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { PieceProperty } from "@activepieces/framework";
 import {
-    Action,
     ActionType,
     apId,
     CloneFlowVersionRequest,
@@ -14,8 +13,6 @@ import {
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
-    getStep,
-    ImportFlowRequest,
     PieceActionSettings,
     PieceTriggerSettings,
     ProjectId,
@@ -36,17 +33,7 @@ export const flowVersionService = {
         });
     },
     async applyOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion | null> {
-        let mutatedFlowVersion = flowVersion;
-        if (operation.type === FlowOperationType.IMPORT_FLOW) {
-            const operations = await createImportFlowOperations(flowVersion, operation.request);
-            for (const operation of operations) {
-                mutatedFlowVersion = await applySingleOperation(projectId, mutatedFlowVersion, operation);
-            }
-        }
-        else {
-            mutatedFlowVersion = await applySingleOperation(projectId, flowVersion, operation);
-        }
-        console.log(JSON.stringify(mutatedFlowVersion, null, 2));
+        const mutatedFlowVersion = await applySingleOperation(projectId, flowVersion, operation);
         await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion);
         return await flowVersionRepo.findOneBy({
             id: flowVersion.id,
@@ -100,46 +87,6 @@ export const flowVersionService = {
     },
 };
 
-
-async function createImportFlowOperations(flowVersion: FlowVersion, request: ImportFlowRequest) {
-    const operations: FlowOperationRequest[] = [];
-    let currentAction: Action = flowVersion.trigger.nextAction;
-    //delete all actions after trigger.
-    while (currentAction) {
-        operations.push({
-            type: FlowOperationType.DELETE_ACTION,
-            request: {
-                name: currentAction.name,
-            },
-        });
-        currentAction = currentAction.nextAction;
-    }
-    operations.push({
-        type: FlowOperationType.CHANGE_NAME,
-        request: {
-            displayName: request.displayName,
-        },
-    });
-    operations.push({
-        type: FlowOperationType.UPDATE_TRIGGER,
-        request: {
-            ...request.trigger,
-        },
-    });
-    let currentNewAction = request.trigger?.nextAction;
-    //reinsert all actions after trigger
-    while (currentNewAction !== undefined && currentNewAction !== null) {
-        operations.push({
-            type: FlowOperationType.ADD_ACTION,
-            request: {
-                action: currentNewAction,
-            },
-        });
-        currentNewAction = currentNewAction.nextAction;
-    }
-    return operations;
-}
-
 async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowVersion> {
     request = await prepareRequest(projectId, flowVersion, request);
     return flowHelper.apply(flowVersion, request);
@@ -152,10 +99,10 @@ async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersi
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion));
     const artifactPromises = [];
 
-    let currentStep = flowVersionWithArtifacts.trigger?.nextAction;
-    while (currentStep !== undefined) {
-        if (currentStep.type === ActionType.CODE) {
-            const codeSettings: CodeActionSettings = currentStep.settings;
+    const steps = flowHelper.getAllSteps(flowVersionWithArtifacts);
+    for (const step of steps) {
+        if (step.type === ActionType.CODE) {
+            const codeSettings: CodeActionSettings = step.settings;
             const artifactPromise = fileService
                 .getOne({ projectId: projectId, fileId: codeSettings.artifactSourceId })
                 .then((artifact) => {
@@ -166,9 +113,7 @@ async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersi
                 });
             artifactPromises.push(artifactPromise);
         }
-        currentStep = currentStep.nextAction;
     }
-
 
     await Promise.all(artifactPromises);
     return flowVersionWithArtifacts;
@@ -195,7 +140,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
         else if (clonedRequest.request.type === ActionType.CODE) {
             const codeSettings: CodeActionSettings = clonedRequest.request.settings;
             await uploadArtifact(projectId, codeSettings);
-            const previousStep = getStep(flowVersion, clonedRequest.request.name);
+            const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name);
             if (
                 previousStep !== undefined &&
                     previousStep.type === ActionType.CODE &&
@@ -206,7 +151,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
         }
         break;
     case FlowOperationType.DELETE_ACTION: {
-        const previousStep = getStep(flowVersion, clonedRequest.request.name);
+        const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name);
         if (previousStep !== undefined && previousStep.type === ActionType.CODE) {
             await deleteArtifact(projectId, previousStep.settings);
         }

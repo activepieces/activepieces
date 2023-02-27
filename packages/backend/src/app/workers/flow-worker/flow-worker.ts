@@ -6,6 +6,7 @@ import {
     CollectionVersion,
     ExecutionOutputStatus,
     File,
+    flowHelper,
     FlowVersion,
     ProjectId,
     StepOutputStatus,
@@ -89,14 +90,13 @@ async function downloadFiles(
 
 async function buildCodes(projectId: ProjectId, flowVersion: FlowVersion): Promise<File[]> {
     const buildRequests: Array<Promise<File>> = [];
-    let currentStep: Trigger | Action | undefined = flowVersion.trigger;
-    while (currentStep !== undefined) {
-        if (currentStep.type === ActionType.CODE) {
-            const codeActionSettings: CodeActionSettings = currentStep.settings;
+    const steps = flowHelper.getAllSteps(flowVersion);
+    steps.forEach((step) => {
+        if (step.type === ActionType.CODE) {
+            const codeActionSettings: CodeActionSettings = step.settings;
             buildRequests.push(getArtifactFile(projectId, codeActionSettings));
         }
-        currentStep = currentStep.nextAction;
-    }
+    });
     const files: File[] = await Promise.all(buildRequests);
     if (files.length > 0) {
         await flowVersionService.overwriteVersion(flowVersion.id, flowVersion);
@@ -107,13 +107,13 @@ async function buildCodes(projectId: ProjectId, flowVersion: FlowVersion): Promi
 const getArtifactFile = async (projectId: ProjectId, codeActionSettings: CodeActionSettings): Promise<File> => {
     if (codeActionSettings.artifactPackagedId === undefined) {
         console.log(`Building package for file id ${codeActionSettings.artifactSourceId}`);
-        const sourceId = codeActionSettings.artifactSourceId!;
+        const sourceId = codeActionSettings.artifactSourceId;
         const fileEntity = await fileService.getOne({ projectId: projectId, fileId: sourceId });
-        const builtFile = await codeBuilder.build(fileEntity!.data);
+        const builtFile = await codeBuilder.build(fileEntity.data);
         const savedPackagedFile: File = await fileService.save(projectId, builtFile);
         codeActionSettings.artifactPackagedId = savedPackagedFile.id;
     }
-    const file: File = (await fileService.getOne({ projectId: projectId, fileId: codeActionSettings.artifactPackagedId }))!;
+    const file: File = (await fileService.getOne({ projectId: projectId, fileId: codeActionSettings.artifactPackagedId }));
     return file;
 };
 

@@ -11,7 +11,7 @@ executionState.insertConfigs({
   foo: true,
 });
 
-let stepOutput: StepOutput = {
+const stepOutput: StepOutput = {
   output: {
     items: [5, 'a'],
     name: 'John',

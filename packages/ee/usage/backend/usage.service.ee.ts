@@ -67,6 +67,7 @@ export interface RateLimitRequest {
     flowVersion: FlowVersion;
 }
 
+// TODO only count the steps that are actually executed.
 function countSteps(flowVersion: FlowVersion): number {
     let steps = 0;
     let currentStep: Trigger | Action | undefined = flowVersion.trigger;
