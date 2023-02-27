@@ -1,4 +1,4 @@
-import { AuthenticationType, createAction, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework"
+import { AuthenticationType, createAction, DynamicPropsValue, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework"
 
 const cleanName = (name: string):
   string => name.replace(" ", "").toLowerCase()
@@ -18,7 +18,7 @@ export const createThing = createAction({
       description: "The name of the bubble application",
       required: true,
     }),
-    thing: Property.Dropdown({
+    thing: Property.Dropdown<BubbleThing>({
       displayName: "Thing",
       description: "The thing/object to create",
       required: true,
@@ -48,7 +48,7 @@ export const createThing = createAction({
             token: api_key as string
           }
         }
-        const { body: meta } = await httpClient.sendRequest<MetaResponse>(request)
+        const { body: meta } = await httpClient.sendRequest<BubbleMetaResponse>(request)
         return {
           disabled: false,
           options: Object.keys(meta.types).map((key) => ({
@@ -58,10 +58,42 @@ export const createThing = createAction({
         };
       }
     }),
-    fields: Property.Object({
+    fields: Property.DynamicProperties({
       displayName: "Fields",
       description: "Use the test version of the API",
-      required: true
+      required: true,
+      refreshers: ["thing"],
+
+      props: async ({ thing }) => {
+        if (!thing) return {}
+  
+        const fields: DynamicPropsValue = {};
+  
+        (thing as BubbleThing).fields.map((field: BubbleField) => {
+          if (BUBBLE_INTERNAL_TYPES.includes(field.id)) {
+            return
+          }
+          if (field.type === "user") {
+            return
+          } 
+
+          const params = {
+            displayName: field.display,
+            description: field.display,
+            required: false
+          }
+          
+          if (field.type === "boolean") {
+            fields[field.display] = Property.Checkbox(params)
+          } else if (field.type === "Number") {
+            fields[field.display] = Property.Number(params)
+          } else {
+            fields[field.display] = Property.ShortText(params)
+          }
+        })
+  
+        return fields
+      }
     }),
     use_test_version: Property.Checkbox({
       displayName: "Use test version",
@@ -76,17 +108,17 @@ export const createThing = createAction({
 
   async run(context) {
     const { api_key, app_name, use_test_version, thing, fields } = context.propsValue
-    const url = `https://${cleanName(app_name as string)}.bubbleapps.io${!use_test_version ? '/' : '/version-test/'}api/1.1/obj/${cleanName(thing.display as string)}`
+    const version = !use_test_version ? '/' : '/version-test/'
+    const url = `https://${cleanName(app_name as string)}.bubbleapps.io${version}api/1.1/obj/${cleanName(thing!.display as string)}`
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url,
-      body: fields ? fields : {},
+      body: fields,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: api_key as string
-      },
-      queryParams: {}
+      }
     }
 
     const result = await httpClient.sendRequest(request)
@@ -100,18 +132,29 @@ export const createThing = createAction({
   }
 })
 
-interface MetaResponse {
+const BUBBLE_INTERNAL_TYPES = [
+  "_id",
+  "Created Date", 
+  "Modified Date", 
+  "Created By", 
+]
+
+interface BubbleThing {
+  display: string
+  fields: BubbleField[]
+}
+
+interface BubbleField {
+  id: string,
+  display: string,
+  type: string
+}
+
+interface BubbleMetaResponse {
   get: string[]
   post: string[]
   types: {
-    [key: string]: {
-      display: string
-      fields: {
-        id: string,
-        display: string,
-        type: string
-      }[]
-    }
+    [key: string]: BubbleThing
   },
   app_data: {
     appname: string
