@@ -19,7 +19,7 @@ const TWO_MINUTES = 120;
 
 export class Sandbox {
     private static readonly isolateExecutableName = getIsolateExecutableName();
-    private static readonly sandboxRunTimeSeconds = system.get(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? TWO_MINUTES;
+    private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? TWO_MINUTES;
 
     constructor(public readonly boxId: number) {}
 
