@@ -12,7 +12,7 @@ export const errorHandler = async (
     if (error instanceof ActivepiecesError) {
         let statusCode = StatusCodes.BAD_REQUEST;
         switch (error.error.code) {
-        case ErrorCode.FLOW_RUN_QUOTA_EXCEEDED:
+        case ErrorCode.TASK_QUOTA_EXCEEDED:
             statusCode = StatusCodes.PAYMENT_REQUIRED;
             break;
         case ErrorCode.INVALID_BEARER_TOKEN:

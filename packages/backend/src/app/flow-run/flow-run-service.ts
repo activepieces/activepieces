@@ -18,7 +18,7 @@ import {
     ApEdition
 } from "@activepieces/shared";
 import { getEdition } from "../helper/license-helper";
-import { RateLimitOperationType, usageService } from "@ee/usage/backend/usage.service.ee";
+import { billingService } from "@ee/billing/backend/billing.service";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 import { collectionRepo } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
@@ -29,6 +29,7 @@ import { Order } from "../helper/pagination/paginator";
 import { telemetry } from "../helper/telemetry.utils";
 import { FlowRunEntity } from "./flow-run-entity";
 import { flowRunSideEffects } from "./flow-run-side-effects";
+import { usageService } from "@ee/billing/backend/usage.service";
 
 export const repo = databaseConnection.getRepository(FlowRunEntity);
 
@@ -77,7 +78,6 @@ export const flowRunService = {
         const edition = await getEdition();
         if (edition === ApEdition.ENTERPRISE) {
             await usageService.limit({
-                operation: RateLimitOperationType.EXECUTE_RUN,
                 projectId: collection.projectId,
                 flowVersion: flowVersion
             });

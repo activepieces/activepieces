@@ -34,7 +34,7 @@ type ErrorParams =
   | InvalidClaimParams
   | InvalidCloudClaimParams
   | InvalidJwtTokenErrorParams
-  | FlowRunQuotaExeceededErrorParams
+  | TaskQuotaExeceededErrorParams
   | SystemInvalidErrorParams
   | SystemPropNotDefinedErrorParams;
 
@@ -174,8 +174,9 @@ export type SystemPropNotDefinedErrorParams = BaseErrorParams<
   }
 >;
 
-export type FlowRunQuotaExeceededErrorParams = BaseErrorParams<
-    ErrorCode.FLOW_RUN_QUOTA_EXCEEDED,
+export type TaskQuotaExeceededErrorParams
+  = BaseErrorParams<
+    ErrorCode.TASK_QUOTA_EXCEEDED,
     Record<string, never>
   >;
 
@@ -200,6 +201,6 @@ export enum ErrorCode {
   INVALID_CLAIM = "INVALID_CLAIM",
   INVALID_CLOUD_CLAIM = "INVALID_CLOUD_CLAIM",
   INVALID_OR_EXPIRED_JWT_TOKEN = "INVALID_OR_EXPIRED_JWT_TOKEN",
-  FLOW_RUN_QUOTA_EXCEEDED = "FLOW_RUN_QUOTA_EXCEEDED",
+  TASK_QUOTA_EXCEEDED = "FLOW_RUN_QUOTA_EXCEEDED",
   SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
 }
