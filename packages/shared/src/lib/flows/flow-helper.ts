@@ -12,15 +12,13 @@ import {
   CodeAction,
   PieceAction,
   LoopOnItemsAction,
-  StorageAction,
-  ActionSchema,
 } from './actions/action';
-import { Trigger, TriggerSchema, TriggerType } from './triggers/trigger';
+import { Trigger, TriggerType } from './triggers/trigger';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { FlowVersion } from './flow-version';
 
-const actionSchemaValidator = TypeCompiler.Compile(ActionSchema);
-const triggerSchemaValidation = TypeCompiler.Compile(TriggerSchema);
+const actionSchemaValidator = TypeCompiler.Compile(Action);
+const triggerSchemaValidation = TypeCompiler.Compile(Trigger);
 
 function isValid(flowVersion: FlowVersion) {
   let valid = true;
@@ -44,7 +42,7 @@ function deleteAction(
     parentStep = parentStep.nextAction;
   }
   if (parentStep.nextAction !== undefined) {
-    let stepToUpdate: Action = parentStep.nextAction;
+    const stepToUpdate: Action = parentStep.nextAction;
     parentStep.nextAction = stepToUpdate.nextAction;
   }
 }
@@ -72,7 +70,7 @@ function updateAction(
     parentStep = parentStep.nextAction;
   }
   if (parentStep.nextAction !== undefined) {
-    let stepToUpdate: Action = parentStep.nextAction;
+    const stepToUpdate: Action = parentStep.nextAction;
     parentStep.nextAction = createAction(request, stepToUpdate.nextAction);
   }
 }
@@ -100,13 +98,6 @@ function createAction(
   };
   let action;
   switch (request.type) {
-    case ActionType.STORAGE:
-      action = {
-        ...baseProperties,
-        type: ActionType.STORAGE,
-        settings: request.settings,
-      } as StorageAction;
-      break;
     case ActionType.LOOP_ON_ITEMS:
       action = {
         ...baseProperties,
@@ -207,6 +198,8 @@ export const flowHelper = {
           clonedVersion.trigger.nextAction
         );
         break;
+      default:
+        throw new Error('Unknown operation type');
     }
     clonedVersion.valid = isValid(clonedVersion);
     return clonedVersion;

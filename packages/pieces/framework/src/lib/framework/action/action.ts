@@ -1,7 +1,8 @@
+import { ActionBase } from '@activepieces/shared';
 import { ActionContext } from '../context';
 import { PieceProperty, StaticPropsValue } from '../property/property';
 
-class IAction<T extends PieceProperty> {
+class IAction<T extends PieceProperty> implements ActionBase {
   constructor(
     public readonly name: string,
     public readonly displayName: string,

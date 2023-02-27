@@ -14,6 +14,7 @@ import { InsertMentionOperation } from '../utils';
 @Component({
   selector: 'app-builder-autocomplete-mentions-dropdown',
   templateUrl: './builder-autocomplete-mentions-dropdown.component.html',
+  styleUrls: ['./builder-autocomplete-mentions-dropdown.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn400ms],
 })
@@ -30,8 +31,9 @@ export class BuilderAutocompleteMentionsDropdownComponent {
       );
     })
   );
-  @Input() width: string = '90%';
-  @Input() left: string = 'unset';
+  @Input() width = 'calc( 100% - 2rem )';
+  @Input() left = 'unset';
+  @Input() marginTop = '0px';
   closePressed = false;
   constructor(
     public interpolatingTextFormControlService: BuilderAutocompleteMentionsDropdownService

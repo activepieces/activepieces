@@ -123,6 +123,35 @@ Property.Checkbox({
 })
 ```
 
+#### Dynamic Properties 
+
+```typescript
+Property.DynamicProperties({
+    description: string,
+    displayName: string,
+    required: boolean,
+    refreshers: string[],
+    props: (propsValue) => Promise<Record<string, ShortTextProperty | NumberProperty | StaticDropdownProperty>>;
+})
+```
+
+#### Basic Authentication 
+
+```typescript
+Property.BasicAuth({
+    description: string,
+    displayName: string,
+    required: boolean,
+    username: {
+        displayName: string,
+        description: string,
+    },
+    password: {
+        displayName: string,
+        description: string,
+    }
+})
+```
 
 #### OAuth2 
 

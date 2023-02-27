@@ -17,24 +17,33 @@ export class FeedbackComponent {
   sendFeedback$: Observable<void>;
   sendingFeedback = false;
   openFeedbackPopOver$: Observable<void>;
-  constructor(public authenticationService: AuthenticationService, private snackbarService: MatSnackBar) {
-    this.openFeedbackPopOver$ = this.authenticationService.openFeedbackPopover$.asObservable().pipe(tap(() => {
-      this.matMenuTrigger.openMenu();
-    }));
+  constructor(
+    public authenticationService: AuthenticationService,
+    private snackbarService: MatSnackBar
+  ) {
+    this.openFeedbackPopOver$ = this.authenticationService.openFeedbackPopover$
+      .asObservable()
+      .pipe(
+        tap(() => {
+          this.matMenuTrigger.openMenu();
+        })
+      );
   }
   sendFeedback() {
     if (this.feedbackControl.value) {
       this.sendingFeedback = true;
-      this.sendFeedback$ = this.authenticationService.sendFeedback(this.feedbackControl.value).pipe(
-        map(() => void 0),
-        tap(() => {
-          this.matMenuTrigger.closeMenu();
-          this.sendingFeedback = false;
-          this.feedbackControl.setValue('');
-          this.snackbarService.open("Feedback submitted");
-        }));
-    }
-    else {
+      this.sendFeedback$ = this.authenticationService
+        .sendFeedback(this.feedbackControl.value)
+        .pipe(
+          map(() => void 0),
+          tap(() => {
+            this.matMenuTrigger.closeMenu();
+            this.sendingFeedback = false;
+            this.feedbackControl.setValue('');
+            this.snackbarService.open('Feedback submitted');
+          })
+        );
+    } else {
       this.matMenuTrigger.closeMenu();
     }
   }

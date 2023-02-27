@@ -4,23 +4,23 @@ import { FlowItem } from '../../../../../../common/model/flow-builder/flow-item'
 import { ActionType, LoopOnItemsAction } from '@activepieces/shared';
 
 @Component({
-	selector: 'app-flow-item-connection',
-	templateUrl: './flow-item-connection.component.html',
-	styleUrls: [],
-	changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-flow-item-connection',
+  templateUrl: './flow-item-connection.component.html',
+  styleUrls: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlowItemConnectionComponent {
-	@Input() flowItem: FlowItem;
-	@Input() colorLine = false;
-	@Input() viewMode: boolean;
-	@Input() insideLoop = false;
-	constructor(public themeService: ThemeService) {}
+  @Input() flowItem: FlowItem;
+  @Input() colorLine = false;
+  @Input() viewMode: boolean;
+  @Input() insideLoop = false;
+  constructor(public themeService: ThemeService) {}
 
-	get ActionType() {
-		return ActionType;
-	}
+  get ActionType() {
+    return ActionType;
+  }
 
-	castToLoopItem() {
-		return this.flowItem as LoopOnItemsAction;
-	}
+  castToLoopItem() {
+    return this.flowItem as LoopOnItemsAction;
+  }
 }

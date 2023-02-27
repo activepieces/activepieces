@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
+import { logger } from "../helper/logger";
 
 const getIsolateExecutableName = () => {
     const defaultName = "isolate";
@@ -18,7 +19,7 @@ const TWO_MINUTES = 120;
 
 export class Sandbox {
     private static readonly isolateExecutableName = getIsolateExecutableName();
-    private static readonly sandboxRunTimeSeconds = system.get(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? TWO_MINUTES;
+    private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? TWO_MINUTES;
 
     constructor(public readonly boxId: number) {}
 
@@ -85,7 +86,9 @@ export class Sandbox {
     private static runIsolate(cmd: string): Promise<string> {
         const currentDir = cwd();
         const fullCmd = `${currentDir}/packages/backend/src/assets/${this.isolateExecutableName} ${cmd}`;
-        console.log(fullCmd);
+
+        logger.info(`sandbox, command: ${fullCmd}`);
+
         return new Promise((resolve, reject) => {
             exec(fullCmd, (error: any, stdout: string | PromiseLike<string>, stderr: any) => {
                 if (error) {

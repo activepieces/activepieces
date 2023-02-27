@@ -10,9 +10,15 @@ export const errorHandler = async (
     console.error("[errorHandler]:", error);
 
     if (error instanceof ActivepiecesError) {
-        const statusCode =
-      error.error.code === ErrorCode.INVALID_BEARER_TOKEN ? StatusCodes.UNAUTHORIZED : StatusCodes.BAD_REQUEST;
-
+        let statusCode = StatusCodes.BAD_REQUEST;
+        switch (error.error.code) {
+        case ErrorCode.FLOW_RUN_QUOTA_EXCEEDED:
+            statusCode = StatusCodes.PAYMENT_REQUIRED;
+            break;
+        case ErrorCode.INVALID_BEARER_TOKEN:
+            statusCode = StatusCodes.UNAUTHORIZED;
+            break;
+        }
         await reply.status(statusCode).send({
             code: error.error.code,
             params:error.error.params
