@@ -5,6 +5,21 @@ import { ApId } from "@activepieces/shared";
 import { webhookService } from "./webhook-service";
 
 export const webhookController: FastifyPluginCallback = (app, _opts, done): void => {
+
+    app.post(
+        "/:flowId",
+        {
+            schema: {
+                params: WebhookQueryParams,
+            },
+        },
+        async (request: FastifyRequest<{ Params: WebhookQueryParams }>, reply) => {
+            handler(request, request.params.flowId);
+            await reply.status(StatusCodes.OK).send();
+        }
+    );
+
+
     app.post(
         "/",
         {
@@ -13,14 +28,7 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
             },
         },
         async (request: FastifyRequest<{ Querystring: WebhookQueryParams }>, reply) => {
-            webhookService.callback({
-                flowId: request.query.flowId,
-                payload: {
-                    headers: request.headers,
-                    body: request.body,
-                    queryParams: request.query
-                },
-            });
+            handler(request, request.query.flowId);
             await reply.status(StatusCodes.OK).send();
         }
     );
@@ -33,6 +41,16 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
     done();
 };
 
+function handler(request: FastifyRequest, flowId: string){
+    webhookService.callback({
+        flowId: flowId,
+        payload: {
+            headers: request.headers,
+            body: request.body,
+            queryParams: request.query
+        },
+    });
+}
 const WebhookQueryParams = Type.Object({
     flowId: ApId,
 });

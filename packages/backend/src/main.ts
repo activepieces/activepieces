@@ -28,6 +28,7 @@ import { firebaseAuthenticationModule } from "@ee/firebase-auth/backend/firebase
 import { billingModule } from "@ee/billing/backend/billing.module";
 import { getEdition } from "./app/helper/license-helper";
 import { ApEdition } from "@activepieces/shared";
+import { HttpMethod } from "@mailchimp/mailchimp_marketing";
 
 const app = fastify({
     logger,
@@ -68,6 +69,17 @@ app.register(import('fastify-raw-body'), {
     routes: []
 });
 app.register(formBody, { parser: str => qs.parse(str) });
+
+app.addHook("onRequest", async (request, reply) => {
+    const route = app.hasRoute({
+        method: request.method as HttpMethod,
+        url: request.url,
+    });
+    if (!route) {
+        reply.code(404).send(`Oops! It looks like we hit a dead end. The endpoint you're searching for is nowhere to be found. We suggest turning around and trying another path. Good luck!`);
+    } 
+});
+
 app.addHook("onRequest", tokenVerifyMiddleware);
 app.register(projectModule);
 app.register(collectionModule);
