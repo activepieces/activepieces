@@ -1,5 +1,5 @@
 import { createPiece } from "@activepieces/framework";
-import { discordSendMessageWebhook } from "./actions/send-message-webhook";
+import { discordSendMessageWebhook } from "./lib/actions/send-message-webhook";
 
 export const discord = createPiece({
     name: 'discord',

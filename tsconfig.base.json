@@ -33,6 +33,7 @@
       "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
       "@activepieces/piece-clickup": ["packages/pieces/clickup/src/index.ts"],
       "@activepieces/piece-csv": ["packages/pieces/csv/src/index.ts"],
+      "@activepieces/piece-discord": ["packages/pieces/discord/src/index.ts"],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
