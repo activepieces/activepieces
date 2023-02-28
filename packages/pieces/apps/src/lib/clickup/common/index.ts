@@ -105,7 +105,34 @@ export const clickupCommon = {
                 }),
             };
         }
-    })
+    }),
+    task_id: Property.Dropdown({
+        description: 'The ID of the ClickUp task',
+        displayName: 'Task Id',
+        required: true,
+        refreshers: ['authentication', 'list_id'],
+        options: async (value) => {
+            const { list_id, authentication } = value;
+            if (authentication === undefined || list_id === undefined) {
+                return {
+                    disabled: true,
+                    placeholder: 'connect your account first and select workspace',
+                    options: [],
+                };
+            }
+            const accessToken = getAccessTokenOrThrow(authentication as OAuth2PropertyValue);
+            const response = (await listTasks(accessToken, list_id as string));
+            return {
+                disabled: false,
+                options: response.tasks.map((task) => {
+                    return {
+                        label: task.name,
+                        value: task.id
+                    }
+                }),
+            };
+        }
+    }),
 }
 
 async function listSpaces(accessToken: string, workspaceId: string) {
@@ -146,6 +173,14 @@ async function listFolderlessList(accessToken: string, spaceId: string) {
 
 
 
+async function listTasks(accessToken: string, listId: string) {
+    return (await callClickUpApi<{
+        tasks: {
+            id: string,
+            name: string
+        }[]
+    }>(HttpMethod.GET, `list/${listId}/task`, accessToken, undefined)).body;
+}
 
 export async function callClickUpApi<T extends HttpMessageBody>(method: HttpMethod, apiUrl: string, accessToken: string, body: any | undefined): Promise<HttpResponse<T>> {
     return await httpClient.sendRequest<T>({

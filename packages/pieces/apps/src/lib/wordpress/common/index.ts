@@ -23,7 +23,7 @@ export const wordpressCommon = {
     authors: Property.Dropdown({
         displayName: 'Authors',
         required: false,
-        refreshers: ['connection', 'websiteUrl'],
+        refreshers: ['connection', 'website_url'],
         options: async (props) => {
             if (!props['connection']) {
                 return {

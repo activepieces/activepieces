@@ -6,20 +6,27 @@ import { ProjectService } from '../../common/service/project.service';
 import { DEFAULT_PAGE_SIZE } from '../../common/components/pagination/tables.utils';
 
 @Injectable({
-	providedIn: 'root',
+  providedIn: 'root',
 })
-export class AreThereCollectionsResovler implements Resolve<Observable<boolean>> {
-	constructor(private projectService: ProjectService, private collectionService: CollectionService) { }
+export class AreThereCollectionsResovler
+  implements Resolve<Observable<boolean>>
+{
+  constructor(
+    private projectService: ProjectService,
+    private collectionService: CollectionService
+  ) {}
 
-	resolve(): Observable<boolean> {
-		return this.projectService.selectedProjectAndTakeOne().pipe(
-			switchMap(project => {
-				return this.collectionService.list({ projectId: project.id, limit: DEFAULT_PAGE_SIZE, cursor: '' }).pipe(
-					map(res => {
-						return res.data.length > 0;
-					})
-				);
-			})
-		);
-	}
+  resolve(): Observable<boolean> {
+    return this.projectService.selectedProjectAndTakeOne().pipe(
+      switchMap((project) => {
+        return this.collectionService
+          .list({ projectId: project.id, limit: DEFAULT_PAGE_SIZE, cursor: '' })
+          .pipe(
+            map((res) => {
+              return res.data.length > 0;
+            })
+          );
+      })
+    );
+  }
 }

@@ -59,7 +59,7 @@ export const typeformNewSubmission = createTrigger({
         await typeformCommon.subscribeWebhook(
             context.propsValue['form_id']!,
             randomTag,
-            context.webhookUrl!,
+            context.webhookUrl,
             getAccessTokenOrThrow(context.propsValue['authentication'])
         );
         await context.store?.put<WebhookInformation>('_new_submission_trigger', {

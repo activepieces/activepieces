@@ -152,9 +152,9 @@ import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedb
     CloudOAuth2ConnectionDialogComponent,
     SecretTextConnectionDialogComponent,
     BasicAuthConnectionDialogComponent,
-    FeedbackComponent
+    FeedbackComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [FlowBuilderHeaderComponent],
 })
-export class FlowBuilderModule { }
+export class FlowBuilderModule {}
