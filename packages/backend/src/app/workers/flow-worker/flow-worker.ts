@@ -1,4 +1,4 @@
-import fs from "node:fs";
+import fs from "node:fs/promises";
 import {
     Action,
     ActionType,
@@ -79,17 +79,18 @@ async function downloadFiles(
         const buildPath = sandbox.getSandboxFolderPath();
 
         // This has to be before flows, since it does modify code settings and fill it with packaged file id.
-        fs.mkdirSync(buildPath + "/codes/");
+        await fs.mkdir(buildPath + "/codes/");
         const artifacts: File[] = await buildCodes(projectId, flowVersion);
-        artifacts.forEach((artifact) => {
-            fs.writeFileSync(buildPath + "/codes/" + artifact.id + ".js", artifact.data);
-        });
 
-        fs.mkdirSync(buildPath + "/flows/");
-        fs.writeFileSync(buildPath + "/flows/" + flowVersion.id + ".json", JSON.stringify(flowVersion));
+        for(const artifact of artifacts) {
+            await fs.writeFile(buildPath + "/codes/" + artifact.id + ".js", artifact.data);
+        }
+        
+        await fs.mkdir(buildPath + "/flows/");
+        await fs.writeFile(buildPath + "/flows/" + flowVersion.id + ".json", JSON.stringify(flowVersion));
 
-        fs.mkdirSync(buildPath + "/collections/");
-        fs.writeFileSync(buildPath + "/collections/" + collectionVersion.id + ".json", JSON.stringify(collectionVersion));
+        await fs.mkdir(buildPath + "/collections/");
+        await fs.writeFile(buildPath + "/collections/" + collectionVersion.id + ".json", JSON.stringify(collectionVersion));
     }
     finally {
         logger.info(`[${flowVersion.id}] Releasing flow lock`);
