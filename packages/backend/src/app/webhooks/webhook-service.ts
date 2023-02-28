@@ -70,7 +70,7 @@ export const webhookService = {
     },
     async getWebhookUrl(flowId: FlowId): Promise<string> {
         const webhookPrefix = await this.getWebhookPrefix();
-        return `${webhookPrefix}?flowId=${flowId}`;
+        return `${webhookPrefix}/${flowId}`;
     }
 };
 
