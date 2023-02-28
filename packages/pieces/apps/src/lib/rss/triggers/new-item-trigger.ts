@@ -1,7 +1,6 @@
 import { XMLParser } from 'fast-xml-parser';
 import { createTrigger, TriggerStrategy, httpClient, HttpMethod } from '@activepieces/framework';
 import { rssFeedUrl } from '../common/props';
-import crypto from "crypto";
 
 export const rssNewItemTrigger = createTrigger({
     name: 'new-item',
@@ -27,8 +26,6 @@ export const rssNewItemTrigger = createTrigger({
         const data = await getRss(propsValue.rss_feed_url);
         const items = data?.rss?.channel?.item || data.feed?.entry || [];
         store.put('lastFetchedRssItem', getId(items?.[0]));
-        console.log("HELLO");
-        console.log(getId(items?.[0]));
         return;
     },
 
@@ -48,7 +45,7 @@ export const rssNewItemTrigger = createTrigger({
         store.put('lastFetchedRssItem', getId(items?.[0]));
 
         const newItems = [];
-        for (const item of data?.rss?.channel?.item ?? []) {
+        for (const item of items) {
             if (getId(item) === lastItemId) break;
             newItems.push(item);
         }
@@ -68,7 +65,7 @@ function getId(item: { id: string, guid: string }) {
     if (item.id) {
         return item.id;
     }
-    return crypto.createHash('sha256').update(JSON.stringify(item)).digest('hex');
+    return JSON.stringify(item);
 }
 
 async function getRss(url: string) {
