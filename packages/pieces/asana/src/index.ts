@@ -1,5 +1,5 @@
 import { createPiece } from "@activepieces/framework";
-import { createAsanaTask } from "./actions/create-task";
+import { createAsanaTask } from "./lib/actions/create-task";
 
 export const asana = createPiece({
     name: 'asana',

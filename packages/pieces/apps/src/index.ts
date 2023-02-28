@@ -1,7 +1,7 @@
 import { Piece } from '@activepieces/framework';
 import { airtable } from '@activepieces/piece-airtable';
+import { asana } from '@activepieces/piece-asana';
 import { slack } from '@activepieces/piece-slack';
-import { asana } from './lib/asana';
 import { binance } from './lib/binance';
 import { blackbaud } from './lib/blackbaud';
 import { calendly } from './lib/calendly';
