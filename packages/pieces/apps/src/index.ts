@@ -35,13 +35,17 @@ import { calcom } from './lib/cal-com';
 import { wordpress } from './lib/wordpress';
 import { posthog } from './lib/posthog';
 import { googleTasks } from './lib/google-tasks';
+import { csv } from './lib/csv';
+import { bannerbear } from './lib/bannerbear';
 
 export const pieces: Piece[] = [
     airtable,
     asana,
+    bannerbear,
     binance,
     blackbaud,
     calendly,
+    csv,
     clickup,
     discord,
     drip,

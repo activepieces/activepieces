@@ -4,10 +4,10 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { Router } from '@angular/router';
 import * as auth from 'firebase/auth';
 import { catchError, forkJoin, from, map, of, switchMap, tap } from 'rxjs';
-import { AuthenticationService } from '@frontend/modules/common/service/authentication.service';
 import { FirebaseSignUpRequest, FirebaseSignInRequest } from "@ee/firebase-auth/shared/index"
-import { environment } from '@/frontend/src/environments/environment';
 import { User } from '@activepieces/shared';
+import { AuthenticationService } from '../../../frontend/src/app/modules/common/service/authentication.service';
+import { environment } from '../../../frontend/src/environments/environment';
 
 export type RegistrationFormValue = {
 	firstName?: string;

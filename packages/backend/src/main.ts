@@ -24,9 +24,9 @@ import { system, validateEnvPropsOnStartup } from "./app/helper/system/system";
 import { SystemProp } from "./app/helper/system/system-prop";
 import swagger from "@fastify/swagger";
 import { databaseConnection } from "./app/database/database-connection";
-import { logger } from './app/helper/logger';
+import { initilizeSentry, logger } from './app/helper/logger';
 import { firebaseAuthenticationModule } from "@ee/firebase-auth/backend/firebase-authentication.module";
-import { usageModule } from "@ee/usage/backend/usage.module.ee";
+import { billingModule } from "@ee/billing/backend/billing.module";
 import { getEdition } from "./app/helper/license-helper";
 import { ApEdition } from "@activepieces/shared";
 
@@ -38,7 +38,7 @@ const app = fastify({
             useDefaults: true,
             coerceTypes: true,
             formats: {
-                
+
             }
         }
     }
@@ -60,6 +60,13 @@ app.register(swagger, {
 app.register(cors, {
     origin: "*",
     methods: ["*"]
+});
+app.register(import('fastify-raw-body'), {
+    field: 'rawBody',
+    global: false,
+    encoding: 'utf8',
+    runFirst: true,
+    routes: []
 });
 app.register(formBody, { parser: str => qs.parse(str) });
 app.addHook("onRequest", tokenVerifyMiddleware);
@@ -107,7 +114,8 @@ const start = async () => {
         logger.info("Activepieces " + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + " Edition");
         if (edition === ApEdition.ENTERPRISE) {
             app.register(firebaseAuthenticationModule);
-            app.register(usageModule);
+            app.register(billingModule);
+            initilizeSentry();
         }
         else {
             app.register(authenticationModule);

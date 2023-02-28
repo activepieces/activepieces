@@ -7,6 +7,7 @@ const ignoredRoutes = new Set([
     "/v1/connection-keys/app-connections",
     "/v1/firebase/users",
     "/v1/firebase/sign-in",
+    "/v1/billing/stripe/webhook",
     // END EE
     "/v1/authentication/sign-in",
     "/v1/authentication/sign-up",

@@ -5,7 +5,7 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { AuthenticationService } from 'packages/frontend/src/app/modules/common/service/authentication.service';
+import { AuthenticationService } from '../../../../../../common/service/authentication.service';
 
 import { FlowItemDetails } from '../step-type-item/flow-item-details';
 
@@ -20,7 +20,7 @@ export class StepTypeListComponent {
   @Output() typeSelected: EventEmitter<FlowItemDetails> = new EventEmitter();
   @Input() emptyListText: string;
 
-  constructor(private authenticationService: AuthenticationService) { }
+  constructor(private authenticationService: AuthenticationService) {}
   openFeedbackPopover() {
     this.authenticationService.openFeedbackPopover$.next();
   }

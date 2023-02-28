@@ -6,23 +6,24 @@ import { CollectionActions } from '../../../../../store/collection/collection.ac
 import { Config } from '@activepieces/shared';
 
 @Component({
-	selector: 'app-configs-list',
-	templateUrl: './configs-list.component.html',
+  selector: 'app-configs-list',
+  templateUrl: './configs-list.component.html',
 })
 export class VariableListComponent implements OnInit {
-	@Output() selectedVariable: EventEmitter<{ value: Config; index: number }> = new EventEmitter<any>();
+  @Output() selectedVariable: EventEmitter<{ value: Config; index: number }> =
+    new EventEmitter<any>();
 
-	variables$: Observable<Config[]>;
-	viewMode$: Observable<boolean>;
+  variables$: Observable<Config[]>;
+  viewMode$: Observable<boolean>;
 
-	constructor(private store: Store) {}
+  constructor(private store: Store) {}
 
-	ngOnInit(): void {
-		this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
-		this.variables$ = this.store.select(BuilderSelectors.selectAllConfigs);
-	}
+  ngOnInit(): void {
+    this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
+    this.variables$ = this.store.select(BuilderSelectors.selectAllConfigs);
+  }
 
-	deleteVariable(index: number) {
-		this.store.dispatch(CollectionActions.deleteConfig({ configIndex: index }));
-	}
+  deleteVariable(index: number) {
+    this.store.dispatch(CollectionActions.deleteConfig({ configIndex: index }));
+  }
 }

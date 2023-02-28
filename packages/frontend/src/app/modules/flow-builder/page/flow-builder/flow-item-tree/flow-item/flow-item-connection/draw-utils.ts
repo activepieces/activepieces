@@ -1,24 +1,24 @@
 export class Drawer {
-	drawVerticalLine(dy: number) {
-		return `v ${dy}`;
-	}
-	drawHorizontalLine(dx: number) {
-		return `h ${dx}`;
-	}
+  drawVerticalLine(dy: number) {
+    return `v ${dy}`;
+  }
+  drawHorizontalLine(dx: number) {
+    return `h ${dx}`;
+  }
 
-	drawLine(dx: number, dy: number) {
-		return `l ${dx} ${dy}`;
-	}
+  drawLine(dx: number, dy: number) {
+    return `l ${dx} ${dy}`;
+  }
 
-	drawArc(isLeft: boolean, isDownwards: boolean, shouldSweep: boolean) {
-		const sweepFlag = shouldSweep ? '0' : '1';
-		const xSign = isLeft ? '-' : '';
-		const ySign = isDownwards ? '' : '-';
-		return `a ${ARC_LENGTH} ${ARC_LENGTH} 0 0 ${sweepFlag} ${xSign}${ARC_LENGTH} ${ySign}${ARC_LENGTH}`;
-	}
-	move(dx: number, dy: number) {
-		return `m ${dx} ${dy}`;
-	}
+  drawArc(isLeft: boolean, isDownwards: boolean, shouldSweep: boolean) {
+    const sweepFlag = shouldSweep ? '0' : '1';
+    const xSign = isLeft ? '-' : '';
+    const ySign = isDownwards ? '' : '-';
+    return `a ${ARC_LENGTH} ${ARC_LENGTH} 0 0 ${sweepFlag} ${xSign}${ARC_LENGTH} ${ySign}${ARC_LENGTH}`;
+  }
+  move(dx: number, dy: number) {
+    return `m ${dx} ${dy}`;
+  }
 }
 
 export const VERTICAL_LINE_LENGTH = 48;
@@ -34,4 +34,5 @@ export const SVG_ELEMENT_DEFAULT_HEIGHT = 150;
 export const SVG_ELEMENT_DEFAULT_WIDTH = 300;
 export const LINES_WIDTH = 2;
 export const SPACE_BETWEEN_ITEM_CONTENT_AND_LINE = 8;
-export const AFTER_NESTED_LOOP_LINE_LENGTH = VERTICAL_LINE_LENGTH + ARROW_HEAD_SIZE.height;
+export const AFTER_NESTED_LOOP_LINE_LENGTH =
+  VERTICAL_LINE_LENGTH + ARROW_HEAD_SIZE.height;

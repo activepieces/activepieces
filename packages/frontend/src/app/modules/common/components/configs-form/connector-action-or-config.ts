@@ -5,7 +5,7 @@ export interface PieceConfig {
   key: string;
   type: PropertyType;
   label: string;
-  value?: any;
+  value?: unknown;
   description?: string;
   authUrl?: string;
   tokenUrl?: string;

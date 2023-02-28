@@ -1,4 +1,4 @@
-import { apId, SignUpRequest, User, UserStatus } from "@activepieces/shared";
+import { apId, SignUpRequest, User, UserId, UserStatus } from "@activepieces/shared";
 import { passwordHasher } from "../authentication/lib/password-hasher";
 import { databaseConnection } from "../database/database-connection";
 import { UserEntity } from "./user-entity";
@@ -6,7 +6,7 @@ import { UserEntity } from "./user-entity";
 const userRepo = databaseConnection.getRepository(UserEntity);
 
 interface GetOneQuery {
-  email?: string;
+  email: string;
 }
 
 export const userService = {
@@ -24,8 +24,10 @@ export const userService = {
         };
         return await userRepo.save(user);
     },
-
-    async getOne(query: GetOneQuery = {}): Promise<User | null> {
+    async getOne({id}: {id: UserId}): Promise<User | null> {
+        return await userRepo.findOneBy({id});
+    },
+    async getOneByEmail(query: GetOneQuery): Promise<User | null> {
         return await userRepo.findOneBy(query);
     },
 };

@@ -33,3 +33,14 @@
 {
   color:rgba(0, 0, 0, 0.38);
 }
+
+.ql-clipboard {
+  left: -100000px;
+  height: 1px;
+  overflow-y: hidden;
+  position: absolute;
+  top: 50%;
+  // ensure quill clipboard preserve whitespaces
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}

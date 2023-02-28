@@ -1,8 +1,8 @@
-<div class="ap-w-[250px] md:ap-w-[500px] " *ngIf="runsStats$ | async as stats">
-    <div class="ap-typography-1 ap-font-semibold ap-flex ap-mb-2">
+<div *ngIf="runsStats$ | async as stats">
+    <div class="ap-typography-1 ap-font-semibold ap-flex ap-mb-2 text-container ap-items-center">
         <div>Tasks: {{stats.runsExecuted}}/{{stats.runsCap}} (Resets in {{stats.daysLeftBeforeReset}} days)</div>
         <div class="ap-flex-grow"></div>
-        <app-button btnColor="primary" btnStyle="basic" (buttonClicked)="openPricingPlans()" type="button"
+        <app-button btnColor="primary" btnStyle="basic" (buttonClicked)="openPricingPlans(stats.customerPortalUrl)" type="button"
             btnSize="small">
             View Plans
         </app-button>

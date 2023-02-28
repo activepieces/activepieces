@@ -348,7 +348,7 @@ export const registered = [
   },
   {
     name: GithubEventType.ISSUES,
-    displayName: "New Issues",
+    displayName: "New Issue",
     description: "Triggers when there is activity relating to an issue.",
     sampleData: {
       "action": "opened",

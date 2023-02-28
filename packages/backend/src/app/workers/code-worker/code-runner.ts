@@ -1,9 +1,10 @@
-import fs from "node:fs";
-import { sandboxManager } from "../sandbox";
+import fs from "node:fs/promises";
 import { CodeExecutionResult, CodeRunStatus } from "@activepieces/shared";
+import { sandboxManager } from "../sandbox";
 import { codeBuilder } from "./code-builder";
 import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";
+import { logger } from "../../helper/logger";
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 
@@ -30,21 +31,28 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
     const buildPath = sandbox.getSandboxFolderPath();
     let executionResult: CodeExecutionResult;
     try {
-        console.log("Started Executing Code in sandbox " + buildPath);
+        const startTime = Date.now();
+        logger.info(`Started Executing Code in sandbox: ${buildPath}`);
+
         await sandbox.cleanAndInit();
 
         const bundledCode = await codeBuilder.build(artifact);
-        const codeExecutor = fs.readFileSync("packages/backend/src/assets/code-executor.js");
-        fs.writeFileSync(buildPath + "/index.js", bundledCode);
-        fs.writeFileSync(buildPath + "/_input.txt", JSON.stringify(input));
-        fs.writeFileSync(buildPath + "/code-executor.js", codeExecutor);
+        const codeExecutor = await fs.readFile("packages/backend/src/assets/code-executor.js");
+
+        await fs.writeFile(`${buildPath}/index.js`, bundledCode);
+        await fs.writeFile(`${buildPath}/_input.txt`, JSON.stringify(input));
+        await fs.writeFile(`${buildPath}/code-executor.js`, codeExecutor);
+
         try {
             await sandbox.runCommandLine(`${nodeExecutablePath} code-executor.js`);
         }
         catch (e) {
-            console.error('error executing code', e);
+            // error is ignored as output is read from filesystem
+            logger.error(e, "code runner");
         }
+
         const metaResult = sandbox.parseMetaFile();
+
         executionResult = {
             verdict: fromStatus(metaResult.status as string),
             timeInSeconds: Number.parseFloat(metaResult.time as string),
@@ -52,11 +60,13 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
             standardOutput: sandbox.parseStandardOutput(),
             standardError: sandbox.parseStandardError(),
         };
-        console.log("Finished Executing in sandbox " + buildPath);
+
+        logger.info(`Finished Executing in sandbox: ${buildPath}, duration: ${Date.now() - startTime}ms`);
     }
     finally {
         sandboxManager.returnSandbox(sandbox.boxId);
     }
+
     return executionResult;
 }
 

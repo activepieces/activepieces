@@ -23,6 +23,7 @@
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
+      "@shared/*": ["packages/shared/src/lib/*"],
       "@backend/*": ["packages/backend/src/app/*"],
       "@frontend/*": ["packages/frontend/src/app/*"],
       "@/*": ["packages/*"]
