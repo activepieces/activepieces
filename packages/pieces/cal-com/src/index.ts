@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/framework';
-import { triggers } from './triggers';
+import { triggers } from './lib/triggers';
 
 export const calcom = createPiece({
   name: 'cal.com',
