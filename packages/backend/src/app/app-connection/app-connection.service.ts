@@ -14,26 +14,26 @@ export const appConnectionService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertConnectionRequest }): Promise<AppConnection> {
         let response: any = request.value;
         switch (request.value.type) {
-        case AppConnectionType.CLOUD_OAUTH2:
-            response = await claimWithCloud({
-                pieceName: request.appName,
-                code: request.value.code
-            })
-            break;
-        case AppConnectionType.OAUTH2:
-            response = await claim({
-                clientSecret: request.value.client_secret,
-                clientId: request.value.client_id,
-                tokenUrl: request.value.token_url,
-                redirectUrl: request.value.redirect_url,
-                code: request.value.code
-            })
-            break;
-        default:
-            break;
+            case AppConnectionType.CLOUD_OAUTH2:
+                response = await claimWithCloud({
+                    pieceName: request.appName,
+                    code: request.value.code
+                })
+                break;
+            case AppConnectionType.OAUTH2:
+                response = await claim({
+                    clientSecret: request.value.client_secret,
+                    clientId: request.value.client_id,
+                    tokenUrl: request.value.token_url,
+                    redirectUrl: request.value.redirect_url,
+                    code: request.value.code
+                })
+                break;
+            default:
+                break;
         }
         const claimedUpsertRequest = { ...request, value: { ...response, ...request.value }, id: apId(), projectId };
-        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId ,  value: encryptObject(claimedUpsertRequest.value)}, ["name", "projectId"]);
+        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId, value: encryptObject(claimedUpsertRequest.value) }, ["name", "projectId"]);
         return appConnectionRepo.findOneByOrFail({
             projectId: projectId,
             name: request.name
@@ -49,19 +49,20 @@ export const appConnectionService = {
         if (appConnection === null) {
             return null;
         }
-        const refreshLock = createRedisLock();
+        const refreshLock = createRedisLock(10 * 1000);
         try {
             await refreshLock.acquire(`${projectId}_${name}`);
 
             appConnection.value = decryptObject(appConnection.value);
             const refreshedAppConnection = await refresh(appConnection);
             await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) });
-            refreshedAppConnection.status = getStatus(refreshedAppConnection);            
+            refreshedAppConnection.status = getStatus(refreshedAppConnection);
             return refreshedAppConnection;
         }
         catch (e) {
-            refreshLock.release();
             appConnection.status = AppConnectionStatus.ERROR;
+        } finally {
+            refreshLock.release();
         }
         return appConnection;
     },
@@ -113,14 +114,14 @@ export const appConnectionService = {
 
 async function refresh(connection: AppConnection): Promise<AppConnection> {
     switch (connection.value.type) {
-    case AppConnectionType.CLOUD_OAUTH2:
-        connection.value = await refreshCloud(connection.appName, connection.value);
-        break;
-    case AppConnectionType.OAUTH2:
-        connection.value = await refreshWithCredentials(connection.value);
-        break;
-    default:
-        break;
+        case AppConnectionType.CLOUD_OAUTH2:
+            connection.value = await refreshCloud(connection.appName, connection.value);
+            break;
+        case AppConnectionType.OAUTH2:
+            connection.value = await refreshWithCredentials(connection.value);
+            break;
+        default:
+            break;
     }
     return connection;
 }
@@ -208,11 +209,13 @@ async function claim(request: {
         return { ...formatOAuth2Response(response), client_id: request.clientId, client_secret: request.clientSecret };
     }
     catch (e: unknown | AxiosError) {
-        throw new ActivepiecesError({code:ErrorCode.INVALID_CLAIM,params:{
-            clientId:request.clientId,
-            tokenUrl:request.tokenUrl,
-            redirectUrl:request.redirectUrl
-        }})
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_CLAIM, params: {
+                clientId: request.clientId,
+                tokenUrl: request.tokenUrl,
+                redirectUrl: request.redirectUrl
+            }
+        })
     }
 }
 
@@ -221,9 +224,11 @@ async function claimWithCloud(request: { pieceName: string; code: string }): Pro
         return (await axios.post("https://secrets.activepieces.com/claim", request)).data;
     }
     catch (e: unknown | AxiosError) {
-        throw new ActivepiecesError({code:ErrorCode.INVALID_CLOUD_CLAIM,params:{
-            appName:request.pieceName
-        }})
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_CLOUD_CLAIM, params: {
+                appName: request.pieceName
+            }
+        })
     }
 }
 
@@ -252,14 +257,14 @@ function deleteProps(obj: Record<string, any>, prop: string[]) {
 function getStatus(connection: AppConnection): AppConnectionStatus {
     const connectionStatus = AppConnectionStatus.ACTIVE;
     switch (connection.value.type) {
-    case AppConnectionType.CLOUD_OAUTH2:
-    case AppConnectionType.OAUTH2:
-        if (isExpired(connection.value)) {
-            return AppConnectionStatus.EXPIRED;
-        }
-        break;
-    default:
-        break;
+        case AppConnectionType.CLOUD_OAUTH2:
+        case AppConnectionType.OAUTH2:
+            if (isExpired(connection.value)) {
+                return AppConnectionStatus.EXPIRED;
+            }
+            break;
+        default:
+            break;
     }
     return connectionStatus;
 }
