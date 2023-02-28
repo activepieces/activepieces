@@ -26,14 +26,17 @@ import { CloudAuthConfigsService } from '../../../../../../../../../common/servi
 import { ConnectionValidator } from '../../../../../../validators/connectionNameValidator';
 import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
 import { appConnectionsActions } from '../../../../../../../../store/app-connections/app-connections.action';
-import { OAuth2PopupParams } from '../../../../../../../../../common/model/oauth2-popup-params.interface';
+import {
+  OAuth2PopupParams,
+  OAuth2PopupResponse,
+} from '../../../../../../../../../common/model/oauth2-popup-params.interface';
 
 interface AuthConfigSettings {
   redirect_url: FormControl<string>;
   client_secret: FormControl<string>;
   client_id: FormControl<string>;
   name: FormControl<string>;
-  value: FormControl<string>;
+  value: FormControl<OAuth2PopupResponse>;
   props: UntypedFormGroup;
 }
 export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
@@ -122,10 +125,13 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
           ),
         ],
       }),
-      value: new FormControl('', {
-        nonNullable: true,
-        validators: Validators.required,
-      }),
+      value: new FormControl(
+        { code: '' },
+        {
+          nonNullable: true,
+          validators: Validators.required,
+        }
+      ),
       props: this.fb.group(propsControls),
     });
     this.settingsForm.controls.name.markAllAsTouched();
@@ -168,7 +174,8 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       name: connectionName,
       appName: this.pieceName,
       value: {
-        code: this.settingsForm.controls.value.value,
+        code: this.settingsForm.controls.value.value.code,
+        code_challenge: this.settingsForm.controls.value.value.code_challenge,
         type: AppConnectionType.OAUTH2,
         client_id: this.settingsForm.controls.client_id.value,
         client_secret: this.settingsForm.controls.client_secret.value,
@@ -237,9 +244,9 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 
   getOAuth2Settings(): OAuth2PopupParams {
     const formValue = this.settingsForm.getRawValue();
+    let authUrl = this.pieceAuthConfig.authUrl!;
+    let tokenUrl = this.pieceAuthConfig.tokenUrl!;
     if (this.pieceAuthConfig.oAuthProps) {
-      let authUrl = this.pieceAuthConfig.authUrl!;
-      let tokenUrl = this.pieceAuthConfig.tokenUrl!;
       Object.keys(this.pieceAuthConfig.oAuthProps).forEach((key) => {
         authUrl = authUrl.replaceAll(
           `{${key}}`,
@@ -250,24 +257,14 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
           this.settingsForm.controls.props.value[key]
         );
       });
-      return {
-        auth_url: authUrl,
-        client_id: formValue.client_id,
-        client_secret: formValue.client_secret,
-        extraParams: this.pieceAuthConfig.oAuthProps || {},
-        redirect_url: formValue.redirect_url,
-        scope: this.pieceAuthConfig.scope!.join(' '),
-        token_url: tokenUrl,
-      };
     }
     return {
       auth_url: this.pieceAuthConfig.authUrl!,
       client_id: formValue.client_id,
-      client_secret: formValue.client_secret,
       extraParams: this.pieceAuthConfig.oAuthProps || {},
       redirect_url: formValue.redirect_url,
+      pkce: this.pieceAuthConfig.pkce,
       scope: this.pieceAuthConfig.scope!.join(' '),
-      token_url: this.pieceAuthConfig.tokenUrl!,
     };
   }
 }

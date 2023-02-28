@@ -17,7 +17,7 @@ export const appConnectionService = {
         case AppConnectionType.CLOUD_OAUTH2:
             response = await claimWithCloud({
                 pieceName: request.appName,
-                code: request.value.code
+                code: request.value.code,
             })
             break;
         case AppConnectionType.OAUTH2:
@@ -26,7 +26,8 @@ export const appConnectionService = {
                 clientId: request.value.client_id,
                 tokenUrl: request.value.token_url,
                 redirectUrl: request.value.redirect_url,
-                code: request.value.code
+                code: request.value.code,
+                codeVerifier: request.value.code_challenge,
             })
             break;
         default:
@@ -189,9 +190,11 @@ async function claim(request: {
     clientId: string,
     tokenUrl: string,
     redirectUrl: string,
-    code: string
+    code: string,
+    codeVerifier: string
 }): Promise<unknown> {
     try {
+        console.log("HELLO " + request.codeVerifier);
         const response = (
             await axios.post(
                 request.tokenUrl,
@@ -199,6 +202,7 @@ async function claim(request: {
                     client_id: request.clientId,
                     client_secret: request.clientSecret,
                     redirect_uri: request.redirectUrl,
+                    code_verifier: request.codeVerifier,
                     grant_type: "authorization_code",
                     code: request.code,
                 }),

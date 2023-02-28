@@ -5,10 +5,11 @@ export const googleCalendarCommon = {
   baseUrl: 'https://www.googleapis.com/calendar/v3',
   authentication: Property.OAuth2({
     description: '',
-    displayName: 'Authentication',
+    displayName: 'Authentication 2',
     authUrl: 'https://accounts.google.com/o/oauth2/auth',
     tokenUrl: 'https://oauth2.googleapis.com/token',
     required: true,
+    pkce: true,
     scope: ['https://www.googleapis.com/auth/calendar'],
   }),
   calendarDropdown: Property.Dropdown<string>({
