@@ -14,23 +14,23 @@ export const appConnectionService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertConnectionRequest }): Promise<AppConnection> {
         let response: any = request.value;
         switch (request.value.type) {
-            case AppConnectionType.CLOUD_OAUTH2:
-                response = await claimWithCloud({
-                    pieceName: request.appName,
-                    code: request.value.code
-                })
-                break;
-            case AppConnectionType.OAUTH2:
-                response = await claim({
-                    clientSecret: request.value.client_secret,
-                    clientId: request.value.client_id,
-                    tokenUrl: request.value.token_url,
-                    redirectUrl: request.value.redirect_url,
-                    code: request.value.code
-                })
-                break;
-            default:
-                break;
+        case AppConnectionType.CLOUD_OAUTH2:
+            response = await claimWithCloud({
+                pieceName: request.appName,
+                code: request.value.code
+            })
+            break;
+        case AppConnectionType.OAUTH2:
+            response = await claim({
+                clientSecret: request.value.client_secret,
+                clientId: request.value.client_id,
+                tokenUrl: request.value.token_url,
+                redirectUrl: request.value.redirect_url,
+                code: request.value.code
+            })
+            break;
+        default:
+            break;
         }
         const claimedUpsertRequest = { ...request, value: { ...response, ...request.value }, id: apId(), projectId };
         await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId, value: encryptObject(claimedUpsertRequest.value) }, ["name", "projectId"]);
@@ -61,7 +61,8 @@ export const appConnectionService = {
         }
         catch (e) {
             appConnection.status = AppConnectionStatus.ERROR;
-        } finally {
+        }
+        finally {
             refreshLock.release();
         }
         return appConnection;
@@ -114,14 +115,14 @@ export const appConnectionService = {
 
 async function refresh(connection: AppConnection): Promise<AppConnection> {
     switch (connection.value.type) {
-        case AppConnectionType.CLOUD_OAUTH2:
-            connection.value = await refreshCloud(connection.appName, connection.value);
-            break;
-        case AppConnectionType.OAUTH2:
-            connection.value = await refreshWithCredentials(connection.value);
-            break;
-        default:
-            break;
+    case AppConnectionType.CLOUD_OAUTH2:
+        connection.value = await refreshCloud(connection.appName, connection.value);
+        break;
+    case AppConnectionType.OAUTH2:
+        connection.value = await refreshWithCredentials(connection.value);
+        break;
+    default:
+        break;
     }
     return connection;
 }
@@ -257,14 +258,14 @@ function deleteProps(obj: Record<string, any>, prop: string[]) {
 function getStatus(connection: AppConnection): AppConnectionStatus {
     const connectionStatus = AppConnectionStatus.ACTIVE;
     switch (connection.value.type) {
-        case AppConnectionType.CLOUD_OAUTH2:
-        case AppConnectionType.OAUTH2:
-            if (isExpired(connection.value)) {
-                return AppConnectionStatus.EXPIRED;
-            }
-            break;
-        default:
-            break;
+    case AppConnectionType.CLOUD_OAUTH2:
+    case AppConnectionType.OAUTH2:
+        if (isExpired(connection.value)) {
+            return AppConnectionStatus.EXPIRED;
+        }
+        break;
+    default:
+        break;
     }
     return connectionStatus;
 }
