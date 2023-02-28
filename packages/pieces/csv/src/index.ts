@@ -1,6 +1,6 @@
 import { createPiece } from "@activepieces/framework";
-import { parseCSVTextAction } from "./actions/convert-json-to-csv";
-import { unparseCSVTextAction } from "./actions/convert-csv-to-json";
+import { parseCSVTextAction } from "./lib/actions/convert-json-to-csv";
+import { unparseCSVTextAction } from "./lib/actions/convert-csv-to-json";
 
 export const csv = createPiece({
   name: 'csv',

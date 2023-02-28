@@ -7,6 +7,7 @@ import { blackbaud } from '@activepieces/piece-blackbaud';
 import { calcom } from '@activepieces/piece-cal-com';
 import { calendly } from '@activepieces/piece-calendly';
 import { clickup } from '@activepieces/piece-clickup';
+import { csv } from '@activepieces/piece-csv';
 import { slack } from '@activepieces/piece-slack';
 import { discord } from './lib/discord';
 import { drip } from './lib/drip';
@@ -35,7 +36,6 @@ import { zoom } from './lib/zoom';
 import { storage } from './lib/store';
 import { freshsales } from './lib/freshsales';
 import { googleTasks } from './lib/google-tasks';
-import { csv } from './lib/csv';
 import { posthog } from './lib/posthog';
 import { wordpress } from './lib/wordpress';
 
