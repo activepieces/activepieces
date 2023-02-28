@@ -5,14 +5,18 @@ export const freshSalesCreateContact = createAction({
   displayName: "Create Contact",
   description: "Add new contact in Freshsales CRM",
   props: {
-    token: Property.ShortText({
-      displayName: "API Key",
-      description: "The API Key supplied by Freshsales",
-      required: true
-    }),
-    app_name: Property.ShortText({
-      displayName: "App Name",
-      description: "Your app name",
+    authentication: Property.BasicAuth({
+      displayName: "Authentication",
+      username: Property.ShortText({
+        displayName: "Bundle alias",
+        description: "Your Freshsales bundle alias (e.g. https://<alias>.myfreshworks.com)",
+        required: true
+      }),
+      password: Property.ShortText({
+        displayName: "API Key",
+        description: "The API Key supplied by Freshsales",
+        required: true
+      }),
       required: true
     }),
     first_name: Property.ShortText({
@@ -33,7 +37,7 @@ export const freshSalesCreateContact = createAction({
     email: Property.ShortText({
       displayName: "Email",
       description: "Primary email address of the contact",
-      required: false
+      required: true
     }),
     work_number: Property.ShortText({
       displayName: "Work number",
@@ -214,16 +218,16 @@ export const freshSalesCreateContact = createAction({
     }
   },
   async run(context) {
-    const { token, app_name, ...contact } = context.propsValue
+    const { authentication, ...contact } = context.propsValue
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `https://${app_name}.myfreshworks.com/crm/sales/api/contacts`,
+      url: `https://${authentication.username}.myfreshworks.com/crm/sales/api/contacts`,
       body: {
         contact
       },
       headers: {
-        'Authorization': `Token token=${token}`
+        'Authorization': `Token token=${authentication.password}`
       }
     }
 
