@@ -1,4 +1,4 @@
-import fastify, { FastifyRequest } from "fastify";
+import fastify, { FastifyRequest, HTTPMethods } from "fastify";
 import cors from "@fastify/cors";
 import formBody from "@fastify/formbody";
 import qs from 'qs';
@@ -28,7 +28,6 @@ import { firebaseAuthenticationModule } from "@ee/firebase-auth/backend/firebase
 import { billingModule } from "@ee/billing/backend/billing.module";
 import { getEdition } from "./app/helper/license-helper";
 import { ApEdition } from "@activepieces/shared";
-import { HttpMethod } from "../../pieces/framework/src";
 
 const app = fastify({
     logger,
@@ -72,7 +71,7 @@ app.register(formBody, { parser: str => qs.parse(str) });
 
 app.addHook("onRequest", async (request, reply) => {
     const route = app.hasRoute({
-        method: request.method as HttpMethod,
+        method: request.method as HTTPMethods,
         url: request.url,
     });
     if (!route) {
