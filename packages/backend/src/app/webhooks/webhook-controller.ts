@@ -10,10 +10,10 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
         "/:flowId",
         {
             schema: {
-                params: WebhookQueryParams,
+                params: WebhookUrlParams,
             },
         },
-        async (request: FastifyRequest<{ Params: WebhookQueryParams }>, reply) => {
+        async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             handler(request, request.params.flowId);
             await reply.status(StatusCodes.OK).send();
         }
@@ -24,10 +24,10 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
         "/",
         {
             schema: {
-                querystring: WebhookQueryParams,
+                querystring: WebhookUrlParams,
             },
         },
-        async (request: FastifyRequest<{ Querystring: WebhookQueryParams }>, reply) => {
+        async (request: FastifyRequest<{ Querystring: WebhookUrlParams }>, reply) => {
             handler(request, request.query.flowId);
             await reply.status(StatusCodes.OK).send();
         }
@@ -51,8 +51,8 @@ function handler(request: FastifyRequest, flowId: string){
         },
     });
 }
-const WebhookQueryParams = Type.Object({
+const WebhookUrlParams = Type.Object({
     flowId: ApId,
 });
 
-type WebhookQueryParams = Static<typeof WebhookQueryParams>;
+type WebhookUrlParams = Static<typeof WebhookUrlParams>;

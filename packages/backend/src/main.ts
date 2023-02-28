@@ -28,7 +28,7 @@ import { firebaseAuthenticationModule } from "@ee/firebase-auth/backend/firebase
 import { billingModule } from "@ee/billing/backend/billing.module";
 import { getEdition } from "./app/helper/license-helper";
 import { ApEdition } from "@activepieces/shared";
-import { HttpMethod } from "@mailchimp/mailchimp_marketing";
+import { HttpMethod } from "../../pieces/framework/src";
 
 const app = fastify({
     logger,
