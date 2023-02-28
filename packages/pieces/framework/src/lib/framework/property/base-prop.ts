@@ -18,6 +18,7 @@ export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> 
 	 U extends PropertyType.NUMBER? string:
 	 U extends PropertyType.DROPDOWN? unknown  :
 	 U extends PropertyType.MULTI_SELECT_DROPDOWN? unknown[]:
+	 U extends PropertyType.STATIC_MULTI_SELECT_DROPDOWN? unknown[]:
 	 U extends PropertyType.STATIC_DROPDOWN? unknown: 
 	unknown;
 };

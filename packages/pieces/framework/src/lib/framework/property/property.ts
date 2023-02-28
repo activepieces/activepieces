@@ -10,7 +10,7 @@ import {
 	ShortTextProperty,
 } from "./base-prop";
 import { BasicAuthProperty } from "./basic-auth-prop";
-import { DropdownProperty, MultiSelectDropdownProperty, StaticDropdownProperty } from "./dropdown-prop";
+import { DropdownProperty, MultiSelectDropdownProperty, StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown-prop";
 import { DynamicProperties } from "./dynamic-prop";
 import { OAuth2Property } from "./oauth2-prop";
 
@@ -28,6 +28,7 @@ export interface PieceProperty {
 	| ObjectProperty<boolean>
 	| JsonProperty<boolean>
 	| MultiSelectDropdownProperty<unknown, boolean>
+	| StaticMultiSelectDropdownProperty<unknown,boolean>
 	| DynamicProperties<boolean>
 }
 
@@ -77,7 +78,10 @@ export const Property = {
 	},
 	DynamicProperties<R extends boolean = boolean>(request: Properties<DynamicProperties<R>>): R extends true ? DynamicProperties<true> : DynamicProperties<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.DYNAMIC } as unknown as R extends true ? DynamicProperties<true> : DynamicProperties<false>;
-	}
+	},
+	StaticMultiSelectDropdown<T, R extends boolean = boolean>(request: Properties<StaticMultiSelectDropdownProperty<T, R>>): R extends true ? StaticMultiSelectDropdownProperty<T, true> : StaticMultiSelectDropdownProperty<T, false> {
+		return { ...request, valueSchema: undefined, type: PropertyType.STATIC_MULTI_SELECT_DROPDOWN } as unknown as R extends true ? StaticMultiSelectDropdownProperty<T, true> : StaticMultiSelectDropdownProperty<T, false>;
+	},
 };
 
 type Properties<T> = Omit<T, "valueSchema" | "type">;

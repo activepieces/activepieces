@@ -166,7 +166,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   createForm() {
     this.requiredConfigs = this.configs.filter((c) => c.required);
     this.allOptionalConfigs = this.configs.filter((c) => !c.required);
-
     this.selectedOptionalConfigs = this.allOptionalConfigs.filter(
       (c) => c.value !== undefined
     );
@@ -227,32 +226,34 @@ export class ConfigsFormComponent implements ControlValueAccessor {
             }),
             tap((res) => {
               const fg = this.form.get(parentConfig.key) as UntypedFormGroup;
-              const removedControlsKeys = Object.keys(fg.controls).filter(
-                (key) => res.find((c) => c.key === key) === undefined
-              );
-              removedControlsKeys.forEach((removedKey) => {
-                fg.removeControl(removedKey);
-              });
-              res.forEach((childConfig) => {
-                const childConfigControl = fg.get(childConfig.key);
-                if (childConfigControl) {
-                  if (childConfig.required) {
-                    childConfigControl.addValidators(Validators.required);
+              if (fg) {
+                const removedControlsKeys = Object.keys(fg.controls).filter(
+                  (key) => res.find((c) => c.key === key) === undefined
+                );
+                removedControlsKeys.forEach((removedKey) => {
+                  fg.removeControl(removedKey);
+                });
+                res.forEach((childConfig) => {
+                  const childConfigControl = fg.get(childConfig.key);
+                  if (childConfigControl) {
+                    if (childConfig.required) {
+                      childConfigControl.addValidators(Validators.required);
+                    } else {
+                      childConfigControl.removeValidators(Validators.required);
+                    }
                   } else {
-                    childConfigControl.removeValidators(Validators.required);
+                    fg.addControl(
+                      childConfig.key,
+                      new UntypedFormControl(
+                        childConfig.defaultValue,
+                        childConfig.required ? Validators.required : []
+                      ),
+                      { emitEvent: false }
+                    );
                   }
-                } else {
-                  fg.addControl(
-                    childConfig.key,
-                    new UntypedFormControl(
-                      childConfig.defaultValue,
-                      childConfig.required ? Validators.required : []
-                    ),
-                    { emitEvent: false }
-                  );
-                }
+                });
                 fg.markAllAsTouched();
-              });
+              }
             }),
             shareReplay(1)
           );
