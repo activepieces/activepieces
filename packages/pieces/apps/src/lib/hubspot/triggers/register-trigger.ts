@@ -1,4 +1,6 @@
-import { createTrigger, Property, TriggerStrategy } from "@activepieces/framework"
+import { AuthenticationType, createTrigger, httpClient, HttpMethod, HttpRequest, Property, TriggerStrategy } from "@activepieces/framework"
+import { HubspotEventType } from "../common/models"
+import { hubSpotAuthentication } from "../common/props"
 
 interface Props {
   name: string,
@@ -9,43 +11,65 @@ interface Props {
 }
 
 export const hubspotRegisterTrigger = 
-  ({ name, eventType, displayName, description, sampleData}: Props) => 
-    createTrigger({
-      name: name,
+  ({ name, eventType, displayName, description, sampleData}: Props) => {
+    const props = {
+      authentication: hubSpotAuthentication,
+      is_active: Property.Checkbox({
+        displayName: 'Active',
+        description: 'Is this webhook active',
+        defaultValue: false,
+        required: true,
+      }),
+      app_id: Property.Checkbox({
+        displayName: 'App ID',
+        description: 'The name of the new folder',
+        required: true,
+      }),
+      ...((eventType === HubspotEventType.CONTACT_PROPERTY_CHANGE) 
+        ? {
+          property_name: Property.ShortText({
+            displayName: 'Property name',
+            description: 'The name of the property the subscription will listen for changes to. This is only needed for property change subscription types.',
+            required: true
+          }) 
+        } 
+        : {}
+      )
+    }
+
+    return createTrigger({
+      name,
       displayName,
       description,
-      props: {
-        is_active: Property.Checkbox({
-          displayName: 'Folder name',
-          description: 'The name of the new folder',
-          required: true,
-        }),
-        propery_name: Property.DynamicProperties({
-          
-        })
-      },
+      props,
       sampleData,
       type: TriggerStrategy.WEBHOOK,
+
       async onEnable(context) {
+        const { app_id, is_active: active, authentication } = context.propsValue
+        
         const request: HttpRequest = {
           method: HttpMethod.POST,
-          url: `https://api.hubapi.com/webhooks/v3/${appId}/subscriptions`,
+          url: `https://api.hubapi.com/webhooks/v3/${app_id}/subscriptions`,
           body: {
-            active: true,
+            active,
             eventType,
+            propertyName: context.propsValue.property_name
           },
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: context.propsValue['authentication']['access_token'],
-          },
-          queryParams: {},
-        };
-        const { body: webhook } = await httpClient.sendRequest<{ id: string }>(request);
-        await context.store.put<WebhookInformation>(`github_${name}_trigger`, {
-          webhookId: webhook.id,
-          owner: owner,
-          repo: repo,
-        });
+            token: authentication.access_token,
+          }
+        }
+
+        const response = await httpClient.sendRequest(request);
+        console.debug("response", response)
+
+        // await context.store.put<WebhookInformation>(`github_${name}_trigger`, {
+        //   webhookId: webhook.id,
+        //   owner: owner,
+        //   repo: repo,
+        // });
       },
       async onDisable(context) {
       },
@@ -55,3 +79,4 @@ export const hubspotRegisterTrigger =
         return [context.payload.body];
       }
     })
+  }

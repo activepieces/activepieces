@@ -15,5 +15,5 @@ export const hubspot = createPiece({
     hubSpotContactsCreateOrUpdateAction,
     hubSpotListsAddContactAction,
   ],
-  hubspotTriggers
+  triggers: hubspotTriggers
 });

@@ -1,9 +1,6 @@
 import { Trigger } from "@activepieces/framework"
+import { HubspotEventType } from "../common/models"
 import { hubspotRegisterTrigger } from "./register-trigger"
-
-export enum HubspotEventType {
-  CONTACT_CREATION = 'contact.creation'
-}
 
 export const hubspotTriggers: Trigger[] = [
   {

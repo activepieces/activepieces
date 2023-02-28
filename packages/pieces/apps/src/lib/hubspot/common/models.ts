@@ -44,3 +44,8 @@ export type HubSpotAddContactsToListResponse = {
 export type HubSpotAddContactsToListRequest = {
   emails: string[];
 }
+
+export enum HubspotEventType {
+  CONTACT_CREATION = 'contact.creation',
+  CONTACT_PROPERTY_CHANGE = 'contact.propertyChange'
+}
