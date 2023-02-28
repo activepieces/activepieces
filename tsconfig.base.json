@@ -42,6 +42,21 @@
       ],
       "@activepieces/piece-github": ["packages/pieces/github/src/index.ts"],
       "@activepieces/piece-gmail": ["packages/pieces/gmail/src/index.ts"],
+      "@activepieces/piece-google-calendar": [
+        "packages/pieces/google-calendar/src/index.ts"
+      ],
+      "@activepieces/piece-google-contacts": [
+        "packages/pieces/google-contacts/src/index.ts"
+      ],
+      "@activepieces/piece-google-drive": [
+        "packages/pieces/google-drive/src/index.ts"
+      ],
+      "@activepieces/piece-google-sheets": [
+        "packages/pieces/google-sheets/src/index.ts"
+      ],
+      "@activepieces/piece-google-tasks": [
+        "packages/pieces/google-tasks/src/index.ts"
+      ],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],

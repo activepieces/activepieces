@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/framework';
-import { googleTasksAddNewTaskAction } from './actions/new-task';
+import { googleTasksAddNewTaskAction } from './lib/actions/new-task';
 
 export const googleTasks = createPiece({
 	name: 'google_tasks',

@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/framework';
-import { createQuickCalendarEvent } from './actions/create-quick-event';
-import { calendarEventChanged } from './triggers/calendar-event';
+import { createQuickCalendarEvent } from './lib/actions/create-quick-event';
+import { calendarEventChanged } from './lib/triggers/calendar-event';
 
 
 export const googleCalendar = createPiece({
