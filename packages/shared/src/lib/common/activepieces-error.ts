@@ -181,7 +181,7 @@ export type InvalidJwtTokenErrorParams = BaseErrorParams<
 export type TaskQuotaExeceededErrorParams = BaseErrorParams<
   ErrorCode.TASK_QUOTA_EXCEEDED,
   {
-    id: string;
+    projectId: string;
   }
 >
 
