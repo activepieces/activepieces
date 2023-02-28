@@ -1,6 +1,6 @@
 import { Piece } from '@activepieces/framework';
+import { airtable } from '@activepieces/piece-airtable';
 import { slack } from '@activepieces/piece-slack';
-import { airtable } from './lib/airtable';
 import { asana } from './lib/asana';
 import { binance } from './lib/binance';
 import { blackbaud } from './lib/blackbaud';

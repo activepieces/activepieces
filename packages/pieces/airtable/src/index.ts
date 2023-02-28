@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/framework';
-import { airtableNewRecord } from './trigger/new-record.trigger';
+import { airtableNewRecord } from './lib/trigger/new-record.trigger';
 
 export const airtable = createPiece({
 	name: 'airtable',
