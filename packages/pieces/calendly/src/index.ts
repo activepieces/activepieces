@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/framework';
-import { calendlyInviteeCanceled } from './trigger/invitee-canceled.trigger';
-import { calendlyInviteeCreated } from './trigger/invitee-created.trigger';
+import { calendlyInviteeCanceled } from './lib/trigger/invitee-canceled.trigger';
+import { calendlyInviteeCreated } from './lib/trigger/invitee-created.trigger';
 
 export const calendly = createPiece({
 	name: 'calendly',
