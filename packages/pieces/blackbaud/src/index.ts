@@ -1,6 +1,6 @@
 import { createPiece } from "@activepieces/framework";
-import { blackbaudCreateContacts } from "./actions/create-contacts";
-import { blackbaudListContacts } from "./actions/list-contacts";
+import { blackbaudCreateContacts } from "./lib/actions/create-contacts";
+import { blackbaudListContacts } from "./lib/actions/list-contacts";
 
 export const blackbaud = createPiece({
     name: 'blackbaud',

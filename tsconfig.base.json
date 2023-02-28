@@ -26,6 +26,9 @@
         "packages/pieces/bannerbear/src/index.ts"
       ],
       "@activepieces/piece-binance": ["packages/pieces/binance/src/index.ts"],
+      "@activepieces/piece-blackbaud": [
+        "packages/pieces/blackbaud/src/index.ts"
+      ],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
