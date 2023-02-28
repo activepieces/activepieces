@@ -57,6 +57,20 @@
       "@activepieces/piece-google-tasks": [
         "packages/pieces/google-tasks/src/index.ts"
       ],
+      "@activepieces/piece-hackernews": [
+        "packages/pieces/hackernews/src/index.ts"
+      ],
+      "@activepieces/piece-http": ["packages/pieces/http/src/index.ts"],
+      "@activepieces/piece-hubspot": ["packages/pieces/hubspot/src/index.ts"],
+      "@activepieces/piece-mailchimp": [
+        "packages/pieces/mailchimp/src/index.ts"
+      ],
+      "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
+      "@activepieces/piece-pipedrive": [
+        "packages/pieces/pipedrive/src/index.ts"
+      ],
+      "@activepieces/piece-posthog": ["packages/pieces/posthog/src/index.ts"],
+      "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
