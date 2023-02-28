@@ -3,17 +3,21 @@ import { Piece } from '@activepieces/framework';
 import { globals } from '../globals';
 import { createContextStore } from '../services/storage.service';
 
+type PieceExecParams = {
+  pieceName: string,
+  pieceVersion: string,
+  actionName: string,
+  config: Record<string, unknown>,
+}
+
 export class PieceExecutor {
-  public async exec(
-    pieceName: string,
-    actionName: string,
-    config: Record<string, any>
-  ) {
+  public async exec(params: PieceExecParams) {
+    const { pieceName, pieceVersion, actionName, config } = params;
     const piece = this.getPiece(pieceName);
 
     return await piece.getAction(actionName)!.run({
       store: createContextStore(globals.flowId),
-      propsValue: config
+      propsValue: config,
     });
   }
 

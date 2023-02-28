@@ -226,7 +226,12 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
 }
 
 function validateAction(settings: PieceActionSettings) {
-    if (settings.pieceName === undefined || settings.actionName === undefined || settings.input === undefined) {
+    if (
+        settings.pieceName === undefined ||
+        settings.pieceVersion === undefined ||
+        settings.actionName === undefined ||
+        settings.input === undefined
+    ) {
         return false;
     }
     const piece = getPiece(settings.pieceName);
@@ -241,7 +246,12 @@ function validateAction(settings: PieceActionSettings) {
 }
 
 function validateTrigger(settings: PieceTriggerSettings) {
-    if (settings.pieceName === undefined || settings.triggerName === undefined || settings.input === undefined) {
+    if (
+        settings.pieceName === undefined ||
+        settings.pieceVersion === undefined ||
+        settings.triggerName === undefined ||
+        settings.input === undefined
+    ) {
         return false;
     }
     const piece = getPiece(settings.pieceName);

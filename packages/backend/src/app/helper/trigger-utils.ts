@@ -154,11 +154,12 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId, collec
 const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
     const piece = getPiece(trigger.settings.pieceName);
 
-    if (piece == null) {
+    if (piece === null) {
         throw new ActivepiecesError({
             code: ErrorCode.PIECE_NOT_FOUND,
             params: {
                 pieceName: trigger.settings.pieceName,
+                pieceVersion: trigger.settings.pieceVersion,
             },
         });
     }
@@ -168,6 +169,7 @@ const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
             code: ErrorCode.PIECE_TRIGGER_NOT_FOUND,
             params: {
                 pieceName: trigger.settings.pieceName,
+                pieceVersion: trigger.settings.pieceVersion,
                 triggerName: trigger.settings.triggerName,
             },
         });
