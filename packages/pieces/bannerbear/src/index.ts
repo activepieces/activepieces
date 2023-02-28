@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/framework';
-import { createImageFromTemplate } from './actions/create-image';
+import { createImageFromTemplate } from './lib/actions/create-image';
 
 export const bannerbear = createPiece({
   name: 'bannerbear',

@@ -1,6 +1,7 @@
 import { Piece } from '@activepieces/framework';
 import { airtable } from '@activepieces/piece-airtable';
 import { asana } from '@activepieces/piece-asana';
+import { bannerbear } from '@activepieces/piece-bannerbear';
 import { slack } from '@activepieces/piece-slack';
 import { binance } from './lib/binance';
 import { blackbaud } from './lib/blackbaud';
@@ -35,7 +36,6 @@ import { calcom } from './lib/cal-com';
 import { freshsales } from './lib/freshsales';
 import { googleTasks } from './lib/google-tasks';
 import { csv } from './lib/csv';
-import { bannerbear } from './lib/bannerbear';
 import { posthog } from './lib/posthog';
 import { wordpress } from './lib/wordpress';
 
