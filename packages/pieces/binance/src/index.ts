@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/framework';
-import { fetchCryptoPairPrice } from './actions/fetch-pair-price';
+import { fetchCryptoPairPrice } from './lib/actions/fetch-pair-price';
 
 export const binance = createPiece({
   name: 'binance',
