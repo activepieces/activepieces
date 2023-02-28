@@ -56,4 +56,19 @@ export class RunsTableComponent implements OnInit {
       run.id;
     window.open(url, '_blank');
   }
+
+  public getStatusText(status: ExecutionOutputStatus): string {
+    switch (status) {
+      case ExecutionOutputStatus.RUNNING:
+        return 'Running';
+      case ExecutionOutputStatus.SUCCEEDED:
+        return 'Success';
+      case ExecutionOutputStatus.FAILED:
+        return 'Failed';
+      case ExecutionOutputStatus.TIMEOUT:
+        return 'Timed out';
+      default:
+        return 'Internal Error';
+    }
+  }
 }

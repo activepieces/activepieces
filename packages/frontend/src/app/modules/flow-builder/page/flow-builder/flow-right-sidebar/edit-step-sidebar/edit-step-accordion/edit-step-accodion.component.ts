@@ -84,7 +84,7 @@ export class EditStepAccordionComponent implements AfterViewInit {
       webhookPrefix: this.flagService.getWebhookUrlPrefix(),
     }).pipe(
       map((res) => {
-        return `${res.webhookPrefix}?flowId=${res.flowId}`;
+        return `${res.webhookPrefix}/${res.flowId}`;
       })
     );
     this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(

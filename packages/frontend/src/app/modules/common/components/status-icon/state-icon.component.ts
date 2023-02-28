@@ -10,7 +10,7 @@ export class StateIconComponent implements OnInit {
   @Input() showStatusText = true;
   @Input() textAfter = '';
   ngOnInit(): void {
-    if (!this.textAfter) {
+    if (!this.textAfter || this.textAfter.length === 0) {
       this.textAfter = this.succeeded ? 'Success' : 'Failed';
     }
   }

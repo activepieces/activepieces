@@ -26,6 +26,7 @@ declare type TriggerDropdownOption = {
   label: {
     name: string;
     description: string;
+    isWebhook: boolean;
   };
   value: { triggerName: string; configs: PieceConfig[]; separator?: boolean };
   disabled?: boolean;
@@ -61,9 +62,9 @@ export class PieceTriggerInputFormComponent {
   componentName: string;
   intialComponentTriggerInputFormValue: {
     triggerName: string;
-    input: { [key: string]: unknown };
+    input: { [key: string]: any };
   } | null;
-  selectedTrigger$: Observable<TriggerDropdownOption | undefined>;
+  selectedTrigger$: Observable<any>;
   triggers$: Observable<TriggerDropdownOption[]>;
   valueChanges$: Observable<void>;
   triggerDropdownValueChanged$: Observable<{
@@ -79,6 +80,7 @@ export class PieceTriggerInputFormComponent {
   onTouch: () => void = () => {
     //ignore
   };
+
   constructor(
     private fb: UntypedFormBuilder,
     private actionMetaDataService: ActionMetaService,
@@ -120,7 +122,7 @@ export class PieceTriggerInputFormComponent {
   }
 
   fetchTriggers(pieceName: string) {
-    const component$ = this.actionMetaDataService.getPieces().pipe(
+    const piece$ = this.actionMetaDataService.getPieces().pipe(
       map((pieces) => {
         const component = pieces.find((c) => c.name === pieceName);
         if (!component) {
@@ -129,7 +131,7 @@ export class PieceTriggerInputFormComponent {
         return component;
       })
     );
-    this.triggers$ = component$.pipe(
+    this.triggers$ = piece$.pipe(
       map((component) => {
         const triggersKeys = Object.keys(component.triggers);
         return triggersKeys.map((triggerName) => {
@@ -148,6 +150,7 @@ export class PieceTriggerInputFormComponent {
             label: {
               name: trigger.displayName,
               description: trigger.description,
+              isWebhook: component.triggers[triggerName].type === 'WEBHOOK',
             },
           };
         });
@@ -221,11 +224,11 @@ export class PieceTriggerInputFormComponent {
     this.fetchTriggers(obj.pieceName);
   }
 
-  registerOnChange(fn: (val) => void): void {
+  registerOnChange(fn: any): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: () => void): void {
+  registerOnTouched(fn: any): void {
     this.onTouch = fn;
   }
 
@@ -273,7 +276,7 @@ export class PieceTriggerInputFormComponent {
 
   getFormattedFormData(): {
     triggerName: string;
-    input: { [configKey: string]: unknown };
+    input: { [configKey: string]: any };
   } {
     const trigger = this.componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value;
     const configs =
