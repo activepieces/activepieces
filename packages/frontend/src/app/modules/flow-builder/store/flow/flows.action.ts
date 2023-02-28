@@ -11,6 +11,7 @@ import {
   FlowRun,
   FlowId,
   FlowOperationRequest,
+  StepLocationRelativeToParent,
 } from '@activepieces/shared';
 
 export enum FlowsActionType {
@@ -132,7 +133,15 @@ export const setLeftSidebar = createAction(
 
 export const setRightSidebar = createAction(
   FlowsActionType.SET_RIGHT_SIDEBAR,
-  props<{ sidebarType: RightSideBarType; props: any }>()
+  props<{
+    sidebarType: RightSideBarType;
+    props:
+      | {
+          stepLocationRelativeToParent: StepLocationRelativeToParent;
+          stepName: string;
+        }
+      | {};
+  }>()
 );
 
 export const FlowsActions = {

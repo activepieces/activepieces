@@ -13,6 +13,13 @@ export enum FlowOperationType {
     DELETE_ACTION = "DELETE_ACTION"
 }
 
+export enum StepLocationRelativeToParent{
+    INSIDE_TRUE_BRANCH = "INSIDE_TRUE_BRANCH",
+    INSIDE_FALSE_BRANCH = "INSIDE_FALSE_BRANCH",
+    AFTER = "AFTER",
+    INSIDE_LOOP="INSIDE_LOOP"
+}
+
 export const ChangeNameRequest = Type.Object({
     displayName: Type.String({}),
 });
@@ -31,7 +38,7 @@ export type UpdateActionRequest = Static<typeof UpdateActionRequest>;
 
 export const AddActionRequest = Type.Object({
     parentStep: Type.String(),
-    branch: Type.Optional(Type.Number()),
+    stepLocationRelativeToParent: Type.Optional(Type.Enum(StepLocationRelativeToParent)),
     action: UpdateActionRequest
 })
 export type AddActionRequest = Static<typeof AddActionRequest>;

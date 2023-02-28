@@ -9,7 +9,11 @@ import {
   SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
   VERTICAL_LINE_LENGTH,
 } from '../page/flow-builder/flow-item-tree/flow-item/flow-item-connection/draw-utils';
-import { ActionType, LoopOnItemsAction } from '@activepieces/shared';
+import {
+  ActionType,
+  BranchAction,
+  LoopOnItemsAction,
+} from '@activepieces/shared';
 
 export class FlowRenderUtil {
   public static isButtonWithinCandidateDistance(
@@ -35,10 +39,15 @@ export class FlowRenderUtil {
     if (!flowItem) {
       return;
     }
-    flowItem.boundingBox = {
-      width: FLOW_ITEM_WIDTH,
-      height: FLOW_ITEM_HEIGHT,
-    };
+    if (!flowItem.boundingBox) {
+      flowItem.boundingBox = {
+        width: FLOW_ITEM_WIDTH,
+        height: FLOW_ITEM_HEIGHT,
+      };
+    } else {
+      flowItem.boundingBox.height = FLOW_ITEM_HEIGHT;
+      flowItem.boundingBox.width = FLOW_ITEM_WIDTH;
+    }
     if (flowItem.type == ActionType.LOOP_ON_ITEMS) {
       const loopItem = flowItem as LoopOnItemsAction;
       if (
@@ -61,6 +70,54 @@ export class FlowRenderUtil {
         SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
         ARC_LENGTH +
         VERTICAL_LINE_LENGTH;
+      flowItem.connectionsBox = {
+        width: FLOW_ITEM_WIDTH,
+        height: svgBoxHeight,
+      };
+    } else if (flowItem.type === ActionType.BRANCH) {
+      const branchItem = flowItem as BranchAction;
+      if (
+        branchItem.onFailureAction !== undefined &&
+        branchItem.onFailureAction !== null
+      ) {
+        this.buildBoxes(branchItem.onFailureAction);
+      }
+      if (
+        branchItem.onSuccessAction !== undefined &&
+        branchItem.onSuccessAction !== null
+      ) {
+        this.buildBoxes(branchItem.onSuccessAction);
+      }
+
+      let subGraphHeight = EMPTY_LOOP_ADD_BUTTON_HEIGHT + VERTICAL_LINE_LENGTH;
+      if (branchItem.onFailureAction && branchItem.onSuccessAction) {
+        subGraphHeight = Math.max(
+          (branchItem.onFailureAction as FlowItem).boundingBox!.height,
+          (branchItem.onSuccessAction as FlowItem).boundingBox!.height
+        );
+      } else if (branchItem.onSuccessAction) {
+        subGraphHeight = Math.max(
+          subGraphHeight,
+          (branchItem.onSuccessAction as FlowItem).boundingBox!.height
+        );
+      } else if (branchItem.onFailureAction) {
+        subGraphHeight = Math.max(
+          subGraphHeight,
+          (branchItem.onFailureAction as FlowItem).boundingBox!.height
+        );
+      }
+      const svgBoxHeight =
+        SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
+        ARC_LENGTH +
+        VERTICAL_LINE_LENGTH +
+        ARC_LENGTH +
+        VERTICAL_LINE_LENGTH +
+        SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
+        subGraphHeight +
+        SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
+        ARC_LENGTH +
+        VERTICAL_LINE_LENGTH;
+
       flowItem.connectionsBox = {
         width: FLOW_ITEM_WIDTH,
         height: svgBoxHeight,

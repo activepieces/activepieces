@@ -25,6 +25,12 @@ export class ActionMetaService {
       description: 'Powerful nodejs code with npm',
       logoUrl: '/assets/img/custom/piece/code.svg',
     },
+    {
+      type: ActionType.BRANCH,
+      name: 'Branch',
+      description: 'Branchy branch ranch',
+      logoUrl: '/assets/img/custom/piece/branch.svg',
+    },
   ];
 
   public triggerItemsDetails = [

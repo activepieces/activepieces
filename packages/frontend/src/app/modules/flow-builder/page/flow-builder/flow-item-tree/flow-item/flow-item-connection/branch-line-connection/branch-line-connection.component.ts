@@ -21,12 +21,12 @@ import {
   SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
   VERTICAL_LINE_LENGTH,
   AFTER_NESTED_LOOP_LINE_LENGTH,
+  EMPTY_LOOP_ADD_BUTTON_WIDTH,
 } from '../draw-utils';
-import { AddButtonType } from '../../../../../../../common/model/enum/add-button-type';
 import { FlowsActions } from '../../../../../../store/flow/flows.action';
 import { Observable } from 'rxjs';
 import {
-  LoopOnItemsAction,
+  BranchAction,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 import { AddButtonAndFlowItemNameContainer } from '../../../../../../../common/model/flow-builder/flow-add-button';
@@ -38,48 +38,49 @@ import { RightSideBarType } from '../../../../../../../common/model/enum/right-s
 import { FlowRendererService } from '../../../../../../service/flow-renderer.service';
 
 @Component({
-  selector: 'app-loop-line-connection',
-  templateUrl: './loop-line-connection.component.html',
-  styleUrls: ['./loop-line-connection.component.scss'],
+  selector: 'app-branch-line-connection',
+  templateUrl: './branch-line-connection.component.html',
+  styleUrls: ['./branch-line-connection.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoopLineConnectionComponent implements OnChanges, OnInit {
+export class BranchLineConnectionComponent implements OnChanges, OnInit {
   @ViewChild('addButton') addButtonView: ElementRef;
-  @ViewChild('emptyLoopAddButton') emptyLoopAddButtonView: ElementRef;
-  @ViewChild('afterLoopAddButton') afterLoopAddButton: ElementRef;
+  @ViewChild('emptyBranchAddButton') emptyBranchAddButtonView: ElementRef;
+  @ViewChild('afterBranchAddButton') afterBranchAddButton: ElementRef;
   @Input() insideLoop = false;
   afterLoopArrowCommand = '';
-  startingLoopLineDrawCommand = '';
-  arrowHeadLeft = 0;
+  trueBranchLineDrawCommand = '';
+  falseBranchLineDrawCommand = '';
+  arrowHeadLeftFalseBranch = 0;
+  arrowHeadLeftTrueBranch = 0;
   arrowHeadTop = 0;
   drawer: Drawer = new Drawer();
   addButtonAndFlowItemNameContainer: AddButtonAndFlowItemNameContainer;
   addButtonTop = '0px';
   addButtonLeft = '0px';
   emptyLoopAddButtonTopOffset = '0px';
-  emptyLoopAddButtonLeftOffset = '0px';
-  afterLoopAddButtonTop = '0px';
-  afterLoopAddButtonLeft = '0px';
+  emptyLoopAddButtonLeftOffsetForFalseBranch = '0px';
+  emptyLoopAddButtonLeftOffsetForTrueBranch = '0px';
+  afterBranchAddButtonTop = '0px';
+  afterBranchAddButtonLeft = '0px';
   afterLoopArrowHeadLeft = 0;
-  afterLoopArrowHeadTop = 0;
+  afterBranchArrowHeadTop = 0;
   showEmptyLoopAddButtonBoxShadow = false;
-  svgHeight = 0;
   addButtonSize = {
     width: `${ADD_BUTTON_SIZE.width}px`,
     height: `${ADD_BUTTON_SIZE.height}px`,
   };
-  _flowItem: LoopOnItemsAction & FlowItemRenderInfo;
+  _flowItem: BranchAction & FlowItemRenderInfo;
 
   showDropArea$: Observable<boolean> = new Observable<boolean>();
 
   @Input() viewMode: boolean;
 
-  @Input() set flowItem(value: LoopOnItemsAction & FlowItemRenderInfo) {
+  @Input() set flowItem(value: BranchAction & FlowItemRenderInfo) {
     this._flowItem = value;
-    this.svgHeight = this.flowItem.connectionsBox!.height;
     this.writeLines();
     this.calculateOffsetBeforeFirstAction();
-    this.calculateOffsetAfterLoop();
+    this.calculateOffsetAfterBranch();
     this.calculateEmptyLoopAddButton();
   }
 
@@ -96,68 +97,83 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
   ngOnInit(): void {
     this.writeLines();
     this.calculateOffsetBeforeFirstAction();
-    this.calculateOffsetAfterLoop();
+    this.calculateOffsetAfterBranch();
     this.calculateEmptyLoopAddButton();
   }
 
   writeLines() {
-    const commands: string[] = [];
-    let childFlowsGraphHeight: number;
-    if (
-      this.flowItem.firstLoopAction === undefined ||
-      this.flowItem.firstLoopAction === null
-    ) {
-      childFlowsGraphHeight =
-        EMPTY_LOOP_ADD_BUTTON_HEIGHT +
-        SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
-        VERTICAL_LINE_LENGTH;
-    } else {
-      childFlowsGraphHeight = (this.flowItem.firstLoopAction as FlowItem)
-        .boundingBox!.height;
+    const trueBranchCommands: string[] = [];
+    let childFlowsGraphHeight =
+      EMPTY_LOOP_ADD_BUTTON_HEIGHT +
+      SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
+      VERTICAL_LINE_LENGTH;
+    if (this.flowItem.onFailureAction && this.flowItem.onSuccessAction) {
+      childFlowsGraphHeight = Math.max(
+        (this.flowItem.onSuccessAction as FlowItem).boundingBox!.height,
+        (this.flowItem.onFailureAction as FlowItem).boundingBox!.height
+      );
+    } else if (this.flowItem.onFailureAction) {
+      childFlowsGraphHeight = Math.max(
+        childFlowsGraphHeight,
+        (this.flowItem.onFailureAction as FlowItem).boundingBox!.height
+      );
+    } else if (this.flowItem.onSuccessAction) {
+      childFlowsGraphHeight = Math.max(
+        childFlowsGraphHeight,
+        (this.flowItem.onSuccessAction as FlowItem).boundingBox!.height
+      );
     }
-    commands.push(...this.writeStartingLine());
-    commands.push(...this.writeLoopClosing(childFlowsGraphHeight));
-    commands.push(...this.writeAfterArrow(childFlowsGraphHeight));
-    this.startingLoopLineDrawCommand = commands.join(' ');
+    trueBranchCommands.push(...this.writeBranchLine(true));
+    trueBranchCommands.push(...this.writeAfterArrow(childFlowsGraphHeight));
+    this.trueBranchLineDrawCommand = trueBranchCommands.join(' ');
+    const falseBranchCommands: string[] = [];
+    falseBranchCommands.push(...this.writeBranchLine(false));
+    falseBranchCommands.push(...this.writeAfterArrow(childFlowsGraphHeight));
+    this.falseBranchLineDrawCommand = falseBranchCommands.join(' ');
   }
 
-  writeStartingLine() {
+  writeBranchLine(trueBranch: boolean) {
     const commands: string[] = [];
+
     commands.push(
       this.drawer.move(FLOW_ITEM_WIDTH / 2, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE)
     );
     commands.push(this.drawer.drawVerticalLine(VERTICAL_LINE_LENGTH));
-    commands.push(this.drawer.drawArc(false, true, true));
-    commands.push(this.drawer.drawHorizontalLine(HORZIONTAL_LINE_LENGTH));
-    commands.push(this.drawer.drawArc(false, true, false));
+    commands.push(this.drawer.drawArc(trueBranch, true, !trueBranch));
+    commands.push(
+      this.drawer.drawHorizontalLine(
+        HORZIONTAL_LINE_LENGTH * (trueBranch ? -1 : 1)
+      )
+    );
+    commands.push(this.drawer.drawArc(trueBranch, true, trueBranch));
     commands.push(this.drawer.drawVerticalLine(VERTICAL_LINE_LENGTH));
     return commands;
   }
 
-  writeLoopClosing(childFlowsGraphHeight: number) {
-    const commands: string[] = [];
-    commands.push(this.drawer.move(0, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE));
-    if (!this.flowItem.firstLoopAction) {
-      commands.push(this.drawer.move(0, EMPTY_LOOP_ADD_BUTTON_HEIGHT));
-      commands.push(this.drawer.move(0, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE));
-      commands.push(this.drawer.drawVerticalLine(VERTICAL_LINE_LENGTH));
-    } else {
-      commands.push(this.drawer.move(0, childFlowsGraphHeight));
-    }
-    commands.push(this.drawer.drawArc(true, true, false));
-    commands.push(
-      this.drawer.drawHorizontalLine(-2.5 * HORZIONTAL_LINE_LENGTH)
-    );
-    commands.push(this.drawer.drawArc(true, false, false));
-    const returningVerticalLineToBeginingLength =
-      this.findReturningVerticalLineLength(childFlowsGraphHeight);
-    commands.push(
-      this.drawer.drawVerticalLine(-returningVerticalLineToBeginingLength)
-    );
-    commands.push(this.drawer.drawArc(false, false, false));
-    commands.push(this.drawer.drawHorizontalLine(HORZIONTAL_LINE_LENGTH));
-    return commands;
-  }
+  // writeLoopClosing(childFlowsGraphHeight: number) {
+  //   const commands: string[] = [];
+  //   commands.push(this.drawer.move(0, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE));
+  //   if (!this.flowItem.firstLoopAction) {
+  //     commands.push(this.drawer.move(0, EMPTY_LOOP_ADD_BUTTON_HEIGHT));
+  //     commands.push(this.drawer.move(0, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE));
+  //     commands.push(this.drawer.drawVerticalLine(VERTICAL_LINE_LENGTH));
+  //   } else {
+  //     commands.push(this.drawer.move(0, childFlowsGraphHeight));
+  //   }
+  //   commands.push(this.drawer.drawArc(true, true, false));
+  //   commands.push(
+  //     this.drawer.drawHorizontalLine(-2.5 * HORZIONTAL_LINE_LENGTH)
+  //   );
+  //   commands.push(this.drawer.drawArc(true, false, false));
+  //   const returningVerticalLineToBeginingLength =
+  //     this.findReturningVerticalLineLength(childFlowsGraphHeight);
+  //   commands.push(
+  //     this.drawer.drawVerticalLine(-returningVerticalLineToBeginingLength)
+  //   );
+  //   commands.push(this.drawer.drawArc(false, false, false));
+  //   commands.push(this.drawer.drawHorizontalLine(HORZIONTAL_LINE_LENGTH));
+  //   return commands;
+  // }
 
   writeAfterArrow(childFlowsGraphHeight: number) {
     const commands: string[] = [];
@@ -182,28 +198,6 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     return commands;
   }
 
-  insertAddButtonToRendererServiceListOfContainers() {
-    if (this.flowItem.firstLoopAction) {
-      this.addButtonAndFlowItemNameContainer =
-        new AddButtonAndFlowItemNameContainer(
-          this.addButtonView.nativeElement,
-          this.flowItem.name
-        );
-      this.flowRendererService.addButtonsWithStepNamesContainers.push(
-        this.addButtonAndFlowItemNameContainer
-      );
-    } else {
-      this.addButtonAndFlowItemNameContainer =
-        new AddButtonAndFlowItemNameContainer(
-          this.emptyLoopAddButtonView.nativeElement,
-          this.flowItem.name
-        );
-      this.flowRendererService.addButtonsWithStepNamesContainers.push(
-        this.addButtonAndFlowItemNameContainer
-      );
-    }
-  }
-
   calculateEmptyLoopAddButton() {
     const leftOffset = HORZIONTAL_LINE_LENGTH + 11;
     const topOffset =
@@ -211,20 +205,27 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
       ARC_LENGTH * 2 +
       2 * SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
     this.emptyLoopAddButtonTopOffset = `${topOffset}px`;
-    this.emptyLoopAddButtonLeftOffset = `calc(50% + ${leftOffset}px`;
+    this.emptyLoopAddButtonLeftOffsetForFalseBranch = `calc(50% + ${leftOffset}px)`;
+    this.emptyLoopAddButtonLeftOffsetForTrueBranch = `calc(50% - ${
+      leftOffset + EMPTY_LOOP_ADD_BUTTON_WIDTH
+    }px)`;
   }
 
   calculateOffsetBeforeFirstAction() {
     const lineStrokeOffset = 1.5;
     const leftOffset =
       FLOW_ITEM_WIDTH / 2 + ARC_LENGTH + HORZIONTAL_LINE_LENGTH + ARC_LENGTH;
+    const rightOffset =
+      FLOW_ITEM_WIDTH / 2 - ARC_LENGTH - HORZIONTAL_LINE_LENGTH - ARC_LENGTH;
     const topOffset =
       VERTICAL_LINE_LENGTH +
       ARC_LENGTH +
       ARC_LENGTH +
       VERTICAL_LINE_LENGTH -
       SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
-    this.arrowHeadLeft =
+    this.arrowHeadLeftFalseBranch =
+      rightOffset - (ARROW_HEAD_SIZE.width / 2.0 + lineStrokeOffset);
+    this.arrowHeadLeftTrueBranch =
       leftOffset - (ARROW_HEAD_SIZE.width / 2.0 + lineStrokeOffset);
     this.arrowHeadTop = topOffset + ARROW_HEAD_SIZE.height;
 
@@ -232,20 +233,20 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     this.addButtonTop = topOffset - VERTICAL_LINE_LENGTH / 2.0 + 'px';
   }
 
-  calculateOffsetAfterLoop() {
+  calculateOffsetAfterBranch() {
     const topOffset =
       this.flowItem.connectionsBox!.height -
       SPACE_BETWEEN_ITEM_CONTENT_AND_LINE -
       (this.flowItem.nextAction ? ARROW_HEAD_SIZE.height : 0);
 
-    this.afterLoopAddButtonTop = `${
+    this.afterBranchAddButtonTop = `${
       topOffset -
       VERTICAL_LINE_LENGTH / 2.0 -
       (this.insideLoop ? ARROW_HEAD_SIZE.height : 1)
     }px`;
-    this.afterLoopAddButtonLeft = `calc(50% - ${ADD_BUTTON_SIZE.width / 2}px`;
+    this.afterBranchAddButtonLeft = `calc(50% - ${ADD_BUTTON_SIZE.width / 2}px`;
     const lineStrokeOffset = 1.5;
-    this.afterLoopArrowHeadTop =
+    this.afterBranchArrowHeadTop =
       topOffset - ARROW_HEAD_SIZE.height - lineStrokeOffset + 5;
     this.afterLoopArrowHeadLeft =
       this.flowItem.connectionsBox!.width / 2.0 -
@@ -253,14 +254,27 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
       lineStrokeOffset;
   }
 
-  addLoopItem() {
+  addTrueBranchItem() {
     this.store.dispatch(
       FlowsActions.setRightSidebar({
         sidebarType: RightSideBarType.STEP_TYPE,
         props: {
-          stepLocationRelativeToParent:
-            StepLocationRelativeToParent.INSIDE_LOOP,
           stepName: this.flowItem.name,
+          stepLocationRelativeToParent:
+            StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
+        },
+      })
+    );
+  }
+
+  addFalseBranchItem() {
+    this.store.dispatch(
+      FlowsActions.setRightSidebar({
+        sidebarType: RightSideBarType.STEP_TYPE,
+        props: {
+          stepName: this.flowItem.name,
+          stepLocationRelativeToParent:
+            StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
         },
       })
     );
@@ -271,7 +285,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
       FlowsActions.setRightSidebar({
         sidebarType: RightSideBarType.STEP_TYPE,
         props: {
-          buttonType: AddButtonType.NEXT_ACTION,
+          stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
           stepName: this.flowItem.name,
         },
       })

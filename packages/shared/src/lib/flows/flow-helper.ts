@@ -5,11 +5,11 @@ import {
   FlowOperationRequest,
   UpdateActionRequest,
   UpdateTriggerRequest,
+  StepLocationRelativeToParent,
 } from './flow-operations';
 import {
   Action,
   ActionType,
-  BranchAction,
 } from './actions/action';
 import { Trigger, TriggerType } from './triggers/trigger';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
@@ -44,13 +44,13 @@ function deleteAction(
     }
     if (parentStep.type === ActionType.BRANCH) {
       if (parentStep.onFailureAction && parentStep.onFailureAction.name === request.name) {
-        const stepToUpdate: Action = parentStep.nextAction;
-        parentStep.nextAction = stepToUpdate.nextAction;
+        const stepToUpdate: Action = parentStep.onFailureAction;
+        parentStep.onFailureAction = stepToUpdate.nextAction;
         deleted = true;
       }
       if (parentStep.onSuccessAction && parentStep.onSuccessAction.name === request.name) {
-        const stepToUpdate: Action = parentStep.nextAction;
-        parentStep.nextAction = stepToUpdate.nextAction;
+        const stepToUpdate: Action = parentStep.onSuccessAction;
+        parentStep.onSuccessAction = stepToUpdate.nextAction;
         deleted = true;
       }
     }
@@ -138,16 +138,16 @@ function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
       params: {}
     }, `Parent step ${request.parentStep} not found`);
   }
-  if (parentStep.type === ActionType.BRANCH && request.branch !== undefined && request.branch !== null) {
-    if (request.branch == 0) {
+  if (parentStep.type === ActionType.BRANCH && request.stepLocationRelativeToParent !== undefined && request.stepLocationRelativeToParent !== null) {
+    if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_TRUE_BRANCH) {
       parentStep.onSuccessAction = createAction(request.action, parentStep.onSuccessAction);
-    } else if (request.branch == 1) {
+    } else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_FALSE_BRANCH) {
       parentStep.onFailureAction = createAction(request.action, parentStep.onFailureAction);
     } else {
       throw new ActivepiecesError({
         code: ErrorCode.FLOW_OPERATION_INVALID,
         params: {}
-      }, `Branch ${request.branch} not found`);
+      }, `Branch ${request.stepLocationRelativeToParent} not found`);
     }
   } else {
     parentStep.nextAction = createAction(request.action, parentStep.nextAction);
