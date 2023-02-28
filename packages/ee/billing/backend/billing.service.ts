@@ -112,7 +112,7 @@ async function updatePlan({ projectPlan, stripeSubscription }: { projectPlan: Pr
     logger.info('Updating plan for project ' + projectPlan.projectId)
     const projectPlanLock = await createRedisLock(5 * 1000);
     try {
-        projectPlanLock.acquire(`project_plan_${projectPlan.projectId}}`);
+        await projectPlanLock.acquire(`project_plan_${projectPlan.projectId}}`);
         const limits = parsePlanFromId(stripeSubscription.items.data[0].plan.id);
         await projectPlanRepo.update(projectPlan.id, {
             ...projectPlan,
@@ -131,7 +131,7 @@ async function downgradeToFreeTier({ projectId }: { projectId: ProjectId }): Pro
     const projectPlanLock = await createRedisLock(5 * 1000);
     const defaultPlanId = getDefaultPlanId();
     try {
-        projectPlanLock.acquire(`project_plan_${projectId}}`);
+        await projectPlanLock.acquire(`project_plan_${projectId}}`);
         const currentPlan = await projectPlanRepo.findOneBy({ projectId });
         const planLimits = parsePlanFromId(defaultPlanId);
         const stripeSubscription = await stripe.subscriptions.create({
@@ -154,7 +154,7 @@ async function createStripeDetails({ projectId }: { projectId: ProjectId }): Pro
     const projectPlanLock = await createRedisLock(5 * 1000);
     const defaultPlanId = getDefaultPlanId();
     try {
-        projectPlanLock.acquire(`project_plan_${projectId}}`);
+        await projectPlanLock.acquire(`project_plan_${projectId}}`);
         const currentPlan = await projectPlanRepo.findOneBy({ projectId });
         if (currentPlan !== undefined && currentPlan !== null) {
             return currentPlan;
