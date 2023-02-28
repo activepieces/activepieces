@@ -153,14 +153,10 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     this.upsert$ = this.appConnectionsService.upsert(connection).pipe(
       catchError((err) => {
         console.error(err);
-        this.snackbar.open(
-          'Connection failed, make sure client id and secret is correct.',
-          'Close',
-          {
-            panelClass: 'error',
-            duration: 5000,
-          }
-        );
+        this.snackbar.open('Connection failed, please try again.', 'Close', {
+          panelClass: 'error',
+          duration: 5000,
+        });
         return of(null);
       }),
       tap((connection) => {
