@@ -1,4 +1,4 @@
-name: Release Latest Only
+name: Release Nightly
 
 on:
   workflow_dispatch:
@@ -31,5 +31,5 @@ jobs:
             linux/arm64
           push: true
           tags: |
-            activepieces/activepieces:latest
+            activepieces/activepieces:nightly
 
