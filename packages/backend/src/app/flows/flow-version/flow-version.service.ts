@@ -304,6 +304,12 @@ function buildSchema(props: PieceProperty): TSchema {
         case PropertyType.MULTI_SELECT_DROPDOWN:
             propsSchema[name] = Type.Union([Type.Array(Type.Any()), Type.String()]);
             break;
+        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+            propsSchema[name] = Type.Union([Type.Array(Type.Any()), Type.String()]);
+            break;
+        case PropertyType.DYNAMIC:
+            propsSchema[name] = Type.Record(Type.String(), Type.Any());
+            break;
         }
 
         if (!property.required) {
