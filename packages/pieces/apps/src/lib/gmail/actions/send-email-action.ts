@@ -14,7 +14,7 @@ export const gmailSendEmailAction = createAction({
 			scope: ["https://mail.google.com/"]
 		}),
 		receiver: Property.ShortText({
-			displayName: 'receiver Email (To)',
+			displayName: 'Receiver Email (To)',
 			description: undefined,
 			required: true,
 		}),
