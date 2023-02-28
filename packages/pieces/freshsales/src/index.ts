@@ -1,5 +1,5 @@
 import { createPiece } from "@activepieces/framework";
-import { freshSalesCreateContact } from "./actions/create-contact";
+import { freshSalesCreateContact } from "./lib/actions/create-contact";
 
 export const freshsales = createPiece({
   name: 'freshsales',

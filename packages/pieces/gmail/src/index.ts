@@ -1,5 +1,5 @@
 import {createPiece} from '@activepieces/framework';
-import {gmailSendEmailAction} from './actions/send-email-action';
+import {gmailSendEmailAction} from './lib/actions/send-email-action';
 
 export const gmail = createPiece({
 	name: 'gmail',

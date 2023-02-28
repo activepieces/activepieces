@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/framework';
-import { githubTriggers } from './trigger';
+import { githubTriggers } from './lib/trigger';
 
 export const github = createPiece({
   name: 'github',

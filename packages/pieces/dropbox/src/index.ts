@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/framework';
-import { dropboxCreateNewFolder } from './actions/create-new-folder';
-import { dropboxCreateNewTextFile } from './actions/create-new-text-file';
+import { dropboxCreateNewFolder } from './lib/actions/create-new-folder';
+import { dropboxCreateNewTextFile } from './lib/actions/create-new-text-file';
 
 export const dropbox = createPiece({
   name: 'dropbox',
