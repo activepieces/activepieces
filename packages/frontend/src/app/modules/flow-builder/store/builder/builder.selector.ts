@@ -436,7 +436,7 @@ const selectAllFlowSteps = createSelector(
   selectCurrentFlow,
   (flow: Flow | undefined) => {
     if (flow && flow.version) {
-      return FlowStructureUtil.traverseAllSteps(flow.version.trigger);
+      return FlowStructureUtil.traverseAllSteps(flow.version.trigger, false);
     }
     return [];
   }
@@ -460,7 +460,7 @@ const selectAllStepsForMentionsDropdown = createSelector(
   selectAllFlowSteps,
   (currentStepName, steps): (MentionListItem & { step: FlowItem })[] => {
     const currentStepIndex = steps.findIndex((s) => s.name === currentStepName);
-
+    console.log(currentStepIndex);
     return steps
       .slice(0, currentStepIndex)
       .filter((s) => s.name !== currentStepName)

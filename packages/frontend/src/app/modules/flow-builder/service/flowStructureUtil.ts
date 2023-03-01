@@ -46,15 +46,19 @@ export class FlowStructureUtil {
   }
 
   public static traverseAllSteps(
-    mainPiece: FlowItem | Trigger | undefined
+    mainStep: FlowItem | Trigger | undefined,
+    includeBranches: boolean
   ): FlowItem[] {
-    if (mainPiece === undefined) {
+    if (mainStep === undefined) {
       return [];
     }
-    const steps: FlowItem[] = [mainPiece];
-    const branches = FlowStructureUtil.branches(mainPiece);
+    const steps: FlowItem[] = [];
+    if (mainStep.type !== ActionType.BRANCH || includeBranches) {
+      steps.push(mainStep);
+    }
+    const branches = FlowStructureUtil.branches(mainStep);
     for (let i = 0; i < branches.length; ++i) {
-      const subSteps = this.traverseAllSteps(branches[i]);
+      const subSteps = this.traverseAllSteps(branches[i], includeBranches);
       for (let i = 0; i < subSteps.length; ++i) {
         steps.push(subSteps[i]);
       }
@@ -110,17 +114,14 @@ export class FlowStructureUtil {
     flowVersion: FlowVersion,
     stepPrefix: string
   ) {
-    const steps = FlowStructureUtil.traverseAllSteps(flowVersion.trigger);
+    const steps = FlowStructureUtil.traverseAllSteps(flowVersion.trigger, true);
     let number = 1;
     // eslint-disable-next-line no-constant-condition
     while (true) {
       let exist = false;
       for (let i = 0; i < steps.length; ++i) {
-        const action = steps[i];
-        if (
-          action.name ===
-          stepPrefix.toString().toLowerCase() + '_' + number
-        ) {
+        const step = steps[i];
+        if (step.name === stepPrefix.toString().toLowerCase() + '_' + number) {
           exist = true;
           break;
         }

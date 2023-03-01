@@ -10,6 +10,7 @@ import {
   VERTICAL_LINE_LENGTH,
 } from '../page/flow-builder/flow-item-tree/flow-item/flow-item-connection/draw-utils';
 import {
+  Action,
   ActionType,
   BranchAction,
   LoopOnItemsAction,
@@ -144,17 +145,29 @@ export class FlowRenderUtil {
     }
   }
 
-  public static buildCoordinates(piece: FlowItem): void {
-    if (!piece) {
+  public static buildCoordinates(step: FlowItem): void {
+    if (!step) {
       return;
     }
 
-    const simpleAction = piece;
-    if (simpleAction.nextAction) {
-      simpleAction.nextAction.xOffset = 0;
+    const simpleStep = step;
+    if (simpleStep.nextAction) {
+      simpleStep.nextAction.xOffset = 0;
       /*      simpleAction.nextAction.yOffset = FlowRendererService.SPACING_VERTICAL;*/
-      this.buildCoordinates(simpleAction.nextAction);
+      this.buildCoordinates(simpleStep.nextAction);
     }
+  }
+  public static findNumberOfNestedBranches(step: Action | undefined): number {
+    if (!step) return 0;
+    if (step.type === ActionType.BRANCH) {
+      return Math.max(
+        1 +
+          this.findNumberOfNestedBranches(step.onFailureAction) +
+          this.findNumberOfNestedBranches(step.onSuccessAction),
+        FlowRenderUtil.findNumberOfNestedBranches(step.nextAction)
+      );
+    }
+    return FlowRenderUtil.findNumberOfNestedBranches(step.nextAction);
   }
 }
 
