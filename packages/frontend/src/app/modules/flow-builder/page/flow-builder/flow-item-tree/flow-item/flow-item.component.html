@@ -1,4 +1,4 @@
-<div [ngStyle]="flowGraphContainer()">
+<div [ngStyle]="flowGraphContainer" [style.transform]="transformObs$|async">
   <div [ngStyle]="flowContentContainer()" #flowItem>
     <app-flow-item-content [trigger]="trigger" [flowItem]="_flowItemData" [viewMode]="viewMode$ | async | defaultTrue"
       [selected]="selected$ | async | defaultFalse" [style.opacity]="1"></app-flow-item-content>

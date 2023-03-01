@@ -71,6 +71,8 @@ import { SecretTextConnectionDialogComponent } from './page/flow-builder/flow-ri
 import { BasicAuthConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/basic-auth-connection-dialog/basic-auth-connection-dialog.component';
 import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedback/feedback.component';
 import { BranchLineConnectionComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-connection/branch-line-connection/branch-line-connection.component';
+import { CanvasPannerDirective } from './page/flow-builder/flow-item-tree/flow-item/panning/panner.directive';
+import { CanvasZoomingDirective } from './page/flow-builder/flow-item-tree/flow-item/zooming/zooming.directive';
 
 @NgModule({
   imports: [
@@ -155,6 +157,8 @@ import { BranchLineConnectionComponent } from './page/flow-builder/flow-item-tre
     BasicAuthConnectionDialogComponent,
     FeedbackComponent,
     BranchLineConnectionComponent,
+    CanvasPannerDirective,
+    CanvasZoomingDirective,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [FlowBuilderHeaderComponent],
