@@ -1,3 +1,4 @@
+import packageJson from '../package.json';
 import { createPiece } from '@activepieces/framework';
 import { createImageFromTemplate } from './lib/actions/create-image';
 
@@ -8,6 +9,6 @@ export const bannerbear = createPiece({
   actions: [createImageFromTemplate],
   authors: ["kanarelo"],
   triggers: [],
-  version: "0.0.0"
+  version: packageJson.version
 });
 

@@ -1,3 +1,4 @@
+import packageJson from '../package.json';
 import { createPiece } from '@activepieces/framework';
 import { addPerson } from './lib/actions/add-person.action/add-person.action'
 import { newPerson } from './lib/trigger/new-person'
@@ -10,7 +11,7 @@ export const pipedrive = createPiece({
 	name: 'pipedrive',
 	displayName: "Pipedrive",
 	logoUrl: 'https://cdn.activepieces.com/pieces/pipedrive.png',
-  version: '0.0.0',
+  version: packageJson.version,
 	actions: [addPerson],
 	authors: ['ashrafsamhouri'],
 	triggers: [newPerson, newDeal, newActivity, updatedPerson, updatedDeal],

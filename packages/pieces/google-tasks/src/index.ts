@@ -1,3 +1,4 @@
+import packageJson from '../package.json';
 import { createPiece } from '@activepieces/framework';
 import { googleTasksAddNewTaskAction } from './lib/actions/new-task';
 
@@ -8,5 +9,5 @@ export const googleTasks = createPiece({
 	displayName: "Google Tasks",
 	authors: ['abaza738'],
 	triggers: [],
-  version: '0.0.0',
+  version: packageJson.version,
 });

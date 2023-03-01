@@ -1,3 +1,4 @@
+import packageJson from "../package.json";
 import { createPiece } from "@activepieces/framework";
 import { getClickupTaskCommants } from "./lib/actions/comments/get-task-comments";
 import { createClickupFolderlessList } from "./lib/actions/lists/create-folderless-list";
@@ -24,5 +25,5 @@ export const clickup = createPiece({
     ],
     authors: ['abuaboud', 'ShayPunter'],
     triggers: [],
-    version: '0.0.0',
+    version: packageJson.version,
 });

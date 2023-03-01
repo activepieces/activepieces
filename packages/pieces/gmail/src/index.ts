@@ -1,4 +1,5 @@
-import {createPiece} from '@activepieces/framework';
+import packageJson from '../package.json';
+import { createPiece } from '@activepieces/framework';
 import {gmailSendEmailAction} from './lib/actions/send-email-action';
 
 export const gmail = createPiece({
@@ -8,5 +9,5 @@ export const gmail = createPiece({
   displayName:'Gmail',
 	authors: ['AbdulTheActivePiecer'],
 	triggers: [],
-  version: '0.0.0',
+  version: packageJson.version,
 });

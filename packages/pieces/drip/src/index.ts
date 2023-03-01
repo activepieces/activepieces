@@ -1,3 +1,4 @@
+import packageJson from '../package.json';
 import { createPiece } from '@activepieces/framework';
 import { dripAddSubscriberToCampaign } from './lib/actions/add-subscriber-to-campaign.action';
 import { dripApplyTagToSubscriber } from './lib/actions/apply-tag-to-subscriber.action';
@@ -10,7 +11,7 @@ export const drip = createPiece({
 	name: 'drip',
 	displayName: 'Drip',
 	logoUrl: 'https://cdn.activepieces.com/pieces/drip.png',
-  version: '0.0.0',
+  version: packageJson.version,
 	authors: ['AbdulTheActivePiecer'],
 	actions: [dripApplyTagToSubscriber, dripAddSubscriberToCampaign, dripUpsertSubscriberAction],
 	triggers: [dripNewSubscriberEvent, dripTagAppliedEvent],
