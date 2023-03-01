@@ -485,6 +485,13 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
     });
   }
 );
+const selectAnyFlowHasSteps = createSelector(selectFlows, (flows: Flow[]) => {
+  let aFlowHasSteps = false;
+  flows.forEach((f) => {
+    aFlowHasSteps = aFlowHasSteps || !!f.version?.trigger?.nextAction;
+  });
+  return aFlowHasSteps;
+});
 
 function findStepLogoUrl(
   step: FlowItem,
@@ -568,4 +575,5 @@ export const BuilderSelectors = {
   selectAllFlowStepsMetaData,
   selectAllStepsForMentionsDropdown,
   selectAppConnectionsForMentionsDropdown,
+  selectAnyFlowHasSteps,
 };
