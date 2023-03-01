@@ -24,7 +24,8 @@ export const rssNewItemTrigger = createTrigger({
 
     async onEnable({ propsValue, store }): Promise<void> {
         const data = await getRss(propsValue.rss_feed_url);
-        store.put('lastFetchedRssItem', data?.rss?.channel?.item?.[0]?.guid);
+        const items = data?.rss?.channel?.item || data.feed?.entry || [];
+        store.put('lastFetchedRssItem', getId(items?.[0]));
         return;
     },
 
@@ -39,17 +40,33 @@ export const rssNewItemTrigger = createTrigger({
 
         // Most RSS feeds observed return this XML schema and are usually sorted by date descending.
         // Relying on that to get the latest published item and determining if there are new items in the feed.
-        store.put('lastFetchedRssItem', data?.rss?.channel?.item?.[0]?.guid);
+        // Support both RSS and Atom feeds.
+        const items = data?.rss?.channel?.item || data.feed?.entry || [];
+        store.put('lastFetchedRssItem', getId(items?.[0]));
 
         const newItems = [];
-        for (const item of data?.rss?.channel?.item ?? []) {
-            if (item.guid === lastItemId) break;
+        for (const item of items) {
+            if (getId(item) === lastItemId) break;
             newItems.push(item);
         }
 
         return newItems;
     },
 });
+
+// Some RSS feeds use the id field, some use the guid field, and some use neither.
+function getId(item: { id: string, guid: string }) {
+    if (item === undefined) {
+        return undefined;
+    }
+    if (item.guid) {
+        return item.guid
+    }
+    if (item.id) {
+        return item.id;
+    }
+    return JSON.stringify(item);
+}
 
 async function getRss(url: string) {
     const response = await httpClient.sendRequest({

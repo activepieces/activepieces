@@ -43,14 +43,14 @@ export interface ProjectCreateResponse {
   anonymize_ips: boolean
   completed_snippet_onboarding: boolean
   ingested_event: boolean
-  test_account_filters: {}
+  test_account_filters: Record<string, never>
   test_account_filters_default_checked: boolean
-  path_cleaning_filters: {}
+  path_cleaning_filters: Record<string, never>
   is_demo: boolean
   timezone: string
-  data_attributes: {}
+  data_attributes: Record<string, never>
   person_display_name_properties: string[]
-  correlation_config: {}
+  correlation_config: Record<string, never>
   session_recording_opt_in: boolean
   capture_console_log_opt_in: boolean
   capture_performance_opt_in: boolean

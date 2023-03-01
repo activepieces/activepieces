@@ -10,7 +10,8 @@ import {
 import * as auth from 'firebase/auth';
 import { FirebaseAuthService } from '../firebase-auth.service';
 import { Router } from '@angular/router';
-import { AuthenticationService } from '@frontend/modules/common/service/authentication.service';
+import { AuthenticationService } from '../../../../frontend/src/app/modules/common/service/authentication.service';
+
 
 export interface UserInfo {
 	firstName: FormControl<string>;

@@ -31,3 +31,14 @@ To exit the dev container and return to your local environment, follow these ste
 
 1. In the bottom left corner of Visual Studio Code, click the `Remote-Containers: Reopen folder locally` button.
 2. Visual Studio Code will close the connection to the dev container and reopen the project in your local environment.
+
+## Troubleshoot
+
+One of the best trouble shoot after an error occur is to reset the dev container.
+
+1. Exit the dev container
+2. Run the following
+    ```sh
+    sh tools/reset-dev.sh
+    ```
+3. Rebuild the dev container from above steps

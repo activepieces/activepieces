@@ -27,7 +27,7 @@ export const firebaseAuthenticationController = async (app: FastifyInstance, _op
         async (request: FastifyRequest<{ Body: FirebaseSignInRequest }>, reply: FastifyReply) => {
            try {
                 const verifiedToken = await firebaseAuth.verifyIdToken(request.body.token);
-                const user = await userService.getOne({ email: verifiedToken.email });
+                const user = await userService.getOneByEmail({ email: verifiedToken.email });
                 if (user !== null) {
                     const projects = await projectService.getAll(user.id);
                     const token = await tokenUtils.encode({
@@ -66,7 +66,7 @@ export const firebaseAuthenticationController = async (app: FastifyInstance, _op
         async (request: FastifyRequest<{ Body: FirebaseSignUpRequest }>, reply: FastifyReply) => {
             try {
                 const verifiedToken = await firebaseAuth.verifyIdToken(request.body.token);
-                const user = await userService.getOne({ email: verifiedToken.email });
+                const user = await userService.getOneByEmail({ email: verifiedToken.email });
                 if (user !== null) {
                     const projects = await projectService.getAll(user.id);
                     const token = await tokenUtils.encode({

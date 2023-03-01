@@ -5,22 +5,30 @@ import { ApId } from "@activepieces/shared";
 import { webhookService } from "./webhook-service";
 
 export const webhookController: FastifyPluginCallback = (app, _opts, done): void => {
+
+    app.post(
+        "/:flowId",
+        {
+            schema: {
+                params: WebhookUrlParams,
+            },
+        },
+        async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+            handler(request, request.params.flowId);
+            await reply.status(StatusCodes.OK).send();
+        }
+    );
+
+
     app.post(
         "/",
         {
             schema: {
-                querystring: WebhookQueryParams,
+                querystring: WebhookUrlParams,
             },
         },
-        async (request: FastifyRequest<{ Querystring: WebhookQueryParams }>, reply) => {
-            webhookService.callback({
-                flowId: request.query.flowId,
-                payload: {
-                    headers: request.headers,
-                    body: request.body,
-                    queryParams: request.query
-                },
-            });
+        async (request: FastifyRequest<{ Querystring: WebhookUrlParams }>, reply) => {
+            handler(request, request.query.flowId);
             await reply.status(StatusCodes.OK).send();
         }
     );
@@ -33,8 +41,18 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
     done();
 };
 
-const WebhookQueryParams = Type.Object({
+function handler(request: FastifyRequest, flowId: string){
+    webhookService.callback({
+        flowId: flowId,
+        payload: {
+            headers: request.headers,
+            body: request.body,
+            queryParams: request.query
+        },
+    });
+}
+const WebhookUrlParams = Type.Object({
     flowId: ApId,
 });
 
-type WebhookQueryParams = Static<typeof WebhookQueryParams>;
+type WebhookUrlParams = Static<typeof WebhookUrlParams>;

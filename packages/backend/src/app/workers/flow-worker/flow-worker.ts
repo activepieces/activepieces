@@ -1,4 +1,4 @@
-import fs from "node:fs";
+import fs from "node:fs/promises";
 import {
     Action,
     ActionType,
@@ -21,6 +21,7 @@ import { OneTimeJobData } from "./job-data";
 import { collectionService } from "../../collections/collection.service";
 import { engineHelper } from "../../helper/engine-helper";
 import { createRedisLock } from "../../database/redis-connection";
+import { captureException, logger } from "../../helper/logger";
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId);
@@ -28,14 +29,10 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     const collection = await collectionService.getOneOrThrow({ projectId: jobData.projectId, id: collectionVersion.collectionId });
 
     const sandbox = sandboxManager.obtainSandbox();
-    const flowLock = await createRedisLock(flowVersion.id);
-    console.log(`[${jobData.runId}] Executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`);
+    logger.info(`[${jobData.runId}] Executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`);
     try {
         await sandbox.cleanAndInit();
-
-        console.log("[" + jobData.runId + "] Downloading Files");
         await downloadFiles(sandbox, jobData.projectId, flowVersion, collectionVersion);
-
         const executionOutput = await engineHelper.executeFlow(sandbox, {
             flowVersionId: flowVersion.id,
             collectionVersionId: collectionVersion.id,
@@ -53,14 +50,19 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id);
     }
     catch (e: unknown) {
-        console.error(`[${jobData.runId}] error`, e);
-        await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null);
+        if (sandbox.timedOut()) {
+            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null);
+        }
+        else {
+            logger.error("[" + jobData.runId + "] Error executing flow");
+            captureException(e as Error);
+            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null);
+        }
     }
     finally {
         sandboxManager.returnSandbox(sandbox.boxId);
-        await flowLock.release();
     }
-    console.log(`[${jobData.runId}] Finished executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`);
+    logger.info(`[${jobData.runId}] Finished executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`);
 }
 
 async function downloadFiles(
@@ -69,20 +71,31 @@ async function downloadFiles(
     flowVersion: FlowVersion,
     collectionVersion: CollectionVersion,
 ): Promise<void> {
-    const buildPath = sandbox.getSandboxFolderPath();
+    const flowLock = await createRedisLock();
+    try {
+        logger.info(`[${flowVersion.id}] Acquiring flow lock to build codes`);
+        await flowLock.acquire(flowVersion.id);
 
-    // This has to be before flows, since it does modify code settings and fill it with packaged file id.
-    fs.mkdirSync(buildPath + "/codes/");
-    const artifacts: File[] = await buildCodes(projectId, flowVersion);
-    artifacts.forEach((artifact) => {
-        fs.writeFileSync(buildPath + "/codes/" + artifact.id + ".js", artifact.data);
-    });
+        const buildPath = sandbox.getSandboxFolderPath();
 
-    fs.mkdirSync(buildPath + "/flows/");
-    fs.writeFileSync(buildPath + "/flows/" + flowVersion.id + ".json", JSON.stringify(flowVersion));
+        // This has to be before flows, since it does modify code settings and fill it with packaged file id.
+        await fs.mkdir(buildPath + "/codes/");
+        const artifacts: File[] = await buildCodes(projectId, flowVersion);
 
-    fs.mkdirSync(buildPath + "/collections/");
-    fs.writeFileSync(buildPath + "/collections/" + collectionVersion.id + ".json", JSON.stringify(collectionVersion));
+        for(const artifact of artifacts) {
+            await fs.writeFile(buildPath + "/codes/" + artifact.id + ".js", artifact.data);
+        }
+        
+        await fs.mkdir(buildPath + "/flows/");
+        await fs.writeFile(buildPath + "/flows/" + flowVersion.id + ".json", JSON.stringify(flowVersion));
+
+        await fs.mkdir(buildPath + "/collections/");
+        await fs.writeFile(buildPath + "/collections/" + collectionVersion.id + ".json", JSON.stringify(collectionVersion));
+    }
+    finally {
+        logger.info(`[${flowVersion.id}] Releasing flow lock`);
+        await flowLock.release();
+    }
 
 }
 

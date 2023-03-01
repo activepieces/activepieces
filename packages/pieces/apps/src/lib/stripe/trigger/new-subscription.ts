@@ -154,7 +154,7 @@ export const stripeNewSubscription = createTrigger({
   async onDisable(context) {
     const response = await context.store?.get<WebhookInformation>('_new_customer_subscription_trigger');
     if (response !== null && response !== undefined) {
-      await stripeCommon.unsubscribeWebhook(response.webhookId, context.propsValue['api_key']!);
+      await stripeCommon.unsubscribeWebhook(response.webhookId, context.propsValue['api_key']);
     }
   },
   async run(context) {

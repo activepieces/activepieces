@@ -1,8 +1,3 @@
-import {
-  defaultCronJobForScheduleTrigger,
-  getDefaultDisplayNameForPiece,
-  getDisplayNameForTrigger,
-} from 'packages/frontend/src/app/modules/common/utils';
 import { Store } from '@ngrx/store';
 import {
   combineLatest,
@@ -27,10 +22,15 @@ import {
   AddActionRequest,
   FlowVersion,
 } from '@activepieces/shared';
-import { CodeService } from 'packages/frontend/src/app/modules/flow-builder/service/code.service';
-import { FlowStructureUtil } from 'packages/frontend/src/app/modules/flow-builder/service/flowStructureUtil';
-import { BuilderSelectors } from 'packages/frontend/src/app/modules/flow-builder/store/builder/builder.selector';
 import { FormControl } from '@angular/forms';
+import { CodeService } from '../../../../service/code.service';
+import { BuilderSelectors } from '../../../../store/builder/builder.selector';
+import { FlowStructureUtil } from '../../../../service/flowStructureUtil';
+import {
+  defaultCronJobForScheduleTrigger,
+  getDefaultDisplayNameForPiece,
+  getDisplayNameForTrigger,
+} from '../../../../../common/utils';
 
 @Component({
   selector: 'app-step-type-sidebar',
@@ -59,7 +59,7 @@ export class StepTypeSidebarComponent implements OnInit {
   flowTypeSelected$: Observable<Flow | undefined>;
   flowItemDetailsLoaded$: Observable<boolean>;
   triggersDetails$: Observable<FlowItemDetails[]>;
-  constructor(private store: Store, private codeService: CodeService) { }
+  constructor(private store: Store, private codeService: CodeService) {}
 
   ngOnInit(): void {
     this.flowItemDetailsLoaded$ = this.store
@@ -73,16 +73,16 @@ export class StepTypeSidebarComponent implements OnInit {
     const coreItemsDetails$ = this._showTriggers
       ? this.store.select(BuilderSelectors.selectFlowItemDetailsForCoreTriggers)
       : this.store.select(BuilderSelectors.selectCoreFlowItemsDetails);
-    const connectorComponentsItemsDetails$ = this._showTriggers
+    const customPiecesItemDetails$ = this._showTriggers
       ? this.store.select(
-        BuilderSelectors.selectFlowItemDetailsForConnectorComponentsTriggers
-      )
+          BuilderSelectors.selectFlowItemDetailsForCustomPiecesTriggers
+        )
       : this.store.select(
-        BuilderSelectors.selectFlowItemDetailsForConnectorComponents
-      );
+          BuilderSelectors.selectFlowItemDetailsForCustomPiecesActions
+        );
 
     const allItemDetails$ = forkJoin({
-      apps: connectorComponentsItemsDetails$.pipe(take(1)),
+      apps: customPiecesItemDetails$.pipe(take(1)),
       core: coreItemsDetails$.pipe(take(1)),
     }).pipe(
       map((res) => {
@@ -92,19 +92,19 @@ export class StepTypeSidebarComponent implements OnInit {
     this.tabsAndTheirLists.push({
       displayName: 'All',
       list$: this.applySearchToObservable(allItemDetails$),
-      emptyListText: 'Oops! We didn\'t find any results.',
+      emptyListText: "Oops! We didn't find any results.",
     });
 
     this.tabsAndTheirLists.push({
       displayName: 'Core',
       list$: this.applySearchToObservable(coreItemsDetails$),
-      emptyListText: 'Oops! We didn\'t find any results.',
+      emptyListText: "Oops! We didn't find any results.",
     });
 
     this.tabsAndTheirLists.push({
       displayName: this._showTriggers ? 'App Events' : 'App Actions',
-      list$: this.applySearchToObservable(connectorComponentsItemsDetails$),
-      emptyListText: 'Oops! We didn\'t find any results.',
+      list$: this.applySearchToObservable(customPiecesItemDetails$),
+      emptyListText: "Oops! We didn't find any results.",
     });
   }
 
@@ -192,6 +192,7 @@ export class StepTypeSidebarComponent implements OnInit {
           valid: false,
           settings: {
             pieceName: triggerDetails.extra!.appName,
+            pieceVersion: '0.0.0',
             triggerName: '',
             input: {},
           },
@@ -257,11 +258,12 @@ export class StepTypeSidebarComponent implements OnInit {
             type: ActionType.PIECE,
             settings: {
               pieceName: componentDetails.extra!.appName,
+              pieceVersion: '0.0.0',
               actionName: undefined,
               input: {},
               inputUiInfo: {
-                customizedInputs: {}
-              }
+                customizedInputs: {},
+              },
             },
           },
         };

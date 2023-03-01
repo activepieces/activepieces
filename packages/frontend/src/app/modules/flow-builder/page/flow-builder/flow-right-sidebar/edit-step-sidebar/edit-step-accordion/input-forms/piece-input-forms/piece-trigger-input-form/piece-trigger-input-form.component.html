@@ -5,12 +5,31 @@
       [compareWith]="triggerDropdownCompareFn">
       <mat-select-trigger>
         <ng-container *ngIf="selectedTrigger$ | async as selectedTrigger">
-          {{selectedTrigger?.label.name}}
+          {{selectedTrigger?.label?.name}}
         </ng-container>
       </mat-select-trigger>
-      <mat-option *ngFor="let opt of triggers$ | async" [value]="opt.value" [matTooltip]="opt.label.description">
-        <div>{{opt.label.name}}</div>
-        <div class="ap-typography-caption ap-text-description ap-truncate"> {{opt.label.description}}</div>
+      <mat-option *ngFor="let opt of triggers$ | async" [value]="opt.value">
+        <div class="ap-flex ap-items-center ap-gap-[2px]">
+          <div>
+            <div>{{opt.label.name}}</div>
+            <div class="ap-typography-caption ap-text-description"> {{opt.label.description}}</div>
+          </div>
+
+          <div class="ap-flex-grow"></div>
+          <div *ngIf="opt.label.isWebhook" matTooltip="Instantly triggered once change occurs"
+            class="ap-rounded-full ap-drop-shadow-md ap-min-h-[30px] ap-min-w-[30px] ap-flex ap-items-center ap-justify-center">
+            <svg-icon src="assets/img/custom/triggers/instant.svg" class="ap-w-[25px] ap-h-[25px] ap-fill-body"
+              [applyClass]="true">
+            </svg-icon>
+          </div>
+          <div *ngIf="!opt.label.isWebhook" matTooltip="Checks for changes every 5 minutes"
+            class="ap-rounded-full  ap-drop-shadow-md ap-min-h-[30px] ap-justify-center ap-min-w-[30px] ap-flex ap-items-center">
+            <svg-icon src="assets/img/custom/triggers/periodic.svg" class="ap-w-[25px] ap-h-[25px] ap-fill-body"
+              [applyClass]="true">
+            </svg-icon>
+          </div>
+
+        </div>
       </mat-option>
       <mat-option [disabled]="true" *ngIf=" ( triggers$ | async) === undefined ||  (triggers$ | async)?.length === 0">
         No options available

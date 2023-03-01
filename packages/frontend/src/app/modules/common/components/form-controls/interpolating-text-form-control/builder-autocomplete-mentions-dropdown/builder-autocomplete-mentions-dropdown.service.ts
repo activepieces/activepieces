@@ -1,11 +1,10 @@
 import { Injectable } from '@angular/core';
 import { UUID } from 'angular2-uuid';
-import {  Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class BuilderAutocompleteMentionsDropdownService {
-  lastOpenDropdownId$: Subject<UUID>= new Subject();
-  constructor() {}
+  lastOpenDropdownId$: Subject<UUID> = new Subject();
 }

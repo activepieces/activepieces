@@ -27,3 +27,7 @@ export type MultiSelectDropdownProperty<T, R extends boolean> = BasePropertySche
 	refreshers: string[];
 	options: (propsValue: Record<string, OAuth2PropertyValue | number | string | object | BasicAuthPropertyValue | unknown[]>) => Promise<DropdownState<T>>
 } & TPropertyValue<T[], PropertyType.MULTI_SELECT_DROPDOWN, R>;
+
+export type StaticMultiSelectDropdownProperty<T, R extends boolean> = BasePropertySchema & {
+	options: DropdownState<T>;
+} & TPropertyValue<T[], PropertyType.STATIC_MULTI_SELECT_DROPDOWN, R>;
