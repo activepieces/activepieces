@@ -44,12 +44,13 @@ export const usageService = {
         const plan = await billingService.getPlan({ projectId });
         const nextReset = nextResetDatetime(plan.subscriptionStartDatetime);
         if (projectUsage === undefined || projectUsage === null || isNotSame(nextReset, projectUsage.nextResetDatetime)) {
-            projectUsage = await projectUsageRepo.save({
+            await projectUsageRepo.upsert({
                 id: apId(),
                 projectId,
                 consumedTasks: 0,
                 nextResetDatetime: nextReset,
-            });
+            }, ['projectId']);
+            return await projectUsageRepo.findOneBy({ projectId });
         }
         return projectUsage;
     },
