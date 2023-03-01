@@ -143,7 +143,11 @@ function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
       parentStep.onSuccessAction = createAction(request.action, parentStep.onSuccessAction);
     } else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_FALSE_BRANCH) {
       parentStep.onFailureAction = createAction(request.action, parentStep.onFailureAction);
-    } else {
+    } 
+    else if(request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
+      parentStep.nextAction = createAction(request.action, parentStep.nextAction);
+    }
+    else {
       throw new ActivepiecesError({
         code: ErrorCode.FLOW_OPERATION_INVALID,
         params: {}

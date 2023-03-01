@@ -58,7 +58,10 @@ export class FlowRenderUtil {
       }
       const subGraph = loopItem.firstLoopAction
         ? (loopItem.firstLoopAction as FlowItem).boundingBox!.height
-        : EMPTY_LOOP_ADD_BUTTON_HEIGHT + VERTICAL_LINE_LENGTH;
+        : EMPTY_LOOP_ADD_BUTTON_HEIGHT +
+          VERTICAL_LINE_LENGTH +
+          SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
+
       const svgBoxHeight =
         SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
         VERTICAL_LINE_LENGTH +
@@ -89,7 +92,8 @@ export class FlowRenderUtil {
         this.buildBoxes(branchItem.onSuccessAction);
       }
 
-      let subGraphHeight = EMPTY_LOOP_ADD_BUTTON_HEIGHT + VERTICAL_LINE_LENGTH;
+      let subGraphHeight =
+        EMPTY_LOOP_ADD_BUTTON_HEIGHT + SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
       if (branchItem.onFailureAction && branchItem.onSuccessAction) {
         subGraphHeight = Math.max(
           (branchItem.onFailureAction as FlowItem).boundingBox!.height,
@@ -116,7 +120,9 @@ export class FlowRenderUtil {
         subGraphHeight +
         SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
         ARC_LENGTH +
-        VERTICAL_LINE_LENGTH;
+        VERTICAL_LINE_LENGTH +
+        VERTICAL_LINE_LENGTH +
+        VERTICAL_LINE_LENGTH * 0.25;
 
       flowItem.connectionsBox = {
         width: FLOW_ITEM_WIDTH,

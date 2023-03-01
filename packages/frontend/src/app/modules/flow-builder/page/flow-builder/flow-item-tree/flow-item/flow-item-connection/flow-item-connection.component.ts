@@ -17,7 +17,7 @@ export class FlowItemConnectionComponent {
   @Input() flowItem: FlowItem;
   @Input() colorLine = false;
   @Input() viewMode: boolean;
-  @Input() insideLoop = false;
+  @Input() insideLoopOrBranch = false;
   constructor(public themeService: ThemeService) {}
 
   get ActionType() {

@@ -1,12 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
   Input,
   OnChanges,
   OnInit,
   SimpleChanges,
-  ViewChild,
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
@@ -20,7 +18,6 @@ import {
   HORZIONTAL_LINE_LENGTH,
   SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
   VERTICAL_LINE_LENGTH,
-  AFTER_NESTED_LOOP_LINE_LENGTH,
   EMPTY_LOOP_ADD_BUTTON_WIDTH,
 } from '../draw-utils';
 import { FlowsActions } from '../../../../../../store/flow/flows.action';
@@ -44,10 +41,7 @@ import { FlowRendererService } from '../../../../../../service/flow-renderer.ser
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BranchLineConnectionComponent implements OnChanges, OnInit {
-  @ViewChild('addButton') addButtonView: ElementRef;
-  @ViewChild('emptyBranchAddButton') emptyBranchAddButtonView: ElementRef;
-  @ViewChild('afterBranchAddButton') afterBranchAddButton: ElementRef;
-  @Input() insideLoop = false;
+  @Input() insideLoopOrBranch = false;
   afterLoopArrowCommand = '';
   trueBranchLineDrawCommand = '';
   falseBranchLineDrawCommand = '';
@@ -57,15 +51,17 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
   drawer: Drawer = new Drawer();
   addButtonAndFlowItemNameContainer: AddButtonAndFlowItemNameContainer;
   addButtonTop = '0px';
-  addButtonLeft = '0px';
+  addButtonFalseBranchLeftStyleProperty = '0px';
+  addButtonTrueBranchLeftStyleProperty = '0px';
   emptyLoopAddButtonTopOffset = '0px';
   emptyLoopAddButtonLeftOffsetForFalseBranch = '0px';
   emptyLoopAddButtonLeftOffsetForTrueBranch = '0px';
   afterBranchAddButtonTop = '0px';
   afterBranchAddButtonLeft = '0px';
-  afterLoopArrowHeadLeft = 0;
-  afterBranchArrowHeadTop = 0;
-  showEmptyLoopAddButtonBoxShadow = false;
+  afterBranchesArrowHeadLeft = 0;
+  afterBranchesArrowHeadTop = 0;
+  showEmptyTrueBranchAddButtonBoxShadow = false;
+  showEmptyFalseranchAddButtonBoxShadow = false;
   addButtonSize = {
     width: `${ADD_BUTTON_SIZE.width}px`,
     height: `${ADD_BUTTON_SIZE.height}px`,
@@ -103,38 +99,52 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
 
   writeLines() {
     const trueBranchCommands: string[] = [];
-    let childFlowsGraphHeight =
-      EMPTY_LOOP_ADD_BUTTON_HEIGHT +
-      SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
-      VERTICAL_LINE_LENGTH;
-    if (this.flowItem.onFailureAction && this.flowItem.onSuccessAction) {
-      childFlowsGraphHeight = Math.max(
-        (this.flowItem.onSuccessAction as FlowItem).boundingBox!.height,
-        (this.flowItem.onFailureAction as FlowItem).boundingBox!.height
-      );
-    } else if (this.flowItem.onFailureAction) {
-      childFlowsGraphHeight = Math.max(
-        childFlowsGraphHeight,
-        (this.flowItem.onFailureAction as FlowItem).boundingBox!.height
-      );
-    } else if (this.flowItem.onSuccessAction) {
-      childFlowsGraphHeight = Math.max(
-        childFlowsGraphHeight,
-        (this.flowItem.onSuccessAction as FlowItem).boundingBox!.height
-      );
-    }
-    trueBranchCommands.push(...this.writeBranchLine(true));
-    trueBranchCommands.push(...this.writeAfterArrow(childFlowsGraphHeight));
+    const trueBranchGraphHeight = this._flowItem.onSuccessAction
+      ? (this._flowItem.onSuccessAction as FlowItem).boundingBox!.height
+      : EMPTY_LOOP_ADD_BUTTON_HEIGHT + SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
+    const falseBranchGraphHeight = this._flowItem.onFailureAction
+      ? (this._flowItem.onFailureAction as FlowItem).boundingBox!.height
+      : EMPTY_LOOP_ADD_BUTTON_HEIGHT + SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
+    const branchesHeightDifference = Math.abs(
+      trueBranchGraphHeight - falseBranchGraphHeight
+    );
+    trueBranchCommands.push(
+      ...this.writeBranchLine(
+        true,
+        trueBranchGraphHeight,
+        branchesHeightDifference,
+        trueBranchGraphHeight > falseBranchGraphHeight
+      )
+    );
+    trueBranchCommands.push(...this.writeBranchClosing(true));
     this.trueBranchLineDrawCommand = trueBranchCommands.join(' ');
+
     const falseBranchCommands: string[] = [];
-    falseBranchCommands.push(...this.writeBranchLine(false));
-    falseBranchCommands.push(...this.writeAfterArrow(childFlowsGraphHeight));
+    falseBranchCommands.push(
+      ...this.writeBranchLine(
+        false,
+        falseBranchGraphHeight,
+        branchesHeightDifference,
+        falseBranchGraphHeight > trueBranchGraphHeight
+      )
+    );
+    falseBranchCommands.push(...this.writeBranchClosing(false));
+    falseBranchCommands.push(
+      ...[
+        this.drawer.move(3, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE),
+        this.drawer.drawVerticalLine(VERTICAL_LINE_LENGTH),
+      ]
+    );
     this.falseBranchLineDrawCommand = falseBranchCommands.join(' ');
   }
 
-  writeBranchLine(trueBranch: boolean) {
+  writeBranchLine(
+    trueBranch: boolean,
+    branchGraphHeight: number,
+    differenceBetweenBranchesHeights: number,
+    isLongerGraph: boolean
+  ) {
     const commands: string[] = [];
-
     commands.push(
       this.drawer.move(FLOW_ITEM_WIDTH / 2, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE)
     );
@@ -146,62 +156,37 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
       )
     );
     commands.push(this.drawer.drawArc(trueBranch, true, trueBranch));
-    commands.push(this.drawer.drawVerticalLine(VERTICAL_LINE_LENGTH));
+    commands.push(
+      this.drawer.drawVerticalLine(
+        VERTICAL_LINE_LENGTH + VERTICAL_LINE_LENGTH * 0.25
+      )
+    );
+    commands.push(this.drawer.move(0, branchGraphHeight));
+    commands.push(this.drawer.move(0, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE));
+    commands.push(
+      this.drawer.drawVerticalLine(
+        VERTICAL_LINE_LENGTH +
+          (isLongerGraph ? 0 : differenceBetweenBranchesHeights)
+      )
+    );
     return commands;
   }
 
-  // writeLoopClosing(childFlowsGraphHeight: number) {
-  //   const commands: string[] = [];
-  //   commands.push(this.drawer.move(0, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE));
-  //   if (!this.flowItem.firstLoopAction) {
-  //     commands.push(this.drawer.move(0, EMPTY_LOOP_ADD_BUTTON_HEIGHT));
-  //     commands.push(this.drawer.move(0, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE));
-  //     commands.push(this.drawer.drawVerticalLine(VERTICAL_LINE_LENGTH));
-  //   } else {
-  //     commands.push(this.drawer.move(0, childFlowsGraphHeight));
-  //   }
-  //   commands.push(this.drawer.drawArc(true, true, false));
-  //   commands.push(
-  //     this.drawer.drawHorizontalLine(-2.5 * HORZIONTAL_LINE_LENGTH)
-  //   );
-  //   commands.push(this.drawer.drawArc(true, false, false));
-  //   const returningVerticalLineToBeginingLength =
-  //     this.findReturningVerticalLineLength(childFlowsGraphHeight);
-  //   commands.push(
-  //     this.drawer.drawVerticalLine(-returningVerticalLineToBeginingLength)
-  //   );
-  //   commands.push(this.drawer.drawArc(false, false, false));
-  //   commands.push(this.drawer.drawHorizontalLine(HORZIONTAL_LINE_LENGTH));
-  //   return commands;
-  // }
-
-  writeAfterArrow(childFlowsGraphHeight: number) {
+  writeBranchClosing(isTrueBranch: boolean) {
     const commands: string[] = [];
+    commands.push(this.drawer.drawArc(!isTrueBranch, true, isTrueBranch));
     commands.push(
-      this.drawer.move(
-        0.5 * HORZIONTAL_LINE_LENGTH - ARC_LENGTH,
-        ARC_LENGTH +
-          VERTICAL_LINE_LENGTH +
-          SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
-          childFlowsGraphHeight +
-          ARC_LENGTH
+      this.drawer.drawHorizontalLine(
+        1.1 * HORZIONTAL_LINE_LENGTH * (isTrueBranch ? 1 : -1)
       )
     );
-
-    if (!this.insideLoop) {
-      commands.push(this.drawer.drawVerticalLine(VERTICAL_LINE_LENGTH));
-    } else {
-      commands.push(
-        this.drawer.drawVerticalLine(AFTER_NESTED_LOOP_LINE_LENGTH)
-      );
-    }
     return commands;
   }
 
   calculateEmptyLoopAddButton() {
     const leftOffset = HORZIONTAL_LINE_LENGTH + 11;
     const topOffset =
-      VERTICAL_LINE_LENGTH * 2 +
+      VERTICAL_LINE_LENGTH * 2.25 +
       ARC_LENGTH * 2 +
       2 * SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
     this.emptyLoopAddButtonTopOffset = `${topOffset}px`;
@@ -223,14 +208,18 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
       ARC_LENGTH +
       VERTICAL_LINE_LENGTH -
       SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
-    this.arrowHeadLeftFalseBranch =
-      rightOffset - (ARROW_HEAD_SIZE.width / 2.0 + lineStrokeOffset);
     this.arrowHeadLeftTrueBranch =
+      rightOffset - (ARROW_HEAD_SIZE.width / 2.0 + lineStrokeOffset);
+    this.arrowHeadLeftFalseBranch =
       leftOffset - (ARROW_HEAD_SIZE.width / 2.0 + lineStrokeOffset);
-    this.arrowHeadTop = topOffset + ARROW_HEAD_SIZE.height;
+    this.arrowHeadTop =
+      topOffset + VERTICAL_LINE_LENGTH / 2.0 - ARROW_HEAD_SIZE.height;
 
-    this.addButtonLeft = leftOffset - ADD_BUTTON_SIZE.width / 2.0 + 'px';
-    this.addButtonTop = topOffset - VERTICAL_LINE_LENGTH / 2.0 + 'px';
+    this.addButtonFalseBranchLeftStyleProperty =
+      leftOffset - Math.floor(ADD_BUTTON_SIZE.width / 2.0) + 'px';
+    this.addButtonTrueBranchLeftStyleProperty =
+      rightOffset - Math.floor(ADD_BUTTON_SIZE.width / 2.0) + 'px';
+    this.addButtonTop = topOffset - VERTICAL_LINE_LENGTH / 2.0 + 25 + 'px';
   }
 
   calculateOffsetAfterBranch() {
@@ -241,14 +230,16 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
 
     this.afterBranchAddButtonTop = `${
       topOffset -
-      VERTICAL_LINE_LENGTH / 2.0 -
-      (this.insideLoop ? ARROW_HEAD_SIZE.height : 1)
+      VERTICAL_LINE_LENGTH * 0.5 -
+      (this.insideLoopOrBranch ? ARROW_HEAD_SIZE.height : 1)
     }px`;
-    this.afterBranchAddButtonLeft = `calc(50% - ${ADD_BUTTON_SIZE.width / 2}px`;
+    this.afterBranchAddButtonLeft = `calc(50% - ${
+      ADD_BUTTON_SIZE.width / 2 - 0.5
+    }px`;
     const lineStrokeOffset = 1.5;
-    this.afterBranchArrowHeadTop =
+    this.afterBranchesArrowHeadTop =
       topOffset - ARROW_HEAD_SIZE.height - lineStrokeOffset + 5;
-    this.afterLoopArrowHeadLeft =
+    this.afterBranchesArrowHeadLeft =
       this.flowItem.connectionsBox!.width / 2.0 -
       ARROW_HEAD_SIZE.width / 2 -
       lineStrokeOffset;
@@ -316,7 +307,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     }
   }
 
-  loopItemStyle() {
+  falseBranchStyle() {
     return {
       width: FLOW_ITEM_WIDTH + 'px',
       height: FLOW_ITEM_HEIGHT + 'px',
@@ -325,7 +316,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
         VERTICAL_LINE_LENGTH +
         ARC_LENGTH +
         ARC_LENGTH +
-        VERTICAL_LINE_LENGTH +
+        VERTICAL_LINE_LENGTH * 1.25 +
         SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
         'px',
       left:
@@ -334,7 +325,29 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
         HORZIONTAL_LINE_LENGTH -
         FLOW_ITEM_WIDTH / 2 +
         'px',
-      position: 'relative',
+      position: 'absolute',
+    };
+  }
+  trueBranchStyle() {
+    return {
+      width: FLOW_ITEM_WIDTH + 'px',
+      height: FLOW_ITEM_HEIGHT + 'px',
+      top:
+        SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
+        VERTICAL_LINE_LENGTH +
+        ARC_LENGTH +
+        ARC_LENGTH +
+        VERTICAL_LINE_LENGTH * 1.25 +
+        SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
+        'px',
+      left:
+        (FLOW_ITEM_WIDTH / 2 +
+          ARC_LENGTH * 2 +
+          HORZIONTAL_LINE_LENGTH -
+          FLOW_ITEM_WIDTH / 2) *
+          -1 +
+        'px',
+      position: 'absolute',
     };
   }
 }

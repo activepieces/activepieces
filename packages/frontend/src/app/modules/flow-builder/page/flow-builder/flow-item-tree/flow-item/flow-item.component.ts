@@ -18,7 +18,7 @@ import {
   styleUrls: [],
 })
 export class FlowItemComponent implements OnInit {
-  @Input() insideLoop = false;
+  @Input() insideLoopOrBranch = false;
   @Input() hoverState = false;
   @Input() trigger = false;
   _flowItemData: FlowItem;

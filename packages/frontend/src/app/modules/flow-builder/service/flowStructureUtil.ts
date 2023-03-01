@@ -1,6 +1,7 @@
 import { FlowItem } from '../../common/model/flow-builder/flow-item';
 import {
   ActionType,
+  BranchAction,
   FlowVersion,
   LoopOnItemsAction,
   Trigger,
@@ -87,6 +88,15 @@ export class FlowStructureUtil {
       const loopAction = mainPiece as LoopOnItemsAction;
       if (loopAction.firstLoopAction) {
         branches.push(loopAction.firstLoopAction);
+      }
+    }
+    if (mainPiece.type === ActionType.BRANCH) {
+      const branchAction = mainPiece as BranchAction;
+      if (branchAction.onFailureAction) {
+        branches.push(branchAction.onFailureAction);
+      }
+      if (branchAction.onSuccessAction) {
+        branches.push(branchAction.onSuccessAction);
       }
     }
     const nextAction = mainPiece.nextAction;
