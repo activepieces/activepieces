@@ -28,16 +28,16 @@ import { openai } from '@activepieces/piece-openai';
 import { pipedrive } from '@activepieces/piece-pipedrive';
 import { posthog } from '@activepieces/piece-posthog';
 import { rssFeed } from '@activepieces/piece-rss';
+import { sendgrid } from '@activepieces/piece-sendgrid';
 import { slack } from '@activepieces/piece-slack';
-import { sendgrid } from './lib/sendgrid';
-import { stripe } from './lib/stripe';
-import { telegramBot } from './lib/telegram_bot';
-import { todoist } from './lib/todoist';
-import { twilio } from './lib/twilio';
-import { typeform } from './lib/typeform';
-import { zoom } from './lib/zoom';
-import { storage } from './lib/store';
-import { wordpress } from './lib/wordpress';
+import { storage } from '@activepieces/piece-store';
+import { stripe } from '@activepieces/piece-stripe';
+import { telegramBot } from '@activepieces/piece-telegram-bot';
+import { todoist } from '@activepieces/piece-todoist';
+import { twilio } from '@activepieces/piece-twilio';
+import { typeform } from '@activepieces/piece-typeform';
+import { wordpress } from '@activepieces/piece-wordpress';
+import { zoom } from '@activepieces/piece-zoom';
 
 export const pieces: Piece[] = [
     airtable,

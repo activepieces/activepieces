@@ -1,0 +1,27 @@
+{
+  "name": "pieces-typeform",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/typeform/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/typeform",
+        "tsConfig": "packages/pieces/typeform/tsconfig.lib.json",
+        "packageJson": "packages/pieces/typeform/package.json",
+        "main": "packages/pieces/typeform/src/index.ts",
+        "assets": ["packages/pieces/typeform/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/typeform/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
