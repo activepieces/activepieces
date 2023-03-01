@@ -64,26 +64,14 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
     }
 
     const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
-        const piecePath = resolve(cwd(), 'packages', 'pieces', 'apps', 'src', 'lib')
-        const pieceDirectories = await readdir(piecePath)
+        const frameworkPackages = ['framework', 'apps']
+        const piecesPath = resolve(cwd(), 'packages', 'pieces')
+        const piecePackages = await readdir(piecesPath)
+        const filteredPiecePackages = piecePackages.filter(d => !frameworkPackages.includes(d))
 
         const pieces: Piece[] = [];
-
-        /* pieces that aren't yet migrated to a standalone package */
-        for (const pieceDirectory of pieceDirectories) {
-            const module = await import(`../../../../pieces/apps/src/lib/${pieceDirectory}/index.ts`)
-            const piece = Object.values<Piece>(module)[0]
-            pieces.push(piece)
-        }
-
-        const frameworkPackages = ['framework', 'apps']
-        const piecePackagePath = resolve(cwd(), 'packages', 'pieces')
-        const piecePackageDirectories = await readdir(piecePackagePath)
-        const filteredPiecePackageDirectories = piecePackageDirectories.filter(d => !frameworkPackages.includes(d))
-
-        /* pieces that are migrated to a standalone package */
-        for (const pieceDirectory of filteredPiecePackageDirectories) {
-            const module = await import(`../../../../pieces/${pieceDirectory}/src/index.ts`)
+        for (const piecePackage of filteredPiecePackages) {
+            const module = await import(`../../../../pieces/${piecePackage}/src/index.ts`)
             const piece = Object.values<Piece>(module)[0]
             pieces.push(piece)
         }
