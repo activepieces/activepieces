@@ -2,6 +2,7 @@ import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { cwd } from "node:process";
 import axios from "axios";
+import sortBy from "lodash/sortBy";
 import { Piece } from "@activepieces/framework";
 import { ActivepiecesError, ApEnvironment, ErrorCode, PieceMetadata, PieceMetadataSummary } from "@activepieces/shared";
 import { system } from "../helper/system/system";
@@ -57,27 +58,21 @@ const cdnPieceMetadataLoader = (): PieceMetadataLoader => {
  * Used in development.
  */
 const filePieceMetadataLoader = (): PieceMetadataLoader => {
-    const byDisplayNameIgnoreCase = (a: Piece, b: Piece) => {
-        const aName = a.displayName.toUpperCase()
-        const bName = b.displayName.toUpperCase()
-        return aName.localeCompare(bName, 'en')
-    }
-
     const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
         const frameworkPackages = ['framework', 'apps']
         const piecesPath = resolve(cwd(), 'packages', 'pieces')
         const piecePackages = await readdir(piecesPath)
         const filteredPiecePackages = piecePackages.filter(d => !frameworkPackages.includes(d))
 
-        const pieces: Piece[] = [];
+        const piecesMetadata: PieceMetadata[] = [];
+
         for (const piecePackage of filteredPiecePackages) {
             const module = await import(`../../../../pieces/${piecePackage}/src/index.ts`)
             const piece = Object.values<Piece>(module)[0]
-            pieces.push(piece)
+            piecesMetadata.push(piece.metadata())
         }
 
-        pieces.sort(byDisplayNameIgnoreCase);
-        return pieces.map(p => p.metadata());
+        return sortBy(piecesMetadata, [p => p.displayName.toUpperCase()])
     }
 
     return {
