@@ -21,7 +21,8 @@
           <div class="box">
             <div class="header"> <app-flow-builder-tabs></app-flow-builder-tabs>
             </div>
-            <div class="content canvas" #canvasWrapper appCanvasZoomer appCanvasPanner>
+            <div class="content canvas" #canvasWrapper appCanvasZoomer appCanvasPanner
+              [style.cursor]="cursorStyle$ | async">
               <app-flow-item-tree></app-flow-item-tree>
             </div>
           </div>

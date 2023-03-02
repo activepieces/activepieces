@@ -24,12 +24,19 @@ export class CanvasPannerDirective {
       this.dragState.currentOffset.x = event.pageX;
       this.dragState.currentOffset.y = event.pageY;
       this.dragState.isDragging = true;
+      this.pannerService.isGrabbing$.next(true);
     }
   }
 
   @HostListener('mouseup', ['$event'])
   mouseUp(ignoredEvent) {
     this.dragState.isDragging = false;
+    this.pannerService.isGrabbing$.next(false);
+  }
+  @HostListener('mouseleave', ['$event'])
+  mouseleave(ignoredEvent) {
+    this.dragState.isDragging = false;
+    this.pannerService.isGrabbing$.next(false);
   }
   @HostListener('mousemove', ['$event'])
   mouseMover(event: MouseEvent) {

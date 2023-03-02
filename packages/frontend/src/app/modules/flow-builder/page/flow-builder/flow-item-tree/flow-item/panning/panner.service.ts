@@ -6,4 +6,5 @@ import { Subject } from 'rxjs';
 })
 export class PannerService {
   panningOffset$: Subject<{ x: number; y: number }> = new Subject();
+  isGrabbing$: Subject<boolean> = new Subject();
 }

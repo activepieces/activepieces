@@ -28,6 +28,7 @@ import {
 } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
+import { PannerService } from './flow-item-tree/flow-item/panning/panner.service';
 
 @Component({
   selector: 'app-collection-builder',
@@ -47,6 +48,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   rightSidebarDragging = false;
   leftSidebarDragging = false;
   loadInitialData$: Observable<void> = new Observable<void>();
+  cursorStyle$: Observable<string>;
   constructor(
     private store: Store,
     public pieceBuilderService: CollectionBuilderService,
@@ -54,8 +56,17 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     private ngZone: NgZone,
     private snackbar: MatSnackBar,
     private runDetailsService: RunDetailsService,
-    private titleService: Title
+    private titleService: Title,
+    private pannerService: PannerService
   ) {
+    this.cursorStyle$ = this.pannerService.isGrabbing$.asObservable().pipe(
+      map((val) => {
+        if (val) {
+          return 'grabbing !important';
+        }
+        return 'auto !important';
+      })
+    );
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
         const runInformation: InstanceRunInfo = value['runInformation'];
