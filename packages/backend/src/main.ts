@@ -28,6 +28,7 @@ import { firebaseAuthenticationModule } from "@ee/firebase-auth/backend/firebase
 import { billingModule } from "@ee/billing/backend/billing.module";
 import { getEdition } from "./app/helper/license-helper";
 import { ApEdition } from "@activepieces/shared";
+import { appEventRoutingModule } from "./app/app-event-routing/app-event-routing.module";
 
 const app = fastify({
     logger,
@@ -94,6 +95,7 @@ app.register(flowRunModule);
 app.register(webhookModule);
 app.register(appConnectionModule);
 app.register(openapiModule);
+app.register(appEventRoutingModule);
 
 app.get(
     "/redirect",

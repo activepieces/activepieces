@@ -1,14 +1,23 @@
 import { TriggerStrategy } from "./trigger/trigger";
 
 
-export interface TriggerHookContext<T, S extends TriggerStrategy> {
-    webhookUrl: string,
-    app: {
-        registerListener({ events, identifierKey, identifierValue }: { events: string[], identifierValue: string, identifierKey: string }): Promise<void>
-    }
-    propsValue: T,
-    store: Store
-}
+export type TriggerHookContext<T, S extends TriggerStrategy> =
+    S extends TriggerStrategy.APP_WEBHOOK ? {
+        webhookUrl: string,
+        app: {
+            createListeners({ events, identifierValue }: { events: string[], identifierValue: string }): Promise<void>
+        },
+        propsValue: T,
+        store: Store
+    } : S extends TriggerStrategy.POLLING ? {
+        propsValue: T,
+        store: Store
+    } : {
+        webhookUrl: string,
+        propsValue: T,
+        store: Store
+    };
+
 
 export interface TriggerContext<T> {
     payload: Record<string, never> | {

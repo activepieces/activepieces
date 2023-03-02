@@ -9,6 +9,7 @@ export const slackAuth = Property.OAuth2({
   scope: [
     'channels:read',
     'channels:write',
+    'channels:history',
     'chat:write:bot',
     'groups:read',
     'mpim:read',

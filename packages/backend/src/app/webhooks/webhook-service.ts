@@ -1,6 +1,7 @@
 import {
     ApEnvironment,
     CollectionId,
+    EventPayload,
     FlowId,
     Instance,
     ProjectId,
@@ -104,5 +105,5 @@ const getInstanceOrThrow = async (
 
 interface CallbackParams {
   flowId: FlowId;
-  payload: unknown;
+  payload: EventPayload;
 }

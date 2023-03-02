@@ -24,10 +24,6 @@ class ITrigger<T extends PieceProperty, S extends TriggerStrategy> implements Tr
     public readonly run: (
       ctx: TriggerContext<StaticPropsValue<T>>
     ) => Promise<unknown[]>,
-    public readonly extractWebhookEvent: (payload: any) => Promise<{
-      event: string;
-      identifierValue: string;
-    }>,
     public readonly sampleData: unknown
   ) { }
 }
@@ -43,10 +39,6 @@ export function createTrigger<T extends PieceProperty, S extends TriggerStrategy
   onEnable: (context: TriggerHookContext<StaticPropsValue<T>, S>) => Promise<void>;
   onDisable: (context: TriggerHookContext<StaticPropsValue<T>, S>) => Promise<void>;
   run: (context: TriggerContext<StaticPropsValue<T>>) => Promise<unknown[]>;
-  extractWebhookEvent?: (payload: any) => Promise<{
-    event: string;
-    identifierValue: string;
-  }>;
   sampleData?: unknown;
 }): Trigger {
   return new ITrigger<T, S>(
@@ -58,8 +50,6 @@ export function createTrigger<T extends PieceProperty, S extends TriggerStrategy
     request.onEnable,
     request.onDisable,
     request.run,
-    // TODO FIX THIS
-    request.extractWebhookEvent??((payload: any) => Promise.reject(new Error("Not implemented"))),
     request.sampleData
   );
 }

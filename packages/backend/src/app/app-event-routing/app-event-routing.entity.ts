@@ -16,7 +16,7 @@ export interface AppEventRouting {
 }
 
 export const AppEventRoutingEntity = new EntitySchema<AppEventRouting>({
-    name: "app_event",
+    name: "app_event_routing",
     columns: {
         ...BaseColumnSchemaPart,
         appName: {
@@ -33,8 +33,8 @@ export const AppEventRoutingEntity = new EntitySchema<AppEventRouting>({
     },
     indices: [
         {
-            name: "idx_app_event_flow_id",
-            columns: ["flow_id"],
+            name: "idx_app_event_routing_flow_id",
+            columns: ["flowId"],
             unique: false,
         },
         {

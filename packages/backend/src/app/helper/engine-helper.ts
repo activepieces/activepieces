@@ -1,4 +1,4 @@
-import { ExecuteFlowOperation, EngineOperationType, CollectionId, PrincipalType, apId, EngineOperation, ExecutionOutput, ExecuteTriggerOperation, TriggerHookType, ProjectId, ExecutePropsOptions } from "@activepieces/shared";
+import { ExecuteFlowOperation, EngineOperationType, CollectionId, PrincipalType, apId, EngineOperation, ExecutionOutput, ExecuteTriggerOperation, TriggerHookType, ProjectId, ExecutePropsOptions, ExecuteEventParserOperation as ExecuteParseEventOperation, ExecuteEventParserOperation, ParseEventResponse } from "@activepieces/shared";
 import { Sandbox, sandboxManager } from "../workers/sandbox";
 import fs from "node:fs";
 import { system } from "./system/system";
@@ -17,6 +17,18 @@ export const engineHelper = {
             ...operation,
             workerToken: await workerToken({ collectionId: operation.collectionId, projectId: operation.projectId })
         }) as ExecutionOutput;
+    },
+    async executeParseEvent(operation: ExecuteParseEventOperation): Promise<ParseEventResponse> {
+        const sandbox = sandboxManager.obtainSandbox();
+        let result;
+        try {
+            await sandbox.cleanAndInit();
+            result = await execute(EngineOperationType.EXTRACT_EVENT_DATA, sandbox, operation);
+        }
+        finally {
+            sandboxManager.returnSandbox(sandbox.boxId);
+        }
+        return result;
     },
     async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[]> {
         const sandbox = sandboxManager.obtainSandbox();
