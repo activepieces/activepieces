@@ -134,4 +134,51 @@ export class FlowStructureUtil {
     }
     return stepPrefix.toString().toLowerCase() + '_' + number;
   }
+
+  private static _findPathToStep(
+    stepToFind: FlowItem,
+    stepToSearch: FlowItem
+  ): FlowItem[] | undefined {
+    if (stepToSearch === undefined) {
+      return undefined;
+    }
+    if (stepToFind.name === stepToSearch.name) {
+      return [];
+    }
+    const pathFromNextAction = this._findPathToStep(
+      stepToFind,
+      stepToSearch.nextAction
+    );
+    if (pathFromNextAction) {
+      if (stepToSearch.type !== ActionType.BRANCH) {
+        return [stepToSearch, ...pathFromNextAction];
+      }
+      return [...pathFromNextAction];
+    }
+    const pathFromTrueBranch = this._findPathToStep(
+      stepToFind,
+      (stepToSearch as BranchAction).onSuccessAction
+    );
+    if (pathFromTrueBranch) {
+      return [...pathFromTrueBranch];
+    }
+    const pathFromFalseBranch = this._findPathToStep(
+      stepToFind,
+      (stepToSearch as BranchAction).onFailureAction
+    );
+    if (pathFromFalseBranch) {
+      return [...pathFromFalseBranch];
+    }
+    return undefined;
+  }
+  public static findPathToStep(stepToFind: FlowItem, trigger: Trigger) {
+    if (stepToFind.name === trigger.name) {
+      return [];
+    }
+    const path = this._findPathToStep(stepToFind, trigger.nextAction);
+    if (!path) {
+      throw new Error('Step not found while traversing to find it ');
+    }
+    return [trigger, ...path];
+  }
 }

@@ -456,21 +456,23 @@ const selectAllFlowStepsMetaData = createSelector(
   }
 );
 const selectAllStepsForMentionsDropdown = createSelector(
-  selectCurrentStepName,
-  selectAllFlowSteps,
-  (currentStepName, steps): (MentionListItem & { step: FlowItem })[] => {
-    const currentStepIndex = steps.findIndex((s) => s.name === currentStepName);
-    console.log(currentStepIndex);
-    return steps
-      .slice(0, currentStepIndex)
-      .filter((s) => s.name !== currentStepName)
-      .map((s) => {
-        return {
-          label: s.displayName,
-          value: `\${${s.name}}`,
-          step: s,
-        };
-      });
+  selectCurrentStep,
+  selectCurrentFlow,
+  (currentStep, flow): (MentionListItem & { step: FlowItem })[] => {
+    if (!currentStep || !flow || !flow.version || !flow.version.trigger) {
+      return [];
+    }
+    const path = FlowStructureUtil.findPathToStep(
+      currentStep,
+      flow?.version?.trigger
+    );
+    return path.map((s) => {
+      return {
+        label: s.displayName,
+        value: `\${${s.name}}`,
+        step: s,
+      };
+    });
   }
 );
 const selectAppConnectionsForMentionsDropdown = createSelector(
