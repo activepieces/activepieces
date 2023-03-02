@@ -14,7 +14,8 @@
         <div>{{opt.label.name}}</div>
         <div class="ap-typography-caption ap-text-description ap-truncate"> {{opt.label.description}}</div>
       </mat-option>
-      <mat-option [disabled]="true" *ngIf=" ( actions$ | async) === undefined ||  (actions$ | async)?.length === 0">
+      <mat-option [disabled]="true"
+        *ngIf=" ( actions$ | async) === undefined || ( actions$ | async) === null || (actions$ | async)?.length === 0">
         No options available
       </mat-option>
     </mat-select>

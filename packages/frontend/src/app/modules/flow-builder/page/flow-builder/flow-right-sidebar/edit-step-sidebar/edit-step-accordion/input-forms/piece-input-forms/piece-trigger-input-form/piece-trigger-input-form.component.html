@@ -31,7 +31,8 @@
 
         </div>
       </mat-option>
-      <mat-option [disabled]="true" *ngIf=" ( triggers$ | async) === undefined ||  (triggers$ | async)?.length === 0">
+      <mat-option [disabled]="true"
+        *ngIf=" ( triggers$ | async) === undefined ||  (triggers$ | async) === null ||   (triggers$ | async)?.length === 0">
         No options available
       </mat-option>
     </mat-select>
