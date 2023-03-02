@@ -4,7 +4,7 @@ import { Configuration, OpenAIApi } from 'openai';
 export const askOpenAI = createAction({
   name: 'ask_chatgpt',
   displayName: 'Ask ChatGPT',
-  description: 'Using OpenAI will answer your question  .',
+  description: 'Ask ChatGPT anything you want!',
   props: {
     apiKey: Property.SecretText({
       displayName: 'Api Key',
@@ -42,15 +42,19 @@ export const askOpenAI = createAction({
     if (propsValue.maxTokens) {
       maxTokens = propsValue.maxTokens;
     }
-    const response = await openai.createCompletion({
-      model: 'text-davinci-003',
-      prompt: propsValue['prompt']!,
+
+    const response = await openai.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      messages: [{
+        role: "user",
+        content: propsValue['prompt']!
+      }],
       temperature: temperature,
       max_tokens: maxTokens,
       top_p: 1,
       frequency_penalty: 0.0,
       presence_penalty: 0.6,
     });
-    return response.data.choices[0].text?.trim();
-  },
+    return response.data.choices[0].message?.content.trim();
+  }
 });
