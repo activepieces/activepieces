@@ -111,9 +111,13 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     const trueBranchCommands: string[] = [];
     const trueBranchGraphHeight = this._flowItem.onSuccessAction
       ? (this._flowItem.onSuccessAction as FlowItem).boundingBox!.height
+      : this.viewMode
+      ? -SPACE_BETWEEN_ITEM_CONTENT_AND_LINE
       : EMPTY_LOOP_ADD_BUTTON_HEIGHT + SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
     const falseBranchGraphHeight = this._flowItem.onFailureAction
       ? (this._flowItem.onFailureAction as FlowItem).boundingBox!.height
+      : this.viewMode
+      ? -SPACE_BETWEEN_ITEM_CONTENT_AND_LINE
       : EMPTY_LOOP_ADD_BUTTON_HEIGHT + SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
     const branchesHeightDifference = Math.abs(
       trueBranchGraphHeight - falseBranchGraphHeight
