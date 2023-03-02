@@ -36,7 +36,8 @@
 
 </ng-container>
 
-<ng-container *ngIf="!codeStepTest$ && ((testing$ | async)===undefined ||(testing$ | async)===false ) ">
+<ng-container
+  *ngIf="!codeStepTest$ && ((testing$ | async)===undefined || (testing$ | async)===null ||(testing$ | async)===false ) ">
   <ng-container *ngIf="expandCodeCollapse">
     <div class="ap-my-3 ap-px-2">
       <div class="ap-typography-body-1 ap-text-center ap-mb-1">
