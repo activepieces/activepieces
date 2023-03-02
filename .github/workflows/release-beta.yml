@@ -35,4 +35,3 @@ jobs:
           push: true
           tags: |
             activepieces/activepieces:${{ env.RELEASE }}-beta
-
