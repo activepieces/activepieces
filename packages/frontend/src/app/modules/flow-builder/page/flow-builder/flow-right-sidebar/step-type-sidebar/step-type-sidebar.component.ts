@@ -21,7 +21,6 @@ import {
   Flow,
   AddActionRequest,
   FlowVersion,
-  BranchOperator,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 import { FormControl } from '@angular/forms';
@@ -267,6 +266,7 @@ export class StepTypeSidebarComponent implements OnInit {
           action: {
             ...baseProps,
             type: ActionType.PIECE,
+            valid: false,
             settings: {
               pieceName: componentDetails.extra!.appName,
               actionName: undefined,
@@ -284,6 +284,7 @@ export class StepTypeSidebarComponent implements OnInit {
           stepLocationRelativeToParent: stepLocationRelativeToParent,
           action: {
             ...baseProps,
+            valid: false,
             type: ActionType.BRANCH,
             settings: {
               conditions: [
@@ -291,7 +292,7 @@ export class StepTypeSidebarComponent implements OnInit {
                   {
                     firstValue: '',
                     secondValue: '',
-                    operator: BranchOperator.TEXT_CONTAINS,
+                    operator: undefined,
                   },
                 ],
               ],

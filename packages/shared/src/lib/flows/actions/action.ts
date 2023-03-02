@@ -97,37 +97,34 @@ export enum BranchOperator {
   DOES_NOT_EXIST = 'DOES_NOT_EXIST',
 }
 
+export const singleValueConditions = [
+  BranchOperator.EXISTS,
+  BranchOperator.DOES_NOT_EXIST,
+  BranchOperator.BOOLEAN_IS_TRUE,
+  BranchOperator.BOOLEAN_IS_FALSE
+]
 export const BranchCondition = Type.Union([
   Type.Object({
     firstValue: Type.String({}),
     secondValue: Type.String({}),
-    operator: Type.Union([Type.Literal(BranchOperator.TEXT_CONTAINS), 
-      Type.Literal(BranchOperator.TEXT_DOES_NOT_CONTAIN),
-      Type.Literal(BranchOperator.TEXT_IS),
-      Type.Literal(BranchOperator.TEXT_IS_NOT),
-      Type.Literal(BranchOperator.TEXT_START_WITH),
-      Type.Literal(BranchOperator.TEXT_DOES_NOT_START_WITH),
-      Type.Literal(BranchOperator.TEXT_END_WITH),
-      Type.Literal(BranchOperator.TEXT_DOES_NOT_END_WITH),
-      Type.Literal(BranchOperator.NUMBER_IS_GREATER_THAN),
-      Type.Literal(BranchOperator.NUMBER_IS_LESS_THAN)
-    ])
+    operator: Type.Optional(Type.Union([...Object.values(BranchOperator).
+      filter(c => singleValueConditions.find(sc => sc === c) === undefined).map(c=>{
+      return Type.Literal(c)
+    }) ]))
   }),
   Type.Object({
     firstValue: Type.String({}),
-    operator: Type.Union([
-      Type.Literal(BranchOperator.EXISTS),
-      Type.Literal(BranchOperator.DOES_NOT_EXIST),
-      Type.Literal(BranchOperator.BOOLEAN_IS_TRUE),
-      Type.Literal(BranchOperator.BOOLEAN_IS_FALSE)
-    ])
+    operator:  Type.Union([...Object.values(BranchOperator).
+      filter(c => singleValueConditions.find(sc => sc === c) !== undefined).map(c=>{
+      return Type.Literal(c)
+    }) ])
   })
 ]);
 
 export type BranchCondition = Static<typeof BranchCondition>;
 
 export type BranchActionSettings = {
-  items: unknown;
+  conditions: BranchCondition[][];
 };
 
 export const BranchAction = Type.Object({

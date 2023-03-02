@@ -73,6 +73,7 @@ import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedb
 import { BranchLineConnectionComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-connection/branch-line-connection/branch-line-connection.component';
 import { CanvasPannerDirective } from './page/flow-builder/flow-item-tree/flow-item/panning/panner.directive';
 import { CanvasZoomingDirective } from './page/flow-builder/flow-item-tree/flow-item/zooming/zooming.directive';
+import { BranchStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/branch-step-input-form/branch-step-input-form.component';
 
 @NgModule({
   imports: [
@@ -159,6 +160,7 @@ import { CanvasZoomingDirective } from './page/flow-builder/flow-item-tree/flow-
     BranchLineConnectionComponent,
     CanvasPannerDirective,
     CanvasZoomingDirective,
+    BranchStepInputFormComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [FlowBuilderHeaderComponent],
