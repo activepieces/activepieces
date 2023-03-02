@@ -21,6 +21,7 @@ import { encryptCredentials1676505294811 } from "./migration/1676505294811-encry
 import { ProjectPlanEntity } from "@ee/billing/backend/plan.entity";
 import { ProjectUsageEntity } from "@ee/billing/backend/usage.entity";
 import { billing1677286751592 } from "./migration/1677286751592-billing";
+import { addVersionToPieceSteps1677521257188 } from "./migration/1677521257188-add-version-to-piece-steps";
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST);
@@ -47,7 +48,8 @@ const getMigrations = () => {
         initializeSchema1676238396411,
         encryptCredentials1676505294811,
         removeStoreAction1676649852890,
-        billing1677286751592
+        billing1677286751592,
+        addVersionToPieceSteps1677521257188,
     ];
 }
 

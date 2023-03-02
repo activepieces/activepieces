@@ -25,7 +25,8 @@
 
         <mat-form-field class="ap-w-full" appearance="outline">
             <mat-label>{{dialogData.pieceAuthConfig.basicAuthConfigs!.username.displayName}}</mat-label>
-            <input [matTooltip]="keyTooltip" [formControl]="settingsForm.controls.username" matInput type="text" />
+            <input [matTooltip]="dialogData.pieceAuthConfig.basicAuthConfigs!.username.description"
+                [formControl]="settingsForm.controls.username" matInput type="text" />
             <mat-error *ngIf="settingsForm.controls.username.invalid">
                 {{dialogData.pieceAuthConfig.basicAuthConfigs!.username.displayName}} is required
             </mat-error>
@@ -33,7 +34,8 @@
 
         <mat-form-field class="ap-w-full" appearance="outline">
             <mat-label>{{dialogData.pieceAuthConfig.basicAuthConfigs!.password.displayName}}</mat-label>
-            <input [matTooltip]="keyTooltip" [formControl]="settingsForm.controls.password" matInput type="password" />
+            <input [matTooltip]="dialogData.pieceAuthConfig.basicAuthConfigs!.password.description"
+                [formControl]="settingsForm.controls.password" matInput type="password" />
             <mat-error *ngIf="settingsForm.controls.password.invalid">
                 {{dialogData.pieceAuthConfig.basicAuthConfigs!.password.displayName}} is required
             </mat-error>

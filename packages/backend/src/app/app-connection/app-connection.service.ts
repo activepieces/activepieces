@@ -33,7 +33,7 @@ export const appConnectionService = {
             break;
         }
         const claimedUpsertRequest = { ...request, value: { ...response, ...request.value }, id: apId(), projectId };
-        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId ,  value: encryptObject(claimedUpsertRequest.value)}, ["name", "projectId"]);
+        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId, value: encryptObject(claimedUpsertRequest.value) }, ["name", "projectId"]);
         return appConnectionRepo.findOneByOrFail({
             projectId: projectId,
             name: request.name
@@ -49,19 +49,21 @@ export const appConnectionService = {
         if (appConnection === null) {
             return null;
         }
-        const refreshLock = createRedisLock();
+        const refreshLock = createRedisLock(10 * 1000);
         try {
             await refreshLock.acquire(`${projectId}_${name}`);
 
             appConnection.value = decryptObject(appConnection.value);
             const refreshedAppConnection = await refresh(appConnection);
             await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) });
-            refreshedAppConnection.status = getStatus(refreshedAppConnection);            
+            refreshedAppConnection.status = getStatus(refreshedAppConnection);
             return refreshedAppConnection;
         }
         catch (e) {
-            refreshLock.release();
             appConnection.status = AppConnectionStatus.ERROR;
+        }
+        finally {
+            refreshLock.release();
         }
         return appConnection;
     },
@@ -208,11 +210,13 @@ async function claim(request: {
         return { ...formatOAuth2Response(response), client_id: request.clientId, client_secret: request.clientSecret };
     }
     catch (e: unknown | AxiosError) {
-        throw new ActivepiecesError({code:ErrorCode.INVALID_CLAIM,params:{
-            clientId:request.clientId,
-            tokenUrl:request.tokenUrl,
-            redirectUrl:request.redirectUrl
-        }})
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_CLAIM, params: {
+                clientId: request.clientId,
+                tokenUrl: request.tokenUrl,
+                redirectUrl: request.redirectUrl
+            }
+        })
     }
 }
 
@@ -221,9 +225,11 @@ async function claimWithCloud(request: { pieceName: string; code: string }): Pro
         return (await axios.post("https://secrets.activepieces.com/claim", request)).data;
     }
     catch (e: unknown | AxiosError) {
-        throw new ActivepiecesError({code:ErrorCode.INVALID_CLOUD_CLAIM,params:{
-            appName:request.pieceName
-        }})
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_CLOUD_CLAIM, params: {
+                appName: request.pieceName
+            }
+        })
     }
 }
 

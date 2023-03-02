@@ -32,11 +32,12 @@ import { typeform } from './lib/typeform';
 import { zoom } from './lib/zoom';
 import { storage } from './lib/store';
 import { calcom } from './lib/cal-com';
-import { wordpress } from './lib/wordpress';
-import { posthog } from './lib/posthog';
+import { freshsales } from './lib/freshsales';
 import { googleTasks } from './lib/google-tasks';
 import { csv } from './lib/csv';
 import { bannerbear } from './lib/bannerbear';
+import { posthog } from './lib/posthog';
+import { wordpress } from './lib/wordpress';
 
 export const pieces: Piece[] = [
     airtable,
@@ -44,6 +45,7 @@ export const pieces: Piece[] = [
     bannerbear,
     binance,
     blackbaud,
+    calcom,
     calendly,
     csv,
     clickup,
@@ -51,6 +53,7 @@ export const pieces: Piece[] = [
     drip,
     dropbox,
     figma,
+    freshsales,
     github,
     gmail,
     googleCalendar,
@@ -64,19 +67,18 @@ export const pieces: Piece[] = [
     mailchimp,
     openai,
     pipedrive,
+    posthog,
     rssFeed,
     sendgrid,
     slack,
+    storage,
     stripe,
     telegramBot,
     todoist,
     twilio,
     typeform,
-    zoom,
     wordpress,
-    storage,
-    calcom,
-    posthog
+    zoom
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {

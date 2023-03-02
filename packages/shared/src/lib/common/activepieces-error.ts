@@ -66,13 +66,6 @@ export type SystemInvalidErrorParams = BaseErrorParams<
   }
 >;
 
-export type InvalidJwtTokenErrorParams = BaseErrorParams<
-  ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
-  {
-    token: string;
-  }
->;
-
 export type FlowNotFoundErrorParams = BaseErrorParams<
   ErrorCode.FLOW_NOT_FOUND,
   {
@@ -134,6 +127,7 @@ export type StepNotFoundErrorParams = BaseErrorParams<
   ErrorCode.STEP_NOT_FOUND,
   {
     pieceName: string;
+    pieceVersion: string;
     stepName: string;
   }
 >
@@ -142,6 +136,7 @@ export type PieceNotFoundErrorParams = BaseErrorParams<
   ErrorCode.PIECE_NOT_FOUND,
   {
     pieceName: string;
+    pieceVersion: string;
   }
 >
 
@@ -149,6 +144,7 @@ export type PieceTriggerNotFoundErrorParams = BaseErrorParams<
   ErrorCode.PIECE_TRIGGER_NOT_FOUND,
   {
     pieceName: string;
+    pieceVersion: string;
     triggerName: string;
   }
 >
@@ -157,6 +153,7 @@ export type ConfigNotFoundErrorParams = BaseErrorParams<
   ErrorCode.CONFIG_NOT_FOUND,
   {
     pieceName: string;
+    pieceVersion: string;
     stepName: string;
     configName: string;
   }
@@ -181,13 +178,19 @@ export type FlowOperationErrorParams = BaseErrorParams<
   Record<string, never>
 >;
 
-export type TaskQuotaExeceededErrorParams
-  = BaseErrorParams<
-    ErrorCode.TASK_QUOTA_EXCEEDED,
-    {
-      projectId: string;
-    }
-  >;
+export type InvalidJwtTokenErrorParams = BaseErrorParams<
+  ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
+  {
+    token: string;
+  }
+>
+
+export type TaskQuotaExeceededErrorParams = BaseErrorParams<
+  ErrorCode.TASK_QUOTA_EXCEEDED,
+  {
+    projectId: string;
+  }
+>
 
 export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",

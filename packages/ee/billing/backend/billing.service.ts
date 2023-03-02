@@ -22,13 +22,23 @@ function getDefaultPlanId(): string {
     if (stripeSecret.startsWith('sk_test')) {
         return "price_1MeoK3KZ0dZRqLEKXIsGoguO";
     } else {
-        return "price_1MfMlJKZ0dZRqLEKWHrxY97A";
+        return "price_1MgpQ4KZ0dZRqLEKqMiS8vrf";
     }
 }
 
 function parsePlanFromId(id: string | null): { name: string, tasks: number } {
     switch (id) {
         // Stripe production plans
+        case 'price_1MgpQ4KZ0dZRqLEKqMiS8vrf':
+            return {
+                name: 'free-1',
+                tasks: 1000
+            }
+        case 'price_1MgpSTKZ0dZRqLEKLejnL5GW':
+            return {
+                name: 'growth-1',
+                tasks: 10000
+            }
         case 'price_1MfMlJKZ0dZRqLEKWHrxY97A':
             return {
                 name: 'free-0',
@@ -112,7 +122,7 @@ async function updatePlan({ projectPlan, stripeSubscription }: { projectPlan: Pr
     logger.info('Updating plan for project ' + projectPlan.projectId)
     const projectPlanLock = await createRedisLock(5 * 1000);
     try {
-        projectPlanLock.acquire(`project_plan_${projectPlan.projectId}}`);
+        await projectPlanLock.acquire(`project_plan_${projectPlan.projectId}}`);
         const limits = parsePlanFromId(stripeSubscription.items.data[0].plan.id);
         await projectPlanRepo.update(projectPlan.id, {
             ...projectPlan,
@@ -131,7 +141,7 @@ async function downgradeToFreeTier({ projectId }: { projectId: ProjectId }): Pro
     const projectPlanLock = await createRedisLock(5 * 1000);
     const defaultPlanId = getDefaultPlanId();
     try {
-        projectPlanLock.acquire(`project_plan_${projectId}}`);
+        await projectPlanLock.acquire(`project_plan_${projectId}}`);
         const currentPlan = await projectPlanRepo.findOneBy({ projectId });
         const planLimits = parsePlanFromId(defaultPlanId);
         const stripeSubscription = await stripe.subscriptions.create({
@@ -154,7 +164,7 @@ async function createStripeDetails({ projectId }: { projectId: ProjectId }): Pro
     const projectPlanLock = await createRedisLock(5 * 1000);
     const defaultPlanId = getDefaultPlanId();
     try {
-        projectPlanLock.acquire(`project_plan_${projectId}}`);
+        await projectPlanLock.acquire(`project_plan_${projectId}}`);
         const currentPlan = await projectPlanRepo.findOneBy({ projectId });
         if (currentPlan !== undefined && currentPlan !== null) {
             return currentPlan;

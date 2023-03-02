@@ -1,6 +1,7 @@
 import { Type, Static } from '@sinclair/typebox';
 import { Format } from '@sinclair/typebox/format';
 import { isValidCron } from 'cron-validator';
+import { SemVerType } from '../../pieces';
 import { Action } from '../actions/action';
 
 export enum TriggerType {
@@ -56,6 +57,7 @@ export type ScheduleTrigger = Static<typeof ScheduleTrigger>;
 
 export const PieceTriggerSettings = Type.Object({
   pieceName: Type.String({}),
+  pieceVersion: SemVerType,
   triggerName: Type.String({}),
   input: Type.Record(Type.String({}), Type.Any())
 });

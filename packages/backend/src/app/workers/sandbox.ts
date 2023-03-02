@@ -75,6 +75,11 @@ export class Sandbox {
         return result;
     }
 
+    timedOut(): boolean {
+        const meta = this.parseMetaFile();
+        return meta["status"] === "TO";
+    }
+    
     getSandboxFilePath(subFile: string) {
         return this.getSandboxFolderPath() + "/" + subFile;
     }

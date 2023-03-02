@@ -14,6 +14,7 @@ const ignoredRoutes = new Set([
     "/v1/flags",
     "/v1/pieces",
     "/v1/webhooks",
+    "/v1/webhooks/:flowId",
     "/v1/docs",
     "/redirect",
 ]);

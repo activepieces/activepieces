@@ -22,7 +22,7 @@ export class ActionMetaService {
     {
       type: ActionType.CODE,
       name: 'Code',
-      description: 'Powerful nodejs code with npm',
+      description: 'Powerful nodejs & typescript code with npm',
       logoUrl: '/assets/img/custom/piece/code.svg',
     },
     {
