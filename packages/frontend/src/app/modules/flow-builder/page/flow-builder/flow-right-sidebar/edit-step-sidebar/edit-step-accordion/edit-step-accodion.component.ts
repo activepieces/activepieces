@@ -168,6 +168,7 @@ export class EditStepAccordionComponent implements AfterViewInit {
     stepToSave.displayName = describeControlValue.displayName;
     stepToSave.settings = inputControlValue;
     stepToSave.name = this._selectedStep.name;
+    debugger;
     stepToSave.valid = this.stepForm.valid;
     if (
       this._selectedStep.type === ActionType.PIECE ||

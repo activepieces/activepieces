@@ -1,15 +1,16 @@
 <div [formGroup]="form" class="ap-flex ap-flex-col ap-gap-2">
     <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label>{{(showSecondValue$|async)? 'First':''}} Value</mat-label>
-        <app-interpolating-text-form-control #textControl [formControl]="form.controls.firstValue"
+        <mat-label>{{(showSecondValue())? 'First':''}} Value</mat-label>
+        <app-interpolating-text-form-control #firstValueTextControl [formControl]="form.controls.firstValue"
             [attr.name]="'firstValue'" (click)="firstValueMentionsDropdown.showMenuSubject$.next(true)"
             (keyup)="$event.key ==='Escape'? firstValueMentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
         <mat-error *ngIf="form.controls.firstValue.invalid">
             First value is required
         </mat-error>
     </mat-form-field>
-    <app-builder-autocomplete-mentions-dropdown #firstValueMentionsDropdown (menuClosed)="textControl.focusEditor()"
-        marginTop="-20px" (addMention)="addMention(textControl,$event)"></app-builder-autocomplete-mentions-dropdown>
+    <app-builder-autocomplete-mentions-dropdown #firstValueMentionsDropdown
+        (menuClosed)="firstValueTextControl.focusEditor()" marginTop="-20px"
+        (addMention)="addMention(firstValueTextControl,$event)"></app-builder-autocomplete-mentions-dropdown>
 
 
     <mat-form-field class="ap-w-full" appearance="outline">
@@ -23,18 +24,21 @@
             Condition is required
         </mat-error>
     </mat-form-field>
+    <ng-container *ngIf="showSecondValue()">
+        <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label>Second Value</mat-label>
+            <app-interpolating-text-form-control #secondValueTextControl [formControl]="form.controls.secondValue"
+                [attr.name]="'secondValue'" (click)="secondMentionsDropdown.showMenuSubject$.next(true)"
+                (keyup)="$event.key ==='Escape'? secondMentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
+            <mat-error *ngIf="form.controls.secondValue.invalid">
+                Second value is required
+            </mat-error>
+        </mat-form-field>
+        <app-builder-autocomplete-mentions-dropdown #secondMentionsDropdown
+            (menuClosed)="secondValueTextControl.focusEditor()" marginTop="-20px"
+            (addMention)="addMention(secondValueTextControl,$event)"></app-builder-autocomplete-mentions-dropdown>
+    </ng-container>
 
-    <mat-form-field *ngIf="showSecondValue$|async" class="ap-w-full" appearance="outline">
-        <mat-label>Second Value</mat-label>
-        <app-interpolating-text-form-control #textControl [formControl]="form.controls.secondValue"
-            [attr.name]="'secondValue'" (click)="secondMentionsDropdown.showMenuSubject$.next(true)"
-            (keyup)="$event.key ==='Escape'? secondMentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
-        <mat-error *ngIf="form.controls.secondValue.invalid">
-            Second value is required
-        </mat-error>
-    </mat-form-field>
-    <app-builder-autocomplete-mentions-dropdown #secondMentionsDropdown (menuClosed)="textControl.focusEditor()"
-        marginTop="-20px" (addMention)="addMention(textControl,$event)"></app-builder-autocomplete-mentions-dropdown>
 </div>
 <ng-container *ngIf="operatorChanged$| async"></ng-container>
 <ng-container *ngIf="valueChanges$ | async"></ng-container>

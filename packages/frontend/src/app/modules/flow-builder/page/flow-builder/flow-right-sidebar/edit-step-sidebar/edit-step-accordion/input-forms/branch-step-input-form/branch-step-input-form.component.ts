@@ -4,10 +4,11 @@ import {
   FormBuilder,
   FormControl,
   FormGroup,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validators,
 } from '@angular/forms';
-import { map, Observable, pairwise, shareReplay, startWith, tap } from 'rxjs';
+import {  Observable, pairwise,  startWith, tap } from 'rxjs';
 import {
   BranchActionSettings,
   BranchOperator,
@@ -37,13 +38,17 @@ interface BranchFormValue {
       multi: true,
       useExisting: BranchStepInputFormComponent,
     },
+    {
+      provide: NG_VALIDATORS,
+      multi: true,
+      useExisting: BranchStepInputFormComponent,
+    },
   ],
 })
 export class BranchStepInputFormComponent implements ControlValueAccessor {
   form: FormGroup<BranchForm>;
   valueChanges$: Observable<Partial<BranchFormValue>>;
   operatorChanged$: Observable<[BranchOperator | null, BranchOperator | null]>;
-  showSecondValue$: Observable<boolean>;
   conditionsDropdownOptions: DropdownItem[] = [];
   onChange: (val: BranchActionSettings) => void = () => {
     //ignored
@@ -78,23 +83,22 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
         const isSecondValueSingleValueCondition = !!singleValueConditions.find(
           (c) => c === secondValue
         );
+        debugger;
         if (
-          isFirstValueBinaryCondition ||
-          (firstValue === null && isSecondValueSingleValueCondition)
+         ( isFirstValueBinaryCondition ||
+          firstValue === null) && isSecondValueSingleValueCondition
         ) {
           this.form.controls.secondValue.setValue('');
           this.form.controls.secondValue.disable();
         }
+        else
+        {
+          this.form.controls.secondValue.enable();
+        }
+
       })
     );
     this.createConditionsDropdownOptions();
-    this.showSecondValue$ = this.form.controls.operator.valueChanges.pipe(
-      startWith(null),
-      map((val) => {
-        return !singleValueConditions.find((c) => c === val);
-      }),
-      shareReplay(1)
-    );
     this.form.markAllAsTouched();
     this.valueChanges$ = this.form.valueChanges.pipe(
       tap(() => {
@@ -153,5 +157,17 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
     mentionOp: InsertMentionOperation
   ) {
     await textControl.addMention(mentionOp);
+  }
+  showSecondValue()
+  {
+    const currentBranchCondition = this.form.value.operator;
+    return !singleValueConditions.find((c) => c === currentBranchCondition);
+  }
+  validate() {
+    debugger;
+    if (this.form.invalid) {
+      return { invalid: true };
+    }
+    return null;
   }
 }
