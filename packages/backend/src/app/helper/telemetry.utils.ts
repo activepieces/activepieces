@@ -13,20 +13,6 @@ const client = new PostHog(
 )
 
 export const telemetry = {
-    async identify(user: User, projectId: ProjectId): Promise<void> {
-        const currentVersion = (await import('../../../../../package.json')).version;
-        const edition = await getEdition();
-        client.identify({
-            distinctId: user.id,
-            properties: {
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                projectId: projectId,
-                ...(await getMetadata())
-            }
-        })
-    },
     async trackProject(projectId: ProjectId, event: TelemetryEvent): Promise<void> {
         if (!telemetryEnabled) {
             return;
