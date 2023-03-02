@@ -194,7 +194,6 @@ async function claim(request: {
     codeVerifier: string
 }): Promise<unknown> {
     try {
-        console.log("HELLO " + request.codeVerifier);
         const response = (
             await axios.post(
                 request.tokenUrl,
