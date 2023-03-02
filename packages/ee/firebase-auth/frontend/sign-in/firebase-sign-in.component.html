@@ -32,11 +32,7 @@
 			</mat-error>
 		</mat-form-field>
 	</div>
-	<div class="mt-4">
-		<div class="ap-text-right ap-mb-1 ap-typography-caption">
-			<a tabindex="-1" class="ap-text-blueLink" routerLink="/forgot-password">Forgot Password?</a>
-		</div>
-
+	<div>
 		<mat-form-field class="ap-w-full" appearance="outline">
 			<mat-label>Password</mat-label>
 			<input type="password" matInput placeholder="Password" formControlName="password" />
@@ -46,20 +42,28 @@
 	<mat-error *ngIf="showEmailNotVerifiedMessage" class="ap-text-center">Please check your inbox for the verification
 		email</mat-error>
 	<mat-error *ngIf="showInvalidEmailOrPasswordMessage" class="ap-text-center">Invalid email or password</mat-error>
-	<div class="text-center ap-mt-2 ap-flex ap-flex-col ap-gap-2">
+	<div class="text-center ap-mt-2 ap-flex ap-flex-col ap-gap-2 ap-mb-2">
 		<app-button [loading]="loading" (buttonClicked)="signIn()" btnColor="primary" [fullWidthOfContainer]="true">
 			Sign in
 		</app-button>
 	</div>
 </form>
 
-<div class="ap-mt-2">
-	<mat-error *ngIf="alreadyRegisteredWithAnotherProvider" class="ap-text-center">Email already exists. Please log in
-		using the same provider you registered with</mat-error>
+<div style="margin-top: 1rem;">
+	<div class="ap-mt-2">
+		<mat-error *ngIf="alreadyRegisteredWithAnotherProvider" class="ap-text-center">Email already exists. Please log
+			in
+			using the same provider you registered with</mat-error>
+	</div>
+
+	<div class="ap-text-center ap-mt-2 ap-typography-caption ">
+		<a tabindex="-1" class="ap-text-blueLink" routerLink="/forgot-password">Forgot Password?</a>
+	</div>
+	<div class="ap-text-center ap-typography-caption ap-mt-2">
+		<p class="ap-mt-2">Don't have an account? <a [routerLink]="['/sign-up']"> Sign up now</a> </p>
+	</div>
 </div>
-<div class="ap-text-center ap-typography-caption ap-mt-2">
-	<p class="ap-mt-2">Don't have an account? <a [routerLink]="['/sign-up']"> Sign up now</a> </p>
-</div>
+
 
 <ng-container *ngIf="signInProvider$ | async"></ng-container>
 <ng-container *ngIf="signIn$ | async"></ng-container>
