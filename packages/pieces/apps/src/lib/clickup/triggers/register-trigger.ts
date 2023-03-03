@@ -26,10 +26,10 @@ export const clickupRegisterTrigger = ({
   props: {
     authentication: clickupCommon.authentication,
     workspace_id: clickupCommon.workspace_id(true),
-		space_id: clickupCommon.space_id(false),
-		list_id: clickupCommon.list_id(false),
-    task_id: clickupCommon.task_id(false),
-    folder_id: clickupCommon.folder_id(false)
+		// space_id: clickupCommon.space_id(true),
+		// list_id: clickupCommon.list_id(false),
+    // task_id: clickupCommon.task_id(false),
+    // folder_id: clickupCommon.folder_id(false)
   },
   sampleData: {
     "id": "4b67ac88-e506-4a29-9d42-26e504e3435e",
@@ -50,18 +50,14 @@ export const clickupRegisterTrigger = ({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const { authentication, workspace_id, folder_id, task_id, space_id, list_id } = context.propsValue
+    const { authentication, workspace_id } = context.propsValue
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.clickup.com/api/v2/team/${workspace_id}/webhook`,
       body: {
         endpoint: context.webhookUrl,
-        events: [eventType],
-        space_id,
-        folder_id,
-        list_id,
-        task_id
+        events: [eventType]
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
