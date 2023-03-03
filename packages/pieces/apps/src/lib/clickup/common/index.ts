@@ -138,7 +138,7 @@ export const clickupCommon = {
     }),
     folder_id: (required = false) => Property.Dropdown({
         description: 'The ID of the ClickUp folder',
-        displayName: 'Task Id',
+        displayName: 'Folder Id',
         refreshers: ['authentication', 'space_id'],
         defaultValue: null,
         required,

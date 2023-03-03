@@ -7,6 +7,7 @@ import { getClickupSpace } from "./actions/spaces/get-space";
 import { getClickupSpaces } from "./actions/spaces/get-spaces";
 import { createClickupTaskComment } from "./actions/comments/create-task-comment";
 import { createClickupSubtask } from "./actions/tasks/create-subtask";
+import { clickupTriggers } from "./triggers";
 
 export const clickup = createPiece({
     name: 'clickup',
@@ -22,7 +23,7 @@ export const clickup = createPiece({
         createClickupTaskComment,
         createClickupSubtask,
     ],
-    authors: ['abuaboud', 'ShayPunter'],
-    triggers: [],
+    authors: ['abuaboud', 'ShayPunter', 'kanarelo'],
+    triggers: clickupTriggers,
     version: '0.0.0',
 });
