@@ -79,7 +79,7 @@ export const clickupCommon = {
             if (authentication === undefined || space_id === undefined) {
                 return {
                     disabled: true,
-                    placeholder: 'connect your account first and space',
+                    placeholder: 'connect your account first and select a space',
                     options: [],
                 };
             }
@@ -113,13 +113,13 @@ export const clickupCommon = {
         displayName: 'Task Id',
         required,
         defaultValue: null,
-        refreshers: ['authentication', 'list_id'],
+        refreshers: ['authentication', 'space_id', 'list_id'],
         options: async (value) => {
-            const { list_id, authentication } = value;
-            if (authentication === undefined || list_id === undefined) {
+            const { list_id, authentication, space_id } = value;
+            if (authentication === undefined || list_id === undefined || space_id === undefined) {
                 return {
                     disabled: true,
-                    placeholder: 'connect your account first and select workspace',
+                    placeholder: 'connect your account first and select workspace and list',
                     options: [],
                 };
             }
@@ -139,15 +139,15 @@ export const clickupCommon = {
     folder_id: (required = false) => Property.Dropdown({
         description: 'The ID of the ClickUp folder',
         displayName: 'Folder Id',
-        refreshers: ['authentication', 'space_id'],
+        refreshers: ['authentication', 'space_id', 'workplace_id'],
         defaultValue: null,
         required,
         options: async (value) => {
-            const { space_id, authentication } = value;
-            if (authentication === undefined || space_id === undefined) {
+            const { space_id, authentication, workplace_id } = value;
+            if (authentication === undefined || workplace_id === undefined || space_id === undefined) {
                 return {
                     disabled: true,
-                    placeholder: 'connect your account first and select workspace',
+                    placeholder: 'connect your account first and select workspace and space',
                     options: [],
                 };
             }
