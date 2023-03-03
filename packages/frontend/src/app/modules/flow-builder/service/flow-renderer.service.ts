@@ -51,7 +51,7 @@ export class FlowRendererService {
     if (clonedActivePiece) {
       clonedActivePiece.xOffset = clonedActivePiece.yOffset = 0;
       this.rootPiece = clonedActivePiece;
-      
+
       FlowRenderUtil.buildBoxes(clonedActivePiece);
       FlowRenderUtil.buildCoordinates(clonedActivePiece);
     }

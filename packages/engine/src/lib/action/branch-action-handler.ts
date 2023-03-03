@@ -87,10 +87,10 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
         case BranchOperator.TEXT_DOES_NOT_CONTAIN:
           andGroup = andGroup && !castedCondition.firstValue.includes(castedCondition.secondValue);
           break;
-        case BranchOperator.TEXT_IS:
+        case BranchOperator.TEXT_EXACTLY_MATCHES:
           andGroup = andGroup && castedCondition.firstValue === castedCondition.secondValue;
           break;
-        case BranchOperator.TEXT_IS_NOT:
+        case BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCHES:
           andGroup = andGroup && castedCondition.firstValue !== castedCondition.secondValue;
           break;
         case BranchOperator.TEXT_START_WITH:
@@ -105,12 +105,18 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
         case BranchOperator.TEXT_DOES_NOT_END_WITH:
           andGroup = andGroup && !castedCondition.firstValue.endsWith(castedCondition.secondValue);
           break;
-        case BranchOperator.NUMBER_IS_GREATER_THAN:
-          andGroup = andGroup && castedCondition.firstValue > castedCondition.secondValue;
+        case BranchOperator.NUMBER_IS_GREATER_THAN: {
+          const firstValue = parseStringToNumber(castedCondition.firstValue);
+          const secondValue = parseStringToNumber(castedCondition.secondValue);
+          andGroup = andGroup && firstValue > secondValue;
           break;
-        case BranchOperator.NUMBER_IS_LESS_THAN:
-          andGroup = andGroup && castedCondition.firstValue < castedCondition.secondValue;
+        }
+        case BranchOperator.NUMBER_IS_LESS_THAN: {
+          const firstValue = parseStringToNumber(castedCondition.firstValue);
+          const secondValue = parseStringToNumber(castedCondition.secondValue);
+          andGroup = andGroup && firstValue < secondValue;
           break;
+        }
         case BranchOperator.BOOLEAN_IS_TRUE:
           andGroup = andGroup && castedCondition.firstValue;
           break;
@@ -130,5 +136,10 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
     }
   }
   return orOperator;
+}
+
+function parseStringToNumber(str: string): number | string {
+  const num = Number(str);
+  return isNaN(num) ? str : num;
 }
 

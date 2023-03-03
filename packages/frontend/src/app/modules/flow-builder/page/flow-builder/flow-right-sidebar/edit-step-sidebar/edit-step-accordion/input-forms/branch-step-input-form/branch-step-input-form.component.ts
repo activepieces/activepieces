@@ -8,7 +8,7 @@ import {
   NG_VALUE_ACCESSOR,
   Validators,
 } from '@angular/forms';
-import {  Observable, pairwise,  startWith, tap } from 'rxjs';
+import { Observable, pairwise, startWith, tap } from 'rxjs';
 import {
   BranchActionSettings,
   BranchOperator,
@@ -83,19 +83,15 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
         const isSecondValueSingleValueCondition = !!singleValueConditions.find(
           (c) => c === secondValue
         );
-        debugger;
         if (
-         ( isFirstValueBinaryCondition ||
-          firstValue === null) && isSecondValueSingleValueCondition
+          (isFirstValueBinaryCondition || firstValue === null) &&
+          isSecondValueSingleValueCondition
         ) {
           this.form.controls.secondValue.setValue('');
           this.form.controls.secondValue.disable();
-        }
-        else
-        {
+        } else {
           this.form.controls.secondValue.enable();
         }
-
       })
     );
     this.createConditionsDropdownOptions();
@@ -134,14 +130,21 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
     }
   }
   createConditionsDropdownOptions() {
-    this.conditionsDropdownOptions = Object.values(BranchOperator)
-      .sort()
-      .map((operator) => {
+    this.conditionsDropdownOptions = Object.values(BranchOperator).map(
+      (operator) => {
         const label = operator
           .split('_')
           .map((word, idx) => {
             if (idx === 0) {
-              return word[0].toUpperCase() + word.toLowerCase().slice(1);
+              const formmatedWord =
+                word[0].toUpperCase() + word.toLowerCase().slice(1);
+              if (
+                word.toLocaleLowerCase() === 'does' ||
+                word.toLocaleLowerCase() === 'exists'
+              ) {
+                return formmatedWord;
+              }
+              return '(' + formmatedWord + ')';
             }
             return word.toLowerCase();
           })
@@ -150,7 +153,8 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
           label: label,
           value: operator,
         };
-      });
+      }
+    );
   }
   async addMention(
     textControl: InterpolatingTextFormControlComponent,
@@ -158,13 +162,11 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
   ) {
     await textControl.addMention(mentionOp);
   }
-  showSecondValue()
-  {
+  showSecondValue() {
     const currentBranchCondition = this.form.value.operator;
     return !singleValueConditions.find((c) => c === currentBranchCondition);
   }
   validate() {
-    debugger;
     if (this.form.invalid) {
       return { invalid: true };
     }

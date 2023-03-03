@@ -9,7 +9,7 @@ export interface TabState {
   };
   rightSidebar: {
     type: RightSideBarType;
-    props: StepTypeSideBarProps | {};
+    props: StepTypeSideBarProps | Record<string, never>;
   };
 
   focusedStep: FlowItem | null;
