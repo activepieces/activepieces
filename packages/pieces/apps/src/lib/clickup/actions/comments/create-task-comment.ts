@@ -8,10 +8,10 @@ export const createClickupTaskComment = createAction({
 	displayName: 'Create Task Comment',
 	props: {
 		authentication: clickupCommon.authentication,
-        workspace_id: clickupCommon.workspace_id,
-		space_id: clickupCommon.space_id,
-        list_id: clickupCommon.list_id,
-		task_id: clickupCommon.task_id,
+        workspace_id: clickupCommon.workspace_id(),
+		space_id: clickupCommon.space_id(),
+        list_id: clickupCommon.list_id(),
+		task_id: clickupCommon.task_id(),
         comment: Property.LongText({
             description: 'Comment to make on the task',
             displayName: 'Comment',
@@ -36,4 +36,4 @@ export const createClickupTaskComment = createAction({
 
 		return response.body;
 	},
-});
+})

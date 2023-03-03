@@ -8,7 +8,7 @@ export const getClickupSpaces = createAction({
 	displayName: 'Get Spaces',
 	props: {
 		authentication: clickupCommon.authentication,
-		team_id: clickupCommon.workspace_id
+		team_id: clickupCommon.workspace_id()
 	},
 	async run(configValue) {
 		const { team_id, authentication } = configValue.propsValue;

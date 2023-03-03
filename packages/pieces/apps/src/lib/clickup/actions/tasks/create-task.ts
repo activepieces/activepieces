@@ -8,9 +8,9 @@ export const createClickupTask = createAction({
 	displayName: 'Create Task',
 	props: {
 		authentication: clickupCommon.authentication,
-		workspace_id: clickupCommon.workspace_id,
-		space_id: clickupCommon.space_id,
-		list_id: clickupCommon.list_id,
+		workspace_id: clickupCommon.workspace_id(),
+		space_id: clickupCommon.space_id(),
+		list_id: clickupCommon.list_id(),
 		name: Property.ShortText({
 			description: 'The name of the task to create',
 			displayName: 'Task Name',
