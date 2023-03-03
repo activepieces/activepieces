@@ -85,9 +85,8 @@ export const triggerUtils = {
 
         case TriggerType.SCHEDULE:
             console.log("Deleted Schedule for flow version Id " + flowVersion.id);
-            await flowQueue.remove({
-                id: flowVersion.id,
-                repeatable: true,
+            await flowQueue.removeRepeatableJob({
+                id: flowVersion.id
             });
             break;
 
@@ -111,9 +110,8 @@ const disablePieceTrigger = async ({ flowVersion, projectId, collectionId, colle
     case TriggerStrategy.WEBHOOK:
         break;
     case TriggerStrategy.POLLING:
-        await flowQueue.remove({
+        await flowQueue.removeRepeatableJob({
             id: flowVersion.id,
-            repeatable: true,
         });
         break;
     }

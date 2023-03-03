@@ -22,10 +22,7 @@ type AddParams = OneTimeJobAddParams | RepeatableJobAddParams;
 
 interface RemoveParams {
   id: ApId;
-  repeatable: boolean;
 }
-
-const JOB_REMOVAL_FAILURE = 0;
 
 export const ONE_TIME_JOB_QUEUE = "oneTimeJobs";
 export const REPEATABLE_JOB_QUEUE = "repeatableJobs";
@@ -48,6 +45,7 @@ export const flowQueue = {
 
             const job = await repeatableJobQueue.add(id, data, {
                 jobId: id,
+                removeOnComplete: true,
                 repeat: {
                     pattern: cronExpression,
                 },
@@ -61,42 +59,27 @@ export const flowQueue = {
             const { id, data } = params;
 
             await oneTimeJobQueue.add(id, data, {
+                removeOnComplete: true,
                 jobId: id,
             });
         }
     },
 
-    async remove({ id, repeatable }: RemoveParams): Promise<void> {
-        if (repeatable) {
-            const client = await repeatableJobQueue.client;
-            const jobKey = await client.get(repeatableJobKey(id));
+    async removeRepeatableJob({ id }: RemoveParams): Promise<void> {
+        const client = await repeatableJobQueue.client;
+        const jobKey = await client.get(repeatableJobKey(id));
 
-            if (jobKey === null) {
-                // If the trigger activation failed, don't let the function fail.
-                // Just ignore the action. Log an error message indicating that the job with key "${jobKey}" couldn't be found, even though it should exist, and proceed to skip the deletion.
-                logger.error(`Couldn't find job ${jobKey}, even though It should exists, skipping delete`);
-            }
-            else {
-
-                const result = await repeatableJobQueue.removeRepeatableByKey(jobKey);
-                await client.del(repeatableJobKey(id));
-
-                if (!result) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.JOB_REMOVAL_FAILURE,
-                        params: {
-                            jobId: id,
-                        },
-                    });
-                }
-            }
+        if (jobKey === null) {
+            // If the trigger activation failed, don't let the function fail.
+            // Just ignore the action. Log an error message indicating that the job with key "${jobKey}" couldn't be found, even though it should exist, and proceed to skip the deletion.
+            logger.error(`Couldn't find job ${jobKey}, even though It should exists, skipping delete`);
         }
         else {
-            const result = await oneTimeJobQueue.remove(id);
 
-            console.log(`[flowQueue#remove]: result=${result}`);
+            const result = await repeatableJobQueue.removeRepeatableByKey(jobKey);
+            await client.del(repeatableJobKey(id));
 
-            if (result === JOB_REMOVAL_FAILURE) {
+            if (!result) {
                 throw new ActivepiecesError({
                     code: ErrorCode.JOB_REMOVAL_FAILURE,
                     params: {
