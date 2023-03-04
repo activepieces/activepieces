@@ -1,5 +1,17 @@
 FROM node:18.14.2-bullseye
 
+# Multi-arch support for amd64, arm64.
+
+ARG TARGETPLATFORM=amd64
+ARG BUILDPLATFORM=arm64
+
+RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM"
+
+
+LABEL org.opencontainers.image.source=https://github.com/sredevopsdev/activepieces
+LABEL org.opencontainers.image.description="ActivePieces Base Image"
+LABEL org.opencontainers.image.licenses=MIT
+
 COPY packages/backend/src/assets/default.cf /usr/local/etc/isolate
 
 RUN apt-get update \
@@ -7,7 +19,7 @@ RUN apt-get update \
     locales \
     locales-all \
     libcap-dev \
- && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
 # Set the locale
 ENV LANG en_US.UTF-8

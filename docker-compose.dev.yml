@@ -2,51 +2,51 @@ version: '3.0'
 
 services:
   backend:
-    image: activepieces/ap-base:2
+    image: ghcr.io/sredevopsdev/ap-base:2
     environment:
       AP_JWT_SECRET: super-secret
       AP_POSTGRES_HOST: postgres
       AP_REDIS_HOST: redis
     privileged: true
     ports:
-     - "3000:3000"
-     - "9229:9229"
+    - "3000:3000"
+    - "9229:9229"
     networks:
       - activepieces_dev
     volumes:
-     - ./:/usr/src/app
+    - ./:/usr/src/app
     working_dir: /usr/src/app
     entrypoint:
-     - npx
-     - nx
-     - dev
-     - backend
+    - npx
+    - nx
+    - dev
+    - backend
     depends_on:
-     - postgres
-     - redis
+    - postgres
+    - redis
 
   frontend:
     image: activepieces/ap-base:2
     ports:
-     - "4200:4200"
-     - "9222:9222"
+    - "4200:4200"
+    - "9222:9222"
     networks:
       - activepieces_dev
     volumes:
-     - ./:/usr/src/app
+    - ./:/usr/src/app
     working_dir: /usr/src/app
     entrypoint:
-     - npx
-     - nx
-     - serve
-     - frontend
+    - npx
+    - nx
+    - serve
+    - frontend
     depends_on:
-     - backend
+    - backend
 
   postgres:
     image: postgres:14.4
     ports:
-     - "5432:5432"
+    - "5432:5432"
     environment:
       POSTGRES_DB: activepieces
       POSTGRES_USER: postgres

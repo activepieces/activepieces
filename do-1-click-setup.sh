@@ -20,7 +20,7 @@ sudo apt-get update
 
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
-git clone https://github.com/activepieces/activepieces
+git clone https://github.com/sredevopsdev/activepieces
 
 docker compose -f ./activepieces/docker-compose.yml up -d
 
