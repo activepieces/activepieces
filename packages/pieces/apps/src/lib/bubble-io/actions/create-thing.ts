@@ -73,9 +73,6 @@ export const createThing = createAction({
           if (BUBBLE_INTERNAL_TYPES.includes(field.id)) {
             return
           }
-          if (field.type === "user") {
-            return
-          } 
 
           const params = {
             displayName: field.display,
@@ -141,6 +138,7 @@ const BUBBLE_INTERNAL_TYPES = [
   "Created Date", 
   "Modified Date", 
   "Created By", 
+  "user"
 ]
 
 interface BubbleThing {
