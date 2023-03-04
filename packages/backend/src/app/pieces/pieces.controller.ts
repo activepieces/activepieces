@@ -28,6 +28,7 @@ export const piecesController: FastifyPluginAsync = async (app) => {
             const collection = await collectionService.getOneOrThrow({ id: collectionVersion.collectionId, projectId: request.principal.projectId });
             return engineHelper.executeProp({
                 pieceName: request.params.pieceName,
+                pieceVersion: request.body.pieceVersion,
                 propertyName: request.body.propertyName,
                 stepName: request.body.stepName,
                 input: request.body.input,

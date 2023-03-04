@@ -44,6 +44,7 @@ const cdnPieceMetadataLoader = (): PieceMetadataLoader => {
                     code: ErrorCode.PIECE_NOT_FOUND,
                     params: {
                         pieceName,
+                        pieceVersion: version,
                     },
                 });
             }
@@ -115,6 +116,7 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
                     code: ErrorCode.PIECE_NOT_FOUND,
                     params: {
                         pieceName,
+                        pieceVersion: pieceMetadata.version,
                     },
                 });
             }

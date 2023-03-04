@@ -226,7 +226,12 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
 }
 
 function validateAction(settings: PieceActionSettings) {
-    if (settings.pieceName === undefined || settings.actionName === undefined || settings.input === undefined) {
+    if (
+        settings.pieceName === undefined ||
+        settings.pieceVersion === undefined ||
+        settings.actionName === undefined ||
+        settings.input === undefined
+    ) {
         return false;
     }
     const piece = getPiece(settings.pieceName);
@@ -241,7 +246,12 @@ function validateAction(settings: PieceActionSettings) {
 }
 
 function validateTrigger(settings: PieceTriggerSettings) {
-    if (settings.pieceName === undefined || settings.triggerName === undefined || settings.input === undefined) {
+    if (
+        settings.pieceName === undefined ||
+        settings.pieceVersion === undefined ||
+        settings.triggerName === undefined ||
+        settings.input === undefined
+    ) {
         return false;
     }
     const piece = getPiece(settings.pieceName);
@@ -303,6 +313,12 @@ function buildSchema(props: PieceProperty): TSchema {
             break;
         case PropertyType.MULTI_SELECT_DROPDOWN:
             propsSchema[name] = Type.Union([Type.Array(Type.Any()), Type.String()]);
+            break;
+        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+            propsSchema[name] = Type.Union([Type.Array(Type.Any()), Type.String()]);
+            break;
+        case PropertyType.DYNAMIC:
+            propsSchema[name] = Type.Record(Type.String(), Type.Any());
             break;
         }
 

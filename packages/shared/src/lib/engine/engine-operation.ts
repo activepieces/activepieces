@@ -19,6 +19,7 @@ export type EngineOperation = ExecuteFlowOperation | ExecutePropsOptions | Execu
 
 export interface ExecutePropsOptions {
     pieceName: string;
+    pieceVersion: string;
     propertyName: string;
     stepName: string;
     input: Record<string, any>;

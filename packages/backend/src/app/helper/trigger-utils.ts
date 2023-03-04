@@ -85,9 +85,8 @@ export const triggerUtils = {
 
         case TriggerType.SCHEDULE:
             console.log("Deleted Schedule for flow version Id " + flowVersion.id);
-            await flowQueue.remove({
-                id: flowVersion.id,
-                repeatable: true,
+            await flowQueue.removeRepeatableJob({
+                id: flowVersion.id
             });
             break;
 
@@ -111,9 +110,8 @@ const disablePieceTrigger = async ({ flowVersion, projectId, collectionId, colle
     case TriggerStrategy.WEBHOOK:
         break;
     case TriggerStrategy.POLLING:
-        await flowQueue.remove({
+        await flowQueue.removeRepeatableJob({
             id: flowVersion.id,
-            repeatable: true,
         });
         break;
     }
@@ -154,11 +152,12 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId, collec
 const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
     const piece = getPiece(trigger.settings.pieceName);
 
-    if (piece == null) {
+    if (piece === null) {
         throw new ActivepiecesError({
             code: ErrorCode.PIECE_NOT_FOUND,
             params: {
                 pieceName: trigger.settings.pieceName,
+                pieceVersion: trigger.settings.pieceVersion,
             },
         });
     }
@@ -168,6 +167,7 @@ const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
             code: ErrorCode.PIECE_TRIGGER_NOT_FOUND,
             params: {
                 pieceName: trigger.settings.pieceName,
+                pieceVersion: trigger.settings.pieceVersion,
                 triggerName: trigger.settings.triggerName,
             },
         });

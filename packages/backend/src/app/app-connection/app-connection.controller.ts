@@ -42,6 +42,9 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
                     params: { id: request.params.connectionName },
                 });
             }
+            // Remove sensitive data from response
+            delete appCredential.value['client_secret'];
+            delete appCredential.value['refresh_token'];
             return appCredential;
         }
     );

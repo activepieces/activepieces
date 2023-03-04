@@ -485,6 +485,13 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
     });
   }
 );
+const selectAnyFlowHasSteps = createSelector(selectFlows, (flows: Flow[]) => {
+  let aFlowHasSteps = false;
+  flows.forEach((f) => {
+    aFlowHasSteps = aFlowHasSteps || !!f.version?.trigger?.nextAction;
+  });
+  return aFlowHasSteps;
+});
 
 function findStepLogoUrl(
   step: FlowItem,
@@ -493,6 +500,9 @@ function findStepLogoUrl(
   if (step.type === ActionType.PIECE) {
     if (step.settings.pieceName === 'storage') {
       return 'assets/img/custom/piece/storage.png';
+    }
+    if (step.settings.pieceName === 'http') {
+      return 'assets/img/custom/piece/http.png';
     }
     return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(
       (i) => i.extra?.appName === step.settings.pieceName
@@ -565,4 +575,5 @@ export const BuilderSelectors = {
   selectAllFlowStepsMetaData,
   selectAllStepsForMentionsDropdown,
   selectAppConnectionsForMentionsDropdown,
+  selectAnyFlowHasSteps,
 };

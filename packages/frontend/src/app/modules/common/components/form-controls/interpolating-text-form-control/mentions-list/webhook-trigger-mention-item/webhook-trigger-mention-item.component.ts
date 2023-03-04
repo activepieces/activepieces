@@ -41,7 +41,7 @@ export class WebhookTriggerMentionItemComponent {
   pathFormGroup: FormGroup<{ path: FormControl<string> }>;
   constructor(formBuilder: FormBuilder, private dialogService: MatDialog) {
     this.pathFormGroup = formBuilder.group({
-      path: new FormControl<string>('${trigger.property}', {
+      path: new FormControl<string>('${trigger.body}', {
         validators: Validators.pattern(pathRegex),
         nonNullable: true,
       }),
