@@ -17,16 +17,16 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@/*": ["packages/*"],
       "@activepieces/engine": ["packages/engine/src/index.ts"],
       "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
-      "@ee/*": ["packages/ee/*"],
-      "@shared/*": ["packages/shared/src/lib/*"],
       "@backend/*": ["packages/backend/src/app/*"],
+      "@ee/*": ["packages/ee/*"],
       "@frontend/*": ["packages/frontend/src/app/*"],
-      "@/*": ["packages/*"]
+      "@shared/*": ["packages/shared/src/lib/*"]
     },
     "resolveJsonModule": true
   },

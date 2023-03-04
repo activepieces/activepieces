@@ -2,7 +2,6 @@ import { Trigger, TriggerStrategy } from "@activepieces/framework";
 import {
     CollectionId,
     CollectionVersion,
-    FlowId,
     FlowVersion,
     PieceTrigger,
     ProjectId,
@@ -20,7 +19,7 @@ import { webhookService } from "../webhooks/webhook-service";
 const EVERY_FIVE_MINUTES = "*/5 * * * *";
 
 export const triggerUtils = {
-    async executeTrigger({ collectionVersion, payload, flowVersion, projectId }: ExecuteTrigger): Promise<any[]> {
+    async executeTrigger({ collectionVersion, payload, flowVersion, projectId }: ExecuteTrigger): Promise<unknown[]> {
         const flowTrigger = flowVersion.trigger;
         let payloads = [];
         switch (flowTrigger.type) {
@@ -96,7 +95,7 @@ export const triggerUtils = {
     },
 };
 
-const disablePieceTrigger = async ({ flowVersion, projectId, collectionId, collectionVersion }: EnableOrDisableParams): Promise<void> => {
+const disablePieceTrigger = async ({ flowVersion, projectId, collectionVersion }: EnableOrDisableParams): Promise<void> => {
     const flowTrigger = flowVersion.trigger as PieceTrigger;
     const pieceTrigger = getPieceTrigger(flowTrigger);
     await engineHelper.executeTrigger({
@@ -184,7 +183,7 @@ interface EnableOrDisableParams {
 }
 
 interface ExecuteTrigger {
-  payload: any;
+  payload: unknown;
   projectId: ProjectId;
   collectionVersion: CollectionVersion;
   flowVersion: FlowVersion;

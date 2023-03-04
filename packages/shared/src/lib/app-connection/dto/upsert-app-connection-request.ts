@@ -32,7 +32,7 @@ export const UpsertOAuth2Request = Type.Object({
         client_id: Type.String({}),
         client_secret: Type.String({}),
         token_url: Type.String({}),
-        props: Type.Optional(Type.Record(Type.String(), Type.String())),
+        props: Type.Optional(Type.Record(Type.String(), Type.Any())),
         scope: Type.String(),
         code: Type.String(),
         redirect_url: Type.String({}),

@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } from "fastify";
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
 import { GetInstanceRequest, InstanceId, UpsertInstanceRequest } from "@activepieces/shared";
 import { instanceService as service } from "./instance.service";
@@ -8,7 +8,7 @@ interface GetOnePathParams {
   id: InstanceId;
 }
 
-export const instanceController = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
+export const instanceController = async (app: FastifyInstance) => {
     // upsert
     app.post(
         "/",

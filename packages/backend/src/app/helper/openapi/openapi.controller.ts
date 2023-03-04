@@ -1,9 +1,9 @@
-import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
+import { FastifyInstance} from "fastify";
 
-export const openapiController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
+export const openapiController = async (fastify: FastifyInstance) => {
     fastify.get(
         "/",
-        async (_request, _reply) => {
+        async () => {
             return JSON.stringify(fastify.swagger(),null,2);
         }
     );

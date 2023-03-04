@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
+import { FastifyInstance, FastifyRequest } from "fastify";
 import { collectionService } from "./collection.service";
 import {
     CollectionId,
@@ -12,7 +12,7 @@ import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 
 const DEFAULT_PAGE_SIZE = 10;
 
-export const collectionController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
+export const collectionController = async (fastify: FastifyInstance) => {
     fastify.delete(
         "/:collectionId",
         async (
@@ -38,8 +38,7 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
         Querystring: {
           versionId: CollectionVersionId | undefined;
         };
-      }>,
-            _reply
+      }>
         ) => {
             const versionId: CollectionVersionId | undefined = request.query.versionId;
             const collection = await collectionService.getOne({ id: request.params.collectionId, versionId: versionId ?? null, projectId: request.principal.projectId });
@@ -66,8 +65,7 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
           collectionId: CollectionId;
         };
         Body: UpdateCollectionRequest;
-      }>,
-            _reply
+      }>
         ) => {
             const collection = await collectionService.getOne({ id: request.params.collectionId, versionId: null, projectId: request.principal.projectId });
             if (collection === null) {
@@ -90,8 +88,7 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
         async (
             request: FastifyRequest<{
         Querystring: ListCollectionsRequest;
-      }>,
-            _reply
+      }>
         ) => {
             return await collectionService.list(request.query.projectId, request.query.cursor, request.query.limit ?? DEFAULT_PAGE_SIZE);
         }
@@ -107,8 +104,7 @@ export const collectionController = async (fastify: FastifyInstance, options: Fa
         async (
             request: FastifyRequest<{
         Body: CreateCollectionRequest;
-      }>,
-            _reply
+      }>
         ) => {
             return await collectionService.create({ projectId: request.principal.projectId, request: request.body });
         }

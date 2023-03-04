@@ -28,6 +28,8 @@ import { firebaseAuthenticationModule } from "@ee/firebase-auth/backend/firebase
 import { billingModule } from "@ee/billing/backend/billing.module";
 import { getEdition } from "./app/helper/license-helper";
 import { ApEdition } from "@activepieces/shared";
+import { appCredentialModule } from "@ee/product-embed/backend/app-credentials/app-credentials.module";
+import { connectionKeyModule } from "@ee/product-embed/backend/connection-keys/connection-key.module";
 
 const app = fastify({
     logger,
@@ -124,6 +126,8 @@ const start = async () => {
         if (edition === ApEdition.ENTERPRISE) {
             app.register(firebaseAuthenticationModule);
             app.register(billingModule);
+            app.register(appCredentialModule);
+            app.register(connectionKeyModule);
             initilizeSentry();
         }
         else {
