@@ -10,6 +10,7 @@ import { CommonActions } from './modules/common/store/common.action';
 import { FlagService } from './modules/common/service/flag.service';
 import { compareVersions } from 'compare-versions';
 import { ApFlagId } from '@activepieces/shared';
+import { TelemetryService } from './modules/common/service/telemetry.service';
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
   ignoreNotification: boolean;
@@ -33,6 +34,7 @@ export class AppComponent implements OnInit {
     private store: Store,
     private authenticationService: AuthenticationService,
     private flagService: FlagService,
+    private telemetryService: TelemetryService,
     private router: Router,
     private maticonRegistry: MatIconRegistry,
     private domSanitizer: DomSanitizer
@@ -100,6 +102,7 @@ export class AppComponent implements OnInit {
           return;
         }
         this.store.dispatch(CommonActions.loadInitial({ user: user }));
+        this.telemetryService.init(user);
       }),
       map(() => void 0)
     );

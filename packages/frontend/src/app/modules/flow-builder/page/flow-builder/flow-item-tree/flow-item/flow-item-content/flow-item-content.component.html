@@ -5,8 +5,8 @@
     ap-cursor-pointer ap-flex ap-items-center ap-mr-5 ap-justify-center
      ap-bg-white ap-border-solid ap-border-[1px]
       ap-border-line ap-min-w-[50px] ap-min-h-[50px]"
-      *ngIf="(readonly$ | async)===undefined || (readonly$ | async)===false" [class.ap-opacity-100]="hover"
-      [class.ap-opacity-0]="!hover">
+      *ngIf="(readonly$ | async)===undefined || (readonly$ | async)===null  || (readonly$ | async)===false"
+      [class.ap-opacity-100]="hover" [class.ap-opacity-0]="!hover">
       <app-icon-button *ngIf="trigger" iconFilename="replace.svg" tooltipText="Change Trigger" [width]="17"
         [height]="17" (buttonClicked)="changeTrigger()"></app-icon-button>
       <app-icon-button *ngIf="!trigger" iconFilename="trash.svg" color="warn" tooltipText="Delete Step"

@@ -1,0 +1,27 @@
+{
+  "name": "pieces-csv",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/csv/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/csv",
+        "tsConfig": "packages/pieces/csv/tsconfig.lib.json",
+        "packageJson": "packages/pieces/csv/package.json",
+        "main": "packages/pieces/csv/src/index.ts",
+        "assets": ["packages/pieces/csv/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/csv/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

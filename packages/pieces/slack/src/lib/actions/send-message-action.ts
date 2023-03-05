@@ -28,7 +28,7 @@ export const slackSendMessageAction = createAction({
       required: true,
       refreshers: ['authentication'],
       async options(value) {
-        if (value['authentication'] === undefined) {
+        if (!value['authentication']) {
           return {
             disabled: true,
             placeholder: 'connect slack account',

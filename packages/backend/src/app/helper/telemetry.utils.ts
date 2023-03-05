@@ -14,8 +14,9 @@ const client = new PostHog(
 
 export const telemetry = {
     async identify(user: User, projectId: ProjectId): Promise<void> {
-        const currentVersion = (await import('../../../../../package.json')).version;
-        const edition = await getEdition();
+        if (!telemetryEnabled) {
+            return;
+        }
         client.identify({
             distinctId: user.id,
             properties: {
