@@ -48,6 +48,7 @@ export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
 })
 export class OAuth2ConnectionDialogComponent implements OnInit {
   PropertyType = PropertyType;
+  readonly FAKE_CODE = 'FAKE_CODE';
   @Input() pieceAuthConfig: PieceConfig;
   @Input() pieceName: string;
   @Input() connectionToUpdate: OAuth2AppConnection | undefined;
@@ -135,6 +136,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       props: this.fb.group(propsControls),
     });
     this.settingsForm.controls.name.markAllAsTouched();
+    this.settingsForm.controls.redirect_url.disable();
     if (this.connectionToUpdate) {
       this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
       this.settingsForm.controls.client_id.setValue(
@@ -156,6 +158,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
           )
         : null;
       this.settingsForm.controls.props.disable();
+      this.settingsForm.controls.value.setValue({ code: this.FAKE_CODE });
     }
   }
   submit() {
@@ -179,7 +182,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         type: AppConnectionType.OAUTH2,
         client_id: this.settingsForm.controls.client_id.value,
         client_secret: this.settingsForm.controls.client_secret.value,
-        redirect_url: this.settingsForm.controls.redirect_url.value,
+        redirect_url: this.settingsForm.controls.redirect_url.getRawValue(),
         scope: this.pieceAuthConfig.scope!.join(' ') || '',
         token_url: this.pieceAuthConfig.tokenUrl!,
         props: this.pieceAuthConfig.oAuthProps
@@ -196,6 +199,10 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
   };
 
   saveConnection(connection: UpsertOAuth2Request): void {
+    if (connection.value.code === this.FAKE_CODE) {
+      this.dialogRef.close(connection);
+      return;
+    }
     this.upsert$ = this.appConnectionsService.upsert(connection).pipe(
       catchError((err) => {
         console.error(err);

@@ -43,6 +43,7 @@ export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
   animations: [fadeInUp400ms],
 })
 export class CloudOAuth2ConnectionDialogComponent implements OnInit {
+  readonly FAKE_CODE = 'FAKE_CODE';
   @Input() pieceAuthConfig: PieceConfig;
   @Input() pieceName: string;
   @Input() connectionToUpdate: CloudAuth2Connection | undefined;
@@ -113,6 +114,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
         );
         this.settingsForm.controls.props.disable();
       }
+      this.settingsForm.controls.value.setValue({ code: this.FAKE_CODE });
     }
     this.settingsForm.controls.name.markAllAsTouched();
   }
@@ -157,6 +159,10 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     return controls;
   }
   saveConnection(connection: UpsertCloudOAuth2Request): void {
+    if (connection.value.code === this.FAKE_CODE) {
+      this.dialogRef.close(connection);
+      return;
+    }
     this.upsert$ = this.appConnectionsService.upsert(connection).pipe(
       catchError((err) => {
         console.error(err);
