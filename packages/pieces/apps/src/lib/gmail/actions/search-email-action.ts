@@ -15,7 +15,29 @@ export const gmailSearchMail = createAction({
     label: GmailProps.label(),
     category: GmailProps.category()
   },
-  sampleData: {},
+  sampleData: [
+    {
+      "messages": [
+        {
+          "id": "183baac18543bef5",
+          "threadId": "183baac18543bef5"
+        },
+        {
+          "id": "183a213a0730fad4",
+          "threadId": "183a213a0730fad4"
+        },
+        {
+          "id": "1839579494fe34fe",
+          "threadId": "1839579494fe34fe"
+        },
+        {
+          "id": "1838bad82a2cb0f2",
+          "threadId": "1838bad82a2cb0f2"
+        }
+      ],
+      "resultSizeEstimate": 4
+    }
+  ],
   async run({ propsValue: { authentication, from, to, subject, label, category } }) {
     
     const response = await GmailRequests.searchMail({
