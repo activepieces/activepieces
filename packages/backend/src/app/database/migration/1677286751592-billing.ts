@@ -10,7 +10,7 @@ export class billing1677286751592 implements MigrationInterface {
         await queryRunner.query(`CREATE UNIQUE INDEX "idx_plan_project_id" ON "project_plan" ("projectId") `);
         await queryRunner.query(`CREATE UNIQUE INDEX "idx_plan_stripe_customer_id" ON "project_plan" ("stripeCustomerId") `);
         await queryRunner.query(`CREATE TABLE "project_usage" ("id" character varying(21) NOT NULL, "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "projectId" character varying(21) NOT NULL, "consumedTasks" integer NOT NULL, "nextResetDatetime" TIMESTAMP WITH TIME ZONE NOT NULL, CONSTRAINT "REL_c407fc9b2bfb44515af69d575a" UNIQUE ("projectId"), CONSTRAINT "PK_100c1959e9dc487c4cadbf9cb56" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "idx_project_usage_project_id" ON "project_usage" ("projectId") `);
+        await queryRunner.query(`CREATE UNIQUE INDEX "idx_project_usage_project_id" ON "project_usage" ("projectId") `);
         await queryRunner.query(`ALTER TABLE "project_plan" ADD CONSTRAINT "fk_project_plan_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "project_usage" ADD CONSTRAINT "fk_project_usage_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         console.log("Finished migration billing1677286751592");

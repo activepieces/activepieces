@@ -22,13 +22,23 @@ function getDefaultPlanId(): string {
     if (stripeSecret.startsWith('sk_test')) {
         return "price_1MeoK3KZ0dZRqLEKXIsGoguO";
     } else {
-        return "price_1MfMlJKZ0dZRqLEKWHrxY97A";
+        return "price_1MgpQ4KZ0dZRqLEKqMiS8vrf";
     }
 }
 
 function parsePlanFromId(id: string | null): { name: string, tasks: number } {
     switch (id) {
         // Stripe production plans
+        case 'price_1MgpQ4KZ0dZRqLEKqMiS8vrf':
+            return {
+                name: 'free-1',
+                tasks: 1000
+            }
+        case 'price_1MgpSTKZ0dZRqLEKLejnL5GW':
+            return {
+                name: 'growth-1',
+                tasks: 10000
+            }
         case 'price_1MfMlJKZ0dZRqLEKWHrxY97A':
             return {
                 name: 'free-0',
