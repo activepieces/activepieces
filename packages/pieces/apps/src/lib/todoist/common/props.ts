@@ -25,7 +25,7 @@ export const todoistProjectIdDropdown = Property.Dropdown<string>({
   description: 'Task project ID. If not set, task is put to user\'s Inbox.',
   required: false,
   options: async (propsValue) => {
-    if (propsValue['authentication'] === undefined) {
+    if (!propsValue['authentication']) {
       return buildEmptyList({
         placeholder: 'Please select an authentication',
       });

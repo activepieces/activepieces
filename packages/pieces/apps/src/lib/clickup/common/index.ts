@@ -15,7 +15,7 @@ export const clickupCommon = {
         required: true,
         refreshers: ['authentication'],
         options: async (value) => {
-            if (value['authentication'] === undefined) {
+            if (!value['authentication']) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',
@@ -47,7 +47,7 @@ export const clickupCommon = {
         refreshers: ['authentication', 'workspace_id'],
         options: async (value) => {
             const { workspace_id, authentication } = value;
-            if (authentication === undefined || workspace_id === undefined) {
+            if (!authentication || !workspace_id) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first and select workspace',
@@ -74,7 +74,7 @@ export const clickupCommon = {
         refreshers: ['authentication', 'space_id'],
         options: async (value) => {
             const { space_id, authentication } = value;
-            if (authentication === undefined || space_id === undefined) {
+            if (!authentication || !space_id) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first and space',
@@ -113,7 +113,7 @@ export const clickupCommon = {
         refreshers: ['authentication', 'list_id'],
         options: async (value) => {
             const { list_id, authentication } = value;
-            if (authentication === undefined || list_id === undefined) {
+            if (!authentication || !list_id) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first and select workspace',

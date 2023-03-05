@@ -15,7 +15,7 @@ export const googleSheetsCommon = {
         required: true,
         refreshers: ['authentication'],
         options: async (propsValue) => {
-            if (propsValue['authentication'] === undefined) {
+            if (!propsValue['authentication']) {
                 return {
                     disabled: true,
                     options: [],
@@ -31,7 +31,7 @@ export const googleSheetsCommon = {
                 },
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,
-                    token: authProp!['access_token'],
+                    token: authProp['access_token'],
                 }
             })).body.files;
             return {
@@ -50,7 +50,7 @@ export const googleSheetsCommon = {
         required: true,
         refreshers: ['authentication', 'spreadsheet_id'],
         options: async (propsValue) => {
-            if (propsValue['authentication'] === undefined || (propsValue['spreadsheet_id'] ?? '').toString().length === 0) {
+            if (!propsValue['authentication'] || (propsValue['spreadsheet_id'] ?? '').toString().length === 0) {
                 return {
                     disabled: true,
                     options: [],
@@ -58,7 +58,7 @@ export const googleSheetsCommon = {
                 }
             }
             const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
-            const sheets = (await listSheetsName(authProp['access_token']!, propsValue['spreadsheet_id'] as string));
+            const sheets = (await listSheetsName(authProp['access_token'], propsValue['spreadsheet_id'] as string));
             return {
                 disabled: false,
                 options: sheets.map((sheet: { properties: { title: string, sheetId: number } }) => {

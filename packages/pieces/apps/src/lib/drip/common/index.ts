@@ -12,7 +12,7 @@ export const dripCommon = {
         required: true,
         refreshers: ["authentication"],
         options: async (props) => {
-            if (props['authentication'] === undefined) {
+            if (!props['authentication']) {
                 return {
                     disabled: true,
                     options: [],

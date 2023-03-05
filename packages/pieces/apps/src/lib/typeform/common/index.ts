@@ -15,7 +15,7 @@ export const formsDropdown = Property.Dropdown<string>({
     async options(propsValue) {
         const auth = propsValue['authentication'] as OAuth2PropertyValue;
 
-        if (auth === undefined) {
+        if (!auth) {
             return {
                 disabled: true,
                 placeholder: 'Connect typeform account',

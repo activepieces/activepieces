@@ -23,7 +23,7 @@ export const googleDriveCreateNewFolder = createAction({
       required: false,
       refreshers: ['authentication'],
       options: async (propsValue) => {
-        if (propsValue['authentication'] === undefined) {
+        if (!propsValue['authentication']) {
           return {
             disabled: true,
             options: [],
@@ -39,7 +39,7 @@ export const googleDriveCreateNewFolder = createAction({
           },
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: authProp!['access_token'],
+            token: authProp['access_token'],
           }
         })).body.files;
 

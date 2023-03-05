@@ -1,4 +1,4 @@
-import {getMailChimpServerPrefix, mailChimpAuth, mailChimpListIdDropdown} from "../../common";
+import { getMailChimpServerPrefix, mailChimpAuth, mailChimpListIdDropdown } from "../../common";
 import mailchimp from "@mailchimp/mailchimp_marketing";
 import { createAction, Property } from "@activepieces/framework";
 
@@ -15,30 +15,29 @@ export const addMemberToList = createAction({
             required: true,
         }),
         list_id: mailChimpListIdDropdown,
-        status: Property.Dropdown<'subscribed' | 'unsubscribed' | 'cleaned' | 'pending' | 'transactional'>({
+        status: Property.StaticDropdown<'subscribed' | 'unsubscribed' | 'cleaned' | 'pending' | 'transactional'>({
             displayName: "Status",
-            refreshers: [],
             required: true,
-            options: async () => {
-            return {disabled:false, options:[
-                {label:'Subscribed', value:'subscribed'},
-                {label:'Unsubscribed', value: 'unsubscribed'},
-                {label:'Cleaned', value:'cleaned'},
-                {label: 'Pending', value: 'pending'},
-                {label:'Transactional',value:'transactional'}
-            ]} ;}
-
+            options: {
+                disabled: false, options: [
+                    { label: 'Subscribed', value: 'subscribed' },
+                    { label: 'Unsubscribed', value: 'unsubscribed' },
+                    { label: 'Cleaned', value: 'cleaned' },
+                    { label: 'Pending', value: 'pending' },
+                    { label: 'Transactional', value: 'transactional' }
+                ]
+            }
         })
     },
     sampleData: {},
     async run(context) {
-        const access_token= context.propsValue.authentication?.access_token;
-        const mailChimpServerPrefix = await getMailChimpServerPrefix(access_token!);
+        const access_token = context.propsValue.authentication?.access_token;
+        const mailChimpServerPrefix = await getMailChimpServerPrefix(access_token);
         mailchimp.setConfig({
             accessToken: access_token,
             server: mailChimpServerPrefix
-          });
+        });
 
-       return await mailchimp.lists.addListMember(context.propsValue.list_id!,{email_address:context.propsValue.email!, status:context.propsValue.status!})
+        return await mailchimp.lists.addListMember(context.propsValue.list_id!, { email_address: context.propsValue.email!, status: context.propsValue.status! })
     },
 });
