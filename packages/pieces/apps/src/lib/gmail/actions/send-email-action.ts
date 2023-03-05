@@ -3,7 +3,7 @@ import { createAction, Property, HttpRequest, HttpMethod, AuthenticationType, ht
 export const gmailSendEmailAction = createAction({
 	name: 'send_email',
 	description: 'Send an email through a Gmail account',
-    displayName:'Send Email',
+	displayName: 'Send Email',
 	props: {
 		authentication: Property.OAuth2({
 			description: "",
@@ -42,7 +42,7 @@ export const gmailSendEmailAction = createAction({
 			"mime-version: 1.0",
 			"content-type: text/html"
 		];
-		const message = headers.join("\n") + "\n\n" + (configValue.propsValue['body_html']?? configValue.propsValue['body_text'])
+		const message = headers.join("\n") + "\n\n" + (configValue.propsValue['body_html'] ?? configValue.propsValue['body_text'])
 		const requestBody: SendEmailRequestBody = {
 			raw: Buffer.from(message).toString("base64").replace(/\+/g, '-').replace(/\//g, '_'),
 		};
