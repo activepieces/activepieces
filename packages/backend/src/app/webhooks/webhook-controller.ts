@@ -6,7 +6,7 @@ import { webhookService } from "./webhook-service";
 
 export const webhookController: FastifyPluginCallback = (app, _opts, done): void => {
 
-    app.post(
+    app.all(
         "/:flowId",
         {
             schema: {
@@ -20,7 +20,7 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
     );
 
 
-    app.post(
+    app.all(
         "/",
         {
             schema: {
@@ -32,11 +32,6 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
             await reply.status(StatusCodes.OK).send();
         }
     );
-
-    /**
-   * Used by applications to test webhooks
-   */
-    app.get("/", (_req: FastifyRequest, res: FastifyReply) => res.status(StatusCodes.OK).send());
 
     done();
 };
