@@ -35,6 +35,7 @@ import {
   TextInsertOperation,
 } from './utils';
 import 'quill-mention';
+import './fixed-selection-mention';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -261,7 +262,6 @@ export class InterpolatingTextFormControlComponent
   public focusEditor() {
     setTimeout(() => {
       this.editor.quillEditor.focus();
-      this.editor.quillEditor.setSelection(99999999999999, 0, 'api');
     });
   }
 
