@@ -9,14 +9,15 @@ export const gmailSearchMail = createAction({
   displayName: 'Search Email',
   props: {
     authentication: GmailProps.authentication,
-    from: GmailProps.from,
-    to: GmailProps.to,
-    subject: GmailProps.subject,
-    label: GmailProps.label,
-    category: GmailProps.category
+    subject: GmailProps.subject(true),
+    from: GmailProps.from(),
+    to: GmailProps.to(),
+    label: GmailProps.label(),
+    category: GmailProps.category()
   },
   sampleData: {},
   async run({ propsValue: { authentication, from, to, subject, label, category } }) {
+    
     const response = await GmailRequests.searchMail({
       access_token: (authentication.access_token as string), 
       from: from as string, 

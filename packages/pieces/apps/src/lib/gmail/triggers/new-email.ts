@@ -10,11 +10,11 @@ export const gmailNewEmailTrigger = createTrigger({
   description: 'Triggers when new mail is found in your Gmail inbox',
   props: {
     authentication: GmailProps.authentication,
-    from: GmailProps.from,
-    to: GmailProps.to,
-    subject: GmailProps.subject,
-    label: GmailProps.label,
-    category: GmailProps.category
+    subject: GmailProps.subject(true),
+    from: GmailProps.from(),
+    to: GmailProps.to(),
+    label: GmailProps.label(),
+    category: GmailProps.category()
   },
   sampleData: {
     "messages": [

@@ -8,30 +8,30 @@ export const GmailProps = {
     authUrl: "https://accounts.google.com/o/oauth2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     required: true,
-    scope: ["https://mail.google.com/"]
+    scope: ["https://www.googleapis.com/auth/gmail.readonly"]
   }),
-  from: Property.ShortText({
+  from: (required = false) => Property.ShortText({
     displayName: 'Email sender',
     description: "The address sending the new mail",
-    required: false,
+    required,
     defaultValue: ""
   }),
-  to: Property.ShortText({
+  to: (required = false) => Property.ShortText({
     displayName: 'Email receipient',
     description: "The address receiving the new mail",
-    required: false,
+    required,
     defaultValue: ""
   }),
-  subject: Property.ShortText({
+  subject: (required = false) => Property.ShortText({
     displayName: 'Email subject',
     description: "The email subject",
-    required: false,
+    required,
     defaultValue: ""
   }),
-  category: Property.StaticDropdown({
+  category: (required = false) => Property.StaticDropdown({
     displayName: "Category",
     description: "category of the mail",
-    required: false,
+    required,
     options: {
       disabled: false,
       options: [
@@ -45,10 +45,10 @@ export const GmailProps = {
       ]
     }
   }),
-  label: Property.Dropdown<GmailLabel>({
+  label: (required = false) => Property.Dropdown<GmailLabel>({
     displayName: "Label",
     description: "The label tagged to the mail",
-    required: false,
+    required,
     defaultValue: "",
     refreshers: ["authentication"],
     options: async ({ authentication }) => {
@@ -80,10 +80,10 @@ export const GmailProps = {
       }
     }
   }),
-  unread: Property.Checkbox({
+  unread: (required = false) => Property.Checkbox({
     displayName: 'Is unread?',
     description: "Check if the email is unread or not",
-    required: false,
+    required,
     defaultValue: false
   })
 }
