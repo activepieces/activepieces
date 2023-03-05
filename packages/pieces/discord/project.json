@@ -1,0 +1,27 @@
+{
+  "name": "pieces-discord",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/discord/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/discord",
+        "tsConfig": "packages/pieces/discord/tsconfig.lib.json",
+        "packageJson": "packages/pieces/discord/package.json",
+        "main": "packages/pieces/discord/src/index.ts",
+        "assets": ["packages/pieces/discord/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/discord/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

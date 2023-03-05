@@ -1,0 +1,27 @@
+{
+  "name": "pieces-todoist",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/todoist/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/todoist",
+        "tsConfig": "packages/pieces/todoist/tsconfig.lib.json",
+        "packageJson": "packages/pieces/todoist/package.json",
+        "main": "packages/pieces/todoist/src/index.ts",
+        "assets": ["packages/pieces/todoist/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/todoist/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

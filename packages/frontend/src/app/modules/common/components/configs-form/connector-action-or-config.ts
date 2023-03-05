@@ -12,6 +12,7 @@ export interface PieceConfig {
   redirectUrl?: string;
   scope?: string[];
   required: boolean;
+  pkce?: boolean;
   extra?: Record<string, unknown>;
   refreshers?: string[];
   basicAuthConfigs?: {
@@ -35,6 +36,7 @@ export class PieceProperty {
   authUrl?: string;
   tokenUrl?: string;
   scope?: string[];
+  pkce?: boolean;
   extra?: Record<string, unknown>;
   refreshers?: string[];
   password?: PieceProperty;
@@ -56,6 +58,7 @@ export const propsConvertor = {
       scope: prop.scope,
       required: prop.required,
       extra: prop.extra,
+      pkce: prop.pkce,
       refreshers: prop.refreshers,
       staticDropdownState: prop.options,
       defaultValue: prop.defaultValue,

@@ -76,12 +76,9 @@ export function initializeAppCustomLogic(
 ): () => Promise<void> {
   return () =>
     new Promise((resolve) => {
-      console.log('***Angular init***');
-
       flagService.getEdition().subscribe((edition) => {
-        console.log('edition ' + edition);
+        console.log('AP Edition ' + edition);
         router.resetConfig([...dynamicRoutes(edition)]);
-        console.log('***Angular Finished***');
         resolve();
       });
     });
