@@ -59,7 +59,7 @@ const setupGeneratedLibrary = async (pieceName: string) => {
 
     export const ${pieceNameCamelCase} = createPiece({
       name: '${pieceName}',
-      displayName: '',
+      displayName: '${pieceName}',
       logoUrl: 'https://cdn.activepieces.com/pieces/${pieceName}.png',
       version: packageJson.version,
       authors: [
