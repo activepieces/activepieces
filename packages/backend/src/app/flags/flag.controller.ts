@@ -1,7 +1,7 @@
-import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } from "fastify";
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { flagService } from "./flag.service";
 
-export const flagController = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
+export const flagController = async (app: FastifyInstance) => {
     app.get("/", async (_request: FastifyRequest, reply: FastifyReply) => {
         const flags = await flagService.getAll();
         const flagMap: Record<string, unknown> = {};
