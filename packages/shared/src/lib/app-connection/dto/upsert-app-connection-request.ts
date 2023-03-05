@@ -11,6 +11,7 @@ export const UpsertCloudOAuth2Request = Type.Object({
     ...commonAuthProps,
     value: Type.Object({
         code: Type.String(),
+        code_challenge: Type.Optional(Type.String()),
         props: Type.Optional(Type.Record(Type.String(), Type.String())),
         scope: Type.String(),
         type: Type.Literal(AppConnectionType.CLOUD_OAUTH2),
@@ -35,6 +36,7 @@ export const UpsertOAuth2Request = Type.Object({
         props: Type.Optional(Type.Record(Type.String(), Type.String())),
         scope: Type.String(),
         code: Type.String(),
+        code_challenge: Type.Optional(Type.String()),
         redirect_url: Type.String({}),
         type: Type.Literal(AppConnectionType.OAUTH2),
     })
