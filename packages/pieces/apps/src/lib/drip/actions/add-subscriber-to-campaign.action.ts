@@ -13,14 +13,14 @@ export const dripAddSubscriberToCampaign = createAction({
             refreshers: ["authentication", "account_id"],
             required: true,
             options: async (props) => {
-                if (props['authentication'] === undefined) {
+                if (!props['authentication']) {
                     return {
                         disabled: true,
                         options: [],
                         placeholder: "Please fill in API key first"
                     }
                 }
-                if (props['account_id'] === undefined) {
+                if (!props['account_id']) {
                     return {
                         disabled: true,
                         options: [],

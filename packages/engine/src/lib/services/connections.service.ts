@@ -3,7 +3,7 @@ import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuth
 import { globals } from '../globals';
 
 export const connectionService = {
-    async obtain(connectionName: string): Promise<null | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | BasicAuthConnectionValue | string> {
+    async obtain(connectionName: string): Promise<undefined | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | BasicAuthConnectionValue | string> {
         const url = globals.apiUrl + `/v1/app-connections/${connectionName}?projectId=${globals.projectId}`;
         try {
             const result: AppConnection = (await axios({
@@ -13,9 +13,6 @@ export const connectionService = {
                     Authorization: 'Bearer ' + globals.workerToken
                 }
             })).data;
-            if(result === null){
-                return null;
-            }
             if(result.value.type === AppConnectionType.SECRET_TEXT){
                 return result.value.secret_text;
             }

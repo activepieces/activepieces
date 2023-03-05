@@ -67,7 +67,7 @@ export const googleTasksCommon = {
         refreshers: ['authentication'],
         required: true,
         options: async (propsValue) => {
-            if (propsValue['authentication'] === undefined) {
+            if (!propsValue['authentication']) {
                 return {
                     disabled: true,
                     placeholder: "Please connect your account first",
