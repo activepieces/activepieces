@@ -1,8 +1,8 @@
-import { createTrigger, TriggerStrategy, Property, httpClient, AuthenticationType, HttpRequest, HttpMethod } from '@activepieces/framework';
+import { createTrigger, TriggerStrategy, Property, httpClient, AuthenticationType, HttpMethod, OAuth2PropertyValue } from '@activepieces/framework';
 import dayjs from 'dayjs';
 
 export const gmailNewEmailTrigger = createTrigger({
-  name: 'new_email_received',
+  name: 'gmail_new_email_received',
   displayName: 'New Email',
   description: 'Triggers when new mail is found in your Gmail inbox',
   props: {
@@ -49,9 +49,9 @@ export const gmailNewEmailTrigger = createTrigger({
         ]
       }
     }),
-    labels: Property.Dropdown<Label>({
-      displayName: "Email receipient",
-      description: "The address receiving the new mail",
+    label: Property.Dropdown<Label>({
+      displayName: "Label",
+      description: "The label tagged to the mail",
       required: false,
       defaultValue: "",
       refreshers: ["authentication"],
@@ -69,7 +69,7 @@ export const gmailNewEmailTrigger = createTrigger({
           url: `https://gmail.googleapis.com/gmail/v1/users/me/labels`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: (authentication as string)
+            token: (authentication as OAuth2PropertyValue).access_token
           }
         })
 
@@ -111,7 +111,7 @@ export const gmailNewEmailTrigger = createTrigger({
   async onDisable({ store }) {
     await store.put('gmail_new_email_trigger', null);
   },
-  async run({ store, propsValue: { authentication, from, to, subject, labels, category } }) {
+  async run({ store, propsValue: { authentication, from, to, subject, label, category } }) {
     const data = await store?.get<{ last_read: number }>('gmail_new_email_trigger');
     const queryParams = []
     const now = dayjs().unix()
@@ -119,8 +119,8 @@ export const gmailNewEmailTrigger = createTrigger({
     if (from) queryParams.push(`from:(${from})`)
     if (to) queryParams.push(`to:(${from})`)
     if (subject) queryParams.push(`subject:(${subject})`)
-    if (labels) queryParams.push(`label:${labels.name}`)
-    if (category) queryParams.push(`label:${category}`)
+    if (label) queryParams.push(`label:${label.name}`)
+    if (category) queryParams.push(`category:${category}`)
     if (data?.last_read != null) queryParams.push(`after:${data.last_read}`)
 
     queryParams.push(`before:${now}`)
