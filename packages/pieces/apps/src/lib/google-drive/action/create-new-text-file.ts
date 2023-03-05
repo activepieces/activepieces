@@ -29,7 +29,7 @@ export const googleDriveCreateNewTextFile = createAction({
       required: false,
       refreshers: ['authentication'],
       options: async (propsValue) => {
-        if (propsValue['authentication'] === undefined) {
+        if (!propsValue['authentication']) {
           return {
             disabled: true,
             options: [],

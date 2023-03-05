@@ -28,7 +28,7 @@ export const hubSpotListIdDropdown = Property.Dropdown<number>({
   description: 'List to add contact to',
   required: true,
   options: async (propsValue) => {
-    if (propsValue['authentication'] === undefined) {
+    if (!propsValue['authentication']) {
       return buildEmptyList({
         placeholder: 'Please select an authentication',
       });

@@ -16,7 +16,7 @@ export const asanaCommon = {
         required: true,
         refreshers: ['authentication'],
         options: async (value) => {
-            if (value['authentication'] === undefined) {
+            if (!value['authentication']) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',
@@ -47,14 +47,14 @@ export const asanaCommon = {
         required: true,
         refreshers: ['authentication', 'workspace'],
         options: async (value) => {
-            if (value['authentication'] === undefined) {
+            if (!value['authentication']) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',
                     options: [],
                 };
             }
-            if (value['workspace'] === undefined) {
+            if (!value['workspace']) {
                 return {
                     disabled: true,
                     placeholder: 'Select workspace first',
