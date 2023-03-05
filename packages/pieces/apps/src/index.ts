@@ -38,6 +38,7 @@ import { twilio } from '@activepieces/piece-twilio';
 import { typeform } from '@activepieces/piece-typeform';
 import { wordpress } from '@activepieces/piece-wordpress';
 import { zoom } from '@activepieces/piece-zoom';
+import { generatebanners } from '@activepieces/piece-generatebanners';
 
 export const pieces: Piece[] = [
     airtable,
@@ -54,6 +55,7 @@ export const pieces: Piece[] = [
     dropbox,
     figma,
     freshsales,
+    generatebanners,
     github,
     gmail,
     googleCalendar,
