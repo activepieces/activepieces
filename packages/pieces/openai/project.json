@@ -1,0 +1,27 @@
+{
+  "name": "pieces-openai",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/openai/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/openai",
+        "tsConfig": "packages/pieces/openai/tsconfig.lib.json",
+        "packageJson": "packages/pieces/openai/package.json",
+        "main": "packages/pieces/openai/src/index.ts",
+        "assets": ["packages/pieces/openai/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/openai/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
