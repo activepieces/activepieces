@@ -41,14 +41,16 @@ export const usageService = {
     },
     async getUsage({ projectId }: { projectId: ProjectId }): Promise<ProjectUsage> {
         let projectUsage = await projectUsageRepo.findOneBy({ projectId });
-        if (projectUsage === undefined || projectUsage === null || isPastResetDate(projectUsage.nextResetDatetime)) {
-            const plan = await billingService.getPlan({ projectId });
-            projectUsage = await projectUsageRepo.save({
+        const plan = await billingService.getPlan({ projectId });
+        const nextReset = nextResetDatetime(plan.subscriptionStartDatetime);
+        if (projectUsage === undefined || projectUsage === null || isNotSame(nextReset, projectUsage.nextResetDatetime)) {
+            await projectUsageRepo.upsert({
                 id: apId(),
                 projectId,
                 consumedTasks: 0,
-                nextResetDatetime: nextResetDatetime(plan.subscriptionStartDatetime),
-            });
+                nextResetDatetime: nextReset,
+            }, ['projectId']);
+            return await projectUsageRepo.findOneBy({ projectId });
         }
         return projectUsage;
     },
@@ -65,13 +67,13 @@ function countSteps(flowVersion: FlowVersion): number {
     return steps;
 }
 
-function isPastResetDate(datetime: string) {
-    const date = dayjs(datetime);
-    const currentDate = dayjs();
-    return currentDate.isAfter(date);
+function isNotSame(firstDate: string, secondDate: string) {
+    const fd = dayjs(firstDate);
+    const sd = dayjs(secondDate);
+    return !fd.isSame(sd);
 }
 
-function nextResetDatetime(datetime: string) {
+function nextResetDatetime(datetime: string): string {
     const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
     const date = dayjs(datetime);
     const currentDate = dayjs();

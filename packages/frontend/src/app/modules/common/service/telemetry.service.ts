@@ -9,7 +9,6 @@ import { FlagService } from './flag.service';
 export class TelemetryService {
   constructor(private flagService: FlagService) {}
   init(user: User) {
-    console.log(user);
     if (user !== null && user !== undefined) {
       this.flagService.getAllFlags().subscribe((flags) => {
         if (flags[ApFlagId.TELEMETRY_ENABLED] === true) {

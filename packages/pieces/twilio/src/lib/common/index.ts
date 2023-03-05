@@ -20,7 +20,7 @@ export const twilioCommon = {
         required: true,
         refreshers: ['authentication'],
         options: async (propsValue) => {
-            if (propsValue['authentication'] === undefined) {
+            if (!propsValue['authentication']) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',

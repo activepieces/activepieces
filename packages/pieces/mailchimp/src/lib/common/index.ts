@@ -16,7 +16,7 @@ export const mailChimpListIdDropdown = Property.Dropdown<string>({
   description: "Audience you want to add the contact to",
   required: true,
   options: async (propsValue) => {
-    if (propsValue['authentication'] === undefined) {
+    if (!propsValue['authentication']) {
       return {
         disabled: true,
         options: [],
