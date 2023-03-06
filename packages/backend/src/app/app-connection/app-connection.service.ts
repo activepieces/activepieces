@@ -194,17 +194,20 @@ async function claim(request: {
     codeVerifier: string
 }): Promise<unknown> {
     try {
+        const params = {
+            client_id: request.clientId,
+            client_secret: request.clientSecret,
+            redirect_uri: request.redirectUrl,
+            grant_type: "authorization_code",
+            code: request.code,
+        };
+        if (request.codeVerifier) {
+            params["code_verifier"] = request.codeVerifier;
+        }
         const response = (
             await axios.post(
                 request.tokenUrl,
-                new URLSearchParams({
-                    client_id: request.clientId,
-                    client_secret: request.clientSecret,
-                    redirect_uri: request.redirectUrl,
-                    code_verifier: request.codeVerifier,
-                    grant_type: "authorization_code",
-                    code: request.code,
-                }),
+                new URLSearchParams(params),
                 {
                     headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
                 }
@@ -213,6 +216,7 @@ async function claim(request: {
         return { ...formatOAuth2Response(response), client_id: request.clientId, client_secret: request.clientSecret };
     }
     catch (e: unknown | AxiosError) {
+        console.error(e)
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CLAIM, params: {
                 clientId: request.clientId,

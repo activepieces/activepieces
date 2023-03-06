@@ -21,7 +21,7 @@
     </div>
     <app-json-viewer class="json-viewer" title="Input" [maxHeight]="400"
       [content]="selectedStepResult.input"></app-json-viewer>
-    <app-json-viewer title="Output" [content]="selectedStepResult.output??selectedStepResult.errorMessage"></app-json-viewer>
+    <app-json-viewer title="Output" [content]="selectedStepResult.errorMessage??selectedStepResult.output"></app-json-viewer>
 
   </div>
 

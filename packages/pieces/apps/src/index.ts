@@ -39,6 +39,7 @@ import { typeform } from '@activepieces/piece-typeform';
 import { wordpress } from '@activepieces/piece-wordpress';
 import { zoom } from '@activepieces/piece-zoom';
 import { generatebanners } from '@activepieces/piece-generatebanners';
+import { connections } from '@activepieces/piece-connections';
 
 export const pieces: Piece[] = [
     airtable,
@@ -80,7 +81,8 @@ export const pieces: Piece[] = [
     twilio,
     typeform,
     wordpress,
-    zoom
+    zoom,
+    connections
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
