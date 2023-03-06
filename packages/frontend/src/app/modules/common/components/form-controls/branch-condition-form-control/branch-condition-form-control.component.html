@@ -10,7 +10,7 @@
                 First value is required
             </mat-error>
         </mat-form-field>
-        <app-builder-autocomplete-mentions-dropdown #firstValueMentionsDropdown
+        <app-builder-autocomplete-mentions-dropdown #firstValueMentionsDropdown width="calc(100% - 2.5rem)"
             (menuClosed)="firstValueTextControl.focusEditor()" marginTop="-20px"
             (addMention)="addMention(firstValueTextControl,$event)"></app-builder-autocomplete-mentions-dropdown>
     </div>
@@ -49,7 +49,7 @@
                     Second value is required
                 </mat-error>
             </mat-form-field>
-            <app-builder-autocomplete-mentions-dropdown #secondMentionsDropdown
+            <app-builder-autocomplete-mentions-dropdown #secondMentionsDropdown width="calc(100% - 2.5rem)"
                 (menuClosed)="secondValueTextControl.focusEditor()" marginTop="-20px"
                 (addMention)="addMention(secondValueTextControl,$event)"></app-builder-autocomplete-mentions-dropdown>
         </div>
