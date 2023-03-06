@@ -1,0 +1,27 @@
+{
+  "name": "pieces-pipedrive",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/pipedrive/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/pipedrive",
+        "tsConfig": "packages/pieces/pipedrive/tsconfig.lib.json",
+        "packageJson": "packages/pieces/pipedrive/package.json",
+        "main": "packages/pieces/pipedrive/src/index.ts",
+        "assets": ["packages/pieces/pipedrive/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/pipedrive/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

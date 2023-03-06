@@ -4,19 +4,19 @@ export enum StepOutputStatus {
   FAILED = 'FAILED',
 }
 
-export class StepOutput{
+export class StepOutput<T = any>{
   duration?: number;
   input?: unknown;
-  output?: any;
+  output?: T
   errorMessage?: unknown;
   standardOutput?: unknown;
   status?: StepOutputStatus;
 }
 
-export class LoopOnItemsStepOutput extends StepOutput {
-  override output!: {
-    current_item: any;
-    current_iteration: number;
-    iterations: Record<string, StepOutput>[];
-  };
+export class LoopOnItemsStepOutput extends StepOutput<{
+  current_item: any;
+  current_iteration: number;
+  iterations: Record<string, StepOutput>[];
+}> {
+
 }

@@ -1,10 +1,10 @@
 import {
-  ApiKeyAppConnection,
   AppConnection,
   AppConnectionType,
   BasicAuthConnection,
   OAuth2AppConnection,
   PropertyType,
+  SecretKeyAppConnection,
 } from '@activepieces/shared';
 import {
   ChangeDetectionStrategy,
@@ -285,7 +285,7 @@ export class AddEditConnectionButtonComponent {
   ) {
     this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(
       switchMap((connection) => {
-        const secretKeyConnection = connection as ApiKeyAppConnection;
+        const secretKeyConnection = connection as SecretKeyAppConnection;
         const dialogData: SecretTextConnectionDialogData = {
           pieceName: this.pieceName,
           displayName: this.config.label,

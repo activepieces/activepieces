@@ -244,11 +244,6 @@ export class PieceTriggerInputFormComponent {
       this.triggerSelected(selectedValue);
       this.selectedTrigger$ = this.triggers$.pipe(
         map((items) => {
-          console.log(
-            items.find(
-              (it) => it.value.triggerName === selectedValue.triggerName
-            )
-          );
           return items.find(
             (it) => it.value.triggerName === selectedValue.triggerName
           );

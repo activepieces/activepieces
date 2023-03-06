@@ -30,7 +30,7 @@ export const slackSendDirectMessageAction = createAction({
       async options(propsValue) {
         const auth = propsValue['authentication'] as OAuth2PropertyValue
 
-        if (auth === undefined) {
+        if (!auth) {
           return {
             disabled: true,
             placeholder: 'connect slack account',
