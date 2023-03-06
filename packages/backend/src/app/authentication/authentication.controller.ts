@@ -1,11 +1,11 @@
-import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } from "fastify";
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { ApFlagId, SignInRequest, SignUpRequest } from "@activepieces/shared";
 import { authenticationService } from "./authentication.service";
 import { flagService } from "../flags/flag.service";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
 
-export const authenticationController = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
+export const authenticationController = async (app: FastifyInstance) => {
     app.post(
         "/sign-up",
         {

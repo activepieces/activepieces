@@ -7,6 +7,9 @@ tmp
 .env
 firebase-admin-sdk.json
 
+# SDK Build
+builds
+
 # dependencies
 node_modules
 

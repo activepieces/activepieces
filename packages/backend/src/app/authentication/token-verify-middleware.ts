@@ -1,4 +1,4 @@
-import { FastifyReply, FastifyRequest } from "fastify";
+import { FastifyRequest } from "fastify";
 import { tokenUtils } from "./lib/token-utils";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 
@@ -21,8 +21,11 @@ const ignoredRoutes = new Set([
 
 const HEADER_PREFIX = "Bearer ";
 
-export const tokenVerifyMiddleware = async (request: FastifyRequest, _reply: FastifyReply): Promise<void> => {
+export const tokenVerifyMiddleware = async (request: FastifyRequest): Promise<void> => {
     if (ignoredRoutes.has(request.routerPath)) {
+        return;
+    }
+    if(request.routerPath == "/v1/app-credentials" && request.method == "GET") {
         return;
     }
     const rawToken = request.headers.authorization;

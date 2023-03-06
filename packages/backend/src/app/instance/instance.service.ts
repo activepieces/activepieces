@@ -24,19 +24,19 @@ export const instanceService = {
 
         const flowPage = await flowService.list({ projectId: projectId, collectionId: request.collectionId, cursorRequest: null, limit: Number.MAX_SAFE_INTEGER });
 
-        const flowIdToVersionId = Object.fromEntries(flowPage.data.map((flow) => [flow.id, flow.version!.id]));
+        const flowIdToVersionId = Object.fromEntries(flowPage.data.map((flow) => [flow.id, flow.version.id]));
 
         const oldInstance: Partial<Instance | null> = await instanceRepo.findOneBy({ projectId, collectionId: request.collectionId });
 
         if (oldInstance !== null && oldInstance !== undefined) {
-            await instanceRepo.delete(oldInstance.id!);
+            await instanceRepo.delete(oldInstance.id);
         }
 
         const newInstance: Partial<Instance> = {
             id: apId(),
             projectId: collection.projectId,
             collectionId: request.collectionId,
-            collectionVersionId: collection.version!.id,
+            collectionVersionId: collection.version.id,
             flowIdToVersionId,
             status: request.status,
         };

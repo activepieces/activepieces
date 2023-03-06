@@ -1,6 +1,6 @@
-import { FastifyInstance, FastifyPluginOptions } from "fastify";
+import { FastifyInstance } from "fastify";
 import { collectionController } from "./collection.controller";
 
-export const collectionModule = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
+export const collectionModule = async (app: FastifyInstance) => {
     app.register(collectionController, { prefix: "/v1/collections" });
 };
