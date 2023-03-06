@@ -1,7 +1,7 @@
 import { PostHog } from 'posthog-node'
 import { SystemProp } from "./system/system-prop";
 import { system } from "./system/system";
-import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared';
+import { ProjectId, TelemetryEvent, User } from '@activepieces/shared';
 import { projectService } from '../project/project.service';
 import { getEdition } from './license-helper';
 

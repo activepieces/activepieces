@@ -1,0 +1,27 @@
+{
+  "name": "pieces-freshsales",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/freshsales/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/freshsales",
+        "tsConfig": "packages/pieces/freshsales/tsconfig.lib.json",
+        "packageJson": "packages/pieces/freshsales/package.json",
+        "main": "packages/pieces/freshsales/src/index.ts",
+        "assets": ["packages/pieces/freshsales/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/freshsales/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

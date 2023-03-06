@@ -1,0 +1,27 @@
+{
+  "name": "pieces-dropbox",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/dropbox/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/dropbox",
+        "tsConfig": "packages/pieces/dropbox/tsconfig.lib.json",
+        "packageJson": "packages/pieces/dropbox/package.json",
+        "main": "packages/pieces/dropbox/src/index.ts",
+        "assets": ["packages/pieces/dropbox/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/dropbox/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

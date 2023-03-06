@@ -146,7 +146,6 @@ export class CreateEditConfigModalComponent
 
   submit() {
     this.configForm.markAllAsTouched();
-    console.log(this.configForm.errors);
     if (this.configForm.valid) {
       const config: Config = this.configForm.getRawValue();
       this.saveConfig(config);

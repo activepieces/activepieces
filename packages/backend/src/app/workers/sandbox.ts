@@ -95,7 +95,7 @@ export class Sandbox {
         logger.info(`sandbox, command: ${fullCmd}`);
 
         return new Promise((resolve, reject) => {
-            exec(fullCmd, (error: any, stdout: string | PromiseLike<string>, stderr: any) => {
+            exec(fullCmd, (error, stdout: string | PromiseLike<string>, stderr) => {
                 if (error) {
                     reject(error);
                     return;

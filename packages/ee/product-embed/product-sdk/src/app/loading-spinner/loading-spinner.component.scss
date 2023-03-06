@@ -1,0 +1,45 @@
+$danger: 'B00020';
+$description: '#FFFFFF';
+$white: '#FFFFFF';
+
+@keyframes loading-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spin-animation {
+  animation-name: loading-spin;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.loading-spinner {
+  height: 20px;
+  width: 20px;
+}
+
+.loading-icon {
+  fill: $white;
+}
+
+.loading-icon-outline {
+  fill: $danger;
+}
+.loading-icon-outline.loading-icon-hover {
+  fill: $white;
+}
+
+.loading-icon-grey {
+  fill: $description;
+}
+
+.loading-icon-large {
+  height: 40px;
+  width: 40px;
+}
