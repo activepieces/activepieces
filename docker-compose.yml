@@ -6,7 +6,6 @@ services:
     restart: unless-stopped
     privileged: true
     ports:
-      - '3000:3000'
       - '8080:80'
     depends_on:
       - postgres
