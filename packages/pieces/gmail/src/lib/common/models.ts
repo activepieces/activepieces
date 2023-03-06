@@ -23,7 +23,31 @@ export interface GmailMessage {
   snippet: string
   historyId: string
   internalDate: string
-  payload: object
+  payload: {
+    partId: string
+    mimeType: string
+    filename: string
+    headers: {
+      name: string
+      value: string
+    }[]
+    body: {
+      size: number
+    },
+    parts: {
+      partId: string
+      mimeType: string
+      filename: string
+      headers: {
+        name: string
+        value: string
+      }[]
+      body: {
+        size: number
+        data: string
+      }
+    }[]
+  }
   sizeEstimate: number
   raw: string
 }
