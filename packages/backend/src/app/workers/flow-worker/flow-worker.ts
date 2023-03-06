@@ -54,7 +54,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null);
         }
         else {
-            logger.error("[" + jobData.runId + "] Error executing flow");
+            logger.error(e, `[${jobData.runId}] Error executing flow`);
             captureException(e as Error);
             await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null);
         }
@@ -79,18 +79,18 @@ async function downloadFiles(
         const buildPath = sandbox.getSandboxFolderPath();
 
         // This has to be before flows, since it does modify code settings and fill it with packaged file id.
-        await fs.mkdir(buildPath + "/codes/");
+        await fs.mkdir(`${buildPath}/codes/`);
         const artifacts: File[] = await buildCodes(projectId, flowVersion);
 
         for(const artifact of artifacts) {
-            await fs.writeFile(buildPath + "/codes/" + artifact.id + ".js", artifact.data);
+            await fs.writeFile(`${buildPath}/codes/${artifact.id}.js`, artifact.data);
         }
-        
-        await fs.mkdir(buildPath + "/flows/");
-        await fs.writeFile(buildPath + "/flows/" + flowVersion.id + ".json", JSON.stringify(flowVersion));
 
-        await fs.mkdir(buildPath + "/collections/");
-        await fs.writeFile(buildPath + "/collections/" + collectionVersion.id + ".json", JSON.stringify(collectionVersion));
+        await fs.mkdir(`${buildPath}/flows/`);
+        await fs.writeFile(`${buildPath}/flows/${flowVersion.id}.json`, JSON.stringify(flowVersion));
+
+        await fs.mkdir(`${buildPath}/collections/`);
+        await fs.writeFile(`${buildPath}/collections/${collectionVersion.id}.json`, JSON.stringify(collectionVersion));
     }
     finally {
         logger.info(`[${flowVersion.id}] Releasing flow lock`);
