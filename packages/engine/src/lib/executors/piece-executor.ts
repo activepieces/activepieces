@@ -16,7 +16,7 @@ export class PieceExecutor {
     const { pieceName, pieceVersion, actionName, config } = params;
     const piece = this.getPiece(pieceName);
     const action = piece.getAction(actionName);
-    if(action === undefined) {
+    if (action === undefined) {
       throw new Error(`error=action_not_found action_name=${actionName}`);
     }
 
@@ -25,11 +25,15 @@ export class PieceExecutor {
       propsValue: config,
       connections: {
         get: async (key: string) => {
-          const connection = await connectionService.obtain(key);
-          if (!connection) {
-            throw new Error(`error=connection_not_found connection_name=${key}`);
+          try {
+            const connection = await connectionService.obtain(key);
+            if (!connection) {
+              return null;
+            }
+            return connection;
+          } catch (e) {
+            return null;
           }
-          return connection;
         }
       }
     });

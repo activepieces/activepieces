@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable, shareReplay } from 'rxjs';
 import { ProjectId, SeekPage } from '@activepieces/shared';
-import { getApiUrl } from '../helper/helper';
+import { getHost } from '../helper/helper';
 import { AppCredential } from '@ee/product-embed/shared/app-credentials/app-credentials';
 
 @Injectable({
@@ -13,7 +13,7 @@ export class CredentialService {
 
   list(projectId: ProjectId): Observable<SeekPage<AppCredential>> {
     return this.http.get<SeekPage<AppCredential>>(
-      getApiUrl() + `/v1/app-credentials`,
+      getHost() + `/v1/app-credentials`,
       { params: { projectId, limit: 999999 } }
     );
   }

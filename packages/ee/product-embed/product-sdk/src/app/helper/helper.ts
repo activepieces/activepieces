@@ -4,7 +4,7 @@ export enum StorageName {
   TOKEN = 'ap-token',
   STYLES = 'ap-styles',
   PROJECT_ID = 'ap-project-id',
-  API_URL = 'ap-api-url',
+  HOST = 'ap-host',
 }
 
 export function storeLocal(name: StorageName, value: unknown) {
@@ -76,19 +76,19 @@ export function clearLocalStorageFromOurKeys() {
   }
 }
 
-export function getApiUrl() {
-  return getLocal(StorageName.API_URL);
+export function getHost() {
+  return getLocal(StorageName.HOST);
 }
 
 export function getRedrectUrl() {
-  return getLocal(StorageName.API_URL) + '/redirect';
+  return getLocal(StorageName.HOST) + '/redirect';
 }
 
 export function getApiDomainUrl() {
-  const localApiUrl = getLocal(StorageName.API_URL);
-  if (localApiUrl === null) {
+  const localHost = getLocal(StorageName.HOST);
+  if (localHost === null) {
     return null;
   }
-  const domain = new URL(localApiUrl);
+  const domain = new URL(localHost);
   return domain.hostname;
 }
