@@ -143,6 +143,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       this.customizedInputs = obj.customizedInputs;
     }
     this.createForm();
+    this.cd.markForCheck();
   }
   registerOnChange(fn: (value) => void): void {
     this.OnChange = fn;
@@ -175,6 +176,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     const optionalConfigsControls = this.createConfigsFormControls(
       this.selectedOptionalConfigs
     );
+
     this.form = this.fb.group({
       ...requiredConfigsControls,
       ...optionalConfigsControls,
