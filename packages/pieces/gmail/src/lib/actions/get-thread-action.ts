@@ -2,10 +2,10 @@ import { createAction, Property } from "@activepieces/framework";
 import { GmailRequests } from "../common/data";
 import { GmailMessageFormat } from "../common/models";
 
-export const gmailGetEmail = createAction({
-  name: 'gmail_get_mail',
-  description: 'Get an email from your Gmail account via Id',
-  displayName: 'Get Email',
+export const gmailGetThread = createAction({
+  name: 'gmail_get_thread',
+  description: 'Get a thread from your Gmail account via Id',
+  displayName: 'Get Thread',
   props: {
     authentication: Property.OAuth2({
       description: "",
@@ -15,9 +15,9 @@ export const gmailGetEmail = createAction({
       required: true,
       scope: ["https://mail.google.com/"]
     }),
-    message_id: Property.ShortText({
-      displayName: 'Message ID',
-      description: 'The messageId of the mail to read',
+    thread_id: Property.ShortText({
+      displayName: 'Thread ID',
+      description: 'The thread Id of the mail to read',
       required: true,
     }),
     format: Property.StaticDropdown<GmailMessageFormat>({
@@ -55,10 +55,10 @@ export const gmailGetEmail = createAction({
     historyId: '99742',
     internalDate: '1665284181000'
   },
-  async run({ propsValue: { authentication, format, message_id } }) {
-    const mail = await GmailRequests.getMail({ 
+  async run({ propsValue: { authentication, format, thread_id } }) {
+    const mail = await GmailRequests.getThread({ 
       authentication, 
-      message_id, 
+      thread_id, 
       format: (format ?? GmailMessageFormat.FULL) 
     })
   

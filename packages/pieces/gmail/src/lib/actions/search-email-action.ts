@@ -1,5 +1,6 @@
 import { createAction } from "@activepieces/framework";
 import { GmailRequests } from "../common/data";
+import { GmailLabel, GmailMessageFormat } from "../common/models";
 import { GmailProps } from "../common/props";
 
 export const gmailSearchMail = createAction({
@@ -48,33 +49,35 @@ export const gmailSearchMail = createAction({
       category: category as string
     })
 
-    const messages = await Promise.all(
-      response
-        .messages
-        .map(async (message: {id: string, threadId: string}) => {
-          const mail =  await GmailRequests.getMail({ 
-            authentication, 
-            message_id: message.id, 
-            format: GmailMessageFormat.FULL 
-          })
-          const thread =  await GmailRequests.getThread({ 
-            authentication, 
-            thread_id: message.threadId,
-            format: GmailMessageFormat.FULL
-          })
-
-          console.log("mail, thread", mail, thread)
-
-          return {
-            message: mail,
-            thread 
-          }
-        }))
-
-    return {
-      messages,
-      nextPageToken: response?.nextPageToken,
-      resultSizeEstimate: response.resultSizeEstimate
+    if (response.messages) {
+      const messages = await Promise.all(
+        response
+          .messages
+          .map(async (message: {id: string, threadId: string}) => {
+            const mail =  await GmailRequests.getMail({ 
+              authentication, 
+              message_id: message.id, 
+              format: GmailMessageFormat.FULL 
+            })
+            const thread =  await GmailRequests.getThread({ 
+              authentication, 
+              thread_id: message.threadId,
+              format: GmailMessageFormat.FULL
+            })
+  
+            return {
+              message: mail,
+              thread 
+            }
+          }))
+  
+      return {
+        messages,
+        resultSizeEstimate: response.resultSizeEstimate,
+        ...(response?.nextPageToken ? {nextPageToken: response.nextPageToken}: {}),
+      }
     }
+
+    return response
   }
 })
