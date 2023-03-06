@@ -36,7 +36,6 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
     conditionsGroups: FormArray<FormControl<BranchCondition[]>>;
   }>;
   valueChanges$: Observable<void>;
-  conditionGroups: BranchCondition[][] = [];
   onChange: (val: BranchActionSettings & { type: ActionType.BRANCH }) => void =
     () => {
       //ignored
@@ -63,19 +62,15 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
     if (obj.type === ActionType.BRANCH) {
       this.form.controls.conditionsGroups.clear();
       if (obj.conditions) {
-        this.conditionGroups = [...obj.conditions];
-        this.conditionGroups.forEach((cg) => {
+        obj.conditions.forEach((cg) => {
           this.form.controls.conditionsGroups.push(
-            new FormControl(cg, { nonNullable: true })
+            new FormControl([...cg], { nonNullable: true })
           );
         });
       }
     }
   }
   addNewConditionGroup() {
-    this.conditionGroups.push([
-      { operator: undefined, firstValue: '', secondValue: '' },
-    ]);
     this.form.controls.conditionsGroups.push(
       new FormControl(
         [{ operator: undefined, firstValue: '', secondValue: '' }],
@@ -103,5 +98,8 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
       return { invalid: true };
     }
     return null;
+  }
+  removeConditionGroup(index: number) {
+    this.form.controls.conditionsGroups.removeAt(index);
   }
 }

@@ -3,8 +3,11 @@
     </div>
     <div class="ap-flex ap-flex-col ap-gap-2">
         <ng-container formArrayName="conditions">
-            <ng-container *ngFor="let con of conditionsList;let idx=index;">
-                <app-branch-condition [formControl]="conditionsForm.controls.conditions.at(idx)">
+            <ng-container
+                *ngFor="let con of conditionsForm.controls.conditions.controls;let idx=index; let isLast = last">
+                <app-branch-condition [formControl]="con"
+                    [isLastAndOnlyCondition]="conditionsForm.controls.conditions.controls.length === 1"
+                    (removeCondition)="removeCondition(idx)" [isInLastAndOnlyGroup]="isInLastAndOnlyGroup">
                 </app-branch-condition>
             </ng-container>
         </ng-container>

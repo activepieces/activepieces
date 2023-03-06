@@ -10,7 +10,7 @@ import {
 } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
 import { BranchCondition } from '@activepieces/shared';
-import { BranchFormValue } from '../branch-condition-form-control/branch-condition-form-control';
+import { BranchFormValue } from '../branch-condition-form-control/branch-condition-form-control.component';
 import { branchConditionValidator } from '../../../validators/branch-condition.validator';
 
 @Component({
@@ -34,11 +34,12 @@ export class BranchConditionsGroupFormControlComponent
 {
   @Input() isFirstConditionGroup = true;
   @Input() isLastConditionGroup = false;
-  @Output() createNewConditionGroup = new EventEmitter<boolean>();
+  @Input() isInLastAndOnlyGroup = false;
+  @Output() removeConditionGroup = new EventEmitter();
+  @Output() createNewConditionGroup = new EventEmitter();
   conditionsForm: FormGroup<{
     conditions: FormArray<FormControl<BranchFormValue>>;
   }>;
-  conditionsList: BranchCondition[];
   valueChanges$: Observable<void>;
 
   onChange: (val: BranchFormValue[]) => void = () => {
@@ -58,9 +59,8 @@ export class BranchConditionsGroupFormControlComponent
     );
   }
   writeValue(obj: BranchCondition[]): void {
-    this.conditionsList = [...obj];
     this.conditionsForm.controls.conditions.clear();
-    this.conditionsList.forEach((c) => {
+    obj.forEach((c) => {
       const conditionValue: BranchFormValue = {
         firstValue: c.firstValue,
         operator: c.operator || undefined,
@@ -97,19 +97,20 @@ export class BranchConditionsGroupFormControlComponent
         { nonNullable: true }
       )
     );
-    this.conditionsList.push({
-      firstValue: '',
-      operator: undefined,
-      secondValue: '',
-    });
   }
   orButtonPressed() {
-    this.createNewConditionGroup.next(true);
+    this.createNewConditionGroup.emit();
   }
   validate() {
     if (this.conditionsForm.controls.conditions.invalid) {
       return { invalid: true };
     }
     return null;
+  }
+  removeCondition(index: number) {
+    this.conditionsForm.controls.conditions.removeAt(index);
+    if (this.conditionsForm.controls.conditions.length === 0) {
+      this.removeConditionGroup.emit();
+    }
   }
 }

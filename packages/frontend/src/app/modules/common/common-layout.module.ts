@@ -77,7 +77,7 @@ import { ImgFallbackDirective } from './helper/image-fallback.directive';
 import { ArrayFormControlComponent } from './components/form-controls/array-form-control/array-form-control.component';
 import { AddEditConnectionButtonComponent } from './components/configs-form/add-edit-connection-button/add-edit-connection-button.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { BranchConditionFormControlComponent } from './components/form-controls/branch-condition-form-control/branch-condition-form-control';
+import { BranchConditionFormControlComponent } from './components/form-controls/branch-condition-form-control/branch-condition-form-control.component';
 import { BranchConditionsGroupFormControlComponent } from './components/form-controls/branch-conditions-group-form-control/branch-conditions-group-form-control.component';
 
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -30,7 +30,8 @@ export interface BranchFormValue {
 }
 @Component({
   selector: 'app-branch-condition',
-  templateUrl: './branch-condition-form-control.html',
+  templateUrl: './branch-condition-form-control.component.html',
+  styleUrls: ['./branch-condition-form-control.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -47,6 +48,9 @@ export interface BranchFormValue {
 export class BranchConditionFormControlComponent
   implements ControlValueAccessor
 {
+  @Output() removeCondition = new EventEmitter();
+  @Input() isLastAndOnlyCondition = false;
+  @Input() isInLastAndOnlyGroup = false;
   form: FormGroup<BranchForm>;
   valueChanges$: Observable<void>;
   operatorChanged$: Observable<[BranchOperator | null, BranchOperator | null]>;
@@ -165,5 +169,8 @@ export class BranchConditionFormControlComponent
       return { invalid: true };
     }
     return null;
+  }
+  removeConditionButtonClicked() {
+    this.removeCondition.emit();
   }
 }
