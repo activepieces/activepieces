@@ -14,6 +14,7 @@ import {
   BranchActionSettings,
   BranchCondition,
 } from '@activepieces/shared';
+import { branchConditionGroupValidator } from '../../../../../../../../common/validators/branch-condition.validator';
 
 @Component({
   selector: 'app-branch-step-input-form',
@@ -64,7 +65,7 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
       if (obj.conditions) {
         obj.conditions.forEach((cg) => {
           this.form.controls.conditionsGroups.push(
-            new FormControl([...cg], { nonNullable: true })
+            new FormControl([...cg], { nonNullable: true,  validators:branchConditionGroupValidator })
           );
         });
       }
@@ -76,6 +77,7 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
         [{ operator: undefined, firstValue: '', secondValue: '' }],
         {
           nonNullable: true,
+          validators:branchConditionGroupValidator
         }
       )
     );
@@ -94,6 +96,7 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
     }
   }
   validate() {
+    debugger;
     if (this.form.controls.conditionsGroups.invalid) {
       return { invalid: true };
     }

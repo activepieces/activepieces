@@ -165,6 +165,7 @@ export class BranchConditionFormControlComponent
     return !singleValueConditions.find((c) => c === currentBranchCondition);
   }
   validate() {
+
     if (this.form.invalid) {
       return { invalid: true };
     }
