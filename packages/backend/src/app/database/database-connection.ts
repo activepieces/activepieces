@@ -53,7 +53,7 @@ const getMigrations = () => {
         removeStoreAction1676649852890,
         billing1677286751592,
         addVersionToPieceSteps1677521257188,
-        productEmbed1677894800372
+      //  productEmbed1677894800372
     ];
 }
 
