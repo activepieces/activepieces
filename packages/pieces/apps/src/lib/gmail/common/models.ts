@@ -28,11 +28,19 @@ export interface GmailMessage {
   raw: string
 }
 
+export interface GmailThread {
+  id: string,
+  snippet: string,
+  historyId: string,
+  messages: GmailMessage[]
+}
+
 export interface GmailMessageResponse {
   messages: {
     id: string
     threadId: string
   }[]
+  nextPageToken?: string
   resultSizeEstimate: number
 }
 
@@ -47,6 +55,13 @@ enum GmailLabelListVisibility {
 }
 
 enum GmailLabelType {
-  system = "system",
-  user = "user"
+  SYSTEM = "system",
+  USER = "user"
+}
+
+export enum GmailMessageFormat {
+  MINIMAL = "minimal",
+  FULL = "full",
+  RAW = "raw",
+  METADATA = "metadata"
 }

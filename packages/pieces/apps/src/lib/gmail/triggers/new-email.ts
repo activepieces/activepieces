@@ -10,11 +10,11 @@ export const gmailNewEmailTrigger = createTrigger({
   description: 'Triggers when new mail is found in your Gmail inbox',
   props: {
     authentication: GmailProps.authentication,
-    subject: GmailProps.subject(true),
-    from: GmailProps.from(),
-    to: GmailProps.to(),
-    label: GmailProps.label(),
-    category: GmailProps.category()
+    subject: GmailProps.subject,
+    from: GmailProps.from,
+    to: GmailProps.to,
+    label: GmailProps.label,
+    category: GmailProps.category
   },
   sampleData: {
     "messages": [
@@ -52,7 +52,7 @@ export const gmailNewEmailTrigger = createTrigger({
     })
 
     await store?.put<TriggerData>('gmail_new_email_trigger', { last_read: now })
-    return [response.body]
+    return [response]
   }
 });
 

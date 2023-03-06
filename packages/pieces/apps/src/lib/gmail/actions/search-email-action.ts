@@ -1,6 +1,6 @@
 import { createAction } from "@activepieces/framework";
 import { GmailRequests } from "../common/data";
-import { GmailLabel } from "../common/models";
+import { GmailLabel, GmailMessageFormat } from "../common/models";
 import { GmailProps } from "../common/props";
 
 export const gmailSearchMail = createAction({
@@ -9,11 +9,11 @@ export const gmailSearchMail = createAction({
   displayName: 'Search Email',
   props: {
     authentication: GmailProps.authentication,
-    subject: GmailProps.subject(true),
-    from: GmailProps.from(),
-    to: GmailProps.to(),
-    label: GmailProps.label(),
-    category: GmailProps.category()
+    subject: GmailProps.subject,
+    from: GmailProps.from,
+    to: GmailProps.to,
+    label: GmailProps.label,
+    category: GmailProps.category
   },
   sampleData: [
     {
@@ -49,6 +49,25 @@ export const gmailSearchMail = createAction({
       category: category as string
     })
 
-    return [response.body]
+    return {
+      messages: response
+        .messages
+        .map((message: {id: string, threadId: string}) => {
+          return {
+            message: GmailRequests.getMail({ 
+              authentication, 
+              message_id: message.id, 
+              format: GmailMessageFormat.FULL 
+            }),
+            thread: GmailRequests.getThread({ 
+              authentication, 
+              thread_id: message.threadId,
+              format: GmailMessageFormat.FULL
+            }),
+          }
+        }),
+      nextPageToken: response?.nextPageToken,
+      resultSizeEstimate: response.resultSizeEstimate
+    }
   }
 })

@@ -1,4 +1,5 @@
-import { Property, HttpMethod, AuthenticationType, httpClient, OAuth2PropertyValue } from "@activepieces/framework";
+import { Property, OAuth2PropertyValue } from "@activepieces/framework";
+import { GmailRequests } from "./data";
 import { GmailLabel } from "./models";
 
 export const GmailProps = {
@@ -10,28 +11,28 @@ export const GmailProps = {
     required: true,
     scope: ["https://www.googleapis.com/auth/gmail.readonly"]
   }),
-  from: (required = false) => Property.ShortText({
+  from: Property.ShortText({
     displayName: 'Email sender',
     description: "The address sending the new mail",
-    required,
+    required: false,
     defaultValue: ""
   }),
-  to: (required = false) => Property.ShortText({
+  to: Property.ShortText({
     displayName: 'Email receipient',
     description: "The address receiving the new mail",
-    required,
+    required: false,
     defaultValue: ""
   }),
-  subject: (required = false) => Property.ShortText({
+  subject: Property.ShortText({
     displayName: 'Email subject',
     description: "The email subject",
-    required,
+    required: false,
     defaultValue: ""
   }),
-  category: (required = false) => Property.StaticDropdown({
+  category: Property.StaticDropdown({
     displayName: "Category",
     description: "category of the mail",
-    required,
+    required: false,
     options: {
       disabled: false,
       options: [
@@ -45,14 +46,14 @@ export const GmailProps = {
       ]
     }
   }),
-  label: (required = false) => Property.Dropdown<GmailLabel>({
+  label: Property.Dropdown<GmailLabel>({
     displayName: "Label",
     description: "The label tagged to the mail",
-    required,
+    required: false,
     defaultValue: "",
     refreshers: ["authentication"],
     options: async ({ authentication }) => {
-      if (authentication === undefined) {
+      if (!authentication) {
         return {
           disabled: true,
           options: [],
@@ -60,15 +61,8 @@ export const GmailProps = {
         }
       }
 
-      const response = await httpClient.sendRequest<{ labels: GmailLabel[] }>({
-        method: HttpMethod.GET,
-        url: `https://gmail.googleapis.com/gmail/v1/users/me/labels`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: (authentication as OAuth2PropertyValue).access_token
-        }
-      })
-
+      const response = await GmailRequests.getLabels(authentication as OAuth2PropertyValue)
+      
       return {
         disabled: false,
         options: response.body.labels.map((label) => (

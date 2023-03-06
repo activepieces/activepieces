@@ -1,5 +1,6 @@
-import { createAction, Property, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
-import { GmailMessage } from "../common/models";
+import { createAction, Property } from "@activepieces/framework";
+import { GmailRequests } from "../common/data";
+import { GmailMessageFormat } from "../common/models";
 
 export const gmailGetEmail = createAction({
   name: 'gmail_get_mail',
@@ -19,7 +20,7 @@ export const gmailGetEmail = createAction({
       description: 'The messageId of the mail to read',
       required: true,
     }),
-    format: Property.StaticDropdown<string>({
+    format: Property.StaticDropdown<GmailMessageFormat>({
       displayName: 'Format',
       description: 'Format of the mail',
       required: false,
@@ -27,10 +28,10 @@ export const gmailGetEmail = createAction({
       options: {
         disabled: false,
         options: [
-          { value: 'minimal', label: 'Minimal' },
-          { value: 'full', label: 'Full' },
-          { value: 'raw', label: 'Raw' },
-          { value: 'metadata', label: 'Metadata' }
+          { value: GmailMessageFormat.MINIMAL, label: 'Minimal' },
+          { value: GmailMessageFormat.FULL, label: 'Full' },
+          { value: GmailMessageFormat.RAW, label: 'Raw' },
+          { value: GmailMessageFormat.METADATA, label: 'Metadata' }
         ]
       }
     })
@@ -54,26 +55,13 @@ export const gmailGetEmail = createAction({
     historyId: '99742',
     internalDate: '1665284181000'
   },
-  async run({ propsValue: { authentication, message_id, format } }) {
-    const request: HttpRequest<Record<string, unknown>> = {
-      method: HttpMethod.GET,
-      url: `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message_id}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: authentication['access_token'],
-      },
-      queryParams: {
-        format: (format ?? 'full')
-      }
-    };
-
-    const response = (await httpClient.sendRequest<GmailMessage>(request))
-    console.debug("get mail response", response.body)
-
-    if (response.status === 200) {
-      return response.body
-    }
-
-    return {}
+  async run({ propsValue: { authentication, format, message_id } }) {
+    const mail = await GmailRequests.getMail({ 
+      authentication, 
+      message_id, 
+      format: (format ?? GmailMessageFormat.FULL) 
+    })
+  
+    return mail
   }
 })
