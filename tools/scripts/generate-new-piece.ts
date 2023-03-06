@@ -1,16 +1,8 @@
 import assert from 'node:assert'
 import { argv } from 'node:process'
-import { exec as execCallback } from 'node:child_process'
-import { promisify } from 'node:util'
-import { readdir, rm, writeFile } from 'node:fs/promises'
-
-const exec = promisify(execCallback)
-
-const availablePiecePackages = async () => {
-  const packages = await readdir('packages/pieces')
-  const frameworkPackage = 'framework'
-  return packages.filter(p => p !== frameworkPackage)
-}
+import { rm, writeFile } from 'node:fs/promises'
+import { getAvailablePieceNames } from './utils/get-available-piece-names'
+import { exec } from './utils/exec'
 
 const validatePieceName = async (pieceName: string) => {
   assert(pieceName, 'pieceName is not provided')
@@ -18,7 +10,7 @@ const validatePieceName = async (pieceName: string) => {
   const pieceNamePattern = /^[A-Za-z0-9\-]+$/
   assert(pieceNamePattern.test(pieceName), 'piece name should contain alphanumeric characters and hyphens only')
 
-  const pieces = await availablePiecePackages()
+  const pieces = await getAvailablePieceNames()
   const nameAlreadyExists = pieces.some(p => p === pieceName)
   assert(!nameAlreadyExists, 'piece name already exists')
 }
