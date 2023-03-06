@@ -13,12 +13,14 @@ export const clickupRegisterTrigger = ({
   name,
   displayName,
   eventType,
-  description
+  description,
+  sampleData
 }: {
   name: string,
   displayName: string,
   eventType: string,
-  description: string
+  description: string,
+  sampleData: unknown
 }) => createTrigger({
   name: `clickup_trigger_${name}`,
   displayName,
@@ -31,23 +33,7 @@ export const clickupRegisterTrigger = ({
     // task_id: clickupCommon.task_id(false),
     // folder_id: clickupCommon.folder_id(false)
   },
-  sampleData: {
-    "id": "4b67ac88-e506-4a29-9d42-26e504e3435e",
-    "webhook": {
-      "id": "4b67ac88-e506-4a29-9d42-26e504e3435e",
-      "userid": 183,
-      "team_id": 108,
-      "endpoint": "https://yourdomain.com/webhook",
-      "client_id": "QVOQP06ZXC6CMGVFKB0ZT7J9Y7APOYGO",
-      "events": [],
-      "task_id": null,
-      "list_id": null,
-      "folder_id": null,
-      "space_id": null,
-      "health": {},
-      "secret": "O94IM25S7PXBPYTMNXLLET230SRP0S89COR7B1YOJ2ZIE8WQNK5UUKEF26W0Z5GA"
-    }
-  },
+  sampleData,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const { authentication, workspace_id } = context.propsValue
@@ -56,7 +42,7 @@ export const clickupRegisterTrigger = ({
       method: HttpMethod.POST,
       url: `https://api.clickup.com/api/v2/team/${workspace_id}/webhook`,
       body: {
-        endpoint: context.webhookUrl,
+        endpoint: context.webhookUrl.replace("http://localhost:3000", "https://aad0-154-122-163-57.eu.ngrok.io"),
         events: [eventType]
       },
       authentication: {
@@ -66,22 +52,24 @@ export const clickupRegisterTrigger = ({
       queryParams: {},
     }
 
-    const { body } = await httpClient.sendRequest<WebhookInformation>(request);
+    const response = await httpClient.sendRequest<WebhookInformation>(request);
+    console.debug(`clickup.${eventType}.onEnable`, response)
     //TODO: use hashes? using same trigger for diff usecases, names might collide;
-    await context.store.put<WebhookInformation>(`clickup_${name}_trigger`, body);
+    await context.store.put<WebhookInformation>(`clickup_${name}_trigger`, response.body);
   },
   async onDisable(context) {
-    const response = await context.store.get<WebhookInformation>(`clickup_${name}_trigger`);
-    if (response !== null && response !== undefined) {
+    const webhook = await context.store.get<WebhookInformation>(`clickup_${name}_trigger`);
+    if (webhook != null) {
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
-        url: `https://api.clickup.com/api/v2/webhook/${response.id}`,
+        url: `https://api.clickup.com/api/v2/webhook/${webhook.id}`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: context.propsValue['authentication']['access_token'],
         },
       };
-      await httpClient.sendRequest(request);
+      const response = await httpClient.sendRequest(request);
+      console.debug(`clickup.${eventType}.onDisable`, response)
     }
   },
   async run(context) {
