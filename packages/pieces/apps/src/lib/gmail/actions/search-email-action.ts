@@ -49,23 +49,31 @@ export const gmailSearchMail = createAction({
       category: category as string
     })
 
-    return {
-      messages: response
+    const messages = await Promise.all(
+      response
         .messages
-        .map((message: {id: string, threadId: string}) => {
+        .map(async (message: {id: string, threadId: string}) => {
+          const mail =  await GmailRequests.getMail({ 
+            authentication, 
+            message_id: message.id, 
+            format: GmailMessageFormat.FULL 
+          })
+          const thread =  await GmailRequests.getThread({ 
+            authentication, 
+            thread_id: message.threadId,
+            format: GmailMessageFormat.FULL
+          })
+
+          console.log("mail, thread", mail, thread)
+
           return {
-            message: GmailRequests.getMail({ 
-              authentication, 
-              message_id: message.id, 
-              format: GmailMessageFormat.FULL 
-            }),
-            thread: GmailRequests.getThread({ 
-              authentication, 
-              thread_id: message.threadId,
-              format: GmailMessageFormat.FULL
-            }),
+            message: mail,
+            thread 
           }
-        }),
+        }))
+
+    return {
+      messages,
       nextPageToken: response?.nextPageToken,
       resultSizeEstimate: response.resultSizeEstimate
     }
