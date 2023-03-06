@@ -18,7 +18,6 @@ import {
     ApEdition
 } from "@activepieces/shared";
 import { getEdition } from "../helper/license-helper";
-import { billingService } from "@ee/billing/backend/billing.service";
 import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 import { collectionRepo } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";

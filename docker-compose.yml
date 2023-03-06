@@ -1,12 +1,11 @@
 version: '3.0'
 services:
   activepieces:
-    image: activepieces/activepieces:0.3.4
+    image: activepieces/activepieces:0.3.5
     container_name: activepieces
     restart: unless-stopped
     privileged: true
     ports:
-      - '3000:3000'
       - '8080:80'
     depends_on:
       - postgres

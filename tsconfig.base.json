@@ -17,16 +17,86 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@/*": ["packages/*"],
       "@activepieces/engine": ["packages/engine/src/index.ts"],
       "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
+      "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
+      "@activepieces/piece-asana": ["packages/pieces/asana/src/index.ts"],
+      "@activepieces/piece-bannerbear": [
+        "packages/pieces/bannerbear/src/index.ts"
+      ],
+      "@activepieces/piece-binance": ["packages/pieces/binance/src/index.ts"],
+      "@activepieces/piece-blackbaud": [
+        "packages/pieces/blackbaud/src/index.ts"
+      ],
+      "@activepieces/piece-cal-com": ["packages/pieces/cal-com/src/index.ts"],
+      "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
+      "@activepieces/piece-clickup": ["packages/pieces/clickup/src/index.ts"],
+      "@activepieces/piece-connections": [
+        "packages/pieces/connections/src/index.ts"
+      ],
+      "@activepieces/piece-csv": ["packages/pieces/csv/src/index.ts"],
+      "@activepieces/piece-discord": ["packages/pieces/discord/src/index.ts"],
+      "@activepieces/piece-drip": ["packages/pieces/drip/src/index.ts"],
+      "@activepieces/piece-dropbox": ["packages/pieces/dropbox/src/index.ts"],
+      "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
+      "@activepieces/piece-freshsales": [
+        "packages/pieces/freshsales/src/index.ts"
+      ],
+      "@activepieces/piece-generatebanners": [
+        "packages/pieces/generatebanners/src/index.ts"
+      ],
+      "@activepieces/piece-github": ["packages/pieces/github/src/index.ts"],
+      "@activepieces/piece-gmail": ["packages/pieces/gmail/src/index.ts"],
+      "@activepieces/piece-google-calendar": [
+        "packages/pieces/google-calendar/src/index.ts"
+      ],
+      "@activepieces/piece-google-contacts": [
+        "packages/pieces/google-contacts/src/index.ts"
+      ],
+      "@activepieces/piece-google-drive": [
+        "packages/pieces/google-drive/src/index.ts"
+      ],
+      "@activepieces/piece-google-sheets": [
+        "packages/pieces/google-sheets/src/index.ts"
+      ],
+      "@activepieces/piece-google-tasks": [
+        "packages/pieces/google-tasks/src/index.ts"
+      ],
+      "@activepieces/piece-hackernews": [
+        "packages/pieces/hackernews/src/index.ts"
+      ],
+      "@activepieces/piece-http": ["packages/pieces/http/src/index.ts"],
+      "@activepieces/piece-hubspot": ["packages/pieces/hubspot/src/index.ts"],
+      "@activepieces/piece-mailchimp": [
+        "packages/pieces/mailchimp/src/index.ts"
+      ],
+      "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
+      "@activepieces/piece-pipedrive": [
+        "packages/pieces/pipedrive/src/index.ts"
+      ],
+      "@activepieces/piece-posthog": ["packages/pieces/posthog/src/index.ts"],
+      "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
+      "@activepieces/piece-sendgrid": ["packages/pieces/sendgrid/src/index.ts"],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
+      "@activepieces/piece-store": ["packages/pieces/store/src/index.ts"],
+      "@activepieces/piece-stripe": ["packages/pieces/stripe/src/index.ts"],
+      "@activepieces/piece-telegram-bot": [
+        "packages/pieces/telegram-bot/src/index.ts"
+      ],
+      "@activepieces/piece-todoist": ["packages/pieces/todoist/src/index.ts"],
+      "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],
+      "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
+      "@activepieces/piece-wordpress": [
+        "packages/pieces/wordpress/src/index.ts"
+      ],
+      "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
-      "@ee/*": ["packages/ee/*"],
-      "@shared/*": ["packages/shared/src/lib/*"],
       "@backend/*": ["packages/backend/src/app/*"],
+      "@ee/*": ["packages/ee/*"],
       "@frontend/*": ["packages/frontend/src/app/*"],
-      "@/*": ["packages/*"]
+      "@shared/*": ["packages/shared/src/lib/*"]
     },
     "resolveJsonModule": true
   },

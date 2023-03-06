@@ -23,6 +23,9 @@ import { ProjectUsageEntity } from "@ee/billing/backend/usage.entity";
 import { billing1677286751592 } from "./migration/1677286751592-billing";
 import { addVersionToPieceSteps1677521257188 } from "./migration/1677521257188-add-version-to-piece-steps";
 import { AppEventRoutingEntity } from "../app-event-routing/app-event-routing.entity";
+import { productEmbed1677894800372 } from "./migration/1677894800372-product-embed";
+import { AppCredentialEntity } from "@ee/product-embed/backend/app-credentials/app-credentials.entity";
+import { ConnectionKeyEntity } from "@ee/product-embed/backend/connection-keys/connection-key.entity";
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST);
@@ -51,6 +54,7 @@ const getMigrations = () => {
         removeStoreAction1676649852890,
         billing1677286751592,
         addVersionToPieceSteps1677521257188,
+        productEmbed1677894800372
     ];
 }
 
@@ -69,6 +73,8 @@ export const databaseConnection = new DataSource({
     migrations: getMigrations(),
     entities: [
         AppEventRoutingEntity,
+        AppCredentialEntity,
+        ConnectionKeyEntity,
         CollectionEntity,
         CollectionVersionEntity,
         FileEntity,

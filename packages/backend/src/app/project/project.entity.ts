@@ -1,11 +1,15 @@
 import { EntitySchema } from "typeorm";
 import { AppConnection, Collection, Flow, Project, User } from "@activepieces/shared";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
+import { ConnectionKey } from "@ee/product-embed/shared/connection-keys/connection-key";
+import { AppCredential } from "@ee/product-embed/shared/app-credentials/app-credentials";
 
 interface ProjectSchema extends Project {
   owner: User;
   collections: Collection[];
   flows: Flow[];
+  connectionKeys: ConnectionKey[];
+  appCredentials: AppCredential[];
   files: File[];
   appConnections: AppConnection[];
 }
@@ -30,6 +34,16 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         appConnections: {
             type: "one-to-many",
             target: "app_connection",
+            inverseSide: "project",
+        },
+        appCredentials: {
+            type: "one-to-many",
+            target: "app_credential",
+            inverseSide: "project",
+        },
+        connectionKeys: {
+            type: "one-to-many",
+            target: "connection_key",
             inverseSide: "project",
         },
         owner: {

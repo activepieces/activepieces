@@ -188,7 +188,7 @@ Property.Dropdown({
     required: boolean;
     refreshers: string[], // properties that when changed, will trigger the options function to execute
     options: async (propsValue): DropdownState {
-        if (props['authentication'] === undefined) {
+        if (!props['authentication']) {
             return {
                 disabled: true;
             }

@@ -15,6 +15,8 @@
 			]
 		}
 	},
+	"forwardPorts": [3000, 4200],
+	"postAttachCommand": "/bin/bash .devcontainer/setup.sh",
 	"hostRequirements": {
   	  "cpus": 4,
   	  "memory": "8gb"
@@ -26,5 +28,5 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
 	"remoteUser": "root",
-	"postCreateCommand": "npm ci && sh tools/codespaces.sh"
+	"postCreateCommand": "npm ci"
 }
