@@ -116,10 +116,10 @@ export const BranchCondition = Type.Union([
   }),
   Type.Object({
     firstValue: Type.String({}),
-    operator:  Type.Union([...Object.values(BranchOperator).
+    operator:  Type.Optional (Type.Union([...Object.values(BranchOperator).
       filter(c => singleValueConditions.find(sc => sc === c) !== undefined).map(c=>{
       return Type.Literal(c)
-    }) ])
+    }) ]))
   })
 ]);
 

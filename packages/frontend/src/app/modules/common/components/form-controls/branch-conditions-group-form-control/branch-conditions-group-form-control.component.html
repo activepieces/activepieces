@@ -1,0 +1,22 @@
+<form [formGroup]="conditionsForm">
+    <div class="ap-typpography-body-2 ap-font-semibold ap-mb-2">{{isFirstConditionGroup? 'Only':'Or'}} continue if...
+    </div>
+    <div class="ap-flex ap-flex-col ap-gap-2">
+        <ng-container formArrayName="conditions">
+            <ng-container *ngFor="let con of conditionsList;let idx=index;">
+                <app-branch-condition [formControl]="conditionsForm.controls.conditions.at(idx)">
+                </app-branch-condition>
+            </ng-container>
+        </ng-container>
+
+    </div>
+
+    <div class="ap-flex ap-gap-1 ap-mt-2" *ngIf="conditionsForm.enabled">
+        <app-button btnColor="basic" btnSize="medium" btnStyle="basic" (buttonClicked)="andButtonPressed()">+
+            And</app-button>
+        <app-button btnColor="basic" btnSize="medium" btnStyle="basic" *ngIf="isLastConditionGroup"
+            (buttonClicked)="orButtonPressed()">
+            + Or</app-button>
+    </div>
+</form>
+<ng-container *ngIf="valueChanges$ | async"></ng-container>

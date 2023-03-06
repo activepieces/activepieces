@@ -77,6 +77,8 @@ import { ImgFallbackDirective } from './helper/image-fallback.directive';
 import { ArrayFormControlComponent } from './components/form-controls/array-form-control/array-form-control.component';
 import { AddEditConnectionButtonComponent } from './components/configs-form/add-edit-connection-button/add-edit-connection-button.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { BranchConditionFormControlComponent } from './components/form-controls/branch-condition-form-control/branch-condition-form-control';
+import { BranchConditionsGroupFormControlComponent } from './components/form-controls/branch-conditions-group-form-control/branch-conditions-group-form-control.component';
 
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -124,6 +126,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     BuilderAutocompleteMentionsDropdownComponent,
     ArrayFormControlComponent,
     AddEditConnectionButtonComponent,
+    BranchConditionFormControlComponent,
+    BranchConditionsGroupFormControlComponent,
   ],
   imports: [
     FontAwesomeModule,
@@ -199,6 +203,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     ImgFallbackDirective,
     BuilderAutocompleteMentionsDropdownComponent,
     ArrayFormControlComponent,
+    BranchConditionsGroupFormControlComponent,
+    MatDividerModule,
   ],
   providers: [
     HighlightService,
