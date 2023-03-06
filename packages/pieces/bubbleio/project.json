@@ -1,0 +1,27 @@
+{
+  "name": "pieces-bubbleio",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/bubbleio/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/bubbleio",
+        "tsConfig": "packages/pieces/bubbleio/tsconfig.lib.json",
+        "packageJson": "packages/pieces/bubbleio/package.json",
+        "main": "packages/pieces/bubbleio/src/index.ts",
+        "assets": ["packages/pieces/bubbleio/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/bubbleio/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

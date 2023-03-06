@@ -4,7 +4,7 @@ import { asana } from '@activepieces/piece-asana';
 import { bannerbear } from '@activepieces/piece-bannerbear';
 import { binance } from '@activepieces/piece-binance';
 import { blackbaud } from '@activepieces/piece-blackbaud';
-import { bubble_io } from '@activepieces/piece-bubble';
+import { bubbleio } from '@activepieces/piece-bubbleio';
 import { calcom } from '@activepieces/piece-cal-com';
 import { calendly } from '@activepieces/piece-calendly';
 import { clickup } from '@activepieces/piece-clickup';
@@ -48,7 +48,7 @@ export const pieces: Piece[] = [
     bannerbear,
     binance,
     blackbaud,
-    bubble_io,
+    bubbleio,
     calcom,
     calendly,
     csv,
