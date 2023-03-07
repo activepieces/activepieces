@@ -168,6 +168,7 @@
       "pages": [
         "telemetry",
         "changelog",
+        "license",
         {
           "group": "Product Embed",
           "pages": [
@@ -177,7 +178,6 @@
             "product-embed/user-flows"
           ]
         },
-        "license"
       ]
     }
   ],
