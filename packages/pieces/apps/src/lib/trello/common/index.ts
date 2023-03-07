@@ -139,7 +139,7 @@ async function listBoardLists(apikey: string, token: string, board_id: string) {
         body: {},
         queryParams: {},
     };
-    const response = await httpClient.sendRequest(request);
+    const response = await httpClient.sendRequest<{ id: string; name: string; }[]>(request);
 
     return response.body;
 }

@@ -8,8 +8,8 @@ export const createCard = createAction({
     description: 'Create a new card in Trello',
 	props: {
         authentication: trelloCommon.authentication,
-        boardId: trelloCommon.board_id,
-        listId: trelloCommon.list_id,
+        board_id: trelloCommon.board_id,
+        list_id: trelloCommon.list_id,
 		name: Property.ShortText({
 			description: 'The name of the card to create',
 			displayName: 'Task Name',
@@ -29,7 +29,7 @@ export const createCard = createAction({
         const request: HttpRequest = {
             method: HttpMethod.POST,
             url: `${trelloCommon.baseUrl}cards` + 
-            `?idList=` + configsWithoutAuthentication['listId']
+            `?idList=` + configsWithoutAuthentication['list_id']
             + `&key=` + context.propsValue.authentication.username
             + `&token=` + context.propsValue.authentication.password,
             headers: {
