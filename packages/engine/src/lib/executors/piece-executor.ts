@@ -13,7 +13,8 @@ export class PieceExecutor {
   public async exec(params: PieceExecParams) {
     const { pieceName, actionName, config } = params;
     const piece = await pieceHelper.loadPiece(pieceName);
-    const action = piece.getAction(actionName);
+    const action = piece?.getAction(actionName);
+
     if (action === undefined) {
       throw new Error(`error=action_not_found action_name=${actionName}`);
     }

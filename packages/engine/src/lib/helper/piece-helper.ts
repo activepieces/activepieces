@@ -1,9 +1,35 @@
-import { DropdownProperty, DropdownState, DynamicProperties, MultiSelectDropdownProperty, Piece } from "@activepieces/framework";
-import { ActivepiecesError, ErrorCode, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionState, PieceTrigger, PropertyType, TriggerHookType } from "@activepieces/shared";
+import { env } from 'node:process';
+import {
+    DropdownProperty,
+    DropdownState,
+    DynamicProperties,
+    MultiSelectDropdownProperty,
+    Piece
+} from "@activepieces/framework";
+import {
+    ActivepiecesError,
+    ApEnvironment,
+    ErrorCode,
+    ExecutePropsOptions,
+    ExecuteTriggerOperation,
+    ExecutionState,
+    PieceTrigger,
+    PropertyType,
+    TriggerHookType
+} from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
+import { getPiece } from '@activepieces/pieces-apps';
 
-const loadPiece = async (pieceName: string): Promise<Piece> => {
+const loadPiece = async (pieceName: string): Promise<Piece | undefined> => {
+    const apEnv = env['AP_ENVIRONMENT'];
+
+    if (apEnv === ApEnvironment.DEVELOPMENT) {
+        console.info(`[engine] PieceHelper#loadPiece, pieceName=${pieceName} loadMethod=local`);
+        return getPiece(pieceName);
+    }
+
+    console.info(`[engine] PieceHelper#loadPiece, pieceName=${pieceName} loadMethod=npm`);
     const pieceModule = await import(`@activepieces/piece-${pieceName}`);
     return Object.values<Piece>(pieceModule)[0];
 }
@@ -79,7 +105,7 @@ export const pieceHelper = {
         const { pieceName, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
 
         const piece = await loadPiece(pieceName);
-        const trigger = piece.getTrigger(triggerName);
+        const trigger = piece?.getTrigger(triggerName);
 
         if (trigger === undefined) {
             throw new Error(`trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
