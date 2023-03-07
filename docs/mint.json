@@ -72,12 +72,14 @@
         "pieces/apps/cal.com",
         "pieces/apps/calendly",
         "pieces/apps/clickup",
+        "pieces/apps/connections",
         "pieces/apps/csv",
         "pieces/apps/discord",
         "pieces/apps/drip",
         "pieces/apps/dropbox",
         "pieces/apps/figma",
         "pieces/apps/freshsales",
+        "pieces/apps/generatebanners",
         "pieces/apps/github",
         "pieces/apps/gmail",
         "pieces/apps/google_calendar",
@@ -166,7 +168,16 @@
       "pages": [
         "telemetry",
         "changelog",
-        "license"
+        "license",
+        {
+          "group": "Product Embed",
+          "pages": [
+            "product-embed/overview",
+            "product-embed/user-authentication",
+            "product-embed/frontend-sdk",
+            "product-embed/user-flows"
+          ]
+        },
       ]
     }
   ],
