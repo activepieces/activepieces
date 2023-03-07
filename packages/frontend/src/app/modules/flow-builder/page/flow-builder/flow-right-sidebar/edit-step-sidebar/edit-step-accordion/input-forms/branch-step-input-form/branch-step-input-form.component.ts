@@ -19,6 +19,7 @@ import { branchConditionGroupValidator } from '../../../../../../../../common/va
 @Component({
   selector: 'app-branch-step-input-form',
   templateUrl: './branch-step-input-form.component.html',
+  styleUrls: ['./branch-step-input-form.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -65,7 +66,10 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
       if (obj.conditions) {
         obj.conditions.forEach((cg) => {
           this.form.controls.conditionsGroups.push(
-            new FormControl([...cg], { nonNullable: true,  validators:branchConditionGroupValidator })
+            new FormControl([...cg], {
+              nonNullable: true,
+              validators: branchConditionGroupValidator,
+            })
           );
         });
       }
@@ -77,7 +81,7 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
         [{ operator: undefined, firstValue: '', secondValue: '' }],
         {
           nonNullable: true,
-          validators:branchConditionGroupValidator
+          validators: branchConditionGroupValidator,
         }
       )
     );
@@ -96,7 +100,6 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
     }
   }
   validate() {
-    debugger;
     if (this.form.controls.conditionsGroups.invalid) {
       return { invalid: true };
     }

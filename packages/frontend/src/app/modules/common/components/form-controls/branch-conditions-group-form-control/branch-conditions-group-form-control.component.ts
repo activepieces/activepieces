@@ -94,7 +94,7 @@ export class BranchConditionsGroupFormControlComponent
     this.conditionsForm.controls.conditions.push(
       new FormControl(
         { firstValue: '', secondValue: undefined, operator: undefined },
-        { nonNullable: true,  validators: branchConditionValidator, }
+        { nonNullable: true, validators: branchConditionValidator }
       )
     );
   }
@@ -102,7 +102,6 @@ export class BranchConditionsGroupFormControlComponent
     this.createNewConditionGroup.emit();
   }
   validate() {
-  
     if (this.conditionsForm.controls.conditions.invalid) {
       return { invalid: true };
     }
