@@ -30,7 +30,7 @@ export const blackbaudListContacts = createAction({
     async run(configValue) {
         const accessToken = configValue.propsValue['authentication']?.access_token;
         let contacts: any[] = [];
-        let nextLink: string | undefined = `${blackbaudCommon.baseUrl}/constituent/v1/constituents?limit=500`;
+        let nextLink: string | undefined = `${blackbaudCommon.baseUrl}/constituent/v1/constituents?limit=5`;
         while (nextLink !== undefined) {
             const request: HttpRequest = {
                 method: HttpMethod.GET,

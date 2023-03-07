@@ -1,7 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.3.5",
-  "license": "MIT",
+  "version": "0.3.6",
   "scripts": {
     "prepare": "husky install"
   },

@@ -17,11 +17,40 @@ export const blackbaudCreateContacts = createAction({
     displayName: 'Create Contacts',
     props: {
         ...blackbaudCommon.auth_props,
-        // Check the documentation for sample input
-        contacts: Property.LongText({
+        contacts: Property.Json({
             displayName: "Contacts JSON List",
             description: "Check the documentation for exact schema",
-            required: true
+            required: true,
+            defaultValue: [
+                {
+                    "email": {
+                        "address": "example@example.com",
+                        "do_not_email": false,
+                        "inactive": false,
+                        "primary": true,
+                        "type": "Email"
+                    },
+                    "first": "Kilgore",
+                    "last": "Trout",
+                    "phone": {
+                        "do_not_call": false,
+                        "inactive": false,
+                        "number": "843-234-3397",
+                        "primary": true,
+                        "type": "Home"
+                    },
+                    "address": {
+                        "street1": "Street 41",
+                        "city": "Calforina",
+                        "state": "CA",
+                        "zip": "19941",
+                        "type": "Business",
+                        "country": "USA"
+                    },
+                    "type": "Individual"
+                }
+            ]
+
         })
     },
     sampleData: [
