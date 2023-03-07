@@ -1,6 +1,4 @@
 <form [formGroup]="conditionsForm">
-    <div class="ap-typpography-body-2 ap-font-semibold ap-mb-2">{{isFirstConditionGroup? 'Only':'Or'}} continue if...
-    </div>
     <div class="ap-flex ap-flex-col ap-gap-2">
         <ng-container formArrayName="conditions">
             <ng-container
@@ -9,12 +7,17 @@
                     [isLastAndOnlyCondition]="conditionsForm.controls.conditions.controls.length === 1"
                     (removeCondition)="removeCondition(idx)" [isInLastAndOnlyGroup]="isInLastAndOnlyGroup">
                 </app-branch-condition>
+                <ng-container *ngIf="!isLast">
+                    <div class="ap-text-center  ap-mb-[20px]">
+                        And
+                    </div>
+                </ng-container>
             </ng-container>
         </ng-container>
 
     </div>
 
-    <div class="ap-flex ap-gap-1 ap-mt-2" *ngIf="conditionsForm.enabled">
+    <div class="ap-flex ap-gap-1 ap-mt-2 ap-justify-center" *ngIf="conditionsForm.enabled">
         <app-button btnColor="basic" btnSize="medium" btnStyle="basic" (buttonClicked)="andButtonPressed()">+
             And</app-button>
         <app-button btnColor="basic" btnSize="medium" btnStyle="basic" *ngIf="isLastConditionGroup"

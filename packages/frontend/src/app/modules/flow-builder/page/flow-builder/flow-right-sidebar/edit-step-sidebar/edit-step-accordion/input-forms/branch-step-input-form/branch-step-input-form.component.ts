@@ -19,6 +19,7 @@ import { branchConditionGroupValidator } from '../../../../../../../../common/va
 @Component({
   selector: 'app-branch-step-input-form',
   templateUrl: './branch-step-input-form.component.html',
+  styleUrls: ['./branch-step-input-form.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

@@ -88,13 +88,14 @@ export class BranchConditionFormControlComponent
         const isSecondValueSingleValueCondition = !!singleValueConditions.find(
           (c) => c === secondValue
         );
+
         if (
           (isFirstValueBinaryCondition || firstValue === null) &&
           isSecondValueSingleValueCondition
         ) {
           this.form.controls.secondValue.setValue('');
           this.form.controls.secondValue.disable();
-        } else {
+        } else if (!isSecondValueSingleValueCondition) {
           this.form.controls.secondValue.enable();
         }
       })
@@ -115,6 +116,10 @@ export class BranchConditionFormControlComponent
   }
   writeValue(obj: BranchCondition): void {
     this.form.patchValue(obj);
+    if (singleValueConditions.find((c) => c === obj.operator)) {
+      this.form.controls.secondValue.setValue('');
+      this.form.controls.secondValue.disable();
+    }
   }
   registerOnChange(fn: (val: BranchCondition) => void): void {
     this.onChange = fn;
@@ -165,7 +170,6 @@ export class BranchConditionFormControlComponent
     return !singleValueConditions.find((c) => c === currentBranchCondition);
   }
   validate() {
-
     if (this.form.invalid) {
       return { invalid: true };
     }

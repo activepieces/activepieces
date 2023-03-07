@@ -7,11 +7,13 @@
                 [isLastConditionGroup]="isLast"
                 [isInLastAndOnlyGroup]="form.controls.conditionsGroups.controls.length === 1">
             </app-branch-conditions-group-form-control>
-            <mat-divider *ngIf="!isLast"></mat-divider>
+            <ng-container *ngIf="!isLast">
+                <div class="or-separator ap-font-semibold">
+                    Or
+                </div>
+            </ng-container>
         </ng-container>
     </ng-container>
-
-
 </div>
 
 <ng-container *ngIf="valueChanges$ | async"></ng-container>
