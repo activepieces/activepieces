@@ -40,16 +40,13 @@ export const webhookService = {
         const flowVersion = await flowVersionService.getOneOrThrow(
             instance.flowIdToVersionId[flow.id]
         );
-        const webhookSecret = await getWebhookSecret(flowVersion);
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId: collection.projectId,
             collectionVersion: collectionVersion,
             flowVersion: flowVersion,
-            payload: payload,
-            webhookSecret: webhookSecret,
+            payload: payload
         });
 
-        console.log(`test payloads`, payloads);
         const createFlowRuns = payloads.map((payload) =>
             flowRunService.start({
                 environment: RunEnvironment.PRODUCTION,

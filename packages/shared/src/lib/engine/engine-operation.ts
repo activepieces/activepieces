@@ -54,10 +54,13 @@ export interface ExecuteTriggerOperation {
     projectId: ProjectId,
     workerToken?: string;
     apiUrl?: string;
+    edition?: string;
+    webhookSecret?: string;
 }
 
 export interface EventPayload {
     body: any,
+    rawBody?: any;
     method: string,
     headers: Record<string, string>,
     queryParams: Record<string, string>,

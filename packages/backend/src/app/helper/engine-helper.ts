@@ -7,6 +7,7 @@ import { tokenUtils } from "../authentication/lib/token-utils";
 import { DropdownState, DynamicPropsValue } from "@activepieces/framework";
 import { logger } from "../helper/logger";
 import chalk from "chalk";
+import { getEdition, getWebhookSecret } from "./secret-helper";
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH);
@@ -37,6 +38,8 @@ export const engineHelper = {
             await sandbox.cleanAndInit();
             result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
+                edition: await getEdition(),
+                webhookSecret: await getWebhookSecret(operation.flowVersion),
                 workerToken: await workerToken({ collectionId: operation.collectionVersion.collectionId, projectId: operation.projectId })
             });
         }

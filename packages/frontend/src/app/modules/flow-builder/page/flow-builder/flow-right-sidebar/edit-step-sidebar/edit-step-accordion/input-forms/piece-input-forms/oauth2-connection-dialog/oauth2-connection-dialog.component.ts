@@ -157,8 +157,8 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       this.settingsForm.controls.client_secret.disable();
       this.connectionToUpdate.value.props
         ? this.settingsForm.controls.props.setValue(
-          this.connectionToUpdate.value.props
-        )
+            this.connectionToUpdate.value.props
+          )
         : null;
       this.settingsForm.controls.props.disable();
       this.settingsForm.controls.value.setValue({ code: this.FAKE_CODE });

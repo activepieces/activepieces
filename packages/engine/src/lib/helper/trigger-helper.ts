@@ -1,6 +1,6 @@
 import { pieces } from "@activepieces/pieces-apps";
-import { EventPayload, ExecuteEventParserOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, TriggerHookType } from "@activepieces/shared";
-import { TriggerStrategy } from "../../../../pieces/framework/src";
+import { ApEdition, EventPayload, ExecuteEventParserOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, TriggerHookType } from "@activepieces/shared";
+import { TriggerStrategy } from "@activepieces/framework";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 
@@ -48,13 +48,23 @@ export const triggerHelper = {
         }
       case TriggerHookType.RUN:
         if (trigger.type === TriggerStrategy.APP_WEBHOOK) {
-          
-          const verified = piece?.events?.verify({ payload: params.triggerPayload as EventPayload, webhookSecret: "" });
-          if (verified === false) {
+          if (params.edition === ApEdition.COMMUNITY) {
+            return [];
+          }
+          if (!params.webhookSecret) {
+            throw new Error(`Webhook secret is not avaiable for piece name ${flowTrigger.settings.pieceName}`)
+          }
+          try {
+            const verified = piece?.events?.verify({ payload: params.triggerPayload as EventPayload, webhookSecret: params.webhookSecret });
+            if (verified === false) {
+              console.log("Webhook is not verified");
+              return [];
+            }
+          } catch (e) {
+            console.error("Error while verifying webhook", e);
             return [];
           }
         }
-        // TODO: fix types to remove use of any
         return trigger.run(context as any);
     }
   },

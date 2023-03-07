@@ -1,14 +1,18 @@
-import { createTrigger, TriggerStrategy } from "@activepieces/framework";
-import { slackAuth, slackChannel } from "../common/props";
+import { createTrigger, Property, TriggerStrategy } from "@activepieces/framework";
+import { slackAuth } from "../common/props";
 
 
-export const newMessage = createTrigger({
-    name: 'new_message',
-    displayName: 'New message',
-    description: 'Trigger when a new message is received',
+export const newReactionAdded = createTrigger({
+    name: 'new_reaction_added',
+    displayName: 'New reaction',
+    description: 'Trigger when a new reaction is added to a message',
     props: {
         authentication: slackAuth,
-        channel: slackChannel
+        emoj: Property.Array({
+            displayName: 'Emojis (E.g fire, smile)',
+            description: 'Select emojs to trigger on',
+            required: false,
+        }),
     },
     type: TriggerStrategy.APP_WEBHOOK,
     sampleData: {
@@ -40,15 +44,17 @@ export const newMessage = createTrigger({
         "channel_type": "channel"
     },
     onEnable: async (context) => {
-        context.app.createListeners({ events: ['message'], identifierValue: context.propsValue.authentication.data['team_id'] })
+        context.app.createListeners({ events: ['reaction_added'], identifierValue: context.propsValue.authentication.data['team_id'] })
     },
     onDisable: async (context) => {
         // Ignored
     },
     run: async (context) => {
-        if (context.payload.body.channel === context.propsValue.channel) {
-            return [context.payload.body.event]
+        if (context.propsValue.emoj) {
+            if (context.propsValue.emoj.includes(context.payload.body.reaction)) {
+                return [];
+            }
         }
-        return [];
+        return [context.payload.body.event]
     }
 });

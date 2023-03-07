@@ -6,6 +6,7 @@ import { AppConnectionEntity } from "./app-connection.entity";
 import axios, { AxiosError } from "axios";
 import { createRedisLock } from "../database/redis-connection";
 import { decryptObject, encryptObject } from "../helper/encryption";
+import { getEdition } from "../helper/secret-helper";
 
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
@@ -18,6 +19,7 @@ export const appConnectionService = {
             response = await claimWithCloud({
                 pieceName: request.appName,
                 code: request.value.code,
+                edition: await getEdition()
             })
             break;
         case AppConnectionType.OAUTH2:
@@ -148,6 +150,7 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
     const requestBody = {
         refreshToken: connectionValue.refresh_token,
         pieceName: appName,
+        edition: await getEdition(),
         tokenUrl: connectionValue.token_url,
     };
     const response = (
@@ -227,7 +230,7 @@ async function claim(request: {
     }
 }
 
-async function claimWithCloud(request: { pieceName: string; code: string }): Promise<unknown> {
+async function claimWithCloud(request: { pieceName: string; code: string, edition: string }): Promise<unknown> {
     try {
         return (await axios.post("https://secrets.activepieces.com/claim", request)).data;
     }

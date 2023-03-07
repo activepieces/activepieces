@@ -200,5 +200,4 @@ interface ExecuteTrigger {
   projectId: ProjectId;
   collectionVersion: CollectionVersion;
   flowVersion: FlowVersion;
-  webhookSecret: string;
 }

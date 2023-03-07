@@ -12,6 +12,7 @@ export const slackAuth = Property.OAuth2({
     'channels:history',
     'chat:write:bot',
     'groups:read',
+    'reactions:read',
     'mpim:read',
     'users:read',
   ],
