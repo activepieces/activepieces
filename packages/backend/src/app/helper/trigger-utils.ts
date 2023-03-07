@@ -2,6 +2,7 @@ import { Trigger, TriggerStrategy } from "@activepieces/framework";
 import {
     CollectionId,
     CollectionVersion,
+    ExecuteTriggerResponse,
     FlowVersion,
     PieceTrigger,
     ProjectId,
@@ -124,7 +125,7 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId, collec
     const flowTrigger = flowVersion.trigger as PieceTrigger;
     const pieceTrigger = getPieceTrigger(flowTrigger);
 
-    await engineHelper.executeTrigger({
+    const response = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion: flowVersion,
         webhookUrl: await webhookService.getWebhookUrl(flowVersion.flowId),
@@ -134,8 +135,10 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId, collec
     switch (pieceTrigger.type) {
     case TriggerStrategy.APP_WEBHOOK: {
         const appName = flowTrigger.settings.pieceName;
-        // TODO: Add identifier value
-        await appEventRoutingService.createListeners({projectId, flowId: flowVersion.flowId, appName, events: [], identifierValue: "a" });
+        const listeners = (response as ExecuteTriggerResponse).listeners;
+        for(const listener of listeners){
+            await appEventRoutingService.createListeners({projectId, flowId: flowVersion.flowId, appName, events: listener.events, identifierValue: listener.identifierValue });
+        }
     }
         break;
     case TriggerStrategy.WEBHOOK:
@@ -197,4 +200,5 @@ interface ExecuteTrigger {
   projectId: ProjectId;
   collectionVersion: CollectionVersion;
   flowVersion: FlowVersion;
+  webhookSecret: string;
 }

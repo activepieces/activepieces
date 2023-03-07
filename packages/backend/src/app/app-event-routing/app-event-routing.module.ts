@@ -19,33 +19,35 @@ export const appEventRoutingController = async (fastify: FastifyInstance, option
                     pieceName: string;
                 }
             }>,
-            reply
+            requestReply
         ) => {
             const pieceName = request.params.pieceName;
             const eventPayload = {
                 headers: request.headers as Record<string, string>,
                 body: request.body,
+                method: request.method,
                 queryParams: request.query as Record<string, string>,
             };
-            const parsedEvent = await engineHelper.executeParseEvent({
+            const {reply, event, identifierValue} = await engineHelper.executeParseEvent({
                 pieceName: pieceName,
                 event: eventPayload
             });
-            const listeners = await appEventRoutingService.listListeners({
-                appName: pieceName,
-                event: parsedEvent.event,
-                identifierValue: parsedEvent.identifierValue
-            })
-            logger.info(`Found ${listeners.length} listeners for event ${parsedEvent.event} with identifier ${parsedEvent.identifierValue} in app ${pieceName}`);
-            listeners.forEach(listener => {
-                webhookService.callback({
-                    flowId: listener.flowId,
-                    payload: eventPayload,
+      
+            if (event && identifierValue) {
+                const listeners = await appEventRoutingService.listListeners({
+                    appName: pieceName,
+                    event: event,
+                    identifierValue: identifierValue
+                })
+                logger.info(`Found ${listeners.length} listeners for event ${event} with identifier ${identifierValue} in app ${pieceName}`);
+                listeners.forEach(listener => {
+                    webhookService.callback({
+                        flowId: listener.flowId,
+                        payload: eventPayload
+                    });
                 });
-            });
-            reply.status(200).send({
-                challenge: request.body['challenge']
-            });
+            }
+            requestReply.status(200).headers(reply?.headers ?? {}).send(reply?.body?? {});
         }
     );
 

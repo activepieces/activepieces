@@ -13,7 +13,8 @@ export class Piece implements PieceBase {
     public readonly authors: string[],
     public readonly version: string,
     public readonly events: {
-      parseAndReply: (event: EventPayload) => ParseEventResponse;
+      parseAndReply: (ctx: {payload: EventPayload}) => ParseEventResponse;
+      verify: (ctx: { webhookSecret: string, payload: EventPayload }) => boolean;
     } | undefined,
     actions: Action[],
     triggers: Trigger[],
@@ -64,7 +65,8 @@ export const createPiece = (request: {
   triggers: Trigger[];
   description?: string;
   events?: {
-    parseAndReply: (event: EventPayload) => ParseEventResponse;
+    parseAndReply: (ctx: {payload: EventPayload}) => ParseEventResponse;
+    verify: (ctx: { webhookSecret: string, payload: EventPayload }) => boolean;
   }
   version: string;
 }): Piece =>

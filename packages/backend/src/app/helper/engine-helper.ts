@@ -1,4 +1,4 @@
-import { ExecuteFlowOperation, EngineOperationType, CollectionId, PrincipalType, apId, EngineOperation, ExecutionOutput, ExecuteTriggerOperation, TriggerHookType, ProjectId, ExecutePropsOptions, ExecuteEventParserOperation as ExecuteParseEventOperation, ExecuteEventParserOperation, ParseEventResponse } from "@activepieces/shared";
+import { ExecuteFlowOperation, EngineOperationType, CollectionId, PrincipalType, apId, EngineOperation, ExecutionOutput, ExecuteTriggerOperation, TriggerHookType, ProjectId, ExecutePropsOptions, ExecuteEventParserOperation as ExecuteParseEventOperation, ExecuteEventParserOperation, ParseEventResponse, ExecuteTriggerResponse } from "@activepieces/shared";
 import { Sandbox, sandboxManager } from "../workers/sandbox";
 import fs from "node:fs";
 import { system } from "./system/system";
@@ -28,9 +28,9 @@ export const engineHelper = {
         finally {
             sandboxManager.returnSandbox(sandbox.boxId);
         }
-        return result;
+        return result as ParseEventResponse;
     },
-    async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[]> {
+    async executeTrigger(operation: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | unknown[]> {
         const sandbox = sandboxManager.obtainSandbox();
         let result;
         try {
@@ -46,7 +46,7 @@ export const engineHelper = {
         if (operation.hookType === TriggerHookType.RUN) {
             return result as unknown[];
         }
-        return result as void;
+        return result;
     },
     async executeProp(operation: ExecutePropsOptions): Promise<DropdownState<any> | Record<string, DynamicPropsValue>> {
         const sandbox = sandboxManager.obtainSandbox();

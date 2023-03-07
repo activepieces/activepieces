@@ -15,8 +15,19 @@ export const slack = createPiece({
     slackSendMessageAction,
   ],
   events: {
-    parseAndReply: (payload: EventPayload) => {
-      return { event: payload.body?.event?.type, identifierValue: payload.body.team_id , data: payload.body.event }
+    parseAndReply: ({payload}) => {
+      if (payload.body['challenge']) {
+        return {
+          reply: {
+            body: payload.body['challenge'],
+            headers: {}
+          }
+        };
+      }
+      return { event: payload.body?.event?.type, identifierValue: payload.body.team_id }
+    },
+    verify: ({webhookSecret, payload}) => {
+      return false;
     }
   },
   triggers: [newSlackMessage]
