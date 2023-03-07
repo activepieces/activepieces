@@ -1,7 +1,7 @@
-import { Piece } from '@activepieces/framework';
 import { globals } from '../globals';
 import { createContextStore } from '../services/storage.service';
 import { connectionService } from '../services/connections.service';
+import { pieceHelper } from '../helper/piece-helper';
 
 type PieceExecParams = {
   pieceName: string,
@@ -12,7 +12,7 @@ type PieceExecParams = {
 export class PieceExecutor {
   public async exec(params: PieceExecParams) {
     const { pieceName, actionName, config } = params;
-    const piece = await this.getPiece(pieceName);
+    const piece = await pieceHelper.loadPiece(pieceName);
     const action = piece.getAction(actionName);
     if (action === undefined) {
       throw new Error(`error=action_not_found action_name=${actionName}`);
@@ -35,10 +35,5 @@ export class PieceExecutor {
         }
       }
     });
-  }
-
-  private async getPiece(pieceName: string): Promise<Piece> {
-    const pieceModule = await import(`@activepieces/piece-${pieceName}`);
-    return Object.values<Piece>(pieceModule)[0];
   }
 }

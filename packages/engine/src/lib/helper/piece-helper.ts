@@ -1,11 +1,47 @@
-import { DropdownProperty, DropdownState, DynamicProperties, MultiSelectDropdownProperty } from "@activepieces/framework";
-import { getPiece } from "@activepieces/pieces-apps";
-import { ActivepiecesError, ErrorCode, ExecutePropsOptions, ExecutionState, PropertyType } from "@activepieces/shared";
+import { DropdownProperty, DropdownState, DynamicProperties, MultiSelectDropdownProperty, Piece } from "@activepieces/framework";
+import { ActivepiecesError, ErrorCode, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionState, PieceTrigger, PropertyType, TriggerHookType } from "@activepieces/shared";
+import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
+
+const loadPiece = async (pieceName: string): Promise<Piece> => {
+    const pieceModule = await import(`@activepieces/piece-${pieceName}`);
+    return Object.values<Piece>(pieceModule)[0];
+}
+
+const getProperty = async (params: ExecutePropsOptions) => {
+    const component = await loadPiece(params.pieceName);
+
+    if (component === undefined) {
+        throw new ActivepiecesError({
+            code: ErrorCode.PIECE_NOT_FOUND,
+            params: {
+                pieceName: params.pieceName,
+                pieceVersion: params.pieceVersion,
+            },
+        });
+    }
+
+    const action = component.getAction(params.stepName);
+    const trigger = component.getTrigger(params.stepName);
+
+    if (action === undefined && trigger === undefined) {
+        throw new ActivepiecesError({
+            code: ErrorCode.STEP_NOT_FOUND,
+            params: {
+                pieceName: params.pieceName,
+                pieceVersion: params.pieceVersion,
+                stepName: params.stepName,
+            },
+        });
+    }
+
+    const props = action !== undefined ? action.props : trigger!.props;
+    return props[params.propertyName];
+}
 
 export const pieceHelper = {
     async executeProps(params: ExecutePropsOptions) {
-        const property = getProperty(params);
+        const property = await getProperty(params);
         if (property === undefined) {
             throw new ActivepiecesError({
                 code: ErrorCode.CONFIG_NOT_FOUND,
@@ -22,10 +58,10 @@ export const pieceHelper = {
             const executionState = new ExecutionState();
             executionState.insertConfigs(params.collectionVersion);
             const resolvedInput = await variableService.resolve(params.input, executionState);
-            if(property.type === PropertyType.DYNAMIC){
+            if (property.type === PropertyType.DYNAMIC) {
                 return await (property as DynamicProperties<boolean>).props(resolvedInput);
             }
-            if(property.type === PropertyType.MULTI_SELECT_DROPDOWN){
+            if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
                 return await (property as MultiSelectDropdownProperty<unknown, boolean>).options(resolvedInput);
             }
             return await (property as DropdownProperty<unknown, boolean>).options(resolvedInput);
@@ -37,32 +73,40 @@ export const pieceHelper = {
                 placeholder: "Throws an error, reconnect or refresh the page"
             } as DropdownState<unknown>;
         }
-    }
-}
+    },
 
-function getProperty(params: ExecutePropsOptions){
-    const component = getPiece(params.pieceName);
-    if (component === undefined) {
-        throw new ActivepiecesError({
-            code: ErrorCode.PIECE_NOT_FOUND,
-            params: {
-                pieceName: params.pieceName,
-                pieceVersion: params.pieceVersion,
-            },
-        });
-    }
-    const action = component.getAction(params.stepName);
-    const trigger = component.getTrigger(params.stepName);
-    if (action === undefined && trigger === undefined) {
-        throw new ActivepiecesError({
-            code: ErrorCode.STEP_NOT_FOUND,
-            params: {
-                pieceName: params.pieceName,
-                pieceVersion: params.pieceVersion,
-                stepName: params.stepName,
-            },
-        });
-    }
-    const props = action !== undefined ? action.props : trigger!.props;
-    return props[params.propertyName];
-}
+    async executeTrigger(params: ExecuteTriggerOperation) {
+        const { pieceName, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
+
+        const piece = await loadPiece(pieceName);
+        const trigger = piece.getTrigger(triggerName);
+
+        if (trigger === undefined) {
+            throw new Error(`trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
+        }
+
+        const variableService = new VariableService();
+        const executionState = new ExecutionState();
+        executionState.insertConfigs(params.collectionVersion);
+        const resolvedInput = await variableService.resolve(input, executionState);
+
+        const context = {
+            store: createContextStore(params.flowVersion.flowId),
+            webhookUrl: params.webhookUrl,
+            propsValue: resolvedInput,
+            payload: params.triggerPayload,
+        };
+
+        switch (params.hookType) {
+            case TriggerHookType.ON_DISABLE:
+                return trigger.onDisable(context);
+            case TriggerHookType.ON_ENABLE:
+                return trigger.onEnable(context);
+            case TriggerHookType.RUN:
+                // TODO: fix types to remove use of any
+                return trigger.run(context as any);
+        }
+    },
+
+    loadPiece,
+};
