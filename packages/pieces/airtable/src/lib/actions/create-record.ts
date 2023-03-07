@@ -11,16 +11,16 @@ export const airtableCreateRecord = createAction({
   props: {
     authentication: airtableCommon.authentication,
     base: airtableCommon.base,
-    table: airtableCommon.table,
+    tableId: airtableCommon.table,
     fields: airtableCommon.fields
   },
   async run(context) {
-    const {authentication: personalToken, base: baseId, table, fields} = context.propsValue
+    const {authentication: personalToken, base: baseId, tableId, fields} = context.propsValue
 
     return airtableCommon.createRecord({
       personalToken,
       baseId,
-      tableId: table.id,
+      tableId: tableId as string,
       fields
     })
   }
