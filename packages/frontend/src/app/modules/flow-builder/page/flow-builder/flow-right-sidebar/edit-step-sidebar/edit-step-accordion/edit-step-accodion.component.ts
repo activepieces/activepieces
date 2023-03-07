@@ -1,11 +1,5 @@
+import { Component, Input } from '@angular/core';
 import {
-  AfterViewInit,
-  ChangeDetectorRef,
-  Component,
-  Input,
-} from '@angular/core';
-import {
-  delay,
   forkJoin,
   map,
   Observable,
@@ -16,13 +10,11 @@ import {
   takeUntil,
   tap,
 } from 'rxjs';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import {
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
 } from '@angular/forms';
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
@@ -41,7 +33,7 @@ import { FlagService } from '../../../../../../common/service/flag.service';
   templateUrl: './edit-step-accodion.component.html',
   styleUrls: ['./edit-step-accodion.component.scss'],
 })
-export class EditStepAccordionComponent implements AfterViewInit {
+export class EditStepAccordionComponent {
   autoSaveListener$: Observable<{
     describe: { displayName: string; name: string };
     input: any;
@@ -50,9 +42,6 @@ export class EditStepAccordionComponent implements AfterViewInit {
   cancelAutoSaveListener$: Subject<boolean> = new Subject();
   _selectedStep: FlowItem;
   stepForm: UntypedFormGroup;
-  openedIndex = 1;
-  faChevornDown = faChevronDown;
-  faInfoCircle = faInfoCircle;
   webhookUrl$: Observable<string>;
 
   //delayExpansionPanelRendering$ is an observable that fixes an issue with angular material's accordions rendering content even though they are closed
@@ -72,7 +61,6 @@ export class EditStepAccordionComponent implements AfterViewInit {
 
   constructor(
     private formBuilder: UntypedFormBuilder,
-    private cd: ChangeDetectorRef,
     private store: Store,
     private snackbar: MatSnackBar,
     private flagService: FlagService
@@ -104,23 +92,6 @@ export class EditStepAccordionComponent implements AfterViewInit {
     });
   }
 
-  ngAfterViewInit(): void {
-    const expansionAnimationDuration = 500;
-    this.delayExpansionPanelRendering$ = of(true).pipe(
-      delay(expansionAnimationDuration)
-    );
-  }
-
-  setOpenedIndex(index: number) {
-    this.openedIndex = index;
-    this.cd.markForCheck();
-  }
-
-  closed(index: number) {
-    if (this.openedIndex == index) {
-      this.openedIndex = -1;
-    }
-  }
   updateFormValue(stepSelected: FlowItem) {
     const describeControl = this.stepForm.get('describe')!;
     describeControl.setValue({

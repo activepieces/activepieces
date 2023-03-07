@@ -14,7 +14,6 @@ import { fadeInUp400ms } from '../../../../../../../common/animation/fade-in-up.
 
 interface DescribeForm {
   displayName: FormControl<string>;
-  name: FormControl<string>;
 }
 @Component({
   selector: 'app-describe-form',
@@ -49,9 +48,7 @@ export class DescribeFormComponent implements ControlValueAccessor {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      name: new FormControl('', { nonNullable: true }),
     });
-    this.describeForm.controls.name.disable();
     this.describeForm.markAsTouched();
     this.updateComponentValue$ = this.describeForm.valueChanges.pipe(
       tap((value) => {
