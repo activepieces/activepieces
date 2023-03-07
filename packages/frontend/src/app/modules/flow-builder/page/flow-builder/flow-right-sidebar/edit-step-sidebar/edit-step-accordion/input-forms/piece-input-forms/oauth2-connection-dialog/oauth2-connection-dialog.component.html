@@ -71,7 +71,7 @@
     </div>
 
     <div>
-      <app-o-auth2-connect-control [configSettings]="getOAuth2Settings()"
+      <app-o-auth2-connect-control [popupParams]="getOAuth2Settings()"
         [settingsValid]="authenticationSettingsControlsValid" formControlName="value"></app-o-auth2-connect-control>
       <p @fadeInUp class="ap-typography-caption ap-text-danger"
         *ngIf="settingsForm.controls.value.invalid &&  settingsForm.controls.value.touched">

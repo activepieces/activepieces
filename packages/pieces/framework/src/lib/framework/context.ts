@@ -1,3 +1,4 @@
+import {  AppConnectionValue } from "@activepieces/shared";
 
 
 export interface TriggerHookContext<T> {
@@ -13,12 +14,18 @@ export interface TriggerContext<T> {
         queryParams: Record<string, string>,
     };
     propsValue: T,
-    store: Store
+    store: Store,
+    connections: ConnectionsManager
 }
 
 export interface ActionContext<T> {
     propsValue: T,
-    store: Store
+    store: Store,
+    connections: ConnectionsManager
+}
+
+export interface ConnectionsManager {
+    get(key: string): Promise<AppConnectionValue | string | null>;
 }
 
 export interface Store {

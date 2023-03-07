@@ -1,11 +1,11 @@
-import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
+import { FastifyInstance, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
 import { AppConnectionId, ListAppConnectionRequest, UpsertConnectionRequest } from "@activepieces/shared";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { appConnectionService } from "./app-connection.service";
 
 const DEFAULT_PAGE_SIZE = 10;
-export const appConnectionController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
+export const appConnectionController = async (fastify: FastifyInstance) => {
 
     fastify.post(
         "/",
@@ -17,8 +17,7 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
         async (
             request: FastifyRequest<{
         Body: UpsertConnectionRequest;
-      }>,
-            _reply
+      }>
         ) => {
             return await appConnectionService.upsert({projectId: request.principal.projectId, request: request.body});
         }
@@ -32,8 +31,7 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
         Params: {
           connectionName: string;
         };
-      }>,
-            _reply
+      }>
         ) => {
             const appCredential = await appConnectionService.getOne({projectId: request.principal.projectId, name: request.params.connectionName});
             if (appCredential === null) {
@@ -42,6 +40,9 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
                     params: { id: request.params.connectionName },
                 });
             }
+            // Remove sensitive data from response
+            delete appCredential.value['client_secret'];
+            delete appCredential.value['refresh_token'];
             return appCredential;
         }
     );
@@ -56,8 +57,7 @@ export const appConnectionController = async (fastify: FastifyInstance, options:
         async (
             request: FastifyRequest<{
         Querystring: ListAppConnectionRequest;
-      }>,
-            _reply
+      }>
         ) => {
             const query = request.query;
             return await appConnectionService.list(request.principal.projectId,

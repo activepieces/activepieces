@@ -1,4 +1,4 @@
-import fastify, { FastifyRequest } from "fastify";
+import fastify, { FastifyRequest, HTTPMethods } from "fastify";
 import cors from "@fastify/cors";
 import formBody from "@fastify/formbody";
 import qs from 'qs';
@@ -9,7 +9,6 @@ import { openapiModule } from "./app/helper/openapi/openapi.module";
 import { flowModule } from "./app/flows/flow.module";
 import { fileModule } from "./app/file/file.module";
 import { piecesController } from "./app/pieces/pieces.controller";
-import { oauth2Module } from "./app/oauth2/oauth2.module";
 import { tokenVerifyMiddleware } from "./app/authentication/token-verify-middleware";
 import { storeEntryModule } from "./app/store-entry/store-entry.module";
 import { instanceModule } from "./app/instance/instance.module";
@@ -24,11 +23,13 @@ import { system, validateEnvPropsOnStartup } from "./app/helper/system/system";
 import { SystemProp } from "./app/helper/system/system-prop";
 import swagger from "@fastify/swagger";
 import { databaseConnection } from "./app/database/database-connection";
-import { logger } from './app/helper/logger';
+import { initilizeSentry, logger } from './app/helper/logger';
 import { firebaseAuthenticationModule } from "@ee/firebase-auth/backend/firebase-authentication.module";
-import { usageModule } from "@ee/usage/backend/usage.module.ee";
+import { billingModule } from "@ee/billing/backend/billing.module";
 import { getEdition } from "./app/helper/license-helper";
 import { ApEdition } from "@activepieces/shared";
+import { appCredentialModule } from "@ee/product-embed/backend/app-credentials/app-credentials.module";
+import { connectionKeyModule } from "@ee/product-embed/backend/connection-keys/connection-key.module";
 
 const app = fastify({
     logger,
@@ -38,7 +39,7 @@ const app = fastify({
             useDefaults: true,
             coerceTypes: true,
             formats: {
-                
+
             }
         }
     }
@@ -61,7 +62,25 @@ app.register(cors, {
     origin: "*",
     methods: ["*"]
 });
+app.register(import('fastify-raw-body'), {
+    field: 'rawBody',
+    global: false,
+    encoding: 'utf8',
+    runFirst: true,
+    routes: []
+});
 app.register(formBody, { parser: str => qs.parse(str) });
+
+app.addHook("onRequest", async (request, reply) => {
+    const route = app.hasRoute({
+        method: request.method as HTTPMethods,
+        url: request.url,
+    });
+    if (!route) {
+        reply.code(404).send(`Oops! It looks like we hit a dead end. The endpoint you're searching for is nowhere to be found. We suggest turning around and trying another path. Good luck!`);
+    } 
+});
+
 app.addHook("onRequest", tokenVerifyMiddleware);
 app.register(projectModule);
 app.register(collectionModule);
@@ -72,7 +91,6 @@ app.register(flowModule);
 app.register(codeModule);
 app.register(flowWorkerModule);
 app.register(piecesController);
-app.register(oauth2Module);
 app.register(instanceModule);
 app.register(flowRunModule);
 app.register(webhookModule);
@@ -107,7 +125,10 @@ const start = async () => {
         logger.info("Activepieces " + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + " Edition");
         if (edition === ApEdition.ENTERPRISE) {
             app.register(firebaseAuthenticationModule);
-            app.register(usageModule);
+            app.register(billingModule);
+            app.register(appCredentialModule);
+            app.register(connectionKeyModule);
+            initilizeSentry();
         }
         else {
             app.register(authenticationModule);

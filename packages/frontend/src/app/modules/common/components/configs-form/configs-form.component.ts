@@ -80,7 +80,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   updateValueOnChange$: Observable<void> = new Observable<void>();
   PropertyType = PropertyType;
   dropdownOptionsObservables$: {
-    [key: ConfigKey]: Observable<DropdownState<any>>;
+    [key: ConfigKey]: Observable<DropdownState<unknown>>;
   } = {};
   dynamicPropsObservables$: {
     [key: ConfigKey]: Observable<PieceConfig[]>;
@@ -90,12 +90,16 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   } = {};
 
   allAuthConfigs$: Observable<DropdownItem[]>;
-  configDropdownChanged$: Observable<any>;
+  configDropdownChanged$: Observable<unknown>;
   cloudAuthCheck$: Observable<void>;
   editorOptions = {
     lineNumbers: true,
     theme: 'lucario',
-    mode: 'javascript',
+    lineWrapping: true,
+    matchBrackets: true,
+    gutters: ['CodeMirror-lint-markers'],
+    mode: 'application/json',
+    lint: true,
   };
   customizedInputs: Record<string, boolean> | undefined;
   faInfoCircle = faInfoCircle;
@@ -111,9 +115,8 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   @ViewChildren('textControl', { read: ElementRef })
   theInputs: QueryList<ElementRef>;
   form!: UntypedFormGroup;
-
-  OnChange = (value) => {};
-  OnTouched = () => {};
+  OnChange: (value) => void;
+  OnTouched: () => void;
 
   constructor(
     private fb: UntypedFormBuilder,
@@ -140,11 +143,12 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       this.customizedInputs = obj.customizedInputs;
     }
     this.createForm();
+    this.cd.markForCheck();
   }
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value) => void): void {
     this.OnChange = fn;
   }
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.OnTouched = fn;
   }
   setDisabledState(disabled: boolean) {
@@ -163,7 +167,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   createForm() {
     this.requiredConfigs = this.configs.filter((c) => c.required);
     this.allOptionalConfigs = this.configs.filter((c) => !c.required);
-
     this.selectedOptionalConfigs = this.allOptionalConfigs.filter(
       (c) => c.value !== undefined
     );
@@ -173,6 +176,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     const optionalConfigsControls = this.createConfigsFormControls(
       this.selectedOptionalConfigs
     );
+
     this.form = this.fb.group({
       ...requiredConfigsControls,
       ...optionalConfigsControls,
@@ -196,7 +200,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         c.type === PropertyType.MULTI_SELECT_DROPDOWN
       ) {
         this.dropdownOptionsObservables$[c.key] =
-          this.createRefreshableConfigObservables<DropdownState<any>>(c).pipe(
+          this.createRefreshableConfigObservables<DropdownState<unknown>>(
+            c
+          ).pipe(
             catchError(() => {
               return of({
                 options: [],
@@ -221,27 +227,35 @@ export class ConfigsFormComponent implements ControlValueAccessor {
               });
             }),
             tap((res) => {
-              res.forEach((childConfig) => {
-                const fg = this.form.get(parentConfig.key) as UntypedFormGroup;
-                const childConfigControl = fg.get(childConfig.key);
-                if (childConfigControl) {
-                  if (childConfig.required) {
-                    childConfigControl.addValidators(Validators.required);
+              const fg = this.form.get(parentConfig.key) as UntypedFormGroup;
+              if (fg) {
+                const removedControlsKeys = Object.keys(fg.controls).filter(
+                  (key) => res.find((c) => c.key === key) === undefined
+                );
+                removedControlsKeys.forEach((removedKey) => {
+                  fg.removeControl(removedKey);
+                });
+                res.forEach((childConfig) => {
+                  const childConfigControl = fg.get(childConfig.key);
+                  if (childConfigControl) {
+                    if (childConfig.required) {
+                      childConfigControl.addValidators(Validators.required);
+                    } else {
+                      childConfigControl.removeValidators(Validators.required);
+                    }
                   } else {
-                    childConfigControl.removeValidators(Validators.required);
+                    fg.addControl(
+                      childConfig.key,
+                      new UntypedFormControl(
+                        childConfig.defaultValue,
+                        childConfig.required ? Validators.required : []
+                      ),
+                      { emitEvent: false }
+                    );
                   }
-                } else {
-                  fg.addControl(
-                    childConfig.key,
-                    new UntypedFormControl(
-                      childConfig.defaultValue,
-                      childConfig.required ? Validators.required : []
-                    ),
-                    { emitEvent: false }
-                  );
-                }
+                });
                 fg.markAllAsTouched();
-              });
+              }
             }),
             shareReplay(1)
           );
@@ -250,7 +264,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   }
 
   createRefreshableConfigObservables<
-    T extends DropdownState<any> | Record<string, PieceProperty>
+    T extends DropdownState<unknown> | Record<string, PieceProperty>
   >(c: PieceConfig) {
     this.refreshableConfigsLoadingFlags$[c.key] = new BehaviorSubject(true);
     const refreshers$ = {};
@@ -276,6 +290,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
           switchMap((collection) => {
             return this.actionMetaDataService.getPieceActionConfigOptions<T>(
               {
+                pieceVersion: '0.0.0',
                 propertyName: c.key,
                 stepName: this.stepName,
                 input: res,
@@ -336,7 +351,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         const dynamicConfigControls = {};
         if (c.value) {
           Object.keys(c.value).forEach((k) => {
-            dynamicConfigControls[k] = new UntypedFormControl(c.value[k]);
+            dynamicConfigControls[k] = new UntypedFormControl(
+              (c.value as object)[k]
+            );
           });
         } else {
           controls[c.key] = new UntypedFormControl(
@@ -418,7 +435,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     try {
       const ctrl = this.form.get(configKey)!;
       ctrl.setValue(this.codeService.beautifyJson(JSON.parse(ctrl.value)));
-    } catch {}
+    } catch {
+      //ignore
+    }
   }
   toggleCustomizedInputFlag(configKey: string) {
     if (!this.customizedInputs) {
@@ -476,9 +495,10 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       input.nativeElement.click();
     }
   }
-  async addMention(textControl:InterpolatingTextFormControlComponent,mentionOp:InsertMentionOperation)
-  {
-    
-     await textControl.addMention(mentionOp);
+  async addMention(
+    textControl: InterpolatingTextFormControlComponent,
+    mentionOp: InsertMentionOperation
+  ) {
+    await textControl.addMention(mentionOp);
   }
 }

@@ -11,6 +11,59 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+### 03/06/2023
+**Version 0.3.5** 
+
+**New Features:**
+- GenerateBanner: This feature allows users to generate an image from a template.
+- OpenAI: The Chat GPT API has been added for OpenAI support.
+
+**Enhancements:**
+
+- Webhooks: The webhooks now support all types of HTTP methods, including GET, POST, and OPTIONS.
+- OAuth2 with PKCE: The new release now supports OAuth2 with PKCE for apps.
+- Backend Port 3000 is no longer required in docker compose.
+
+**Bug Fixes:**
+
+- Completed Runs Removal: Completed runs are now successfully removed from Redis.
+- Raspberry PI: The Activepieces now works on Raspberry PI.
+- Previously, clicking would always set the cursor to the end of the input, but now this issue has been fixed.
+
+
+**Contributors:**
+
+- @tpatel created the GenerateBanner piece.
+
+**Full Changelog:** https://github.com/activepieces/activepieces/compare/0.3.4...0.3.5
+
+
+### 03/01/2023
+**Version 0.3.4** 
+
+* **Pieces:**
+  - BannerBear: generate template
+  - ClickUp: create task / post comment on task
+  - RSS: Now support ATOM feeds
+  - CSV: Convert CSV to JSON / Convert JSON to CSV (New)
+  - FreshSales: Create Contact (New)
+
+* **Features/Enhancements:**
+  - Dynamic Properties in Pieces Framework.
+  - Properties in Pieces can have default value now
+  - Code pieces now support Typescript :partying_face:
+  - Add badge for the trigger to know if it's polling or webhook.
+  - Webhooks now have flow id as path variable and not query param.
+
+* **Fixes:**
+  - Storage and HTTP pieces moved to the core tab.
+  - Flow no longer throttled sequentially
+
+* **Contributors:**
+  - @kanarelo: freshsales / csv / banner bear
+  - @ShayPunter: Enriched Clickup piece
+  - @fomojola made their first contribution in https://github.com/activepieces/activepieces/pull/664
+
 ### 02/22/2023
 **Version 0.3.3** (0.3.2 with hotfix) [GitHub](https://github.com/activepieces/activepieces/pull/583)
 
@@ -20,11 +73,13 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 * **Pieces:**
     - Figma: Includes actions for getting file, getting comments, posting comments, and triggering new comments
-    - Cal.Com: Includes actions for cancelled bookings, created bookings, and rescheduled bookings
+    - Cal.Com: Includes triggers for cancelled bookings, created bookings, and rescheduled bookings
     - RSS: Includes a trigger for new items in the feed
     - Clickup: Includes actions for getting lists, creating folderless lists, getting tasks, getting task comments, and getting spaces actions
     - Wordpress: Includes actions for creating Wordpress posts and triggering new Wordpress posts
     - Github: Includes triggers for new pull requests and new issues
+    - Posthog: Includes actions for capture events / creating project
+    - Google Tasks: Includes actions for creating task
 
 * **Features:**
     - Auto Complete styling fixes

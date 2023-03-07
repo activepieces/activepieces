@@ -13,7 +13,6 @@ import { ApButtonComponent } from './components/ap-button/ap-button.component';
 import { ApImgComponent } from './components/ap-img/ap-img.component';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { LoadingSkeletonComponent } from './components/loading-skeleton/loading-skeleton.component';
-import { ApInputComponent } from './components/ap-input/ap-input.component';
 import { LoadingIconComponent } from './components/loading-icon/loading-icon.component';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { DefaultFalsePipe } from './pipe/default-false.pipe';
@@ -58,7 +57,6 @@ import { JsonViewDialogComponent } from './components/json-view/json-view-dialog
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AuthConfigsPipe } from './components/configs-form/auth-configs.pipe';
-import { OAuth2CloudConnectControlComponent } from './components/form-controls/o-auth2-cloud-connect-control/o-auth2-cloud-connect-control.component';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { InterpolatingTextFormControlComponent } from './components/form-controls/interpolating-text-form-control/interpolating-text-form-control.component';
 import { QuillModule } from 'ngx-quill';
@@ -95,7 +93,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     ApButtonComponent,
     ApImgComponent,
     LoadingSkeletonComponent,
-    ApInputComponent,
     LoadingIconComponent,
     DefaultFalsePipe,
     DefaultTruePipe,
@@ -112,7 +109,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     DialogTitleTemplateComponent,
     JsonViewDialogComponent,
     AuthConfigsPipe,
-    OAuth2CloudConnectControlComponent,
     InterpolatingTextFormControlComponent,
     StepMentionsListComponent,
     MentionListItemTemplateComponent,
@@ -169,7 +165,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     ApButtonComponent,
     ApImgComponent,
     LoadingSkeletonComponent,
-    ApInputComponent,
     LoadingIconComponent,
     DefaultFalsePipe,
     DefaultTruePipe,
@@ -194,7 +189,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatTableModule,
     DialogTitleTemplateComponent,
     MatDialogModule,
-    OAuth2CloudConnectControlComponent,
     MatToolbarModule,
     InterpolatingTextFormControlComponent,
     MatIconModule,

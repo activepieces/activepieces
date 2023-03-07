@@ -1,9 +1,9 @@
-import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
+import { FastifyInstance, FastifyRequest } from "fastify";
 import { storeEntryService } from "./store-entry.service";
 import { PrincipalType, PutStoreEntryRequest } from "@activepieces/shared";
 import { StatusCodes } from "http-status-codes";
 
-export const storeEntryController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
+export const storeEntryController = async (fastify: FastifyInstance) => {
     fastify.post(
         "/",
         {

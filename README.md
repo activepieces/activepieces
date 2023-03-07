@@ -2,7 +2,7 @@
   <img width="300" alt="activepieceslogo" src="https://github.com/activepieces/activepieces/raw/main/assets/ap-logo.png">
 </p>
 <p align="center">
-<a href="/LICENSE" target="_blank"><img src="https://img.shields.io/github/license/activepieces/activepieces?style=for-the-badge&" alt="Activepieces Licence" /></a>&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
+<a href="/LICENSE" target="_blank"><img src='https://img.shields.io/badge/license-MIT-green?style=for-the-badge' /></a>&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
 </p>
 
 ## Activepieces is an open-source business automation tool
@@ -69,6 +69,8 @@ Visit https://www.activepieces.com/docs/install/overview
  </tr>
 </table>
 
+## Repo Activity
+![Alt](https://repobeats.axiom.co/api/embed/f3afe14b092263a6c76408043fd4fc2f72ed4cf3.svg "Repobeats analytics image")
 
 ## Connectors
 We're building no-code connectors to make flow building a frictionless process for non developers. Go to the [Pieces](https://www.activepieces.com/docs/pieces) section of our docs to browse all available pieces.
@@ -94,7 +96,6 @@ This section is dedicated to individuals who have contributed to 10 or more acti
 <a href="https://github.com/kanarelo"><img src="https://avatars.githubusercontent.com/u/393261?v=4?s=100" width="100px;" alt="Mukewa Wekalao"/></a>
 <a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4?s=100" width="100px;" alt="AbdulTheActivePiecer"/> </a>
 <a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/></a>
-<a href="https://github.com/ashrafsamhouri"><img src="https://avatars.githubusercontent.com/u/97393596?v=4?s=100" width="100px;" alt="ashrafsamhouri"/></a>
 
 ### Busy Beavers Club 🦸
 This section is dedicated to individuals who have contributed to 5 or more actions/triggers.
@@ -123,7 +124,7 @@ This section is dedicated to individuals who have contributed to 5 or more actio
       <td align="center" valign="top" width="14.28%"><a href="http://osamahaikal.pythonanywhere.com/"><img src="https://avatars.githubusercontent.com/u/72370395?v=4?s=100" width="100px;" alt="Osama Abdallah Essa Haikal"/><br /><sub><b>Osama Abdallah Essa Haikal</b></sub></a><br /><a href="#plugin-OsamaHaikal" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/M-Arman"><img src="https://avatars.githubusercontent.com/u/54455592?v=4?s=100" width="100px;" alt="Arman"/><br /><sub><b>Arman</b></sub></a><br /><a href="#security-M-Arman" title="Security">🛡️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/oskarkraemer"><img src="https://avatars.githubusercontent.com/u/42745862?v=4?s=100" width="100px;" alt="Oskar Krämer"/><br /><sub><b>Oskar Krämer</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=oskarkraemer" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://thibpat.com"><img src="https://avatars.githubusercontent.com/u/494686?v=4?s=100" width="100px;" alt="Thibaut Patel"/><br /><sub><b>Thibaut Patel</b></sub></a><br /><a href="#ideas-tpatel" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://thibpat.com"><img src="https://avatars.githubusercontent.com/u/494686?v=4?s=100" width="100px;" alt="Thibaut Patel"/><br /><sub><b>Thibaut Patel</b></sub></a><br /><a href="#ideas-tpatel" title="Ideas, Planning, & Feedback">🤔</a> <a href="#plugin-tpatel" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Applesaucesomer"><img src="https://avatars.githubusercontent.com/u/18318905?v=4?s=100" width="100px;" alt="Applesaucesomer"/><br /><sub><b>Applesaucesomer</b></sub></a><br /><a href="#ideas-Applesaucesomer" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
     <tr>

@@ -1,8 +1,8 @@
-import { FastifyInstance, FastifyPluginOptions } from "fastify";
+import { FastifyInstance } from "fastify";
 import { projectService } from "./project.service";
 
-export const projectController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
-    fastify.get("/", async (request, _reply) => {
+export const projectController = async (fastify: FastifyInstance) => {
+    fastify.get("/", async (request) => {
         return await projectService.getAll(request.principal.id);
     });
 };
