@@ -21,17 +21,16 @@ export const airtableCommon = {
           placeholder: "Please connect your account"
         }
       }
-      const request: HttpRequest = {
-        method: HttpMethod.GET,
-        url: "https://api.airtable.com/v0/meta/bases",
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: props["authentication"] as string
-        }
-      };
 
       try {
-        const response = await httpClient.sendRequest<{ bases: AirtableBase[] }>(request)
+        const response = await httpClient.sendRequest<{ bases: AirtableBase[] }>({
+          method: HttpMethod.GET,
+          url: "https://api.airtable.com/v0/meta/bases",
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: props["authentication"] as string
+          }
+        })
         if (response.status === 200) {
           return {
             disabled: false,
@@ -56,19 +55,19 @@ export const airtableCommon = {
     }
   }),
 
-  table: Property.Dropdown({
+  table: Property.Dropdown<string>({
     displayName: 'Table',
     required: true,
     refreshers: ["authentication", "base"],
-    options: async (props) => {
-      if (!props['authentication']) {
+    options: async ({ authentication, base }) => {
+      if (!authentication) {
         return {
           disabled: true,
           options: [],
           placeholder: "Please connect your account"
         }
       }
-      if (!props['base']) {
+      if (!base) {
         return {
           disabled: true,
           options: [],
@@ -76,27 +75,23 @@ export const airtableCommon = {
         }
       }
 
-      const request: HttpRequest = {
-        method: HttpMethod.GET,
-        url: `https://api.airtable.com/v0/meta/bases/${props['base']}/tables`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: props["authentication"] as string
-        }
-      }
-
       try {
-        const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>(request);
-        if (response.status === 200) {
+        const tables: AirtableTable[] = await airtableCommon.fetchTableList({
+          token: authentication as string,
+          baseId: base as string
+        })
+
+        if (tables) {
           return {
             disabled: false,
-            options: response.body.tables.map((table) => {
-              return { value: table, label: table.name };
-            })
+            options: tables.map(
+              (table) => ({ value: table.id, label: table.name })
+            )
           }
         }
       } catch (e) {
         console.debug(e)
+
         return {
           disabled: true,
           options: [],
@@ -123,37 +118,51 @@ export const airtableCommon = {
 
       const fields: DynamicPropsValue = {};
 
-      (table as AirtableTable).fields.map((field: AirtableField) => {
-        if (AirtableEnterpriseFields.includes(field.type)) {
-          console.debug("skipping type", field.type)
-          //skip these types
-          return
-        } 
-
-        const params = {
-          displayName: field.name,
-          description: field.description,
-          required: false
-        }
-
-        if (field.type === "singleSelect") {
-          const options = field.options!.choices.map((option: { id: string, name: string }) => ({
-            value: option.id,
-            label: option.name
-          }))
-
-          fields[field.id] = (AirtableFieldMapping[field.type])({
-            ...params,
-            options: {
-              options
-            }
-          })
-        } else if (field.type === "multipleSelects") {
-          //TODO: implement multiselect
-        } else {
-          fields[field.id] = (AirtableFieldMapping[field.type])(params)
-        }
-      })
+      try {
+        const airtable: AirtableTable = await airtableCommon.fetchTable({
+          token: authentication as unknown as string,
+          baseId: base as unknown as string,
+          tableId: table as unknown as string
+        });
+  
+        airtable.fields.map((field: AirtableField) => {
+          if (AirtableEnterpriseFields.includes(field.type)) {
+            console.debug("skipping type", field.type)
+            //skip these types
+            return
+          }
+  
+          const params = {
+            displayName: field.name,
+            description: (
+              (['date', 'dateTime'].includes(field.type)) 
+                ? `${field.description}. Expected format: mmmm d,yyyy` 
+                : field.description
+            ),
+            required: false
+          }
+  
+          if (field.type === "singleSelect") {
+            const options = field.options?.choices.map((option: { id: string, name: string }) => ({
+              value: option.id,
+              label: option.name
+            }))
+  
+            fields[field.id] = (AirtableFieldMapping[field.type])({
+              ...params,
+              options: {
+                options: options ?? []
+              }
+            })
+          } else if (field.type === "multipleSelects") {
+            //TODO: implement multiselect
+          } else {
+            fields[field.id] = (AirtableFieldMapping[field.type])(params)
+          }
+        })
+      } catch (e) {
+        console.debug(e)
+      }
 
       return fields
     }
@@ -174,7 +183,39 @@ export const airtableCommon = {
     return currentTablleSnapshot;
   },
 
-  async createRecord({personalToken: token, fields, tableId, baseId}: Params) {
+  async fetchTableList({ token, baseId }: { token: string, baseId: string }): Promise<AirtableTable[]> {
+    const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>({
+      method: HttpMethod.GET,
+      url: `https://api.airtable.com/v0/meta/bases/${baseId}/tables`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token
+      }
+    })
+
+    if (response.status === 200) {
+      console.debug("fetch airtable list response", response)
+      return response.body.tables
+    }
+
+    return []
+  },
+
+  async fetchTable({ token, baseId, tableId }: { token: string, baseId: string, tableId: string }) {
+    const response = await httpClient.sendRequest<AirtableTable>({
+      method: HttpMethod.GET,
+      url: `https://api.airtable.com/v0/meta/bases/${baseId}/tables/${tableId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token
+      }
+    })
+
+    console.debug("fetch airtable response", response)
+    return response.body
+  },
+
+  async createRecord({ personalToken: token, fields, tableId, baseId }: Params) {
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
@@ -188,8 +229,8 @@ export const airtableCommon = {
     }
 
     const response = await httpClient.sendRequest<AirtableRecord>(request);
-    console.debug("Create record response", response.body)
-    
+    console.debug("Create record response", response)
+
     if (response.status === 200) {
       return response.body
     }
@@ -198,9 +239,9 @@ export const airtableCommon = {
   }
 }
 
-interface Params { 
+interface Params {
   personalToken: string
   baseId: string
   tableId: string
-  fields?: Record<string, unknown> 
+  fields?: Record<string, unknown>
 }
