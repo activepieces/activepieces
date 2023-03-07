@@ -1,0 +1,27 @@
+{
+  "name": "pieces-connections",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/connections/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/connections",
+        "tsConfig": "packages/pieces/connections/tsconfig.lib.json",
+        "packageJson": "packages/pieces/connections/package.json",
+        "main": "packages/pieces/connections/src/index.ts",
+        "assets": ["packages/pieces/connections/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/connections/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

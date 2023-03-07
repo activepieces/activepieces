@@ -35,6 +35,7 @@ import {
   TextInsertOperation,
 } from './utils';
 import 'quill-mention';
+import './fixed-selection-mention';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
 import { DomSanitizer } from '@angular/platform-browser';

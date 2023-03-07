@@ -12,6 +12,7 @@ export const pieceHelper = {
                 params: {
                     stepName: params.stepName,
                     pieceName: params.pieceName,
+                    pieceVersion: params.pieceVersion,
                     configName: params.propertyName,
                 },
             });
@@ -46,6 +47,7 @@ function getProperty(params: ExecutePropsOptions){
             code: ErrorCode.PIECE_NOT_FOUND,
             params: {
                 pieceName: params.pieceName,
+                pieceVersion: params.pieceVersion,
             },
         });
     }
@@ -55,8 +57,9 @@ function getProperty(params: ExecutePropsOptions){
         throw new ActivepiecesError({
             code: ErrorCode.STEP_NOT_FOUND,
             params: {
-                stepName: params.stepName,
                 pieceName: params.pieceName,
+                pieceVersion: params.pieceVersion,
+                stepName: params.stepName,
             },
         });
     }

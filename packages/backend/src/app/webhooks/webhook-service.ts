@@ -38,7 +38,7 @@ export const webhookService = {
         const flowVersion = await flowVersionService.getOneOrThrow(
             instance.flowIdToVersionId[flow.id]
         );
-        const payloads: any[] = await triggerUtils.executeTrigger({
+        const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId: collection.projectId,
             collectionVersion: collectionVersion,
             flowVersion: flowVersion,
@@ -70,7 +70,7 @@ export const webhookService = {
     },
     async getWebhookUrl(flowId: FlowId): Promise<string> {
         const webhookPrefix = await this.getWebhookPrefix();
-        return `${webhookPrefix}?flowId=${flowId}`;
+        return `${webhookPrefix}/${flowId}`;
     }
 };
 

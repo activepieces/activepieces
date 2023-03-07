@@ -1,0 +1,49 @@
+.text-center {
+  text-align: center;
+}
+
+.intro-title {
+  color: black;
+}
+
+.close-button {
+  cursor: pointer;
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+}
+
+.btn-block {
+  width: 100%;
+  height: 50px;
+}
+
+.modal {
+  padding: 1rem;
+}
+
+.logo {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+}
+
+.logo-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  width: 100px;
+  margin-left: auto;
+  margin-right: auto;
+  background-position: center;
+}
+
+.celebration {
+  background-image: url('https://cdn.activepieces.com/sdk/assets/celebration.gif');
+}
+
+.mat-mdc-dialog-actions {
+  justify-content: end;
+}

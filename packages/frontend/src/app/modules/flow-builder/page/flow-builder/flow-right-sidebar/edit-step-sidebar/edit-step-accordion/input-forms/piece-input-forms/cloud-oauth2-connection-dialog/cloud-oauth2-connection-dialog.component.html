@@ -47,8 +47,8 @@
       </ng-container>
     </div>
     <div>
-      <app-o-auth2-cloud-connect-control [cloudConnectionPopupSettings]="cloudConnectionPopupSettings"
-        formControlName="value"></app-o-auth2-cloud-connect-control>
+      <app-o-auth2-connect-control [popupParams]="cloudConnectionPopupSettings"
+        formControlName="value" [settingsValid]="true"></app-o-auth2-connect-control>
       <p @fadeInUp class="ap-typography-caption ap-text-danger"
         *ngIf="settingsForm.controls.value.invalid && settingsForm.controls.value.touched">
         You have to connect an account to continue

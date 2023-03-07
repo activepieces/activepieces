@@ -12,32 +12,31 @@ import { Store } from '@ngrx/store';
 import { catchError, map, Observable, of, take, tap } from 'rxjs';
 import {
   AppConnection,
+  AppConnectionType,
   OAuth2AppConnection,
-  OAuth2ConnectionValueWithApp,
   PropertyType,
   UpsertOAuth2Request,
 } from '@activepieces/shared';
+
 import deepEqual from 'deep-equal';
 import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
 import { PieceConfig } from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
-import { CloudAuthConfigsService } from '../../../../../../../../../common/service/cloud-auth-configs.service';
 import { AppConnectionsService } from '../../../../../../../../../common/service/app-connections.service';
+import { CloudAuthConfigsService } from '../../../../../../../../../common/service/cloud-auth-configs.service';
 import { ConnectionValidator } from '../../../../../../validators/connectionNameValidator';
 import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
 import { appConnectionsActions } from '../../../../../../../../store/app-connections/app-connections.action';
+import {
+  OAuth2PopupParams,
+  OAuth2PopupResponse,
+} from '../../../../../../../../../common/model/oauth2-popup-params.interface';
 
 interface AuthConfigSettings {
-  appName: FormControl<string | null>;
   redirect_url: FormControl<string>;
   client_secret: FormControl<string>;
   client_id: FormControl<string>;
-  auth_url: FormControl<string>;
-  token_url: FormControl<string>;
-  scope: FormControl<string>;
   name: FormControl<string>;
-  value: FormControl<OAuth2ConnectionValueWithApp>;
-  refresh_url: FormControl<string>;
-  extraParams: FormControl<Record<string, unknown>>;
+  value: FormControl<OAuth2PopupResponse>;
   props: UntypedFormGroup;
 }
 export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
@@ -49,6 +48,7 @@ export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
 })
 export class OAuth2ConnectionDialogComponent implements OnInit {
   PropertyType = PropertyType;
+  readonly FAKE_CODE = 'FAKE_CODE';
   @Input() pieceAuthConfig: PieceConfig;
   @Input() pieceName: string;
   @Input() connectionToUpdate: OAuth2AppConnection | undefined;
@@ -99,17 +99,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       );
     const propsControls = this.createPropsFormGroup();
     this.settingsForm = this.fb.group({
-      extraParams: new FormControl<Record<string, unknown>>(
-        this.pieceAuthConfig.extra ?? {},
-        {
-          nonNullable: true,
-          validators: [Validators.required],
-        }
-      ),
-      appName: new FormControl<string | null>(this.pieceName, {
-        nonNullable: false,
-        validators: [],
-      }),
       redirect_url: new FormControl(
         this.serverUrl ? `${this.serverUrl}/redirect` : '',
         {
@@ -125,17 +114,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      auth_url: new FormControl(this.pieceAuthConfig.authUrl || '', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-      token_url: new FormControl(this.pieceAuthConfig.tokenUrl || '', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-      scope: new FormControl(this.pieceAuthConfig.scope?.join(' ') || '', {
-        nonNullable: true,
-      }),
       name: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
         nonNullable: true,
         validators: [Validators.required, Validators.pattern('[A-Za-z0-9_]*')],
@@ -148,16 +126,18 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
           ),
         ],
       }),
-      value: new FormControl(undefined as any, Validators.required),
-      refresh_url: new FormControl('code', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
+      value: new FormControl(
+        { code: '' },
+        {
+          nonNullable: true,
+          validators: Validators.required,
+        }
+      ),
       props: this.fb.group(propsControls),
     });
     this.settingsForm.controls.name.markAllAsTouched();
+    this.settingsForm.controls.redirect_url.disable();
     if (this.connectionToUpdate) {
-      this.settingsForm.controls.value.setValue(this.connectionToUpdate.value);
       this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
       this.settingsForm.controls.client_id.setValue(
         this.connectionToUpdate.value.client_id
@@ -169,12 +149,16 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         this.connectionToUpdate.value.redirect_url
       );
       this.settingsForm.controls.name.disable();
-
+      this.settingsForm.controls.redirect_url.disable();
+      this.settingsForm.controls.client_id.disable();
+      this.settingsForm.controls.client_secret.disable();
       this.connectionToUpdate.value.props
         ? this.settingsForm.controls.props.setValue(
             this.connectionToUpdate.value.props
           )
         : null;
+      this.settingsForm.controls.props.disable();
+      this.settingsForm.controls.value.setValue({ code: this.FAKE_CODE });
     }
   }
   submit() {
@@ -189,20 +173,18 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     const connectionName = this.connectionToUpdate
       ? this.connectionToUpdate.name
       : this.settingsForm.controls.name.value;
-    const settingsFormValue = this.getOAuth2Settings();
-    const connectionValue = settingsFormValue.value;
-    delete connectionValue['name'];
-    delete connectionValue['appName'];
     const newConnection: UpsertOAuth2Request = {
       name: connectionName,
       appName: this.pieceName,
       value: {
-        ...connectionValue,
+        code: this.settingsForm.controls.value.value.code,
+        code_challenge: this.settingsForm.controls.value.value.code_challenge,
+        type: AppConnectionType.OAUTH2,
         client_id: this.settingsForm.controls.client_id.value,
         client_secret: this.settingsForm.controls.client_secret.value,
-        redirect_url: this.settingsForm.controls.redirect_url.value,
-        scope: this.settingsForm.controls.scope.value,
-        token_url: this.settingsForm.controls.token_url.value,
+        redirect_url: this.settingsForm.controls.redirect_url.getRawValue(),
+        scope: this.pieceAuthConfig.scope!.join(' ') || '',
+        token_url: this.pieceAuthConfig.tokenUrl!,
         props: this.pieceAuthConfig.oAuthProps
           ? this.settingsForm.controls.props.value
           : undefined,
@@ -217,11 +199,15 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
   };
 
   saveConnection(connection: UpsertOAuth2Request): void {
+    if (connection.value.code === this.FAKE_CODE) {
+      this.dialogRef.close(connection);
+      return;
+    }
     this.upsert$ = this.appConnectionsService.upsert(connection).pipe(
       catchError((err) => {
         console.error(err);
         this.snackbar.open(
-          'Connection operation failed please check your console.',
+          'Connection failed, make sure client id and secret is correct.',
           'Close',
           { panelClass: 'error', duration: 5000 }
         );
@@ -263,11 +249,11 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     return controls;
   }
 
-  getOAuth2Settings() {
+  getOAuth2Settings(): OAuth2PopupParams {
     const formValue = this.settingsForm.getRawValue();
+    let authUrl = this.pieceAuthConfig.authUrl!;
+    let tokenUrl = this.pieceAuthConfig.tokenUrl!;
     if (this.pieceAuthConfig.oAuthProps) {
-      let authUrl = formValue.auth_url;
-      let tokenUrl = formValue.token_url;
       Object.keys(this.pieceAuthConfig.oAuthProps).forEach((key) => {
         authUrl = authUrl.replaceAll(
           `{${key}}`,
@@ -278,8 +264,14 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
           this.settingsForm.controls.props.value[key]
         );
       });
-      return { ...formValue, auth_url: authUrl, token_url: tokenUrl };
     }
-    return formValue;
+    return {
+      auth_url: this.pieceAuthConfig.authUrl!,
+      client_id: formValue.client_id,
+      extraParams: this.pieceAuthConfig.oAuthProps || {},
+      redirect_url: formValue.redirect_url,
+      pkce: this.pieceAuthConfig.pkce,
+      scope: this.pieceAuthConfig.scope!.join(' '),
+    };
   }
 }

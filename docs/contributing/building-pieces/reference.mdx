@@ -22,9 +22,10 @@ This contains piece metadata and should be placed into `app_name/index.ts`
 export const pieceName = createPiece({
 	name: string, // Unique name across all pieces
 	logoUrl: string, // Logo URL
-    authors: [], // List of GitHub contributors' usernames.
+  authors: [], // List of GitHub contributors' usernames.
 	actions: Action[], // List of actions
 	triggers: Trigger[], // List of triggers
+  version: '0.0.0', // piece version, uses semver convention please see semver.org
 });
 ```
 
@@ -113,7 +114,7 @@ Property.LongText({
 })
 ```
 
-#### Checkbox 
+#### Checkbox
 
 ```typescript
 Property.Checkbox({
@@ -123,7 +124,7 @@ Property.Checkbox({
 })
 ```
 
-#### Dynamic Properties 
+#### Dynamic Properties
 
 ```typescript
 Property.DynamicProperties({
@@ -135,7 +136,7 @@ Property.DynamicProperties({
 })
 ```
 
-#### Basic Authentication 
+#### Basic Authentication
 
 ```typescript
 Property.BasicAuth({
@@ -153,7 +154,7 @@ Property.BasicAuth({
 })
 ```
 
-#### OAuth2 
+#### OAuth2
 
 ```typescript
 Property.OAuth2({
@@ -166,7 +167,7 @@ Property.OAuth2({
 ```
 
 
-#### Number 
+#### Number
 
 ```typescript
 Property.Number({
@@ -176,7 +177,7 @@ Property.Number({
 })
 ```
 
-#### Dropdown 
+#### Dropdown
 
 Options can be loaded dynamically based on the user's props value.
 
@@ -187,7 +188,7 @@ Property.Dropdown({
     required: boolean;
     refreshers: string[], // properties that when changed, will trigger the options function to execute
     options: async (propsValue): DropdownState {
-        if (props['authentication'] === undefined) {
+        if (!props['authentication']) {
             return {
                 disabled: true;
             }

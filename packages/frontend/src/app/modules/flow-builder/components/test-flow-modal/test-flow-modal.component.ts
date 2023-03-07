@@ -62,7 +62,14 @@ export class TestFlowModalComponent implements OnInit {
   testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
   testFlowButtonDisabledTooltip = '';
   payloadControl: UntypedFormControl = new UntypedFormControl(
-    '{}',
+    JSON.stringify(
+      {
+        body: {},
+        headers: {},
+      },
+      null,
+      2
+    ),
     jsonValidator
   );
   codeEditorOptions = {

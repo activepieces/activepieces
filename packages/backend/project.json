@@ -37,19 +37,13 @@
         }
       }
     },
-    "dev": {
+    "serve": {
       "executor": "nx:run-commands",
       "options": {
         "commands": [
           "nx build-watch backend",
           "nx serve engine"
         ]
-      }
-    },
-    "serve": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "nodemon -e ts,js,mjs,json -x 'nx bundle engine' --watch packages/engine/src --watch packages/pieces/framework/src --watch packages/pieces/apps/src & nx build-watch backend"
       }
     },
     "lint": {

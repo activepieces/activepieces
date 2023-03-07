@@ -113,7 +113,7 @@
             <mat-label> {{ (refreshableConfigsLoadingFlags$[config.key] | async)? 'Loading...' : config.label
               }}</mat-label>
             <mat-select
-              [style.display]="((dropdownOptionsObservables$[config.key] | async) === undefined ||  (dropdownOptionsObservables$[config.key] | async)?.disabled === true)? 'none':'block' "
+              [style.display]="((dropdownOptionsObservables$[config.key] | async) === undefined || (dropdownOptionsObservables$[config.key] | async) === null ||  (dropdownOptionsObservables$[config.key] | async)?.disabled === true)? 'none':'block' "
               multiple [formControlName]="config.key" [compareWith]="dropdownCompareWithFunction">
               <ng-container *ngIf="dropdownOptionsObservables$[config.key]| async as state">
                 <mat-option *ngFor="let opt of state.options" [value]="opt.value">
@@ -170,6 +170,33 @@
       </div>
 
     </ng-container>
+
+    <ng-container *ngSwitchCase="PropertyType.STATIC_MULTI_SELECT_DROPDOWN">
+      <div>
+        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:config} ">
+          </ng-container>
+        </span>
+        <ng-container
+          *ngTemplateOutlet="customizedInputs && customizedInputs[config.key]? textInputTemplate:staticMultiSelectDropdownInputTemplate ;context:{$implicit:config, formGroup:formGroup}">
+        </ng-container>
+        <ng-template #staticMultiSelectDropdownInputTemplate>
+          <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label> {{ config.label }} </mat-label>
+            <mat-select [matTooltip]="config.description" [formControlName]="config.key" multiple
+              [compareWith]="dropdownCompareWithFunction">
+              <mat-option *ngFor="let opt of config.staticDropdownState.options" [value]="opt.value">
+                {{opt.label}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="formGroup.get(config.key)?.invalid">
+              {{config.label}} is required
+            </mat-error>
+          </mat-form-field>
+        </ng-template>
+      </div>
+    </ng-container>
+
 
     <ng-container *ngSwitchCase="PropertyType.ARRAY">
       <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
@@ -306,8 +333,9 @@
     </ng-container>
 
     <ng-container *ngSwitchCase="PropertyType.DYNAMIC">
-      <ng-container
-        *ngIf="(refreshableConfigsLoadingFlags$[config.key] | async) === false || (refreshableConfigsLoadingFlags$[config.key] | async) === undefined; else loading">
+      <ng-container *ngIf="(refreshableConfigsLoadingFlags$[config.key] | async) === false || 
+        (refreshableConfigsLoadingFlags$[config.key] | async) === undefined || 
+        (refreshableConfigsLoadingFlags$[config.key] | async) === null; else loading">
 
         <div *ngFor="let c of dynamicPropsObservables$[config.key] | async; let i = index">
           <ng-container

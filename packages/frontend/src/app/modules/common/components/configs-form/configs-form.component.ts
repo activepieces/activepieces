@@ -95,7 +95,11 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   editorOptions = {
     lineNumbers: true,
     theme: 'lucario',
-    mode: 'javascript',
+    lineWrapping: true,
+    matchBrackets: true,
+    gutters: ['CodeMirror-lint-markers'],
+    mode: 'application/json',
+    lint: true,
   };
   customizedInputs: Record<string, boolean> | undefined;
   faInfoCircle = faInfoCircle;
@@ -139,6 +143,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       this.customizedInputs = obj.customizedInputs;
     }
     this.createForm();
+    this.cd.markForCheck();
   }
   registerOnChange(fn: (value) => void): void {
     this.OnChange = fn;
@@ -162,7 +167,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   createForm() {
     this.requiredConfigs = this.configs.filter((c) => c.required);
     this.allOptionalConfigs = this.configs.filter((c) => !c.required);
-
     this.selectedOptionalConfigs = this.allOptionalConfigs.filter(
       (c) => c.value !== undefined
     );
@@ -172,6 +176,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
     const optionalConfigsControls = this.createConfigsFormControls(
       this.selectedOptionalConfigs
     );
+
     this.form = this.fb.group({
       ...requiredConfigsControls,
       ...optionalConfigsControls,
@@ -222,27 +227,35 @@ export class ConfigsFormComponent implements ControlValueAccessor {
               });
             }),
             tap((res) => {
-              res.forEach((childConfig) => {
-                const fg = this.form.get(parentConfig.key) as UntypedFormGroup;
-                const childConfigControl = fg.get(childConfig.key);
-                if (childConfigControl) {
-                  if (childConfig.required) {
-                    childConfigControl.addValidators(Validators.required);
+              const fg = this.form.get(parentConfig.key) as UntypedFormGroup;
+              if (fg) {
+                const removedControlsKeys = Object.keys(fg.controls).filter(
+                  (key) => res.find((c) => c.key === key) === undefined
+                );
+                removedControlsKeys.forEach((removedKey) => {
+                  fg.removeControl(removedKey);
+                });
+                res.forEach((childConfig) => {
+                  const childConfigControl = fg.get(childConfig.key);
+                  if (childConfigControl) {
+                    if (childConfig.required) {
+                      childConfigControl.addValidators(Validators.required);
+                    } else {
+                      childConfigControl.removeValidators(Validators.required);
+                    }
                   } else {
-                    childConfigControl.removeValidators(Validators.required);
+                    fg.addControl(
+                      childConfig.key,
+                      new UntypedFormControl(
+                        childConfig.defaultValue,
+                        childConfig.required ? Validators.required : []
+                      ),
+                      { emitEvent: false }
+                    );
                   }
-                } else {
-                  fg.addControl(
-                    childConfig.key,
-                    new UntypedFormControl(
-                      childConfig.defaultValue,
-                      childConfig.required ? Validators.required : []
-                    ),
-                    { emitEvent: false }
-                  );
-                }
+                });
                 fg.markAllAsTouched();
-              });
+              }
             }),
             shareReplay(1)
           );
@@ -277,6 +290,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
           switchMap((collection) => {
             return this.actionMetaDataService.getPieceActionConfigOptions<T>(
               {
+                pieceVersion: '0.0.0',
                 propertyName: c.key,
                 stepName: this.stepName,
                 input: res,

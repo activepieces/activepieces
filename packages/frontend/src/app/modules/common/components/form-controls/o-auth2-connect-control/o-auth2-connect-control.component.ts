@@ -1,9 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { catchError, Observable, tap, throwError } from 'rxjs';
-import { AppConnectionType, OAuth2AppDetails } from '@activepieces/shared';
 import { fadeInUp400ms } from '../../../animation/fade-in-up.animation';
 import { Oauth2Service } from '../../../service/oauth2.service';
+import {
+  OAuth2PopupParams,
+  OAuth2PopupResponse,
+} from '../../../model/oauth2-popup-params.interface';
 
 @Component({
   selector: 'app-o-auth2-connect-control',
@@ -18,12 +21,14 @@ import { Oauth2Service } from '../../../service/oauth2.service';
   animations: [fadeInUp400ms],
 })
 export class OAuth2ConnectControlComponent implements ControlValueAccessor {
-  @Input() configSettings: OAuth2AppDetails;
+  @Input() popupParams: OAuth2PopupParams;
   @Input() settingsValid: boolean;
-  responseData: unknown = null;
+  responseData: OAuth2PopupResponse = {
+    code: '',
+  };
   popUpError = false;
   isDisabled = false;
-  popupOpened$: Observable<unknown>;
+  popupOpened$: Observable<any>;
   onChange: (val) => void = (newValue) => {
     newValue;
   };
@@ -36,9 +41,10 @@ export class OAuth2ConnectControlComponent implements ControlValueAccessor {
     this.isDisabled = isDisabled;
   }
 
-  writeValue(obj: unknown): void {
+  writeValue(obj: OAuth2PopupResponse): void {
     this.responseData = obj;
   }
+
   registerOnChange(fn: (val) => void): void {
     this.onChange = fn;
   }
@@ -47,19 +53,16 @@ export class OAuth2ConnectControlComponent implements ControlValueAccessor {
   }
 
   openPopup(): void {
-    const configSettings = this.configSettings as OAuth2AppDetails & {
-      extraParams: Record<string, unknown>;
-      auth_url: string;
-      scope: string;
-    };
-    this.popupOpened$ = this.oauth2Service.openPopup(configSettings).pipe(
+    this.popupOpened$ = this.oauth2Service.openPopup(this.popupParams).pipe(
       tap((value) => {
         this.popUpError = false;
         this.responseData = value;
-        this.onChange({ ...value, type: AppConnectionType.OAUTH2 });
+        this.onChange(value);
       }),
       catchError((err) => {
-        this.responseData = null;
+        this.responseData = {
+          code: '',
+        };
         this.onChange(null);
         this.popUpError = true;
         return throwError(() => {
@@ -69,7 +72,9 @@ export class OAuth2ConnectControlComponent implements ControlValueAccessor {
     );
   }
   clearControlValue() {
-    this.responseData = null;
+    this.responseData = {
+      code: '',
+    };
     this.onChange(null);
   }
 }

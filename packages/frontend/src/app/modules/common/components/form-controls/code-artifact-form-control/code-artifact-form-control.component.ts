@@ -47,7 +47,9 @@ export class CodeArtifactFormControlComponent
     lineWrapping: true,
     theme: 'lucario',
     readOnly: '',
-    mode: 'javascript',
+    mode: 'text/typescript',
+    matchBrackets: true,
+    gutters: ['CodeMirror-lint-markers'],
   };
   constructor(
     private formBuilder: FormBuilder,

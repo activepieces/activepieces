@@ -4,6 +4,7 @@ export enum ExecutionOutputStatus {
   SUCCEEDED = 'SUCCEEDED',
   FAILED = 'FAILED',
   RUNNING = "RUNNING",
+  TIMEOUT = "TIMEOUT",
   INTERNAL_ERROR = "INTERNAL_ERROR",
 }
 

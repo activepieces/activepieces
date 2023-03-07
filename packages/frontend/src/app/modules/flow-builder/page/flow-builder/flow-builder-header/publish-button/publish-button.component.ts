@@ -31,19 +31,30 @@ export class PublishButtonComponent implements OnInit {
     this.disableDeployButton$ = combineLatest({
       publishingSavingStates: this.collectionState$,
       AllFlowsValidty: this.store.select(BuilderSelectors.selectFlowsValidity),
+      anyFlowHasSteps: this.store.select(
+        BuilderSelectors.selectAnyFlowHasSteps
+      ),
     }).pipe(
       map((res) => {
         return (
           !res.AllFlowsValidty ||
           res.publishingSavingStates.isPublishing ||
-          res.publishingSavingStates.isSaving
+          res.publishingSavingStates.isSaving ||
+          !res.anyFlowHasSteps
         );
       })
     );
-    this.buttonTooltipText$ = this.disableDeployButton$.pipe(
+    this.buttonTooltipText$ = combineLatest({
+      buttonIsDisabled: this.disableDeployButton$,
+      anyFlowHasSteps: this.store.select(
+        BuilderSelectors.selectAnyFlowHasSteps
+      ),
+    }).pipe(
       delay(100),
       map((res) => {
-        if (res) {
+        if (!res.anyFlowHasSteps) {
+          return 'At least one flow has to have a step after its trigger';
+        } else if (res.buttonIsDisabled) {
           return 'Please fix all flows';
         } else {
           return 'Publish collection';

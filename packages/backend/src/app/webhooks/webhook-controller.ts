@@ -5,36 +5,49 @@ import { ApId } from "@activepieces/shared";
 import { webhookService } from "./webhook-service";
 
 export const webhookController: FastifyPluginCallback = (app, _opts, done): void => {
-    app.post(
-        "/",
+
+    app.all(
+        "/:flowId",
         {
             schema: {
-                querystring: WebhookQueryParams,
+                params: WebhookUrlParams,
             },
         },
-        async (request: FastifyRequest<{ Querystring: WebhookQueryParams }>, reply) => {
-            webhookService.callback({
-                flowId: request.query.flowId,
-                payload: {
-                    headers: request.headers,
-                    body: request.body,
-                    queryParams: request.query
-                },
-            });
+        async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+            handler(request, request.params.flowId);
             await reply.status(StatusCodes.OK).send();
         }
     );
 
-    /**
-   * Used by applications to test webhooks
-   */
-    app.get("/", (_req: FastifyRequest, res: FastifyReply) => res.status(StatusCodes.OK).send());
+
+    app.all(
+        "/",
+        {
+            schema: {
+                querystring: WebhookUrlParams,
+            },
+        },
+        async (request: FastifyRequest<{ Querystring: WebhookUrlParams }>, reply) => {
+            handler(request, request.query.flowId);
+            await reply.status(StatusCodes.OK).send();
+        }
+    );
 
     done();
 };
 
-const WebhookQueryParams = Type.Object({
+function handler(request: FastifyRequest, flowId: string){
+    webhookService.callback({
+        flowId: flowId,
+        payload: {
+            headers: request.headers,
+            body: request.body,
+            queryParams: request.query
+        },
+    });
+}
+const WebhookUrlParams = Type.Object({
     flowId: ApId,
 });
 
-type WebhookQueryParams = Static<typeof WebhookQueryParams>;
+type WebhookUrlParams = Static<typeof WebhookUrlParams>;
