@@ -51,7 +51,7 @@ export class Oauth2Service {
     this.currentlyOpenPopUp = popup;
     const codeObs$ = new Observable<any>((observer) => {
       window.addEventListener('message', function handler(event) {
-        if (redirect_uri.startsWith(event.origin)) {
+     //   if (redirect_uri.startsWith(event.origin)) {
           if (event.data != undefined) {
             event.data.code = decodeURIComponent(event.data.code);
             observer.next(event.data);
@@ -63,7 +63,7 @@ export class Oauth2Service {
             observer.complete();
           }
           window.removeEventListener('message', handler);
-        }
+       // }
       });
     });
 

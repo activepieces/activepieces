@@ -166,7 +166,20 @@
       "pages": [
         "telemetry",
         "changelog",
+<<<<<<< Updated upstream
         "license"
+=======
+        "license",
+        {
+          "group": "Product Embed",
+          "pages": [
+            "product-embed/overview",
+            "product-embed/user-authentication",
+            "product-embed/frontend-sdk",
+            "product-embed/user-flows"
+          ]
+        }
+>>>>>>> Stashed changes
       ]
     }
   ],

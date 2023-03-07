@@ -40,6 +40,7 @@ function handler(request: FastifyRequest, flowId: string){
     webhookService.callback({
         flowId: flowId,
         payload: {
+            method: request.method,
             headers: request.headers as Record<string, string>,
             body: request.body,
             queryParams: request.query as Record<string, string>,

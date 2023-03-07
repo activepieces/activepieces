@@ -1,17 +1,17 @@
 import { pieces } from "@activepieces/pieces-apps";
-import { ExecuteEventParserOperation, ExecuteTriggerOperation, ExecutionState, ParseEventResponse, PieceTrigger, TriggerHookType } from "@activepieces/shared";
+import { ExecuteEventParserOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, TriggerHookType } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 
 export const triggerHelper = {
   async executeEventParser(params: ExecuteEventParserOperation): Promise<ParseEventResponse | undefined> {
     const piece = pieces.find((p) => p.name === params.pieceName);
-    if(piece === undefined){
+    if (piece === undefined) {
       throw new Error(`Piece is not found ${params.pieceName}`)
     }
     return piece.events?.parseAndReply(params.event);
   },
-  async executeTrigger(params: ExecuteTriggerOperation) {
+  async executeTrigger(params: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | unknown[]> {
     const flowTrigger: PieceTrigger = params.flowVersion.trigger as PieceTrigger;
     const piece = pieces.find((p) => p.name === flowTrigger.settings.pieceName);
     const trigger = piece?.getTrigger(flowTrigger.settings.triggerName);
@@ -38,12 +38,12 @@ export const triggerHelper = {
       case TriggerHookType.ON_DISABLE:
         await trigger.onDisable(context);
         return {
-          eventListners: appListeners
+          listeners: []
         }
       case TriggerHookType.ON_ENABLE:
         await trigger.onEnable(context);
         return {
-          eventListners: appListeners
+          listeners: appListeners
         }
       case TriggerHookType.RUN:
         // TODO: fix types to remove use of any

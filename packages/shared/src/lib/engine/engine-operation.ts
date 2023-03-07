@@ -18,7 +18,6 @@ export enum TriggerHookType {
 
 export type EngineOperation = ExecuteFlowOperation | ExecutePropsOptions | ExecuteTriggerOperation | ExecuteEventParserOperation;
 
-
 export interface ExecuteEventParserOperation {
     pieceName: string;
     event: EventPayload
@@ -59,11 +58,25 @@ export interface ExecuteTriggerOperation {
 
 export interface EventPayload {
     body: any,
+    method: string,
     headers: Record<string, string>,
     queryParams: Record<string, string>,
 }
 
-export interface ParseEventResponse {
-    event: string;
-    identifierValue: string, data: unknown
+export type ParseEventResponse = {
+    event?: string;
+    identifierValue?: string,
+    reply?: {
+        headers: Record<string, string>,
+        body: unknown
+    }
+}
+
+export interface AppEventListener {
+    events: string[],
+    identifierValue: string,
+};
+
+export interface ExecuteTriggerResponse {
+    listeners: AppEventListener[];
 }

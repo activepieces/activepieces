@@ -1,7 +1,7 @@
-import { FlowId, ProjectId } from "@activepieces/shared";
+import { apId, FlowId, ProjectId } from "@activepieces/shared";
 import { databaseConnection } from "../database/database-connection";
-import { InsertResult } from "typeorm";
 import { AppEventRouting, AppEventRoutingEntity } from "./app-event-routing.entity";
+import { logger } from "../helper/logger";
 
 
 const appEventRoutingRepo = databaseConnection.getRepository(AppEventRoutingEntity);
@@ -16,18 +16,20 @@ export const appEventRoutingService = {
         identifierValue: string,
         flowId: FlowId,
         projectId: ProjectId
-    }): Promise<void> {
-        const upsertCommands: Promise<InsertResult>[] = [];
+    }): Promise<AppEventRouting[]> {
+        logger.info(`Creating listeners for ${appName}, events=${events}, identifierValue=${identifierValue}`);
+        const upsertCommands: Promise<AppEventRouting>[] = [];
         events.forEach(event => {
-            upsertCommands.push(appEventRoutingRepo.upsert({
+            upsertCommands.push(appEventRoutingRepo.save({
+                id: apId(),
                 appName,
                 event,
                 identifierValue,
                 flowId,
                 projectId,
-            }, ["appName", "event", "flowId", "projectId"]));
+            }));
         });
-        await Promise.all(upsertCommands);
+        return await Promise.all(upsertCommands);
     },
     async deleteListeners({ projectId, flowId }: { projectId: ProjectId, flowId: FlowId }): Promise<void> {
         appEventRoutingRepo.delete({

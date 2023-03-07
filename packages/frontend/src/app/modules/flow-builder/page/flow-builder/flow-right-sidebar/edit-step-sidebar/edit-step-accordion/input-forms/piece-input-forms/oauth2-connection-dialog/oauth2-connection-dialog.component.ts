@@ -30,6 +30,7 @@ import {
   OAuth2PopupParams,
   OAuth2PopupResponse,
 } from '../../../../../../../../../common/model/oauth2-popup-params.interface';
+import { environment } from '../../../../../../../../../../../environments/environment';
 
 interface AuthConfigSettings {
   redirect_url: FormControl<string>;
@@ -136,7 +137,9 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       props: this.fb.group(propsControls),
     });
     this.settingsForm.controls.name.markAllAsTouched();
-    this.settingsForm.controls.redirect_url.disable();
+    if (environment.production) {
+      this.settingsForm.controls.redirect_url.disable();
+    }
     if (this.connectionToUpdate) {
       this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
       this.settingsForm.controls.client_id.setValue(
@@ -154,8 +157,8 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       this.settingsForm.controls.client_secret.disable();
       this.connectionToUpdate.value.props
         ? this.settingsForm.controls.props.setValue(
-            this.connectionToUpdate.value.props
-          )
+          this.connectionToUpdate.value.props
+        )
         : null;
       this.settingsForm.controls.props.disable();
       this.settingsForm.controls.value.setValue({ code: this.FAKE_CODE });

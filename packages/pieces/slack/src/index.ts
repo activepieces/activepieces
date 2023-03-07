@@ -16,7 +16,15 @@ export const slack = createPiece({
   ],
   events: {
     parseAndReply: (payload: EventPayload) => {
-      return { event: payload.body?.event?.type, identifierValue: payload.body.team_id , data: payload.body.event }
+      if (payload.body['challenge']) {
+        return {
+          reply: {
+            body: payload.body['challenge'],
+            headers: {}
+          }
+        };
+      }
+      return { event: payload.body?.event?.type, identifierValue: payload.body.team_id }
     }
   },
   triggers: [newSlackMessage]

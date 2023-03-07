@@ -41,8 +41,6 @@ export const appConnectionService = {
         })
     },
     async getOne({ projectId, name }: { projectId: ProjectId, name: string }): Promise<AppConnection | null> {
-        // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
-        // which could result in the wrong request saving incorrect data.
         const appConnection = await appConnectionRepo.findOneBy({
             projectId: projectId,
             name: name
@@ -50,6 +48,8 @@ export const appConnectionService = {
         if (appConnection === null) {
             return null;
         }
+        // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
+        // which could result in the wrong request saving incorrect data.
         const refreshLock = createRedisLock(10 * 1000);
         try {
             await refreshLock.acquire(`${projectId}_${name}`);
