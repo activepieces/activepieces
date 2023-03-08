@@ -92,6 +92,7 @@ export const clickupTriggers = [
         }
       ],
       task: sampleTask,
+      task_id: '8669p1zvv',
       webhook_id: '9b2708b6-87e8-4fff-851a-2ebf0e35130f'
     }
   },
@@ -117,7 +118,7 @@ export const clickupTriggers = [
         }
       ],
       task: sampleTask,
-      task_id: 'sadsdsjddd',
+      task_id: '8669p1zvv',
       webhook_id: 'c065bdfd-eb7a-48dc-b25e-0cf5babf5ec8'
     }
   },
@@ -155,6 +156,7 @@ export const clickupTriggers = [
         }
       ],
       task: sampleTask,
+      task_id: '8669p1zvv',
       webhook_id: '6a86ce24-6276-4315-87f7-b580a9264284'
     }
   },
@@ -181,6 +183,7 @@ export const clickupTriggers = [
         }
       ],
       task: sampleTask,
+      task_id: '8669p1zvv',
       webhook_id: '1c14c8af-5509-4d81-ae7f-c0790c0f9683'
     }
   }
