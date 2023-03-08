@@ -345,7 +345,10 @@ export class ConfigsFormComponent implements ControlValueAccessor {
             validators
           );
         } else {
-          controls[c.key] = new UntypedFormControl(c.value || '{}', validators);
+          controls[c.key] = new UntypedFormControl(
+            c.value || JSON.stringify(c.defaultValue ?? {}, null, 2),
+            validators
+          );
         }
       } else if (c.type === PropertyType.DYNAMIC) {
         const dynamicConfigControls = {};
