@@ -6,7 +6,6 @@ import { PannerService } from './panner.service';
 })
 export class CanvasPannerDirective {
   constructor(private pannerService: PannerService) {}
-  
 
   @HostListener('mousedown', ['$event'])
   mouseDown(event: MouseEvent) {
@@ -17,7 +16,6 @@ export class CanvasPannerDirective {
       this.pannerService.isGrabbing$.next(true);
     }
   }
-
 
   @HostListener('mouseup', ['$event'])
   mouseUp(ignoredEvent) {
@@ -30,7 +28,6 @@ export class CanvasPannerDirective {
     this.pannerService.isGrabbing$.next(false);
   }
 
-
   @HostListener('mousemove', ['$event'])
   mouseMover(event: MouseEvent) {
     if (this.pannerService.dragState.isDragging) {
@@ -40,28 +37,25 @@ export class CanvasPannerDirective {
       };
       console.log(delta);
       this.pannerService.lastPanningOffset = {
-        x:  this.pannerService.lastPanningOffset.x + delta.x,
+        x: this.pannerService.lastPanningOffset.x + delta.x,
         y: this.pannerService.lastPanningOffset.y + delta.y,
       };
       this.pannerService.dragState.currentOffset.x = event.clientX;
       this.pannerService.dragState.currentOffset.y = event.clientY;
-      this.pannerService.panningOffset$.next(this.pannerService.lastPanningOffset);
+      this.pannerService.panningOffset$.next(
+        this.pannerService.lastPanningOffset
+      );
     }
   }
-  @HostListener('wheel',['$event'])
-  macPanning(event:WheelEvent)
-  {
-    var isMac = navigator.platform.toUpperCase().indexOf('MAC')>=0;
-    if(isMac)
-    {
-      event.preventDefault();
-      console.log(event);
-      this.pannerService.dragState.currentOffset.x-=event.deltaX;
-      this.pannerService.dragState.currentOffset.y-=event.deltaY;
-      this.pannerService.panningOffset$.next({
-       ...this.pannerService.dragState.currentOffset
-      });
-    }
+  @HostListener('wheel', ['$event'])
+  macPanning(event: WheelEvent) {
+    event.preventDefault();
+    this.pannerService.lastPanningOffset.x -= event.deltaX;
+    this.pannerService.lastPanningOffset.y -= event.deltaY;
+    this.pannerService.dragState.currentOffset.x = event.clientX;
+    this.pannerService.dragState.currentOffset.y = event.clientY;
+    this.pannerService.panningOffset$.next({
+      ...this.pannerService.lastPanningOffset,
+    });
   }
-  
 }
