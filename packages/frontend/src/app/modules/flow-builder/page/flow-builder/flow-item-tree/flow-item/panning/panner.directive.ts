@@ -27,46 +27,7 @@ export class CanvasPannerDirective {
       this.pannerService.isGrabbing$.next(true);
     }
   }
-  @HostListener('gesturestart', ['$event'])
-  gestureStart(event: MouseEvent) {
-    console.log("firing gesturestart:")
-    console.log(event);
-    console.log('-----------------------------------------');
-      this.dragState.currentOffset.x = event.clientX;
-      this.dragState.currentOffset.y = event.clientY;
-      this.dragState.isDragging = true;
-      this.pannerService.isGrabbing$.next(true);
-    
-  }
 
-  @HostListener('gestureend', ['$event'])
-  gestureEnd(event: MouseEvent) {
-    console.log("firing gestureend:")
-    console.log(event);
-    console.log('-----------------------------------------');
-    this.dragState.isDragging = false;
-    this.pannerService.isGrabbing$.next(false);
-  }
-
-  @HostListener('gesturechange ', ['$event'])
-  gestureChange(event: MouseEvent) {
-    console.log("firing gestureChange:")
-    console.log(event);
-    console.log('-----------------------------------------');
-    if (this.dragState.isDragging) {
-      const delta = {
-        x: event.pageX - this.dragState.currentOffset.x,
-        y: event.pageY - this.dragState.currentOffset.y,
-      };
-      this.lastPanningOffset = {
-        x: this.lastPanningOffset.x + delta.x,
-        y: this.lastPanningOffset.y + delta.y,
-      };
-      this.dragState.currentOffset.x = event.clientX;
-      this.dragState.currentOffset.y = event.clientY;
-      this.pannerService.panningOffset$.next(this.lastPanningOffset);
-    }
-  }
 
   @HostListener('mouseup', ['$event'])
   mouseUp(ignoredEvent) {
@@ -87,6 +48,7 @@ export class CanvasPannerDirective {
         x: event.pageX - this.dragState.currentOffset.x,
         y: event.pageY - this.dragState.currentOffset.y,
       };
+      console.log(delta);
       this.lastPanningOffset = {
         x: this.lastPanningOffset.x + delta.x,
         y: this.lastPanningOffset.y + delta.y,
@@ -96,4 +58,19 @@ export class CanvasPannerDirective {
       this.pannerService.panningOffset$.next(this.lastPanningOffset);
     }
   }
+  @HostListener('wheel',['$event'])
+  macPanning(event:WheelEvent)
+  {
+    var isMac = navigator.platform.toUpperCase().indexOf('MAC')>=0;
+    if(isMac)
+    {
+      console.log(event);
+      this.dragState.currentOffset.x+=event.deltaX;
+      this.dragState.currentOffset.y+=event.deltaY;
+      this.pannerService.panningOffset$.next({
+       ...this.dragState.currentOffset
+      });
+    }
+  }
+  
 }
