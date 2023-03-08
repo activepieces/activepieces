@@ -1,6 +1,74 @@
 import { ClickupEventType } from "../common/models"
 import { clickupRegisterTrigger } from "./register-trigger"
 
+const sampleTask = {
+  "id": "string",
+  "custom_id": "string",
+  "name": "string",
+  "text_content": "string",
+  "description": "string",
+  "status": {
+    "status": "in progress",
+    "color": "#d3d3d3",
+    "orderindex": 1,
+    "type": "custom"
+  },
+  "orderindex": "string",
+  "date_created": "string",
+  "date_updated": "string",
+  "date_closed": "string",
+  "creator": {
+    "id": 183,
+    "username": "John Doe",
+    "color": "#827718",
+    "profilePicture": "https://attachments-public.clickup.com/profilePictures/183_abc.jpg"
+  },
+  "assignees": [
+    "string"
+  ],
+  "checklists": [
+    "string"
+  ],
+  "tags": [
+    "string"
+  ],
+  "parent": "string",
+  "priority": "string",
+  "due_date": "string",
+  "start_date": "string",
+  "time_estimate": "string",
+  "time_spent": "string",
+  "custom_fields": [
+    {
+      "id": "string",
+      "name": "string",
+      "type": "string",
+      "type_config": {},
+      "date_created": "string",
+      "hide_from_guests": true,
+      "value": {
+        "id": 183,
+        "username": "John Doe",
+        "email": "john@example.com",
+        "color": "#7b68ee",
+        "initials": "JD",
+        "profilePicture": null
+      },
+      "required": true
+    }
+  ],
+  "list": {
+    "id": "123"
+  },
+  "folder": {
+    "id": "456"
+  },
+  "space": {
+    "id": "789"
+  },
+  "url": "string"
+}
+
 export const clickupTriggers = [
   {
     name: "task_created",
@@ -23,7 +91,7 @@ export const clickupTriggers = [
           after: [Object]
         }
       ],
-      task_id: '1669p1zvv',
+      task: sampleTask,
       webhook_id: '9b2708b6-87e8-4fff-851a-2ebf0e35130f'
     }
   },
@@ -48,7 +116,8 @@ export const clickupTriggers = [
           after: "Watch over Neriah's things"
         }
       ],
-      task_id: '8669p1zvv',
+      task: sampleTask,
+      task_id: 'sadsdsjddd',
       webhook_id: 'c065bdfd-eb7a-48dc-b25e-0cf5babf5ec8'
     }
   },
@@ -85,7 +154,7 @@ export const clickupTriggers = [
           comment: [Object]
         }
       ],
-      task_id: '8669njn1v',
+      task: sampleTask,
       webhook_id: '6a86ce24-6276-4315-87f7-b580a9264284'
     }
   },
@@ -111,7 +180,7 @@ export const clickupTriggers = [
           comment: [Object]
         }
       ],
-      task_id: '8669njn1v',
+      task: sampleTask,
       webhook_id: '1c14c8af-5509-4d81-ae7f-c0790c0f9683'
     }
   }
