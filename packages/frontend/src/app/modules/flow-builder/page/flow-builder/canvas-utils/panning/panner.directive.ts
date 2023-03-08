@@ -35,7 +35,6 @@ export class CanvasPannerDirective {
         x: event.pageX - this.pannerService.dragState.currentOffset.x,
         y: event.pageY - this.pannerService.dragState.currentOffset.y,
       };
-      console.log(delta);
       this.pannerService.lastPanningOffset = {
         x: this.pannerService.lastPanningOffset.x + delta.x,
         y: this.pannerService.lastPanningOffset.y + delta.y,

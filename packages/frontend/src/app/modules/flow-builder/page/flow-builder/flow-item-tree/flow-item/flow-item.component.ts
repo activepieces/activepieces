@@ -14,7 +14,6 @@ import {
 import { PannerService } from '../../canvas-utils/panning/panner.service';
 import { ZoomingService } from '../../canvas-utils/zooming/zooming.service';
 
-
 @Component({
   selector: 'app-flow-item',
   templateUrl: './flow-item.component.html',

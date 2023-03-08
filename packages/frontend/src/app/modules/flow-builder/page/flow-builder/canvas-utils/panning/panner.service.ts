@@ -18,19 +18,18 @@ export class PannerService {
     x: 0,
     y: 0,
   };
-  recenter()
-  {
-    this.dragState= {
+  recenter() {
+    this.dragState = {
       currentOffset: {
         x: 0,
         y: 0,
       },
       isDragging: false,
     };
-    this.lastPanningOffset=  {
+    this.lastPanningOffset = {
       x: 0,
       y: 0,
     };
-    this.panningOffset$.next({x:0,y:0});
+    this.panningOffset$.next({ x: 0, y: 0 });
   }
 }

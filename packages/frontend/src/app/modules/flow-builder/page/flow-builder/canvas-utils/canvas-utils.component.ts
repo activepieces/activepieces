@@ -7,7 +7,6 @@ import { ZoomingService } from './zooming/zooming.service';
   templateUrl: './canvas-utils.component.html',
 })
 export class CanvasUtilsComponent {
-  zoomValue = '100%';
   constructor(
     private zoomingService: ZoomingService,
     private pannerService: PannerService
@@ -20,7 +19,6 @@ export class CanvasUtilsComponent {
         this.zoomingService.zoomingMax
       )
     );
-    this.zoomValue = `${this.zoomingService.zoomingScale$.value * 100}%`;
   }
   zoomOut() {
     this.zoomingService.zoomingScale$.next(
@@ -30,13 +28,9 @@ export class CanvasUtilsComponent {
         this.zoomingService.zoomingMin
       )
     );
-    this.zoomValue = `${this.zoomingService.zoomingScale$.value * 100}%`;
   }
   recenter() {
     this.pannerService.recenter();
-  }
-  resetZoom() {
     this.zoomingService.zoomingScale$.next(1);
-    this.zoomValue = '100%';
   }
 }
