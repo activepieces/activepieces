@@ -37,31 +37,34 @@ export const gmailGetThread = createAction({
     })
   },
   sampleData: {
-    id: '183baac18543bef8',
-    threadId: '183baac18543bef8',
-    labelIds: ['UNREAD', 'CATEGORY_SOCIAL', 'INBOX'],
-    snippet: '',
-    payload: {
-      partId: '',
-      mimeType: 'multipart/alternative',
-      filename: '',
-      headers: [
-        [Object]
-      ],
-      body: { size: 0 },
-      parts: [[Object]]
-    },
-    sizeEstimate: 107643,
-    historyId: '99742',
-    internalDate: '1665284181000'
+    "id": '382baac18543beg8',
+    "historyId": '183baac185',
+    "messages": [
+      {
+        "threadId": '182baac18543bef8',
+        "labelIds": ['UNREAD', 'CATEGORY_SOCIAL', 'INBOX'],
+        "snippet": '',
+        "payload": {
+          "partId": '',
+          "mimeType": 'multipart/alternative',
+          "filename": '',
+          "headers": [[Object]],
+          "body": { size: 0 },
+          "parts": [[Object]]
+        },
+        "sizeEstimate": 107643,
+        "historyId": '99742',
+        "internalDate": '1665284181000'
+      }
+    ]
   },
   async run({ propsValue: { authentication, format, thread_id } }) {
-    const mail = await GmailRequests.getThread({ 
-      authentication, 
-      thread_id, 
-      format: (format ?? GmailMessageFormat.FULL) 
+    const mail = await GmailRequests.getThread({
+      access_token: authentication.access_token,
+      thread_id,
+      format: (format ?? GmailMessageFormat.FULL)
     })
-  
+
     return mail
   }
 })
