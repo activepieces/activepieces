@@ -36,7 +36,9 @@ type ErrorParams =
   | InvalidJwtTokenErrorParams
   | TaskQuotaExeceededErrorParams
   | SystemInvalidErrorParams
-  | SystemPropNotDefinedErrorParams;
+  | SystemPropNotDefinedErrorParams
+  | FlowOperationErrorParams;
+
 
 export interface BaseErrorParams<T, V> {
   code: T;
@@ -171,6 +173,11 @@ export type SystemPropNotDefinedErrorParams = BaseErrorParams<
   }
 >;
 
+export type FlowOperationErrorParams = BaseErrorParams<
+  ErrorCode.FLOW_OPERATION_INVALID,
+  Record<string, never>
+>;
+
 export type InvalidJwtTokenErrorParams = BaseErrorParams<
   ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
   {
@@ -208,4 +215,5 @@ export enum ErrorCode {
   INVALID_OR_EXPIRED_JWT_TOKEN = "INVALID_OR_EXPIRED_JWT_TOKEN",
   TASK_QUOTA_EXCEEDED = "FLOW_RUN_QUOTA_EXCEEDED",
   SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
+  FLOW_OPERATION_INVALID = "FLOW_OPERATION_INVALID",
 }

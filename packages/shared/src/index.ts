@@ -1,3 +1,4 @@
+export * from "./lib/flows/actions/action";
 export * from "./lib/app-connection/app-connection";
 export * from "./lib/app-connection/dto/read-app-connection-request";
 export * from "./lib/app-connection/dto/upsert-app-connection-request";
@@ -24,7 +25,6 @@ export * from "./lib/store-entry/dto/store-entry-request";
 export { CodeRunStatus } from "./lib/workers/code-worker/code-run-status";
 export { CodeExecutionResult } from "./lib/workers/code-worker/code-execution-result";
 export { ExecuteCodeRequest } from './lib/code/dto/code-request';
-export { flowHelper } from "./lib/flows/flow-helper";
 export { AuthenticationResponse } from './lib/authentication/dto/authentication-response';
 export { SignUpRequest } from './lib/authentication/dto/sign-up-request';
 export { SignInRequest } from './lib/authentication/dto/sign-in-request';
@@ -43,7 +43,7 @@ export { CollectionVersion, CollectionVersionState, CollectionVersionId } from '
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version';
 export { Flow, FlowId } from './lib/flows/flow';
 export { File, FileId } from './lib/file/file'
-export { getStep } from './lib/flows/flow-helper';
+export * from './lib/flows/flow-helper';
 export { FlowRun, FlowRunId, RunEnvironment } from './lib/flow-run/flow-run'
 export { ExecutionState } from './lib/flow-run/execution/execution-state';
 export { Project, ProjectId } from './lib/project/project';

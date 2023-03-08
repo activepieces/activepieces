@@ -1,15 +1,10 @@
-<div class="positioned-relative" *ngIf="flowItem">
-  <app-loop-line-connection
-    *ngIf="flowItem.type === ActionType.LOOP_ON_ITEMS"
-    [viewMode]="viewMode"
-    [flowItem]="castToLoopItem()"
-    [insideLoop]="insideLoop"
-  >
+<div class="ap-relative" *ngIf="flowItem">
+  <app-loop-line-connection *ngIf="flowItem.type === ActionType.LOOP_ON_ITEMS" [viewMode]="viewMode"
+    [flowItem]="castToLoopItem()" [insideLoopOrBranch]="insideLoopOrBranch">
   </app-loop-line-connection>
-  <app-simple-line-connection
-    *ngIf="flowItem.type !== ActionType.LOOP_ON_ITEMS"
-    [flowItem]="flowItem"
-    [viewMode]="viewMode"
-    [insideLoop]="insideLoop"
-  ></app-simple-line-connection>
+  <app-branch-line-connection *ngIf="flowItem.type === ActionType.BRANCH" [viewMode]="viewMode"
+    [flowItem]="castToBranchItem()" [insideLoopOrBranch]="insideLoopOrBranch">
+  </app-branch-line-connection>
+  <app-simple-line-connection *ngIf="flowItem.type !== ActionType.LOOP_ON_ITEMS && flowItem.type !== ActionType.BRANCH"
+    [flowItem]="flowItem" [viewMode]="viewMode" [insideLoopOrBranch]="insideLoopOrBranch"></app-simple-line-connection>
 </div>

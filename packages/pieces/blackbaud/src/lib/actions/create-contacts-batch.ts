@@ -14,7 +14,7 @@ const schema = {
 export const blackbaudCreateContacts = createAction({
     name: 'create_contact_batch',
     description: 'Create contacts on blackbaud',
-    displayName: 'Create Contacts',
+    displayName: 'Create Contacts (Batch)',
     props: {
         ...blackbaudCommon.auth_props,
         contacts: Property.Json({
@@ -50,7 +50,6 @@ export const blackbaudCreateContacts = createAction({
                     "type": "Individual"
                 }
             ]
-
         })
     },
     sampleData: [

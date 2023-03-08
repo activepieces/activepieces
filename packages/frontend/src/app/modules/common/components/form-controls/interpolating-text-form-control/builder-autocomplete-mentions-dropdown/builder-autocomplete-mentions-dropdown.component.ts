@@ -34,9 +34,9 @@ export class BuilderAutocompleteMentionsDropdownComponent {
   @Input() width = 'calc( 100% - 2rem )';
   @Input() left = 'unset';
   @Input() marginTop = '0px';
+  id = new UUID();
   closePressed = false;
   constructor(
     public interpolatingTextFormControlService: BuilderAutocompleteMentionsDropdownService
   ) {}
-  id = new UUID();
 }
