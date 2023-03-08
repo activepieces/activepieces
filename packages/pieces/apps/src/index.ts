@@ -30,6 +30,7 @@ import { posthog } from '@activepieces/piece-posthog';
 import { rssFeed } from '@activepieces/piece-rss';
 import { sendgrid } from '@activepieces/piece-sendgrid';
 import { slack } from '@activepieces/piece-slack';
+import { trello } from './lib/trello';
 import { storage } from '@activepieces/piece-store';
 import { stripe } from '@activepieces/piece-stripe';
 import { telegramBot } from '@activepieces/piece-telegram-bot';
@@ -80,6 +81,7 @@ export const pieces: Piece[] = [
     todoist,
     twilio,
     typeform,
+    trello,
     wordpress,
     zoom,
     connections
