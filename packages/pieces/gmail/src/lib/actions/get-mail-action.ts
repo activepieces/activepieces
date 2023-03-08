@@ -55,13 +55,10 @@ export const gmailGetEmail = createAction({
     historyId: '99742',
     internalDate: '1665284181000'
   },
-  async run({ propsValue: { authentication, format, message_id } }) {
-    const mail = await GmailRequests.getMail({
+  run: async ({ propsValue: { authentication, format, message_id } }) =>
+    await GmailRequests.getMail({
       access_token: authentication.access_token,
       message_id,
       format: (format ?? GmailMessageFormat.FULL)
     })
-
-    return mail
-  }
 })

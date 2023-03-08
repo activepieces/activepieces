@@ -58,13 +58,10 @@ export const gmailGetThread = createAction({
       }
     ]
   },
-  async run({ propsValue: { authentication, format, thread_id } }) {
-    const mail = await GmailRequests.getThread({
+  run: async ({ propsValue: { authentication, format, thread_id } }) =>
+    await GmailRequests.getThread({
       access_token: authentication.access_token,
       thread_id,
       format: (format ?? GmailMessageFormat.FULL)
     })
-
-    return mail
-  }
 })

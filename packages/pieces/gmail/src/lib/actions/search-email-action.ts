@@ -1,6 +1,6 @@
 import { createAction } from "@activepieces/framework";
 import { GmailRequests } from "../common/data";
-import { GmailLabel, GmailMessageFormat } from "../common/models";
+import { GmailLabel } from "../common/models";
 import { GmailProps } from "../common/props";
 
 export const gmailSearchMail = createAction({
@@ -19,28 +19,55 @@ export const gmailSearchMail = createAction({
     {
       "messages": [
         {
-          "id": "183baac18543bef5",
-          "threadId": "183baac18543bef5"
-        },
-        {
-          "id": "183a213a0730fad4",
-          "threadId": "183a213a0730fad4"
-        },
-        {
-          "id": "1839579494fe34fe",
-          "threadId": "1839579494fe34fe"
-        },
-        {
-          "id": "1838bad82a2cb0f2",
-          "threadId": "1838bad82a2cb0f2"
+          "thread": {
+            "id": '382baac18543beg8',
+            "historyId": '183baac185',
+            "messages": [
+              {
+                "id": '183baac18543bef8',
+                "threadId": '382baac18543beg8',
+                "labelIds": ['UNREAD', 'CATEGORY_SOCIAL', 'INBOX'],
+                "snippet": '',
+                "payload": {
+                  "partId": '',
+                  "mimeType": 'multipart/alternative',
+                  "filename": '',
+                  "headers": [[Object]],
+                  "body": { size: 0 },
+                  "parts": [[Object]]
+                },
+                "sizeEstimate": 107643,
+                "historyId": '99742',
+                "internalDate": '1665284181000'
+              }
+            ]
+          },
+          "message": {
+            "id": '183baac18543bef8',
+            "threadId": '382baac18543beg8',
+            "labelIds": ['UNREAD', 'CATEGORY_SOCIAL', 'INBOX'],
+            "snippet": '',
+            "payload": {
+              "partId": '',
+              "mimeType": 'multipart/alternative',
+              "filename": '',
+              "headers": [
+                [Object]
+              ],
+              "body": { size: 0 },
+              "parts": [[Object]]
+            },
+            "sizeEstimate": 107643,
+            "historyId": '99742',
+            "internalDate": '1665284181000'
+          }
         }
       ],
-      "resultSizeEstimate": 4
+      "resultSizeEstimate": 1
     }
   ],
-  async run({ propsValue: { authentication, from, to, subject, label, category } }) {
-    
-    const response = await GmailRequests.searchMail({
+  run: async ({ propsValue: { authentication, from, to, subject, label, category } }) => 
+    await GmailRequests.searchMail({
       access_token: (authentication.access_token as string), 
       from: from as string, 
       to: to as string, 
@@ -48,36 +75,4 @@ export const gmailSearchMail = createAction({
       label: label as GmailLabel, 
       category: category as string
     })
-
-    if (response.messages) {
-      const messages = await Promise.all(
-        response
-          .messages
-          .map(async (message: {id: string, threadId: string}) => {
-            const mail =  await GmailRequests.getMail({ 
-              authentication, 
-              message_id: message.id, 
-              format: GmailMessageFormat.FULL 
-            })
-            const thread =  await GmailRequests.getThread({ 
-              authentication, 
-              thread_id: message.threadId,
-              format: GmailMessageFormat.FULL
-            })
-  
-            return {
-              message: mail,
-              thread 
-            }
-          }))
-  
-      return {
-        messages,
-        resultSizeEstimate: response.resultSizeEstimate,
-        ...(response?.nextPageToken ? {nextPageToken: response.nextPageToken}: {}),
-      }
-    }
-
-    return response
-  }
 })
