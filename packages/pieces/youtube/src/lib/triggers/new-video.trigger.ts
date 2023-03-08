@@ -12,7 +12,29 @@ export const youtubeNewVideoTrigger = createTrigger({
     props: {
         channel_identifier: channelIdentifier,
     },
-
+    sampleData: {
+        "id": "yt:video:hVz5GAcysoE",
+        "yt:videoId": "hVz5GAcysoE",
+        "yt:channelId": "UCq-Fj5jknLsUf-MWSy4_brA",
+        "title": "Bhool Bhulaiyaa 2 Scene #5 \"Shanti Mil Chuki Hai\" | Kartik Aaryan, Kiara Advani & Tabu | Bhushan K",
+        "link": "",
+        "author": {
+            "name": "T-Series",
+            "uri": "https://www.youtube.com/channel/UCq-Fj5jknLsUf-MWSy4_brA"
+        },
+        "published": "2023-03-08T13:30:13+00:00",
+        "updated": "2023-03-08T13:30:14+00:00",
+        "media:group": {
+            "media:title": "Bhool Bhulaiyaa 2 Scene #5 \"Shanti Mil Chuki Hai\" | Kartik Aaryan, Kiara Advani & Tabu | Bhushan K",
+            "media:content": "",
+            "media:thumbnail": "",
+            "media:description": "Presenting Bhool Bhulaiyaa 2 Scene #5 \"Shanti Mil Chuki Hai\"\n\nGulshan Kumar & T-Series presents \"Bhool Bhulaiyaa 2\" produced by Bhushan Kumar, Murad Khetani, and Krishan Kumar under the banner of T-Series and Cine1 Studios, starring Kartik Aaryan, Kiara Advani and Tabu, directed by Anees Bazmee, screenplay by Akash Kaushik and dialogues by Farhad Samji and Akash Kaushik. \n\n___________________________________\nEnjoy & stay connected with us!\n👉 Subscribe to T-Series: http://bit.ly/TSeriesYouTube\n👉 Like us on Facebook: https://www.facebook.com/tseriesmusic\n👉 Follow us on Twitter: https://twitter.com/tseries\n👉 Follow us on Instagram: http://bit.ly/InstagramTseries",
+            "media:community": {
+                "media:starRating": "",
+                "media:statistics": ""
+            }
+        }
+    },
     async onEnable({ propsValue, store }): Promise<void> {
         const channelId = await parseChannelIdentifier(propsValue.channel_identifier);
 
@@ -20,12 +42,12 @@ export const youtubeNewVideoTrigger = createTrigger({
             throw new Error('Unable to get channel ID.');
         }
 
-        store.put('channelId', channelId);
+        await store.put('channelId', channelId);
         const data = await getRss(channelId);
         const items = data.feed?.entry || [];
 
-        store.put('lastFetchedYoutubeVideo', items?.[0]?.id);
-        store.put('lastPublishedYoutubeVideo', items?.[0].published);
+        await store.put('lastFetchedYoutubeVideo', items?.[0]?.id);
+        await store.put('lastPublishedYoutubeVideo', items?.[0].published);
         return;
     },
 
@@ -42,8 +64,8 @@ export const youtubeNewVideoTrigger = createTrigger({
         const storedLastPublished = await store.get<string>('lastPublishedYoutubeVideo');
 
         const items = data.feed?.entry || [];
-        store.put('lastFetchedYoutubeVideo', items?.[0]?.id);
-        store.put('lastPublishedYoutubeVideo', items?.[0].published);
+        await store.put('lastFetchedYoutubeVideo', items?.[0]?.id);
+        await store.put('lastPublishedYoutubeVideo', items?.[0].published);
 
         /**
          * If the new latest item's date is before the last saved date
@@ -76,7 +98,7 @@ async function parseChannelIdentifier(channelIdentifier: string) {
 
     match = ChannelParsingRegex.CHANNEL_ID.exec(channelIdentifier)?.[1] ?? '';
     if (match) return match;
-    
+
     match = ChannelParsingRegex.URL_WITH_CHANNEL_ID.exec(channelIdentifier)?.[1] ?? '';
     if (match) return match;
 
@@ -94,11 +116,11 @@ async function fetchChannelIdByHandle(channelHandle: string) {
         url: `https://www.youtube.com/${channelHandle}`
     })
     const pageSource = response.body;
-    
+
     if (typeof pageSource !== 'string') {
         return null;
     }
-    
+
     // Extract the channel ID from the page source using a regular expression
     const channelIdRegex = /"channelId":"(.*?)"/;
     return channelIdRegex.exec(pageSource)?.[1] ?? null;
