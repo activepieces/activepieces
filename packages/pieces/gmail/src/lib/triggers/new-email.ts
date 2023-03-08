@@ -17,53 +17,48 @@ export const gmailNewEmailTrigger = createTrigger({
     category: GmailProps.category
   },
   sampleData: {
-    "messages": [
-      {
-        "message": {
+    "message": {
+      "id": '183baac18543bef8',
+      "threadId": '183baac18543bef8',
+      "labelIds": ['UNREAD', 'CATEGORY_SOCIAL', 'INBOX'],
+      "snippet": '',
+      "payload": {
+        "partId": '',
+        "mimeType": 'multipart/alternative',
+        "filename": '',
+        "headers": [
+          [Object]
+        ],
+        "body": { size: 0 },
+        "parts": [[Object]]
+      },
+      "sizeEstimate": 107643,
+      "historyId": '99742',
+      "internalDate": '1665284181000'
+    },
+    "thread": {
+      "id": '382baac18543beg8',
+      "historyId": '183baac185',
+      "messages": [
+        {
           "id": '183baac18543bef8',
-          "threadId": '183baac18543bef8',
+          "threadId": '382baac18543beg8',
           "labelIds": ['UNREAD', 'CATEGORY_SOCIAL', 'INBOX'],
           "snippet": '',
           "payload": {
             "partId": '',
             "mimeType": 'multipart/alternative',
             "filename": '',
-            "headers": [
-              [Object]
-            ],
+            "headers": [[Object]],
             "body": { size: 0 },
             "parts": [[Object]]
           },
           "sizeEstimate": 107643,
           "historyId": '99742',
           "internalDate": '1665284181000'
-        },
-        "thread": {
-          "id": '382baac18543beg8',
-          "historyId": '183baac185',
-          "messages": [
-            {
-              "id": '183baac18543bef8',
-              "threadId": '382baac18543beg8',
-              "labelIds": ['UNREAD', 'CATEGORY_SOCIAL', 'INBOX'],
-              "snippet": '',
-              "payload": {
-                "partId": '',
-                "mimeType": 'multipart/alternative',
-                "filename": '',
-                "headers": [[Object]],
-                "body": { size: 0 },
-                "parts": [[Object]]
-              },
-              "sizeEstimate": 107643,
-              "historyId": '99742',
-              "internalDate": '1665284181000'
-            }
-          ]
-        },
-      }
-    ],
-    "resultSizeEstimate": 1
+        }
+      ]
+    },
   },
   type: TriggerStrategy.POLLING,
   async onEnable({ store }) {
@@ -73,26 +68,26 @@ export const gmailNewEmailTrigger = createTrigger({
       last_read
     });
   },
-  async onDisable({ store }) {  
+  async onDisable({ store }) {
     await store.put('gmail_new_email_trigger', undefined);
   },
   async run({ store, propsValue: { authentication, from, to, subject, label, category } }) {
     const data = await store.get<TriggerData>('gmail_new_email_trigger');
-    const now  = dayjs().unix();
+    const now = dayjs().unix();
 
     const response = await GmailRequests.searchMail({
-      access_token: (authentication.access_token as string), 
-      from: from as string, 
-      to: to as string, 
-      subject: subject as string, 
-      label: label as GmailLabel, 
+      access_token: (authentication.access_token as string),
+      from: from as string,
+      to: to as string,
+      subject: subject as string,
+      label: label as GmailLabel,
       category: category as string,
       after: data?.last_read,
       before: now
     })
 
     await store?.put<TriggerData>('gmail_new_email_trigger', { last_read: now })
-    return [response]
+    return response.messages;
   }
 });
 

@@ -1,18 +1,12 @@
 import { createAction, Property, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
+import { GmailProps } from "../common/props";
 
 export const gmailSendEmailAction = createAction({
 	name: 'send_email',
 	description: 'Send an email through a Gmail account',
 	displayName: 'Send Email',
 	props: {
-		authentication: Property.OAuth2({
-			description: "",
-			displayName: 'Authentication',
-			authUrl: "https://accounts.google.com/o/oauth2/auth",
-			tokenUrl: "https://oauth2.googleapis.com/token",
-			required: true,
-			scope: ["https://mail.google.com/"]
-		}),
+		authentication: GmailProps.authentication,
 		receiver: Property.ShortText({
 			displayName: 'Receiver Email (To)',
 			description: undefined,
@@ -52,7 +46,7 @@ export const gmailSendEmailAction = createAction({
 			body: requestBody,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: configValue.propsValue['authentication']!['access_token'],
+				token: configValue.propsValue['authentication']['access_token'],
 			},
 			queryParams: {},
 		};
