@@ -41,7 +41,7 @@ import { wordpress } from '@activepieces/piece-wordpress';
 import { zoom } from '@activepieces/piece-zoom';
 import { generatebanners } from '@activepieces/piece-generatebanners';
 import { connections } from '@activepieces/piece-connections';
-import { youtube } from '../../youtube/src';
+import { youtube } from '@activepieces/piece-youtube';
 
 export const pieces: Piece[] = [
     airtable,
