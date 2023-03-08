@@ -28,7 +28,7 @@ import {
 } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
-import { PannerService } from './flow-item-tree/flow-item/panning/panner.service';
+import { PannerService } from './canvas-utils/panning/panner.service';
 
 @Component({
   selector: 'app-collection-builder',
