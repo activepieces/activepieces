@@ -6,6 +6,7 @@ import {
     CollectionVersion,
     ExecutionOutputStatus,
     File,
+    flowHelper,
     FlowVersion,
     ProjectId,
     StepOutputStatus,
@@ -102,14 +103,13 @@ async function downloadFiles(
 
 async function buildCodes(projectId: ProjectId, flowVersion: FlowVersion): Promise<File[]> {
     const buildRequests: Array<Promise<File>> = [];
-    let currentStep: Trigger | Action | undefined = flowVersion.trigger;
-    while (currentStep !== undefined) {
-        if (currentStep.type === ActionType.CODE) {
-            const codeActionSettings: CodeActionSettings = currentStep.settings;
+    const steps = flowHelper.getAllSteps(flowVersion);
+    steps.forEach((step) => {
+        if (step.type === ActionType.CODE) {
+            const codeActionSettings: CodeActionSettings = step.settings;
             buildRequests.push(getArtifactFile(projectId, codeActionSettings));
         }
-        currentStep = currentStep.nextAction;
-    }
+    });
     const files: File[] = await Promise.all(buildRequests);
     if (files.length > 0) {
         await flowVersionService.overwriteVersion(flowVersion.id, flowVersion);

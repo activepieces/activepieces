@@ -355,6 +355,7 @@ export class FlowsEffects {
               if (flow === undefined || tabState === undefined) {
                 return throwError(() => new Error('Flow is not selected'));
               }
+
               return this.processFlowUpdate({
                 operation: action.operation,
                 flow: flow,

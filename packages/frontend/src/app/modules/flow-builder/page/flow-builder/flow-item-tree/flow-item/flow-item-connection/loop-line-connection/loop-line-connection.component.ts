@@ -25,7 +25,10 @@ import {
 import { AddButtonType } from '../../../../../../../common/model/enum/add-button-type';
 import { FlowsActions } from '../../../../../../store/flow/flows.action';
 import { Observable } from 'rxjs';
-import { LoopOnItemsAction } from '@activepieces/shared';
+import {
+  LoopOnItemsAction,
+  StepLocationRelativeToParent,
+} from '@activepieces/shared';
 import { AddButtonAndFlowItemNameContainer } from '../../../../../../../common/model/flow-builder/flow-add-button';
 import {
   FlowItem,
@@ -234,14 +237,14 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
       this.flowItem.connectionsBox!.height -
       SPACE_BETWEEN_ITEM_CONTENT_AND_LINE -
       (this.flowItem.nextAction ? ARROW_HEAD_SIZE.height : 0);
+
     this.afterLoopAddButtonTop = `${
       topOffset -
       VERTICAL_LINE_LENGTH / 2.0 -
-      ADD_BUTTON_SIZE.height / 2.0 +
-      (this.insideLoop ? ARROW_HEAD_SIZE.height : 0)
+      (this.insideLoop ? ARROW_HEAD_SIZE.height : 1)
     }px`;
     this.afterLoopAddButtonLeft = `calc(50% - ${ADD_BUTTON_SIZE.width / 2}px`;
-    const lineStrokeOffset = 1;
+    const lineStrokeOffset = 1.5;
     this.afterLoopArrowHeadTop =
       topOffset - ARROW_HEAD_SIZE.height - lineStrokeOffset + 5;
     this.afterLoopArrowHeadLeft =
@@ -255,7 +258,8 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
       FlowsActions.setRightSidebar({
         sidebarType: RightSideBarType.STEP_TYPE,
         props: {
-          buttonType: AddButtonType.FIRST_LOOP_ACTION,
+          stepLocationRelativeToParent:
+            StepLocationRelativeToParent.INSIDE_LOOP,
           stepName: this.flowItem.name,
         },
       })
