@@ -1,4 +1,5 @@
 import { Property, getAccessTokenOrThrow, OAuth2PropertyValue, HttpMethod, HttpMessageBody, HttpResponse, httpClient, AuthenticationType } from "@activepieces/framework";
+import { ClickupTask } from "./models";
 
 export const clickupCommon = {
     authentication: Property.OAuth2({
@@ -209,6 +210,10 @@ async function listTasks(accessToken: string, listId: string) {
             name: string
         }[]
     }>(HttpMethod.GET, `list/${listId}/task`, accessToken, undefined)).body;
+}
+
+export async function callClickupGetTask(accessToken: string, taskId: string) {
+    return (await callClickUpApi<ClickupTask>(HttpMethod.GET, `task/${taskId}`, accessToken, undefined)).body;
 }
 
 

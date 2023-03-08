@@ -28,3 +28,89 @@ export const enum ClickupEventType {
   KEY_RESULT_UPDATED = "keyResultUpdated",
   KEY_RESULT_DELETED = "keyResultDeleted",
 }
+
+export interface ClickupTask {
+  id: string
+  custom_id: string
+  name: string
+  text_content: string
+  description: string
+  status: {
+    status: string
+    color: string
+    orderindex: number
+    type: string
+  }
+  orderindex: string
+  date_created: string
+  date_updated: string
+  date_closed: string
+  creator: {
+    id: number
+    username: string
+    color: string
+    profilePicture: string
+  }
+  assignees: string[]
+  checklists: string[]
+  tags: string[]
+  parent: string
+  priority: string
+  due_date: string
+  start_date: string
+  time_estimate: string
+  time_spent: string
+  custom_fields: Record<string, unknown>[]
+  list: {
+    id: string
+  }
+  folder: {
+    id: string
+  }
+  space: {
+    id: string
+  }
+  url: string
+}
+
+export interface ClickupWebhookPayload {
+  event: ClickupEventType
+  history_items: {
+    id: string
+    type: number
+    date: string
+    field: string
+    parent_id: string
+    data: Record<string, unknown>
+    source: string
+    user: ClickupUser
+    before: string
+    after: string
+    comment: ClickupComment
+  },
+  task_id: string,
+  webhook_id: string
+}
+
+interface ClickupUser {
+  id: number
+  username: string
+  initials: string
+  email: string
+  color: string
+  profilePicture: string
+}
+
+interface ClickupComment {
+  id: string
+  comment: {
+      text: string
+  }[]
+  comment_text: string
+  user: ClickupUser
+  resolved: boolean
+  assignee: ClickupUser
+  assigned_by: ClickupUser
+  reactions: []
+  date: string
+}
