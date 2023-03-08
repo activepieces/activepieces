@@ -72,6 +72,7 @@ export const instanceSideEffects = {
         if (instance !== null) {
             logger.info(`Collection ${collectionId} is deleted, running intstance side effects first`);
             await this.disable(instance);
+            logger.info(`Collection ${collectionId} is deleted, finished running the side effects`);
         }
     },
     async onFlowDelete({projectId, flowId}: {projectId: ProjectId, flowId: FlowId}) {
