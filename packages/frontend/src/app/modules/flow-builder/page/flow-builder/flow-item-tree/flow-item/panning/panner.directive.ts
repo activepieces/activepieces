@@ -64,9 +64,10 @@ export class CanvasPannerDirective {
     var isMac = navigator.platform.toUpperCase().indexOf('MAC')>=0;
     if(isMac)
     {
+      event.preventDefault();
       console.log(event);
-      this.dragState.currentOffset.x+=event.deltaX;
-      this.dragState.currentOffset.y+=event.deltaY;
+      this.dragState.currentOffset.x-=event.deltaX;
+      this.dragState.currentOffset.y-=event.deltaY;
       this.pannerService.panningOffset$.next({
        ...this.dragState.currentOffset
       });
