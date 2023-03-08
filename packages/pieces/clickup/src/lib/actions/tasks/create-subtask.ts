@@ -8,11 +8,11 @@ export const createClickupSubtask = createAction({
 	displayName: 'Create Subtask',
 	props: {
 		authentication: clickupCommon.authentication,
-        workspace_id: clickupCommon.workspace_id(),
+		workspace_id: clickupCommon.workspace_id(),
 		space_id: clickupCommon.space_id(),
-        list_id: clickupCommon.list_id(),
+		list_id: clickupCommon.list_id(),
 		task_id: clickupCommon.task_id(),
-        name: Property.ShortText({
+		name: Property.ShortText({
 			description: 'The name of the task to create',
 			displayName: 'Task Name',
 			required: true,
@@ -29,7 +29,7 @@ export const createClickupSubtask = createAction({
 			`list/${list_id}/task`, getAccessTokenOrThrow(authentication), {
 			name,
 			description,
-            "parent": task_id,
+			"parent": task_id,
 		});
 
 		return response.body;

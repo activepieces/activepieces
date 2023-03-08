@@ -149,13 +149,13 @@ export const createClickupTask = createAction({
 		}
 	},
 	async run(configValue) {
-	const { list_id, name, description, authentication } = configValue.propsValue;
-	const response = await callClickUpApi(HttpMethod.POST,
-		`list/${list_id}/task`, getAccessTokenOrThrow(authentication), {
-		name,
-		description
-	});
+		const { list_id, name, description, authentication } = configValue.propsValue;
+		const response = await callClickUpApi(HttpMethod.POST,
+			`list/${list_id}/task`, getAccessTokenOrThrow(authentication), {
+			name,
+			description
+		});
 
-	return response.body;
-},
+		return response.body;
+	},
 });
