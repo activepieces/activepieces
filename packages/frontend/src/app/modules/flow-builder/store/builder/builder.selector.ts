@@ -487,6 +487,7 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
     });
   }
 );
+
 const selectAnyFlowHasSteps = createSelector(selectFlows, (flows: Flow[]) => {
   let aFlowHasSteps = false;
   flows.forEach((f) => {
@@ -494,6 +495,16 @@ const selectAnyFlowHasSteps = createSelector(selectFlows, (flows: Flow[]) => {
   });
   return aFlowHasSteps;
 });
+
+const selectStepLogoUrl = (stepName: string) => {
+  return createSelector(selectAllFlowStepsMetaData, (stepsMetaData) => {
+    const logoUrl = stepsMetaData.find((s) => s.name === stepName)?.logoUrl;
+    if (!logoUrl) {
+      return 'assets/img/custom/piece/branch.png';
+    }
+    return logoUrl;
+  });
+};
 
 function findStepLogoUrl(
   step: FlowItem,
@@ -578,4 +589,5 @@ export const BuilderSelectors = {
   selectAllStepsForMentionsDropdown,
   selectAppConnectionsForMentionsDropdown,
   selectAnyFlowHasSteps,
+  selectStepLogoUrl,
 };
