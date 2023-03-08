@@ -10,7 +10,8 @@ export class CanvasZoomingDirective {
 
   @HostListener('wheel', ['$event'])
   mouseWheel(event: WheelEvent) {
-    this.currentScale += event.deltaY * -0.0002;
-    this.zoomingService.zoomingScale$.next(this.currentScale);
+    this.zoomingService;
+    // this.currentScale += event.deltaY * -0.0002;
+    // this.zoomingService.zoomingScale$.next(this.currentScale);
   }
 }
