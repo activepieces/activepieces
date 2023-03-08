@@ -15,37 +15,36 @@ interface SearchMailProps {
 }
 
 interface GetMailProps {
-  authentication: OAuth2PropertyValue
-  message_id?: string 
+  access_token: string
+  message_id?: string
   thread_id?: string
   format: GmailMessageFormat
 }
 
 export const GmailRequests = {
-  getMail: async ({ authentication, format, message_id }: GetMailProps) => {
+  getMail: async ({ access_token, format, message_id }: GetMailProps) => {
     const response = await httpClient.sendRequest<GmailMessage>({
       method: HttpMethod.GET,
       url: `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message_id}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: authentication['access_token'],
+        token: access_token
       },
       queryParams: {
         format
       }
     })
-
     console.debug("getMail response", response)
 
     return response.body
   },
-  getThread: async ({ authentication, format, thread_id }: GetMailProps) => {
+  getThread: async ({ access_token, format, thread_id }: GetMailProps) => {
     const response = await httpClient.sendRequest<GmailThread>({
       method: HttpMethod.GET,
       url: `https://gmail.googleapis.com/gmail/v1/users/me/threads/${thread_id}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: authentication['access_token'],
+        token: access_token
       },
       queryParams: {
         format
@@ -65,9 +64,9 @@ export const GmailRequests = {
       }
     })
   },
-  searchMail: async ({ access_token, max_results = 25, page_token:pageToken, ...mail}: SearchMailProps) => {
+  searchMail: async ({ access_token, max_results = 25, page_token: pageToken, ...mail }: SearchMailProps) => {
     const query = []
-    
+
     if (mail.from) query.push(`from:(${mail.from})`)
     if (mail.to) query.push(`to:(${mail.to})`)
     if (mail.subject) query.push(`subject:(${mail.subject})`)
@@ -86,11 +85,41 @@ export const GmailRequests = {
       queryParams: {
         q: query.join(" "),
         maxResults: `${max_results}`,
-        ...(pageToken ? {pageToken} : {})
+        ...(pageToken ? { pageToken } : {})
       }
     })
 
     console.log("searchMail response", response)
+
+    if (response.body.messages) {
+      const messages = await Promise.all(
+        response.body
+          .messages
+          .map(async (message: { id: string, threadId: string }) => {
+            const mail = await GmailRequests.getMail({
+              access_token,
+              message_id: message.id,
+              format: GmailMessageFormat.FULL
+            })
+            const thread = await GmailRequests.getThread({
+              access_token,
+              thread_id: message.threadId,
+              format: GmailMessageFormat.FULL
+            })
+
+            return {
+              message: mail,
+              thread
+            }
+          }))
+
+      return {
+        messages,
+        resultSizeEstimate: response.body.resultSizeEstimate,
+        ...(response?.body.nextPageToken ? { nextPageToken: response.body.nextPageToken } : {}),
+      }
+    }
+
     return response.body
   }
 }
