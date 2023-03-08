@@ -19,8 +19,48 @@ export const gmailNewEmailTrigger = createTrigger({
   sampleData: {
     "messages": [
       {
-        "id": "150c7d689ef7cdf7",
-        "threadId": "150c7d689ef7cdf7"
+        "message": {
+          "id": '183baac18543bef8',
+          "threadId": '183baac18543bef8',
+          "labelIds": ['UNREAD', 'CATEGORY_SOCIAL', 'INBOX'],
+          "snippet": '',
+          "payload": {
+            "partId": '',
+            "mimeType": 'multipart/alternative',
+            "filename": '',
+            "headers": [
+              [Object]
+            ],
+            "body": { size: 0 },
+            "parts": [[Object]]
+          },
+          "sizeEstimate": 107643,
+          "historyId": '99742',
+          "internalDate": '1665284181000'
+        },
+        "thread": {
+          "id": '382baac18543beg8',
+          "historyId": '183baac185',
+          "messages": [
+            {
+              "id": '183baac18543bef8',
+              "threadId": '382baac18543beg8',
+              "labelIds": ['UNREAD', 'CATEGORY_SOCIAL', 'INBOX'],
+              "snippet": '',
+              "payload": {
+                "partId": '',
+                "mimeType": 'multipart/alternative',
+                "filename": '',
+                "headers": [[Object]],
+                "body": { size: 0 },
+                "parts": [[Object]]
+              },
+              "sizeEstimate": 107643,
+              "historyId": '99742',
+              "internalDate": '1665284181000'
+            }
+          ]
+        },
       }
     ],
     "resultSizeEstimate": 1
@@ -34,7 +74,7 @@ export const gmailNewEmailTrigger = createTrigger({
     });
   },
   async onDisable({ store }) {  
-    await store.put('gmail_new_email_trigger', null);
+    await store.put('gmail_new_email_trigger', undefined);
   },
   async run({ store, propsValue: { authentication, from, to, subject, label, category } }) {
     const data = await store.get<TriggerData>('gmail_new_email_trigger');
