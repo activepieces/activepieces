@@ -84,11 +84,18 @@ export const clickupTriggers = [
           date: '1378109721053',
           field: 'status',
           parent_id: '900900799744',
-          data: [Object],
+          data: {},
           source: null,
-          user: [Object],
-          before: [Object],
-          after: [Object]
+          user: {
+            "id": 55053258,
+            "username": "Activepieces Apps",
+            "email": "apps@activepieces.com",
+            "color": "#aa2fff",
+            "initials": "AA",
+            "profilePicture": null
+          },
+          before: null,
+          after: "90040005586783",
         }
       ],
       task: sampleTask,
@@ -112,7 +119,14 @@ export const clickupTriggers = [
           parent_id: '900900799744',
           data: {},
           source: null,
-          user: [Object],
+          user: {
+            "id": 55053258,
+            "username": "Activepieces Apps",
+            "email": "apps@activepieces.com",
+            "color": "#aa2fff",
+            "initials": "AA",
+            "profilePicture": null
+          },
           before: "Watch over Neriah's",
           after: "Watch over Neriah's things"
         }
@@ -149,10 +163,22 @@ export const clickupTriggers = [
           parent_id: '900900799744',
           data: {},
           source: null,
-          user: [Object],
+          user: {
+            "id": 55053258,
+            "username": "Activepieces Apps",
+            "email": "apps@activepieces.com",
+            "color": "#aa2fff",
+            "initials": "AA",
+            "profilePicture": null
+          },
           before: null,
           after: '90090008088251',
-          comment: [Object]
+          comment: [
+            {
+              "text": "asdsada",
+              "attributes": {}
+            }
+          ],
         }
       ],
       task: sampleTask,
@@ -176,10 +202,22 @@ export const clickupTriggers = [
           parent_id: '900900799744',
           data: {},
           source: null,
-          user: [Object],
+          user: {
+            "id": 55053258,
+            "username": "Activepieces Apps",
+            "email": "apps@activepieces.com",
+            "color": "#aa2fff",
+            "initials": "AA",
+            "profilePicture": null
+          },
           before: null,
           after: '90090008088251',
-          comment: [Object]
+          comment: [
+            {
+              "text": "asdsada",
+              "attributes": {}
+            }
+          ],
         }
       ],
       task: sampleTask,
