@@ -6,8 +6,8 @@ import {
   AuthenticationType,
   TriggerStrategy,
 } from '@activepieces/framework';
-import { clickupCommon } from '../common';
-import { ClickupEventType } from '../common/models';
+import { callClickupGetTask, clickupCommon } from '../common';
+import { ClickupEventType, ClickupWebhookPayload } from '../common/models';
 
 export const clickupRegisterTrigger = ({
   name,
@@ -18,7 +18,7 @@ export const clickupRegisterTrigger = ({
 }: {
   name: string,
   displayName: string,
-  eventType: string,
+  eventType: ClickupEventType,
   description: string,
   sampleData: unknown
 }) => createTrigger({
@@ -27,11 +27,7 @@ export const clickupRegisterTrigger = ({
   description,
   props: {
     authentication: clickupCommon.authentication,
-    workspace_id: clickupCommon.workspace_id(true),
-		// space_id: clickupCommon.space_id(true),
-		// list_id: clickupCommon.list_id(false),
-    // task_id: clickupCommon.task_id(false),
-    // folder_id: clickupCommon.folder_id(false)
+    workspace_id: clickupCommon.workspace_id(true)
   },
   sampleData,
   type: TriggerStrategy.WEBHOOK,
@@ -42,7 +38,7 @@ export const clickupRegisterTrigger = ({
       method: HttpMethod.POST,
       url: `https://api.clickup.com/api/v2/team/${workspace_id}/webhook`,
       body: {
-        endpoint: context.webhookUrl.replace("http://localhost:3000", "https://aad0-154-122-163-57.eu.ngrok.io"),
+        endpoint: context.webhookUrl,
         events: [eventType]
       },
       authentication: {
@@ -54,7 +50,7 @@ export const clickupRegisterTrigger = ({
 
     const response = await httpClient.sendRequest<WebhookInformation>(request);
     console.debug(`clickup.${eventType}.onEnable`, response)
-    //TODO: use hashes? using same trigger for diff usecases, names might collide;
+
     await context.store.put<WebhookInformation>(`clickup_${name}_trigger`, response.body);
   },
   async onDisable(context) {
@@ -73,8 +69,29 @@ export const clickupRegisterTrigger = ({
     }
   },
   async run(context) {
-    console.debug("payload received", context.payload.body)
-    return [context.payload.body];
+    const payload = context.payload.body as ClickupWebhookPayload
+
+    if (
+      [
+        ClickupEventType.TASK_CREATED,
+        ClickupEventType.TASK_UPDATED,
+        ClickupEventType.TASK_COMMENT_POSTED,
+        ClickupEventType.TASK_COMMENT_UPDATED,
+      ].includes(eventType)
+    ) {
+      const enriched = [{
+        ...payload,
+        task: await callClickupGetTask(
+          context.propsValue['authentication']['access_token'], 
+          payload.task_id
+        )
+      }]
+      
+      console.debug("payload enriched", enriched)
+      return enriched
+    }
+
+    return [context.payload.body]
   },
 });
 
@@ -82,15 +99,15 @@ interface WebhookInformation {
   id: string
   webhook: {
     id: string
-    userid: 183,
-    team_id: 108,
+    userid: number
+    team_id: number
     endpoint: string
     client_id: string
-    events: ClickupEventType[],
-    task_id: null,
-    list_id: null,
-    folder_id: null,
-    space_id: null,
+    events: ClickupEventType[]
+    task_id: string
+    list_id: string
+    folder_id: string
+    space_id: string
     health: {
       status: string
       fail_count: number
