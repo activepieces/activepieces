@@ -1,4 +1,4 @@
-import { createAction, Property, HttpMethod, getAccessTokenOrThrow } from "@activepieces/framework";
+import { createAction, HttpMethod, getAccessTokenOrThrow } from "@activepieces/framework";
 import { clickupCommon, callClickUpApi } from "../../common";
 
 
@@ -8,7 +8,7 @@ export const getClickupSpaces = createAction({
 	displayName: 'Get Spaces',
 	props: {
 		authentication: clickupCommon.authentication,
-		team_id: clickupCommon.workspace_id
+		team_id: clickupCommon.workspace_id()
 	},
 	async run(configValue) {
 		const { team_id, authentication } = configValue.propsValue;
