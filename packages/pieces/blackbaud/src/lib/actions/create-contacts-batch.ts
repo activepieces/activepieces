@@ -24,7 +24,7 @@ export const blackbaudCreateContacts = createAction({
             defaultValue: [
                 {
                     "email": {
-                        "address": "Kilgore_Trout64@gmail.com",
+                        "address": "example@example.com",
                         "do_not_email": false,
                         "inactive": false,
                         "primary": true,
@@ -35,7 +35,7 @@ export const blackbaudCreateContacts = createAction({
                     "phone": {
                         "do_not_call": false,
                         "inactive": false,
-                        "number": "843-537-3397",
+                        "number": "843-234-3397",
                         "primary": true,
                         "type": "Home"
                     },
