@@ -134,6 +134,7 @@ This section is dedicated to individuals who have contributed to 5 or more actio
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/abaza738"><img src="https://avatars.githubusercontent.com/u/50132270?v=4?s=100" width="100px;" alt="abaza738"/><br /><sub><b>abaza738</b></sub></a><br /><a href="#plugin-abaza738" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jonaboe"><img src="https://avatars.githubusercontent.com/u/51358680?v=4?s=100" width="100px;" alt="Jona Boeddinghaus"/><br /><sub><b>Jona Boeddinghaus</b></sub></a><br /><a href="#plugin-jonaboe" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/fomojola"><img src="https://avatars.githubusercontent.com/u/264253?v=4?s=100" width="100px;" alt="fomojola"/><br /><sub><b>fomojola</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=fomojola" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/astorozhevsky"><img src="https://avatars.githubusercontent.com/u/11055414?v=4?s=100" width="100px;" alt="Alexander Storozhevsky"/><br /><sub><b>Alexander Storozhevsky</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=astorozhevsky" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
