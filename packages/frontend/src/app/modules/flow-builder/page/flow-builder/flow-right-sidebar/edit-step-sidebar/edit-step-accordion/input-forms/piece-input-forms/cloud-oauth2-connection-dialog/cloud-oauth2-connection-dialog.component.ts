@@ -140,6 +140,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
         token_url: this.settingsForm.value['token_url'],
         code: popupResponse.code,
         code_challenge: popupResponse.code_challenge,
+        client_id: this._cloudConnectionPopupSettings.client_id,
         scope: this._cloudConnectionPopupSettings.scope,
         type: AppConnectionType.CLOUD_OAUTH2,
         props: this.pieceAuthConfig.oAuthProps
