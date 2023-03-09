@@ -55,7 +55,8 @@
       </p>
     </div>
   </form>
-  <a class="ap-cursor-pointer ap-mt-2" *ngIf="!connectionToUpdate && !hasAppWebhook" (click)="useOwnCred()">I would like
+  <a class="ap-cursor-pointer ap-mt-2" *ngIf="!connectionToUpdate && !isTriggerAppWebhook" (click)="useOwnCred()">I
+    would like
     to use my own
     app credentials </a>
 </mat-dialog-content>

@@ -67,6 +67,8 @@ export class AddEditConnectionButtonComponent {
   pieceName: string;
   @Input()
   isEditConnectionButton = false;
+  @Input()
+  triggerName:string;
   @Output()
   connectionPropertyValueChanged: EventEmitter<{
     configKey: string;
@@ -170,14 +172,14 @@ export class AddEditConnectionButtonComponent {
                 return pieces.find((p) => p.name === this.pieceName)!;
               }),
               map((p) => {
-                let hasAppWebhook = false;
+                let isTriggerAppWebhook = false;
+                debugger;
                 Object.keys(p.triggers).forEach((k) => {
-                  hasAppWebhook =
-                    hasAppWebhook || p.triggers[k].type === 'APP_WEBHOOK';
+                  isTriggerAppWebhook = isTriggerAppWebhook ||  this.triggerName === k && p.triggers[k].type === "APP_WEBHOOK"
                 });
                 return {
                   cloudAuth2Config: res,
-                  hasAppWebhook: hasAppWebhook,
+                  isTriggerAppWebhook: isTriggerAppWebhook,
                 };
               })
             );
@@ -185,15 +187,15 @@ export class AddEditConnectionButtonComponent {
           tap(
             (res: {
               cloudAuth2Config: { clientId: string };
-              hasAppWebhook: boolean;
+              isTriggerAppWebhook: boolean;
             }) => {
-              if (res.cloudAuth2Config && !res.hasAppWebhook) {
+              if (res.cloudAuth2Config) {
                 this.openNewCloudOAuth2ConnectionModal(
                   res.cloudAuth2Config.clientId,
-                  res.hasAppWebhook
+                  res.isTriggerAppWebhook
                 );
               } else {
-                this.openNewOAuth2ConnectionDialog(res.hasAppWebhook);
+                this.openNewOAuth2ConnectionDialog();
               }
             }
           ),
@@ -201,7 +203,7 @@ export class AddEditConnectionButtonComponent {
         );
     }
   }
-  private openNewOAuth2ConnectionDialog(hasAppWebhook: boolean) {
+  private openNewOAuth2ConnectionDialog() {
     this.updateOrAddConnectionDialogClosed$ = this.flagService
       .getFrontendUrl()
       .pipe(
@@ -211,8 +213,7 @@ export class AddEditConnectionButtonComponent {
               data: {
                 pieceAuthConfig: this.config,
                 pieceName: this.pieceName,
-                serverUrl: serverUrl,
-                hasAppWebhook: hasAppWebhook,
+                serverUrl: serverUrl
               },
             })
             .afterClosed()
@@ -260,7 +261,7 @@ export class AddEditConnectionButtonComponent {
 
   private openNewCloudOAuth2ConnectionModal(
     clientId: string,
-    hasAppWebhook: boolean
+    isTriggerAppWebhook: boolean
   ) {
     this.updateOrAddConnectionDialogClosed$ = this.dialogService
       .open(CloudOAuth2ConnectionDialogComponent, {
@@ -268,7 +269,7 @@ export class AddEditConnectionButtonComponent {
           pieceAuthConfig: this.config,
           pieceName: this.pieceName,
           clientId: clientId,
-          hasAppWebhook: hasAppWebhook,
+          isTriggerAppWebhook: isTriggerAppWebhook,
         },
       })
       .afterClosed()
@@ -281,7 +282,7 @@ export class AddEditConnectionButtonComponent {
               value: authConfigOptionValue,
             });
           } else if (result === USE_MY_OWN_CREDENTIALS) {
-            this.openNewOAuth2ConnectionDialog(false);
+            this.openNewOAuth2ConnectionDialog();
           }
         }),
         map(() => void 0)

@@ -57,7 +57,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
   settingsForm: FormGroup<AuthConfigSettings>;
   loading = false;
   submitted = false;
-  hasAppWebhook = false;
   clientIdTooltip =
     'Your App ID, Key or Client ID. You can find it if you go to your app on the 3rd party service.';
   clientSecretTooltip =
@@ -90,7 +89,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     this.pieceAuthConfig = dialogData.pieceAuthConfig;
     this.connectionToUpdate = dialogData.connectionToUpdate;
     this.serverUrl = dialogData.serverUrl;
-    this.hasAppWebhook = dialogData.hasAppWebhook;
   }
 
   ngOnInit(): void {

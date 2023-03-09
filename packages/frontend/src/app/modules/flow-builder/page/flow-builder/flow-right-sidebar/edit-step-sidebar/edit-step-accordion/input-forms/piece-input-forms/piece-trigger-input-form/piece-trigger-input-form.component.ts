@@ -150,7 +150,7 @@ export class PieceTriggerInputFormComponent {
             label: {
               name: trigger.displayName,
               description: trigger.description,
-              isWebhook: component.triggers[triggerName].type === 'WEBHOOK',
+              isWebhook: component.triggers[triggerName].type === 'WEBHOOK' || component.triggers[triggerName].type === 'APP_WEBHOOK',
             },
           };
         });

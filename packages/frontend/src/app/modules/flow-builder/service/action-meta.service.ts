@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import {
   ActionType,
+  ApEdition,
   PieceOptionRequest,
   TriggerType,
 } from '@activepieces/shared';
@@ -10,8 +11,9 @@ import {
   AppPiece,
   PieceProperty,
 } from '../../common/components/configs-form/connector-action-or-config';
-import { Observable, shareReplay } from 'rxjs';
+import { forkJoin, map, Observable, shareReplay } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { FlagService } from '../../common/service/flag.service';
 
 @Injectable({
   providedIn: 'root',
@@ -53,13 +55,39 @@ export class ActionMetaService {
       logoUrl: '/assets/img/custom/piece/empty-trigger.svg',
     },
   ];
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private flagsService:FlagService) {}
 
   public getPieces() {
+
     if (!this.pieces$) {
-      this.pieces$ = this.http
-        .get<AppPiece[]>(environment.apiUrl + '/pieces')
-        .pipe(shareReplay(1));
+      const edition$= this.flagsService.getEdition();
+      const pieces$ = this.http
+        .get<AppPiece[]>(environment.apiUrl + '/pieces');
+      this.pieces$ = forkJoin({
+        pieces:pieces$,
+        edition:edition$
+      }).pipe(map(res=>{
+        if(res.edition === ApEdition.COMMUNITY)
+        { 
+         return res.pieces.map(p=>{
+          if(p.name==="slack")
+          debugger;
+          const triggers = {...p.triggers};
+          const filterdTriggers: typeof triggers={};
+          Object.keys(triggers).forEach(k=>{
+          
+            if(triggers[k].type !== "APP_WEBHOOK")
+            {
+              filterdTriggers[k]=triggers[k];
+            }
+          })
+          return {...p,triggers:filterdTriggers};
+         })
+        }
+        return res.pieces
+      }),
+      shareReplay(1))
+      
     }
     return this.pieces$;
   }
