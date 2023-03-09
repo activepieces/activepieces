@@ -19,7 +19,8 @@ export const appConnectionService = {
             response = await claimWithCloud({
                 pieceName: request.appName,
                 code: request.value.code,
-                edition: await getEdition()
+                edition: await getEdition(),
+                codeVerifier: request.value.code_challenge
             })
             break;
         case AppConnectionType.OAUTH2:
@@ -230,11 +231,13 @@ async function claim(request: {
     }
 }
 
-async function claimWithCloud(request: { pieceName: string; code: string, edition: string }): Promise<unknown> {
+async function claimWithCloud(request: { 
+    pieceName: string; code: string; codeVerifier: string, edition: string }): Promise<unknown> {
     try {
         return (await axios.post("https://secrets.activepieces.com/claim", request)).data;
     }
     catch (e: unknown | AxiosError) {
+        console.error(e);
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CLOUD_CLAIM, params: {
                 appName: request.pieceName
