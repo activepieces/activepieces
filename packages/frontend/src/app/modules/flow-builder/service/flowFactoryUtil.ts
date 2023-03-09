@@ -1,6 +1,7 @@
 import { FlowItem } from '../../common/model/flow-builder/flow-item';
 import {
   ActionType,
+  BranchAction,
   Flow,
   LoopOnItemsAction,
   Trigger,
@@ -32,6 +33,7 @@ export class FlowFactoryUtil {
       switch (clonedContent.type) {
         case ActionType.CODE:
         case ActionType.LOOP_ON_ITEMS:
+        case ActionType.BRANCH:
         case ActionType.PIECE: {
           const simple = this.addCordDetails(clonedContent);
           FlowFactoryUtil.buildHelper(simple);
@@ -72,6 +74,19 @@ export class FlowFactoryUtil {
         flowItemData.nextAction = FlowFactoryUtil.createStepFromAction(
           action.nextAction
         );
+      }
+      if (action.type === ActionType.BRANCH) {
+        const branchAction = action as BranchAction;
+        if (branchAction.onSuccessAction) {
+          branchAction.onSuccessAction = FlowFactoryUtil.createStepFromAction(
+            branchAction.onSuccessAction
+          );
+        }
+        if (branchAction.onFailureAction) {
+          branchAction.onFailureAction = FlowFactoryUtil.createStepFromAction(
+            branchAction.onFailureAction
+          );
+        }
       }
       if (action.type === ActionType.LOOP_ON_ITEMS) {
         const loopAction = action as LoopOnItemsAction;

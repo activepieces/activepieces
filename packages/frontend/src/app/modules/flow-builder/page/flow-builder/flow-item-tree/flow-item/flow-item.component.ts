@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Point } from '../../../../../common/model/helper/point';
 import { FlowItem } from '../../../../../common/model/flow-builder/flow-item';
-import { map, Observable, of } from 'rxjs';
+import { combineLatest, map, Observable, of, startWith } from 'rxjs';
 import { BuilderSelectors } from '../../../../store/builder/builder.selector';
 import { Store } from '@ngrx/store';
 import { FlowStructureUtil } from '../../../../service/flowStructureUtil';
@@ -11,6 +11,8 @@ import {
   SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
   VERTICAL_LINE_LENGTH,
 } from './flow-item-connection/draw-utils';
+import { PannerService } from '../../canvas-utils/panning/panner.service';
+import { ZoomingService } from '../../canvas-utils/zooming/zooming.service';
 
 @Component({
   selector: 'app-flow-item',
@@ -18,7 +20,9 @@ import {
   styleUrls: [],
 })
 export class FlowItemComponent implements OnInit {
-  @Input() insideLoop = false;
+  flowGraphContainer = {};
+  transformObs$: Observable<string>;
+  @Input() insideLoopOrBranch = false;
   @Input() hoverState = false;
   @Input() trigger = false;
   _flowItemData: FlowItem;
@@ -34,6 +38,7 @@ export class FlowItemComponent implements OnInit {
           return this._flowItemData.name == stepName;
         })
       );
+    this.flowGraphContainer = this.flowGraphContainerCalculator();
   }
 
   dragging = false;
@@ -41,10 +46,36 @@ export class FlowItemComponent implements OnInit {
   viewMode$: Observable<boolean> = of(false);
   dragDelta: Point | undefined;
 
-  constructor(private store: Store) {}
+  constructor(
+    private store: Store,
+    private pannerService: PannerService,
+    private zoomingService: ZoomingService
+  ) {}
 
   ngOnInit(): void {
     this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
+    if (FlowStructureUtil.isTrigger(this._flowItemData)) {
+      const translate$ = this.pannerService.panningOffset$.asObservable().pipe(
+        startWith({ x: 0, y: 0 }),
+        map((val) => {
+          return `translate(${val.x}px,${val.y}px)`;
+        })
+      );
+      const scale$ = this.zoomingService.zoomingScale$.asObservable().pipe(
+        startWith(1),
+        map((val) => {
+          return `scale(${val})`;
+        })
+      );
+      this.transformObs$ = combineLatest({
+        scale: scale$,
+        translate: translate$,
+      }).pipe(
+        map((value) => {
+          return `${value.scale} ${value.translate}`;
+        })
+      );
+    }
   }
 
   flowContentContainer() {
@@ -55,7 +86,7 @@ export class FlowItemComponent implements OnInit {
     };
   }
 
-  flowGraphContainer() {
+  flowGraphContainerCalculator() {
     return {
       top: FlowStructureUtil.isTrigger(this._flowItemData) ? '50px' : '0px',
       width: this._flowItemData.boundingBox!.width + 'px',

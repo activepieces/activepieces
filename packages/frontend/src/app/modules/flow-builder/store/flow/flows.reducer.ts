@@ -93,7 +93,7 @@ const _flowsReducer = createReducer(
     const flowIndex = clonedFlows.findIndex(
       (f) => f.id === state.selectedFlowId
     );
-    if (flowIndex != -1) {
+    if (flowIndex !== -1) {
       clonedFlows[flowIndex].version = flowHelper.apply(
         clonedFlows[flowIndex].version!,
         {

@@ -656,3 +656,17 @@ mat-form-field.\!ap-bg-white
 {
 	width: 100%;
 }
+.no-check-bg .mat-button-toggle-checked
+{
+	background-color:  $white ;
+}
+.mat-button-toggle-appearance-standard .mat-button-toggle-label-content
+{
+	line-height: unset;
+}
+.mat-button-toggle-button 
+{
+	display:flex;
+	padding-top:.3125rem !important; 
+	padding-bottom: .3125rem !important;
+}

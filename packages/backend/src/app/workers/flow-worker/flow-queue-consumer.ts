@@ -1,5 +1,5 @@
 import { Worker } from "bullmq";
-import { ApId, RunEnvironment, TriggerType } from "@activepieces/shared";
+import { ActivepiecesError, ApId, ErrorCode, RunEnvironment, TriggerType } from "@activepieces/shared";
 import { createRedisClient } from "../../database/redis-connection";
 import { flowRunService } from "../../flow-run/flow-run-service";
 import { triggerUtils } from "../../helper/trigger-utils";
@@ -10,6 +10,7 @@ import { collectionVersionService } from "../../collections/collection-version/c
 import { logger } from "../../helper/logger";
 import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";
+import { instanceService } from "../../instance/instance.service";
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
     ONE_TIME_JOB_QUEUE,
@@ -27,15 +28,32 @@ const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
 const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     REPEATABLE_JOB_QUEUE,
     async (job) => {
+
         logger.info(`[repeatableJobConsumer] job.id=${job.name} job.type=${job.data.triggerType}`);
         const { data } = job;
-        switch (data.triggerType) {
-        case TriggerType.SCHEDULE:
-            await consumeScheduleTrigger(data);
-            break;
-        case TriggerType.PIECE:
-            await consumePieceTrigger(data);
-            break;
+
+        try {
+            switch (data.triggerType) {
+            case TriggerType.SCHEDULE:
+                await consumeScheduleTrigger(data);
+                break;
+            case TriggerType.PIECE:
+                await consumePieceTrigger(data);
+                break;
+            }
+        }
+        catch (e) {
+            if (e instanceof ActivepiecesError) {
+                const apError: ActivepiecesError = e as ActivepiecesError;
+                const instance = await instanceService.getByCollectionId({ projectId: data.projectId, collectionId: data.collectionId });
+                if (apError.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
+                    logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`);
+                    await instanceService.deleteOne({ projectId: data.projectId, id: instance.id })
+                }
+            }
+            else {
+                throw e;
+            }
         }
         logger.info(`[repeatableJobConsumer] done job.id=${job.name} job.type=${job.data.triggerType}`);
     },
