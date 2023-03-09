@@ -42,7 +42,7 @@ import { zoom } from '@activepieces/piece-zoom';
 import { generatebanners } from '@activepieces/piece-generatebanners';
 import { connections } from '@activepieces/piece-connections';
 import { youtube } from '@activepieces/piece-youtube';
-
+import { intercom } from '@activepieces/piece-intercom';
 export const pieces: Piece[] = [
     airtable,
     asana,
@@ -87,6 +87,7 @@ export const pieces: Piece[] = [
     zoom,
     connections,
     youtube,
+    intercom
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
