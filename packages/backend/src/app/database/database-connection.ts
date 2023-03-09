@@ -65,7 +65,7 @@ export const databaseConnection = new DataSource({
     username,
     password,
     database,
-    synchronize: true,
+    synchronize: false,
     subscribers: [],
     migrationsRun: true,
     migrationsTransactionMode: 'each',
