@@ -82,7 +82,7 @@ export const youtubeNewVideoTrigger = createTrigger({
         const items = (await getRssItems(channelId)) || [];
 
         await store.put('lastFetchedYoutubeVideo', items?.[0]?.guid);
-        await store.put('lastPublishedYoutubeVideo', items?.[0].pubDate);
+        await store.put('lastPublishedYoutubeVideo', items?.[0]?.pubDate);
         return;
     },
 
@@ -95,11 +95,14 @@ export const youtubeNewVideoTrigger = createTrigger({
         if (!channelId) return [];
 
         const items = (await getRssItems(channelId)) || [];
+        if (items.length === 0) {
+            return [];
+        }
         const lastItemId = await store.get('lastFetchedYoutubeVideo');
         const storedLastPublished = await store.get<string>('lastPublishedYoutubeVideo');
 
         await store.put('lastFetchedYoutubeVideo', items?.[0]?.guid);
-        await store.put('lastPublishedYoutubeVideo', items?.[0].pubDate);
+        await store.put('lastPublishedYoutubeVideo', items?.[0]?.pubDate);
 
         /**
          * If the new latest item's date is before the last saved date
@@ -107,13 +110,13 @@ export const youtubeNewVideoTrigger = createTrigger({
          * this happens when a live stream ends, the live stream entry is deleted and later
          * is replaced by the stream's video.
          */
-        if (dayjs(items?.[0].published).isBefore(dayjs(storedLastPublished))) {
+        if (dayjs(items?.[0]?.pubDate).isBefore(dayjs(storedLastPublished))) {
             return [];
         }
 
         const newItems = [];
         for (const item of items) {
-            if (item.id === lastItemId) break;
+            if (item.guid === lastItemId) break;
             newItems.push(item);
         }
 
