@@ -104,6 +104,7 @@
         "pieces/apps/twilio",
         "pieces/apps/typeform",
         "pieces/apps/wordpress",
+        "pieces/apps/youtube",
         "pieces/apps/zoom"
       ]
     },
