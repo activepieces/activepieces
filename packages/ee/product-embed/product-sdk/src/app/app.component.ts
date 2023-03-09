@@ -158,12 +158,6 @@ export class AppComponent implements OnDestroy, AfterViewInit {
 
   ngAfterViewInit(): void {
     setStylesForSdkElement(this.elementRef);
-    /**this.init({
-			token: "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJqb2huIiwiZXhwIjoxNjk5MDQ2MDcxfQ.GijRskoYh0JkCbyskYHGw-McWb2FzJQvX5LdEqbIDTj9VH1_EdSkYbd7k4QOBWf48o6aawZHAly6XUuz74yQ1UWSrkBX23DpS_CXS2E9WxsYeZuXKfbyo_u2qKjQN2QoQJaSXRU5OnP0RRTHNvUKX8H5FAJDBYb83gRczXPrv9LeL7WSgsC827MZQF_KWxTAu6Ne9uJPmPFhVIfDBCYU93blhfmCg7k6Cm9WM7tx0drvbVB7-HQsw1St-eVcgulEoITxl6icHVKMVFQfNQ9P9DNdHr99uMdsNJNg9MNSK-dvi0_jciefXlRWz3h14-wO--afFURyXpevi7gAzmd1gA",
-			host: "http://localhost:3000",
-			projectId: "JliFpKlXjF3EUPqvMZowl"
-		});
-		this.disconnect({ appName: "gmail" });**/
   }
 
   ngOnDestroy(): void {

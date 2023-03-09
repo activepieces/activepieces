@@ -30,6 +30,7 @@ import { posthog } from '@activepieces/piece-posthog';
 import { rssFeed } from '@activepieces/piece-rss';
 import { sendgrid } from '@activepieces/piece-sendgrid';
 import { slack } from '@activepieces/piece-slack';
+import { trello } from './lib/trello';
 import { storage } from '@activepieces/piece-store';
 import { stripe } from '@activepieces/piece-stripe';
 import { telegramBot } from '@activepieces/piece-telegram-bot';
@@ -41,6 +42,7 @@ import { zoom } from '@activepieces/piece-zoom';
 import { generatebanners } from '@activepieces/piece-generatebanners';
 import { connections } from '@activepieces/piece-connections';
 import { notion } from '@activepieces/piece-notion';
+import { youtube } from '@activepieces/piece-youtube';
 
 export const pieces: Piece[] = [
     airtable,
@@ -81,10 +83,12 @@ export const pieces: Piece[] = [
     todoist,
     twilio,
     typeform,
+    trello,
     wordpress,
     zoom,
     connections,
     notion,
+    youtube,
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {

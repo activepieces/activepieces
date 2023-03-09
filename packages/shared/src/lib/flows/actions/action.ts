@@ -5,6 +5,7 @@ export enum ActionType {
   CODE = 'CODE',
   PIECE = 'PIECE',
   LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
+  BRANCH = 'BRANCH',
 }
 
 const commonActionProps = {
@@ -77,7 +78,68 @@ export const LoopOnItemsAction = Type.Object({
 });
 
 
-export type LoopOnItemsAction = Static<typeof LoopOnItemsAction> & {firstLoopAction?: Action};
+export type LoopOnItemsAction = Static<typeof LoopOnItemsAction> & { firstLoopAction?: Action };
+
+// Loop Items
+
+export enum BranchOperator {
+  TEXT_CONTAINS = 'TEXT_CONTAINS',
+  TEXT_DOES_NOT_CONTAIN = 'TEXT_DOES_NOT_CONTAIN',
+  TEXT_EXACTLY_MATCHES = 'TEXT_EXACTLY_MATCHES',
+  TEXT_DOES_NOT_EXACTLY_MATCH = 'TEXT_DOES_NOT_EXACTLY_MATCH',
+  TEXT_STARTS_WITH = 'TEXT_START_WITH',
+  TEXT_DOES_NOT_START_WITH = 'TEXT_DOES_NOT_START_WITH',
+  TEXT_ENDS_WITH = 'TEXT_ENDS_WITH',
+  TEXT_DOES_NOT_END_WITH = 'TEXT_DOES_NOT_END_WITH',
+  NUMBER_IS_GREATER_THAN = 'NUMBER_IS_GREATER_THAN',
+  NUMBER_IS_LESS_THAN = 'NUMBER_IS_LESS_THAN',
+  BOOLEAN_IS_TRUE = 'BOOLEAN_IS_TRUE',
+  BOOLEAN_IS_FALSE = 'BOOLEAN_IS_FALSE',
+  EXISTS = 'EXISTS',
+  DOES_NOT_EXIST = 'DOES_NOT_EXIST',
+}
+
+export const singleValueConditions = [
+  BranchOperator.EXISTS,
+  BranchOperator.DOES_NOT_EXIST,
+  BranchOperator.BOOLEAN_IS_TRUE,
+  BranchOperator.BOOLEAN_IS_FALSE
+]
+export const BranchCondition = Type.Union([
+  Type.Object({
+    firstValue: Type.String({}),
+    secondValue: Type.String({}),
+    operator: Type.Optional(Type.Union([...Object.values(BranchOperator).
+      filter(c => singleValueConditions.find(sc => sc === c) === undefined).map(c=>{
+      return Type.Literal(c)
+    }) ]))
+  }),
+  Type.Object({
+    firstValue: Type.String({}),
+    operator:  Type.Optional (Type.Union([...Object.values(BranchOperator).
+      filter(c => singleValueConditions.find(sc => sc === c) !== undefined).map(c=>{
+      return Type.Literal(c)
+    }) ]))
+  })
+]);
+
+export type BranchCondition = Static<typeof BranchCondition>;
+
+export type BranchActionSettings = {
+  conditions: BranchCondition[][];
+};
+
+export const BranchAction = Type.Object({
+  ...commonActionProps,
+  type: Type.Literal(ActionType.BRANCH),
+  settings: Type.Object({
+    conditions: Type.Array(Type.Array(BranchCondition)),
+  }),
+  onSuccessAction: Type.Optional(Type.Any({})),
+  onFailureAction: Type.Optional(Type.Any({})),
+});
+
+export type BranchAction = Static<typeof BranchAction> & { onSuccessAction?: Action, onFailureAction?: Action };
 
 
 // Union of all actions
@@ -85,7 +147,8 @@ export type LoopOnItemsAction = Static<typeof LoopOnItemsAction> & {firstLoopAct
 export const Action = Type.Union([
   CodeAction,
   PieceAction,
-  LoopOnItemsAction
- ]);
+  LoopOnItemsAction,
+  BranchAction
+]);
 
-export type Action = Static<typeof Action> & {nextAction?: Action};
+export type Action = Static<typeof Action> & { nextAction?: Action };

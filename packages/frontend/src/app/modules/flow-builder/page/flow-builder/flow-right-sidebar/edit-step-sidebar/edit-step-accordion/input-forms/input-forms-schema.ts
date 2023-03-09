@@ -1,4 +1,4 @@
-import { TriggerType, ActionType } from '@activepieces/shared';
+import { TriggerType, ActionType, BranchCondition } from '@activepieces/shared';
 declare type ConfigsAndTheirValues = { [key: string]: any };
 interface InputFormsSchemaBase {
   type?: ActionType | TriggerType;
@@ -11,6 +11,10 @@ export interface CodeStepInputFormSchema extends InputFormsSchemaBase {
   artifactSourceId: string;
   artifactPackagedId: string;
   input: Record<string, unknown>;
+}
+
+export interface BranchInputFormSchema extends InputFormsSchemaBase {
+  conditions: BranchCondition[][];
 }
 
 export interface ScheduledTriggerInputFormSchema extends InputFormsSchemaBase {

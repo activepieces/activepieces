@@ -70,6 +70,10 @@ import { appConnectionsReducer } from './store/app-connections/app-connections.r
 import { SecretTextConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
 import { BasicAuthConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/basic-auth-connection-dialog/basic-auth-connection-dialog.component';
 import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedback/feedback.component';
+import { BranchLineConnectionComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-connection/branch-line-connection/branch-line-connection.component';
+import { CanvasPannerDirective } from './page/flow-builder/canvas-utils/panning/panner.directive';
+import { BranchStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/branch-step-input-form/branch-step-input-form.component';
+import { CanvasUtilsComponent } from './page/flow-builder/canvas-utils/canvas-utils.component';
 
 @NgModule({
   imports: [
@@ -153,6 +157,10 @@ import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedb
     SecretTextConnectionDialogComponent,
     BasicAuthConnectionDialogComponent,
     FeedbackComponent,
+    BranchLineConnectionComponent,
+    CanvasPannerDirective,
+    BranchStepInputFormComponent,
+    CanvasUtilsComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [FlowBuilderHeaderComponent],

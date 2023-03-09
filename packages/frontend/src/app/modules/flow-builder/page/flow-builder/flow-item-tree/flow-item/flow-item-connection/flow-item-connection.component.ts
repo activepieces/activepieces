@@ -1,7 +1,11 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { ThemeService } from '../../../../../../common/service/theme.service';
 import { FlowItem } from '../../../../../../common/model/flow-builder/flow-item';
-import { ActionType, LoopOnItemsAction } from '@activepieces/shared';
+import {
+  ActionType,
+  BranchAction,
+  LoopOnItemsAction,
+} from '@activepieces/shared';
 
 @Component({
   selector: 'app-flow-item-connection',
@@ -13,7 +17,7 @@ export class FlowItemConnectionComponent {
   @Input() flowItem: FlowItem;
   @Input() colorLine = false;
   @Input() viewMode: boolean;
-  @Input() insideLoop = false;
+  @Input() insideLoopOrBranch = false;
   constructor(public themeService: ThemeService) {}
 
   get ActionType() {
@@ -22,5 +26,9 @@ export class FlowItemConnectionComponent {
 
   castToLoopItem() {
     return this.flowItem as LoopOnItemsAction;
+  }
+
+  castToBranchItem() {
+    return this.flowItem as BranchAction;
   }
 }

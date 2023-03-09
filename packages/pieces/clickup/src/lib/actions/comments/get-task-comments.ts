@@ -2,7 +2,7 @@ import { createAction, Property, HttpMethod, getAccessTokenOrThrow } from "@acti
 import { clickupCommon, callClickUpApi } from "../../common";
 
 
-export const getClickupTaskCommants = createAction({
+export const getClickupTaskComments = createAction({
 	name: 'get_task_comments',
 	description: 'Gets comments from a task in ClickUp',
 	displayName: 'Get Task Comments',
