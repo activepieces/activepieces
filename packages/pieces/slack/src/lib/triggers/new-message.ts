@@ -4,7 +4,7 @@ import { slackAuth, slackChannel } from "../common/props";
 
 export const newMessage = createTrigger({
     name: 'new_message',
-    displayName: 'New message',
+    displayName: 'New Message (Beta)',
     description: 'Trigger when a new message is received',
     props: {
         authentication: slackAuth,
@@ -46,7 +46,7 @@ export const newMessage = createTrigger({
         // Ignored
     },
     run: async (context) => {
-        if (context.payload.body.channel === context.propsValue.channel) {
+        if (context.payload.body.event.channel === context.propsValue.channel) {
             return [context.payload.body.event]
         }
         return [];
