@@ -6,10 +6,10 @@ enum ContactRole
   USER="user",
   LEAD="lead"
 }
-export const createContact= createAction({
-    description:'Create a contact (ie. user or lead)',
+export const getOrCreateContact= createAction({
+    description:'Get or create a contact (ie. user or lead) if it isn\'t found',
     displayName:"Create Contact",
-    name:"create_contact_intercom",
+    name:"get_or_create_contact_intercom",
     sampleData:{
         "type": "contact",
         "id": "6409ae25be4bf93b73d32f17",
@@ -145,6 +145,7 @@ export const createContact= createAction({
     },
     run:async(context)=>{
         const authentication = getAccessTokenOrThrow(context.propsValue.connection)
+        try{
             const response = await httpClient.sendRequest({
                 method: HttpMethod.POST,
                 url: `https://api.intercom.io/contacts`,
@@ -164,6 +165,36 @@ export const createContact= createAction({
                     signed_up_at:new Date()
                 }
               });
-              return response.body;       
+              return response.body;
+        }
+        catch(ex:any)
+        {   
+            //check if it is failed because the user exists
+            const response:HttpResponse = (JSON.parse(ex.message)).response;
+            if(response && response.body)
+            {
+                const errors = response.body['errors'];
+                if(Array.isArray(errors) && errors[0])
+                {
+                    const idFromErrorMessage= errors[0].message?.split('id=')[1];
+                    if(idFromErrorMessage)
+                    {
+                        return (await httpClient.sendRequest({
+                            method:HttpMethod.GET,
+                            url:`https://api.intercom.io/contacts/${idFromErrorMessage}`,
+                            authentication: {
+                                type: AuthenticationType.BEARER_TOKEN,
+                                token: (authentication as string)
+                            },
+                        })).body;
+                    }
+                   
+                }
+            }
+            throw ex;
+        }
+       
+         
+       
     }
 })
