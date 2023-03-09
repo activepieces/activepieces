@@ -19,6 +19,7 @@ export const appConnectionService = {
             response = await claimWithCloud({
                 pieceName: request.appName,
                 code: request.value.code,
+                clientId: request.value.client_id,
                 edition: await getEdition(),
                 codeVerifier: request.value.code_challenge
             })
@@ -151,6 +152,7 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
     const requestBody = {
         refreshToken: connectionValue.refresh_token,
         pieceName: appName,
+        clientId: connectionValue.client_id,
         edition: await getEdition(),
         tokenUrl: connectionValue.token_url,
     };
@@ -232,7 +234,7 @@ async function claim(request: {
 }
 
 async function claimWithCloud(request: { 
-    pieceName: string; code: string; codeVerifier: string, edition: string }): Promise<unknown> {
+    pieceName: string; code: string; codeVerifier: string, edition: string; clientId: string }): Promise<unknown> {
     try {
         return (await axios.post("https://secrets.activepieces.com/claim", request)).data;
     }
