@@ -26,6 +26,7 @@ import { AppEventRoutingEntity } from "../app-event-routing/app-event-routing.en
 import { productEmbed1677894800372 } from "./migration/1677894800372-product-embed";
 import { AppCredentialEntity } from "@ee/product-embed/backend/app-credentials/app-credentials.entity";
 import { ConnectionKeyEntity } from "@ee/product-embed/backend/connection-keys/connection-key.entity";
+import { addEventRouting1678382946390 } from "./migration/1678382946390-add-event-routing";
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST);
@@ -54,7 +55,8 @@ const getMigrations = () => {
         removeStoreAction1676649852890,
         billing1677286751592,
         addVersionToPieceSteps1677521257188,
-        productEmbed1677894800372
+        productEmbed1677894800372,
+        addEventRouting1678382946390
     ];
 }
 
