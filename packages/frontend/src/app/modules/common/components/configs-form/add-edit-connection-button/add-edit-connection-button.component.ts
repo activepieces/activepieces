@@ -68,7 +68,7 @@ export class AddEditConnectionButtonComponent {
   @Input()
   isEditConnectionButton = false;
   @Input()
-  triggerName:string;
+  triggerName: string;
   @Output()
   connectionPropertyValueChanged: EventEmitter<{
     configKey: string;
@@ -173,9 +173,11 @@ export class AddEditConnectionButtonComponent {
               }),
               map((p) => {
                 let isTriggerAppWebhook = false;
-                debugger;
                 Object.keys(p.triggers).forEach((k) => {
-                  isTriggerAppWebhook = isTriggerAppWebhook ||  this.triggerName === k && p.triggers[k].type === "APP_WEBHOOK"
+                  isTriggerAppWebhook =
+                    isTriggerAppWebhook ||
+                    (this.triggerName === k &&
+                      p.triggers[k].type === 'APP_WEBHOOK');
                 });
                 return {
                   cloudAuth2Config: res,
@@ -213,7 +215,7 @@ export class AddEditConnectionButtonComponent {
               data: {
                 pieceAuthConfig: this.config,
                 pieceName: this.pieceName,
-                serverUrl: serverUrl
+                serverUrl: serverUrl,
               },
             })
             .afterClosed()

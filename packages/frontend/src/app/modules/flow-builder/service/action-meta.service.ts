@@ -55,39 +55,33 @@ export class ActionMetaService {
       logoUrl: '/assets/img/custom/piece/empty-trigger.svg',
     },
   ];
-  constructor(private http: HttpClient, private flagsService:FlagService) {}
+  constructor(private http: HttpClient, private flagsService: FlagService) {}
 
   public getPieces() {
-
     if (!this.pieces$) {
-      const edition$= this.flagsService.getEdition();
-      const pieces$ = this.http
-        .get<AppPiece[]>(environment.apiUrl + '/pieces');
+      const edition$ = this.flagsService.getEdition();
+      const pieces$ = this.http.get<AppPiece[]>(environment.apiUrl + '/pieces');
       this.pieces$ = forkJoin({
-        pieces:pieces$,
-        edition:edition$
-      }).pipe(map(res=>{
-        if(res.edition === ApEdition.COMMUNITY)
-        { 
-         return res.pieces.map(p=>{
-          if(p.name==="slack")
-          debugger;
-          const triggers = {...p.triggers};
-          const filterdTriggers: typeof triggers={};
-          Object.keys(triggers).forEach(k=>{
-          
-            if(triggers[k].type !== "APP_WEBHOOK")
-            {
-              filterdTriggers[k]=triggers[k];
-            }
-          })
-          return {...p,triggers:filterdTriggers};
-         })
-        }
-        return res.pieces
-      }),
-      shareReplay(1))
-      
+        pieces: pieces$,
+        edition: edition$,
+      }).pipe(
+        map((res) => {
+          if (res.edition === ApEdition.COMMUNITY) {
+            return res.pieces.map((p) => {
+              const triggers = { ...p.triggers };
+              const filterdTriggers: typeof triggers = {};
+              Object.keys(triggers).forEach((k) => {
+                if (triggers[k].type !== 'APP_WEBHOOK') {
+                  filterdTriggers[k] = triggers[k];
+                }
+              });
+              return { ...p, triggers: filterdTriggers };
+            });
+          }
+          return res.pieces;
+        }),
+        shareReplay(1)
+      );
     }
     return this.pieces$;
   }

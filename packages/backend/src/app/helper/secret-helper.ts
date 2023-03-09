@@ -1,6 +1,6 @@
 import { captureException } from "@sentry/node";
 import axios from "axios";
-import { ApEdition, FlowVersion } from "../../../../shared/src";
+import { ApEdition, FlowVersion } from "@activepieces/shared";
 import { system } from "./system/system";
 import { SystemProp } from "./system/system-prop";
 
@@ -48,7 +48,8 @@ async function getWebhookSecrets(): Promise<Record<string, string>> {
         const response = await axios.post(
             'https://secrets.activepieces.com/webhooks', { licenseKey });
         return response.data;
-    } catch (e) {
+    }
+    catch (e) {
         captureException(e);
         throw e;
     }
