@@ -40,6 +40,7 @@ import { wordpress } from '@activepieces/piece-wordpress';
 import { zoom } from '@activepieces/piece-zoom';
 import { generatebanners } from '@activepieces/piece-generatebanners';
 import { connections } from '@activepieces/piece-connections';
+import { notion } from '@activepieces/piece-notion';
 
 export const pieces: Piece[] = [
     airtable,
@@ -82,7 +83,8 @@ export const pieces: Piece[] = [
     typeform,
     wordpress,
     zoom,
-    connections
+    connections,
+    notion,
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
