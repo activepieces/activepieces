@@ -30,7 +30,6 @@ import { getEdition } from "./app/helper/license-helper";
 import { ApEdition } from "@activepieces/shared";
 import { appCredentialModule } from "@ee/product-embed/backend/app-credentials/app-credentials.module";
 import { connectionKeyModule } from "@ee/product-embed/backend/connection-keys/connection-key.module";
-import packageJson from "../../../package.json";
 
 const app = fastify({
     logger,
@@ -50,7 +49,7 @@ app.register(swagger, {
     openapi: {
         info: {
             title: 'Activepieces Documentation',
-            version: packageJson.version,
+            version: "0.3.6",
         },
         externalDocs: {
             url: 'https://www.activepieces.com/docs',
@@ -118,10 +117,11 @@ app.setErrorHandler(errorHandler);
 
 const start = async () => {
     try {
+
         await validateEnvPropsOnStartup();
         await databaseConnection.initialize();
         await databaseConnection.runMigrations();
-
+            
         const edition = await getEdition();
         logger.info("Activepieces " + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + " Edition");
         if (edition === ApEdition.ENTERPRISE) {

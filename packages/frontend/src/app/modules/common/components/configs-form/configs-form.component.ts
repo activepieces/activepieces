@@ -294,7 +294,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
                 propertyName: c.key,
                 stepName: this.stepName,
                 input: res,
-                collectionVersionId: collection.version!.id,
+                collectionId: collection.id,
               },
               this.pieceName
             );

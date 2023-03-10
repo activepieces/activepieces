@@ -3,11 +3,6 @@ import { Collection, Instance } from '@activepieces/shared';
 export enum CollectionActionType {
   CHANGE_NAME = '[COLLECTION] CHANGE_NAME',
   SET_INITIAL = '[COLLECTION] SET_INITIAL',
-  UPDATE_CONFIG = '[COLLECTION] UPDATE_CONFIG',
-  ADD_CONFIG = '[COLLECTION] ADD_CONFIG',
-  DELETE_CONFIG = '[COLLECTION] DELETE_CONFIG',
-  DELETE_CONFIG_FAILED = '[COLLECTION] DELETE_CONFIG_FAILED',
-  DELETE_CONFIG_SUCCEEDED = '[COLLECTION] DELETE_CONFIG_SUCCEEDED',
   COLLECTION_SAVED_SUCCESS = '[COLLECTION] SAVED_SUCCESS',
   COLLECTION_SAVED_FAILED = '[COLLECTION] SAVED_FAILED',
   PUBLISH_COLLECTION = '[COLLECTION] PUBLISH_COLLECTION',
@@ -17,12 +12,7 @@ export enum CollectionActionType {
   ENABLE_INSTANCE = `[COLLECTION] ENABLE_INSTANCE`,
 }
 
-export const CollectionModifyingState = [
-  CollectionActionType.CHANGE_NAME,
-  CollectionActionType.UPDATE_CONFIG,
-  CollectionActionType.ADD_CONFIG,
-  CollectionActionType.DELETE_CONFIG_SUCCEEDED,
-];
+export const CollectionModifyingState = [CollectionActionType.CHANGE_NAME];
 
 export const changeName = createAction(
   CollectionActionType.CHANGE_NAME,

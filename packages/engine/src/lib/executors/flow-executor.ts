@@ -2,7 +2,6 @@ import { Utils } from '../utils';
 import { globals } from '../globals';
 import { ActionHandler } from '../action/action-handler';
 import {
-  CollectionVersion,
   ExecutionState,
   FlowVersion,
   StepOutputStatus,
@@ -20,13 +19,12 @@ export class FlowExecutor {
   }
 
   public async executeFlow(
-    collectionVersionId: string,
     flowVersionId: string
   ): Promise<ExecutionOutput> {
     try {
       const startTime = new Date().getTime();
 
-      const flowVersion: FlowVersion = this.prepareFlow(collectionVersionId, flowVersionId);
+      const flowVersion: FlowVersion = this.prepareFlow( flowVersionId);
       const flowStatus = await this.iterateFlow(
         createAction(flowVersion.trigger?.nextAction),
         []
@@ -107,12 +105,9 @@ export class FlowExecutor {
     return await this.iterateFlow(handler.nextAction, ancestors);
   }
 
-  private prepareFlow(collectionVersionId: string, flowVersionId: string) {
+  private prepareFlow(flowVersionId: string) {
     try {
       // Parse all required files.
-      const collectionVersion: CollectionVersion = Utils.parseJsonFile(
-        `${globals.collectionDirectory}/${collectionVersionId}.json`
-      );
       const flowVersion: FlowVersion = Utils.parseJsonFile(
         `${globals.flowDirectory}/${flowVersionId}.json`
       );

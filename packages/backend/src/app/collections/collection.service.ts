@@ -2,9 +2,6 @@ import {
     apId,
     Collection,
     CollectionId,
-    CollectionVersion,
-    CollectionVersionId,
-    CollectionVersionState,
     CreateCollectionRequest,
     Cursor,
     ProjectId,
@@ -12,7 +9,6 @@ import {
     TelemetryEventName,
     UpdateCollectionRequest,
 } from "@activepieces/shared";
-import { collectionVersionService } from "./collection-version/collection-version.service";
 import { CollectionEntity } from "./collection.entity";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
 import { buildPaginator } from "../helper/pagination/build-paginator";
@@ -30,7 +26,7 @@ export const collectionService = {
    * @param versionId versionId of collection to get, use 'null' for the latest version
    * @returns collection if it exists, else null
    */
-    async getOne({projectId, id, versionId}: {projectId: ProjectId, id: CollectionId, versionId: CollectionVersionId | null}): Promise<Collection | null> {
+    async getOne({ projectId, id }: { projectId: ProjectId, id: CollectionId }): Promise<Collection | null> {
         const collection: Collection | null = await collectionRepo.findOneBy({
             projectId,
             id,
@@ -38,13 +34,10 @@ export const collectionService = {
         if (collection === null) {
             return null;
         }
-        return {
-            ...collection,
-            version: await collectionVersionService.getCollectionVersionId(id, versionId),
-        };
+        return collection;
     },
-    async getOneOrThrow({projectId, id}: {projectId: ProjectId, id: CollectionId}): Promise<Collection> {
-        const collection = await collectionService.getOne({projectId, id, versionId: null});
+    async getOneOrThrow({ projectId, id }: { projectId: ProjectId, id: CollectionId }): Promise<Collection> {
+        const collection = await collectionService.getOne({ projectId, id });
 
         if (collection === null) {
             throw new ActivepiecesError({
@@ -71,42 +64,22 @@ export const collectionService = {
         });
         const queryBuilder = collectionRepo.createQueryBuilder("collection").where({ projectId });
         const { data, cursor } = await paginator.paginate(queryBuilder.where({ projectId }));
-        // TODO REPLACE WITH SQL QUERY
-        const collectionVersionsPromises: Array<Promise<CollectionVersion | null>> = [];
-        data.forEach((collection) => {
-            collectionVersionsPromises.push(collectionVersionService.getCollectionVersionId(collection.id, null));
-        });
-        const versions: Array<CollectionVersion | null> = await Promise.all(collectionVersionsPromises);
-        for (let i = 0; i < data.length; ++i) {
-            data[i] = { ...data[i], version: versions[i] };
-        }
         return paginationHelper.createPage<Collection>(data, cursor);
     },
 
-    async update({projectId, collectionId, request}: {projectId: ProjectId, collectionId: CollectionId, request: UpdateCollectionRequest}): Promise<Collection | null> {
-        let lastVersion = await collectionVersionService.getCollectionVersionId(collectionId, null);
-        if (lastVersion === null) {
-            throw new Error("There is no latest version of collection id " + collectionId);
-        }
-        if (lastVersion.state === CollectionVersionState.LOCKED) {
-            lastVersion = await collectionVersionService.createVersion(collectionId, request);
-        }
-        else {
-            await collectionVersionService.updateVersion(lastVersion.id, request);
-        }
-        return await collectionService.getOne({projectId, id: collectionId, versionId: null});
+    async update({ projectId, collectionId, request }: { projectId: ProjectId, collectionId: CollectionId, request: UpdateCollectionRequest }): Promise<Collection | null> {
+        await collectionRepo.update(collectionId, { projectId, id: collectionId, displayName: request.displayName });
+        return await collectionService.getOne({ projectId, id: collectionId });
     },
 
-    async create({projectId, request}: {projectId: ProjectId, request: CreateCollectionRequest}): Promise<Collection> {
+    async create({ projectId, request }: { projectId: ProjectId, request: CreateCollectionRequest }): Promise<Collection> {
         const collection: Partial<Collection> = {
             id: apId(),
             projectId: projectId,
+            displayName: request.displayName
         };
 
         const savedCollection = await collectionRepo.save(collection);
-        await collectionVersionService.createVersion(savedCollection.id, {
-            displayName: request.displayName,
-        });
         telemetry.trackProject(
             collection.projectId,
             {
@@ -119,8 +92,8 @@ export const collectionService = {
         return savedCollection;
     },
 
-    async delete({projectId, collectionId} : {projectId: ProjectId, collectionId: CollectionId}): Promise<void> {
-        instanceSideEffects.onCollectionDelete({projectId, collectionId});
+    async delete({ projectId, collectionId }: { projectId: ProjectId, collectionId: CollectionId }): Promise<void> {
+        instanceSideEffects.onCollectionDelete({ projectId, collectionId });
         await collectionRepo.delete({ projectId: projectId, id: collectionId });
     },
 };

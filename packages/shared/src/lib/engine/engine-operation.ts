@@ -1,5 +1,4 @@
 import { CollectionId } from "../collections/collection";
-import { CollectionVersion, CollectionVersionId } from "../collections/collection-version";
 import { FlowVersion, FlowVersionId } from "../flows/flow-version";
 import { ProjectId } from "../project/project";
 
@@ -23,8 +22,8 @@ export interface ExecutePropsOptions {
     propertyName: string;
     stepName: string;
     input: Record<string, any>;
-    collectionVersion: CollectionVersion;
     projectId: ProjectId;
+    collectionId: CollectionId,
     apiUrl?: string;
     workerToken?: string;
 }
@@ -32,7 +31,6 @@ export interface ExecutePropsOptions {
 export interface ExecuteFlowOperation {
     flowVersionId: FlowVersionId,
     collectionId: CollectionId;
-    collectionVersionId: CollectionVersionId,
     projectId: ProjectId,
     triggerPayload: unknown,
     workerToken?: string;
@@ -43,9 +41,9 @@ export interface ExecuteTriggerOperation {
     hookType: TriggerHookType,
     flowVersion: FlowVersion,
     webhookUrl: string,
-    collectionVersion: CollectionVersion;
     triggerPayload?: unknown,
     projectId: ProjectId,
+    collectionId: CollectionId,
     workerToken?: string;
     apiUrl?: string;
 }

@@ -2,7 +2,6 @@ import { FastifyInstance, FastifyRequest } from "fastify";
 import { collectionService } from "./collection.service";
 import {
     CollectionId,
-    CollectionVersionId,
     CreateCollectionRequest,
     ListCollectionsRequest,
     UpdateCollectionRequest
@@ -48,13 +47,9 @@ export const collectionController = async (fastify: FastifyInstance) => {
                 Params: {
                     collectionId: CollectionId;
                 };
-                Querystring: {
-                    versionId: CollectionVersionId | undefined;
-                };
             }>
         ) => {
-            const versionId: CollectionVersionId | undefined = request.query.versionId;
-            const collection = await collectionService.getOne({ id: request.params.collectionId, versionId: versionId ?? null, projectId: request.principal.projectId });
+            const collection = await collectionService.getOne({ id: request.params.collectionId, projectId: request.principal.projectId });
             if (collection === null) {
                 throw new ActivepiecesError({
                     code: ErrorCode.COLLECTION_NOT_FOUND,
@@ -80,7 +75,7 @@ export const collectionController = async (fastify: FastifyInstance) => {
                 Body: UpdateCollectionRequest;
             }>
         ) => {
-            const collection = await collectionService.getOne({ id: request.params.collectionId, versionId: null, projectId: request.principal.projectId });
+            const collection = await collectionService.getOne({ id: request.params.collectionId,projectId: request.principal.projectId });
             if (collection === null) {
                 throw new ActivepiecesError({
                     code: ErrorCode.COLLECTION_NOT_FOUND,

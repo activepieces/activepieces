@@ -63,7 +63,7 @@ export class CollectionsTableComponent implements OnInit {
     const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
       data: {
         deleteEntity$: this.collectionService.delete(collection.id),
-        entityName: collection.version?.displayName,
+        entityName: collection.displayName,
       } as DeleteEntityDialogData,
     });
     this.archiveCollectionDialogClosed$ = dialogRef.beforeClosed().pipe(

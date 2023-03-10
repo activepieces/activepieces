@@ -25,7 +25,7 @@ export const engineHelper = {
             await sandbox.cleanAndInit();
             result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
-                workerToken: await workerToken({ collectionId: operation.collectionVersion.collectionId, projectId: operation.projectId })
+                workerToken: await workerToken({ collectionId: operation.collectionId, projectId: operation.projectId })
             });
         }
         finally {
@@ -43,7 +43,7 @@ export const engineHelper = {
             await sandbox.cleanAndInit();
             result = await execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, {
                 ...operation,
-                workerToken: await workerToken({ collectionId: operation.collectionVersion.collectionId, projectId: operation.projectId })
+                workerToken: await workerToken({ collectionId: operation.collectionId, projectId: operation.projectId })
             });
         }
         finally {

@@ -19,7 +19,7 @@ function executeFlow() {
     executionState.insertStep(input.triggerPayload!, 'trigger', []);
     const executor = new FlowExecutor(executionState);
     executor
-      .executeFlow(input.collectionVersionId, input.flowVersionId)
+      .executeFlow(input.flowVersionId)
       .then((output) => {
         Utils.writeToJsonFile(globals.outputFile, output);
       });

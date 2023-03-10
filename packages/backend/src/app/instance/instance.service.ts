@@ -11,7 +11,7 @@ export const instanceRepo = databaseConnection.getRepository(InstanceEntity);
 
 export const instanceService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertInstanceRequest }): Promise<Instance> {
-        const collection = await collectionService.getOne({ projectId: projectId, id: request.collectionId, versionId: null });
+        const collection = await collectionService.getOne({ projectId: projectId, id: request.collectionId});
 
         if (collection == null) {
             throw new ActivepiecesError({
@@ -36,7 +36,6 @@ export const instanceService = {
             id: apId(),
             projectId: collection.projectId,
             collectionId: request.collectionId,
-            collectionVersionId: collection.version.id,
             flowIdToVersionId,
             status: request.status,
         };
