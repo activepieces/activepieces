@@ -106,7 +106,6 @@ export const collectionService = {
         const savedCollection = await collectionRepo.save(collection);
         await collectionVersionService.createVersion(savedCollection.id, {
             displayName: request.displayName,
-            configs: [],
         });
         telemetry.trackProject(
             collection.projectId,

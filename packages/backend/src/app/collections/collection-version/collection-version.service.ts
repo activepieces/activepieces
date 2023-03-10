@@ -72,7 +72,6 @@ export const collectionVersionService = {
             id: apId(),
             displayName: request.displayName,
             collectionId,
-            configs: request.configs,
             state: CollectionVersionState.DRAFT,
         };
         return await collectionVersionRepo.save(collectionVersion);

@@ -30,6 +30,7 @@ import { getEdition } from "./app/helper/license-helper";
 import { ApEdition } from "@activepieces/shared";
 import { appCredentialModule } from "@ee/product-embed/backend/app-credentials/app-credentials.module";
 import { connectionKeyModule } from "@ee/product-embed/backend/connection-keys/connection-key.module";
+import packageJson from "../../../package.json";
 
 const app = fastify({
     logger,
@@ -48,8 +49,8 @@ const app = fastify({
 app.register(swagger, {
     openapi: {
         info: {
-            title: 'Activepieces OpenAPI Documentation',
-            version: '1.0.0'
+            title: 'Activepieces Documentation',
+            version: packageJson.version,
         },
         externalDocs: {
             url: 'https://www.activepieces.com/docs',

@@ -118,8 +118,6 @@ export class FlowExecutor {
       );
       
       globals.flowId = flowVersion.id;
-      // Add predefined configs to Execution State.
-      this.executionState.insertConfigs(collectionVersion);
 
       return flowVersion;
     } catch (e) {

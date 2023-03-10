@@ -12,7 +12,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { map, Observable, of, tap } from 'rxjs';
-import { Config } from '@activepieces/shared';
 import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
 import {
   PieceConfig,
@@ -71,7 +70,6 @@ export class PieceTriggerInputFormComponent {
     triggerName: string;
     configs: PieceConfig[];
   }>;
-  updateOrAddConfigModalClosed$: Observable<Config>;
   allAuthConfigs$: Observable<DropdownItem[]>;
 
   onChange: (value) => void = (value) => {

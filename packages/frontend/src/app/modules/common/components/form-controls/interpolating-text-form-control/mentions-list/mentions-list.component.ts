@@ -31,7 +31,6 @@ export class MentionsListComponent {
     nonNullable: true,
   });
   stepsMentions$: Observable<(MentionListItem & { step: FlowItem })[]>;
-  configsMentions$: Observable<MentionListItem[]>;
   connectionsMentions$: Observable<MentionListItem[]>;
   expandConfigs = false;
   expandConnections = false;
@@ -69,19 +68,6 @@ export class MentionsListComponent {
             )
         );
       })
-    );
-    this.configsMentions$ = combineLatest({
-      configs: this.store
-        .select(BuilderSelectors.selectAllConfigsForMentionsDropdown)
-        .pipe(take(1)),
-      search: this.mentionsTreeCache.listSearchBarObs$,
-    }).pipe(
-      map((res) => {
-        return res.configs.filter((item) =>
-          item.label.toLowerCase().includes(res.search.toLowerCase())
-        );
-      }),
-      shareReplay(1)
     );
     this.connectionsMentions$ = combineLatest({
       connections: this.store

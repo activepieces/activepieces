@@ -14,9 +14,6 @@ export const CollectionVersionEntity = new EntitySchema<CollectionVersionSchema>
             type: String,
         },
         collectionId: ApIdSchema,
-        configs: {
-            type: "jsonb",
-        },
         state: {
             type: String,
         },

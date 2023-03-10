@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { Collection, Config, Instance } from '@activepieces/shared';
+import { Collection, Instance } from '@activepieces/shared';
 export enum CollectionActionType {
   CHANGE_NAME = '[COLLECTION] CHANGE_NAME',
   SET_INITIAL = '[COLLECTION] SET_INITIAL',
@@ -33,29 +33,6 @@ export const changeDescription = createAction(
   CollectionActionType.CHANGE_NAME,
   props<{ description: string }>()
 );
-export const updateConfig = createAction(
-  CollectionActionType.UPDATE_CONFIG,
-  props<{ configIndex: number; config: Config }>()
-);
-
-export const deleteConfig = createAction(
-  CollectionActionType.DELETE_CONFIG,
-  props<{ configIndex: number }>()
-);
-
-export const addConfig = createAction(
-  CollectionActionType.ADD_CONFIG,
-  props<{ config: Config }>()
-);
-export const deleteConfigSucceeded = createAction(
-  CollectionActionType.DELETE_CONFIG_SUCCEEDED,
-  props<{ configIndex: number }>()
-);
-
-export const deleteConfigFailed = createAction(
-  CollectionActionType.DELETE_CONFIG_FAILED,
-  props<{ referenceKey: string; refreshedKey: string }>()
-);
 
 export const savedSuccess = createAction(
   CollectionActionType.COLLECTION_SAVED_SUCCESS,
@@ -88,13 +65,8 @@ export const setInitial = createAction(
 export const CollectionActions = {
   changeName,
   setInitial,
-  updateConfig,
-  addConfig,
-  deleteConfigSucceeded,
   savedSuccess,
   savedFailed,
-  deleteConfigFailed,
-  deleteConfig,
   publish,
   publishSuccess,
   publishFailed,

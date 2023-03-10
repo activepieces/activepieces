@@ -89,41 +89,6 @@ export class CollectionEffects {
     );
   });
 
-  deleteConfig$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(CollectionActions.deleteConfig),
-      concatLatestFrom((action) => [
-        this.store.select(BuilderSelectors.selectCurrentCollection),
-      ]),
-      concatMap(([action, collection]) => {
-        return of(
-          CollectionActions.deleteConfigSucceeded({
-            configIndex: action.configIndex,
-          })
-        );
-      })
-    );
-  });
-
-  deleteConfigFailed$ = createEffect(
-    () => {
-      return this.actions$.pipe(
-        ofType(CollectionActions.deleteConfigFailed),
-        tap((action) => {
-          this.snackBar.open(
-            `This variable can't be deleted because it's a refresher for ${action.refreshedKey}`,
-            '',
-            {
-              panelClass: 'error',
-              duration: 5000,
-            }
-          );
-        })
-      );
-    },
-    { dispatch: false }
-  );
-
   publishFailed$ = createEffect(
     () => {
       return this.actions$.pipe(

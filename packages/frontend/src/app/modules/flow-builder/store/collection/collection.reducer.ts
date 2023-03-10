@@ -15,7 +15,6 @@ const initialState: CollectionState = {
       collectionId: '',
       displayName: 'dummy',
       state: CollectionVersionState.DRAFT,
-      configs: [],
       created: '',
       updated: '',
     },
@@ -69,31 +68,6 @@ const _collectionReducer = createReducer(
       state: CollectionStateEnum.FAILED_SAVING_OR_PUBLISHING,
     };
   }),
-
-  on(CollectionActions.addConfig, (state, { config }): CollectionState => {
-    const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-    clonedState.collection.version!.configs.push(config);
-    clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
-    return clonedState;
-  }),
-  on(
-    CollectionActions.deleteConfigSucceeded,
-    (state, { configIndex: index }): CollectionState => {
-      const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-      clonedState.collection.version!.configs.splice(index, 1);
-      clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
-      return clonedState;
-    }
-  ),
-  on(
-    CollectionActions.updateConfig,
-    (state, { configIndex, config }): CollectionState => {
-      const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-      clonedState.collection.version!.configs[configIndex] = config;
-      clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
-      return clonedState;
-    }
-  ),
   on(CollectionActions.publish, (state): CollectionState => {
     return { ...state, state: CollectionStateEnum.PUBLISHING | state.state };
   }),
