@@ -234,10 +234,7 @@ export const youtubeNewVideoTrigger = createTrigger({
             return [];
         }
         const lastItemId = await store.get('lastFetchedYoutubeVideo');
-        const storedLastPublished = await store.get<string>('lastUpdatedYoutubeVideo');
-
-        await store.put('lastFetchedYoutubeVideo', items?.[0]?.guid);
-        await store.put('lastUpdatedYoutubeVideo', getUpdateDate(items?.[0]));
+        const storedLastUpdated = await store.get<string>('lastUpdatedYoutubeVideo');
 
         /**
          * If the new latest item's date is before the last saved date
@@ -245,9 +242,12 @@ export const youtubeNewVideoTrigger = createTrigger({
          * this happens when a live stream ends, the live stream entry is deleted and later
          * is replaced by the stream's video.
          */
-        if (dayjs(getUpdateDate(items?.[0])).isBefore(dayjs(storedLastPublished))) {
+        if (storedLastUpdated && dayjs(getUpdateDate(items?.[0])).isBefore(dayjs(storedLastUpdated))) {
             return [];
         }
+
+        await store.put('lastFetchedYoutubeVideo', items?.[0]?.guid);
+        await store.put('lastUpdatedYoutubeVideo', getUpdateDate(items?.[0]));
 
         const newItems = [];
         for (const item of items) {
@@ -259,9 +259,9 @@ export const youtubeNewVideoTrigger = createTrigger({
     },
 });
 
-function getUpdateDate(item: any){
+function getUpdateDate(item: any) {
     const updated = item["atom:updated"];
-    if(updated == undefined){
+    if (updated == undefined) {
         return undefined;
     }
     return updated["#"];
