@@ -136,6 +136,9 @@ This section is dedicated to individuals who have contributed to 5 or more actio
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/fomojola"><img src="https://avatars.githubusercontent.com/u/264253?v=4?s=100" width="100px;" alt="fomojola"/><br /><sub><b>fomojola</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=fomojola" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/astorozhevsky"><img src="https://avatars.githubusercontent.com/u/11055414?v=4?s=100" width="100px;" alt="Alexander Storozhevsky"/><br /><sub><b>Alexander Storozhevsky</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=astorozhevsky" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/J0LGER"><img src="https://avatars.githubusercontent.com/u/54769522?v=4?s=100" width="100px;" alt="J0LGER"/><br /><sub><b>J0LGER</b></sub></a><br /><a href="#security-J0LGER" title="Security">🛡️</a></td>
+    </tr>
   </tbody>
 </table>
 
