@@ -109,7 +109,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   allOptionalConfigs: PieceConfig[] = [];
   selectedOptionalConfigs: PieceConfig[] = [];
   optionalConfigsMenuOpened = false;
-  @Input() stepName: string;
+  @Input() actionOrTriggerName: string;
   @Input() pieceName: string;
   @Input() pieceDisplayName: string;
   @ViewChildren('textControl', { read: ElementRef })
@@ -292,7 +292,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
               {
                 pieceVersion: '0.0.0',
                 propertyName: c.key,
-                stepName: this.stepName,
+                stepName: this.actionOrTriggerName,
                 input: res,
                 collectionVersionId: collection.version!.id,
               },
@@ -341,7 +341,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         }
         if (typeof c.value === 'object') {
           controls[c.key] = new UntypedFormControl(
-            JSON.stringify(c.value),
+            JSON.stringify(c.value || c.defaultValue),
             validators
           );
         } else {

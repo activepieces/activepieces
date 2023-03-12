@@ -137,7 +137,7 @@ export class FlowStructureUtil {
 
   private static _findPathToStep(
     stepToFind: FlowItem,
-    stepToSearch: FlowItem
+    stepToSearch: FlowItem | undefined
   ): FlowItem[] | undefined {
     if (stepToSearch === undefined) {
       return undefined;

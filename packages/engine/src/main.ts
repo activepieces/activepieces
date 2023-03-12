@@ -1,7 +1,7 @@
 import { FlowExecutor } from './lib/executors/flow-executor';
 import { Utils } from './lib/utils';
 import { globals } from './lib/globals';
-import { EngineOperationType, ExecutePropsOptions, ExecuteFlowOperation, ExecuteTriggerOperation, ExecutionState } from '@activepieces/shared';
+import { EngineOperationType, ExecutePropsOptions, ExecuteFlowOperation, ExecuteTriggerOperation, ExecutionState, ExecuteEventParserOperation } from '@activepieces/shared';
 import { pieceHelper } from './lib/helper/piece-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
 
@@ -44,6 +44,19 @@ function executeProps() {
 
 }
 
+
+function executeEventParser() {
+  const input: ExecuteEventParserOperation = Utils.parseJsonFile(globals.inputFile);
+
+  triggerHelper.executeEventParser(input).then((output) => {
+    Utils.writeToJsonFile(globals.outputFile, output);
+  }).catch(e => {
+    console.error(e);
+    Utils.writeToJsonFile(globals.outputFile, (e as Error).message);
+  });;
+
+}
+
 function executeTrigger() {
   const input: ExecuteTriggerOperation = Utils.parseJsonFile(globals.inputFile);
 
@@ -64,6 +77,9 @@ async function execute() {
   switch (args[0]) {
     case EngineOperationType.EXECUTE_FLOW:
       executeFlow();
+      break;
+    case EngineOperationType.EXTRACT_EVENT_DATA:
+      executeEventParser();
       break;
     case EngineOperationType.EXECUTE_PROPERTY:
       executeProps();

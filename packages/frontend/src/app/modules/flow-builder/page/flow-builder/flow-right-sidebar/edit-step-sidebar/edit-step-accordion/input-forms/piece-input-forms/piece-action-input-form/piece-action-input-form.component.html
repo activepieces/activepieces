@@ -26,7 +26,7 @@
   <ng-container
     *ngIf="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value && pieceActionForm.get(CONFIGS_FORM_CONTROL_NAME)">
     <div>
-      <app-configs-form [stepName]="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value?.actionName"
+      <app-configs-form [actionOrTriggerName]="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value?.actionName"
         [pieceName]="pieceName" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
       </app-configs-form>
     </div>
