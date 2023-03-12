@@ -16,6 +16,7 @@ import { Config } from '@activepieces/shared';
 import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
 import {
   PieceConfig,
+  PieceProperty,
   propsConvertor,
 } from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
 import { DropdownItem } from '../../../../../../../../../common/model/dropdown-item.interface';
@@ -121,16 +122,12 @@ export class PieceTriggerInputFormComponent {
     );
   }
 
-  fetchTriggers(pieceName: string) {
-    const piece$ = this.actionMetaDataService.getPieces().pipe(
-      map((pieces) => {
-        const component = pieces.find((c) => c.name === pieceName);
-        if (!component) {
-          throw new Error(`Activepieces- piece not found: ${pieceName}`);
-        }
-        return component;
-      })
+  fetchTriggers(pieceName: string, pieceVersion: string) {
+    const piece$ = this.actionMetaDataService.getPieceMetadata(
+      pieceName,
+      pieceVersion
     );
+
     this.triggers$ = piece$.pipe(
       map((component) => {
         const triggersKeys = Object.keys(component.triggers);
@@ -139,7 +136,7 @@ export class PieceTriggerInputFormComponent {
           const configs = Object.entries(trigger.props).map((keyEntry) => {
             return propsConvertor.convertToFrontEndConfig(
               keyEntry[0],
-              keyEntry[1]
+              keyEntry[1] as PieceProperty
             );
           });
           return {
@@ -223,7 +220,7 @@ export class PieceTriggerInputFormComponent {
     this.componentForm.removeControl(CONFIGS_FORM_CONTROL_NAME, {
       emitEvent: false,
     });
-    this.fetchTriggers(obj.pieceName);
+    this.fetchTriggers(obj.pieceName, obj.pieceVersion);
   }
 
   registerOnChange(fn: any): void {

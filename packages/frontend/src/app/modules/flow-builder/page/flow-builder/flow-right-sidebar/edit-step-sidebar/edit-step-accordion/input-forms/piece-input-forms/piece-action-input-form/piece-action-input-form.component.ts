@@ -31,6 +31,7 @@ import { Config, PieceActionSettings } from '@activepieces/shared';
 import { DropdownItem } from '../../../../../../../../../common/model/dropdown-item.interface';
 import {
   PieceConfig,
+  PieceProperty,
   propsConvertor,
 } from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
 import { ComponentActionInputFormSchema } from '../../input-forms-schema';
@@ -152,26 +153,22 @@ export class PieceActionInputFormComponent
     );
   }
 
-  fetchActions(pieceName: string) {
-    const pieces$ = this.actionMetaDataService.getPieces().pipe(
-      map((pieces) => {
-        const component = pieces.find((c) => c.name === pieceName);
-        if (!component) {
-          throw new Error(`Activepieces- piece not found: ${pieceName}`);
-        }
-        return component;
-      })
+  fetchActions(pieceName: string, pieceVersion: string) {
+    const pieces$ = this.actionMetaDataService.getPieceMetadata(
+      pieceName,
+      pieceVersion
     );
+
     this.actions$ = pieces$.pipe(
-      map((component) => {
-        const actionsKeys = Object.keys(component.actions);
+      map((pieceMetadata) => {
+        const actionsKeys = Object.keys(pieceMetadata.actions);
         return actionsKeys.map((actionName) => {
-          const action = component.actions[actionName];
+          const action = pieceMetadata.actions[actionName];
 
           const configs = Object.entries(action.props).map((keyEntry) => {
             return propsConvertor.convertToFrontEndConfig(
               keyEntry[0],
-              keyEntry[1]
+              keyEntry[1] as PieceProperty
             );
           });
           return {
@@ -262,7 +259,7 @@ export class PieceActionInputFormComponent
     this.pieceActionForm.removeControl(CONFIGS_FORM_CONTROL_NAME, {
       emitEvent: false,
     });
-    this.fetchActions(obj.pieceName);
+    this.fetchActions(obj.pieceName, obj.pieceVersion);
   }
 
   registerOnChange(fn: (value) => void): void {

@@ -140,27 +140,22 @@ export class TestFlowModalComponent implements OnInit {
     if (flow.version!.trigger?.type === TriggerType.WEBHOOK) {
       this.dialogRef = this.dialogService.open(testFlowTemplate);
     } else if (flow.version!.trigger!.type === TriggerType.PIECE) {
-      this.executeTest$ = this.actionMetaDataService.getPieces().pipe(
-        map((pieces) => {
-          return pieces.find(
-            (p) =>
-              p.name ===
-              (flow.version?.trigger!.settings as PieceTriggerSettings)
-                .pieceName
-          )!;
-        }),
-        map((piece) => {
-          return (
-            piece.triggers[
-              (flow.version?.trigger!.settings as PieceTriggerSettings)
-                .triggerName
-            ].sampleData || {}
-          );
-        }),
-        switchMap((sampleData) =>
-          this.executeTest(collection, flow, sampleData)
-        )
-      );
+      const { pieceName, pieceVersion } = flow.version!.trigger.settings;
+      this.executeTest$ = this.actionMetaDataService
+        .getPieceMetadata(pieceName, pieceVersion)
+        .pipe(
+          map((pieceMetadata) => {
+            return (
+              pieceMetadata.triggers[
+                (flow.version?.trigger!.settings as PieceTriggerSettings)
+                  .triggerName
+              ].sampleData || {}
+            );
+          }),
+          switchMap((sampleData) =>
+            this.executeTest(collection, flow, sampleData)
+          )
+        );
     } else {
       this.executeTest$ = this.executeTest(collection, flow, {});
     }

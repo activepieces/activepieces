@@ -1,11 +1,14 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { forkJoin, map, of, switchMap } from 'rxjs';
-import { ActionType, TriggerType } from '@activepieces/shared';
+import {
+  ActionType,
+  PieceMetadataSummary,
+  TriggerType,
+} from '@activepieces/shared';
 import { FlowItemDetails } from '../../../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionMetaService } from '../../../service/action-meta.service';
 import { FlowItemDetailsActions } from './flow-items-details.action';
-import { AppPiece } from '../../../../common/components/configs-form/connector-action-or-config';
 
 @Injectable()
 export class FlowItemsDetailsEffects {
@@ -13,7 +16,7 @@ export class FlowItemsDetailsEffects {
     return this.actions$.pipe(
       ofType(FlowItemDetailsActions.loadFlowItemsDetails),
       switchMap(() => {
-        const components$ = this.flowItemsDetailsService.getPieces();
+        const components$ = this.flowItemsDetailsService.getPiecesManifest();
         const coreTriggersFlowItemsDetails$ = of(
           this.flowItemsDetailsService.triggerItemsDetails
         );
@@ -69,25 +72,26 @@ export class FlowItemsDetailsEffects {
       })
     );
   });
+
   createFlowItemDetailsForComponents(forTriggers: boolean) {
-    return (components: AppPiece[]) => {
-      return components
-        .map((c) => {
-          if (Object.keys(c.actions).length > 0 && !forTriggers) {
+    return (piecesManifest: PieceMetadataSummary[]) => {
+      return piecesManifest
+        .map((piece) => {
+          if (piece.actions > 0 && !forTriggers) {
             return new FlowItemDetails(
               ActionType.PIECE,
-              c.displayName,
-              c.description ? c.description : ``,
-              c.logoUrl,
-              { appName: c.name }
+              piece.displayName,
+              piece.description ? piece.description : ``,
+              piece.logoUrl,
+              { appName: piece.name }
             );
-          } else if (Object.keys(c.triggers).length > 0 && forTriggers) {
+          } else if (piece.triggers > 0 && forTriggers) {
             return new FlowItemDetails(
               TriggerType.PIECE,
-              c.displayName,
+              piece.displayName,
               ``,
-              c.logoUrl,
-              { appName: c.name }
+              piece.logoUrl,
+              { appName: piece.name }
             );
           } else {
             return null;
