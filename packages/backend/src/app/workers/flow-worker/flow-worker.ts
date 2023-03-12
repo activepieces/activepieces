@@ -1,6 +1,5 @@
 import fs from "node:fs/promises";
 import {
-    Action,
     ActionType,
     CodeActionSettings,
     CollectionVersion,
@@ -10,7 +9,6 @@ import {
     FlowVersion,
     ProjectId,
     StepOutputStatus,
-    Trigger,
     TriggerType,
 } from "@activepieces/shared";
 import { Sandbox, sandboxManager } from "../sandbox";
@@ -28,23 +26,14 @@ import { packageManager, PackageManagerDependencies } from "../../helper/package
 
 const extractPieceDependencies = (flowVersion: FlowVersion): PackageManagerDependencies => {
     const pieceDependencies: PackageManagerDependencies = {};
+    const flowSteps = flowHelper.getAllSteps(flowVersion);
 
-    const trigger = flowVersion.trigger;
-    if (trigger && trigger.type == TriggerType.PIECE) {
-        const packageName = `@activepieces/piece-${trigger.settings.pieceName}`;
-        const packageVersion = trigger.settings.pieceVersion;
-        pieceDependencies[packageName] = packageVersion;
-    }
-
-    let action: Action = flowVersion.trigger?.nextAction;
-    while (action) {
-        if (action.type === ActionType.PIECE) {
-            const packageName = `@activepieces/piece-${action.settings.pieceName}`;
-            const packageVersion = action.settings.pieceVersion;
+    for (const step of flowSteps) {
+        if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
+            const packageName = `@activepieces/piece-${step.settings.pieceName}`;
+            const packageVersion = step.settings.pieceVersion;
             pieceDependencies[packageName] = packageVersion;
         }
-
-        action = action.nextAction;
     }
 
     return pieceDependencies;
