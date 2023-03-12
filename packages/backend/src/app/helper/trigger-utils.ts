@@ -1,4 +1,4 @@
-import { Trigger, TriggerStrategy } from "@activepieces/framework";
+import { Trigger } from "@activepieces/framework";
 import {
     CollectionId,
     CollectionVersion,
@@ -9,6 +9,7 @@ import {
     RunEnvironment,
     TriggerHookType,
     TriggerType,
+    TriggerStrategy,
 } from "@activepieces/shared";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowQueue } from "../workers/flow-worker/flow-queue";

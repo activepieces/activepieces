@@ -4,8 +4,8 @@ import {
   HttpRequest,
   HttpMethod,
   AuthenticationType,
-  TriggerStrategy,
 } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/shared';
 import { callClickupGetTask, clickupCommon } from '../common';
 import { ClickupEventType, ClickupWebhookPayload } from '../common/models';
 
@@ -82,11 +82,11 @@ export const clickupRegisterTrigger = ({
       const enriched = [{
         ...payload,
         task: await callClickupGetTask(
-          context.propsValue['authentication']['access_token'], 
+          context.propsValue['authentication']['access_token'],
           payload.task_id
         )
       }]
-      
+
       console.debug("payload enriched", enriched)
       return enriched
     }

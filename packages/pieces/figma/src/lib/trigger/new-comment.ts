@@ -1,4 +1,5 @@
-import { createTrigger, TriggerStrategy, Property, assertNotNullOrUndefined } from "@activepieces/framework";
+import { createTrigger, Property, assertNotNullOrUndefined } from "@activepieces/framework";
+import { TriggerStrategy } from "@activepieces/shared";
 import { nanoid } from 'nanoid'
 import { figmaAuth } from '../common/props';
 import { figmaCommon } from "../common";
@@ -41,7 +42,7 @@ export const newCommentTrigger = createTrigger({
 
     assertNotNullOrUndefined(token, 'token');
     assertNotNullOrUndefined(teamId, 'teamId');
-    
+
     const url = `${figmaCommon.baseUrl}/${figmaCommon.webhooks}`;
     const eventType = "FILE_COMMENT";
     const passcode = `figma_passcode_${nanoid()}`;

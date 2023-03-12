@@ -37,7 +37,7 @@ export {
 export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry';
 export { User, UserStatus, UserId } from './lib/user/user';
 export { CreateFlowRunRequest } from './lib/flow-run/create-flow-run-request';
-export { Trigger, EmptyTrigger, PieceTriggerSettings, ScheduleTriggerSettings, PieceTrigger, ScheduleTrigger, WebhookTrigger, TriggerType } from './lib/flows/triggers/trigger';
+export { TriggerStrategy, Trigger, EmptyTrigger, PieceTriggerSettings, ScheduleTriggerSettings, PieceTrigger, ScheduleTrigger, WebhookTrigger, TriggerType } from './lib/flows/triggers/trigger';
 export { Collection, CollectionId } from './lib/collections/collection';
 export { CollectionVersion, CollectionVersionState, CollectionVersionId } from './lib/collections/collection-version';
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version';
