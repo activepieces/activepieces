@@ -33,7 +33,9 @@ export class FlowFactoryUtil {
       return undefined;
     } else {
       const clonedContent: ActionFlowItem = { ...content };
-      return this.addCordDetails(clonedContent) as ActionFlowItem;
+      const simple = this.addCordDetails(clonedContent) as ActionFlowItem;
+      FlowFactoryUtil.buildHelper(simple);
+      return simple;
     }
   }
 
