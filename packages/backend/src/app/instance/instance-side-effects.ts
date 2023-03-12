@@ -22,8 +22,8 @@ export const instanceSideEffects = {
     async enable(instance: Instance): Promise<void> {
         if (
             instance.status === InstanceStatus.DISABLED ||
-      instance.flowIdToVersionId == null ||
-      instance.collectionVersionId == null
+            instance.flowIdToVersionId == null ||
+            instance.collectionVersionId == null
         ) {
             return;
         }
@@ -67,7 +67,7 @@ export const instanceSideEffects = {
         const disableTriggers = flowVersions.map((version) => triggerUtils.disable({ collectionId: instance.collectionId, flowVersion: version, projectId: instance.projectId, collectionVersion }));
         await Promise.all(disableTriggers);
     },
-    async onCollectionDelete({projectId, collectionId}: {projectId: ProjectId, collectionId: CollectionId}) {
+    async onCollectionDelete({ projectId, collectionId }: { projectId: ProjectId, collectionId: CollectionId }) {
         const instance = await instanceService.getByCollectionId({ projectId, collectionId });
         if (instance !== null) {
             logger.info(`Collection ${collectionId} is deleted, running intstance side effects first`);
@@ -75,15 +75,17 @@ export const instanceSideEffects = {
             logger.info(`Collection ${collectionId} is deleted, finished running the side effects`);
         }
     },
-    async onFlowDelete({projectId, flowId}: {projectId: ProjectId, flowId: FlowId}) {
-        const flow = await flowService.getOneOrThrow({projectId, id: flowId});
+    async onFlowDelete({ projectId, flowId }: { projectId: ProjectId, flowId: FlowId }) {
+        const flow = await flowService.getOneOrThrow({ projectId, id: flowId });
         const instance = await instanceService.getByCollectionId({ projectId: projectId, collectionId: flow.collectionId });
-        const flowVersionId = instance.flowIdToVersionId[flow.id];
-        if (instance !== null && flowVersionId != null) {
-            const collectionVersion = (await collectionVersionService.getOneOrThrow(instance.collectionVersionId));
-            const flowVersion = (await flowVersionService.getOneOrThrow(flowVersionId));
-            logger.info(`Flow ${flowId} is deleted, running intstance side effects first`);
-            await triggerUtils.disable({ collectionId: instance.collectionId, flowVersion: flowVersion, projectId: instance.projectId, collectionVersion })
+        if (instance) {
+            const flowVersionId = instance.flowIdToVersionId[flow.id];
+            if (flowVersionId) {
+                const collectionVersion = (await collectionVersionService.getOneOrThrow(instance.collectionVersionId));
+                const flowVersion = (await flowVersionService.getOneOrThrow(flowVersionId));
+                logger.info(`Flow ${flowId} is deleted, running intstance side effects first`);
+                await triggerUtils.disable({ collectionId: instance.collectionId, flowVersion: flowVersion, projectId: instance.projectId, collectionVersion })
+            }
         }
     }
 };
@@ -104,6 +106,6 @@ const lockVersions = async ({ collectionVersion, flowVersions }: LockVersionsPar
 };
 
 interface LockVersionsParams {
-  collectionVersion: CollectionVersion;
-  flowVersions: FlowVersion[];
+    collectionVersion: CollectionVersion;
+    flowVersions: FlowVersion[];
 }
