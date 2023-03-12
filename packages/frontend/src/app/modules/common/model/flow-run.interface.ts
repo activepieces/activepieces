@@ -10,7 +10,6 @@ export const initializedRun: FlowRun = {
   collectionId: '',
   flowVersionId: '',
   flowId: '',
-  collectionVersionId: '',
   status: ExecutionOutputStatus.RUNNING,
   logsFileId: '',
   startTime: '',

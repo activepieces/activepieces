@@ -2,29 +2,41 @@ import { FastifyInstance, FastifyRequest } from "fastify";
 import { collectionService } from "./collection.service";
 import {
     CollectionId,
-    CollectionVersionId,
     CreateCollectionRequest,
     ListCollectionsRequest,
     UpdateCollectionRequest
 } from "@activepieces/shared";
 import { StatusCodes } from "http-status-codes";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
+import { Static, Type } from "@sinclair/typebox";
 
 const DEFAULT_PAGE_SIZE = 10;
+
+const CollectionIdParams = Type.Object({
+    collectionId: Type.String(),
+});
+type CollectionIdParams = Static<typeof CollectionIdParams>;
+
 
 export const collectionController = async (fastify: FastifyInstance) => {
     fastify.delete(
         "/:collectionId",
+        {
+            schema: {
+                description: "Delete a collection",
+                tags: ["collection"],
+                summary: "Delete a collection",
+                params: CollectionIdParams,
+            }
+        },
         async (
             request: FastifyRequest<{
-        Params: {
-          collectionId: CollectionId;
-        };
-      }>,
-            _reply
+                Params: CollectionIdParams;
+            }>,
+            reply
         ) => {
             await collectionService.delete({ projectId: request.principal.projectId, collectionId: request.params.collectionId });
-            _reply.status(StatusCodes.OK).send();
+            reply.status(StatusCodes.OK).send();
         }
     );
 
@@ -32,16 +44,12 @@ export const collectionController = async (fastify: FastifyInstance) => {
         "/:collectionId",
         async (
             request: FastifyRequest<{
-        Params: {
-          collectionId: CollectionId;
-        };
-        Querystring: {
-          versionId: CollectionVersionId | undefined;
-        };
-      }>
+                Params: {
+                    collectionId: CollectionId;
+                };
+            }>
         ) => {
-            const versionId: CollectionVersionId | undefined = request.query.versionId;
-            const collection = await collectionService.getOne({ id: request.params.collectionId, versionId: versionId ?? null, projectId: request.principal.projectId });
+            const collection = await collectionService.getOne({ id: request.params.collectionId, projectId: request.principal.projectId });
             if (collection === null) {
                 throw new ActivepiecesError({
                     code: ErrorCode.COLLECTION_NOT_FOUND,
@@ -61,13 +69,13 @@ export const collectionController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-        Params: {
-          collectionId: CollectionId;
-        };
-        Body: UpdateCollectionRequest;
-      }>
+                Params: {
+                    collectionId: CollectionId;
+                };
+                Body: UpdateCollectionRequest;
+            }>
         ) => {
-            const collection = await collectionService.getOne({ id: request.params.collectionId, versionId: null, projectId: request.principal.projectId });
+            const collection = await collectionService.getOne({ id: request.params.collectionId,projectId: request.principal.projectId });
             if (collection === null) {
                 throw new ActivepiecesError({
                     code: ErrorCode.COLLECTION_NOT_FOUND,
@@ -82,15 +90,18 @@ export const collectionController = async (fastify: FastifyInstance) => {
         "/",
         {
             schema: {
-                querystring: ListCollectionsRequest
+                description: "List Collections",
+                tags: ["collection"],
+                summary: "List Collections",
+                querystring: ListCollectionsRequest,
             },
         },
         async (
             request: FastifyRequest<{
-        Querystring: ListCollectionsRequest;
-      }>
+                Querystring: ListCollectionsRequest;
+            }>
         ) => {
-            return await collectionService.list(request.query.projectId, request.query.cursor, request.query.limit ?? DEFAULT_PAGE_SIZE);
+            return await collectionService.list(request.principal.projectId, request.query.cursor, request.query.limit ?? DEFAULT_PAGE_SIZE);
         }
     );
 
@@ -103,8 +114,8 @@ export const collectionController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-        Body: CreateCollectionRequest;
-      }>
+                Body: CreateCollectionRequest;
+            }>
         ) => {
             return await collectionService.create({ projectId: request.principal.projectId, request: request.body });
         }

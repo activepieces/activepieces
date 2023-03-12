@@ -31,7 +31,6 @@ export const triggerHelper = {
 
     const variableService = new VariableService();
     const executionState = new ExecutionState();
-    executionState.insertConfigs(params.collectionVersion);
     const resolvedInput = await variableService.resolve(input, executionState);
     const appListeners: Listener[] = [];
 

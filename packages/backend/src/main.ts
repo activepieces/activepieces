@@ -49,8 +49,8 @@ const app = fastify({
 app.register(swagger, {
     openapi: {
         info: {
-            title: 'Activepieces OpenAPI Documentation',
-            version: '1.0.0'
+            title: 'Activepieces Documentation',
+            version: "0.3.6",
         },
         externalDocs: {
             url: 'https://www.activepieces.com/docs',
@@ -119,10 +119,11 @@ app.setErrorHandler(errorHandler);
 
 const start = async () => {
     try {
+
         await validateEnvPropsOnStartup();
         await databaseConnection.initialize();
         await databaseConnection.runMigrations();
-
+            
         const edition = await getEdition();
         logger.info("Activepieces " + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + " Edition");
         if (edition === ApEdition.ENTERPRISE) {

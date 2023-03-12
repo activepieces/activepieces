@@ -15,7 +15,6 @@ import { UUID } from 'angular2-uuid';
 import { ViewModeEnum } from '../../../store/model/enums/view-mode.enum';
 import { BuilderSelectors } from '../../../store/builder/builder.selector';
 import { Flow } from '@activepieces/shared';
-import { LeftSideBarType } from '../../../../common/model/enum/left-side-bar-type.enum';
 import { FlowService } from '../../../../common/service/flow.service';
 
 @Component({
@@ -73,14 +72,6 @@ export class FlowBuilderTabsComponent implements OnInit, AfterViewInit {
 
   changeSelectedFlow(flow: Flow) {
     this.store.dispatch(FlowsActions.selectFlow({ flowId: flow.id }));
-  }
-
-  configsClicked() {
-    this.store.dispatch(
-      FlowsActions.setLeftSidebar({
-        sidebarType: LeftSideBarType.CONFIGS,
-      })
-    );
   }
 
   get viewMode() {

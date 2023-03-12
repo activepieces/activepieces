@@ -1,8 +1,0 @@
-<div class="variable-container ap-mb-3">
-  <div class="info-container" *ngIf="variable">
-    <div>{{variable.key}}</div>
-    <div class="ap-text-description">Type: {{variable.type}}</div>
-  </div>
-  <app-icon-button [hidden]="viewMode" color="warn" (click)="deleteEvent.emit(); $event.stopPropagation();"
-    [hoverColor]="themeService.DANGER_COLOR" [iconFilename]="'trash.svg'"></app-icon-button>
-</div>
