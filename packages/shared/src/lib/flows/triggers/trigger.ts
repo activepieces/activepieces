@@ -15,7 +15,7 @@ const commonProps = {
   name: Type.String({}),
   valid: Type.Boolean({}),
   displayName: Type.String({}),
-  nextAction: Type.Optional(Type.Any({}))
+  nextAction: Type.Optional(Action)
 }
 
 export const EmptyTrigger = Type.Object({
@@ -79,4 +79,4 @@ export const Trigger = Type.Union([
   EmptyTrigger
 ]);
 
-export type Trigger = Static<typeof Trigger> & { nextAction?: Action };
+export type Trigger = Static<typeof Trigger>;
