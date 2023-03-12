@@ -14,6 +14,7 @@ const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
 export const appConnectionService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertConnectionRequest }): Promise<AppConnection> {
         let response: any = request.value;
+
         switch (request.value.type) {
         case AppConnectionType.CLOUD_OAUTH2:
             response = await claimWithCloud({
@@ -37,12 +38,14 @@ export const appConnectionService = {
         default:
             break;
         }
-        const claimedUpsertRequest = { ...request, value: { ...response, ...request.value }, id: apId(), projectId };
+        const claimedUpsertRequest = { ...request, value: { ...response, ...request.value }, id: apId()};
         await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId, value: encryptObject(claimedUpsertRequest.value) }, ["name", "projectId"]);
-        return appConnectionRepo.findOneByOrFail({
+        const connection= await appConnectionRepo.findOneByOrFail({
             projectId: projectId,
             name: request.name
-        })
+        });
+       connection.value.type= request.value.type;
+       return connection;
     },
     async getOne({ projectId, name }: { projectId: ProjectId, name: string }): Promise<AppConnection | null> {
         const appConnection = await appConnectionRepo.findOneBy({
