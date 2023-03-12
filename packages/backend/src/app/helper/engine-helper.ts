@@ -1,4 +1,4 @@
-import { ExecuteFlowOperation, EngineOperationType, CollectionId, PrincipalType, apId, EngineOperation, ExecutionOutput, ExecuteTriggerOperation, TriggerHookType, ProjectId, ExecutePropsOptions } from "@activepieces/shared";
+import { ExecuteFlowOperation, EngineOperationType, CollectionId, PrincipalType, apId, EngineOperation, ExecutionOutput, ExecuteTriggerOperation, TriggerHookType, ProjectId, ExecutePropsOptions, ExecuteEventParserOperation as ExecuteParseEventOperation, ExecuteEventParserOperation, ParseEventResponse, ExecuteTriggerResponse } from "@activepieces/shared";
 import { Sandbox, sandboxManager } from "../workers/sandbox";
 import fs from "node:fs";
 import { system } from "./system/system";
@@ -7,6 +7,7 @@ import { tokenUtils } from "../authentication/lib/token-utils";
 import { DropdownState, DynamicPropsValue } from "@activepieces/framework";
 import { logger } from "../helper/logger";
 import chalk from "chalk";
+import { getEdition, getWebhookSecret } from "./secret-helper";
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH);
@@ -18,13 +19,27 @@ export const engineHelper = {
             workerToken: await workerToken({ collectionId: operation.collectionId, projectId: operation.projectId })
         }) as ExecutionOutput;
     },
-    async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[]> {
+    async executeParseEvent(operation: ExecuteParseEventOperation): Promise<ParseEventResponse> {
+        const sandbox = sandboxManager.obtainSandbox();
+        let result;
+        try {
+            await sandbox.cleanAndInit();
+            result = await execute(EngineOperationType.EXTRACT_EVENT_DATA, sandbox, operation);
+        }
+        finally {
+            sandboxManager.returnSandbox(sandbox.boxId);
+        }
+        return result as ParseEventResponse;
+    },
+    async executeTrigger(operation: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | unknown[]> {
         const sandbox = sandboxManager.obtainSandbox();
         let result;
         try {
             await sandbox.cleanAndInit();
             result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
+                edition: await getEdition(),
+                webhookSecret: await getWebhookSecret(operation.flowVersion),
                 workerToken: await workerToken({ collectionId: operation.collectionVersion.collectionId, projectId: operation.projectId })
             });
         }
@@ -34,7 +49,7 @@ export const engineHelper = {
         if (operation.hookType === TriggerHookType.RUN) {
             return result as unknown[];
         }
-        return result as void;
+        return result;
     },
     async executeProp(operation: ExecutePropsOptions): Promise<DropdownState<any> | Record<string, DynamicPropsValue>> {
         const sandbox = sandboxManager.obtainSandbox();

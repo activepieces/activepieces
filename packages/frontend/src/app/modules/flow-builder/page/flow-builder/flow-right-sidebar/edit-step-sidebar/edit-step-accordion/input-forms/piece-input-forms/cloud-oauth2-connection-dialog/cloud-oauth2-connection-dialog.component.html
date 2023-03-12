@@ -47,15 +47,17 @@
       </ng-container>
     </div>
     <div>
-      <app-o-auth2-connect-control [popupParams]="cloudConnectionPopupSettings"
-        formControlName="value" [settingsValid]="true"></app-o-auth2-connect-control>
+      <app-o-auth2-connect-control [popupParams]="cloudConnectionPopupSettings" formControlName="value"
+        [settingsValid]="true"></app-o-auth2-connect-control>
       <p @fadeInUp class="ap-typography-caption ap-text-danger"
         *ngIf="settingsForm.controls.value.invalid && settingsForm.controls.value.touched">
         You have to connect an account to continue
       </p>
     </div>
   </form>
-  <a class="ap-cursor-pointer ap-mt-2" *ngIf="!connectionToUpdate" (click)="useOwnCred()">I would like to use my own
+  <a class="ap-cursor-pointer ap-mt-2" *ngIf="!connectionToUpdate && !isTriggerAppWebhook" (click)="useOwnCred()">I
+    would like
+    to use my own
     app credentials </a>
 </mat-dialog-content>
 
