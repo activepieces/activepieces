@@ -27,6 +27,13 @@ const executePnpm = async (directory: string, command: PnpmCommand, ...args: str
 
 export const packageManager = {
     async addDependencies(directory: string, dependencies: PackageManagerDependencies): Promise<PackageManagerOutput> {
+        const depsCount = Object.keys(dependencies).length;
+
+        if (depsCount === 0) {
+            logger.info(`[PackageManager#addDependencies] skip adding deps, depsCount=0`);
+            return;
+        }
+
         const options = [
             "--prefer-offline",
             "--config.lockfile=false",
