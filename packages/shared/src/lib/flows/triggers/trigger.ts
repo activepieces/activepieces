@@ -2,7 +2,6 @@ import { Type, Static } from '@sinclair/typebox';
 import { Format } from '@sinclair/typebox/format';
 import { isValidCron } from 'cron-validator';
 import { SemVerType } from '../../pieces';
-import { Action } from '../actions/action';
 
 export enum TriggerType {
   SCHEDULE = 'SCHEDULE',
@@ -15,7 +14,7 @@ const commonProps = {
   name: Type.String({}),
   valid: Type.Boolean({}),
   displayName: Type.String({}),
-  nextAction: Type.Optional(Action)
+  nextAction: Type.Optional(Type.Any())
 }
 
 export const EmptyTrigger = Type.Object({
