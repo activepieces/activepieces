@@ -19,12 +19,7 @@ export const instanceSideEffects = {
     async enable(instance: Instance): Promise<void> {
         if (
             instance.status === InstanceStatus.DISABLED ||
-<<<<<<< HEAD
-            instance.flowIdToVersionId == null ||
-            instance.collectionVersionId == null
-=======
-      instance.flowIdToVersionId == null
->>>>>>> 3ee188b46da9ed0532532e21f1f1bdd3172a5d65
+            instance.flowIdToVersionId == null
         ) {
             return;
         }
@@ -98,10 +93,5 @@ const lockVersions = async ({ flowVersions }: LockVersionsParams): Promise<void>
 };
 
 interface LockVersionsParams {
-<<<<<<< HEAD
-    collectionVersion: CollectionVersion;
-    flowVersions: FlowVersion[];
-=======
   flowVersions: FlowVersion[];
->>>>>>> 3ee188b46da9ed0532532e21f1f1bdd3172a5d65
 }
