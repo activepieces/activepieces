@@ -36,7 +36,7 @@
       <mat-error *ngIf="settingsForm.controls.client_id.invalid">
         Client ID is required</mat-error>
     </mat-form-field>
-    <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-form-field *ngIf="!settingsForm.controls['client_secret'].disabled" class="ap-w-full" appearance="outline">
       <mat-label>Client Secret</mat-label>
       <input [matTooltip]="clientSecretTooltip" formControlName="client_secret" matInput type="password"
         placeholder="Key" />
