@@ -1,5 +1,4 @@
-import { OAuth2AppConnection } from "../../../../../shared/src";
-import { AuthenticationType, createAction, DynamicPropsValue, getAccessTokenOrThrow, httpClient, HttpMethod, OAuth2PropertyValue, Property } from "../../../../framework/src";
+import { AuthenticationType, createAction, DynamicPropsValue, getAccessTokenOrThrow, httpClient, HttpMethod, OAuth2PropertyValue, Property } from "@activepieces/framework";
 import { intercomCommon } from "../common";
 
 enum MessageType {
@@ -10,6 +9,23 @@ export const sendMessage = createAction({
     description:"Send a message to a contact (only allowed by admins)",
     displayName:"Send Message",
     name:"send_message_intercom",
+    sampleData:{
+        "type": "admin_message",
+        "id": "98257967",
+        "created_at": 1678635731,
+        "subject": "test",
+        "body": "test body",
+        "message_type": "email",
+        "template": "personal",
+        "owner": {
+          "type": "admin",
+          "id": "6439686",
+          "name": "Jon Doe",
+          "email": "John@Doe.com",
+          "away_mode_enabled": false,
+          "away_mode_reassign": false
+        }
+      },
     props:{
         connection: intercomCommon.connection,
         message_type: Property.StaticDropdown(
