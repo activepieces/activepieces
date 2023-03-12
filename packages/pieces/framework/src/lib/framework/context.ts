@@ -15,7 +15,6 @@ export interface TriggerContext<T> {
     };
     propsValue: T,
     store: Store,
-    connections: ConnectionsManager
 }
 
 export interface ActionContext<T> {

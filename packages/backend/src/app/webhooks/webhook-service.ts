@@ -17,6 +17,7 @@ import { flowRepo } from '../flows/flow.repo';
 import { system } from '../helper/system/system';
 import { SystemProp } from '../helper/system/system-prop';
 import { getPublicIp } from '../helper/public-ip-utils';
+import { triggerEventService } from '../flows/trigger-events/trigger-event.service';
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
@@ -38,6 +39,8 @@ export const webhookService = {
         const flowVersion = await flowVersionService.getOneOrThrow(
             instance.flowIdToVersionId[flow.id]
         );
+        triggerEventService.newEvent({ flowVersion, payload, projectId: flow.projectId });
+
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId: collection.projectId,
             collectionVersion: collectionVersion,
@@ -103,6 +106,6 @@ const getInstanceOrThrow = async (
 };
 
 interface CallbackParams {
-  flowId: FlowId;
-  payload: unknown;
+    flowId: FlowId;
+    payload: unknown;
 }

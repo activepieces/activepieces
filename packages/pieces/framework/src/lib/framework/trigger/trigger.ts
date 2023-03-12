@@ -23,8 +23,11 @@ class ITrigger<T extends PieceProperty> implements TriggerBase {
     public readonly run: (
       ctx: TriggerContext<StaticPropsValue<T>>
     ) => Promise<unknown[]>,
-    public readonly sampleData: unknown
-  ) {}
+    public readonly test: (
+      ctx: TriggerContext<StaticPropsValue<T>>
+    ) => Promise<unknown>,
+    public sampleData: unknown
+  ) { }
 }
 
 export type Trigger = ITrigger<any>;
@@ -38,7 +41,8 @@ export function createTrigger<T extends PieceProperty>(request: {
   onEnable: (context: TriggerHookContext<StaticPropsValue<T>>) => Promise<void>;
   onDisable: (context: TriggerHookContext<StaticPropsValue<T>>) => Promise<void>;
   run: (context: TriggerContext<StaticPropsValue<T>>) => Promise<unknown[]>;
-  sampleData?: unknown;
+  test?: (context: TriggerContext<StaticPropsValue<T>>) => Promise<unknown>;
+  sampleData: unknown | ((context: TriggerContext<StaticPropsValue<T>>) => Promise<unknown>);
 }): Trigger {
   return new ITrigger<T>(
     request.name,
@@ -49,6 +53,7 @@ export function createTrigger<T extends PieceProperty>(request: {
     request.onEnable,
     request.onDisable,
     request.run,
+    request.test ?? (() => Promise.resolve()),
     request.sampleData
   );
 }

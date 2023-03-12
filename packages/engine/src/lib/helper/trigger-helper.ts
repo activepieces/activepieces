@@ -15,8 +15,9 @@ export const triggerHelper = {
     executionState.insertConfigs(params.collectionVersion);
     const resolvedInput = await variableService.resolve(flowTrigger.settings.input, executionState);
 
+    const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : '';
     const context = {
-      store: createContextStore(params.flowVersion.flowId),
+      store: createContextStore(prefix, params.flowVersion.flowId),
       webhookUrl: params.webhookUrl,
       propsValue: resolvedInput,
       payload: params.triggerPayload,
@@ -26,6 +27,9 @@ export const triggerHelper = {
         return trigger.onDisable(context);
       case TriggerHookType.ON_ENABLE:
         return trigger.onEnable(context);
+      case TriggerHookType.TEST:
+        // TODO: fix types to remove use of any
+        return trigger.test(context as any);
       case TriggerHookType.RUN:
         // TODO: fix types to remove use of any
         return trigger.run(context as any);

@@ -25,6 +25,8 @@ import { addVersionToPieceSteps1677521257188 } from "./migration/1677521257188-a
 import { productEmbed1677894800372 } from "./migration/1677894800372-product-embed";
 import { AppCredentialEntity } from "@ee/product-embed/backend/app-credentials/app-credentials.entity";
 import { ConnectionKeyEntity } from "@ee/product-embed/backend/connection-keys/connection-key.entity";
+import { TriggerEventEntity } from "../flows/trigger-events/trigger-event.entity";
+import { addtriggerevents1678621361185 } from "./migration/1678621361185-addtriggerevents";
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST);
@@ -53,7 +55,8 @@ const getMigrations = () => {
         removeStoreAction1676649852890,
         billing1677286751592,
         addVersionToPieceSteps1677521257188,
-        productEmbed1677894800372
+        productEmbed1677894800372,
+        addtriggerevents1678621361185
     ];
 }
 
@@ -71,6 +74,7 @@ export const databaseConnection = new DataSource({
     ssl: getSslConfig(),
     migrations: getMigrations(),
     entities: [
+        TriggerEventEntity,
         AppCredentialEntity,
         ConnectionKeyEntity,
         CollectionEntity,

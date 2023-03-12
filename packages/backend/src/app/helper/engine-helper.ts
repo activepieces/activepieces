@@ -18,7 +18,7 @@ export const engineHelper = {
             workerToken: await workerToken({ collectionId: operation.collectionId, projectId: operation.projectId })
         }) as ExecutionOutput;
     },
-    async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[]> {
+    async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | unknown> {
         const sandbox = sandboxManager.obtainSandbox();
         let result;
         try {
@@ -33,6 +33,9 @@ export const engineHelper = {
         }
         if (operation.hookType === TriggerHookType.RUN) {
             return result as unknown[];
+        }
+        if (operation.hookType === TriggerHookType.TEST) {
+            return result as unknown;
         }
         return result as void;
     },

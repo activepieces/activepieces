@@ -13,7 +13,7 @@ type PieceExecParams = {
 
 export class PieceExecutor {
   public async exec(params: PieceExecParams) {
-    const { pieceName, pieceVersion, actionName, config } = params;
+    const { pieceName, actionName, config } = params;
     const piece = this.getPiece(pieceName);
     const action = piece.getAction(actionName);
     if (action === undefined) {
@@ -21,7 +21,7 @@ export class PieceExecutor {
     }
 
     return await action.run({
-      store: createContextStore(globals.flowId),
+      store: createContextStore('', globals.flowId),
       propsValue: config,
       connections: {
         get: async (key: string) => {
