@@ -1,6 +1,7 @@
 import { Trigger, TriggerStrategy } from "@activepieces/framework";
 import {
     CollectionId,
+    ExecuteTriggerResponse,
     FlowVersion,
     PieceTrigger,
     ProjectId,
@@ -14,6 +15,7 @@ import { engineHelper } from "./engine-helper";
 import { logger } from "../helper/logger";
 import { getPiece } from "@activepieces/pieces-apps";
 import { webhookService } from "../webhooks/webhook-service";
+import { appEventRoutingService } from "../app-event-routing/app-event-routing.service";
 
 const EVERY_FIVE_MINUTES = "*/5 * * * *";
 
@@ -104,6 +106,9 @@ const disablePieceTrigger = async ({ flowVersion, projectId, collectionId }: Ena
         projectId: projectId
     });
     switch (pieceTrigger.type) {
+    case TriggerStrategy.APP_WEBHOOK:
+        await appEventRoutingService.deleteListeners({projectId, flowId: flowVersion.flowId });
+        break;
     case TriggerStrategy.WEBHOOK:
         break;
     case TriggerStrategy.POLLING:
@@ -118,7 +123,7 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId }: Enab
     const flowTrigger = flowVersion.trigger as PieceTrigger;
     const pieceTrigger = getPieceTrigger(flowTrigger);
 
-    await engineHelper.executeTrigger({
+    const response = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion: flowVersion,
         collectionId,
@@ -126,6 +131,14 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId }: Enab
         projectId: projectId
     });
     switch (pieceTrigger.type) {
+    case TriggerStrategy.APP_WEBHOOK: {
+        const appName = flowTrigger.settings.pieceName;
+        const listeners = (response as ExecuteTriggerResponse).listeners;
+        for(const listener of listeners){
+            await appEventRoutingService.createListeners({projectId, flowId: flowVersion.flowId, appName, events: listener.events, identifierValue: listener.identifierValue });
+        }
+    }
+        break;
     case TriggerStrategy.WEBHOOK:
         break;
     case TriggerStrategy.POLLING:

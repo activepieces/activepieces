@@ -3,7 +3,7 @@ import { SystemProp } from "./system/system-prop";
 import { system } from "./system/system";
 import { ProjectId, TelemetryEvent, User } from '@activepieces/shared';
 import { projectService } from '../project/project.service';
-import { getEdition } from './license-helper';
+import { getEdition } from './secret-helper';
 
 
 const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED) ?? true;

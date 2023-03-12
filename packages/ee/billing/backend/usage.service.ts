@@ -11,7 +11,7 @@ const projectUsageRepo = databaseConnection.getRepository<ProjectUsage>(ProjectU
 
 export const usageService = {
     async limit(request: { projectId: ProjectId; flowVersion: FlowVersion; }): Promise<{ perform: true }> {
-        const quotaLock = await createRedisLock(5 * 1000);
+        const quotaLock = await createRedisLock(15 * 1000);
         try {
             await quotaLock.acquire(`usage_${request.projectId}}`);
             const projectUsage = await usageService.getUsage({ projectId: request.projectId });

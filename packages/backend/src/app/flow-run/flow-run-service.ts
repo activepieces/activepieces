@@ -16,7 +16,7 @@ import {
     TelemetryEventName,
     ApEdition
 } from "@activepieces/shared";
-import { getEdition } from "../helper/license-helper";
+import { getEdition } from "../helper/secret-helper";
 import { collectionRepo } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
 import { flowVersionService } from "../flows/flow-version/flow-version.service";

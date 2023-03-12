@@ -19,7 +19,7 @@ services:
     entrypoint:
      - npx
      - nx
-     - dev
+     - serve
      - backend
     depends_on:
      - postgres

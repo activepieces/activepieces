@@ -109,7 +109,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   allOptionalConfigs: PieceConfig[] = [];
   selectedOptionalConfigs: PieceConfig[] = [];
   optionalConfigsMenuOpened = false;
-  @Input() stepName: string;
+  @Input() actionOrTriggerName: string;
   @Input() pieceName: string;
   @Input() pieceDisplayName: string;
   @ViewChildren('textControl', { read: ElementRef })
@@ -290,9 +290,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
           switchMap((collection) => {
             return this.actionMetaDataService.getPieceActionConfigOptions<T>(
               {
-                pieceVersion: '0.0.0',
+                pieceVersion: '0.0.1',
                 propertyName: c.key,
-                stepName: this.stepName,
+                stepName: this.actionOrTriggerName,
                 input: res,
                 collectionId: collection.id,
               },

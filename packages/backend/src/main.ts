@@ -26,8 +26,9 @@ import { databaseConnection } from "./app/database/database-connection";
 import { initilizeSentry, logger } from './app/helper/logger';
 import { firebaseAuthenticationModule } from "@ee/firebase-auth/backend/firebase-authentication.module";
 import { billingModule } from "@ee/billing/backend/billing.module";
-import { getEdition } from "./app/helper/license-helper";
+import { getEdition } from "./app/helper/secret-helper";
 import { ApEdition } from "@activepieces/shared";
+import { appEventRoutingModule } from "./app/app-event-routing/app-event-routing.module";
 import { appCredentialModule } from "@ee/product-embed/backend/app-credentials/app-credentials.module";
 import { connectionKeyModule } from "@ee/product-embed/backend/connection-keys/connection-key.module";
 
@@ -96,6 +97,7 @@ app.register(flowRunModule);
 app.register(webhookModule);
 app.register(appConnectionModule);
 app.register(openapiModule);
+app.register(appEventRoutingModule);
 
 app.get(
     "/redirect",

@@ -341,7 +341,7 @@ export class PieceActionInputFormComponent
         ...configs.input,
       },
       pieceName: this.pieceName,
-      pieceVersion: '0.0.0',
+      pieceVersion: '0.0.1',
       inputUiInfo: { customizedInputs: customizedInputs },
     };
 
