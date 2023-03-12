@@ -1,6 +1,7 @@
 import {
     ApEnvironment,
     CollectionId,
+    EventPayload,
     FlowId,
     Instance,
     ProjectId,
@@ -17,6 +18,7 @@ import { flowRepo } from '../flows/flow.repo';
 import { system } from '../helper/system/system';
 import { SystemProp } from '../helper/system/system-prop';
 import { getPublicIp } from '../helper/public-ip-utils';
+import { getWebhookSecret } from '../helper/secret-helper';
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
@@ -42,10 +44,9 @@ export const webhookService = {
             projectId: collection.projectId,
             collectionVersion: collectionVersion,
             flowVersion: flowVersion,
-            payload: payload,
+            payload: payload
         });
 
-        console.log(`test payloads`, payloads);
         const createFlowRuns = payloads.map((payload) =>
             flowRunService.start({
                 environment: RunEnvironment.PRODUCTION,
@@ -104,5 +105,5 @@ const getInstanceOrThrow = async (
 
 interface CallbackParams {
   flowId: FlowId;
-  payload: unknown;
+  payload: EventPayload;
 }

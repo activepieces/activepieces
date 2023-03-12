@@ -101,38 +101,5 @@ export const pieceHelper = {
         }
     },
 
-    async executeTrigger(params: ExecuteTriggerOperation) {
-        const { pieceName, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
-
-        const piece = await loadPiece(pieceName);
-        const trigger = piece?.getTrigger(triggerName);
-
-        if (trigger === undefined) {
-            throw new Error(`trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
-        }
-
-        const variableService = new VariableService();
-        const executionState = new ExecutionState();
-        executionState.insertConfigs(params.collectionVersion);
-        const resolvedInput = await variableService.resolve(input, executionState);
-
-        const context = {
-            store: createContextStore(params.flowVersion.flowId),
-            webhookUrl: params.webhookUrl,
-            propsValue: resolvedInput,
-            payload: params.triggerPayload,
-        };
-
-        switch (params.hookType) {
-            case TriggerHookType.ON_DISABLE:
-                return trigger.onDisable(context);
-            case TriggerHookType.ON_ENABLE:
-                return trigger.onEnable(context);
-            case TriggerHookType.RUN:
-                // TODO: fix types to remove use of any
-                return trigger.run(context as any);
-        }
-    },
-
     loadPiece,
 };

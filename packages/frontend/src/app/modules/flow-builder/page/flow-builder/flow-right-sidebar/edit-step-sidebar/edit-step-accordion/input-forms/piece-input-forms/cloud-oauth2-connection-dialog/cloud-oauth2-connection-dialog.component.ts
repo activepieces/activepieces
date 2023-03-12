@@ -54,6 +54,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   upsert$: Observable<AppConnection | null>;
   keyTooltip =
     'The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.';
+  isTriggerAppWebhook = false;
   constructor(
     private fb: FormBuilder,
     private store: Store,
@@ -66,6 +67,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       pieceName: string;
       connectionToUpdate: CloudAuth2Connection | undefined;
       clientId: string;
+      isTriggerAppWebhook: boolean;
     }
   ) {
     this.pieceName = dialogData.pieceName;
@@ -79,6 +81,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       extraParams: this.pieceAuthConfig.extra!,
       client_id: dialogData.clientId,
     };
+    this.isTriggerAppWebhook = dialogData.isTriggerAppWebhook;
   }
 
   ngOnInit(): void {
@@ -137,6 +140,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
         token_url: this.settingsForm.value['token_url'],
         code: popupResponse.code,
         code_challenge: popupResponse.code_challenge,
+        client_id: this._cloudConnectionPopupSettings.client_id,
         scope: this._cloudConnectionPopupSettings.scope,
         type: AppConnectionType.CLOUD_OAUTH2,
         props: this.pieceAuthConfig.oAuthProps

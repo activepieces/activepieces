@@ -1,6 +1,7 @@
 import { FlowItem } from '../../common/model/flow-builder/flow-item';
 import {
   ActionType,
+  BranchAction,
   FlowVersion,
   LoopOnItemsAction,
   Trigger,
@@ -45,15 +46,19 @@ export class FlowStructureUtil {
   }
 
   public static traverseAllSteps(
-    mainPiece: FlowItem | Trigger | undefined
+    mainStep: FlowItem | Trigger | undefined,
+    includeBranches: boolean
   ): FlowItem[] {
-    if (mainPiece === undefined) {
+    if (mainStep === undefined) {
       return [];
     }
-    const steps: FlowItem[] = [mainPiece];
-    const branches = FlowStructureUtil.branches(mainPiece);
+    const steps: FlowItem[] = [];
+    if (mainStep.type !== ActionType.BRANCH || includeBranches) {
+      steps.push(mainStep);
+    }
+    const branches = FlowStructureUtil.branches(mainStep);
     for (let i = 0; i < branches.length; ++i) {
-      const subSteps = this.traverseAllSteps(branches[i]);
+      const subSteps = this.traverseAllSteps(branches[i], includeBranches);
       for (let i = 0; i < subSteps.length; ++i) {
         steps.push(subSteps[i]);
       }
@@ -89,6 +94,15 @@ export class FlowStructureUtil {
         branches.push(loopAction.firstLoopAction);
       }
     }
+    if (mainPiece.type === ActionType.BRANCH) {
+      const branchAction = mainPiece as BranchAction;
+      if (branchAction.onFailureAction) {
+        branches.push(branchAction.onFailureAction);
+      }
+      if (branchAction.onSuccessAction) {
+        branches.push(branchAction.onSuccessAction);
+      }
+    }
     const nextAction = mainPiece.nextAction;
     if (nextAction) {
       branches.push(nextAction);
@@ -100,17 +114,14 @@ export class FlowStructureUtil {
     flowVersion: FlowVersion,
     stepPrefix: string
   ) {
-    const steps = FlowStructureUtil.traverseAllSteps(flowVersion.trigger);
+    const steps = FlowStructureUtil.traverseAllSteps(flowVersion.trigger, true);
     let number = 1;
     // eslint-disable-next-line no-constant-condition
     while (true) {
       let exist = false;
       for (let i = 0; i < steps.length; ++i) {
-        const action = steps[i];
-        if (
-          action.name ===
-          stepPrefix.toString().toLowerCase() + '_' + number
-        ) {
+        const step = steps[i];
+        if (step.name === stepPrefix.toString().toLowerCase() + '_' + number) {
           exist = true;
           break;
         }
@@ -122,5 +133,52 @@ export class FlowStructureUtil {
       }
     }
     return stepPrefix.toString().toLowerCase() + '_' + number;
+  }
+
+  private static _findPathToStep(
+    stepToFind: FlowItem,
+    stepToSearch: FlowItem
+  ): FlowItem[] | undefined {
+    if (stepToSearch === undefined) {
+      return undefined;
+    }
+    if (stepToFind.name === stepToSearch.name) {
+      return [];
+    }
+    const pathFromNextAction = this._findPathToStep(
+      stepToFind,
+      stepToSearch.nextAction
+    );
+    if (pathFromNextAction) {
+      if (stepToSearch.type !== ActionType.BRANCH) {
+        return [stepToSearch, ...pathFromNextAction];
+      }
+      return [...pathFromNextAction];
+    }
+    const pathFromTrueBranch = this._findPathToStep(
+      stepToFind,
+      (stepToSearch as BranchAction).onSuccessAction
+    );
+    if (pathFromTrueBranch) {
+      return [...pathFromTrueBranch];
+    }
+    const pathFromFalseBranch = this._findPathToStep(
+      stepToFind,
+      (stepToSearch as BranchAction).onFailureAction
+    );
+    if (pathFromFalseBranch) {
+      return [...pathFromFalseBranch];
+    }
+    return undefined;
+  }
+  public static findPathToStep(stepToFind: FlowItem, trigger: Trigger) {
+    if (stepToFind.name === trigger.name) {
+      return [];
+    }
+    const path = this._findPathToStep(stepToFind, trigger.nextAction);
+    if (!path) {
+      throw new Error('Step not found while traversing to find it ');
+    }
+    return [trigger, ...path];
   }
 }

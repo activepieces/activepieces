@@ -113,7 +113,7 @@ export class EditStepAccordionComponent implements AfterViewInit {
 
   setOpenedIndex(index: number) {
     this.openedIndex = index;
-    this.cd.detectChanges();
+    this.cd.markForCheck();
   }
 
   closed(index: number) {

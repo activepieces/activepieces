@@ -1,17 +1,20 @@
 import fs from "node:fs/promises";
 import {
-    ExecuteFlowOperation,
-    EngineOperationType,
-    CollectionId,
-    PrincipalType,
     apId,
+    CollectionId,
     EngineOperation,
-    ExecutionOutput,
-    ExecuteTriggerOperation,
-    TriggerHookType,
-    ProjectId,
+    EngineOperationType,
+    ExecuteEventParserOperation,
+    ExecuteFlowOperation,
     ExecutePropsOptions,
-    PieceTrigger
+    ExecuteTriggerOperation,
+    ExecuteTriggerResponse,
+    ExecutionOutput,
+    ParseEventResponse,
+    PieceTrigger,
+    PrincipalType,
+    ProjectId,
+    TriggerHookType,
 } from "@activepieces/shared";
 import { Sandbox, sandboxManager } from "../workers/sandbox";
 import { system } from "./system/system";
@@ -20,13 +23,14 @@ import { tokenUtils } from "../authentication/lib/token-utils";
 import { DropdownState, DynamicPropsValue } from "@activepieces/framework";
 import { logger } from "../helper/logger";
 import chalk from "chalk";
+import { getEdition, getWebhookSecret } from "./secret-helper";
 import { packageManager } from "./package-manager";
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH);
 
-const installPieceDependency = async (directory: string, pieceName: string, pieceVersion: string) => {
-    await packageManager.addDependencies(directory, { [`@activepieces/piece-${pieceName}`]: pieceVersion });
+const installPieceDependency = async (path: string, pieceName: string, pieceVersion: string) => {
+    await packageManager.addDependencies(path, { [`@activepieces/piece-${pieceName}`]: pieceVersion });
 };
 
 export const engineHelper = {
@@ -37,18 +41,37 @@ export const engineHelper = {
         }) as ExecutionOutput;
     },
 
-    async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[]> {
+    async executeParseEvent(operation: ExecuteEventParserOperation): Promise<ParseEventResponse> {
         const sandbox = sandboxManager.obtainSandbox();
-        let result: unknown;
+        let result;
         try {
             await sandbox.cleanAndInit();
 
-            const buildDirectory = sandbox.getSandboxFolderPath();
+            const buildPath = sandbox.getSandboxFolderPath();
+            const { pieceName } = operation;
+            await installPieceDependency(buildPath, pieceName, "latest");
+            result = await execute(EngineOperationType.EXTRACT_EVENT_DATA, sandbox, operation);
+        }
+        finally {
+            sandboxManager.returnSandbox(sandbox.boxId);
+        }
+        return result as ParseEventResponse;
+    },
+
+    async executeTrigger(operation: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | unknown[]> {
+        const sandbox = sandboxManager.obtainSandbox();
+        let result;
+        try {
+            await sandbox.cleanAndInit();
+
+            const buildPath = sandbox.getSandboxFolderPath();
             const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings;
-            await installPieceDependency(buildDirectory, pieceName, pieceVersion);
+            await installPieceDependency(buildPath, pieceName, pieceVersion);
 
             result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
+                edition: await getEdition(),
+                webhookSecret: await getWebhookSecret(operation.flowVersion),
                 workerToken: await workerToken({
                     collectionId: operation.collectionVersion.collectionId,
                     projectId: operation.projectId
@@ -62,8 +85,7 @@ export const engineHelper = {
         if (operation.hookType === TriggerHookType.RUN) {
             return result as unknown[];
         }
-
-        return result as void;
+        return result;
     },
 
     async executeProp(operation: ExecutePropsOptions): Promise<DropdownState<any> | Record<string, DynamicPropsValue>> {
@@ -73,9 +95,9 @@ export const engineHelper = {
         try {
             await sandbox.cleanAndInit();
 
-            const buildDirectory = sandbox.getSandboxFolderPath();
+            const buildPath = sandbox.getSandboxFolderPath();
             const { pieceName, pieceVersion } = operation;
-            await installPieceDependency(buildDirectory, pieceName, pieceVersion);
+            await installPieceDependency(buildPath, pieceName, pieceVersion);
 
             result = await execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, {
                 ...operation,

@@ -6,7 +6,8 @@ import { ProjectId } from "../project/project";
 export enum EngineOperationType {
     EXECUTE_FLOW = "EXECEUTE_FLOW",
     EXECUTE_PROPERTY = "EXECUTE_PROPERTY",
-    EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK"
+    EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK",
+    EXTRACT_EVENT_DATA = "EXTRACT_EVENT_DATA",
 }
 
 export enum TriggerHookType {
@@ -15,7 +16,12 @@ export enum TriggerHookType {
     RUN = "RUN"
 }
 
-export type EngineOperation = ExecuteFlowOperation | ExecutePropsOptions | ExecuteTriggerOperation;
+export type EngineOperation = ExecuteFlowOperation | ExecutePropsOptions | ExecuteTriggerOperation | ExecuteEventParserOperation;
+
+export interface ExecuteEventParserOperation {
+    pieceName: string;
+    event: EventPayload
+}
 
 export interface ExecutePropsOptions {
     pieceName: string;
@@ -48,4 +54,32 @@ export interface ExecuteTriggerOperation {
     projectId: ProjectId,
     workerToken?: string;
     apiUrl?: string;
+    edition?: string;
+    webhookSecret?: string;
+}
+
+export interface EventPayload {
+    body: any,
+    rawBody?: any;
+    method: string,
+    headers: Record<string, string>,
+    queryParams: Record<string, string>,
+}
+
+export type ParseEventResponse = {
+    event?: string;
+    identifierValue?: string,
+    reply?: {
+        headers: Record<string, string>,
+        body: unknown
+    }
+}
+
+export interface AppEventListener {
+    events: string[],
+    identifierValue: string,
+};
+
+export interface ExecuteTriggerResponse {
+    listeners: AppEventListener[];
 }

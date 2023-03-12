@@ -92,6 +92,6 @@ type propMap = Record<
     description: string;
     props: Record<string, PieceProperty>;
     sampleData?: object;
-    type?: 'POLLING' | 'WEBHOOK';
+    type?: 'POLLING' | 'WEBHOOK' | 'APP_WEBHOOK';
   }
 >;

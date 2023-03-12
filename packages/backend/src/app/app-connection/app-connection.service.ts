@@ -6,6 +6,7 @@ import { AppConnectionEntity } from "./app-connection.entity";
 import axios, { AxiosError } from "axios";
 import { createRedisLock } from "../database/redis-connection";
 import { decryptObject, encryptObject } from "../helper/encryption";
+import { getEdition } from "../helper/secret-helper";
 
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
@@ -18,6 +19,9 @@ export const appConnectionService = {
             response = await claimWithCloud({
                 pieceName: request.appName,
                 code: request.value.code,
+                clientId: request.value.client_id,
+                edition: await getEdition(),
+                codeVerifier: request.value.code_challenge
             })
             break;
         case AppConnectionType.OAUTH2:
@@ -41,8 +45,6 @@ export const appConnectionService = {
         })
     },
     async getOne({ projectId, name }: { projectId: ProjectId, name: string }): Promise<AppConnection | null> {
-        // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
-        // which could result in the wrong request saving incorrect data.
         const appConnection = await appConnectionRepo.findOneBy({
             projectId: projectId,
             name: name
@@ -50,6 +52,8 @@ export const appConnectionService = {
         if (appConnection === null) {
             return null;
         }
+        // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
+        // which could result in the wrong request saving incorrect data.
         const refreshLock = createRedisLock(10 * 1000);
         try {
             await refreshLock.acquire(`${projectId}_${name}`);
@@ -148,6 +152,8 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
     const requestBody = {
         refreshToken: connectionValue.refresh_token,
         pieceName: appName,
+        clientId: connectionValue.client_id,
+        edition: await getEdition(),
         tokenUrl: connectionValue.token_url,
     };
     const response = (
@@ -227,11 +233,13 @@ async function claim(request: {
     }
 }
 
-async function claimWithCloud(request: { pieceName: string; code: string }): Promise<unknown> {
+async function claimWithCloud(request: { 
+    pieceName: string; code: string; codeVerifier: string, edition: string; clientId: string }): Promise<unknown> {
     try {
         return (await axios.post("https://secrets.activepieces.com/claim", request)).data;
     }
     catch (e: unknown | AxiosError) {
+        console.error(e);
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CLOUD_CLAIM, params: {
                 appName: request.pieceName

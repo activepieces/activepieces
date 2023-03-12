@@ -104,6 +104,7 @@
         "pieces/apps/twilio",
         "pieces/apps/typeform",
         "pieces/apps/wordpress",
+        "pieces/apps/youtube",
         "pieces/apps/zoom"
       ]
     },
@@ -177,7 +178,7 @@
             "product-embed/frontend-sdk",
             "product-embed/user-flows"
           ]
-        },
+        }
       ]
     }
   ],

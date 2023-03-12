@@ -8,6 +8,6 @@ export const openai = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   version: packageJson.version,
   actions: [askOpenAI],
-  authors: ['aboudzein', 'creed983'],
+  authors: ['aboudzein', 'creed983', 'astorozhevsky',],
   triggers: [],
 });

@@ -17,6 +17,7 @@ export class ModalCommunicationService {
   showModal(component: any, data: Record<string, unknown>) {
     const modal = this.dialog.open(component, {
       data: data,
+      panelClass: 'my-dialog',
     });
     return modal;
   }

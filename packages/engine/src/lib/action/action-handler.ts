@@ -1,12 +1,12 @@
-import { StepOutput, Action, ActionType, ExecutionState } from '@activepieces/shared';
+import { StepOutput, Action, ExecutionState } from '@activepieces/shared';
 
-export type ActionHandler = BaseActionHandler<any>;
+export type ActionHandler = BaseActionHandler<Action>;
 
 export abstract class BaseActionHandler<A extends Action> {
   action: A;
-  nextAction?: BaseActionHandler<any> | undefined;
+  nextAction?: BaseActionHandler<Action> | undefined;
 
-  protected constructor(action: A, nextAction?: BaseActionHandler<any>) {
+  protected constructor(action: A, nextAction?: BaseActionHandler<Action>) {
     this.action = action;
     this.nextAction = nextAction;
   }

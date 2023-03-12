@@ -21,6 +21,7 @@ import {
   Flow,
   AddActionRequest,
   FlowVersion,
+  StepLocationRelativeToParent,
 } from '@activepieces/shared';
 import { FormControl } from '@angular/forms';
 import { CodeService } from '../../../../service/code.service';
@@ -31,6 +32,7 @@ import {
   getDefaultDisplayNameForPiece,
   getDisplayNameForTrigger,
 } from '../../../../../common/utils';
+import { StepTypeSideBarProps } from '../../../../store/model/tab-state';
 
 @Component({
   selector: 'app-step-type-sidebar',
@@ -118,29 +120,34 @@ export class StepTypeSidebarComponent implements OnInit {
   }
 
   onTypeSelected(flowItemDetails: FlowItemDetails) {
-    this.flowTypeSelected$ = forkJoin([
-      this.store.select(BuilderSelectors.selectCurrentFlow).pipe(take(1)),
-      this.store
+    this.flowTypeSelected$ = forkJoin({
+      currentFlow: this.store
+        .select(BuilderSelectors.selectCurrentFlow)
+        .pipe(take(1)),
+      rightSideBar: this.store
         .select(BuilderSelectors.selectCurrentRightSideBar)
         .pipe(take(1)),
-    ]).pipe(
+    }).pipe(
       take(1),
       tap((results) => {
-        if (results[0] == undefined) {
+        if (!results.currentFlow) {
           return;
         }
         if (this._showTriggers) {
           this.replaceTrigger(flowItemDetails);
         } else {
-          const action = this.constructAction(
-            results[1].props.stepName,
-            results[0].version!,
+          const operation = this.constructOperation(
+            (results.rightSideBar.props as StepTypeSideBarProps).stepName,
+            results.currentFlow.version!,
             flowItemDetails.type as ActionType,
-            flowItemDetails
+            flowItemDetails,
+            (results.rightSideBar.props as StepTypeSideBarProps)
+              .stepLocationRelativeToParent
           );
+
           this.store.dispatch(
             FlowsActions.addAction({
-              operation: action,
+              operation: operation,
             })
           );
         }
@@ -206,11 +213,12 @@ export class StepTypeSidebarComponent implements OnInit {
     );
   }
 
-  constructAction(
-    parentAction: string,
+  constructOperation(
+    parentStep: string,
     flowVersion: FlowVersion,
     actionType: ActionType,
-    flowItemDetails: FlowItemDetails
+    flowItemDetails: FlowItemDetails,
+    stepLocationRelativeToParent: StepLocationRelativeToParent
   ): AddActionRequest {
     const baseProps = {
       name: FlowStructureUtil.findAvailableName(flowVersion, 'step'),
@@ -224,7 +232,8 @@ export class StepTypeSidebarComponent implements OnInit {
     switch (actionType) {
       case ActionType.CODE: {
         return {
-          parentAction: parentAction,
+          parentStep: parentStep,
+          stepLocationRelativeToParent: stepLocationRelativeToParent,
           action: {
             ...baseProps,
             type: ActionType.CODE,
@@ -239,7 +248,8 @@ export class StepTypeSidebarComponent implements OnInit {
       }
       case ActionType.LOOP_ON_ITEMS: {
         return {
-          parentAction: parentAction,
+          parentStep: parentStep,
+          stepLocationRelativeToParent: stepLocationRelativeToParent,
           action: {
             ...baseProps,
             type: ActionType.LOOP_ON_ITEMS,
@@ -252,10 +262,12 @@ export class StepTypeSidebarComponent implements OnInit {
       case ActionType.PIECE: {
         const componentDetails = flowItemDetails as ComponentItemDetails;
         return {
-          parentAction: parentAction,
+          parentStep: parentStep,
+          stepLocationRelativeToParent: stepLocationRelativeToParent,
           action: {
             ...baseProps,
             type: ActionType.PIECE,
+            valid: false,
             settings: {
               pieceName: componentDetails.extra!.appName,
               pieceVersion: '0.0.1',
@@ -264,6 +276,28 @@ export class StepTypeSidebarComponent implements OnInit {
               inputUiInfo: {
                 customizedInputs: {},
               },
+            },
+          },
+        };
+      }
+      case ActionType.BRANCH: {
+        return {
+          parentStep: parentStep,
+          stepLocationRelativeToParent: stepLocationRelativeToParent,
+          action: {
+            ...baseProps,
+            valid: false,
+            type: ActionType.BRANCH,
+            settings: {
+              conditions: [
+                [
+                  {
+                    firstValue: '',
+                    secondValue: '',
+                    operator: undefined,
+                  },
+                ],
+              ],
             },
           },
         };
