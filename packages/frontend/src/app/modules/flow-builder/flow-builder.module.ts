@@ -31,7 +31,6 @@ import { flowsReducer } from './store/flow/flows.reducer';
 import { FlowsEffects } from './store/flow/flow.effects';
 import { viewModeReducer } from './store/builder/viewmode/view-mode.reducer';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
-import { VariableSidebarComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/configs-sidebar.component';
 import { ViewModeEffects } from './store/builder/viewmode/viewMode.effects';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -50,9 +49,6 @@ import { DescribeFormComponent } from './page/flow-builder/flow-right-sidebar/ed
 import { CodeStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/code-step-input-form/code-step-input-form.component';
 import { LoopStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/loop-step-input-form/loop-step-input-form.component';
 import { ScheduleTriggerInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/schedule-trigger-input-form/schedule-trigger-input-form.component';
-import { ConfigCardComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/config-card/config-card.component';
-import { VariableListComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/configs-list/configs-list.component';
-import { CreateEditConfigModalComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/create-or-edit-config-modal.component';
 import { PublishButtonComponent } from './page/flow-builder/flow-builder-header/publish-button/publish-button.component';
 import { TrackFocusDirective } from './page/flow-builder/flow-left-sidebar/run-details/steps-results-list/track-focus.directive';
 import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
@@ -122,7 +118,6 @@ import { CanvasUtilsComponent } from './page/flow-builder/canvas-utils/canvas-ut
     FlowItemConnectionComponent,
     FlowItemContentComponent,
     FlowLeftSidebarComponent,
-    VariableListComponent,
     TestFlowModalComponent,
     RunDetailsComponent,
     TestRunBarComponent,
@@ -131,8 +126,6 @@ import { CanvasUtilsComponent } from './page/flow-builder/canvas-utils/canvas-ut
     StepTypItemComponent,
     StepTypeListComponent,
     StepTypeSidebarComponent,
-    CreateEditConfigModalComponent,
-    VariableSidebarComponent,
     StepResultComponent,
     SimpleLineConnectionComponent,
     LoopLineConnectionComponent,
@@ -143,7 +136,6 @@ import { CanvasUtilsComponent } from './page/flow-builder/canvas-utils/canvas-ut
     LoopStepInputFormComponent,
     CodeStepInputFormComponent,
     ScheduleTriggerInputFormComponent,
-    ConfigCardComponent,
     PieceActionInputFormComponent,
     OAuth2ConnectionDialogComponent,
     PublishButtonComponent,

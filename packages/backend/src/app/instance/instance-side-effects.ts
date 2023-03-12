@@ -1,7 +1,5 @@
 import {
     CollectionId,
-    CollectionVersion,
-    CollectionVersionState,
     FlowId,
     FlowVersion,
     FlowVersionState,
@@ -11,7 +9,6 @@ import {
 } from "@activepieces/shared";
 import { In } from "typeorm";
 import { logger } from "../helper/logger";
-import { collectionVersionService } from "../collections/collection-version/collection-version.service";
 import { flowVersionRepo } from "../flows/flow-version/flow-version-repo";
 import { flowVersionService } from "../flows/flow-version/flow-version.service";
 import { flowService } from "../flows/flow.service";
@@ -22,13 +19,10 @@ export const instanceSideEffects = {
     async enable(instance: Instance): Promise<void> {
         if (
             instance.status === InstanceStatus.DISABLED ||
-      instance.flowIdToVersionId == null ||
-      instance.collectionVersionId == null
+      instance.flowIdToVersionId == null
         ) {
             return;
         }
-        const collectionVersion = (await collectionVersionService.getOne(instance.collectionVersionId));
-
         const flowVersionIds = Object.values(instance.flowIdToVersionId);
 
         const flowVersions = await flowVersionRepo.findBy({
@@ -36,7 +30,6 @@ export const instanceSideEffects = {
         });
 
         await lockVersions({
-            collectionVersion,
             flowVersions,
         });
 
@@ -44,7 +37,6 @@ export const instanceSideEffects = {
             async (flowVersion) =>
                 await triggerUtils.enable({
                     collectionId: instance.collectionId,
-                    collectionVersion: collectionVersion,
                     projectId: instance.projectId,
                     flowVersion,
                 })
@@ -57,14 +49,12 @@ export const instanceSideEffects = {
         if (instance.status === InstanceStatus.DISABLED || instance.flowIdToVersionId == null) {
             return;
         }
-
-        const collectionVersion = (await collectionVersionService.getOneOrThrow(instance.collectionVersionId));
         const flowVersionIds = Object.values(instance.flowIdToVersionId);
 
         const flowVersions = await flowVersionRepo.findBy({
             id: In(flowVersionIds),
         });
-        const disableTriggers = flowVersions.map((version) => triggerUtils.disable({ collectionId: instance.collectionId, flowVersion: version, projectId: instance.projectId, collectionVersion }));
+        const disableTriggers = flowVersions.map((version) => triggerUtils.disable({ collectionId: instance.collectionId, flowVersion: version, projectId: instance.projectId }));
         await Promise.all(disableTriggers);
     },
     async onCollectionDelete({projectId, collectionId}: {projectId: ProjectId, collectionId: CollectionId}) {
@@ -80,23 +70,20 @@ export const instanceSideEffects = {
         const instance = await instanceService.getByCollectionId({ projectId: projectId, collectionId: flow.collectionId });
         const flowVersionId = instance.flowIdToVersionId[flow.id];
         if (instance !== null && flowVersionId != null) {
-            const collectionVersion = (await collectionVersionService.getOneOrThrow(instance.collectionVersionId));
             const flowVersion = (await flowVersionService.getOneOrThrow(flowVersionId));
             logger.info(`Flow ${flowId} is deleted, running intstance side effects first`);
-            await triggerUtils.disable({ collectionId: instance.collectionId, flowVersion: flowVersion, projectId: instance.projectId, collectionVersion })
+            await triggerUtils.disable({ collectionId: instance.collectionId, flowVersion: flowVersion, projectId: instance.projectId })
         }
     }
 };
 
-const lockVersions = async ({ collectionVersion, flowVersions }: LockVersionsParams): Promise<void> => {
-    collectionVersion.state = CollectionVersionState.LOCKED;
+const lockVersions = async ({ flowVersions }: LockVersionsParams): Promise<void> => {
 
     flowVersions.forEach((flowVersion) => {
         flowVersion.state = FlowVersionState.LOCKED;
     });
 
     const saveLockedVersions = [
-        collectionVersionService.updateVersion(collectionVersion.id, collectionVersion),
         flowVersionRepo.save(flowVersions),
     ];
 
@@ -104,6 +91,5 @@ const lockVersions = async ({ collectionVersion, flowVersions }: LockVersionsPar
 };
 
 interface LockVersionsParams {
-  collectionVersion: CollectionVersion;
   flowVersions: FlowVersion[];
 }

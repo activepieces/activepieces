@@ -1,4 +1,3 @@
-import { CollectionVersion } from '../../collections/collection-version';
 import {LoopOnItemsStepOutput, StepOutput} from './step-output';
 
 export class ExecutionState {
@@ -10,26 +9,6 @@ export class ExecutionState {
     this.configs = {};
     this.steps = {};
     this.lastStepState = {};
-  }
-
-
-  insertConfigs(collectionVersion: CollectionVersion) {
-    let configs: Map<string, unknown> = new Map(
-      collectionVersion.configs.map((config) => {
-        return [config.key, config.value];
-      })
-    );
-    if (configs instanceof Map) {
-      configs.forEach((value: any, key: string) => {
-        this.configs[key] = value;
-      });
-    } else if (typeof configs === 'object' && !Array.isArray(configs)) {
-      Object.entries(configs).forEach(([key, value]) => {
-        this.configs[key] = value;
-      });
-    } else {
-      throw Error(`Invalid configs type: ${typeof configs}`);
-    }
   }
 
   insertStep(

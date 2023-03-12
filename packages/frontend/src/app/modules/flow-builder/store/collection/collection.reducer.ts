@@ -1,24 +1,14 @@
 import { CollectionActions } from './collection.action';
-import { UUID } from 'angular2-uuid';
 import { Action, createReducer, on } from '@ngrx/store';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { CollectionState } from '../model/collection-state.model';
 import { FlowsActions } from '../flow/flows.action';
-import { Collection, CollectionVersionState } from '@activepieces/shared';
+import { Collection } from '@activepieces/shared';
 
 const initialState: CollectionState = {
   state: CollectionStateEnum.NONE,
-  lastSaveRequestId: UUID.UUID(),
   collection: {
-    version: {
-      id: '',
-      collectionId: '',
-      displayName: 'dummy',
-      state: CollectionVersionState.DRAFT,
-      configs: [],
-      created: '',
-      updated: '',
-    },
+    displayName: 'dummy',
     created: '',
     updated: '',
     id: '',
@@ -43,7 +33,7 @@ const _collectionReducer = createReducer(
     CollectionActions.changeName,
     (state, { displayName }): CollectionState => {
       const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-      clonedState.collection.version!.displayName = displayName;
+      clonedState.collection.displayName = displayName;
       clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
       return clonedState;
     }
@@ -69,31 +59,6 @@ const _collectionReducer = createReducer(
       state: CollectionStateEnum.FAILED_SAVING_OR_PUBLISHING,
     };
   }),
-
-  on(CollectionActions.addConfig, (state, { config }): CollectionState => {
-    const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-    clonedState.collection.version!.configs.push(config);
-    clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
-    return clonedState;
-  }),
-  on(
-    CollectionActions.deleteConfigSucceeded,
-    (state, { configIndex: index }): CollectionState => {
-      const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-      clonedState.collection.version!.configs.splice(index, 1);
-      clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
-      return clonedState;
-    }
-  ),
-  on(
-    CollectionActions.updateConfig,
-    (state, { configIndex, config }): CollectionState => {
-      const clonedState: CollectionState = JSON.parse(JSON.stringify(state));
-      clonedState.collection.version!.configs[configIndex] = config;
-      clonedState.state |= CollectionStateEnum.SAVING_COLLECTION;
-      return clonedState;
-    }
-  ),
   on(CollectionActions.publish, (state): CollectionState => {
     return { ...state, state: CollectionStateEnum.PUBLISHING | state.state };
   }),

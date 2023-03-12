@@ -6,7 +6,7 @@
       [applyClass]="true" src="assets/img/custom/pencil-underline.svg" class="ap-flex ap-items-center ap-fill-body">
     </svg-icon>
     <app-editable-text [editing]="editing" (editingChanges)="changeEditValue($event)"
-      [value]="collection.version!.displayName" (valueChanges)="savePieceName($event)"
+      [value]="collection.displayName" (valueChanges)="savePieceName($event)"
       [disableEditing]="viewMode$ | async | defaultTrue" [allowClick]="true"
       [cssClasses]="'ap-typography-headline-6 ap-font-bold'" class="ap-text-title"
       (mouseenter)="collectionNameHovered=true" (mouseleave)="collectionNameHovered=false"></app-editable-text>
