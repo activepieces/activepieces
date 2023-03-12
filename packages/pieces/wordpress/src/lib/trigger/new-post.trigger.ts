@@ -1,4 +1,5 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/framework';
+import { createTrigger } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/shared';
 import { wordpressCommon } from '../common';
 
 const triggerNameInStore = 'wordpress_new_post_trigger';

@@ -1,4 +1,5 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/framework';
+import { createTrigger } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/shared';
 import { stripeCommon } from '../common';
 
 export const stripeNewPayment = createTrigger({

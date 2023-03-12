@@ -3,6 +3,12 @@ import { Format } from '@sinclair/typebox/format';
 import { isValidCron } from 'cron-validator';
 import { SemVerType } from '../../pieces';
 
+export enum TriggerStrategy {
+  POLLING = 'POLLING',
+  WEBHOOK = 'WEBHOOK',
+  APP_WEBHOOK = "APP_WEBHOOK"
+}
+
 export enum TriggerType {
   SCHEDULE = 'SCHEDULE',
   EMPTY = 'EMPTY',
