@@ -1,15 +1,8 @@
-import { exec as execSync, ExecOptions } from "node:child_process";
 import fs from "node:fs/promises";
-import { promisify } from "node:util";
 import decompress from "decompress";
 import { sandboxManager } from "../sandbox";
 import { logger } from "../../helper/logger";
-
-type PackageJson = {
-    dependencies: Record<string, string>;
-}
-
-const exec = promisify(execSync);
+import { packageManager, PackageManagerDependencies } from "../../helper/package-manager";
 
 const webpackConfig = `
   const path = require("node:path");
@@ -66,25 +59,19 @@ async function build(artifact: Buffer): Promise<Buffer> {
         await sandbox.cleanAndInit();
         await downloadFiles(artifact, buildPath);
 
-        const execOptions: ExecOptions = {
-            cwd: buildPath,
+        const dependencies: PackageManagerDependencies = {
+            "@tsconfig/node18": "1.0.1",
+            "ts-loader": "9.4.2",
+            "typescript": "4.8.4",
+            "webpack": "5.74.0",
+            "webpack-cli": "4.10.0",
         };
 
-        const pnpmInstallCommand = `
-          pnpm install \
-            --prefer-offline \
-            --config.lockfile=false \
-            --config.auto-install-peers=true
-        `;
+        await packageManager.addDependencies(buildPath, dependencies);
 
-        logger.info("code builder, installing dependencies");
-        await exec(pnpmInstallCommand, execOptions);
+        await packageManager.runLocalDependency(buildPath, "webpack");
 
-        logger.info("code builder, bundling code");
-        await exec("pnpm webpack", execOptions);
-
-        const bundledFilePath = `${buildPath}/dist/index.js`;
-        bundledFile = await fs.readFile(bundledFilePath);
+        bundledFile = await fs.readFile(`${buildPath}/dist/index.js`);
 
         logger.info(`Finished Building in sandbox: ${buildPath}, duration: ${Date.now() - startTime}ms`);
     }
@@ -107,33 +94,11 @@ async function build(artifact: Buffer): Promise<Buffer> {
 }
 
 async function downloadFiles(artifact: Buffer, buildPath: string) {
-    const packageJsonPath = `${buildPath}/package.json`;
     const webpackConfigPath = `${buildPath}/webpack.config.js`;
     const tsConfigPath = `${buildPath}/tsconfig.json`;
 
     await decompress(artifact, buildPath, {});
 
-    const packageJson: PackageJson = JSON.parse(
-        await fs.readFile(packageJsonPath, {
-            encoding: "utf8",
-            flag: "r",
-        })
-    );
-
-    logger.info(packageJson, 'code builder, package.json');
-
-    const dependencies = packageJson.dependencies ?? {};
-
-    packageJson.dependencies = {
-        ...dependencies,
-        "@tsconfig/node18": "1.0.1",
-        "ts-loader": "9.4.2",
-        "typescript": "4.8.4",
-        "webpack": "5.74.0",
-        "webpack-cli": "4.10.0",
-    }
-
-    await fs.writeFile(packageJsonPath, JSON.stringify(packageJson));
     await fs.writeFile(webpackConfigPath, webpackConfig);
     await fs.writeFile(tsConfigPath, tsConfig);
 }

@@ -1,12 +1,6 @@
-import { TriggerBase } from '@activepieces/shared';
+import { TriggerBase, TriggerStrategy } from '@activepieces/shared';
 import { TriggerContext, TriggerHookContext } from '../context';
 import { PieceProperty, StaticPropsValue } from '../property/property';
-
-export enum TriggerStrategy {
-  POLLING = 'POLLING',
-  WEBHOOK = 'WEBHOOK',
-  APP_WEBHOOK = "APP_WEBHOOK"
-}
 
 class ITrigger<T extends PieceProperty, S extends TriggerStrategy> implements TriggerBase {
   constructor(
