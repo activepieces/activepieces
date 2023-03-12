@@ -8,7 +8,7 @@ enum ContactRole
 }
 export const getOrCreateContact= createAction({
     description:'Get or create a contact (ie. user or lead) if it isn\'t found',
-    displayName:"Create Contact",
+    displayName:"Get or Create Contact",
     name:"get_or_create_contact_intercom",
     sampleData:{
         "type": "contact",
@@ -144,11 +144,12 @@ export const getOrCreateContact= createAction({
         
     },
     run:async(context)=>{
-        const authentication = getAccessTokenOrThrow(context.propsValue.connection)
+        const authentication = getAccessTokenOrThrow(context.propsValue.connection);
         try{
             const response = await httpClient.sendRequest({
                 method: HttpMethod.POST,
                 url: `https://api.intercom.io/contacts`,
+                headers:intercomCommon.intercomHeaders,
                 authentication: {
                   type: AuthenticationType.BEARER_TOKEN,
                   token: (authentication as string)
@@ -179,22 +180,11 @@ export const getOrCreateContact= createAction({
                     const idFromErrorMessage= errors[0].message?.split('id=')[1];
                     if(idFromErrorMessage)
                     {
-                        return (await httpClient.sendRequest({
-                            method:HttpMethod.GET,
-                            url:`https://api.intercom.io/contacts/${idFromErrorMessage}`,
-                            authentication: {
-                                type: AuthenticationType.BEARER_TOKEN,
-                                token: (authentication as string)
-                            },
-                        })).body;
+                        return intercomCommon.getContact({userId:idFromErrorMessage,token:authentication})
                     }
-                   
                 }
             }
             throw ex;
-        }
-       
-         
-       
+        }       
     }
 })

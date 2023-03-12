@@ -31,11 +31,11 @@ export const createContact= createAction({
         "created_at": 1678356005,
         "updated_at": 1678356005,
         "signed_up_at": 1678356004,
-        "last_seen_at": null,
-        "last_replied_at": null,
-        "last_contacted_at": null,
-        "last_email_opened_at": null,
-        "last_email_clicked_at": null,
+        "last_seen_at": 1678356004,
+        "last_replied_at": 1678356004,
+        "last_contacted_at": 1678356004,
+        "last_email_opened_at": 1678356004,
+        "last_email_clicked_at": 1678356004,
         "language_override": null,
         "browser": null,
         "browser_version": null,
@@ -148,6 +148,7 @@ export const createContact= createAction({
             const response = await httpClient.sendRequest({
                 method: HttpMethod.POST,
                 url: `https://api.intercom.io/contacts`,
+                headers: intercomCommon.intercomHeaders,
                 authentication: {
                   type: AuthenticationType.BEARER_TOKEN,
                   token: (authentication as string)
