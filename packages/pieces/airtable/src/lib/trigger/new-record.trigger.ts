@@ -12,7 +12,7 @@ export const airtableNewRecord = createTrigger({
   props: {
     authentication: airtableCommon.authentication,
     base: airtableCommon.base,
-    table: airtableCommon.table
+    tableId: airtableCommon.tableId
   },
   sampleData: {},
   type: TriggerStrategy.POLLING,
@@ -21,7 +21,7 @@ export const airtableNewRecord = createTrigger({
     const currentTableSnapshot = await airtableCommon.getTableSnapshot({
       personalToken: context.propsValue['authentication'],
       baseId: context.propsValue['base'],
-      tableId: context.propsValue['table'] as string
+      tableId: context.propsValue['tableId'] as string
     })
 
     await context.store?.put<AirtableRecord[]>(triggerNameInStore, currentTableSnapshot);
@@ -35,7 +35,7 @@ export const airtableNewRecord = createTrigger({
     const currentTableSnapshot = await airtableCommon.getTableSnapshot({
       personalToken: context.propsValue['authentication'],
       baseId: context.propsValue['base'],
-      tableId: context.propsValue['table'] as string
+      tableId: context.propsValue['tableId'] as string
     });
     
     const lastSnapshot = await context.store.get<AirtableRecord[]>(triggerNameInStore) || [];

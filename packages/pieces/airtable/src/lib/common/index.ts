@@ -55,7 +55,7 @@ export const airtableCommon = {
     }
   }),
 
-  table: Property.Dropdown<string>({
+  tableId: Property.Dropdown<string>({
     displayName: 'Table',
     required: true,
     refreshers: ["authentication", "base"],
@@ -109,12 +109,12 @@ export const airtableCommon = {
   fields: Property.DynamicProperties({
     displayName: 'Table',
     required: true,
-    refreshers: ["authentication", "base", "table"],
+    refreshers: ["authentication", "base", "tableId"],
 
-    props: async ({ authentication, base, table }) => {
+    props: async ({ authentication, base, tableId }) => {
       if (!authentication) return {}
       if (!base) return {}
-      if (!table) return {}
+      if (!tableId) return {}
 
       const fields: DynamicPropsValue = {};
 
@@ -122,40 +122,35 @@ export const airtableCommon = {
         const airtable: AirtableTable = await airtableCommon.fetchTable({
           token: authentication as unknown as string,
           baseId: base as unknown as string,
-          tableId: table as unknown as string
+          tableId: tableId as unknown as string
         });
-  
+
         airtable.fields.map((field: AirtableField) => {
-          if (AirtableEnterpriseFields.includes(field.type)) {
-            console.debug("skipping type", field.type)
-            //skip these types
-            return
-          }
-  
+          //skip these types
+          if (AirtableEnterpriseFields.includes(field.type)) return
+
           const params = {
             displayName: field.name,
             description: (
-              (['date', 'dateTime'].includes(field.type)) 
-                ? `${field.description}. Expected format: mmmm d,yyyy` 
+              (['date', 'dateTime'].includes(field.type))
+                ? `${field.description}. Expected format: mmmm d,yyyy`
                 : field.description
             ),
             required: false
           }
-  
-          if (field.type === "singleSelect") {
+
+          if (field.type === "singleSelect" || field.type === "multipleSelects") {
             const options = field.options?.choices.map((option: { id: string, name: string }) => ({
               value: option.id,
               label: option.name
             }))
-  
+
             fields[field.id] = (AirtableFieldMapping[field.type])({
               ...params,
               options: {
                 options: options ?? []
               }
             })
-          } else if (field.type === "multipleSelects") {
-            //TODO: implement multiselect
           } else {
             fields[field.id] = (AirtableFieldMapping[field.type])(params)
           }
@@ -194,25 +189,15 @@ export const airtableCommon = {
     })
 
     if (response.status === 200) {
-      console.debug("fetch airtable list response", response)
       return response.body.tables
     }
 
     return []
   },
 
-  async fetchTable({ token, baseId, tableId }: { token: string, baseId: string, tableId: string }) {
-    const response = await httpClient.sendRequest<AirtableTable>({
-      method: HttpMethod.GET,
-      url: `https://api.airtable.com/v0/meta/bases/${baseId}/tables/${tableId}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token
-      }
-    })
-
-    console.debug("fetch airtable response", response)
-    return response.body
+  async fetchTable({ token, baseId, tableId }: { token: string, baseId: string, tableId: string }) { 
+    const response = await airtableCommon.fetchTableList({ token, baseId }); 
+    return response.find(t => t.id === tableId)!; 
   },
 
   async createRecord({ personalToken: token, fields, tableId, baseId }: Params) {
@@ -229,7 +214,6 @@ export const airtableCommon = {
     }
 
     const response = await httpClient.sendRequest<AirtableRecord>(request);
-    console.debug("Create record response", response)
 
     if (response.status === 200) {
       return response.body

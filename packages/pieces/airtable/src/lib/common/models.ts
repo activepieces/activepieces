@@ -90,7 +90,7 @@ export const AirtableFieldMapping = {
   percent: Property.ShortText,
   currency: Property.ShortText,
   singleSelect: Property.StaticDropdown,
-  multipleSelects: Property.MultiSelectDropdown,
+  multipleSelects: Property.StaticMultiSelectDropdown,
   multipleRecordLinks: Property.ShortText,
   date: Property.ShortText,
   dateTime: Property.ShortText,
