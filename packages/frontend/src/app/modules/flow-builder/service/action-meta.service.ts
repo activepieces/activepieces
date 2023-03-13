@@ -12,12 +12,10 @@ import {
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import { PieceProperty } from '../../common/components/configs-form/connector-action-or-config';
-import { Observable, of, shareReplay, tap, map, forkJoin } from 'rxjs';
+import { Observable, shareReplay, map, forkJoin } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { FlagService } from '../../common/service/flag.service';
 
-type PieceName = string;
-type PieceVersion = string;
 type TriggersMetadata = Record<string, TriggerBase>;
 
 @Injectable({
@@ -28,7 +26,7 @@ export class ActionMetaService {
     .get<PieceMetadataSummary[]>(`${environment.apiUrl}/pieces`)
     .pipe(shareReplay(1));
 
-  private piecesMetadata = new Map<[PieceName, PieceVersion], PieceMetadata>();
+  private piecesCache = new Map<string, Observable<PieceMetadata>>();
 
   private edition$ = this.flagsService.getEdition();
 
@@ -70,6 +68,10 @@ export class ActionMetaService {
 
   constructor(private http: HttpClient, private flagsService: FlagService) {}
 
+  private getCacheKey(pieceName: string, pieceVersion: string): string {
+    return `${pieceName}-${pieceVersion}`;
+  }
+
   private filterAppWebhooks(
     triggersMap: TriggersMetadata,
     edition: ApEdition
@@ -104,11 +106,13 @@ export class ActionMetaService {
     pieceName: string,
     pieceVersion: string
   ): Observable<PieceMetadata> {
-    if (this.piecesMetadata.has([pieceName, pieceVersion])) {
-      return of(this.piecesMetadata.get([pieceName, pieceVersion])!);
+    const cacheKey = this.getCacheKey(pieceName, pieceVersion);
+
+    if (this.piecesCache.has(cacheKey)) {
+      return this.piecesCache.get(cacheKey)!;
     }
 
-    return forkJoin({
+    const pieceMetadata$ = forkJoin({
       pieceMetadata: this.fetchPieceMetadata(pieceName, pieceVersion),
       edition: this.edition$,
     }).pipe(
@@ -119,10 +123,11 @@ export class ActionMetaService {
         );
         return pieceMetadata;
       }),
-      tap((pieceMetadata) =>
-        this.piecesMetadata.set([pieceName, pieceVersion], pieceMetadata)
-      )
+      shareReplay(1)
     );
+
+    this.piecesCache.set(cacheKey, pieceMetadata$);
+    return this.piecesCache.get(cacheKey)!;
   }
 
   getPieceActionConfigOptions<
