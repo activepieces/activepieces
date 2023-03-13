@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import {
+    ApEnvironment,
     apId,
     CollectionId,
     EngineOperation,
@@ -30,7 +31,10 @@ const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH);
 
 const installPieceDependency = async (path: string, pieceName: string, pieceVersion: string) => {
-    await packageManager.addDependencies(path, { [`@activepieces/piece-${pieceName}`]: pieceVersion });
+    const environment = system.get(SystemProp.ENVIRONMENT);
+    if (environment === ApEnvironment.PRODUCTION) {
+        await packageManager.addDependencies(path, { [`@activepieces/piece-${pieceName}`]: pieceVersion });
+    }
 };
 
 export const engineHelper = {
