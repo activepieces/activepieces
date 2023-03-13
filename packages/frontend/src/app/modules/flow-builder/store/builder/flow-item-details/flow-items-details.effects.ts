@@ -83,7 +83,10 @@ export class FlowItemsDetailsEffects {
               piece.displayName,
               piece.description ? piece.description : ``,
               piece.logoUrl,
-              { appName: piece.name }
+              {
+                appName: piece.name,
+                appVersion: piece.version,
+              }
             );
           } else if (piece.triggers > 0 && forTriggers) {
             return new FlowItemDetails(
@@ -91,7 +94,10 @@ export class FlowItemsDetailsEffects {
               piece.displayName,
               ``,
               piece.logoUrl,
-              { appName: piece.name }
+              {
+                appName: piece.name,
+                appVersion: piece.version,
+              }
             );
           } else {
             return null;

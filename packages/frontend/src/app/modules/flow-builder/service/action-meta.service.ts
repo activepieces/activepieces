@@ -92,7 +92,7 @@ export class ActionMetaService {
     pieceVersion: string
   ): Observable<PieceMetadata> {
     return this.http.get<PieceMetadata>(
-      `${environment.apiUrl}/pieces/${pieceName}?pieceVersion=${pieceVersion}`
+      `${environment.apiUrl}/pieces/${pieceName}?version=${pieceVersion}`
     );
   }
 

@@ -90,6 +90,7 @@ export class PieceActionInputFormComponent
   initialSetup$: Observable<ActionDropdownOption[]>;
   triggerInitialSetup$: Subject<true> = new Subject();
   pieceName: string;
+  pieceVersion: string;
   intialComponentInputFormValue: ComponentActionInputFormSchema | null;
   selectedAction$: Observable<any>;
   actions$: Observable<ActionDropdownOption[]>;
@@ -154,12 +155,12 @@ export class PieceActionInputFormComponent
   }
 
   fetchActions(pieceName: string, pieceVersion: string) {
-    const pieces$ = this.actionMetaDataService.getPieceMetadata(
+    const pieceMetadata$ = this.actionMetaDataService.getPieceMetadata(
       pieceName,
       pieceVersion
     );
 
-    this.actions$ = pieces$.pipe(
+    this.actions$ = pieceMetadata$.pipe(
       map((pieceMetadata) => {
         const actionsKeys = Object.keys(pieceMetadata.actions);
         return actionsKeys.map((actionName) => {
@@ -253,6 +254,7 @@ export class PieceActionInputFormComponent
   writeValue(obj: ComponentActionInputFormSchema): void {
     this.intialComponentInputFormValue = obj;
     this.pieceName = obj.pieceName;
+    this.pieceVersion = obj.pieceVersion;
     this.pieceActionForm
       .get(ACTION_FORM_CONTROL_NAME)
       ?.setValue(undefined, { emitEvent: false });
@@ -339,7 +341,7 @@ export class PieceActionInputFormComponent
         ...configs.input,
       },
       pieceName: this.pieceName,
-      pieceVersion: '0.0.1',
+      pieceVersion: this.pieceVersion,
       inputUiInfo: { customizedInputs: customizedInputs },
     };
 

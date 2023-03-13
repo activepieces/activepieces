@@ -60,7 +60,8 @@ export class PieceTriggerInputFormComponent {
   readonly CONFIGS_FORM_CONTROL_NAME = CONFIGS_FORM_CONTROL_NAME;
   componentForm: UntypedFormGroup;
   initialSetup$: Observable<TriggerDropdownOption[]>;
-  componentName: string;
+  pieceName: string;
+  pieceVersion: string;
   intialComponentTriggerInputFormValue: {
     triggerName: string;
     input: { [key: string]: any };
@@ -213,7 +214,8 @@ export class PieceTriggerInputFormComponent {
   }
   writeValue(obj: ComponentTriggerInputFormSchema): void {
     this.intialComponentTriggerInputFormValue = obj;
-    this.componentName = obj.pieceName;
+    this.pieceName = obj.pieceName;
+    this.pieceVersion = obj.pieceVersion;
     this.componentForm
       .get(TRIGGER_FORM_CONTROL_NAME)
       ?.setValue(undefined, { emitEvent: false });
