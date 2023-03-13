@@ -16,11 +16,8 @@ services:
     volumes:
       - ./:/usr/src/app
     working_dir: /usr/src/app
-    entrypoint:
-      - npx
-      - nx
-      - serve
-      - backend
+    command: >
+      bash -c "chmod +x ./docker-dev-entrypoint.sh && ./docker-dev-entrypoint.sh && npx nx serve backend"
     depends_on:
       - postgres
       - redis
@@ -35,11 +32,8 @@ services:
     volumes:
       - ./:/usr/src/app
     working_dir: /usr/src/app
-    entrypoint:
-      - npx
-      - nx
-      - serve
-      - frontend
+    command: >
+      bash -c "chmod +x ./docker-dev-entrypoint.sh && ./docker-dev-entrypoint.sh && npx nx serve frontend"
     depends_on:
       - backend
 
