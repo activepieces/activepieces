@@ -1,9 +1,10 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
+import { logger } from "../../helper/logger";
 
 export class removeStoreAction1676649852890 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        console.log("Running migration removeStoreAction1676649852890");
+        logger.info("Running migration removeStoreAction1676649852890");
         const flowVersionRepo = queryRunner.connection.getRepository("flow_version");
         const flowVersions = await flowVersionRepo.find({});
         let count = 0;
@@ -37,7 +38,7 @@ export class removeStoreAction1676649852890 implements MigrationInterface {
             }
         }
 
-        console.log("Finished running migration removeStoreAction1676649852890, changed " + count + " actions");
+        logger.info("Finished running migration removeStoreAction1676649852890, changed " + count + " actions");
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

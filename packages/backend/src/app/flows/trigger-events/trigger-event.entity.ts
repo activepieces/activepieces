@@ -17,8 +17,7 @@ export const TriggerEventEntity = new EntitySchema<TriggerEventSchema>({
             type: String,
         },
         payload: {
-            type: "bytea",
-            nullable: true,
+            type: "jsonb"
         },
     },
     indices: [

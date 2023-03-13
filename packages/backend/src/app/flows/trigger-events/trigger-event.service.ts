@@ -22,12 +22,12 @@ export const triggerEventService = {
             break;
         }
     },
-    async newEvent({projectId, flowVersion, payload}:{projectId: ProjectId, flowVersion: FlowVersion, payload: unknown}): Promise<TriggerEvent> {
+    async saveEvent({projectId, flowVersion, payload}:{projectId: ProjectId, flowVersion: FlowVersion, payload: unknown}): Promise<TriggerEvent> {
         const sourceName = getSourceName(flowVersion.trigger);
         return triggerEventrepo.save({
             id: apId(),
             projectId,
-            flowVersion,
+            flowId: flowVersion.flowId,
             sourceName,
             payload,
         });  
@@ -46,7 +46,7 @@ export const triggerEventService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         });
-        const query = triggerEventrepo.createQueryBuilder("flow_run").where({
+        const query = triggerEventrepo.createQueryBuilder("trigger_event").where({
             projectId,
             flowId,
             sourceName,

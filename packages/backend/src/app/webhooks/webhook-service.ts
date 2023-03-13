@@ -18,7 +18,6 @@ import { system } from '../helper/system/system';
 import { SystemProp } from '../helper/system/system-prop';
 import { getPublicIp } from '../helper/public-ip-utils';
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service';
-import { getWebhookSecret } from '../helper/secret-helper';
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
@@ -33,11 +32,10 @@ export const webhookService = {
         }
         const collection = await collectionService.getOneOrThrow({ projectId: flow.projectId, id: flow.collectionId });
         const instance = await getInstanceOrThrow(flow.projectId, collection.id);
-        console.log(`payload`, payload);
         const flowVersion = await flowVersionService.getOneOrThrow(
             instance.flowIdToVersionId[flow.id]
         );
-        triggerEventService.newEvent({ flowVersion, payload, projectId: flow.projectId });
+        triggerEventService.saveEvent({ flowVersion, payload, projectId: flow.projectId });
 
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId: collection.projectId,
@@ -104,5 +102,5 @@ const getInstanceOrThrow = async (
 
 interface CallbackParams {
     flowId: FlowId;
-    payload: unknown;
+    payload: EventPayload;
 }

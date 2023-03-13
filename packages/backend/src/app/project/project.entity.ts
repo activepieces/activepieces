@@ -1,5 +1,5 @@
 import { EntitySchema } from "typeorm";
-import { AppConnection, Collection, Flow, Project, User } from "@activepieces/shared";
+import { AppConnection, Collection, Flow, Project, TriggerEvent, User } from "@activepieces/shared";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 import { ConnectionKey } from "@ee/product-embed/shared/connection-keys/connection-key";
 import { AppCredential } from "@ee/product-embed/shared/app-credentials/app-credentials";
@@ -11,6 +11,7 @@ interface ProjectSchema extends Project {
   connectionKeys: ConnectionKey[];
   appCredentials: AppCredential[];
   files: File[];
+  events: TriggerEvent[];
   appConnections: AppConnection[];
 }
 
@@ -54,15 +55,20 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
                 foreignKeyConstraintName: "fk_project_owner_id",
             },
         },
+        events: {
+            type: "one-to-many",
+            target: "trigger_event",
+            inverseSide: "project",
+        },
         files: {
             type: "one-to-many",
             target: "file",
-            inverseSide: "file",
+            inverseSide: "project",
         },
         flows: {
             type: "one-to-many",
             target: "flow",
-            inverseSide: "flow",
+            inverseSide: "project",
         },
         collections: {
             type: "one-to-many",
