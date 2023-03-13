@@ -144,7 +144,6 @@ export class EditStepAccordionComponent implements AfterViewInit {
     inputControl.setValue({
       ...settings,
       type: stepSelected.type,
-      teeeeeeeeeeeeeeeeest: 'teeeeeeeeeest',
     });
   }
 
