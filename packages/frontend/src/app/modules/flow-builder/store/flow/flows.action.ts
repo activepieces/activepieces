@@ -11,7 +11,9 @@ import {
   FlowRun,
   FlowId,
   FlowOperationRequest,
+  StepLocationRelativeToParent,
 } from '@activepieces/shared';
+import { AddButtonType } from '../../../common/model/enum/add-button-type';
 
 export enum FlowsActionType {
   // Flow Version Modifying Action
@@ -132,7 +134,20 @@ export const setLeftSidebar = createAction(
 
 export const setRightSidebar = createAction(
   FlowsActionType.SET_RIGHT_SIDEBAR,
-  props<{ sidebarType: RightSideBarType; props: any }>()
+  props<{
+    sidebarType: RightSideBarType;
+    props:
+      | {
+          stepLocationRelativeToParent: StepLocationRelativeToParent;
+          stepName: string;
+        }
+      | {
+          stepName: string;
+          buttonType: AddButtonType;
+        }
+      // TODO URGENTLY REMOVE THIS
+      | any;
+  }>()
 );
 
 export const FlowsActions = {

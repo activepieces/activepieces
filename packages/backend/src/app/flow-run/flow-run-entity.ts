@@ -1,11 +1,10 @@
 import { EntitySchema } from "typeorm";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
-import { Collection, CollectionVersion, Flow, FlowRun, Project } from "@activepieces/shared";
+import { Collection, Flow, FlowRun, Project } from "@activepieces/shared";
 
 interface FlowRunSchema extends FlowRun {
   project: Project;
   collection: Collection;
-  collectionVersion: CollectionVersion;
   flow: Flow;
 }
 
@@ -17,7 +16,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         flowId: ApIdSchema,
         collectionId: ApIdSchema,
         flowVersionId: ApIdSchema,
-        collectionVersionId: ApIdSchema,
         environment: {
             type: String,
             nullable: true
@@ -77,16 +75,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
                 name: "collectionId",
                 foreignKeyConstraintName: "fk_flow_run_collection_id",
             },
-        },
-        collectionVersion: {
-            type: "many-to-one",
-            target: "collection_version",
-            cascade: true,
-            onDelete: "CASCADE",
-            joinColumn: {
-                name: "collectionVersionId",
-                foreignKeyConstraintName: "fk_flow_run_collection_version_id",
-            },
-        },
+        }
     },
 });

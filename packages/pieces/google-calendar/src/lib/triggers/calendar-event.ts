@@ -1,4 +1,5 @@
-import { createTrigger, TriggerStrategy, OAuth2PropertyValue } from '@activepieces/framework';
+import { createTrigger, OAuth2PropertyValue } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/shared';
 import { googleCalendarCommon } from '../common';
 import { getLatestEvent, stopWatchEvent, watchEvent } from '../common/helper';
 import { GoogleWatchResponse } from '../common/types';

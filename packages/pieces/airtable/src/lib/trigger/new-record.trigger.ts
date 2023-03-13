@@ -1,7 +1,8 @@
 import { deepStrictEqual } from 'assert';
-import { createTrigger, TriggerStrategy } from '@activepieces/framework';
+import { createTrigger } from '@activepieces/framework';
 import { airtableCommon } from '../common';
 import { AirtableRecord } from '../common/models';
+import { TriggerStrategy } from '@activepieces/shared';
 
 const triggerNameInStore = 'airtable_new_record_trigger';
 export const airtableNewRecord = createTrigger({

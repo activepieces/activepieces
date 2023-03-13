@@ -48,7 +48,6 @@ export const system = {
 
 const getEnvVar = (prop: SystemProp): string | undefined => {
     const value = process.env[`AP_${prop}`];
-    console.log(`[system#getEnvVar] prop=${prop} value=${value}`);
     return value;
 };
 

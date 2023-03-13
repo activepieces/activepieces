@@ -4,8 +4,8 @@ import {
   HttpRequest,
   HttpMethod,
   AuthenticationType,
-  TriggerStrategy,
 } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/shared';
 import { githubCommon } from '../common';
 
 export const githubRegisterTrigger = ({

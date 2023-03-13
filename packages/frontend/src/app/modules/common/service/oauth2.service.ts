@@ -51,19 +51,19 @@ export class Oauth2Service {
     this.currentlyOpenPopUp = popup;
     const codeObs$ = new Observable<any>((observer) => {
       window.addEventListener('message', function handler(event) {
-        if (redirect_uri.startsWith(event.origin)) {
-          if (event.data != undefined) {
-            event.data.code = decodeURIComponent(event.data.code);
-            observer.next(event.data);
-            popup?.close();
-            observer.complete();
-          } else {
-            observer.error('No code returned');
-            popup?.close();
-            observer.complete();
-          }
-          window.removeEventListener('message', handler);
+        //   if (redirect_uri.startsWith(event.origin)) {
+        if (event.data != undefined) {
+          event.data.code = decodeURIComponent(event.data.code);
+          observer.next(event.data);
+          popup?.close();
+          observer.complete();
+        } else {
+          observer.error('No code returned');
+          popup?.close();
+          observer.complete();
         }
+        window.removeEventListener('message', handler);
+        // }
       });
     });
 

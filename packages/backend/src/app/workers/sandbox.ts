@@ -5,6 +5,7 @@ import path from "node:path";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
 import { logger } from "../helper/logger";
+import { packageManager } from "../helper/package-manager";
 
 const getIsolateExecutableName = () => {
     const defaultName = "isolate";
@@ -26,6 +27,7 @@ export class Sandbox {
     async cleanAndInit(): Promise<void> {
         await Sandbox.runIsolate("--box-id=" + this.boxId + " --cleanup");
         await Sandbox.runIsolate("--box-id=" + this.boxId + " --init");
+        await packageManager.initProject(this.getSandboxFolderPath());
     }
 
     async runCommandLine(commandLine: string): Promise<string> {
@@ -39,6 +41,7 @@ export class Sandbox {
         metaFile +
         " --stdout=_standardOutput.txt" +
         " --stderr=_standardError.txt --run " +
+        " --env=AP_ENVIRONMENT " +
         commandLine
         );
     }
@@ -79,7 +82,7 @@ export class Sandbox {
         const meta = this.parseMetaFile();
         return meta["status"] === "TO";
     }
-    
+
     getSandboxFilePath(subFile: string) {
         return this.getSandboxFolderPath() + "/" + subFile;
     }

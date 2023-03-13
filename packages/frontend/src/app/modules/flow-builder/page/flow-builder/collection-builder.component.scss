@@ -49,7 +49,7 @@ mat-drawer[position=start]{
 
 .box .content {
   flex: 1 1 auto;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .drawer-container
@@ -113,4 +113,12 @@ mat-drawer[position=start]{
 :host
 {
   height: 100%;
+}
+.crosshair
+{
+  left: calc(50% - 7.5px);
+  top: calc(50% - 7.5px);
+  background-color: red;
+  z-index: 9999;
+  text-align: center;
 }

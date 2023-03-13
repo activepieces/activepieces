@@ -21,7 +21,8 @@
           <div class="box">
             <div class="header"> <app-flow-builder-tabs></app-flow-builder-tabs>
             </div>
-            <div class="content canvas" #canvasWrapper>
+            <div class="content canvas" #canvasWrapper appCanvasPanner [style.cursor]="cursorStyle$ | async">
+              <app-canvas-utils class="ap-absolute ap-right-[15px] ap-bottom-[15px]"></app-canvas-utils>
               <app-flow-item-tree></app-flow-item-tree>
             </div>
           </div>

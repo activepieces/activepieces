@@ -10,6 +10,7 @@ const commonAuthProps = {
 export const UpsertCloudOAuth2Request = Type.Object({
     ...commonAuthProps,
     value: Type.Object({
+        client_id: Type.String(),
         code: Type.String(),
         code_challenge: Type.Optional(Type.String()),
         props: Type.Optional(Type.Record(Type.String(), Type.String())),

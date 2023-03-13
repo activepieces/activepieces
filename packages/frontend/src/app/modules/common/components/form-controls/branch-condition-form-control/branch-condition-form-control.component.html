@@ -1,0 +1,61 @@
+<div [formGroup]="form" class="ap-flex ap-flex-col ap-gap-2 ap-rounded">
+
+    <div>
+        <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label>{{(showSecondValue())? 'First':''}} Value</mat-label>
+            <app-interpolating-text-form-control #firstValueTextControl [formControl]="form.controls.firstValue"
+                [attr.name]="'firstValue'" (click)="firstValueMentionsDropdown.showMenuSubject$.next(true)"
+                (keyup)="$event.key ==='Escape'? firstValueMentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
+            <mat-error *ngIf="form.controls.firstValue.invalid">
+                First value is required
+            </mat-error>
+        </mat-form-field>
+        <app-builder-autocomplete-mentions-dropdown #firstValueMentionsDropdown width="calc(100% - 2.5rem)"
+            (menuClosed)="firstValueTextControl.focusEditor()" marginTop="-20px"
+            (addMention)="addMention(firstValueTextControl,$event)"></app-builder-autocomplete-mentions-dropdown>
+    </div>
+
+
+
+    <div class="ap-relative" appTrackHover #valueInput="hoverTrackerDirective">
+        <app-icon-button *ngIf="form.enabled && !(isLastAndOnlyCondition && isInLastAndOnlyGroup)" [width]="9"
+            [height]="9" iconFilename="delete.svg"
+            [tooltipText]=" !deleteButton.isHovered && !valueInput.isHovered ?'' :'Remove Condition'"
+            class="delete-btn ap-z-40" [class.opacity-0]="!deleteButton.isHovered  && !valueInput.isHovered"
+            (buttonClicked)="removeConditionButtonClicked()" appTrackHover
+            #deleteButton="hoverTrackerDirective"></app-icon-button>
+
+        <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label> Condition</mat-label>
+            <mat-select [formControl]="form.controls.operator">
+                <mat-option *ngFor="let opt of conditionsDropdownOptions" [value]="opt.value">
+                    {{opt.label}}
+                </mat-option>
+            </mat-select>
+            <mat-error *ngIf="form.controls.operator.invalid">
+                Condition is required
+            </mat-error>
+        </mat-form-field>
+    </div>
+
+    <ng-container *ngIf="showSecondValue()">
+        <div>
+            <mat-form-field class="ap-w-full" appearance="outline">
+                <mat-label>Second Value</mat-label>
+                <app-interpolating-text-form-control #secondValueTextControl [formControl]="form.controls.secondValue"
+                    [attr.name]="'secondValue'" (click)="secondMentionsDropdown.showMenuSubject$.next(true)"
+                    (keyup)="$event.key ==='Escape'? secondMentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
+                <mat-error *ngIf="form.controls.secondValue.invalid">
+                    Second value is required
+                </mat-error>
+            </mat-form-field>
+            <app-builder-autocomplete-mentions-dropdown #secondMentionsDropdown width="calc(100% - 2.5rem)"
+                (menuClosed)="secondValueTextControl.focusEditor()" marginTop="-20px"
+                (addMention)="addMention(secondValueTextControl,$event)"></app-builder-autocomplete-mentions-dropdown>
+        </div>
+
+    </ng-container>
+
+</div>
+<ng-container *ngIf="operatorChanged$| async"></ng-container>
+<ng-container *ngIf="valueChanges$ | async"></ng-container>

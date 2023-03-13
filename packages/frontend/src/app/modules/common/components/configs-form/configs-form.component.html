@@ -253,7 +253,8 @@
           <app-add-edit-connection-button class="edit-selected-auth"
             *ngIf="formGroup.enabled && formGroup.get(config.key)!.value" btnSize="extraSmall"
             [isEditConnectionButton]="true" [config]="config" [pieceName]="pieceName"
-            [selectedConnectionInterpolatedString]="formGroup.get(config.key)!.value">
+            [selectedConnectionInterpolatedString]="formGroup.get(config.key)!.value"
+            [triggerName]="actionOrTriggerName">
             Edit
           </app-add-edit-connection-button>
           <mat-form-field class="ap-w-full" appearance="outline">
@@ -270,6 +271,7 @@
                   <div class="ap-flex-grow">No connections</div>
                   <app-add-edit-connection-button class="edit-selected-auth" btnSize="small" *ngIf="formGroup.enabled"
                     [isEditConnectionButton]="false" [config]="config" [pieceName]="pieceName"
+                    [triggerName]="actionOrTriggerName"
                     (connectionPropertyValueChanged)="connectionValueChanged($event)">
                     + Add
                   </app-add-edit-connection-button>
@@ -281,7 +283,8 @@
             </mat-error>
           </mat-form-field>
           <app-add-edit-connection-button btnSize="medium" *ngIf="formGroup.enabled" [isEditConnectionButton]="false"
-            [config]="config" [pieceName]="pieceName" (connectionPropertyValueChanged)="connectionValueChanged($event)">
+            [config]="config" [pieceName]="pieceName" (connectionPropertyValueChanged)="connectionValueChanged($event)"
+            [triggerName]="actionOrTriggerName">
             + New Connection
           </app-add-edit-connection-button>
         </div>
@@ -337,11 +340,14 @@
         (refreshableConfigsLoadingFlags$[config.key] | async) === undefined || 
         (refreshableConfigsLoadingFlags$[config.key] | async) === null; else loading">
 
-        <div *ngFor="let c of dynamicPropsObservables$[config.key] | async; let i = index">
-          <ng-container
-            *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:c, configIndex:i, formGroup:formGroup.get(config.key)}">
-          </ng-container>
+        <div class="ap-flex ap-flex-col ap-gap-2">
+          <div *ngFor="let c of dynamicPropsObservables$[config.key] | async; let i = index"><ng-container
+              *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:c, configIndex:i, formGroup:formGroup.get(config.key)}">
+            </ng-container></div>
         </div>
+
+
+
 
       </ng-container>
 

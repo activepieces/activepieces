@@ -12,7 +12,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { map, Observable, of, tap } from 'rxjs';
-import { Config } from '@activepieces/shared';
 import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
 import {
   PieceConfig,
@@ -71,7 +70,6 @@ export class PieceTriggerInputFormComponent {
     triggerName: string;
     configs: PieceConfig[];
   }>;
-  updateOrAddConfigModalClosed$: Observable<Config>;
   allAuthConfigs$: Observable<DropdownItem[]>;
 
   onChange: (value) => void = (value) => {
@@ -150,7 +148,9 @@ export class PieceTriggerInputFormComponent {
             label: {
               name: trigger.displayName,
               description: trigger.description,
-              isWebhook: component.triggers[triggerName].type === 'WEBHOOK',
+              isWebhook:
+                component.triggers[triggerName].type === 'WEBHOOK' ||
+                component.triggers[triggerName].type === 'APP_WEBHOOK',
             },
           };
         });

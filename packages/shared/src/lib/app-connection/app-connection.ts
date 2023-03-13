@@ -46,6 +46,7 @@ export interface BaseOAuth2ConnectionValue {
 
 export interface CloudOAuth2ConnectionValue extends BaseOAuth2ConnectionValue {
   type: AppConnectionType.CLOUD_OAUTH2;
+  client_id: string;
   expires_in: number;
   token_type: string;
   access_token: string;

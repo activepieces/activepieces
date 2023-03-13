@@ -179,7 +179,7 @@ export class TestFlowModalComponent implements OnInit {
   executeTest(collection: Collection, flow: Flow, payload: object) {
     return this.flowService
       .execute({
-        collectionVersionId: collection.version!.id,
+        collectionId: collection.id,
         flowVersionId: flow.version!.id,
         payload,
       })

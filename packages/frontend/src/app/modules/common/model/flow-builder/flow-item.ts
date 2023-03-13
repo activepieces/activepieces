@@ -12,6 +12,7 @@ export type FlowItemRenderInfo = {
 };
 
 export type FlowItem = (Action | Trigger) & FlowItemRenderInfo;
+export type ActionFlowItem = Action & FlowItemRenderInfo;
 
 export interface BoundingBox {
   width: number;

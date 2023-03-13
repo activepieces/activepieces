@@ -43,7 +43,7 @@
   <ng-container
     *ngIf="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value && componentForm.get(CONFIGS_FORM_CONTROL_NAME)">
     <div>
-      <app-configs-form [stepName]="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value?.triggerName"
+      <app-configs-form [actionOrTriggerName]="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value?.triggerName"
         [pieceName]="componentName" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
       </app-configs-form>
     </div>
@@ -52,6 +52,5 @@
 
 <ng-container *ngIf="valueChanges$ | async"></ng-container>
 <ng-container *ngIf="triggerDropdownValueChanged$ | async"></ng-container>
-<ng-container *ngIf="updateOrAddConfigModalClosed$ | async"></ng-container>
 <ng-container *ngIf="initialSetup$ | async"> </ng-container>
 <ng-container *ngIf="selectedTrigger$ | async"></ng-container>
