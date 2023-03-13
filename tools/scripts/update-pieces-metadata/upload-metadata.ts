@@ -84,8 +84,8 @@ const uploadPiecesManifest = async (piecesMetadata: PieceMetadata[]) => {
         description: p.description,
         logoUrl: p.logoUrl,
         version: p.version,
-        actions: p.actions.size,
-        triggers: p.triggers.size,
+        actions: Object.keys(p.actions).length,
+        triggers: Object.keys(p.triggers).length,
     }))
 
     const fileName = `pieces/metadata/latest.json`
