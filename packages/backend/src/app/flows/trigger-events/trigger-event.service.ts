@@ -1,8 +1,9 @@
-import { apId, Cursor, FlowVersion, ListenForTriggerEventsRequest, PieceTrigger, ProjectId, SeekPage, Trigger, TriggerEvent , TriggerType} from "@activepieces/shared";
+import { apId, Cursor, FlowId, FlowVersion, ListenForTriggerEventsRequest, PieceTrigger, ProjectId, SeekPage, Trigger, TriggerEvent , TriggerType} from "@activepieces/shared";
 import { databaseConnection } from "../../database/database-connection";
 import { buildPaginator } from "../../helper/pagination/build-paginator";
 import { paginationHelper } from "../../helper/pagination/pagination-utils";
 import { Order } from "../../helper/pagination/paginator";
+import { flowService } from "../flow.service";
 import { TriggerEventEntity } from "./trigger-event.entity";
 
 const triggerEventrepo = databaseConnection.getRepository(TriggerEventEntity);
@@ -22,12 +23,13 @@ export const triggerEventService = {
             break;
         }
     },
-    async saveEvent({projectId, flowVersion, payload}:{projectId: ProjectId, flowVersion: FlowVersion, payload: unknown}): Promise<TriggerEvent> {
-        const sourceName = getSourceName(flowVersion.trigger);
+    async saveEvent({projectId, flowId, payload}:{projectId: ProjectId, flowId: FlowId, payload: unknown}): Promise<TriggerEvent> {
+        const flow = await flowService.getOne({projectId: projectId, id: flowId, versionId: undefined, includeArtifacts: false});
+        const sourceName = getSourceName(flow.version.trigger);
         return triggerEventrepo.save({
             id: apId(),
             projectId,
-            flowId: flowVersion.flowId,
+            flowId: flow.id,
             sourceName,
             payload,
         });  

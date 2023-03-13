@@ -30,13 +30,15 @@ export const webhookService = {
                 },
             });
         }
+        triggerEventService.saveEvent({ flowId: flowId, payload, projectId: flow.projectId });
         const collection = await collectionService.getOneOrThrow({ projectId: flow.projectId, id: flow.collectionId });
-        const instance = await getInstanceOrThrow(flow.projectId, collection.id);
+        const instance = await instanceService.getByCollectionId({ projectId: flow.projectId, collectionId: collection.id });
+        if (instance === null) {
+            return;
+        }
         const flowVersion = await flowVersionService.getOneOrThrow(
             instance.flowIdToVersionId[flow.id]
         );
-        triggerEventService.saveEvent({ flowVersion, payload, projectId: flow.projectId });
-
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId: collection.projectId,
             collectionId: collection.id,
@@ -81,24 +83,6 @@ function extractHostname(url: string): string | null {
         return null;
     }
 }
-
-const getInstanceOrThrow = async (
-    projectId: ProjectId,
-    collectionId: CollectionId
-): Promise<Instance> => {
-    const instance = await instanceService.getByCollectionId({ projectId, collectionId });
-
-    if (instance === null) {
-        throw new ActivepiecesError({
-            code: ErrorCode.INSTANCE_NOT_FOUND,
-            params: {
-                collectionId,
-            },
-        });
-    }
-
-    return instance;
-};
 
 interface CallbackParams {
     flowId: FlowId;
