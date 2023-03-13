@@ -56,6 +56,8 @@ services:
       - redis_data_dev:/data
     networks:
       - activepieces_dev
+    ports:
+      - 6379:6379
 
 volumes:
   postgres_data_dev:
