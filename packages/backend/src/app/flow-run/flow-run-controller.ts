@@ -7,7 +7,7 @@ const DEFAULT_PAGING_LIMIT = 10;
 
 
 interface GetOnePathParams {
-  id: FlowRunId;
+    id: FlowRunId;
 }
 
 export const flowRunController: FastifyPluginCallback = (app, _options, done): void => {
@@ -20,11 +20,11 @@ export const flowRunController: FastifyPluginCallback = (app, _options, done): v
             },
         },
         async (request: FastifyRequest<{ Body: CreateFlowRunRequest }>, reply: FastifyReply) => {
-            const { flowVersionId, collectionVersionId, payload } = request.body;
+            const { flowVersionId, collectionId, payload } = request.body;
             const flowRun = await flowRunService.start({
                 environment: RunEnvironment.TESTING,
                 flowVersionId,
-                collectionVersionId,
+                collectionId,
                 payload,
             });
 

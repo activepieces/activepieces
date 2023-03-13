@@ -13,7 +13,6 @@ import { flowVersionService } from '../flows/flow-version/flow-version.service';
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
 import { triggerUtils } from '../helper/trigger-utils';
 import { instanceService } from '../instance/instance.service';
-import { collectionVersionService } from '../collections/collection-version/collection-version.service';
 import { flowRepo } from '../flows/flow.repo';
 import { system } from '../helper/system/system';
 import { SystemProp } from '../helper/system/system-prop';
@@ -33,16 +32,13 @@ export const webhookService = {
         }
         const collection = await collectionService.getOneOrThrow({ projectId: flow.projectId, id: flow.collectionId });
         const instance = await getInstanceOrThrow(flow.projectId, collection.id);
-        const collectionVersion = await collectionVersionService.getOneOrThrow(
-            instance.collectionVersionId
-        );
         console.log(`payload`, payload);
         const flowVersion = await flowVersionService.getOneOrThrow(
             instance.flowIdToVersionId[flow.id]
         );
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId: collection.projectId,
-            collectionVersion: collectionVersion,
+            collectionId: collection.id,
             flowVersion: flowVersion,
             payload: payload
         });
@@ -50,7 +46,7 @@ export const webhookService = {
         const createFlowRuns = payloads.map((payload) =>
             flowRunService.start({
                 environment: RunEnvironment.PRODUCTION,
-                collectionVersionId: instance.collectionVersionId,
+                collectionId: collection.id,
                 flowVersionId: flowVersion.id,
                 payload,
             })

@@ -1,17 +1,21 @@
 import { EntitySchema } from "typeorm";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
-import { Collection, CollectionVersion, Flow, Project } from "@activepieces/shared";
+import { Collection, Flow, Project } from "@activepieces/shared";
 
 export interface CollectionSchema extends Collection {
   project: Project;
   flows: Flow[];
-  versions: CollectionVersion[];
 }
 
 export const CollectionEntity = new EntitySchema<CollectionSchema>({
     name: "collection",
     columns: {
         ...BaseColumnSchemaPart,
+        displayName: {
+            type: String,
+            // TODO REMOVE IN FUTURE
+            nullable: true
+        },
         projectId: ApIdSchema,
     },
     indices: [
@@ -31,11 +35,6 @@ export const CollectionEntity = new EntitySchema<CollectionSchema>({
                 name: "projectId",
                 foreignKeyConstraintName: "fk_collection_project_id",
             },
-        },
-        versions: {
-            type: "one-to-many",
-            target: "collection_version",
-            inverseSide: "collection",
         },
         flows: {
             type: "one-to-many",

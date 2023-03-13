@@ -73,7 +73,7 @@ export const engineHelper = {
                 edition: await getEdition(),
                 webhookSecret: await getWebhookSecret(operation.flowVersion),
                 workerToken: await workerToken({
-                    collectionId: operation.collectionVersion.collectionId,
+                    collectionId: operation.collectionId,
                     projectId: operation.projectId
                 }),
             });
@@ -102,7 +102,7 @@ export const engineHelper = {
             result = await execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, {
                 ...operation,
                 workerToken: await workerToken({
-                    collectionId: operation.collectionVersion.collectionId,
+                    collectionId: operation.collectionId,
                     projectId: operation.projectId
                 }),
             });

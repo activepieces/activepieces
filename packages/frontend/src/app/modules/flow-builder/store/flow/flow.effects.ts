@@ -31,15 +31,12 @@ import { BuilderActions } from '../builder/builder.action';
 import { TabState } from '../model/tab-state';
 import { RunDetailsService } from '../../page/flow-builder/flow-left-sidebar/run-details/iteration-details.service';
 import {
-  Collection,
-  CollectionVersionState,
   Flow,
   FlowId,
   FlowOperationRequest,
   FlowOperationType,
   TriggerType,
 } from '@activepieces/shared';
-import { CollectionService } from '../../../common/service/collection.service';
 
 @Injectable()
 export class FlowsEffects {
@@ -278,60 +275,49 @@ export class FlowsEffects {
       ofType(...SingleFlowModifyingState),
       concatLatestFrom(() => [
         this.store.select(BuilderSelectors.selectCurrentFlow),
-        this.store.select(BuilderSelectors.selectCurrentCollection),
       ]),
-      concatMap(([action, flow, collection]) => {
-        let collection$: Observable<Collection> = of(collection);
-        if (collection.version!.state === CollectionVersionState.LOCKED) {
-          collection$ = this.collectionService.update(
-            collection.id,
-            collection.version!
-          );
+      concatMap(([action, flow]) => {
+        const genSavedId = UUID.UUID();
+        let flowOperation: FlowOperationRequest;
+        switch (action.type) {
+          case FlowsActionType.UPDATE_TRIGGER:
+            flowOperation = {
+              type: FlowOperationType.UPDATE_TRIGGER,
+              request: action.operation,
+            };
+            break;
+          case FlowsActionType.ADD_ACTION:
+            flowOperation = {
+              type: FlowOperationType.ADD_ACTION,
+              request: action.operation,
+            };
+            break;
+          case FlowsActionType.UPDATE_ACTION:
+            flowOperation = {
+              type: FlowOperationType.UPDATE_ACTION,
+              request: action.operation,
+            };
+            break;
+          case FlowsActionType.DELETE_ACTION:
+            flowOperation = {
+              type: FlowOperationType.DELETE_ACTION,
+              request: action.operation,
+            };
+            break;
+          case FlowsActionType.CHANGE_NAME:
+            flowOperation = {
+              type: FlowOperationType.CHANGE_NAME,
+              request: {
+                displayName: action.displayName,
+              },
+            };
+            break;
         }
-
-        return collection$.pipe(
-          map(() => {
-            const genSavedId = UUID.UUID();
-            let flowOperation: FlowOperationRequest;
-            switch (action.type) {
-              case FlowsActionType.UPDATE_TRIGGER:
-                flowOperation = {
-                  type: FlowOperationType.UPDATE_TRIGGER,
-                  request: action.operation,
-                };
-                break;
-              case FlowsActionType.ADD_ACTION:
-                flowOperation = {
-                  type: FlowOperationType.ADD_ACTION,
-                  request: action.operation,
-                };
-                break;
-              case FlowsActionType.UPDATE_ACTION:
-                flowOperation = {
-                  type: FlowOperationType.UPDATE_ACTION,
-                  request: action.operation,
-                };
-                break;
-              case FlowsActionType.DELETE_ACTION:
-                flowOperation = {
-                  type: FlowOperationType.DELETE_ACTION,
-                  request: action.operation,
-                };
-                break;
-              case FlowsActionType.CHANGE_NAME:
-                flowOperation = {
-                  type: FlowOperationType.CHANGE_NAME,
-                  request: {
-                    displayName: action.displayName,
-                  },
-                };
-                break;
-            }
-            return FlowsActions.applyUpdateOperation({
-              flow: flow!,
-              operation: flowOperation,
-              saveRequestId: genSavedId,
-            });
+        return of(
+          FlowsActions.applyUpdateOperation({
+            flow: flow!,
+            operation: flowOperation,
+            saveRequestId: genSavedId,
           })
         );
       })
@@ -415,7 +401,6 @@ export class FlowsEffects {
     private store: Store,
     private actions$: Actions,
     private snackBar: MatSnackBar,
-    private collectionService: CollectionService,
     private runDetailsService: RunDetailsService
   ) {}
 }

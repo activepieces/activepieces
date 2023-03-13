@@ -2,7 +2,6 @@ import { TlsOptions } from "node:tls";
 import { DataSource } from "typeorm";
 import { UserEntity } from "../user/user-entity";
 import { ProjectEntity } from "../project/project.entity";
-import { CollectionVersionEntity } from "../collections/collection-version/collection-version-entity";
 import { CollectionEntity } from "../collections/collection.entity";
 import { FlowEntity } from "../flows/flow.entity";
 import { FlowVersionEntity } from "../flows/flow-version/flow-version-entity";
@@ -26,6 +25,7 @@ import { AppEventRoutingEntity } from "../app-event-routing/app-event-routing.en
 import { productEmbed1677894800372 } from "./migration/1677894800372-product-embed";
 import { AppCredentialEntity } from "@ee/product-embed/backend/app-credentials/app-credentials.entity";
 import { ConnectionKeyEntity } from "@ee/product-embed/backend/connection-keys/connection-key.entity";
+import { removeCollectionVersion1678492809093 } from "./migration/1678492809093-removeCollectionVersion";
 import { addEventRouting1678382946390 } from "./migration/1678382946390-add-event-routing";
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
@@ -56,6 +56,7 @@ const getMigrations = () => {
         billing1677286751592,
         addVersionToPieceSteps1677521257188,
         productEmbed1677894800372,
+        removeCollectionVersion1678492809093,
         addEventRouting1678382946390
     ];
 }
@@ -78,7 +79,6 @@ export const databaseConnection = new DataSource({
         AppCredentialEntity,
         ConnectionKeyEntity,
         CollectionEntity,
-        CollectionVersionEntity,
         FileEntity,
         FlagEntity,
         FlowEntity,

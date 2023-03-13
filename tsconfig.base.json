@@ -85,6 +85,7 @@
         "packages/pieces/telegram-bot/src/index.ts"
       ],
       "@activepieces/piece-todoist": ["packages/pieces/todoist/src/index.ts"],
+      "@activepieces/piece-trello": ["packages/pieces/trello/src/index.ts"],
       "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
       "@activepieces/piece-wordpress": [
