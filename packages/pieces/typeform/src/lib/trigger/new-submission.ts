@@ -1,6 +1,7 @@
 import { typeformCommon, formsDropdown } from '../common';
 import { nanoid } from 'nanoid'
-import { createTrigger, TriggerStrategy, getAccessTokenOrThrow } from '@activepieces/framework';
+import { createTrigger, getAccessTokenOrThrow } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/shared';
 
 export const typeformNewSubmission = createTrigger({
     name: 'new_submission',

@@ -84,7 +84,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
             })
           );
 
-          this.titleService.setTitle(`AP-${collection.version?.displayName}`);
+          this.titleService.setTitle(`AP-${collection.displayName}`);
           this.snackbar.openFromComponent(TestRunBarComponent, {
             duration: undefined,
           });
@@ -92,7 +92,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
           const collection: Collection = value['collection'];
           const flows = value['flows'];
           const instance: Instance | undefined = value['instance'];
-          this.titleService.setTitle(`AP-${collection.version?.displayName}`);
+          this.titleService.setTitle(`AP-${collection.displayName}`);
           this.store.dispatch(
             BuilderActions.loadInitial({
               collection: collection,

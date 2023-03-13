@@ -6,7 +6,6 @@ import { triggerUtils } from "../../helper/trigger-utils";
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from "./flow-queue";
 import { flowWorker } from "./flow-worker";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
-import { collectionVersionService } from "../../collections/collection-version/collection-version.service";
 import { logger } from "../../helper/logger";
 import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";
@@ -66,16 +65,15 @@ const consumeScheduleTrigger = async (data: RepeatableJobData): Promise<void> =>
     await flowRunService.start({
         environment: data.environment,
         flowVersionId: data.flowVersion.id,
-        collectionVersionId: data.collectionVersionId,
+        collectionId: data.collectionId,
         payload: null,
     });
 };
 
 const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
-    const collectionVersion = await collectionVersionService.getOneOrThrow(data.collectionVersionId);
     const payloads: unknown[] = await triggerUtils.executeTrigger({
-        collectionVersion: collectionVersion,
         projectId: data.projectId,
+        collectionId: data.collectionId,
         flowVersion: data.flowVersion,
         payload: null,
     });
@@ -85,7 +83,7 @@ const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
     const createFlowRuns = payloads.map((payload) =>
         flowRunService.start({
             environment: RunEnvironment.PRODUCTION,
-            collectionVersionId: data.collectionVersionId,
+            collectionId: data.collectionId,
             flowVersionId: data.flowVersion.id,
             payload,
         })

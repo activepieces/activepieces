@@ -2,7 +2,6 @@ export * from "./lib/flows/actions/action";
 export * from "./lib/app-connection/app-connection";
 export * from "./lib/app-connection/dto/read-app-connection-request";
 export * from "./lib/app-connection/dto/upsert-app-connection-request";
-export * from "./lib/collections/config";
 export * from "./lib/common/activepieces-error";
 export * from "./lib/common/telemetry";
 export * from "./lib/engine/engine-operation";
@@ -11,7 +10,6 @@ export * from "./lib/flow-run/dto/list-flow-runs-request";
 export * from "./lib/flow-run/execution/execution-output";
 export * from "./lib/flow-run/execution/step-output";
 export * from "./lib/flows/flow-operations";
-export * from "./lib/collections/config";
 export * from './lib/instance';
 export * from "./lib/app-connection/app-connection";
 export * from "./lib/app-connection/dto/upsert-app-connection-request";
@@ -37,9 +35,8 @@ export {
 export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry';
 export { User, UserStatus, UserId } from './lib/user/user';
 export { CreateFlowRunRequest } from './lib/flow-run/create-flow-run-request';
-export { Trigger, EmptyTrigger, PieceTriggerSettings, ScheduleTriggerSettings, PieceTrigger, ScheduleTrigger, WebhookTrigger, TriggerType } from './lib/flows/triggers/trigger';
+export { TriggerStrategy, Trigger, EmptyTrigger, PieceTriggerSettings, ScheduleTriggerSettings, PieceTrigger, ScheduleTrigger, WebhookTrigger, TriggerType } from './lib/flows/triggers/trigger';
 export { Collection, CollectionId } from './lib/collections/collection';
-export { CollectionVersion, CollectionVersionState, CollectionVersionId } from './lib/collections/collection-version';
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version';
 export { Flow, FlowId } from './lib/flows/flow';
 export { File, FileId } from './lib/file/file'

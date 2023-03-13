@@ -33,10 +33,6 @@
   <div
     class="ap-flex ap-justify-center  ap-items-center ap-gap-2 ap-border-solid ap-border-b-[1px] ap-border-line ap-p-2 ap-self-center">
 
-    <app-button [hidden]="!(isFlowSelected$ | async | defaultFalse)" (buttonClicked)="configsClicked()" btnStyle="basic"
-      btnColor="basic" btnSize="medium">
-      Configs
-    </app-button>
     <app-test-flow-modal [hidden]="
         !(isFlowSelected$ | async | defaultFalse) ||
         (viewMode$ | async) === viewMode.VIEW_INSTANCE_RUN

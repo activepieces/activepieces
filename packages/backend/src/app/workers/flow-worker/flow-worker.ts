@@ -1,20 +1,17 @@
 import fs from "node:fs/promises";
 import {
-    Action,
     ActionType,
     CodeActionSettings,
-    CollectionVersion,
     ExecutionOutputStatus,
     File,
     flowHelper,
     FlowVersion,
     ProjectId,
     StepOutputStatus,
-    Trigger,
+    TriggerType,
 } from "@activepieces/shared";
 import { Sandbox, sandboxManager } from "../sandbox";
 import { flowVersionService } from "../../flows/flow-version/flow-version.service";
-import { collectionVersionService } from "../../collections/collection-version/collection-version.service";
 import { fileService } from "../../file/file.service";
 import { codeBuilder } from "../code-worker/code-builder";
 import { flowRunService } from "../../flow-run/flow-run-service";
@@ -23,20 +20,41 @@ import { collectionService } from "../../collections/collection.service";
 import { engineHelper } from "../../helper/engine-helper";
 import { createRedisLock } from "../../database/redis-connection";
 import { captureException, logger } from "../../helper/logger";
+import { packageManager, PackageManagerDependencies } from "../../helper/package-manager";
+
+const extractPieceDependencies = (flowVersion: FlowVersion): PackageManagerDependencies => {
+    const pieceDependencies: PackageManagerDependencies = {};
+    const flowSteps = flowHelper.getAllSteps(flowVersion);
+
+    for (const step of flowSteps) {
+        if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
+            const packageName = `@activepieces/piece-${step.settings.pieceName}`;
+            const packageVersion = step.settings.pieceVersion;
+            pieceDependencies[packageName] = packageVersion;
+        }
+    }
+
+    return pieceDependencies;
+}
+
+const installPieceDependencies = async (sandbox: Sandbox, flowVersion: FlowVersion): Promise<void> => {
+    const pieceDependencies = extractPieceDependencies(flowVersion);
+    await packageManager.addDependencies(sandbox.getSandboxFolderPath(), pieceDependencies);
+};
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId);
-    const collectionVersion = await collectionVersionService.getOneOrThrow(jobData.collectionVersionId);
-    const collection = await collectionService.getOneOrThrow({ projectId: jobData.projectId, id: collectionVersion.collectionId });
+    const collection = await collectionService.getOneOrThrow({ projectId: jobData.projectId, id: jobData.collectionId });
 
     const sandbox = sandboxManager.obtainSandbox();
     logger.info(`[${jobData.runId}] Executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`);
     try {
         await sandbox.cleanAndInit();
-        await downloadFiles(sandbox, jobData.projectId, flowVersion, collectionVersion);
+        await downloadFiles(sandbox, jobData.projectId, flowVersion);
+        await installPieceDependencies(sandbox, flowVersion);
+
         const executionOutput = await engineHelper.executeFlow(sandbox, {
             flowVersionId: flowVersion.id,
-            collectionVersionId: collectionVersion.id,
             collectionId: collection.id,
             projectId: collection.projectId,
             triggerPayload: {
@@ -51,11 +69,11 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id);
     }
     catch (e: unknown) {
+        logger.error(e, `[${jobData.runId}] Error executing flow`);
         if (sandbox.timedOut()) {
             await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null);
         }
         else {
-            logger.error("[" + jobData.runId + "] Error executing flow");
             captureException(e as Error);
             await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null);
         }
@@ -69,8 +87,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
 async function downloadFiles(
     sandbox: Sandbox,
     projectId: ProjectId,
-    flowVersion: FlowVersion,
-    collectionVersion: CollectionVersion,
+    flowVersion: FlowVersion
 ): Promise<void> {
     const flowLock = await createRedisLock();
     try {
@@ -80,18 +97,16 @@ async function downloadFiles(
         const buildPath = sandbox.getSandboxFolderPath();
 
         // This has to be before flows, since it does modify code settings and fill it with packaged file id.
-        await fs.mkdir(buildPath + "/codes/");
+        await fs.mkdir(`${buildPath}/codes/`);
         const artifacts: File[] = await buildCodes(projectId, flowVersion);
 
-        for(const artifact of artifacts) {
-            await fs.writeFile(buildPath + "/codes/" + artifact.id + ".js", artifact.data);
+        for (const artifact of artifacts) {
+            await fs.writeFile(`${buildPath}/codes/${artifact.id}.js`, artifact.data);
         }
-        
-        await fs.mkdir(buildPath + "/flows/");
-        await fs.writeFile(buildPath + "/flows/" + flowVersion.id + ".json", JSON.stringify(flowVersion));
 
-        await fs.mkdir(buildPath + "/collections/");
-        await fs.writeFile(buildPath + "/collections/" + collectionVersion.id + ".json", JSON.stringify(collectionVersion));
+        await fs.mkdir(`${buildPath}/flows/`);
+        await fs.writeFile(`${buildPath}/flows/${flowVersion.id}.json`, JSON.stringify(flowVersion));
+
     }
     finally {
         logger.info(`[${flowVersion.id}] Releasing flow lock`);

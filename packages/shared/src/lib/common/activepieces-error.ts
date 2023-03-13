@@ -1,6 +1,5 @@
 import { AppConnectionId } from "../app-connection/app-connection";
 import { CollectionId } from "../collections/collection";
-import { CollectionVersionId } from "../collections/collection-version";
 import { FileId } from "../file/file";
 import { FlowRunId } from "../flow-run/flow-run";
 import { FlowId } from "../flows/flow";
@@ -16,7 +15,6 @@ export class ActivepiecesError extends Error {
 
 type ErrorParams =
   | CollectionNotFoundErrorParams
-  | CollectionVersionNotFoundErrorParams
   | ConfigNotFoundErrorParams
   | ExistingUserErrorParams
   | FileNotFoundErrorParams
@@ -77,13 +75,6 @@ export type CollectionNotFoundErrorParams = BaseErrorParams<
   ErrorCode.COLLECTION_NOT_FOUND,
   {
     id: CollectionId;
-  }
->
-
-export type CollectionVersionNotFoundErrorParams = BaseErrorParams<
-  ErrorCode.COLLECTION_VERSION_NOT_FOUND,
-  {
-    id: CollectionVersionId;
   }
 >
 

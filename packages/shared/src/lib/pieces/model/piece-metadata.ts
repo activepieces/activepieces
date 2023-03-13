@@ -1,3 +1,5 @@
+import { TriggerStrategy } from "../../flows/triggers/trigger";
+
 export type PieceBase = {
   name: string;
   displayName: string;
@@ -12,7 +14,9 @@ export type ActionBase = {
   description: string,
 }
 
-export type TriggerBase = ActionBase;
+export type TriggerBase = ActionBase & {
+  type: TriggerStrategy;
+};
 
 export type PieceMetadata = PieceBase & {
   actions: Record<string, ActionBase>;

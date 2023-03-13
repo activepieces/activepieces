@@ -1,0 +1,27 @@
+{
+  "name": "pieces-trello",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/trello/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/trello",
+        "tsConfig": "packages/pieces/trello/tsconfig.lib.json",
+        "packageJson": "packages/pieces/trello/package.json",
+        "main": "packages/pieces/trello/src/index.ts",
+        "assets": ["packages/pieces/trello/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/trello/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

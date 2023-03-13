@@ -1,24 +1,19 @@
-import { TriggerBase } from '@activepieces/shared';
+import { TriggerBase, TriggerStrategy } from '@activepieces/shared';
 import { TriggerContext, TriggerHookContext } from '../context';
 import { PieceProperty, StaticPropsValue } from '../property/property';
 
-export enum TriggerStrategy {
-  POLLING = 'POLLING',
-  WEBHOOK = 'WEBHOOK',
-}
-
-class ITrigger<T extends PieceProperty> implements TriggerBase {
+class ITrigger<T extends PieceProperty, S extends TriggerStrategy> implements TriggerBase {
   constructor(
     public readonly name: string,
     public readonly displayName: string,
     public readonly description: string,
     public readonly props: T,
-    public readonly type: TriggerStrategy,
+    public readonly type: S,
     public readonly onEnable: (
-      ctx: TriggerHookContext<StaticPropsValue<T>>
+      ctx: TriggerHookContext<StaticPropsValue<T>, S>
     ) => Promise<void>,
     public readonly onDisable: (
-      ctx: TriggerHookContext<StaticPropsValue<T>>
+      ctx: TriggerHookContext<StaticPropsValue<T>, S>
     ) => Promise<void>,
     public readonly run: (
       ctx: TriggerContext<StaticPropsValue<T>>
@@ -30,21 +25,21 @@ class ITrigger<T extends PieceProperty> implements TriggerBase {
   ) { }
 }
 
-export type Trigger = ITrigger<any>;
+export type Trigger = ITrigger<any, TriggerStrategy>;
 
-export function createTrigger<T extends PieceProperty>(request: {
+export function createTrigger<T extends PieceProperty, S extends TriggerStrategy>(request: {
   name: string;
   displayName: string;
   description: string;
   props: T;
-  type: TriggerStrategy;
-  onEnable: (context: TriggerHookContext<StaticPropsValue<T>>) => Promise<void>;
-  onDisable: (context: TriggerHookContext<StaticPropsValue<T>>) => Promise<void>;
+  type: S;
+  onEnable: (context: TriggerHookContext<StaticPropsValue<T>, S>) => Promise<void>;
+  onDisable: (context: TriggerHookContext<StaticPropsValue<T>, S>) => Promise<void>;
   run: (context: TriggerContext<StaticPropsValue<T>>) => Promise<unknown[]>;
   test?: (context: TriggerContext<StaticPropsValue<T>>) => Promise<unknown>;
   sampleData: unknown | ((context: TriggerContext<StaticPropsValue<T>>) => Promise<unknown>);
 }): Trigger {
-  return new ITrigger<T>(
+  return new ITrigger<T, S>(
     request.name,
     request.displayName,
     request.description,

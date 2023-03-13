@@ -1,9 +1,8 @@
 import { EntitySchema} from "typeorm";
-import { Collection, CollectionVersion, Instance } from "@activepieces/shared";
+import { Collection, Instance } from "@activepieces/shared";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 export interface InstanceSchema extends Instance {
   collection: Collection;
-  collectionVersion: CollectionVersion;
 }
 
 export const InstanceEntity = new EntitySchema<InstanceSchema>({
@@ -12,7 +11,6 @@ export const InstanceEntity = new EntitySchema<InstanceSchema>({
         ...BaseColumnSchemaPart,
         projectId: ApIdSchema,
         collectionId: ApIdSchema,
-        collectionVersionId: ApIdSchema,
         flowIdToVersionId: {
             type: "jsonb",
         },
@@ -33,17 +31,6 @@ export const InstanceEntity = new EntitySchema<InstanceSchema>({
         },
     ],
     relations: {
-        collectionVersion: {
-            type: "one-to-one",
-            target: "collection_version",
-            cascade: true,
-            onDelete: "CASCADE",
-            joinColumn: {
-                name: "collectionVersionId",
-                referencedColumnName: "id",
-                foreignKeyConstraintName: "fk_instance_collection_version",
-            },
-        },
         collection: {
             type: "one-to-one",
             target: "collection",
