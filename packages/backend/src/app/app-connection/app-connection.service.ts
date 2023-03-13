@@ -39,10 +39,12 @@ export const appConnectionService = {
         }
         const claimedUpsertRequest = { ...request, value: { ...response, ...request.value }, id: apId(), projectId };
         await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId, value: encryptObject(claimedUpsertRequest.value) }, ["name", "projectId"]);
-        return appConnectionRepo.findOneByOrFail({
+        const connection = await appConnectionRepo.findOneByOrFail({
             projectId: projectId,
             name: request.name
         })
+        connection.value = decryptObject(connection.value);
+        return connection;
     },
     async getOne({ projectId, name }: { projectId: ProjectId, name: string }): Promise<AppConnection | null> {
         const appConnection = await appConnectionRepo.findOneBy({

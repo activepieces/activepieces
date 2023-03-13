@@ -16,10 +16,14 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-        Body: UpsertConnectionRequest;
-      }>
+                Body: UpsertConnectionRequest;
+            }>
         ) => {
-            return await appConnectionService.upsert({projectId: request.principal.projectId, request: request.body});
+            const connection = await appConnectionService.upsert({ projectId: request.principal.projectId, request: request.body });
+            // Remove sensitive data from response
+            delete connection.value['client_secret'];
+            delete connection.value['refresh_token'];
+            return connection;
         }
     );
 
@@ -28,12 +32,12 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
         "/:connectionName",
         async (
             request: FastifyRequest<{
-        Params: {
-          connectionName: string;
-        };
-      }>
+                Params: {
+                    connectionName: string;
+                };
+            }>
         ) => {
-            const appCredential = await appConnectionService.getOne({projectId: request.principal.projectId, name: request.params.connectionName});
+            const appCredential = await appConnectionService.getOne({ projectId: request.principal.projectId, name: request.params.connectionName });
             if (appCredential === null) {
                 throw new ActivepiecesError({
                     code: ErrorCode.APP_CONNECTION_NOT_FOUND,
@@ -56,8 +60,8 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-        Querystring: ListAppConnectionRequest;
-      }>
+                Querystring: ListAppConnectionRequest;
+            }>
         ) => {
             const query = request.query;
             return await appConnectionService.list(request.principal.projectId,
@@ -70,10 +74,10 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
         "/:connectionId",
         async (
             request: FastifyRequest<{
-        Params: {
-          connectionId: AppConnectionId;
-        };
-      }>,
+                Params: {
+                    connectionId: AppConnectionId;
+                };
+            }>,
             _reply
         ) => {
             await appConnectionService.delete({ id: request.params.connectionId, projectId: request.principal.projectId });
