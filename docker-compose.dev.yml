@@ -1,4 +1,4 @@
-version: '3.0'
+version: '3'
 
 services:
   backend:
@@ -9,44 +9,44 @@ services:
       AP_REDIS_HOST: redis
     privileged: true
     ports:
-     - "3000:3000"
-     - "9229:9229"
+      - 3000:3000
+      - 9229:9229
     networks:
       - activepieces_dev
     volumes:
-     - ./:/usr/src/app
+      - ./:/usr/src/app
     working_dir: /usr/src/app
     entrypoint:
-     - npx
-     - nx
-     - serve
-     - backend
+      - npx
+      - nx
+      - serve
+      - backend
     depends_on:
-     - postgres
-     - redis
+      - postgres
+      - redis
 
   frontend:
     image: activepieces/ap-base:3
     ports:
-     - "4200:4200"
-     - "9222:9222"
+      - 4200:4200
+      - 9222:9222
     networks:
       - activepieces_dev
     volumes:
-     - ./:/usr/src/app
+      - ./:/usr/src/app
     working_dir: /usr/src/app
     entrypoint:
-     - npx
-     - nx
-     - serve
-     - frontend
+      - npx
+      - nx
+      - serve
+      - frontend
     depends_on:
-     - backend
+      - backend
 
   postgres:
     image: postgres:14.4
     ports:
-     - "5432:5432"
+      - 5432:5432
     environment:
       POSTGRES_DB: activepieces
       POSTGRES_USER: postgres
