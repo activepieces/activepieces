@@ -2,9 +2,11 @@ name: Release Pieces
 
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     branches:
       - main
+    paths:
+      - 'packages/pieces/**'
 
 jobs:
   Release-Pieces:
