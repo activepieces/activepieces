@@ -165,12 +165,15 @@ export class PieceActionInputFormComponent
         return actionsKeys.map((actionName) => {
           const action = pieceMetadata.actions[actionName];
 
-          const configs = Object.entries(action.props).map((keyEntry) => {
-            return propsConvertor.convertToFrontEndConfig(
-              keyEntry[0],
-              keyEntry[1] as PieceProperty
-            );
-          });
+          const configs = Object.entries(action.props).map(
+            ([propName, prop]) => {
+              return propsConvertor.convertToFrontEndConfig(
+                propName,
+                prop as PieceProperty
+              );
+            }
+          );
+
           return {
             value: {
               actionName: actionName,

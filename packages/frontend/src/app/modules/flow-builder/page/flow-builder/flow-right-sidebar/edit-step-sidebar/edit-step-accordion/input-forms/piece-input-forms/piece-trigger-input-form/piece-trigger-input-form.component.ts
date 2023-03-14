@@ -132,12 +132,16 @@ export class PieceTriggerInputFormComponent {
         const triggersKeys = Object.keys(component.triggers);
         return triggersKeys.map((triggerName) => {
           const trigger = component.triggers[triggerName];
-          const configs = Object.entries(trigger.props).map((keyEntry) => {
-            return propsConvertor.convertToFrontEndConfig(
-              keyEntry[0],
-              keyEntry[1] as PieceProperty
-            );
-          });
+
+          const configs = Object.entries(trigger.props).map(
+            ([propName, prop]) => {
+              return propsConvertor.convertToFrontEndConfig(
+                propName,
+                prop as PieceProperty
+              );
+            }
+          );
+
           return {
             value: {
               triggerName: triggerName,
