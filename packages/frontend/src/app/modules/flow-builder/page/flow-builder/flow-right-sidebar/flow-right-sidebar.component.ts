@@ -13,8 +13,8 @@ import { FormControl } from '@angular/forms';
 import { BuilderSelectors } from '../../../store/builder/builder.selector';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { FlowItem } from '../../../../common/model/flow-builder/flow-item';
-import { ActionType } from '@activepieces/shared';
-import { TestStepService } from './edit-step-sidebar/test-step/test-step.service';
+import { ActionType, TriggerType } from '@activepieces/shared';
+import { TestStepService } from '../../../service/test-step.service';
 
 @Component({
   selector: 'app-flow-right-sidebar',
@@ -23,6 +23,7 @@ import { TestStepService } from './edit-step-sidebar/test-step/test-step.service
 })
 export class FlowRightSidebarComponent implements OnInit {
   ActionType = ActionType;
+  TriggerType = TriggerType;
   rightSidebarType$: Observable<RightSideBarType>;
   testFormControl: FormControl<string> = new FormControl('', {
     nonNullable: true,
@@ -34,7 +35,7 @@ export class FlowRightSidebarComponent implements OnInit {
   @ViewChild('selectedStepResultContainer', { read: ElementRef })
   selectedStepResultContainer: ElementRef;
   elevateResizer$: Observable<void>;
-  animateSectionsHeightChange = true;
+  animateSectionsHeightChange = false;
   constructor(
     private store: Store,
     private ngZone: NgZone,
