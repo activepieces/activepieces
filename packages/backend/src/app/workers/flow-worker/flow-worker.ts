@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import {
     ActionType,
+    ApEnvironment,
     CodeActionSettings,
     ExecutionOutputStatus,
     File,
@@ -21,10 +22,17 @@ import { engineHelper } from "../../helper/engine-helper";
 import { createRedisLock } from "../../database/redis-connection";
 import { captureException, logger } from "../../helper/logger";
 import { packageManager, PackageManagerDependencies } from "../../helper/package-manager";
+import { SystemProp } from "../../helper/system/system-prop";
+import { system } from "../../helper/system/system";
 
 const extractPieceDependencies = (flowVersion: FlowVersion): PackageManagerDependencies => {
     const pieceDependencies: PackageManagerDependencies = {};
     const flowSteps = flowHelper.getAllSteps(flowVersion);
+
+    const environment = system.get(SystemProp.ENVIRONMENT);
+    if (environment === ApEnvironment.DEVELOPMENT) {
+        return {};
+    }
 
     for (const step of flowSteps) {
         if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
