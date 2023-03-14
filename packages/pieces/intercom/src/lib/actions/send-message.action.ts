@@ -2,14 +2,14 @@ import { AuthenticationType, createAction, DynamicPropsValue, getAccessTokenOrTh
 import { intercomCommon } from "../common";
 
 enum MessageType {
-    EMAIL="email",
-    IN_APP="in_app"
+    EMAIL = "email",
+    IN_APP = "in_app"
 }
 export const sendMessage = createAction({
-    description:"Send a message to a contact (only allowed by admins)",
-    displayName:"Send Message",
-    name:"send_message_intercom",
-    sampleData:{
+    description: "Send a message to a contact (only allowed by admins)",
+    displayName: "Send Message",
+    name: "send_message",
+    sampleData: {
         "type": "admin_message",
         "id": "98257967",
         "created_at": 1678635731,
@@ -18,178 +18,171 @@ export const sendMessage = createAction({
         "message_type": "email",
         "template": "personal",
         "owner": {
-          "type": "admin",
-          "id": "6439686",
-          "name": "Jon Doe",
-          "email": "John@Doe.com",
-          "away_mode_enabled": false,
-          "away_mode_reassign": false
+            "type": "admin",
+            "id": "6439686",
+            "name": "Jon Doe",
+            "email": "John@Doe.com",
+            "away_mode_enabled": false,
+            "away_mode_reassign": false
         }
-      },
-    props:{
+    },
+    props: {
         connection: intercomCommon.connection,
         message_type: Property.StaticDropdown(
             {
-                displayName:"Message Type",
-                options:{
-                    options:[{value:MessageType.EMAIL,label:"Email"}, {value:MessageType.IN_APP,label:"In App Chat"}]
+                displayName: "Message Type",
+                options: {
+                    options: [{ value: MessageType.EMAIL, label: "Email" }, { value: MessageType.IN_APP, label: "In App Chat" }]
                 },
-                required:true,
-                defaultValue:MessageType.EMAIL
+                required: true,
+                defaultValue: MessageType.EMAIL
             }),
-            emailRequiredFields:Property.DynamicProperties({
-            displayName:"Email Required Fields",
-            required:true,
-            refreshers:['message_type'],
-            props:async ({message_type})=>{
+        email_required_fields: Property.DynamicProperties({
+            displayName: "Email Required Fields",
+            required: true,
+            refreshers: ['message_type'],
+            props: async ({ message_type }) => {
                 let fields: DynamicPropsValue = {};
-                if((message_type as unknown as MessageType )=== MessageType.EMAIL || !message_type)
-                {
-                    fields= {
-                        subject:Property.ShortText({
-                            displayName:"Subject",
-                            required:true,
-                            description:"Email title"
+                if ((message_type as unknown as MessageType) === MessageType.EMAIL || !message_type) {
+                    fields = {
+                        subject: Property.ShortText({
+                            displayName: "Subject",
+                            required: true,
+                            description: "Email title"
                         }),
-                        template:Property.StaticDropdown({
-                            displayName:"Template",
-                            options:{
-                                options:[{label:"Personal",value:"personal"},{label:"Plain", value:"plain"}]
+                        template: Property.StaticDropdown({
+                            displayName: "Template",
+                            options: {
+                                options: [{ label: "Personal", value: "personal" }, { label: "Plain", value: "plain" }]
                             },
-                            required:true,
-                            defaultValue:"personal",
-                            description:"Style of the email"
+                            required: true,
+                            defaultValue: "personal",
+                            description: "Style of the email"
                         })
                     }
                 }
                 return fields;
             },
-            }),
-            from:Property.Dropdown({
-                displayName:"From (Admin)",
-                options:async(propsValues)=>{
-                   if(!propsValues['connection'])
-                   {
-                       return {
-                           options:[],
-                           disabled:true,
-                           placeholder:"Please connect your account first"
-                       }
-                   }
-                   const accessToken = getAccessTokenOrThrow(propsValues['connection'] as OAuth2PropertyValue);
-                   const request = httpClient.sendRequest<{admins: {id:string, email:string, name:string}[]}>({
-                       method:HttpMethod.GET,
-                       url:`https://api.intercom.io/admins`,
-                       headers:intercomCommon.intercomHeaders,
-                       authentication:{
-                           type:AuthenticationType.BEARER_TOKEN,
-                           token:accessToken
-                       }
-                   });
-                   const response  = (await request).body;
-   
-                   return {
-                       options:response.admins.map(c =>{
-                           const res= {value:c.id, label:''}
-                           if(c.name)
-                           {
-                               res.label=c.name;
-                           }
-                           else if(c.email)
-                           {
-                               res.label=c.email;
-                           }
-                           else
-                           {
-                               res.label= c.id;
-                           }
-                           return res;
-                       })
-                   }
-                },
-                refreshers:["connection"],
-                required:true
-               }),
-            to:Property.Dropdown({
-             displayName:"To",
-             options:async(propsValues)=>{
-                if(!propsValues['connection'])
-                {
+        }),
+        from: Property.Dropdown({
+            displayName: "From (Admin)",
+            options: async (propsValues) => {
+                if (!propsValues['connection']) {
                     return {
-                        options:[],
-                        disabled:true,
-                        placeholder:"Please connect your account first"
+                        options: [],
+                        disabled: true,
+                        placeholder: "Please connect your account first"
                     }
                 }
                 const accessToken = getAccessTokenOrThrow(propsValues['connection'] as OAuth2PropertyValue);
-                const request = httpClient.sendRequest<{data: {id:string, email:string, name:string}[]}>({
-                    method:HttpMethod.GET,
-                    url:`https://api.intercom.io/contacts`,
-                    headers:intercomCommon.intercomHeaders,
-                    authentication:{
-                        type:AuthenticationType.BEARER_TOKEN,
-                        token:accessToken
+                const request = httpClient.sendRequest<{ admins: { id: string, email: string, name: string }[] }>({
+                    method: HttpMethod.GET,
+                    url: `https://api.intercom.io/admins`,
+                    headers: intercomCommon.intercomHeaders,
+                    authentication: {
+                        type: AuthenticationType.BEARER_TOKEN,
+                        token: accessToken
                     }
                 });
-                const response  = (await request).body;
+                const response = (await request).body;
 
                 return {
-                    options:response.data.map(c =>{
-                        const res= {value:c.id, label:''}
-                        if(c.name)
-                        {
-                            res.label=c.name;
+                    options: response.admins.map(c => {
+                        const res = { value: c.id, label: '' }
+                        if (c.name) {
+                            res.label = c.name;
                         }
-                        else if(c.email)
-                        {
-                            res.label=c.email;
+                        else if (c.email) {
+                            res.label = c.email;
                         }
-                        else
-                        {
-                            res.label= c.id;
+                        else {
+                            res.label = c.id;
                         }
                         return res;
                     })
                 }
-             },
-             refreshers:["connection"],
-             required:true
-            }),
-            body:Property.ShortText({
-                displayName:"Message Body",
-                required:true,
-            }),
-            create_conversation_without_contact_reply:Property.Checkbox({
-                displayName:"Create Conversation Without Contact Reply",
-                description:"Whether a conversation should be opened in the inbox for the message without the contact replying. Defaults to false if not provided.",
-                required:false,
-                defaultValue:false
-            })
-        
-    },
-    run:async(context)=>{
-        const accessToken = context.propsValue.connection.access_token;
-        const user = await intercomCommon.getContact({userId:context.propsValue.to,token:accessToken});
-        const response = await httpClient.sendRequest({
-            method:HttpMethod.POST,
-            url:'https://api.intercom.io/messages',
-            authentication:{
-                type:AuthenticationType.BEARER_TOKEN,
-                token:accessToken
             },
-            headers:intercomCommon.intercomHeaders,
-            body:{
-                message_type:context.propsValue.message_type,
-                from:{
-                    id:context.propsValue.from,
-                    role:"admin"
+            refreshers: ["connection"],
+            required: true
+        }),
+        to: Property.Dropdown({
+            displayName: "To",
+            options: async (propsValues) => {
+                if (!propsValues['connection']) {
+                    return {
+                        options: [],
+                        disabled: true,
+                        placeholder: "Please connect your account first"
+                    }
+                }
+                const accessToken = getAccessTokenOrThrow(propsValues['connection'] as OAuth2PropertyValue);
+                const request = httpClient.sendRequest<{ data: { id: string, email: string, name: string }[] }>({
+                    method: HttpMethod.GET,
+                    url: `https://api.intercom.io/contacts`,
+                    headers: intercomCommon.intercomHeaders,
+                    authentication: {
+                        type: AuthenticationType.BEARER_TOKEN,
+                        token: accessToken
+                    }
+                });
+                const response = (await request).body;
+
+                return {
+                    options: response.data.map(c => {
+                        const res = { value: c.id, label: '' }
+                        if (c.name) {
+                            res.label = c.name;
+                        }
+                        else if (c.email) {
+                            res.label = c.email;
+                        }
+                        else {
+                            res.label = c.id;
+                        }
+                        return res;
+                    })
+                }
+            },
+            refreshers: ["connection"],
+            required: true
+        }),
+        body: Property.ShortText({
+            displayName: "Message Body",
+            required: true,
+        }),
+        create_conversation_without_contact_reply: Property.Checkbox({
+            displayName: "Create Conversation Without Contact Reply",
+            description: "Whether a conversation should be opened in the inbox for the message without the contact replying. Defaults to false if not provided.",
+            required: false,
+            defaultValue: false
+        })
+
+    },
+    run: async (context) => {
+        const accessToken = context.propsValue.connection.access_token;
+        const user = await intercomCommon.getContact({ userId: context.propsValue.to, token: accessToken });
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.POST,
+            url: 'https://api.intercom.io/messages',
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: accessToken
+            },
+            headers: intercomCommon.intercomHeaders,
+            body: {
+                message_type: context.propsValue.message_type,
+                from: {
+                    id: context.propsValue.from,
+                    role: "admin"
                 },
-                to:{id:context.propsValue.to,
-                    role:user.role},
-                body:context.propsValue.body,
-                template:context.propsValue.emailRequiredFields['template'],
-                subject: context.propsValue.emailRequiredFields['subject'],
-                create_conversation_without_contact_reply:context.propsValue.create_conversation_without_contact_reply
+                to: {
+                    id: context.propsValue.to,
+                    role: user.role
+                },
+                body: context.propsValue.body,
+                template: context.propsValue.email_required_fields['template'],
+                subject: context.propsValue.email_required_fields['subject'],
+                create_conversation_without_contact_reply: context.propsValue.create_conversation_without_contact_reply
             }
         });
         return response.body;
