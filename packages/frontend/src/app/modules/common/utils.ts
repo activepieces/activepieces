@@ -30,6 +30,9 @@ export function getDefaultDisplayNameForPiece(
     case ActionType.PIECE: {
       return pieceName;
     }
+    case ActionType.BRANCH: {
+      return 'Branch';
+    }
   }
 }
 

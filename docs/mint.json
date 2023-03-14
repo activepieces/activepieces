@@ -101,9 +101,11 @@
         "pieces/apps/stripe",
         "pieces/apps/telegram_bot",
         "pieces/apps/todoist",
+        "pieces/apps/trello",
         "pieces/apps/twilio",
         "pieces/apps/typeform",
         "pieces/apps/wordpress",
+        "pieces/apps/youtube",
         "pieces/apps/zoom"
       ]
     },
@@ -168,7 +170,16 @@
       "pages": [
         "telemetry",
         "changelog",
-        "license"
+        "license",
+        {
+          "group": "Product Embed",
+          "pages": [
+            "product-embed/overview",
+            "product-embed/user-authentication",
+            "product-embed/frontend-sdk",
+            "product-embed/user-flows"
+          ]
+        }
       ]
     }
   ],

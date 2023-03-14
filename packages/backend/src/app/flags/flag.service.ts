@@ -5,7 +5,7 @@ import { SystemProp } from "../helper/system/system-prop";
 import { FlagEntity } from "./flag.entity";
 import axios from "axios";
 import { webhookService } from "../webhooks/webhook-service";
-import { getEdition } from "../helper/license-helper";
+import { getEdition } from "../helper/secret-helper";
 
 const flagRepo = databaseConnection.getRepository(FlagEntity);
 

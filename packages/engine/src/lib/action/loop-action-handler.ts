@@ -1,19 +1,18 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { ExecutionState, LoopOnItemsAction } from '@activepieces/shared';
+import { Action, ExecutionState, LoopOnItemsAction } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from '@activepieces/shared';
-import { globals } from '../globals';
 
 export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction> {
-  firstLoopAction?: BaseActionHandler<any>;
+  firstLoopAction?: BaseActionHandler<Action>;
   override action: LoopOnItemsAction;
   variableService: VariableService;
 
   constructor(
     action: LoopOnItemsAction,
-    firstLoopAction: BaseActionHandler<any> | undefined,
-    nextAction: BaseActionHandler<any> | undefined
+    firstLoopAction: BaseActionHandler<Action> | undefined,
+    nextAction: BaseActionHandler<Action> | undefined
   ) {
     super(action, nextAction);
     this.action = action;

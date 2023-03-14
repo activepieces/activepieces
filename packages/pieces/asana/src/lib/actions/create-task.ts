@@ -3,7 +3,7 @@ import { asanaCommon, callAsanaApi } from "../common";
 
 export const createAsanaTask = createAction({
     name: 'create_task',
-    description: 'Create a new task in a ClickUp workspace and list',
+    description: 'Create a new task in Asana',
     displayName: 'Create Task',
     props: {
         authentication: asanaCommon.authentication,

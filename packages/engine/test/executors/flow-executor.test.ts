@@ -178,7 +178,7 @@ describe('Flow Executor', () => {
     expect(Object.keys(executionOutput.executionState.configs).length).toEqual(
         1
     );
-    let loopOutput: LoopOnItemsStepOutput = executionOutput.executionState.steps['LOOP_ACTION']! as LoopOnItemsStepOutput;
+    const loopOutput: LoopOnItemsStepOutput = executionOutput.executionState.steps['LOOP_ACTION']! as LoopOnItemsStepOutput;
     expect(loopOutput.output!.iterations[1]['CODE_IN_LOOP']?.input).toEqual({
       current_item: 'two',
       current_iteration: 2
