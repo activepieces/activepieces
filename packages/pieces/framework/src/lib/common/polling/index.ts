@@ -1,6 +1,6 @@
 import { Store, } from "../../framework";
 
-export interface TimebasedPolling<INPUT> {
+interface TimebasedPolling<INPUT> {
     strategy: DedupeStrategy.TIMEBASED;
     items: (
         { propsValue }: { propsValue: INPUT },
@@ -10,7 +10,8 @@ export interface TimebasedPolling<INPUT> {
     }[]
     >;
 }
-export interface LastItemPolling<INPUT> {
+
+interface LastItemPolling<INPUT> {
     strategy: DedupeStrategy.LAST_ITEM;
     items: (
         { propsValue }: { propsValue: INPUT },
@@ -26,7 +27,7 @@ export enum DedupeStrategy {
     LAST_ITEM
 }
 
-type Polling<T> = TimebasedPolling<T> | LastItemPolling<T>;
+export type Polling<T> = TimebasedPolling<T> | LastItemPolling<T>;
 
 export const pollingHelper = {
     async poll<INPUT>(polling: Polling<INPUT>, { store, propsValue }: { store: Store, propsValue: INPUT }): Promise<unknown[]> {
@@ -39,12 +40,15 @@ export const pollingHelper = {
                 return items.filter(f => f.epochMillSeconds > lastEpochMillSeconds).map((item) => item.data);
             }
             case DedupeStrategy.LAST_ITEM: {
-                const lastItem = (await store.get<unknown>("lastItem"))!;
+                const lastItemId = (await store.get<unknown>("lastItem"));
                 const items = await polling.items({ propsValue });
                 const newLastItem = items?.[0]?.id;
+                if(!newLastItem) {
+                    return items;
+                }
                 await store.put("lastItem", newLastItem);
                 // get  items until you find the last item
-                const lastItemIndex = items.findIndex(f => f.id === lastItem);
+                const lastItemIndex = items.findIndex(f => f.id === lastItemId);
                 return items?.slice(0, lastItemIndex).map((item) => item.data) ?? [];
             }
         }

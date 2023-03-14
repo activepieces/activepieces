@@ -1,4 +1,4 @@
-import { createTrigger } from '@activepieces/framework';
+import { createTrigger, DedupeStrategy, Polling, pollingHelper } from '@activepieces/framework';
 import { TriggerStrategy } from '@activepieces/shared';
 import { rssFeedUrl } from '../common/props';
 import FeedParser from 'feedparser';
@@ -9,7 +9,6 @@ export const rssNewItemTrigger = createTrigger({
     displayName: 'New Item In Feed',
     description: 'Runs when a new item is added in the RSS feed',
     type: TriggerStrategy.POLLING,
-
     sampleData: {
         "title": "AWS Cloud Quest: Container Services",
         "description": "<p>This is the DIY challenge of the Container Services in AWS Cloud Quest.</p>\n\n<p></ol>",
@@ -127,33 +126,28 @@ export const rssNewItemTrigger = createTrigger({
         rss_feed_url: rssFeedUrl,
     },
     async onEnable({ propsValue, store }): Promise<void> {
-        const items = await getRssItems(propsValue.rss_feed_url);
-        await store.put('lastFetchedRssItem', getId(items?.[0]));
-        return;
+        await pollingHelper.onEnable(polling, { store: store, propsValue: propsValue });
     },
 
-    async onDisable(): Promise<void> {
-        return;
+    async onDisable({ propsValue, store }): Promise<void> {
+        await pollingHelper.onDisable(polling, { store: store, propsValue: propsValue });
     },
 
     async run({ propsValue, store }): Promise<unknown[]> {
-        const items = await getRssItems(propsValue.rss_feed_url);
-        const lastItemId = await store.get('lastFetchedRssItem');
-
-        // Most RSS feeds observed return this XML schema and are usually sorted by date descending.
-        // Relying on that to get the latest published item and determining if there are new items in the feed.
-        // Support both RSS and Atom feeds.
-        store.put('lastFetchedRssItem', getId(items?.[0]));
-
-        const newItems = [];
-        for (const item of items) {
-            if (getId(item) === lastItemId) break;
-            newItems.push(item);
-        }
-
-        return newItems;
+        return await pollingHelper.poll(polling, { store: store, propsValue: propsValue });
     },
 });
+
+const polling: Polling<{ rss_feed_url: string }> = {
+    strategy: DedupeStrategy.LAST_ITEM,
+    items: async ({ propsValue }: { propsValue: { rss_feed_url: string } }) => {
+        const items = await getRssItems(propsValue.rss_feed_url);
+        return items.map((item) => ({
+            id: getId(item),
+            data: item,
+        }));
+    }
+}
 
 // Some RSS feeds use the id field, some use the guid field, and some use neither.
 function getId(item: { id: string, guid: string }) {

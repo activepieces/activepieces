@@ -1,8 +1,8 @@
-import { createTrigger, pollingHelper, DedupeStrategy, TimebasedPolling } from '@activepieces/framework';
+import { createTrigger, pollingHelper, DedupeStrategy, Polling } from '@activepieces/framework';
 import { TriggerStrategy } from '@activepieces/shared';
 import { airtableCommon } from '../common';
 
-const polling: TimebasedPolling<{ authentication: string, table: string, base: string }> = {
+const polling: Polling<{ authentication: string, table: string, base: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ propsValue }: { propsValue: { authentication: string, table: string, base: string } }) => {
     const records = await airtableCommon.getTableSnapshot({
