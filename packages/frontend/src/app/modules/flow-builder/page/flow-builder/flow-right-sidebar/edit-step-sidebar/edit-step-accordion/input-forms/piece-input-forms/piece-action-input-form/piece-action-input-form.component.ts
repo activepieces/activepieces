@@ -27,7 +27,7 @@ import {
 import { Store } from '@ngrx/store';
 import { ActionMetaService } from '../../../../../../../../service/action-meta.service';
 import { FlowItemsDetailsState } from '../../../../../../../../store/model/flow-items-details-state.model';
-import { PieceActionSettings } from '@activepieces/shared';
+import { ActionType, PieceActionSettings } from '@activepieces/shared';
 import { DropdownItem } from '../../../../../../../../../common/model/dropdown-item.interface';
 import {
   PieceConfig,
@@ -263,7 +263,10 @@ export class PieceActionInputFormComponent
     this.pieceActionForm.removeControl(CONFIGS_FORM_CONTROL_NAME, {
       emitEvent: false,
     });
-    this.fetchActions(obj.pieceName, obj.pieceVersion);
+
+    if (obj.type === ActionType.PIECE) {
+      this.fetchActions(obj.pieceName, obj.pieceVersion);
+    }
   }
 
   registerOnChange(fn: (value) => void): void {

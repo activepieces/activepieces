@@ -12,6 +12,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { map, Observable, of, tap } from 'rxjs';
+import { TriggerType } from '@activepieces/shared';
 import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
 import {
   PieceConfig,
@@ -224,7 +225,10 @@ export class PieceTriggerInputFormComponent {
     this.componentForm.removeControl(CONFIGS_FORM_CONTROL_NAME, {
       emitEvent: false,
     });
-    this.fetchTriggers(obj.pieceName, obj.pieceVersion);
+
+    if (obj.type === TriggerType.PIECE) {
+      this.fetchTriggers(obj.pieceName, obj.pieceVersion);
+    }
   }
 
   registerOnChange(fn: any): void {
