@@ -110,7 +110,8 @@ export class PieceStepMentionItemComponent implements OnInit {
       throw new Error("Activepieces- step isn't of a piece type");
     }
 
-    const { pieceName, pieceVersion } = this._stepMention.step.settings;
+    const { pieceName, pieceVersion } = step.settings;
+
     this.sampleData$ = this.actionMetaDataService
       .getPieceMetadata(pieceName, pieceVersion)
       .pipe(
@@ -132,8 +133,8 @@ export class PieceStepMentionItemComponent implements OnInit {
         map((sampleData) => {
           const childrenNodes = traverseStepOutputAndReturnMentionTree(
             sampleData,
-            this._stepMention.step.name,
-            this._stepMention.step.displayName
+            step.name,
+            step.displayName
           ).children;
           return childrenNodes;
         }),
@@ -146,10 +147,9 @@ export class PieceStepMentionItemComponent implements OnInit {
         }),
         tap((res) => {
           if (!res.error) {
-            this.mentionsTreeCache.setStepMentionsTree(
-              this._stepMention.step.name,
-              { children: res.children }
-            );
+            this.mentionsTreeCache.setStepMentionsTree(step.name, {
+              children: res.children,
+            });
           }
           this.fetching$.next(false);
         }),
@@ -167,7 +167,7 @@ export class PieceStepMentionItemComponent implements OnInit {
         }),
         map((res) => {
           const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(
-            this._stepMention.step.name,
+            step.name,
             res.search
           );
           return {
