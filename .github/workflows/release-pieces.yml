@@ -23,12 +23,18 @@ jobs:
 
       - name: publish shared package
         run: npx ts-node tools/scripts/utils/publish-nx-project.ts packages/shared
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: publish framework package
         run: npx ts-node tools/scripts/utils/publish-nx-project.ts packages/pieces/framework
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: publish pieces packages to npm
+      - name: publish pieces packages
         run: npx ts-node tools/scripts/publish-pieces-to-npm.ts
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: update pieces metadata
         run: npx nx update-pieces-metadata pieces-apps
