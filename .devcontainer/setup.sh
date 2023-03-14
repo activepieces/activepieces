@@ -5,4 +5,4 @@ fi
 
 echo "Running Setup for Codespaces"
 
-sh codespaces.sh
+sh .devcontainer/codespaces.sh
