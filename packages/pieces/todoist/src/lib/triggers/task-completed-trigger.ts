@@ -17,7 +17,7 @@ const now = () => dayjs().format(ISO_FORMAT)
 
 export const todoistTaskCompletedTrigger = createTrigger({
   name: 'task_completed',
-  displayName: 'Task completed',
+  displayName: 'Task Completed',
   description: 'Triggers when a new task is completed',
   type: TriggerStrategy.POLLING,
 

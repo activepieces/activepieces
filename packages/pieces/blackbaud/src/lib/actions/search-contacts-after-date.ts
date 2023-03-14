@@ -4,7 +4,7 @@ import { blackbaudCommon } from '../common/common';
 
 export const blackbaudSearchAfterDate = createAction({
     name: 'search_contacts_after_date',
-    description: 'Search contacts on blackbaud',
+    description: 'Search contacts',
     displayName: 'Search Contacts After Date',
     props: {
         ...blackbaudCommon.auth_props,

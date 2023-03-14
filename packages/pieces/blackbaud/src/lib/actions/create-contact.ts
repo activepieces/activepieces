@@ -1,10 +1,10 @@
-import { createAction, httpClient, HttpMethod, HttpRequest, Property } from '@activepieces/framework';
+import { createAction, httpClient, HttpMethod, Property } from '@activepieces/framework';
 import { blackbaudCommon } from '../common/common';
 
 export const blackbaudCreateContactOnEmail = createAction({
     name: 'create_contact_if_not_exists',
-    description: 'Create a contact if it does not exist',
-    displayName: 'Create Contact if not email exists',
+    description: 'Create Contact if it does not exist',
+    displayName: 'Create Contact Based on Email',
     props: {
         ...blackbaudCommon.auth_props,
         email: Property.ShortText({

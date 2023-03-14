@@ -9,12 +9,12 @@ export const figma = createPiece({
 	name: 'figma',
 	displayName: "Figma",
 	logoUrl: 'https://cdn.activepieces.com/pieces/figma.png',
-  version: packageJson.version,
+	version: packageJson.version,
 	actions: [
 		getFileAction,
 		getCommentsAction,
 		postCommentAction,
-  ],
+	],
 	triggers: [
 		newCommentTrigger,
 	]

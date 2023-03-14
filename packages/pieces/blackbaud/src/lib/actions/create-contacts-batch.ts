@@ -13,7 +13,7 @@ const schema = {
 
 export const blackbaudCreateContacts = createAction({
     name: 'create_contact_batch',
-    description: 'Create contacts on blackbaud',
+    description: 'Create contacts',
     displayName: 'Create Contacts (Batch)',
     props: {
         ...blackbaudCommon.auth_props,
