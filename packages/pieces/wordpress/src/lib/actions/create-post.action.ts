@@ -5,7 +5,7 @@ import { wordpressCommon, WordpressMedia } from "../common";
 
 export const createWordpressPost = createAction({
     name: 'create_post',
-    description: 'Create a new post on Wordpress',
+    description: 'Create new post on Wordpress',
     displayName: 'Create Post',
     props: {
         connection: wordpressCommon.connection,

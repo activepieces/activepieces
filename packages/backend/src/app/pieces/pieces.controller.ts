@@ -1,8 +1,6 @@
 import { FastifyPluginAsync, FastifyRequest } from "fastify";
 import { GetPieceRequestParams, GetPieceRequestQuery, PieceOptionRequest } from "@activepieces/shared";
 import { pieces } from "@activepieces/pieces-apps";
-import { collectionVersionService } from "../collections/collection-version/collection-version.service";
-import { collectionService } from "../collections/collection.service";
 import { engineHelper } from "../helper/engine-helper";
 import { pieceMetadataLoader } from "./piece-metadata-loader";
 
@@ -24,16 +22,14 @@ export const piecesController: FastifyPluginAsync = async (app) => {
                 Body: PieceOptionRequest;
             }>,
         ) => {
-            const collectionVersion = await collectionVersionService.getOneOrThrow(request.body.collectionVersionId);
-            const collection = await collectionService.getOneOrThrow({ id: collectionVersion.collectionId, projectId: request.principal.projectId });
             return engineHelper.executeProp({
                 pieceName: request.params.pieceName,
                 pieceVersion: request.body.pieceVersion,
                 propertyName: request.body.propertyName,
                 stepName: request.body.stepName,
                 input: request.body.input,
-                collectionVersion: collectionVersion,
-                projectId: collection.projectId
+                collectionId: request.body.collectionId,
+                projectId: request.principal.projectId
             })
         }
     );

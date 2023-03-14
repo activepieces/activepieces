@@ -122,7 +122,7 @@ function updateAction(
   }
 }
 
-function extractActions(step: Trigger | Action): { nextAction: Action, onSuccessAction?: Action, onFailureAction?: Action } {
+function extractActions(step: Trigger | Action): { nextAction?: Action, onSuccessAction?: Action, onFailureAction?: Action } {
   const nextAction = step.nextAction;
   const onSuccessAction = step.type === ActionType.BRANCH ? step.onSuccessAction : undefined;
   const onFailureAction = step.type === ActionType.BRANCH ? step.onFailureAction : undefined;
@@ -184,7 +184,8 @@ function createAction(
     case ActionType.LOOP_ON_ITEMS:
       action = {
         ...baseProperties,
-        firstLoopAction: request.firstLoopAction,
+        // Required to do when loops is supported
+        // firstLoopAction: request.firstLoopAction, 
         type: ActionType.LOOP_ON_ITEMS,
         settings: request.settings,
       };

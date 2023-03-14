@@ -17,18 +17,7 @@ const byDisplayNameIgnoreCase = (a: Piece, b: Piece) => {
 export const generateMetadata = async (): Promise<PieceMetadata[]> => {
     console.log('generateMetadata')
 
-    const piecePath = resolve(cwd(), 'packages', 'pieces', 'apps', 'src', 'lib')
-    const pieceDirectories = await readdir(piecePath)
-
     const pieces: Piece[] = [];
-
-    /* pieces that aren't yet migrated to a standalone package */
-    for (const pieceDirectory of pieceDirectories) {
-        const index = resolve(piecePath, pieceDirectory, 'index.ts')
-        const module = await import(index)
-        const piece = Object.values<Piece>(module)[0]
-        pieces.push(piece)
-    }
 
     const frameworkPackages = ['framework', 'apps']
     const piecePackagePath = resolve(cwd(), 'packages', 'pieces')

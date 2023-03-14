@@ -3,7 +3,6 @@ import {Cursor} from "../../common/seek-page";
 import { Static, Type } from "@sinclair/typebox";
 
 export const ListCollectionsRequest = Type.Object({
-    projectId: Type.String({}),
     limit: Type.Optional(Type.Number({})),
     cursor: Type.Optional(Type.String({})),
 });

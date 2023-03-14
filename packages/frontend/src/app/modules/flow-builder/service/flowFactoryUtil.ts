@@ -1,4 +1,7 @@
-import { FlowItem } from '../../common/model/flow-builder/flow-item';
+import {
+  ActionFlowItem,
+  FlowItem,
+} from '../../common/model/flow-builder/flow-item';
 import {
   ActionType,
   BranchAction,
@@ -24,29 +27,19 @@ export class FlowFactoryUtil {
   }
 
   private static createStepFromAction(
-    content: FlowItem | undefined
-  ): FlowItem | undefined {
+    content: ActionFlowItem | undefined
+  ): ActionFlowItem | undefined {
     if (content === undefined || content === null) {
       return undefined;
     } else {
-      const clonedContent: FlowItem = { ...content };
-      switch (clonedContent.type) {
-        case ActionType.CODE:
-        case ActionType.LOOP_ON_ITEMS:
-        case ActionType.BRANCH:
-        case ActionType.PIECE: {
-          const simple = this.addCordDetails(clonedContent);
-          FlowFactoryUtil.buildHelper(simple);
-          return simple;
-        }
-        default:
-          throw new Error('UNSUPPORTED STEP TYPE !');
-      }
+      const clonedContent: ActionFlowItem = { ...content };
+      const simple = this.addCordDetails(clonedContent) as ActionFlowItem;
+      FlowFactoryUtil.buildHelper(simple);
+      return simple;
     }
-    return undefined;
   }
 
-  public static addCordDetails(content: FlowItem): FlowItem {
+  private static addCordDetails(content: FlowItem): FlowItem {
     const cordDetails = {
       width: FLOW_ITEM_WIDTH,
       height: FLOW_ITEM_HEIGHT,
@@ -63,10 +56,10 @@ export class FlowFactoryUtil {
     }
     if (FlowStructureUtil.isTrigger(flowItemData)) {
       const trigger = flowItemData as Trigger;
-      if (trigger.nextAction) {
-        flowItemData.nextAction = FlowFactoryUtil.createStepFromAction(
-          trigger.nextAction
-        )!;
+      const nextAction = trigger.nextAction;
+      if (nextAction) {
+        flowItemData.nextAction =
+          FlowFactoryUtil.createStepFromAction(nextAction);
       }
     } else {
       const action = flowItemData;

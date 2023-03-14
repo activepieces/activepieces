@@ -7,10 +7,10 @@ export const todoist = createPiece({
 	name: 'todoist',
 	displayName: 'Todoist',
 	logoUrl: 'https://cdn.activepieces.com/pieces/todoist.png',
-  version: packageJson.version,
+	version: packageJson.version,
 	authors: ['khaledmashaly'],
 	actions: [todoistCreateTaskAction],
 	triggers: [
-    todoistTaskCompletedTrigger,
-  ],
+		todoistTaskCompletedTrigger,
+	],
 });

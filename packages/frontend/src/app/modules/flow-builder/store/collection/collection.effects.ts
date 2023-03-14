@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType, concatLatestFrom } from '@ngrx/effects';
 import { catchError, debounceTime, of, tap } from 'rxjs';
-import { concatMap, filter, map, switchMap } from 'rxjs/operators';
+import { concatMap, map, switchMap } from 'rxjs/operators';
 import {
   CollectionActions,
   CollectionModifyingState,
@@ -13,29 +13,13 @@ import { Store } from '@ngrx/store';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuilderSelectors } from '../builder/builder.selector';
-import { SingleFlowModifyingState } from '../flow/flows.action';
 import { BuilderActions } from '../builder/builder.action';
-import { CollectionVersionState, InstanceStatus } from '@activepieces/shared';
+import { InstanceStatus } from '@activepieces/shared';
 import { InstanceService } from '../../../common/service/instance.service';
 import { autoSaveDebounceTime } from '../../../common/utils';
 
 @Injectable()
 export class CollectionEffects {
-  createNewVersion$ = createEffect(
-    () => {
-      return this.actions$.pipe(
-        ofType(...SingleFlowModifyingState),
-        concatLatestFrom((action) => [
-          this.store.select(BuilderSelectors.selectCurrentCollection),
-        ]),
-        filter(([action, collection]) => {
-          return collection.version!.state === CollectionVersionState.LOCKED;
-        })
-      );
-    },
-    { dispatch: false }
-  );
-
   saving$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(...CollectionModifyingState),
@@ -45,7 +29,9 @@ export class CollectionEffects {
       debounceTime(autoSaveDebounceTime),
       concatMap(([action, collection]) => {
         return this.collectionService
-          .update(collection.id, collection.version!)
+          .update(collection.id, {
+            displayName: collection.displayName,
+          })
           .pipe(
             tap(() => {
               const now = new Date();
@@ -88,41 +74,6 @@ export class CollectionEffects {
       })
     );
   });
-
-  deleteConfig$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(CollectionActions.deleteConfig),
-      concatLatestFrom((action) => [
-        this.store.select(BuilderSelectors.selectCurrentCollection),
-      ]),
-      concatMap(([action, collection]) => {
-        return of(
-          CollectionActions.deleteConfigSucceeded({
-            configIndex: action.configIndex,
-          })
-        );
-      })
-    );
-  });
-
-  deleteConfigFailed$ = createEffect(
-    () => {
-      return this.actions$.pipe(
-        ofType(CollectionActions.deleteConfigFailed),
-        tap((action) => {
-          this.snackBar.open(
-            `This variable can't be deleted because it's a refresher for ${action.refreshedKey}`,
-            '',
-            {
-              panelClass: 'error',
-              duration: 5000,
-            }
-          );
-        })
-      );
-    },
-    { dispatch: false }
-  );
 
   publishFailed$ = createEffect(
     () => {

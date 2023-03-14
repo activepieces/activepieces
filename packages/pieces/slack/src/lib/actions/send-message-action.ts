@@ -8,7 +8,7 @@ import { slackSendMessage } from '../common/utils'
 
 export const slackSendMessageAction = createAction({
   name: 'send_channel_message',
-  displayName: 'Send message to a channel',
+  displayName: 'Send Message To A Channel',
   description: 'Send message to a channel',
   sampleData: {
     success: true,
