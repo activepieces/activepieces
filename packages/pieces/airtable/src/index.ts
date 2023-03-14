@@ -6,7 +6,7 @@ export const airtable = createPiece({
 	name: 'airtable',
 	displayName: 'Airtable',
 	logoUrl: 'https://cdn.activepieces.com/pieces/airtable.png',
-  version: packageJson.version,
+	version: packageJson.version,
 	authors: ['AbdulTheActivePiecer'],
 	actions: [],
 	triggers: [airtableNewRecord],

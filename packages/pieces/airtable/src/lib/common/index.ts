@@ -10,7 +10,7 @@ interface AirtableBase {
 
 export interface AirtableRecord {
     fields: Record<string, unknown>,
-    createdTime: Date,
+    createdTime: string,
     id: string;
 }
 
@@ -90,7 +90,7 @@ export const airtableCommon = {
         }
 
     }),
-    async getTableSnapshot(params: { personalToken: string, baseId: string, tableId: string }) {
+    async getTableSnapshot(params: { personalToken: string, baseId: string, tableId: string }): Promise<AirtableRecord[]> {
         Airtable.configure({
             apiKey: params.personalToken,
         });
