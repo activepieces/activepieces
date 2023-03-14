@@ -1,0 +1,35 @@
+name: Release Pieces
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  Release-Pieces:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: install npm deps
+        run: npm ci
+
+      - name: build packages
+        run: npx nx run-many --target=build
+
+      - name: publish shared package
+        run: npx ts-node tools/scripts/utils/publish-nx-project.ts packages/shared
+
+      - name: publish framework package
+        run: npx ts-node tools/scripts/utils/publish-nx-project.ts packages/pieces/framework
+
+      - name: publish pieces packages to npm
+        run: npx ts-node tools/scripts/publish-pieces-to-npm.ts
+
+      - name: update pieces metadata
+        run: npx nx update-pieces-metadata pieces-apps
+        env:
+          DO_SPACES_KEY: ${{ secrets.DO_SPACES_KEY }}
+          DO_SPACES_SECRET: ${{ secrets.DO_SPACES_SECRET }}
