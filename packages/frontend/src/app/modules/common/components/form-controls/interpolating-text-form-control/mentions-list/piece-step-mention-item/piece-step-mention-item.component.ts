@@ -104,6 +104,12 @@ export class PieceStepMentionItemComponent implements OnInit {
     );
   }
   fetchSampleData() {
+    const step = this._stepMention.step;
+
+    if (step.type !== TriggerType.PIECE && step.type !== ActionType.PIECE) {
+      throw new Error("Activepieces- step isn't of a piece type");
+    }
+
     const { pieceName, pieceVersion } = this._stepMention.step.settings;
     this.sampleData$ = this.actionMetaDataService
       .getPieceMetadata(pieceName, pieceVersion)
@@ -112,7 +118,6 @@ export class PieceStepMentionItemComponent implements OnInit {
           this.fetching$.next(true);
         }),
         map((pieceMetadata) => {
-          const step = this._stepMention.step;
           if (step.type === TriggerType.PIECE) {
             return step.settings.triggerName
               ? pieceMetadata.triggers[step.settings.triggerName].sampleData ??
