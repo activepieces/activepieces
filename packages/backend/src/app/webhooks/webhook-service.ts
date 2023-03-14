@@ -17,7 +17,6 @@ import { flowRepo } from '../flows/flow.repo';
 import { system } from '../helper/system/system';
 import { SystemProp } from '../helper/system/system-prop';
 import { getPublicIp } from '../helper/public-ip-utils';
-import { getWebhookSecret } from '../helper/secret-helper';
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {

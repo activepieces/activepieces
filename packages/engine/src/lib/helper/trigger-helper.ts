@@ -63,12 +63,16 @@ export const triggerHelper = {
             return [];
           }
 
+          if (!params.appWebhookUrl) {
+            throw new Error(`App webhook url is not avaiable for piece name ${pieceName}`)
+          }
           if (!params.webhookSecret) {
             throw new Error(`Webhook secret is not avaiable for piece name ${pieceName}`)
           }
 
           try {
             const verified = piece?.events?.verify({
+              appWebhookUrl: params.appWebhookUrl,
               payload: params.triggerPayload as EventPayload,
               webhookSecret: params.webhookSecret,
             });
