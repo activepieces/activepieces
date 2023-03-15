@@ -68,6 +68,7 @@
       ],
       "@activepieces/piece-http": ["packages/pieces/http/src/index.ts"],
       "@activepieces/piece-hubspot": ["packages/pieces/hubspot/src/index.ts"],
+      "@activepieces/piece-intercom": ["packages/pieces/intercom/src/index.ts"],
       "@activepieces/piece-mailchimp": [
         "packages/pieces/mailchimp/src/index.ts"
       ],
