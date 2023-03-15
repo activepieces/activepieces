@@ -35,7 +35,9 @@ export type EmptyTrigger = Static<typeof EmptyTrigger>;
 export const WebhookTrigger = Type.Object({
   ...commonProps,
   type: Type.Literal(TriggerType.WEBHOOK),
-  settings:SampleDataSettingsObject
+  settings:Type.Object({
+    inputUiInfo:SampleDataSettingsObject
+  })
 });
 
 export type WebhookTrigger = Static<typeof WebhookTrigger>;

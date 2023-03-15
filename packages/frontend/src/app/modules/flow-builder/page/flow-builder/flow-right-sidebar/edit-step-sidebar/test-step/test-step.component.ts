@@ -145,8 +145,11 @@ export class TestStepComponent {
           if (step && step.type === TriggerType.WEBHOOK) {
             const clone = { ...step };
             clone.settings = {
-              historicalData: newResults || clone.settings.historicalData,
-              currentSelectedData: this.selectedDataControl.value,
+              inputUiInfo: {
+                historicalData:
+                  newResults || clone.settings.inputUiInfo.historicalData,
+                currentSelectedData: this.selectedDataControl.value,
+              },
             };
             this.store.dispatch(
               FlowsActions.updateTrigger({

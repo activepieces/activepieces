@@ -23,7 +23,7 @@ export class HorizontalSidebarSeparatorComponent {
       tap((shouldAnimate) => {
         if (shouldAnimate) {
           this.dragPosition = { x: 0, y: 0 };
-          this.topStyle = 'calc(50% - 5px)';
+          this.topStyle = 'calc(50% + 17px)';
           setTimeout(() => {
             this.animate = false;
           }, 150);

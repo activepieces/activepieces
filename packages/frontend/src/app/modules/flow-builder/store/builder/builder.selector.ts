@@ -178,7 +178,7 @@ const selectStepHistoricalSampleData = createSelector(
   selectCurrentStepSettings,
   (settings) => {
     if (settings) {
-      const sampleDataSettings = settings as SampleDataSettings;
+      const sampleDataSettings = settings['inputUiInfo'] as SampleDataSettings;
       return sampleDataSettings.historicalData || [];
     }
     return [];
@@ -188,7 +188,7 @@ const selectStepSelectedSampleData = createSelector(
   selectCurrentStepSettings,
   (settings) => {
     if (settings) {
-      const sampleDataSettings = settings as SampleDataSettings;
+      const sampleDataSettings = settings['inputUiInfo'] as SampleDataSettings;
       return sampleDataSettings.currentSelectedData;
     }
     return undefined;

@@ -79,7 +79,7 @@ export class FlowRightSidebarComponent implements OnInit {
   resizerAnimation() {
     this.animateSectionsHeightChange = true;
     this.editStepSection.nativeElement.style.height = `calc(50% - 30px)`;
-    this.selectedStepResultContainer.nativeElement.style.maxHeight = `calc(50% - 30px)`;
+    this.selectedStepResultContainer.nativeElement.style.maxHeight = `calc(50% + 26px)`;
     setTimeout(() => {
       this.animateSectionsHeightChange = false;
     }, 150);

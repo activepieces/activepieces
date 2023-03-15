@@ -1,8 +1,10 @@
 <div class="ap-px-4  ap-py-3 " *ngIf="currentResults$ |async as currentResults">
 
 
-    <div class="ap-flex ap-flex-col ap-gap-2 ap-items-center" *ngIf="currentResults.length === 0 && !loading ">
-        <p class="ap-typography-body-2 ap-text-center">Test this step to generate sample data that can be used in the
+    <div class="ap-flex ap-flex-col ap-gap-2 ap-items-center ap-justify-center ap-h-[136px]"
+        *ngIf="currentResults.length === 0 && !loading ">
+        <p class="ap-typography-body-2 ap-text-center ">Test this step to generate sample data that can be used
+            in the
             next steps</p>
         <app-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()">Test
             Trigger</app-button>

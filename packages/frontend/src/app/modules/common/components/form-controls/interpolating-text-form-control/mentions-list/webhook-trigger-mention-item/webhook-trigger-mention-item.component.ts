@@ -63,15 +63,14 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
   }
   ngOnInit(): void {
     this.sampleData = traverseStepOutputAndReturnMentionTree(
-      this._stepMention.step.settings.currentSelectedData,
+      this._stepMention.step.settings.inputUiInfo.currentSelectedData,
       this._stepMention.step.name,
       this._stepMention.step.displayName
     ).children;
-    debugger;
+
     this.nodesFilteredWithSearch$ =
       this.mentionsTreeCache.listSearchBarObs$.pipe(
         map((res) => {
-          debugger;
           const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(
             this._stepMention.step.name,
             res
