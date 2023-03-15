@@ -6,7 +6,11 @@ export const airtableCreateRecord = createAction({
   displayName: 'Create Airtable Record',
   description: 'Adds a record into an airtable',
   sampleData: {
-    "status": 1
+    "id": "recoyzj6c0Zekuz4V",
+    "createdTime": "2023-03-15T12:50:33.000Z",
+    "fields": {
+      "fieldName":"fieldValue"
+    }
   },
   props: {
     authentication: airtableCommon.authentication,
