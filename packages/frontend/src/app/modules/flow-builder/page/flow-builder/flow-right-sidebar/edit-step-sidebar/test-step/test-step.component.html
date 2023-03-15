@@ -2,9 +2,8 @@
 
 
     <div class="ap-flex ap-flex-col ap-gap-2 ap-items-center" *ngIf="currentResults.length === 0 && !loading ">
-        <p class="ap-typography-body-2 ap-text-center">Test this step to generate sample data to use with the next steps
-            in
-            your flow</p>
+        <p class="ap-typography-body-2 ap-text-center">Test this step to generate sample data that can be used in the
+            next steps</p>
         <app-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()">Test
             Trigger</app-button>
     </div>
@@ -22,7 +21,7 @@
                 (buttonClicked)="testStep()">Retest</app-button>
         </div>
 
-        <mat-form-field class="ap-w-full ap-mt-2" appearance="outline">
+        <mat-form-field class="ap-w-full ap-mt-2" appearance="outline" subscriptSizing="dynamic">
             <mat-label>
                 Data
             </mat-label>
@@ -33,7 +32,9 @@
                 </mat-option>
             </mat-select>
         </mat-form-field>
-
+        <div class="ap-typography-caption ap-text-description ap-my-2">
+            This sample data can be used in the next steps
+        </div>
         <app-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
             [content]="selectedDataControl.value"></app-json-viewer>
 
