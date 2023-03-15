@@ -122,3 +122,11 @@ mat-drawer[position=start]{
   z-index: 9999;
   text-align: center;
 }
+
+.right-side-bar-container
+{
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+}
