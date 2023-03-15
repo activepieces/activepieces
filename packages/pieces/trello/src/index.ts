@@ -6,7 +6,7 @@ import { getCard } from './lib/actions/get-card';
 
 export const trello = createPiece({
   name: 'trello',
-  displayName: 'trello',
+  displayName: 'Trello',
   logoUrl: 'https://cdn.activepieces.com/pieces/trello.png',
   version: packageJson.version,
   authors: ['ShayPunter'],

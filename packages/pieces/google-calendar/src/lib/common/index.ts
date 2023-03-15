@@ -10,7 +10,7 @@ export const googleCalendarCommon = {
     tokenUrl: 'https://oauth2.googleapis.com/token',
     required: true,
     pkce: true,
-    scope: ['https://www.googleapis.com/auth/calendar'],
+    scope: ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar.readonly'],
   }),
   calendarDropdown: Property.Dropdown<string>({
     displayName: 'Calendar',

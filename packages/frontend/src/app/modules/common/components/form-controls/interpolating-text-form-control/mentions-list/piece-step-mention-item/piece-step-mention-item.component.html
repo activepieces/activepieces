@@ -8,7 +8,7 @@
     <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"></app-generic-step-mention-item>
   </div>
   <app-button @fadeIn *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
-    (click)="mentionClicked.emit(_stepMention)">Select
+    [keepBgWhite]="true" (click)="mentionClicked.emit(_stepMention)">Select
   </app-button>
 
 </button>

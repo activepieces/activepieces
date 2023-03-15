@@ -3,7 +3,7 @@ import { createAction, Property, HttpRequest, HttpMethod, AuthenticationType, ht
 export const dropboxCreateNewTextFile = createAction({
   name: 'create_new_dropbox_text_file',
   description: 'Create a new text file in your Dropbox from text input',
-  displayName: 'Create new text file',
+  displayName: 'Create New Text File',
   props: {
     authentication: Property.OAuth2({
       description: "",

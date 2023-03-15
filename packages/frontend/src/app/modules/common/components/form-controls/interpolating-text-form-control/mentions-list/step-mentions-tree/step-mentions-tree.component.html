@@ -10,13 +10,14 @@
     #treeNode="matTreeNode" *matTreeNodeDef="let node; ">
 
     <div matTreeNodeToggle mat-menu-item (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)"
-      [style.padding-left]="treeNode.level === 0? '50px': (treeNode.level * 20 + 50)+'px'" class=" ap-min-w-[0]">
+      [style.padding-left]="treeNode.level === 0? '50px': (treeNode.level * 20 + 50)+'px'"
+      class=" ap-min-w-[0] ap-relative">
       <div class=" ap-flex ap-gap-1  ap-min-h-[27px]">
         {{node.key}}<span class="ap-text-primary ap-truncate ap-flex-grow ap-transition-all">:
           <span class="ap-transition-all" [matTooltip]="node.value">{{node.value}}
           </span></span>
-        <app-button @fadeIn *ngIf="treeNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
-          btnSize="small">Select
+        <app-button @fadeIn class="ap-absolute ap-right-[10px]" *ngIf="treeNodeHoverTracker.isHovered"
+          btnColor="primary" btnStyle="basic" type="button" [keepBgWhite]="true" btnSize="small">Select
         </app-button>
       </div>
     </div>
@@ -29,7 +30,7 @@
     [style.display]="markedNodesToShow?.get(node.propertyPath) || (searchContainsStepDisplayName$|async) ? '':'none'">
     <div matTreeNodeToggle appTrackHover #nestedTreeNodeHoverTracker="hoverTrackerDirective"
       (click)="$event.stopPropagation();"
-      class="mat-tree-node ap-min-w-[0] ap-min-h-[27px]  ap-flex ap-items-center ap-typography-body-2"
+      class="mat-tree-node ap-min-w-[0] ap-min-h-[27px] ap-relative  ap-flex ap-items-center ap-typography-body-2"
       [style.padding-left]="nestedTreeNode.level === 0? '50px': (nestedTreeNode.level * 20 + 50)+'px'" mat-menu-item>
 
       <mat-icon class="mat-icon-rtl-mirror">
@@ -39,8 +40,9 @@
         {{node.key}}
       </div>
       <div class=" ap-flex-grow "></div>
-      <app-button @fadeIn *ngIf="nestedTreeNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
-        btnSize="small" (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)">Select
+      <app-button @fadeIn *ngIf="nestedTreeNodeHoverTracker.isHovered" class="ap-absolute ap-right-[10px]"
+        [keepBgWhite]="true" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+        (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)">Select
       </app-button>
     </div>
 

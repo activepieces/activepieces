@@ -5,7 +5,8 @@
             <ng-container *ngTemplateOutlet="btnContent"></ng-container>
         </button>
         <button [class]="btnSizeClass" [type]="type" [class.ap-w-full]="fullWidthOfContainer" *ngSwitchCase="'basic'"
-            mat-button [color]="btnColor" [disabled]="disabled ? true : false" (click)="click()">
+            [class.inside-hover-item]="keepBgWhite" mat-button [color]="btnColor" [disabled]="disabled ? true : false"
+            (click)="click()">
             <ng-container *ngTemplateOutlet="btnContent"></ng-container>
         </button>
         <button [type]="type" [class]="btnSizeClass" [class.ap-w-full]="fullWidthOfContainer" *ngSwitchCase="'raised'"

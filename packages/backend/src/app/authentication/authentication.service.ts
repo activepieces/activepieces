@@ -37,10 +37,9 @@ export const authenticationService = {
                     projectId: project.id
                 }
             });
-            const { ...userResponse } = user;
-
+            user.password = undefined;
             return {
-                ...userResponse,
+                ...user,
                 token,
                 projectId: project.id
             };
@@ -93,6 +92,7 @@ export const authenticationService = {
             projectId: projects[0].id
         });
 
+        user.password = undefined;
         return {
             ...user,
             token,

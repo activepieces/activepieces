@@ -2,6 +2,8 @@ import { apId, FlowId, ProjectId } from "@activepieces/shared";
 import { databaseConnection } from "../database/database-connection";
 import { AppEventRouting, AppEventRoutingEntity } from "./app-event-routing.entity";
 import { logger } from "../helper/logger";
+import { SystemProp } from "../helper/system/system-prop";
+import { system } from "../helper/system/system";
 
 
 const appEventRoutingRepo = databaseConnection.getRepository(AppEventRoutingEntity);
@@ -36,6 +38,14 @@ export const appEventRoutingService = {
             projectId,
             flowId: flowId
         });
+    },
+    async getAppWebookUrl({ appName }: { appName: string}): Promise<string | undefined> {
+        const webhookUrl = system.get(SystemProp.WEBHOOK_URL);
+        if(webhookUrl){
+            return `${webhookUrl}/v1/app-events/${appName}`;
+        }
+        const frontendUrl = system.get(SystemProp.FRONTEND_URL);
+        return `${frontendUrl}/api/v1/app-events/${appName}`;
     }
 }
 

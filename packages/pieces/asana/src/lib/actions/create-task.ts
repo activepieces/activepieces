@@ -3,7 +3,7 @@ import { asanaCommon, callAsanaApi } from "../common";
 
 export const createAsanaTask = createAction({
     name: 'create_task',
-    description: 'Create a new task in Asana',
+    description: 'Create a new task',
     displayName: 'Create Task',
     props: {
         authentication: asanaCommon.authentication,

@@ -4,7 +4,7 @@ import { askOpenAI } from './lib/actions/send-prompt';
 
 export const openai = createPiece({
   name: 'openai',
-  displayName: 'Open AI',
+  displayName: 'OpenAI',
   logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   version: packageJson.version,
   actions: [askOpenAI],
