@@ -17,6 +17,7 @@ import { flowRepo } from '../flows/flow.repo';
 import { system } from '../helper/system/system';
 import { SystemProp } from '../helper/system/system-prop';
 import { getPublicIp } from '../helper/public-ip-utils';
+import { triggerEventService } from '../flows/trigger-events/trigger-event.service';
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
@@ -29,9 +30,12 @@ export const webhookService = {
                 },
             });
         }
+        triggerEventService.saveEvent({ flowId: flowId, payload, projectId: flow.projectId });
         const collection = await collectionService.getOneOrThrow({ projectId: flow.projectId, id: flow.collectionId });
-        const instance = await getInstanceOrThrow(flow.projectId, collection.id);
-        console.log(`payload`, payload);
+        const instance = await instanceService.getByCollectionId({ projectId: flow.projectId, collectionId: collection.id });
+        if (instance === null) {
+            return;
+        }
         const flowVersion = await flowVersionService.getOneOrThrow(
             instance.flowIdToVersionId[flow.id]
         );
@@ -80,25 +84,7 @@ function extractHostname(url: string): string | null {
     }
 }
 
-const getInstanceOrThrow = async (
-    projectId: ProjectId,
-    collectionId: CollectionId
-): Promise<Instance> => {
-    const instance = await instanceService.getByCollectionId({ projectId, collectionId });
-
-    if (instance === null) {
-        throw new ActivepiecesError({
-            code: ErrorCode.INSTANCE_NOT_FOUND,
-            params: {
-                collectionId,
-            },
-        });
-    }
-
-    return instance;
-};
-
 interface CallbackParams {
-  flowId: FlowId;
-  payload: EventPayload;
+    flowId: FlowId;
+    payload: EventPayload;
 }

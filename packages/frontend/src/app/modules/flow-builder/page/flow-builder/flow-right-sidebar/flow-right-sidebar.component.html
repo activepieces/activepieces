@@ -4,8 +4,30 @@
     rightSidebarType === sidebarType.STEP_TYPE ||
     rightSidebarType === sidebarType.TRIGGER_TYPE
   "></app-step-type-sidebar>
-  <app-edit-step-sidebar *ngIf="rightSidebarType === sidebarType.EDIT_STEP
-  ">
-  </app-edit-step-sidebar>
+
+
+  <ng-container *ngIf="rightSidebarType === sidebarType.EDIT_STEP">
+    <div #editStepSection class="top-resizer-section" [class.ap-transition-all]="animateSectionsHeightChange">
+      <app-edit-step-sidebar>
+      </app-edit-step-sidebar>
+    </div>
+    <ng-container *ngIf="currentStep$ | async as currentStep">
+      <ng-container *ngIf="currentStep.type === TriggerType.WEBHOOK">
+        <div class="resizer-area" #resizerArea>
+          <app-horizontal-sidebar-separator [resizerArea]="resizerArea" topStyle="calc( 100% - 10px )"
+            (resizerDragged)="resizerDragged($event)" (resizerDragStarted)="resizerDragStarted()">
+          </app-horizontal-sidebar-separator>
+        </div>
+        <div class="bottom-resizer-section" #selectedStepResultContainer>
+          <app-test-step></app-test-step>
+        </div>
+      </ng-container>
+
+    </ng-container>
+
+  </ng-container>
+
+</ng-container>
+<ng-container *ngIf="elevateResizer$ | async">
 
 </ng-container>
