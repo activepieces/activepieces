@@ -19,7 +19,7 @@ export const triggerHelper = {
     return piece.events?.parseAndReply({ payload: params.event });
   },
 
-  async executeTrigger(params: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | unknown[]> {
+  async executeTrigger(params: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | unknown[] | unknown> {
     const { pieceName, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
 
     const piece = await pieceHelper.loadPiece(pieceName);
@@ -34,8 +34,9 @@ export const triggerHelper = {
     const resolvedInput = await variableService.resolve(input, executionState);
     const appListeners: Listener[] = [];
 
+    const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : '';
     const context = {
-      store: createContextStore(params.flowVersion.flowId),
+      store: createContextStore(prefix, params.flowVersion.flowId),
       app: {
         async createListeners({ events, identifierKey, identifierValue }: Listener) {
           appListeners.push({ events, identifierValue, identifierKey });
@@ -57,6 +58,9 @@ export const triggerHelper = {
         return {
           listeners: appListeners
         }
+    case TriggerHookType.TEST:
+          // TODO: fix types to remove use of any
+          return trigger.test(context as any);
       case TriggerHookType.RUN:
         if (trigger.type === TriggerStrategy.APP_WEBHOOK) {
           if (params.edition === ApEdition.COMMUNITY) {

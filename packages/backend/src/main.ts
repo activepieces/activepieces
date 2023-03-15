@@ -31,6 +31,7 @@ import { ApEdition } from "@activepieces/shared";
 import { appEventRoutingModule } from "./app/app-event-routing/app-event-routing.module";
 import { appCredentialModule } from "@ee/product-embed/backend/app-credentials/app-credentials.module";
 import { connectionKeyModule } from "@ee/product-embed/backend/connection-keys/connection-key.module";
+import { triggerEventModule } from "./app/flows/trigger-events/trigger-event.module";
 
 const app = fastify({
     logger,
@@ -97,6 +98,7 @@ app.register(flowRunModule);
 app.register(webhookModule);
 app.register(appConnectionModule);
 app.register(openapiModule);
+app.register(triggerEventModule);
 app.register(appEventRoutingModule);
 
 app.get(
