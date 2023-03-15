@@ -15,6 +15,7 @@ assert(process.env.DO_SPACES_SECRET)
 
 const doSpacesClient = new S3({
     forcePathStyle: false, // Configures to use subdomain/virtual calling format.
+    region: 'us-east-1', // dummy region needed by S3 client
     endpoint: 'https://fra1.digitaloceanspaces.com',
     credentials: {
         accessKeyId: process.env.DO_SPACES_KEY,
