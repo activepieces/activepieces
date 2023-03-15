@@ -3,6 +3,7 @@ import {
   ElementRef,
   NgZone,
   OnInit,
+  Renderer2,
   ViewChild,
 } from '@angular/core';
 import { RightSideBarType } from '../../../../common/model/enum/right-side-bar-type.enum';
@@ -39,27 +40,43 @@ export class FlowRightSidebarComponent implements OnInit {
   constructor(
     private store: Store,
     private ngZone: NgZone,
-    private testStepService: TestStepService
+    private testStepService: TestStepService,
+    private renderer: Renderer2
   ) {}
 
   ngOnInit(): void {
     this.rightSidebarType$ = this.store.select(
       BuilderSelectors.selectCurrentRightSideBarType
     );
+    this.elevateResizer$ = this.testStepService.elevateResizer$.pipe(
+      tap((shouldAnimate) => {
+        if (shouldAnimate) {
+          this.resizerAnimation();
+        }
+      }),
+      map(() => void 0)
+    );
     this.currentStep$ = this.store
       .select(BuilderSelectors.selectCurrentStep)
       .pipe(
-        tap(() => {
-          this.elevateResizer$ = this.testStepService.elevateResizer$.pipe(
-            tap((shouldAnimate) => {
-              if (shouldAnimate) {
-                this.resizerAnimation();
-              }
-            }),
-            map(() => void 0)
-          );
+        tap((step) => {
+          if (step?.type !== TriggerType.WEBHOOK) {
+            this.resetHeights();
+          }
         })
       );
+  }
+
+  private resetHeights() {
+    if (this.editStepSection?.nativeElement) {
+      this.renderer.removeStyle(this.editStepSection.nativeElement, 'height');
+    }
+    if (this.selectedStepResultContainer?.nativeElement) {
+      this.renderer.removeStyle(
+        this.editStepSection.nativeElement,
+        'maxHeight'
+      );
+    }
   }
 
   get sidebarType() {
@@ -77,11 +94,15 @@ export class FlowRightSidebarComponent implements OnInit {
     });
   }
   resizerAnimation() {
-    this.animateSectionsHeightChange = true;
-    this.editStepSection.nativeElement.style.height = `calc(50% - 30px)`;
-    this.selectedStepResultContainer.nativeElement.style.maxHeight = `calc(50% - 30px)`;
-    setTimeout(() => {
-      this.animateSectionsHeightChange = false;
-    }, 150);
+    this.renderer.setStyle(
+      this.editStepSection.nativeElement,
+      'height',
+      'calc(50% - 30px)'
+    );
+    this.renderer.setStyle(
+      this.selectedStepResultContainer.nativeElement,
+      'maxHeight',
+      'calc(50% - 30px)'
+    );
   }
 }
