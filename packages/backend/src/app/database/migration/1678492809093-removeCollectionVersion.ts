@@ -6,6 +6,13 @@ export class removeCollectionVersion1678492809093 implements MigrationInterface 
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         logger.info("Running migration removeCollectionVersion1678492809093");
+        await queryRunner.query(`ALTER TABLE "instance" DROP CONSTRAINT "fk_instance_collection_version"`);
+        await queryRunner.query(`ALTER TABLE "flow_run" DROP CONSTRAINT "fk_flow_run_collection_version_id"`);
+        await queryRunner.query(`ALTER TABLE "instance" DROP CONSTRAINT "REL_183c020130aa172f58c6a0c647"`);
+        await queryRunner.query(`ALTER TABLE "instance" DROP COLUMN "collectionVersionId"`);
+        await queryRunner.query(`ALTER TABLE "flow_run" DROP COLUMN "collectionVersionId"`);
+        await queryRunner.query(`ALTER TABLE "collection" ADD "displayName" character varying`);
+
         await queryRunner.commitTransaction();
         await queryRunner.startTransaction();
         const collectionRepo = queryRunner.connection.getRepository("collection");
@@ -32,6 +39,7 @@ export class removeCollectionVersion1678492809093 implements MigrationInterface 
         await queryRunner.query(`ALTER TABLE "instance" ADD "collectionVersionId" character varying(21) NOT NULL`);
         await queryRunner.query(`ALTER TABLE "instance" ADD CONSTRAINT "REL_183c020130aa172f58c6a0c647" UNIQUE ("collectionVersionId")`);
         await queryRunner.query(`ALTER TABLE "flow_run" ADD CONSTRAINT "fk_flow_run_collection_version_id" FOREIGN KEY ("collectionVersionId") REFERENCES "collection_version"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "instance" ADD CONSTRAINT "fk_instance_collection_version" FOREIGN KEY ("collectionVersionId") REFERENCES "collection_version"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
     }
 
 }
