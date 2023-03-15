@@ -66,6 +66,8 @@ export class AddEditConnectionButtonComponent {
   @Input()
   pieceName: string;
   @Input()
+  pieceVersion: string;
+  @Input()
   isEditConnectionButton = false;
   @Input()
   triggerName: string;
@@ -167,24 +169,23 @@ export class AddEditConnectionButtonComponent {
             return res[this.pieceName];
           }),
           switchMap((res: { clientId: string }) => {
-            return this.actionMetaService.getPieces().pipe(
-              map((pieces) => {
-                return pieces.find((p) => p.name === this.pieceName)!;
-              }),
-              map((p) => {
-                let isTriggerAppWebhook = false;
-                Object.keys(p.triggers).forEach((k) => {
-                  isTriggerAppWebhook =
-                    isTriggerAppWebhook ||
-                    (this.triggerName === k &&
-                      p.triggers[k].type === 'APP_WEBHOOK');
-                });
-                return {
-                  cloudAuth2Config: res,
-                  isTriggerAppWebhook: isTriggerAppWebhook,
-                };
-              })
-            );
+            return this.actionMetaService
+              .getPieceMetadata(this.pieceName, this.pieceVersion)
+              .pipe(
+                map((p) => {
+                  let isTriggerAppWebhook = false;
+                  Object.keys(p.triggers).forEach((k) => {
+                    isTriggerAppWebhook =
+                      isTriggerAppWebhook ||
+                      (this.triggerName === k &&
+                        p.triggers[k].type === 'APP_WEBHOOK');
+                  });
+                  return {
+                    cloudAuth2Config: res,
+                    isTriggerAppWebhook: isTriggerAppWebhook,
+                  };
+                })
+              );
           }),
           tap(
             (res: {

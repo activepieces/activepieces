@@ -27,6 +27,7 @@ import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   ActionType,
+  PieceActionSettings,
   TriggerType,
   UpdateActionRequest,
   UpdateTriggerRequest,
@@ -35,6 +36,12 @@ import { FlowItem } from '../../../../../../common/model/flow-builder/flow-item'
 import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
 import { FlowsActions } from '../../../../../store/flow/flows.action';
 import { FlagService } from '../../../../../../common/service/flag.service';
+
+type DescribeControlValue = {
+  name: string;
+  version: string;
+  displayName: string;
+};
 
 @Component({
   selector: 'app-edit-step-accodion',
@@ -98,7 +105,11 @@ export class EditStepAccordionComponent implements AfterViewInit {
     );
     this.stepForm = this.formBuilder.group({
       describe: new UntypedFormControl({
-        value: { name: '', displayName: '' },
+        value: {
+          name: '',
+          version: '',
+          displayName: '',
+        },
       }),
       input: new UntypedFormControl({}),
     });
@@ -126,10 +137,14 @@ export class EditStepAccordionComponent implements AfterViewInit {
     describeControl.setValue({
       displayName: stepSelected.displayName,
       name: stepSelected.name,
+      version: (stepSelected.settings as PieceActionSettings).pieceVersion,
     });
     const inputControl = this.stepForm.get('input')!;
     const settings = stepSelected.settings;
-    inputControl.setValue({ ...settings, type: stepSelected.type });
+    inputControl.setValue({
+      ...settings,
+      type: stepSelected.type,
+    });
   }
 
   setAutoSaveListener() {
@@ -159,7 +174,7 @@ export class EditStepAccordionComponent implements AfterViewInit {
   }
 
   prepareStepDataToSave(): UpdateActionRequest | UpdateTriggerRequest {
-    const describeControlValue: { displayName: string; name: string } =
+    const describeControlValue: DescribeControlValue =
       this.stepForm.get('describe')!.value;
     const inputControlValue = this.stepForm.get('input')!.value;
     const stepToSave: UpdateActionRequest = JSON.parse(
