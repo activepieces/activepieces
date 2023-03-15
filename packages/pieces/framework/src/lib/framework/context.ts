@@ -1,6 +1,4 @@
-import { TriggerStrategy } from "./trigger/trigger";
-import {  AppConnectionValue } from "@activepieces/shared";
-
+import {  AppConnectionValue, TriggerStrategy } from "@activepieces/shared";
 
 export type TriggerHookContext<T, S extends TriggerStrategy> =
     S extends TriggerStrategy.APP_WEBHOOK ? {

@@ -1,4 +1,5 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/framework';
+import { createTrigger } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { GmailRequests } from '../common/data';
 import { GmailLabel } from '../common/models';

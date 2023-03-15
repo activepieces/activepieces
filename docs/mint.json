@@ -101,6 +101,7 @@
         "pieces/apps/stripe",
         "pieces/apps/telegram_bot",
         "pieces/apps/todoist",
+        "pieces/apps/trello",
         "pieces/apps/twilio",
         "pieces/apps/typeform",
         "pieces/apps/wordpress",

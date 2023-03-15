@@ -1,4 +1,5 @@
-import { createTrigger, TriggerStrategy, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
+import { createTrigger, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
+import { TriggerStrategy } from "@activepieces/shared";
 import { calendlyCommon, CalendlyWebhookInformation } from "../common";
 
 const triggerNameInStore = 'calendly_invitee_created_trigger';

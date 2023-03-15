@@ -40,23 +40,6 @@
 
 
   </ng-container>
-  <div *ngIf="(configsMentions$|async)?.length" class="mat-tree-node ap-flex ap-text-body ap-items-center ap-px-4"
-    mat-menu-item (click)="expandConfigs? expandConfigs=false : expandConfigs=true">
-    <mat-icon class="mat-icon-rtl-mirror">
-      {{expandConfigs ? 'expand_less ' : 'expand_more'}}
-    </mat-icon>
-    <app-mention-list-item-template itemLabel="Configs" class="ap-flex-grow"></app-mention-list-item-template>
-  </div>
-  <ng-container *ngIf="expandConfigs">
-
-    <ng-container *ngFor="let configMention of configsMentions$|async">
-      <app-generic-mention-item [mention]="configMention" matTooltip="Config" leftPadding="56px"
-        (mentionClicked)="mentionClicked($event)"></app-generic-mention-item>
-    </ng-container>
-
-  </ng-container>
-  <mat-divider *ngIf="(configsMentions$|async)?.length"></mat-divider>
-
   <div class="mat-tree-node ap-flex ap-items-center ap-px-4" *ngIf="(connectionsMentions$|async)?.length" mat-menu-item
     (click)="expandConnections? expandConnections=false : expandConnections=true">
     <mat-icon class="mat-icon-rtl-mirror">

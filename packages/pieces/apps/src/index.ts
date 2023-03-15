@@ -30,7 +30,6 @@ import { posthog } from '@activepieces/piece-posthog';
 import { rssFeed } from '@activepieces/piece-rss';
 import { sendgrid } from '@activepieces/piece-sendgrid';
 import { slack } from '@activepieces/piece-slack';
-import { trello } from './lib/trello';
 import { storage } from '@activepieces/piece-store';
 import { stripe } from '@activepieces/piece-stripe';
 import { telegramBot } from '@activepieces/piece-telegram-bot';
@@ -43,6 +42,9 @@ import { generatebanners } from '@activepieces/piece-generatebanners';
 import { connections } from '@activepieces/piece-connections';
 import { youtube } from '@activepieces/piece-youtube';
 import { intercom } from '@activepieces/piece-intercom';
+import { trello } from '@activepieces/piece-trello';
+import { square } from '@activepieces/piece-square';
+
 export const pieces: Piece[] = [
     airtable,
     asana,
@@ -87,7 +89,8 @@ export const pieces: Piece[] = [
     zoom,
     connections,
     youtube,
-    intercom
+    intercom,
+    square
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {

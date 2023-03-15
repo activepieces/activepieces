@@ -27,7 +27,7 @@ import {
 import { Store } from '@ngrx/store';
 import { ActionMetaService } from '../../../../../../../../service/action-meta.service';
 import { FlowItemsDetailsState } from '../../../../../../../../store/model/flow-items-details-state.model';
-import { Config, PieceActionSettings } from '@activepieces/shared';
+import { PieceActionSettings } from '@activepieces/shared';
 import { DropdownItem } from '../../../../../../../../../common/model/dropdown-item.interface';
 import {
   PieceConfig,
@@ -97,7 +97,6 @@ export class PieceActionInputFormComponent
     actionName: string;
     configs: PieceConfig[];
   }>;
-  updateOrAddConfigModalClosed$: Observable<Config>;
   allAuthConfigs$: Observable<DropdownItem[]>;
   flowItemDetails$: Observable<FlowItemsDetailsState>;
 
@@ -342,7 +341,7 @@ export class PieceActionInputFormComponent
         ...configs.input,
       },
       pieceName: this.pieceName,
-      pieceVersion: '0.0.0',
+      pieceVersion: '0.0.1',
       inputUiInfo: { customizedInputs: customizedInputs },
     };
 
