@@ -21,6 +21,9 @@ jobs:
       - name: build packages
         run: npx nx run-many --target=build
 
+      - name: copy project .npmrc to user level
+        run: cp .npmrc $HOME/.npmrc
+
       - name: publish shared package
         run: npx ts-node tools/scripts/utils/publish-nx-project.ts packages/shared
         env:
