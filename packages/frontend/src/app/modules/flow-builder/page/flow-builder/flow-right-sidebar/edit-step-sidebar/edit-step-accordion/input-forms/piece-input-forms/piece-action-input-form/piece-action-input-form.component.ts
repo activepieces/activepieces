@@ -34,7 +34,7 @@ import {
   PieceProperty,
   propsConvertor,
 } from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
-import { ComponentActionInputFormSchema } from '../../input-forms-schema';
+import { PieceActionInputFormSchema } from '../../input-forms-schema';
 import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
 import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
 declare type ActionDropdownOptionValue = {
@@ -91,7 +91,7 @@ export class PieceActionInputFormComponent
   triggerInitialSetup$: Subject<true> = new Subject();
   pieceName: string;
   pieceVersion: string;
-  intialComponentInputFormValue: ComponentActionInputFormSchema | null;
+  intialComponentInputFormValue: PieceActionInputFormSchema | null;
   selectedAction$: Observable<any>;
   actions$: Observable<ActionDropdownOption[]>;
   valueChanges$: Observable<void>;
@@ -253,7 +253,7 @@ export class PieceActionInputFormComponent
     );
     this.triggerInitialSetup$.next(true);
   }
-  writeValue(obj: ComponentActionInputFormSchema): void {
+  writeValue(obj: PieceActionInputFormSchema): void {
     this.intialComponentInputFormValue = obj;
     this.pieceName = obj.pieceName;
     this.pieceVersion = obj.pieceVersion;

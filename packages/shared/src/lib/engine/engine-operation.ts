@@ -12,7 +12,8 @@ export enum EngineOperationType {
 export enum TriggerHookType {
     ON_ENABLE = "ON_ENABLE",
     ON_DISABLE = "ON_DISABLE",
-    RUN = "RUN"
+    RUN = "RUN",
+    TEST = "TEST"
 }
 
 export type EngineOperation = ExecuteFlowOperation | ExecutePropsOptions | ExecuteTriggerOperation | ExecuteEventParserOperation;
@@ -53,6 +54,7 @@ export interface ExecuteTriggerOperation {
     workerToken?: string;
     apiUrl?: string;
     edition?: string;
+    appWebhookUrl?: string;
     webhookSecret?: string;
 }
 

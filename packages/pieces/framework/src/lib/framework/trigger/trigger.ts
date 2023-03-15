@@ -18,7 +18,10 @@ class ITrigger<T extends PieceProperty, S extends TriggerStrategy> implements Tr
     public readonly run: (
       ctx: TriggerContext<StaticPropsValue<T>>
     ) => Promise<unknown[]>,
-    public readonly sampleData: unknown
+    public readonly test: (
+      ctx: TriggerContext<StaticPropsValue<T>>
+    ) => Promise<unknown>,
+    public sampleData: unknown
   ) { }
 }
 
@@ -33,7 +36,8 @@ export function createTrigger<T extends PieceProperty, S extends TriggerStrategy
   onEnable: (context: TriggerHookContext<StaticPropsValue<T>, S>) => Promise<void>;
   onDisable: (context: TriggerHookContext<StaticPropsValue<T>, S>) => Promise<void>;
   run: (context: TriggerContext<StaticPropsValue<T>>) => Promise<unknown[]>;
-  sampleData?: unknown;
+  test?: (context: TriggerContext<StaticPropsValue<T>>) => Promise<unknown>;
+  sampleData: unknown | ((context: TriggerContext<StaticPropsValue<T>>) => Promise<unknown>);
 }): Trigger {
   return new ITrigger<T, S>(
     request.name,
@@ -44,6 +48,7 @@ export function createTrigger<T extends PieceProperty, S extends TriggerStrategy
     request.onEnable,
     request.onDisable,
     request.run,
+    request.test ?? (() => Promise.resolve()),
     request.sampleData
   );
 }

@@ -73,7 +73,7 @@ export const clickupTriggers = [
   {
     name: "task_created",
     eventType: ClickupEventType.TASK_CREATED,
-    displayName: 'Task created',
+    displayName: 'Task Created',
     description: 'Triggered when a new task is created.',
     sampleData: {
       event: 'taskCreated',
@@ -106,7 +106,7 @@ export const clickupTriggers = [
   {
     name: "task_updated",
     eventType: ClickupEventType.TASK_UPDATED,
-    displayName: 'Task updated',
+    displayName: 'Task Updated',
     description: 'Triggered when a task is updated.',
     sampleData: {
       event: 'taskUpdated',
@@ -139,7 +139,7 @@ export const clickupTriggers = [
   {
     name: "task_deleted",
     eventType: ClickupEventType.TASK_DELETED,
-    displayName: 'Task deleted',
+    displayName: 'Task Deleted',
     description: 'Triggered when a task is deleted.',
     sampleData: {
       event: 'taskDeleted',
@@ -150,7 +150,7 @@ export const clickupTriggers = [
   {
     name: "task_comment_posted",
     eventType: ClickupEventType.TASK_COMMENT_POSTED,
-    displayName: 'Task comment posted',
+    displayName: 'Task Comment Posted',
     description: 'Triggered when a task comment is posted.',
     sampleData: {
       event: 'taskCommentPosted',
@@ -189,7 +189,7 @@ export const clickupTriggers = [
   {
     name: "task_comment_updated",
     eventType: ClickupEventType.TASK_COMMENT_UPDATED,
-    displayName: 'Task comment updated',
+    displayName: 'Task Comment Updated',
     description: 'Triggered when a task comment is updated.',
     sampleData: {
       event: 'taskCommentUpdated',

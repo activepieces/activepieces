@@ -17,9 +17,9 @@ name: 'send_message_webhook',
   async run(configValue) {
     const request: HttpRequest<{ content: string }> = {
       method: HttpMethod.POST,
-      url: configValue.propsValue['webhook_url']!,
+      url: configValue.propsValue['webhook_url'],
       body: {
-        content: configValue.propsValue['content']!,
+        content: configValue.propsValue['content'],
       },
     };
       return await httpClient.sendRequest<never>(request);

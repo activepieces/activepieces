@@ -1,4 +1,4 @@
-import { AuthenticationType, createAction, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework"
+import {  createAction, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework"
 
 export const freshSalesCreateContact = createAction({
   name: "freshsales_create_contact",

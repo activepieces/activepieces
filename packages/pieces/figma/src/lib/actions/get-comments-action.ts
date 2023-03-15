@@ -5,7 +5,7 @@ import { figmaGetRequest } from '../common/utils';
 
 export const getCommentsAction = createAction({
   name: 'get_comments',
-  displayName: 'Get file comments',
+  displayName: 'Get File Comments',
   description: 'Get file comments',
   sampleData: {
     "success": true,

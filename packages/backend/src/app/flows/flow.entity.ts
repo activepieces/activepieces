@@ -1,5 +1,5 @@
 import { EntitySchema } from "typeorm";
-import { Collection, Flow, FlowRun, FlowVersion, Project } from "@activepieces/shared";
+import { Collection, Flow, FlowRun, FlowVersion, Project, TriggerEvent } from "@activepieces/shared";
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 
 interface FlowSchema extends Flow {
@@ -7,6 +7,7 @@ interface FlowSchema extends Flow {
   collection: Collection;
   project: Project;
   runs: FlowRun[];
+  events: TriggerEvent[];
 }
 
 export const FlowEntity = new EntitySchema<FlowSchema>({
@@ -27,6 +28,11 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
         runs: {
             type: "one-to-many",
             target: "flow_run",
+            inverseSide: "flow",
+        },
+        events: {
+            type: "one-to-many",
+            target: "trigger_event",
             inverseSide: "flow",
         },
         versions: {

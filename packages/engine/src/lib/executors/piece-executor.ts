@@ -20,7 +20,7 @@ export class PieceExecutor {
     }
 
     return await action.run({
-      store: createContextStore(globals.flowId),
+      store: createContextStore('', globals.flowId),
       propsValue: config,
       connections: {
         get: async (key: string) => {

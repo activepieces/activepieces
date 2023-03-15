@@ -4,7 +4,7 @@ import { createAction, Property, assertNotNullOrUndefined } from '@activepieces/
 
 export const hubSpotListsAddContactAction = createAction({
   name: 'add_contact_to_list',
-  displayName: 'Add contact to list',
+  displayName: 'Add contact To List',
   description: 'Add contact to list',
   sampleData: {
     'updated': [12345],

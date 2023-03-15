@@ -40,7 +40,7 @@ export class ActionMetaService {
     {
       type: ActionType.BRANCH,
       name: 'Branch',
-      description: 'Branchy branch ranch',
+      description: 'Decide what happens based on an if condition result',
       logoUrl: '/assets/img/custom/piece/branch.svg',
     },
   ];

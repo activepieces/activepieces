@@ -7,6 +7,7 @@ import {
   Flow,
   FlowRun,
   PieceActionSettings,
+  SampleDataSettings,
 } from '@activepieces/shared';
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
@@ -162,6 +163,25 @@ export const selectCurrentStep = createSelector(
       return undefined;
     }
     return selectedFlowTabsState.focusedStep;
+  }
+);
+const selectCurrentStepSettings = createSelector(
+  selectCurrentStep,
+  (selectedStep) => {
+    if (selectedStep) {
+      return selectedStep.settings;
+    }
+    return undefined;
+  }
+);
+const selectStepSelectedSampleData = createSelector(
+  selectCurrentStepSettings,
+  (settings) => {
+    if (settings) {
+      const sampleDataSettings = settings['inputUiInfo'] as SampleDataSettings;
+      return sampleDataSettings.currentSelectedData;
+    }
+    return undefined;
   }
 );
 export const selectCurrentStepName = createSelector(
@@ -528,4 +548,6 @@ export const BuilderSelectors = {
   selectAllStepsForMentionsDropdown,
   selectAppConnectionsForMentionsDropdown,
   selectAnyFlowHasSteps,
+  selectCurrentStepSettings,
+  selectStepSelectedSampleData,
 };
