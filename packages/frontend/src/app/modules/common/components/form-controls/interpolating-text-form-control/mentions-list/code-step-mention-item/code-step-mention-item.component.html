@@ -13,7 +13,7 @@
       role="status"></span>
     <div class="ap-flex-grow"></div>
     <app-button @fadeIn *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
-      [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
+      [keepBgWhite]="true" [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
       (buttonClicked)="mentionClicked.emit(stepMention)">Select
     </app-button>
   </div>

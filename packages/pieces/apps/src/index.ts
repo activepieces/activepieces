@@ -41,6 +41,7 @@ import { zoom } from '@activepieces/piece-zoom';
 import { generatebanners } from '@activepieces/piece-generatebanners';
 import { connections } from '@activepieces/piece-connections';
 import { youtube } from '@activepieces/piece-youtube';
+import { intercom } from '@activepieces/piece-intercom';
 import { trello } from '@activepieces/piece-trello';
 import { square } from '@activepieces/piece-square';
 import { delay } from '@activepieces/piece-delay';
@@ -93,6 +94,8 @@ export const pieces: Piece[] = [
     square,
     delay,
     dataMapper,
+    intercom,
+    square
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
