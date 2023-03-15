@@ -1,7 +1,7 @@
 name: Build Everything
 
 on:
-  push:
+  pull_request:
 
 jobs:
   Build-Everything:

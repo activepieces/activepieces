@@ -54,6 +54,7 @@ export interface ExecuteTriggerOperation {
     workerToken?: string;
     apiUrl?: string;
     edition?: string;
+    appWebhookUrl?: string;
     webhookSecret?: string;
 }
 

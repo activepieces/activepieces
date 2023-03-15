@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import {
+    ApEnvironment,
     apId,
     CollectionId,
     EngineOperation,
@@ -25,12 +26,16 @@ import { logger } from "../helper/logger";
 import chalk from "chalk";
 import { getEdition, getWebhookSecret } from "./secret-helper";
 import { packageManager } from "./package-manager";
+import { appEventRoutingService } from "../app-event-routing/app-event-routing.service";
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH);
 
 const installPieceDependency = async (path: string, pieceName: string, pieceVersion: string) => {
-    await packageManager.addDependencies(path, { [`@activepieces/piece-${pieceName}`]: pieceVersion });
+    const environment = system.get(SystemProp.ENVIRONMENT);
+    if (environment === ApEnvironment.PRODUCTION) {
+        await packageManager.addDependencies(path, { [`@activepieces/piece-${pieceName}`]: pieceVersion });
+    }
 };
 
 export const engineHelper = {
@@ -70,6 +75,7 @@ export const engineHelper = {
             result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
                 edition: await getEdition(),
+                appWebhookUrl: await appEventRoutingService.getAppWebookUrl({ appName: pieceName }),
                 webhookSecret: await getWebhookSecret(operation.flowVersion),
                 workerToken: await workerToken({
                     collectionId: operation.collectionId,

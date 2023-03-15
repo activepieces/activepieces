@@ -42,6 +42,7 @@ import { generatebanners } from '@activepieces/piece-generatebanners';
 import { connections } from '@activepieces/piece-connections';
 import { youtube } from '@activepieces/piece-youtube';
 import { trello } from '@activepieces/piece-trello';
+import { square } from '@activepieces/piece-square';
 
 export const pieces: Piece[] = [
     airtable,
@@ -87,6 +88,7 @@ export const pieces: Piece[] = [
     zoom,
     connections,
     youtube,
+    square
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
