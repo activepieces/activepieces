@@ -43,6 +43,9 @@
         <div class="ap-flex ap-flex-col ap-gap-2">
             <div class="ap-flex ap-gap-2 ap-items-center">
                 <div class="spinner-border dark-spinner" role="status"></div> Testing trigger
+                <div class="ap-flex-grow"></div>
+                <app-button btnColor="primary" btnStyle="stroked" btnSize="medium"
+                    (buttonClicked)="cancelTesting()">Cancel</app-button>
             </div>
             <div class="ap-font-semibold ap-flex ap-items-center ap-gap-2 ap-ml-[-3px]">
                 <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">

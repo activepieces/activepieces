@@ -6,6 +6,7 @@ import {
   forkJoin,
   interval,
   map,
+  merge,
   Observable,
   of,
   Subject,
@@ -42,6 +43,7 @@ export class TestStepComponent {
   initialHistoricalData$: Observable<WebhookHistoricalData[]>;
   initaillySelectedSampleData$: Observable<unknown>;
   stopSelectedDataControlListener$ = new Subject<boolean>();
+  cancelTesting$ = new Subject<boolean>();
   constructor(private testStepService: TestStepService, private store: Store) {
     this.initialObservables();
   }
@@ -83,8 +85,12 @@ export class TestStepComponent {
         take(1),
         switchMap((id) => {
           if (id) {
+            const stopListening$ = merge(
+              this.cancelTesting$,
+              this.foundNewResult$
+            );
             return interval(500).pipe(
-              takeUntil(this.foundNewResult$),
+              takeUntil(stopListening$),
               switchMap(() => {
                 return this.createResultsChecker(id.toString());
               })
@@ -155,4 +161,8 @@ export class TestStepComponent {
   dropdownCompareWithFunction = (opt: unknown, formControlValue: unknown) => {
     return formControlValue !== undefined && deepEqual(opt, formControlValue);
   };
+  cancelTesting() {
+    this.loading = false;
+    this.cancelTesting$.next(true);
+  }
 }
