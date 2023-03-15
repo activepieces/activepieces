@@ -44,9 +44,10 @@
             <div class="ap-flex ap-gap-2 ap-items-center">
                 <div class="spinner-border dark-spinner" role="status"></div> Testing trigger
             </div>
-            <p class="ap-font-semibold">
-                (Warning) Action Required
-            </p>
+            <div class="ap-font-semibold ap-flex ap-items-center ap-gap-2 ap-ml-[-3px]">
+                <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">
+                </svg-icon> Action Required
+            </div>
             <p>
                 Please send data to the webhook endpoint to
                 test the step.
