@@ -12,7 +12,7 @@ export const unparseCSVTextAction = createAction({
   ],
   props: {
     csv_object: Property.Json({
-      displayName: 'CSV JSON',
+      displayName: 'JSON Input',
       defaultValue: {},
       required: true
     }),
