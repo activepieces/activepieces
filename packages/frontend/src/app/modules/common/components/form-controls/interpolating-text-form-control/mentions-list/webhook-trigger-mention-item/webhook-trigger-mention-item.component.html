@@ -1,11 +1,8 @@
 <button (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true" mat-menu-item
   appTrackHover #hoverTracker="hoverTrackerDirective">
-  <ng-container *ngIf="sampleData">
-    <mat-icon class="mat-icon-rtl-mirror" *ngIf="sampleData && sampleData.length>0">
-      {{expandSample ? 'expand_less' : 'expand_more'}}
-    </mat-icon>
-  </ng-container>
-
+  <mat-icon class="mat-icon-rtl-mirror">
+    {{expandSample ? 'expand_less' : 'expand_more'}}
+  </mat-icon>
   <app-generic-step-mention-item matTooltip="Webhook Trigger" [stepIndex]="stepIndex"
     [stepMention]="_stepMention"></app-generic-step-mention-item>
   <app-button @fadeIn *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
@@ -15,11 +12,26 @@
 
 
 <ng-container *ngIf="expandSample">
-  <ng-container *ngIf="sampleData">
+  <ng-container *ngIf="sampleData; else testTriggerTemplate">
     <app-step-mentions-tree [stepOutputObjectChildNodes]="sampleData"
       [markedNodesToShow]="(nodesFilteredWithSearch$ | async)!" [stepDisplayName]="_stepMention.step.displayName"
       (mentionClicked)="mentionEmitted.emit($event)"></app-step-mentions-tree>
   </ng-container>
+  <ng-template #testTriggerTemplate>
+    <div class="ap-my-3 ap-px-2">
+      <div class="ap-typography-body-1 ap-text-center ap-mb-1">
+        Test Trigger First
+      </div>
+      <div class="ap-typography-body-2 ap-text-center ap-mb-3">
+        This trigger needs to be tested in order to view its data.
+      </div>
+      <div class="ap-text-center">
+        <app-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
+          (click)="$event.stopPropagation(); selectStep()">Go to step
+        </app-button>
+      </div>
+    </div>
+  </ng-template>
 </ng-container>
 
 <ng-template #dialogTemplate>

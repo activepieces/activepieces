@@ -26,6 +26,8 @@ import { FlowItem } from '../../../../../model/flow-builder/flow-item';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 import { map, Observable } from 'rxjs';
 import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
+import { Store } from '@ngrx/store';
+import { FlowsActions } from '../../../../../../flow-builder/store/flow/flows.action';
 
 const pathRegex = /\$\{trigger((\.[a-zA-Z_$][a-zA-Z_$0-9]*)(\[([0-9])+\])*)*\}/;
 @Component({
@@ -52,7 +54,8 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
   constructor(
     formBuilder: FormBuilder,
     private dialogService: MatDialog,
-    private mentionsTreeCache: MentionsTreeCacheService
+    private mentionsTreeCache: MentionsTreeCacheService,
+    private store: Store
   ) {
     this.pathFormGroup = formBuilder.group({
       path: new FormControl<string>('${trigger.body}', {
@@ -108,5 +111,10 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
   }
   openPathDialog(dialogTemplate: TemplateRef<unknown>) {
     this.dialogService.open(dialogTemplate);
+  }
+  selectStep() {
+    this.store.dispatch(
+      FlowsActions.selectStepByName({ stepName: this._stepMention.step.name })
+    );
   }
 }
