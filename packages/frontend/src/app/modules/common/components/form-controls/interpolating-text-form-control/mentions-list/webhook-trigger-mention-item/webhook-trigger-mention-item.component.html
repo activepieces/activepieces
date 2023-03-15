@@ -1,8 +1,26 @@
-<button (click)="openPathDialog(dialogTemplate)" mat-menu-item>
+<button (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true" mat-menu-item
+  appTrackHover #hoverTracker="hoverTrackerDirective">
+  <ng-container *ngIf="sampleData">
+    <mat-icon class="mat-icon-rtl-mirror" *ngIf="sampleData && sampleData.length>0">
+      {{expandSample ? 'expand_less' : 'expand_more'}}
+    </mat-icon>
+  </ng-container>
+
   <app-generic-step-mention-item matTooltip="Webhook Trigger" [stepIndex]="stepIndex"
     [stepMention]="_stepMention"></app-generic-step-mention-item>
+  <app-button @fadeIn *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+    class="ap-absolute ap-right-[10px]" [keepBgWhite]="true" (click)="openPathDialog(dialogTemplate)">Custom Path
+  </app-button>
 </button>
 
+
+<ng-container *ngIf="expandSample">
+  <ng-container *ngIf="sampleData">
+    <app-step-mentions-tree [stepOutputObjectChildNodes]="sampleData"
+      [markedNodesToShow]="(nodesFilteredWithSearch$ | async)!" [stepDisplayName]="_stepMention.step.displayName"
+      (mentionClicked)="mentionEmitted.emit($event)"></app-step-mentions-tree>
+  </ng-container>
+</ng-container>
 
 <ng-template #dialogTemplate>
   <app-dialog-title-template>
@@ -12,7 +30,7 @@
     <div class="ap-typography-body-1 ap-text-description ap-mb-4 ap-max-w-[500px]">
       Please type the path within the webhook payload you would like to access
     </div>
-    <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="pathFormGroup" (submit)="emitMention()">
+    <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="pathFormGroup" (submit)="emitCustomPathMention()">
       <mat-form-field class="ap-w-full" appearance="outline">
         <input formControlName="path" matInput type="text" placeholder="eg.${trigger.value}" />
         <mat-error *ngIf="pathFormGroup.controls.path.invalid">Path is invalid</mat-error>
@@ -26,7 +44,7 @@
       <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
         Cancel
       </app-button>
-      <app-button cdkFocusInitial btnSize="default" type="submit" (click)="emitMention();" btnColor="warn">
+      <app-button cdkFocusInitial btnSize="default" type="submit" (click)="emitCustomPathMention()" btnColor="warn">
         Confirm
       </app-button>
     </div>

@@ -41,20 +41,15 @@ export class TestStepComponent {
   saveNewSelectedData$: Observable<void>;
   initialHistoricalData$: Observable<WebhookHistoricalData[]>;
   initaillySelectedSampleData$: Observable<unknown>;
+  stopSelectedDataControlListener$ = new Subject<boolean>();
   constructor(private testStepService: TestStepService, private store: Store) {
     this.initialObservables();
   }
   private initialObservables() {
-    this.saveNewSelectedData$ = this.selectedDataControl.valueChanges.pipe(
-      tap(() => {
-        this.saveNewResultToStep();
-      }),
-      map(() => void 0)
-    );
+    this.setSelectedDataControlListener();
     this.initialHistoricalData$ = this.store
       .select(BuilderSelectors.selectStepHistoricalSampleData)
       .pipe(
-        take(1),
         tap((res) => {
           this.currentResults$.next(res);
         })
@@ -62,11 +57,22 @@ export class TestStepComponent {
     this.initaillySelectedSampleData$ = this.store
       .select(BuilderSelectors.selectStepSelectedSampleData)
       .pipe(
-        take(1),
         tap((res) => {
+          this.stopSelectedDataControlListener$.next(true);
           this.selectedDataControl.setValue(res);
+          this.setSelectedDataControlListener();
         })
       );
+  }
+
+  private setSelectedDataControlListener() {
+    this.saveNewSelectedData$ = this.selectedDataControl.valueChanges.pipe(
+      takeUntil(this.stopSelectedDataControlListener$),
+      tap(() => {
+        this.saveNewResultToStep();
+      }),
+      map(() => void 0)
+    );
   }
 
   testStep() {

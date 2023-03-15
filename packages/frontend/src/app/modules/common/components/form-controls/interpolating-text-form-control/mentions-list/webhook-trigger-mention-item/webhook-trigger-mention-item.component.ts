@@ -3,6 +3,7 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnInit,
   Output,
   TemplateRef,
 } from '@angular/core';
@@ -16,18 +17,27 @@ import { MatDialog } from '@angular/material/dialog';
 import { TriggerType, WebhookTrigger } from '@activepieces/shared';
 import {
   MentionListItem,
+  MentionTreeNode,
   replaceArrayNotationsWithSpaces,
   replaceDotsWithSpaces,
+  traverseStepOutputAndReturnMentionTree,
 } from '../../utils';
 import { FlowItem } from '../../../../../model/flow-builder/flow-item';
+import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
+import { map, Observable } from 'rxjs';
+import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
 
 const pathRegex = /\$\{trigger((\.[a-zA-Z_$][a-zA-Z_$0-9]*)(\[([0-9])+\])*)*\}/;
 @Component({
   selector: 'app-webhook-trigger-mention-item',
   templateUrl: './webhook-trigger-mention-item.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  animations: [fadeIn400ms],
 })
-export class WebhookTriggerMentionItemComponent {
+export class WebhookTriggerMentionItemComponent implements OnInit {
+  expandSample = false;
+  sampleData: MentionTreeNode[] | undefined = undefined;
+  nodesFilteredWithSearch$: Observable<Map<string, boolean>>;
   @Input()
   set stepMention(val: MentionListItem & { step: FlowItem }) {
     if (val.step.type !== TriggerType.WEBHOOK) {
@@ -36,10 +46,14 @@ export class WebhookTriggerMentionItemComponent {
     this._stepMention = val as MentionListItem & { step: WebhookTrigger };
   }
   @Input() stepIndex: number;
-  @Output() pathChosen: EventEmitter<MentionListItem> = new EventEmitter();
+  @Output() mentionEmitted: EventEmitter<MentionListItem> = new EventEmitter();
   _stepMention: MentionListItem & { step: WebhookTrigger };
   pathFormGroup: FormGroup<{ path: FormControl<string> }>;
-  constructor(formBuilder: FormBuilder, private dialogService: MatDialog) {
+  constructor(
+    formBuilder: FormBuilder,
+    private dialogService: MatDialog,
+    private mentionsTreeCache: MentionsTreeCacheService
+  ) {
     this.pathFormGroup = formBuilder.group({
       path: new FormControl<string>('${trigger.body}', {
         validators: Validators.pattern(pathRegex),
@@ -47,7 +61,26 @@ export class WebhookTriggerMentionItemComponent {
       }),
     });
   }
-  emitMention() {
+  ngOnInit(): void {
+    this.sampleData = traverseStepOutputAndReturnMentionTree(
+      this._stepMention.step.settings.currentSelectedData,
+      this._stepMention.step.name,
+      this._stepMention.step.displayName
+    ).children;
+    debugger;
+    this.nodesFilteredWithSearch$ =
+      this.mentionsTreeCache.listSearchBarObs$.pipe(
+        map((res) => {
+          debugger;
+          const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(
+            this._stepMention.step.name,
+            res
+          );
+          return markedNodesToShow;
+        })
+      );
+  }
+  emitCustomPathMention() {
     if (this.pathFormGroup.valid) {
       const triggerPath = this.pathFormGroup.controls.path.value!;
       const triggerPathWithoutInterpolationDenotation = triggerPath.slice(
@@ -63,7 +96,7 @@ export class WebhookTriggerMentionItemComponent {
         value: this.pathFormGroup.controls.path.value!,
         label: mentionText,
       };
-      this.pathChosen.emit(mentionItem);
+      this.mentionEmitted.emit(mentionItem);
       this.dialogService.closeAll();
     }
   }
