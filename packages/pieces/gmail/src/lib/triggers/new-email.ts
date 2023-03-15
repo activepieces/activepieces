@@ -27,11 +27,7 @@ export const gmailNewEmailTrigger = createTrigger({
         "partId": '',
         "mimeType": 'multipart/alternative',
         "filename": '',
-        "headers": [
-          [Object]
-        ],
         "body": { size: 0 },
-        "parts": [[Object]]
       },
       "sizeEstimate": 107643,
       "historyId": '99742',
@@ -50,9 +46,7 @@ export const gmailNewEmailTrigger = createTrigger({
             "partId": '',
             "mimeType": 'multipart/alternative',
             "filename": '',
-            "headers": [[Object]],
             "body": { size: 0 },
-            "parts": [[Object]]
           },
           "sizeEstimate": 107643,
           "historyId": '99742',

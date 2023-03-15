@@ -108,7 +108,7 @@ export const wordpressNewPost = createTrigger({
       ]
     }
   },
-  description: 'Triggers when a new post is published.',
+  description: 'Triggers when a new post is published',
   props: {
     connection: wordpressCommon.connection,
     website_url: wordpressCommon.website_url,

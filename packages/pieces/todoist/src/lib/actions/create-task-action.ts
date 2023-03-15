@@ -4,7 +4,7 @@ import { todoistAuthentication, todoistProjectIdDropdown } from '../common/props
 
 export const todoistCreateTaskAction = createAction({
   name: 'create_task',
-  displayName: 'Create task',
+  displayName: 'Create Task',
   description: 'Create task',
   sampleData: {
     'creator_id': '2671355',
