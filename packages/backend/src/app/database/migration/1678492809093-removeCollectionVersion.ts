@@ -13,9 +13,13 @@ export class removeCollectionVersion1678492809093 implements MigrationInterface 
         for (let i = 0; i < collections.length; ++i) {
             let currentCollection = collections[i];
             const [latestCollectionVersion] = await queryRunner.query(`SELECT * FROM public.collection_version WHERE "collectionId"='${currentCollection.id}' ORDER BY created DESC LIMIT 1`);
+            let displayName = "Untitled";
+            if (latestCollectionVersion) {
+                displayName = latestCollectionVersion['displayName'];
+            }
             currentCollection = {
                 ...currentCollection,
-                displayName: latestCollectionVersion['displayName']
+                displayName: displayName
             }
             await collectionRepo.update(currentCollection.id, currentCollection);
         }
