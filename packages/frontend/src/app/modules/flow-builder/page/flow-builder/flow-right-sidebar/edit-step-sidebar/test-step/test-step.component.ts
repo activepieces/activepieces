@@ -32,8 +32,7 @@ export interface WebhookHistoricalData {
   styleUrls: ['./test-step.component.scss'],
 })
 export class TestStepComponent {
-  currentResults$: BehaviorSubject<WebhookHistoricalData[]> =
-    new BehaviorSubject([] as WebhookHistoricalData[]);
+  currentResults$: BehaviorSubject<WebhookHistoricalData[]>;
   testStep$: Observable<WebhookHistoricalData[]>;
   foundNewResult$: Subject<boolean> = new Subject();
   loading = false;
@@ -50,10 +49,18 @@ export class TestStepComponent {
   private initialObservables() {
     this.setSelectedDataControlListener();
     this.initialHistoricalData$ = this.store
-      .select(BuilderSelectors.selectStepHistoricalSampleData)
+      .select(BuilderSelectors.selectCurrentFlowId)
       .pipe(
+        switchMap((res) => {
+          return this.testStepService.getWebhookResults(res!.toString());
+        }),
+        map((res) => {
+          return res.data;
+        }),
         tap((res) => {
-          this.currentResults$.next(res);
+          this.currentResults$ = new BehaviorSubject<WebhookHistoricalData[]>(
+            res
+          );
         })
       );
     this.initaillySelectedSampleData$ = this.store
@@ -118,17 +125,13 @@ export class TestStepComponent {
 
         if (newResults.length > 0) {
           this.loading = false;
-          newResults.sort(
-            (a, b) =>
-              new Date(a.created).getTime() - new Date(b.created).getTime()
-          );
           this.selectedDataControl.setValue(
             newResults[newResults.length - 1].payload
           );
           this.foundNewResult$.next(true);
-          const resultsList = [...res.currentResults, ...newResults];
+          const resultsList = [...newResults, ...res.currentResults];
           this.currentResults$.next(resultsList);
-          this.saveNewResultToStep(resultsList);
+
           this.testStepService.elevateResizer$.next(true);
           return resultsList;
         }
@@ -136,7 +139,7 @@ export class TestStepComponent {
       })
     );
   }
-  saveNewResultToStep(newResults?: WebhookHistoricalData[]) {
+  saveNewResultToStep() {
     this.saveAfterNewDataIsLoaded$ = this.store
       .select(BuilderSelectors.selectCurrentStep)
       .pipe(
@@ -146,8 +149,6 @@ export class TestStepComponent {
             const clone = { ...step };
             clone.settings = {
               inputUiInfo: {
-                historicalData:
-                  newResults || clone.settings.inputUiInfo.historicalData,
                 currentSelectedData: this.selectedDataControl.value,
               },
             };

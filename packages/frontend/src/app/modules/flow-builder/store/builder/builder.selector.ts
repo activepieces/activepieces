@@ -174,16 +174,6 @@ const selectCurrentStepSettings = createSelector(
     return undefined;
   }
 );
-const selectStepHistoricalSampleData = createSelector(
-  selectCurrentStepSettings,
-  (settings) => {
-    if (settings) {
-      const sampleDataSettings = settings['inputUiInfo'] as SampleDataSettings;
-      return sampleDataSettings.historicalData || [];
-    }
-    return [];
-  }
-);
 const selectStepSelectedSampleData = createSelector(
   selectCurrentStepSettings,
   (settings) => {
@@ -559,6 +549,5 @@ export const BuilderSelectors = {
   selectAppConnectionsForMentionsDropdown,
   selectAnyFlowHasSteps,
   selectCurrentStepSettings,
-  selectStepHistoricalSampleData,
   selectStepSelectedSampleData,
 };
