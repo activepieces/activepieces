@@ -201,7 +201,7 @@ export class StepTypeSidebarComponent implements OnInit {
           valid: false,
           settings: {
             pieceName: triggerDetails.extra!.appName,
-            pieceVersion: '0.0.1',
+            pieceVersion: triggerDetails.extra!.appVersion,
             triggerName: '',
             input: {},
           },
@@ -272,7 +272,7 @@ export class StepTypeSidebarComponent implements OnInit {
             valid: false,
             settings: {
               pieceName: componentDetails.extra!.appName,
-              pieceVersion: '0.0.1',
+              pieceVersion: componentDetails.extra!.appVersion,
               actionName: undefined,
               input: {},
               inputUiInfo: {

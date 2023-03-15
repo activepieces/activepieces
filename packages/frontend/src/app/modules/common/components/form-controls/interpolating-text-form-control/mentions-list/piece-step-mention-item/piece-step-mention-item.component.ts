@@ -104,77 +104,80 @@ export class PieceStepMentionItemComponent implements OnInit {
     );
   }
   fetchSampleData() {
-    this.sampleData$ = this.actionMetaDataService.getPieces().pipe(
-      tap(() => {
-        this.fetching$.next(true);
-      }),
-      map((pieces) => {
-        const step = this._stepMention.step;
-        if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
-          const piece = pieces.find((p) => p.name === step.settings.pieceName);
-          if (piece) {
-            if (step.type === TriggerType.PIECE) {
-              return step.settings.triggerName
-                ? piece.triggers[step.settings.triggerName].sampleData ?? {}
-                : {};
-            } else {
-              return step.settings.actionName
-                ? piece.actions[step.settings.actionName].sampleData ?? {}
-                : {};
-            }
+    const step = this._stepMention.step;
+
+    if (step.type !== TriggerType.PIECE && step.type !== ActionType.PIECE) {
+      throw new Error("Activepieces- step isn't of a piece type");
+    }
+
+    const { pieceName, pieceVersion } = step.settings;
+
+    this.sampleData$ = this.actionMetaDataService
+      .getPieceMetadata(pieceName, pieceVersion)
+      .pipe(
+        tap(() => {
+          this.fetching$.next(true);
+        }),
+        map((pieceMetadata) => {
+          if (step.type === TriggerType.PIECE) {
+            return step.settings.triggerName
+              ? pieceMetadata.triggers[step.settings.triggerName].sampleData ??
+                  {}
+              : {};
+          } else {
+            return step.settings.actionName
+              ? pieceMetadata.actions[step.settings.actionName].sampleData ?? {}
+              : {};
           }
-        }
-        throw new Error("Activepieces- step isn't of a piece type");
-      }),
-      map((sampleData) => {
-        const childrenNodes = traverseStepOutputAndReturnMentionTree(
-          sampleData,
-          this._stepMention.step.name,
-          this._stepMention.step.displayName
-        ).children;
-        return childrenNodes;
-      }),
-      map((res) => {
-        if (!res || res.length === 0) {
-          const error = this.getErrorMessage();
-          return { error: error, children: [] };
-        }
-        return { children: res, error: '' };
-      }),
-      tap((res) => {
-        if (!res.error) {
-          this.mentionsTreeCache.setStepMentionsTree(
-            this._stepMention.step.name,
-            { children: res.children }
-          );
-        }
-        this.fetching$.next(false);
-      }),
-      switchMap((res) => {
-        if (res.error) {
+        }),
+        map((sampleData) => {
+          const childrenNodes = traverseStepOutputAndReturnMentionTree(
+            sampleData,
+            step.name,
+            step.displayName
+          ).children;
+          return childrenNodes;
+        }),
+        map((res) => {
+          if (!res || res.length === 0) {
+            const error = this.getErrorMessage();
+            return { error: error, children: [] };
+          }
+          return { children: res, error: '' };
+        }),
+        tap((res) => {
+          if (!res.error) {
+            this.mentionsTreeCache.setStepMentionsTree(step.name, {
+              children: res.children,
+            });
+          }
+          this.fetching$.next(false);
+        }),
+        switchMap((res) => {
+          if (res.error) {
+            return combineLatest({
+              stepTree: of({ children: [], error: res.error }),
+              search: this.mentionsTreeCache.listSearchBarObs$,
+            });
+          }
           return combineLatest({
-            stepTree: of({ children: [], error: res.error }),
+            stepTree: of({ children: res.children, error: res.error }),
             search: this.mentionsTreeCache.listSearchBarObs$,
           });
-        }
-        return combineLatest({
-          stepTree: of({ children: res.children, error: res.error }),
-          search: this.mentionsTreeCache.listSearchBarObs$,
-        });
-      }),
-      map((res) => {
-        const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(
-          this._stepMention.step.name,
-          res.search
-        );
-        return {
-          children: res.stepTree.children,
-          error: '',
-          markedNodesToShow: markedNodesToShow,
-        };
-      }),
-      shareReplay(1)
-    );
+        }),
+        map((res) => {
+          const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(
+            step.name,
+            res.search
+          );
+          return {
+            children: res.stepTree.children,
+            error: '',
+            markedNodesToShow: markedNodesToShow,
+          };
+        }),
+        shareReplay(1)
+      );
   }
 
   private getErrorMessage() {

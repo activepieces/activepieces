@@ -27,10 +27,11 @@ import {
 import { Store } from '@ngrx/store';
 import { ActionMetaService } from '../../../../../../../../service/action-meta.service';
 import { FlowItemsDetailsState } from '../../../../../../../../store/model/flow-items-details-state.model';
-import { PieceActionSettings } from '@activepieces/shared';
+import { ActionType, PieceActionSettings } from '@activepieces/shared';
 import { DropdownItem } from '../../../../../../../../../common/model/dropdown-item.interface';
 import {
   PieceConfig,
+  PieceProperty,
   propsConvertor,
 } from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
 import { PieceActionInputFormSchema } from '../../input-forms-schema';
@@ -89,6 +90,7 @@ export class PieceActionInputFormComponent
   initialSetup$: Observable<ActionDropdownOption[]>;
   triggerInitialSetup$: Subject<true> = new Subject();
   pieceName: string;
+  pieceVersion: string;
   intialComponentInputFormValue: PieceActionInputFormSchema | null;
   selectedAction$: Observable<any>;
   actions$: Observable<ActionDropdownOption[]>;
@@ -151,28 +153,27 @@ export class PieceActionInputFormComponent
     );
   }
 
-  fetchActions(pieceName: string) {
-    const pieces$ = this.actionMetaDataService.getPieces().pipe(
-      map((pieces) => {
-        const component = pieces.find((c) => c.name === pieceName);
-        if (!component) {
-          throw new Error(`Activepieces- piece not found: ${pieceName}`);
-        }
-        return component;
-      })
+  fetchActions(pieceName: string, pieceVersion: string) {
+    const pieceMetadata$ = this.actionMetaDataService.getPieceMetadata(
+      pieceName,
+      pieceVersion
     );
-    this.actions$ = pieces$.pipe(
-      map((component) => {
-        const actionsKeys = Object.keys(component.actions);
-        return actionsKeys.map((actionName) => {
-          const action = component.actions[actionName];
 
-          const configs = Object.entries(action.props).map((keyEntry) => {
-            return propsConvertor.convertToFrontEndConfig(
-              keyEntry[0],
-              keyEntry[1]
-            );
-          });
+    this.actions$ = pieceMetadata$.pipe(
+      map((pieceMetadata) => {
+        const actionsKeys = Object.keys(pieceMetadata.actions);
+        return actionsKeys.map((actionName) => {
+          const action = pieceMetadata.actions[actionName];
+
+          const configs = Object.entries(action.props).map(
+            ([propName, prop]) => {
+              return propsConvertor.convertToFrontEndConfig(
+                propName,
+                prop as PieceProperty
+              );
+            }
+          );
+
           return {
             value: {
               actionName: actionName,
@@ -255,13 +256,17 @@ export class PieceActionInputFormComponent
   writeValue(obj: PieceActionInputFormSchema): void {
     this.intialComponentInputFormValue = obj;
     this.pieceName = obj.pieceName;
+    this.pieceVersion = obj.pieceVersion;
     this.pieceActionForm
       .get(ACTION_FORM_CONTROL_NAME)
       ?.setValue(undefined, { emitEvent: false });
     this.pieceActionForm.removeControl(CONFIGS_FORM_CONTROL_NAME, {
       emitEvent: false,
     });
-    this.fetchActions(obj.pieceName);
+
+    if (obj.type === ActionType.PIECE) {
+      this.fetchActions(obj.pieceName, obj.pieceVersion);
+    }
   }
 
   registerOnChange(fn: (value) => void): void {
@@ -341,7 +346,7 @@ export class PieceActionInputFormComponent
         ...configs.input,
       },
       pieceName: this.pieceName,
-      pieceVersion: '0.0.1',
+      pieceVersion: this.pieceVersion,
       inputUiInfo: { customizedInputs: customizedInputs },
     };
 

@@ -3,23 +3,33 @@ import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-ty
 import {
   ActionType,
   ApEdition,
+  PieceMetadata,
+  PieceMetadataSummary,
   PieceOptionRequest,
+  TriggerBase,
+  TriggerStrategy,
   TriggerType,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
-import {
-  AppPiece,
-  PieceProperty,
-} from '../../common/components/configs-form/connector-action-or-config';
-import { forkJoin, map, Observable, shareReplay } from 'rxjs';
+import { PieceProperty } from '../../common/components/configs-form/connector-action-or-config';
+import { Observable, shareReplay, map, forkJoin } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { FlagService } from '../../common/service/flag.service';
+
+type TriggersMetadata = Record<string, TriggerBase>;
 
 @Injectable({
   providedIn: 'root',
 })
 export class ActionMetaService {
-  private pieces$: Observable<AppPiece[]>;
+  private piecesManifest$ = this.http
+    .get<PieceMetadataSummary[]>(`${environment.apiUrl}/pieces`)
+    .pipe(shareReplay(1));
+
+  private piecesCache = new Map<string, Observable<PieceMetadata>>();
+
+  private edition$ = this.flagsService.getEdition();
+
   public coreFlowItemsDetails: FlowItemDetails[] = [
     {
       type: ActionType.CODE,
@@ -55,36 +65,71 @@ export class ActionMetaService {
       logoUrl: '/assets/img/custom/piece/empty-trigger.svg',
     },
   ];
+
   constructor(private http: HttpClient, private flagsService: FlagService) {}
 
-  public getPieces() {
-    if (!this.pieces$) {
-      const edition$ = this.flagsService.getEdition();
-      const pieces$ = this.http.get<AppPiece[]>(environment.apiUrl + '/pieces');
-      this.pieces$ = forkJoin({
-        pieces: pieces$,
-        edition: edition$,
-      }).pipe(
-        map((res) => {
-          if (res.edition === ApEdition.COMMUNITY) {
-            return res.pieces.map((p) => {
-              const triggers = { ...p.triggers };
-              const filterdTriggers: typeof triggers = {};
-              Object.keys(triggers).forEach((k) => {
-                if (triggers[k].type !== 'APP_WEBHOOK') {
-                  filterdTriggers[k] = triggers[k];
-                }
-              });
-              return { ...p, triggers: filterdTriggers };
-            });
-          }
-          return res.pieces;
-        }),
-        shareReplay(1)
-      );
-    }
-    return this.pieces$;
+  private getCacheKey(pieceName: string, pieceVersion: string): string {
+    return `${pieceName}-${pieceVersion}`;
   }
+
+  private filterAppWebhooks(
+    triggersMap: TriggersMetadata,
+    edition: ApEdition
+  ): TriggersMetadata {
+    if (edition === ApEdition.ENTERPRISE) {
+      return triggersMap;
+    }
+
+    const triggersList = Object.entries(triggersMap);
+
+    const filteredTriggersList = triggersList.filter(
+      ([, trigger]) => trigger.type !== TriggerStrategy.APP_WEBHOOK
+    );
+
+    return Object.fromEntries(filteredTriggersList);
+  }
+
+  private fetchPieceMetadata(
+    pieceName: string,
+    pieceVersion: string
+  ): Observable<PieceMetadata> {
+    return this.http.get<PieceMetadata>(
+      `${environment.apiUrl}/pieces/${pieceName}?version=${pieceVersion}`
+    );
+  }
+
+  getPiecesManifest(): Observable<PieceMetadataSummary[]> {
+    return this.piecesManifest$;
+  }
+
+  getPieceMetadata(
+    pieceName: string,
+    pieceVersion: string
+  ): Observable<PieceMetadata> {
+    const cacheKey = this.getCacheKey(pieceName, pieceVersion);
+
+    if (this.piecesCache.has(cacheKey)) {
+      return this.piecesCache.get(cacheKey)!;
+    }
+
+    const pieceMetadata$ = forkJoin({
+      pieceMetadata: this.fetchPieceMetadata(pieceName, pieceVersion),
+      edition: this.edition$,
+    }).pipe(
+      map(({ pieceMetadata, edition }) => {
+        pieceMetadata.triggers = this.filterAppWebhooks(
+          pieceMetadata.triggers,
+          edition
+        );
+        return pieceMetadata;
+      }),
+      shareReplay(1)
+    );
+
+    this.piecesCache.set(cacheKey, pieceMetadata$);
+    return this.piecesCache.get(cacheKey)!;
+  }
+
   getPieceActionConfigOptions<
     T extends DropdownState<any> | Record<string, PieceProperty>
   >(req: PieceOptionRequest, pieceName: string) {
@@ -94,6 +139,7 @@ export class ActionMetaService {
     );
   }
 }
+
 export type DropdownState<T> = {
   disabled?: boolean;
   placeholder?: string;

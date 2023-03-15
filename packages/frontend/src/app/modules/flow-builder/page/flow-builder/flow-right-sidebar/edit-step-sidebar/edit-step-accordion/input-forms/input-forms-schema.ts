@@ -24,6 +24,7 @@ export interface ScheduledTriggerInputFormSchema extends InputFormsSchemaBase {
 //TODO figure out a way to check the type of the (input form schema) because right now they are interfaces and instance of won't work since these are json objects from the server
 export interface PieceActionInputFormSchema extends InputFormsSchemaBase {
   pieceName: string;
+  pieceVersion: string;
   actionName: string;
   input: ConfigsAndTheirValues;
   inputUiInfo: {
@@ -32,6 +33,7 @@ export interface PieceActionInputFormSchema extends InputFormsSchemaBase {
 }
 export interface ComponentTriggerInputFormSchema extends InputFormsSchemaBase {
   pieceName: string;
+  pieceVersion: string;
   triggerName: string;
   input: ConfigsAndTheirValues;
 }

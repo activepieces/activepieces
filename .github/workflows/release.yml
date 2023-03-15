@@ -40,19 +40,3 @@ jobs:
           tags: |
             activepieces/activepieces:${{ env.RELEASE }}
             activepieces/activepieces:latest
-
-  Update-Pieces-Metadata:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v3
-
-      - name: install npm deps
-        run: npm ci
-
-      - name: update pieces metadata
-        run: npx nx update-pieces-metadata pieces-apps
-        env:
-          DO_SPACES_KEY: ${{ secrets.DO_SPACES_KEY }}
-          DO_SPACES_SECRET: ${{ secrets.DO_SPACES_SECRET }}
-
