@@ -36,6 +36,10 @@
         "packages/pieces/connections/src/index.ts"
       ],
       "@activepieces/piece-csv": ["packages/pieces/csv/src/index.ts"],
+      "@activepieces/piece-data-mapper": [
+        "packages/pieces/data-mapper/src/index.ts"
+      ],
+      "@activepieces/piece-delay": ["packages/pieces/delay/src/index.ts"],
       "@activepieces/piece-discord": ["packages/pieces/discord/src/index.ts"],
       "@activepieces/piece-drip": ["packages/pieces/drip/src/index.ts"],
       "@activepieces/piece-dropbox": ["packages/pieces/dropbox/src/index.ts"],

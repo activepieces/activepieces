@@ -44,6 +44,8 @@ import { youtube } from '@activepieces/piece-youtube';
 import { intercom } from '@activepieces/piece-intercom';
 import { trello } from '@activepieces/piece-trello';
 import { square } from '@activepieces/piece-square';
+import { delay } from '@activepieces/piece-delay';
+import { dataMapper } from '@activepieces/piece-data-mapper';
 
 export const pieces: Piece[] = [
     airtable,
@@ -89,6 +91,9 @@ export const pieces: Piece[] = [
     zoom,
     connections,
     youtube,
+    square,
+    delay,
+    dataMapper,
     intercom,
     square
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
