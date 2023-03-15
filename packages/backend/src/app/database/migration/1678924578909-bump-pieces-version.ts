@@ -3,12 +3,13 @@ import { logger } from "../../helper/logger";
 
 const FLOW_VERSION_TABLE = "flow_version";
 const PIECE_TYPE = "PIECE";
+const PIECE_TRIGGER_TYPE = "PIECE_TRIGGER";
 const BRANCH_TYPE = "BRANCH";
 
-export class bumpPieceVersions1678923185686 implements MigrationInterface {
+export class bumpPiecesVersion1678924578909 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info("bumpPieceVersions1678923185686, started");
+        logger.info("bumpPiecesVersion1678924578909, started");
 
         let count = 0;
         const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE);
@@ -23,7 +24,7 @@ export class bumpPieceVersions1678923185686 implements MigrationInterface {
             }
         }
 
-        logger.info("bumpPieceVersions1678923185686, finished bumping " + count + " flows");
+        logger.info("bumpPiecesVersion1678924578909, finished bumping " + count + " flows");
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> { 
@@ -35,7 +36,7 @@ export class bumpPieceVersions1678923185686 implements MigrationInterface {
 function updateStep(step) {
     let update = false;
     while (step) {
-        if (step.type === PIECE_TYPE) {
+        if (step.type === PIECE_TYPE || step.type === PIECE_TRIGGER_TYPE) {
             if (step.settings.pieceName === 'youtube') {
                 // Youtube latest version is 0.1.3
                 step.settings.pieceVersion = "0.1.3";
