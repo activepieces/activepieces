@@ -51,8 +51,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   leftSidebarDragging = false;
   loadInitialData$: Observable<void> = new Observable<void>();
   cursorStyle$: Observable<string>;
-  currentStep$:Observable<FlowItem | null | undefined>;
-  TriggerType=TriggerType;
+  currentStep$: Observable<FlowItem | null | undefined>;
+  TriggerType = TriggerType;
   constructor(
     private store: Store,
     public pieceBuilderService: CollectionBuilderService,
