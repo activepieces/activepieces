@@ -11,8 +11,8 @@ import {
   NG_VALUE_ACCESSOR,
   Validators,
 } from '@angular/forms';
-import { map, Observable, of, tap } from 'rxjs';
-import { TriggerType } from '@activepieces/shared';
+import { forkJoin, map, Observable, of, shareReplay, take, tap } from 'rxjs';
+import { TriggerType, UpdateTriggerRequest } from '@activepieces/shared';
 import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
 import {
   PieceConfig,
@@ -22,6 +22,9 @@ import {
 import { DropdownItem } from '../../../../../../../../../common/model/dropdown-item.interface';
 import { ActionMetaService } from '../../../../../../../../service/action-meta.service';
 import { ComponentTriggerInputFormSchema } from '../../input-forms-schema';
+import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
+import { FlowsActions } from '../../../../../../../../store/flow/flows.action';
+import { Store } from '@ngrx/store';
 
 declare type TriggerDropdownOption = {
   label: {
@@ -74,7 +77,7 @@ export class PieceTriggerInputFormComponent {
     configs: PieceConfig[];
   }>;
   allAuthConfigs$: Observable<DropdownItem[]>;
-
+  updateStepName$: Observable<void>;
   onChange: (value) => void = (value) => {
     value;
   };
@@ -85,7 +88,8 @@ export class PieceTriggerInputFormComponent {
   constructor(
     private fb: UntypedFormBuilder,
     private actionMetaDataService: ActionMetaService,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private store: Store
   ) {
     this.buildForm();
     this.triggerDropdownValueChanged$ = this.componentForm
@@ -157,7 +161,8 @@ export class PieceTriggerInputFormComponent {
             },
           };
         });
-      })
+      }),
+      shareReplay(1)
     );
     this.initialSetup$ = this.triggers$.pipe(
       tap((items) => {
@@ -249,16 +254,18 @@ export class PieceTriggerInputFormComponent {
   ) {
     if (selectedValue) {
       this.triggerSelected(selectedValue);
-      this.selectedTrigger$ = this.triggers$.pipe(
-        map((items) => {
-          return items.find(
-            (it) => it.value.triggerName === selectedValue.triggerName
-          );
-        })
+      this.selectedTrigger$ = this.findTriggerByTriggerName(
+        selectedValue.triggerName
       );
     }
   }
-
+  findTriggerByTriggerName(triggerName: string) {
+    return this.triggers$.pipe(
+      map((items) => {
+        return items.find((it) => it.value.triggerName === triggerName);
+      })
+    );
+  }
   private triggerSelected(selectedValue: {
     triggerName: string;
     configs: PieceConfig[];
@@ -274,6 +281,7 @@ export class PieceTriggerInputFormComponent {
     }
     this.cd.detectChanges();
     this.componentForm.updateValueAndValidity();
+    this.updateStepName(selectedValue.triggerName);
   }
 
   getFormattedFormData(): {
@@ -300,5 +308,27 @@ export class PieceTriggerInputFormComponent {
     } else {
       this.componentForm.enable();
     }
+  }
+  updateStepName(triggerName: string) {
+    this.updateStepName$ = forkJoin({
+      action: this.findTriggerByTriggerName(triggerName),
+      step: this.store.select(BuilderSelectors.selectCurrentStep).pipe(take(1)),
+    }).pipe(
+      tap((res) => {
+        if (res.step && res.action) {
+          const clone = {
+            ...res.step,
+            displayName: res.action.label.name,
+          } as UpdateTriggerRequest;
+
+          this.store.dispatch(
+            FlowsActions.updateTrigger({
+              operation: clone,
+            })
+          );
+        }
+      }),
+      map(() => void 0)
+    );
   }
 }
