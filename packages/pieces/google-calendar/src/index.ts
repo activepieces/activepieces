@@ -5,7 +5,7 @@ import { calendarEventChanged } from './lib/triggers/calendar-event';
 
 
 export const googleCalendar = createPiece({
-	name: 'google_calendar',
+	name: 'google-calendar',
 	logoUrl: 'https://cdn.activepieces.com/pieces/google_calendar.png',
 	displayName: "Google Calendar",
   	version: packageJson.version,

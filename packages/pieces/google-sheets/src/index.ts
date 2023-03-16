@@ -4,8 +4,8 @@ import { insertRowAction } from './lib/actions/insert-row.action';
 import { newRowAdded } from './lib/triggers/new-row-added';
 
 export const googleSheets = createPiece({
-	name: 'google_sheets',
-	logoUrl: 'https://cdn.activepieces.com/pieces/google_sheets.png',
+	name: 'google-sheets',
+	logoUrl: 'https://cdn.activepieces.com/pieces/google-sheets.png',
 	authors: ['abuaboud', 'AbdulTheActivepiecer'],
 	actions: [insertRowAction],
 	displayName: "Google Sheets",

@@ -4,7 +4,7 @@ import { googleContactsAddContactAction } from './lib/action/create-contact';
 import { googleContactNewOrUpdatedContact } from './lib/trigger/new-contact';
 
 export const googleContacts = createPiece({
-	name: 'google_contacts',
+	name: 'google-contacts',
 	logoUrl: 'https://cdn.activepieces.com/pieces/google_contacts.png',
 	actions: [googleContactsAddContactAction],
 	displayName: "Google Contacts",

@@ -4,7 +4,7 @@ import { storageGetAction } from "./lib/actions/store-get-action";
 import { storagePutAction } from "./lib/actions/store-put-action";
 
 export const storage = createPiece({
-    name: 'storage',
+    name: 'store',
     displayName: 'Storage',
     description: "Store or retrieve data from activepieces key/value database",
     logoUrl: 'https://cdn.activepieces.com/pieces/storage.png',

@@ -6,10 +6,11 @@ const PIECE_TYPE = "PIECE";
 const PIECE_TRIGGER_TYPE = "PIECE_TRIGGER";
 const BRANCH_TYPE = "BRANCH";
 
-export class bumpPiecesVersion1678924578909 implements MigrationInterface {
+export class bumpFixPieceVersions1678928503715 implements MigrationInterface {
+
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info("bumpPiecesVersion1678924578909, started");
+        logger.info("bumpFixPieceVersions1678928503715, started");
 
         let count = 0;
         const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE);
@@ -24,10 +25,10 @@ export class bumpPiecesVersion1678924578909 implements MigrationInterface {
             }
         }
 
-        logger.info("bumpPiecesVersion1678924578909, finished bumping " + count + " flows");
+        logger.info("bumpFixPieceVersions1678928503715, finished bumping " + count + " flows");
     }
 
-    public async down(queryRunner: QueryRunner): Promise<void> { 
+    public async down(queryRunner: QueryRunner): Promise<void> {
         // Ignored
     }
 
@@ -37,6 +38,30 @@ function updateStep(step) {
     let update = false;
     while (step) {
         if (step.type === PIECE_TYPE || step.type === PIECE_TRIGGER_TYPE) {
+            if (step.settings.pieceName === 'google_sheets') {
+                step.settings.pieceName = "google-sheets";
+            }
+            if (step.settings.pieceName === 'google_calendar') {
+                step.settings.pieceName = "google-calendar";
+            }
+            if (step.settings.pieceName === 'google_contacts') {
+                step.settings.pieceName = "google-contacts";
+            }
+            if (step.settings.pieceName === 'google_drive') {
+                step.settings.pieceName = "google-drive";
+            }
+            if (step.settings.pieceName === 'google_tasks') {
+                step.settings.pieceName = "google-tasks";
+            }
+            if (step.settings.pieceName === 'cal.com') {
+                step.settings.pieceName = "cal-com";
+            }
+            if (step.settings.pieceName === 'storage') {
+                step.settings.pieceName = "store";
+            }
+            if (step.settings.pieceName === 'telegram_bot') {
+                step.settings.pieceName = "telegram-bot";
+            }      
             if (step.settings.pieceName === 'youtube') {
                 // Youtube latest version is 0.1.3
                 step.settings.pieceVersion = "0.1.3";

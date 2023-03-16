@@ -29,7 +29,7 @@ import { TriggerEventEntity } from "../flows/trigger-events/trigger-event.entity
 import { addtriggerevents1678621361185 } from "./migration/1678621361185-addtriggerevents";
 import { removeCollectionVersion1678492809093 } from "./migration/1678492809093-removeCollectionVersion";
 import { addEventRouting1678382946390 } from "./migration/1678382946390-add-event-routing";
-import { bumpPiecesVersion1678924578909 } from "./migration/1678924578909-bump-pieces-version";
+import { bumpFixPieceVersions1678928503715 } from "./migration/1678928503715-bump-fix-piece-versions";
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST);
@@ -62,7 +62,6 @@ const getMigrations = () => {
         addtriggerevents1678621361185,
         removeCollectionVersion1678492809093,
         addEventRouting1678382946390,
-        bumpPiecesVersion1678924578909
     ];
 }
 
