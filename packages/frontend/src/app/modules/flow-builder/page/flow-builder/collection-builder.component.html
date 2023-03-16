@@ -15,7 +15,11 @@
             " (cdkDragStarted)="rightDrawerHandleDragStarted()" (cdkDragEnded)="rightDrawHandleDragStopped()">
             <div class="knob"></div>
           </div>
-          <app-flow-right-sidebar></app-flow-right-sidebar>
+          <div class="right-side-bar-container ap-overflow-y-scroll ap-h-full"
+            [class.!ap-overflow-y-hidden]="(currentStep$ | async)?.type === TriggerType.WEBHOOK">
+            <app-flow-right-sidebar></app-flow-right-sidebar>
+          </div>
+
         </mat-drawer>
         <mat-drawer-content [class.no-transition]="rightSidebarDragging || leftSidebarDragging">
           <div class="box">
