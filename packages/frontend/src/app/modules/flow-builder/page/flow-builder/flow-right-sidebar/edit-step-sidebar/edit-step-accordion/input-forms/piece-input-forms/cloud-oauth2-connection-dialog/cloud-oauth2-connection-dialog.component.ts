@@ -87,9 +87,12 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   ngOnInit(): void {
     const propsControls = this.createPropsFormGroup();
     this.settingsForm = this.fb.group({
-      name: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
+      name: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_\\-]/g, '_'), {
         nonNullable: true,
-        validators: [Validators.required, Validators.pattern('[A-Za-z0-9_]*')],
+        validators: [
+          Validators.required,
+          Validators.pattern('[A-Za-z0-9_\\-]*'),
+        ],
         asyncValidators: [
           ConnectionValidator.createValidator(
             this.store
