@@ -62,7 +62,7 @@ export const engineHelper = {
         return result as ParseEventResponse;
     },
 
-    async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | unknown> {
+    async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | ExecuteTriggerResponse> {
         const sandbox = sandboxManager.obtainSandbox();
         let result;
         try {
@@ -86,12 +86,8 @@ export const engineHelper = {
         finally {
             sandboxManager.returnSandbox(sandbox.boxId);
         }
-
-        if (operation.hookType === TriggerHookType.RUN) {
+        if (operation.hookType === TriggerHookType.RUN || operation.hookType === TriggerHookType.TEST) {
             return result as unknown[];
-        }
-        if (operation.hookType === TriggerHookType.TEST) {
-            return result as unknown;
         }
         return result as void;
     },

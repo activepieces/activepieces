@@ -95,8 +95,8 @@ function encodePreviousCursor(cursor: string) {
 export const paginationHelper = {
     createPage<T>(data: T[], cursor: CursorResult): SeekPage<T> {
         return {
-            next: encodeNextCursor(cursor.afterCursor),
-            previous: encodePreviousCursor(cursor.beforeCursor),
+            next: encodeNextCursor(cursor?.afterCursor),
+            previous: encodePreviousCursor(cursor?.beforeCursor),
             data,
         };
     },
