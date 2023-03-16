@@ -62,6 +62,7 @@ const getMigrations = () => {
         addtriggerevents1678621361185,
         removeCollectionVersion1678492809093,
         addEventRouting1678382946390,
+        bumpFixPieceVersions1678928503715
     ];
 }
 

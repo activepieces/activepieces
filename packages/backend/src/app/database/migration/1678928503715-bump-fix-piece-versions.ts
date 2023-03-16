@@ -63,11 +63,11 @@ function updateStep(step) {
                 step.settings.pieceName = "telegram-bot";
             }      
             if (step.settings.pieceName === 'youtube') {
-                // Youtube latest version is 0.1.3
-                step.settings.pieceVersion = "0.1.3";
+                // Youtube latest version is 0.1.4
+                step.settings.pieceVersion = "0.1.4";
             }
             else {
-                step.settings.pieceVersion = "0.1.2";
+                step.settings.pieceVersion = "0.1.3";
             }
             update = true;
         }
