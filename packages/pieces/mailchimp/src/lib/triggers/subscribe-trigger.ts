@@ -1,4 +1,5 @@
-import { createTrigger, TriggerStrategy, getAccessTokenOrThrow, httpClient, HttpMethod, AuthenticationType } from '@activepieces/framework';
+import { createTrigger, getAccessTokenOrThrow, httpClient, HttpMethod, AuthenticationType } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/shared';
 import { getMailChimpServerPrefix, mailChimpAuth, mailChimpListIdDropdown } from '../common';
 import { MailChimpSubscribeWebhookRequest } from '../common/types';
 
@@ -6,7 +7,7 @@ const WEBHOOK_DATA_STORE_KEY = 'mail_chimp_webhook_data';
 
 export const mailChimpSubscribeTrigger = createTrigger({
   name: 'subscribe',
-  displayName: 'Member subscribed to Audience',
+  displayName: 'Member Subscribed to Audience',
   description: 'Runs when an Audience subscriber is added.',
   type: TriggerStrategy.WEBHOOK,
   props: {

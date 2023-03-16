@@ -26,7 +26,7 @@ type PieceMetadataLoader = {
  * Used in production.
  */
 const cdnPieceMetadataLoader = (): PieceMetadataLoader => {
-    const CDN = 'https://cdn.activepieces.com/pieces/metadata';
+    const CDN = 'https://activepieces-cdn.fra1.digitaloceanspaces.com/pieces/metadata';
 
     return {
         async manifest() {

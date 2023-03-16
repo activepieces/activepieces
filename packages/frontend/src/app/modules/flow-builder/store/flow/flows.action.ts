@@ -13,6 +13,7 @@ import {
   FlowOperationRequest,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
+import { AddButtonType } from '../../../common/model/enum/add-button-type';
 
 export enum FlowsActionType {
   // Flow Version Modifying Action
@@ -140,7 +141,12 @@ export const setRightSidebar = createAction(
           stepLocationRelativeToParent: StepLocationRelativeToParent;
           stepName: string;
         }
-      | {};
+      | {
+          stepName: string;
+          buttonType: AddButtonType;
+        }
+      // TODO URGENTLY REMOVE THIS
+      | any;
   }>()
 );
 

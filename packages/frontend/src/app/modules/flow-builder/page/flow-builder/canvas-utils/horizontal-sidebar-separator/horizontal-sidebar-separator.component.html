@@ -1,0 +1,7 @@
+<div #paneSeparator class="ap-flex ap-items-center ap-justify-center pane-separator" [class.ap-transition-all]="animate"
+    [style.top]="topStyle" cdkDragLockAxis="y" cdkDrag (cdkDragMoved)="resizerIsBeingDragged($event)"
+    [cdkDragFreeDragPosition]="dragPosition" [cdkDragBoundary]="resizerArea" [class.active]="resizerKnobIsBeingDragged"
+    (cdkDragEnded)="resizerDragStopped.emit()" (cdkDragStarted)="resizerDragStarted.emit()">
+    <div class="knob"></div>
+
+    <ng-container *ngIf="elevateResizer$ | async"></ng-container>

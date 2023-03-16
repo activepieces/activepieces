@@ -3,7 +3,7 @@ import { createAction, Property, HttpRequest, HttpMethod, AuthenticationType, ht
 export const dropboxCreateNewFolder = createAction({
   name: 'create_new_dropbox_folder',
   description: 'Create a new empty folder in your Dropbox',
-  displayName: 'Create new folder',
+  displayName: 'Create New Folder',
   props: {
     authentication: Property.OAuth2({
       description: "",

@@ -1,4 +1,5 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/framework';
+import { createTrigger } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/shared';
 import { wordpressCommon } from '../common';
 
 const triggerNameInStore = 'wordpress_new_post_trigger';
@@ -107,7 +108,7 @@ export const wordpressNewPost = createTrigger({
       ]
     }
   },
-  description: 'Triggers when a new post is published.',
+  description: 'Triggers when a new post is published',
   props: {
     connection: wordpressCommon.connection,
     website_url: wordpressCommon.website_url,

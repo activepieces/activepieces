@@ -13,7 +13,7 @@ import { slackSendMessage } from '../common/utils'
 
 export const slackSendDirectMessageAction = createAction({
   name: 'send_direct_message',
-  displayName: 'Send message to a user',
+  displayName: 'Send Message To A User',
   description: 'Send message to a user',
   sampleData: {
     success: true,

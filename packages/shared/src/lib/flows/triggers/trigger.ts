@@ -2,7 +2,12 @@ import { Type, Static } from '@sinclair/typebox';
 import { Format } from '@sinclair/typebox/format';
 import { isValidCron } from 'cron-validator';
 import { SemVerType } from '../../pieces';
-import { Action } from '../actions/action';
+import { SampleDataSettingsObject } from '../sample-data';
+export enum TriggerStrategy {
+  POLLING = 'POLLING',
+  WEBHOOK = 'WEBHOOK',
+  APP_WEBHOOK = "APP_WEBHOOK"
+}
 
 export enum TriggerType {
   SCHEDULE = 'SCHEDULE',
@@ -15,7 +20,7 @@ const commonProps = {
   name: Type.String({}),
   valid: Type.Boolean({}),
   displayName: Type.String({}),
-  nextAction: Type.Optional(Type.Any({}))
+  nextAction: Type.Optional(Type.Any())
 }
 
 export const EmptyTrigger = Type.Object({
@@ -30,7 +35,9 @@ export type EmptyTrigger = Static<typeof EmptyTrigger>;
 export const WebhookTrigger = Type.Object({
   ...commonProps,
   type: Type.Literal(TriggerType.WEBHOOK),
-  settings: Type.Object({}),
+  settings:Type.Object({
+    inputUiInfo:SampleDataSettingsObject
+  })
 });
 
 export type WebhookTrigger = Static<typeof WebhookTrigger>;
@@ -79,4 +86,4 @@ export const Trigger = Type.Union([
   EmptyTrigger
 ]);
 
-export type Trigger = Static<typeof Trigger> & { nextAction?: Action };
+export type Trigger = Static<typeof Trigger>;

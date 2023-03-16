@@ -4,10 +4,10 @@ import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
 import {
   AppConnection,
-  Config,
   Flow,
   FlowRun,
   PieceActionSettings,
+  SampleDataSettings,
 } from '@activepieces/shared';
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
@@ -41,15 +41,6 @@ export const selectCurrentCollectionInstance = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => {
     return state.collectionState.instance;
-  }
-);
-
-export const selectCurrentCollectionConfigs = createSelector(
-  selectCurrentCollection,
-  (collection: Collection) => {
-    return collection.version!.configs.map((c) => {
-      return { ...c, collectionVersionId: collection.version!.id };
-    });
   }
 );
 
@@ -124,13 +115,6 @@ export const selectCurrentFlowId = createSelector(
   (state: GlobalBuilderState) => state.flowsState.selectedFlowId
 );
 
-export const selectAllConfigs = createSelector(
-  selectCurrentCollectionConfigs,
-  (collectionConfigs: Config[]) => {
-    return [...collectionConfigs];
-  }
-);
-
 export const selectFlowsState = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => {
@@ -179,6 +163,25 @@ export const selectCurrentStep = createSelector(
       return undefined;
     }
     return selectedFlowTabsState.focusedStep;
+  }
+);
+const selectCurrentStepSettings = createSelector(
+  selectCurrentStep,
+  (selectedStep) => {
+    if (selectedStep) {
+      return selectedStep.settings;
+    }
+    return undefined;
+  }
+);
+const selectStepSelectedSampleData = createSelector(
+  selectCurrentStepSettings,
+  (settings) => {
+    if (settings) {
+      const sampleDataSettings = settings['inputUiInfo'] as SampleDataSettings;
+      return sampleDataSettings.currentSelectedData;
+    }
+    return undefined;
   }
 );
 export const selectCurrentStepName = createSelector(
@@ -380,22 +383,6 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
     return coreItemDetials;
   });
 
-export const selectConfig = (configKey: string) =>
-  createSelector(
-    selectCurrentCollectionConfigs,
-    (collectionConfigs: Config[]) => {
-      const indexInCollectionConfigsList = collectionConfigs.findIndex(
-        (c) => c.key === configKey
-      );
-      if (indexInCollectionConfigsList > -1) {
-        return {
-          indexInList: indexInCollectionConfigsList,
-          config: collectionConfigs[indexInCollectionConfigsList],
-        };
-      }
-      return undefined;
-    }
-  );
 const selectAllAppConnections = createSelector(
   selectBuilderState,
   (globalState) => globalState.appConnectionsState.connections
@@ -413,19 +400,6 @@ const selectAppConnectionsDropdownOptions = createSelector(
       const result: ConnectionDropdownItem = {
         label: { appName: c.appName, name: c.name },
         value: `\${connections.${c.name}}`,
-      };
-      return result;
-    });
-  }
-);
-
-const selectAllConfigsForMentionsDropdown = createSelector(
-  selectCurrentCollectionConfigs,
-  (collectionConfigs: Config[]): MentionListItem[] => {
-    return [...collectionConfigs].map((c) => {
-      const result = {
-        label: c.key,
-        value: `\${configs.${c.key}}`,
       };
       return result;
     });
@@ -559,7 +533,6 @@ export const BuilderSelectors = {
   selectCurrentLeftSidebarType,
   selectFlowsCount,
   selectCurrentStepName,
-  selectCurrentCollectionConfigs,
   selectCurrentRightSideBarType,
   selectCurrentFlowRunStatus,
   selectCurrentDisplayName,
@@ -574,8 +547,6 @@ export const BuilderSelectors = {
   selectCoreFlowItemsDetails,
   selectFlowItemDetailsForCoreTriggers,
   selectCurrentFlowValidity,
-  selectAllConfigs,
-  selectConfig,
   selectFlowsValidity,
   selectFlowItemDetailsForCustomPiecesActions,
   selectAppConnectionsDropdownOptions,
@@ -583,11 +554,12 @@ export const BuilderSelectors = {
   selectIsPublishing,
   selectFlowItemDetailsForCustomPiecesTriggers,
   selectAllAppConnections,
-  selectAllConfigsForMentionsDropdown,
   selectAllFlowSteps,
   selectAllFlowStepsMetaData,
   selectAllStepsForMentionsDropdown,
   selectAppConnectionsForMentionsDropdown,
   selectAnyFlowHasSteps,
   selectStepLogoUrl,
+  selectCurrentStepSettings,
+  selectStepSelectedSampleData,
 };

@@ -41,6 +41,7 @@ import {
   SecretTextConnectionDialogComponent,
   SecretTextConnectionDialogData,
 } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
+import { ActionMetaService } from '../../../../flow-builder/service/action-meta.service';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
 import { CloudAuthConfigsService } from '../../../service/cloud-auth-configs.service';
 import { FlagService } from '../../../service/flag.service';
@@ -65,7 +66,11 @@ export class AddEditConnectionButtonComponent {
   @Input()
   pieceName: string;
   @Input()
+  pieceVersion: string;
+  @Input()
   isEditConnectionButton = false;
+  @Input()
+  triggerName: string;
   @Output()
   connectionPropertyValueChanged: EventEmitter<{
     configKey: string;
@@ -77,7 +82,8 @@ export class AddEditConnectionButtonComponent {
     private store: Store,
     private dialogService: MatDialog,
     private cloudAuthConfigsService: CloudAuthConfigsService,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private actionMetaService: ActionMetaService
   ) {}
 
   buttonClicked() {
@@ -162,13 +168,40 @@ export class AddEditConnectionButtonComponent {
           map((res) => {
             return res[this.pieceName];
           }),
-          tap((cloudAuth2Config: { clientId: string }) => {
-            if (cloudAuth2Config) {
-              this.openNewCloudOAuth2ConnectionModal(cloudAuth2Config.clientId);
-            } else {
-              this.openNewOAuth2ConnectionDialog();
-            }
+          switchMap((res: { clientId: string }) => {
+            return this.actionMetaService
+              .getPieceMetadata(this.pieceName, this.pieceVersion)
+              .pipe(
+                map((p) => {
+                  let isTriggerAppWebhook = false;
+                  Object.keys(p.triggers).forEach((k) => {
+                    isTriggerAppWebhook =
+                      isTriggerAppWebhook ||
+                      (this.triggerName === k &&
+                        p.triggers[k].type === 'APP_WEBHOOK');
+                  });
+                  return {
+                    cloudAuth2Config: res,
+                    isTriggerAppWebhook: isTriggerAppWebhook,
+                  };
+                })
+              );
           }),
+          tap(
+            (res: {
+              cloudAuth2Config: { clientId: string };
+              isTriggerAppWebhook: boolean;
+            }) => {
+              if (res.cloudAuth2Config) {
+                this.openNewCloudOAuth2ConnectionModal(
+                  res.cloudAuth2Config.clientId,
+                  res.isTriggerAppWebhook
+                );
+              } else {
+                this.openNewOAuth2ConnectionDialog();
+              }
+            }
+          ),
           map(() => void 0)
         );
     }
@@ -209,7 +242,8 @@ export class AddEditConnectionButtonComponent {
                       }),
                       tap((cloudAuth2Config: { clientId: string }) => {
                         this.openNewCloudOAuth2ConnectionModal(
-                          cloudAuth2Config.clientId
+                          cloudAuth2Config.clientId,
+                          false
                         );
                       }),
                       map(() => void 0)
@@ -228,13 +262,17 @@ export class AddEditConnectionButtonComponent {
       );
   }
 
-  private openNewCloudOAuth2ConnectionModal(clientId: string) {
+  private openNewCloudOAuth2ConnectionModal(
+    clientId: string,
+    isTriggerAppWebhook: boolean
+  ) {
     this.updateOrAddConnectionDialogClosed$ = this.dialogService
       .open(CloudOAuth2ConnectionDialogComponent, {
         data: {
           pieceAuthConfig: this.config,
           pieceName: this.pieceName,
           clientId: clientId,
+          isTriggerAppWebhook: isTriggerAppWebhook,
         },
       })
       .afterClosed()

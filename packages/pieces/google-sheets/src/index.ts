@@ -10,5 +10,5 @@ export const googleSheets = createPiece({
 	actions: [insertRowAction],
 	displayName: "Google Sheets",
 	triggers: [newRowAdded],
-  version: packageJson.version,
+	version: packageJson.version,
 });

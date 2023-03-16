@@ -1,4 +1,5 @@
-import { createTrigger, TriggerStrategy, assertNotNullOrUndefined } from '@activepieces/framework';
+import { createTrigger, assertNotNullOrUndefined } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { todoistSyncClient } from '../common/client/sync-client'
 import { TodoistCompletedTask } from '../common/models'
@@ -16,7 +17,7 @@ const now = () => dayjs().format(ISO_FORMAT)
 
 export const todoistTaskCompletedTrigger = createTrigger({
   name: 'task_completed',
-  displayName: 'Task completed',
+  displayName: 'Task Completed',
   description: 'Triggers when a new task is completed',
   type: TriggerStrategy.POLLING,
 

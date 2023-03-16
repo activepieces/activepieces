@@ -15,7 +15,7 @@ export const flowRunSideEffects = {
                 environment: flowRun.environment,
                 runId: flowRun.id,
                 flowVersionId: flowRun.flowVersionId,
-                collectionVersionId: flowRun.collectionVersionId,
+                collectionId: flowRun.collectionId,
                 payload,
             },
         });

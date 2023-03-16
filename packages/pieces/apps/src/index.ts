@@ -40,6 +40,12 @@ import { wordpress } from '@activepieces/piece-wordpress';
 import { zoom } from '@activepieces/piece-zoom';
 import { generatebanners } from '@activepieces/piece-generatebanners';
 import { connections } from '@activepieces/piece-connections';
+import { youtube } from '@activepieces/piece-youtube';
+import { intercom } from '@activepieces/piece-intercom';
+import { trello } from '@activepieces/piece-trello';
+import { square } from '@activepieces/piece-square';
+import { delay } from '@activepieces/piece-delay';
+import { dataMapper } from '@activepieces/piece-data-mapper';
 
 export const pieces: Piece[] = [
     airtable,
@@ -80,9 +86,16 @@ export const pieces: Piece[] = [
     todoist,
     twilio,
     typeform,
+    trello,
     wordpress,
     zoom,
-    connections
+    connections,
+    youtube,
+    square,
+    delay,
+    dataMapper,
+    intercom,
+    square
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {

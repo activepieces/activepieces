@@ -41,6 +41,7 @@ import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
 import { DomSanitizer } from '@angular/platform-browser';
 import { StepMetaData } from '../../../../flow-builder/store/model/flow-items-details-state.model';
+
 @Component({
   selector: 'app-interpolating-text-form-control',
   templateUrl: './interpolating-text-form-control.component.html',
@@ -73,6 +74,9 @@ export class InterpolatingTextFormControlComponent
     mention: {
       spaceAfterInsert: false,
       mentionDenotationChars: ['@'],
+      source: function (searchTerm, renderList, mentionChar) {
+        return;
+      },
       allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
     },
     toolbar: false,

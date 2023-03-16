@@ -11,8 +11,8 @@ import {
   SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
   VERTICAL_LINE_LENGTH,
 } from './flow-item-connection/draw-utils';
-import { PannerService } from './panning/panner.service';
-import { ZoomingService } from './zooming/zooming.service';
+import { PannerService } from '../../canvas-utils/panning/panner.service';
+import { ZoomingService } from '../../canvas-utils/zooming/zooming.service';
 
 @Component({
   selector: 'app-flow-item',

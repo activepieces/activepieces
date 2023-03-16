@@ -12,10 +12,11 @@ import {
   Validators,
 } from '@angular/forms';
 import { map, Observable, of, tap } from 'rxjs';
-import { Config } from '@activepieces/shared';
+import { TriggerType } from '@activepieces/shared';
 import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
 import {
   PieceConfig,
+  PieceProperty,
   propsConvertor,
 } from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
 import { DropdownItem } from '../../../../../../../../../common/model/dropdown-item.interface';
@@ -59,7 +60,8 @@ export class PieceTriggerInputFormComponent {
   readonly CONFIGS_FORM_CONTROL_NAME = CONFIGS_FORM_CONTROL_NAME;
   componentForm: UntypedFormGroup;
   initialSetup$: Observable<TriggerDropdownOption[]>;
-  componentName: string;
+  pieceName: string;
+  pieceVersion: string;
   intialComponentTriggerInputFormValue: {
     triggerName: string;
     input: { [key: string]: any };
@@ -71,7 +73,6 @@ export class PieceTriggerInputFormComponent {
     triggerName: string;
     configs: PieceConfig[];
   }>;
-  updateOrAddConfigModalClosed$: Observable<Config>;
   allAuthConfigs$: Observable<DropdownItem[]>;
 
   onChange: (value) => void = (value) => {
@@ -121,27 +122,27 @@ export class PieceTriggerInputFormComponent {
     );
   }
 
-  fetchTriggers(pieceName: string) {
-    const piece$ = this.actionMetaDataService.getPieces().pipe(
-      map((pieces) => {
-        const component = pieces.find((c) => c.name === pieceName);
-        if (!component) {
-          throw new Error(`Activepieces- piece not found: ${pieceName}`);
-        }
-        return component;
-      })
+  fetchTriggers(pieceName: string, pieceVersion: string) {
+    const piece$ = this.actionMetaDataService.getPieceMetadata(
+      pieceName,
+      pieceVersion
     );
+
     this.triggers$ = piece$.pipe(
       map((component) => {
         const triggersKeys = Object.keys(component.triggers);
         return triggersKeys.map((triggerName) => {
           const trigger = component.triggers[triggerName];
-          const configs = Object.entries(trigger.props).map((keyEntry) => {
-            return propsConvertor.convertToFrontEndConfig(
-              keyEntry[0],
-              keyEntry[1]
-            );
-          });
+
+          const configs = Object.entries(trigger.props).map(
+            ([propName, prop]) => {
+              return propsConvertor.convertToFrontEndConfig(
+                propName,
+                prop as PieceProperty
+              );
+            }
+          );
+
           return {
             value: {
               triggerName: triggerName,
@@ -150,7 +151,9 @@ export class PieceTriggerInputFormComponent {
             label: {
               name: trigger.displayName,
               description: trigger.description,
-              isWebhook: component.triggers[triggerName].type === 'WEBHOOK',
+              isWebhook:
+                component.triggers[triggerName].type === 'WEBHOOK' ||
+                component.triggers[triggerName].type === 'APP_WEBHOOK',
             },
           };
         });
@@ -214,14 +217,18 @@ export class PieceTriggerInputFormComponent {
   }
   writeValue(obj: ComponentTriggerInputFormSchema): void {
     this.intialComponentTriggerInputFormValue = obj;
-    this.componentName = obj.pieceName;
+    this.pieceName = obj.pieceName;
+    this.pieceVersion = obj.pieceVersion;
     this.componentForm
       .get(TRIGGER_FORM_CONTROL_NAME)
       ?.setValue(undefined, { emitEvent: false });
     this.componentForm.removeControl(CONFIGS_FORM_CONTROL_NAME, {
       emitEvent: false,
     });
-    this.fetchTriggers(obj.pieceName);
+
+    if (obj.type === TriggerType.PIECE) {
+      this.fetchTriggers(obj.pieceName, obj.pieceVersion);
+    }
   }
 
   registerOnChange(fn: any): void {

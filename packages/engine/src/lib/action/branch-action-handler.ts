@@ -90,13 +90,13 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
         case BranchOperator.TEXT_EXACTLY_MATCHES:
           andGroup = andGroup && castedCondition.firstValue === castedCondition.secondValue;
           break;
-        case BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCHES:
+        case BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH:
           andGroup = andGroup && castedCondition.firstValue !== castedCondition.secondValue;
           break;
-        case BranchOperator.TEXT_START_WITH:
+        case BranchOperator.TEXT_STARTS_WITH:
           andGroup = andGroup && castedCondition.firstValue.startsWith(castedCondition.secondValue);
           break;
-        case BranchOperator.TEXT_END_WITH:
+        case BranchOperator.TEXT_ENDS_WITH:
           andGroup = andGroup && castedCondition.firstValue.endsWith(castedCondition.secondValue);
           break;
         case BranchOperator.TEXT_DOES_NOT_START_WITH:

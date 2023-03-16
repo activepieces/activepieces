@@ -14,7 +14,7 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
             },
         },
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-            handler(request, request.params.flowId);
+            await handler(request, request.params.flowId);
             await reply.status(StatusCodes.OK).send();
         }
     );
@@ -28,7 +28,7 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
             },
         },
         async (request: FastifyRequest<{ Querystring: WebhookUrlParams }>, reply) => {
-            handler(request, request.query.flowId);
+            await handler(request, request.query.flowId);
             await reply.status(StatusCodes.OK).send();
         }
     );
@@ -36,13 +36,14 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
     done();
 };
 
-function handler(request: FastifyRequest, flowId: string){
-    webhookService.callback({
+async function handler(request: FastifyRequest, flowId: string){
+    await webhookService.callback({
         flowId: flowId,
         payload: {
-            headers: request.headers,
+            method: request.method,
+            headers: request.headers as Record<string, string>,
             body: request.body,
-            queryParams: request.query
+            queryParams: request.query as Record<string, string>,
         },
     });
 }

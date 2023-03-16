@@ -1,6 +1,7 @@
 import {
     ApEnvironment,
     CollectionId,
+    EventPayload,
     FlowId,
     Instance,
     ProjectId,
@@ -12,11 +13,11 @@ import { flowVersionService } from '../flows/flow-version/flow-version.service';
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
 import { triggerUtils } from '../helper/trigger-utils';
 import { instanceService } from '../instance/instance.service';
-import { collectionVersionService } from '../collections/collection-version/collection-version.service';
 import { flowRepo } from '../flows/flow.repo';
 import { system } from '../helper/system/system';
 import { SystemProp } from '../helper/system/system-prop';
 import { getPublicIp } from '../helper/public-ip-utils';
+import { triggerEventService } from '../flows/trigger-events/trigger-event.service';
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
@@ -29,27 +30,26 @@ export const webhookService = {
                 },
             });
         }
+        triggerEventService.saveEvent({ flowId: flowId, payload, projectId: flow.projectId });
         const collection = await collectionService.getOneOrThrow({ projectId: flow.projectId, id: flow.collectionId });
-        const instance = await getInstanceOrThrow(flow.projectId, collection.id);
-        const collectionVersion = await collectionVersionService.getOneOrThrow(
-            instance.collectionVersionId
-        );
-        console.log(`payload`, payload);
+        const instance = await instanceService.getByCollectionId({ projectId: flow.projectId, collectionId: collection.id });
+        if (instance === null) {
+            return;
+        }
         const flowVersion = await flowVersionService.getOneOrThrow(
             instance.flowIdToVersionId[flow.id]
         );
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId: collection.projectId,
-            collectionVersion: collectionVersion,
+            collectionId: collection.id,
             flowVersion: flowVersion,
-            payload: payload,
+            payload: payload
         });
 
-        console.log(`test payloads`, payloads);
         const createFlowRuns = payloads.map((payload) =>
             flowRunService.start({
                 environment: RunEnvironment.PRODUCTION,
-                collectionVersionId: instance.collectionVersionId,
+                collectionId: collection.id,
                 flowVersionId: flowVersion.id,
                 payload,
             })
@@ -84,25 +84,7 @@ function extractHostname(url: string): string | null {
     }
 }
 
-const getInstanceOrThrow = async (
-    projectId: ProjectId,
-    collectionId: CollectionId
-): Promise<Instance> => {
-    const instance = await instanceService.getByCollectionId({ projectId, collectionId });
-
-    if (instance === null) {
-        throw new ActivepiecesError({
-            code: ErrorCode.INSTANCE_NOT_FOUND,
-            params: {
-                collectionId,
-            },
-        });
-    }
-
-    return instance;
-};
-
 interface CallbackParams {
-  flowId: FlowId;
-  payload: unknown;
+    flowId: FlowId;
+    payload: EventPayload;
 }

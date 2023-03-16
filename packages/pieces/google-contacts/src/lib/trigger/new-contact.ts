@@ -1,4 +1,5 @@
-import { createTrigger, TriggerStrategy, getAccessTokenOrThrow, HttpResponse, httpClient, HttpMethod, AuthenticationType } from '@activepieces/framework';
+import { createTrigger, getAccessTokenOrThrow, HttpResponse, httpClient, HttpMethod, AuthenticationType } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/shared';
 import { googleContactsCommon } from '../common';
 
 export const googleContactNewOrUpdatedContact = createTrigger({
@@ -71,7 +72,7 @@ export const googleContactNewOrUpdatedContact = createTrigger({
         const response = await listContacts(getAccessTokenOrThrow(ctx.propsValue['authentication']), undefined);
         await ctx.store?.put("syncToken", response.body.nextSyncToken);
     },
-    async onDisable(ctx) { 
+    async onDisable(ctx) {
         console.log("Disabling google contact trigger");
     },
     async run(ctx) {

@@ -109,8 +109,9 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   allOptionalConfigs: PieceConfig[] = [];
   selectedOptionalConfigs: PieceConfig[] = [];
   optionalConfigsMenuOpened = false;
-  @Input() stepName: string;
+  @Input() actionOrTriggerName: string;
   @Input() pieceName: string;
+  @Input() pieceVersion: string;
   @Input() pieceDisplayName: string;
   @ViewChildren('textControl', { read: ElementRef })
   theInputs: QueryList<ElementRef>;
@@ -290,11 +291,11 @@ export class ConfigsFormComponent implements ControlValueAccessor {
           switchMap((collection) => {
             return this.actionMetaDataService.getPieceActionConfigOptions<T>(
               {
-                pieceVersion: '0.0.0',
+                pieceVersion: this.pieceVersion,
                 propertyName: c.key,
-                stepName: this.stepName,
+                stepName: this.actionOrTriggerName,
                 input: res,
-                collectionVersionId: collection.version!.id,
+                collectionId: collection.id,
               },
               this.pieceName
             );
@@ -341,11 +342,14 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         }
         if (typeof c.value === 'object') {
           controls[c.key] = new UntypedFormControl(
-            JSON.stringify(c.value),
+            JSON.stringify(c.value || c.defaultValue),
             validators
           );
         } else {
-          controls[c.key] = new UntypedFormControl(c.value || '{}', validators);
+          controls[c.key] = new UntypedFormControl(
+            c.value || JSON.stringify(c.defaultValue ?? {}, null, 2),
+            validators
+          );
         }
       } else if (c.type === PropertyType.DYNAMIC) {
         const dynamicConfigControls = {};

@@ -39,5 +39,4 @@ export class BuilderAutocompleteMentionsDropdownComponent {
   constructor(
     public interpolatingTextFormControlService: BuilderAutocompleteMentionsDropdownService
   ) {}
- 
 }

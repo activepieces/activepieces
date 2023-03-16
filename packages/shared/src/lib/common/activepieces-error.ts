@@ -1,6 +1,5 @@
 import { AppConnectionId } from "../app-connection/app-connection";
 import { CollectionId } from "../collections/collection";
-import { CollectionVersionId } from "../collections/collection-version";
 import { FileId } from "../file/file";
 import { FlowRunId } from "../flow-run/flow-run";
 import { FlowId } from "../flows/flow";
@@ -16,7 +15,6 @@ export class ActivepiecesError extends Error {
 
 type ErrorParams =
   | CollectionNotFoundErrorParams
-  | CollectionVersionNotFoundErrorParams
   | ConfigNotFoundErrorParams
   | ExistingUserErrorParams
   | FileNotFoundErrorParams
@@ -77,13 +75,6 @@ export type CollectionNotFoundErrorParams = BaseErrorParams<
   ErrorCode.COLLECTION_NOT_FOUND,
   {
     id: CollectionId;
-  }
->
-
-export type CollectionVersionNotFoundErrorParams = BaseErrorParams<
-  ErrorCode.COLLECTION_VERSION_NOT_FOUND,
-  {
-    id: CollectionVersionId;
   }
 >
 
@@ -213,7 +204,7 @@ export enum ErrorCode {
   INVALID_CLAIM = "INVALID_CLAIM",
   INVALID_CLOUD_CLAIM = "INVALID_CLOUD_CLAIM",
   INVALID_OR_EXPIRED_JWT_TOKEN = "INVALID_OR_EXPIRED_JWT_TOKEN",
-  TASK_QUOTA_EXCEEDED = "FLOW_RUN_QUOTA_EXCEEDED",
+  TASK_QUOTA_EXCEEDED = "TASK_QUOTA_EXCEEDED",
   SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
   FLOW_OPERATION_INVALID = "FLOW_OPERATION_INVALID",
 }

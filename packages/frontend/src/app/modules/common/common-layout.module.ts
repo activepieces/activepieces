@@ -78,7 +78,8 @@ import { AddEditConnectionButtonComponent } from './components/configs-form/add-
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { BranchConditionFormControlComponent } from './components/form-controls/branch-condition-form-control/branch-condition-form-control.component';
 import { BranchConditionsGroupFormControlComponent } from './components/form-controls/branch-conditions-group-form-control/branch-conditions-group-form-control.component';
-
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { HotspotComponent } from './components/hotspot/hotspot.component';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
   hideDelay: 0,
@@ -126,6 +127,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     AddEditConnectionButtonComponent,
     BranchConditionFormControlComponent,
     BranchConditionsGroupFormControlComponent,
+    HotspotComponent,
   ],
   imports: [
     FontAwesomeModule,
@@ -159,6 +161,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatIconModule,
     MatDividerModule,
     MatTreeModule,
+    MatButtonToggleModule,
   ],
   exports: [
     EditableTextComponent,
@@ -202,6 +205,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     ArrayFormControlComponent,
     BranchConditionsGroupFormControlComponent,
     MatDividerModule,
+    MatButtonToggleModule,
+    HotspotComponent,
   ],
   providers: [
     HighlightService,

@@ -28,7 +28,7 @@ import {
 } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
-import { PannerService } from './flow-item-tree/flow-item/panning/panner.service';
+import { PannerService } from './canvas-utils/panning/panner.service';
 
 @Component({
   selector: 'app-collection-builder',
@@ -84,7 +84,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
             })
           );
 
-          this.titleService.setTitle(`AP-${collection.version?.displayName}`);
+          this.titleService.setTitle(`AP-${collection.displayName}`);
           this.snackbar.openFromComponent(TestRunBarComponent, {
             duration: undefined,
           });
@@ -92,7 +92,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
           const collection: Collection = value['collection'];
           const flows = value['flows'];
           const instance: Instance | undefined = value['instance'];
-          this.titleService.setTitle(`AP-${collection.version?.displayName}`);
+          this.titleService.setTitle(`AP-${collection.displayName}`);
           this.store.dispatch(
             BuilderActions.loadInitial({
               collection: collection,

@@ -189,7 +189,9 @@ export class StepTypeSidebarComponent implements OnInit {
           ...base,
           valid: true,
           type: TriggerType.WEBHOOK,
-          settings: {},
+          settings: {
+            inputUiInfo: { currentSelectedData: '' },
+          },
         };
         break;
       case TriggerType.PIECE:
@@ -199,7 +201,7 @@ export class StepTypeSidebarComponent implements OnInit {
           valid: false,
           settings: {
             pieceName: triggerDetails.extra!.appName,
-            pieceVersion: '0.0.0',
+            pieceVersion: triggerDetails.extra!.appVersion,
             triggerName: '',
             input: {},
           },
@@ -270,7 +272,7 @@ export class StepTypeSidebarComponent implements OnInit {
             valid: false,
             settings: {
               pieceName: componentDetails.extra!.appName,
-              pieceVersion: '0.0.0',
+              pieceVersion: componentDetails.extra!.appVersion,
               actionName: undefined,
               input: {},
               inputUiInfo: {

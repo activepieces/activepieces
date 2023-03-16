@@ -36,6 +36,10 @@
         "packages/pieces/connections/src/index.ts"
       ],
       "@activepieces/piece-csv": ["packages/pieces/csv/src/index.ts"],
+      "@activepieces/piece-data-mapper": [
+        "packages/pieces/data-mapper/src/index.ts"
+      ],
+      "@activepieces/piece-delay": ["packages/pieces/delay/src/index.ts"],
       "@activepieces/piece-discord": ["packages/pieces/discord/src/index.ts"],
       "@activepieces/piece-drip": ["packages/pieces/drip/src/index.ts"],
       "@activepieces/piece-dropbox": ["packages/pieces/dropbox/src/index.ts"],
@@ -68,6 +72,7 @@
       ],
       "@activepieces/piece-http": ["packages/pieces/http/src/index.ts"],
       "@activepieces/piece-hubspot": ["packages/pieces/hubspot/src/index.ts"],
+      "@activepieces/piece-intercom": ["packages/pieces/intercom/src/index.ts"],
       "@activepieces/piece-mailchimp": [
         "packages/pieces/mailchimp/src/index.ts"
       ],
@@ -79,17 +84,20 @@
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-sendgrid": ["packages/pieces/sendgrid/src/index.ts"],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
+      "@activepieces/piece-square": ["packages/pieces/square/src/index.ts"],
       "@activepieces/piece-store": ["packages/pieces/store/src/index.ts"],
       "@activepieces/piece-stripe": ["packages/pieces/stripe/src/index.ts"],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/telegram-bot/src/index.ts"
       ],
       "@activepieces/piece-todoist": ["packages/pieces/todoist/src/index.ts"],
+      "@activepieces/piece-trello": ["packages/pieces/trello/src/index.ts"],
       "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
       "@activepieces/piece-wordpress": [
         "packages/pieces/wordpress/src/index.ts"
       ],
+      "@activepieces/piece-youtube": ["packages/pieces/youtube/src/index.ts"],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
