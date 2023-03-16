@@ -67,14 +67,12 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
         const piecesMetadata: PieceMetadata[] = [];
 
         for (const piecePackage of filteredPiecePackages) {
-            try
-            {
+            try {
                 const module = await import(`../../../../pieces/${piecePackage}/src/index.ts`)
                 const piece = Object.values<Piece>(module)[0]
                 piecesMetadata.push(piece.metadata())
             }
-            catch(ex)
-            {
+            catch(ex) {
                 logger.error(ex);
             }
         }
