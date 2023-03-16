@@ -40,7 +40,7 @@ export class bumpFixPieceVersions1678928503715 implements MigrationInterface {
                 update = true;
             }
             if (appConnection.appName === 'google_contacts') {
-                appConnection.appNamee = "google-contacts";
+                appConnection.appName = "google-contacts";
                 update = true;
             }
             if (appConnection.appName === 'google_drive') {
