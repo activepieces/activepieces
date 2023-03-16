@@ -157,8 +157,11 @@ export const selectFlowSelectedId = createSelector(
 export const selectCurrentStep = createSelector(
   selectFlowsState,
   (flowsState: FlowsState) => {
+    if (!flowsState.selectedFlowId) {
+      return undefined;
+    }
     const selectedFlowTabsState =
-      flowsState.tabsState[flowsState.selectedFlowId!.toString()];
+      flowsState.tabsState[flowsState.selectedFlowId.toString()];
     if (!selectedFlowTabsState) {
       return undefined;
     }
