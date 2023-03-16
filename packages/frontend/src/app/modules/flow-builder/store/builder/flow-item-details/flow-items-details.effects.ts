@@ -39,7 +39,7 @@ export class FlowItemsDetailsEffects {
       }),
       map((res) => {
         const storagePiece = res.customPiecesActionsFlowItemDetails.find(
-          (p) => p.extra?.appName === 'storage'
+          (p) => p.extra?.appName === 'store'
         );
         const httpPiece = res.customPiecesActionsFlowItemDetails.find(
           (p) => p.extra?.appName === 'http'
@@ -50,7 +50,7 @@ export class FlowItemsDetailsEffects {
             storagePiece,
           ];
           const index = res.customPiecesActionsFlowItemDetails.findIndex(
-            (p) => p.extra?.appName === 'storage'
+            (p) => p.extra?.appName === 'store'
           );
           res.customPiecesActionsFlowItemDetails.splice(index, 1);
         }
