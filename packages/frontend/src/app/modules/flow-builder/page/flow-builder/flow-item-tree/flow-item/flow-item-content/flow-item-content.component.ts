@@ -33,6 +33,7 @@ import {
   TriggerType,
 } from '@activepieces/shared';
 import { fadeIn400ms } from '../../../../../../common/animation/fade-in.animations';
+import { isOverflown } from '../../../../../../common/utils';
 
 @Component({
   selector: 'app-flow-item-content',
@@ -51,6 +52,7 @@ export class FlowItemContentComponent implements OnInit {
   _flowItem: FlowItem;
   selectedRun$: Observable<FlowRun | undefined>;
   readonly$: Observable<boolean>;
+  isOverflown = isOverflown;
   @Input() selected: boolean;
   @Input() trigger = false;
   @Input() viewMode: boolean;
