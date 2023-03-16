@@ -116,9 +116,12 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      name: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_]/g, '_'), {
+      name: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_\\-]/g, '_'), {
         nonNullable: true,
-        validators: [Validators.required, Validators.pattern('[A-Za-z0-9_]*')],
+        validators: [
+          Validators.required,
+          Validators.pattern('[A-Za-z0-9_\\-]*'),
+        ],
         asyncValidators: [
           ConnectionValidator.createValidator(
             this.store

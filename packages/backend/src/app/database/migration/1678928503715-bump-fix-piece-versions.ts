@@ -2,6 +2,7 @@ import { MigrationInterface, QueryRunner } from "typeorm"
 import { logger } from "../../helper/logger";
 
 const FLOW_VERSION_TABLE = "flow_version";
+const APP_CONNECTION_TABLE = "app_connection";
 const PIECE_TYPE = "PIECE";
 const PIECE_TRIGGER_TYPE = "PIECE_TRIGGER";
 const BRANCH_TYPE = "BRANCH";
@@ -25,7 +26,49 @@ export class bumpFixPieceVersions1678928503715 implements MigrationInterface {
             }
         }
 
-        logger.info("bumpFixPieceVersions1678928503715, finished bumping " + count + " flows");
+        let connectionCount = 0;
+        const appConnectionRepo = queryRunner.connection.getRepository(APP_CONNECTION_TABLE);
+        const appConnections = await appConnectionRepo.find();
+        for (const appConnection of appConnections) {
+            let update = false;
+            if (appConnection.appName === 'google_sheets') {
+                appConnection.appName = "google-sheets";
+                update = true;
+            }
+            if (appConnection.appName === 'google_calendar') {
+                appConnection.appName = "google-calendar";
+                update = true;
+            }
+            if (appConnection.appName === 'google_contacts') {
+                appConnection.appNamee = "google-contacts";
+                update = true;
+            }
+            if (appConnection.appName === 'google_drive') {
+                appConnection.appName = "google-drive";
+                update = true;
+            }
+            if (appConnection.appName === 'google_tasks') {
+                appConnection.appName = "google-tasks";
+                update = true;
+            }
+            if (appConnection.appName === 'cal.com') {
+                appConnection.appName = "cal-com";
+                update = true;
+            }
+            if (appConnection.appName === 'storage') {
+                appConnection.appName = "store";
+                update = true;
+            }
+            if (appConnection.appName === 'telegram_bot') {
+                appConnection.appName = "telegram-bot";
+                update = true;
+            }      
+            if (update) {
+                connectionCount++;
+                await appConnectionRepo.update(appConnection.id, appConnection);
+            }
+        }
+        logger.info("bumpFixPieceVersions1678928503715, finished bumping " + count + " flows " + " and connections count " + connectionCount);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
