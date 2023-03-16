@@ -1,12 +1,11 @@
 <div class="ap-flex tab-container ap-cursor-pointer ap-items-center ap-relative" (mouseenter)="handleHovering(true)"
   (mouseleave)="handleHovering(false)" (click)="containerClicked()">
   <svg-icon *ngIf="!flow.version!.valid" src="assets/img/custom/error.svg" matTooltip="There is an invalid step"
-            class="ap-flex">
+    class="ap-flex">
   </svg-icon>
-  <app-editable-text [allowClick]="true" [allowDoubleClick]="false" [disableEditing]="readonlyMode"
-                     [value]="flow.version!.displayName" class="no-select flow-name-color" [editing]="editing"
-                     (valueChanges)="saveNewName($event)" (editingChanges)="this.editing = $event" [viewedTextMaxWidth]="'150px'"
-                     [style.color]="'#4F4F4F'">
+  <app-editable-text [allowDoubleClick]="true" [disableEditing]="readonlyMode" [value]="flow.version!.displayName"
+    class="no-select flow-name-color" [editing]="editing" (valueChanges)="saveNewName($event)"
+    (editingChanges)="this.editing = $event" [viewedTextMaxWidth]="'150px'" [style.color]="'#4F4F4F'">
   </app-editable-text>
 
   <app-chevron-dropdown-menu [hidden]="readonlyMode" class="chevron-dropdown"
