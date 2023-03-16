@@ -18,8 +18,6 @@ import { getPiece } from "@activepieces/pieces-apps";
 import { webhookService } from "../webhooks/webhook-service";
 import { appEventRoutingService } from "../app-event-routing/app-event-routing.service";
 
-const EVERY_FIVE_MINUTES = "*/5 * * * *";
-
 export const triggerUtils = {
     async executeTrigger({ payload, flowVersion, projectId, collectionId}: ExecuteTrigger): Promise<unknown[]> {
         const flowTrigger = flowVersion.trigger;
@@ -139,11 +137,12 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId }: Enab
         for(const listener of listeners){
             await appEventRoutingService.createListeners({projectId, flowId: flowVersion.flowId, appName, events: listener.events, identifierValue: listener.identifierValue });
         }
-    }
         break;
+    }
     case TriggerStrategy.WEBHOOK:
         break;
-    case TriggerStrategy.POLLING:
+    case TriggerStrategy.POLLING: {
+        const cronExpression = (response as ExecuteTriggerResponse).cronExpression;
         await flowQueue.add({
             id: flowVersion.id,
             data: {
@@ -153,10 +152,11 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId }: Enab
                 flowVersion,
                 triggerType: TriggerType.PIECE,
             },
-            cronExpression: EVERY_FIVE_MINUTES,
+            cronExpression: cronExpression,
         });
-
         break;
+
+    }
     }
 };
 

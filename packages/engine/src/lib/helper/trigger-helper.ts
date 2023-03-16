@@ -3,12 +3,14 @@ import { ApEdition, EventPayload, ExecuteEventParserOperation, ExecuteTriggerOpe
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./piece-helper";
+import { isValidCron } from 'cron-validator';
 
 type Listener = {
   events: string[];
   identifierValue: string;
   identifierKey: string;
 }
+
 
 export const triggerHelper = {
   async executeEventParser(params: ExecuteEventParserOperation): Promise<ParseEventResponse | undefined> {
@@ -33,14 +35,20 @@ export const triggerHelper = {
     const executionState = new ExecutionState();
     const resolvedInput = await variableService.resolve(input, executionState);
     const appListeners: Listener[] = [];
-
     const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : '';
+    let cronExpression = "*/5 * * * *";
     const context = {
       store: createContextStore(prefix, params.flowVersion.flowId),
       app: {
         async createListeners({ events, identifierKey, identifierValue }: Listener) {
           appListeners.push({ events, identifierValue, identifierKey });
         }
+      },
+      setSchedule(expr: string) {
+        if (!isValidCron(expr)) {
+          throw new Error(`Invalid cron expression: ${expr}`);
+        }
+        cronExpression = expr;
       },
       webhookUrl: params.webhookUrl,
       propsValue: resolvedInput,
@@ -56,11 +64,12 @@ export const triggerHelper = {
       case TriggerHookType.ON_ENABLE:
         await trigger.onEnable(context);
         return {
-          listeners: appListeners
+          listeners: appListeners,
+          cronExpression: cronExpression
         }
-    case TriggerHookType.TEST:
-          // TODO: fix types to remove use of any
-          return trigger.test(context as any);
+      case TriggerHookType.TEST:
+        // TODO: fix types to remove use of any
+        return trigger.test(context as any);
       case TriggerHookType.RUN:
         if (trigger.type === TriggerStrategy.APP_WEBHOOK) {
           if (params.edition === ApEdition.COMMUNITY) {

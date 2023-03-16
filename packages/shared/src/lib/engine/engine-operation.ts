@@ -82,4 +82,5 @@ export interface AppEventListener {
 
 export interface ExecuteTriggerResponse {
     listeners: AppEventListener[];
+    cronExpression: string;
 }
