@@ -491,17 +491,9 @@ function findStepLogoUrl(
       (i) => i.extra?.appName === step.settings.pieceName
     )!.logoUrl!;
   } else {
-    if (
-      step.type === TriggerType.EMPTY ||
-      step.type === TriggerType.SCHEDULE ||
-      step.type === TriggerType.WEBHOOK
-    ) {
+    if (step.type === TriggerType.EMPTY || step.type === TriggerType.WEBHOOK) {
       const fileName =
-        step.type === TriggerType.EMPTY
-          ? 'emptyTrigger.png'
-          : step.type === TriggerType.SCHEDULE
-          ? 'schedule.png'
-          : 'webhook.png';
+        step.type === TriggerType.EMPTY ? 'emptyTrigger.png' : 'webhook.png';
       return 'assets/img/custom/piece/' + fileName;
     }
     return 'assets/img/custom/piece/code.png';

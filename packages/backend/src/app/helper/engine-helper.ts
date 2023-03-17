@@ -9,7 +9,6 @@ import {
     ExecuteFlowOperation,
     ExecutePropsOptions,
     ExecuteTriggerOperation,
-    ExecuteTriggerResponse,
     ExecutionOutput,
     ParseEventResponse,
     PieceTrigger,

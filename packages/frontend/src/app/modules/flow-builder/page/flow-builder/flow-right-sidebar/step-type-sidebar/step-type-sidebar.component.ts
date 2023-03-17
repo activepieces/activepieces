@@ -28,7 +28,6 @@ import { CodeService } from '../../../../service/code.service';
 import { BuilderSelectors } from '../../../../store/builder/builder.selector';
 import { FlowStructureUtil } from '../../../../service/flowStructureUtil';
 import {
-  defaultCronJobForScheduleTrigger,
   getDefaultDisplayNameForPiece,
   getDisplayNameForTrigger,
 } from '../../../../../common/utils';
@@ -172,16 +171,6 @@ export class StepTypeSidebarComponent implements OnInit {
           valid: false,
           type: TriggerType.EMPTY,
           settings: {},
-        };
-        break;
-      case TriggerType.SCHEDULE:
-        trigger = {
-          ...base,
-          valid: true,
-          type: TriggerType.SCHEDULE,
-          settings: {
-            cronExpression: defaultCronJobForScheduleTrigger,
-          },
         };
         break;
       case TriggerType.WEBHOOK:

@@ -54,23 +54,6 @@ export const triggerUtils = {
         case TriggerType.PIECE:
             await enablePieceTrigger({ collectionId, projectId, flowVersion });
             break;
-
-        case TriggerType.SCHEDULE:
-            console.log("Created Schedule for flow version Id " + flowVersion.id);
-
-            await flowQueue.add({
-                id: flowVersion.id,
-                data: {
-                    environment: RunEnvironment.PRODUCTION,
-                    projectId: projectId,
-                    collectionId,
-                    flowVersion,
-                    triggerType: TriggerType.SCHEDULE,
-                },
-                cronExpression: flowVersion.trigger.settings.cronExpression,
-            });
-
-            break;
         default:
             break;
         }
@@ -81,14 +64,6 @@ export const triggerUtils = {
         case TriggerType.PIECE:
             await disablePieceTrigger({ collectionId, projectId, flowVersion });
             break;
-
-        case TriggerType.SCHEDULE:
-            console.log("Deleted Schedule for flow version Id " + flowVersion.id);
-            await flowQueue.removeRepeatableJob({
-                id: flowVersion.id
-            });
-            break;
-
         default:
             break;
         }

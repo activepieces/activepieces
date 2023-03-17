@@ -1,5 +1,5 @@
-import { TriggerStrategy } from "../../../../../shared/src";
-import { createTrigger, Property } from "../../../../framework/src";
+import { TriggerStrategy } from "@activepieces/shared";
+import { createTrigger, Property } from "@activepieces/framework";
 
 export const cronExpressionTrigger = createTrigger({
     name: 'cron_expression',

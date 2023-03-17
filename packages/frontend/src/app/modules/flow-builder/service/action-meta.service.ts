@@ -47,12 +47,6 @@ export class ActionMetaService {
 
   public triggerItemsDetails = [
     {
-      type: TriggerType.SCHEDULE,
-      name: 'Schedule',
-      description: 'Trigger flow with fixed schedule.',
-      logoUrl: '/assets/img/custom/piece/schedule.svg',
-    },
-    {
       type: TriggerType.WEBHOOK,
       name: 'Webhook',
       description: 'Trigger flow by calling a unique web url',

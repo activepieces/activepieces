@@ -154,7 +154,6 @@ export class EditStepAccordionComponent implements AfterViewInit {
       tap(() => {
         if (
           this._selectedStep.type === TriggerType.PIECE ||
-          this._selectedStep.type === TriggerType.SCHEDULE ||
           this._selectedStep.type === TriggerType.WEBHOOK
         ) {
           this.store.dispatch(

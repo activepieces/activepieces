@@ -30,6 +30,7 @@ import { addtriggerevents1678621361185 } from "./migration/1678621361185-addtrig
 import { removeCollectionVersion1678492809093 } from "./migration/1678492809093-removeCollectionVersion";
 import { addEventRouting1678382946390 } from "./migration/1678382946390-add-event-routing";
 import { bumpFixPieceVersions1678928503715 } from "./migration/1678928503715-bump-fix-piece-versions";
+import { migrateSchedule1679014156667 } from "./migration/1679014156667-migrate-schedule";
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST);
@@ -62,7 +63,9 @@ const getMigrations = () => {
         addtriggerevents1678621361185,
         removeCollectionVersion1678492809093,
         addEventRouting1678382946390,
-        bumpFixPieceVersions1678928503715
+        bumpFixPieceVersions1678928503715,
+        // TODO ENABLE THIS
+        // migrateSchedule1679014156667
     ];
 }
 
