@@ -62,7 +62,7 @@ export const GmailProps = {
       }
 
       const response = await GmailRequests.getLabels(authentication as OAuth2PropertyValue)
-      
+
       return {
         disabled: false,
         options: response.body.labels.map((label) => (
