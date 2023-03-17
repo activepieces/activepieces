@@ -4,7 +4,7 @@ export enum StepOutputStatus {
   FAILED = 'FAILED',
 }
 
-export class StepOutput<T = any>{
+export class StepOutput<T = unknown>{
   duration?: number;
   input?: unknown;
   output?: T
@@ -14,15 +14,15 @@ export class StepOutput<T = any>{
 }
 
 export class LoopOnItemsStepOutput extends StepOutput<{
-  current_item: any;
+  current_item: unknown;
   current_iteration: number;
   iterations: Record<string, StepOutput>[];
 }> {
 
 }
 
-export class BranchStepOutput extends StepOutput {
-  override output!: {
-    condition: boolean;
-  };
+export class BranchStepOutput extends StepOutput<{
+  condition: boolean;
+}> {
+
 }

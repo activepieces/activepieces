@@ -99,7 +99,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
   // The iteration object will always contain all previous iterations.
   updateExecutionStateWithLoopDetails(
     executionState: ExecutionState,
-    loopOutput: any
+    loopOutput: LoopOnItemsStepOutput['output']
   ) {
     executionState.updateLastStep(
       {

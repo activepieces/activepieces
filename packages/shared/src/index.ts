@@ -14,7 +14,6 @@ export * from './lib/instance';
 export * from "./lib/app-connection/app-connection";
 export * from "./lib/app-connection/dto/upsert-app-connection-request";
 export * from "./lib/flow-run/execution/execution-output";
-export { StoreOperation } from "./lib/flows/actions/action";
 export { StepOutputStatus } from "./lib/flow-run/execution/step-output";
 export * from "./lib/instance";
 export * from "./lib/pieces";

@@ -50,12 +50,6 @@ export const PieceActionSchema = Type.Object({
   type: Type.Literal(ActionType.PIECE),
   settings: PieceActionSettings,
 });
-// Storage Action
-
-export enum StoreOperation {
-  PUT = 'PUT',
-  GET = 'GET',
-}
 
 // Loop Items
 export type LoopOnItemsActionSettings = {
