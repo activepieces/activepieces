@@ -1,0 +1,91 @@
+---
+title: "App Webhooks"
+description: ""
+---
+
+Certain services, such as `Slack`, `Square` and `Hubspot`, only support webhooks at the developer app level. This requires a logic to route the events to the correct user.
+
+The way app webhook triggers usually work is as follows:
+
+1. Register the webhook url (`https://WEBHOOK_URL/api/v1/app-events/PIECE_NAME`) in the third-party app, manually.
+2. Add the entry to the file `packages/backend/app-secrets-dev.json` locally, an example:
+```json
+{
+    "slack": {
+        "webhookSecret": "YOUR_WEBHOOK_SECRET"
+    },
+    "PICECE_NAME": {
+        "webhookSecret": "YOUR_WEBHOOK_SECRET"
+    }
+}
+```
+3. You need to define a way to parse the event in the piece, and reply for the verification request. An example:
+
+```typescript
+export const slack = createPiece({
+  name: 'slack',
+  displayName: 'Slack',
+  logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
+  version,
+  actions: [
+    slackSendDirectMessageAction,
+    slackSendMessageAction,
+  ],
+  events: {
+    parseAndReply: ({ payload }) => {
+      if (payload.body['challenge']) {
+        return {
+          reply: {
+            body: payload.body['challenge'],
+            headers: {}
+          }
+        };
+      }
+      // `identifierValue`: This variable contains the value that will be used to identify the appropriate routing of events. Its current value is `team_id`.
+      // `event`: This variable contains the type of event, such as `'message'`.
+      return { event: payload.body?.event?.type, identifierValue: payload.body.team_id}
+    },
+    verify: ({ webhookSecret, payload }) => {
+      // Construct the signature base string
+      const timestamp = payload.headers['x-slack-request-timestamp'];
+      const signature = payload.headers['x-slack-signature'];
+      const signatureBaseString = `v0:${timestamp}:${payload.rawBody}`;
+      const hmac = crypto.createHmac('sha256', webhookSecret);
+      hmac.update(signatureBaseString);
+      const computedSignature = `v0=${hmac.digest('hex')}`;
+      return signature === computedSignature;
+    }
+  },
+  triggers: [newSlackMessage, newReactionAdded]
+})
+```
+
+4- Now in each trigger, you need to listen for the event name and provide sample data:
+
+```typescript
+export const newMessage = createTrigger({
+    name: 'new_message',
+    displayName: 'New Message',
+    description: 'Triggers when a new message is received',
+    props: {
+        authentication: slackAuth,
+        channel: slackChannel
+    },
+    type: TriggerStrategy.APP_WEBHOOK,
+    sampleData: {
+        // Sample data omitted 
+    },
+    onEnable: async (context) => {
+        context.app.createListeners({ events: ['message'], identifierValue: context.propsValue.authentication.data['team_id'] })
+    },
+    onDisable: async (context) => {
+        // Ignored
+    },
+    run: async (context) => {
+        if (context.payload.body.event.channel === context.propsValue.channel) {
+            return [context.payload.body.event]
+        }
+        return [];
+    }
+});
+```

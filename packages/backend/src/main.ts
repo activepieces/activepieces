@@ -26,7 +26,7 @@ import { databaseConnection } from "./app/database/database-connection";
 import { initilizeSentry, logger } from './app/helper/logger';
 import { firebaseAuthenticationModule } from "@ee/firebase-auth/backend/firebase-authentication.module";
 import { billingModule } from "@ee/billing/backend/billing.module";
-import { getEdition } from "./app/helper/secret-helper";
+import { getEdition, getWebhookSecrets } from "./app/helper/secret-helper";
 import { ApEdition } from "@activepieces/shared";
 import { appEventRoutingModule } from "./app/app-event-routing/app-event-routing.module";
 import { appCredentialModule } from "@ee/product-embed/backend/app-credentials/app-credentials.module";
@@ -142,6 +142,9 @@ const start = async () => {
             host: "0.0.0.0",
             port: 3000,
         });
+
+        const webhookSecrets = await getWebhookSecrets();
+        logger.info("app-secrets file found, for the following apps: " + Object.keys(webhookSecrets).join(", "));
 
         console.log(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____

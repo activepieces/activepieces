@@ -1,8 +1,10 @@
 import { captureException } from "@sentry/node";
 import axios from "axios";
-import { ApEdition, FlowVersion } from "@activepieces/shared";
+import { ApEnvironment, FlowVersion } from "@activepieces/shared";
 import { system } from "./system/system";
 import { SystemProp } from "./system/system-prop";
+import fs from "node:fs/promises";
+import { logger } from "./logger";
 
 let edition = undefined;
 let webhookSecrets = undefined;
@@ -29,25 +31,24 @@ export async function getEdition(): Promise<string> {
 
 export async function getWebhookSecret(flowVersion: FlowVersion): Promise<string> {
     const appName = flowVersion.trigger?.settings['pieceName'];
-    if(!appName) {
+    if (!appName) {
         return undefined;
     }
     if (webhookSecrets === undefined) {
         webhookSecrets = await getWebhookSecrets();
     }
-    return webhookSecrets[appName];
+    return webhookSecrets[appName]?.webhookSecret;
 }
 
-async function getWebhookSecrets(): Promise<Record<string, string>> {
-    const currentEdition = await getEdition();
-    if (currentEdition === ApEdition.COMMUNITY) {
-        return {};
-    }
+export async function getWebhookSecrets(): Promise<Record<string, string>> {
     try {
-        const licenseKey = system.get(SystemProp.LICENSE_KEY);
-        const response = await axios.post(
-            'https://secrets.activepieces.com/webhooks', { licenseKey });
-        return response.data;
+        const secretPath = (await system.get(SystemProp.ENVIRONMENT)) === ApEnvironment.PRODUCTION ? '/app/config/app-secrets.json' : 'packages/backend/app-secrets-dev.json';
+        if (fs.access(secretPath) !== undefined) {
+            const file = await fs.readFile(secretPath, 'utf8');
+            return JSON.parse(file);
+        }
+        logger.warn("app-secrets.json file not found. See https://activepieces.com/docs for more information.");
+        return {};
     }
     catch (e) {
         captureException(e);

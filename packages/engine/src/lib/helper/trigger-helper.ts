@@ -63,10 +63,6 @@ export const triggerHelper = {
           return trigger.test(context as any);
       case TriggerHookType.RUN:
         if (trigger.type === TriggerStrategy.APP_WEBHOOK) {
-          if (params.edition === ApEdition.COMMUNITY) {
-            return [];
-          }
-
           if (!params.appWebhookUrl) {
             throw new Error(`App webhook url is not avaiable for piece name ${pieceName}`)
           }

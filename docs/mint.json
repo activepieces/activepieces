@@ -165,7 +165,15 @@
       "pages": [
         "contributing/building-pieces/overview",
         "contributing/building-pieces/create-action",
-        "contributing/building-pieces/create-trigger",
+        {
+          "group": "Creating Trigger",
+          "pages": [
+            "contributing/building-pieces/create-trigger/overview",
+            "contributing/building-pieces/create-trigger/polling",
+            "contributing/building-pieces/create-trigger/webhooks",
+            "contributing/building-pieces/create-trigger/app-webhooks"
+          ]
+        },
         "contributing/building-pieces/reference",
         "contributing/building-pieces/examples"
       ]

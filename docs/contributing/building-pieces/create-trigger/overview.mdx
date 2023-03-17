@@ -1,0 +1,40 @@
+---
+title: "Overview"
+description: ""
+---
+
+This tutorial explains three techniques for creating triggers:
+
+- `Polling`: Periodically call endpoints to check for changes.
+- `Webhooks`: Listen to user events through a single URL.
+- `App Webhooks (Subscriptions)`: Use a developer app (using OAuth2) to receive all authorized user events at a single URL.
+
+# Trigger Structure
+
+```typescript
+export const createNewIssue = createTrigger({
+    name: string, // Unique name across the piece.
+    displayName: string, // Display name on the interface.
+	description: string, // Description for the action
+    triggerType: POLLING | WEBHOOK,
+	
+    props: {}; // Required properties from the user.
+    // Run when the user enable or publish the collection.
+
+	onEnable: (ctx) => {};
+    // Run when the user disable the collection or
+    // the old collection is deleted after new one is published.
+	onDisable: (ctx) => {};
+    
+    // Trigger implementation, It takes context as parameter.
+    // should returns an array of payload, each payload considered
+    // a separate flow run.
+    run: async run(ctx): unknown[] => {}
+})
+```
+
+<Tip>
+It's important to note that the `run` method returns an array. 
+The reason for this is that a single polling can contain multiple triggers, so each item in the array will trigger the flow to run.
+</Tip>
+

@@ -5,7 +5,7 @@ import { SystemProp } from "../helper/system/system-prop";
 import { FlagEntity } from "./flag.entity";
 import axios from "axios";
 import { webhookService } from "../webhooks/webhook-service";
-import { getEdition } from "../helper/secret-helper";
+import { getEdition, getWebhookSecrets } from "../helper/secret-helper";
 
 const flagRepo = databaseConnection.getRepository(FlagEntity);
 
@@ -30,6 +30,12 @@ export const flagService = {
         const currentVersion = (await import('../../../../../package.json')).version;
         const latestVersion = (await flagService.getLatestPackageDotJson()).version;
         flags.push(
+            {
+                id: ApFlagId.APP_SECRETS,
+                value: Object.keys(await getWebhookSecrets()),
+                created,
+                updated,
+            },
             {
                 id: ApFlagId.ENVIRONMENT,
                 value: system.get(SystemProp.ENVIRONMENT),

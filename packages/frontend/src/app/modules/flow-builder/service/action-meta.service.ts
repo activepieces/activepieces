@@ -7,7 +7,6 @@ import {
   PieceMetadataSummary,
   PieceOptionRequest,
   TriggerBase,
-  TriggerStrategy,
   TriggerType,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
@@ -76,17 +75,8 @@ export class ActionMetaService {
     triggersMap: TriggersMetadata,
     edition: ApEdition
   ): TriggersMetadata {
-    if (edition === ApEdition.ENTERPRISE) {
-      return triggersMap;
-    }
-
-    const triggersList = Object.entries(triggersMap);
-
-    const filteredTriggersList = triggersList.filter(
-      ([, trigger]) => trigger.type !== TriggerStrategy.APP_WEBHOOK
-    );
-
-    return Object.fromEntries(filteredTriggersList);
+    // TODO REMOVE, and use the flag service to check
+    return triggersMap;
   }
 
   private fetchPieceMetadata(

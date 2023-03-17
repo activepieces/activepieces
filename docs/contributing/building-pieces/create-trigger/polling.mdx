@@ -1,0 +1,19 @@
+---
+title: "Polling"
+description: ""
+---
+
+The way polling triggers usually work is as follows:
+
+**On Enable:**
+Store the last timestamp or most recent item id using the context store property.
+
+**Run:**
+This method runs every **5 minutes**, fetches the endpoint between a certain timestamp or traverses until it finds the last item id, and returns the new items as an array.
+
+**Testing:**
+You cannot test it with Test Flow, as it uses static sample data provided in the piece. 
+To test the trigger, publish the collection, perform the event, and wait for the run to be invoked (every 5 minutes) on the third party. Then check the flow runs from the main dashboard.
+
+**Examples:**
+- [New Completed Task On Todoist](https://github.com/activepieces/activepieces/blob/main/packages/pieces/apps/src/lib/todoist/triggers/task-completed-trigger.ts)
