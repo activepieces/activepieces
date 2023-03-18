@@ -4,7 +4,7 @@ export enum StepOutputStatus {
   FAILED = 'FAILED',
 }
 
-export class StepOutput<T = unknown>{
+export class StepOutput<T = any>{
   duration?: number;
   input?: unknown;
   output?: T
