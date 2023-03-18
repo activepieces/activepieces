@@ -6,7 +6,8 @@
   <app-generic-step-mention-item matTooltip="Webhook Trigger" [stepIndex]="stepIndex"
     [stepMention]="_stepMention"></app-generic-step-mention-item>
   <app-button @fadeIn *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
-    class="ap-absolute ap-right-[10px]" [keepBgWhite]="true" (click)="openPathDialog(dialogTemplate)">Custom Path
+    class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
+    (click)="openPathDialog(dialogTemplate)">Custom Path
   </app-button>
 </button>
 
