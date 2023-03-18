@@ -62,12 +62,12 @@ export class BasicAuthConnectionDialogComponent {
         validators: [Validators.required],
       }),
       name: new FormControl(
-        this.dialogData.pieceName.replace(/[^A-Za-z0-9_]/g, '_'),
+        this.dialogData.pieceName.replace(/[^A-Za-z0-9_\\-]/g, '_'),
         {
           nonNullable: true,
           validators: [
             Validators.required,
-            Validators.pattern('[A-Za-z0-9_]*'),
+            Validators.pattern('[A-Za-z0-9_\\-]*'),
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(

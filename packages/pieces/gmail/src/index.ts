@@ -4,6 +4,7 @@ import { gmailGetThread } from './lib/actions/get-thread-action';
 import { gmailSearchMail } from './lib/actions/search-email-action';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
+import packageJson from '../package.json';
 
 export const gmail = createPiece({
 	name: 'gmail',
@@ -12,5 +13,5 @@ export const gmail = createPiece({
 	displayName: 'Gmail',
 	authors: ['AbdulTheActivePiecer', 'kanarelo'],
 	triggers: [gmailNewEmailTrigger],
-	version: '0.0.0',
+	version: packageJson.version,
 });

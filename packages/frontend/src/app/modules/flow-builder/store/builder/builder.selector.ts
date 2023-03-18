@@ -157,8 +157,11 @@ export const selectFlowSelectedId = createSelector(
 export const selectCurrentStep = createSelector(
   selectFlowsState,
   (flowsState: FlowsState) => {
+    if (!flowsState.selectedFlowId) {
+      return undefined;
+    }
     const selectedFlowTabsState =
-      flowsState.tabsState[flowsState.selectedFlowId!.toString()];
+      flowsState.tabsState[flowsState.selectedFlowId.toString()];
     if (!selectedFlowTabsState) {
       return undefined;
     }
@@ -342,7 +345,7 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
       return triggerItemDetails;
     }
     if (
-      (flowItem.settings as PieceActionSettings)?.pieceName == 'storage' ||
+      (flowItem.settings as PieceActionSettings)?.pieceName == 'store' ||
       (flowItem.settings as PieceActionSettings)?.pieceName == 'http'
     ) {
       const details = state.coreFlowItemsDetails.find(
@@ -474,7 +477,7 @@ function findStepLogoUrl(
   flowItemsDetailsState: FlowItemsDetailsState
 ) {
   if (step.type === ActionType.PIECE) {
-    if (step.settings.pieceName === 'storage') {
+    if (step.settings.pieceName === 'store') {
       return 'assets/img/custom/piece/storage.png';
     }
     if (step.settings.pieceName === 'http') {
