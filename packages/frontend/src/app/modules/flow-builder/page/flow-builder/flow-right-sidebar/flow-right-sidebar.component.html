@@ -7,7 +7,9 @@
 
 
   <ng-container *ngIf="rightSidebarType === sidebarType.EDIT_STEP">
-    <div #editStepSection class="top-resizer-section" [class.ap-transition-all]="animateSectionsHeightChange">
+    <div #editStepSection class="top-resizer-section" [class.ap-transition-all]="animateSectionsHeightChange"
+      [class.!ap-h-full]="(currentStep$ | async)?.type !== TriggerType.WEBHOOK"
+      [class.!ap-min-h-full]="(currentStep$ | async)?.type !== TriggerType.WEBHOOK">
       <app-edit-step-sidebar>
       </app-edit-step-sidebar>
     </div>
