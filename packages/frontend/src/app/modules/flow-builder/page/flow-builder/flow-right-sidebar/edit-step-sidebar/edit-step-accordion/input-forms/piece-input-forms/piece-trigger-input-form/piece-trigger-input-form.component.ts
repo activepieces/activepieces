@@ -146,7 +146,6 @@ export class PieceTriggerInputFormComponent {
               );
             }
           );
-
           return {
             value: {
               triggerName: triggerName,
@@ -166,60 +165,58 @@ export class PieceTriggerInputFormComponent {
     );
     this.initialSetup$ = this.triggers$.pipe(
       tap((items) => {
-        if (
-          this.intialComponentTriggerInputFormValue &&
-          this.intialComponentTriggerInputFormValue.triggerName
-        ) {
-          this.componentForm
-            .get(TRIGGER_FORM_CONTROL_NAME)!
-            .setValue(
-              items.find(
-                (i) =>
-                  i.value.triggerName ===
-                  this.intialComponentTriggerInputFormValue?.triggerName
-              )?.value,
+        this.initialiseConfigsFormValue(items);
+      })
+    );
+  }
+  private initialiseConfigsFormValue(items: TriggerDropdownOption[]) {
+    if (this.intialComponentTriggerInputFormValue &&
+      this.intialComponentTriggerInputFormValue.triggerName) {
+      this.componentForm
+        .get(TRIGGER_FORM_CONTROL_NAME)!
+        .setValue(
+          items.find(
+            (i) => i.value.triggerName ===
+              this.intialComponentTriggerInputFormValue?.triggerName
+          )?.value,
+          {
+            emitEvent: false,
+          }
+        );
+      this.selectedTrigger$ = of(
+        items.find(
+          (it) => it.value.triggerName ===
+            this.intialComponentTriggerInputFormValue?.triggerName
+        )
+      ).pipe(
+        tap((selectedTrigger) => {
+          if (selectedTrigger) {
+            const configs = [...selectedTrigger.value.configs];
+            const configsValues = this.intialComponentTriggerInputFormValue?.input;
+            if (configsValues) {
+              Object.keys(configsValues).forEach((key) => {
+                const config = configs.find((c) => c.key === key);
+                if (config) {
+                  config.value = configsValues[key];
+                }
+              });
+            }
+            this.componentForm.addControl(
+              CONFIGS_FORM_CONTROL_NAME,
+              new UntypedFormControl({
+                value: [...configs],
+                disabled: this.componentForm.disabled,
+              }),
               {
                 emitEvent: false,
               }
             );
-          this.selectedTrigger$ = of(
-            items.find(
-              (it) =>
-                it.value.triggerName ===
-                this.intialComponentTriggerInputFormValue?.triggerName
-            )
-          ).pipe(
-            tap((selectedTrigger) => {
-              if (selectedTrigger) {
-                const configs = [...selectedTrigger.value.configs];
-                const configsValues =
-                  this.intialComponentTriggerInputFormValue?.input;
-                if (configsValues) {
-                  Object.keys(configsValues).forEach((key) => {
-                    const config = configs.find((c) => c.key === key);
-                    if (config) {
-                      config.value = configsValues[key];
-                    }
-                  });
-                }
-                this.componentForm.addControl(
-                  CONFIGS_FORM_CONTROL_NAME,
-                  new UntypedFormControl({
-                    value: [...configs],
-                    disabled: this.componentForm.disabled,
-                  }),
-                  {
-                    emitEvent: false,
-                  }
-                );
-                this.cd.detectChanges();
-              }
-            })
-          );
-        }
-      })
-    );
+          }
+        })
+      );
+    }
   }
+
   writeValue(obj: ComponentTriggerInputFormSchema): void {
     this.intialComponentTriggerInputFormValue = obj;
     this.pieceName = obj.pieceName;

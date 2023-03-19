@@ -168,7 +168,7 @@ export class PieceActionInputFormComponent
       pieceName,
       pieceVersion
     );
-
+      
     this.actions$ = pieceMetadata$.pipe(
       map((pieceMetadata) => {
         const actionsKeys = Object.keys(pieceMetadata.actions);
@@ -182,7 +182,6 @@ export class PieceActionInputFormComponent
               );
             }
           );
-
           return {
             value: {
               actionName: actionName,
@@ -195,74 +194,78 @@ export class PieceActionInputFormComponent
           };
         });
       }),
+      tap(()=>{
+        this.triggerInitialSetup$.next(true);
+      }),
       shareReplay(1)
     );
     this.initialSetup$ = this.triggerInitialSetup$.pipe(
       switchMap(() => {
         return this.actions$.pipe(
-          tap((items) => {
-            if (
-              this.intialComponentInputFormValue &&
-              this.intialComponentInputFormValue.actionName
-            ) {
-              this.pieceActionForm
-                .get(ACTION_FORM_CONTROL_NAME)!
-                .setValue(
-                  items.find(
-                    (i) =>
-                      i.value.actionName ===
-                      this.intialComponentInputFormValue?.actionName
-                  )?.value,
-                  {
-                    emitEvent: false,
-                  }
-                );
-              this.selectedAction$ = of(
-                items.find(
-                  (it) =>
-                    it.value.actionName ===
-                    this.intialComponentInputFormValue!.actionName
-                )
-              ).pipe(
-                tap((selectedAction) => {
-                  if (selectedAction) {
-                    const configs = [...selectedAction.value.configs];
-                    const configsValues =
-                      this.intialComponentInputFormValue!.input;
-                    if (configsValues) {
-                      Object.keys(configsValues).forEach((key) => {
-                        const config = configs.find((c) => c.key === key);
-                        if (config) {
-                          config.value = configsValues[key];
-                        }
-                      });
-                    }
-                    this.pieceActionForm.addControl(
-                      CONFIGS_FORM_CONTROL_NAME,
-                      new UntypedFormControl({
-                        value: {
-                          configs: [...configs],
-                          customizedInputs:
-                            this.intialComponentInputFormValue!.inputUiInfo
-                              ?.customizedInputs || {},
-                        },
-                        disabled: this.pieceActionForm.disabled,
-                      }),
-                      {
-                        emitEvent: false,
-                      }
-                    );
-                    this.cd.detectChanges();
-                  }
-                })
-              );
-            }
+          tap((items) => {    
+            this.setInitialFormValue(items);
           })
         );
       })
     );
     this.triggerInitialSetup$.next(true);
   }
+  private setInitialFormValue(items: ActionDropdownOption[]) {
+    if (this.intialComponentInputFormValue &&
+      this.intialComponentInputFormValue.actionName) {
+      this.pieceActionForm
+        .get(ACTION_FORM_CONTROL_NAME)!
+        .setValue(
+          items.find(
+            (i) => i.value.actionName ===
+              this.intialComponentInputFormValue?.actionName
+          )?.value,
+          {
+            emitEvent: false,
+          }
+        );
+      this.selectedAction$ = of(
+        items.find(
+          (it) => it.value.actionName ===
+            this.intialComponentInputFormValue!.actionName
+        )
+      ).pipe(
+        tap((selectedAction) => {
+          this.setInitialConfigsFormValue(selectedAction);
+        })
+      );
+    }
+  }
+
+  private setInitialConfigsFormValue(selectedAction: ActionDropdownOption | undefined) {
+    if (selectedAction) {
+      const configs = [...selectedAction.value.configs];
+      const configsValues = this.intialComponentInputFormValue!.input;
+      if (configsValues) {
+        Object.keys(configsValues).forEach((key) => {
+          const config = configs.find((c) => c.key === key);
+          if (config) {
+            config.value = configsValues[key];
+          }
+        });
+      }
+      this.pieceActionForm.addControl(
+        CONFIGS_FORM_CONTROL_NAME,
+        new UntypedFormControl({
+          value: {
+            configs: [...configs],
+            customizedInputs: this.intialComponentInputFormValue!.inputUiInfo
+              ?.customizedInputs || {},
+          },
+          disabled: this.pieceActionForm.disabled,
+        }),
+        {
+          emitEvent: false,
+        }
+      );
+    }
+  }
+
   writeValue(obj: PieceActionInputFormSchema): void {
     this.intialComponentInputFormValue = obj;
     this.pieceName = obj.pieceName;
