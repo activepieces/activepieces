@@ -67,7 +67,7 @@ export const selectViewMode = createSelector(
   (state: GlobalBuilderState) => state.viewMode
 );
 
-export const selectInstanceRunView = createSelector(
+export const selectIsInDebugMode = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) =>
     state.viewMode === ViewModeEnum.VIEW_INSTANCE_RUN
@@ -193,13 +193,13 @@ export const selectCurrentStepName = createSelector(
     if (selectedStep) {
       return selectedStep.name;
     }
-    return null;
+    return '';
   }
 );
-export const selectCurrentDisplayName = createSelector(
+export const selectCurrentStepDisplayName = createSelector(
   selectCurrentStep,
-  (state) => {
-    return state?.displayName;
+  (step) => {
+    return step?.displayName || '';
   }
 );
 export const selectCurrentTabState = createSelector(
@@ -538,8 +538,8 @@ export const BuilderSelectors = {
   selectCurrentStepName,
   selectCurrentRightSideBarType,
   selectCurrentFlowRunStatus,
-  selectCurrentDisplayName,
-  selectInstanceRunView,
+  selectCurrentStepDisplayName,
+  selectIsInDebugMode,
   selectCollectionState,
   selectIsSaving,
   selectFlow,
