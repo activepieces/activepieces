@@ -1,5 +1,11 @@
 import { CdkDragMove } from '@angular/cdk/drag-drop';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  Output,
+} from '@angular/core';
 import { map, Observable, tap } from 'rxjs';
 import { TestStepService } from '../../../../service/test-step.service';
 
@@ -8,7 +14,7 @@ import { TestStepService } from '../../../../service/test-step.service';
   templateUrl: './horizontal-sidebar-separator.component.html',
   styleUrls: ['./horizontal-sidebar-separator.component.scss'],
 })
-export class HorizontalSidebarSeparatorComponent {
+export class HorizontalSidebarSeparatorComponent implements OnDestroy {
   animate = false;
   resizerKnobIsBeingDragged = false;
   @Input() resizerArea: HTMLElement;
@@ -16,6 +22,7 @@ export class HorizontalSidebarSeparatorComponent {
   @Output() resizerDragged: EventEmitter<CdkDragMove> = new EventEmitter();
   @Output() resizerDragStarted = new EventEmitter();
   @Output() resizerDragStopped = new EventEmitter();
+  @Output() resetTopResizerSectionHeight = new EventEmitter();
   dragPosition = { x: 0, y: 0 };
   elevateResizer$: Observable<void>;
   constructor(private testStepService: TestStepService) {
@@ -32,7 +39,11 @@ export class HorizontalSidebarSeparatorComponent {
       map(() => void 0)
     );
   }
+
   resizerIsBeingDragged(dragMoveEvent: CdkDragMove) {
     this.resizerDragged.next(dragMoveEvent);
+  }
+  ngOnDestroy(): void {
+    this.resetTopResizerSectionHeight.emit();
   }
 }
