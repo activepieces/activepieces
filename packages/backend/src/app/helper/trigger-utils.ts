@@ -39,6 +39,7 @@ export const triggerUtils = {
             }
             catch (e) {
                 logger.error(`Flow ${flowTrigger.name} with ${pieceTrigger.name} trigger throws and error, returning as zero payload `);
+                logger.error(e);
                 payloads = [];
             }
             break;

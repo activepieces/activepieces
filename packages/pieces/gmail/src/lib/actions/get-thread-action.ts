@@ -1,20 +1,14 @@
 import { createAction, Property } from "@activepieces/framework";
 import { GmailRequests } from "../common/data";
 import { GmailMessageFormat } from "../common/models";
+import { GmailProps } from "../common/props";
 
 export const gmailGetThread = createAction({
   name: 'gmail_get_thread',
   description: 'Get a thread from your Gmail account via Id',
   displayName: 'Get Thread',
   props: {
-    authentication: Property.OAuth2({
-      description: "",
-      displayName: 'Authentication',
-      authUrl: "https://accounts.google.com/o/oauth2/auth",
-      tokenUrl: "https://oauth2.googleapis.com/token",
-      required: true,
-      scope: ["https://mail.google.com/"]
-    }),
+    authentication: GmailProps.authentication,
     thread_id: Property.ShortText({
       displayName: 'Thread ID',
       description: 'The thread Id of the mail to read',

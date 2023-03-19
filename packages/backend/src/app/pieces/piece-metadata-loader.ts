@@ -7,7 +7,7 @@ import { Piece } from "@activepieces/framework";
 import { ActivepiecesError, ApEnvironment, ErrorCode, PieceMetadata, PieceMetadataSummary } from "@activepieces/shared";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
-import { logger } from "../helper/logger";
+import { captureException, logger } from "../helper/logger";
 
 type PieceMetadataLoader = {
     /**
@@ -67,14 +67,13 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
         const piecesMetadata: PieceMetadata[] = [];
 
         for (const piecePackage of filteredPiecePackages) {
-            try
-            {
+            try {
                 const module = await import(`../../../../pieces/${piecePackage}/src/index.ts`)
                 const piece = Object.values<Piece>(module)[0]
                 piecesMetadata.push(piece.metadata())
             }
-            catch(ex)
-            {
+            catch(ex) {
+                captureException(ex);
                 logger.error(ex);
             }
         }
