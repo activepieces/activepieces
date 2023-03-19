@@ -2,7 +2,10 @@ import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 
 import { map, Observable, take, tap } from 'rxjs';
-import { UpdateActionRequest, UpdateTriggerRequest } from '../../../../../../../../../../shared/src';
+import {
+  UpdateActionRequest,
+  UpdateTriggerRequest,
+} from '@activepieces/shared';
 import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
 import { FlowsActions } from '../../../../../store/flow/flows.action';
 
@@ -16,9 +19,8 @@ export class StepNameEditorComponent {
   stepNameHovered = false;
   isInDebugMode$: Observable<boolean>;
   currentStepName$: Observable<string>;
-  updateStepName$:Observable<void>;
-  constructor(private store:Store)
-  {
+  updateStepName$: Observable<void>;
+  constructor(private store: Store) {
     this.isInDebugMode$ = this.store.select(
       BuilderSelectors.selectIsInDebugMode
     );
@@ -30,17 +32,30 @@ export class StepNameEditorComponent {
     this.isEditingStepName = isEditingStepName;
   }
   saveStepName(stepName: string) {
-   this.updateStepName$=this.store.select(BuilderSelectors.selectCurrentStep).pipe(take(1),tap(step=>{
-    if(step?.name === 'trigger')
-    {
-      const clone = {... step, displayName:stepName} as UpdateTriggerRequest;
-      this.store.dispatch(FlowsActions.updateTrigger({operation:clone}));
-    }
-    else if(step?.name)
-    {
-      const clone = {... step, displayName:stepName} as UpdateActionRequest;
-      this.store.dispatch(FlowsActions.updateAction({operation:clone}));
-    }
-   }),map(()=>void 0));
+    this.updateStepName$ = this.store
+      .select(BuilderSelectors.selectCurrentStep)
+      .pipe(
+        take(1),
+        tap((step) => {
+          if (step?.name === 'trigger') {
+            const clone = {
+              ...step,
+              displayName: stepName,
+            } as UpdateTriggerRequest;
+            this.store.dispatch(
+              FlowsActions.updateTrigger({ operation: clone })
+            );
+          } else if (step?.name) {
+            const clone = {
+              ...step,
+              displayName: stepName,
+            } as UpdateActionRequest;
+            this.store.dispatch(
+              FlowsActions.updateAction({ operation: clone })
+            );
+          }
+        }),
+        map(() => void 0)
+      );
   }
 }

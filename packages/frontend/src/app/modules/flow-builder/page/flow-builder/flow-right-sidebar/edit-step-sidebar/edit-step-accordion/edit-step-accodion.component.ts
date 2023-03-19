@@ -139,7 +139,6 @@ export class EditStepAccordionComponent {
     return stepToSave;
   }
 
-
   copyUrl(url: string) {
     navigator.clipboard.writeText(url);
     this.snackbar.open('Webhook url copied to clipboard');

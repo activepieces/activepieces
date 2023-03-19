@@ -31,7 +31,7 @@ export class BuilderAutocompleteMentionsDropdownComponent {
       );
     })
   );
-  @Input() width = 'calc( 100% - 2rem )';
+  @Input() width = 'calc( 100% - 2.4rem )';
   @Input() left = 'unset';
   @Input() marginTop = '0px';
   id = new UUID();

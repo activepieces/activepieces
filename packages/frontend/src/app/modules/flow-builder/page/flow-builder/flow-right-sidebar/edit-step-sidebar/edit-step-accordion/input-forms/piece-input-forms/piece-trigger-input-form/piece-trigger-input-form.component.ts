@@ -170,13 +170,16 @@ export class PieceTriggerInputFormComponent {
     );
   }
   private initialiseConfigsFormValue(items: TriggerDropdownOption[]) {
-    if (this.intialComponentTriggerInputFormValue &&
-      this.intialComponentTriggerInputFormValue.triggerName) {
+    if (
+      this.intialComponentTriggerInputFormValue &&
+      this.intialComponentTriggerInputFormValue.triggerName
+    ) {
       this.componentForm
         .get(TRIGGER_FORM_CONTROL_NAME)!
         .setValue(
           items.find(
-            (i) => i.value.triggerName ===
+            (i) =>
+              i.value.triggerName ===
               this.intialComponentTriggerInputFormValue?.triggerName
           )?.value,
           {
@@ -185,14 +188,16 @@ export class PieceTriggerInputFormComponent {
         );
       this.selectedTrigger$ = of(
         items.find(
-          (it) => it.value.triggerName ===
+          (it) =>
+            it.value.triggerName ===
             this.intialComponentTriggerInputFormValue?.triggerName
         )
       ).pipe(
         tap((selectedTrigger) => {
           if (selectedTrigger) {
             const configs = [...selectedTrigger.value.configs];
-            const configsValues = this.intialComponentTriggerInputFormValue?.input;
+            const configsValues =
+              this.intialComponentTriggerInputFormValue?.input;
             if (configsValues) {
               Object.keys(configsValues).forEach((key) => {
                 const config = configs.find((c) => c.key === key);

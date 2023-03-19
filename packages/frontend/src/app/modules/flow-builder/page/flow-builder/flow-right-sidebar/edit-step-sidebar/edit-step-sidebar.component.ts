@@ -67,5 +67,4 @@ export class NewEditPieceSidebarComponent implements OnInit {
   get ActionType() {
     return ActionType;
   }
-
 }

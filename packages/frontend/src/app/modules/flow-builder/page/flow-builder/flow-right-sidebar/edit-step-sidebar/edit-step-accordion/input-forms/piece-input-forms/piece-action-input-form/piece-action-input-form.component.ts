@@ -168,7 +168,7 @@ export class PieceActionInputFormComponent
       pieceName,
       pieceVersion
     );
-      
+
     this.actions$ = pieceMetadata$.pipe(
       map((pieceMetadata) => {
         const actionsKeys = Object.keys(pieceMetadata.actions);
@@ -194,7 +194,7 @@ export class PieceActionInputFormComponent
           };
         });
       }),
-      tap(()=>{
+      tap(() => {
         this.triggerInitialSetup$.next(true);
       }),
       shareReplay(1)
@@ -202,7 +202,7 @@ export class PieceActionInputFormComponent
     this.initialSetup$ = this.triggerInitialSetup$.pipe(
       switchMap(() => {
         return this.actions$.pipe(
-          tap((items) => {    
+          tap((items) => {
             this.setInitialFormValue(items);
           })
         );
@@ -211,13 +211,16 @@ export class PieceActionInputFormComponent
     this.triggerInitialSetup$.next(true);
   }
   private setInitialFormValue(items: ActionDropdownOption[]) {
-    if (this.intialComponentInputFormValue &&
-      this.intialComponentInputFormValue.actionName) {
+    if (
+      this.intialComponentInputFormValue &&
+      this.intialComponentInputFormValue.actionName
+    ) {
       this.pieceActionForm
         .get(ACTION_FORM_CONTROL_NAME)!
         .setValue(
           items.find(
-            (i) => i.value.actionName ===
+            (i) =>
+              i.value.actionName ===
               this.intialComponentInputFormValue?.actionName
           )?.value,
           {
@@ -226,7 +229,8 @@ export class PieceActionInputFormComponent
         );
       this.selectedAction$ = of(
         items.find(
-          (it) => it.value.actionName ===
+          (it) =>
+            it.value.actionName ===
             this.intialComponentInputFormValue!.actionName
         )
       ).pipe(
@@ -237,7 +241,9 @@ export class PieceActionInputFormComponent
     }
   }
 
-  private setInitialConfigsFormValue(selectedAction: ActionDropdownOption | undefined) {
+  private setInitialConfigsFormValue(
+    selectedAction: ActionDropdownOption | undefined
+  ) {
     if (selectedAction) {
       const configs = [...selectedAction.value.configs];
       const configsValues = this.intialComponentInputFormValue!.input;
@@ -254,8 +260,9 @@ export class PieceActionInputFormComponent
         new UntypedFormControl({
           value: {
             configs: [...configs],
-            customizedInputs: this.intialComponentInputFormValue!.inputUiInfo
-              ?.customizedInputs || {},
+            customizedInputs:
+              this.intialComponentInputFormValue!.inputUiInfo
+                ?.customizedInputs || {},
           },
           disabled: this.pieceActionForm.disabled,
         }),
