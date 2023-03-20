@@ -168,7 +168,8 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
           VERTICAL_LINE_LENGTH +
           SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
           childFlowsGraphHeight +
-          ARC_LENGTH
+          ARC_LENGTH +
+          SPACE_BETWEEN_ITEM_CONTENT_AND_LINE / 2
       )
     );
 
@@ -244,7 +245,10 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     this.afterLoopAddButtonLeft = `calc(50% - ${ADD_BUTTON_SIZE.width / 2}px`;
     const lineStrokeOffset = 1.5;
     this.afterLoopArrowHeadTop =
-      topOffset - ARROW_HEAD_SIZE.height - lineStrokeOffset;
+      topOffset -
+      ARROW_HEAD_SIZE.height -
+      lineStrokeOffset +
+      SPACE_BETWEEN_ITEM_CONTENT_AND_LINE / 2;
     this.afterLoopArrowHeadLeft =
       this.flowItem.connectionsBox!.width / 2.0 -
       ARROW_HEAD_SIZE.width / 2 -

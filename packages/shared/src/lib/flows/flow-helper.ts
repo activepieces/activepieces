@@ -124,7 +124,7 @@ function updateAction(
       }
     }
     if (parentStep.type === ActionType.LOOP_ON_ITEMS) {
-      debugger;
+
       if (parentStep.firstLoopAction && parentStep.firstLoopAction.name === request.name) {
         const actions = extractActions(parentStep.firstLoopAction);
         parentStep.firstLoopAction = createAction(request, actions);
@@ -244,6 +244,7 @@ function createAction(
       };
       break;
   }
+  debugger;
   action.valid = (request.valid ?? true) && actionSchemaValidator.Check(action);
   return action;
 }

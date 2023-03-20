@@ -110,7 +110,6 @@ const _flowsReducer = createReducer(
   }),
   on(FlowsActions.updateAction, (state, { operation }): FlowsState => {
     const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
-    debugger;
     const clonedFlows = clonedState.flows;
     const clonedTabsState = {
       ...clonedState.tabsState,

@@ -120,10 +120,10 @@ export class StepResultComponent implements OnInit, AfterViewInit {
           });
 
           const firstIteration = this.iterationsAccordionList[0];
-          const stepsThatWereNotReached = firstIteration.slice(
+          const stepsThatWereNotReached = firstIteration?.slice(
             iteration.length
           );
-          stepsThatWereNotReached.forEach((st) => {
+          stepsThatWereNotReached?.forEach((st) => {
             this.clearStepsThatWereNotReached(st);
           });
         })

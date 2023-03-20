@@ -25,7 +25,7 @@
 
                   <div class="ap-flex ap-items-center done-iteration-container"
                     [style.width]="iterationInputFocusDirective.isFocused? '100%' : 'auto'">
-                    <ng-container @fadeIn *ngIf="!iterationInputFocusDirective.isFocused">
+                    <ng-container *ngIf="!iterationInputFocusDirective.isFocused">
                       <label (click)="$event.stopPropagation()" [for]="stepNameAndResult.stepName" @fadeIn>Iteration:
                         &nbsp;</label>
                     </ng-container>

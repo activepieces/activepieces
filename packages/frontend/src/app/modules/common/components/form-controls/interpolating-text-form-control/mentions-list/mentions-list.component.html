@@ -30,7 +30,7 @@
           [stepMention]="stepMention"></app-webhook-trigger-mention-item>
       </ng-container>
       <ng-container *ngSwitchDefault>
-        <button mat-menu-item matTooltip="Storage Step" (click)="mentionClicked(stepMention)">
+        <button mat-menu-item (click)="mentionClicked(stepMention)">
           <app-generic-step-mention-item [stepIndex]="idx+1"
             [stepMention]="stepMention"></app-generic-step-mention-item>
         </button>
