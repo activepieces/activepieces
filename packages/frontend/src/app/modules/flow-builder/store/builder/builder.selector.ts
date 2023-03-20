@@ -504,6 +504,9 @@ function findStepLogoUrl(
           : 'webhook.png';
       return 'assets/img/custom/piece/' + fileName;
     }
+    if (step.type === ActionType.LOOP_ON_ITEMS) {
+      return 'assets/img/custom/piece/loop.png';
+    }
     return 'assets/img/custom/piece/code.png';
   }
 }

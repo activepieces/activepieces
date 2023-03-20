@@ -7,7 +7,6 @@ import {
   Output,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Store } from '@ngrx/store';
 import {
   combineLatest,
   filter,
@@ -33,8 +32,6 @@ import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CodeService } from '../../../../../../flow-builder/service/code.service';
-import { FlowItemDetails } from '../../../../../../flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { BuilderSelectors } from '../../../../../../flow-builder/store/builder/builder.selector';
 import { FlowItem } from '../../../../../model/flow-builder/flow-item';
 
 @Component({
@@ -49,7 +46,7 @@ export class CodeStepMentionItemComponent implements OnInit {
   @Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
   testDialogClosed$: Observable<object>;
   expandCodeCollapse = false;
-  flowItemDetails$: Observable<FlowItemDetails | undefined>;
+
   codeStepTest$: Observable<{
     children?: MentionTreeNode[];
     error?: boolean;
@@ -58,7 +55,6 @@ export class CodeStepMentionItemComponent implements OnInit {
   }>;
   testing$: Subject<boolean> = new Subject();
   constructor(
-    private store: Store,
     private dialogService: MatDialog,
     private codeService: CodeService,
     private mentionsTreeCache: MentionsTreeCacheService,
@@ -90,9 +86,6 @@ export class CodeStepMentionItemComponent implements OnInit {
         })
       );
     }
-    this.flowItemDetails$ = this.store.select(
-      BuilderSelectors.selectFlowItemDetails(this.stepMention.step)
-    );
   }
   openTestCodeModal() {
     const codeStepSettings = this.stepMention.step

@@ -43,7 +43,6 @@ import { FlowItem } from '../../../../../model/flow-builder/flow-item';
 })
 export class PieceStepMentionItemComponent implements OnInit {
   TriggerType = TriggerType;
-
   expandSample = false;
   @Input()
   set stepMention(val: MentionListItem & { step: FlowItem }) {

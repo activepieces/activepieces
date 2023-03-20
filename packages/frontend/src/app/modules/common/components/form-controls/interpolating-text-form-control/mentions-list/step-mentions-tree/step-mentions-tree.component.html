@@ -40,8 +40,8 @@
         {{node.key}}
       </div>
       <div class=" ap-flex-grow "></div>
-      <app-button @fadeIn *ngIf="nestedTreeNodeHoverTracker.isHovered" class="ap-absolute ap-right-[10px]"
-        [keepBgWhite]="true" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+      <app-button *ngIf="nestedTreeNodeHoverTracker.isHovered" class="ap-absolute ap-right-[10px]" [keepBgWhite]="true"
+        btnColor="primary" btnStyle="basic" type="button" btnSize="small"
         (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)">Select
       </app-button>
     </div>

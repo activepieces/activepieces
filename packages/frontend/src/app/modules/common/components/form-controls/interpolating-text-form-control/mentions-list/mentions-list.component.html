@@ -19,6 +19,10 @@
         <app-piece-step-mention-item [stepIndex]="idx+1" (mentionClicked)="mentionClicked($event)"
           [stepMention]="stepMention"></app-piece-step-mention-item>
       </ng-container>
+      <ng-container *ngSwitchCase="ActionType.LOOP_ON_ITEMS">
+        <app-loop-step-mention-item [stepIndex]="idx+1" (mentionClicked)="mentionClicked($event)"
+          [stepMention]="stepMention"></app-loop-step-mention-item>
+      </ng-container>
 
       <ng-container *ngSwitchCase="TriggerType.PIECE">
         <app-piece-step-mention-item [stepIndex]="idx+1" (mentionClicked)="mentionClicked($event)"
