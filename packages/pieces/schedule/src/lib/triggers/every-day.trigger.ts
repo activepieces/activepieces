@@ -29,14 +29,14 @@ export const everyDayTrigger= createTrigger({
     },
     onEnable: async (ctx) => {
         const hourOfTheDay =validateHours(ctx.propsValue.hour_of_the_day);
-        const cronExpression = ctx.propsValue.run_on_weekends? `0 ${hourOfTheDay}  * * *` : `0 ${hourOfTheDay} * *  MON-FRI`
+        const cronExpression = ctx.propsValue.run_on_weekends? `0 ${hourOfTheDay}  * * *` : `0 ${hourOfTheDay} * * 1-5`
         ctx.setSchedule(cronExpression);        
     },
     run(ctx) {
         const hourOfTheDay =validateHours(ctx.propsValue.hour_of_the_day);
         return Promise.resolve([{
             hourOfTheDay:hourOfTheDay,
-            cronExpression: ctx.propsValue.run_on_weekends? `0 ${hourOfTheDay}  * * *` : `0 ${hourOfTheDay} * *  MON-FRI`
+            cronExpression: ctx.propsValue.run_on_weekends? `0 ${hourOfTheDay}  * * *` : `0 ${hourOfTheDay} * * 1-5`
         }]);
     },
     onDisable: async () => {

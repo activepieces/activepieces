@@ -2,6 +2,7 @@
 import { createPiece } from '@activepieces/framework';
 import packageJson from '../package.json';
 import { everyDayTrigger } from './lib/triggers/every-day.trigger';
+import { everyHourTrigger } from './lib/triggers/every-hour.trigger';
 
 export const schedule = createPiece({
   name: 'schedule',
@@ -15,6 +16,8 @@ export const schedule = createPiece({
   actions: [
   ],
   triggers: [
+    everyHourTrigger,
     everyDayTrigger
+ 
   ],
 });
