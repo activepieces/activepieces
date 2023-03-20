@@ -47,11 +47,11 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
   @ViewChild('addButton') addButtonView: ElementRef;
   @ViewChild('emptyLoopAddButton') emptyLoopAddButtonView: ElementRef;
   @ViewChild('afterLoopAddButton') afterLoopAddButton: ElementRef;
-  @Input() insideLoop = false;
+  @Input() insideLoopOrBranch = false;
   afterLoopArrowCommand = '';
   startingLoopLineDrawCommand = '';
-  arrowHeadLeft = 0;
-  arrowHeadTop = 0;
+  loopingArrowHeadLeft = 0;
+  loopingArrowHeadTop = 0;
   drawer: Drawer = new Drawer();
   addButtonAndFlowItemNameContainer: AddButtonAndFlowItemNameContainer;
   addButtonTop = '0px';
@@ -102,7 +102,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
 
   writeLines() {
     const commands: string[] = [];
-    let childFlowsGraphHeight: number;
+    let childFlowsGraphHeight = 0;
     if (
       this.flowItem.firstLoopAction === undefined ||
       this.flowItem.firstLoopAction === null
@@ -145,9 +145,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
       commands.push(this.drawer.move(0, childFlowsGraphHeight));
     }
     commands.push(this.drawer.drawArc(true, true, false));
-    commands.push(
-      this.drawer.drawHorizontalLine(-2.5 * HORZIONTAL_LINE_LENGTH)
-    );
+    commands.push(this.drawer.drawHorizontalLine(-2 * HORZIONTAL_LINE_LENGTH));
     commands.push(this.drawer.drawArc(true, false, false));
     const returningVerticalLineToBeginingLength =
       this.findReturningVerticalLineLength(childFlowsGraphHeight);
@@ -155,7 +153,9 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
       this.drawer.drawVerticalLine(-returningVerticalLineToBeginingLength)
     );
     commands.push(this.drawer.drawArc(false, false, false));
-    commands.push(this.drawer.drawHorizontalLine(HORZIONTAL_LINE_LENGTH));
+    commands.push(
+      this.drawer.drawHorizontalLine(HORZIONTAL_LINE_LENGTH * 0.75)
+    );
     return commands;
   }
 
@@ -163,7 +163,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     const commands: string[] = [];
     commands.push(
       this.drawer.move(
-        0.5 * HORZIONTAL_LINE_LENGTH - ARC_LENGTH,
+        HORZIONTAL_LINE_LENGTH * 0.165,
         ARC_LENGTH +
           VERTICAL_LINE_LENGTH +
           SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
@@ -172,7 +172,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
       )
     );
 
-    if (!this.insideLoop) {
+    if (!this.insideLoopOrBranch) {
       commands.push(this.drawer.drawVerticalLine(VERTICAL_LINE_LENGTH));
     } else {
       commands.push(
@@ -215,7 +215,6 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
   }
 
   calculateOffsetBeforeFirstAction() {
-    const lineStrokeOffset = 1.5;
     const leftOffset =
       FLOW_ITEM_WIDTH / 2 + ARC_LENGTH + HORZIONTAL_LINE_LENGTH + ARC_LENGTH;
     const topOffset =
@@ -224,9 +223,8 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
       ARC_LENGTH +
       VERTICAL_LINE_LENGTH -
       SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
-    this.arrowHeadLeft =
-      leftOffset - (ARROW_HEAD_SIZE.width / 2.0 + lineStrokeOffset);
-    this.arrowHeadTop = topOffset + ARROW_HEAD_SIZE.height;
+    this.loopingArrowHeadLeft = 111.5;
+    this.loopingArrowHeadTop = 90.5;
 
     this.addButtonLeft = leftOffset - ADD_BUTTON_SIZE.width / 2.0 + 'px';
     this.addButtonTop = topOffset - VERTICAL_LINE_LENGTH / 2.0 + 'px';
@@ -241,12 +239,12 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     this.afterLoopAddButtonTop = `${
       topOffset -
       VERTICAL_LINE_LENGTH / 2.0 -
-      (this.insideLoop ? ARROW_HEAD_SIZE.height : 1)
+      (this.insideLoopOrBranch ? ARROW_HEAD_SIZE.height : 1)
     }px`;
     this.afterLoopAddButtonLeft = `calc(50% - ${ADD_BUTTON_SIZE.width / 2}px`;
     const lineStrokeOffset = 1.5;
     this.afterLoopArrowHeadTop =
-      topOffset - ARROW_HEAD_SIZE.height - lineStrokeOffset + 5;
+      topOffset - ARROW_HEAD_SIZE.height - lineStrokeOffset;
     this.afterLoopArrowHeadLeft =
       this.flowItem.connectionsBox!.width / 2.0 -
       ARROW_HEAD_SIZE.width / 2 -

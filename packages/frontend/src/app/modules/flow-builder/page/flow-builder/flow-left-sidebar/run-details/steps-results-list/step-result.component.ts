@@ -71,7 +71,9 @@ export class StepResultComponent implements OnInit, AfterViewInit {
         startWith(1),
         tap((newIndex: number | null) => {
           if (newIndex) {
-            this.iterationInputMinWidth = `${newIndex.toString().length}ch`;
+            this.iterationInputMinWidth = `${
+              newIndex.toString().length * 2.2
+            }ch`;
           } else {
             this.iterationInputMinWidth = '0ch';
           }

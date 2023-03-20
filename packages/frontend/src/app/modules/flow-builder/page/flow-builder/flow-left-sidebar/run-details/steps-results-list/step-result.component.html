@@ -22,6 +22,7 @@
 
                 <div #spacer class="ap-flex-grow"></div>
                 <ng-container *ngIf="showIterationInput; else allIterations">
+
                   <div class="ap-flex ap-items-center done-iteration-container"
                     [style.width]="iterationInputFocusDirective.isFocused? '100%' : 'auto'">
                     <ng-container @fadeIn *ngIf="!iterationInputFocusDirective.isFocused">
@@ -33,7 +34,7 @@
 
                       <div class="done-iteration-section ap-items-center" #doneButtonSection
                         (click)="$event.stopPropagation();" dir="ltr"
-                        [hidden]="!iterationInputFocusDirective.isFocused">
+                        [class.ap-invisible]="!iterationInputFocusDirective.isFocused">
                         <span (click)="iterationInput.focus()">
                           /{{stepNameAndResult.result.output.iterations?.length}}
                         </span>

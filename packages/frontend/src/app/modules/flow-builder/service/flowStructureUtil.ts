@@ -169,6 +169,14 @@ export class FlowStructureUtil {
     if (pathFromFalseBranch) {
       return [...pathFromFalseBranch];
     }
+    const pathFromLoop = this._findPathToStep(
+      stepToFind,
+      (stepToSearch as LoopOnItemsAction).firstLoopAction
+    );
+    if (pathFromLoop) {
+      return [stepToSearch, ...pathFromLoop];
+    }
+
     return undefined;
   }
   public static findPathToStep(stepToFind: FlowItem, trigger: Trigger) {

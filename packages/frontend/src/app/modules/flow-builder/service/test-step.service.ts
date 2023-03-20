@@ -20,4 +20,11 @@ export class TestStepService {
       }
     );
   }
+  getPollingResults(flowId: string) {
+    return this.http.get<SeekPage<TriggerEvent>>(environment.apiUrl + '/poll', {
+      params: {
+        flowId: flowId,
+      },
+    });
+  }
 }

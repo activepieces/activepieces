@@ -60,7 +60,7 @@ export const LoopOnItemsActionSchema = Type.Object({
   ...commonActionProps,
   type: Type.Literal(ActionType.LOOP_ON_ITEMS),
   settings: Type.Object({
-    items: Type.Array(Type.Any({})),
+    items: Type.Union([Type.Array(Type.String({})), Type.String()])
   }),
 });
 
