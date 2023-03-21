@@ -4,13 +4,13 @@ import { createTrigger, Property } from "@activepieces/framework";
 
 export const everyHourTrigger= createTrigger({
     name: 'every_hour',
-    displayName: 'Every Hour (UTC+0)',
+    displayName: 'Every Hour',
     description: 'Triggers the current flow every hour',
     type: TriggerStrategy.POLLING,
     sampleData: {},
     props:{
         run_on_weekends : Property.Checkbox({
-            displayName:"Run on weekends",
+            displayName:"Run on weekends (Sat,Sun)",
             required:true,
             defaultValue:false
         })

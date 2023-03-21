@@ -4,7 +4,7 @@ import { DAY_HOURS, MONTH_DAYS,  validateHours,  validateMonthDays  } from "../c
 
 export const everyMonthTrigger= createTrigger({
     name: 'every_month',
-    displayName: 'Every Month (UTC+0)',
+    displayName: 'Every Month',
     description: 'Triggers the current flow every month',
     type: TriggerStrategy.POLLING,
     sampleData: {},
@@ -22,7 +22,7 @@ export const everyMonthTrigger= createTrigger({
             required:true,
         }),
         hour_of_the_day: Property.StaticDropdown({
-            displayName:'Hour of the day',
+            displayName:'Hour of the day (UTC)',
             options:{
                 options: DAY_HOURS.map((d,idx)=>{
                     return {

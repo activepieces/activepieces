@@ -4,7 +4,7 @@ import { DAY_HOURS, validateWeekDays, validateHours, WEEK_DAYS,  } from "../comm
 
 export const everyWeekTrigger= createTrigger({
     name: 'every_week',
-    displayName: 'Every Week (UTC+0)',
+    displayName: 'Every Week',
     description: 'Triggers the current flow every week',
     type: TriggerStrategy.POLLING,
     sampleData: {},
@@ -22,7 +22,7 @@ export const everyWeekTrigger= createTrigger({
             required:true,
         }),
         hour_of_the_day: Property.StaticDropdown({
-            displayName:'Hour of the day',
+            displayName:'Hour of the day (UTC)',
             options:{
                 options: DAY_HOURS.map((h,idx)=>{
                     return {

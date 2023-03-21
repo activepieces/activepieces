@@ -4,13 +4,13 @@ import { DAY_HOURS, validateHours,  } from "../common";
 
 export const everyDayTrigger= createTrigger({
     name: 'every_day',
-    displayName: 'Every Day (UTC+0)',
+    displayName: 'Every Day',
     description: 'Triggers the current flow every day',
     type: TriggerStrategy.POLLING,
     sampleData: {},
     props:{
         hour_of_the_day: Property.StaticDropdown({
-            displayName:'Hour of the day',
+            displayName:'Hour of the day (UTC)',
             options:{
                 options: DAY_HOURS.map((h,idx)=>{
                     return {
@@ -20,15 +20,16 @@ export const everyDayTrigger= createTrigger({
                 })
             },
             required:true,
+            defaultValue:0
         }),
         run_on_weekends : Property.Checkbox({
-            displayName:"Run on weekends",
+            displayName:"Run on weekends (Sat,Sun)",
             required:true,
             defaultValue:false
         })
     },
     onEnable: async (ctx) => {
-        const hourOfTheDay =validateHours(ctx.propsValue.hour_of_the_day);
+        const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
         const cronExpression = ctx.propsValue.run_on_weekends? `0 ${hourOfTheDay}  * * *` : `0 ${hourOfTheDay} * * 1-5`
         ctx.setSchedule(cronExpression);        
     },
