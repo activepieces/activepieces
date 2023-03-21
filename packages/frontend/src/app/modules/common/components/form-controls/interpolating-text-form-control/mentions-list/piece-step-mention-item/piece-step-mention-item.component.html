@@ -4,10 +4,12 @@
       <mat-icon class="mat-icon-rtl-mirror" *ngIf="result.children && result.children.length>0">
         {{expandSample ? 'expand_less' : 'expand_more'}}
       </mat-icon>
+      <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"
+        [indentation]="!result.children || result.children.length===0"></app-generic-step-mention-item>
     </ng-container>
-    <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"></app-generic-step-mention-item>
+
   </div>
-  <app-button @fadeIn *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+  <app-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
     [keepBgWhite]="true" (click)="mentionClicked.emit(_stepMention)">Select
   </app-button>
 

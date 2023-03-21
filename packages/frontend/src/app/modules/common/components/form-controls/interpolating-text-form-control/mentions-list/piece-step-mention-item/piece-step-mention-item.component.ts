@@ -29,7 +29,6 @@ import {
   traverseStepOutputAndReturnMentionTree,
 } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
-import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
 import { ActionMetaService } from '../../../../../../flow-builder/service/action-meta.service';
 import { FlowItemDetails } from '../../../../../../flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { BuilderSelectors } from '../../../../../../flow-builder/store/builder/builder.selector';
@@ -39,7 +38,6 @@ import { FlowItem } from '../../../../../model/flow-builder/flow-item';
   selector: 'app-piece-step-mention-item',
   templateUrl: './piece-step-mention-item.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn400ms],
 })
 export class PieceStepMentionItemComponent implements OnInit {
   TriggerType = TriggerType;

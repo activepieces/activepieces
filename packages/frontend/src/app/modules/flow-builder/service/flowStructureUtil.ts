@@ -182,6 +182,7 @@ export class FlowStructureUtil {
 
     return undefined;
   }
+
   public static findPathToStep(stepToFind: FlowItem, trigger: Trigger) {
     if (stepToFind.name === trigger.name) {
       return [];
@@ -190,6 +191,48 @@ export class FlowStructureUtil {
     if (!path) {
       throw new Error('Step not found while traversing to find it ');
     }
+    if (trigger.nextAction) {
+      this.findIndeciesInDfsOrder(path, trigger.nextAction, { value: 2 });
+    }
+    console.log(path);
     return [trigger, ...path];
+  }
+  private static findIndeciesInDfsOrder(
+    path: FlowItem[],
+    action: FlowItem,
+    idx: { value: number }
+  ) {
+    const actionIndexInPath = path.findIndex((a) => a === action);
+    if (actionIndexInPath > -1) {
+      path[actionIndexInPath] = {
+        ...path[actionIndexInPath],
+        indexInDfsTraversal: idx.value,
+      };
+    }
+    idx.value++;
+    if ((action as BranchAction).onSuccessAction) {
+      this.findIndeciesInDfsOrder(
+        path,
+        (action as BranchAction).onSuccessAction!,
+        idx
+      );
+    }
+    if ((action as BranchAction).onFailureAction) {
+      this.findIndeciesInDfsOrder(
+        path,
+        (action as BranchAction).onFailureAction!,
+        idx
+      );
+    }
+    if ((action as LoopOnItemsAction).firstLoopAction) {
+      this.findIndeciesInDfsOrder(
+        path,
+        (action as LoopOnItemsAction).firstLoopAction!,
+        idx
+      );
+    }
+    if (action.nextAction) {
+      this.findIndeciesInDfsOrder(path, action.nextAction, idx);
+    }
   }
 }

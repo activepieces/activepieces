@@ -244,7 +244,6 @@ function createAction(
       };
       break;
   }
-  debugger;
   action.valid = (request.valid ?? true) && actionSchemaValidator.Check(action);
   return action;
 }

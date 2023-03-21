@@ -25,7 +25,6 @@ import {
 import { FlowItem } from '../../../../../model/flow-builder/flow-item';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 import { map, Observable } from 'rxjs';
-import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
 import { Store } from '@ngrx/store';
 import { FlowsActions } from '../../../../../../flow-builder/store/flow/flows.action';
 
@@ -34,7 +33,6 @@ const pathRegex = /\$\{trigger((\.[a-zA-Z_$][a-zA-Z_$0-9]*)(\[([0-9])+\])*)*\}/;
   selector: 'app-webhook-trigger-mention-item',
   templateUrl: './webhook-trigger-mention-item.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn400ms],
 })
 export class WebhookTriggerMentionItemComponent implements OnInit {
   expandSample = false;
