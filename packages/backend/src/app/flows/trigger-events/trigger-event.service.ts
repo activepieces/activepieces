@@ -28,16 +28,32 @@ export const triggerEventService = {
         switch (trigger.type) {
         case TriggerType.WEBHOOK:
         case TriggerType.SCHEDULE:
-            throw new Error("Not implemented");
+            throw new Error("Cannot be tested");
         case TriggerType.PIECE: {
-            const test =( await engineHelper.executeTrigger({
+            const testResult =( await engineHelper.executeTrigger({
                 hookType: TriggerHookType.TEST,
                 flowVersion: flow.version,
                 collectionId: flow.collectionId,
                 webhookUrl: await webhookService.getWebhookUrl(projectId),
                 projectId: projectId
             }) )as unknown[];
-            return paginationHelper.createPage<unknown>(test, null);
+            await triggerEventrepo.delete({
+                projectId,
+                flowId: flow.id,
+            });
+            for(let i = 0; i < testResult.length; i++) {
+                await triggerEventService.saveEvent({
+                    projectId,
+                    flowId: flow.id,
+                    payload: testResult[i]
+                });
+            }
+            return triggerEventService.list({
+                projectId,
+                flow,
+                cursor: null,
+                limit: testResult.length
+            });
         }
         case TriggerType.EMPTY:
             return emptyPage;
