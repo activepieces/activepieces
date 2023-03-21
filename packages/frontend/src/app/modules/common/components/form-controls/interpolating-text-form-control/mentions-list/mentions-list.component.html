@@ -35,7 +35,7 @@
       </ng-container>
       <ng-container *ngSwitchDefault>
         <button mat-menu-item (click)="mentionClicked(stepMention)">
-          <app-generic-step-mention-item [stepIndex]="idx+1"
+          <app-generic-step-mention-item [stepIndex]="idx+1" [indentation]="true"
             [stepMention]="stepMention"></app-generic-step-mention-item>
         </button>
       </ng-container>
