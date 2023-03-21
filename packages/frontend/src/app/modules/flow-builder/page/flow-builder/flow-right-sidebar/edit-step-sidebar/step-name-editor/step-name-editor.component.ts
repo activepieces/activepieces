@@ -16,7 +16,6 @@ import { FlowsActions } from '../../../../../store/flow/flows.action';
 })
 export class StepNameEditorComponent {
   isEditingStepName = false;
-  stepNameHovered = false;
   isInDebugMode$: Observable<boolean>;
   currentStepName$: Observable<string>;
   updateStepName$: Observable<void>;
