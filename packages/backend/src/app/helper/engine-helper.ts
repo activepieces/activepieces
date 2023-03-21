@@ -9,8 +9,9 @@ import {
     ExecuteFlowOperation,
     ExecutePropsOptions,
     ExecuteTriggerOperation,
-    ExecuteTriggerResponse,
     ExecutionOutput,
+    getPackageNameForPiece,
+    getPackageVersionForPiece,
     ParseEventResponse,
     PieceTrigger,
     PrincipalType,
@@ -33,9 +34,24 @@ const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH
 
 const installPieceDependency = async (path: string, pieceName: string, pieceVersion: string) => {
     const environment = system.get(SystemProp.ENVIRONMENT);
-    if (environment === ApEnvironment.PRODUCTION) {
-        await packageManager.addDependencies(path, { [`@activepieces/piece-${pieceName}`]: pieceVersion });
+
+    if (environment === ApEnvironment.DEVELOPMENT) {
+        return;
     }
+
+    const packageName = getPackageNameForPiece({
+        pieceName,
+        pieceVersion,
+    });
+
+    const packageVersion = getPackageVersionForPiece({
+        pieceName,
+        pieceVersion,
+    });
+
+    await packageManager.addDependencies(path, {
+        [packageName]: packageVersion,
+    });
 };
 
 export const engineHelper = {
