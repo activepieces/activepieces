@@ -150,7 +150,10 @@ export class FlowStructureUtil {
       stepToSearch.nextAction
     );
     if (pathFromNextAction) {
-      if (stepToSearch.type !== ActionType.BRANCH) {
+      if (
+        stepToSearch.type !== ActionType.BRANCH &&
+        stepToSearch.type !== ActionType.LOOP_ON_ITEMS
+      ) {
         return [stepToSearch, ...pathFromNextAction];
       }
       return [...pathFromNextAction];
