@@ -18,8 +18,8 @@ export class LoopStepMentionItemComponent {
   @Input() stepIndex: number;
   @Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
   mentionsItems = {
-    current_iteration: 0,
-    current_item: 'current_element',
+    index: 0,
+    item: 'current_element',
   };
   mentionItemsToShow$: Observable<{
     children: MentionTreeNode[];

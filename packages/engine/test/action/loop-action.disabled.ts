@@ -41,8 +41,8 @@ describe('Loop Action', () => {
     console.log(JSON.stringify(stepOutput));
     expect(stepOutput.status).toEqual(StepOutputStatus.SUCCEEDED);
     expect(stepOutput.output).toEqual({
-      current_item: "two",
-      current_iteration: 2,
+      item: "two",
+      index: 2,
       iterations: [
         {},
         {}
@@ -89,8 +89,8 @@ describe('Loop Action', () => {
     })
     expect(stepOutput.status).toEqual(StepOutputStatus.FAILED);
     expect(stepOutput.output).toEqual({
-      current_item: "one",
-      current_iteration: 1,
+      item: "one",
+      index: 1,
       iterations: [
         {}
       ]

@@ -14,8 +14,8 @@ export class StepOutput<T = any>{
 }
 
 export class LoopOnItemsStepOutput extends StepOutput<{
-  current_item: unknown;
-  current_iteration: number;
+  item: unknown;
+  index: number;
   iterations: Record<string, StepOutput>[];
 }> {
 

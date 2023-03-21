@@ -156,8 +156,8 @@ describe('Flow Executor', () => {
     // This should be resolved without any iterations array.
     expect(executionOutput.executionState.steps['FIRST_LOOP'].output!.iterations[0]['SECOND_LOOP'].output.iterations[1]['INNER_CODE']?.input).toEqual({
       x: {
-        current_item: 'hello 1',
-        current_iteration: 1
+        item: 'hello 1',
+        index: 1
       }
     });
   });
@@ -180,18 +180,18 @@ describe('Flow Executor', () => {
     );
     const loopOutput: LoopOnItemsStepOutput = executionOutput.executionState.steps['LOOP_ACTION']! as LoopOnItemsStepOutput;
     expect(loopOutput.output!.iterations[1]['CODE_IN_LOOP']?.input).toEqual({
-      current_item: 'two',
-      current_iteration: 2
+      item: 'two',
+      index: 2
     });
     expect(loopOutput.output!.iterations[0]['CODE_IN_LOOP']?.input).toEqual({
-      current_item: "one",
-      current_iteration: 1
+      item: "one",
+      index: 1
     });
     const innerLoop: LoopOnItemsStepOutput = loopOutput.output!.iterations[0]['LOOP_IN_LOOP']! as LoopOnItemsStepOutput;
     expect(innerLoop.output!.iterations[1]["CODE_IN_LOOP_IN_LOOP"]?.input).toEqual({
       loop: {
-        current_item: "two",
-        current_iteration: 2
+        item: "two",
+        index: 2
       }
     });
     expect(Object.keys(executionOutput.executionState.steps).length).toEqual(3);
