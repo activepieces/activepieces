@@ -257,3 +257,6 @@ function formatStepOutput(stepOutput: unknown) {
 export function getImageTemplateForStepLogo(logoUrl: string) {
   return `<img style="object-fit:contain; width:16px; height:16px; margin-right:5px; margin-bottom:2px; display:inline;" src="${logoUrl}">`;
 }
+
+export const FIRST_LEVEL_PADDING_IN_MENTIONS_LIST = 71;
+export const CHEVRON_SPACE_IN_MENTIONS_LIST = 40;
