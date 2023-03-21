@@ -17,7 +17,9 @@ export const everyHourTrigger= createTrigger({
     },
     onEnable: async (ctx) => {
         const cronExpression = ctx.propsValue.run_on_weekends? `0 * * * *` : `0 * * * 1-5`
-        ctx.setSchedule(cronExpression);        
+        ctx.setSchedule({
+            cronExpression: cronExpression,
+        });        
     },
     run(ctx) {
         const cronExpression = ctx.propsValue.run_on_weekends? `0 * * * *` : `0 * * * 1-5`

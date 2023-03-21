@@ -31,7 +31,9 @@ export const everyDayTrigger= createTrigger({
     onEnable: async (ctx) => {
         const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
         const cronExpression = ctx.propsValue.run_on_weekends? `0 ${hourOfTheDay}  * * *` : `0 ${hourOfTheDay} * * 1-5`
-        ctx.setSchedule(cronExpression);        
+        ctx.setSchedule({
+            cronExpression: cronExpression,
+        });        
     },
     run(ctx) {
         const hourOfTheDay =validateHours(ctx.propsValue.hour_of_the_day);

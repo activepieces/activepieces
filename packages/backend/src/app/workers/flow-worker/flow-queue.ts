@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import { ApId } from "@activepieces/shared";
+import { ApId, ScheduleOptions } from "@activepieces/shared";
 import { createRedisClient } from "../../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
@@ -11,7 +11,7 @@ interface BaseAddParams {
 
 interface RepeatableJobAddParams extends BaseAddParams {
   data: RepeatableJobData;
-  cronExpression: string;
+  scheduleOptions: ScheduleOptions;
 }
 
 interface OneTimeJobAddParams extends BaseAddParams {
@@ -41,14 +41,14 @@ export const flowQueue = {
     async add(params: AddParams): Promise<void> {
         console.log("[flowQueue#add] params=", params);
         if (isRepeatable(params)) {
-            const { id, data, cronExpression } = params;
+            const { id, data, scheduleOptions } = params;
 
             const job = await repeatableJobQueue.add(id, data, {
                 jobId: id,
                 removeOnComplete: true,
                 repeat: {
-                    pattern: cronExpression,
-                    
+                    pattern: scheduleOptions.cronExpression,
+                    tz: scheduleOptions.timezone
                 },
             });
 
@@ -93,5 +93,5 @@ export const flowQueue = {
 };
 
 const isRepeatable = (params: AddParams): params is RepeatableJobAddParams => {
-    return (params as RepeatableJobAddParams).cronExpression !== undefined;
+    return (params as RepeatableJobAddParams).scheduleOptions.cronExpression !== undefined;
 };

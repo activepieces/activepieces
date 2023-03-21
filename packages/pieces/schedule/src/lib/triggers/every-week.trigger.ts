@@ -38,7 +38,9 @@ export const everyWeekTrigger= createTrigger({
         const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
         const dayOfTheWeek = validateWeekDays(ctx.propsValue.day_of_the_week);
         const cronExpression = `0 ${hourOfTheDay} * * ${dayOfTheWeek}`
-        ctx.setSchedule(cronExpression);        
+        ctx.setSchedule({
+            cronExpression: cronExpression,
+        });      
     },
     run(ctx) {
         const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);

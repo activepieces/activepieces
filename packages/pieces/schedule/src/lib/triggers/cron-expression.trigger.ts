@@ -1,5 +1,5 @@
-import { TriggerStrategy } from "../../../../../shared/src";
-import { createTrigger, Property } from "../../../../framework/src";
+import { TriggerStrategy } from "@activepieces/shared";
+import { createTrigger, Property } from "@activepieces/framework";
 
 export const cronExpressionTrigger = createTrigger({
     name: 'cron_expression',
@@ -16,7 +16,9 @@ export const cronExpressionTrigger = createTrigger({
     type: TriggerStrategy.POLLING,
     sampleData: {},
     onEnable: async (ctx) => {
-        ctx.setSchedule(ctx.propsValue.cronExpression)        
+        ctx.setSchedule({
+            cronExpression: ctx.propsValue.cronExpression,
+        })        
     },
     run(context) {
         return Promise.resolve([{}]);

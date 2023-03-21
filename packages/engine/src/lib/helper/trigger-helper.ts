@@ -1,5 +1,5 @@
 import { pieces } from "@activepieces/pieces-apps";
-import { ApEdition, EventPayload, ExecuteEventParserOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, TriggerHookType, TriggerStrategy } from "@activepieces/shared";
+import { ApEdition, EventPayload, ExecuteEventParserOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, ScheduleOptions, TriggerHookType, TriggerStrategy } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./piece-helper";
@@ -36,7 +36,10 @@ export const triggerHelper = {
     const resolvedInput = await variableService.resolve(input, executionState);
     const appListeners: Listener[] = [];
     const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : '';
-    let cronExpression = "*/5 * * * *";
+    let scheduleOptions: ScheduleOptions = {
+      cronExpression: "*/5 * * * *",
+      timezone: "UTC"
+    } 
     const context = {
       store: createContextStore(prefix, params.flowVersion.flowId),
       app: {
@@ -44,11 +47,14 @@ export const triggerHelper = {
           appListeners.push({ events, identifierValue, identifierKey });
         }
       },
-      setSchedule(expr: string) {
-        if (!isValidCron(expr)) {
-          throw new Error(`Invalid cron expression: ${expr}`);
+      setSchedule(request : ScheduleOptions) {
+        if (!isValidCron(request.cronExpression)) {
+          throw new Error(`Invalid cron expression: ${request.cronExpression}`);
         }
-        cronExpression = expr;
+        scheduleOptions = {
+          cronExpression: request.cronExpression,
+          timezone: request.timezone??"UTC"
+        };
       },
       webhookUrl: params.webhookUrl,
       propsValue: resolvedInput,
@@ -65,7 +71,7 @@ export const triggerHelper = {
         await trigger.onEnable(context);
         return {
           listeners: appListeners,
-          cronExpression: cronExpression
+          scheduleOptions: scheduleOptions
         }
       case TriggerHookType.TEST:
         // TODO: fix types to remove use of any

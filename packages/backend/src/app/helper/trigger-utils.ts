@@ -117,7 +117,7 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId }: Enab
     case TriggerStrategy.WEBHOOK:
         break;
     case TriggerStrategy.POLLING: {
-        const cronExpression = (response as ExecuteTriggerResponse).cronExpression;
+        const scheduleOptions = (response as ExecuteTriggerResponse).scheduleOptions;
         await flowQueue.add({
             id: flowVersion.id,
             data: {
@@ -127,7 +127,7 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId }: Enab
                 flowVersion,
                 triggerType: TriggerType.PIECE,
             },
-            cronExpression: cronExpression,
+            scheduleOptions: scheduleOptions,
         });
         break;
 

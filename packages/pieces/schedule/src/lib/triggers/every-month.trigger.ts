@@ -38,7 +38,9 @@ export const everyMonthTrigger= createTrigger({
         const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
         const dayOfTheMonth = validateMonthDays(ctx.propsValue.day_of_the_month);
         const cronExpression = `0 ${hourOfTheDay} ${dayOfTheMonth} * *`
-        ctx.setSchedule(cronExpression);        
+        ctx.setSchedule({
+            cronExpression: cronExpression,
+        });       
     },
     run(ctx) {
         const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
