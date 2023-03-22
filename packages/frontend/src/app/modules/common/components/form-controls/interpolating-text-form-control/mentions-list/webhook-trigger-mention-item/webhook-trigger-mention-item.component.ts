@@ -74,11 +74,12 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
 
   openPathDialog() {
     const dialogData:CustomPathMentionDialogData = {
-      defaultValue:'${trigger.body}',
+      defaultValue:'trigger',
       dialogTitle:'Webhook Payload Path',
       entityName: 'webhook payload',
-      placeHolder:'eg. ${trigger.header}',
-      stepDisplayName: this._stepMention.step.displayName
+      placeHolder:'eg. trigger.headers',
+      stepDisplayName: this._stepMention.step.displayName,
+      stepName:"trigger"
     }
      this.customPathDialogClosed$= this.dialogService.open(CustomPathMentionDialogComponent,{data:dialogData}).afterClosed().pipe(tap(val=>{
         if(val)

@@ -194,7 +194,6 @@ export class FlowStructureUtil {
     if (trigger.nextAction) {
       this.findIndeciesInDfsOrder(path, trigger.nextAction, { value: 2 });
     }
-    console.log(path);
     return [trigger, ...path];
   }
   private static findIndeciesInDfsOrder(

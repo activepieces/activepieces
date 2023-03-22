@@ -1,41 +1,45 @@
-import { Component, Inject } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Component, Inject, OnInit } from '@angular/core';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import {  MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MentionListItem, replaceArrayNotationsWithSpaces, replaceDotsWithSpaces } from '../../utils';
 
-const pathRegex = /\$\{trigger((\.[a-zA-Z_$][a-zA-Z_$0-9]*)(\[([0-9])+\])*)*\}/;
 export interface CustomPathMentionDialogData {
   stepDisplayName: string;
   defaultValue: string;
   placeHolder: string;
   dialogTitle:string;
   entityName:string;
+  stepName:string;
 }
 
 @Component({
   templateUrl: './custom-path-mention-dialog.component.html'
 })
-export class CustomPathMentionDialogComponent {
+export class CustomPathMentionDialogComponent implements OnInit{
   pathFormGroup: FormGroup<{ path: FormControl<string> }>;
   constructor(
-    formBuilder: FormBuilder,
+   private formBuilder: FormBuilder,
     @Inject(MAT_DIALOG_DATA)
     public data: CustomPathMentionDialogData,
     private dialogRef: MatDialogRef<CustomPathMentionDialogComponent>,
   ) {
-    this.pathFormGroup = formBuilder.group({
-      path: new FormControl<string>('${trigger.body}', {
-        validators: Validators.pattern(pathRegex),
+  }
+  ngOnInit(): void {
+    const pathRegex =`${this.data.stepName}((\\.[a-zA-Z_$][a-zA-Z_$0-9]*)(\\[([0-9])+\\])*)*`;
+    debugger;
+    this.pathFormGroup = this.formBuilder.group({
+      path: new FormControl<string>(this.data.defaultValue, {
+        validators: [Validators.pattern(pathRegex),pathStartValidator(this.data.stepName) ],
         nonNullable: true,
       }),
     });
   }
   emitCustomPathMention() {
     if (this.pathFormGroup.valid) {
-      const triggerPath = this.pathFormGroup.controls.path.value!;
-      const triggerPathWithoutInterpolationDenotation = triggerPath.slice(
+      const customPath =  `\${${this.pathFormGroup.controls.path.value!}}`;
+      const triggerPathWithoutInterpolationDenotation = customPath.slice(
         2,
-        triggerPath.length - 1
+        customPath.length - 1
       );
       const mentionText = replaceArrayNotationsWithSpaces(
         replaceDotsWithSpaces(
@@ -43,7 +47,7 @@ export class CustomPathMentionDialogComponent {
         )
       );
       const mentionItem: MentionListItem = {
-        value: this.pathFormGroup.controls.path.value!,
+        value: customPath,
         label: mentionText,
       };
       this.dialogRef.close(mentionItem);
@@ -57,3 +61,20 @@ export class CustomPathMentionDialogComponent {
     ].join('.');
   }
 }
+
+function pathStartValidator(
+  stepName:string
+) {
+  const fn= (control: AbstractControl)=>{
+    const val:string =control.value;
+    if(val.startsWith(stepName))
+    return null;
+    else
+    {
+      return {"invalid-path": true}
+    }
+  }
+  return fn;
+}
+
+
