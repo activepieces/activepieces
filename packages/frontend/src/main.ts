@@ -10,8 +10,7 @@ import 'codemirror/addon/display/autorefresh';
 import 'codemirror/addon/lint/lint';
 import 'codemirror/addon/lint/javascript-lint';
 import jsonlint from 'codemirror/addon/lint/json-lint';
-import { JSHINT } from './app/jshint/jshint';
-(<any>window).JSHINT = JSHINT;
+
 (<any>window).jsonlint = jsonlint;
 if (environment.production) {
   enableProdMode();
