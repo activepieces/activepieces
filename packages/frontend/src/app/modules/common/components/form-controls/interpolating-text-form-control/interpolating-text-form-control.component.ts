@@ -1,6 +1,7 @@
 import { BooleanInput, coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   DoCheck,
   HostBinding,
@@ -68,6 +69,8 @@ export class InterpolatingTextFormControlComponent
 {
   static nextId = 0;
   @Input() insideMatField = true;
+  @Input() onlyAllowOneMentionToBeAdded = false;
+  private _readOnly = false;
   private _placeholder = '';
   focused = false;
   readonly modules: QuillModules = {
@@ -136,7 +139,8 @@ export class InterpolatingTextFormControlComponent
     @Optional() _parentFormGroup: FormGroupDirective,
     @Optional() @Self() ngControl: NgControl,
     private store: Store,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private cd: ChangeDetectorRef
   ) {
     super(_defaultErrorStateMatcher, _parentForm, _parentFormGroup, ngControl);
     if (this.ngControl != null) {
@@ -152,6 +156,7 @@ export class InterpolatingTextFormControlComponent
   }
 
   ngOnInit(): void {
+    this._readOnly = this.onlyAllowOneMentionToBeAdded;
     this.valueChanges$ = this.editorFormControl.valueChanges.pipe(
       skip(1),
       tap((val) => {
@@ -208,7 +213,9 @@ export class InterpolatingTextFormControlComponent
   get empty(): boolean {
     return !this.value;
   }
-
+  get readOnly() {
+    return this._readOnly;
+  }
   @HostBinding('class.floated')
   get shouldLabelFloat(): boolean {
     return this.focused || !this.empty;
@@ -309,39 +316,52 @@ export class InterpolatingTextFormControlComponent
   }
 
   public async addMention(mentionOp: InsertMentionOperation) {
-    const allStepsMetaData = await firstValueFrom(this.stepsMetaData$);
-    const itemPathWithoutInterpolationDenotation =
-      mentionOp.insert.mention.serverValue.slice(
-        2,
-        mentionOp.insert.mention.serverValue.length - 1
-      );
-    const itemPrefix = itemPathWithoutInterpolationDenotation.split('.')[0];
-    let imageTag = '';
-    if (itemPrefix !== 'configs' && itemPrefix !== 'connections') {
-      const stepMetaDataIndex = allStepsMetaData.findIndex(
-        (s) => s.name === itemPrefix
-      );
-      if (stepMetaDataIndex > -1) {
-        imageTag =
-          getImageTemplateForStepLogo(
-            allStepsMetaData[stepMetaDataIndex].logoUrl
-          ) + `${stepMetaDataIndex + 1}. `;
-      }
-    } else {
-      if (itemPrefix === 'connections') {
-        imageTag = getImageTemplateForStepLogo(
-          'assets/img/custom/piece/connection.png'
+    this._readOnly = false;
+    this.cd.markForCheck();
+
+    setTimeout(async () => {
+      const allStepsMetaData = await firstValueFrom(this.stepsMetaData$);
+      const itemPathWithoutInterpolationDenotation =
+        mentionOp.insert.mention.serverValue.slice(
+          2,
+          mentionOp.insert.mention.serverValue.length - 1
         );
-      } else if (itemPrefix === 'configs') {
-        imageTag = getImageTemplateForStepLogo(
-          'assets/img/custom/piece/config.png'
+      const itemPrefix = itemPathWithoutInterpolationDenotation.split('.')[0];
+      let imageTag = '';
+      if (itemPrefix !== 'configs' && itemPrefix !== 'connections') {
+        const stepMetaDataIndex = allStepsMetaData.findIndex(
+          (s) => s.name === itemPrefix
         );
+        if (stepMetaDataIndex > -1) {
+          imageTag =
+            getImageTemplateForStepLogo(
+              allStepsMetaData[stepMetaDataIndex].logoUrl
+            ) + `${stepMetaDataIndex + 1}. `;
+        }
+      } else {
+        if (itemPrefix === 'connections') {
+          imageTag = getImageTemplateForStepLogo(
+            'assets/img/custom/piece/connection.png'
+          );
+        } else if (itemPrefix === 'configs') {
+          imageTag = getImageTemplateForStepLogo(
+            'assets/img/custom/piece/config.png'
+          );
+        }
       }
-    }
-    mentionOp.insert.mention.value =
-      ' ' + imageTag + mentionOp.insert.mention.value + ' ';
-    this.editor.quillEditor
-      .getModule('mention')
-      .insertItem(mentionOp.insert.mention, true);
+      mentionOp.insert.mention.value =
+        ' ' + imageTag + mentionOp.insert.mention.value + ' ';
+
+      if (this.onlyAllowOneMentionToBeAdded) {
+        this.editorFormControl.setValue({ ops: [mentionOp] });
+      } else {
+        this.editor.quillEditor
+          .getModule('mention')
+          .insertItem(mentionOp.insert.mention, true);
+      }
+
+      this._readOnly = this.onlyAllowOneMentionToBeAdded;
+      this.cd.markForCheck();
+    }, 1);
   }
 }

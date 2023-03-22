@@ -44,6 +44,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
   iterationIndexControl = new UntypedFormControl(1);
   iteration$: Observable<{ stepName: string; result: StepOutput }[]>;
   iterationsAccordionList: { stepName: string; result: StepOutput }[][] = [];
+  private previousIterationIndex = 0;
   hideIterationInput$: Observable<boolean>;
   showIterationInput = false;
   iterationInputMinWidth = '0px';
@@ -76,28 +77,13 @@ export class StepResultComponent implements OnInit, AfterViewInit {
       this.iteration$ = this.iterationIndexControl.valueChanges.pipe(
         startWith(1),
         tap((newIndex: number | null) => {
-          if (newIndex) {
-            this.iterationInputMinWidth = `${newIndex.toString().length}ch`;
-          } else {
-            this.iterationInputMinWidth = '0ch';
-          }
+          this.setInputMinWidth(newIndex);
         }),
         map((newIndex: number | null) => {
-          if (newIndex === null) {
-            return 1;
-          }
-          if (newIndex < 1) {
-            this.iterationIndexControl.setValue(1);
-            return 1;
-          } else if (
-            newIndex > this.stepNameAndResult.result.output.iterations!.length
-          ) {
-            this.iterationIndexControl.setValue(
-              this.stepNameAndResult.result.output.iterations!.length
-            );
-            return this.stepNameAndResult.result.output.iterations!.length;
-          }
-          return newIndex;
+          return this.minMaxIterationIndex(newIndex);
+        }),
+        tap((newIndex) => {
+          this.iterationIndexControl.setValue(newIndex, { emitEvent: false });
         }),
         map((newIndex: number) => {
           if (!newIndex) {
@@ -107,29 +93,13 @@ export class StepResultComponent implements OnInit, AfterViewInit {
           return iteration || [];
         }),
         tap((iteration) => {
-          iteration.forEach((st) => {
-            const stepNameAndResult = {
-              stepName: st.stepName,
-              result: st.result,
-            };
-            this.runDetailsService.iterationStepResultState$.next(
-              stepNameAndResult
-            );
-            if (
-              st.stepName ===
-              this.runDetailsService.currentStepResult$.value?.stepName
-            ) {
-              this.runDetailsService.currentStepResult$.next(stepNameAndResult);
-            }
-          });
-
-          const firstIteration = this.iterationsAccordionList[0];
-          const stepsThatWereNotReached = firstIteration.slice(
-            iteration.length
-          );
-          stepsThatWereNotReached.forEach((st) => {
+          const previousIteration =
+            this.iterationsAccordionList[this.previousIterationIndex];
+          previousIteration?.forEach((st) => {
             this.clearStepsThatWereNotReached(st);
           });
+          this.findCurrentStepResultInCurrentIteration(iteration);
+          this.previousIterationIndex = this.iterationIndexControl.value - 1;
         })
       );
     }
@@ -137,6 +107,41 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     if (this._selectedStepName === this.stepNameAndResult.stepName) {
       this.childStepSelected.emit();
       this.runDetailsService.currentStepResult$.next(this.stepNameAndResult);
+    }
+  }
+
+  private findCurrentStepResultInCurrentIteration(
+    iteration: { stepName: string; result: StepOutput }[]
+  ) {
+    iteration.forEach((st) => {
+      const stepNameAndResult = {
+        stepName: st.stepName,
+        result: st.result,
+      };
+      this.runDetailsService.iterationStepResultState$.next(stepNameAndResult);
+      if (
+        st.stepName ===
+        this.runDetailsService.currentStepResult$.value?.stepName
+      ) {
+        this.runDetailsService.currentStepResult$.next(stepNameAndResult);
+      }
+    });
+  }
+  private minMaxIterationIndex(newIndex: number | null) {
+    if (newIndex === null || newIndex < 1) {
+      return 1;
+    } else if (
+      newIndex > this.stepNameAndResult.result.output.iterations!.length
+    ) {
+      return this.stepNameAndResult.result.output.iterations!.length;
+    }
+    return newIndex;
+  }
+  private setInputMinWidth(newIndex: number | null) {
+    if (newIndex) {
+      this.iterationInputMinWidth = `${newIndex.toString().length * 2.2}ch`;
+    } else {
+      this.iterationInputMinWidth = '0ch';
     }
   }
 
@@ -203,7 +208,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     ) {
       this.runDetailsService.currentStepResult$.next(undefined);
     }
-    if (parentLoopStepResultAndName.result.output.iterations) {
+    if (parentLoopStepResultAndName.result.output?.iterations) {
       const firstIterationResult = this.createStepResultsForDetailsAccordion(
         parentLoopStepResultAndName.result.output.iterations[0]
       );

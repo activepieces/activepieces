@@ -4,7 +4,8 @@
         [value]="(currentStepName$ | async) || ''" (valueChanges)="saveStepName($event)"
         [disableEditing]="isInDebugMode$ | async | defaultTrue" [allowClick]="true"></app-editable-text>
     <svg-icon [class.ap-opacity-0]="isEditingStepName" [svgStyle]="{ width: '16px', height: '16px' }"
-        [applyClass]="true" src="assets/img/custom/pencil-underline.svg" class="ap-flex ap-items-center ap-fill-body">
+        (click)="isEditingStepName = true" [applyClass]="true" src="assets/img/custom/pencil-underline.svg"
+        class="ap-flex ap-items-center ap-fill-body">
     </svg-icon>
 </div>
 <ng-container *ngIf="updateStepName$ | async">

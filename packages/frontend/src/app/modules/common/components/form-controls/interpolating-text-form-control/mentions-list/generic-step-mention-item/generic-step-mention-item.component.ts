@@ -17,6 +17,7 @@ import { MentionListItem } from '../../utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GenericStepMentionItemComponent implements OnInit {
+  @Input() indentation = false;
   @Input() stepMention: MentionListItem & { step: FlowItem };
   @Input() stepIndex: number;
   flowItemDetails$: Observable<FlowItemDetails | undefined>;

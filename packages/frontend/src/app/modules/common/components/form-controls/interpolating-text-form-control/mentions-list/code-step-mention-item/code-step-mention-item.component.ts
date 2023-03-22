@@ -7,7 +7,6 @@ import {
   Output,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Store } from '@ngrx/store';
 import {
   combineLatest,
   filter,
@@ -25,31 +24,32 @@ import { CodeActionSettings } from '@activepieces/shared';
 
 import { TestCodeFormModalComponent } from '../../../code-artifact-form-control/code-artifact-control-fullscreen/test-code-form-modal/test-code-form-modal.component';
 import {
+  CHEVRON_SPACE_IN_MENTIONS_LIST,
+  FIRST_LEVEL_PADDING_IN_MENTIONS_LIST,
   MentionListItem,
   MentionTreeNode,
   traverseStepOutputAndReturnMentionTree,
 } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
-import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CodeService } from '../../../../../../flow-builder/service/code.service';
-import { FlowItemDetails } from '../../../../../../flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { BuilderSelectors } from '../../../../../../flow-builder/store/builder/builder.selector';
 import { FlowItem } from '../../../../../model/flow-builder/flow-item';
 
 @Component({
   selector: 'app-code-step-mention-item',
   templateUrl: './code-step-mention-item.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn400ms],
 })
 export class CodeStepMentionItemComponent implements OnInit {
+  readonly CHEVRON_SPACE_IN_MENTIONS_LIST = CHEVRON_SPACE_IN_MENTIONS_LIST;
+  readonly FIRST_LEVEL_PADDING_IN_MENTIONS_LIST =
+    FIRST_LEVEL_PADDING_IN_MENTIONS_LIST;
   @Input() stepMention: MentionListItem & { step: FlowItem };
   @Input() stepIndex: number;
   @Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
   testDialogClosed$: Observable<object>;
   expandCodeCollapse = false;
-  flowItemDetails$: Observable<FlowItemDetails | undefined>;
+
   codeStepTest$: Observable<{
     children?: MentionTreeNode[];
     error?: boolean;
@@ -58,7 +58,6 @@ export class CodeStepMentionItemComponent implements OnInit {
   }>;
   testing$: Subject<boolean> = new Subject();
   constructor(
-    private store: Store,
     private dialogService: MatDialog,
     private codeService: CodeService,
     private mentionsTreeCache: MentionsTreeCacheService,
@@ -90,9 +89,6 @@ export class CodeStepMentionItemComponent implements OnInit {
         })
       );
     }
-    this.flowItemDetails$ = this.store.select(
-      BuilderSelectors.selectFlowItemDetails(this.stepMention.step)
-    );
   }
   openTestCodeModal() {
     const codeStepSettings = this.stepMention.step
@@ -145,6 +141,7 @@ export class CodeStepMentionItemComponent implements OnInit {
               return combineLatest({
                 stepTree: of({ children: res.children, value: res.value }),
                 search: this.mentionsTreeCache.listSearchBarObs$,
+                error: of(res.error),
               }).pipe(
                 map((res) => {
                   const markedNodesToShow =
@@ -154,7 +151,7 @@ export class CodeStepMentionItemComponent implements OnInit {
                     );
                   return {
                     children: res.stepTree.children,
-                    error: false,
+                    error: res.error,
                     markedNodesToShow: markedNodesToShow,
                     value: res.stepTree.value,
                   };

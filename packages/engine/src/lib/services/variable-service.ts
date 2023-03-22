@@ -106,11 +106,6 @@ export class VariableService {
       steps: { [key: string]: unknown };
     };
     const valuesMap: ValuesMap = { configs: {}, steps: {} };
-
-    Object.entries(executionState.configs).forEach(([key, value]) => {
-      valuesMap.configs[key] = value;
-    });
-
     Object.entries(executionState.lastStepState).forEach(([key, value]) => {
       valuesMap.steps[key] = value;
     });
