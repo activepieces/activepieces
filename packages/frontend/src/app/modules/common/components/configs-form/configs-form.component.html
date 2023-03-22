@@ -270,8 +270,8 @@
                 <div class="ap-flex">
                   <div class="ap-flex-grow">No connections</div>
                   <app-add-edit-connection-button class="edit-selected-auth" btnSize="small" *ngIf="formGroup.enabled"
-                    [isEditConnectionButton]="false" [config]="config" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
-                    [triggerName]="actionOrTriggerName"
+                    [isEditConnectionButton]="false" [config]="config" [pieceName]="pieceName"
+                    [pieceVersion]="pieceVersion" [triggerName]="actionOrTriggerName"
                     (connectionPropertyValueChanged)="connectionValueChanged($event)">
                     + Add
                   </app-add-edit-connection-button>
@@ -283,9 +283,8 @@
             </mat-error>
           </mat-form-field>
           <app-add-edit-connection-button btnSize="medium" *ngIf="formGroup.enabled" [isEditConnectionButton]="false"
-            [config]="config" [pieceName]="pieceName"  [pieceVersion]="pieceVersion"
-            (connectionPropertyValueChanged)="connectionValueChanged($event)"
-            [triggerName]="actionOrTriggerName">
+            [config]="config" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
+            (connectionPropertyValueChanged)="connectionValueChanged($event)" [triggerName]="actionOrTriggerName">
             + New Connection
           </app-add-edit-connection-button>
         </div>
@@ -374,10 +373,10 @@
 
 <ng-template #textInputTemplate let-config let-formGroup="formGroup">
   <div [formGroup]="formGroup">
-    <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-form-field class="ap-w-full" appearance="outline" (click)="mentionsDropdown.showMenuSubject$.next(true)">
       <mat-label>{{config.label}}</mat-label>
       <app-interpolating-text-form-control #textControl [matTooltip]="config.description" [formControlName]="config.key"
-        [attr.name]="config.key" (click)="mentionsDropdown.showMenuSubject$.next(true)"
+        [attr.name]="config.key"
         (keyup)="$event.key ==='Escape'? mentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
       <mat-error *ngIf="formGroup.get(config.key)?.invalid">
         {{config.label}} is required

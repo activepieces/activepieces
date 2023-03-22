@@ -7,7 +7,7 @@
   </div>
   <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" (submit)="deleteFlow()">
     <mat-form-field class="ap-w-full" appearance="outline">
-      <input formControlName="confirmation" matInput type="text" placeholder="DELETE" />
+      <input cdkFocusInitial formControlName="confirmation" matInput type="text" placeholder="DELETE" />
       <mat-error *ngIf="confirmationForm.controls.confirmation.invalid">
         <ng-container *ngIf="confirmationForm.controls.confirmation.hasError('lastFlow'); else invalidConfirmationMsg">
           This is the only flow in the colleciton.
@@ -25,7 +25,7 @@
     <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="!!deleteFlow$">
       Cancel
     </app-button>
-    <app-button cdkFocusInitial btnSize="default" (click)=" deleteFlow()" [loading]="!!deleteFlow$" btnColor="warn">
+    <app-button btnSize="default" (click)=" deleteFlow()" [loading]="!!deleteFlow$" btnColor="warn">
       Confirm
     </app-button>
   </div>

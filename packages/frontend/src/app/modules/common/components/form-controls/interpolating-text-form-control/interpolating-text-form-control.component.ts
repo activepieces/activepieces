@@ -26,6 +26,7 @@ import { QuillEditorComponent, QuillModules } from 'ngx-quill';
 import { firstValueFrom, Observable, skip, Subject, take, tap } from 'rxjs';
 import {
   CustomErrorMatcher,
+  fixSelection,
   fromOpsToText,
   fromTextToOps,
   getImageTemplateForStepLogo,
@@ -260,12 +261,28 @@ export class InterpolatingTextFormControlComponent
     this.describedBy = ids.join(' ');
   }
   onContainerClick(): void {
-    this.focusEditor();
+    if (!this.focused) {
+      this.focusEditor();
+    }
   }
 
   public focusEditor() {
     setTimeout(() => {
       this.editor.quillEditor.focus();
+      const selection = window.getSelection();
+      if (
+        selection &&
+        selection.focusNode &&
+        selection.focusNode.parentNode &&
+        selection.type === 'Caret'
+      ) {
+        const classList: DOMTokenList | undefined =
+          selection.focusNode.parentNode['classList'];
+        console.log(selection);
+        if (classList && classList.contains('mention')) {
+          fixSelection(selection.focusNode);
+        }
+      }
     });
   }
 

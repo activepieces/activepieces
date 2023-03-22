@@ -22,6 +22,7 @@ export class EditableTextComponent {
   @Output() valueChanges: EventEmitter<string> = new EventEmitter<string>();
   @Output() editingChanges: EventEmitter<boolean> = new EventEmitter<boolean>();
   @ViewChild('editableText') editableText: ElementRef;
+  @Input() hideOverflowWhileEditing = true;
   valueOnEditingStarted = '';
   _editing = false;
   get editing(): boolean {

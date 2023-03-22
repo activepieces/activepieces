@@ -2,9 +2,16 @@
   <div *ngIf="backArrow" class="icon-button" (click)="backArrowClicked.emit()">
     <fa-icon [fixedWidth]="true" [size]="'1x'" [icon]="faChevronLeft" style="flex-grow: 1; cursor: pointer"></fa-icon>
   </div>
-  <div class="ap-typography-subtitle-1 ap-text-title ap-font-normal ap-flex-grow" #drawerTitle
-    [matTooltip]="drawerTitle.clientWidth < drawerTitle.scrollWidth? title:''">
+
+  <div *ngIf="title; else passedContent" class="ap-typography-subtitle-1 ap-text-title ap-font-normal ap-flex-grow"
+    #drawerTitle [matTooltip]="drawerTitle.clientWidth < drawerTitle.scrollWidth? title:''">
     {{ title }}
   </div>
+  <ng-template #passedContent>
+    <div class="ap-flex-grow">
+      <ng-content>
+      </ng-content>
+    </div>
+  </ng-template>
   <app-icon-button [iconFilename]="'close.svg'" (click)="closeClicked.emit()"></app-icon-button>
 </div>

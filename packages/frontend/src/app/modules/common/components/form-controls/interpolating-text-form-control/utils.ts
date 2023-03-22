@@ -257,3 +257,12 @@ function formatStepOutput(stepOutput: unknown) {
 export function getImageTemplateForStepLogo(logoUrl: string) {
   return `<img style="object-fit:contain; width:16px; height:16px; margin-right:5px; margin-bottom:2px; display:inline;" src="${logoUrl}">`;
 }
+
+export function fixSelection(node: Node) {
+  const range = document.createRange();
+  range.setStartAfter(node);
+  range.collapse(true);
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+}

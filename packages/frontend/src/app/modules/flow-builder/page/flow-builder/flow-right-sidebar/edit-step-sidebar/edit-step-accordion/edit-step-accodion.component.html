@@ -1,77 +1,32 @@
 <div class="edit-step-accordion-container ap-flex ap-flex-col">
   <form class="ap-w-full" [formGroup]="stepForm">
-    <mat-accordion [hideToggle]="true">
-      <mat-expansion-panel #descriptionPanel (closed)="closed(0)" (opened)="setOpenedIndex(0)"
-        class="expansion-panel-transition" [expanded]="_selectedStep.type === TriggerType.WEBHOOK"
-        [class.expansion-panel-opened]="openedIndex === 0">
-        <mat-expansion-panel-header class="ap-p-4">
-          <mat-panel-title>
-            <label class="ap-typography-subtitle-2">Description </label>
-            <div class="ap-ml-auto">
-              <fa-icon [icon]="faChevornDown" class="flip-transition chevorn-margin-left"
-                [class.flip-chevorn-up]="openedIndex === 0"></fa-icon>
-            </div>
-          </mat-panel-title>
-        </mat-expansion-panel-header>
+    <div class="ap-p-4">
 
-
-
-        <ng-container *ngIf="
-                  _selectedStep.type !==TriggerType.WEBHOOK; else noDelayInExpansion">
-          <div class="ap-p-4" *ngIf="delayExpansionPanelRendering$ | async">
-            <app-describe-form formControlName="describe"></app-describe-form>
-          </div>
-        </ng-container>
-        <ng-template #noDelayInExpansion>
-          <div class="ap-p-4">
-            <app-describe-form formControlName="describe"></app-describe-form>
-            <ng-container *ngIf="_selectedStep.type ===TriggerType.WEBHOOK">
-              <div class="ap-mt-1">
-                <ng-container *ngIf="webhookUrl$ | async as url">
-                  <section class="ap-typography-body-2">
-                    <p class="ap-mt-1 ap-flex ap-items-center">Url: <app-icon-button [width]="15" [height]="15"
-                        [iconFilename]="'copy.svg'" [tooltipText]="'copy'"
-                        (buttonClicked)="copyUrl(url)"></app-icon-button></p>
-
-                    <div class="ap-typography-caption ap-flex ap-flex-col ap-gap-2">
-                      <p [matTooltip]="url" class="ap-truncate"> {{url}} </p>
-                    </div>
-
-                  </section>
-
-                </ng-container>
-
+      <ng-container *ngIf="_selectedStep.type ===TriggerType.WEBHOOK">
+        <div class="ap-mt-1">
+          <ng-container *ngIf="webhookUrl$ | async as url">
+            <section class="ap-typography-body-2">
+              <p class="ap-mt-1 ap-flex ap-items-center">Url: <app-icon-button [width]="15" [height]="15"
+                  [iconFilename]="'copy.svg'" [tooltipText]="'copy'" (buttonClicked)="copyUrl(url)"></app-icon-button>
+              </p>
+              <div class="ap-typography-caption ap-flex ap-flex-col ap-gap-2">
+                <p [matTooltip]="url" class="ap-truncate"> {{url}} </p>
               </div>
+            </section>
+          </ng-container>
 
-            </ng-container>
-
-          </div>
-        </ng-template>
-
-      </mat-expansion-panel>
-      <mat-expansion-panel #InputPanel (closed)="closed(1)" (opened)="setOpenedIndex(1)"
-        class="expansion-panel-transition" [class.expansion-panel-opened]="openedIndex === 1" [expanded]="true" *ngIf="
-        _selectedStep.type !==TriggerType.WEBHOOK">
-        <mat-expansion-panel-header class="ap-p-4">
-          <mat-panel-title>
-            <label class="expansion-panel-label">Input </label>
-            <div class="ap-ml-auto">
-              <fa-icon [icon]="faChevornDown" class="flip-transition chevorn-margin-left"
-                [class.flip-chevorn-up]="openedIndex === 1"></fa-icon>
-            </div>
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-        <div class="ap-px-4  ap-py-2 expansion-panel-body">
-          <ng-container *ngTemplateOutlet="inputFormSelection"></ng-container>
         </div>
-      </mat-expansion-panel>
-    </mat-accordion>
+
+      </ng-container>
+
+    </div>
+    <div class="ap-px-4  ap-py-2 expansion-panel-body">
+      <ng-container *ngTemplateOutlet="inputFormSelection"></ng-container>
+    </div>
   </form>
 </div>
 
 <ng-container *ngIf="autoSaveListener$ | async"></ng-container>
-
-<ng-container *ngIf="displayNameChangedListener$ | async"></ng-container>
 <ng-container *ngIf="readOnly$ | async"></ng-container>
 <ng-template #inputFormSelection>
   <div [formGroup]="stepForm">
@@ -87,7 +42,6 @@
       <app-piece-trigger-input-form *ngSwitchCase="TriggerType.PIECE" formControlName="input">
       </app-piece-trigger-input-form>
       <app-branch-step-input-form *ngSwitchCase="ActionType.BRANCH" formControlName="input">
-
       </app-branch-step-input-form>
     </ng-container>
 

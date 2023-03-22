@@ -67,7 +67,7 @@ export const selectViewMode = createSelector(
   (state: GlobalBuilderState) => state.viewMode
 );
 
-export const selectInstanceRunView = createSelector(
+export const selectIsInDebugMode = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) =>
     state.viewMode === ViewModeEnum.VIEW_INSTANCE_RUN
@@ -193,13 +193,13 @@ export const selectCurrentStepName = createSelector(
     if (selectedStep) {
       return selectedStep.name;
     }
-    return null;
+    return '';
   }
 );
-export const selectCurrentDisplayName = createSelector(
+export const selectCurrentStepDisplayName = createSelector(
   selectCurrentStep,
-  (state) => {
-    return state?.displayName;
+  (step) => {
+    return step?.displayName || '';
   }
 );
 export const selectCurrentTabState = createSelector(
@@ -464,6 +464,7 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
     });
   }
 );
+
 const selectAnyFlowHasSteps = createSelector(selectFlows, (flows: Flow[]) => {
   let aFlowHasSteps = false;
   flows.forEach((f) => {
@@ -471,6 +472,16 @@ const selectAnyFlowHasSteps = createSelector(selectFlows, (flows: Flow[]) => {
   });
   return aFlowHasSteps;
 });
+
+const selectStepLogoUrl = (stepName: string) => {
+  return createSelector(selectAllFlowStepsMetaData, (stepsMetaData) => {
+    const logoUrl = stepsMetaData.find((s) => s.name === stepName)?.logoUrl;
+    if (!logoUrl) {
+      return 'assets/img/custom/piece/branch.png';
+    }
+    return logoUrl;
+  });
+};
 
 function findStepLogoUrl(
   step: FlowItem,
@@ -527,8 +538,8 @@ export const BuilderSelectors = {
   selectCurrentStepName,
   selectCurrentRightSideBarType,
   selectCurrentFlowRunStatus,
-  selectCurrentDisplayName,
-  selectInstanceRunView,
+  selectCurrentStepDisplayName,
+  selectIsInDebugMode,
   selectCollectionState,
   selectIsSaving,
   selectFlow,
@@ -551,6 +562,7 @@ export const BuilderSelectors = {
   selectAllStepsForMentionsDropdown,
   selectAppConnectionsForMentionsDropdown,
   selectAnyFlowHasSteps,
+  selectStepLogoUrl,
   selectCurrentStepSettings,
   selectStepSelectedSampleData,
 };

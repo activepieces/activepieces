@@ -8,7 +8,7 @@
   <form class="ap-flex ap-flex-col ap-gap-2 ap-w-[430px]" [formGroup]="settingsForm" (submit)="submit()">
     <mat-form-field class="ap-w-full" appearance="outline">
       <mat-label>Name</mat-label>
-      <input [matTooltip]="keyTooltip" formControlName="name" matInput type="text" />
+      <input cdkFocusInitial [matTooltip]="keyTooltip" formControlName="name" matInput type="text" />
       <mat-error *ngIf="settingsForm.controls.name.invalid">
         <ng-container *ngIf="settingsForm.controls.name.getError('required'); else patternErrorOrAlreadyUsed">
           Name is required
@@ -89,8 +89,7 @@
     <app-button btnColor="basic" mat-dialog-close btnSize="default">
       Cancel
     </app-button>
-    <app-button cdkFocusInitial btnSize="default" (click)="submit()" btnColor="primary" type="submit"
-      [loading]="loading">
+    <app-button btnSize="default" (click)="submit()" btnColor="primary" type="submit" [loading]="loading">
       Save
     </app-button>
   </div>
