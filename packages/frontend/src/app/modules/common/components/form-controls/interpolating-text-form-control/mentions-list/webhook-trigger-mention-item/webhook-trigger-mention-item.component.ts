@@ -5,30 +5,25 @@ import {
   Input,
   OnInit,
   Output,
-  TemplateRef,
 } from '@angular/core';
 import {
-  FormBuilder,
   FormControl,
   FormGroup,
-  Validators,
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { TriggerType, WebhookTrigger } from '@activepieces/shared';
 import {
   MentionListItem,
   MentionTreeNode,
-  replaceArrayNotationsWithSpaces,
-  replaceDotsWithSpaces,
   traverseStepOutputAndReturnMentionTree,
 } from '../../utils';
 import { FlowItem } from '../../../../../model/flow-builder/flow-item';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
-import { map, Observable } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { FlowsActions } from '../../../../../../flow-builder/store/flow/flows.action';
+import { CustomPathMentionDialogComponent, CustomPathMentionDialogData } from '../custom-path-mention-dialog/custom-path-mention-dialog.component';
 
-const pathRegex = /\$\{trigger((\.[a-zA-Z_$][a-zA-Z_$0-9]*)(\[([0-9])+\])*)*\}/;
 @Component({
   selector: 'app-webhook-trigger-mention-item',
   templateUrl: './webhook-trigger-mention-item.component.html',
@@ -47,20 +42,15 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
   }
   @Input() stepIndex: number;
   @Output() mentionEmitted: EventEmitter<MentionListItem> = new EventEmitter();
+  customPathDialogClosed$:Observable<MentionListItem| undefined>;
   _stepMention: MentionListItem & { step: WebhookTrigger };
   pathFormGroup: FormGroup<{ path: FormControl<string> }>;
   constructor(
-    formBuilder: FormBuilder,
     private dialogService: MatDialog,
     private mentionsTreeCache: MentionsTreeCacheService,
     private store: Store
   ) {
-    this.pathFormGroup = formBuilder.group({
-      path: new FormControl<string>('${trigger.body}', {
-        validators: Validators.pattern(pathRegex),
-        nonNullable: true,
-      }),
-    });
+
   }
   ngOnInit(): void {
     this.sampleData = traverseStepOutputAndReturnMentionTree(
@@ -80,35 +70,22 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
         })
       );
   }
-  emitCustomPathMention() {
-    if (this.pathFormGroup.valid) {
-      const triggerPath = this.pathFormGroup.controls.path.value!;
-      const triggerPathWithoutInterpolationDenotation = triggerPath.slice(
-        2,
-        triggerPath.length - 1
-      );
-      const mentionText = replaceArrayNotationsWithSpaces(
-        replaceDotsWithSpaces(
-          this.adjustItemPath(triggerPathWithoutInterpolationDenotation)
-        )
-      );
-      const mentionItem: MentionListItem = {
-        value: this.pathFormGroup.controls.path.value!,
-        label: mentionText,
-      };
-      this.mentionEmitted.emit(mentionItem);
-      this.dialogService.closeAll();
+
+
+  openPathDialog() {
+    const dialogData:CustomPathMentionDialogData = {
+      defaultValue:'${trigger.body}',
+      dialogTitle:'Webhook Payload Path',
+      entityName: 'webhook payload',
+      placeHolder:'eg. ${trigger.header}',
+      stepDisplayName: this._stepMention.step.displayName
     }
-  }
-  adjustItemPath(triggerPathWithoutInterpolationDenotation: string): string {
-    const triggerDisplayName = this._stepMention.step.displayName;
-    return [
-      triggerDisplayName,
-      ...triggerPathWithoutInterpolationDenotation.split('.').slice(1),
-    ].join('.');
-  }
-  openPathDialog(dialogTemplate: TemplateRef<unknown>) {
-    this.dialogService.open(dialogTemplate);
+     this.customPathDialogClosed$= this.dialogService.open(CustomPathMentionDialogComponent,{data:dialogData}).afterClosed().pipe(tap(val=>{
+        if(val)
+        {
+          this.mentionEmitted.emit(val);
+        }
+     }));
   }
   selectStep() {
     this.store.dispatch(

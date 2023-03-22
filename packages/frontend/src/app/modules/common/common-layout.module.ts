@@ -81,6 +81,7 @@ import { BranchConditionsGroupFormControlComponent } from './components/form-con
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { HotspotComponent } from './components/hotspot/hotspot.component';
 import { LoopStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/loop-step-mention-item/loop-step-mention-item.component';
+import { CustomPathMentionDialogComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
   hideDelay: 0,
@@ -130,6 +131,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     BranchConditionsGroupFormControlComponent,
     HotspotComponent,
     LoopStepMentionItemComponent,
+    CustomPathMentionDialogComponent,
   ],
   imports: [
     FontAwesomeModule,
