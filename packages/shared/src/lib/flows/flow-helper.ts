@@ -21,10 +21,10 @@ const triggerSchemaValidation = TypeCompiler.Compile(Trigger);
 
 function isValid(flowVersion: FlowVersion) {
   let valid = true;
-  let step: Action | Trigger | undefined = flowVersion.trigger;
-  while (step !== undefined) {
+  const steps = flowHelper.getAllSteps(flowVersion);
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
     valid = valid && step.valid;
-    step = step.nextAction;
   }
   return valid;
 }
