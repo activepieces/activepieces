@@ -207,7 +207,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     ) {
       this.runDetailsService.currentStepResult$.next(undefined);
     }
-    if (parentLoopStepResultAndName.result.output.iterations) {
+    if (parentLoopStepResultAndName.result.output?.iterations) {
       const firstIterationResult = this.createStepResultsForDetailsAccordion(
         parentLoopStepResultAndName.result.output.iterations[0]
       );
