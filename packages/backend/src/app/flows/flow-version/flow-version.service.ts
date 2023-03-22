@@ -272,7 +272,7 @@ function buildSchema(props: PieceProperty): TSchema {
             propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()]);
             break;
         case PropertyType.JSON:
-            propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()]);
+            propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.Array(Type.Any()), Type.String()]);
             break;
         case PropertyType.MULTI_SELECT_DROPDOWN:
             propsSchema[name] = Type.Union([Type.Array(Type.Any()), Type.String()]);
