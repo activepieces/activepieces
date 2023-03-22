@@ -3,7 +3,7 @@ type PackageInfoParams = {
   pieceVersion: string;
 }
 
-export const getPackageNameForPiece = (params: PackageInfoParams): string => {
+export const getPackageAliasForPiece = (params: PackageInfoParams): string => {
   const { pieceName, pieceVersion } = params;
 
   return `@activepieces/piece-${pieceName}-${pieceVersion}`

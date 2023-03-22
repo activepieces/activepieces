@@ -12,7 +12,7 @@ import {
     ErrorCode,
     ExecutePropsOptions,
     ExecutionState,
-    getPackageNameForPiece,
+    getPackageAliasForPiece,
     PropertyType,
 } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
@@ -28,7 +28,7 @@ const loadPiece = async (pieceName: string, pieceVersion: string): Promise<Piece
 
     console.info(`[engine] PieceHelper#loadPiece, pieceName=${pieceName} loadMethod=npm`);
 
-    const packageName = getPackageNameForPiece({
+    const packageName = getPackageAliasForPiece({
         pieceName,
         pieceVersion,
     });

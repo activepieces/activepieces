@@ -10,7 +10,7 @@ import {
     ExecutePropsOptions,
     ExecuteTriggerOperation,
     ExecutionOutput,
-    getPackageNameForPiece,
+    getPackageAliasForPiece,
     getPackageVersionForPiece,
     ParseEventResponse,
     PieceTrigger,
@@ -39,7 +39,7 @@ const installPieceDependency = async (path: string, pieceName: string, pieceVers
         return;
     }
 
-    const packageName = getPackageNameForPiece({
+    const packageName = getPackageAliasForPiece({
         pieceName,
         pieceVersion,
     });

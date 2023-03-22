@@ -7,7 +7,7 @@ import {
     File,
     flowHelper,
     FlowVersion,
-    getPackageNameForPiece,
+    getPackageAliasForPiece,
     getPackageVersionForPiece,
     ProjectId,
     StepOutputStatus,
@@ -41,7 +41,7 @@ const extractPieceDependencies = (flowVersion: FlowVersion): PackageManagerDepen
         if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
             const { pieceName, pieceVersion } = step.settings;
 
-            const packageName = getPackageNameForPiece({
+            const packageName = getPackageAliasForPiece({
                 pieceName,
                 pieceVersion,
             });
