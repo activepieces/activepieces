@@ -11,7 +11,7 @@
               <div class="ap-flex ap-items-center ap-w-full">
                 <div class="nested-level-padding" [style.min-width]="nestingLevelPadding"></div>
                 <div class="ap-flex icon-and-name-gap">
-                  <div class="ap-flex icons-gap" [class.expanded]="expansionPanelTemplate.expanded">
+                  <div class="ap-flex icons-gap ap-items-center" [class.expanded]="expansionPanelTemplate.expanded">
                     <svg-icon src="assets/img/custom/debug-icons/caret.svg" *ngIf="selectedIteration.length > 0"
                       [applyClass]="true" class="loop-caret"></svg-icon>
                     <ng-container *ngTemplateOutlet="stepIcon"></ng-container>
@@ -89,7 +89,7 @@
               <div class="nested-level-padding" [style.width]="nestingLevelPadding"></div>
 
               <div class="ap-flex icon-and-name-gap">
-                <div class="ap-flex icons-gap" [class.expanded]="expansionPanelTemplate.expanded">
+                <div class="ap-flex icons-gap ap-items-center" [class.expanded]="expansionPanelTemplate.expanded">
                   <ng-container *ngTemplateOutlet="stepIcon"></ng-container>
                 </div>
                 {{ stepNameAndResult.stepName }}

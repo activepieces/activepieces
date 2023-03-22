@@ -58,7 +58,6 @@ export class FlowItemContentComponent implements OnInit {
     this._flowItem = newFlowItem;
     this.flowItemChanged$.next(true);
     this.fetchFlowItemDetailsAndLoadLogo();
-    this.cd.detectChanges();
   }
 
   stepResult: StepOutput | undefined;
@@ -80,6 +79,7 @@ export class FlowItemContentComponent implements OnInit {
     this.stepInsideLoopStatus$ =
       this.runDetailsService.iterationStepResultState$.pipe(
         filter((stepNameAndStatus) => {
+          
           return stepNameAndStatus.stepName === this._flowItem.name;
         }),
         map((stepNameAndStatus) => {
@@ -106,7 +106,7 @@ export class FlowItemContentComponent implements OnInit {
                     itemIcon.src = flowItemDetails.logoUrl!;
                     itemIcon.onload = () => {
                       this.stepIconUrl = flowItemDetails.logoUrl!;
-                      this.cd.detectChanges();
+                      this.cd.markForCheck();
                     };
                   } else {
                     console.error(
