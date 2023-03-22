@@ -1,6 +1,6 @@
 <button (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true" mat-menu-item
-  appTrackHover #hoverTracker="hoverTrackerDirective">
-  <mat-icon class="mat-icon-rtl-mirror">
+  class="!ap-px-[9px]" appTrackHover #hoverTracker="hoverTrackerDirective">
+  <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
     {{expandSample ? 'expand_less' : 'expand_more'}}
   </mat-icon>
   <app-generic-step-mention-item matTooltip="Webhook Trigger" [stepIndex]="stepIndex"

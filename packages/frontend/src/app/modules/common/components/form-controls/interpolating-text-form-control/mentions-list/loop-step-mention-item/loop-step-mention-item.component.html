@@ -1,7 +1,7 @@
-<button mat-menu-item (click)="expandCodeCollapse = !expandCodeCollapse">
+<button mat-menu-item (click)="expandCodeCollapse = !expandCodeCollapse" class="!ap-px-[9px]">
     <div appTrackHover #hoverTracker="hoverTrackerDirective"
         class="ap-flex ap-flex-grow ap-min-h-[27px] ap-items-center">
-        <mat-icon class="mat-icon-rtl-mirror">
+        <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
             {{expandCodeCollapse ? 'expand_less' : 'expand_more'}}
         </mat-icon>
         <app-generic-step-mention-item [stepIndex]="stepIndex"

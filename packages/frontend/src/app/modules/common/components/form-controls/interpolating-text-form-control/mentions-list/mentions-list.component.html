@@ -34,7 +34,7 @@
           [stepMention]="stepMention"></app-webhook-trigger-mention-item>
       </ng-container>
       <ng-container *ngSwitchDefault>
-        <button mat-menu-item (click)="mentionClicked(stepMention)">
+        <button mat-menu-item (click)="mentionClicked(stepMention)" class="!ap-px-[9px]">
           <app-generic-step-mention-item [stepIndex]="stepMention.step.indexInDfsTraversal || 1" [indentation]="true"
             [stepMention]="stepMention"></app-generic-step-mention-item>
         </button>

@@ -1,6 +1,5 @@
-<app-dialog-title-template>
-  <ng-container *ngIf="!connectionToUpdate; else editConnectionHeader">New Connection</ng-container>
-  <ng-template #editConnectionHeader>Edit {{connectionToUpdate!.name}}</ng-template>
+<app-dialog-title-template><ng-container *ngIf="!connectionToUpdate; else editConnectionHeader">New
+    Connection</ng-container><ng-template #editConnectionHeader>Edit {{connectionToUpdate!.name}}</ng-template>
 </app-dialog-title-template>
 
 <mat-dialog-content>

@@ -35,7 +35,7 @@
       [style.padding-left]="nestedTreeNode.level === 0? FIRST_LEVEL_PADDING_IN_MENTIONS_LIST + 'px': (nestedTreeNode.level * CHEVRON_SPACE_IN_MENTIONS_LIST + FIRST_LEVEL_PADDING_IN_MENTIONS_LIST)+'px'"
       mat-menu-item>
 
-      <mat-icon class="mat-icon-rtl-mirror">
+      <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
         {{treeControl.isExpanded(node) ? 'expand_less ' : 'expand_more'}}
       </mat-icon>
       <div class="ap-truncate" [matTooltip]="node.key">

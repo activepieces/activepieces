@@ -1,9 +1,8 @@
-<app-dialog-title-template>
-    {{data.dialogTitle}}
+<app-dialog-title-template>{{data.dialogTitle}}
 </app-dialog-title-template>
 <mat-dialog-content>
-    <div class="ap-typography-body-1 ap-text-description ap-mb-4 ap-max-w-[500px]">
-        Describe the path to the property using JSON format
+    <div class="ap-typography-body-1 ap-text-description ap-mb-4 ap-max-w-[500px]">Describe the path to the property
+        using JSON format
         <p>{{data.placeHolder}}</p>
     </div>
     <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="pathFormGroup" (submit)="emitCustomPathMention()">
