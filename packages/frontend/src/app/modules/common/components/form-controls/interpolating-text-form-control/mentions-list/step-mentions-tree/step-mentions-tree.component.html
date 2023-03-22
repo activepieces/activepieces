@@ -42,13 +42,10 @@
         {{node.key}}
       </div>
       <div class=" ap-flex-grow "></div>
-      <<<<<<< HEAD <app-button *ngIf="nestedTreeNodeHoverTracker.isHovered" class="ap-absolute ap-right-[10px]"
-        [keepBgWhite]="true" btnColor="primary" btnStyle="basic" type="button" btnSize="small"=======<app-button @fadeIn
-        *ngIf="nestedTreeNodeHoverTracker.isHovered" class="ap-absolute ap-right-[10px]"
-        [buttonIsInsideAutocomplete]="true" btnColor="primary" btnStyle="basic" type="button" btnSize="small">>>>>>>
-        main
+      <app-button *ngIf="nestedTreeNodeHoverTracker.isHovered" class="ap-absolute ap-right-[10px]"
+        [buttonIsInsideAutocomplete]="true" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
         (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)">Select
-        </app-button>
+      </app-button>
     </div>
 
     <!-- There is inline padding applied to this div using styles.

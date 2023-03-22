@@ -8,7 +8,7 @@
             [stepMention]="stepMention"></app-generic-step-mention-item>
         <div class="ap-flex-grow"></div>
         <app-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
-            [keepBgWhite]="true" [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
+            [buttonIsInsideAutocomplete]="true" [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
             (buttonClicked)="mentionClicked.emit(stepMention)">Select
         </app-button>
     </div>
@@ -29,7 +29,7 @@
             class="mat-tree-node ap-min-w-[0] ap-min-h-[27px] ap-relative  ap-flex ap-items-center ap-typography-body-2"
             [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST + 'px'" mat-menu-item>
             Item <app-button *ngIf="ItemMentionListItem.isHovered" btnColor="primary" btnStyle="basic" type="button"
-                btnSize="small" class="ap-absolute ap-right-[10px]" [keepBgWhite]="true"
+                btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
                 (click)="openPathDialog()">Custom Path
             </app-button>
         </div>

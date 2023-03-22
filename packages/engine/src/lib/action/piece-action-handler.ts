@@ -43,7 +43,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       stepOutput.output = await executer.exec({
         pieceName,
         pieceVersion,
-        actionName: actionName!,
+        actionName: actionName,
         config,
       });
 
