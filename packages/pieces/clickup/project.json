@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/clickup/tsconfig.lib.json",
         "packageJson": "packages/pieces/clickup/package.json",
         "main": "packages/pieces/clickup/src/index.ts",
-        "assets": ["packages/pieces/clickup/*.md"]
+        "assets": ["packages/pieces/clickup/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

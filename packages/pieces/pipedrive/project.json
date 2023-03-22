@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/pipedrive/tsconfig.lib.json",
         "packageJson": "packages/pieces/pipedrive/package.json",
         "main": "packages/pieces/pipedrive/src/index.ts",
-        "assets": ["packages/pieces/pipedrive/*.md"]
+        "assets": ["packages/pieces/pipedrive/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

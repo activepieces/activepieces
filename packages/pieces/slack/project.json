@@ -19,7 +19,8 @@
         "tsConfig": "packages/pieces/slack/tsconfig.lib.json",
         "packageJson": "packages/pieces/slack/package.json",
         "main": "packages/pieces/slack/src/index.ts",
-        "assets": ["packages/pieces/slack/*.md"]
+        "assets": ["packages/pieces/slack/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     }
   },

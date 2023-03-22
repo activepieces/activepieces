@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/mailchimp/tsconfig.lib.json",
         "packageJson": "packages/pieces/mailchimp/package.json",
         "main": "packages/pieces/mailchimp/src/index.ts",
-        "assets": ["packages/pieces/mailchimp/*.md"]
+        "assets": ["packages/pieces/mailchimp/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

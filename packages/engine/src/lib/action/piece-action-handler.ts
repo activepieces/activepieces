@@ -25,8 +25,10 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
   ): Promise<StepOutput> {
     const stepOutput = new StepOutput();
 
+    const { input, pieceName, pieceVersion, actionName } = this.action.settings;
+
     const config = await this.variableService.resolve(
-      this.action.settings.input,
+      input,
       executionState
     );
 
@@ -36,8 +38,9 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       const executer = new PieceExecutor();
 
       stepOutput.output = await executer.exec({
-        pieceName: this.action.settings.pieceName,
-        actionName: this.action.settings.actionName!,
+        pieceName,
+        pieceVersion,
+        actionName: actionName!,
         config,
       });
 

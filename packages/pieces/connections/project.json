@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/connections/tsconfig.lib.json",
         "packageJson": "packages/pieces/connections/package.json",
         "main": "packages/pieces/connections/src/index.ts",
-        "assets": ["packages/pieces/connections/*.md"]
+        "assets": ["packages/pieces/connections/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

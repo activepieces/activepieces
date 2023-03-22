@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/asana/tsconfig.lib.json",
         "packageJson": "packages/pieces/asana/package.json",
         "main": "packages/pieces/asana/src/index.ts",
-        "assets": ["packages/pieces/asana/*.md"]
+        "assets": ["packages/pieces/asana/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
