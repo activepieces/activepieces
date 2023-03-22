@@ -1,7 +1,7 @@
 import { readdir } from 'node:fs/promises'
 
 export const getAvailablePieceNames = async (): Promise<string[]> => {
-  const frameworkPackages = ['framework', 'apps']
+  const ignoredPackages = ['framework', 'apps', 'dist']
   const packageNames = await readdir('packages/pieces')
-  return packageNames.filter(p => !frameworkPackages.includes(p))
+  return packageNames.filter(p => !ignoredPackages.includes(p))
 }
