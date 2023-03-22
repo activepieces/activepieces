@@ -20,7 +20,9 @@ export class TestCodeFormModalComponent {
   editorOptions = {
     lineNumbers: true,
     theme: 'lucario',
-    mode: 'javascript',
+    mode: 'application/ld+json',
+    lint: true,
+    gutters: ['CodeMirror-lint-markers'],
   };
   @Output() contextSubmitted: EventEmitter<unknown> = new EventEmitter();
   submitted = false;

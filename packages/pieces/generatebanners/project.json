@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/generatebanners/tsconfig.lib.json",
         "packageJson": "packages/pieces/generatebanners/package.json",
         "main": "packages/pieces/generatebanners/src/index.ts",
-        "assets": ["packages/pieces/generatebanners/*.md"]
+        "assets": ["packages/pieces/generatebanners/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

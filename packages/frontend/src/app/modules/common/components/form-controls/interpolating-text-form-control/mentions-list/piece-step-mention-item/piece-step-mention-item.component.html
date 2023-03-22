@@ -1,14 +1,17 @@
-<button mat-menu-item appTrackHover #hoverTracker="hoverTrackerDirective">
+<button mat-menu-item appTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-[9px]">
   <div class="ap-flex" (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true">
     <ng-container *ngIf="sampleData$ | async as result">
-      <mat-icon class="mat-icon-rtl-mirror" *ngIf="result.children && result.children.length>0">
+      <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]" *ngIf="result.children && result.children.length>0">
         {{expandSample ? 'expand_less' : 'expand_more'}}
       </mat-icon>
+      <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"
+        [indentation]="!result.children || result.children.length===0"></app-generic-step-mention-item>
     </ng-container>
-    <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"></app-generic-step-mention-item>
+
   </div>
-  <app-button @fadeIn *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
-    [keepBgWhite]="true" (click)="mentionClicked.emit(_stepMention)">Select
+  <app-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+    class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
+    (click)="mentionClicked.emit(_stepMention)">Select
   </app-button>
 
 </button>

@@ -13,6 +13,8 @@ import { Observable, tap } from 'rxjs';
 import { ActionType } from '@activepieces/shared';
 import { LoopStepInputFormSchema } from '../input-forms-schema';
 import { fadeInUp400ms } from '../../../../../../../../common/animation/fade-in-up.animation';
+import { InterpolatingTextFormControlComponent } from '../../../../../../../../common/components/form-controls/interpolating-text-form-control/interpolating-text-form-control.component';
+import { InsertMentionOperation } from '../../../../../../../../common/components/form-controls/interpolating-text-form-control/utils';
 
 @Component({
   selector: 'app-loop-step-input-form',
@@ -48,6 +50,7 @@ export class LoopStepInputFormComponent implements ControlValueAccessor {
         validators: Validators.required,
       }),
     });
+    this.loopStepForm.markAllAsTouched();
     this.updateComponentValue$ = this.loopStepForm.valueChanges.pipe(
       tap(() => {
         this.onChange(this.loopStepForm.getRawValue());
@@ -57,7 +60,7 @@ export class LoopStepInputFormComponent implements ControlValueAccessor {
 
   writeValue(obj: LoopStepInputFormSchema): void {
     if (obj.type === ActionType.LOOP_ON_ITEMS) {
-      this.loopStepForm.patchValue(obj);
+      this.loopStepForm.patchValue(obj, { emitEvent: false });
     }
   }
   registerOnChange(fn: (val) => void): void {
@@ -83,5 +86,11 @@ export class LoopStepInputFormComponent implements ControlValueAccessor {
     } else if (this.loopStepForm.disabled) {
       this.loopStepForm.enable();
     }
+  }
+  async addMention(
+    textControl: InterpolatingTextFormControlComponent,
+    mentionOp: InsertMentionOperation
+  ) {
+    await textControl.addMention(mentionOp);
   }
 }

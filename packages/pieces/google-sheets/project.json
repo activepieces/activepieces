@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/google-sheets/tsconfig.lib.json",
         "packageJson": "packages/pieces/google-sheets/package.json",
         "main": "packages/pieces/google-sheets/src/index.ts",
-        "assets": ["packages/pieces/google-sheets/*.md"]
+        "assets": ["packages/pieces/google-sheets/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

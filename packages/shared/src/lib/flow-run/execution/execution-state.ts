@@ -1,12 +1,10 @@
 import {LoopOnItemsStepOutput, StepOutput} from './step-output';
 
 export class ExecutionState {
-  configs: Record<string, unknown>;
   steps: Record<string, StepOutput>;
   lastStepState: Record<string, unknown>;
 
   constructor() {
-    this.configs = {};
     this.steps = {};
     this.lastStepState = {};
   }
@@ -21,11 +19,11 @@ export class ExecutionState {
     this.updateLastStep(stepOutput.output, actionName);
   }
 
-  updateLastStep(outputOnly: any, actionName: string) {
+  updateLastStep(outputOnly: unknown, actionName: string) {
     this.lastStepState[actionName] = ExecutionState.deepClone(outputOnly);
   }
 
-  private static deepClone(value: any) {
+  private static deepClone(value: unknown) {
     if (value === undefined) {
       return undefined;
     }

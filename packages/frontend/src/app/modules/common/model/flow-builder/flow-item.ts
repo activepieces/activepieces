@@ -9,6 +9,7 @@ export type FlowItemRenderInfo = {
   width?: number;
   height?: number;
   nextAction?: FlowItem;
+  indexInDfsTraversal?: number;
 };
 
 export type FlowItem = (Action | Trigger) & FlowItemRenderInfo;

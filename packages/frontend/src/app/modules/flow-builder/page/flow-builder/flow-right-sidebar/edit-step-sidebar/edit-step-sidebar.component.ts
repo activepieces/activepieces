@@ -29,7 +29,6 @@ export class NewEditPieceSidebarComponent implements OnInit {
     flowId: UUID | null;
   }>;
   selectedFlowItemDetails$: Observable<FlowItemDetails | undefined>;
-
   flowId$: Observable<null | UUID>;
   ngOnInit(): void {
     //in case you switch piece while the edit piece panel is opened

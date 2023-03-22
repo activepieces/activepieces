@@ -1,4 +1,5 @@
 import Quill from 'quill';
+import { fixSelection } from './utils';
 
 const Embed = Quill.import('blots/embed');
 
@@ -46,7 +47,13 @@ class MentionBlot extends Embed {
       this.mounted = true;
       this.clickHandler = this.getClickHandler();
       this.hoverHandler = this.getHoverHandler();
-
+      this.domNode.addEventListener(
+        'focus',
+        () => {
+          console.log('mention focus');
+        },
+        false
+      );
       this.domNode.addEventListener('click', this.clickHandler, false);
       this.domNode.addEventListener('mouseenter', this.hoverHandler, false);
     }
@@ -64,7 +71,7 @@ class MentionBlot extends Embed {
   getClickHandler() {
     return (e) => {
       if (typeof window.getSelection != 'undefined') {
-        this.fixSelection();
+        fixSelection(this.domNode);
       }
       const event = this.buildEvent('mention-clicked', e);
       window.dispatchEvent(event);
@@ -72,14 +79,6 @@ class MentionBlot extends Embed {
     };
   }
 
-  fixSelection() {
-    const range = document.createRange();
-    range.setStartAfter(this.domNode);
-    range.collapse(true);
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-  }
   getHoverHandler() {
     return (e) => {
       const event = this.buildEvent('mention-hovered', e);

@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/calendly/tsconfig.lib.json",
         "packageJson": "packages/pieces/calendly/package.json",
         "main": "packages/pieces/calendly/src/index.ts",
-        "assets": ["packages/pieces/calendly/*.md"]
+        "assets": ["packages/pieces/calendly/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

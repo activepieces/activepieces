@@ -111,7 +111,7 @@ ngx-monaco-editor {
 
 .CodeMirror-lint-tooltip
 {
-  z-index:$appended-to-body-z-index;
+  z-index: calc($appended-to-body-z-index +  1)
 }
 
 .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like
@@ -125,4 +125,13 @@ ngx-monaco-editor {
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
   margin-bottom: -3px;
+}
+
+.json-editor .CodeMirror-gutter-wrapper
+{
+  left:-41px !important;
+}
+.json-editor .CodeMirror-gutters
+{
+  left: 0px !important;;
 }

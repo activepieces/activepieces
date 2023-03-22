@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/openai/tsconfig.lib.json",
         "packageJson": "packages/pieces/openai/package.json",
         "main": "packages/pieces/openai/src/index.ts",
-        "assets": ["packages/pieces/openai/*.md"]
+        "assets": ["packages/pieces/openai/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

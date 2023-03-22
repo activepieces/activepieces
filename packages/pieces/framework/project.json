@@ -15,7 +15,8 @@
         "tsConfig": "packages/pieces/framework/tsconfig.lib.json",
         "assets": [
           "packages/pieces/framework/*.md"
-        ]
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "publish": {

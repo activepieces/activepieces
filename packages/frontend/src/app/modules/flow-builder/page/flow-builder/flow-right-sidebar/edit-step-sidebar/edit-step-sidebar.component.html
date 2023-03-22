@@ -1,7 +1,8 @@
 <div class="px-3 pt-3">
   <ng-container *ngIf="(displayNameChanged$ | async ) ==='' || (displayNameChanged$ | async ) !=='' ">
-    <app-sidebar-header [title]="'Edit '+ (displayNameChanged$ | async )"
-      (closeClicked)="closeSidebar()"></app-sidebar-header>
+    <app-sidebar-header (closeClicked)="closeSidebar()">
+      <app-step-name-editor></app-step-name-editor>
+    </app-sidebar-header>
   </ng-container>
 </div>
 
