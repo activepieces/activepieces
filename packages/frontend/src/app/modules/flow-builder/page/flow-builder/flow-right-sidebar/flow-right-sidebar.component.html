@@ -16,7 +16,8 @@
       <ng-container *ngIf="currentStep.type === TriggerType.WEBHOOK">
         <div class="resizer-area" #resizerArea>
           <app-horizontal-sidebar-separator [resizerArea]="resizerArea" topStyle="calc( 100% - 10px )"
-            (resizerDragged)="resizerDragged($event)" (resizerDragStarted)="resizerDragStarted()">
+            (resetTopResizerSectionHeight)="resetTopResizerSectionHeight()" (resizerDragged)="resizerDragged($event)"
+            (resizerDragStarted)="resizerDragStarted()">
           </app-horizontal-sidebar-separator>
         </div>
         <div class="bottom-resizer-section" #selectedStepResultContainer>
