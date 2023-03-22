@@ -1,33 +1,9 @@
 import assert from 'node:assert'
 import { ExecException } from 'node:child_process'
-import { readFile } from 'node:fs/promises'
 import { exit, argv } from 'node:process'
-import { exec } from './exec'
 import axios, { AxiosError } from 'axios'
-
-type PackageJson = {
-  name: string
-  version: string
-}
-
-type ProjectJson = {
-  name: string
-}
-
-const readJsonFile = async <T> (path: string): Promise<T> => {
-  console.info(`[readJsonFile] path=${path}`)
-
-  const jsonFile = await readFile(path, { encoding: 'utf-8' })
-  return JSON.parse(jsonFile) as T
-}
-
-const readPackageJson = async (path: string): Promise<PackageJson> => {
-  return await readJsonFile(`${path}/package.json`)
-}
-
-const readProjectJson = async (path: string): Promise<ProjectJson> => {
-  return await readJsonFile(`${path}/project.json`)
-}
+import { exec } from './exec'
+import { readPackageJson, readProjectJson } from './files'
 
 const getLatestPublishedVersion = async (packageName: string): Promise<string | null> => {
   console.info(`[getLatestPublishedVersion] packageName=${packageName}`)
