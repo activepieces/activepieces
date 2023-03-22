@@ -84,7 +84,6 @@ export class FlowItemContentComponent implements OnInit {
     this.stepInsideLoopStatus$ =
       this.runDetailsService.iterationStepResultState$.pipe(
         filter((stepNameAndStatus) => {
-          
           return stepNameAndStatus.stepName === this._flowItem.name;
         }),
         map((stepNameAndStatus) => {

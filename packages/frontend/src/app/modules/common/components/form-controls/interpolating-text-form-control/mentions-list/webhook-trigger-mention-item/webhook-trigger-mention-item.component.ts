@@ -6,10 +6,7 @@ import {
   OnInit,
   Output,
 } from '@angular/core';
-import {
-  FormControl,
-  FormGroup,
-} from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { TriggerType, WebhookTrigger } from '@activepieces/shared';
 import {
@@ -22,7 +19,10 @@ import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 import { map, Observable, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { FlowsActions } from '../../../../../../flow-builder/store/flow/flows.action';
-import { CustomPathMentionDialogComponent, CustomPathMentionDialogData } from '../custom-path-mention-dialog/custom-path-mention-dialog.component';
+import {
+  CustomPathMentionDialogComponent,
+  CustomPathMentionDialogData,
+} from '../custom-path-mention-dialog/custom-path-mention-dialog.component';
 
 @Component({
   selector: 'app-webhook-trigger-mention-item',
@@ -42,16 +42,14 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
   }
   @Input() stepIndex: number;
   @Output() mentionEmitted: EventEmitter<MentionListItem> = new EventEmitter();
-  customPathDialogClosed$:Observable<MentionListItem| undefined>;
+  customPathDialogClosed$: Observable<MentionListItem | undefined>;
   _stepMention: MentionListItem & { step: WebhookTrigger };
   pathFormGroup: FormGroup<{ path: FormControl<string> }>;
   constructor(
     private dialogService: MatDialog,
     private mentionsTreeCache: MentionsTreeCacheService,
     private store: Store
-  ) {
-
-  }
+  ) {}
   ngOnInit(): void {
     this.sampleData = traverseStepOutputAndReturnMentionTree(
       this._stepMention.step.settings.inputUiInfo.currentSelectedData,
@@ -71,22 +69,25 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
       );
   }
 
-
   openPathDialog() {
-    const dialogData:CustomPathMentionDialogData = {
-      defaultValue:'trigger',
-      dialogTitle:'Webhook Payload Path',
+    const dialogData: CustomPathMentionDialogData = {
+      defaultValue: 'trigger',
+      dialogTitle: 'Webhook Payload Path',
       entityName: 'webhook payload',
-      placeHolder:'eg. trigger.headers',
+      placeHolder: 'eg. trigger.headers',
       stepDisplayName: this._stepMention.step.displayName,
-      stepName:"trigger"
-    }
-     this.customPathDialogClosed$= this.dialogService.open(CustomPathMentionDialogComponent,{data:dialogData}).afterClosed().pipe(tap(val=>{
-        if(val)
-        {
-          this.mentionEmitted.emit(val);
-        }
-     }));
+      stepName: 'trigger',
+    };
+    this.customPathDialogClosed$ = this.dialogService
+      .open(CustomPathMentionDialogComponent, { data: dialogData })
+      .afterClosed()
+      .pipe(
+        tap((val) => {
+          if (val) {
+            this.mentionEmitted.emit(val);
+          }
+        })
+      );
   }
   selectStep() {
     this.store.dispatch(
