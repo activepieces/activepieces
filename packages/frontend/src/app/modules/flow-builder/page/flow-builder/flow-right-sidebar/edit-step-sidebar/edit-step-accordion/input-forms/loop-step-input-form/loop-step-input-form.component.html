@@ -2,8 +2,8 @@
   <div>
     <mat-form-field class="ap-w-full" appearance="outline">
       <mat-label>Items</mat-label>
-      <app-interpolating-text-form-control #ItemsTextControl formControlName="items"
-        (click)="itemsMentionsDropdown.showMenuSubject$.next(true)"
+      <app-interpolating-text-form-control #ItemsTextControl formControlName="items" [disabled]="true"
+        [onlyAllowOneMentionToBeAdded]="true" (click)="itemsMentionsDropdown.showMenuSubject$.next(true)"
         (keyup)="$event.key ==='Escape'? itemsMentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
       <mat-error *ngIf="loopStepForm.controls.items.invalid">
         Items are required.
