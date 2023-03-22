@@ -26,6 +26,7 @@ import { RunDetailsService } from '../../../flow-left-sidebar/run-details/iterat
 import { DeleteStepDialogComponent } from './delete-step-dialog/delete-step-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import {
+  ActionType,
   ExecutionOutputStatus,
   FlowRun,
   StepOutput,
@@ -33,6 +34,7 @@ import {
   TriggerType,
 } from '@activepieces/shared';
 import { fadeIn400ms } from '../../../../../../common/animation/fade-in.animations';
+import { isOverflown } from '../../../../../../common/utils';
 
 @Component({
   selector: 'app-flow-item-content',
@@ -51,11 +53,14 @@ export class FlowItemContentComponent implements OnInit {
   _flowItem: FlowItem;
   selectedRun$: Observable<FlowRun | undefined>;
   readonly$: Observable<boolean>;
+  logoTooltipText = '';
+  isOverflown = isOverflown;
   @Input() selected: boolean;
   @Input() trigger = false;
   @Input() viewMode: boolean;
   @Input() set flowItem(newFlowItem: FlowItem) {
     this._flowItem = newFlowItem;
+    this.logoTooltipText = this.getLogoTooltipText();
     this.flowItemChanged$.next(true);
     this.fetchFlowItemDetailsAndLoadLogo();
   }
@@ -181,5 +186,26 @@ export class FlowItemContentComponent implements OnInit {
       stepName: this._flowItem.name,
       result: this.stepResult,
     });
+  }
+
+  getLogoTooltipText() {
+    switch (this._flowItem.type) {
+      case ActionType.BRANCH:
+        return 'Branch';
+      case ActionType.CODE:
+        return 'Code';
+      case ActionType.LOOP_ON_ITEMS:
+        return 'Loop';
+      case ActionType.PIECE:
+        return this._flowItem.settings.pieceName.replace(/-/g, ' ');
+      case TriggerType.EMPTY:
+        return 'Click to choose a trigger';
+      case TriggerType.WEBHOOK:
+        return 'Webhook trigger';
+      case TriggerType.PIECE:
+        return this._flowItem.settings.pieceName.replace(/-/g, ' ');
+      case TriggerType.SCHEDULE:
+        return 'Schedule Trigger';
+    }
   }
 }

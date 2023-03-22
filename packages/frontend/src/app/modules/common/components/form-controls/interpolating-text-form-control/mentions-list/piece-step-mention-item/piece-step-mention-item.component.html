@@ -10,7 +10,8 @@
 
   </div>
   <app-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
-    [keepBgWhite]="true" (click)="mentionClicked.emit(_stepMention)">Select
+    class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
+    (click)="mentionClicked.emit(_stepMention)">Select
   </app-button>
 
 </button>

@@ -106,14 +106,8 @@
 </div>
 
 <ng-template #stepIcon>
-  <svg-icon src="assets/img/custom/debug-icons/loop.svg" *ngIf="iterationsAccordionList.length > 0" [applyClass]="true"
-    class="step-icon"></svg-icon>
+  <img [src]="stepLogoUrl$ | async" class="ap-h-[24px] ap-w-[24px] ap-object-contain step-icon">
 
-  <svg-icon src="assets/img/custom/debug-icons/action.svg" *ngIf="!isTrigger && iterationsAccordionList.length === 0"
-    [applyClass]="true" class="step-icon"></svg-icon>
-
-  <svg-icon src="assets/img/custom/debug-icons/trigger.svg" *ngIf="isTrigger" [applyClass]="true" class="step-icon">
-  </svg-icon>
 </ng-template>
 
 <ng-container *ngIf="hideIterationInput$|async"></ng-container>

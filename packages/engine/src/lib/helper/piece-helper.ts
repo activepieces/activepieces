@@ -11,17 +11,14 @@ import {
     ApEnvironment,
     ErrorCode,
     ExecutePropsOptions,
-    ExecuteTriggerOperation,
     ExecutionState,
-    PieceTrigger,
+    getPackageAliasForPiece,
     PropertyType,
-    TriggerHookType
 } from "@activepieces/shared";
-import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { getPiece } from '@activepieces/pieces-apps';
 
-const loadPiece = async (pieceName: string): Promise<Piece | undefined> => {
+const loadPiece = async (pieceName: string, pieceVersion: string): Promise<Piece | undefined> => {
     const apEnv = env['AP_ENVIRONMENT'];
 
     if (apEnv === ApEnvironment.DEVELOPMENT) {
@@ -30,39 +27,47 @@ const loadPiece = async (pieceName: string): Promise<Piece | undefined> => {
     }
 
     console.info(`[engine] PieceHelper#loadPiece, pieceName=${pieceName} loadMethod=npm`);
-    const pieceModule = await import(`@activepieces/piece-${pieceName}`);
+
+    const packageName = getPackageAliasForPiece({
+        pieceName,
+        pieceVersion,
+    });
+
+    const pieceModule = await import(packageName);
     return Object.values<Piece>(pieceModule)[0];
 }
 
 const getProperty = async (params: ExecutePropsOptions) => {
-    const component = await loadPiece(params.pieceName);
+    const { pieceName, pieceVersion, propertyName, stepName } = params;
+
+    const component = await loadPiece(pieceName, pieceVersion);
 
     if (component === undefined) {
         throw new ActivepiecesError({
             code: ErrorCode.PIECE_NOT_FOUND,
             params: {
-                pieceName: params.pieceName,
-                pieceVersion: params.pieceVersion,
+                pieceName: pieceName,
+                pieceVersion: pieceVersion,
             },
         });
     }
 
-    const action = component.getAction(params.stepName);
-    const trigger = component.getTrigger(params.stepName);
+    const action = component.getAction(stepName);
+    const trigger = component.getTrigger(stepName);
 
     if (action === undefined && trigger === undefined) {
         throw new ActivepiecesError({
             code: ErrorCode.STEP_NOT_FOUND,
             params: {
-                pieceName: params.pieceName,
-                pieceVersion: params.pieceVersion,
-                stepName: params.stepName,
+                pieceName: pieceName,
+                pieceVersion: pieceVersion,
+                stepName: stepName,
             },
         });
     }
 
     const props = action !== undefined ? action.props : trigger!.props;
-    return props[params.propertyName];
+    return props[propertyName];
 }
 
 export const pieceHelper = {

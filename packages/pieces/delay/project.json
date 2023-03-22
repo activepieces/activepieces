@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/delay/tsconfig.lib.json",
         "packageJson": "packages/pieces/delay/package.json",
         "main": "packages/pieces/delay/src/index.ts",
-        "assets": ["packages/pieces/delay/*.md"]
+        "assets": ["packages/pieces/delay/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

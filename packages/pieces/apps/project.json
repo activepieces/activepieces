@@ -19,7 +19,8 @@
         "tsConfig": "packages/pieces/apps/tsconfig.lib.json",
         "packageJson": "packages/pieces/apps/package.json",
         "main": "packages/pieces/apps/src/index.ts",
-        "assets": ["packages/pieces/apps/*.md"]
+        "assets": ["packages/pieces/apps/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "refresh-docs": {

@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/figma/tsconfig.lib.json",
         "packageJson": "packages/pieces/figma/package.json",
         "main": "packages/pieces/figma/src/index.ts",
-        "assets": ["packages/pieces/figma/*.md"]
+        "assets": ["packages/pieces/figma/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

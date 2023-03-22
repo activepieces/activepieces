@@ -1,7 +1,7 @@
 <div
   class="ap-min-w-[70px] ap-bg-transparent ap-h-full ap-flex ap-flex-col ap-items-center ap-gap-[20px] ap-typography-caption">
-  <svg-icon class="ap-my-[25px]" [svgStyle]="{ width: '22px', height: '20px' }" src="assets/img/custom/logo/logo.svg">
-  </svg-icon>
+  <app-icon-button class="ap-my-[25px]" [width]="22" [height]="20" [iconFilename]="'logo/logo.svg'"
+    [tooltipText]="'Home'" (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></app-icon-button>
 
   <div *ngFor="let r of sideNavRoutes"
     class="ap-flex ap-justify-center  sidenav-text ap-items-center ap-flex-col ap-gap-[2px] ap-cursor-pointer t"

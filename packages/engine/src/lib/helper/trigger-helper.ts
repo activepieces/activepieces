@@ -20,9 +20,9 @@ export const triggerHelper = {
   },
 
   async executeTrigger(params: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | unknown[] | unknown> {
-    const { pieceName, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
+    const { pieceName, pieceVersion, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
 
-    const piece = await pieceHelper.loadPiece(pieceName);
+    const piece = await pieceHelper.loadPiece(pieceName, pieceVersion);
     const trigger = piece?.getTrigger(triggerName);
 
     if (trigger === undefined) {

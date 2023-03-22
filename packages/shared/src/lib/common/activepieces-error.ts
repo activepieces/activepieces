@@ -33,6 +33,7 @@ type ErrorParams =
   | InvalidCloudClaimParams
   | InvalidJwtTokenErrorParams
   | TaskQuotaExeceededErrorParams
+  | TriggerFailedErrorParams
   | SystemInvalidErrorParams
   | SystemPropNotDefinedErrorParams
   | FlowOperationErrorParams;
@@ -140,6 +141,17 @@ export type PieceTriggerNotFoundErrorParams = BaseErrorParams<
   }
 >
 
+export type TriggerFailedErrorParams = BaseErrorParams<
+  ErrorCode.TRIGGER_FAILED,
+  {
+    pieceName: string;
+    pieceVersion: string;
+    triggerName: string;
+    error: Error;
+  }
+>
+
+
 export type ConfigNotFoundErrorParams = BaseErrorParams<
   ErrorCode.CONFIG_NOT_FOUND,
   {
@@ -206,5 +218,6 @@ export enum ErrorCode {
   INVALID_OR_EXPIRED_JWT_TOKEN = "INVALID_OR_EXPIRED_JWT_TOKEN",
   TASK_QUOTA_EXCEEDED = "TASK_QUOTA_EXCEEDED",
   SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
+  TRIGGER_FAILED = "TRIGGER_FAILED",
   FLOW_OPERATION_INVALID = "FLOW_OPERATION_INVALID",
 }

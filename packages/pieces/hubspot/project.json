@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/hubspot/tsconfig.lib.json",
         "packageJson": "packages/pieces/hubspot/package.json",
         "main": "packages/pieces/hubspot/src/index.ts",
-        "assets": ["packages/pieces/hubspot/*.md"]
+        "assets": ["packages/pieces/hubspot/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

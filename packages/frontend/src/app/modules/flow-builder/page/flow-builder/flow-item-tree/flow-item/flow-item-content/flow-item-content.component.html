@@ -16,7 +16,8 @@
 
   <div class="flow-item ap-flex ap-items-center" [class.selected]="selected"
     [class.empty-trigger]="_flowItem.type === triggerType.EMPTY" (click)="selectStep()">
-    <div class="flow-icon-container ap-flex ap-justify-center ap-items-center">
+    <div class="flow-icon-container ap-flex ap-justify-center ap-items-center"
+      [matTooltip]="logoTooltipText | titlecase">
       <ng-container *ngIf="flowItemDetails$ | async">
         <img *ngIf="stepIconUrl" class="logo-icon" @fadeIn [src]="stepIconUrl" />
       </ng-container>
@@ -30,8 +31,8 @@
     <div class="flow-content ap-flex ap-flex-col ap-justify-center  ap-self-stretch">
       <div class="ap-flex  ap-items-center ap-gap-2 ">
         <div class="ap-flex ap-flex-grow ap-flex-col ap-gap-2">
-          <div class="ap-typography-subtitle-1 ap-font-normal flow-title ap-flex-grow ap-max-w-[150px]" #stepTitle
-            [matTooltip]="_flowItem.displayName">
+          <div class="ap-typography-subtitle-1 ap-font-normal flow-title ap-flex-grow ap-max-w-[193px]" #stepTitle
+            [matTooltip]=" isOverflown(stepTitle)?_flowItem.displayName:''">
             {{ _flowItem.displayName }}
           </div>
           <div class="ap-typography-caption ap-flex ap-text-description ap-items-center">

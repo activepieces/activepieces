@@ -6,7 +6,7 @@
   </div>
   <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" (submit)="deleteCollection()">
     <mat-form-field class="ap-w-full" appearance="outline">
-      <input formControlName="confirmation" matInput type="text" placeholder="DELETE" />
+      <input cdkFocusInitial formControlName="confirmation" matInput type="text" placeholder="DELETE" />
       <mat-error *ngIf="confirmationForm.controls.confirmation.invalid">Please write the confirmation message
         correctly</mat-error>
     </mat-form-field>
@@ -21,8 +21,8 @@
     <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="!!deleteOperation$">
       Cancel
     </app-button>
-    <app-button cdkFocusInitial btnSize="default" type="submit" (click)="deleteCollection();"
-      [loading]="!!deleteOperation$" btnColor="warn">
+    <app-button btnSize="default" type="submit" (click)="deleteCollection();" [loading]="!!deleteOperation$"
+      btnColor="warn">
       Confirm
     </app-button>
   </div>

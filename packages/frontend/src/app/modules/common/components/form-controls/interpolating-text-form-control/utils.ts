@@ -260,3 +260,11 @@ export function getImageTemplateForStepLogo(logoUrl: string) {
 
 export const FIRST_LEVEL_PADDING_IN_MENTIONS_LIST = 53;
 export const CHEVRON_SPACE_IN_MENTIONS_LIST = 25;
+export function fixSelection(node: Node) {
+  const range = document.createRange();
+  range.setStartAfter(node);
+  range.collapse(true);
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+}

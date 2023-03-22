@@ -16,6 +16,7 @@ import { RunDetailsService } from '../iteration-details.service';
 import { FlowsActions } from '../../../../../store/flow/flows.action';
 import { StepOutput, StepOutputStatus } from '@activepieces/shared';
 import { fadeInAnimation } from '../../../../../../common/animation/fade-in.animations';
+import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
 
 @Component({
   selector: 'app-step-result',
@@ -27,6 +28,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
   @Input() stepNameAndResult: { stepName: string; result: StepOutput };
   @Input() set selectedStepName(stepName: string | null) {
     this._selectedStepName = stepName;
+
     if (this._selectedStepName === this.stepNameAndResult.stepName) {
       this.runDetailsService.hideAllIterationsInput$.next(true);
       this.childStepSelected.emit();
@@ -35,6 +37,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
   @Input() nestingLevel = 0;
   @Input() isTrigger = false;
   @Output() childStepSelected = new EventEmitter();
+  stepLogoUrl$: Observable<string | undefined>;
   isLoopStep = false;
   nestingLevelPadding = '0px';
   finishedBuilding = false;
@@ -60,6 +63,9 @@ export class StepResultComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.nestingLevelPadding = `${this.nestingLevel * 25}px`;
+    this.stepLogoUrl$ = this.store.select(
+      BuilderSelectors.selectStepLogoUrl(this.stepNameAndResult.stepName)
+    );
     if (this.stepNameAndResult.result.output?.iterations !== undefined) {
       this.isLoopStep = true;
       const loopOutput = this.stepNameAndResult.result;
