@@ -1,9 +1,9 @@
 <form [formGroup]="loopStepForm" class="ap-flex ap-flex-col ap-gap-2">
   <div>
-    <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-form-field class="ap-w-full" appearance="outline" (click)="itemsMentionsDropdown.showMenuSubject$.next(true)">
       <mat-label>Items</mat-label>
       <app-interpolating-text-form-control #ItemsTextControl formControlName="items" [disabled]="true"
-        [onlyAllowOneMentionToBeAdded]="true" (click)="itemsMentionsDropdown.showMenuSubject$.next(true)"
+        [onlyAllowOneMentionToBeAdded]="true"
         (keyup)="$event.key ==='Escape'? itemsMentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
       <mat-error *ngIf="loopStepForm.controls.items.invalid">
         Items are required.
