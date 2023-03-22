@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/binance/tsconfig.lib.json",
         "packageJson": "packages/pieces/binance/package.json",
         "main": "packages/pieces/binance/src/index.ts",
-        "assets": ["packages/pieces/binance/*.md"]
+        "assets": ["packages/pieces/binance/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

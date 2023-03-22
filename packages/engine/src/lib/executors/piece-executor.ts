@@ -5,14 +5,15 @@ import { pieceHelper } from '../helper/piece-helper';
 
 type PieceExecParams = {
   pieceName: string,
+  pieceVersion: string,
   actionName: string,
   config: Record<string, unknown>,
 }
 
 export class PieceExecutor {
   public async exec(params: PieceExecParams) {
-    const { pieceName, actionName, config } = params;
-    const piece = await pieceHelper.loadPiece(pieceName);
+    const { pieceName, pieceVersion, actionName, config } = params;
+    const piece = await pieceHelper.loadPiece(pieceName, pieceVersion);
     const action = piece?.getAction(actionName);
 
     if (action === undefined) {
@@ -20,7 +21,7 @@ export class PieceExecutor {
     }
 
     return await action.run({
-      store: createContextStore(globals.flowId),
+      store: createContextStore('', globals.flowId),
       propsValue: config,
       connections: {
         get: async (key: string) => {

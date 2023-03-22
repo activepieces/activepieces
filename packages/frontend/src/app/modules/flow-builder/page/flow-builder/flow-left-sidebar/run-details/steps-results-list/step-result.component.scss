@@ -31,10 +31,10 @@
     {
       font-weight: 700;
       .step-icon {
-        fill: $body;
+      opacity:1;
       }
       .loop-caret {
-        fill: $body;
+       opacity:1;
       }
 
     }
@@ -42,10 +42,10 @@
       background-color: $graySelect !important;
       font-weight: 700;
       .step-icon {
-        fill: $body;
+        opacity:1;
       }
       .loop-caret {
-        fill: $body;
+        opacity:1;
       }
     }
     &:hover {
@@ -97,10 +97,8 @@
 
   }
   .step-icon {
-    width: 20px;
-    height: 20px;
-    fill: $add-piece;
-
+    // filter: grayscale(1);
+    opacity: 0.75;
   }
   .icon-and-name-gap {
     gap: 10px;

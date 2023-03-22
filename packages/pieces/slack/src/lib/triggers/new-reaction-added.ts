@@ -5,8 +5,8 @@ import { slackAuth } from "../common/props";
 
 export const newReactionAdded = createTrigger({
     name: 'new_reaction_added',
-    displayName: 'New Reaction (Beta)',
-    description: 'Trigger when a new reaction is added to a message',
+    displayName: 'New Reaction',
+    description: 'Triggers when a new reaction is added to a message',
     props: {
         authentication: slackAuth,
         emoj: Property.Array({

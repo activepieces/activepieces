@@ -7,6 +7,7 @@ import {
   Flow,
   FlowRun,
   PieceActionSettings,
+  SampleDataSettings,
 } from '@activepieces/shared';
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
@@ -66,7 +67,7 @@ export const selectViewMode = createSelector(
   (state: GlobalBuilderState) => state.viewMode
 );
 
-export const selectInstanceRunView = createSelector(
+export const selectIsInDebugMode = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) =>
     state.viewMode === ViewModeEnum.VIEW_INSTANCE_RUN
@@ -156,12 +157,34 @@ export const selectFlowSelectedId = createSelector(
 export const selectCurrentStep = createSelector(
   selectFlowsState,
   (flowsState: FlowsState) => {
+    if (!flowsState.selectedFlowId) {
+      return undefined;
+    }
     const selectedFlowTabsState =
-      flowsState.tabsState[flowsState.selectedFlowId!.toString()];
+      flowsState.tabsState[flowsState.selectedFlowId.toString()];
     if (!selectedFlowTabsState) {
       return undefined;
     }
     return selectedFlowTabsState.focusedStep;
+  }
+);
+const selectCurrentStepSettings = createSelector(
+  selectCurrentStep,
+  (selectedStep) => {
+    if (selectedStep) {
+      return selectedStep.settings;
+    }
+    return undefined;
+  }
+);
+const selectStepSelectedSampleData = createSelector(
+  selectCurrentStepSettings,
+  (settings) => {
+    if (settings) {
+      const sampleDataSettings = settings['inputUiInfo'] as SampleDataSettings;
+      return sampleDataSettings.currentSelectedData;
+    }
+    return undefined;
   }
 );
 export const selectCurrentStepName = createSelector(
@@ -170,13 +193,13 @@ export const selectCurrentStepName = createSelector(
     if (selectedStep) {
       return selectedStep.name;
     }
-    return null;
+    return '';
   }
 );
-export const selectCurrentDisplayName = createSelector(
+export const selectCurrentStepDisplayName = createSelector(
   selectCurrentStep,
-  (state) => {
-    return state?.displayName;
+  (step) => {
+    return step?.displayName || '';
   }
 );
 export const selectCurrentTabState = createSelector(
@@ -322,7 +345,7 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
       return triggerItemDetails;
     }
     if (
-      (flowItem.settings as PieceActionSettings)?.pieceName == 'storage' ||
+      (flowItem.settings as PieceActionSettings)?.pieceName == 'store' ||
       (flowItem.settings as PieceActionSettings)?.pieceName == 'http'
     ) {
       const details = state.coreFlowItemsDetails.find(
@@ -441,6 +464,7 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
     });
   }
 );
+
 const selectAnyFlowHasSteps = createSelector(selectFlows, (flows: Flow[]) => {
   let aFlowHasSteps = false;
   flows.forEach((f) => {
@@ -449,12 +473,22 @@ const selectAnyFlowHasSteps = createSelector(selectFlows, (flows: Flow[]) => {
   return aFlowHasSteps;
 });
 
+const selectStepLogoUrl = (stepName: string) => {
+  return createSelector(selectAllFlowStepsMetaData, (stepsMetaData) => {
+    const logoUrl = stepsMetaData.find((s) => s.name === stepName)?.logoUrl;
+    if (!logoUrl) {
+      return 'assets/img/custom/piece/branch.png';
+    }
+    return logoUrl;
+  });
+};
+
 function findStepLogoUrl(
   step: FlowItem,
   flowItemsDetailsState: FlowItemsDetailsState
 ) {
   if (step.type === ActionType.PIECE) {
-    if (step.settings.pieceName === 'storage') {
+    if (step.settings.pieceName === 'store') {
       return 'assets/img/custom/piece/storage.png';
     }
     if (step.settings.pieceName === 'http') {
@@ -481,6 +515,9 @@ function findStepLogoUrl(
           : 'webhook.png';
       return 'assets/img/custom/piece/' + fileName;
     }
+    if (step.type === ActionType.LOOP_ON_ITEMS) {
+      return 'assets/img/custom/piece/loop.png';
+    }
     return 'assets/img/custom/piece/code.png';
   }
 }
@@ -504,8 +541,8 @@ export const BuilderSelectors = {
   selectCurrentStepName,
   selectCurrentRightSideBarType,
   selectCurrentFlowRunStatus,
-  selectCurrentDisplayName,
-  selectInstanceRunView,
+  selectCurrentStepDisplayName,
+  selectIsInDebugMode,
   selectCollectionState,
   selectIsSaving,
   selectFlow,
@@ -528,4 +565,7 @@ export const BuilderSelectors = {
   selectAllStepsForMentionsDropdown,
   selectAppConnectionsForMentionsDropdown,
   selectAnyFlowHasSteps,
+  selectStepLogoUrl,
+  selectCurrentStepSettings,
+  selectStepSelectedSampleData,
 };

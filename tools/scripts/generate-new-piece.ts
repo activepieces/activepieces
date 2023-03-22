@@ -3,6 +3,7 @@ import { argv } from 'node:process'
 import { rm, writeFile } from 'node:fs/promises'
 import { getAvailablePieceNames } from './utils/get-available-piece-names'
 import { exec } from './utils/exec'
+import { readProjectJson, writeProjectJson } from './utils/files'
 
 const validatePieceName = async (pieceName: string) => {
   assert(pieceName, 'pieceName is not provided')
@@ -30,10 +31,12 @@ const nxGenerateNodeLibrary = async (pieceName: string) => {
   await exec(nxGenerateCommand)
 }
 
-const setupGeneratedLibrary = async (pieceName: string) => {
+const removeUnusedFiles = async (pieceName: string) => {
   await rm(`packages/pieces/${pieceName}/.babelrc`)
   await rm(`packages/pieces/${pieceName}/src/lib/pieces-${pieceName}.ts`)
+}
 
+const generateIndexTsFile = async (pieceName: string) => {
   const pieceNameCamelCase = pieceName
     .split('-')
     .map((s, i) => {
@@ -64,6 +67,21 @@ const setupGeneratedLibrary = async (pieceName: string) => {
   `
 
   await writeFile(`packages/pieces/${pieceName}/src/index.ts`, indexTemplate)
+}
+
+const updateProjectJsonConfig = async (pieceName: string) => {
+  const projectJson = await readProjectJson(`packages/pieces/${pieceName}`)
+
+  assert (projectJson.targets?.build?.options, '[updateProjectJsonConfig] targets.build.options is required');
+
+  projectJson.targets.build.options.buildableProjectDepsInPackageJsonType = 'dependencies'
+  await writeProjectJson(`packages/pieces/${pieceName}`, projectJson)
+}
+
+const setupGeneratedLibrary = async (pieceName: string) => {
+  await removeUnusedFiles(pieceName)
+  await generateIndexTsFile(pieceName)
+  await updateProjectJsonConfig(pieceName)
 }
 
 const main = async () => {

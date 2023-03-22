@@ -25,8 +25,11 @@ import { AppEventRoutingEntity } from "../app-event-routing/app-event-routing.en
 import { productEmbed1677894800372 } from "./migration/1677894800372-product-embed";
 import { AppCredentialEntity } from "@ee/product-embed/backend/app-credentials/app-credentials.entity";
 import { ConnectionKeyEntity } from "@ee/product-embed/backend/connection-keys/connection-key.entity";
+import { TriggerEventEntity } from "../flows/trigger-events/trigger-event.entity";
+import { addtriggerevents1678621361185 } from "./migration/1678621361185-addtriggerevents";
 import { removeCollectionVersion1678492809093 } from "./migration/1678492809093-removeCollectionVersion";
 import { addEventRouting1678382946390 } from "./migration/1678382946390-add-event-routing";
+import { bumpFixPieceVersions1678928503715 } from "./migration/1678928503715-bump-fix-piece-versions";
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE);
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST);
@@ -56,8 +59,10 @@ const getMigrations = () => {
         billing1677286751592,
         addVersionToPieceSteps1677521257188,
         productEmbed1677894800372,
+        addtriggerevents1678621361185,
         removeCollectionVersion1678492809093,
-        addEventRouting1678382946390
+        addEventRouting1678382946390,
+        bumpFixPieceVersions1678928503715
     ];
 }
 
@@ -75,6 +80,7 @@ export const databaseConnection = new DataSource({
     ssl: getSslConfig(),
     migrations: getMigrations(),
     entities: [
+        TriggerEventEntity,
         AppEventRoutingEntity,
         AppCredentialEntity,
         ConnectionKeyEntity,

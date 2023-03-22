@@ -9,8 +9,9 @@ import {
     ExecuteFlowOperation,
     ExecutePropsOptions,
     ExecuteTriggerOperation,
-    ExecuteTriggerResponse,
     ExecutionOutput,
+    getPackageAliasForPiece,
+    getPackageVersionForPiece,
     ParseEventResponse,
     PieceTrigger,
     PrincipalType,
@@ -26,15 +27,31 @@ import { logger } from "../helper/logger";
 import chalk from "chalk";
 import { getEdition, getWebhookSecret } from "./secret-helper";
 import { packageManager } from "./package-manager";
+import { appEventRoutingService } from "../app-event-routing/app-event-routing.service";
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH);
 
 const installPieceDependency = async (path: string, pieceName: string, pieceVersion: string) => {
     const environment = system.get(SystemProp.ENVIRONMENT);
-    if (environment === ApEnvironment.PRODUCTION) {
-        await packageManager.addDependencies(path, { [`@activepieces/piece-${pieceName}`]: pieceVersion });
+
+    if (environment === ApEnvironment.DEVELOPMENT) {
+        return;
     }
+
+    const packageName = getPackageAliasForPiece({
+        pieceName,
+        pieceVersion,
+    });
+
+    const packageVersion = getPackageVersionForPiece({
+        pieceName,
+        pieceVersion,
+    });
+
+    await packageManager.addDependencies(path, {
+        [packageName]: packageVersion,
+    });
 };
 
 export const engineHelper = {
@@ -44,7 +61,6 @@ export const engineHelper = {
             workerToken: await workerToken({ collectionId: operation.collectionId, projectId: operation.projectId })
         }) as ExecutionOutput;
     },
-
     async executeParseEvent(operation: ExecuteEventParserOperation): Promise<ParseEventResponse> {
         const sandbox = sandboxManager.obtainSandbox();
         let result;
@@ -62,7 +78,7 @@ export const engineHelper = {
         return result as ParseEventResponse;
     },
 
-    async executeTrigger(operation: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | unknown[]> {
+    async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | unknown> {
         const sandbox = sandboxManager.obtainSandbox();
         let result;
         try {
@@ -75,6 +91,7 @@ export const engineHelper = {
             result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
                 edition: await getEdition(),
+                appWebhookUrl: await appEventRoutingService.getAppWebookUrl({ appName: pieceName }),
                 webhookSecret: await getWebhookSecret(operation.flowVersion),
                 workerToken: await workerToken({
                     collectionId: operation.collectionId,
@@ -89,7 +106,10 @@ export const engineHelper = {
         if (operation.hookType === TriggerHookType.RUN) {
             return result as unknown[];
         }
-        return result;
+        if (operation.hookType === TriggerHookType.TEST) {
+            return result as unknown;
+        }
+        return result as void;
     },
 
     async executeProp(operation: ExecutePropsOptions): Promise<DropdownState<any> | Record<string, DynamicPropsValue>> {

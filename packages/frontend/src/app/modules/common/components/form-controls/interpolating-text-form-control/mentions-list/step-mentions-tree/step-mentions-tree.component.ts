@@ -9,9 +9,10 @@ import {
 } from '@angular/core';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { map, Observable, tap } from 'rxjs';
-import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
 import {
   arrayNotationRegex,
+  CHEVRON_SPACE_IN_MENTIONS_LIST,
+  FIRST_LEVEL_PADDING_IN_MENTIONS_LIST,
   MentionListItem,
   MentionTreeNode,
   replaceArrayNotationsWithSpaces,
@@ -24,9 +25,11 @@ import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
   templateUrl: './step-mentions-tree.component.html',
   styleUrls: ['./step-mentions-tree.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn400ms],
 })
 export class StepMentionsListComponent implements OnInit {
+  readonly CHEVRON_SPACE_IN_MENTIONS_LIST = CHEVRON_SPACE_IN_MENTIONS_LIST;
+  readonly FIRST_LEVEL_PADDING_IN_MENTIONS_LIST =
+    FIRST_LEVEL_PADDING_IN_MENTIONS_LIST;
   @Input() stepOutputObjectChildNodes: MentionTreeNode[] = [];
   @Input() stepDisplayName: string;
   @Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();

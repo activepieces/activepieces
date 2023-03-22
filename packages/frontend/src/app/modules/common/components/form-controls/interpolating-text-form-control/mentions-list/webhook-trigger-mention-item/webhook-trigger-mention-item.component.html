@@ -1,35 +1,36 @@
-<button (click)="openPathDialog(dialogTemplate)" mat-menu-item>
+<button (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true" mat-menu-item
+  class="!ap-px-[9px]" appTrackHover #hoverTracker="hoverTrackerDirective">
+  <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
+    {{expandSample ? 'expand_less' : 'expand_more'}}
+  </mat-icon>
   <app-generic-step-mention-item matTooltip="Webhook Trigger" [stepIndex]="stepIndex"
     [stepMention]="_stepMention"></app-generic-step-mention-item>
+  <app-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+    class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true" (click)="openPathDialog()">Custom Path
+  </app-button>
 </button>
 
 
-<ng-template #dialogTemplate>
-  <app-dialog-title-template>
-    Webhook Payload Path
-  </app-dialog-title-template>
-  <mat-dialog-content>
-    <div class="ap-typography-body-1 ap-text-description ap-mb-4 ap-max-w-[500px]">
-      Please type the path within the webhook payload you would like to access
+<ng-container *ngIf="expandSample">
+  <ng-container *ngIf="sampleData; else testTriggerTemplate">
+    <app-step-mentions-tree [stepOutputObjectChildNodes]="sampleData"
+      [markedNodesToShow]="(nodesFilteredWithSearch$ | async)!" [stepDisplayName]="_stepMention.step.displayName"
+      (mentionClicked)="mentionEmitted.emit($event)"></app-step-mentions-tree>
+  </ng-container>
+  <ng-template #testTriggerTemplate>
+    <div class="ap-my-3 ap-px-2">
+      <div class="ap-typography-body-1 ap-text-center ap-mb-1">
+        Test Trigger First
+      </div>
+      <div class="ap-typography-body-2 ap-text-center ap-mb-3">
+        This trigger needs to be tested in order to view its data.
+      </div>
+      <div class="ap-text-center">
+        <app-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
+          (click)="$event.stopPropagation(); selectStep()">Go to step
+        </app-button>
+      </div>
     </div>
-    <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="pathFormGroup" (submit)="emitMention()">
-      <mat-form-field class="ap-w-full" appearance="outline">
-        <input formControlName="path" matInput type="text" placeholder="eg.${trigger.value}" />
-        <mat-error *ngIf="pathFormGroup.controls.path.invalid">Path is invalid</mat-error>
-      </mat-form-field>
-    </form>
-
-  </mat-dialog-content>
-
-  <mat-dialog-actions align="end">
-    <div class="ap-flex ap-gap-2.5">
-      <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
-        Cancel
-      </app-button>
-      <app-button cdkFocusInitial btnSize="default" type="submit" (click)="emitMention();" btnColor="warn">
-        Confirm
-      </app-button>
-    </div>
-  </mat-dialog-actions>
-
-</ng-template>
+  </ng-template>
+</ng-container>
+<ng-container *ngIf="customPathDialogClosed$ | async"></ng-container>

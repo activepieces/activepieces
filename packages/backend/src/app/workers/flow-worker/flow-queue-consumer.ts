@@ -10,6 +10,7 @@ import { logger } from "../../helper/logger";
 import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";
 import { instanceService } from "../../instance/instance.service";
+import { flowVersionService } from "../../flows/flow-version/flow-version.service";
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
     ONE_TIME_JOB_QUEUE,
@@ -71,10 +72,11 @@ const consumeScheduleTrigger = async (data: RepeatableJobData): Promise<void> =>
 };
 
 const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
+    const flowVersion = await flowVersionService.getOne(data.flowVersion.id);
     const payloads: unknown[] = await triggerUtils.executeTrigger({
         projectId: data.projectId,
         collectionId: data.collectionId,
-        flowVersion: data.flowVersion,
+        flowVersion: flowVersion,
         payload: null,
     });
 

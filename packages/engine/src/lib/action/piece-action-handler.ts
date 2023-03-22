@@ -1,5 +1,6 @@
 import { VariableService } from '../services/variable-service';
 import {
+  Action,
   ExecutionState,
   PieceAction,
   StepOutput,
@@ -13,31 +14,36 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
 
   constructor(
     action: PieceAction,
-    nextAction: BaseActionHandler<any> | undefined
+    nextAction: BaseActionHandler<Action> | undefined
   ) {
     super(action, nextAction);
     this.variableService = new VariableService();
   }
 
   async execute(
-    executionState: ExecutionState,
-    _ancestors: [string, number][]
+    executionState: ExecutionState
   ): Promise<StepOutput> {
     const stepOutput = new StepOutput();
 
+    const { input, pieceName, pieceVersion, actionName } = this.action.settings;
+
     const config = await this.variableService.resolve(
-      this.action.settings.input,
+      input,
       executionState
     );
 
     stepOutput.input = config;
 
+    if(!actionName){
+      throw new Error("Action name is not defined");
+    }
     try {
       const executer = new PieceExecutor();
 
       stepOutput.output = await executer.exec({
-        pieceName: this.action.settings.pieceName,
-        actionName: this.action.settings.actionName!,
+        pieceName,
+        pieceVersion,
+        actionName: actionName,
         config,
       });
 

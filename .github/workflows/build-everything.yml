@@ -1,7 +1,16 @@
 name: Build Everything
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'packages/**'
   push:
+    branches:
+      - main
+    paths:
+      - 'packages/**'
 
 jobs:
   Build-Everything:

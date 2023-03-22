@@ -14,7 +14,6 @@ export * from './lib/instance';
 export * from "./lib/app-connection/app-connection";
 export * from "./lib/app-connection/dto/upsert-app-connection-request";
 export * from "./lib/flow-run/execution/execution-output";
-export { StoreOperation } from "./lib/flows/actions/action";
 export { StepOutputStatus } from "./lib/flow-run/execution/step-output";
 export * from "./lib/instance";
 export * from "./lib/pieces";
@@ -52,3 +51,6 @@ export { CreateFlowRequest } from './lib/flows/dto/create-flow-request';
 export { CloneFlowVersionRequest } from './lib/flows/dto/clone-flow-version-request';
 export { SeekPage, Cursor } from './lib/common/seek-page';
 export { apId, ApId } from './lib/common/id-generator'
+export * from "./lib/flows/trigger-events/trigger-events-dto";
+export * from "./lib/flows/trigger-events/trigger-event";
+export {SampleDataSettings} from './lib/flows/sample-data'

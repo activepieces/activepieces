@@ -45,7 +45,6 @@ import { SidebarHeaderComponent } from './components/sidebar-header/sidebar-head
 import { flowItemsDetailsReducer } from './store/builder/flow-item-details/flow-items-details.reducer';
 import { FlowItemsDetailsEffects } from './store/builder/flow-item-details/flow-items-details.effects';
 import { EditStepAccordionComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/edit-step-accodion.component';
-import { DescribeFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/describe-form/describe-form.component';
 import { CodeStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/code-step-input-form/code-step-input-form.component';
 import { LoopStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/loop-step-input-form/loop-step-input-form.component';
 import { ScheduleTriggerInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/schedule-trigger-input-form/schedule-trigger-input-form.component';
@@ -70,6 +69,9 @@ import { BranchLineConnectionComponent } from './page/flow-builder/flow-item-tre
 import { CanvasPannerDirective } from './page/flow-builder/canvas-utils/panning/panner.directive';
 import { BranchStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/branch-step-input-form/branch-step-input-form.component';
 import { CanvasUtilsComponent } from './page/flow-builder/canvas-utils/canvas-utils.component';
+import { HorizontalSidebarSeparatorComponent } from './page/flow-builder/canvas-utils/horizontal-sidebar-separator/horizontal-sidebar-separator.component';
+import { TestStepComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/test-step/test-step.component';
+import { StepNameEditorComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/step-name-editor/step-name-editor.component';
 
 @NgModule({
   imports: [
@@ -132,7 +134,6 @@ import { CanvasUtilsComponent } from './page/flow-builder/canvas-utils/canvas-ut
     SelectedStepResultComponent,
     IterationAccordionComponent,
     EditStepAccordionComponent,
-    DescribeFormComponent,
     LoopStepInputFormComponent,
     CodeStepInputFormComponent,
     ScheduleTriggerInputFormComponent,
@@ -153,6 +154,9 @@ import { CanvasUtilsComponent } from './page/flow-builder/canvas-utils/canvas-ut
     CanvasPannerDirective,
     BranchStepInputFormComponent,
     CanvasUtilsComponent,
+    HorizontalSidebarSeparatorComponent,
+    TestStepComponent,
+    StepNameEditorComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [FlowBuilderHeaderComponent],

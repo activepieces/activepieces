@@ -73,11 +73,11 @@ export const pollingHelper = {
                 return;
         }
     },
-    async test<INPUT>(polling: Polling<INPUT>, { propsValue }: { store: Store, propsValue: INPUT }): Promise<unknown> {
+    async test<INPUT>(polling: Polling<INPUT>, { propsValue }: { store: Store, propsValue: INPUT }): Promise<unknown[]> {
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED:
             case DedupeStrategy.LAST_ITEM:
-                return (await polling.items({ propsValue }))?.[0];
+                return (await polling.items({ propsValue }));
         }
     }
 }

@@ -138,6 +138,8 @@ This section is dedicated to individuals who have contributed to 5 or more actio
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/J0LGER"><img src="https://avatars.githubusercontent.com/u/54769522?v=4?s=100" width="100px;" alt="J0LGER"/><br /><sub><b>J0LGER</b></sub></a><br /><a href="#security-J0LGER" title="Security">🛡️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://about.me/veverkap"><img src="https://avatars.githubusercontent.com/u/22348?v=4?s=100" width="100px;" alt="Patrick Veverka"/><br /><sub><b>Patrick Veverka</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Aveverkap" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://berksmbl.com"><img src="https://avatars.githubusercontent.com/u/10000339?v=4?s=100" width="100px;" alt="Berk Sümbül"/><br /><sub><b>Berk Sümbül</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=berksmbl" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

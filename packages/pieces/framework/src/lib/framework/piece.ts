@@ -14,7 +14,7 @@ export class Piece implements PieceBase {
     public readonly version: string,
     public readonly events: {
       parseAndReply: (ctx: {payload: EventPayload}) => ParseEventResponse;
-      verify: (ctx: { webhookSecret: string, payload: EventPayload }) => boolean;
+      verify: (ctx: { webhookSecret: string, payload: EventPayload, appWebhookUrl: string }) => boolean;
     } | undefined,
     actions: Action[],
     triggers: Trigger[],
@@ -66,7 +66,7 @@ export const createPiece = (request: {
   description?: string;
   events?: {
     parseAndReply: (ctx: {payload: EventPayload}) => ParseEventResponse;
-    verify: (ctx: { webhookSecret: string, payload: EventPayload }) => boolean;
+    verify: (ctx: { webhookSecret: string, payload: EventPayload, appWebhookUrl: string }) => boolean;
   }
   version: string;
 }): Piece =>

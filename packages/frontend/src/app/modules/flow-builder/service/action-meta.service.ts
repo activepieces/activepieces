@@ -40,8 +40,14 @@ export class ActionMetaService {
     {
       type: ActionType.BRANCH,
       name: 'Branch',
-      description: 'Branchy branch ranch',
+      description: 'Decide what happens based on an if condition result',
       logoUrl: '/assets/img/custom/piece/branch.svg',
+    },
+    {
+      type: ActionType.LOOP_ON_ITEMS,
+      name: 'Loop',
+      description: 'Loop on a list of items',
+      logoUrl: '/assets/img/custom/piece/loop.svg',
     },
   ];
 

@@ -7,7 +7,7 @@ import { Piece } from "@activepieces/framework";
 import { ActivepiecesError, ApEnvironment, ErrorCode, PieceMetadata, PieceMetadataSummary } from "@activepieces/shared";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
-import { logger } from "../helper/logger";
+import { captureException, logger } from "../helper/logger";
 
 type PieceMetadataLoader = {
     /**
@@ -59,7 +59,7 @@ const cdnPieceMetadataLoader = (): PieceMetadataLoader => {
  */
 const filePieceMetadataLoader = (): PieceMetadataLoader => {
     const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
-        const frameworkPackages = ['framework', 'apps']
+        const frameworkPackages = ['framework', 'apps', 'dist']
         const piecesPath = resolve(cwd(), 'packages', 'pieces')
         const piecePackages = await readdir(piecesPath)
         const filteredPiecePackages = piecePackages.filter(d => !frameworkPackages.includes(d))
@@ -67,9 +67,15 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
         const piecesMetadata: PieceMetadata[] = [];
 
         for (const piecePackage of filteredPiecePackages) {
-            const module = await import(`../../../../pieces/${piecePackage}/src/index.ts`)
-            const piece = Object.values<Piece>(module)[0]
-            piecesMetadata.push(piece.metadata())
+            try {
+                const module = await import(`../../../../pieces/${piecePackage}/src/index.ts`)
+                const piece = Object.values<Piece>(module)[0]
+                piecesMetadata.push(piece.metadata())
+            }
+            catch(ex) {
+                captureException(ex);
+                logger.error(ex);
+            }
         }
 
         return sortBy(piecesMetadata, [p => p.displayName.toUpperCase()])

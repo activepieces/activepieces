@@ -5,7 +5,7 @@ import { figmaPostRequestWithMessage } from '../common/utils';
 
 export const postCommentAction = createAction({
   name: 'post_comment',
-  displayName: 'Post file comment',
+  displayName: 'Post File Comment',
   description: 'Post file comment',
   sampleData: {
     success: true,

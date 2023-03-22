@@ -11,7 +11,7 @@ export const drip = createPiece({
 	name: 'drip',
 	displayName: 'Drip',
 	logoUrl: 'https://cdn.activepieces.com/pieces/drip.png',
-  version: packageJson.version,
+	version: packageJson.version,
 	authors: ['AbdulTheActivePiecer'],
 	actions: [dripApplyTagToSubscriber, dripAddSubscriberToCampaign, dripUpsertSubscriberAction],
 	triggers: [dripNewSubscriberEvent, dripTagAppliedEvent],

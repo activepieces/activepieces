@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/bannerbear/tsconfig.lib.json",
         "packageJson": "packages/pieces/bannerbear/package.json",
         "main": "packages/pieces/bannerbear/src/index.ts",
-        "assets": ["packages/pieces/bannerbear/*.md"]
+        "assets": ["packages/pieces/bannerbear/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

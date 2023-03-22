@@ -29,7 +29,6 @@ import {
   traverseStepOutputAndReturnMentionTree,
 } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
-import { fadeIn400ms } from '../../../../../animation/fade-in.animations';
 import { ActionMetaService } from '../../../../../../flow-builder/service/action-meta.service';
 import { FlowItemDetails } from '../../../../../../flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { BuilderSelectors } from '../../../../../../flow-builder/store/builder/builder.selector';
@@ -39,11 +38,9 @@ import { FlowItem } from '../../../../../model/flow-builder/flow-item';
   selector: 'app-piece-step-mention-item',
   templateUrl: './piece-step-mention-item.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn400ms],
 })
 export class PieceStepMentionItemComponent implements OnInit {
   TriggerType = TriggerType;
-
   expandSample = false;
   @Input()
   set stepMention(val: MentionListItem & { step: FlowItem }) {
@@ -104,7 +101,14 @@ export class PieceStepMentionItemComponent implements OnInit {
     );
   }
   fetchSampleData() {
-    const { pieceName, pieceVersion } = this._stepMention.step.settings;
+    const step = this._stepMention.step;
+
+    if (step.type !== TriggerType.PIECE && step.type !== ActionType.PIECE) {
+      throw new Error("Activepieces- step isn't of a piece type");
+    }
+
+    const { pieceName, pieceVersion } = step.settings;
+
     this.sampleData$ = this.actionMetaDataService
       .getPieceMetadata(pieceName, pieceVersion)
       .pipe(
@@ -112,7 +116,6 @@ export class PieceStepMentionItemComponent implements OnInit {
           this.fetching$.next(true);
         }),
         map((pieceMetadata) => {
-          const step = this._stepMention.step;
           if (step.type === TriggerType.PIECE) {
             return step.settings.triggerName
               ? pieceMetadata.triggers[step.settings.triggerName].sampleData ??
@@ -127,8 +130,8 @@ export class PieceStepMentionItemComponent implements OnInit {
         map((sampleData) => {
           const childrenNodes = traverseStepOutputAndReturnMentionTree(
             sampleData,
-            this._stepMention.step.name,
-            this._stepMention.step.displayName
+            step.name,
+            step.displayName
           ).children;
           return childrenNodes;
         }),
@@ -141,10 +144,9 @@ export class PieceStepMentionItemComponent implements OnInit {
         }),
         tap((res) => {
           if (!res.error) {
-            this.mentionsTreeCache.setStepMentionsTree(
-              this._stepMention.step.name,
-              { children: res.children }
-            );
+            this.mentionsTreeCache.setStepMentionsTree(step.name, {
+              children: res.children,
+            });
           }
           this.fetching$.next(false);
         }),
@@ -162,7 +164,7 @@ export class PieceStepMentionItemComponent implements OnInit {
         }),
         map((res) => {
           const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(
-            this._stepMention.step.name,
+            step.name,
             res.search
           );
           return {

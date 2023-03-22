@@ -125,6 +125,9 @@ export const rssNewItemTrigger = createTrigger({
     props: {
         rss_feed_url: rssFeedUrl,
     },
+    async test({ propsValue, store }): Promise<unknown[]> {
+        return await pollingHelper.test(polling, { store: store, propsValue: propsValue });
+    },
     async onEnable({ propsValue, store }): Promise<void> {
         await pollingHelper.onEnable(polling, { store: store, propsValue: propsValue });
     },

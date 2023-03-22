@@ -6,7 +6,7 @@ import { TriggerStrategy } from '@activepieces/shared';
 export const typeformNewSubmission = createTrigger({
     name: 'new_submission',
     displayName: 'New Submission',
-    description: 'Triggers when typeform receives a new submission',
+    description: 'Triggers when Typeform receives a new submission',
     props: {
         authentication: typeformCommon.authentication,
         form_id: formsDropdown,

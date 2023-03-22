@@ -19,7 +19,8 @@
         "tsConfig": "packages/pieces/airtable/tsconfig.lib.json",
         "packageJson": "packages/pieces/airtable/package.json",
         "main": "packages/pieces/airtable/src/index.ts",
-        "assets": ["packages/pieces/airtable/*.md"]
+        "assets": ["packages/pieces/airtable/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     }
   },

@@ -1,6 +1,6 @@
-<button mat-menu-item (click)="expandCodeCollapse = !expandCodeCollapse">
+<button mat-menu-item (click)="expandCodeCollapse = !expandCodeCollapse" class="!ap-px-[9px]">
   <div appTrackHover #hoverTracker="hoverTrackerDirective" class="ap-flex ap-flex-grow ap-min-h-[27px] ap-items-center">
-    <mat-icon class="mat-icon-rtl-mirror">
+    <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
       {{expandCodeCollapse ? 'expand_less' : 'expand_more'}}
     </mat-icon>
     <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="stepMention"></app-generic-step-mention-item>
@@ -12,9 +12,9 @@
     <span *ngIf="testing$|async" class="spinner-border dark-spinner ap-w-[16px] ap-h-[16px] ap-ml-1"
       role="status"></span>
     <div class="ap-flex-grow"></div>
-    <app-button @fadeIn *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
-      [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
-      (buttonClicked)="mentionClicked.emit(stepMention)">Select
+    <app-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+      class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true" [darkLoadingSpinner]="true"
+      (click)="$event.stopPropagation();" (buttonClicked)="mentionClicked.emit(stepMention)">Select
     </app-button>
   </div>
 </button>
@@ -22,14 +22,17 @@
 <ng-container *ngIf="codeStepTest$ | async as result">
   <app-step-mentions-tree *ngIf="result.children && expandCodeCollapse" [stepOutputObjectChildNodes]="result.children"
     [markedNodesToShow]="result.markedNodesToShow" [stepDisplayName]="stepMention.step.displayName"
-    (mentionClicked)=" emitMention($event)"></app-step-mentions-tree>
-  <div class="ap-pl-6" *ngIf="result.error && expandCodeCollapse">
+    (mentionClicked)="emitMention($event)"></app-step-mentions-tree>
+  <div class=" ap-min-h-[48px] ap-flex ap-items-center"
+    [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'" *ngIf="result.error && expandCodeCollapse">
     <app-state-icon [showStatusText]="true" [succeeded]="false" textAfter="Step failed"></app-state-icon>
   </div>
 </ng-container>
 <ng-container *ngIf="codeStepTest$ | async as result">
-  <button *ngIf="result.value && expandCodeCollapse" mat-menu-item (click)="mentionClicked.emit(stepMention)">
-    <span class="ap-pl-6 ap-truncate ap-flex-grow ap-transition-all">result:
+  <button class="!ap-pl-0" *ngIf="result.value && expandCodeCollapse" mat-menu-item
+    (click)="mentionClicked.emit(stepMention)">
+    <span class=" ap-truncate ap-flex-grow ap-transition-all"
+      [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'">result:
       <span class="ap-transition-all ap-text-primary" [matTooltip]="result.value">{{result.value}}
       </span></span>
   </button>

@@ -70,3 +70,14 @@
 	@return $modified-theme;
 }
 
+.mdc-dialog .mdc-dialog__content
+{
+	padding: 0px 24px 20px 24px !important;
+}
+
+.material-icons
+{
+	font-size:20px !important;
+	height:20px !important;
+	width: 20px !important;
+}

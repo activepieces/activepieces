@@ -25,10 +25,12 @@ import {
   Collection,
   ExecutionOutputStatus,
   Instance,
+  TriggerType,
 } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
 import { PannerService } from './canvas-utils/panning/panner.service';
+import { FlowItem } from '../../../common/model/flow-builder/flow-item';
 
 @Component({
   selector: 'app-collection-builder',
@@ -49,6 +51,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   leftSidebarDragging = false;
   loadInitialData$: Observable<void> = new Observable<void>();
   cursorStyle$: Observable<string>;
+  currentStep$: Observable<FlowItem | null | undefined>;
+  TriggerType = TriggerType;
   constructor(
     private store: Store,
     public pieceBuilderService: CollectionBuilderService,
@@ -59,6 +63,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     private titleService: Title,
     private pannerService: PannerService
   ) {
+    this.currentStep$ = this.store.select(BuilderSelectors.selectCurrentStep);
     this.cursorStyle$ = this.pannerService.isGrabbing$.asObservable().pipe(
       map((val) => {
         if (val) {

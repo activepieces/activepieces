@@ -17,6 +17,7 @@ import { logger } from "../helper/logger";
 import { getPiece } from "@activepieces/pieces-apps";
 import { webhookService } from "../webhooks/webhook-service";
 import { appEventRoutingService } from "../app-event-routing/app-event-routing.service";
+import { captureException } from "@sentry/node";
 
 const EVERY_FIVE_MINUTES = "*/5 * * * *";
 
@@ -38,7 +39,16 @@ export const triggerUtils = {
                 }) as unknown[];
             }
             catch (e) {
-                logger.error(`Flow ${flowTrigger.name} with ${pieceTrigger.name} trigger throws and error, returning as zero payload `);
+                const error = new ActivepiecesError({
+                    code: ErrorCode.TRIGGER_FAILED,
+                    params: {
+                        triggerName: pieceTrigger.name,
+                        pieceName: flowTrigger.settings.pieceName,
+                        pieceVersion: flowTrigger.settings.pieceVersion,
+                        error: e
+                    }
+                }, `Flow ${flowTrigger.name} with ${pieceTrigger.name} trigger throws and error, returning as zero payload `);
+                captureException(error);
                 payloads = [];
             }
             break;

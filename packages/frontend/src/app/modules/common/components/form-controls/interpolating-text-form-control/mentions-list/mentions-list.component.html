@@ -9,29 +9,33 @@
 </mat-form-field>
 <div class="ap-max-h-[240px] ap-overflow-scroll ">
 
-  <ng-container *ngFor="let stepMention of stepsMentions$|async;let idx=index" #stepsListTemplate>
+  <ng-container *ngFor="let stepMention of stepsMentions$|async" #stepsListTemplate>
     <ng-container [ngSwitch]="stepMention.step.type">
       <ng-container *ngSwitchCase="ActionType.CODE">
-        <app-code-step-mention-item [stepIndex]="idx+1" (mentionClicked)="mentionClicked($event)"
-          [stepMention]="stepMention"></app-code-step-mention-item>
+        <app-code-step-mention-item [stepIndex]="stepMention.step.indexInDfsTraversal!"
+          (mentionClicked)="mentionClicked($event)" [stepMention]="stepMention"></app-code-step-mention-item>
       </ng-container>
       <ng-container *ngSwitchCase="ActionType.PIECE">
-        <app-piece-step-mention-item [stepIndex]="idx+1" (mentionClicked)="mentionClicked($event)"
-          [stepMention]="stepMention"></app-piece-step-mention-item>
+        <app-piece-step-mention-item [stepIndex]="stepMention.step.indexInDfsTraversal!"
+          (mentionClicked)="mentionClicked($event)" [stepMention]="stepMention"></app-piece-step-mention-item>
+      </ng-container>
+      <ng-container *ngSwitchCase="ActionType.LOOP_ON_ITEMS">
+        <app-loop-step-mention-item [stepIndex]="stepMention.step.indexInDfsTraversal!"
+          (mentionClicked)="mentionClicked($event)" [stepMention]="stepMention"></app-loop-step-mention-item>
       </ng-container>
 
       <ng-container *ngSwitchCase="TriggerType.PIECE">
-        <app-piece-step-mention-item [stepIndex]="idx+1" (mentionClicked)="mentionClicked($event)"
+        <app-piece-step-mention-item [stepIndex]="1" (mentionClicked)="mentionClicked($event)"
           [stepMention]="stepMention"></app-piece-step-mention-item>
       </ng-container>
 
       <ng-container *ngSwitchCase="TriggerType.WEBHOOK">
-        <app-webhook-trigger-mention-item [stepIndex]="idx+1" (pathChosen)="mentionClicked($event);"
+        <app-webhook-trigger-mention-item [stepIndex]="1" (mentionEmitted)="mentionClicked($event)"
           [stepMention]="stepMention"></app-webhook-trigger-mention-item>
       </ng-container>
       <ng-container *ngSwitchDefault>
-        <button mat-menu-item matTooltip="Storage Step" (click)="mentionClicked(stepMention)">
-          <app-generic-step-mention-item [stepIndex]="idx+1"
+        <button mat-menu-item (click)="mentionClicked(stepMention)" class="!ap-px-[9px]">
+          <app-generic-step-mention-item [stepIndex]="stepMention.step.indexInDfsTraversal || 1" [indentation]="true"
             [stepMention]="stepMention"></app-generic-step-mention-item>
         </button>
       </ng-container>
