@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/cal-com/tsconfig.lib.json",
         "packageJson": "packages/pieces/cal-com/package.json",
         "main": "packages/pieces/cal-com/src/index.ts",
-        "assets": ["packages/pieces/cal-com/*.md"]
+        "assets": ["packages/pieces/cal-com/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

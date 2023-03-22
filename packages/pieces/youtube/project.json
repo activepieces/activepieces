@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/youtube/tsconfig.lib.json",
         "packageJson": "packages/pieces/youtube/package.json",
         "main": "packages/pieces/youtube/src/index.ts",
-        "assets": ["packages/pieces/youtube/*.md"]
+        "assets": ["packages/pieces/youtube/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

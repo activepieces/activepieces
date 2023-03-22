@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/telegram-bot/tsconfig.lib.json",
         "packageJson": "packages/pieces/telegram-bot/package.json",
         "main": "packages/pieces/telegram-bot/src/index.ts",
-        "assets": ["packages/pieces/telegram-bot/*.md"]
+        "assets": ["packages/pieces/telegram-bot/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

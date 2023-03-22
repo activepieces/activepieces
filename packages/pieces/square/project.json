@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/square/tsconfig.lib.json",
         "packageJson": "packages/pieces/square/package.json",
         "main": "packages/pieces/square/src/index.ts",
-        "assets": ["packages/pieces/square/*.md"]
+        "assets": ["packages/pieces/square/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

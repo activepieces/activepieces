@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/gmail/tsconfig.lib.json",
         "packageJson": "packages/pieces/gmail/package.json",
         "main": "packages/pieces/gmail/src/index.ts",
-        "assets": ["packages/pieces/gmail/*.md"]
+        "assets": ["packages/pieces/gmail/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
