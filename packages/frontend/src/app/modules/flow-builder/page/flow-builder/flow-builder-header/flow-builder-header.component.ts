@@ -74,6 +74,11 @@ export class FlowBuilderHeaderComponent implements OnInit {
       tap((params) => {
         if (params['newCollection']) {
           this.editing = true;
+          //remove query params after activating editing for new collection name
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {},
+          });
         }
       })
     );
