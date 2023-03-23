@@ -6,6 +6,7 @@ import { readPackageJson, PackageJson } from '../utils/files'
 type Piece = {
     name: string
     displayName: string
+    version: string
     metadata(): PieceMetadata
 }
 
@@ -43,6 +44,7 @@ export const generateMetadata = async (): Promise<PieceMetadata[]> => {
         const piece = Object.values<Piece>(module)[0]
 
         piece.name = pieceName
+        piece.version = packageJson.version
         pieces.push(piece)
     }
 
