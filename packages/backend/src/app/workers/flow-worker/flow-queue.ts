@@ -93,5 +93,5 @@ export const flowQueue = {
 };
 
 const isRepeatable = (params: AddParams): params is RepeatableJobAddParams => {
-    return (params as RepeatableJobAddParams).scheduleOptions.cronExpression !== undefined;
+    return (params as RepeatableJobAddParams).scheduleOptions?.cronExpression !== undefined;
 };
