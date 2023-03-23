@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/intercom/tsconfig.lib.json",
         "packageJson": "packages/pieces/intercom/package.json",
         "main": "packages/pieces/intercom/src/index.ts",
-        "assets": ["packages/pieces/intercom/*.md"]
+        "assets": ["packages/pieces/intercom/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

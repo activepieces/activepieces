@@ -1,10 +1,7 @@
 import {
     ApEnvironment,
-    CollectionId,
     EventPayload,
     FlowId,
-    Instance,
-    ProjectId,
     RunEnvironment,
 } from '@activepieces/shared';
 import { collectionService } from '../collections/collection.service';
@@ -22,7 +19,7 @@ import { triggerEventService } from '../flows/trigger-events/trigger-event.servi
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
         const flow = await flowRepo.findOneBy({ id: flowId });
-        if (flow === null) {
+        if (flow === null || flowId === null || flowId === undefined) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_NOT_FOUND,
                 params: {

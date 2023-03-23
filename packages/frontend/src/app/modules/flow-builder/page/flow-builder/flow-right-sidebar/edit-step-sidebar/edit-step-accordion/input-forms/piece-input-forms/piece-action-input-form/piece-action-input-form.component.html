@@ -6,13 +6,16 @@
       <mat-select-trigger>
         <mat-select-trigger>
           <ng-container *ngIf="selectedAction$ | async as selectedAction">
-            {{selectedAction?.label.name}}
+            {{selectedAction?.label?.name}}
           </ng-container>
         </mat-select-trigger>
       </mat-select-trigger>
-      <mat-option *ngFor="let opt of actions$ | async" [value]="opt.value" [matTooltip]="opt.label.description">
-        <div>{{opt.label.name}}</div>
-        <div class="ap-typography-caption ap-text-description ap-truncate"> {{opt.label.description}}</div>
+      <mat-option *ngFor="let opt of actions$ | async" [value]="opt.value">
+        <div class="ap-truncate" [matTooltip]="isOverflown(actionDisplayNameTemplate)? opt.label.name : ''"
+          #actionDisplayNameTemplate>{{opt.label.name}}</div>
+        <div class="ap-typography-caption ap-text-description ap-truncate"
+          [matTooltip]="isOverflown(actionDescriptionTemplate)? opt.label.description : ''" #actionDescriptionTemplate>
+          {{opt.label.description}}</div>
       </mat-option>
       <mat-option [disabled]="true"
         *ngIf=" ( actions$ | async) === undefined || ( actions$ | async) === null || (actions$ | async)?.length === 0">
@@ -38,3 +41,4 @@
 <ng-container *ngIf="initialSetup$ | async"> </ng-container>
 <ng-container *ngIf="selectedAction$ | async"></ng-container>
 <ng-container *ngIf="triggerInitialSetup$ | async"></ng-container>
+<ng-container *ngIf="updateStepName$ | async"></ng-container>

@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/dropbox/tsconfig.lib.json",
         "packageJson": "packages/pieces/dropbox/package.json",
         "main": "packages/pieces/dropbox/src/index.ts",
-        "assets": ["packages/pieces/dropbox/*.md"]
+        "assets": ["packages/pieces/dropbox/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

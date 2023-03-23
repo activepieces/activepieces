@@ -7,6 +7,8 @@ import {
     File,
     flowHelper,
     FlowVersion,
+    getPackageAliasForPiece,
+    getPackageVersionForPiece,
     ProjectId,
     StepOutputStatus,
     TriggerType,
@@ -26,18 +28,29 @@ import { SystemProp } from "../../helper/system/system-prop";
 import { system } from "../../helper/system/system";
 
 const extractPieceDependencies = (flowVersion: FlowVersion): PackageManagerDependencies => {
-    const pieceDependencies: PackageManagerDependencies = {};
-    const flowSteps = flowHelper.getAllSteps(flowVersion);
-
     const environment = system.get(SystemProp.ENVIRONMENT);
+
     if (environment === ApEnvironment.DEVELOPMENT) {
         return {};
     }
 
+    const pieceDependencies: PackageManagerDependencies = {};
+    const flowSteps = flowHelper.getAllSteps(flowVersion);
+
     for (const step of flowSteps) {
         if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
-            const packageName = `@activepieces/piece-${step.settings.pieceName}`;
-            const packageVersion = step.settings.pieceVersion;
+            const { pieceName, pieceVersion } = step.settings;
+
+            const packageName = getPackageAliasForPiece({
+                pieceName,
+                pieceVersion,
+            });
+
+            const packageVersion = getPackageVersionForPiece({
+                pieceName,
+                pieceVersion,
+            });
+
             pieceDependencies[packageName] = packageVersion;
         }
     }

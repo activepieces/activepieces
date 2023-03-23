@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/stripe/tsconfig.lib.json",
         "packageJson": "packages/pieces/stripe/package.json",
         "main": "packages/pieces/stripe/src/index.ts",
-        "assets": ["packages/pieces/stripe/*.md"]
+        "assets": ["packages/pieces/stripe/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

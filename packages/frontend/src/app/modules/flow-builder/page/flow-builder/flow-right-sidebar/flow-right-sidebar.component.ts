@@ -3,6 +3,7 @@ import {
   ElementRef,
   NgZone,
   OnInit,
+  Renderer2,
   ViewChild,
 } from '@angular/core';
 import { RightSideBarType } from '../../../../common/model/enum/right-side-bar-type.enum';
@@ -39,7 +40,8 @@ export class FlowRightSidebarComponent implements OnInit {
   constructor(
     private store: Store,
     private ngZone: NgZone,
-    private testStepService: TestStepService
+    private testStepService: TestStepService,
+    private renderer2: Renderer2
   ) {}
 
   ngOnInit(): void {
@@ -72,16 +74,35 @@ export class FlowRightSidebarComponent implements OnInit {
   resizerDragged(dragMoveEvent: CdkDragMove) {
     const height = this.editStepSectionRect.height + dragMoveEvent.distance.y;
     this.ngZone.runOutsideAngular(() => {
-      this.editStepSection.nativeElement.style.height = `${height}px`;
-      this.selectedStepResultContainer.nativeElement.style.maxHeight = `calc(100% - ${height}px - 5px)`;
+      this.renderer2.setStyle(
+        this.editStepSection.nativeElement,
+        'height',
+        `${height}px`
+      );
+      this.renderer2.setStyle(
+        this.selectedStepResultContainer.nativeElement,
+        'max-height',
+        `calc(100% - ${height}px - 5px)`
+      );
     });
   }
   resizerAnimation() {
     this.animateSectionsHeightChange = true;
-    this.editStepSection.nativeElement.style.height = `calc(50% - 30px)`;
-    this.selectedStepResultContainer.nativeElement.style.maxHeight = `calc(50% + 26px)`;
+    this.renderer2.setStyle(
+      this.editStepSection.nativeElement,
+      'height',
+      `calc(50% - 30px)`
+    );
+    this.renderer2.setStyle(
+      this.selectedStepResultContainer.nativeElement,
+      'max-height',
+      `calc(50% + 26px)`
+    );
     setTimeout(() => {
       this.animateSectionsHeightChange = false;
     }, 150);
+  }
+  resetTopResizerSectionHeight() {
+    this.renderer2.removeStyle(this.editStepSection.nativeElement, 'height');
   }
 }

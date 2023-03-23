@@ -6,6 +6,8 @@ export type PieceBase = {
   logoUrl: string;
   description: string;
   version: string;
+  minimumSupportedRelease?: string;
+  maximumSupportedRelease?: string;
 }
 
 export type ActionBase = {

@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/wordpress/tsconfig.lib.json",
         "packageJson": "packages/pieces/wordpress/package.json",
         "main": "packages/pieces/wordpress/src/index.ts",
-        "assets": ["packages/pieces/wordpress/*.md"]
+        "assets": ["packages/pieces/wordpress/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

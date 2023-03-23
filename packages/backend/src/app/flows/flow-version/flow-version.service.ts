@@ -4,6 +4,7 @@ import { PieceProperty } from "@activepieces/framework";
 import {
     ActionType,
     apId,
+    BranchActionSettingsWithValidation,
     CloneFlowVersionRequest,
     CodeActionSettings,
     flowHelper,
@@ -13,6 +14,7 @@ import {
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
+    LoopOnItemsActionSettingsWithValidation,
     PieceActionSettings,
     PieceTriggerSettings,
     ProjectId,
@@ -24,6 +26,9 @@ import { fileService } from "../../file/file.service";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowVersionRepo } from "./flow-version-repo";
 import { getPiece } from "@activepieces/pieces-apps";
+
+const branchSetttingsValidaotr = TypeCompiler.Compile(BranchActionSettingsWithValidation);
+const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation);
 
 export const flowVersionService = {
     async overwriteVersion(flowVersionId: FlowVersionId, mutatedFlowVersion: FlowVersion) {
@@ -41,13 +46,15 @@ export const flowVersionService = {
     },
 
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {
+        if(id === null || id === undefined){
+            return null;
+        }
         return await flowVersionRepo.findOneBy({
             id,
         });
     },
     async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
         const flowVersion = await flowVersionService.getOne(id);
-
         if (flowVersion === null) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_VERSION_NOT_FOUND,
@@ -124,7 +131,13 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
     switch (clonedRequest.type) {
     case FlowOperationType.ADD_ACTION:
         clonedRequest.request.action.valid = true;
-        if (clonedRequest.request.action.type === ActionType.PIECE) {
+        if(clonedRequest.request.action.type === ActionType.LOOP_ON_ITEMS) {
+            clonedRequest.request.action.valid = loopSettingsValidator.Check(clonedRequest.request.action.settings);
+        }
+        else if(clonedRequest.request.action.type === ActionType.BRANCH) {
+            clonedRequest.request.action.valid = branchSetttingsValidaotr.Check(clonedRequest.request.action.settings);
+        }
+        else if (clonedRequest.request.action.type === ActionType.PIECE) {
             clonedRequest.request.action.valid = validateAction(clonedRequest.request.action.settings);
         }
         else if (clonedRequest.request.action.type === ActionType.CODE) {
@@ -134,7 +147,13 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
         break;
     case FlowOperationType.UPDATE_ACTION:
         clonedRequest.request.valid = true;
-        if (clonedRequest.request.type === ActionType.PIECE) {
+        if(clonedRequest.request.type === ActionType.LOOP_ON_ITEMS) {
+            clonedRequest.request.valid = loopSettingsValidator.Check(clonedRequest.request.settings);
+        }
+        else if(clonedRequest.request.type === ActionType.BRANCH) {
+            clonedRequest.request.valid = branchSetttingsValidaotr.Check(clonedRequest.request.settings);
+        }
+        else if (clonedRequest.request.type === ActionType.PIECE) {
             clonedRequest.request.valid = validateAction(clonedRequest.request.settings);
         }
         else if (clonedRequest.request.type === ActionType.CODE) {
@@ -169,6 +188,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
     }
     return clonedRequest;
 }
+
 
 function validateAction(settings: PieceActionSettings) {
     if (
@@ -254,7 +274,7 @@ function buildSchema(props: PieceProperty): TSchema {
             propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()]);
             break;
         case PropertyType.JSON:
-            propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()]);
+            propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.Array(Type.Any()), Type.String()]);
             break;
         case PropertyType.MULTI_SELECT_DROPDOWN:
             propsSchema[name] = Type.Union([Type.Array(Type.Any()), Type.String()]);

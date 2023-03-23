@@ -53,7 +53,7 @@
             "artifactPackagedId":"0FAE443357F3627777D9DED5BE084951692FDE3AF036A5BF0FCAE1FF8A3D3124",
             "newArtifactToUploadFile":null,
             "input":{
-              "current_iteration":"${step_2.current_iteration}"
+              "index":"${step_2.index}"
             }
           }
         },

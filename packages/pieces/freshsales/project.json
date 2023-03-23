@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/freshsales/tsconfig.lib.json",
         "packageJson": "packages/pieces/freshsales/package.json",
         "main": "packages/pieces/freshsales/src/index.ts",
-        "assets": ["packages/pieces/freshsales/*.md"]
+        "assets": ["packages/pieces/freshsales/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

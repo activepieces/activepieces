@@ -85,6 +85,8 @@ const uploadPiecesManifest = async (piecesMetadata: PieceMetadata[]) => {
         description: p.description,
         logoUrl: p.logoUrl,
         version: p.version,
+        minimumSupportedRelease: p.minimumSupportedRelease,
+        maximumSupportedRelease: p.maximumSupportedRelease,
         actions: Object.keys(p.actions).length,
         triggers: Object.keys(p.triggers).length,
     }))

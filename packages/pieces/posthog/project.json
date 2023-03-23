@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/posthog/tsconfig.lib.json",
         "packageJson": "packages/pieces/posthog/package.json",
         "main": "packages/pieces/posthog/src/index.ts",
-        "assets": ["packages/pieces/posthog/*.md"]
+        "assets": ["packages/pieces/posthog/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
