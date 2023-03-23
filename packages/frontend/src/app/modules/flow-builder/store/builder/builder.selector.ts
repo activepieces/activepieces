@@ -19,7 +19,10 @@ import { ActionType, Collection, TriggerType } from '@activepieces/shared';
 import { FlowStructureUtil } from '../../service/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../../common/model/dropdown-item.interface';
 import { MentionListItem } from '../../../common/components/form-controls/interpolating-text-form-control/utils';
-import { CORE_PIECES_ACTIONS_NAMES } from './flow-item-details/flow-items-details.effects';
+import {
+  CORE_PIECES_ACTIONS_NAMES,
+  CORE_PIECES_TRIGGERS,
+} from './flow-item-details/flow-items-details.effects';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -438,36 +441,6 @@ const selectAnyFlowHasSteps = createSelector(selectFlows, (flows: Flow[]) => {
   return aFlowHasSteps;
 });
 
-function findStepLogoUrlForMentions(
-  step: FlowItem,
-  flowItemsDetailsState: FlowItemsDetailsState
-) {
-  if (step.type === ActionType.PIECE) {
-    if (CORE_PIECES_ACTIONS_NAMES.find((n) => n === step.settings.pieceName)) {
-      return `assets/img/custom/piece/${step.settings.pieceName}_mention.png`;
-    }
-    return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(
-      (i) => i.extra?.appName === step.settings.pieceName
-    )!.logoUrl!;
-  } else if (step.type === TriggerType.PIECE) {
-    return flowItemsDetailsState.customPiecesTriggersFlowItemDetails.find(
-      (i) => i.extra?.appName === step.settings.pieceName
-    )!.logoUrl!;
-  } else {
-    if (step.type === TriggerType.EMPTY || step.type === TriggerType.WEBHOOK) {
-      const fileName =
-        step.type === TriggerType.EMPTY
-          ? 'emptyTrigger.png'
-          : 'webhook_mention.png';
-      return 'assets/img/custom/piece/' + fileName;
-    }
-    if (step.type === ActionType.LOOP_ON_ITEMS) {
-      return 'assets/img/custom/piece/loop_mention.png';
-    }
-    return 'assets/img/custom/piece/code_mention.png';
-  }
-}
-
 const selectAllStepsForMentionsDropdown = createSelector(
   selectCurrentStep,
   selectCurrentFlow,
@@ -494,17 +467,52 @@ const selectAllStepsForMentionsDropdown = createSelector(
     });
   }
 );
+function findStepLogoUrlForMentions(
+  step: FlowItem,
+  flowItemsDetailsState: FlowItemsDetailsState
+) {
+  if (step.type === ActionType.PIECE) {
+    if (CORE_PIECES_ACTIONS_NAMES.find((n) => n === step.settings.pieceName)) {
+      return `assets/img/custom/piece/${step.settings.pieceName}_mention.png`;
+    }
+    return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(
+      (i) => i.extra?.appName === step.settings.pieceName
+    )!.logoUrl!;
+  } else if (step.type === TriggerType.PIECE) {
+    if (CORE_PIECES_TRIGGERS.find((n) => n === step.settings.pieceName)) {
+      return `assets/img/custom/piece/${step.settings.pieceName}_mention.png`;
+    }
+    return flowItemsDetailsState.customPiecesTriggersFlowItemDetails.find(
+      (i) => i.extra?.appName === step.settings.pieceName
+    )!.logoUrl!;
+  } else {
+    if (step.type === TriggerType.EMPTY || step.type === TriggerType.WEBHOOK) {
+      const fileName =
+        step.type === TriggerType.EMPTY
+          ? 'emptyTrigger.png'
+          : 'webhook_mention.png';
+      return 'assets/img/custom/piece/' + fileName;
+    }
+    if (step.type === ActionType.LOOP_ON_ITEMS) {
+      return 'assets/img/custom/piece/loop_mention.png';
+    }
+    return 'assets/img/custom/piece/code_mention.png';
+  }
+}
 
 const selectStepLogoUrl = (stepName: string) => {
-  return createSelector(selectAllStepsForMentionsDropdown, (stepsMetaData) => {
-    const logoUrl = stepsMetaData.find(
-      (s) => s.step.name === stepName
-    )?.logoUrl;
-    if (!logoUrl) {
-      return 'assets/img/custom/piece/branch.png';
+  return createSelector(
+    selectAllFlowSteps,
+    selectAllFlowItemsDetails,
+    (steps, flowItemsDetails) => {
+      const step = steps.find((s) => s.name === stepName);
+      if (!step) {
+        return 'assets/img/custom/piece/branch_mention.png';
+      }
+      const logoUrl = findStepLogoUrlForMentions(step, flowItemsDetails);
+      return logoUrl;
     }
-    return logoUrl;
-  });
+  );
 };
 export const BuilderSelectors = {
   selectCurrentCollection,

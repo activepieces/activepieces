@@ -77,6 +77,7 @@ export class FlowItemsDetailsEffects {
     const indicesOfPiecesInSource = piecesNamesToMove
       .map((n) => {
         const index = source.findIndex((p) => p.extra?.appName === n);
+
         if (index < 0) {
           console.error(`piece ${n} is not found`);
         }
@@ -84,12 +85,14 @@ export class FlowItemsDetailsEffects {
       })
       .filter((idx) => idx > -1);
     indicesOfPiecesInSource.forEach((idx) => {
-      target = [...target, source[idx]];
+      target = [...target, { ...source[idx] }];
     });
     indicesOfPiecesInSource.forEach((idx) => {
-      target.splice(idx, 1);
+      source.splice(idx, 1);
     });
-    return target;
+    return target.sort((a, b) => {
+      return a.name.localeCompare(b.name);
+    });
   }
 
   createFlowItemDetailsForComponents(forTriggers: boolean) {
