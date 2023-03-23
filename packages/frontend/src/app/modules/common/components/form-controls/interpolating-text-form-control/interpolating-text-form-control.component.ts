@@ -32,6 +32,7 @@ import {
   fromTextToOps,
   getImageTemplateForStepLogo,
   InsertMentionOperation,
+  MentionListItem,
   QuillEditorOperationsObject,
   QuillMaterialBase,
   TextInsertOperation,
@@ -41,7 +42,8 @@ import './fixed-selection-mention';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
 import { DomSanitizer } from '@angular/platform-browser';
-import { StepMetaData } from '../../../../flow-builder/store/model/flow-items-details-state.model';
+
+import { FlowItem } from '../../../model/flow-builder/flow-item';
 
 @Component({
   selector: 'app-interpolating-text-form-control',
@@ -88,7 +90,11 @@ export class InterpolatingTextFormControlComponent
   editorFormControl: FormControl<QuillEditorOperationsObject>;
   valueChanges$!: Observable<unknown>;
   private _value = '';
-  stepsMetaData$: Observable<StepMetaData[]>;
+  stepsMetaData$: Observable<
+    (MentionListItem & {
+      step: FlowItem;
+    })[]
+  >;
   autofilled?: boolean | undefined = false;
   userAriaDescribedBy?: string | undefined;
   override stateChanges = new Subject<void>();
@@ -102,7 +108,7 @@ export class InterpolatingTextFormControlComponent
       if (this._value) {
         const stepsMetaData = await firstValueFrom(
           this.store
-            .select(BuilderSelectors.selectAllFlowStepsMetaData)
+            .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
             .pipe(take(1))
         );
         if (typeof this._value === 'string')
@@ -151,7 +157,7 @@ export class InterpolatingTextFormControlComponent
       { nonNullable: true }
     );
     this.stepsMetaData$ = this.store.select(
-      BuilderSelectors.selectAllFlowStepsMetaData
+      BuilderSelectors.selectAllStepsForMentionsDropdown
     );
   }
 
@@ -236,7 +242,7 @@ export class InterpolatingTextFormControlComponent
   async writeValue(value: string) {
     const stepsMetaData = await firstValueFrom(
       this.store
-        .select(BuilderSelectors.selectAllFlowStepsMetaData)
+        .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
         .pipe(take(1))
     );
     if (value && typeof value === 'string') {
@@ -329,14 +335,13 @@ export class InterpolatingTextFormControlComponent
       const itemPrefix = itemPathWithoutInterpolationDenotation.split('.')[0];
       let imageTag = '';
       if (itemPrefix !== 'configs' && itemPrefix !== 'connections') {
-        const stepMetaDataIndex = allStepsMetaData.findIndex(
-          (s) => s.name === itemPrefix
+        const stepMetaData = allStepsMetaData.find(
+          (s) => s.step.name === itemPrefix
         );
-        if (stepMetaDataIndex > -1) {
+        if (stepMetaData) {
           imageTag =
-            getImageTemplateForStepLogo(
-              allStepsMetaData[stepMetaDataIndex].logoUrl
-            ) + `${stepMetaDataIndex + 1}. `;
+            getImageTemplateForStepLogo(stepMetaData.logoUrl || '') +
+            `${stepMetaData.step.indexInDfsTraversal || -1 + 1}. `;
         }
       } else {
         if (itemPrefix === 'connections') {

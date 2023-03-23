@@ -10,6 +10,14 @@ import { FlowItemDetails } from '../../../page/flow-builder/flow-right-sidebar/s
 import { ActionMetaService } from '../../../service/action-meta.service';
 import { FlowItemDetailsActions } from './flow-items-details.action';
 
+export const CORE_PIECES_ACTIONS_NAMES = [
+  'store',
+  'data-mapper',
+  'connections',
+  'delay',
+  'http',
+];
+export const CORE_PIECES_TRIGGERS = ['schedule'];
 @Injectable()
 export class FlowItemsDetailsEffects {
   load$ = createEffect(() => {
@@ -38,29 +46,17 @@ export class FlowItemsDetailsEffects {
         });
       }),
       map((res) => {
-        const storagePiece = res.customPiecesActionsFlowItemDetails.find(
-          (p) => p.extra?.appName === 'store'
+        res.coreFlowItemsDetails = this.moveCorePiecesToCoreFlowItemDetails(
+          CORE_PIECES_ACTIONS_NAMES,
+          res.customPiecesActionsFlowItemDetails,
+          res.coreFlowItemsDetails
         );
-        const httpPiece = res.customPiecesActionsFlowItemDetails.find(
-          (p) => p.extra?.appName === 'http'
-        );
-        if (storagePiece) {
-          res.coreFlowItemsDetails = [
-            ...res.coreFlowItemsDetails,
-            storagePiece,
-          ];
-          const index = res.customPiecesActionsFlowItemDetails.findIndex(
-            (p) => p.extra?.appName === 'store'
+        res.coreTriggerFlowItemsDetails =
+          this.moveCorePiecesToCoreFlowItemDetails(
+            CORE_PIECES_TRIGGERS,
+            res.customPiecesTriggersFlowItemDetails,
+            res.coreTriggerFlowItemsDetails
           );
-          res.customPiecesActionsFlowItemDetails.splice(index, 1);
-        }
-        if (httpPiece) {
-          res.coreFlowItemsDetails = [...res.coreFlowItemsDetails, httpPiece];
-          const index = res.customPiecesActionsFlowItemDetails.findIndex(
-            (p) => p.extra?.appName === 'http'
-          );
-          res.customPiecesActionsFlowItemDetails.splice(index, 1);
-        }
         return res;
       }),
       switchMap((res) => {
@@ -72,6 +68,29 @@ export class FlowItemsDetailsEffects {
       })
     );
   });
+
+  private moveCorePiecesToCoreFlowItemDetails(
+    piecesNamesToMove: string[],
+    source: FlowItemDetails[],
+    target: FlowItemDetails[]
+  ) {
+    const indicesOfPiecesInSource = piecesNamesToMove
+      .map((n) => {
+        const index = source.findIndex((p) => p.extra?.appName === n);
+        if (index < 0) {
+          console.error(`piece ${n} is not found`);
+        }
+        return index;
+      })
+      .filter((idx) => idx > -1);
+    indicesOfPiecesInSource.forEach((idx) => {
+      target = [...target, source[idx]];
+    });
+    indicesOfPiecesInSource.forEach((idx) => {
+      target.splice(idx, 1);
+    });
+    return target;
+  }
 
   createFlowItemDetailsForComponents(forTriggers: boolean) {
     return (piecesManifest: PieceMetadataSummary[]) => {

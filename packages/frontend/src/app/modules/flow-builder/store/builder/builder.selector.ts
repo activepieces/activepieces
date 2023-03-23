@@ -12,16 +12,14 @@ import {
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
 import { FlowItem } from '../../../common/model/flow-builder/flow-item';
-import {
-  FlowItemsDetailsState,
-  StepMetaData,
-} from '../model/flow-items-details-state.model';
+import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
 import { FlowsState } from '../model/flows-state.model';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { ActionType, Collection, TriggerType } from '@activepieces/shared';
 import { FlowStructureUtil } from '../../service/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../../common/model/dropdown-item.interface';
 import { MentionListItem } from '../../../common/components/form-controls/interpolating-text-form-control/utils';
+import { CORE_PIECES_ACTIONS_NAMES } from './flow-item-details/flow-items-details.effects';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -418,40 +416,7 @@ const selectAllFlowSteps = createSelector(
     return [];
   }
 );
-const selectAllFlowStepsMetaData = createSelector(
-  selectAllFlowSteps,
-  selectAllFlowItemsDetails,
-  (steps, flowItemDetails): StepMetaData[] => {
-    return steps.map((s) => {
-      const logoUrl = findStepLogoUrl(s, flowItemDetails);
-      return {
-        displayName: s.displayName,
-        name: s.name,
-        logoUrl: logoUrl,
-      };
-    });
-  }
-);
-const selectAllStepsForMentionsDropdown = createSelector(
-  selectCurrentStep,
-  selectCurrentFlow,
-  (currentStep, flow): (MentionListItem & { step: FlowItem })[] => {
-    if (!currentStep || !flow || !flow.version || !flow.version.trigger) {
-      return [];
-    }
-    const path = FlowStructureUtil.findPathToStep(
-      currentStep,
-      flow?.version?.trigger
-    );
-    return path.map((s) => {
-      return {
-        label: s.displayName,
-        value: `\${${s.name}}`,
-        step: s,
-      };
-    });
-  }
-);
+
 const selectAppConnectionsForMentionsDropdown = createSelector(
   selectAllAppConnections,
   (connections: AppConnection[]) => {
@@ -473,26 +438,13 @@ const selectAnyFlowHasSteps = createSelector(selectFlows, (flows: Flow[]) => {
   return aFlowHasSteps;
 });
 
-const selectStepLogoUrl = (stepName: string) => {
-  return createSelector(selectAllFlowStepsMetaData, (stepsMetaData) => {
-    const logoUrl = stepsMetaData.find((s) => s.name === stepName)?.logoUrl;
-    if (!logoUrl) {
-      return 'assets/img/custom/piece/branch.png';
-    }
-    return logoUrl;
-  });
-};
-
-function findStepLogoUrl(
+function findStepLogoUrlForMentions(
   step: FlowItem,
   flowItemsDetailsState: FlowItemsDetailsState
 ) {
   if (step.type === ActionType.PIECE) {
-    if (step.settings.pieceName === 'store') {
-      return 'assets/img/custom/piece/storage.png';
-    }
-    if (step.settings.pieceName === 'http') {
-      return 'assets/img/custom/piece/http.png';
+    if (CORE_PIECES_ACTIONS_NAMES.find((n) => n === step.settings.pieceName)) {
+      return `assets/img/custom/piece/${step.settings.pieceName}_mention.png`;
     }
     return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(
       (i) => i.extra?.appName === step.settings.pieceName
@@ -504,15 +456,56 @@ function findStepLogoUrl(
   } else {
     if (step.type === TriggerType.EMPTY || step.type === TriggerType.WEBHOOK) {
       const fileName =
-        step.type === TriggerType.EMPTY ? 'emptyTrigger.png' : 'webhook.png';
+        step.type === TriggerType.EMPTY
+          ? 'emptyTrigger.png'
+          : 'webhook_mention.png';
       return 'assets/img/custom/piece/' + fileName;
     }
     if (step.type === ActionType.LOOP_ON_ITEMS) {
-      return 'assets/img/custom/piece/loop.png';
+      return 'assets/img/custom/piece/loop_mention.png';
     }
-    return 'assets/img/custom/piece/code.png';
+    return 'assets/img/custom/piece/code_mention.png';
   }
 }
+
+const selectAllStepsForMentionsDropdown = createSelector(
+  selectCurrentStep,
+  selectCurrentFlow,
+  selectAllFlowItemsDetails,
+  (
+    currentStep,
+    flow,
+    flowItemDetails
+  ): (MentionListItem & { step: FlowItem })[] => {
+    if (!currentStep || !flow || !flow.version || !flow.version.trigger) {
+      return [];
+    }
+    const path = FlowStructureUtil.findPathToStep(
+      currentStep,
+      flow?.version?.trigger
+    );
+    return path.map((s) => {
+      return {
+        label: s.displayName,
+        value: `\${${s.name}}`,
+        step: s,
+        logoUrl: findStepLogoUrlForMentions(s, flowItemDetails),
+      };
+    });
+  }
+);
+
+const selectStepLogoUrl = (stepName: string) => {
+  return createSelector(selectAllStepsForMentionsDropdown, (stepsMetaData) => {
+    const logoUrl = stepsMetaData.find(
+      (s) => s.step.name === stepName
+    )?.logoUrl;
+    if (!logoUrl) {
+      return 'assets/img/custom/piece/branch.png';
+    }
+    return logoUrl;
+  });
+};
 export const BuilderSelectors = {
   selectCurrentCollection,
   selectCurrentCollectionId,
@@ -553,7 +546,6 @@ export const BuilderSelectors = {
   selectFlowItemDetailsForCustomPiecesTriggers,
   selectAllAppConnections,
   selectAllFlowSteps,
-  selectAllFlowStepsMetaData,
   selectAllStepsForMentionsDropdown,
   selectAppConnectionsForMentionsDropdown,
   selectAnyFlowHasSteps,
