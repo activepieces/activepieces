@@ -92,7 +92,7 @@ export class FlowItemsDetailsEffects {
             return new FlowItemDetails(
               TriggerType.PIECE,
               piece.displayName,
-              ``,
+              piece.description ? piece.description : ``,
               piece.logoUrl,
               {
                 appName: piece.name,

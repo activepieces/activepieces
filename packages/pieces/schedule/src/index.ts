@@ -11,7 +11,7 @@ export const schedule = createPiece({
   name: 'schedule',
   displayName: 'Schedule',
   logoUrl: 'https://cdn.activepieces.com/pieces/schedule.png',
-  description:"All triggers run within UTC+0 timezone",
+  description:"Trigger flow with fixed schedule",
   version: packageJson.version,
   authors: [
     "abuaboud", "abdulTheActivePiecer"
