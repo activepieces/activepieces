@@ -15,7 +15,7 @@ export const schedule = createPiece({
   version: packageJson.version,
   minimumSupportedRelease: "0.3.8",
   authors: [
-    "abuaboud", "abdulTheActivePiecer"
+    "abuaboud", "AbdulTheActivePiecer"
   ],
   actions: [
   ],
