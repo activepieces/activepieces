@@ -9,10 +9,13 @@ const getLatestPublishedVersion = async (packageName: string): Promise<string | 
 
   try {
     const response = await axios<{version: string}>(`https://registry.npmjs.org/${packageName}/latest`)
+    const version = response.data.version
+    console.info(`[getLatestPublishedVersion] packageName=${packageName}, latestVersion=${version}`)
     return response.data.version
   }
   catch (e: unknown) {
       if (e instanceof AxiosError && e.response?.status === 404) {
+        console.info(`[getLatestPublishedVersion] packageName=${packageName}, latestVersion=null`)
         return null
       }
 
@@ -24,7 +27,7 @@ const packageChangedFromMainBranch = async (path: string): Promise<boolean> => {
   console.info(`[packageChangedFromMainBranch] path=${path}`)
 
   try {
-    const diff = await exec(`git diff --quiet main ${path}`)
+    const diff = await exec(`git diff --quiet origin/main -- ${path}`)
     return false
   }
   catch (e) {
@@ -56,7 +59,7 @@ export const packagePrePublishChecks = async (path: string): Promise<boolean> =>
     const packageChanged = await packageChangedFromMainBranch(path)
 
     if (packageChanged) {
-      throw new Error(`[packagePrePublishValidation] package changed but version not incremented, path=${path}`)
+      throw new Error(`[packagePrePublishValidation] package version not incremented, path=${path}, version=${currentVersion}`)
     }
 
     console.info(`[packagePrePublishValidation] package already published, path=${path}, version=${currentVersion}`)
