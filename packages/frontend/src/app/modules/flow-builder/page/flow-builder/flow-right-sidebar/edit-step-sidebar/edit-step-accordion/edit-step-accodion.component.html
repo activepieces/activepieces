@@ -31,8 +31,6 @@
 <ng-template #inputFormSelection>
   <div [formGroup]="stepForm">
     <ng-container [ngSwitch]="_selectedStep.type">
-      <app-schedule-trigger-input-form *ngSwitchCase="TriggerType.SCHEDULE" formControlName="input">
-      </app-schedule-trigger-input-form>
       <app-loop-step-input-form *ngSwitchCase="ActionType.LOOP_ON_ITEMS" formControlName="input">
       </app-loop-step-input-form>
       <app-code-step-input-form *ngSwitchCase="ActionType.CODE" formControlName="input">

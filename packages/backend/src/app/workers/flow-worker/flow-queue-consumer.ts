@@ -34,9 +34,6 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
 
         try {
             switch (data.triggerType) {
-            case TriggerType.SCHEDULE:
-                await consumeScheduleTrigger(data);
-                break;
             case TriggerType.PIECE:
                 await consumePieceTrigger(data);
                 break;
@@ -62,14 +59,6 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     }
 );
 
-const consumeScheduleTrigger = async (data: RepeatableJobData): Promise<void> => {
-    await flowRunService.start({
-        environment: data.environment,
-        flowVersionId: data.flowVersion.id,
-        collectionId: data.collectionId,
-        payload: null,
-    });
-};
 
 const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
     const flowVersion = await flowVersionService.getOne(data.flowVersion.id);

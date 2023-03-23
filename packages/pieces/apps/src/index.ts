@@ -46,6 +46,7 @@ import { trello } from '@activepieces/piece-trello';
 import { square } from '@activepieces/piece-square';
 import { delay } from '@activepieces/piece-delay';
 import { dataMapper } from '@activepieces/piece-data-mapper';
+import { schedule } from '@activepieces/piece-schedule';
 
 export const pieces: Piece[] = [
     airtable,
@@ -95,7 +96,7 @@ export const pieces: Piece[] = [
     delay,
     dataMapper,
     intercom,
-    square
+    schedule
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {

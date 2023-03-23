@@ -9,7 +9,8 @@ import { ErrorStateMatcher, mixinErrorState } from '@angular/material/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
 import { Subject } from 'rxjs';
-import { StepMetaData } from '../../../../flow-builder/store/model/flow-items-details-state.model';
+
+import { FlowItem } from '../../../model/flow-builder/flow-item';
 
 export const QuillMaterialBase = mixinErrorState(
   class {
@@ -42,7 +43,7 @@ export class CustomErrorMatcher implements ErrorStateMatcher {
 
 export function fromTextToOps(
   text: string,
-  allStepsMetaData: StepMetaData[],
+  allStepsMetaData: (MentionListItem & { step: FlowItem })[],
   sanitizer: DomSanitizer
 ): {
   ops: (TextInsertOperation | InsertMentionOperation)[];
@@ -66,14 +67,13 @@ export function fromTextToOps(
             itemPathWithoutInterpolationDenotation.split('.')[0];
           let imageTag = '';
           if (itemPrefix !== 'configs' && itemPrefix !== 'connections') {
-            const stepMetaDataIndex = allStepsMetaData.findIndex(
-              (s) => s.name === itemPrefix
+            const stepMetaData = allStepsMetaData.find(
+              (s) => s.step.name === itemPrefix
             );
-            if (stepMetaDataIndex > -1) {
+            if (stepMetaData) {
               imageTag =
-                getImageTemplateForStepLogo(
-                  allStepsMetaData[stepMetaDataIndex].logoUrl
-                ) + `${stepMetaDataIndex + 1}. `;
+                getImageTemplateForStepLogo(stepMetaData.logoUrl || '') +
+                `${stepMetaData?.step.indexInDfsTraversal || 0 + 1}. `;
             }
           } else {
             if (itemPrefix === 'connections') {
@@ -121,7 +121,10 @@ export function fromTextToOps(
   }
 }
 
-function adjustItemPath(itemPath: string, allStepsMetaData: StepMetaData[]) {
+function adjustItemPath(
+  itemPath: string,
+  allStepsMetaData: (MentionListItem & { step: FlowItem })[]
+) {
   const itemPrefix = itemPath.split('.')[0];
   if (itemPrefix === 'configs') {
     //remove configs prefix
@@ -139,12 +142,12 @@ function adjustItemPath(itemPath: string, allStepsMetaData: StepMetaData[]) {
 }
 function replaceStepNameWithDisplayName(
   stepName: string,
-  allStepsMetaData: StepMetaData[]
+  allStepsMetaData: (MentionListItem & { step: FlowItem })[]
 ) {
   //search without array notation
   const stepDisplayName = allStepsMetaData.find(
-    (s) => s.name === stepName.replace(arrayNotationRegex, '')
-  )?.displayName;
+    (s) => s.step.name === stepName.replace(arrayNotationRegex, '')
+  )?.step.displayName;
   if (stepDisplayName) {
     const arrayNotationInStepName = stepName.match(arrayNotationRegex);
     if (arrayNotationInStepName === null) return stepDisplayName;
@@ -238,6 +241,7 @@ export function traverseStepOutputAndReturnMentionTree(
 export interface MentionListItem {
   label: string;
   value: string;
+  logoUrl?: string;
 }
 
 function formatStepOutput(stepOutput: unknown) {

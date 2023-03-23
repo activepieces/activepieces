@@ -37,6 +37,7 @@ import {
   FlowOperationType,
   TriggerType,
 } from '@activepieces/shared';
+import { MentionsTreeCacheService } from '../../../common/components/form-controls/interpolating-text-form-control/mentions-list/mentions-tree-cache.service';
 
 @Injectable()
 export class FlowsEffects {
@@ -104,6 +105,9 @@ export class FlowsEffects {
         this.store.select(BuilderSelectors.selectCurrentTabState),
         this.store.select(BuilderSelectors.selectCurrentStepName),
       ]),
+      tap(([{ operation }]) => {
+        this.mentionsTreeCache.clearStepCache(operation.name);
+      }),
       switchMap(([{ operation }, state, currentStepName]) => {
         if (
           state &&
@@ -401,6 +405,7 @@ export class FlowsEffects {
     private store: Store,
     private actions$: Actions,
     private snackBar: MatSnackBar,
-    private runDetailsService: RunDetailsService
+    private runDetailsService: RunDetailsService,
+    private mentionsTreeCache: MentionsTreeCacheService
   ) {}
 }

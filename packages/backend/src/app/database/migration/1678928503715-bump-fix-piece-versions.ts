@@ -71,7 +71,7 @@ export class bumpFixPieceVersions1678928503715 implements MigrationInterface {
         logger.info("bumpFixPieceVersions1678928503715, finished bumping " + count + " flows " + " and connections count " + connectionCount);
     }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
+    public async down(): Promise<void> {
         // Ignored
     }
 
