@@ -59,7 +59,7 @@ export class ActionMetaService {
     },
   ];
 
-  public triggerItemsDetails :FlowItemDetails[] = [
+  public triggerItemsDetails: FlowItemDetails[] = [
     {
       type: TriggerType.WEBHOOK,
       name: 'Webhook',
