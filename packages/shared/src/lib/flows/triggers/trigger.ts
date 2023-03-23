@@ -40,29 +40,6 @@ export const WebhookTrigger = Type.Object({
 
 export type WebhookTrigger = Static<typeof WebhookTrigger>;
 
-
-// TODO REMOVE THIS
-/*
-// Schedule
-Format.Set('cronexpression', (value) => isValidCron(value, { seconds: false }));
-
-export const ScheduleTriggerSettings = Type.Object({
-  cronExpression: Type.String({
-    format: 'cronexpression',
-  })
-});
-
-export type ScheduleTriggerSettings = Static<typeof ScheduleTriggerSettings>;
-
-export const ScheduleTrigger = Type.Object({
-  ...commonProps,
-  type: Type.Literal(TriggerType.SCHEDULE),
-  settings: ScheduleTriggerSettings
-});
-
-export type ScheduleTrigger = Static<typeof ScheduleTrigger>;
-
-*/
 export const PieceTriggerSettings = Type.Object({
   pieceName: Type.String({}),
   pieceVersion: SemVerType,

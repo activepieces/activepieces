@@ -1,14 +1,14 @@
-import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
+import { FastifyInstance, FastifyRequest } from "fastify";
 import { webhookService } from "../webhooks/webhook-service";
 import { appEventRoutingService } from "./app-event-routing.service";
 import { engineHelper } from "../helper/engine-helper";
 import { logger } from "../helper/logger";
 
-export const appEventRoutingModule = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
+export const appEventRoutingModule = async (app: FastifyInstance) => {
     app.register(appEventRoutingController, { prefix: "/v1/app-events" });
 };
 
-export const appEventRoutingController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
+export const appEventRoutingController = async (fastify: FastifyInstance) => {
 
     fastify.post(
         "/:pieceName",
