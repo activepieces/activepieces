@@ -89,6 +89,14 @@ export class FlagService {
     );
   }
 
+  getRelease(): Observable<string> {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return flags[ApFlagId.CURRENT_VERSION] as string;
+      })
+    );
+  }
+
   getEnvironment(): Observable<string> {
     return this.getAllFlags().pipe(
       map((flags) => {

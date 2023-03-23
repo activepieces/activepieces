@@ -18,6 +18,8 @@ export class Piece implements PieceBase {
     } | undefined,
     actions: Action[],
     triggers: Trigger[],
+    public readonly minimumSupportedRelease?: string,
+    public readonly maximumSupportedRelease?: string,
     public readonly description: string = ''
   ) {
     this._actions = Object.fromEntries(
@@ -52,6 +54,8 @@ export class Piece implements PieceBase {
       triggers: this._triggers,
       description: this.description,
       version: this.version,
+      minimumSupportedRelease: this.minimumSupportedRelease,
+      maximumSupportedRelease: this.maximumSupportedRelease,
     };
   }
 }
@@ -69,6 +73,8 @@ export const createPiece = (request: {
     verify: (ctx: { webhookSecret: string, payload: EventPayload, appWebhookUrl: string }) => boolean;
   }
   version: string;
+  minimumSupportedRelease?: string;
+  maximumSupportedRelease?: string;
 }): Piece =>
   new Piece(
     request.name,
@@ -79,5 +85,7 @@ export const createPiece = (request: {
     request.events,
     request.actions,
     request.triggers,
+    request.minimumSupportedRelease,
+    request.maximumSupportedRelease,
     request.description
   );
