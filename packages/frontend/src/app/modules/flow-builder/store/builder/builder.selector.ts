@@ -6,7 +6,6 @@ import {
   AppConnection,
   Flow,
   FlowRun,
-  PieceActionSettings,
   SampleDataSettings,
 } from '@activepieces/shared';
 import { TabState } from '../model/tab-state';
@@ -339,36 +338,24 @@ export const selectFlowItemDetailsForCustomPiecesTriggers = createSelector(
 
 export const selectFlowItemDetails = (flowItem: FlowItem) =>
   createSelector(selectAllFlowItemsDetails, (state: FlowItemsDetailsState) => {
-    const triggerItemDetails = state.coreTriggerFlowItemsDetails.find(
-      (t) => t.type === flowItem.type
-    );
-    if (triggerItemDetails) {
-      return triggerItemDetails;
-    }
-    if (
-      (flowItem.settings as PieceActionSettings)?.pieceName == 'store' ||
-      (flowItem.settings as PieceActionSettings)?.pieceName == 'http'
-    ) {
-      const details = state.coreFlowItemsDetails.find(
-        (p) =>
-          p.extra?.appName ===
-          (flowItem.settings as PieceActionSettings)?.pieceName
-      );
-      if (!details) {
-        throw new Error(
-          `${
-            (flowItem.settings as PieceActionSettings)?.pieceName
-          } not found in core nor custom pieces details`
+    if (flowItem.type === ActionType.PIECE) {
+      if (
+        CORE_PIECES_ACTIONS_NAMES.find((n) => n === flowItem.settings.pieceName)
+      ) {
+        return state.coreFlowItemsDetails.find(
+          (c) => c.extra?.appName === flowItem.settings.pieceName
         );
       }
-      return details;
-    }
-    if (flowItem.type === ActionType.PIECE) {
       return state.customPiecesActionsFlowItemDetails.find(
         (f) => f.extra!.appName === flowItem.settings.pieceName
       );
     }
     if (flowItem.type === TriggerType.PIECE) {
+      if (CORE_PIECES_TRIGGERS.find((n) => n === flowItem.settings.pieceName)) {
+        return state.coreTriggerFlowItemsDetails.find(
+          (c) => c.extra?.appName === flowItem.settings.pieceName
+        );
+      }
       return state.customPiecesTriggersFlowItemDetails.find(
         (f) => f.extra!.appName === flowItem.settings.pieceName
       );
@@ -379,12 +366,12 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
       (c) => c.type === flowItem.type
     );
 
-    if (!coreItemDetials) {
-      console.warn(
-        `Flow item details for ${flowItem.displayName} are not currently loaded`
-      );
-    }
-    return coreItemDetials;
+    if (coreItemDetials) return coreItemDetials;
+    const triggerItemDetails = state.coreTriggerFlowItemsDetails.find(
+      (t) => t.type === flowItem.type
+    );
+
+    return triggerItemDetails;
   });
 
 const selectAllAppConnections = createSelector(
