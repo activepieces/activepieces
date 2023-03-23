@@ -2,6 +2,7 @@ export * from "./lib/flows/actions/action";
 export * from "./lib/app-connection/app-connection";
 export * from "./lib/app-connection/dto/read-app-connection-request";
 export * from "./lib/app-connection/dto/upsert-app-connection-request";
+export * from "./lib/common";
 export * from "./lib/common/activepieces-error";
 export * from "./lib/common/telemetry";
 export * from "./lib/engine/engine-operation";
