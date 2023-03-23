@@ -46,13 +46,15 @@ export const flowVersionService = {
     },
 
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {
+        if(id === null || id === undefined){
+            return null;
+        }
         return await flowVersionRepo.findOneBy({
             id,
         });
     },
     async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
         const flowVersion = await flowVersionService.getOne(id);
-
         if (flowVersion === null) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_VERSION_NOT_FOUND,
