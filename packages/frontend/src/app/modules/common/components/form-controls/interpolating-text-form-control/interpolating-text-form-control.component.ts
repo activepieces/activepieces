@@ -341,7 +341,7 @@ export class InterpolatingTextFormControlComponent
         if (stepMetaData) {
           imageTag =
             getImageTemplateForStepLogo(stepMetaData.logoUrl || '') +
-            `${stepMetaData.step.indexInDfsTraversal || -1 + 1}. `;
+            `${stepMetaData.step.indexInDfsTraversal || 0 + 1}. `;
         }
       } else {
         if (itemPrefix === 'connections') {
