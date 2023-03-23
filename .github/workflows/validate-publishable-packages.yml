@@ -20,5 +20,5 @@ jobs:
       - name: install npm deps
         run: npm ci
 
-      - name: publish shared package
+      - name: validate publishable packages
         run: npx ts-node tools/scripts/validate-publishable-packages.ts
