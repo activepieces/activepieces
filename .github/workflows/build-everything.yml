@@ -1,6 +1,7 @@
 name: Build Everything
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - main
