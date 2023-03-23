@@ -2,6 +2,7 @@ import assert from 'node:assert'
 import { PieceMetadata } from '../../../packages/shared/src'
 import { getAvailablePieceNames } from '../utils/get-available-piece-names'
 import { readPackageJson, PackageJson } from '../utils/files'
+import { validateMetadata } from './validate-metadata'
 
 type Piece = {
     name: string
@@ -45,6 +46,8 @@ export const generateMetadata = async (): Promise<PieceMetadata[]> => {
 
         piece.name = pieceName
         piece.version = packageJson.version
+
+        validateMetadata(piece.metadata())
         pieces.push(piece)
     }
 
