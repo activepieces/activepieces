@@ -209,7 +209,10 @@ export class PieceTriggerInputFormComponent {
             this.componentForm.addControl(
               CONFIGS_FORM_CONTROL_NAME,
               new UntypedFormControl({
-                value: [...configs],
+                value: {
+                  configs: configs,
+                  setDefaultValues: false,
+                },
                 disabled: this.componentForm.disabled,
               }),
               {
@@ -276,10 +279,16 @@ export class PieceTriggerInputFormComponent {
     if (!configsForm) {
       this.componentForm.addControl(
         CONFIGS_FORM_CONTROL_NAME,
-        new UntypedFormControl([...selectedValue.configs])
+        new UntypedFormControl({
+          configs: [...selectedValue.configs],
+          setDefaultValues: true,
+        })
       );
     } else {
-      configsForm.setValue([...selectedValue.configs]);
+      configsForm.setValue({
+        configs: [...selectedValue.configs],
+        setDefaultValues: true,
+      });
     }
     this.cd.detectChanges();
     this.componentForm.updateValueAndValidity();

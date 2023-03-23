@@ -248,7 +248,7 @@ function buildSchema(props: PieceProperty): TSchema {
             });
             break;
         case PropertyType.CHECKBOX:
-            propsSchema[name] = Type.Boolean({});
+            propsSchema[name] = Type.Union([Type.Boolean(),Type.String({})]) ;
             break;
         case PropertyType.NUMBER:
             // Because it could be a variable
