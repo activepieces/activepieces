@@ -88,7 +88,6 @@ export const flowService = {
         });
         const queryBuilder = flowRepo.createQueryBuilder("flow").where({ collectionId, projectId });
         const { data, cursor } = await paginator.paginate(queryBuilder.where({ collectionId }));
-        // TODO REPLACE WITH SQL QUERY
         const flowVersionsPromises: Array<Promise<FlowVersion | null>> = [];
         data.forEach((collection) => {
             flowVersionsPromises.push(flowVersionService.getFlowVersion(projectId, collection.id, undefined, false));
