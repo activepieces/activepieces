@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/schedule/tsconfig.lib.json",
         "packageJson": "packages/pieces/schedule/package.json",
         "main": "packages/pieces/schedule/src/index.ts",
-        "assets": ["packages/pieces/schedule/*.md"]
+        "assets": ["packages/pieces/schedule/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
