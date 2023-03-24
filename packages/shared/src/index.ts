@@ -2,6 +2,7 @@ export * from "./lib/flows/actions/action";
 export * from "./lib/app-connection/app-connection";
 export * from "./lib/app-connection/dto/read-app-connection-request";
 export * from "./lib/app-connection/dto/upsert-app-connection-request";
+export * from "./lib/common";
 export * from "./lib/common/activepieces-error";
 export * from "./lib/common/telemetry";
 export * from "./lib/engine/engine-operation";
@@ -34,7 +35,7 @@ export {
 export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry';
 export { User, UserStatus, UserId } from './lib/user/user';
 export { CreateFlowRunRequest } from './lib/flow-run/create-flow-run-request';
-export { TriggerStrategy, Trigger, EmptyTrigger, PieceTriggerSettings, ScheduleTriggerSettings, PieceTrigger, ScheduleTrigger, WebhookTrigger, TriggerType } from './lib/flows/triggers/trigger';
+export { TriggerStrategy, Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType } from './lib/flows/triggers/trigger';
 export { Collection, CollectionId } from './lib/collections/collection';
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version';
 export { Flow, FlowId } from './lib/flows/flow';
@@ -54,3 +55,7 @@ export { apId, ApId } from './lib/common/id-generator'
 export * from "./lib/flows/trigger-events/trigger-events-dto";
 export * from "./lib/flows/trigger-events/trigger-event";
 export {SampleDataSettings} from './lib/flows/sample-data'
+import { TypeSystem } from '@sinclair/typebox/system'
+
+// Look at https://github.com/sinclairzx81/typebox/issues/350
+TypeSystem.ExactOptionalPropertyTypes = false;

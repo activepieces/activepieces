@@ -203,8 +203,6 @@ export class FlowItemContentComponent implements OnInit {
         return 'Webhook trigger';
       case TriggerType.PIECE:
         return this._flowItem.settings.pieceName.replace(/-/g, ' ');
-      case TriggerType.SCHEDULE:
-        return 'Schedule Trigger';
     }
   }
 }

@@ -263,6 +263,7 @@ export class PieceActionInputFormComponent
             customizedInputs:
               this.intialComponentInputFormValue!.inputUiInfo
                 ?.customizedInputs || {},
+            setDefaultValues: false,
           },
           disabled: this.pieceActionForm.disabled,
         }),
@@ -324,15 +325,16 @@ export class PieceActionInputFormComponent
         new UntypedFormControl({
           configs: [...selectedActionValue.configs],
           customizedInputs: {},
+          setDefaultValues: true,
         })
       );
     } else {
       configsForm.setValue({
         configs: [...selectedActionValue.configs],
         customizedInputs: {},
+        setDefaultValues: true,
       });
     }
-
     this.cd.detectChanges();
     this.pieceActionForm.updateValueAndValidity();
     this.updateStepName(selectedActionValue.actionName);

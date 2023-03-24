@@ -116,6 +116,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   @ViewChildren('textControl', { read: ElementRef })
   theInputs: QueryList<ElementRef>;
   form!: UntypedFormGroup;
+  setDefaultValue$: Observable<null>;
   OnChange: (value) => void;
   OnTouched: () => void;
 
@@ -131,19 +132,22 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       BuilderSelectors.selectAppConnectionsDropdownOptions
     );
   }
+  writeValue(obj: {
+    configs: PieceConfig[];
+    customizedInputs?: Record<string, boolean>;
+    setDefaultValues: boolean;
+  }): void {
+    this.configs = obj.configs;
+    this.customizedInputs = obj.customizedInputs;
 
-  writeValue(
-    obj:
-      | { configs: PieceConfig[]; customizedInputs: Record<string, boolean> }
-      | PieceConfig[]
-  ): void {
-    if (Array.isArray(obj)) {
-      this.configs = obj;
-    } else {
-      this.configs = obj.configs;
-      this.customizedInputs = obj.customizedInputs;
-    }
     this.createForm();
+    if (obj.setDefaultValues) {
+      this.setDefaultValue$ = of(null).pipe(
+        tap(() => {
+          this.form.setValue(this.form.value);
+        })
+      );
+    }
     this.cd.markForCheck();
   }
   registerOnChange(fn: (value) => void): void {
@@ -411,7 +415,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
   formValueMiddleWare(formValue: object) {
     const formattedValue = { ...formValue };
-
     Object.keys(formValue).forEach((configKey) => {
       if (
         this.configs.find((c) => c.key === configKey)!.type ===

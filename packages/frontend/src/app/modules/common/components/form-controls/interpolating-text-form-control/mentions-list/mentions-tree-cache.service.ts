@@ -81,4 +81,7 @@ export class MentionsTreeCacheService {
       }
     }
   }
+  clearStepCache(stepName: string) {
+    return this.cache.delete(stepName);
+  }
 }

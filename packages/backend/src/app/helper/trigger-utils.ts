@@ -13,13 +13,10 @@ import {
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowQueue } from "../workers/flow-worker/flow-queue";
 import { engineHelper } from "./engine-helper";
-import { logger } from "../helper/logger";
 import { getPiece } from "@activepieces/pieces-apps";
 import { webhookService } from "../webhooks/webhook-service";
 import { appEventRoutingService } from "../app-event-routing/app-event-routing.service";
 import { captureException } from "@sentry/node";
-
-const EVERY_FIVE_MINUTES = "*/5 * * * *";
 
 export const triggerUtils = {
     async executeTrigger({ payload, flowVersion, projectId, collectionId}: ExecuteTrigger): Promise<unknown[]> {
@@ -65,23 +62,6 @@ export const triggerUtils = {
         case TriggerType.PIECE:
             await enablePieceTrigger({ collectionId, projectId, flowVersion });
             break;
-
-        case TriggerType.SCHEDULE:
-            console.log("Created Schedule for flow version Id " + flowVersion.id);
-
-            await flowQueue.add({
-                id: flowVersion.id,
-                data: {
-                    environment: RunEnvironment.PRODUCTION,
-                    projectId: projectId,
-                    collectionId,
-                    flowVersion,
-                    triggerType: TriggerType.SCHEDULE,
-                },
-                cronExpression: flowVersion.trigger.settings.cronExpression,
-            });
-
-            break;
         default:
             break;
         }
@@ -92,14 +72,6 @@ export const triggerUtils = {
         case TriggerType.PIECE:
             await disablePieceTrigger({ collectionId, projectId, flowVersion });
             break;
-
-        case TriggerType.SCHEDULE:
-            console.log("Deleted Schedule for flow version Id " + flowVersion.id);
-            await flowQueue.removeRepeatableJob({
-                id: flowVersion.id
-            });
-            break;
-
         default:
             break;
         }
@@ -148,11 +120,12 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId }: Enab
         for(const listener of listeners){
             await appEventRoutingService.createListeners({projectId, flowId: flowVersion.flowId, appName, events: listener.events, identifierValue: listener.identifierValue });
         }
-    }
         break;
+    }
     case TriggerStrategy.WEBHOOK:
         break;
-    case TriggerStrategy.POLLING:
+    case TriggerStrategy.POLLING: {
+        const scheduleOptions = (response as ExecuteTriggerResponse).scheduleOptions;
         await flowQueue.add({
             id: flowVersion.id,
             data: {
@@ -162,10 +135,11 @@ const enablePieceTrigger = async ({ flowVersion, projectId, collectionId }: Enab
                 flowVersion,
                 triggerType: TriggerType.PIECE,
             },
-            cronExpression: EVERY_FIVE_MINUTES,
+            scheduleOptions: scheduleOptions,
         });
-
         break;
+
+    }
     }
 };
 

@@ -268,13 +268,6 @@ function createTrigger(
         settings: request.settings,
       };
       break;
-    case TriggerType.SCHEDULE:
-      trigger = {
-        ...baseProperties,
-        type: TriggerType.SCHEDULE,
-        settings: request.settings,
-      };
-      break;
     case TriggerType.PIECE:
       trigger = {
         ...baseProperties,

@@ -15,8 +15,6 @@ export const triggerEventService = {
         switch (trigger.type) {
         case TriggerType.WEBHOOK:
             break;
-        case TriggerType.SCHEDULE:
-            throw new Error("Not implemented");
         case TriggerType.PIECE:
             throw new Error("Not implemented");
         case TriggerType.EMPTY:
@@ -62,8 +60,6 @@ function getSourceName(trigger: Trigger): string {
     switch (trigger.type) {
     case TriggerType.WEBHOOK:
         return TriggerType.WEBHOOK;
-    case TriggerType.SCHEDULE:
-        return TriggerType.SCHEDULE;
     case TriggerType.PIECE:{
         const pieceTrigger = trigger as PieceTrigger;
         return pieceTrigger.settings.pieceName +"@" + pieceTrigger.settings.pieceVersion + ":" + pieceTrigger.settings.triggerName;

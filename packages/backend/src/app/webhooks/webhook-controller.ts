@@ -1,4 +1,4 @@
-import { FastifyPluginCallback, FastifyReply, FastifyRequest } from "fastify";
+import { FastifyPluginCallback, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
 import { Static, Type } from "@sinclair/typebox";
 import { ApId } from "@activepieces/shared";
