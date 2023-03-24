@@ -1,7 +1,8 @@
-import { httpClient, HttpMethod, Property, createTrigger, Trigger } from "@activepieces/framework"
+import { httpClient, HttpMethod, createTrigger, Trigger } from "@activepieces/framework"
 import { TriggerStrategy } from "@activepieces/shared"
+import { shopifyCommon } from "./props";
 
-export const registerWebhooks = ({
+export const createShopifyWebhookTrigger = ({
     name,
     description,
     displayName,
@@ -19,21 +20,7 @@ export const registerWebhooks = ({
         description,
         displayName,
         props: {
-            authentication: Property.OAuth2({
-                props: {
-                    shop: Property.ShortText({
-                        displayName: 'Shop Name',
-                        description: 'Shop Name',
-                        required: true
-                    })
-                },
-                displayName: 'Authentication',
-                description: 'Authentication for the webhook',
-                required: true,
-                authUrl: "https://{shop}.myshopify.com/admin/oauth/authorize",
-                tokenUrl: "https://{shop}.myshopify.com/admin/oauth/access_token",
-                scope: ['read_orders', 'read_customers']
-            })
+            authentication: shopifyCommon.authentication
         },
         sampleData: sampleData,
         type: TriggerStrategy.WEBHOOK,
@@ -58,7 +45,7 @@ export const registerWebhooks = ({
                 }
             })
             await context.store?.put(`shopify_webhook_id`, response.body.webhook.id)
-            console.log(response);
+            console.log("webhook created", response.body.webhook.id);
         },
         async onDisable(context) {
             const webhookId = await context.store.get<string>(`shopify_webhook_id`);
@@ -74,7 +61,7 @@ export const registerWebhooks = ({
                     "X-Shopify-Access-Token": context.propsValue.authentication.access_token
                 }
             })
-            await context.store?.put(`shopify_webhook_id`, undefined)
+            await context.store?.put(`shopify_webhook_id`, null)
         },
         async run(context) {
             console.debug("trigger running", context)

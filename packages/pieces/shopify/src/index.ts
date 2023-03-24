@@ -1,7 +1,10 @@
 
 import { createPiece } from '@activepieces/framework';
 import packageJson from '../package.json';
-import { triggers } from './lib/triggers';
+import { newCancelledOrder } from './lib/triggers/new-cancelled-order';
+import { newCustomer } from './lib/triggers/new-customer';
+import { newOrder } from './lib/triggers/new-order';
+import { newPaidOrder } from './lib/triggers/new-paid-order';
 
 export const shopify = createPiece({
   name: 'shopify',
@@ -9,8 +12,15 @@ export const shopify = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/shopify.png',
   version: packageJson.version,
   authors: [
+    "abuaboud"
   ],
+  minimumSupportedRelease: '0.3.8',
   actions: [
   ],
-  triggers: triggers,
+  triggers: [
+    newCustomer,
+    newOrder,
+    newPaidOrder,
+    newCancelledOrder
+  ],
 });
