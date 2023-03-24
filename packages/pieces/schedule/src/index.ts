@@ -13,7 +13,8 @@ export const schedule = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/schedule.png',
   description:"Trigger flow with fixed schedule",
   version: packageJson.version,
-  minimumSupportedRelease: "0.3.8",
+  // TODO bump to 0.3.8 once released
+  minimumSupportedRelease: "0.3.7",
   authors: [
     "abuaboud", "AbdulTheActivePiecer"
   ],
