@@ -238,6 +238,7 @@ function validateProps(props: PieceProperty, input: Record<string, unknown>) {
 
 function buildSchema(props: PieceProperty): TSchema {
     const entries = Object.entries(props);
+    const nonNullableUnknownPropType = Type.Not(Type.Null(),Type.Unknown());
     const propsSchema: Record<string, TSchema> = {};
     for (let i = 0; i < entries.length; ++i) {
         const property = entries[i][1];
@@ -250,17 +251,17 @@ function buildSchema(props: PieceProperty): TSchema {
             });
             break;
         case PropertyType.CHECKBOX:
-            propsSchema[name] = Type.Boolean({});
+            propsSchema[name] = Type.Union([Type.Boolean(),Type.String({})]) ;
             break;
         case PropertyType.NUMBER:
             // Because it could be a variable
             propsSchema[name] = Type.String({});
             break;
         case PropertyType.STATIC_DROPDOWN:
-            propsSchema[name] = Type.Any({});
+            propsSchema[name] =  nonNullableUnknownPropType;
             break;
         case PropertyType.DROPDOWN:
-            propsSchema[name] = Type.Any({});
+            propsSchema[name] = nonNullableUnknownPropType;
             break;
         case PropertyType.OAUTH2:
             // Only accepts connections variable.

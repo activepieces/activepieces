@@ -16,8 +16,8 @@
         {{node.key}}<span class="ap-text-primary ap-truncate ap-flex-grow ap-transition-all">:
           <span class="ap-transition-all" [matTooltip]="node.value">{{node.value}}
           </span></span>
-        <app-button @fadeIn class="ap-absolute ap-right-[10px]" *ngIf="treeNodeHoverTracker.isHovered"
-          btnColor="primary" btnStyle="basic" type="button" [buttonIsInsideAutocomplete]="true" btnSize="small">Select
+        <app-button class="ap-absolute ap-right-[10px]" *ngIf="treeNodeHoverTracker.isHovered" btnColor="primary"
+          btnStyle="basic" type="button" [buttonIsInsideAutocomplete]="true" btnSize="small">Select
         </app-button>
 
       </div>

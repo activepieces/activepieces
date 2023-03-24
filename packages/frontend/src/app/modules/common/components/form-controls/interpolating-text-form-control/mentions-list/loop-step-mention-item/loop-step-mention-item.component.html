@@ -18,7 +18,7 @@
 <ng-container *ngIf="expandCodeCollapse">
     <ng-container *ngIf="mentionItemsToShow$ | async as result">
         <div #indexMentionListItem="hoverTrackerDirective" appTrackHover
-            *ngIf="result.markedNodesToShow[childrenNodes[0].propertyPath]" (click)="$event.stopPropagation();"
+            *ngIf="result.markedNodesToShow[childrenNodes[0].propertyPath]" (click)="emitIndexMention()"
             class="mat-tree-node ap-min-w-[0] ap-min-h-[27px] ap-relative  ap-flex ap-items-center ap-typography-body-2"
             [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST + 'px'" mat-menu-item>
             Index

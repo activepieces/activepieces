@@ -395,3 +395,5 @@
     matTooltip="Dynamic Value" (click)="toggleCustomizedInputFlag(config.key)">
   </svg-icon>
 </ng-template>
+
+<ng-container *ngIf="setDefaultValue$ | async"></ng-container>

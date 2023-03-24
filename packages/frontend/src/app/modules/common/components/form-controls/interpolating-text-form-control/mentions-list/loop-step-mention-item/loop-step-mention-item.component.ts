@@ -89,4 +89,11 @@ export class LoopStepMentionItemComponent implements OnInit {
         })
       );
   }
+  emitIndexMention() {
+    this.mentionClicked.emit({
+      label: `${this.stepMention.label} index`,
+      value: `\${${this.stepMention.step.name}.index}`,
+      logoUrl: this.stepMention.logoUrl,
+    });
+  }
 }

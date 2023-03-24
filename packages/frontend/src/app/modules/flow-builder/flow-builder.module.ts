@@ -47,7 +47,6 @@ import { FlowItemsDetailsEffects } from './store/builder/flow-item-details/flow-
 import { EditStepAccordionComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/edit-step-accodion.component';
 import { CodeStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/code-step-input-form/code-step-input-form.component';
 import { LoopStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/loop-step-input-form/loop-step-input-form.component';
-import { ScheduleTriggerInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/schedule-trigger-input-form/schedule-trigger-input-form.component';
 import { PublishButtonComponent } from './page/flow-builder/flow-builder-header/publish-button/publish-button.component';
 import { TrackFocusDirective } from './page/flow-builder/flow-left-sidebar/run-details/steps-results-list/track-focus.directive';
 import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
@@ -136,7 +135,6 @@ import { StepNameEditorComponent } from './page/flow-builder/flow-right-sidebar/
     EditStepAccordionComponent,
     LoopStepInputFormComponent,
     CodeStepInputFormComponent,
-    ScheduleTriggerInputFormComponent,
     PieceActionInputFormComponent,
     OAuth2ConnectionDialogComponent,
     PublishButtonComponent,

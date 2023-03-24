@@ -7,9 +7,3 @@ export interface FlowItemsDetailsState {
   customPiecesTriggersFlowItemDetails: FlowItemDetails[];
   loaded: boolean;
 }
-
-export interface StepMetaData {
-  logoUrl: string;
-  displayName: string;
-  name: string;
-}

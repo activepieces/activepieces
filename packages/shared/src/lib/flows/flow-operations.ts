@@ -1,7 +1,7 @@
 import {
     CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema,
 } from "./actions/action";
-import { EmptyTrigger, PieceTrigger, ScheduleTrigger, WebhookTrigger } from "./triggers/trigger";
+import { EmptyTrigger, PieceTrigger, WebhookTrigger } from "./triggers/trigger";
 import { Static, Type } from "@sinclair/typebox";
 
 
@@ -43,15 +43,7 @@ export const AddActionRequest = Type.Object({
 })
 export type AddActionRequest = Static<typeof AddActionRequest>;
 
-export const UpdateScheduleTrigger = Type.Object({
-    ...ScheduleTrigger.properties,
-    settings: Type.Object({
-        cronExpression: Type.String()
-    })
-});
-export type UpdateScheduleTrigger = Static<typeof UpdateScheduleTrigger>;
-
-export const UpdateTriggerRequest = Type.Union([EmptyTrigger, UpdateScheduleTrigger, PieceTrigger, WebhookTrigger]);
+export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger, WebhookTrigger]);
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>;
 
 export const FlowOperationRequest = Type.Union([
