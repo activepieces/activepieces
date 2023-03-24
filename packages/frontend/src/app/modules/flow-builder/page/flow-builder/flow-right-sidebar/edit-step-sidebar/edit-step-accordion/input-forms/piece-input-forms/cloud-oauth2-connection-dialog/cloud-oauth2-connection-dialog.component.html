@@ -1,6 +1,5 @@
-<app-dialog-title-template>
-  <ng-container *ngIf="!connectionToUpdate; else editConnectionHeader">New Connection</ng-container>
-  <ng-template #editConnectionHeader>Edit {{connectionToUpdate!.name}}</ng-template>
+<app-dialog-title-template><ng-container *ngIf="!connectionToUpdate; else editConnectionHeader">New
+    Connection</ng-container><ng-template #editConnectionHeader>Edit {{connectionToUpdate!.name}}</ng-template>
 </app-dialog-title-template>
 
 <mat-dialog-content>
@@ -8,7 +7,7 @@
   <form class="ap-flex ap-flex-col ap-gap-2 ap-w-[430px]" [formGroup]="settingsForm" (submit)="submit()">
     <mat-form-field class="ap-w-full" appearance="outline">
       <mat-label>Name</mat-label>
-      <input [matTooltip]="keyTooltip" formControlName="name" matInput type="text" />
+      <input cdkFocusInitial [matTooltip]="keyTooltip" formControlName="name" matInput type="text" />
       <mat-error *ngIf="settingsForm.controls.name.invalid">
         <ng-container *ngIf="settingsForm.controls.name.getError('required'); else patternErrorOrAlreadyUsed">
           Name is required
@@ -47,15 +46,17 @@
       </ng-container>
     </div>
     <div>
-      <app-o-auth2-cloud-connect-control [cloudConnectionPopupSettings]="cloudConnectionPopupSettings"
-        formControlName="value"></app-o-auth2-cloud-connect-control>
+      <app-o-auth2-connect-control [popupParams]="cloudConnectionPopupSettings" formControlName="value"
+        [settingsValid]="true"></app-o-auth2-connect-control>
       <p @fadeInUp class="ap-typography-caption ap-text-danger"
         *ngIf="settingsForm.controls.value.invalid && settingsForm.controls.value.touched">
         You have to connect an account to continue
       </p>
     </div>
   </form>
-  <a class="ap-cursor-pointer ap-mt-2" *ngIf="!connectionToUpdate" (click)="useOwnCred()">I would like to use my own
+  <a class="ap-cursor-pointer ap-mt-2" *ngIf="!connectionToUpdate && !isTriggerAppWebhook" (click)="useOwnCred()">I
+    would like
+    to use my own
     app credentials </a>
 </mat-dialog-content>
 
@@ -64,8 +65,7 @@
     <app-button btnColor="basic" mat-dialog-close btnSize="default">
       Cancel
     </app-button>
-    <app-button cdkFocusInitial btnSize="default" (click)="submit()" btnColor="primary" type="submit"
-      [loading]="loading">
+    <app-button btnSize="default" (click)="submit()" btnColor="primary" type="submit" [loading]="loading">
       Save
     </app-button>
   </div>

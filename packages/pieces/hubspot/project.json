@@ -1,0 +1,28 @@
+{
+  "name": "pieces-hubspot",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/hubspot/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/hubspot",
+        "tsConfig": "packages/pieces/hubspot/tsconfig.lib.json",
+        "packageJson": "packages/pieces/hubspot/package.json",
+        "main": "packages/pieces/hubspot/src/index.ts",
+        "assets": ["packages/pieces/hubspot/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/hubspot/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

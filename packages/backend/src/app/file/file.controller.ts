@@ -1,10 +1,10 @@
-import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
+import { FastifyInstance, FastifyRequest } from "fastify";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { FileId } from "@activepieces/shared";
 import { fileService } from "./file.service";
 import { StatusCodes } from "http-status-codes";
 
-export const fileController = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
+export const fileController = async (fastify: FastifyInstance) => {
     fastify.get(
         "/:fileId",
         async (

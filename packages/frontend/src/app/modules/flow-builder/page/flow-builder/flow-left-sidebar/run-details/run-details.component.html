@@ -5,16 +5,13 @@
 <ng-container *ngIf="logs$ | async as logs; else loading">
   <ng-container *ngIf="logs; else loading">
     <div class="run-details-body">
-      <div class="resizer-area">
-        <div #paneSeparator class="ap-flex ap-items-center ap-justify-center pane-separator" cdkDragLockAxis="y" cdkDrag
-          (cdkDragMoved)="
-        resizerDragged($event,stepsResultsAccordion,selectedStepResultContainer)
-      " cdkDragBoundary=".resizer-area" [class.active]="resizerKnobIsBeingDragged"
-          (cdkDragEnded)="resizerDragStopped()" (cdkDragStarted)="resizerDragStarted(stepsResultsAccordion)">
-          <div class="knob"></div>
-        </div>
+      <div class="resizer-area" #resizerArea>
+        <app-horizontal-sidebar-separator [resizerArea]="resizerArea"
+          (resizerDragged)="resizerDragged($event,stepsResultsAccordion,selectedStepResultContainer)"
+          (resizerDragStopped)="resizerDragStopped()" (resizerDragStarted)="resizerDragStarted(stepsResultsAccordion)">
+        </app-horizontal-sidebar-separator>
       </div>
-      <div class="steps-results" #stepsResultsAccordion>
+      <div class="top-resizer-section" #stepsResultsAccordion>
         <ng-container *ngFor="let stepResult of logs.runResults; let stepIndex = index">
           <app-step-result [isTrigger]="stepIndex === 0" [stepNameAndResult]="stepResult"
             [selectedStepName]="selectedStepName$ | async">
@@ -23,7 +20,7 @@
       </div>
 
 
-      <div class="selected-step-result" #selectedStepResultContainer>
+      <div class="bottom-resizer-section" #selectedStepResultContainer>
         <ng-container *ngIf="
         runDetailsService.currentStepResult$
           | async as currentStepResult

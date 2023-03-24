@@ -1,0 +1,28 @@
+{
+  "name": "pieces-mailchimp",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/mailchimp/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/mailchimp",
+        "tsConfig": "packages/pieces/mailchimp/tsconfig.lib.json",
+        "packageJson": "packages/pieces/mailchimp/package.json",
+        "main": "packages/pieces/mailchimp/src/index.ts",
+        "assets": ["packages/pieces/mailchimp/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/mailchimp/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

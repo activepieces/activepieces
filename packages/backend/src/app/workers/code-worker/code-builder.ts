@@ -1,29 +1,51 @@
-import fs from "node:fs";
-import { ExecSyncOptionsWithBufferEncoding } from "node:child_process";
+import fs from "node:fs/promises";
 import decompress from "decompress";
 import { sandboxManager } from "../sandbox";
-import { exec } from "node:child_process";
 import { logger } from "../../helper/logger";
+import { packageManager, PackageManagerDependencies } from "../../helper/package-manager";
 
 const webpackConfig = `
   const path = require("node:path");
+
   module.exports = {
+    mode: "production",
     target: "node",
-    externalsPresets: { node: true },
-    entry: "./index.js",
+    entry: path.join(__dirname, "index.ts"),
+    module: {
+      rules: [
+        {
+          test: /\\.ts$/,
+          use: [
+            {
+              loader: "ts-loader",
+              options: {
+                // don't check types
+                transpileOnly: true,
+              },
+            },
+          ],
+        }
+      ]
+    },
     resolve: {
+      // add 'ts' to the default extensions
+      extensions: [".ts", "..."],
       preferRelative: true,
-      extensions: [".js"]
     },
     output: {
+      // enables the use of 'module.exports', see: https://github.com/webpack/webpack/issues/1114
       libraryTarget: "commonjs2",
       path: path.join(__dirname, "dist"),
       filename: "index.js",
     },
-    optimization: {
-      minimize: true,
-    },
   };
+`;
+
+const tsConfig = `
+  {
+    // preset config for node 18
+    "extends": "@tsconfig/node18/tsconfig.json"
+  }
 `;
 
 async function build(artifact: Buffer): Promise<Buffer> {
@@ -31,76 +53,54 @@ async function build(artifact: Buffer): Promise<Buffer> {
     const buildPath = sandbox.getSandboxFolderPath();
     let bundledFile: Buffer;
     try {
-        console.log("Started Building in sandbox " + buildPath);
+        const startTime = Date.now();
+        logger.info(`Started Building in sandbox: ${buildPath}`);
 
         await sandbox.cleanAndInit();
-
         await downloadFiles(artifact, buildPath);
 
-        const execOptions: ExecSyncOptionsWithBufferEncoding = {
-            cwd: buildPath,
+        const dependencies: PackageManagerDependencies = {
+            "@tsconfig/node18": "1.0.1",
+            "ts-loader": "9.4.2",
+            "typescript": "4.8.4",
+            "webpack": "5.74.0",
+            "webpack-cli": "4.10.0",
         };
 
-        logger.info("Installing npm");
-        await execPromise('npm install', execOptions);
+        await packageManager.addDependencies(buildPath, dependencies);
 
-        logger.info("Finished npm depdencies");
-        await execPromise('npm exec -g webpack -- --mode production', execOptions);
+        await packageManager.runLocalDependency(buildPath, "webpack");
 
-        const bundledFilePath = buildPath + "/dist/index.js";
-        bundledFile = fs.readFileSync(bundledFilePath);
-        console.log("Finished Building in sandbox " + buildPath);
+        bundledFile = await fs.readFile(`${buildPath}/dist/index.js`);
+
+        logger.info(`Finished Building in sandbox: ${buildPath}, duration: ${Date.now() - startTime}ms`);
     }
     catch (e) {
-        logger.error(e);
-        const consoleError = e as { stdout: string };
-        const invalidArtifactFile = fs
-            .readFileSync("./packages/backend/src/assets/invalid-code.js")
+        logger.error(e, "code builder");
+
+        const invalidArtifactTemplate = await fs.readFile("./packages/backend/src/assets/invalid-code.js");
+
+        const invalidArtifactFile = invalidArtifactTemplate
             .toString("utf-8")
-            .replace("${ERROR_MESSAGE}", JSON.stringify(consoleError.toString()).replace(/"/g, '\\"'));
+            .replace("${ERROR_MESSAGE}", JSON.stringify(e.toString()).replace(/"/g, '\\"'));
+
         bundledFile = Buffer.from(invalidArtifactFile, "utf-8");
     }
     finally {
         sandboxManager.returnSandbox(sandbox.boxId);
     }
+
     return bundledFile;
 }
 
-async function execPromise(cmd: string, options: ExecSyncOptionsWithBufferEncoding): Promise<string> {
-    return new Promise((resolve, reject) => {
-        exec(cmd, options, (error: any, stdout: string | PromiseLike<string>, stderr: any) => {
-            if (error) {
-                reject(error);
-                return;
-            }
-            if (stderr) {
-                resolve(stderr);
-                return;
-            }
-            resolve(stdout);
-        });
-    });
-}
-
 async function downloadFiles(artifact: Buffer, buildPath: string) {
-    const packageJsonPath = `${buildPath}/package.json`;
     const webpackConfigPath = `${buildPath}/webpack.config.js`;
+    const tsConfigPath = `${buildPath}/tsconfig.json`;
 
     await decompress(artifact, buildPath, {});
 
-    const packageJson = JSON.parse(
-        fs.readFileSync(packageJsonPath, {
-            encoding: "utf8",
-            flag: "r",
-        })
-    );
-
-    if (packageJson.scripts === undefined) {
-        packageJson.scripts = {};
-    }
-
-    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson));
-    fs.writeFileSync(webpackConfigPath, webpackConfig);
+    await fs.writeFile(webpackConfigPath, webpackConfig);
+    await fs.writeFile(tsConfigPath, tsConfig);
 }
 
 export const codeBuilder = {

@@ -11,6 +11,7 @@ export type OAuth2PropertySchema = BasePropertySchema & {
 	authUrl: string;
 	tokenUrl: string;
 	scope: string[];
+	pkce?: boolean;
 	extra?: Record<string, unknown>
 }
 

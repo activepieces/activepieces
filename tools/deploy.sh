@@ -1,6 +1,15 @@
+#!/usr/bin/env bash
+
 cp .env.example .env
-echo "\nAP_POSTGRES_PASSWORD=\"`openssl rand -hex 32`\"" >> .env
-echo "\nAP_JWT_SECRET=\"`openssl rand -hex 32`\"" >> .env
-echo "\nENCRYPTION_KEY=\"`openssl rand -hex 16`\"" >> .env
+
+if [ "$(uname)" = "Darwin" ]; then
+  sed -i '' -e 's|AP_POSTGRES_PASSWORD=.*|AP_POSTGRES_PASSWORD='"$(openssl rand -hex 32)"'|g' .env
+  sed -i '' -e 's|AP_JWT_SECRET=.*|AP_JWT_SECRET='"$(openssl rand -hex 32)"'|g' .env
+  sed -i '' -e 's|ENCRYPTION_KEY=.*|ENCRYPTION_KEY='"$(openssl rand -hex 16)"'|g' .env
+else
+  sed -i 's|AP_POSTGRES_PASSWORD=.*|AP_POSTGRES_PASSWORD='"$(openssl rand -hex 32)"'|g' .env
+  sed -i 's|AP_JWT_SECRET=.*|AP_JWT_SECRET='"$(openssl rand -hex 32)"'|g' .env
+  sed -i 's|ENCRYPTION_KEY=.*|ENCRYPTION_KEY='"$(openssl rand -hex 16)"'|g' .env
+fi;
 
 echo "A .env file containing random passwords and secrets has been successfully generated."

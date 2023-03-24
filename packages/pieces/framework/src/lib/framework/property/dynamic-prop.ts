@@ -1,8 +1,8 @@
 import { PropertyType } from "@activepieces/shared";
 import { BasePropertySchema, NumberProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
-import { StaticDropdownProperty } from "./dropdown-prop";
+import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown-prop";
 
-type DynamicProp = ShortTextProperty<true> | NumberProperty<true> | StaticDropdownProperty<any, true>;
+type DynamicProp = ShortTextProperty<boolean> | NumberProperty<boolean> | StaticDropdownProperty<any, boolean> | StaticMultiSelectDropdownProperty<any,boolean>;
 
 export type DynamicPropsValue = Record<string, DynamicProp['valueSchema']>;
 

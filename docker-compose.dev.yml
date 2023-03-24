@@ -2,7 +2,7 @@ version: '3.0'
 
 services:
   backend:
-    image: activepieces/ap-base:1
+    image: activepieces/ap-base:3
     environment:
       AP_JWT_SECRET: super-secret
       AP_POSTGRES_HOST: postgres
@@ -19,14 +19,14 @@ services:
     entrypoint:
      - npx
      - nx
-     - dev
+     - serve
      - backend
     depends_on:
      - postgres
      - redis
 
   frontend:
-    image: activepieces/ap-base:1
+    image: activepieces/ap-base:3
     ports:
      - "4200:4200"
      - "9222:9222"

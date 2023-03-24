@@ -11,6 +11,154 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+### 03/16/2023
+
+**New Pieces:**
+- OpenAI: Additional optional parameters have been added.
+- Airtable: Create Record Action.
+- Square: New Customer / Customer Updated / New Payment / New Order / Order Updated / New Booking / New Invoice Triggers.
+- Intercom: Create Contact / Create Or Get Contact / Send Message Actions.
+- Delay: An action that introduces a delay of up to 5 minutes.
+- Data Mapper: An advanced mapping action that allows mapping between two objects in a JSON editor where autocomplete is available.
+
+
+**Enhancements:**
+- Webhooks trigger now simulates real testing, including fetching real sample data.
+- Deploy to Easypanel documentation has been added.
+- All pieces are now versioned, ensuring that your running flows are safe from changes.
+- All pieces are now published to [npm](https://www.npmjs.com/search?q=%40activepieces).
+- Pieces will be automatically released to the registry without new releases.
+
+**Bug Fixes:**
+- Clickup: New connections no longer fail.
+- Youtube: Livestream videos no longer get triggered twice.
+- Deploy.sh script now works on MacOS.
+- Intercom: Create Contact Action / Create or Get Contact Action / Send Message Action.
+
+**Contributors:**
+- @astorozhevsky added OpenAI additional variables.
+- @J0LGER encoded code variable in malicious redirection by third party.
+- @veverkap fixed a typo in the frontend.
+- @berksmbl documented Easy Panel deployment.
+- @kanarelo created Airtable new record.
+
+**Full Changelog:**
+https://github.com/activepieces/activepieces/compare/0.3.6...0.3.7
+
+### 03/09/2023
+
+<Warning>
+**Breaking Changes:** The feature of having configurations in collections has been removed for the time being. However, we plan to reintroduce it in a different form at a later stage. Currently, the workaround is to have a code piece that returns the configurations and use it in other places.
+</Warning>
+
+
+**New Features:**
+- Gmail: New Email Trigger / Get Email Id / Search Emails
+- ClickUp: Task Created / Task Updated / Task Deleted / Task Comment posted  / Task Comment Updated
+- Youtube: New Youtube Video
+- Trello: Create Card / Get Card
+- Blackbaud: Create Contacts Batch / Update Contact / Search Contact After Certain Date.
+- Branching: Condontional Branching
+
+**Enhancements:**
+- Webhooks Supports all http types.
+- Flow Canvas supports Zoom In / Out and Panning
+
+**Bug Fixes:**
+- GenerateBanners: docs are fixed now.
+
+**Contributors:**
+- @kanarelo created gmail & clickup triggers.
+- @abaza738 created youtube trigger
+- @ShayPunter created trello
+
+**Full Changelog:** https://github.com/activepieces/activepieces/compare/0.3.5...0.3.6
+
+### 03/06/2023
+**Version 0.3.5** 
+
+**New Features:**
+- GenerateBanner: This feature allows users to generate an image from a template.
+- OpenAI: The Chat GPT API has been added for OpenAI support.
+
+**Enhancements:**
+
+- Webhooks: The webhooks now support all types of HTTP methods, including GET, POST, and OPTIONS.
+- OAuth2 with PKCE: The new release now supports OAuth2 with PKCE for apps.
+- Backend Port 3000 is no longer required in docker compose.
+
+**Bug Fixes:**
+
+- Completed Runs Removal: Completed runs are now successfully removed from Redis.
+- Raspberry PI: The Activepieces now works on Raspberry PI.
+- Previously, clicking would always set the cursor to the end of the input, but now this issue has been fixed.
+
+
+**Contributors:**
+
+- @tpatel created the GenerateBanner piece.
+- @creed983 updated chatgpt model.
+
+**Full Changelog:** https://github.com/activepieces/activepieces/compare/0.3.4...0.3.5
+
+
+### 03/01/2023
+**Version 0.3.4** 
+
+* **Pieces:**
+  - BannerBear: generate template
+  - ClickUp: create task / post comment on task
+  - RSS: Now support ATOM feeds
+  - CSV: Convert CSV to JSON / Convert JSON to CSV (New)
+  - FreshSales: Create Contact (New)
+
+* **Features/Enhancements:**
+  - Dynamic Properties in Pieces Framework.
+  - Properties in Pieces can have default value now
+  - Code pieces now support Typescript :partying_face:
+  - Add badge for the trigger to know if it's polling or webhook.
+  - Webhooks now have flow id as path variable and not query param.
+
+* **Fixes:**
+  - Storage and HTTP pieces moved to the core tab.
+  - Flow no longer throttled sequentially
+
+* **Contributors:**
+  - @kanarelo: freshsales / csv / banner bear
+  - @ShayPunter: Enriched Clickup piece
+  - @fomojola made their first contribution in https://github.com/activepieces/activepieces/pull/664
+
+### 02/22/2023
+**Version 0.3.3** (0.3.2 with hotfix) [GitHub](https://github.com/activepieces/activepieces/pull/583)
+
+<Warning>
+**Breaking Changes:** You need to configure `AP_ENCRYPTION_KEY`, and merged activepieces docker images into one. Please ensure that your `docker-compose.yml` is up to date as well. 
+</Warning>
+
+* **Pieces:**
+    - Figma: Includes actions for getting file, getting comments, posting comments, and triggering new comments
+    - Cal.Com: Includes triggers for cancelled bookings, created bookings, and rescheduled bookings
+    - RSS: Includes a trigger for new items in the feed
+    - Clickup: Includes actions for getting lists, creating folderless lists, getting tasks, getting task comments, and getting spaces actions
+    - Wordpress: Includes actions for creating Wordpress posts and triggering new Wordpress posts
+    - Github: Includes triggers for new pull requests and new issues
+    - Posthog: Includes actions for capture events / creating project
+    - Google Tasks: Includes actions for creating task
+
+* **Features:**
+    - Auto Complete styling fixes
+    - Multi select option added
+    - App connections are now encrypted
+* **Fixes:**
+    - Added full sample for Google Calendar
+
+* **Contributors**
+    - @kanarelo: Enriched Github, created Posthog and Cal.Com pieces
+    - @ShayPunter: Enriched Clickup piece
+    - @abaza738: Created RSS feed trigger and Google Tasks piece
+    - @jonaboe: Created Figma piece
+
+
 ### 02/15/2023
 **Version 0.3.1** [GitHub](https://github.com/activepieces/activepieces/pull/583)
 

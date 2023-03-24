@@ -1,20 +1,20 @@
-import { CollectionId, CollectionVersionId, FlowRunId, FlowVersion, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from "@activepieces/shared";
+import { CollectionId, FlowRunId, FlowVersion, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from "@activepieces/shared";
 
 interface BaseJobData {
   environment: RunEnvironment;
-  collectionVersionId: CollectionVersionId;
+  collectionId: CollectionId;
+  projectId: ProjectId;
+
 }
 
 export interface RepeatableJobData extends BaseJobData {
   collectionId: CollectionId;
   flowVersion: FlowVersion;
   triggerType: TriggerType;
-  projectId: ProjectId;
 };
 
 export interface OneTimeJobData extends BaseJobData {
   flowVersionId: FlowVersionId;
-  projectId: ProjectId;
   runId: FlowRunId;
   payload: unknown;
 }

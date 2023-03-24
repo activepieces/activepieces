@@ -1,7 +1,17 @@
 name: Build Everything
 
 on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'packages/**'
   push:
+    branches:
+      - main
+    paths:
+      - 'packages/**'
 
 jobs:
   Build-Everything:
@@ -15,6 +25,9 @@ jobs:
 
       - name: lint the backend
         run: npx nx lint backend
+
+      - name: lint the frontend
+        run: npx nx lint frontend
 
       - name: build everything
         run: npx nx run-many --target=build

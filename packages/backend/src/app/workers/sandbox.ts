@@ -4,6 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
+import { logger } from "../helper/logger";
+import { packageManager } from "../helper/package-manager";
 
 const getIsolateExecutableName = () => {
     const defaultName = "isolate";
@@ -18,13 +20,14 @@ const TWO_MINUTES = 120;
 
 export class Sandbox {
     private static readonly isolateExecutableName = getIsolateExecutableName();
-    private static readonly sandboxRunTimeSeconds = system.get(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? TWO_MINUTES;
+    private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? TWO_MINUTES;
 
     constructor(public readonly boxId: number) {}
 
     async cleanAndInit(): Promise<void> {
         await Sandbox.runIsolate("--box-id=" + this.boxId + " --cleanup");
         await Sandbox.runIsolate("--box-id=" + this.boxId + " --init");
+        await packageManager.initProject(this.getSandboxFolderPath());
     }
 
     async runCommandLine(commandLine: string): Promise<string> {
@@ -38,6 +41,7 @@ export class Sandbox {
         metaFile +
         " --stdout=_standardOutput.txt" +
         " --stderr=_standardError.txt --run " +
+        " --env=AP_ENVIRONMENT " +
         commandLine
         );
     }
@@ -74,6 +78,11 @@ export class Sandbox {
         return result;
     }
 
+    timedOut(): boolean {
+        const meta = this.parseMetaFile();
+        return meta["status"] === "TO";
+    }
+
     getSandboxFilePath(subFile: string) {
         return this.getSandboxFolderPath() + "/" + subFile;
     }
@@ -85,9 +94,11 @@ export class Sandbox {
     private static runIsolate(cmd: string): Promise<string> {
         const currentDir = cwd();
         const fullCmd = `${currentDir}/packages/backend/src/assets/${this.isolateExecutableName} ${cmd}`;
-        console.log(fullCmd);
+
+        logger.info(`sandbox, command: ${fullCmd}`);
+
         return new Promise((resolve, reject) => {
-            exec(fullCmd, (error: any, stdout: string | PromiseLike<string>, stderr: any) => {
+            exec(fullCmd, (error, stdout: string | PromiseLike<string>, stderr) => {
                 if (error) {
                     reject(error);
                     return;

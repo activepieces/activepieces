@@ -1,0 +1,28 @@
+{
+  "name": "pieces-hackernews",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/hackernews/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/hackernews",
+        "tsConfig": "packages/pieces/hackernews/tsconfig.lib.json",
+        "packageJson": "packages/pieces/hackernews/package.json",
+        "main": "packages/pieces/hackernews/src/index.ts",
+        "assets": ["packages/pieces/hackernews/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/hackernews/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

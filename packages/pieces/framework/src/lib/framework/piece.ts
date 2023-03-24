@@ -1,7 +1,8 @@
 import type { Trigger } from './trigger/trigger';
 import { Action } from './action/action';
+import { EventPayload, ParseEventResponse, PieceBase, PieceMetadata } from '@activepieces/shared';
 
-export class Piece {
+export class Piece implements PieceBase {
   private readonly _actions: Record<string, Action>;
   private readonly _triggers: Record<string, Trigger>;
 
@@ -10,8 +11,15 @@ export class Piece {
     public readonly displayName: string,
     public readonly logoUrl: string,
     public readonly authors: string[],
+    public readonly version: string,
+    public readonly events: {
+      parseAndReply: (ctx: {payload: EventPayload}) => ParseEventResponse;
+      verify: (ctx: { webhookSecret: string, payload: EventPayload, appWebhookUrl: string }) => boolean;
+    } | undefined,
     actions: Action[],
     triggers: Trigger[],
+    public readonly minimumSupportedRelease?: string,
+    public readonly maximumSupportedRelease?: string,
     public readonly description: string = ''
   ) {
     this._actions = Object.fromEntries(
@@ -37,7 +45,7 @@ export class Piece {
     return this._triggers[triggerName];
   }
 
-  metadata() {
+  metadata(): PieceMetadata {
     return {
       name: this.name,
       displayName: this.displayName,
@@ -45,6 +53,9 @@ export class Piece {
       actions: this._actions,
       triggers: this._triggers,
       description: this.description,
+      version: this.version,
+      minimumSupportedRelease: this.minimumSupportedRelease,
+      maximumSupportedRelease: this.maximumSupportedRelease,
     };
   }
 }
@@ -57,13 +68,24 @@ export const createPiece = (request: {
   actions: Action[];
   triggers: Trigger[];
   description?: string;
+  events?: {
+    parseAndReply: (ctx: {payload: EventPayload}) => ParseEventResponse;
+    verify: (ctx: { webhookSecret: string, payload: EventPayload, appWebhookUrl: string }) => boolean;
+  }
+  version: string;
+  minimumSupportedRelease?: string;
+  maximumSupportedRelease?: string;
 }): Piece =>
   new Piece(
     request.name,
     request.displayName,
     request.logoUrl,
     request.authors ?? [],
+    request.version,
+    request.events,
     request.actions,
     request.triggers,
+    request.minimumSupportedRelease,
+    request.maximumSupportedRelease,
     request.description
   );

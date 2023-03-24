@@ -126,7 +126,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/494686?v=4",
       "profile": "https://thibpat.com",
       "contributions": [
-        "ideas"
+        "ideas",
+        "plugin"
       ]
     },
     {
@@ -182,6 +183,51 @@
       "profile": "https://github.com/jonaboe",
       "contributions": [
         "plugin"
+      ]
+    },
+    {
+      "login": "fomojola",
+      "name": "fomojola",
+      "avatar_url": "https://avatars.githubusercontent.com/u/264253?v=4",
+      "profile": "https://github.com/fomojola",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "astorozhevsky",
+      "name": "Alexander Storozhevsky",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11055414?v=4",
+      "profile": "https://github.com/astorozhevsky",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "J0LGER",
+      "name": "J0LGER",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54769522?v=4",
+      "profile": "https://github.com/J0LGER",
+      "contributions": [
+        "security"
+      ]
+    },
+    {
+      "login": "veverkap",
+      "name": "Patrick Veverka",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22348?v=4",
+      "profile": "https://about.me/veverkap",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "berksmbl",
+      "name": "Berk Sümbül",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10000339?v=4",
+      "profile": "http://berksmbl.com",
+      "contributions": [
+        "doc"
       ]
     }
   ]

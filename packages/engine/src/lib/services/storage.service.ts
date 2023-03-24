@@ -32,12 +32,10 @@ export const storageService = {
     }
 
 }
-
-// TODO FIX, this is not using flow id.
-export function createContextStore(flowId: FlowId): Store {
+export function createContextStore(prefix: string, flowId: FlowId): Store {
     return {
         put: async function <T>(key: string, value: T, scope = StoreScope.FLOW): Promise<T> {
-            const modifiedKey = createKey(scope, flowId, key);
+            const modifiedKey = createKey(prefix, scope, flowId, key);
             await storageService.put({
                 key: modifiedKey,
                 value: value,
@@ -45,7 +43,7 @@ export function createContextStore(flowId: FlowId): Store {
             return value;
         },
         get: async function <T>(key: string, scope = StoreScope.FLOW): Promise<T | null> {
-            const modifiedKey = createKey(scope, flowId, key);
+            const modifiedKey = createKey(prefix, scope, flowId, key);
             const storeEntry = await storageService.get(modifiedKey);
             if (storeEntry === null) {
                 // TODO remove in three months (May) as old triggers are storing as collection, while it should store as flow
@@ -59,11 +57,11 @@ export function createContextStore(flowId: FlowId): Store {
     };
 }
 
-function createKey(scope: StoreScope, flowId: FlowId, key: string): string {
+function createKey(prefix: string, scope: StoreScope, flowId: FlowId, key: string): string {
     switch (scope) {
         case StoreScope.COLLECTION:
-            return key;
+            return prefix + key;
         case StoreScope.FLOW:
-            return "flow_" + flowId + "/" + key;
+            return prefix + "flow_" + flowId + "/" + key;
     }
 }

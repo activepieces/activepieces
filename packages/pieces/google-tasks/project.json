@@ -1,0 +1,28 @@
+{
+  "name": "pieces-google-tasks",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/google-tasks/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/google-tasks",
+        "tsConfig": "packages/pieces/google-tasks/tsconfig.lib.json",
+        "packageJson": "packages/pieces/google-tasks/package.json",
+        "main": "packages/pieces/google-tasks/src/index.ts",
+        "assets": ["packages/pieces/google-tasks/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/google-tasks/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

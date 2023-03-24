@@ -12,39 +12,39 @@ HackerNews is a social news website that allows users to submit and vote on stor
 
 ## Piece Definition
 
-To get started, let's create a new folder for Hacker News and add the piece definition inside.
+To get started, let's generate a new piece for Hacker News
 
 ```bash
-mkdir packages/pieces/apps/src/lib/hackernews_tutorial && cd packages/pieces/apps/src/lib/hackernews_tutorial
+npx ts-node tools/scripts/generate-new-piece.ts hacker-news
 ```
 
-Next, let's create the definition file:
-
-```bash
-touch index.ts
-```
-
-Inside this file, paste the following code:
+The piece will be generated at `packages/pieces/hacker-news/`,
+the `src/index.ts` file should contain the following code
 
 ```ts
 import { createPiece } from '@activepieces/framework';
+import packageJson from '../package.json';
 
-export const hackernews_tutorial = createPiece({
-  name: 'hackernews_tutorial',
-  displayName: 'Hackernews Tutorial',
-  logoUrl: 'https://cdn.activepieces.com/pieces/hackernews.png',
-  authors: ['your_github_username'],
-  actions: [],
-  triggers: [],
+export const hackerNews = createPiece({
+  name: 'hacker-news',
+  displayName: 'hacker-news',
+  logoUrl: 'https://cdn.activepieces.com/pieces/hacker-news.png',
+  version: packageJson.version,
+  authors: [
+  ],
+  actions: [
+  ],
+  triggers: [
+  ],
 });
 ```
 
 ## Action Definition
 
-Now let's create first action which fetch top stories from hackernews, The first step to do that is to create folder for the actions inside the hackernews folder.
+Now let's create first action which fetch top stories from hackernews, The first step to do that is to create folder for the actions inside the hackernews folder (`packages/pieces/hacker-news/src/lib/`).
 
 ```bash
-mkdir actions && cd actions
+cd packages/pieces/hacker-news/src/lib/ && mkdir actions && cd actions
 ```
 
 Next, Let's create the action file:
@@ -118,13 +118,14 @@ To make the action readable by Activepieces, add it to the array of actions in t
 ```typescript
 import { createPiece } from '@activepieces/framework';
 // Don't forget to add the following import.
-import { fetchTopStories } from './actions/fetch-top-stories';
+import { fetchTopStories } from './lib/actions/fetch-top-stories';
 
-export const hackernews_tutorial = createPiece({
+export const hackerNews = createPiece({
   name: 'hackernews_tutorial',
   displayName: 'Hackernews Tutorial',
   logoUrl: 'https://cdn.activepieces.com/pieces/hackernews.png',
-  // Add the action here.
+  authors: [],
+   // Add the action here.
   actions: [fetchTopStories], // <--------
   triggers: [],
 });
@@ -136,11 +137,11 @@ First, import the `hackernews_tutorial` piece at the top of the file by adding t
 
 
 ``` ts
-import { hackernews_tutorial } from './lib/hackernews_tutorial'; // Import the hackernews piece
+import { hackerNews } from '@activepieces/piece-hacker-news';
 
 export const pieces: Piece[] = [
   // other pieces
-  hackernews_tutorial, // Add the hackernews piece to the array
+  hackerNews, // Add the hackernews piece to the array
   // more pieces
 ];
 

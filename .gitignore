@@ -7,6 +7,9 @@ tmp
 .env
 firebase-admin-sdk.json
 
+# SDK Build
+builds
+
 # dependencies
 node_modules
 
@@ -43,3 +46,4 @@ Thumbs.db
 .angular
 activepieces-engine.js
 .history/
+packages/backend/.env

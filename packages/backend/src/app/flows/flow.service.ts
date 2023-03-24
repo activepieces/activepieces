@@ -13,6 +13,7 @@ import {
     FlowVersionState,
     ProjectId,
     SeekPage,
+    TelemetryEventName,
     TriggerType,
 } from "@activepieces/shared";
 import { flowVersionService } from "./flow-version/flow-version.service";
@@ -22,6 +23,7 @@ import { createRedisLock } from "../database/redis-connection";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { flowRepo } from "./flow.repo";
 import { instanceSideEffects } from "../instance/instance-side-effects";
+import { telemetry } from "../helper/telemetry.utils";
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
@@ -43,6 +45,16 @@ export const flowService = {
             } as EmptyTrigger,
         });
         const latestFlowVersion = await flowVersionService.getFlowVersion(projectId, savedFlow.id, undefined, false);
+        telemetry.trackProject(
+            savedFlow.projectId,
+            {
+                name: TelemetryEventName.FLOW_CREATED,
+                payload: {
+                    collectionId: flow.collectionId,
+                    flowId: flow.id
+                }
+            }
+        );
         return {
             ...savedFlow,
             version: latestFlowVersion,
@@ -76,7 +88,6 @@ export const flowService = {
         });
         const queryBuilder = flowRepo.createQueryBuilder("flow").where({ collectionId, projectId });
         const { data, cursor } = await paginator.paginate(queryBuilder.where({ collectionId }));
-        // TODO REPLACE WITH SQL QUERY
         const flowVersionsPromises: Array<Promise<FlowVersion | null>> = [];
         data.forEach((collection) => {
             flowVersionsPromises.push(flowVersionService.getFlowVersion(projectId, collection.id, undefined, false));
@@ -102,8 +113,10 @@ export const flowService = {
         };
     },
     async update({ flowId, projectId, request }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
-        const flowLock = await createRedisLock(flowId);
+        const flowLock = await createRedisLock();
         try {
+            await flowLock.acquire(flowId);
+
             let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, false));
             if (lastVersion.state === FlowVersionState.LOCKED) {
                 lastVersion = await flowVersionService.createVersion(flowId, lastVersion);

@@ -1,0 +1,28 @@
+{
+  "name": "pieces-generatebanners",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/generatebanners/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/generatebanners",
+        "tsConfig": "packages/pieces/generatebanners/tsconfig.lib.json",
+        "packageJson": "packages/pieces/generatebanners/package.json",
+        "main": "packages/pieces/generatebanners/src/index.ts",
+        "assets": ["packages/pieces/generatebanners/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/generatebanners/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

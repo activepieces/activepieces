@@ -1,0 +1,28 @@
+{
+  "name": "pieces-drip",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/drip/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/drip",
+        "tsConfig": "packages/pieces/drip/tsconfig.lib.json",
+        "packageJson": "packages/pieces/drip/package.json",
+        "main": "packages/pieces/drip/src/index.ts",
+        "assets": ["packages/pieces/drip/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/drip/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

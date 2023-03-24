@@ -8,21 +8,21 @@ import { ViewModeActions } from './view-mode.action';
 
 @Injectable()
 export class ViewModeEffects {
-	constructor(private actions$: Actions) {}
+  constructor(private actions$: Actions) {}
 
-	loadInitial$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(BuilderActions.loadInitial),
-			switchMap(({ viewMode }: { viewMode: ViewModeEnum }) => {
-				if (viewMode === undefined) {
-					return EMPTY;
-				}
-				return of(
-					ViewModeActions.setViewMode({
-						viewMode: viewMode,
-					})
-				);
-			})
-		);
-	});
+  loadInitial$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(BuilderActions.loadInitial),
+      switchMap(({ viewMode }: { viewMode: ViewModeEnum }) => {
+        if (viewMode === undefined) {
+          return EMPTY;
+        }
+        return of(
+          ViewModeActions.setViewMode({
+            viewMode: viewMode,
+          })
+        );
+      })
+    );
+  });
 }

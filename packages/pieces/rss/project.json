@@ -1,0 +1,28 @@
+{
+  "name": "pieces-rss",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/rss/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/rss",
+        "tsConfig": "packages/pieces/rss/tsconfig.lib.json",
+        "packageJson": "packages/pieces/rss/package.json",
+        "main": "packages/pieces/rss/src/index.ts",
+        "assets": ["packages/pieces/rss/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/rss/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

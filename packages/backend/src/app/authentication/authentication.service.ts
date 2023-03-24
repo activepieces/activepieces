@@ -27,7 +27,7 @@ export const authenticationService = {
             });
 
             telemetry.identify(user, project.id);
-            telemetry.track(user.id, {
+            telemetry.trackProject(project.id, {
                 name: TelemetryEventName.SIGNED_UP,
                 payload: {
                     userId: user.id,
@@ -37,10 +37,9 @@ export const authenticationService = {
                     projectId: project.id
                 }
             });
-            const { ...userResponse } = user;
-
+            user.password = undefined;
             return {
-                ...userResponse,
+                ...user,
                 token,
                 projectId: project.id
             };
@@ -60,7 +59,7 @@ export const authenticationService = {
     },
 
     signIn: async (request: SignInRequest): Promise<AuthenticationResponse> => {
-        const user = await userService.getOne({
+        const user = await userService.getOneByEmail({
             email: request.email,
         });
 
@@ -93,6 +92,7 @@ export const authenticationService = {
             projectId: projects[0].id
         });
 
+        user.password = undefined;
         return {
             ...user,
             token,

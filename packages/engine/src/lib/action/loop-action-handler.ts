@@ -1,19 +1,18 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { ExecutionState, LoopOnItemsAction } from '@activepieces/shared';
+import { Action, ExecutionState, LoopOnItemsAction } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from '@activepieces/shared';
-import { globals } from '../globals';
 
 export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction> {
-  firstLoopAction?: BaseActionHandler<any>;
+  firstLoopAction?: BaseActionHandler<Action>;
   override action: LoopOnItemsAction;
   variableService: VariableService;
 
   constructor(
     action: LoopOnItemsAction,
-    firstLoopAction: BaseActionHandler<any> | undefined,
-    nextAction: BaseActionHandler<any> | undefined
+    firstLoopAction: BaseActionHandler<Action> | undefined,
+    nextAction: BaseActionHandler<Action> | undefined
   ) {
     super(action, nextAction);
     this.action = action;
@@ -49,8 +48,8 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     stepOutput.input = resolvedInput;
 
     stepOutput.output = {
-      current_iteration: 1,
-      current_item: undefined,
+      index: 1,
+      item: undefined,
       iterations: []
     };
     executionState.insertStep(stepOutput, this.action.name, ancestors);
@@ -59,8 +58,8 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
       for (let i = 0; i < resolvedInput.items.length; ++i) {
         ancestors.push([this.action.name, i]);
 
-        loopOutput.current_iteration = i + 1;
-        loopOutput.current_item = resolvedInput.items[i];
+        loopOutput.index = i + 1;
+        loopOutput.item = resolvedInput.items[i];
         loopOutput.iterations.push({});
         this.updateExecutionStateWithLoopDetails(executionState, loopOutput);
 
@@ -100,7 +99,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
   // The iteration object will always contain all previous iterations.
   updateExecutionStateWithLoopDetails(
     executionState: ExecutionState,
-    loopOutput: any
+    loopOutput: LoopOnItemsStepOutput['output']
   ) {
     executionState.updateLastStep(
       {

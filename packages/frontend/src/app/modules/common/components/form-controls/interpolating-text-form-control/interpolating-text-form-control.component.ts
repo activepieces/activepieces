@@ -1,6 +1,7 @@
 import { BooleanInput, coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   DoCheck,
   HostBinding,
@@ -8,6 +9,7 @@ import {
   OnDestroy,
   OnInit,
   Optional,
+  SecurityContext,
   Self,
   ViewChild,
 } from '@angular/core';
@@ -22,20 +24,26 @@ import {
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldControl } from '@angular/material/form-field';
 import { QuillEditorComponent, QuillModules } from 'ngx-quill';
-import { lastValueFrom, Observable, skip, Subject, take, tap } from 'rxjs';
+import { firstValueFrom, Observable, skip, Subject, take, tap } from 'rxjs';
 import {
   CustomErrorMatcher,
+  fixSelection,
   fromOpsToText,
   fromTextToOps,
+  getImageTemplateForStepLogo,
   InsertMentionOperation,
+  MentionListItem,
   QuillEditorOperationsObject,
   QuillMaterialBase,
   TextInsertOperation,
 } from './utils';
 import 'quill-mention';
+import './fixed-selection-mention';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
+import { DomSanitizer } from '@angular/platform-browser';
 
+import { FlowItem } from '../../../model/flow-builder/flow-item';
 
 @Component({
   selector: 'app-interpolating-text-form-control',
@@ -55,46 +63,57 @@ import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder
 export class InterpolatingTextFormControlComponent
   extends QuillMaterialBase
   implements
-  OnInit,
-  OnDestroy,
-  DoCheck,
-  MatFormFieldControl<string>,
-  ControlValueAccessor {
+    OnInit,
+    OnDestroy,
+    DoCheck,
+    MatFormFieldControl<string>,
+    ControlValueAccessor
+{
   static nextId = 0;
   @Input() insideMatField = true;
+  @Input() onlyAllowOneMentionToBeAdded = false;
+  private _readOnly = false;
   private _placeholder = '';
   focused = false;
   readonly modules: QuillModules = {
     mention: {
       spaceAfterInsert: false,
       mentionDenotationChars: ['@'],
+      source: function (searchTerm, renderList, mentionChar) {
+        return;
+      },
       allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
     },
     toolbar: false,
   };
-  onChange!: (value: any) => void;
-  onTouch!: () => void;
+
   editorFormControl: FormControl<QuillEditorOperationsObject>;
-  valueChanges$!: Observable<any>;
+  valueChanges$!: Observable<unknown>;
   private _value = '';
+  stepsMetaData$: Observable<
+    (MentionListItem & {
+      step: FlowItem;
+    })[]
+  >;
   autofilled?: boolean | undefined = false;
   userAriaDescribedBy?: string | undefined;
   override stateChanges = new Subject<void>();
   @ViewChild(QuillEditorComponent, { static: true })
   editor!: QuillEditorComponent;
+
   @Input()
   set value(value: string) {
     this._value = value;
     setTimeout(async () => {
       if (this._value) {
-        const stepsNamesAndDisplayNames = await lastValueFrom(
+        const stepsMetaData = await firstValueFrom(
           this.store
-            .select(BuilderSelectors.selectAllFlowStepsNamesAndDisplayNames)
+            .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
             .pipe(take(1))
         );
-        if (typeof this._value === "string")
+        if (typeof this._value === 'string')
           this.editorFormControl.setValue(
-            fromTextToOps(this._value, stepsNamesAndDisplayNames)
+            fromTextToOps(this._value, stepsMetaData, this.sanitizer)
           );
       }
       this.stateChanges.next();
@@ -109,12 +128,25 @@ export class InterpolatingTextFormControlComponent
     this._placeholder = value;
     this.stateChanges.next();
   }
+  @Input()
+  disabled = false;
+  controlType = 'custom-form-field';
+  @HostBinding('attr.aria-describedby') describedBy = '';
+  protected _required: boolean | undefined;
+  onChange: (val) => void = () => {
+    //ignore
+  };
+  onTouched: () => void = () => {
+    //ignore
+  };
   constructor(
     _defaultErrorStateMatcher: ErrorStateMatcher,
     @Optional() _parentForm: NgForm,
     @Optional() _parentFormGroup: FormGroupDirective,
     @Optional() @Self() ngControl: NgControl,
-    private store: Store
+    private store: Store,
+    private sanitizer: DomSanitizer,
+    private cd: ChangeDetectorRef
   ) {
     super(_defaultErrorStateMatcher, _parentForm, _parentFormGroup, ngControl);
     if (this.ngControl != null) {
@@ -124,9 +156,13 @@ export class InterpolatingTextFormControlComponent
       { ops: [] },
       { nonNullable: true }
     );
+    this.stepsMetaData$ = this.store.select(
+      BuilderSelectors.selectAllStepsForMentionsDropdown
+    );
   }
 
   ngOnInit(): void {
+    this._readOnly = this.onlyAllowOneMentionToBeAdded;
     this.valueChanges$ = this.editorFormControl.valueChanges.pipe(
       skip(1),
       tap((val) => {
@@ -159,10 +195,11 @@ export class InterpolatingTextFormControlComponent
       Node.ELEMENT_NODE,
       (node, delta) => {
         const ops: TextInsertOperation[] = [];
-        delta.ops.forEach((op: TextInsertOperation) => {
+        delta.ops.forEach((op) => {
           if (op.insert && typeof op.insert === 'string') {
             ops.push({
-              insert: op.insert,
+              insert:
+                this.sanitizer.sanitize(SecurityContext.HTML, op.insert) || '',
             });
           }
         });
@@ -179,12 +216,12 @@ export class InterpolatingTextFormControlComponent
     return this._value;
   }
 
-
-
   get empty(): boolean {
     return !this.value;
   }
-
+  get readOnly() {
+    return this._readOnly;
+  }
   @HostBinding('class.floated')
   get shouldLabelFloat(): boolean {
     return this.focused || !this.empty;
@@ -201,31 +238,28 @@ export class InterpolatingTextFormControlComponent
   set required(value: BooleanInput) {
     this._required = coerceBooleanProperty(value);
   }
-  protected _required: boolean | undefined;
-  @Input()
-  disabled = false;
-
-  controlType = 'custom-form-field';
-
-  @HostBinding('attr.aria-describedby') describedBy = '';
 
   async writeValue(value: string) {
-    const stepsNamesAndDisplayNames = await lastValueFrom(
+    const stepsMetaData = await firstValueFrom(
       this.store
-        .select(BuilderSelectors.selectAllFlowStepsNamesAndDisplayNames)
+        .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
         .pipe(take(1))
     );
-    if (value && typeof value === "string") {
-      const parsedTextToOps = fromTextToOps(value, stepsNamesAndDisplayNames);
+    if (value && typeof value === 'string') {
+      const parsedTextToOps = fromTextToOps(
+        value,
+        stepsMetaData,
+        this.sanitizer
+      );
       this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
     }
     this._value = value;
   }
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (val) => void): void {
     this.onChange = fn;
   }
-  registerOnTouched(fn: any): void {
-    this.onTouch = fn;
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
   }
   setDisabledState?(isDisabled: boolean): void {
     this.disabled = isDisabled;
@@ -236,18 +270,33 @@ export class InterpolatingTextFormControlComponent
     this.stateChanges.next();
   }
 
-
   setDescribedByIds(ids: string[]): void {
     this.describedBy = ids.join(' ');
   }
   onContainerClick(): void {
-    this.focusEditor();
+    if (!this.focused) {
+      this.focusEditor();
+    }
   }
 
   public focusEditor() {
     setTimeout(() => {
       this.editor.quillEditor.focus();
-    })
+      const selection = window.getSelection();
+      if (
+        selection &&
+        selection.focusNode &&
+        selection.focusNode.parentNode &&
+        selection.type === 'Caret'
+      ) {
+        const classList: DOMTokenList | undefined =
+          selection.focusNode.parentNode['classList'];
+        console.log(selection);
+        if (classList && classList.contains('mention')) {
+          fixSelection(selection.focusNode);
+        }
+      }
+    });
   }
 
   ngDoCheck(): void {
@@ -267,14 +316,57 @@ export class InterpolatingTextFormControlComponent
     this.stateChanges.next();
   }
   onFocus() {
-    this.onTouch();
+    this.onTouched();
     this.focused = true;
     this.stateChanges.next();
   }
 
-  public addMention(mentionOp: InsertMentionOperation) {
-    this.editor.quillEditor
-      .getModule('mention')
-      .insertItem(mentionOp.insert.mention, true);
+  public async addMention(mentionOp: InsertMentionOperation) {
+    this._readOnly = false;
+    this.cd.markForCheck();
+
+    setTimeout(async () => {
+      const allStepsMetaData = await firstValueFrom(this.stepsMetaData$);
+      const itemPathWithoutInterpolationDenotation =
+        mentionOp.insert.mention.serverValue.slice(
+          2,
+          mentionOp.insert.mention.serverValue.length - 1
+        );
+      const itemPrefix = itemPathWithoutInterpolationDenotation.split('.')[0];
+      let imageTag = '';
+      if (itemPrefix !== 'configs' && itemPrefix !== 'connections') {
+        const stepMetaData = allStepsMetaData.find(
+          (s) => s.step.name === itemPrefix
+        );
+        if (stepMetaData) {
+          imageTag =
+            getImageTemplateForStepLogo(stepMetaData.logoUrl || '') +
+            `${stepMetaData.step.indexInDfsTraversal || 0 + 1}. `;
+        }
+      } else {
+        if (itemPrefix === 'connections') {
+          imageTag = getImageTemplateForStepLogo(
+            'assets/img/custom/piece/connection.png'
+          );
+        } else if (itemPrefix === 'configs') {
+          imageTag = getImageTemplateForStepLogo(
+            'assets/img/custom/piece/config.png'
+          );
+        }
+      }
+      mentionOp.insert.mention.value =
+        ' ' + imageTag + mentionOp.insert.mention.value + ' ';
+
+      if (this.onlyAllowOneMentionToBeAdded) {
+        this.editorFormControl.setValue({ ops: [mentionOp] });
+      } else {
+        this.editor.quillEditor
+          .getModule('mention')
+          .insertItem(mentionOp.insert.mention, true);
+      }
+
+      this._readOnly = this.onlyAllowOneMentionToBeAdded;
+      this.cd.markForCheck();
+    }, 1);
   }
 }

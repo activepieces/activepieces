@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
+import { FastifyInstance, FastifyRequest } from "fastify";
 import {
     CreateFlowRequest,
     FlowId,
@@ -12,7 +12,7 @@ import { flowService } from "./flow.service";
 
 const DEFUALT_PAGE_SIZE = 10;
 
-export const flowController = async (fastify: FastifyInstance, _options: FastifyPluginOptions) => {
+export const flowController = async (fastify: FastifyInstance) => {
     fastify.post(
         "/",
         {
@@ -23,8 +23,7 @@ export const flowController = async (fastify: FastifyInstance, _options: Fastify
         async (
             request: FastifyRequest<{
                 Body: CreateFlowRequest;
-            }>,
-            _reply
+            }>
         ) => {
             return await flowService.create({ projectId: request.principal.projectId, request: request.body });
         }
@@ -43,8 +42,7 @@ export const flowController = async (fastify: FastifyInstance, _options: Fastify
                     flowId: FlowId;
                 };
                 Body: FlowOperationRequest;
-            }>,
-            _reply
+            }>
         ) => {
             const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, includeArtifacts: false });
             if (flow === null) {
@@ -64,8 +62,7 @@ export const flowController = async (fastify: FastifyInstance, _options: Fastify
         async (
             request: FastifyRequest<{
                 Querystring: ListFlowsRequest;
-            }>,
-            _reply
+            }>
         ) => {
             return await flowService.list({ projectId: request.principal.projectId, collectionId: request.query.collectionId, cursorRequest: request.query.cursor ?? null, limit: request.query.limit ?? DEFUALT_PAGE_SIZE });
         }
@@ -82,8 +79,7 @@ export const flowController = async (fastify: FastifyInstance, _options: Fastify
                     versionId: FlowVersionId | undefined;
                     includeArtifacts: boolean | undefined;
                 };
-            }>,
-            _reply
+            }>
         ) => {
             const versionId: FlowVersionId | undefined = request.query.versionId;
             const includeArtifacts = request.query.includeArtifacts ?? false;

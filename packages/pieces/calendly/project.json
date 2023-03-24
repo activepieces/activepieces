@@ -1,0 +1,28 @@
+{
+  "name": "pieces-calendly",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/calendly/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/calendly",
+        "tsConfig": "packages/pieces/calendly/tsconfig.lib.json",
+        "packageJson": "packages/pieces/calendly/package.json",
+        "main": "packages/pieces/calendly/src/index.ts",
+        "assets": ["packages/pieces/calendly/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/calendly/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

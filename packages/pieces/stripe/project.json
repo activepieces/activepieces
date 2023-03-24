@@ -1,0 +1,28 @@
+{
+  "name": "pieces-stripe",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/stripe/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/stripe",
+        "tsConfig": "packages/pieces/stripe/tsconfig.lib.json",
+        "packageJson": "packages/pieces/stripe/package.json",
+        "main": "packages/pieces/stripe/src/index.ts",
+        "assets": ["packages/pieces/stripe/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/stripe/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

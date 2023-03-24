@@ -1,15 +1,16 @@
 import { Worker } from "bullmq";
-import { ApId, RunEnvironment, TriggerType } from "@activepieces/shared";
+import { ActivepiecesError, ApId, ErrorCode, RunEnvironment, TriggerType } from "@activepieces/shared";
 import { createRedisClient } from "../../database/redis-connection";
 import { flowRunService } from "../../flow-run/flow-run-service";
 import { triggerUtils } from "../../helper/trigger-utils";
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from "./flow-queue";
 import { flowWorker } from "./flow-worker";
 import { OneTimeJobData, RepeatableJobData } from "./job-data";
-import { collectionVersionService } from "../../collections/collection-version/collection-version.service";
 import { logger } from "../../helper/logger";
 import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";
+import { instanceService } from "../../instance/instance.service";
+import { flowVersionService } from "../../flows/flow-version/flow-version.service";
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
     ONE_TIME_JOB_QUEUE,
@@ -27,15 +28,29 @@ const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
 const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     REPEATABLE_JOB_QUEUE,
     async (job) => {
+
         logger.info(`[repeatableJobConsumer] job.id=${job.name} job.type=${job.data.triggerType}`);
         const { data } = job;
-        switch (data.triggerType) {
-        case TriggerType.SCHEDULE:
-            await consumeScheduleTrigger(data);
-            break;
-        case TriggerType.PIECE:
-            await consumePieceTrigger(data);
-            break;
+
+        try {
+            switch (data.triggerType) {
+            case TriggerType.PIECE:
+                await consumePieceTrigger(data);
+                break;
+            }
+        }
+        catch (e) {
+            if (e instanceof ActivepiecesError) {
+                const apError: ActivepiecesError = e as ActivepiecesError;
+                const instance = await instanceService.getByCollectionId({ projectId: data.projectId, collectionId: data.collectionId });
+                if (apError.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
+                    logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`);
+                    await instanceService.deleteOne({ projectId: data.projectId, id: instance.id })
+                }
+            }
+            else {
+                throw e;
+            }
         }
         logger.info(`[repeatableJobConsumer] done job.id=${job.name} job.type=${job.data.triggerType}`);
     },
@@ -44,21 +59,13 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     }
 );
 
-const consumeScheduleTrigger = async (data: RepeatableJobData): Promise<void> => {
-    await flowRunService.start({
-        environment: data.environment,
-        flowVersionId: data.flowVersion.id,
-        collectionVersionId: data.collectionVersionId,
-        payload: null,
-    });
-};
 
 const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
-    const collectionVersion = await collectionVersionService.getOneOrThrow(data.collectionVersionId);
+    const flowVersion = await flowVersionService.getOne(data.flowVersion.id);
     const payloads: unknown[] = await triggerUtils.executeTrigger({
-        collectionVersion: collectionVersion,
         projectId: data.projectId,
-        flowVersion: data.flowVersion,
+        collectionId: data.collectionId,
+        flowVersion: flowVersion,
         payload: null,
     });
 
@@ -67,7 +74,7 @@ const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
     const createFlowRuns = payloads.map((payload) =>
         flowRunService.start({
             environment: RunEnvironment.PRODUCTION,
-            collectionVersionId: data.collectionVersionId,
+            collectionId: data.collectionId,
             flowVersionId: data.flowVersion.id,
             payload,
         })

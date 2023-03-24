@@ -1,67 +1,135 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { forkJoin, map, of, switchMap } from 'rxjs';
-import { ActionType, TriggerType } from '@activepieces/shared';
-import { AppPiece } from 'packages/frontend/src/app/modules/common/components/configs-form/connector-action-or-config';
+import {
+  ActionType,
+  PieceMetadataSummary,
+  TriggerType,
+} from '@activepieces/shared';
 import { FlowItemDetails } from '../../../page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { ActionMetaService } from '../../../service/action-meta.service';
 import { FlowItemDetailsActions } from './flow-items-details.action';
 
+export const CORE_PIECES_ACTIONS_NAMES = [
+  'store',
+  'data-mapper',
+  'connections',
+  'delay',
+  'http',
+];
+export const CORE_PIECES_TRIGGERS = ['schedule'];
 @Injectable()
 export class FlowItemsDetailsEffects {
-	load$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(FlowItemDetailsActions.loadFlowItemsDetails),
-			switchMap(() => {
-				const components$ = this.flowItemsDetailsService.getPieces();
-				const coreTriggersFlowItemsDetails$ = of(this.flowItemsDetailsService.triggerItemsDetails);
-				const connectorComponentsTriggersFlowItemDetails$ = components$.pipe(
-					map(this.createFlowItemDetailsForComponents(true))
-				);
-				const connectorComponentsActions$ = components$.pipe(map(this.createFlowItemDetailsForComponents(false)));
-				const coreFlowItemsDetails$ = of(this.flowItemsDetailsService.coreFlowItemsDetails);
-				return forkJoin({
-					coreFlowItemsDetails: coreFlowItemsDetails$,
-					coreTriggerFlowItemsDetails: coreTriggersFlowItemsDetails$,
-					connectorComponentsActionsFlowItemDetails: connectorComponentsActions$,
-					connectorComponentsTriggersFlowItemDetails: connectorComponentsTriggersFlowItemDetails$,
-				});
-			}),
-			switchMap(res => {
-				return of(
-					FlowItemDetailsActions.flowItemsDetailsLoadedSuccessfully({
-						flowItemsDetailsLoaded: { ...res, loaded: true },
-					})
-				);
-			})
-		);
-	});
-	createFlowItemDetailsForComponents(forTriggers: boolean) {
-		return (components: AppPiece[]) => {
-			return components
-				.map(c => {
-					if (Object.keys(c.actions).length > 0 && !forTriggers) {
-						return new FlowItemDetails(
-							ActionType.PIECE,
-							c.displayName,
-							c.description ? c.description : ``,
-							c.logoUrl,
-							{ appName: c.name }
-						);
-					} else if (Object.keys(c.triggers).length > 0 && forTriggers) {
-						return new FlowItemDetails(
-							TriggerType.PIECE,
-							c.displayName,
-							``,
-							c.logoUrl,
-							{ appName: c.name }
-						);
-					} else {
-						return null;
-					}
-				})
-				.filter(res => res !== null) as FlowItemDetails[];
-		};
-	}
-	constructor(private actions$: Actions, private flowItemsDetailsService: ActionMetaService) { }
+  load$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FlowItemDetailsActions.loadFlowItemsDetails),
+      switchMap(() => {
+        const components$ = this.flowItemsDetailsService.getPiecesManifest();
+        const coreTriggersFlowItemsDetails$ = of(
+          this.flowItemsDetailsService.triggerItemsDetails
+        );
+        const customPiecesTriggersFlowItemDetails$ = components$.pipe(
+          map(this.createFlowItemDetailsForComponents(true))
+        );
+        const customPiecesActions$ = components$.pipe(
+          map(this.createFlowItemDetailsForComponents(false))
+        );
+        const coreFlowItemsDetails$ = of(
+          this.flowItemsDetailsService.coreFlowItemsDetails
+        );
+        return forkJoin({
+          coreFlowItemsDetails: coreFlowItemsDetails$,
+          coreTriggerFlowItemsDetails: coreTriggersFlowItemsDetails$,
+          customPiecesActionsFlowItemDetails: customPiecesActions$,
+          customPiecesTriggersFlowItemDetails:
+            customPiecesTriggersFlowItemDetails$,
+        });
+      }),
+      map((res) => {
+        res.coreFlowItemsDetails = this.moveCorePiecesToCoreFlowItemDetails(
+          CORE_PIECES_ACTIONS_NAMES,
+          res.customPiecesActionsFlowItemDetails,
+          res.coreFlowItemsDetails
+        );
+        res.coreTriggerFlowItemsDetails =
+          this.moveCorePiecesToCoreFlowItemDetails(
+            CORE_PIECES_TRIGGERS,
+            res.customPiecesTriggersFlowItemDetails,
+            res.coreTriggerFlowItemsDetails
+          );
+        return res;
+      }),
+      switchMap((res) => {
+        return of(
+          FlowItemDetailsActions.flowItemsDetailsLoadedSuccessfully({
+            flowItemsDetailsLoaded: { ...res, loaded: true },
+          })
+        );
+      })
+    );
+  });
+
+  private moveCorePiecesToCoreFlowItemDetails(
+    piecesNamesToMove: string[],
+    source: FlowItemDetails[],
+    target: FlowItemDetails[]
+  ) {
+    const indicesOfPiecesInSource = piecesNamesToMove
+      .map((n) => {
+        const index = source.findIndex((p) => p.extra?.appName === n);
+
+        if (index < 0) {
+          console.error(`piece ${n} is not found`);
+        }
+        return index;
+      })
+      .filter((idx) => idx > -1);
+    indicesOfPiecesInSource.forEach((idx) => {
+      target = [...target, { ...source[idx] }];
+    });
+    indicesOfPiecesInSource.forEach((idx) => {
+      source.splice(idx, 1);
+    });
+    return target.sort((a, b) => {
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  createFlowItemDetailsForComponents(forTriggers: boolean) {
+    return (piecesManifest: PieceMetadataSummary[]) => {
+      return piecesManifest
+        .map((piece) => {
+          if (piece.actions > 0 && !forTriggers) {
+            return new FlowItemDetails(
+              ActionType.PIECE,
+              piece.displayName,
+              piece.description ? piece.description : ``,
+              piece.logoUrl,
+              {
+                appName: piece.name,
+                appVersion: piece.version,
+              }
+            );
+          } else if (piece.triggers > 0 && forTriggers) {
+            return new FlowItemDetails(
+              TriggerType.PIECE,
+              piece.displayName,
+              piece.description ? piece.description : ``,
+              piece.logoUrl,
+              {
+                appName: piece.name,
+                appVersion: piece.version,
+              }
+            );
+          } else {
+            return null;
+          }
+        })
+        .filter((res) => res !== null) as FlowItemDetails[];
+    };
+  }
+  constructor(
+    private actions$: Actions,
+    private flowItemsDetailsService: ActionMetaService
+  ) {}
 }

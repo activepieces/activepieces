@@ -2,7 +2,7 @@
   <img width="300" alt="activepieceslogo" src="https://github.com/activepieces/activepieces/raw/main/assets/ap-logo.png">
 </p>
 <p align="center">
-<a href="/LICENSE" target="_blank"><img src="https://img.shields.io/github/license/activepieces/activepieces?style=for-the-badge&" alt="Activepieces Licence" /></a>&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
+<a href="/LICENSE" target="_blank"><img src='https://img.shields.io/badge/license-MIT-green?style=for-the-badge' /></a>&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
 </p>
 
 ## Activepieces is an open-source business automation tool
@@ -69,6 +69,8 @@ Visit https://www.activepieces.com/docs/install/overview
  </tr>
 </table>
 
+## Repo Activity
+![Alt](https://repobeats.axiom.co/api/embed/f3afe14b092263a6c76408043fd4fc2f72ed4cf3.svg "Repobeats analytics image")
 
 ## Connectors
 We're building no-code connectors to make flow building a frictionless process for non developers. Go to the [Pieces](https://www.activepieces.com/docs/pieces) section of our docs to browse all available pieces.
@@ -94,12 +96,12 @@ This section is dedicated to individuals who have contributed to 10 or more acti
 <a href="https://github.com/kanarelo"><img src="https://avatars.githubusercontent.com/u/393261?v=4?s=100" width="100px;" alt="Mukewa Wekalao"/></a>
 <a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4?s=100" width="100px;" alt="AbdulTheActivePiecer"/> </a>
 <a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/></a>
-<a href="https://github.com/ashrafsamhouri"><img src="https://avatars.githubusercontent.com/u/97393596?v=4?s=100" width="100px;" alt="ashrafsamhouri"/></a>
 
 ### Busy Beavers Club 🦸
 This section is dedicated to individuals who have contributed to 5 or more actions/triggers.
 <br><br>
 <a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="khaledmashaly"/></a>
+<a href="https://shaypunter.co.uk"><img src="https://avatars.githubusercontent.com/u/18310437?v=4?s=100" width="100px;" alt="Shay Punter"/></a>
 ### Builder Beavers Club 🏗️
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
@@ -122,7 +124,7 @@ This section is dedicated to individuals who have contributed to 5 or more actio
       <td align="center" valign="top" width="14.28%"><a href="http://osamahaikal.pythonanywhere.com/"><img src="https://avatars.githubusercontent.com/u/72370395?v=4?s=100" width="100px;" alt="Osama Abdallah Essa Haikal"/><br /><sub><b>Osama Abdallah Essa Haikal</b></sub></a><br /><a href="#plugin-OsamaHaikal" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/M-Arman"><img src="https://avatars.githubusercontent.com/u/54455592?v=4?s=100" width="100px;" alt="Arman"/><br /><sub><b>Arman</b></sub></a><br /><a href="#security-M-Arman" title="Security">🛡️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/oskarkraemer"><img src="https://avatars.githubusercontent.com/u/42745862?v=4?s=100" width="100px;" alt="Oskar Krämer"/><br /><sub><b>Oskar Krämer</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=oskarkraemer" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://thibpat.com"><img src="https://avatars.githubusercontent.com/u/494686?v=4?s=100" width="100px;" alt="Thibaut Patel"/><br /><sub><b>Thibaut Patel</b></sub></a><br /><a href="#ideas-tpatel" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://thibpat.com"><img src="https://avatars.githubusercontent.com/u/494686?v=4?s=100" width="100px;" alt="Thibaut Patel"/><br /><sub><b>Thibaut Patel</b></sub></a><br /><a href="#ideas-tpatel" title="Ideas, Planning, & Feedback">🤔</a> <a href="#plugin-tpatel" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Applesaucesomer"><img src="https://avatars.githubusercontent.com/u/18318905?v=4?s=100" width="100px;" alt="Applesaucesomer"/><br /><sub><b>Applesaucesomer</b></sub></a><br /><a href="#ideas-Applesaucesomer" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
     <tr>
@@ -131,6 +133,13 @@ This section is dedicated to individuals who have contributed to 5 or more actio
       <td align="center" valign="top" width="14.28%"><a href="https://shaypunter.co.uk"><img src="https://avatars.githubusercontent.com/u/18310437?v=4?s=100" width="100px;" alt="Shay Punter"/><br /><sub><b>Shay Punter</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=ShayPunter" title="Documentation">📖</a> <a href="#plugin-ShayPunter" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/abaza738"><img src="https://avatars.githubusercontent.com/u/50132270?v=4?s=100" width="100px;" alt="abaza738"/><br /><sub><b>abaza738</b></sub></a><br /><a href="#plugin-abaza738" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jonaboe"><img src="https://avatars.githubusercontent.com/u/51358680?v=4?s=100" width="100px;" alt="Jona Boeddinghaus"/><br /><sub><b>Jona Boeddinghaus</b></sub></a><br /><a href="#plugin-jonaboe" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/fomojola"><img src="https://avatars.githubusercontent.com/u/264253?v=4?s=100" width="100px;" alt="fomojola"/><br /><sub><b>fomojola</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=fomojola" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/astorozhevsky"><img src="https://avatars.githubusercontent.com/u/11055414?v=4?s=100" width="100px;" alt="Alexander Storozhevsky"/><br /><sub><b>Alexander Storozhevsky</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=astorozhevsky" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/J0LGER"><img src="https://avatars.githubusercontent.com/u/54769522?v=4?s=100" width="100px;" alt="J0LGER"/><br /><sub><b>J0LGER</b></sub></a><br /><a href="#security-J0LGER" title="Security">🛡️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://about.me/veverkap"><img src="https://avatars.githubusercontent.com/u/22348?v=4?s=100" width="100px;" alt="Patrick Veverka"/><br /><sub><b>Patrick Veverka</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Aveverkap" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://berksmbl.com"><img src="https://avatars.githubusercontent.com/u/10000339?v=4?s=100" width="100px;" alt="Berk Sümbül"/><br /><sub><b>Berk Sümbül</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=berksmbl" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

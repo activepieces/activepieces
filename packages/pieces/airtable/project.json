@@ -1,0 +1,28 @@
+{
+  "name": "pieces-airtable",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/airtable/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/airtable/**/*.ts"]
+      }
+    },
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/airtable",
+        "tsConfig": "packages/pieces/airtable/tsconfig.lib.json",
+        "packageJson": "packages/pieces/airtable/package.json",
+        "main": "packages/pieces/airtable/src/index.ts",
+        "assets": ["packages/pieces/airtable/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    }
+  },
+  "tags": []
+}

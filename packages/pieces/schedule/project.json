@@ -1,0 +1,28 @@
+{
+  "name": "pieces-schedule",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/schedule/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/schedule",
+        "tsConfig": "packages/pieces/schedule/tsconfig.lib.json",
+        "packageJson": "packages/pieces/schedule/package.json",
+        "main": "packages/pieces/schedule/src/index.ts",
+        "assets": ["packages/pieces/schedule/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/schedule/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

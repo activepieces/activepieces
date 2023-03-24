@@ -1,6 +1,5 @@
 import {
     apId,
-    CollectionVersionId,
     Cursor,
     ExecutionOutputStatus,
     FileId,
@@ -17,9 +16,7 @@ import {
     TelemetryEventName,
     ApEdition
 } from "@activepieces/shared";
-import { getEdition } from "../helper/license-helper";
-import { RateLimitOperationType, usageService } from "@ee/usage/backend/usage.service.ee";
-import { collectionVersionService } from "../collections/collection-version/collection-version.service";
+import { getEdition } from "../helper/secret-helper";
 import { collectionRepo } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
 import { flowVersionService } from "../flows/flow-version/flow-version.service";
@@ -29,6 +26,7 @@ import { Order } from "../helper/pagination/paginator";
 import { telemetry } from "../helper/telemetry.utils";
 import { FlowRunEntity } from "./flow-run-entity";
 import { flowRunSideEffects } from "./flow-run-side-effects";
+import { usageService } from "@ee/billing/backend/usage.service";
 
 export const repo = databaseConnection.getRepository(FlowRunEntity);
 
@@ -67,17 +65,15 @@ export const flowRunService = {
         return await this.getOne({ id: flowRunId });
     },
 
-    async start({ flowVersionId, collectionVersionId, payload, environment }: StartParams): Promise<FlowRun> {
+    async start({ flowVersionId, collectionId, payload, environment }: StartParams): Promise<FlowRun> {
         console.log(`[flowRunService#start]  flowVersionId=${flowVersionId} collectionVersionId=${flowVersionId}`);
 
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId);
-        const collectionVersion = await collectionVersionService.getOneOrThrow(collectionVersionId);
-        const collection = await getCollectionOrThrowWithoutProjectId(collectionVersion.collectionId);
+        const collection = await getCollectionOrThrowWithoutProjectId(collectionId);
 
         const edition = await getEdition();
         if (edition === ApEdition.ENTERPRISE) {
             await usageService.limit({
-                operation: RateLimitOperationType.EXECUTE_RUN,
                 projectId: collection.projectId,
                 flowVersion: flowVersion
             });
@@ -86,13 +82,12 @@ export const flowRunService = {
         const flowRun: Partial<FlowRun> = {
             id: apId(),
             projectId: collection.projectId,
-            collectionId: collectionVersion.collectionId,
+            collectionId: collection.id,
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
             environment: environment,
-            collectionVersionId: collectionVersion.id,
             flowDisplayName: flowVersion.displayName,
-            collectionDisplayName: collectionVersion.displayName,
+            collectionDisplayName: collection.displayName,
             status: ExecutionOutputStatus.RUNNING,
             startTime: new Date().toISOString(),
         };
@@ -153,6 +148,6 @@ interface GetOneParams {
 interface StartParams {
     environment: RunEnvironment;
     flowVersionId: FlowVersionId;
-    collectionVersionId: CollectionVersionId;
+    collectionId: CollectionId;
     payload: unknown;
 }

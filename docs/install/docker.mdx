@@ -54,7 +54,7 @@ The easiest way to expose your webhook URL on localhost is by using a service li
 ```bash
 ngrok http 4200
 ```
-3. Replace `AP_FRONTEND_URL` environment variable in `packages/.env` with the ngrok url.
+3. Replace `AP_FRONTEND_URL` environment variable in `.env` with the ngrok url.
 
 ![Ngrok](../resources/screenshots/docker-ngrok.png)
 
@@ -67,6 +67,14 @@ Review the [configurations guide](configurations.mdx) to make any necessary adju
 ## Upgrading
 
 To upgrade to new versions, which are installed using docker compose, perform the following steps. First, open a terminal in the activepieces repository directory and run the following commands.
+
+**1. Run the update script**
+```bash
+sh tools/update.sh
+```
+
+
+To upgrade to new versions manually, which are installed using docker compose, perform the following steps. First, open a terminal in the activepieces repository directory and run the following commands.
 
 **1. Pull the new docker compose file**
 ```bash
@@ -81,7 +89,7 @@ docker compose pull
 3. Review changelog for breaking changes
 
 <Warning>
-Please review the [Breaking changes](https://activepieces.com/docs/install/breaking_changes) document.
+Please review the [Breaking changes](https://activepieces.com/docs/install/breaking-changes) document.
 </Warning>
 
 4. Run the updated docker images
@@ -90,3 +98,18 @@ docker compose up -d --remove-orphans
 ```
 
 Congratulations! You have now successfully updated the version.
+
+## Deleting
+
+The following command is capable of deleting all Docker containers and associated data, and therefore should be used with caution:
+
+```
+sh tools/reset.sh
+```
+
+<Warning>
+Executing this command will result in the removal of all Docker containers and the data stored within them. It is important to be aware of the potentially hazardous nature of this command before proceeding.
+</Warning>
+
+
+

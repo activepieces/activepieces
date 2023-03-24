@@ -1,0 +1,28 @@
+{
+  "name": "pieces-posthog",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/posthog/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/posthog",
+        "tsConfig": "packages/pieces/posthog/tsconfig.lib.json",
+        "packageJson": "packages/pieces/posthog/package.json",
+        "main": "packages/pieces/posthog/src/index.ts",
+        "assets": ["packages/pieces/posthog/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/posthog/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

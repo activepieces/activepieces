@@ -31,7 +31,6 @@ import { flowsReducer } from './store/flow/flows.reducer';
 import { FlowsEffects } from './store/flow/flow.effects';
 import { viewModeReducer } from './store/builder/viewmode/view-mode.reducer';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
-import { VariableSidebarComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/configs-sidebar.component';
 import { ViewModeEffects } from './store/builder/viewmode/viewMode.effects';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -46,13 +45,8 @@ import { SidebarHeaderComponent } from './components/sidebar-header/sidebar-head
 import { flowItemsDetailsReducer } from './store/builder/flow-item-details/flow-items-details.reducer';
 import { FlowItemsDetailsEffects } from './store/builder/flow-item-details/flow-items-details.effects';
 import { EditStepAccordionComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/edit-step-accodion.component';
-import { DescribeFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/describe-form/describe-form.component';
 import { CodeStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/code-step-input-form/code-step-input-form.component';
 import { LoopStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/loop-step-input-form/loop-step-input-form.component';
-import { ScheduleTriggerInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/schedule-trigger-input-form/schedule-trigger-input-form.component';
-import { ConfigCardComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/config-card/config-card.component';
-import { VariableListComponent } from './page/flow-builder/flow-left-sidebar/configs-sidebar/configs-list/configs-list.component';
-import { CreateEditConfigModalComponent } from './page/flow-builder/flow-left-sidebar/create-or-edit-config-modal/create-or-edit-config-modal.component';
 import { PublishButtonComponent } from './page/flow-builder/flow-builder-header/publish-button/publish-button.component';
 import { TrackFocusDirective } from './page/flow-builder/flow-left-sidebar/run-details/steps-results-list/track-focus.directive';
 import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
@@ -70,6 +64,13 @@ import { appConnectionsReducer } from './store/app-connections/app-connections.r
 import { SecretTextConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
 import { BasicAuthConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/basic-auth-connection-dialog/basic-auth-connection-dialog.component';
 import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedback/feedback.component';
+import { BranchLineConnectionComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-connection/branch-line-connection/branch-line-connection.component';
+import { CanvasPannerDirective } from './page/flow-builder/canvas-utils/panning/panner.directive';
+import { BranchStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/branch-step-input-form/branch-step-input-form.component';
+import { CanvasUtilsComponent } from './page/flow-builder/canvas-utils/canvas-utils.component';
+import { HorizontalSidebarSeparatorComponent } from './page/flow-builder/canvas-utils/horizontal-sidebar-separator/horizontal-sidebar-separator.component';
+import { TestStepComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/test-step/test-step.component';
+import { StepNameEditorComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/step-name-editor/step-name-editor.component';
 
 @NgModule({
   imports: [
@@ -118,7 +119,6 @@ import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedb
     FlowItemConnectionComponent,
     FlowItemContentComponent,
     FlowLeftSidebarComponent,
-    VariableListComponent,
     TestFlowModalComponent,
     RunDetailsComponent,
     TestRunBarComponent,
@@ -127,19 +127,14 @@ import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedb
     StepTypItemComponent,
     StepTypeListComponent,
     StepTypeSidebarComponent,
-    CreateEditConfigModalComponent,
-    VariableSidebarComponent,
     StepResultComponent,
     SimpleLineConnectionComponent,
     LoopLineConnectionComponent,
     SelectedStepResultComponent,
     IterationAccordionComponent,
     EditStepAccordionComponent,
-    DescribeFormComponent,
     LoopStepInputFormComponent,
     CodeStepInputFormComponent,
-    ScheduleTriggerInputFormComponent,
-    ConfigCardComponent,
     PieceActionInputFormComponent,
     OAuth2ConnectionDialogComponent,
     PublishButtonComponent,
@@ -152,9 +147,16 @@ import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedb
     CloudOAuth2ConnectionDialogComponent,
     SecretTextConnectionDialogComponent,
     BasicAuthConnectionDialogComponent,
-    FeedbackComponent
+    FeedbackComponent,
+    BranchLineConnectionComponent,
+    CanvasPannerDirective,
+    BranchStepInputFormComponent,
+    CanvasUtilsComponent,
+    HorizontalSidebarSeparatorComponent,
+    TestStepComponent,
+    StepNameEditorComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [FlowBuilderHeaderComponent],
 })
-export class FlowBuilderModule { }
+export class FlowBuilderModule {}

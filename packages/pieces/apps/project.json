@@ -19,13 +19,20 @@
         "tsConfig": "packages/pieces/apps/tsconfig.lib.json",
         "packageJson": "packages/pieces/apps/package.json",
         "main": "packages/pieces/apps/src/index.ts",
-        "assets": ["packages/pieces/apps/*.md"]
+        "assets": ["packages/pieces/apps/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "refresh-docs": {
       "executor": "nx:run-commands",
       "options": {
         "command": "ts-node -r tsconfig-paths/register -P packages/pieces/apps/tsconfig.lib.json packages/pieces/apps/src/docs-generator/index.ts"
+      }
+    },
+    "update-pieces-metadata": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node -r tsconfig-paths/register -P packages/pieces/apps/tsconfig.lib.json tools/scripts/update-pieces-metadata/main.ts"
       }
     }
   },
