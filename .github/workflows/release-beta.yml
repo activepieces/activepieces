@@ -35,4 +35,4 @@ jobs:
             linux/arm/v7
           push: true
           tags: |
-            activepieces/activepieces:${{ env.RELEASE }}.3-beta
+            activepieces/activepieces:${{ env.RELEASE }}.4-beta
