@@ -161,8 +161,8 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       this.settingsForm.controls.client_secret.disable();
       this.connectionToUpdate.value.props
         ? this.settingsForm.controls.props.setValue(
-            this.connectionToUpdate.value.props
-          )
+          this.connectionToUpdate.value.props
+        )
         : null;
       this.settingsForm.controls.props.disable();
       this.settingsForm.controls.value.setValue({ code: this.FAKE_CODE });
@@ -180,6 +180,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     const connectionName = this.connectionToUpdate
       ? this.connectionToUpdate.name
       : this.settingsForm.controls.name.value;
+    const { tokenUrl } = this.getTokenAndUrl();
     const newConnection: UpsertOAuth2Request = {
       name: connectionName,
       appName: this.pieceName,
@@ -191,7 +192,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         client_secret: this.settingsForm.controls.client_secret.value,
         redirect_url: this.settingsForm.controls.redirect_url.getRawValue(),
         scope: this.pieceAuthConfig.scope!.join(' ') || '',
-        token_url: this.pieceAuthConfig.tokenUrl!,
+        token_url: tokenUrl,
         props: this.pieceAuthConfig.oAuthProps
           ? this.settingsForm.controls.props.value
           : undefined,
@@ -258,6 +259,18 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 
   getOAuth2Settings(): OAuth2PopupParams {
     const formValue = this.settingsForm.getRawValue();
+    const { authUrl } = this.getTokenAndUrl();
+    return {
+      auth_url: authUrl,
+      client_id: formValue.client_id,
+      extraParams: this.pieceAuthConfig.oAuthProps || {},
+      redirect_url: formValue.redirect_url,
+      pkce: this.pieceAuthConfig.pkce,
+      scope: this.pieceAuthConfig.scope!.join(' '),
+    };
+  }
+
+  getTokenAndUrl() {
     let authUrl = this.pieceAuthConfig.authUrl!;
     let tokenUrl = this.pieceAuthConfig.tokenUrl!;
     if (this.pieceAuthConfig.oAuthProps) {
@@ -273,12 +286,8 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       });
     }
     return {
-      auth_url: this.pieceAuthConfig.authUrl!,
-      client_id: formValue.client_id,
-      extraParams: this.pieceAuthConfig.oAuthProps || {},
-      redirect_url: formValue.redirect_url,
-      pkce: this.pieceAuthConfig.pkce,
-      scope: this.pieceAuthConfig.scope!.join(' '),
+      authUrl: authUrl,
+      tokenUrl: tokenUrl,
     };
   }
 }
