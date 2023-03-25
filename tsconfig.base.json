@@ -76,6 +76,7 @@
       "@activepieces/piece-mailchimp": [
         "packages/pieces/mailchimp/src/index.ts"
       ],
+      "@activepieces/piece-mastodon": ["packages/pieces/mastodon/src/index.ts"],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/pipedrive/src/index.ts"
