@@ -16,22 +16,21 @@ import {
   tap,
 } from 'rxjs';
 import { TriggerType } from '@activepieces/shared';
-import { TestStepService } from '../../../../../service/test-step.service';
-import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
 import { FormControl } from '@angular/forms';
-import { FlowsActions } from '../../../../../store/flow/flows.action';
 import deepEqual from 'deep-equal';
+import { TestStepService } from '../../flow-builder/service/test-step.service';
+import { BuilderSelectors } from '../../flow-builder/store/builder/builder.selector';
+import { FlowsActions } from '../../flow-builder/store/flow/flows.action';
 
 export interface WebhookHistoricalData {
   payload: unknown;
   created: string;
 }
 @Component({
-  selector: 'app-test-step',
-  templateUrl: './test-step.component.html',
-  styleUrls: ['./test-step.component.scss'],
+  selector: 'app-test-webhook-trigger',
+  templateUrl: './test-webhook-trigger.component.html',
 })
-export class TestStepComponent {
+export class TestWebhookTriggerComponent {
   currentResults$: BehaviorSubject<WebhookHistoricalData[]>;
   testStep$: Observable<WebhookHistoricalData[]>;
   foundNewResult$: Subject<boolean> = new Subject();
