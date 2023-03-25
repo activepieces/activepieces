@@ -1,9 +1,5 @@
-import { AuthenticationType } from "../../../common/authentication/core/authentication-type";
-import { httpClient } from "../../../common/http/core/http-client";
-import { HttpMessageBody } from "../../../common/http/core/http-message-body";
-import { HttpMethod } from "../../../common/http/core/http-method";
-import { HttpResponse } from "../../../common/http/core/http-response";
-import { OAuth2PropertyValue, Property } from "../../../framework/property";
+import { AuthenticationType, httpClient, HttpMessageBody, HttpMethod, HttpResponse, OAuth2PropertyValue, Property } from "@activepieces/framework";
+
 
 export const salesforcesCommon = {
     authentication: Property.OAuth2({
@@ -35,7 +31,8 @@ export const salesforcesCommon = {
                         label: object.label,
                         value: object.name
                     }
-                })
+                }).sort((a: {label: string}, b: {label: string}) => a.label.localeCompare(b.label))
+                .filter((object: {label: string}) => !object.label.startsWith("_"))
             }
         }
     }),
