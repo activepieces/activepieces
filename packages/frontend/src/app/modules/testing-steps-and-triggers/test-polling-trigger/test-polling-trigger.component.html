@@ -5,12 +5,11 @@
             *ngIf="currentResults.length === 0  && !hasBeenTested">
             <div class="ap-relative">
                 <app-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
-                    matTooltip="Test this step to generate sample data that can be used in the next steps"
+                    matTooltip="Pull data to generate sample data that can be used in the next steps"
                     matTooltipPosition="above"> </app-hotspot>
                 <app-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()"
                     [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : ''"
-                    [disabled]="(isValid$ | async) === false">Test
-                    Trigger</app-button>
+                    [disabled]="(isValid$ | async) === false">Pull Data</app-button>
             </div>
         </div>
 
@@ -18,7 +17,7 @@
             <div class="ap-flex ap-items-center">
                 <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
                     <svg-icon src="assets/img/custom/success-step-result.svg"
-                        [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon> Tested
+                        [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon> Pulled
                     Successfully
                 </div>
                 <div class="ap-flex-grow">
@@ -26,7 +25,7 @@
                 </div>
                 <app-button btnColor="primary" btnStyle="stroked" btnSize="medium"
                     [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : ''"
-                    [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Retest</app-button>
+                    [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Pull Data</app-button>
             </div>
 
             <mat-form-field class="ap-w-full ap-mt-2" appearance="outline" subscriptSizing="dynamic">
@@ -59,9 +58,10 @@
                 </div>
                 <app-button btnColor="primary" btnStyle="stroked" btnSize="medium"
                     [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : ''"
-                    [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Retest</app-button>
+                    [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Pull Data</app-button>
             </div>
 
+            <p class="ap-mt-2">Please add some data then press "Pull Data"</p>
         </ng-container>
     </div>
 </ng-container>
