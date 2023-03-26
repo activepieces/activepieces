@@ -9,6 +9,7 @@ import {
     ExecuteFlowOperation,
     ExecutePropsOptions,
     ExecuteTriggerOperation,
+    ExecuteTriggerResponse,
     ExecutionOutput,
     getPackageAliasForPiece,
     getPackageVersionForPiece,
