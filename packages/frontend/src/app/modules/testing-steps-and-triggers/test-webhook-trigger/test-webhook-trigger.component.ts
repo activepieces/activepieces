@@ -21,6 +21,7 @@ import deepEqual from 'deep-equal';
 import { TestStepService } from '../../flow-builder/service/test-step.service';
 import { BuilderSelectors } from '../../flow-builder/store/builder/builder.selector';
 import { FlowsActions } from '../../flow-builder/store/flow/flows.action';
+import { TestStepCoreComponent } from '../test-steps-core';
 
 export interface WebhookHistoricalData {
   payload: unknown;
@@ -30,7 +31,7 @@ export interface WebhookHistoricalData {
   selector: 'app-test-webhook-trigger',
   templateUrl: './test-webhook-trigger.component.html',
 })
-export class TestWebhookTriggerComponent {
+export class TestWebhookTriggerComponent extends TestStepCoreComponent {
   currentResults$: BehaviorSubject<WebhookHistoricalData[]>;
   testStep$: Observable<WebhookHistoricalData[]>;
   foundNewResult$: Subject<boolean> = new Subject();
@@ -43,9 +44,11 @@ export class TestWebhookTriggerComponent {
   stopSelectedDataControlListener$ = new Subject<boolean>();
   cancelTesting$ = new Subject<boolean>();
   saveAfterNewDataIsLoaded$: Observable<void>;
-  constructor(private testStepService: TestStepService, private store: Store) {
+  constructor(testStepService: TestStepService, private store: Store) {
+    super(testStepService);
     this.initialObservables();
   }
+
   private initialObservables() {
     this.setSelectedDataControlListener();
     this.initialHistoricalData$ = this.store

@@ -7,6 +7,7 @@ import { TriggerType } from '../../../../../../shared/src';
 import { TestStepService } from '../../flow-builder/service/test-step.service';
 import { BuilderSelectors } from '../../flow-builder/store/builder/builder.selector';
 import { FlowsActions } from '../../flow-builder/store/flow/flows.action';
+import { TestStepCoreComponent } from '../test-steps-core';
 export interface PollingHistoricalData {
   payload: unknown;
   created: string;
@@ -15,7 +16,7 @@ export interface PollingHistoricalData {
   selector: 'app-test-polling-trigger',
   templateUrl: './test-polling-trigger.component.html',
 })
-export class TestPollingTriggerComponent {
+export class TestPollingTriggerComponent extends TestStepCoreComponent{
   currentResults$: BehaviorSubject<PollingHistoricalData[]>;
   saveAfterNewDataIsLoaded$: Observable<void>;
   saveNewSelectedData$: Observable<void>;
@@ -25,12 +26,14 @@ export class TestPollingTriggerComponent {
   testStep$: Observable<PollingHistoricalData[]>;
   loading=false;
   hasBeenTested=false;
-  constructor(private testStepService: TestStepService, private store: Store) {
-   this.setSelectedDataControlListener();
-   
+  isValid$:Observable<boolean>;
+  constructor(testStepService: TestStepService, private store: Store) {
+   super(testStepService);
+   this.isValid$= this.store.select(BuilderSelectors.selectStepValidity);
+   this.initialObservables();
   }
+  private initialObservables() {
 
-  private setSelectedDataControlListener() {
     this.saveNewSelectedData$ = this.selectedDataControl.valueChanges.pipe(
       tap(() => {
         this.saveNewResultToStep();
@@ -40,10 +43,13 @@ export class TestPollingTriggerComponent {
     this.initialHistoricalData$ = this.store
     .select(BuilderSelectors.selectCurrentFlowId)
     .pipe(
+      take(1),
       switchMap((res) => {
+        
         return this.testStepService.getTriggerEventsResults(res!.toString());
       }),
       map((res) => {
+        
         return res.data;
       }),
       tap((res) => {
@@ -55,10 +61,19 @@ export class TestPollingTriggerComponent {
   this.initaillySelectedSampleData$ = this.store
     .select(BuilderSelectors.selectStepSelectedSampleData)
     .pipe(
+      take(1),
       tap((res) => {
         this.selectedDataControl.setValue(res);
         this.setSelectedDataControlListener();
       })
+    );
+  }
+  private setSelectedDataControlListener() {
+    this.saveNewSelectedData$ = this.selectedDataControl.valueChanges.pipe(
+      tap(() => {
+        this.saveNewResultToStep();
+      }),
+      map(() => void 0)
     );
   }
   testStep() {
@@ -70,12 +85,12 @@ export class TestPollingTriggerComponent {
         take(1),
         switchMap((id) => {
           if (id) {
-          return  this.testStepService.getTriggerEventsResults(id.toString()).pipe(tap(res=>{
+          return  this.testStepService.getPollingResults(id.toString()).pipe(tap(res=>{
               this.loading = false;
               this.currentResults$.next(res.data);
               if(res.data.length>0)
               this.selectedDataControl.setValue(
-                res.data[res.data.length - 1].payload
+                res.data[0].payload
               );
               this.testStepService.elevateResizer$.next(true);
             }),map(res=>res.data));
@@ -111,4 +126,5 @@ export class TestPollingTriggerComponent {
   dropdownCompareWithFunction = (opt: unknown, formControlValue: unknown) => {
     return formControlValue !== undefined && deepEqual(opt, formControlValue);
   };
+ 
 }

@@ -28,11 +28,19 @@ export const newRowAdded = createTrigger({
     context.store?.put("rowCount_testing", allValues.length);
     if(rowCount ===0)
     {
-      return allValues.slice(0,5);
+      return allValues.slice(0,5).map(s => {
+        return {
+          value:s
+        }
+      });;
     }
     else
     {
-      return allValues.slice(rowCount-6);
+      return allValues.slice(0,5).map(s => {
+        return {
+          value:s
+        }
+      });
     }
   },
   async onEnable(context) {

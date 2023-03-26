@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { SeekPage, TriggerEvent } from '@activepieces/shared';
 import { environment } from '../../../../environments/environment';
 
@@ -9,6 +9,9 @@ import { environment } from '../../../../environments/environment';
 })
 export class TestStepService {
   elevateResizer$: Subject<boolean> = new Subject();
+  testingStepSectionIsRendered$: BehaviorSubject<boolean> = new BehaviorSubject(
+    false
+  );
   constructor(private http: HttpClient) {}
   getTriggerEventsResults(flowId: string) {
     return this.http.get<SeekPage<TriggerEvent>>(

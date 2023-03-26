@@ -84,7 +84,6 @@ export const engineHelper = {
         let result;
         try {
             await sandbox.cleanAndInit();
-
             const buildPath = sandbox.getSandboxFolderPath();
             const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings;
             await installPieceDependency(buildPath, pieceName, pieceVersion);

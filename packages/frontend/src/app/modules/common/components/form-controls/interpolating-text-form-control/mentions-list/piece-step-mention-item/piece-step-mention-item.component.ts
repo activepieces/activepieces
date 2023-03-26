@@ -72,12 +72,10 @@ export class PieceStepMentionItemComponent implements OnInit {
     private mentionsTreeCache: MentionsTreeCacheService
   ) {}
   ngOnInit(): void {
-    const cacheResult = this.mentionsTreeCache.getStepMentionsTree(
-      this._stepMention.step.name
-    );
-    if (cacheResult) {
+    const cachedResult: undefined | MentionTreeNode[] = this.getChachedData();
+    if (cachedResult) {
       this.sampleData$ = combineLatest({
-        stepTree: of({ children: cacheResult.children, error: '' }),
+        stepTree: of({ children: cachedResult, error: '' }),
         search: this.mentionsTreeCache.listSearchBarObs$,
       }).pipe(
         map((res) => {
@@ -100,15 +98,31 @@ export class PieceStepMentionItemComponent implements OnInit {
       BuilderSelectors.selectFlowItemDetails(this._stepMention.step)
     );
   }
+  getChachedData() {
+    const step = this._stepMention.step;
+    let cachedResult: undefined | MentionTreeNode[] = undefined;
+    if (
+      step.type === TriggerType.PIECE &&
+      step.settings.inputUiInfo.currentSelectedData
+    ) {
+      cachedResult = traverseStepOutputAndReturnMentionTree(
+        step.settings.inputUiInfo.currentSelectedData,
+        step.name,
+        step.displayName
+      )?.children;
+    } else {
+      cachedResult = this.mentionsTreeCache.getStepMentionsTree(
+        step.name
+      )?.children;
+    }
+    return cachedResult;
+  }
   fetchSampleData() {
     const step = this._stepMention.step;
-
     if (step.type !== TriggerType.PIECE && step.type !== ActionType.PIECE) {
       throw new Error("Activepieces- step isn't of a piece type");
     }
-
     const { pieceName, pieceVersion } = step.settings;
-
     this.sampleData$ = this.actionMetaDataService
       .getPieceMetadata(pieceName, pieceVersion)
       .pipe(

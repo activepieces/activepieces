@@ -7,7 +7,7 @@ import { TestPollingTriggerComponent } from './test-polling-trigger/test-polling
 
 @NgModule({
   declarations: [TestWebhookTriggerComponent, TestPollingTriggerComponent],
-  exports: [TestWebhookTriggerComponent],
+  exports: [TestWebhookTriggerComponent, TestPollingTriggerComponent],
   imports: [CommonModule, CommonLayoutModule, FormsModule, ReactiveFormsModule],
 })
 export class TestingStepsAndTriggersModule {}

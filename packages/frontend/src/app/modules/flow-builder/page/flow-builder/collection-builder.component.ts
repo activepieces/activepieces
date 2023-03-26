@@ -30,7 +30,7 @@ import {
 import { Title } from '@angular/platform-browser';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
 import { PannerService } from './canvas-utils/panning/panner.service';
-import { FlowItem } from '../../../common/model/flow-builder/flow-item';
+import { TestStepService } from '../../service/test-step.service';
 
 @Component({
   selector: 'app-collection-builder',
@@ -51,8 +51,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   leftSidebarDragging = false;
   loadInitialData$: Observable<void> = new Observable<void>();
   cursorStyle$: Observable<string>;
-  currentStep$: Observable<FlowItem | null | undefined>;
   TriggerType = TriggerType;
+  testingStepSectionIsRendered$: Observable<boolean>;
   constructor(
     private store: Store,
     public pieceBuilderService: CollectionBuilderService,
@@ -61,9 +61,11 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     private snackbar: MatSnackBar,
     private runDetailsService: RunDetailsService,
     private titleService: Title,
-    private pannerService: PannerService
+    private pannerService: PannerService,
+    private testStepService: TestStepService
   ) {
-    this.currentStep$ = this.store.select(BuilderSelectors.selectCurrentStep);
+    this.testingStepSectionIsRendered$ =
+      this.testStepService.testingStepSectionIsRendered$.asObservable();
     this.cursorStyle$ = this.pannerService.isGrabbing$.asObservable().pipe(
       map((val) => {
         if (val) {
