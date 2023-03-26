@@ -32,7 +32,7 @@ export const newRowAdded = createTrigger({
     }
     else
     {
-      return allValues.slice(rowCount-1);
+      return allValues.slice(rowCount-6);
     }
   },
   async onEnable(context) {

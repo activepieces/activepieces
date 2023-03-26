@@ -10,7 +10,7 @@ import { environment } from '../../../../environments/environment';
 export class TestStepService {
   elevateResizer$: Subject<boolean> = new Subject();
   constructor(private http: HttpClient) {}
-  getWebhookResults(flowId: string) {
+  getTriggerEventsResults(flowId: string) {
     return this.http.get<SeekPage<TriggerEvent>>(
       environment.apiUrl + '/trigger-events',
       {
@@ -21,10 +21,13 @@ export class TestStepService {
     );
   }
   getPollingResults(flowId: string) {
-    return this.http.get<SeekPage<TriggerEvent>>(environment.apiUrl + '/poll', {
-      params: {
-        flowId: flowId,
-      },
-    });
+    return this.http.get<SeekPage<TriggerEvent>>(
+      environment.apiUrl + '/trigger-events/poll',
+      {
+        params: {
+          flowId: flowId,
+        },
+      }
+    );
   }
 }

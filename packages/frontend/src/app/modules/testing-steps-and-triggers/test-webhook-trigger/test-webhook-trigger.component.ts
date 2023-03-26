@@ -36,12 +36,13 @@ export class TestWebhookTriggerComponent {
   foundNewResult$: Subject<boolean> = new Subject();
   loading = false;
   selectedDataControl: FormControl<unknown> = new FormControl();
-  saveAfterNewDataIsLoaded$: Observable<void>;
+
   saveNewSelectedData$: Observable<void>;
   initialHistoricalData$: Observable<WebhookHistoricalData[]>;
   initaillySelectedSampleData$: Observable<unknown>;
   stopSelectedDataControlListener$ = new Subject<boolean>();
   cancelTesting$ = new Subject<boolean>();
+  saveAfterNewDataIsLoaded$: Observable<void>;
   constructor(private testStepService: TestStepService, private store: Store) {
     this.initialObservables();
   }
@@ -51,7 +52,7 @@ export class TestWebhookTriggerComponent {
       .select(BuilderSelectors.selectCurrentFlowId)
       .pipe(
         switchMap((res) => {
-          return this.testStepService.getWebhookResults(res!.toString());
+          return this.testStepService.getTriggerEventsResults(res!.toString());
         }),
         map((res) => {
           return res.data;
@@ -110,7 +111,7 @@ export class TestWebhookTriggerComponent {
   createResultsChecker(flowId: string) {
     const observables = {
       currentResults: of(this.currentResults$.value),
-      resultsChecked: this.testStepService.getWebhookResults(flowId),
+      resultsChecked: this.testStepService.getTriggerEventsResults(flowId),
     };
     return forkJoin(observables).pipe(
       map((res) => {
