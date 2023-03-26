@@ -289,7 +289,7 @@ function buildSchema(props: PieceProperty): TSchema {
         }
 
         if (!property.required) {
-            propsSchema[name] = Type.Union([Type.Null(), Type.Undefined(), propsSchema[name]]);
+            propsSchema[name] = Type.Optional(Type.Union([Type.Null(), Type.Undefined(), propsSchema[name]]));
         }
     }
 
