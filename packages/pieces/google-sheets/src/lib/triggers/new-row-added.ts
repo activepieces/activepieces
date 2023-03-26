@@ -25,6 +25,10 @@ export const newRowAdded = createTrigger({
     const spreadSheetId = context.propsValue['spreadsheet_id'];
     const rowCount = (await context.store?.get<number>("rowCount_testing")) ?? 0;
     const allValues =  await googleSheetsCommon.getValues(spreadSheetId, accessToken, sheetId);    
+    if(!allValues)
+    {
+      return [];
+    }
     context.store?.put("rowCount_testing", allValues.length);
     if(rowCount ===0)
     {
