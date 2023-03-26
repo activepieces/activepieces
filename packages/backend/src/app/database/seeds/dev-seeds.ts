@@ -5,8 +5,6 @@ import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";
 
 const seedDevUser = async (): Promise<void> => {
-    logger.debug("[seedDevUser]");
-
     await authenticationService.signUp({
         email: "dev@ap.com",
         password: "12345678",
@@ -15,6 +13,8 @@ const seedDevUser = async (): Promise<void> => {
         trackEvents: false,
         newsLetter: false,
     });
+
+    logger.info("[seedDevUser] email=dev@ap.com pass=12345678");
 }
 
 export const seedDevData = async () => {
