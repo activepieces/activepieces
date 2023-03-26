@@ -3,18 +3,25 @@ import { authenticationService } from "../../authentication/authentication.servi
 import { logger } from "../../helper/logger";
 import { system } from "../../helper/system/system";
 import { SystemProp } from "../../helper/system/system-prop";
+import { userService } from "../../user/user-service";
 
 const seedDevUser = async (): Promise<void> => {
-    await authenticationService.signUp({
-        email: "dev@ap.com",
-        password: "12345678",
-        firstName: "firstName",
-        lastName: "lastName",
-        trackEvents: false,
-        newsLetter: false,
-    });
+    const devEmail = "dev@ap.com";
+    const devPassword = "12345678";
+    const devUser = await userService.getOneByEmail({ email: devEmail });
 
-    logger.info("[seedDevUser] email=dev@ap.com pass=12345678");
+    if (!devUser) {
+        await authenticationService.signUp({
+            email: devEmail,
+            password: devPassword,
+            firstName: "firstName",
+            lastName: "lastName",
+            trackEvents: false,
+            newsLetter: false,
+        });
+    }
+
+    logger.info(`[seedDevUser] email=${devEmail} pass=${devPassword}`);
 }
 
 export const seedDevData = async () => {
