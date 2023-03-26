@@ -27,7 +27,6 @@ export const triggerEventService = {
         const emptyPage = paginationHelper.createPage<TriggerEvent>([], null);
         switch (trigger.type) {
         case TriggerType.WEBHOOK:
-        case TriggerType.SCHEDULE:
             throw new Error("Cannot be tested");
         case TriggerType.PIECE: {
             const testResult =( await engineHelper.executeTrigger({
@@ -87,8 +86,6 @@ function getSourceName(trigger: Trigger): string {
     switch (trigger.type) {
     case TriggerType.WEBHOOK:
         return TriggerType.WEBHOOK;
-    case TriggerType.SCHEDULE:
-        return TriggerType.SCHEDULE;
     case TriggerType.PIECE:{
         const pieceTrigger = trigger as PieceTrigger;
         return pieceTrigger.settings.pieceName +"@" + pieceTrigger.settings.pieceVersion + ":" + pieceTrigger.settings.triggerName;

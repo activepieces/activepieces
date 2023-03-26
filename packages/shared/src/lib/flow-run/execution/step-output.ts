@@ -14,15 +14,15 @@ export class StepOutput<T = any>{
 }
 
 export class LoopOnItemsStepOutput extends StepOutput<{
-  current_item: any;
-  current_iteration: number;
+  item: unknown;
+  index: number;
   iterations: Record<string, StepOutput>[];
 }> {
 
 }
 
-export class BranchStepOutput extends StepOutput {
-  override output!: {
-    condition: boolean;
-  };
+export class BranchStepOutput extends StepOutput<{
+  condition: boolean;
+}> {
+
 }

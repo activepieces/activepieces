@@ -3,6 +3,7 @@ import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-ty
 import {
   ActionType,
   ApEdition,
+  compareSemVer,
   PieceMetadata,
   PieceMetadataSummary,
   PieceOptionRequest,
@@ -18,10 +19,17 @@ import { FlagService } from '../../common/service/flag.service';
 
 type TriggersMetadata = Record<string, TriggerBase>;
 
+type FilterUnSupportedPiecesParams = {
+  piecesManifest: PieceMetadataSummary[];
+  release: string;
+};
+
 @Injectable({
   providedIn: 'root',
 })
 export class ActionMetaService {
+  private release$ = this.flagsService.getRelease().pipe(shareReplay(1));
+
   private piecesManifest$ = this.http
     .get<PieceMetadataSummary[]>(`${environment.apiUrl}/pieces`)
     .pipe(shareReplay(1));
@@ -43,15 +51,15 @@ export class ActionMetaService {
       description: 'Decide what happens based on an if condition result',
       logoUrl: '/assets/img/custom/piece/branch.svg',
     },
+    {
+      type: ActionType.LOOP_ON_ITEMS,
+      name: 'Loop',
+      description: 'Loop on a list of items',
+      logoUrl: '/assets/img/custom/piece/loop.svg',
+    },
   ];
 
-  public triggerItemsDetails = [
-    {
-      type: TriggerType.SCHEDULE,
-      name: 'Schedule',
-      description: 'Trigger flow with fixed schedule.',
-      logoUrl: '/assets/img/custom/piece/schedule.svg',
-    },
+  public triggerItemsDetails: FlowItemDetails[] = [
     {
       type: TriggerType.WEBHOOK,
       name: 'Webhook',
@@ -67,6 +75,22 @@ export class ActionMetaService {
   ];
 
   constructor(private http: HttpClient, private flagsService: FlagService) {}
+
+  private filterUnSupportedPieces = (params: FilterUnSupportedPiecesParams) => {
+    const { piecesManifest, release } = params;
+
+    return piecesManifest.filter((piece) => {
+      const minRelease = piece.minimumSupportedRelease;
+      const maxRelease = piece.maximumSupportedRelease;
+      if (minRelease && compareSemVer(release, minRelease) === -1) {
+        return false;
+      } else if (maxRelease && compareSemVer(release, maxRelease) === 1) {
+        return false;
+      } else {
+        return true;
+      }
+    });
+  };
 
   private getCacheKey(pieceName: string, pieceVersion: string): string {
     return `${pieceName}-${pieceVersion}`;
@@ -99,7 +123,10 @@ export class ActionMetaService {
   }
 
   getPiecesManifest(): Observable<PieceMetadataSummary[]> {
-    return this.piecesManifest$;
+    return forkJoin({
+      piecesManifest: this.piecesManifest$,
+      release: this.release$,
+    }).pipe(map(this.filterUnSupportedPieces), shareReplay(1));
   }
 
   getPieceMetadata(

@@ -1,4 +1,4 @@
-import {  AppConnectionValue, TriggerStrategy } from "@activepieces/shared";
+import { AppConnectionValue, ScheduleOptions, TriggerStrategy } from "@activepieces/shared";
 
 export type TriggerHookContext<T, S extends TriggerStrategy> =
     S extends TriggerStrategy.APP_WEBHOOK ? {
@@ -10,6 +10,7 @@ export type TriggerHookContext<T, S extends TriggerStrategy> =
         store: Store
     } : S extends TriggerStrategy.POLLING ? {
         propsValue: T,
+        setSchedule(schedule: ScheduleOptions): void,
         store: Store
     } : {
         webhookUrl: string,

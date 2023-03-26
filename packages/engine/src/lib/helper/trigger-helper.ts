@@ -1,14 +1,16 @@
 import { pieces } from "@activepieces/pieces-apps";
-import { ApEdition, EventPayload, ExecuteEventParserOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, TriggerHookType, TriggerStrategy } from "@activepieces/shared";
+import { ApEdition, EventPayload, ExecuteEventParserOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, ScheduleOptions, TriggerHookType, TriggerStrategy } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./piece-helper";
+import { isValidCron } from 'cron-validator';
 
 type Listener = {
   events: string[];
   identifierValue: string;
   identifierKey: string;
 }
+
 
 export const triggerHelper = {
   async executeEventParser(params: ExecuteEventParserOperation): Promise<ParseEventResponse | undefined> {
@@ -20,9 +22,9 @@ export const triggerHelper = {
   },
 
   async executeTrigger(params: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | unknown[] | unknown> {
-    const { pieceName, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
+    const { pieceName, pieceVersion, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
 
-    const piece = await pieceHelper.loadPiece(pieceName);
+    const piece = await pieceHelper.loadPiece(pieceName, pieceVersion);
     const trigger = piece?.getTrigger(triggerName);
 
     if (trigger === undefined) {
@@ -33,14 +35,26 @@ export const triggerHelper = {
     const executionState = new ExecutionState();
     const resolvedInput = await variableService.resolve(input, executionState);
     const appListeners: Listener[] = [];
-
     const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : '';
+    let scheduleOptions: ScheduleOptions = {
+      cronExpression: "*/5 * * * *",
+      timezone: "UTC"
+    } 
     const context = {
       store: createContextStore(prefix, params.flowVersion.flowId),
       app: {
         async createListeners({ events, identifierKey, identifierValue }: Listener) {
           appListeners.push({ events, identifierValue, identifierKey });
         }
+      },
+      setSchedule(request : ScheduleOptions) {
+        if (!isValidCron(request.cronExpression)) {
+          throw new Error(`Invalid cron expression: ${request.cronExpression}`);
+        }
+        scheduleOptions = {
+          cronExpression: request.cronExpression,
+          timezone: request.timezone??"UTC"
+        };
       },
       webhookUrl: params.webhookUrl,
       propsValue: resolvedInput,
@@ -56,11 +70,12 @@ export const triggerHelper = {
       case TriggerHookType.ON_ENABLE:
         await trigger.onEnable(context);
         return {
-          listeners: appListeners
+          listeners: appListeners,
+          scheduleOptions: scheduleOptions
         }
-    case TriggerHookType.TEST:
-          // TODO: fix types to remove use of any
-          return trigger.test(context as any);
+      case TriggerHookType.TEST:
+        // TODO: fix types to remove use of any
+        return trigger.test(context as any);
       case TriggerHookType.RUN:
         if (trigger.type === TriggerStrategy.APP_WEBHOOK) {
           if (params.edition === ApEdition.COMMUNITY) {

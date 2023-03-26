@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/zoom/tsconfig.lib.json",
         "packageJson": "packages/pieces/zoom/package.json",
         "main": "packages/pieces/zoom/src/index.ts",
-        "assets": ["packages/pieces/zoom/*.md"]
+        "assets": ["packages/pieces/zoom/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

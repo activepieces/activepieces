@@ -22,19 +22,22 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
   }
 
   async execute(
-    executionState: ExecutionState,
-    ancestors: [string, number][]
+    executionState: ExecutionState
   ): Promise<StepOutput> {
     const stepOutput = new StepOutput();
     const params = await this.variableService.resolve(
       this.action.settings.input,
       executionState
     );
+    const artifactPackagedId = this.action.settings.artifactPackagedId;
+    if(!artifactPackagedId){
+      throw new Error("Artifact packaged id is not defined");
+    }
     stepOutput.input = params;
     try {
       const codeExecutor = new CodeExecutor();
       stepOutput.output = await codeExecutor.executeCode(
-        this.action.settings.artifactPackagedId!,
+        artifactPackagedId,
         params
       );
       stepOutput.status = StepOutputStatus.SUCCEEDED;

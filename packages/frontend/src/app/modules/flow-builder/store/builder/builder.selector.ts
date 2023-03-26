@@ -6,22 +6,22 @@ import {
   AppConnection,
   Flow,
   FlowRun,
-  PieceActionSettings,
   SampleDataSettings,
 } from '@activepieces/shared';
 import { TabState } from '../model/tab-state';
 import { ViewModeEnum } from '../model/enums/view-mode.enum';
 import { FlowItem } from '../../../common/model/flow-builder/flow-item';
-import {
-  FlowItemsDetailsState,
-  StepMetaData,
-} from '../model/flow-items-details-state.model';
+import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
 import { FlowsState } from '../model/flows-state.model';
 import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { ActionType, Collection, TriggerType } from '@activepieces/shared';
 import { FlowStructureUtil } from '../../service/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../../common/model/dropdown-item.interface';
 import { MentionListItem } from '../../../common/components/form-controls/interpolating-text-form-control/utils';
+import {
+  CORE_PIECES_ACTIONS_NAMES,
+  CORE_PIECES_TRIGGERS,
+} from './flow-item-details/flow-items-details.effects';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -67,7 +67,7 @@ export const selectViewMode = createSelector(
   (state: GlobalBuilderState) => state.viewMode
 );
 
-export const selectInstanceRunView = createSelector(
+export const selectIsInDebugMode = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) =>
     state.viewMode === ViewModeEnum.VIEW_INSTANCE_RUN
@@ -193,13 +193,13 @@ export const selectCurrentStepName = createSelector(
     if (selectedStep) {
       return selectedStep.name;
     }
-    return null;
+    return '';
   }
 );
-export const selectCurrentDisplayName = createSelector(
+export const selectCurrentStepDisplayName = createSelector(
   selectCurrentStep,
-  (state) => {
-    return state?.displayName;
+  (step) => {
+    return step?.displayName || '';
   }
 );
 export const selectCurrentTabState = createSelector(
@@ -338,36 +338,24 @@ export const selectFlowItemDetailsForCustomPiecesTriggers = createSelector(
 
 export const selectFlowItemDetails = (flowItem: FlowItem) =>
   createSelector(selectAllFlowItemsDetails, (state: FlowItemsDetailsState) => {
-    const triggerItemDetails = state.coreTriggerFlowItemsDetails.find(
-      (t) => t.type === flowItem.type
-    );
-    if (triggerItemDetails) {
-      return triggerItemDetails;
-    }
-    if (
-      (flowItem.settings as PieceActionSettings)?.pieceName == 'store' ||
-      (flowItem.settings as PieceActionSettings)?.pieceName == 'http'
-    ) {
-      const details = state.coreFlowItemsDetails.find(
-        (p) =>
-          p.extra?.appName ===
-          (flowItem.settings as PieceActionSettings)?.pieceName
-      );
-      if (!details) {
-        throw new Error(
-          `${
-            (flowItem.settings as PieceActionSettings)?.pieceName
-          } not found in core nor custom pieces details`
+    if (flowItem.type === ActionType.PIECE) {
+      if (
+        CORE_PIECES_ACTIONS_NAMES.find((n) => n === flowItem.settings.pieceName)
+      ) {
+        return state.coreFlowItemsDetails.find(
+          (c) => c.extra?.appName === flowItem.settings.pieceName
         );
       }
-      return details;
-    }
-    if (flowItem.type === ActionType.PIECE) {
       return state.customPiecesActionsFlowItemDetails.find(
         (f) => f.extra!.appName === flowItem.settings.pieceName
       );
     }
     if (flowItem.type === TriggerType.PIECE) {
+      if (CORE_PIECES_TRIGGERS.find((n) => n === flowItem.settings.pieceName)) {
+        return state.coreTriggerFlowItemsDetails.find(
+          (c) => c.extra?.appName === flowItem.settings.pieceName
+        );
+      }
       return state.customPiecesTriggersFlowItemDetails.find(
         (f) => f.extra!.appName === flowItem.settings.pieceName
       );
@@ -378,12 +366,12 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
       (c) => c.type === flowItem.type
     );
 
-    if (!coreItemDetials) {
-      console.warn(
-        `Flow item details for ${flowItem.displayName} are not currently loaded`
-      );
-    }
-    return coreItemDetials;
+    if (coreItemDetials) return coreItemDetials;
+    const triggerItemDetails = state.coreTriggerFlowItemsDetails.find(
+      (t) => t.type === flowItem.type
+    );
+
+    return triggerItemDetails;
   });
 
 const selectAllAppConnections = createSelector(
@@ -418,40 +406,7 @@ const selectAllFlowSteps = createSelector(
     return [];
   }
 );
-const selectAllFlowStepsMetaData = createSelector(
-  selectAllFlowSteps,
-  selectAllFlowItemsDetails,
-  (steps, flowItemDetails): StepMetaData[] => {
-    return steps.map((s) => {
-      const logoUrl = findStepLogoUrl(s, flowItemDetails);
-      return {
-        displayName: s.displayName,
-        name: s.name,
-        logoUrl: logoUrl,
-      };
-    });
-  }
-);
-const selectAllStepsForMentionsDropdown = createSelector(
-  selectCurrentStep,
-  selectCurrentFlow,
-  (currentStep, flow): (MentionListItem & { step: FlowItem })[] => {
-    if (!currentStep || !flow || !flow.version || !flow.version.trigger) {
-      return [];
-    }
-    const path = FlowStructureUtil.findPathToStep(
-      currentStep,
-      flow?.version?.trigger
-    );
-    return path.map((s) => {
-      return {
-        label: s.displayName,
-        value: `\${${s.name}}`,
-        step: s,
-      };
-    });
-  }
-);
+
 const selectAppConnectionsForMentionsDropdown = createSelector(
   selectAllAppConnections,
   (connections: AppConnection[]) => {
@@ -464,6 +419,7 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
     });
   }
 );
+
 const selectAnyFlowHasSteps = createSelector(selectFlows, (flows: Flow[]) => {
   let aFlowHasSteps = false;
   flows.forEach((f) => {
@@ -472,41 +428,79 @@ const selectAnyFlowHasSteps = createSelector(selectFlows, (flows: Flow[]) => {
   return aFlowHasSteps;
 });
 
-function findStepLogoUrl(
+const selectAllStepsForMentionsDropdown = createSelector(
+  selectCurrentStep,
+  selectCurrentFlow,
+  selectAllFlowItemsDetails,
+  (
+    currentStep,
+    flow,
+    flowItemDetails
+  ): (MentionListItem & { step: FlowItem })[] => {
+    if (!currentStep || !flow || !flow.version || !flow.version.trigger) {
+      return [];
+    }
+    const path = FlowStructureUtil.findPathToStep(
+      currentStep,
+      flow?.version?.trigger
+    );
+    return path.map((s) => {
+      return {
+        label: s.displayName,
+        value: `\${${s.name}}`,
+        step: s,
+        logoUrl: findStepLogoUrlForMentions(s, flowItemDetails),
+      };
+    });
+  }
+);
+function findStepLogoUrlForMentions(
   step: FlowItem,
   flowItemsDetailsState: FlowItemsDetailsState
 ) {
   if (step.type === ActionType.PIECE) {
-    if (step.settings.pieceName === 'store') {
-      return 'assets/img/custom/piece/storage.png';
-    }
-    if (step.settings.pieceName === 'http') {
-      return 'assets/img/custom/piece/http.png';
+    if (CORE_PIECES_ACTIONS_NAMES.find((n) => n === step.settings.pieceName)) {
+      return `assets/img/custom/piece/${step.settings.pieceName}_mention.png`;
     }
     return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(
       (i) => i.extra?.appName === step.settings.pieceName
     )!.logoUrl!;
   } else if (step.type === TriggerType.PIECE) {
+    if (CORE_PIECES_TRIGGERS.find((n) => n === step.settings.pieceName)) {
+      return `assets/img/custom/piece/${step.settings.pieceName}_mention.png`;
+    }
     return flowItemsDetailsState.customPiecesTriggersFlowItemDetails.find(
       (i) => i.extra?.appName === step.settings.pieceName
     )!.logoUrl!;
   } else {
-    if (
-      step.type === TriggerType.EMPTY ||
-      step.type === TriggerType.SCHEDULE ||
-      step.type === TriggerType.WEBHOOK
-    ) {
+    if (step.type === TriggerType.EMPTY || step.type === TriggerType.WEBHOOK) {
       const fileName =
         step.type === TriggerType.EMPTY
           ? 'emptyTrigger.png'
-          : step.type === TriggerType.SCHEDULE
-          ? 'schedule.png'
-          : 'webhook.png';
+          : 'webhook_mention.png';
       return 'assets/img/custom/piece/' + fileName;
     }
-    return 'assets/img/custom/piece/code.png';
+    if (step.type === ActionType.LOOP_ON_ITEMS) {
+      return 'assets/img/custom/piece/loop_mention.png';
+    }
+    return 'assets/img/custom/piece/code_mention.png';
   }
 }
+
+const selectStepLogoUrl = (stepName: string) => {
+  return createSelector(
+    selectAllFlowSteps,
+    selectAllFlowItemsDetails,
+    (steps, flowItemsDetails) => {
+      const step = steps.find((s) => s.name === stepName);
+      if (!step) {
+        return 'assets/img/custom/piece/branch_mention.png';
+      }
+      const logoUrl = findStepLogoUrlForMentions(step, flowItemsDetails);
+      return logoUrl;
+    }
+  );
+};
 export const BuilderSelectors = {
   selectCurrentCollection,
   selectCurrentCollectionId,
@@ -527,8 +521,8 @@ export const BuilderSelectors = {
   selectCurrentStepName,
   selectCurrentRightSideBarType,
   selectCurrentFlowRunStatus,
-  selectCurrentDisplayName,
-  selectInstanceRunView,
+  selectCurrentStepDisplayName,
+  selectIsInDebugMode,
   selectCollectionState,
   selectIsSaving,
   selectFlow,
@@ -547,10 +541,10 @@ export const BuilderSelectors = {
   selectFlowItemDetailsForCustomPiecesTriggers,
   selectAllAppConnections,
   selectAllFlowSteps,
-  selectAllFlowStepsMetaData,
   selectAllStepsForMentionsDropdown,
   selectAppConnectionsForMentionsDropdown,
   selectAnyFlowHasSteps,
+  selectStepLogoUrl,
   selectCurrentStepSettings,
   selectStepSelectedSampleData,
 };

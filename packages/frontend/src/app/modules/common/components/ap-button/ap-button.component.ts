@@ -16,7 +16,7 @@ export class ApButtonComponent {
   @Input() tooltipDisabled = false;
   @Input() tooltipText = '';
   @Input() type: 'submit' | 'button' = 'submit';
-  @Input() keepBgWhite = false;
+  @Input() buttonIsInsideAutocomplete = false;
   @Input() set btnSize(
     value: 'extraSmall' | 'small' | 'medium' | 'large' | 'default'
   ) {

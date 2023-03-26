@@ -1,11 +1,5 @@
+import { Component, Input } from '@angular/core';
 import {
-  AfterViewInit,
-  ChangeDetectorRef,
-  Component,
-  Input,
-} from '@angular/core';
-import {
-  delay,
   forkJoin,
   map,
   Observable,
@@ -16,18 +10,15 @@ import {
   takeUntil,
   tap,
 } from 'rxjs';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import {
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
 } from '@angular/forms';
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   ActionType,
-  PieceActionSettings,
   TriggerType,
   UpdateActionRequest,
   UpdateTriggerRequest,
@@ -37,34 +28,20 @@ import { BuilderSelectors } from '../../../../../store/builder/builder.selector'
 import { FlowsActions } from '../../../../../store/flow/flows.action';
 import { FlagService } from '../../../../../../common/service/flag.service';
 
-type DescribeControlValue = {
-  name: string;
-  version: string;
-  displayName: string;
-};
-
 @Component({
   selector: 'app-edit-step-accodion',
   templateUrl: './edit-step-accodion.component.html',
   styleUrls: ['./edit-step-accodion.component.scss'],
 })
-export class EditStepAccordionComponent implements AfterViewInit {
+export class EditStepAccordionComponent {
   autoSaveListener$: Observable<{
-    describe: { displayName: string; name: string };
     input: any;
   }>;
   readOnly$: Observable<boolean> = of(false);
   cancelAutoSaveListener$: Subject<boolean> = new Subject();
   _selectedStep: FlowItem;
   stepForm: UntypedFormGroup;
-  openedIndex = 1;
-  faChevornDown = faChevronDown;
-  faInfoCircle = faInfoCircle;
   webhookUrl$: Observable<string>;
-
-  //delayExpansionPanelRendering$ is an observable that fixes an issue with angular material's accordions rendering content even though they are closed
-  delayExpansionPanelRendering$: Observable<boolean>;
-  displayNameChangedListener$: Observable<string>;
   ActionType = ActionType;
   TriggerType = TriggerType;
   @Input() displayNameChanged$: Subject<string>;
@@ -74,12 +51,10 @@ export class EditStepAccordionComponent implements AfterViewInit {
     this.cancelAutoSaveListener$.next(true);
     this.updateFormValue(step);
     this.setAutoSaveListener();
-    this.setDiplayNameListener();
   }
 
   constructor(
     private formBuilder: UntypedFormBuilder,
-    private cd: ChangeDetectorRef,
     private store: Store,
     private snackbar: MatSnackBar,
     private flagService: FlagService
@@ -104,41 +79,11 @@ export class EditStepAccordionComponent implements AfterViewInit {
       })
     );
     this.stepForm = this.formBuilder.group({
-      describe: new UntypedFormControl({
-        value: {
-          name: '',
-          version: '',
-          displayName: '',
-        },
-      }),
       input: new UntypedFormControl({}),
     });
   }
 
-  ngAfterViewInit(): void {
-    const expansionAnimationDuration = 500;
-    this.delayExpansionPanelRendering$ = of(true).pipe(
-      delay(expansionAnimationDuration)
-    );
-  }
-
-  setOpenedIndex(index: number) {
-    this.openedIndex = index;
-    this.cd.markForCheck();
-  }
-
-  closed(index: number) {
-    if (this.openedIndex == index) {
-      this.openedIndex = -1;
-    }
-  }
   updateFormValue(stepSelected: FlowItem) {
-    const describeControl = this.stepForm.get('describe')!;
-    describeControl.setValue({
-      displayName: stepSelected.displayName,
-      name: stepSelected.name,
-      version: (stepSelected.settings as PieceActionSettings).pieceVersion,
-    });
     const inputControl = this.stepForm.get('input')!;
     const settings = stepSelected.settings;
     inputControl.setValue({
@@ -154,7 +99,6 @@ export class EditStepAccordionComponent implements AfterViewInit {
       tap(() => {
         if (
           this._selectedStep.type === TriggerType.PIECE ||
-          this._selectedStep.type === TriggerType.SCHEDULE ||
           this._selectedStep.type === TriggerType.WEBHOOK
         ) {
           this.store.dispatch(
@@ -174,13 +118,10 @@ export class EditStepAccordionComponent implements AfterViewInit {
   }
 
   prepareStepDataToSave(): UpdateActionRequest | UpdateTriggerRequest {
-    const describeControlValue: DescribeControlValue =
-      this.stepForm.get('describe')!.value;
     const inputControlValue = this.stepForm.get('input')!.value;
     const stepToSave: UpdateActionRequest = JSON.parse(
       JSON.stringify(this._selectedStep)
     );
-    stepToSave.displayName = describeControlValue.displayName;
     stepToSave.settings = inputControlValue;
     stepToSave.name = this._selectedStep.name;
     stepToSave.valid = this.stepForm.valid;
@@ -195,20 +136,6 @@ export class EditStepAccordionComponent implements AfterViewInit {
       stepToSave.settings = componentSettings;
     }
     return stepToSave;
-  }
-
-  setDiplayNameListener() {
-    this.displayNameChangedListener$ = this.stepForm
-      .get('describe')!
-      .valueChanges.pipe(
-        takeUntil(this.cancelAutoSaveListener$),
-        map((describeFormValue) => {
-          return describeFormValue.displayName;
-        }),
-        tap((displayName) => {
-          this.displayNameChanged$.next(displayName);
-        })
-      );
   }
 
   copyUrl(url: string) {

@@ -6,9 +6,6 @@ export function getDisplayNameForTrigger(triggerType: TriggerType) {
       return 'Webhook Trigger';
       break;
     }
-    case TriggerType.SCHEDULE: {
-      return 'Schedule Trigger';
-    }
     case TriggerType.EMPTY: {
       return 'Empty Trigger';
     }
@@ -54,7 +51,12 @@ export function findDefaultFlowDisplayName(flows: Flow[]) {
   return `Flow ${defaultFlowIndex}`;
 }
 
-export const defaultCronJobForScheduleTrigger = '0/5 * * * *';
-
 export const autoSaveDebounceTime = 600;
 export const cacheArtifactDebounceTime = 200;
+
+export function isOverflown(element: HTMLElement) {
+  return (
+    element.scrollHeight > element.clientHeight ||
+    element.scrollWidth > element.clientWidth
+  );
+}

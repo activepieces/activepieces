@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/blackbaud/tsconfig.lib.json",
         "packageJson": "packages/pieces/blackbaud/package.json",
         "main": "packages/pieces/blackbaud/src/index.ts",
-        "assets": ["packages/pieces/blackbaud/*.md"]
+        "assets": ["packages/pieces/blackbaud/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

@@ -1,15 +1,9 @@
-import {ExecutionState, StepOutput} from '@activepieces/shared';
-import {VariableService} from '../../src/services/variable-service';
+import { ExecutionState, StepOutput } from '@activepieces/shared';
+import { VariableService } from '../../src/lib/services/variable-service';
 
 const variableService = new VariableService();
 
 const executionState = new ExecutionState();
-
-executionState.insertConfigs({
-  price: 6.4,
-  msg: 'Hello World',
-  foo: true,
-});
 
 const stepOutput: StepOutput = {
   output: {
@@ -18,7 +12,7 @@ const stepOutput: StepOutput = {
   },
 };
 executionState.insertStep(
-    stepOutput,
+  stepOutput,
   'trigger',
   []
 );
@@ -38,61 +32,61 @@ describe('Variable Service', () => {
 
   test('Test resolve text with configs variables', async () => {
     expect(
-      variableService.resolve('Price is ${configs.price}', executionState)
+      await variableService.resolve('Price is ${configs.price}', executionState)
     ).toEqual('Price is 6.4');
   });
   test('Test resolve object steps variables', async () => {
-    expect(variableService.resolve('${trigger}', executionState)).toEqual(
-        {
-          items: [5, 'a'],
-          name: 'John',
-        },
+    expect(await variableService.resolve('${trigger}', executionState)).toEqual(
+      {
+        items: [5, 'a'],
+        name: 'John',
+      },
     );
   });
 
   test('Test resolve steps variables', async () => {
-    expect(variableService.resolve('${trigger.name}', executionState)).toEqual(
+    expect(await variableService.resolve('${trigger.name}', executionState)).toEqual(
       'John'
     );
   });
 
   test('Test resolve multiple variables', async () => {
     expect(
-      variableService.resolve('${configs.msg} ${trigger.name}', executionState)
+      await variableService.resolve('${configs.msg} ${trigger.name}', executionState)
     ).toEqual('Hello World John');
   });
 
-  test('Test resolve variable array items',async () => {
+  test('Test resolve variable array items', async () => {
     expect(
-      variableService.resolve(
+      await variableService.resolve(
         '${trigger.items[0]} ${trigger.items[1]}',
         executionState
       )
     ).toEqual('5 a');
   });
 
-  test('Test resolve array variable',async () => {
-    expect(variableService.resolve('${trigger.items}', executionState)).toEqual(
+  test('Test resolve array variable', async () => {
+    expect(await variableService.resolve('${trigger.items}', executionState)).toEqual(
       [5, 'a']
     );
   });
 
-  test('Test resolve text with array variable',async () => {
+  test('Test resolve text with array variable', async () => {
     expect(
-      variableService.resolve('items are ${trigger.items}', executionState)
+      await variableService.resolve('items are ${trigger.items}', executionState)
     ).toEqual('items are [5,"a"]');
   });
 
   test('Test resolve object variable', async () => {
-    expect(variableService.resolve('${trigger}', executionState)).toEqual({
+    expect(await variableService.resolve('${trigger}', executionState)).toEqual({
       items: [5, 'a'],
       name: 'John',
     });
   });
 
-  test('Test resolve text with object variable',async () => {
+  test('Test resolve text with object variable', async () => {
     expect(
-      variableService.resolve(
+      await variableService.resolve(
         'values from trigger step: ${trigger}',
         executionState
       )
@@ -101,7 +95,7 @@ describe('Variable Service', () => {
 
   test('Test resolve integer from variables', async () => {
     expect(
-      variableService.resolve('${trigger.items[0]}', executionState)
+      await variableService.resolve('${trigger.items[0]}', executionState)
     ).toEqual(5);
   });
 
@@ -152,12 +146,12 @@ describe('Variable Service', () => {
         },
         executionState
       )
-    ).toEqual({input: {foo: 'bar', nums: [1, 2, 5], var: 6.4}});
+    ).toEqual({ input: { foo: 'bar', nums: [1, 2, 5], var: 6.4 } });
   });
 
-  test('Test resolve array',  async () => {
+  test('Test resolve array', async () => {
     expect(
-      await  variableService.resolve([1, 'a', '${trigger.name}'], executionState)
+      await variableService.resolve([1, 'a', '${trigger.name}'], executionState)
     ).toEqual([1, 'a', 'John']);
   });
 });

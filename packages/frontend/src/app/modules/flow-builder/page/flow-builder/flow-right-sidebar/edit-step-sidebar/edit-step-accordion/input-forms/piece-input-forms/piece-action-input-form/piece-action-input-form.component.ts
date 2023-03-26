@@ -15,19 +15,26 @@ import {
 } from '@angular/forms';
 
 import {
+  forkJoin,
   map,
   Observable,
   of,
   pairwise,
+  shareReplay,
   startWith,
   Subject,
   switchMap,
+  take,
   tap,
 } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { ActionMetaService } from '../../../../../../../../service/action-meta.service';
 import { FlowItemsDetailsState } from '../../../../../../../../store/model/flow-items-details-state.model';
-import { ActionType, PieceActionSettings } from '@activepieces/shared';
+import {
+  ActionType,
+  PieceActionSettings,
+  UpdateActionRequest,
+} from '@activepieces/shared';
 import { DropdownItem } from '../../../../../../../../../common/model/dropdown-item.interface';
 import {
   PieceConfig,
@@ -37,6 +44,8 @@ import {
 import { PieceActionInputFormSchema } from '../../input-forms-schema';
 import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
 import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
+import { FlowsActions } from '../../../../../../../../store/flow/flows.action';
+import { isOverflown } from '../../../../../../../../../common/utils';
 declare type ActionDropdownOptionValue = {
   actionName: string;
   configs: PieceConfig[];
@@ -86,13 +95,14 @@ export class PieceActionInputFormComponent
 {
   readonly ACTION_FORM_CONTROL_NAME = ACTION_FORM_CONTROL_NAME;
   readonly CONFIGS_FORM_CONTROL_NAME = CONFIGS_FORM_CONTROL_NAME;
+  updateStepName$: Observable<void>;
   pieceActionForm: UntypedFormGroup;
   initialSetup$: Observable<ActionDropdownOption[]>;
   triggerInitialSetup$: Subject<true> = new Subject();
   pieceName: string;
   pieceVersion: string;
   intialComponentInputFormValue: PieceActionInputFormSchema | null;
-  selectedAction$: Observable<any>;
+  selectedAction$: Observable<ActionDropdownOption | undefined>;
   actions$: Observable<ActionDropdownOption[]>;
   valueChanges$: Observable<void>;
   actionDropdownValueChanged$: Observable<{
@@ -101,7 +111,7 @@ export class PieceActionInputFormComponent
   }>;
   allAuthConfigs$: Observable<DropdownItem[]>;
   flowItemDetails$: Observable<FlowItemsDetailsState>;
-
+  isOverflown = isOverflown;
   onChange: (val) => void = (value) => {
     value;
   };
@@ -164,7 +174,6 @@ export class PieceActionInputFormComponent
         const actionsKeys = Object.keys(pieceMetadata.actions);
         return actionsKeys.map((actionName) => {
           const action = pieceMetadata.actions[actionName];
-
           const configs = Object.entries(action.props).map(
             ([propName, prop]) => {
               return propsConvertor.convertToFrontEndConfig(
@@ -173,7 +182,6 @@ export class PieceActionInputFormComponent
               );
             }
           );
-
           return {
             value: {
               actionName: actionName,
@@ -185,74 +193,87 @@ export class PieceActionInputFormComponent
             },
           };
         });
-      })
+      }),
+      tap(() => {
+        this.triggerInitialSetup$.next(true);
+      }),
+      shareReplay(1)
     );
     this.initialSetup$ = this.triggerInitialSetup$.pipe(
       switchMap(() => {
         return this.actions$.pipe(
           tap((items) => {
-            if (
-              this.intialComponentInputFormValue &&
-              this.intialComponentInputFormValue.actionName
-            ) {
-              this.pieceActionForm
-                .get(ACTION_FORM_CONTROL_NAME)!
-                .setValue(
-                  items.find(
-                    (i) =>
-                      i.value.actionName ===
-                      this.intialComponentInputFormValue?.actionName
-                  )?.value,
-                  {
-                    emitEvent: false,
-                  }
-                );
-              this.selectedAction$ = of(
-                items.find(
-                  (it) =>
-                    it.value.actionName ===
-                    this.intialComponentInputFormValue!.actionName
-                )
-              ).pipe(
-                tap((selectedAction) => {
-                  if (selectedAction) {
-                    const configs = [...selectedAction.value.configs];
-                    const configsValues =
-                      this.intialComponentInputFormValue!.input;
-                    if (configsValues) {
-                      Object.keys(configsValues).forEach((key) => {
-                        const config = configs.find((c) => c.key === key);
-                        if (config) {
-                          config.value = configsValues[key];
-                        }
-                      });
-                    }
-                    this.pieceActionForm.addControl(
-                      CONFIGS_FORM_CONTROL_NAME,
-                      new UntypedFormControl({
-                        value: {
-                          configs: [...configs],
-                          customizedInputs:
-                            this.intialComponentInputFormValue!.inputUiInfo
-                              ?.customizedInputs || {},
-                        },
-                        disabled: this.pieceActionForm.disabled,
-                      }),
-                      {
-                        emitEvent: false,
-                      }
-                    );
-                    this.cd.detectChanges();
-                  }
-                })
-              );
-            }
+            this.setInitialFormValue(items);
           })
         );
       })
     );
     this.triggerInitialSetup$.next(true);
   }
+  private setInitialFormValue(items: ActionDropdownOption[]) {
+    if (
+      this.intialComponentInputFormValue &&
+      this.intialComponentInputFormValue.actionName
+    ) {
+      this.pieceActionForm
+        .get(ACTION_FORM_CONTROL_NAME)!
+        .setValue(
+          items.find(
+            (i) =>
+              i.value.actionName ===
+              this.intialComponentInputFormValue?.actionName
+          )?.value,
+          {
+            emitEvent: false,
+          }
+        );
+      this.selectedAction$ = of(
+        items.find(
+          (it) =>
+            it.value.actionName ===
+            this.intialComponentInputFormValue!.actionName
+        )
+      ).pipe(
+        tap((selectedAction) => {
+          this.setInitialConfigsFormValue(selectedAction);
+        })
+      );
+    }
+  }
+
+  private setInitialConfigsFormValue(
+    selectedAction: ActionDropdownOption | undefined
+  ) {
+    if (selectedAction) {
+      const configs = [...selectedAction.value.configs];
+      const configsValues = this.intialComponentInputFormValue!.input;
+      if (configsValues) {
+        Object.keys(configsValues).forEach((key) => {
+          const config = configs.find((c) => c.key === key);
+          if (config) {
+            config.value = configsValues[key];
+          }
+        });
+      }
+      this.pieceActionForm.addControl(
+        CONFIGS_FORM_CONTROL_NAME,
+        new UntypedFormControl({
+          value: {
+            configs: [...configs],
+            customizedInputs:
+              this.intialComponentInputFormValue!.inputUiInfo
+                ?.customizedInputs || {},
+            setDefaultValues: false,
+          },
+          disabled: this.pieceActionForm.disabled,
+        }),
+        {
+          emitEvent: false,
+        }
+      );
+    }
+  }
+
   writeValue(obj: PieceActionInputFormSchema): void {
     this.intialComponentInputFormValue = obj;
     this.pieceName = obj.pieceName;
@@ -287,12 +308,8 @@ export class PieceActionInputFormComponent
   ) {
     if (selectedActionValue) {
       this.actionSelected(selectedActionValue);
-      this.selectedAction$ = this.actions$.pipe(
-        map((items) => {
-          return items.find(
-            (it) => it.value.actionName === selectedActionValue.actionName
-          );
-        })
+      this.selectedAction$ = this.findActionByActionName(
+        selectedActionValue.actionName
       );
     }
   }
@@ -308,17 +325,19 @@ export class PieceActionInputFormComponent
         new UntypedFormControl({
           configs: [...selectedActionValue.configs],
           customizedInputs: {},
+          setDefaultValues: true,
         })
       );
     } else {
       configsForm.setValue({
         configs: [...selectedActionValue.configs],
         customizedInputs: {},
+        setDefaultValues: true,
       });
     }
-
     this.cd.detectChanges();
     this.pieceActionForm.updateValueAndValidity();
+    this.updateStepName(selectedActionValue.actionName);
   }
 
   getFormattedFormData(
@@ -361,5 +380,34 @@ export class PieceActionInputFormComponent
     } else {
       this.pieceActionForm.enable();
     }
+  }
+  findActionByActionName(actionNameLookup: string) {
+    return this.actions$.pipe(
+      map((items) => {
+        return items.find((it) => it.value.actionName === actionNameLookup);
+      })
+    );
+  }
+  updateStepName(actionName: string) {
+    this.updateStepName$ = forkJoin({
+      action: this.findActionByActionName(actionName),
+      step: this.store.select(BuilderSelectors.selectCurrentStep).pipe(take(1)),
+    }).pipe(
+      tap((res) => {
+        if (res.step && res.action) {
+          const clone = {
+            ...res.step,
+            displayName: res.action.label.name,
+          } as UpdateActionRequest;
+
+          this.store.dispatch(
+            FlowsActions.updateAction({
+              operation: clone,
+            })
+          );
+        }
+      }),
+      map(() => void 0)
+    );
   }
 }

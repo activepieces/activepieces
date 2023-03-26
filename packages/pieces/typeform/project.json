@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/typeform/tsconfig.lib.json",
         "packageJson": "packages/pieces/typeform/package.json",
         "main": "packages/pieces/typeform/src/index.ts",
-        "assets": ["packages/pieces/typeform/*.md"]
+        "assets": ["packages/pieces/typeform/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

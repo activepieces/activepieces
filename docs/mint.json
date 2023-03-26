@@ -98,6 +98,7 @@
         "pieces/apps/pipedrive",
         "pieces/apps/posthog",
         "pieces/apps/rss",
+        "pieces/apps/schedule",
         "pieces/apps/sendgrid",
         "pieces/apps/slack",
         "pieces/apps/square",

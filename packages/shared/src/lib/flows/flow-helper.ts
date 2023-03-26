@@ -21,10 +21,10 @@ const triggerSchemaValidation = TypeCompiler.Compile(Trigger);
 
 function isValid(flowVersion: FlowVersion) {
   let valid = true;
-  let step: Action | Trigger | undefined = flowVersion.trigger;
-  while (step !== undefined) {
+  const steps = flowHelper.getAllSteps(flowVersion);
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
     valid = valid && step.valid;
-    step = step.nextAction;
   }
   return valid;
 }
@@ -54,6 +54,13 @@ function deleteAction(
         deleted = true;
       }
     }
+    if (parentStep.type === ActionType.LOOP_ON_ITEMS) {
+      if (parentStep.firstLoopAction && parentStep.firstLoopAction.name === request.name) {
+        const stepToUpdate: Action = parentStep.firstLoopAction;
+        parentStep.firstLoopAction = stepToUpdate.nextAction;
+        deleted = true;
+      }
+    }
   }
   if (!deleted) {
     throw new ActivepiecesError({
@@ -70,6 +77,9 @@ function traverseFlowInternal(step: Trigger | Action | undefined): (Action | Tri
     if (step.type === ActionType.BRANCH) {
       steps.push(...traverseFlowInternal(step.onFailureAction));
       steps.push(...traverseFlowInternal(step.onSuccessAction));
+    }
+    if (step.type === ActionType.LOOP_ON_ITEMS) {
+      steps.push(...traverseFlowInternal(step.firstLoopAction));
     }
     step = step.nextAction;
   }
@@ -97,19 +107,27 @@ function updateAction(
   for (let i = 0; i < steps.length; i++) {
     const parentStep = steps[i];
     if (parentStep.nextAction && parentStep.nextAction.name === request.name) {
-      const { nextAction, onSuccessAction, onFailureAction } = extractActions(parentStep.nextAction);
-      parentStep.nextAction = createAction(request, nextAction, onFailureAction, onSuccessAction);
+      const actions = extractActions(parentStep.nextAction);
+      parentStep.nextAction = createAction(request, actions);
       updated = true;
     }
     if (parentStep.type === ActionType.BRANCH) {
       if (parentStep.onFailureAction && parentStep.onFailureAction.name === request.name) {
-        const { nextAction, onSuccessAction, onFailureAction } = extractActions(parentStep.onFailureAction);
-        parentStep.onFailureAction = createAction(request, nextAction, onFailureAction, onSuccessAction);
+        const actions = extractActions(parentStep.onFailureAction);
+        parentStep.onFailureAction = createAction(request, actions);
         updated = true;
       }
       if (parentStep.onSuccessAction && parentStep.onSuccessAction.name === request.name) {
-        const { nextAction, onSuccessAction, onFailureAction } = extractActions(parentStep.onSuccessAction);
-        parentStep.onSuccessAction = createAction(request, nextAction, onFailureAction, onSuccessAction);
+        const actions = extractActions(parentStep.onSuccessAction);
+        parentStep.onSuccessAction = createAction(request, actions);
+        updated = true;
+      }
+    }
+    if (parentStep.type === ActionType.LOOP_ON_ITEMS) {
+
+      if (parentStep.firstLoopAction && parentStep.firstLoopAction.name === request.name) {
+        const actions = extractActions(parentStep.firstLoopAction);
+        parentStep.firstLoopAction = createAction(request, actions);
         updated = true;
       }
     }
@@ -122,11 +140,12 @@ function updateAction(
   }
 }
 
-function extractActions(step: Trigger | Action): { nextAction?: Action, onSuccessAction?: Action, onFailureAction?: Action } {
+function extractActions(step: Trigger | Action): { nextAction?: Action, onSuccessAction?: Action, onFailureAction?: Action , firstLoopAction?:Action } {
   const nextAction = step.nextAction;
   const onSuccessAction = step.type === ActionType.BRANCH ? step.onSuccessAction : undefined;
   const onFailureAction = step.type === ActionType.BRANCH ? step.onFailureAction : undefined;
-  return { nextAction, onSuccessAction, onFailureAction };
+  const firstLoopAction = step.type === ActionType.LOOP_ON_ITEMS ? step.firstLoopAction : undefined;
+  return { nextAction, onSuccessAction, onFailureAction ,firstLoopAction};
 }
 
 
@@ -138,31 +157,52 @@ function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
       params: {}
     }, `Parent step ${request.parentStep} not found`);
   }
-  if (parentStep.type === ActionType.BRANCH && request.stepLocationRelativeToParent !== undefined && request.stepLocationRelativeToParent !== null) {
+  if (parentStep.type === ActionType.LOOP_ON_ITEMS && request.stepLocationRelativeToParent) {
+    if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_LOOP) {
+      parentStep.firstLoopAction = createAction(request.action, {
+        nextAction: parentStep.firstLoopAction
+      });
+    } else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
+      parentStep.nextAction = createAction(request.action, {
+        nextAction: parentStep.nextAction
+      });
+    } else {
+      throw new ActivepiecesError({
+        code: ErrorCode.FLOW_OPERATION_INVALID,
+        params: {}
+      }, `Loop step parent ${request.stepLocationRelativeToParent} not found`);
+    }
+  } else if (parentStep.type === ActionType.BRANCH && request.stepLocationRelativeToParent) {
     if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_TRUE_BRANCH) {
-      parentStep.onSuccessAction = createAction(request.action, parentStep.onSuccessAction);
+      parentStep.onSuccessAction = createAction(request.action, {
+        nextAction: parentStep.onSuccessAction
+      });
     } else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_FALSE_BRANCH) {
-      parentStep.onFailureAction = createAction(request.action, parentStep.onFailureAction);
-    } 
-    else if(request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
-      parentStep.nextAction = createAction(request.action, parentStep.nextAction);
+      parentStep.onFailureAction = createAction(request.action, {
+        nextAction: parentStep.onFailureAction
+      });
+    }
+    else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
+      parentStep.nextAction = createAction(request.action, {
+        nextAction: parentStep.nextAction
+      });
     }
     else {
       throw new ActivepiecesError({
         code: ErrorCode.FLOW_OPERATION_INVALID,
         params: {}
-      }, `Branch ${request.stepLocationRelativeToParent} not found`);
+      }, `Branch step parernt ${request.stepLocationRelativeToParent} not found`);
     }
   } else {
-    parentStep.nextAction = createAction(request.action, parentStep.nextAction);
+    parentStep.nextAction = createAction(request.action, {
+      nextAction: parentStep.nextAction
+    });
   }
 }
 
 function createAction(
   request: UpdateActionRequest,
-  nextAction: Action | undefined,
-  onFailureAction?: Action,
-  onSuccessAction?: Action
+  { nextAction, onSuccessAction, onFailureAction, firstLoopAction }: { nextAction?: Action, onSuccessAction?: Action, onFailureAction?: Action, firstLoopAction?: Action },
 ): Action {
   const baseProperties = {
     displayName: request.displayName,
@@ -184,8 +224,7 @@ function createAction(
     case ActionType.LOOP_ON_ITEMS:
       action = {
         ...baseProperties,
-        // Required to do when loops is supported
-        // firstLoopAction: request.firstLoopAction, 
+        firstLoopAction: firstLoopAction,
         type: ActionType.LOOP_ON_ITEMS,
         settings: request.settings,
       };
@@ -226,13 +265,6 @@ function createTrigger(
       trigger = {
         ...baseProperties,
         type: TriggerType.EMPTY,
-        settings: request.settings,
-      };
-      break;
-    case TriggerType.SCHEDULE:
-      trigger = {
-        ...baseProperties,
-        type: TriggerType.SCHEDULE,
         settings: request.settings,
       };
       break;
