@@ -5,7 +5,7 @@ interface TimebasedPolling<INPUT> {
     items: (
         { propsValue }: { propsValue: INPUT },
     ) => Promise<{
-        epochMillSeconds: number;
+        epochMilliSeconds: number;
         data: unknown;
     }[]
     >;
@@ -33,11 +33,11 @@ export const pollingHelper = {
     async poll<INPUT>(polling: Polling<INPUT>, { store, propsValue }: { store: Store, propsValue: INPUT }): Promise<unknown[]> {
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED: {
-                const lastEpochMillSeconds = (await store.get<number>("lastPoll"))!;
+                const lastEpochMilliSeconds = (await store.get<number>("lastPoll"))!;
                 const items = await polling.items({ propsValue });
-                const newLastEpochMillSeconds = items.reduce((acc, item) => Math.max(acc, item.epochMillSeconds), lastEpochMillSeconds);
-                await store.put("lastPoll", newLastEpochMillSeconds);
-                return items.filter(f => f.epochMillSeconds > lastEpochMillSeconds).map((item) => item.data);
+                const newLastEpochMilliSeconds = items.reduce((acc, item) => Math.max(acc, item.epochMilliSeconds), lastEpochMilliSeconds);
+                await store.put("lastPoll", newLastEpochMilliSeconds);
+                return items.filter(f => f.epochMilliSeconds > lastEpochMilliSeconds).map((item) => item.data);
             }
             case DedupeStrategy.LAST_ITEM: {
                 const lastItemId = (await store.get<unknown>("lastItem"));

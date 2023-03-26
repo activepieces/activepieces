@@ -78,7 +78,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       redirect_url: 'https://secrets.activepieces.com/redirect',
       scope: this.pieceAuthConfig.scope!.join(' '),
       pkce: this.pieceAuthConfig.pkce,
-      extraParams: this.pieceAuthConfig.extra!,
+      extraParams: this.pieceAuthConfig.extra || {},
       client_id: dialogData.clientId,
     };
     this.isTriggerAppWebhook = dialogData.isTriggerAppWebhook;
@@ -225,7 +225,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     return {
       auth_url: this.pieceAuthConfig.authUrl!,
       client_id: this._cloudConnectionPopupSettings.client_id,
-      extraParams: this.pieceAuthConfig.oAuthProps || {},
+      extraParams: this.pieceAuthConfig.extra || {},
       redirect_url: this._cloudConnectionPopupSettings.redirect_url,
       pkce: this.pieceAuthConfig.pkce,
       scope: this.pieceAuthConfig.scope!.join(' '),
