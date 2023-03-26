@@ -20,7 +20,18 @@ export const sendInBlueProps = {
     displayName: "Attributes",
     description: `Pass the set of attributes and their values. The attribute's parameter should be passed in capital letter while creating a contact. These attributes must be present in your SendinBlue account. For eg:
     {"FNAME":"Elly", "LNAME":"Roger"}`,
-    required: false
+    required: false,
+    defaultValue: {
+      "FIRST_NAME": "",
+      "LAST_NAME": "",
+      "SMS": "",
+      "CIV": "",
+      "DOB": "",
+      "ADDRESS": "",
+      "ZIP_CODE": "",
+      "CITY": "",
+      "AREA": ""
+    }
   }),
   email_blacklisted: Property.Checkbox({
     displayName: "Email Blacklisted?",
