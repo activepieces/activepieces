@@ -14,7 +14,7 @@ const triggerEventController = async (fastify: FastifyInstance) => {
 
 
     fastify.get(
-        "/test",
+        "/poll",
         {
             schema: {
                 querystring: TestTriggerRequest
