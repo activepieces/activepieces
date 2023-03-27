@@ -143,7 +143,7 @@ const start = async () => {
             port: 3000,
         });
 
-        console.log(`
+        logger.info(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
     /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
    /  \\    | |         | |      | |    \\ \\  / /  | |__    | |__) |   | |   | |__    | |      | |__    | (___
@@ -155,7 +155,7 @@ started on ${system.get(SystemProp.FRONTEND_URL)}
     `);
     }
     catch (err) {
-        app.log.error(err);
+        logger.error(err);
         process.exit(1);
     }
 };

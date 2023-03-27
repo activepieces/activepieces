@@ -155,7 +155,7 @@ async function buildCodes(projectId: ProjectId, flowVersion: FlowVersion): Promi
 
 const getArtifactFile = async (projectId: ProjectId, codeActionSettings: CodeActionSettings): Promise<File> => {
     if (codeActionSettings.artifactPackagedId === undefined) {
-        console.log(`Building package for file id ${codeActionSettings.artifactSourceId}`);
+        logger.info(`Building package for file id ${codeActionSettings.artifactSourceId}`);
         const sourceId = codeActionSettings.artifactSourceId;
         const fileEntity = await fileService.getOne({ projectId: projectId, fileId: sourceId });
         const builtFile = await codeBuilder.build(fileEntity.data);

@@ -74,7 +74,7 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
             }
         }
 
-        console.log("Running Flow Run migeration");
+        logger.info("Running Flow Run migration");
         const flowRuns = await flowRunRepo.find();
         for (let i = 0; i < flowRuns.length; ++i) {
             const currentFlowRun = flowRuns[i];
