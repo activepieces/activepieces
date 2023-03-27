@@ -37,6 +37,7 @@ import { todoist } from '@activepieces/piece-todoist';
 import { twilio } from '@activepieces/piece-twilio';
 import { typeform } from '@activepieces/piece-typeform';
 import { wordpress } from '@activepieces/piece-wordpress';
+import { webflow } from '@activepieces/piece-webflow';
 import { zoom } from '@activepieces/piece-zoom';
 import { generatebanners } from '@activepieces/piece-generatebanners';
 import { connections } from '@activepieces/piece-connections';
@@ -94,6 +95,7 @@ export const pieces: Piece[] = [
     youtube,
     square,
     delay,
+    webflow,
     dataMapper,
     intercom,
     schedule
