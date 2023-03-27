@@ -1,9 +1,10 @@
 import { FastifyPluginAsync, FastifyRequest } from "fastify";
+import { FlowId, WebhookUrlParams } from "@activepieces/shared";
 import { StatusCodes } from "http-status-codes";
-import { WebhookUrlParams } from "@activepieces/shared";
+import { logger } from "../helper/logger";
 import { webhookService } from "./webhook-service";
 
-export const webhookController: FastifyPluginAsync = async (app) => {
+export const webhookSimulationController: FastifyPluginAsync = async (app) => {
     app.all(
         "/:flowId",
         {
@@ -31,9 +32,12 @@ export const webhookController: FastifyPluginAsync = async (app) => {
     );
 };
 
-const handler = async (request: FastifyRequest, flowId: string) => {
-    await webhookService.callback({
-        flowId: flowId,
+const handler = async (request: FastifyRequest, flowId: FlowId) => {
+    logger.debug([`[WebhookSimulationController] flowId=${flowId}`]);
+
+    await webhookService.simulationCallback({
+        flowId,
+        projectId: request.principal.projectId,
         payload: {
             method: request.method,
             headers: request.headers as Record<string, string>,

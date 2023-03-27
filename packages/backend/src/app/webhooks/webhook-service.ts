@@ -2,6 +2,7 @@ import {
     ApEnvironment,
     EventPayload,
     FlowId,
+    ProjectId,
     RunEnvironment,
 } from '@activepieces/shared';
 import { collectionService } from '../collections/collection.service';
@@ -15,6 +16,7 @@ import { system } from '../helper/system/system';
 import { SystemProp } from '../helper/system/system-prop';
 import { getPublicIp } from '../helper/public-ip-utils';
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service';
+import { flowService } from '../flows/flow.service';
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
@@ -40,7 +42,8 @@ export const webhookService = {
             projectId: collection.projectId,
             collectionId: collection.id,
             flowVersion: flowVersion,
-            payload: payload
+            payload: payload,
+            simulate: false,
         });
 
         const createFlowRuns = payloads.map((payload) =>
@@ -54,19 +57,63 @@ export const webhookService = {
 
         await Promise.all(createFlowRuns);
     },
-    async getWebhookPrefix(): Promise<string> {
+
+    async simulationCallback({ flowId, projectId, payload }: SimulationCallbackParams): Promise<void> {
+        const flow = await flowService.getOneOrThrow({
+            id: flowId,
+            projectId,
+        });
+
+        const collection = await collectionService.getOneOrThrow({
+            id: flow.collectionId,
+            projectId,
+        });
+
+        const events = await triggerUtils.executeTrigger({
+            projectId: collection.projectId,
+            collectionId: collection.id,
+            flowVersion: flow.version,
+            simulate: true,
+            payload,
+        });
+
+        const eventSaveJobs = events.map(event => triggerEventService.saveEvent({
+            flowId,
+            projectId,
+            payload: event,
+        }));
+
+        await Promise.all(eventSaveJobs);
+
+        await triggerUtils.disable({
+            projectId: collection.projectId,
+            collectionId: collection.id,
+            flowVersion: flow.version,
+            simulate: true,
+        });
+    },
+
+    async getWebhookPrefix(controllerPrefix: WebhookControllerPrefix = ''): Promise<string> {
         const environment = system.get(SystemProp.ENVIRONMENT);
-        let url = environment === ApEnvironment.PRODUCTION ? system.get(SystemProp.FRONTEND_URL) : system.get(SystemProp.WEBHOOK_URL);
+
+        let url = environment === ApEnvironment.PRODUCTION
+            ? system.get(SystemProp.FRONTEND_URL)
+            : system.get(SystemProp.WEBHOOK_URL);
+
         // Localhost doesn't work with webhooks, so we need try to use the public ip
         if (extractHostname(url) == 'localhost' && environment === ApEnvironment.PRODUCTION) {
             url = `http://${(await getPublicIp()).ip}`;
         }
+
         const slash = url.endsWith('/') ? '' : '/';
         const redirect = environment === ApEnvironment.PRODUCTION ? 'api/' : '';
-        return `${url}${slash}${redirect}v1/webhooks`;
+
+        return `${url}${slash}${redirect}v1/webhooks${controllerPrefix}`;
     },
-    async getWebhookUrl(flowId: FlowId): Promise<string> {
-        const webhookPrefix = await this.getWebhookPrefix();
+
+    async getWebhookUrl({ flowId, simulate }: GetWebhookUrlParams): Promise<string> {
+        const controllerPrefix: WebhookControllerPrefix = simulate ? '/simulate' : '';
+        const webhookPrefix = await this.getWebhookPrefix(controllerPrefix);
         return `${webhookPrefix}/${flowId}`;
     }
 };
@@ -81,7 +128,18 @@ function extractHostname(url: string): string | null {
     }
 }
 
-interface CallbackParams {
+type WebhookControllerPrefix = '' | '/simulate';
+
+type GetWebhookUrlParams = {
+    flowId: FlowId;
+    simulate?: boolean;
+}
+
+type CallbackParams = {
     flowId: FlowId;
     payload: EventPayload;
+}
+
+type SimulationCallbackParams = CallbackParams & {
+    projectId: ProjectId;
 }
