@@ -101,10 +101,11 @@ export const collectionController = async (fastify: FastifyInstance) => {
                 Querystring: ListCollectionsRequest;
             }>
         ) => {
-            return await collectionService.list(request.principal.projectId, request.query.cursor, request.query.limit ?? DEFAULT_PAGE_SIZE);
+            const collections = await collectionService.list(request.principal.projectId, request.query.cursor, request.query.limit ?? DEFAULT_PAGE_SIZE);
+            const collectionsDtoList= await collectionService.findInstanceStatusForCollections(collections);
+            return collectionsDtoList;
         }
     );
-
     fastify.post(
         "/",
         {

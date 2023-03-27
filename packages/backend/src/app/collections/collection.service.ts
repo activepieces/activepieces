@@ -2,8 +2,11 @@ import {
     apId,
     Collection,
     CollectionId,
+    CollectionListDto,
+    CollectionStatus,
     CreateCollectionRequest,
     Cursor,
+    InstanceStatus,
     ProjectId,
     SeekPage,
     TelemetryEventName,
@@ -16,6 +19,7 @@ import { databaseConnection } from "../database/database-connection";
 import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { instanceSideEffects } from "../instance/instance-side-effects";
 import { telemetry } from "../helper/telemetry.utils";
+import { instanceService } from "../instance/instance.service";
 
 export const collectionRepo = databaseConnection.getRepository(CollectionEntity);
 
@@ -65,6 +69,27 @@ export const collectionService = {
         const queryBuilder = collectionRepo.createQueryBuilder("collection").where({ projectId });
         const { data, cursor } = await paginator.paginate(queryBuilder.where({ projectId }));
         return paginationHelper.createPage<Collection>(data, cursor);
+    },
+    async findInstanceStatusForCollections(collections:SeekPage<Collection>):Promise<SeekPage<CollectionListDto>> {
+        const result:SeekPage<CollectionListDto> = {
+            next:collections.next,
+            previous:collections.previous,
+            data:[]
+        };
+    
+        for(const c of collections.data) {
+            const instance = await instanceService.getByCollectionId({projectId:c.projectId,collectionId: c.id});
+            if(instance) {
+                const dto= {...c,
+                    status: instance.status === InstanceStatus.DISABLED?
+                        CollectionStatus.DISABLED : CollectionStatus.ENABLED } as unknown as  CollectionListDto;
+                result.data.push(dto);
+            }
+            const dto= {...c,
+                status:CollectionStatus.UNPUBLISHED} as unknown as  CollectionListDto;
+            result.data.push(dto);
+        }
+        return result;
     },
 
     async update({ projectId, collectionId, request }: { projectId: ProjectId, collectionId: CollectionId, request: UpdateCollectionRequest }): Promise<Collection | null> {

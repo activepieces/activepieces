@@ -24,7 +24,7 @@ export class CollectionsTableComponent implements OnInit {
   archiveCollectionDialogClosed$: Observable<void>;
   createCollection$: Observable<Flow>;
   dataSource!: CollectionsTableDataSource;
-  displayedColumns = ['name', 'created', 'action'];
+  displayedColumns = ['name', 'created', 'status', 'action'];
   collectionDeleted$: Subject<boolean> = new Subject();
   areThereCollections$: Observable<boolean>;
   constructor(

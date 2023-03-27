@@ -8,7 +8,7 @@ import {
   map,
   catchError,
 } from 'rxjs';
-import { Collection } from '@activepieces/shared';
+import { CollectionListDto } from '@activepieces/shared';
 import { ApPaginatorComponent } from '../../../common/components/pagination/ap-paginator.component';
 import { ProjectService } from '../../../common/service/project.service';
 import { CollectionService } from '../../../common/service/collection.service';
@@ -18,8 +18,8 @@ import { CollectionService } from '../../../common/service/collection.service';
  * encapsulate all logic for fetching and manipulating the displayed data
  * (including sorting, pagination, and filtering).
  */
-export class CollectionsTableDataSource extends DataSource<Collection> {
-  data: Collection[] = [];
+export class CollectionsTableDataSource extends DataSource<CollectionListDto> {
+  data: CollectionListDto[] = [];
   public isLoading = true;
   constructor(
     private pageSize$: Observable<number>,
@@ -37,7 +37,7 @@ export class CollectionsTableDataSource extends DataSource<Collection> {
    * the returned stream emits new items.
    * @returns A stream of the items to be rendered.
    */
-  connect(): Observable<Collection[]> {
+  connect(): Observable<CollectionListDto[]> {
     return combineLatest({
       pageCursor: this.pageCursor$,
       pageSize: this.pageSize$,
