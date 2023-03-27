@@ -9,6 +9,7 @@ export const zendesk = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/zendesk.png',
   version: packageJson.version,
   authors: [
+    "abuaboud"
   ],
   actions: [
   ],
