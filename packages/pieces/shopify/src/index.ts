@@ -14,7 +14,7 @@ export const shopify = createPiece({
   authors: [
     "abuaboud"
   ],
-  minimumSupportedRelease: '0.3.8',
+  minimumSupportedRelease: '0.3.9',
   actions: [
   ],
   triggers: [
