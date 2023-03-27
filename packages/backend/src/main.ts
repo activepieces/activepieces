@@ -80,7 +80,7 @@ app.addHook("onRequest", async (request, reply) => {
     });
     if (!route) {
         reply.code(404).send(`Oops! It looks like we hit a dead end. The endpoint you're searching for is nowhere to be found. We suggest turning around and trying another path. Good luck!`);
-    } 
+    }
 });
 
 app.addHook("onRequest", tokenVerifyMiddleware);
@@ -125,7 +125,7 @@ const start = async () => {
         await validateEnvPropsOnStartup();
         await databaseConnection.initialize();
         await databaseConnection.runMigrations();
-            
+
         const edition = await getEdition();
         logger.info("Activepieces " + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + " Edition");
         if (edition === ApEdition.ENTERPRISE) {

@@ -1,4 +1,16 @@
-import { apId, Cursor, Flow, FlowId, FlowVersion, PieceTrigger, ProjectId, SeekPage, Trigger, TriggerEvent , TriggerHookType, TriggerType} from "@activepieces/shared";
+import {
+    apId,
+    Cursor,
+    Flow,
+    FlowId,
+    PieceTrigger,
+    ProjectId,
+    SeekPage,
+    Trigger,
+    TriggerEvent ,
+    TriggerHookType,
+    TriggerType,
+} from "@activepieces/shared";
 import { databaseConnection } from "../../database/database-connection";
 import { engineHelper } from "../../helper/engine-helper";
 import { buildPaginator } from "../../helper/pagination/build-paginator";
@@ -8,20 +20,21 @@ import { webhookService } from "../../webhooks/webhook-service";
 import { flowService } from "../flow.service";
 import { TriggerEventEntity } from "./trigger-event.entity";
 
-const triggerEventrepo = databaseConnection.getRepository(TriggerEventEntity);
+const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity);
 
 export const triggerEventService = {
     async saveEvent({projectId, flowId, payload}:{projectId: ProjectId, flowId: FlowId, payload: unknown}): Promise<TriggerEvent> {
         const flow = await flowService.getOne({projectId: projectId, id: flowId, versionId: undefined, includeArtifacts: false});
         const sourceName = getSourceName(flow.version.trigger);
-        return triggerEventrepo.save({
+        return triggerEventRepo.save({
             id: apId(),
             projectId,
             flowId: flow.id,
             sourceName,
             payload,
-        });  
+        });
     },
+
     async test({projectId, flow}: {projectId: ProjectId, flow: Flow}): Promise<SeekPage<unknown>> {
         const trigger = flow.version.trigger;
         const emptyPage = paginationHelper.createPage<TriggerEvent>([], null);
@@ -36,7 +49,7 @@ export const triggerEventService = {
                 webhookUrl: await webhookService.getWebhookUrl(projectId),
                 projectId: projectId
             }) )as unknown[];
-            await triggerEventrepo.delete({
+            await triggerEventRepo.delete({
                 projectId,
                 flowId: flow.id,
             });
@@ -58,6 +71,11 @@ export const triggerEventService = {
             return emptyPage;
         }
     },
+
+    async simulate({ flow }: SimulateParams): Promise<void> {
+        return;
+    },
+
     async list({projectId, flow, cursor, limit}: ListParams): Promise<SeekPage<TriggerEvent>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor);
         const sourceName = getSourceName(flow.version.trigger);
@@ -72,7 +90,7 @@ export const triggerEventService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         });
-        const query = triggerEventrepo.createQueryBuilder("trigger_event").where({
+        const query = triggerEventRepo.createQueryBuilder("trigger_event").where({
             projectId,
             flowId,
             sourceName,
@@ -95,9 +113,13 @@ function getSourceName(trigger: Trigger): string {
     }
 }
 
-interface ListParams {
+type SimulateParams = {
+    flow: Flow;
+}
+
+type ListParams = {
     projectId: ProjectId;
-    flow: Flow; 
+    flow: Flow;
     cursor: Cursor | null;
     limit: number;
 }
