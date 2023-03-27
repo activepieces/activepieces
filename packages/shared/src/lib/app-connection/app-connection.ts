@@ -21,6 +21,7 @@ export enum AppConnectionType {
   CLOUD_OAUTH2 = "CLOUD_OAUTH2",
   SECRET_TEXT = "SECRET_TEXT",
   BASIC_AUTH = "BASIC_AUTH",
+  CUSTOM_AUTH ="CUSTOM_AUTH"
 }
 
 export interface SecretTextConnectionValue {
@@ -42,6 +43,12 @@ export interface BaseOAuth2ConnectionValue {
   refresh_token: string;
   scope: string;
   data: Record<string, any>
+}
+
+export interface CustomAuthConnectionValue
+{
+  type: AppConnectionType.CUSTOM_AUTH;
+  props: Record<string, unknown>;
 }
 
 export interface CloudOAuth2ConnectionValue extends BaseOAuth2ConnectionValue {
@@ -72,5 +79,6 @@ export type OAuth2AppConnection = BaseAppConnection<OAuth2ConnectionValueWithApp
 export type SecretKeyAppConnection = BaseAppConnection<SecretTextConnectionValue>;
 export type CloudAuth2Connection = BaseAppConnection<CloudOAuth2ConnectionValue>;
 export type BasicAuthConnection = BaseAppConnection<BasicAuthConnectionValue>;
-export type AppConnection = BasicAuthConnection | SecretKeyAppConnection | OAuth2AppConnection | CloudAuth2Connection;
-export type AppConnectionValue = SecretTextConnectionValue | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | BasicAuthConnectionValue;
+export type CustomAuthConnection = BaseAppConnection<CustomAuthConnectionValue>;
+export type AppConnection = BasicAuthConnection | SecretKeyAppConnection | OAuth2AppConnection | CloudAuth2Connection | CustomAuthConnection;
+export type AppConnectionValue = SecretTextConnectionValue | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | BasicAuthConnectionValue | CustomAuthConnectionValue;
