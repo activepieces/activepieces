@@ -46,13 +46,9 @@ const triggerEventController = async (fastify: FastifyInstance) => {
                 Querystring: SimulateTriggerRequest;
             }>
         ) => {
-            const flow = await flowService.getOneOrThrow({
+            await triggerEventService.simulate({
+                flowId: request.query.flowId,
                 projectId: request.principal.projectId,
-                id: request.query.flowId,
-            });
-
-            return await triggerEventService.simulate({
-                flow: flow,
             });
         }
     );

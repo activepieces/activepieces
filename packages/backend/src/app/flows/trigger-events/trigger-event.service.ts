@@ -13,9 +13,11 @@ import {
 } from "@activepieces/shared";
 import { databaseConnection } from "../../database/database-connection";
 import { engineHelper } from "../../helper/engine-helper";
+import { logger } from "../../helper/logger";
 import { buildPaginator } from "../../helper/pagination/build-paginator";
 import { paginationHelper } from "../../helper/pagination/pagination-utils";
 import { Order } from "../../helper/pagination/paginator";
+import { triggerUtils } from "../../helper/trigger-utils";
 import { webhookService } from "../../webhooks/webhook-service";
 import { flowService } from "../flow.service";
 import { TriggerEventEntity } from "./trigger-event.entity";
@@ -46,7 +48,10 @@ export const triggerEventService = {
                 hookType: TriggerHookType.TEST,
                 flowVersion: flow.version,
                 collectionId: flow.collectionId,
-                webhookUrl: await webhookService.getWebhookUrl(projectId),
+                webhookUrl: await webhookService.getWebhookUrl({
+                    flowId: flow.id,
+                    simulate: true,
+                }),
                 projectId: projectId
             }) )as unknown[];
             await triggerEventRepo.delete({
@@ -72,8 +77,20 @@ export const triggerEventService = {
         }
     },
 
-    async simulate({ flow }: SimulateParams): Promise<void> {
-        return;
+    async simulate({ flowId, projectId }: SimulateParams): Promise<void> {
+        logger.debug(`[TriggerEventService#simulate] flowId=${flowId} projectId=${projectId}`);
+
+        const flow = await flowService.getOneOrThrow({
+            id: flowId,
+            projectId,
+        });
+
+        await triggerUtils.enable({
+            collectionId: flow.collectionId,
+            flowVersion: flow.version,
+            projectId: flow.projectId,
+            simulate: true,
+        });
     },
 
     async list({projectId, flow, cursor, limit}: ListParams): Promise<SeekPage<TriggerEvent>> {
@@ -114,7 +131,8 @@ function getSourceName(trigger: Trigger): string {
 }
 
 type SimulateParams = {
-    flow: Flow;
+    flowId: FlowId;
+    projectId: ProjectId;
 }
 
 type ListParams = {
