@@ -25,7 +25,7 @@ export class TestStepService {
   }
   getPollingResults(flowId: string) {
     return this.http.get<SeekPage<TriggerEvent>>(
-      environment.apiUrl + '/trigger-events/poll',
+      environment.apiUrl + '/trigger-events/test',
       {
         params: {
           flowId: flowId,
