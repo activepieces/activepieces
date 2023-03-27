@@ -48,6 +48,7 @@ import { square } from '@activepieces/piece-square';
 import { delay } from '@activepieces/piece-delay';
 import { dataMapper } from '@activepieces/piece-data-mapper';
 import { schedule } from '@activepieces/piece-schedule';
+import { constantContact } from '@activepieces/piece-constant-contact';
 
 export const pieces: Piece[] = [
     airtable,
@@ -98,7 +99,8 @@ export const pieces: Piece[] = [
     delay,
     dataMapper,
     intercom,
-    schedule
+    schedule,
+    constantContact
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
