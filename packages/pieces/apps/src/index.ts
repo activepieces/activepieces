@@ -29,6 +29,7 @@ import { pipedrive } from '@activepieces/piece-pipedrive';
 import { posthog } from '@activepieces/piece-posthog';
 import { rssFeed } from '@activepieces/piece-rss';
 import { sendgrid } from '@activepieces/piece-sendgrid';
+import { sendinblue } from '@activepieces/piece-sendinblue';
 import { slack } from '@activepieces/piece-slack';
 import { storage } from '@activepieces/piece-store';
 import { stripe } from '@activepieces/piece-stripe';
@@ -81,6 +82,7 @@ export const pieces: Piece[] = [
     posthog,
     rssFeed,
     sendgrid,
+    sendinblue,
     slack,
     storage,
     stripe,
