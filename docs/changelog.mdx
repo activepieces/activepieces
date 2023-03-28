@@ -11,6 +11,29 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+## 03/27/2023
+
+<Tip>
+Please upgrade your instance to ensure that you can see the latest pieces as some new pieces may not be compatible with older versions.
+</Tip>
+
+**Enhancements:**
+- Simple Scheduler Piece (Every Hour / Every Day / Every Week / Cron Expression)
+- Loops Piece
+- Remove Accordions from Edit Step Panel
+
+**Bug Fixes:**
+- New pieces version that require new version of activepieces will no longer shows.
+- Allowing multiple versions of the same piece in the flow.
+- Webhook URL is no longer truncated when it's too long.
+
+**Chore:**
+- Validation pipeline to make sure version is incremented when modify existing piece.
+- Dervie the piece code name from the package name, so avoid possible bugs.
+
+**Full Changelog:**
+https://github.com/activepieces/activepieces/compare/0.3.7...0.3.8
+
 ### 03/16/2023
 
 **New Pieces:**
