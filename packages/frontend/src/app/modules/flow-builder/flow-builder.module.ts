@@ -71,6 +71,7 @@ import { CanvasUtilsComponent } from './page/flow-builder/canvas-utils/canvas-ut
 import { HorizontalSidebarSeparatorComponent } from './page/flow-builder/canvas-utils/horizontal-sidebar-separator/horizontal-sidebar-separator.component';
 import { TestStepComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/test-step/test-step.component';
 import { StepNameEditorComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/step-name-editor/step-name-editor.component';
+import { CustomAuthConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/custom-auth-connection-dialog/custom-auth-connection-dialog.component';
 
 @NgModule({
   imports: [
@@ -155,6 +156,7 @@ import { StepNameEditorComponent } from './page/flow-builder/flow-right-sidebar/
     HorizontalSidebarSeparatorComponent,
     TestStepComponent,
     StepNameEditorComponent,
+    CustomAuthConnectionDialogComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [FlowBuilderHeaderComponent],
