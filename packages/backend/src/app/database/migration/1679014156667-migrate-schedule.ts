@@ -21,7 +21,7 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
                     },
                     triggerName: "cron_expression",
                     pieceName: "schedule",
-                    pieceVersion: "0.0.1",
+                    pieceVersion: "0.0.2",
                 }
                 count++;
                 await flowVersionRepo.update(flowVersion.id, flowVersion);

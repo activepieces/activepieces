@@ -7,7 +7,7 @@ description: ""
 
 The Code piece is where you can write your custom code. It maximizes flexibility as you can write code to achieve things you can't with the predefined pieces.
 
-This piece currently supports writing code in **Node.js**, you can also bring in your favorite **npm packages**.
+This piece currently supports writing code in **Node.js**, you can also bring in your favorite **npm packages** by clicking on the fullscreen button and **Add npm package***.
 
 Code is executed in an isolated environment and doesn't have access to machine resources outside this environment.
 
@@ -35,18 +35,10 @@ Parameters are key/value pairs. The **key** you define here will become availabl
 
 For example, if you pass `mode` as a **key** and `full` as a **value**, you can access this parameter by `params.mode` and its value will be `full`.
 
-The parameters become powerful when you pass outputs from previous steps. The syntax to use outputs from previous steps is generally `${step_name.variable_name}`.
+The parameters become powerful when you pass outputs from previous steps.
 
-For example, if you'd like to pass the dynamic output `current_mode` from the `trigger` step to a `params.mode`, you will keep the parameter **key** as `mode` and change its **value** to `${trigger.current_mode}`. This will still be accessible in your code through `params.mode`.
+## Fullscreen 
 
-### Code
+You can go to fullscreen to add npm packages and have a better coding and testing experience by clicking the fullscreen button.
 
-<Warning>
-   This section is currently under construction 🚧
-</Warning>
-
-## Examples
-
-<Warning>
-   This section is currently under construction 🚧
-</Warning>
+![title](/resources/screenshots/code-fullscreen.png)
