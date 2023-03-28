@@ -1,4 +1,4 @@
-import { AuthenticationType, createAction, httpClient, HttpMethod, Property } from "../../../../framework/src";
+import { AuthenticationType, createAction, httpClient, HttpMethod, Property } from "@activepieces/framework";
 
 
 export const postStatus = createAction({
@@ -7,15 +7,22 @@ export const postStatus = createAction({
     description: 'Post a status to Mastodon',
     sampleData: {},
     props: {
-        base_url: Property.ShortText({
-            displayName: 'Base URL',
-            description: 'The base URL of your Mastodon instance',
-            required: true,
-        }),
-        authentication: Property.ShortText({
-            displayName: 'Access Token',
-            description: 'The access token for your Mastodon account, check the documentation for how to get this',
-            required: true,
+        authentication: Property.CustomAuth({
+            displayName: "Authentication",
+            props: {
+                base_url: Property.ShortText({
+                    displayName: 'Base URL',
+                    description: 'The base URL of your Mastodon instance',
+                    defaultValue: "https://mastodon.social/",
+                    required: true,
+                }),
+                access_token: Property.ShortText({
+                    displayName: 'Access Token',
+                    description: 'The access token for your Mastodon account, check the documentation for how to get this',
+                    required: true
+                })
+            },
+            required: true
         }),
         status: Property.LongText({
             displayName: 'Status',
@@ -24,10 +31,10 @@ export const postStatus = createAction({
         })
     },
     async run(context) {
-        const token = context.propsValue.authentication;
+        const token = context.propsValue.authentication.access_token;
         const status = context.propsValue.status;
         // Remove trailing slash from base_url
-        const baseUrl = context.propsValue.base_url.replace(/\/$/, "");
+        const baseUrl = context.propsValue.authentication.base_url.replace(/\/$/, "");
         return await httpClient.sendRequest({
             url: `${baseUrl}/api/v1/statuses`,
             method: HttpMethod.POST,
@@ -37,7 +44,7 @@ export const postStatus = createAction({
             },
             body: {
                 status,
-            }             
+            }
         })
     },
 });

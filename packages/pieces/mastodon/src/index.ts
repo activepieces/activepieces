@@ -8,6 +8,7 @@ export const mastodon = createPiece({
   displayName: 'Mastodon',
   logoUrl: 'https://cdn.activepieces.com/pieces/mastodon.png',
   version: packageJson.version,
+  minimumSupportedRelease: '0.3.9',
   authors: [
     "abuaboud"
   ],
