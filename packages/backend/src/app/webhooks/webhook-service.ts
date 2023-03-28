@@ -1,46 +1,39 @@
 import {
     ApEnvironment,
     EventPayload,
+    Flow,
     FlowId,
+    FlowVersion,
     ProjectId,
     RunEnvironment,
 } from '@activepieces/shared';
-import { collectionService } from '../collections/collection.service';
 import { flowRunService } from '../flow-run/flow-run-service';
 import { flowVersionService } from '../flows/flow-version/flow-version.service';
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
 import { triggerUtils } from '../helper/trigger-utils';
-import { instanceService } from '../instance/instance.service';
 import { flowRepo } from '../flows/flow.repo';
 import { system } from '../helper/system/system';
 import { SystemProp } from '../helper/system/system-prop';
 import { getPublicIp } from '../helper/public-ip-utils';
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service';
-import { flowService } from '../flows/flow.service';
+import { isEmpty, isNil } from 'lodash';
+import { logger } from '../helper/logger';
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
-        const flow = await flowRepo.findOneBy({ id: flowId });
-        if (flow === null || flowId === null || flowId === undefined) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FLOW_NOT_FOUND,
-                params: {
-                    id: flowId,
-                },
-            });
-        }
-        triggerEventService.saveEvent({ flowId: flowId, payload, projectId: flow.projectId });
-        const collection = await collectionService.getOneOrThrow({ projectId: flow.projectId, id: flow.collectionId });
-        const instance = await instanceService.getByCollectionId({ projectId: flow.projectId, collectionId: collection.id });
-        if (instance === null) {
-            return;
-        }
-        const flowVersion = await flowVersionService.getOneOrThrow(
-            instance.flowIdToVersionId[flow.id]
-        );
+        const flow = await getFlowOrThrow(flowId);
+        const { projectId, collectionId } = flow;
+        const flowVersion = await getLatestFlowVersionOrThrow(flowId, projectId);
+
+        triggerEventService.saveEvent({
+            flowId,
+            payload,
+            projectId,
+        });
+
         const payloads: unknown[] = await triggerUtils.executeTrigger({
-            projectId: collection.projectId,
-            collectionId: collection.id,
+            projectId,
+            collectionId,
             flowVersion: flowVersion,
             payload: payload,
             simulate: false,
@@ -49,7 +42,7 @@ export const webhookService = {
         const createFlowRuns = payloads.map((payload) =>
             flowRunService.start({
                 environment: RunEnvironment.PRODUCTION,
-                collectionId: collection.id,
+                collectionId,
                 flowVersionId: flowVersion.id,
                 payload,
             })
@@ -58,24 +51,24 @@ export const webhookService = {
         await Promise.all(createFlowRuns);
     },
 
-    async simulationCallback({ flowId, projectId, payload }: SimulationCallbackParams): Promise<void> {
-        const flow = await flowService.getOneOrThrow({
-            id: flowId,
-            projectId,
-        });
-
-        const collection = await collectionService.getOneOrThrow({
-            id: flow.collectionId,
-            projectId,
-        });
+    async simulationCallback({ flowId, payload }: CallbackParams): Promise<void> {
+        const flow = await getFlowOrThrow(flowId);
+        const { projectId, collectionId } = flow;
+        const flowVersion = await getLatestFlowVersionOrThrow(flowId, projectId);
 
         const events = await triggerUtils.executeTrigger({
-            projectId: collection.projectId,
-            collectionId: collection.id,
-            flowVersion: flow.version,
-            simulate: true,
+            projectId,
+            collectionId,
+            flowVersion,
             payload,
+            simulate: true,
         });
+
+        if (isEmpty(events)) {
+            return;
+        }
+
+        logger.debug(events, `[WebhookService#simulationCallback] events, flowId=${flowId}`);
 
         const eventSaveJobs = events.map(event => triggerEventService.saveEvent({
             flowId,
@@ -86,9 +79,9 @@ export const webhookService = {
         await Promise.all(eventSaveJobs);
 
         await triggerUtils.disable({
-            projectId: collection.projectId,
-            collectionId: collection.id,
-            flowVersion: flow.version,
+            projectId,
+            collectionId,
+            flowVersion,
             simulate: true,
         });
     },
@@ -128,6 +121,48 @@ function extractHostname(url: string): string | null {
     }
 }
 
+const getLatestFlowVersionOrThrow = async (flowId: FlowId, projectId: ProjectId): Promise<FlowVersion> => {
+    const flowVersionId = undefined;
+    const includeArtifacts = false;
+
+    const flowVersion = await flowVersionService.getFlowVersion(
+        projectId,
+        flowId,
+        flowVersionId,
+        includeArtifacts,
+    );
+
+    if (isNil(flowVersion)) {
+        logger.error(`[WebhookService#getLatestFlowVersionOrThrow] error=flow_version_not_found flowId=${flowId} projectId=${projectId}`);
+
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_NOT_FOUND,
+            params: {
+                id: flowId,
+            },
+        });
+    }
+
+    return flowVersion;
+};
+
+const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
+    const flow = await flowRepo.findOneBy({ id: flowId });
+
+    if (isNil(flow)) {
+        logger.error(`[WebhookService#getFlowOrThrow] error=instance_not_found flowId=${flowId}`);
+
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_NOT_FOUND,
+            params: {
+                id: flowId,
+            },
+        });
+    }
+
+    return flow;
+}
+
 type WebhookControllerPrefix = '' | '/simulate';
 
 type GetWebhookUrlParams = {
@@ -138,8 +173,4 @@ type GetWebhookUrlParams = {
 type CallbackParams = {
     flowId: FlowId;
     payload: EventPayload;
-}
-
-type SimulationCallbackParams = CallbackParams & {
-    projectId: ProjectId;
 }

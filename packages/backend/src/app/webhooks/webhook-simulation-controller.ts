@@ -37,7 +37,6 @@ const handler = async (request: FastifyRequest, flowId: FlowId) => {
 
     await webhookService.simulationCallback({
         flowId,
-        projectId: request.principal.projectId,
         payload: {
             method: request.method,
             headers: request.headers as Record<string, string>,
