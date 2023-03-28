@@ -8,6 +8,7 @@ export const zohoCrm = createPiece({
   displayName: "Zoho CRM",
   logoUrl: "https://cdn.activepieces.com/pieces/zoho-crm.png",
   version: packageJson.version,
+  minimumSupportedRelease: "0.3.9",
   authors: [
     "abuaboud"
   ],
