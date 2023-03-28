@@ -1,62 +1,132 @@
 import { AuthenticationType, createAction, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework";
+import { props } from "../common/props";
 
 export const xeroCreateInvoice = createAction({
   name: 'xero_create_invoice',
   description: 'Create Xero Invoice',
   displayName: 'Create or Update Invoice',
   sampleData: {
-    "Invoices": [{
-      "Type": "ACCREC", 
-      "Contact": {
-        "ContactID":
-          "430fa14a-f945-44d3-9f97-5df5e28441b8"
-      }, 
-      "LineItems": [{
-        "Description": "Acme Tires", 
-        "Quantity": 2, 
-        "UnitAmount": 20,
-        "AccountCode": "200", 
-        "TaxType": "NONE", 
-        "LineAmount": 40
-      }],
-      "Date": "2019-03-11", 
-      "DueDate": "2018-12-10", 
-      "Reference": "Website Design", 
-      "Status": "AUTHORISED"
-    }]
+    "Id": "16693b0a-bc43-4e20-9f2c-114dd48b469b",
+    "Status": "OK",
+    "ProviderName": "ActivePie",
+    "DateTimeUTC": "/Date(1679982403282)/",
+    "Invoices": [
+      {
+        "Type": "ACCREC",
+        "InvoiceID": "dd0f3411-c57d-41dd-8651-37737f56cf67",
+        "InvoiceNumber": "INV-0001",
+        "Reference": "GHHGC743237",
+        "Prepayments": [],
+        "Overpayments": [],
+        "AmountDue": 200,
+        "AmountPaid": 0,
+        "SentToContact": false,
+        "CurrencyRate": 1,
+        "IsDiscounted": false,
+        "HasErrors": false,
+        "InvoicePaymentServices": [],
+        "Contact": {
+          "ContactID": "e595b89d-347e-447d-a859-ee03340ec88d",
+          "ContactStatus": "ACTIVE",
+          "Name": "DSAP",
+          "EmailAddress": "dq@example.com",
+          "BankAccountDetails": "",
+          "Addresses": [
+            {
+              "AddressType": "STREET",
+              "City": "",
+              "Region": "",
+              "PostalCode": "",
+              "Country": ""
+            },
+            {
+              "AddressType": "POBOX",
+              "City": "",
+              "Region": "",
+              "PostalCode": "",
+              "Country": ""
+            }
+          ],
+          "Phones": [
+            {
+              "PhoneType": "DEFAULT",
+              "PhoneNumber": "",
+              "PhoneAreaCode": "",
+              "PhoneCountryCode": ""
+            },
+            {
+              "PhoneType": "DDI",
+              "PhoneNumber": "",
+              "PhoneAreaCode": "",
+              "PhoneCountryCode": ""
+            },
+            {
+              "PhoneType": "FAX",
+              "PhoneNumber": "",
+              "PhoneAreaCode": "",
+              "PhoneCountryCode": ""
+            },
+            {
+              "PhoneType": "MOBILE",
+              "PhoneNumber": "",
+              "PhoneAreaCode": "",
+              "PhoneCountryCode": ""
+            }
+          ],
+          "UpdatedDateUTC": "/Date(1679982402187+0000)/",
+          "ContactGroups": [],
+          "IsSupplier": false,
+          "IsCustomer": true,
+          "SalesTrackingCategories": [],
+          "PurchasesTrackingCategories": [],
+          "ContactPersons": [],
+          "HasValidationErrors": false
+        },
+        "DateString": "2023-03-04T00:00:00",
+        "Date": "/Date(1677888000000+0000)/",
+        "DueDateString": "2023-03-18T00:00:00",
+        "DueDate": "/Date(1679097600000+0000)/",
+        "BrandingThemeID": "4b3fdee3-c068-4121-a348-db3b4b7934d9",
+        "Status": "SUBMITTED",
+        "LineAmountTypes": "Exclusive",
+        "LineItems": [
+          {
+            "Description": "Description",
+            "UnitAmount": 200,
+            "TaxType": "NONE",
+            "TaxAmount": 0,
+            "LineAmount": 200,
+            "AccountCode": "200",
+            "Tracking": [],
+            "Quantity": 1,
+            "LineItemID": "43331784-c61d-4a56-8488-312b76f5c705",
+            "ValidationErrors": []
+          }
+        ],
+        "SubTotal": 200,
+        "TotalTax": 0,
+        "Total": 200,
+        "UpdatedDateUTC": "/Date(1679982403190+0000)/",
+        "CurrencyCode": "KES"
+      }
+    ]
   },
   props: {
-    authentication: Property.OAuth2({
-      description: "",
-      displayName: 'Authentication',
-      authUrl: "https://app.clickup.com/api",
-      tokenUrl: "https://app.clickup.com/api/v2/oauth/token",
-      required: true,
-      scope: [
-        'accounting.contacts'
-      ]
-    }),
-    invoice_id: Property.ShortText({
-      displayName: "Invoice ID",
-      description: "ID of the invoice to update",
-      required: false
-    }),
-    contact_id: Property.ShortText({
-      displayName: "Contact ID",
-      description: "ID of the contact to create invoice for.",
-      required: true
-    }),
+    authentication: props.authentication,
+    tenant_id: props.tenant_id,
+    invoice_id: props.invoice_id,
+    contact_id: props.contact_id(true),
     line_item: Property.Object({
       displayName: "Line Item",
       description: "Invoice line items",
       required: true,
       defaultValue: {
-        Description: undefined, 
+        AccountCode: 200,
         Quantity: 0,
         UnitAmount: 0,
-        AccountCode: undefined, 
-        TaxType: "NONE", 
-        LineAmount: 0
+        LineAmount: 0,
+        TaxType: "NONE",
+        Description: "",
       }
     }),
     date: Property.ShortText({
@@ -80,25 +150,25 @@ export const xeroCreateInvoice = createAction({
       required: true,
       options: {
         options: [
-          {label: 'Draft', value: 'DRAFT'	},
-          {label: 'Submitted', value: 'SUBMITTED'},
-          {label: 'Authorised', value: 'AUTHORISED'},
-          {label: 'Submitted', value: 'SUBMITTED'},
-          {label: 'Deleted', value: 'DELETED'},
-          {label: 'Voided', value: 'VOIDED'},
+          { label: 'Draft', value: 'DRAFT' },
+          { label: 'Submitted', value: 'SUBMITTED' },
+          { label: 'Authorised', value: 'AUTHORISED' },
+          { label: 'Submitted', value: 'SUBMITTED' },
+          { label: 'Deleted', value: 'DELETED' },
+          { label: 'Voided', value: 'VOIDED' },
         ]
       }
     })
   },
   async run(context) {
-    const { invoice_id, contact_id, ...invoice } = context.propsValue
+    const { invoice_id, contact_id, tenant_id, ...invoice } = context.propsValue
 
     const body = {
       Invoices: [{
-        Type: "ACCREC", 
+        Type: "ACCREC",
         Contact: {
           ContactID: contact_id
-        }, 
+        },
         LineItems: [invoice.line_item],
         Date: invoice.date,
         DueDate: invoice.due_date,
@@ -115,6 +185,9 @@ export const xeroCreateInvoice = createAction({
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.propsValue.authentication.access_token
+      },
+      headers: {
+        'Xero-Tenant-Id': tenant_id
       }
     }
 
