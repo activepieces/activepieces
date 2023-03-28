@@ -34,8 +34,8 @@ export const webhookService = {
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId,
             collectionId,
-            flowVersion: flowVersion,
-            payload: payload,
+            flowVersion,
+            payload,
             simulate: false,
         });
 
