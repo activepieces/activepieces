@@ -35,6 +35,9 @@
       "@activepieces/piece-connections": [
         "packages/pieces/connections/src/index.ts"
       ],
+      "@activepieces/piece-constant-contact": [
+        "packages/pieces/constant-contact/src/index.ts"
+      ],
       "@activepieces/piece-csv": ["packages/pieces/csv/src/index.ts"],
       "@activepieces/piece-data-mapper": [
         "packages/pieces/data-mapper/src/index.ts"
