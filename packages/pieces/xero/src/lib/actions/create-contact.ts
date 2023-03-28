@@ -1,4 +1,5 @@
 import { AuthenticationType, createAction, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework";
+import { props } from "../common/props";
 
 export const xeroCreateContact = createAction({
   name: 'xero_create_contact',
@@ -19,21 +20,9 @@ export const xeroCreateContact = createAction({
     }]
   },
   props: {
-    authentication: Property.OAuth2({
-      description: "",
-      displayName: 'Authentication',
-      authUrl: "https://app.clickup.com/api",
-      tokenUrl: "https://app.clickup.com/api/v2/oauth/token",
-      required: true,
-      scope: [
-        'accounting.contacts'
-      ]
-    }),
-    contact_id: Property.ShortText({
-      displayName: "Contact ID",
-      description: "ID of the contact to update",
-      required: false
-    }),
+    authentication: props.authentication,
+    tenant_id: props.tenant_id,
+    contact_id: props.contact_id(),
     name: Property.ShortText({
       displayName: "Name",
       description: "Contact name, in full.",
@@ -46,8 +35,7 @@ export const xeroCreateContact = createAction({
     })
   },
   async run(context) {
-    const { name, email, contact_id } = context.propsValue
-
+    const { name, email, contact_id, tenant_id } = context.propsValue
     const body = {
       Contacts: [{
         Name: name,
@@ -63,6 +51,9 @@ export const xeroCreateContact = createAction({
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.propsValue.authentication.access_token
+      },
+      headers: {
+        'Xero-Tenant-Id': tenant_id
       }
     }
 
