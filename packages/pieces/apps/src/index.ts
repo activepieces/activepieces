@@ -23,6 +23,7 @@ import { googleTasks } from '@activepieces/piece-google-tasks';
 import { hackernews } from '@activepieces/piece-hackernews';
 import { http } from '@activepieces/piece-http';
 import { hubspot } from '@activepieces/piece-hubspot';
+import { jotform } from '@activepieces/piece-jotform';
 import { mailchimp } from '@activepieces/piece-mailchimp';
 import { openai } from '@activepieces/piece-openai';
 import { pipedrive } from '@activepieces/piece-pipedrive';
@@ -75,6 +76,7 @@ export const pieces: Piece[] = [
     hackernews,
     http,
     hubspot,
+    jotform,
     mailchimp,
     openai,
     pipedrive,
