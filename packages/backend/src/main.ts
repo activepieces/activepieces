@@ -32,6 +32,7 @@ import { appEventRoutingModule } from "./app/app-event-routing/app-event-routing
 import { appCredentialModule } from "@ee/product-embed/backend/app-credentials/app-credentials.module";
 import { connectionKeyModule } from "@ee/product-embed/backend/connection-keys/connection-key.module";
 import { triggerEventModule } from "./app/flows/trigger-events/trigger-event.module";
+import { seedDevData } from "./app/database/seeds/dev-seeds";
 
 const app = fastify({
     logger,
@@ -81,6 +82,7 @@ app.addHook("onRequest", async (request, reply) => {
     if (!route) {
         reply.code(404).send(`Oops! It looks like we hit a dead end. The endpoint you're searching for is nowhere to be found. We suggest turning around and trying another path. Good luck!`);
     }
+    }
 });
 
 app.addHook("onRequest", tokenVerifyMiddleware);
@@ -122,9 +124,11 @@ app.setErrorHandler(errorHandler);
 const start = async () => {
     try {
 
-        await validateEnvPropsOnStartup();
+        validateEnvPropsOnStartup();
         await databaseConnection.initialize();
         await databaseConnection.runMigrations();
+
+        await seedDevData();
 
         const edition = await getEdition();
         logger.info("Activepieces " + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + " Edition");

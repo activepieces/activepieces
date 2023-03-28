@@ -56,6 +56,7 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     },
     {
         connection: createRedisClient(),
+        concurrency: system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
     }
 );
 
