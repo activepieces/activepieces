@@ -8,18 +8,23 @@ import {
   map,
   catchError,
 } from 'rxjs';
-import { CollectionListDto } from '@activepieces/shared';
+import { CollectionListDto, InstanceStatus } from '@activepieces/shared';
 import { ApPaginatorComponent } from '../../../common/components/pagination/ap-paginator.component';
 import { ProjectService } from '../../../common/service/project.service';
 import { CollectionService } from '../../../common/service/collection.service';
+import { FormControl } from '@angular/forms';
+
+type CollectionListDtoWithInstanceStatusToggleControl = CollectionListDto & {
+  instanceToggleControl: FormControl<boolean>;
+};
 
 /**
  * Data source for the LogsTable view. This class should
  * encapsulate all logic for fetching and manipulating the displayed data
  * (including sorting, pagination, and filtering).
  */
-export class CollectionsTableDataSource extends DataSource<CollectionListDto> {
-  data: CollectionListDto[] = [];
+export class CollectionsTableDataSource extends DataSource<CollectionListDtoWithInstanceStatusToggleControl> {
+  data: CollectionListDtoWithInstanceStatusToggleControl[] = [];
   public isLoading = true;
   constructor(
     private pageSize$: Observable<number>,
@@ -37,7 +42,7 @@ export class CollectionsTableDataSource extends DataSource<CollectionListDto> {
    * the returned stream emits new items.
    * @returns A stream of the items to be rendered.
    */
-  connect(): Observable<CollectionListDto[]> {
+  connect(): Observable<CollectionListDtoWithInstanceStatusToggleControl[]> {
     return combineLatest({
       pageCursor: this.pageCursor$,
       pageSize: this.pageSize$,
@@ -60,10 +65,16 @@ export class CollectionsTableDataSource extends DataSource<CollectionListDto> {
       tap((res) => {
         this.paginator.next = res.next;
         this.paginator.previous = res.previous;
-        this.data = res.data;
         this.isLoading = false;
+        const instanceTogglesControls = this.createTogglesControls(res.data);
+        this.data = res.data.map((c) => {
+          return {
+            ...c,
+            instanceToggleControl: instanceTogglesControls[c.id],
+          };
+        });
       }),
-      map((res) => res.data)
+      map(() => this.data)
     );
   }
 
@@ -73,5 +84,15 @@ export class CollectionsTableDataSource extends DataSource<CollectionListDto> {
    */
   disconnect(): void {
     //ignore
+  }
+  createTogglesControls(collections: CollectionListDto[]) {
+    const controls: Record<string, FormControl> = {};
+    collections.forEach((c) => {
+      controls[c.id] = new FormControl({
+        value: c.status === InstanceStatus.ENABLED ? true : false,
+        disabled: !c.valid,
+      });
+    });
+    return controls;
   }
 }

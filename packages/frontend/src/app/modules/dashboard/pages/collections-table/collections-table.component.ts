@@ -5,7 +5,12 @@ import { map, Observable, startWith, Subject, switchMap, tap } from 'rxjs';
 import { CollectionsTableDataSource } from './collections-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
 import { ARE_THERE_COLLECTIONS_FLAG } from '../../dashboard.routing';
-import { Collection, Flow } from '@activepieces/shared';
+import {
+  Collection,
+  CollectionListDto,
+  Flow,
+  InstanceStatus,
+} from '@activepieces/shared';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
@@ -14,6 +19,8 @@ import { ApPaginatorComponent } from '../../../common/components/pagination/ap-p
 import { ProjectService } from '../../../common/service/project.service';
 import { FlowService } from '../../../common/service/flow.service';
 import { DEFAULT_PAGE_SIZE } from '../../../common/components/pagination/tables.utils';
+import { FormControl } from '@angular/forms';
+import { InstanceService } from '../../../common/service/instance.service';
 @Component({
   templateUrl: './collections-table.component.html',
 })
@@ -27,13 +34,15 @@ export class CollectionsTableComponent implements OnInit {
   displayedColumns = ['name', 'created', 'status', 'action'];
   collectionDeleted$: Subject<boolean> = new Subject();
   areThereCollections$: Observable<boolean>;
+  collectionsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
     private collectionService: CollectionService,
     private dialogService: MatDialog,
     private projectService: ProjectService,
-    private flowService: FlowService
+    private flowService: FlowService,
+    private instanceService: InstanceService
   ) {}
 
   ngOnInit(): void {
@@ -100,5 +109,29 @@ export class CollectionsTableComponent implements OnInit {
           })
         );
     }
+  }
+  toggleCollectionStatus(
+    collectionDto: CollectionListDto,
+    control: FormControl<boolean>
+  ) {
+    control.disable();
+    this.collectionsUpdateStatusRequest$[collectionDto.id] =
+      this.instanceService
+        .publish({
+          collectionId: collectionDto.id,
+          status:
+            collectionDto.status === InstanceStatus.ENABLED
+              ? InstanceStatus.DISABLED
+              : InstanceStatus.ENABLED,
+        })
+        .pipe(
+          tap((res) => {
+            control.enable();
+            control.setValue(res.status === InstanceStatus.ENABLED);
+            this.collectionsUpdateStatusRequest$[collectionDto.id] = null;
+            collectionDto.status = res.status;
+          }),
+          map(() => void 0)
+        );
   }
 }

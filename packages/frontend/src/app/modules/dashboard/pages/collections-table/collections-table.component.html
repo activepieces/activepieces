@@ -8,7 +8,17 @@
       </ng-container>
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef>Status</th>
-        <td mat-cell *matCellDef="let collection">{{ collection.status | titlecase }}</td>
+        <td mat-cell *matCellDef="let collection">
+          <div class="ap-flex ap-gap-2">
+            <mat-slide-toggle color="primary"
+              (click)="$event.stopImmediatePropagation(); toggleCollectionStatus(collection,collection.instanceToggleControl)"
+              [formControl]="collection.instanceToggleControl"
+              [matTooltip]="collection.valid? collection.instanceToggleControl.value? 'Collection is on' : 'Collection is off': 'Collection is incomplete, and cannot be turned on'"></mat-slide-toggle>
+            <div [class.ap-invisible]="!collectionsUpdateStatusRequest$[collection.id]"
+              class="spinner-border dark-spinner" role="status"></div>
+          </div>
+
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="created">
@@ -21,8 +31,9 @@
             [loading]="creatingCollection"> New Collection</app-button>
         </th>
         <td mat-cell *matCellDef="let collection" class="!ap-text-center">
+
           <app-icon-button tooltipText="Delete Collection" iconFilename="trash.svg" color="warn" [width]="16"
-            [height]="16" (click)="$event.stopImmediatePropagation(); deleteCollection(collection)"></app-icon-button>
+            [height]="16" (buttonClicked)="deleteCollection(collection)"></app-icon-button>
 
         </td>
       </ng-container>
@@ -42,3 +53,6 @@
 <app-empty-collections-table *ngIf="(areThereCollections$|async)===false"></app-empty-collections-table>
 <ng-container *ngIf="archiveCollectionDialogClosed$ | async"></ng-container>
 <ng-container *ngIf="createCollection$ | async"> </ng-container>
+<ng-container *ngFor="let obs$ of collectionsUpdateStatusRequest$ | keyvalue">
+  <ng-container *ngIf="obs$.value | async"></ng-container>
+</ng-container>

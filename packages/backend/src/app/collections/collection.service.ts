@@ -20,6 +20,8 @@ import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { instanceSideEffects } from "../instance/instance-side-effects";
 import { telemetry } from "../helper/telemetry.utils";
 import { instanceService } from "../instance/instance.service";
+import { flowService } from "../flows/flow.service";
+import { flow } from "lodash";
 
 export const collectionRepo = databaseConnection.getRepository(CollectionEntity);
 
@@ -79,18 +81,17 @@ export const collectionService = {
     
         for(const c of collections.data) {
             const instance = await instanceService.getByCollectionId({projectId:c.projectId,collectionId: c.id});
-            if(instance) {
-                const dto= {...c,
-                    status: instance.status === InstanceStatus.DISABLED?
-                        CollectionStatus.DISABLED : CollectionStatus.ENABLED } as unknown as  CollectionListDto;
-                result.data.push(dto);
-            }
-            else {
-                const dto= {...c,
-                    status:CollectionStatus.UNPUBLISHED} as unknown as  CollectionListDto;
-                result.data.push(dto);
-            }
-    
+            let collectionValidity = true;
+            const flows = await flowService.list({ projectId: c.projectId, collectionId: c.id, cursorRequest: null, limit: 10000 });
+            flows.data.forEach(f=>{
+                if(!f.version.valid) {
+                    collectionValidity=false;
+                }
+            });
+            const dto= {...c,
+                valid:collectionValidity,
+                status: instance? instance.status: InstanceStatus.DISABLED } as unknown as  CollectionListDto;
+            result.data.push(dto);
         }
         return result;
     },

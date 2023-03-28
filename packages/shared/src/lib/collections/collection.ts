@@ -1,12 +1,8 @@
 import {BaseModel, BaseModelSchema} from "../common/base-model";
 import {ProjectId} from "../project/project";
 import { Static, Type } from "@sinclair/typebox";
+import { InstanceStatus } from "../instance";
 export type CollectionId = string;
-export enum CollectionStatus {
-  ENABLED="ENABLED",
-  DISABLED="DISABLED",
-  UNPUBLISHED="UNPUBLISHED"
-}
 export interface Collection extends BaseModel<CollectionId> {
   displayName: string;
   projectId: ProjectId;
@@ -22,6 +18,7 @@ export const CollectionListDto = Type.Object({
   ...BaseModelSchema,
   projectId: Type.String(),
   displayName: Type.String(),
-  status: Type.Enum(CollectionStatus)
+  status: Type.Enum(InstanceStatus),
+  valid: Type.Boolean()
 });
 export type CollectionListDto = Static<typeof CollectionListDto>;
