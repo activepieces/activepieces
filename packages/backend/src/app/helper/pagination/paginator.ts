@@ -126,7 +126,9 @@ export default class Paginator<Entity extends ObjectLiteral> {
         let query = "";
         this.paginationKeys.forEach((key) => {
             params[key] = cursors[key];
-            where.orWhere(`${query}${this.alias}.${key} ${operator} :${key}`, params);
+            if(key === 'created'){
+                where.orWhere(`DATE_TRUNC('second', ${query}${this.alias}.${key}) ${operator} :${key}`, params);
+            }
             query = `${query}${this.alias}.${key} = :${key} AND `;
         });
     }

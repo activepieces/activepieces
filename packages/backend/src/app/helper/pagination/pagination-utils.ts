@@ -15,7 +15,7 @@ export function encodeByType(type: string, value: any): string | null {
     switch (type) {
     case "timestamp with time zone":
     case "date": {
-        return (value as Date).getTime().toString();
+        return new Date(value).valueOf().toString();
     }
     case "number": {
         return `${value}`;
@@ -47,12 +47,10 @@ export function decodeByType(type: string, value: string): string | number | Dat
     case "timestamp with time zone":
     case "date": {
         const timestamp = parseInt(value, 10);
-
         if (Number.isNaN(timestamp)) {
             throw new Error("date column in cursor should be a valid timestamp");
         }
-
-        return new Date(timestamp);
+        return new Date(timestamp).toISOString();
     }
 
     case "number": {
