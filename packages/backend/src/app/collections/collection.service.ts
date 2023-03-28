@@ -85,9 +85,12 @@ export const collectionService = {
                         CollectionStatus.DISABLED : CollectionStatus.ENABLED } as unknown as  CollectionListDto;
                 result.data.push(dto);
             }
-            const dto= {...c,
-                status:CollectionStatus.UNPUBLISHED} as unknown as  CollectionListDto;
-            result.data.push(dto);
+            else {
+                const dto= {...c,
+                    status:CollectionStatus.UNPUBLISHED} as unknown as  CollectionListDto;
+                result.data.push(dto);
+            }
+    
         }
         return result;
     },
