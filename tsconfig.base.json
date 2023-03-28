@@ -35,6 +35,9 @@
       "@activepieces/piece-connections": [
         "packages/pieces/connections/src/index.ts"
       ],
+      "@activepieces/piece-constant-contact": [
+        "packages/pieces/constant-contact/src/index.ts"
+      ],
       "@activepieces/piece-csv": ["packages/pieces/csv/src/index.ts"],
       "@activepieces/piece-data-mapper": [
         "packages/pieces/data-mapper/src/index.ts"
@@ -82,8 +85,12 @@
       ],
       "@activepieces/piece-posthog": ["packages/pieces/posthog/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
+      "@activepieces/piece-salesforce": [
+        "packages/pieces/salesforce/src/index.ts"
+      ],
       "@activepieces/piece-schedule": ["packages/pieces/schedule/src/index.ts"],
       "@activepieces/piece-sendgrid": ["packages/pieces/sendgrid/src/index.ts"],
+      "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
       "@activepieces/piece-sendinblue": [
         "packages/pieces/sendinblue/src/index.ts"
       ],

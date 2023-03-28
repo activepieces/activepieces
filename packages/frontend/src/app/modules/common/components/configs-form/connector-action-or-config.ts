@@ -66,9 +66,6 @@ export const propsConvertor = {
       customAuthProps: prop.props,
     };
 
-    if (name === 'test') {
-      debugger;
-    }
     if (prop.username && prop.password) {
       pieceConfig.basicAuthConfigs = {
         password: prop.password,
