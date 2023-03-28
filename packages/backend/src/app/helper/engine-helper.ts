@@ -162,8 +162,8 @@ async function execute(operation: EngineOperationType, sandbox: Sandbox, input: 
 
     await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ${operation}`);
 
-    const standardOutput = sandbox.parseStandardOutput();
-    const standardError = sandbox.parseStandardError();
+    const standardOutput = await sandbox.parseStandardOutput();
+    const standardError = await sandbox.parseStandardError();
 
     standardOutput.split("\n").forEach(f => {
         if (f.trim().length > 0) logger.info({}, chalk.yellow(f))
