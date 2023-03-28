@@ -50,4 +50,17 @@ export const instanceController = async (app: FastifyInstance) => {
         });
         reply.status(StatusCodes.OK).send();
     });
+    // update status
+    app.post(
+        "/updateStatus",
+        {
+            schema: {
+                body: UpsertInstanceRequest,
+            },
+        },
+        async (request: FastifyRequest<{ Body: UpsertInstanceRequest }>, reply: FastifyReply) => {
+            const instance = await service.updateInstanceStatusByCollectionId({ projectId: request.principal.projectId, request: request.body });
+            reply.send(instance);
+        }
+    );
 };

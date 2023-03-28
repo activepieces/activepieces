@@ -8,7 +8,7 @@ import {
   map,
   catchError,
 } from 'rxjs';
-import { CollectionListDto, InstanceStatus } from '@activepieces/shared';
+import { CollectionListDto, CollectionStatus } from '@activepieces/shared';
 import { ApPaginatorComponent } from '../../../common/components/pagination/ap-paginator.component';
 import { ProjectService } from '../../../common/service/project.service';
 import { CollectionService } from '../../../common/service/collection.service';
@@ -89,8 +89,8 @@ export class CollectionsTableDataSource extends DataSource<CollectionListDtoWith
     const controls: Record<string, FormControl> = {};
     collections.forEach((c) => {
       controls[c.id] = new FormControl({
-        value: c.status === InstanceStatus.ENABLED ? true : false,
-        disabled: !c.valid,
+        value: c.status === CollectionStatus.ENABLED ? true : false,
+        disabled: c.status === CollectionStatus.UNPUBLISHED,
       });
     });
     return controls;

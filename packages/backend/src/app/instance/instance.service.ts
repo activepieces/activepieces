@@ -1,4 +1,4 @@
-import { apId, CollectionId, Instance, InstanceId, ProjectId, TelemetryEventName, UpsertInstanceRequest } from "@activepieces/shared";
+import { apId, CollectionId, Instance, InstanceId, InstanceStatus, ProjectId, TelemetryEventName, UpsertInstanceRequest } from "@activepieces/shared";
 import { collectionService } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
 import { flowService } from "../flows/flow.service";
@@ -12,7 +12,6 @@ export const instanceRepo = databaseConnection.getRepository(InstanceEntity);
 export const instanceService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertInstanceRequest }): Promise<Instance> {
         const collection = await collectionService.getOne({ projectId: projectId, id: request.collectionId});
-
         if (collection == null) {
             throw new ActivepiecesError({
                 code: ErrorCode.COLLECTION_NOT_FOUND,
@@ -22,7 +21,11 @@ export const instanceService = {
             });
         }
 
-        const flowPage = await flowService.list({ projectId: projectId, collectionId: request.collectionId, cursorRequest: null, limit: Number.MAX_SAFE_INTEGER });
+        const flowPage = await flowService.list({
+            projectId: projectId, 
+            collectionId: request.collectionId,
+            cursorRequest: null, 
+            limit: Number.MAX_SAFE_INTEGER });
 
         const flowIdToVersionId = Object.fromEntries(flowPage.data.map((flow) => [flow.id, flow.version.id]));
 
@@ -78,6 +81,29 @@ export const instanceService = {
             projectId
         });
     },
+    async updateInstanceStatusByCollectionId({ projectId,request }: { projectId: ProjectId, request: UpsertInstanceRequest }) {
+        const collection = await collectionService.getOne({ projectId: projectId, id: request.collectionId});
+        if (collection == null) {
+            throw new ActivepiecesError({
+                code: ErrorCode.COLLECTION_NOT_FOUND,
+                params: {
+                    id: request.collectionId,
+                },
+            });
+        }
+        const instance: Instance | null = await instanceRepo.findOneBy({ projectId, collectionId: request.collectionId });
+        if(instance) {
+            instance.status = request.status;
+            if(instance.status === InstanceStatus.ENABLED) {
+                await instanceSideEffects.enable(instance);
+            }
+            else {
+                await instanceSideEffects.disable(instance);
+            }
+            instanceRepo.save(instance);
+            return instance;
+        }
+    }
 };
 
 interface GetOneParams {

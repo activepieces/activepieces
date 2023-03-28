@@ -8,6 +8,7 @@ import { ARE_THERE_COLLECTIONS_FLAG } from '../../dashboard.routing';
 import {
   Collection,
   CollectionListDto,
+  CollectionStatus,
   Flow,
   InstanceStatus,
 } from '@activepieces/shared';
@@ -117,10 +118,10 @@ export class CollectionsTableComponent implements OnInit {
     control.disable();
     this.collectionsUpdateStatusRequest$[collectionDto.id] =
       this.instanceService
-        .publish({
+        .updateStatus({
           collectionId: collectionDto.id,
           status:
-            collectionDto.status === InstanceStatus.ENABLED
+            collectionDto.status === CollectionStatus.ENABLED
               ? InstanceStatus.DISABLED
               : InstanceStatus.ENABLED,
         })
@@ -129,7 +130,7 @@ export class CollectionsTableComponent implements OnInit {
             control.enable();
             control.setValue(res.status === InstanceStatus.ENABLED);
             this.collectionsUpdateStatusRequest$[collectionDto.id] = null;
-            collectionDto.status = res.status;
+            collectionDto.status = res.status === InstanceStatus.ENABLED? CollectionStatus.ENABLED : CollectionStatus.DISABLED;
           }),
           map(() => void 0)
         );

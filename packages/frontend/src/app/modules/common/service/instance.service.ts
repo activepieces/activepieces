@@ -18,6 +18,12 @@ export class InstanceService {
   publish(request: UpsertInstanceRequest): Observable<Instance> {
     return this.http.post<Instance>(environment.apiUrl + `/instances`, request);
   }
+  updateStatus(request: UpsertInstanceRequest): Observable<Instance> {
+    return this.http.post<Instance>(
+      environment.apiUrl + `/instances/updateStatus`,
+      request
+    );
+  }
 
   get(collectionId: CollectionId): Observable<Instance> {
     return this.http.get<Instance>(environment.apiUrl + `/instances`, {
