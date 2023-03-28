@@ -68,6 +68,7 @@ import { BranchLineConnectionComponent } from './page/flow-builder/flow-item-tre
 import { CanvasPannerDirective } from './page/flow-builder/canvas-utils/panning/panner.directive';
 import { BranchStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/branch-step-input-form/branch-step-input-form.component';
 import { CanvasUtilsComponent } from './page/flow-builder/canvas-utils/canvas-utils.component';
+import { MagicWandDialogComponent } from './page/flow-builder/flow-builder-header/magic-wand-dialog/magic-flow-dialog.component';
 import { HorizontalSidebarSeparatorComponent } from './page/flow-builder/canvas-utils/horizontal-sidebar-separator/horizontal-sidebar-separator.component';
 import { TestStepComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/test-step/test-step.component';
 import { StepNameEditorComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/step-name-editor/step-name-editor.component';
@@ -152,6 +153,7 @@ import { StepNameEditorComponent } from './page/flow-builder/flow-right-sidebar/
     CanvasPannerDirective,
     BranchStepInputFormComponent,
     CanvasUtilsComponent,
+    MagicWandDialogComponent,
     HorizontalSidebarSeparatorComponent,
     TestStepComponent,
     StepNameEditorComponent,

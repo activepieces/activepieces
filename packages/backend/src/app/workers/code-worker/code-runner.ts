@@ -51,14 +51,14 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
             logger.error(e, "code runner");
         }
 
-        const metaResult = sandbox.parseMetaFile();
+        const metaResult = await sandbox.parseMetaFile();
 
         executionResult = {
             verdict: fromStatus(metaResult.status as string),
             timeInSeconds: Number.parseFloat(metaResult.time as string),
-            output: sandbox.parseFunctionOutput(),
-            standardOutput: sandbox.parseStandardOutput(),
-            standardError: sandbox.parseStandardError(),
+            output: await sandbox.parseFunctionOutput(),
+            standardOutput: await sandbox.parseStandardOutput(),
+            standardError: await sandbox.parseStandardError(),
         };
 
         logger.info(`Finished Executing in sandbox: ${buildPath}, duration: ${Date.now() - startTime}ms`);
