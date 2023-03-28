@@ -82,7 +82,6 @@ app.addHook("onRequest", async (request, reply) => {
     if (!route) {
         reply.code(404).send(`Oops! It looks like we hit a dead end. The endpoint you're searching for is nowhere to be found. We suggest turning around and trying another path. Good luck!`);
     }
-    }
 });
 
 app.addHook("onRequest", tokenVerifyMiddleware);
