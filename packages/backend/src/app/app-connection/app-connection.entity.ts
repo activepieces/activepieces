@@ -3,7 +3,7 @@ import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
 import { EncryptedObject } from '../helper/encryption'
 
-export type AppConnectionSchema = AppConnection & { project: Project , value: EncryptedObject}
+export type AppConnectionSchema = AppConnection & { project: Project, value: EncryptedObject}
 
 export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
     name: 'app_connection',

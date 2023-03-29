@@ -13,7 +13,7 @@ export enum Order {
     DESC = 'DESC',
 }
 
-export type CursorParam = Record<string, any>
+export type CursorParam = Record<string, unknown>
 
 export interface CursorResult {
     beforeCursor: string | null;

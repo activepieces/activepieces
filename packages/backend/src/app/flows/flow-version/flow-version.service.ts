@@ -238,7 +238,7 @@ function validateProps(props: PieceProperty, input: Record<string, unknown>) {
 
 function buildSchema(props: PieceProperty): TSchema {
     const entries = Object.entries(props)
-    const nonNullableUnknownPropType = Type.Not(Type.Null(),Type.Unknown())
+    const nonNullableUnknownPropType = Type.Not(Type.Null(), Type.Unknown())
     const propsSchema: Record<string, TSchema> = {}
     for (let i = 0; i < entries.length; ++i) {
         const property = entries[i][1]
@@ -251,7 +251,7 @@ function buildSchema(props: PieceProperty): TSchema {
                 })
                 break
             case PropertyType.CHECKBOX:
-                propsSchema[name] = Type.Union([Type.Boolean(),Type.String({})]) 
+                propsSchema[name] = Type.Union([Type.Boolean(), Type.String({})]) 
                 break
             case PropertyType.NUMBER:
             // Because it could be a variable

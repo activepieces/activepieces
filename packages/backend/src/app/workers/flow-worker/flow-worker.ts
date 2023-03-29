@@ -110,7 +110,7 @@ async function downloadFiles(
     projectId: ProjectId,
     flowVersion: FlowVersion,
 ): Promise<void> {
-    const flowLock = await createRedisLock()
+    const flowLock = createRedisLock()
     try {
         logger.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
         await flowLock.acquire(flowVersion.id)

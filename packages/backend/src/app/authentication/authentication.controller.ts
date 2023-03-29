@@ -15,7 +15,7 @@ export const authenticationController = async (app: FastifyInstance) => {
         },
         async (request: FastifyRequest<{ Body: SignUpRequest }>, reply: FastifyReply) => {
             const userCreated = await flagService.getOne(ApFlagId.USER_CREATED)
-            const signUpEnabled = (await system.getBoolean(SystemProp.SIGN_UP_ENABLED)) ?? false
+            const signUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
             if (userCreated && !signUpEnabled) {
                 reply.code(403).send({
                     message: 'Sign up is disabled',

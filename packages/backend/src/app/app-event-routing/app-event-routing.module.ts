@@ -19,7 +19,7 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-                Body: any;
+                Body: unknown;
                 Params: {
                     pieceName: string;
                 }
@@ -38,7 +38,7 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
                 pieceName: pieceName,
                 event: eventPayload,
             })
-      
+
             logger.info(`Received event ${event} with identifier ${identifierValue} in app ${pieceName}`)
             if (event && identifierValue) {
                 const listeners = await appEventRoutingService.listListeners({

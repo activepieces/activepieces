@@ -9,7 +9,7 @@ export function btoa(value: string): string {
     return Buffer.from(value).toString('base64')
 }
 
-export function encodeByType(type: string, value: any): string | null {
+export function encodeByType(type: string, value: unknown): string | null {
     if (value === null) return null
 
     switch (type) {
@@ -21,14 +21,14 @@ export function encodeByType(type: string, value: any): string | null {
             return `${value}`
         }
         case 'string': {
-            return encodeURIComponent(value)
+            return encodeURIComponent(value as string)
         }
         case 'object': {
         /**
        * if reflection type is Object, check whether an object is a date.
        * see: https://github.com/rbuckton/reflect-metadata/issues/84
        */
-            if (typeof value.getTime === 'function') {
+            if (typeof (value as Record<string, unknown>).getTime === 'function') {
                 return (value as Date).getTime().toString()
             }
 

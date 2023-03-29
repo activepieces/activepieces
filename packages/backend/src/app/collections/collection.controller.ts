@@ -75,7 +75,7 @@ export const collectionController = async (fastify: FastifyInstance) => {
                 Body: UpdateCollectionRequest;
             }>,
         ) => {
-            const collection = await collectionService.getOne({ id: request.params.collectionId,projectId: request.principal.projectId })
+            const collection = await collectionService.getOne({ id: request.params.collectionId, projectId: request.principal.projectId })
             if (collection === null) {
                 throw new ActivepiecesError({
                     code: ErrorCode.COLLECTION_NOT_FOUND,

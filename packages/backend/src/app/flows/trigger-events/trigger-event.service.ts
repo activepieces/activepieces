@@ -7,7 +7,7 @@ import {
     ProjectId,
     SeekPage,
     Trigger,
-    TriggerEvent ,
+    TriggerEvent,
     TriggerHookType,
     TriggerType,
 } from '@activepieces/shared'

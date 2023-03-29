@@ -18,7 +18,7 @@ import { databaseConnection } from '../database/database-connection'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { AppConnectionEntity } from './app-connection.entity'
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 import { createRedisLock } from '../database/redis-connection'
 import { decryptObject, encryptObject } from '../helper/encryption'
 import { getEdition } from '../helper/secret-helper'
@@ -29,7 +29,7 @@ const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity)
 
 export const appConnectionService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertConnectionRequest }): Promise<AppConnection> {
-        let response: any = request.value
+        let response: Record<string, unknown> = request.value
         switch (request.value.type) {
             case AppConnectionType.CLOUD_OAUTH2:
                 response = await claimWithCloud({
@@ -216,7 +216,7 @@ async function claim(request: {
     redirectUrl: string,
     code: string,
     codeVerifier: string
-}): Promise<unknown> {
+}): Promise<Record<string, unknown>> {
     try {
         const params = {
             client_id: request.clientId,
@@ -239,7 +239,7 @@ async function claim(request: {
         ).data
         return { ...formatOAuth2Response(response), client_id: request.clientId, client_secret: request.clientSecret }
     }
-    catch (e: unknown | AxiosError) {
+    catch (e: unknown) {
         logger.error(e)
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CLAIM, params: {
@@ -253,11 +253,11 @@ async function claim(request: {
 
 async function claimWithCloud(request: {
     pieceName: string; code: string; codeVerifier: string, edition: string; clientId: string
-}): Promise<unknown> {
+}): Promise<Record<string, unknown>> {
     try {
         return (await axios.post('https://secrets.activepieces.com/claim', request)).data
     }
-    catch (e: unknown | AxiosError) {
+    catch (e: unknown) {
         logger.error(e)
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CLOUD_CLAIM, params: {
@@ -267,7 +267,7 @@ async function claimWithCloud(request: {
     }
 }
 
-function formatOAuth2Response(response: Record<string, any>) {
+function formatOAuth2Response(response: unknown) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000)
     const formattedResponse: BaseOAuth2ConnectionValue = {
         access_token: response['access_token'],
@@ -283,7 +283,7 @@ function formatOAuth2Response(response: Record<string, any>) {
     return formattedResponse
 }
 
-function deleteProps(obj: Record<string, any>, prop: string[]) {
+function deleteProps(obj: Record<string, unknown>, prop: string[]) {
     for (const p of prop) {
         delete obj[p]
     }
