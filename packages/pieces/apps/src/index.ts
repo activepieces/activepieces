@@ -49,6 +49,7 @@ import { delay } from '@activepieces/piece-delay';
 import { dataMapper } from '@activepieces/piece-data-mapper';
 import { schedule } from '@activepieces/piece-schedule';
 import { zohoCrm } from '@activepieces/piece-zoho-crm';
+import { mattermost } from '@activepieces/piece-mattermost';
 import { mastodon } from '@activepieces/piece-mastodon';
 import { shopify } from '@activepieces/piece-shopify';
 import { constantContact } from '@activepieces/piece-constant-contact';
@@ -106,6 +107,7 @@ export const pieces: Piece[] = [
     intercom,
     schedule,
     zohoCrm,
+    mattermost,
     mastodon,
     shopify,
     constantContact,
