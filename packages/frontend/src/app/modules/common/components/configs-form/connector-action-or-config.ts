@@ -23,6 +23,7 @@ export interface PieceConfig {
     string,
     Pick<PieceProperty, 'displayName' | 'description' | 'type' | 'options'>
   >;
+  customAuthProps?: Record<string, PieceProperty>;
   staticDropdownState?: DropdownState<unknown>;
   defaultValue?: unknown;
 }
@@ -62,7 +63,9 @@ export const propsConvertor = {
       refreshers: prop.refreshers,
       staticDropdownState: prop.options,
       defaultValue: prop.defaultValue,
+      customAuthProps: prop.props,
     };
+
     if (prop.username && prop.password) {
       pieceConfig.basicAuthConfigs = {
         password: prop.password,

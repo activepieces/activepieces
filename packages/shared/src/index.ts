@@ -49,7 +49,7 @@ export { ListCollectionsRequest, } from './lib/collections/dto/list-collections-
 export { ListFlowsRequest } from './lib/flows/dto/list-flows-request';
 export { CreateCollectionRequest } from './lib/collections/dto/create-collection-request';
 export { UpdateCollectionRequest } from './lib/collections/dto/update-collection-request';
-export { CreateFlowRequest } from './lib/flows/dto/create-flow-request';
+export * from './lib/flows/dto/create-flow-request';
 export { CloneFlowVersionRequest } from './lib/flows/dto/clone-flow-version-request';
 export { SeekPage, Cursor } from './lib/common/seek-page';
 export { apId, ApId } from './lib/common/id-generator'

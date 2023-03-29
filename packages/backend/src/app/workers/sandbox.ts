@@ -1,6 +1,6 @@
 import { arch, cwd } from "node:process";
 import { exec } from "node:child_process";
-import fs from "node:fs";
+import fs from "node:fs/promises";
 import path from "node:path";
 import { system } from "../helper/system/system";
 import { SystemProp } from "../helper/system/system-prop";
@@ -46,29 +46,40 @@ export class Sandbox {
         );
     }
 
-    parseFunctionOutput(): string | undefined {
+    async parseFunctionOutput(): Promise<string | undefined> {
         const outputFile = this.getSandboxFilePath("_functionOutput.txt");
-        if (!fs.existsSync(outputFile)) {
+        if(!(await this.fileExists(outputFile))) {
             return undefined;
         }
-        const str = fs.readFileSync(outputFile).toString("utf-8");
+        const str = await fs.readFile(outputFile, { encoding: 'utf-8' });
         if (this.isJson(str)) {
             return JSON.parse(str);
         }
         return str;
     }
-
-    parseStandardOutput(): string {
-        return fs.readFileSync(this.getSandboxFilePath("_standardOutput.txt")).toString("utf-8");
+    
+    async fileExists(filePath: string): Promise<boolean> {
+        try {
+            await fs.access(filePath);
+            return true;
+        }
+        catch (e) {
+            return false;
+        }
     }
 
-    parseStandardError(): string {
-        return fs.readFileSync(this.getSandboxFilePath("_standardError.txt")).toString("utf-8");
+
+    parseStandardOutput(): Promise<string> {
+        return fs.readFile(this.getSandboxFilePath("_standardOutput.txt"), {encoding: "utf-8"});
     }
 
-    parseMetaFile(): Record<string, unknown> {
+    parseStandardError(): Promise<string> {
+        return fs.readFile(this.getSandboxFilePath("_standardError.txt",), {encoding: "utf-8"});
+    }
+
+    async parseMetaFile(): Promise<Record<string, unknown>> {
         const metaFile = this.getSandboxFilePath("meta.txt");
-        const lines = fs.readFileSync(metaFile).toString("utf-8").split("\n");
+        const lines = (await fs.readFile(metaFile, {encoding: "utf-8"})).split("\n");
         const result: Record<string, unknown> = {};
 
         lines.forEach((line: string) => {
@@ -78,8 +89,8 @@ export class Sandbox {
         return result;
     }
 
-    timedOut(): boolean {
-        const meta = this.parseMetaFile();
+    async timedOut(): Promise<boolean> {
+        const meta = await this.parseMetaFile();
         return meta["status"] === "TO";
     }
 
