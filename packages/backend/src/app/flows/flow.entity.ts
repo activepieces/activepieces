@@ -3,11 +3,11 @@ import { Collection, Flow, FlowRun, FlowVersion, Project, TriggerEvent } from "@
 import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 
 interface FlowSchema extends Flow {
-  versions: FlowVersion[];
-  collection: Collection;
-  project: Project;
-  runs: FlowRun[];
-  events: TriggerEvent[];
+    versions: FlowVersion[];
+    collection: Collection;
+    project: Project;
+    runs: FlowRun[];
+    events: TriggerEvent[];
 }
 
 export const FlowEntity = new EntitySchema<FlowSchema>({

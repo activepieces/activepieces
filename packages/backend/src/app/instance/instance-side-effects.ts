@@ -104,5 +104,5 @@ const lockVersions = async ({ flowVersions }: LockVersionsParams): Promise<void>
 };
 
 interface LockVersionsParams {
-  flowVersions: FlowVersion[];
+    flowVersions: FlowVersion[];
 }

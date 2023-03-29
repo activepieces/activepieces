@@ -6,22 +6,22 @@ import { OneTimeJobData, RepeatableJobData } from "./job-data";
 import { logger } from "../../helper/logger";
 
 interface BaseAddParams {
-  id: ApId;
+    id: ApId;
 }
 
 interface RepeatableJobAddParams extends BaseAddParams {
-  data: RepeatableJobData;
-  scheduleOptions: ScheduleOptions;
+    data: RepeatableJobData;
+    scheduleOptions: ScheduleOptions;
 }
 
 interface OneTimeJobAddParams extends BaseAddParams {
-  data: OneTimeJobData;
+    data: OneTimeJobData;
 }
 
 type AddParams = OneTimeJobAddParams | RepeatableJobAddParams;
 
 interface RemoveParams {
-  id: ApId;
+    id: ApId;
 }
 
 export const ONE_TIME_JOB_QUEUE = "oneTimeJobs";

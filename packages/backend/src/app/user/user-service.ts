@@ -6,7 +6,7 @@ import { UserEntity } from "./user-entity";
 const userRepo = databaseConnection.getRepository(UserEntity);
 
 interface GetOneQuery {
-  email: string;
+    email: string;
 }
 
 export const userService = {

@@ -41,39 +41,39 @@ export const triggerEventService = {
         const trigger = flow.version.trigger;
         const emptyPage = paginationHelper.createPage<TriggerEvent>([], null);
         switch (trigger.type) {
-        case TriggerType.WEBHOOK:
-            throw new Error("Cannot be tested");
-        case TriggerType.PIECE: {
-            const testResult =( await engineHelper.executeTrigger({
-                hookType: TriggerHookType.TEST,
-                flowVersion: flow.version,
-                collectionId: flow.collectionId,
-                webhookUrl: await webhookService.getWebhookUrl({
-                    flowId: flow.id,
-                    simulate: true,
-                }),
-                projectId: projectId
-            }) )as unknown[];
-            await triggerEventRepo.delete({
-                projectId,
-                flowId: flow.id,
-            });
-            for(let i = 0; i < testResult.length; i++) {
-                await triggerEventService.saveEvent({
+            case TriggerType.WEBHOOK:
+                throw new Error("Cannot be tested");
+            case TriggerType.PIECE: {
+                const testResult =( await engineHelper.executeTrigger({
+                    hookType: TriggerHookType.TEST,
+                    flowVersion: flow.version,
+                    collectionId: flow.collectionId,
+                    webhookUrl: await webhookService.getWebhookUrl({
+                        flowId: flow.id,
+                        simulate: true,
+                    }),
+                    projectId: projectId
+                }) )as unknown[];
+                await triggerEventRepo.delete({
                     projectId,
                     flowId: flow.id,
-                    payload: testResult[i]
+                });
+                for(let i = 0; i < testResult.length; i++) {
+                    await triggerEventService.saveEvent({
+                        projectId,
+                        flowId: flow.id,
+                        payload: testResult[i]
+                    });
+                }
+                return triggerEventService.list({
+                    projectId,
+                    flow,
+                    cursor: null,
+                    limit: testResult.length
                 });
             }
-            return triggerEventService.list({
-                projectId,
-                flow,
-                cursor: null,
-                limit: testResult.length
-            });
-        }
-        case TriggerType.EMPTY:
-            return emptyPage;
+            case TriggerType.EMPTY:
+                return emptyPage;
         }
     },
 
@@ -119,14 +119,14 @@ export const triggerEventService = {
 
 function getSourceName(trigger: Trigger): string {
     switch (trigger.type) {
-    case TriggerType.WEBHOOK:
-        return TriggerType.WEBHOOK;
-    case TriggerType.PIECE:{
-        const pieceTrigger = trigger as PieceTrigger;
-        return pieceTrigger.settings.pieceName +"@" + pieceTrigger.settings.pieceVersion + ":" + pieceTrigger.settings.triggerName;
-    }
-    case TriggerType.EMPTY:
-        return TriggerType.EMPTY;
+        case TriggerType.WEBHOOK:
+            return TriggerType.WEBHOOK;
+        case TriggerType.PIECE:{
+            const pieceTrigger = trigger as PieceTrigger;
+            return pieceTrigger.settings.pieceName +"@" + pieceTrigger.settings.pieceVersion + ":" + pieceTrigger.settings.triggerName;
+        }
+        case TriggerType.EMPTY:
+            return TriggerType.EMPTY;
     }
 }
 

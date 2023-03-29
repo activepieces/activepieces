@@ -22,5 +22,5 @@ export const getPublicIp = async (): Promise<IpMetadata> => {
 };
 
 interface IpMetadata {
-  ip: string;
+    ip: string;
 }

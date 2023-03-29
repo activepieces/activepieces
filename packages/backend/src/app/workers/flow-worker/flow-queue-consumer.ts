@@ -34,9 +34,9 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
 
         try {
             switch (data.triggerType) {
-            case TriggerType.PIECE:
-                await consumePieceTrigger(data);
-                break;
+                case TriggerType.PIECE:
+                    await consumePieceTrigger(data);
+                    break;
             }
         }
         catch (e) {

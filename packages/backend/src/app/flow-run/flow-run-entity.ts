@@ -3,9 +3,9 @@ import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 import { Collection, Flow, FlowRun, Project } from "@activepieces/shared";
 
 interface FlowRunSchema extends FlowRun {
-  project: Project;
-  collection: Collection;
-  flow: Flow;
+    project: Project;
+    collection: Collection;
+    flow: Flow;
 }
 
 export const FlowRunEntity = new EntitySchema<FlowRunSchema>({

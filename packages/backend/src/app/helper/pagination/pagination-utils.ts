@@ -13,29 +13,29 @@ export function encodeByType(type: string, value: any): string | null {
     if (value === null) return null;
 
     switch (type) {
-    case "timestamp with time zone":
-    case "date": {
-        return (value as Date).getTime().toString();
-    }
-    case "number": {
-        return `${value}`;
-    }
-    case "string": {
-        return encodeURIComponent(value);
-    }
-    case "object": {
+        case "timestamp with time zone":
+        case "date": {
+            return (value as Date).getTime().toString();
+        }
+        case "number": {
+            return `${value}`;
+        }
+        case "string": {
+            return encodeURIComponent(value);
+        }
+        case "object": {
         /**
        * if reflection type is Object, check whether an object is a date.
        * see: https://github.com/rbuckton/reflect-metadata/issues/84
        */
-        if (typeof value.getTime === "function") {
-            return (value as Date).getTime().toString();
-        }
+            if (typeof value.getTime === "function") {
+                return (value as Date).getTime().toString();
+            }
 
-        break;
-    }
-    default:
-        break;
+            break;
+        }
+        default:
+            break;
     }
 
     throw new Error(`unknown type in cursor: [${type}]${value}`);
@@ -43,35 +43,35 @@ export function encodeByType(type: string, value: any): string | null {
 
 export function decodeByType(type: string, value: string): string | number | Date {
     switch (type) {
-    case "object":
-    case "timestamp with time zone":
-    case "date": {
-        const timestamp = parseInt(value, 10);
+        case "object":
+        case "timestamp with time zone":
+        case "date": {
+            const timestamp = parseInt(value, 10);
 
-        if (Number.isNaN(timestamp)) {
-            throw new Error("date column in cursor should be a valid timestamp");
+            if (Number.isNaN(timestamp)) {
+                throw new Error("date column in cursor should be a valid timestamp");
+            }
+
+            return new Date(timestamp);
         }
 
-        return new Date(timestamp);
-    }
+        case "number": {
+            const num = parseFloat(value);
 
-    case "number": {
-        const num = parseFloat(value);
+            if (Number.isNaN(num)) {
+                throw new Error("number column in cursor should be a valid number");
+            }
 
-        if (Number.isNaN(num)) {
-            throw new Error("number column in cursor should be a valid number");
+            return num;
         }
 
-        return num;
-    }
+        case "string": {
+            return decodeURIComponent(value);
+        }
 
-    case "string": {
-        return decodeURIComponent(value);
-    }
-
-    default: {
-        throw new Error(`unknown type in cursor: [${type}]${value}`);
-    }
+        default: {
+            throw new Error(`unknown type in cursor: [${type}]${value}`);
+        }
     }
 }
 

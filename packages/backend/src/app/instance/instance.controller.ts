@@ -5,7 +5,7 @@ import { instanceService as service } from "./instance.service";
 
 
 interface GetOnePathParams {
-  id: InstanceId;
+    id: InstanceId;
 }
 
 export const instanceController = async (app: FastifyInstance) => {
@@ -34,8 +34,8 @@ export const instanceController = async (app: FastifyInstance) => {
         ,
         async (
             request: FastifyRequest<{
-        Querystring: GetInstanceRequest
-      }>,
+                Querystring: GetInstanceRequest
+            }>,
             reply: FastifyReply
         ) => {
             reply.send(await service.getByCollectionId({ projectId: request.principal.projectId, collectionId: request.query.collectionId }));

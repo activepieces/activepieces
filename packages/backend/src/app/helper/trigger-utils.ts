@@ -24,70 +24,70 @@ export const triggerUtils = {
         const flowTrigger = flowVersion.trigger;
         let payloads = [];
         switch (flowTrigger.type) {
-        case TriggerType.PIECE: {
-            const pieceTrigger = getPieceTrigger(flowTrigger);
-            try {
-                payloads = await engineHelper.executeTrigger({
-                    hookType: TriggerHookType.RUN,
-                    flowVersion: flowVersion,
-                    triggerPayload: payload,
-                    collectionId,
-                    webhookUrl: await webhookService.getWebhookUrl({
-                        flowId: flowVersion.flowId,
-                        simulate,
-                    }),
-                    projectId: projectId
-                }) as unknown[];
+            case TriggerType.PIECE: {
+                const pieceTrigger = getPieceTrigger(flowTrigger);
+                try {
+                    payloads = await engineHelper.executeTrigger({
+                        hookType: TriggerHookType.RUN,
+                        flowVersion: flowVersion,
+                        triggerPayload: payload,
+                        collectionId,
+                        webhookUrl: await webhookService.getWebhookUrl({
+                            flowId: flowVersion.flowId,
+                            simulate,
+                        }),
+                        projectId: projectId
+                    }) as unknown[];
+                }
+                catch (e) {
+                    const error = new ActivepiecesError({
+                        code: ErrorCode.TRIGGER_FAILED,
+                        params: {
+                            triggerName: pieceTrigger.name,
+                            pieceName: flowTrigger.settings.pieceName,
+                            pieceVersion: flowTrigger.settings.pieceVersion,
+                            error: e
+                        }
+                    }, `Flow ${flowTrigger.name} with ${pieceTrigger.name} trigger throws and error, returning as zero payload `);
+                    captureException(error);
+                    payloads = [];
+                }
+                break;
             }
-            catch (e) {
-                const error = new ActivepiecesError({
-                    code: ErrorCode.TRIGGER_FAILED,
-                    params: {
-                        triggerName: pieceTrigger.name,
-                        pieceName: flowTrigger.settings.pieceName,
-                        pieceVersion: flowTrigger.settings.pieceVersion,
-                        error: e
-                    }
-                }, `Flow ${flowTrigger.name} with ${pieceTrigger.name} trigger throws and error, returning as zero payload `);
-                captureException(error);
-                payloads = [];
-            }
-            break;
-        }
-        default:
-            payloads = [payload];
-            break;
+            default:
+                payloads = [payload];
+                break;
         }
         return payloads;
     },
 
     async enable({ collectionId, flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
         switch (flowVersion.trigger.type) {
-        case TriggerType.PIECE:
-            await enablePieceTrigger({
-                collectionId,
-                projectId,
-                flowVersion,
-                simulate,
-            });
-            break;
-        default:
-            break;
+            case TriggerType.PIECE:
+                await enablePieceTrigger({
+                    collectionId,
+                    projectId,
+                    flowVersion,
+                    simulate,
+                });
+                break;
+            default:
+                break;
         }
     },
 
     async disable({ collectionId, flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
         switch (flowVersion.trigger.type) {
-        case TriggerType.PIECE:
-            await disablePieceTrigger({
-                collectionId,
-                projectId,
-                flowVersion,
-                simulate,
-            });
-            break;
-        default:
-            break;
+            case TriggerType.PIECE:
+                await disablePieceTrigger({
+                    collectionId,
+                    projectId,
+                    flowVersion,
+                    simulate,
+                });
+                break;
+            default:
+                break;
         }
     },
 };
@@ -109,16 +109,16 @@ const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void>
     });
 
     switch (pieceTrigger.type) {
-    case TriggerStrategy.APP_WEBHOOK:
-        await appEventRoutingService.deleteListeners({projectId, flowId: flowVersion.flowId });
-        break;
-    case TriggerStrategy.WEBHOOK:
-        break;
-    case TriggerStrategy.POLLING:
-        await flowQueue.removeRepeatableJob({
-            id: flowVersion.id,
-        });
-        break;
+        case TriggerStrategy.APP_WEBHOOK:
+            await appEventRoutingService.deleteListeners({projectId, flowId: flowVersion.flowId });
+            break;
+        case TriggerStrategy.WEBHOOK:
+            break;
+        case TriggerStrategy.POLLING:
+            await flowQueue.removeRepeatableJob({
+                id: flowVersion.id,
+            });
+            break;
     }
 };
 
@@ -141,38 +141,38 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
     });
 
     switch (pieceTrigger.type) {
-    case TriggerStrategy.APP_WEBHOOK: {
-        const appName = flowTrigger.settings.pieceName;
-        const listeners = (response as ExecuteTriggerResponse).listeners;
-        for(const listener of listeners){
-            await appEventRoutingService.createListeners({
-                projectId,
-                flowId: flowVersion.flowId,
-                appName,
-                events: listener.events,
-                identifierValue: listener.identifierValue,
-            });
+        case TriggerStrategy.APP_WEBHOOK: {
+            const appName = flowTrigger.settings.pieceName;
+            const listeners = (response as ExecuteTriggerResponse).listeners;
+            for(const listener of listeners){
+                await appEventRoutingService.createListeners({
+                    projectId,
+                    flowId: flowVersion.flowId,
+                    appName,
+                    events: listener.events,
+                    identifierValue: listener.identifierValue,
+                });
+            }
+            break;
         }
-        break;
-    }
-    case TriggerStrategy.WEBHOOK:
-        break;
-    case TriggerStrategy.POLLING: {
-        const scheduleOptions = (response as ExecuteTriggerResponse).scheduleOptions;
-        await flowQueue.add({
-            id: flowVersion.id,
-            data: {
-                projectId,
-                environment: RunEnvironment.PRODUCTION,
-                collectionId,
-                flowVersion,
-                triggerType: TriggerType.PIECE,
-            },
-            scheduleOptions: scheduleOptions,
-        });
-        break;
+        case TriggerStrategy.WEBHOOK:
+            break;
+        case TriggerStrategy.POLLING: {
+            const scheduleOptions = (response as ExecuteTriggerResponse).scheduleOptions;
+            await flowQueue.add({
+                id: flowVersion.id,
+                data: {
+                    projectId,
+                    environment: RunEnvironment.PRODUCTION,
+                    collectionId,
+                    flowVersion,
+                    triggerType: TriggerType.PIECE,
+                },
+                scheduleOptions: scheduleOptions,
+            });
+            break;
 
-    }
+        }
     }
 };
 

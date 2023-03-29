@@ -5,14 +5,14 @@ import { ConnectionKey } from "@ee/product-embed/shared/connection-keys/connecti
 import { AppCredential } from "@ee/product-embed/shared/app-credentials/app-credentials";
 
 interface ProjectSchema extends Project {
-  owner: User;
-  collections: Collection[];
-  flows: Flow[];
-  connectionKeys: ConnectionKey[];
-  appCredentials: AppCredential[];
-  files: File[];
-  events: TriggerEvent[];
-  appConnections: AppConnection[];
+    owner: User;
+    collections: Collection[];
+    flows: Flow[];
+    connectionKeys: ConnectionKey[];
+    appCredentials: AppCredential[];
+    files: File[];
+    events: TriggerEvent[];
+    appConnections: AppConnection[];
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({

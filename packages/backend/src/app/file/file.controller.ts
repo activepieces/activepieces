@@ -9,10 +9,10 @@ export const fileController = async (fastify: FastifyInstance) => {
         "/:fileId",
         async (
             request: FastifyRequest<{
-        Params: {
-          fileId: FileId;
-        };
-      }>,
+                Params: {
+                    fileId: FileId;
+                };
+            }>,
             _reply
         ) => {
             const file = await fileService.getOne({ projectId: request.principal.projectId, fileId: request.params.fileId });

@@ -13,8 +13,8 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-        Body: PutStoreEntryRequest;
-      }>,
+                Body: PutStoreEntryRequest;
+            }>,
             _reply
         ) => {
             if (request.principal.type !== PrincipalType.WORKER) {
@@ -41,11 +41,11 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-        Body: PutStoreEntryRequest;
-        Querystring: {
-          key: string;
-        };
-      }>,
+                Body: PutStoreEntryRequest;
+                Querystring: {
+                    key: string;
+                };
+            }>,
             _reply
         ) => {
             if (request.principal.type !== PrincipalType.WORKER) {

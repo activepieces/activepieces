@@ -3,8 +3,8 @@ import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
 import { Collection, Flow, Project } from "@activepieces/shared";
 
 export interface CollectionSchema extends Collection {
-  project: Project;
-  flows: Flow[];
+    project: Project;
+    flows: Flow[];
 }
 
 export const CollectionEntity = new EntitySchema<CollectionSchema>({

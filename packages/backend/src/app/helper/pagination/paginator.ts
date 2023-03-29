@@ -9,20 +9,20 @@ import {
 import { atob, btoa, decodeByType, encodeByType } from "./pagination-utils";
 
 export enum Order {
-  ASC = "ASC",
-  DESC = "DESC",
+    ASC = "ASC",
+    DESC = "DESC",
 }
 
 export type CursorParam = Record<string, any>;
 
 export interface CursorResult {
-  beforeCursor: string | null;
-  afterCursor: string | null;
+    beforeCursor: string | null;
+    afterCursor: string | null;
 }
 
 export interface PagingResult<Entity> {
-  data: Entity[];
-  cursor: CursorResult;
+    data: Entity[];
+    cursor: CursorResult;
 }
 
 export default class Paginator<Entity extends ObjectLiteral> {
@@ -41,8 +41,8 @@ export default class Paginator<Entity extends ObjectLiteral> {
     private order: Order = Order.DESC;
 
     public constructor(
-    private readonly entity: EntitySchema,
-    private readonly paginationKeys: Array<Extract<keyof Entity, string>>
+        private readonly entity: EntitySchema,
+        private readonly paginationKeys: Array<Extract<keyof Entity, string>>
     ) {}
 
     public setAlias(alias: string): void {

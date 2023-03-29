@@ -13,16 +13,16 @@ function fromStatus(code: string): CodeRunStatus {
         return CodeRunStatus.OK;
     }
     switch (code) {
-    case "XX":
-        return CodeRunStatus.INTERNAL_ERROR;
-    case "TO":
-        return CodeRunStatus.TIMEOUT;
-    case "RE":
-        return CodeRunStatus.RUNTIME_ERROR;
-    case "SG":
-        return CodeRunStatus.CRASHED;
-    default:
-        return CodeRunStatus.UNKNOWN_ERROR;
+        case "XX":
+            return CodeRunStatus.INTERNAL_ERROR;
+        case "TO":
+            return CodeRunStatus.TIMEOUT;
+        case "RE":
+            return CodeRunStatus.RUNTIME_ERROR;
+        case "SG":
+            return CodeRunStatus.CRASHED;
+        default:
+            return CodeRunStatus.UNKNOWN_ERROR;
     }
 }
 

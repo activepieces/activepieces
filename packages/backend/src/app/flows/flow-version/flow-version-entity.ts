@@ -3,7 +3,7 @@ import { Flow, FlowVersion } from "@activepieces/shared";
 import { ApIdSchema, BaseColumnSchemaPart } from "../../helper/base-entity";
 
 interface FlowVersionSchema extends FlowVersion {
-  flow: Flow;
+    flow: Flow;
 }
 
 export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({

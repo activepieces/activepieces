@@ -3,7 +3,7 @@ import { Project, User } from "@activepieces/shared";
 import { BaseColumnSchemaPart } from "../helper/base-entity";
 
 export interface UserSchema extends User {
-  projects: Project[];
+    projects: Project[];
 }
 
 export const UserEntity = new EntitySchema<UserSchema>({

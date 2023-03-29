@@ -3,7 +3,7 @@ import fastify from "fastify";
 import { Principal } from "@activepieces/shared";
 
 declare module "fastify" {
-  export interface FastifyRequest {
-    principal: Principal;
-  }
+    export interface FastifyRequest {
+        principal: Principal;
+    }
 }
