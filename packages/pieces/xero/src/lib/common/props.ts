@@ -43,8 +43,6 @@ export const props = {
         createdDateUtc: string,
         updatedDateUtc: string,
       }[]>(request)
-      
-      console.debug(result)
 
       if (result.status === 200) {
         return {

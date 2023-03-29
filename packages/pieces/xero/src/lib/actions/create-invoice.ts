@@ -1,5 +1,6 @@
 import { AuthenticationType, createAction, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework";
 import { props } from "../common/props";
+import dayjs from "dayjs";
 
 export const xeroCreateInvoice = createAction({
   name: 'xero_create_invoice',
@@ -119,7 +120,7 @@ export const xeroCreateInvoice = createAction({
     line_item: Property.Object({
       displayName: "Line Item",
       description: "Invoice line items",
-      required: true,
+      required: false,
       defaultValue: {
         AccountCode: 200,
         Quantity: 0,
@@ -132,7 +133,8 @@ export const xeroCreateInvoice = createAction({
     date: Property.ShortText({
       displayName: "Date Prepared",
       description: "Date the invoice was created. Format example: 2019-03-11",
-      required: true
+      required: true,
+      defaultValue: dayjs().format('YYYY-MM-DD')
     }),
     due_date: Property.ShortText({
       displayName: "Due Date",
@@ -169,7 +171,7 @@ export const xeroCreateInvoice = createAction({
         Contact: {
           ContactID: contact_id
         },
-        LineItems: [invoice.line_item],
+        LineItems: invoice.line_item ? [invoice.line_item] : [],
         Date: invoice.date,
         DueDate: invoice.due_date,
         Reference: invoice.reference,
