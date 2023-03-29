@@ -14,7 +14,7 @@ export const CollectionEntity = new EntitySchema<CollectionSchema>({
         displayName: {
             type: String,
             // TODO REMOVE IN FUTURE
-            nullable: true
+            nullable: true,
         },
         projectId: ApIdSchema,
     },

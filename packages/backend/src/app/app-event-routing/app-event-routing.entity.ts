@@ -25,11 +25,11 @@ export const AppEventRoutingEntity = new EntitySchema<AppEventRouting>({
         projectId: ApIdSchema,
         flowId: ApIdSchema,
         identifierValue: {
-            type: String
+            type: String,
         },
         event: {
-            type: String
-        }
+            type: String,
+        },
     },
     indices: [
         {

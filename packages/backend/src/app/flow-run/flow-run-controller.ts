@@ -29,12 +29,12 @@ export const flowRunController: FastifyPluginCallback = (app, _options, done): v
             })
 
             await reply.send(flowRun)
-        }
+        },
     )
 
     // list
     app.get('/', {
-        schema: ListFlowRunsRequest
+        schema: ListFlowRunsRequest,
     }, async (request: FastifyRequest<{ Querystring: ListFlowRunsRequest }>, reply: FastifyReply) => {
         const flowRunPage = await service.list({
             projectId: request.principal.projectId,

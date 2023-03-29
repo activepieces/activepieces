@@ -21,45 +21,45 @@ export const flowController = async (fastify: FastifyInstance) => {
         '/guess',
         {
             schema: {
-                body: GuessFlowRequest
+                body: GuessFlowRequest,
             },
         },
         async (
             request: FastifyRequest<{
                 Body: GuessFlowRequest;
-            }>
+            }>,
         ) => {
             const trigger = await flowGuessService.guessFlow(request.body.prompt)
             logger.info('Cleaned Actions ' + JSON.stringify(trigger))
             const flow = await flowService.create({
                 projectId: request.principal.projectId, request: {
                     displayName: request.body.displayName,
-                    collectionId: request.body.collectionId
-                }
+                    collectionId: request.body.collectionId,
+                },
             })
             const flowVersion = {
                 ...flow.version,
-                trigger: trigger
+                trigger: trigger,
             }
             await flowVersionService.overwriteVersion(flowVersion.id, flowVersion)
             return flowService.getOne({ id: flow.id, versionId: undefined, projectId: request.principal.projectId, includeArtifacts: false })
-        }
+        },
     )
 
     fastify.post(
         '/',
         {
             schema: {
-                body: CreateFlowRequest
+                body: CreateFlowRequest,
             },
         },
         async (
             request: FastifyRequest<{
                 Body: CreateFlowRequest;
-            }>
+            }>,
         ) => {
             return await flowService.create({ projectId: request.principal.projectId, request: request.body })
-        }
+        },
     )
 
     fastify.post(
@@ -75,30 +75,30 @@ export const flowController = async (fastify: FastifyInstance) => {
                     flowId: FlowId;
                 };
                 Body: FlowOperationRequest;
-            }>
+            }>,
         ) => {
             const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, includeArtifacts: false })
             if (flow === null) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
             return await flowService.update({ flowId: request.params.flowId, request: request.body, projectId: request.principal.projectId })
-        }
+        },
     )
 
     fastify.get(
         '/',
         {
             schema: {
-                querystring: ListFlowsRequest
+                querystring: ListFlowsRequest,
             },
         },
         async (
             request: FastifyRequest<{
                 Querystring: ListFlowsRequest;
-            }>
+            }>,
         ) => {
             return await flowService.list({ projectId: request.principal.projectId, collectionId: request.query.collectionId, cursorRequest: request.query.cursor ?? null, limit: request.query.limit ?? DEFUALT_PAGE_SIZE })
-        }
+        },
     )
 
     fastify.get(
@@ -112,7 +112,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                     versionId: FlowVersionId | undefined;
                     includeArtifacts: boolean | undefined;
                 };
-            }>
+            }>,
         ) => {
             const versionId: FlowVersionId | undefined = request.query.versionId
             const includeArtifacts = request.query.includeArtifacts ?? false
@@ -121,7 +121,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
             return flow
-        }
+        },
     )
 
     fastify.delete(
@@ -132,10 +132,10 @@ export const flowController = async (fastify: FastifyInstance) => {
                     flowId: FlowId;
                 };
             }>,
-            _reply
+            _reply,
         ) => {
             await flowService.delete({ projectId: request.principal.projectId, flowId: request.params.flowId })
             _reply.status(StatusCodes.OK).send()
-        }
+        },
     )
 }

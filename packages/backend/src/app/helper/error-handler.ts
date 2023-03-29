@@ -7,7 +7,7 @@ import { logger } from '@sentry/utils'
 export const errorHandler = async (
     error: FastifyError,
     _request: FastifyRequest,
-    reply: FastifyReply
+    reply: FastifyReply,
 ): Promise<void> => {
     logger.error('[errorHandler]:', error)
     if (error instanceof ActivepiecesError) {
@@ -22,7 +22,7 @@ export const errorHandler = async (
         }
         await reply.status(statusCode).send({
             code: error.error.code,
-            params:error.error.params
+            params:error.error.params,
         })
     }
     else {

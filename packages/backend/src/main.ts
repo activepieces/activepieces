@@ -43,9 +43,9 @@ const app = fastify({
             coerceTypes: true,
             formats: {
 
-            }
-        }
-    }
+            },
+        },
+    },
 })
 
 app.register(swagger, {
@@ -56,21 +56,21 @@ app.register(swagger, {
         },
         externalDocs: {
             url: 'https://www.activepieces.com/docs',
-            description: 'Find more info here'
+            description: 'Find more info here',
         },
-    }
+    },
 })
 
 app.register(cors, {
     origin: '*',
-    methods: ['*']
+    methods: ['*'],
 })
 app.register(import('fastify-raw-body'), {
     field: 'rawBody',
     global: false,
     encoding: 'utf8',
     runFirst: true,
-    routes: []
+    routes: [],
 })
 app.register(formBody, { parser: str => qs.parse(str) })
 
@@ -105,10 +105,10 @@ app.register(appEventRoutingModule)
 app.get(
     '/redirect',
     async (
-        request: FastifyRequest<{ Querystring: { code: string; } }>, reply
+        request: FastifyRequest<{ Querystring: { code: string; } }>, reply,
     ) => {
         const params = {
-            'code': request.query.code
+            'code': request.query.code,
         }
         if (params.code === undefined) {
             reply.send('The code is missing in url')
@@ -116,7 +116,7 @@ app.get(
         else {
             reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${encodeURIComponent(params['code'])}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
         }
-    }
+    },
 )
 app.setErrorHandler(errorHandler)
 

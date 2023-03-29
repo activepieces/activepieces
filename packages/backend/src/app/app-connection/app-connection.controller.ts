@@ -11,20 +11,20 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
         '/',
         {
             schema: {
-                body: UpsertConnectionRequest
-            }
+                body: UpsertConnectionRequest,
+            },
         },
         async (
             request: FastifyRequest<{
                 Body: UpsertConnectionRequest;
-            }>
+            }>,
         ) => {
             const connection = await appConnectionService.upsert({ projectId: request.principal.projectId, request: request.body })
             // Remove sensitive data from response
             delete connection.value['client_secret']
             delete connection.value['refresh_token']
             return connection
-        }
+        },
     )
 
 
@@ -35,7 +35,7 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
                 Params: {
                     connectionName: string;
                 };
-            }>
+            }>,
         ) => {
             const appCredential = await appConnectionService.getOne({ projectId: request.principal.projectId, name: request.params.connectionName })
             if (appCredential === null) {
@@ -48,26 +48,26 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
             delete appCredential.value['client_secret']
             delete appCredential.value['refresh_token']
             return appCredential
-        }
+        },
     )
 
     fastify.get(
         '/',
         {
             schema: {
-                querystring: ListAppConnectionRequest
+                querystring: ListAppConnectionRequest,
             },
         },
         async (
             request: FastifyRequest<{
                 Querystring: ListAppConnectionRequest;
-            }>
+            }>,
         ) => {
             const query = request.query
             return await appConnectionService.list(request.principal.projectId,
                 query.appName,
                 query.cursor ?? null, query.limit ?? DEFAULT_PAGE_SIZE)
-        }
+        },
     )
 
     fastify.delete(
@@ -78,10 +78,10 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
                     connectionId: AppConnectionId;
                 };
             }>,
-            _reply
+            _reply,
         ) => {
             await appConnectionService.delete({ id: request.params.connectionId, projectId: request.principal.projectId })
             _reply.status(StatusCodes.OK).send()
-        }
+        },
     )
 }

@@ -40,7 +40,7 @@ export const instanceSideEffects = {
                     projectId: instance.projectId,
                     flowVersion,
                     simulate: false,
-                })
+                }),
         )
 
         await Promise.all(enableTriggers)
@@ -87,7 +87,7 @@ export const instanceSideEffects = {
                 })
             }
         }
-    }
+    },
 }
 
 const lockVersions = async ({ flowVersions }: LockVersionsParams): Promise<void> => {

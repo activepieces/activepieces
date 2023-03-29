@@ -49,7 +49,7 @@ const cdnPieceMetadataLoader = (): PieceMetadataLoader => {
                     },
                 })
             }
-        }
+        },
     }
 }
 
@@ -113,7 +113,7 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
             }
 
             return pieceMetadata
-        }
+        },
     }
 }
 

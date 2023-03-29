@@ -51,9 +51,9 @@ export const flowService = {
                 name: TelemetryEventName.FLOW_CREATED,
                 payload: {
                     collectionId: flow.collectionId,
-                    flowId: flow.id
-                }
-            }
+                    flowId: flow.id,
+                },
+            },
         )
         return {
             ...savedFlow,

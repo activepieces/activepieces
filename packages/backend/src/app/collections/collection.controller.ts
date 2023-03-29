@@ -4,7 +4,7 @@ import {
     CollectionId,
     CreateCollectionRequest,
     ListCollectionsRequest,
-    UpdateCollectionRequest
+    UpdateCollectionRequest,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
@@ -27,17 +27,17 @@ export const collectionController = async (fastify: FastifyInstance) => {
                 tags: ['collection'],
                 summary: 'Delete a collection',
                 params: CollectionIdParams,
-            }
+            },
         },
         async (
             request: FastifyRequest<{
                 Params: CollectionIdParams;
             }>,
-            reply
+            reply,
         ) => {
             await collectionService.delete({ projectId: request.principal.projectId, collectionId: request.params.collectionId })
             reply.status(StatusCodes.OK).send()
-        }
+        },
     )
 
     fastify.get(
@@ -47,7 +47,7 @@ export const collectionController = async (fastify: FastifyInstance) => {
                 Params: {
                     collectionId: CollectionId;
                 };
-            }>
+            }>,
         ) => {
             const collection = await collectionService.getOne({ id: request.params.collectionId, projectId: request.principal.projectId })
             if (collection === null) {
@@ -57,14 +57,14 @@ export const collectionController = async (fastify: FastifyInstance) => {
                 })
             }
             return collection
-        }
+        },
     )
 
     fastify.post(
         '/:collectionId',
         {
             schema: {
-                body: UpdateCollectionRequest
+                body: UpdateCollectionRequest,
             },
         },
         async (
@@ -73,7 +73,7 @@ export const collectionController = async (fastify: FastifyInstance) => {
                     collectionId: CollectionId;
                 };
                 Body: UpdateCollectionRequest;
-            }>
+            }>,
         ) => {
             const collection = await collectionService.getOne({ id: request.params.collectionId,projectId: request.principal.projectId })
             if (collection === null) {
@@ -83,7 +83,7 @@ export const collectionController = async (fastify: FastifyInstance) => {
                 })
             }
             return await collectionService.update({ projectId: request.principal.projectId, collectionId: request.params.collectionId, request: request.body })
-        }
+        },
     )
 
     fastify.get(
@@ -99,25 +99,25 @@ export const collectionController = async (fastify: FastifyInstance) => {
         async (
             request: FastifyRequest<{
                 Querystring: ListCollectionsRequest;
-            }>
+            }>,
         ) => {
             return await collectionService.list(request.principal.projectId, request.query.cursor, request.query.limit ?? DEFAULT_PAGE_SIZE)
-        }
+        },
     )
 
     fastify.post(
         '/',
         {
             schema: {
-                body: CreateCollectionRequest
+                body: CreateCollectionRequest,
             },
         },
         async (
             request: FastifyRequest<{
                 Body: CreateCollectionRequest;
-            }>
+            }>,
         ) => {
             return await collectionService.create({ projectId: request.principal.projectId, request: request.body })
-        }
+        },
     )
 }

@@ -42,7 +42,7 @@ export class Sandbox {
         ' --stdout=_standardOutput.txt' +
         ' --stderr=_standardError.txt --run ' +
         ' --env=AP_ENVIRONMENT ' +
-        commandLine
+        commandLine,
         )
     }
 
@@ -74,7 +74,7 @@ export class Sandbox {
     }
 
     parseStandardError(): Promise<string> {
-        return fs.readFile(this.getSandboxFilePath('_standardError.txt',), {encoding: 'utf-8'})
+        return fs.readFile(this.getSandboxFilePath('_standardError.txt'), {encoding: 'utf-8'})
     }
 
     async parseMetaFile(): Promise<Record<string, unknown>> {

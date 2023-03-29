@@ -36,7 +36,7 @@ export const appEventRoutingService = {
     async deleteListeners({ projectId, flowId }: { projectId: ProjectId, flowId: FlowId }): Promise<void> {
         appEventRoutingRepo.delete({
             projectId,
-            flowId: flowId
+            flowId: flowId,
         })
     },
     async getAppWebookUrl({ appName }: { appName: string}): Promise<string | undefined> {
@@ -46,6 +46,6 @@ export const appEventRoutingService = {
         }
         const frontendUrl = system.get(SystemProp.FRONTEND_URL)
         return `${frontendUrl}/api/v1/app-events/${appName}`
-    }
+    },
 }
 

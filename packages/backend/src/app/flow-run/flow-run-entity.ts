@@ -18,7 +18,7 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         flowVersionId: ApIdSchema,
         environment: {
             type: String,
-            nullable: true
+            nullable: true,
         },
         flowDisplayName: {
             type: String,
@@ -43,7 +43,7 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             name: 'idx_run_project_id',
             columns: ['projectId'],
             unique: false,
-        }
+        },
     ],
     relations: {
         project: {
@@ -75,6 +75,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
                 name: 'collectionId',
                 foreignKeyConstraintName: 'fk_flow_run_collection_id',
             },
-        }
+        },
     },
 })

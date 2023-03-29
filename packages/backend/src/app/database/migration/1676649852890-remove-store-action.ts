@@ -24,9 +24,9 @@ export class removeStoreAction1676649852890 implements MigrationInterface {
                         actionName: operation,
                         input: {
                             key,
-                            value
+                            value,
                         },
-                        inputUiInfo: {}
+                        inputUiInfo: {},
                     }
                     changed = true
                 }
@@ -54,7 +54,7 @@ export class removeStoreAction1676649852890 implements MigrationInterface {
                     action.settings = {
                         operation: action.setings.operation.toUpperCase(),
                         key: action.settings.key,
-                        value: action.settings.value
+                        value: action.settings.value,
                     }
                     changed = true
                 }

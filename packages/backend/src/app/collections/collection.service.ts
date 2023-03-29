@@ -76,7 +76,7 @@ export const collectionService = {
         const collection: Partial<Collection> = {
             id: apId(),
             projectId: projectId,
-            displayName: request.displayName
+            displayName: request.displayName,
         }
 
         const savedCollection = await collectionRepo.save(collection)
@@ -86,8 +86,8 @@ export const collectionService = {
                 name: TelemetryEventName.COLLECTION_CREATED,
                 payload: {
                     collectionId: collection.id,
-                    projectId: collection.projectId
-                }
+                    projectId: collection.projectId,
+                },
             })
         return savedCollection
     },

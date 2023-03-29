@@ -14,7 +14,7 @@ import {
     ErrorCode,
     Collection,
     TelemetryEventName,
-    ApEdition
+    ApEdition,
 } from '@activepieces/shared'
 import { getEdition } from '../helper/secret-helper'
 import { collectionRepo } from '../collections/collection.service'
@@ -47,7 +47,7 @@ export const flowRunService = {
 
         const query = repo.createQueryBuilder('flow_run').where({
             projectId,
-            environment: RunEnvironment.PRODUCTION
+            environment: RunEnvironment.PRODUCTION,
         })
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
@@ -56,7 +56,7 @@ export const flowRunService = {
     async finish(
         flowRunId: FlowRunId,
         status: ExecutionOutputStatus,
-        logsFileId: FileId | null
+        logsFileId: FileId | null,
     ): Promise<FlowRun | null> {
         await repo.update(flowRunId, {
             logsFileId,
@@ -76,7 +76,7 @@ export const flowRunService = {
         if (edition === ApEdition.ENTERPRISE) {
             await usageService.limit({
                 projectId: collection.projectId,
-                flowVersion: flowVersion
+                flowVersion: flowVersion,
             })
         }
 
@@ -101,8 +101,8 @@ export const flowRunService = {
                 projectId: flowRun.projectId,
                 collectionId: flowRun.collectionId,
                 flowId: flowVersion.flowId,
-                environment: flowRun.environment
-            }
+                environment: flowRun.environment,
+            },
         })
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,
@@ -128,7 +128,7 @@ async function getCollectionOrThrowWithoutProjectId(collectionId: CollectionId):
         throw new ActivepiecesError({
             code: ErrorCode.COLLECTION_NOT_FOUND,
             params: {
-                id: collectionId
+                id: collectionId,
             },
         })
     }

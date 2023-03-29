@@ -89,7 +89,7 @@ export const flagService = {
                 value: latestVersion,
                 created,
                 updated,
-            }
+            },
         )
 
         return flags
@@ -102,7 +102,7 @@ export const flagService = {
         catch (ex) {
             return { version: '0.0.0' }
         }
-    }
+    },
 }
 
 export type FlagType =

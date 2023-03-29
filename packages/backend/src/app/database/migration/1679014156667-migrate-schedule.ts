@@ -17,7 +17,7 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
                 step.type = 'PIECE_TRIGGER'
                 step.settings = {
                     input: {
-                        cronExpression: step.settings.cronExpression
+                        cronExpression: step.settings.cronExpression,
                     },
                     triggerName: 'cron_expression',
                     pieceName: 'schedule',
@@ -44,7 +44,7 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
                 if(step.settings.pieceName === 'schedule'){
                     step.type = 'SCHEDULE'
                     step.settings = {
-                        cronExpression: step.settings.input.cronExpression
+                        cronExpression: step.settings.input.cronExpression,
                     }
                     count++
                     await flowVersionRepo.update(flowVersion.id, flowVersion)

@@ -52,7 +52,7 @@ export const triggerEventService = {
                         flowId: flow.id,
                         simulate: true,
                     }),
-                    projectId: projectId
+                    projectId: projectId,
                 }) )as unknown[]
                 await triggerEventRepo.delete({
                     projectId,
@@ -62,14 +62,14 @@ export const triggerEventService = {
                     await triggerEventService.saveEvent({
                         projectId,
                         flowId: flow.id,
-                        payload: testResult[i]
+                        payload: testResult[i],
                     })
                 }
                 return triggerEventService.list({
                     projectId,
                     flow,
                     cursor: null,
-                    limit: testResult.length
+                    limit: testResult.length,
                 })
             }
             case TriggerType.EMPTY:
@@ -114,7 +114,7 @@ export const triggerEventService = {
         })
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<TriggerEvent>(data, newCursor)
-    }
+    },
 }
 
 function getSourceName(trigger: Trigger): string {

@@ -13,12 +13,12 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             type: String,
         },
         appName: {
-            type: String
+            type: String,
         },
         projectId: ApIdSchema,
         value: {
-            type: 'jsonb'
-        }
+            type: 'jsonb',
+        },
     },
     indices: [
         {
@@ -37,6 +37,6 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_app_connection_app_project_id',
             },
-        }
+        },
     },
 })

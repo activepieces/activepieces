@@ -15,8 +15,8 @@ describe('Code Runner', () => {
             timeInSeconds: 1.0,
             output: 'true',
             standardOutput: '',
-            standardError: ''
-        }
+            standardError: '',
+        },
         )
     })
 
@@ -33,7 +33,7 @@ describe('Code Runner', () => {
                 verdict: 'RUNTIME_ERROR',
                 timeInSeconds: 1.0,
                 standardOutput: '',
-                standardError: 'ERROR_MESSAGE'
+                standardError: 'ERROR_MESSAGE',
             })
     })
 })

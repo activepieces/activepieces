@@ -36,7 +36,7 @@ export const triggerUtils = {
                             flowId: flowVersion.flowId,
                             simulate,
                         }),
-                        projectId: projectId
+                        projectId: projectId,
                     }) as unknown[]
                 }
                 catch (e) {
@@ -46,8 +46,8 @@ export const triggerUtils = {
                             triggerName: pieceTrigger.name,
                             pieceName: flowTrigger.settings.pieceName,
                             pieceVersion: flowTrigger.settings.pieceVersion,
-                            error: e
-                        }
+                            error: e,
+                        },
                     }, `Flow ${flowTrigger.name} with ${pieceTrigger.name} trigger throws and error, returning as zero payload `)
                     captureException(error)
                     payloads = []
@@ -105,7 +105,7 @@ const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void>
             flowId: flowVersion.flowId,
             simulate,
         }),
-        projectId: projectId
+        projectId: projectId,
     })
 
     switch (pieceTrigger.type) {
@@ -137,7 +137,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
         flowVersion: flowVersion,
         collectionId,
         webhookUrl,
-        projectId: projectId
+        projectId: projectId,
     })
 
     switch (pieceTrigger.type) {

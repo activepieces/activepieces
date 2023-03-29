@@ -26,7 +26,7 @@ export class removeCollectionVersion1678492809093 implements MigrationInterface 
             }
             currentCollection = {
                 ...currentCollection,
-                displayName: displayName
+                displayName: displayName,
             }
             await collectionRepo.update(currentCollection.id, currentCollection)
         }

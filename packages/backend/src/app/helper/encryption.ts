@@ -19,7 +19,7 @@ export function encryptObject(object: unknown): EncryptedObject {
     encrypted += cipher.final('hex')
     return {
         iv: iv.toString('hex'),
-        data: encrypted
+        data: encrypted,
     }
 }
 

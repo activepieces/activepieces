@@ -61,7 +61,7 @@ export const tokenUtils = {
                         new ActivepiecesError({
                             code: ErrorCode.INVALID_BEARER_TOKEN,
                             params: {},
-                        })
+                        }),
                     )
                 }
                 else {

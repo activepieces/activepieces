@@ -5,6 +5,6 @@ export const openapiController = async (fastify: FastifyInstance) => {
         '/',
         async () => {
             return JSON.stringify(fastify.swagger(),null,2)
-        }
+        },
     )
 }

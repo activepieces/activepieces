@@ -20,7 +20,7 @@ export const instanceController = async (app: FastifyInstance) => {
         async (request: FastifyRequest<{ Body: UpsertInstanceRequest }>, reply: FastifyReply) => {
             const instance = await service.upsert({ projectId: request.principal.projectId, request: request.body })
             reply.send(instance)
-        }
+        },
     )
 
     // list
@@ -28,25 +28,25 @@ export const instanceController = async (app: FastifyInstance) => {
         '/',
         {
             schema: {
-                querystring: GetInstanceRequest
-            }
+                querystring: GetInstanceRequest,
+            },
         }
         ,
         async (
             request: FastifyRequest<{
                 Querystring: GetInstanceRequest
             }>,
-            reply: FastifyReply
+            reply: FastifyReply,
         ) => {
             reply.send(await service.getByCollectionId({ projectId: request.principal.projectId, collectionId: request.query.collectionId }))
-        }
+        },
     )
 
     // delete one
     app.delete('/:id', async (request: FastifyRequest<{ Params: GetOnePathParams }>, reply: FastifyReply) => {
         await service.deleteOne({
             id: request.params.id,
-            projectId: request.principal.projectId
+            projectId: request.principal.projectId,
         })
         reply.status(StatusCodes.OK).send()
     })

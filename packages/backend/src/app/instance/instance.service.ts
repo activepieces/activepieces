@@ -51,8 +51,8 @@ export const instanceService = {
                 name: TelemetryEventName.COLLECTION_ENABLED,
                 payload: {
                     collectionId: savedInstance.collectionId,
-                    projectId: savedInstance.projectId
-                }
+                    projectId: savedInstance.projectId,
+                },
             })
         await instanceSideEffects.enable(savedInstance)
         return savedInstance
@@ -75,7 +75,7 @@ export const instanceService = {
         }
         await instanceRepo.delete({
             id,
-            projectId
+            projectId,
         })
     },
 }

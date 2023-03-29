@@ -15,7 +15,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             await handler(request, request.params.flowId)
             await reply.status(StatusCodes.OK).send()
-        }
+        },
     )
 
     app.all(
@@ -28,7 +28,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
         async (request: FastifyRequest<{ Querystring: WebhookUrlParams }>, reply) => {
             await handler(request, request.query.flowId)
             await reply.status(StatusCodes.OK).send()
-        }
+        },
     )
 
     app.all(
@@ -52,7 +52,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
             })
 
             await reply.status(StatusCodes.OK).send()
-        }
+        },
     )
 }
 

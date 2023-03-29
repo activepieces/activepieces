@@ -20,7 +20,7 @@ const triggerEventController = async (fastify: FastifyInstance) => {
         async (
             request: FastifyRequest<{
                 Querystring: TestPollingTriggerRequest;
-            }>
+            }>,
         ) => {
             const flow = await flowService.getOneOrThrow({
                 projectId: request.principal.projectId,
@@ -31,7 +31,7 @@ const triggerEventController = async (fastify: FastifyInstance) => {
                 projectId: request.principal.projectId,
                 flow: flow,
             })
-        }
+        },
     )
 
     fastify.get(
@@ -44,13 +44,13 @@ const triggerEventController = async (fastify: FastifyInstance) => {
         async (
             request: FastifyRequest<{
                 Querystring: SimulateTriggerRequest;
-            }>
+            }>,
         ) => {
             await triggerEventService.simulate({
                 flowId: request.query.flowId,
                 projectId: request.principal.projectId,
             })
-        }
+        },
     )
 
     fastify.get(
@@ -63,7 +63,7 @@ const triggerEventController = async (fastify: FastifyInstance) => {
         async (
             request: FastifyRequest<{
                 Querystring: ListTriggerEventsRequest;
-            }>
+            }>,
         ) => {
             const flow = await flowService.getOneOrThrow({ projectId: request.principal.projectId, id: request.query.flowId })
             return await triggerEventService.list({
@@ -72,6 +72,6 @@ const triggerEventController = async (fastify: FastifyInstance) => {
                 cursor: request.query.cursor ?? null,
                 limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             })
-        }
+        },
     )
 }

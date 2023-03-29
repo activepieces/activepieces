@@ -12,7 +12,7 @@ export class initializeSchema1676238396411 implements MigrationInterface {
             SELECT FROM information_schema.tables
               WHERE  table_schema = 'public'
               AND    table_name   = 'user'
-          )`
+          )`,
         )
 
         const userTableExists =

@@ -59,7 +59,7 @@ export const engineHelper = {
     async executeFlow(sandbox: Sandbox, operation: ExecuteFlowOperation): Promise<ExecutionOutput> {
         return await execute(EngineOperationType.EXECUTE_FLOW, sandbox, {
             ...operation,
-            workerToken: await workerToken({ collectionId: operation.collectionId, projectId: operation.projectId })
+            workerToken: await workerToken({ collectionId: operation.collectionId, projectId: operation.projectId }),
         }) as ExecutionOutput
     },
     async executeParseEvent(operation: ExecuteEventParserOperation): Promise<ParseEventResponse> {
@@ -95,7 +95,7 @@ export const engineHelper = {
                 webhookSecret: await getWebhookSecret(operation.flowVersion),
                 workerToken: await workerToken({
                     collectionId: operation.collectionId,
-                    projectId: operation.projectId
+                    projectId: operation.projectId,
                 }),
             })
         }
@@ -123,7 +123,7 @@ export const engineHelper = {
                 ...operation,
                 workerToken: await workerToken({
                     collectionId: operation.collectionId,
-                    projectId: operation.projectId
+                    projectId: operation.projectId,
                 }),
             })
         }
@@ -132,7 +132,7 @@ export const engineHelper = {
         }
 
         return result
-    }
+    },
 }
 
 function workerToken(request: { projectId: ProjectId, collectionId: CollectionId }): Promise<string> {
@@ -140,7 +140,7 @@ function workerToken(request: { projectId: ProjectId, collectionId: CollectionId
         type: PrincipalType.WORKER,
         id: apId(),
         projectId: request.projectId,
-        collectionId: request.collectionId
+        collectionId: request.collectionId,
     })
 }
 
@@ -153,7 +153,7 @@ async function execute(operation: EngineOperationType, sandbox: Sandbox, input: 
 
     await fs.writeFile(`${sandboxPath}/input.json`, JSON.stringify({
         ...input,
-        apiUrl: 'http://127.0.0.1:3000'
+        apiUrl: 'http://127.0.0.1:3000',
     }))
 
     await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ${operation}`)

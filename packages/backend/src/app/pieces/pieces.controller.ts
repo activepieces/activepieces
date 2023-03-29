@@ -8,7 +8,7 @@ export const piecesController: FastifyPluginAsync = async (app) => {
         '/v1/pieces/:pieceName/options',
         {
             schema: {
-                body: PieceOptionRequest
+                body: PieceOptionRequest,
             },
         },
         async (
@@ -24,9 +24,9 @@ export const piecesController: FastifyPluginAsync = async (app) => {
                 stepName: request.body.stepName,
                 input: request.body.input,
                 collectionId: request.body.collectionId,
-                projectId: request.principal.projectId
+                projectId: request.principal.projectId,
             })
-        }
+        },
     )
 
     app.get('/v1/pieces', async () => {

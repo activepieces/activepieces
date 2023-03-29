@@ -56,8 +56,8 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     },
     {
         connection: createRedisClient(),
-        concurrency: system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
-    }
+        concurrency: system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10,
+    },
 )
 
 
@@ -79,7 +79,7 @@ const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
             collectionId: data.collectionId,
             flowVersionId: data.flowVersion.id,
             payload,
-        })
+        }),
     )
 
     await Promise.all(createFlowRuns)

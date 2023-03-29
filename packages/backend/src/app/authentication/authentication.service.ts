@@ -23,7 +23,7 @@ export const authenticationService = {
             const token = await tokenUtils.encode({
                 id: user.id,
                 type: PrincipalType.USER,
-                projectId: project.id
+                projectId: project.id,
             })
 
             telemetry.identify(user, project.id)
@@ -34,14 +34,14 @@ export const authenticationService = {
                     email: user.email,
                     firstName: user.firstName,
                     lastName: user.lastName,
-                    projectId: project.id
-                }
+                    projectId: project.id,
+                },
             })
             user.password = undefined
             return {
                 ...user,
                 token,
-                projectId: project.id
+                projectId: project.id,
             }
         }
         catch (e: unknown) {
@@ -89,14 +89,14 @@ export const authenticationService = {
         const token = await tokenUtils.encode({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: projects[0].id
+            projectId: projects[0].id,
         })
 
         user.password = undefined
         return {
             ...user,
             token,
-            projectId: projects[0].id
+            projectId: projects[0].id,
         }
     },
 }

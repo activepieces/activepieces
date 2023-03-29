@@ -9,7 +9,7 @@ import { getEdition } from './secret-helper'
 const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED) ?? true
 
 const client = new PostHog(
-    'phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh'
+    'phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh',
 )
 
 export const telemetry = {
@@ -24,8 +24,8 @@ export const telemetry = {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 projectId: projectId,
-                ...(await getMetadata())
-            }
+                ...(await getMetadata()),
+            },
         })
     },
     async trackProject(projectId: ProjectId, event: TelemetryEvent): Promise<void> {
@@ -40,10 +40,10 @@ export const telemetry = {
                 ...event.payload,
                 ...(await getMetadata()),
                 datetime: new Date().toISOString(),
-            }
+            },
         })
 
-    }
+    },
 }
 
 async function getMetadata() {

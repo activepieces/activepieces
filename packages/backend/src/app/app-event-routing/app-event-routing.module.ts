@@ -15,7 +15,7 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
         {
             config: {
                 rawBody: true,
-            }
+            },
         },
         async (
             request: FastifyRequest<{
@@ -24,7 +24,7 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
                     pieceName: string;
                 }
             }>,
-            requestReply
+            requestReply,
         ) => {
             const pieceName = request.params.pieceName
             const eventPayload = {
@@ -36,7 +36,7 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
             }
             const {reply, event, identifierValue} = await engineHelper.executeParseEvent({
                 pieceName: pieceName,
-                event: eventPayload
+                event: eventPayload,
             })
       
             logger.info(`Received event ${event} with identifier ${identifierValue} in app ${pieceName}`)
@@ -44,18 +44,18 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
                 const listeners = await appEventRoutingService.listListeners({
                     appName: pieceName,
                     event: event,
-                    identifierValue: identifierValue
+                    identifierValue: identifierValue,
                 })
                 logger.info(`Found ${listeners.length} listeners for event ${event} with identifier ${identifierValue} in app ${pieceName}`)
                 listeners.forEach(listener => {
                     webhookService.callback({
                         flowId: listener.flowId,
-                        payload: eventPayload
+                        payload: eventPayload,
                     })
                 })
             }
             requestReply.status(200).headers(reply?.headers ?? {}).send(reply?.body?? {})
-        }
+        },
     )
 
 }

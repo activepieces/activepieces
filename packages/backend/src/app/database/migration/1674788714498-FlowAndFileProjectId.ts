@@ -11,7 +11,7 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
             SELECT FROM information_schema.tables
               WHERE  table_schema = 'public'
               AND    table_name   = 'flow'
-          )`
+          )`,
         )
 
         const flowTableNotExist =

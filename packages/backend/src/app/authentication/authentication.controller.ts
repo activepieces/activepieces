@@ -18,13 +18,13 @@ export const authenticationController = async (app: FastifyInstance) => {
             const signUpEnabled = (await system.getBoolean(SystemProp.SIGN_UP_ENABLED)) ?? false
             if (userCreated && !signUpEnabled) {
                 reply.code(403).send({
-                    message: 'Sign up is disabled'
+                    message: 'Sign up is disabled',
                 })
                 return
             }
             const authenticationResponse = await authenticationService.signUp(request.body)
             reply.send(authenticationResponse)
-        }
+        },
     )
 
     app.post(
@@ -37,13 +37,13 @@ export const authenticationController = async (app: FastifyInstance) => {
         async (request: FastifyRequest<{ Body: SignInRequest }>, reply: FastifyReply) => {
             const authenticationResponse = await authenticationService.signIn(request.body)
             reply.send(authenticationResponse)
-        }
+        },
     )
 
     app.get(
         '/me',
         async (request: FastifyRequest, reply: FastifyReply) => {
             reply.send(request.principal)
-        }
+        },
     )
 }

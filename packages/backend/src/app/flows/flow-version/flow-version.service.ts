@@ -247,7 +247,7 @@ function buildSchema(props: PieceProperty): TSchema {
             case PropertyType.SHORT_TEXT:
             case PropertyType.LONG_TEXT:
                 propsSchema[name] = Type.String({
-                    minLength: property.required ? 1 : undefined
+                    minLength: property.required ? 1 : undefined,
                 })
                 break
             case PropertyType.CHECKBOX:

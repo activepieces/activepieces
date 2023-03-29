@@ -13,6 +13,8 @@
         "@typescript-eslint/quotes": ["error", "single"],
         "semi": "off",
         "@typescript-eslint/semi": ["error", "never"],
+        "comma-dangle": "off",
+        "@typescript-eslint/comma-dangle": ["error", "always-multiline"],
         "no-console": "error"
       }
     },

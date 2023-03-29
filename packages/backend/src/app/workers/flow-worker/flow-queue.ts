@@ -48,7 +48,7 @@ export const flowQueue = {
                 removeOnComplete: true,
                 repeat: {
                     pattern: scheduleOptions.cronExpression,
-                    tz: scheduleOptions.timezone
+                    tz: scheduleOptions.timezone,
                 },
             })
 

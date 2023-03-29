@@ -42,7 +42,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
     public constructor(
         private readonly entity: EntitySchema,
-        private readonly paginationKeys: Array<Extract<keyof Entity, string>>
+        private readonly paginationKeys: Array<Extract<keyof Entity, string>>,
     ) {}
 
     public setAlias(alias: string): void {

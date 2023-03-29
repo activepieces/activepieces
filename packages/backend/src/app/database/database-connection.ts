@@ -64,7 +64,7 @@ const getMigrations = () => {
         removeCollectionVersion1678492809093,
         addEventRouting1678382946390,
         bumpFixPieceVersions1678928503715,
-        migrateSchedule1679014156667
+        migrateSchedule1679014156667,
     ]
 }
 
@@ -98,6 +98,6 @@ export const databaseConnection = new DataSource({
         UserEntity,
         AppConnectionEntity,
         ProjectPlanEntity,
-        ProjectUsageEntity
+        ProjectUsageEntity,
     ],
 })

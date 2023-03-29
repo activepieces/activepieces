@@ -45,7 +45,7 @@ export const webhookService = {
                 collectionId,
                 flowVersionId: flowVersion.id,
                 payload,
-            })
+            }),
         )
 
         await Promise.all(createFlowRuns)
@@ -109,7 +109,7 @@ export const webhookService = {
         const suffix: WebhookUrlSuffix = simulate ? '/simulate' : ''
         const webhookPrefix = await this.getWebhookPrefix()
         return `${webhookPrefix}/${flowId}${suffix}`
-    }
+    },
 }
 
 function extractHostname(url: string): string | null {

@@ -27,5 +27,5 @@ export const FileEntity = new EntitySchema<FileSchema>({
                 foreignKeyConstraintName: 'fk_file_project_id',
             },
         },
-    }
+    },
 })

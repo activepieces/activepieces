@@ -10,7 +10,7 @@ export class productEmbed1677894800372 implements MigrationInterface {
             SELECT FROM information_schema.tables
               WHERE  table_schema = 'public'
               AND    table_name   = 'app_credential'
-          )`
+          )`,
         )
 
         const appCredentialExists =

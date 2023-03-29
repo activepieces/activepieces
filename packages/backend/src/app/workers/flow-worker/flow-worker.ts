@@ -108,7 +108,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
 async function downloadFiles(
     sandbox: Sandbox,
     projectId: ProjectId,
-    flowVersion: FlowVersion
+    flowVersion: FlowVersion,
 ): Promise<void> {
     const flowLock = await createRedisLock()
     try {

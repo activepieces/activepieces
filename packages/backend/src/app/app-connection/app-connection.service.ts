@@ -37,7 +37,7 @@ export const appConnectionService = {
                     code: request.value.code,
                     clientId: request.value.client_id,
                     edition: await getEdition(),
-                    codeVerifier: request.value.code_challenge
+                    codeVerifier: request.value.code_challenge,
                 })
                 break
             case AppConnectionType.OAUTH2:
@@ -57,7 +57,7 @@ export const appConnectionService = {
         await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId, value: encryptObject(claimedUpsertRequest.value) }, ['name', 'projectId'])
         const connection = await appConnectionRepo.findOneByOrFail({
             projectId: projectId,
-            name: request.name
+            name: request.name,
         })
         connection.value = decryptObject(connection.value)
         return connection
@@ -65,7 +65,7 @@ export const appConnectionService = {
     async getOne({ projectId, name }: { projectId: ProjectId, name: string }): Promise<AppConnection | null> {
         const appConnection = await appConnectionRepo.findOneBy({
             projectId: projectId,
-            name: name
+            name: name,
         })
         if (appConnection === null) {
             return null
@@ -133,7 +133,7 @@ export const appConnectionService = {
         })
         const refreshConnections = await Promise.all(promises)
         return paginationHelper.createPage<AppConnection>(refreshConnections, cursor)
-    }
+    },
 }
 
 async function refresh(connection: AppConnection): Promise<AppConnection> {
@@ -181,7 +181,7 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
     return {
         ...connectionValue,
         ...response,
-        type: AppConnectionType.CLOUD_OAUTH2
+        type: AppConnectionType.CLOUD_OAUTH2,
     }
 }
 
@@ -203,7 +203,7 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
             }),
             {
                 headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
-            }
+            },
         )
     ).data
     return { ...appConnection, ...formatOAuth2Response(response) }
@@ -234,7 +234,7 @@ async function claim(request: {
                 new URLSearchParams(params),
                 {
                     headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
-                }
+                },
             )
         ).data
         return { ...formatOAuth2Response(response), client_id: request.clientId, client_secret: request.clientSecret }
@@ -245,8 +245,8 @@ async function claim(request: {
             code: ErrorCode.INVALID_CLAIM, params: {
                 clientId: request.clientId,
                 tokenUrl: request.tokenUrl,
-                redirectUrl: request.redirectUrl
-            }
+                redirectUrl: request.redirectUrl,
+            },
         })
     }
 }
@@ -261,8 +261,8 @@ async function claimWithCloud(request: {
         logger.error(e)
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CLOUD_CLAIM, params: {
-                appName: request.pieceName
-            }
+                appName: request.pieceName,
+            },
         })
     }
 }
