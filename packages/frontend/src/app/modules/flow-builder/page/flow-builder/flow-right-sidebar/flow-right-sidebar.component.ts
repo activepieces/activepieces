@@ -7,15 +7,16 @@ import {
   ViewChild,
 } from '@angular/core';
 import { RightSideBarType } from '../../../../common/model/enum/right-side-bar-type.enum';
-import { map, Observable, tap } from 'rxjs';
+import { map, Observable, of, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 
 import { FormControl } from '@angular/forms';
 import { BuilderSelectors } from '../../../store/builder/builder.selector';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { FlowItem } from '../../../../common/model/flow-builder/flow-item';
-import { ActionType, TriggerType } from '@activepieces/shared';
+import { ActionType, TriggerStrategy, TriggerType } from '@activepieces/shared';
 import { TestStepService } from '../../../service/test-step.service';
+import { ActionMetaService } from '../../../service/action-meta.service';
 
 @Component({
   selector: 'app-flow-right-sidebar',
@@ -37,11 +38,13 @@ export class FlowRightSidebarComponent implements OnInit {
   selectedStepResultContainer: ElementRef;
   elevateResizer$: Observable<void>;
   animateSectionsHeightChange = false;
+  isCurrentStepPollingTrigger$: Observable<boolean>;
   constructor(
     private store: Store,
     private ngZone: NgZone,
     private testStepService: TestStepService,
-    private renderer2: Renderer2
+    private renderer2: Renderer2,
+    private actionMetaDataService: ActionMetaService
   ) {}
 
   ngOnInit(): void {
@@ -62,6 +65,31 @@ export class FlowRightSidebarComponent implements OnInit {
           );
         })
       );
+    this.isCurrentStepPollingTrigger$ = this.currentStep$.pipe(
+      switchMap((step) => {
+        if (
+          step &&
+          step.type === TriggerType.PIECE &&
+          step.settings.pieceName !== 'schedule'
+        ) {
+          return this.actionMetaDataService
+            .getPieceMetadata(
+              step.settings.pieceName,
+              step.settings.pieceVersion
+            )
+            .pipe(
+              map((res) => {
+                return (
+                  res.triggers[step.settings.triggerName] &&
+                  res.triggers[step.settings.triggerName].type ===
+                    TriggerStrategy.POLLING
+                );
+              })
+            );
+        }
+        return of(false);
+      })
+    );
   }
 
   get sidebarType() {
