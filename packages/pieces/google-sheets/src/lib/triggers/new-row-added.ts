@@ -15,7 +15,8 @@ export const newRowAdded = createTrigger({
     sheet_id: googleSheetsCommon.sheet_id
   },
   sampleData: {
-    "value": sampleData
+    "value": sampleData,
+    "rowId": 1
   },
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
@@ -29,7 +30,7 @@ export const newRowAdded = createTrigger({
   async onDisable(context) {
     console.log("Disabling new google sheets trigger");
    },
-  async run(context) {
+   async run(context) {
     const sheetId = context.propsValue['sheet_id'];
     const accessToken = context.propsValue['authentication']['access_token'];
     const spreadSheetId = context.propsValue['spreadsheet_id'];
@@ -38,14 +39,16 @@ export const newRowAdded = createTrigger({
     let payloads: any[] = [];
     console.log(`The spreadsheet ${spreadSheetId} has now ${currentValues.length} rows, previous # of rows ${rowCount}`);
     if (currentValues.length > rowCount) {
-      payloads = currentValues.slice(rowCount).map(value => {
+      payloads = currentValues.slice(rowCount).map((value, index) => {
+        const rowIndex = rowCount + index;
         return {
-          value: value
+          value: value,
+          rowId: rowIndex
         }
       });
     }
     context.store?.put("rowCount", currentValues.length);
     return payloads;
-  },
+},
 });
 
