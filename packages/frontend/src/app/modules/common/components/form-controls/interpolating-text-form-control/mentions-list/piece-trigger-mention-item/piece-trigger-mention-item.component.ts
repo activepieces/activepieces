@@ -18,9 +18,8 @@ import {
   tap,
 } from 'rxjs';
 import {
-  ActionType,
-  PieceAction,
   PieceTrigger,
+  TriggerStrategy,
   TriggerType,
 } from '@activepieces/shared';
 import {
@@ -33,28 +32,26 @@ import { ActionMetaService } from '../../../../../../flow-builder/service/action
 import { FlowItemDetails } from '../../../../../../flow-builder/page/flow-builder/flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
 import { BuilderSelectors } from '../../../../../../flow-builder/store/builder/builder.selector';
 import { FlowItem } from '../../../../../model/flow-builder/flow-item';
+import { FlowsActions } from '../../../../../../flow-builder/store/flow/flows.action';
 
 @Component({
-  selector: 'app-piece-step-mention-item',
-  templateUrl: './piece-step-mention-item.component.html',
+  selector: 'app-piece-trigger-mention-item',
+  templateUrl: './piece-trigger-mention-item.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PieceStepMentionItemComponent implements OnInit {
+export class PieceTriggerMentionItemComponent implements OnInit {
   TriggerType = TriggerType;
   expandSample = false;
   @Input()
   set stepMention(val: MentionListItem & { step: FlowItem }) {
-    if (
-      val.step.type !== ActionType.PIECE &&
-      val.step.type !== TriggerType.PIECE
-    ) {
-      throw new Error('Step is not a piece action nor a piece trigger');
+    if (val.step.type !== TriggerType.PIECE) {
+      throw new Error('Step is not a piece trigger');
     }
     this._stepMention = val as MentionListItem & {
-      step: PieceTrigger | PieceAction;
+      step: PieceTrigger;
     };
   }
-  _stepMention: MentionListItem & { step: PieceTrigger | PieceAction };
+  _stepMention: MentionListItem & { step: PieceTrigger };
   @Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
   @Input() stepIndex: number;
   flowItemDetails$: Observable<FlowItemDetails | undefined>;
@@ -64,8 +61,7 @@ export class PieceStepMentionItemComponent implements OnInit {
     markedNodesToShow: Map<string, boolean>;
   }>;
   fetching$: Subject<boolean> = new Subject();
-  noSampleDataNote$: Observable<string>;
-
+  isPollingTrigger$: Observable<boolean>;
   constructor(
     private store: Store,
     private actionMetaDataService: ActionMetaService,
@@ -73,6 +69,7 @@ export class PieceStepMentionItemComponent implements OnInit {
   ) {}
   ngOnInit(): void {
     const cachedResult: undefined | MentionTreeNode[] = this.getChachedData();
+    this.isPollingTrigger$ = this.checkIfItIsPollingTrigger();
     if (cachedResult) {
       this.sampleData$ = combineLatest({
         stepTree: of({ children: cachedResult, error: '' }),
@@ -119,7 +116,7 @@ export class PieceStepMentionItemComponent implements OnInit {
   }
   fetchSampleData() {
     const step = this._stepMention.step;
-    if (step.type !== TriggerType.PIECE && step.type !== ActionType.PIECE) {
+    if (step.type !== TriggerType.PIECE) {
       throw new Error("Activepieces- step isn't of a piece type");
     }
     const { pieceName, pieceVersion } = step.settings;
@@ -130,16 +127,9 @@ export class PieceStepMentionItemComponent implements OnInit {
           this.fetching$.next(true);
         }),
         map((pieceMetadata) => {
-          if (step.type === TriggerType.PIECE) {
-            return step.settings.triggerName
-              ? pieceMetadata.triggers[step.settings.triggerName].sampleData ??
-                  {}
-              : {};
-          } else {
-            return step.settings.actionName
-              ? pieceMetadata.actions[step.settings.actionName].sampleData ?? {}
-              : {};
-          }
+          return step.settings.triggerName
+            ? pieceMetadata.triggers[step.settings.triggerName].sampleData ?? {}
+            : {};
         }),
         map((sampleData) => {
           const childrenNodes = traverseStepOutputAndReturnMentionTree(
@@ -192,23 +182,34 @@ export class PieceStepMentionItemComponent implements OnInit {
   }
 
   private getErrorMessage() {
-    const actionOrTirggerText =
-      this._stepMention.step.type === ActionType.PIECE ? 'action' : 'trigger';
-    const triggerName =
-      this._stepMention.step.type === TriggerType.PIECE
-        ? this._stepMention.step.settings.triggerName
-        : '';
-    const actionName =
-      this._stepMention.step.type === ActionType.PIECE
-        ? this._stepMention.step.settings.actionName
-        : '';
     const noSampleData = `No sample available`;
-    const error =
-      !triggerName && !actionName
-        ? `Please select ${
-            actionOrTirggerText === 'action' ? 'an action' : 'a trigger'
-          } `
-        : noSampleData;
+    const error = !this._stepMention.step.settings.triggerName
+      ? `Please select a trigger`
+      : noSampleData;
     return error;
+  }
+  checkIfItIsPollingTrigger() {
+    return this.actionMetaDataService
+      .getPieceMetadata(
+        this._stepMention.step.settings.pieceName,
+        this._stepMention.step.settings.pieceVersion
+      )
+      .pipe(
+        map((res) => {
+          if (res) {
+            return (
+              res.triggers[this._stepMention.step.settings.triggerName].type ===
+                TriggerStrategy.POLLING &&
+              this._stepMention.step.settings.pieceName !== 'schedule'
+            );
+          }
+          return false;
+        })
+      );
+  }
+  selectStep() {
+    this.store.dispatch(
+      FlowsActions.selectStepByName({ stepName: this._stepMention.step.name })
+    );
   }
 }

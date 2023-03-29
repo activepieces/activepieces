@@ -44,7 +44,9 @@ export const PieceTriggerSettings = Type.Object({
   pieceName: Type.String({}),
   pieceVersion: SemVerType,
   triggerName: Type.String({}),
-  input: Type.Record(Type.String({}), Type.Any())
+  input: Type.Record(Type.String({}), Type.Any()),
+  inputUiInfo:SampleDataSettingsObject
+  
 });
 
 export type PieceTriggerSettings = Static<typeof PieceTriggerSettings>;

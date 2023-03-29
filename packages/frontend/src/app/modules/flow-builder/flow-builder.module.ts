@@ -70,7 +70,7 @@ import { BranchStepInputFormComponent } from './page/flow-builder/flow-right-sid
 import { CanvasUtilsComponent } from './page/flow-builder/canvas-utils/canvas-utils.component';
 import { MagicWandDialogComponent } from './page/flow-builder/flow-builder-header/magic-wand-dialog/magic-flow-dialog.component';
 import { HorizontalSidebarSeparatorComponent } from './page/flow-builder/canvas-utils/horizontal-sidebar-separator/horizontal-sidebar-separator.component';
-import { TestStepComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/test-step/test-step.component';
+import { TestingStepsAndTriggersModule } from '../testing-steps-and-triggers/testing-steps-and-triggers.module';
 import { StepNameEditorComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/step-name-editor/step-name-editor.component';
 import { CustomAuthConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/custom-auth-connection-dialog/custom-auth-connection-dialog.component';
 
@@ -101,6 +101,7 @@ import { CustomAuthConnectionDialogComponent } from './page/flow-builder/flow-ri
     MatExpansionModule,
     MonacoEditorModule,
     MatTabsModule,
+    TestingStepsAndTriggersModule,
   ],
   providers: [
     {
@@ -156,7 +157,6 @@ import { CustomAuthConnectionDialogComponent } from './page/flow-builder/flow-ri
     CanvasUtilsComponent,
     MagicWandDialogComponent,
     HorizontalSidebarSeparatorComponent,
-    TestStepComponent,
     StepNameEditorComponent,
     CustomAuthConnectionDialogComponent,
   ],
