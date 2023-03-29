@@ -3,6 +3,7 @@ import { FlowItemDetails } from '../page/flow-builder/flow-right-sidebar/step-ty
 import {
   ActionType,
   ApEdition,
+  ApEnvironment,
   compareSemVer,
   PieceMetadata,
   PieceMetadataSummary,
@@ -22,6 +23,7 @@ type TriggersMetadata = Record<string, TriggerBase>;
 type FilterUnSupportedPiecesParams = {
   piecesManifest: PieceMetadataSummary[];
   release: string;
+  environment: string;
 };
 
 @Injectable({
@@ -80,6 +82,9 @@ export class ActionMetaService {
     const { piecesManifest, release } = params;
 
     return piecesManifest.filter((piece) => {
+      if (params.environment === ApEnvironment.DEVELOPMENT) {
+        return true;
+      }
       const minRelease = piece.minimumSupportedRelease;
       const maxRelease = piece.maximumSupportedRelease;
       if (minRelease && compareSemVer(release, minRelease) === -1) {
@@ -125,6 +130,7 @@ export class ActionMetaService {
   getPiecesManifest(): Observable<PieceMetadataSummary[]> {
     return forkJoin({
       piecesManifest: this.piecesManifest$,
+      environment: this.flagsService.getEnvironment(),
       release: this.release$,
     }).pipe(map(this.filterUnSupportedPieces), shareReplay(1));
   }
