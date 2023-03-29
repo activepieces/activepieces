@@ -86,7 +86,7 @@ export const webhookService = {
         });
     },
 
-    async getWebhookPrefix(controllerPrefix: WebhookControllerPrefix = ''): Promise<string> {
+    async getWebhookPrefix(): Promise<string> {
         const environment = system.get(SystemProp.ENVIRONMENT);
 
         let url = environment === ApEnvironment.PRODUCTION
@@ -101,13 +101,13 @@ export const webhookService = {
         const slash = url.endsWith('/') ? '' : '/';
         const redirect = environment === ApEnvironment.PRODUCTION ? 'api/' : '';
 
-        return `${url}${slash}${redirect}v1/webhooks${controllerPrefix}`;
+        return `${url}${slash}${redirect}v1/webhooks`;
     },
 
     async getWebhookUrl({ flowId, simulate }: GetWebhookUrlParams): Promise<string> {
-        const controllerPrefix: WebhookControllerPrefix = simulate ? '/simulate' : '';
-        const webhookPrefix = await this.getWebhookPrefix(controllerPrefix);
-        return `${webhookPrefix}/${flowId}`;
+        const suffix: WebhookUrlSuffix = simulate ? '/simulate' : '';
+        const webhookPrefix = await this.getWebhookPrefix();
+        return `${webhookPrefix}/${flowId}${suffix}`;
     }
 };
 
@@ -163,7 +163,7 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
     return flow;
 }
 
-type WebhookControllerPrefix = '' | '/simulate';
+type WebhookUrlSuffix = '' | '/simulate';
 
 type GetWebhookUrlParams = {
     flowId: FlowId;
