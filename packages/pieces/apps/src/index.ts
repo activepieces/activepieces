@@ -49,10 +49,11 @@ import { delay } from '@activepieces/piece-delay';
 import { dataMapper } from '@activepieces/piece-data-mapper';
 import { schedule } from '@activepieces/piece-schedule';
 import { zendesk } from '@activepieces/piece-zendesk';
+import { mattermost } from '@activepieces/piece-mattermost';
+import { mastodon } from '@activepieces/piece-mastodon';
 import { shopify } from '@activepieces/piece-shopify';
 import { constantContact } from '@activepieces/piece-constant-contact';
 import { salesforce } from '@activepieces/piece-salesforce';
-
 
 export const pieces: Piece[] = [
     airtable,
@@ -105,6 +106,8 @@ export const pieces: Piece[] = [
     intercom,
     schedule,
     zendesk,
+    mattermost,
+    mastodon,
     shopify,
     constantContact,
     salesforce

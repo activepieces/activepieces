@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from "fastify";
-import { ListTriggerEventsRequest } from "@activepieces/shared";
+import { ListTriggerEventsRequest, TestTriggerRequest } from "@activepieces/shared";
 import { triggerEventService } from "./trigger-event.service";
 import { flowService } from "../flow.service";
 
@@ -11,6 +11,27 @@ export const triggerEventModule = async (app: FastifyInstance) => {
 
 
 const triggerEventController = async (fastify: FastifyInstance) => {
+
+
+    fastify.get(
+        "/poll",
+        {
+            schema: {
+                querystring: TestTriggerRequest
+            },
+        },
+        async (
+            request: FastifyRequest<{
+                Querystring: TestTriggerRequest;
+            }>
+        ) => {
+            const flow = await flowService.getOneOrThrow({ projectId: request.principal.projectId, id: request.query.flowId });
+            return await triggerEventService.test({
+                projectId: request.principal.projectId,
+                flow: flow
+            });
+        }
+    );
 
     fastify.get(
         "/",
@@ -24,10 +45,10 @@ const triggerEventController = async (fastify: FastifyInstance) => {
                 Querystring: ListTriggerEventsRequest;
             }>
         ) => {
-            const flow = await flowService.getOneOrThrow({projectId: request.principal.projectId, id: request.query.flowId});
+            const flow = await flowService.getOneOrThrow({ projectId: request.principal.projectId, id: request.query.flowId });
             return await triggerEventService.list({
                 projectId: request.principal.projectId,
-                flowVersion: flow.version,
+                flow: flow,
                 cursor: request.query.cursor ?? null,
                 limit: request.query.limit ?? DEFUALT_PAGE_SIZE
             });

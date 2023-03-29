@@ -9,6 +9,7 @@ import {
     ExecuteFlowOperation,
     ExecutePropsOptions,
     ExecuteTriggerOperation,
+    ExecuteTriggerResponse,
     ExecutionOutput,
     getPackageAliasForPiece,
     getPackageVersionForPiece,
@@ -78,12 +79,11 @@ export const engineHelper = {
         return result as ParseEventResponse;
     },
 
-    async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | unknown> {
+    async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | ExecuteTriggerResponse> {
         const sandbox = sandboxManager.obtainSandbox();
         let result;
         try {
             await sandbox.cleanAndInit();
-
             const buildPath = sandbox.getSandboxFolderPath();
             const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings;
             await installPieceDependency(buildPath, pieceName, pieceVersion);
@@ -102,12 +102,8 @@ export const engineHelper = {
         finally {
             sandboxManager.returnSandbox(sandbox.boxId);
         }
-
-        if (operation.hookType === TriggerHookType.RUN) {
+        if (operation.hookType === TriggerHookType.RUN || operation.hookType === TriggerHookType.TEST) {
             return result as unknown[];
-        }
-        if (operation.hookType === TriggerHookType.TEST) {
-            return result as unknown;
         }
         return result as void;
     },

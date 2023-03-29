@@ -16,43 +16,46 @@ import {
   tap,
 } from 'rxjs';
 import { TriggerType } from '@activepieces/shared';
-import { TestStepService } from '../../../../../service/test-step.service';
-import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
 import { FormControl } from '@angular/forms';
-import { FlowsActions } from '../../../../../store/flow/flows.action';
 import deepEqual from 'deep-equal';
+import { TestStepService } from '../../flow-builder/service/test-step.service';
+import { BuilderSelectors } from '../../flow-builder/store/builder/builder.selector';
+import { FlowsActions } from '../../flow-builder/store/flow/flows.action';
+import { TestStepCoreComponent } from '../test-steps-core';
 
 export interface WebhookHistoricalData {
   payload: unknown;
   created: string;
 }
 @Component({
-  selector: 'app-test-step',
-  templateUrl: './test-step.component.html',
-  styleUrls: ['./test-step.component.scss'],
+  selector: 'app-test-webhook-trigger',
+  templateUrl: './test-webhook-trigger.component.html',
 })
-export class TestStepComponent {
+export class TestWebhookTriggerComponent extends TestStepCoreComponent {
   currentResults$: BehaviorSubject<WebhookHistoricalData[]>;
   testStep$: Observable<WebhookHistoricalData[]>;
   foundNewResult$: Subject<boolean> = new Subject();
   loading = false;
   selectedDataControl: FormControl<unknown> = new FormControl();
-  saveAfterNewDataIsLoaded$: Observable<void>;
+
   saveNewSelectedData$: Observable<void>;
   initialHistoricalData$: Observable<WebhookHistoricalData[]>;
   initaillySelectedSampleData$: Observable<unknown>;
   stopSelectedDataControlListener$ = new Subject<boolean>();
   cancelTesting$ = new Subject<boolean>();
-  constructor(private testStepService: TestStepService, private store: Store) {
+  saveAfterNewDataIsLoaded$: Observable<void>;
+  constructor(testStepService: TestStepService, private store: Store) {
+    super(testStepService);
     this.initialObservables();
   }
+
   private initialObservables() {
     this.setSelectedDataControlListener();
     this.initialHistoricalData$ = this.store
       .select(BuilderSelectors.selectCurrentFlowId)
       .pipe(
         switchMap((res) => {
-          return this.testStepService.getWebhookResults(res!.toString());
+          return this.testStepService.getTriggerEventsResults(res!.toString());
         }),
         map((res) => {
           return res.data;
@@ -111,7 +114,7 @@ export class TestStepComponent {
   createResultsChecker(flowId: string) {
     const observables = {
       currentResults: of(this.currentResults$.value),
-      resultsChecked: this.testStepService.getWebhookResults(flowId),
+      resultsChecked: this.testStepService.getTriggerEventsResults(flowId),
     };
     return forkJoin(observables).pipe(
       map((res) => {
