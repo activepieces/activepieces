@@ -1,13 +1,13 @@
-import { FastifyInstance, FastifyRequest } from 'fastify'
-import { ListTriggerEventsRequest, SimulateTriggerRequest, TestPollingTriggerRequest } from '@activepieces/shared'
-import { triggerEventService } from './trigger-event.service'
-import { flowService } from '../flow.service'
+import { FastifyInstance, FastifyRequest } from 'fastify';
+import { ListTriggerEventsRequest, SimulateTriggerRequest, TestPollingTriggerRequest } from '@activepieces/shared';
+import { triggerEventService } from './trigger-event.service';
+import { flowService } from '../flow.service';
 
-const DEFAULT_PAGE_SIZE = 10
+const DEFAULT_PAGE_SIZE = 10;
 
 export const triggerEventModule = async (app: FastifyInstance) => {
-    app.register(triggerEventController, { prefix: '/v1/trigger-events' })
-}
+    app.register(triggerEventController, { prefix: '/v1/trigger-events' });
+};
 
 const triggerEventController = async (fastify: FastifyInstance) => {
     fastify.get(
@@ -25,14 +25,14 @@ const triggerEventController = async (fastify: FastifyInstance) => {
             const flow = await flowService.getOneOrThrow({
                 projectId: request.principal.projectId,
                 id: request.query.flowId,
-            })
+            });
 
             return await triggerEventService.test({
                 projectId: request.principal.projectId,
                 flow: flow,
-            })
+            });
         },
-    )
+    );
 
     fastify.get(
         '/simulate',
@@ -49,9 +49,9 @@ const triggerEventController = async (fastify: FastifyInstance) => {
             await triggerEventService.simulate({
                 flowId: request.query.flowId,
                 projectId: request.principal.projectId,
-            })
+            });
         },
-    )
+    );
 
     fastify.get(
         '/',
@@ -65,13 +65,13 @@ const triggerEventController = async (fastify: FastifyInstance) => {
                 Querystring: ListTriggerEventsRequest;
             }>,
         ) => {
-            const flow = await flowService.getOneOrThrow({ projectId: request.principal.projectId, id: request.query.flowId })
+            const flow = await flowService.getOneOrThrow({ projectId: request.principal.projectId, id: request.query.flowId });
             return await triggerEventService.list({
                 projectId: request.principal.projectId,
                 flow: flow,
                 cursor: request.query.cursor ?? null,
                 limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
-            })
+            });
         },
-    )
-}
+    );
+};

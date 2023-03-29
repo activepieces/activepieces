@@ -1,19 +1,19 @@
-import { createRedisClient } from '../database/redis-connection'
+import { createRedisClient } from '../database/redis-connection';
 
-const redis = createRedisClient()
+const redis = createRedisClient();
 
 const getKey = (keySuffix: string): string => {
-    return `ACTIVEPIECES:SYSTEM_PROP:${keySuffix}`
-}
+    return `ACTIVEPIECES:SYSTEM_PROP:${keySuffix}`;
+};
 
 export const redisStore = {
     async save(keySuffix: string, value: string): Promise<void> {
-        const key = getKey(keySuffix)
-        await redis.set(key, value)
+        const key = getKey(keySuffix);
+        await redis.set(key, value);
     },
 
     async load(keySuffix: string): Promise<string | null> {
-        const key = getKey(keySuffix)
-        return await redis.get(key)
+        const key = getKey(keySuffix);
+        return await redis.get(key);
     },
-}
+};

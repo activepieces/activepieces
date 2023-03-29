@@ -1,6 +1,6 @@
-import { EntitySchema } from 'typeorm'
-import { Collection, Flow, FlowRun, FlowVersion, Project, TriggerEvent } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
+import { EntitySchema } from 'typeorm';
+import { Collection, Flow, FlowRun, FlowVersion, Project, TriggerEvent } from '@activepieces/shared';
+import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity';
 
 interface FlowSchema extends Flow {
     versions: FlowVersion[];
@@ -61,4 +61,4 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             },
         },
     },
-})
+});

@@ -1,8 +1,8 @@
-import { EntitySchema } from 'typeorm'
-import { AppConnection, Collection, Flow, Project, TriggerEvent, User } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
-import { ConnectionKey } from '@ee/product-embed/shared/connection-keys/connection-key'
-import { AppCredential } from '@ee/product-embed/shared/app-credentials/app-credentials'
+import { EntitySchema } from 'typeorm';
+import { AppConnection, Collection, Flow, Project, TriggerEvent, User } from '@activepieces/shared';
+import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity';
+import { ConnectionKey } from '@ee/product-embed/shared/connection-keys/connection-key';
+import { AppCredential } from '@ee/product-embed/shared/app-credentials/app-credentials';
 
 interface ProjectSchema extends Project {
     owner: User;
@@ -76,4 +76,4 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             inverseSide: 'project',
         },
     },
-})
+});

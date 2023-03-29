@@ -1,8 +1,8 @@
-import { FlowId, ProjectId } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
-import { EntitySchema } from 'typeorm'
+import { FlowId, ProjectId } from '@activepieces/shared';
+import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity';
+import { EntitySchema } from 'typeorm';
 
-export type AppEventRoutingId = string
+export type AppEventRoutingId = string;
 
 export interface AppEventRouting {
     id: AppEventRoutingId;
@@ -43,4 +43,4 @@ export const AppEventRoutingEntity = new EntitySchema<AppEventRouting>({
             unique: true,
         },
     ],
-})
+});

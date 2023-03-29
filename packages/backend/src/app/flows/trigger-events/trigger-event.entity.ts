@@ -1,6 +1,6 @@
-import { EntitySchema } from 'typeorm'
-import { Flow, Project, TriggerEvent } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity'
+import { EntitySchema } from 'typeorm';
+import { Flow, Project, TriggerEvent } from '@activepieces/shared';
+import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity';
 
 interface TriggerEventSchema extends TriggerEvent {
     flow: Flow;
@@ -49,4 +49,4 @@ export const TriggerEventEntity = new EntitySchema<TriggerEventSchema>({
             },
         },
     },
-})
+});
