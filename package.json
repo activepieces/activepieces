@@ -66,6 +66,7 @@
     "ioredis": "^5.2.5",
     "jshint": "^2.13.6",
     "jsonlint-mod": "^1.7.6",
+    "jsonrepair": "^3.0.2",
     "jsonwebtoken": "^9.0.0",
     "jszip": "^3.10.1",
     "kl-angular-mentions": "^1.2.3",

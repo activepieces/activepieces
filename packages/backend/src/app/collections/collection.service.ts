@@ -59,7 +59,6 @@ export const collectionService = {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
         const paginator = buildPaginator({
             entity: CollectionEntity,
-            paginationKeys: ["created"],
             query: {
                 limit,
                 order: "ASC",
