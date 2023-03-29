@@ -48,6 +48,7 @@ import { square } from '@activepieces/piece-square';
 import { delay } from '@activepieces/piece-delay';
 import { dataMapper } from '@activepieces/piece-data-mapper';
 import { schedule } from '@activepieces/piece-schedule';
+import { mattermost } from '@activepieces/piece-mattermost';
 import { mastodon } from '@activepieces/piece-mastodon';
 import { shopify } from '@activepieces/piece-shopify';
 import { constantContact } from '@activepieces/piece-constant-contact';
@@ -104,6 +105,7 @@ export const pieces: Piece[] = [
     dataMapper,
     intercom,
     schedule,
+    mattermost,
     mastodon,
     shopify,
     constantContact,
