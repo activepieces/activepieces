@@ -1,7 +1,7 @@
-import { FastifyPluginAsync, FastifyRequest } from 'fastify';
-import { GetPieceRequestParams, GetPieceRequestQuery, PieceOptionRequest } from '@activepieces/shared';
-import { engineHelper } from '../helper/engine-helper';
-import { pieceMetadataLoader } from './piece-metadata-loader';
+import { FastifyPluginAsync, FastifyRequest } from 'fastify'
+import { GetPieceRequestParams, GetPieceRequestQuery, PieceOptionRequest } from '@activepieces/shared'
+import { engineHelper } from '../helper/engine-helper'
+import { pieceMetadataLoader } from './piece-metadata-loader'
 
 export const piecesController: FastifyPluginAsync = async (app) => {
     app.post(
@@ -27,11 +27,11 @@ export const piecesController: FastifyPluginAsync = async (app) => {
                 projectId: request.principal.projectId
             })
         }
-    );
+    )
 
     app.get('/v1/pieces', async () => {
-        return await pieceMetadataLoader.manifest();
-    });
+        return await pieceMetadataLoader.manifest()
+    })
 
     app.get(
         '/v1/pieces/:name',
@@ -47,9 +47,9 @@ export const piecesController: FastifyPluginAsync = async (app) => {
                 Querystring: GetPieceRequestQuery;
             }>,
         ) => {
-            const { name } = request.params;
-            const { version } = request.query;
-            return await pieceMetadataLoader.pieceMetadata(name, version);
+            const { name } = request.params
+            const { version } = request.query
+            return await pieceMetadataLoader.pieceMetadata(name, version)
         },
-    );
-};
+    )
+}

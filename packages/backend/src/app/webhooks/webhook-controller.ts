@@ -1,8 +1,8 @@
-import { FastifyPluginAsync, FastifyRequest } from 'fastify';
-import { StatusCodes } from 'http-status-codes';
-import { WebhookUrlParams } from '@activepieces/shared';
-import { webhookService } from './webhook-service';
-import { logger } from '../helper/logger';
+import { FastifyPluginAsync, FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { WebhookUrlParams } from '@activepieces/shared'
+import { webhookService } from './webhook-service'
+import { logger } from '../helper/logger'
 
 export const webhookController: FastifyPluginAsync = async (app) => {
     app.all(
@@ -13,10 +13,10 @@ export const webhookController: FastifyPluginAsync = async (app) => {
             },
         },
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-            await handler(request, request.params.flowId);
-            await reply.status(StatusCodes.OK).send();
+            await handler(request, request.params.flowId)
+            await reply.status(StatusCodes.OK).send()
         }
-    );
+    )
 
     app.all(
         '/',
@@ -26,10 +26,10 @@ export const webhookController: FastifyPluginAsync = async (app) => {
             },
         },
         async (request: FastifyRequest<{ Querystring: WebhookUrlParams }>, reply) => {
-            await handler(request, request.query.flowId);
-            await reply.status(StatusCodes.OK).send();
+            await handler(request, request.query.flowId)
+            await reply.status(StatusCodes.OK).send()
         }
-    );
+    )
 
     app.all(
         '/:flowId/simulate',
@@ -39,7 +39,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
             },
         },
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-            logger.debug(`[WebhookController#simulate] flowId=${request.params.flowId}`);
+            logger.debug(`[WebhookController#simulate] flowId=${request.params.flowId}`)
 
             await webhookService.simulationCallback({
                 flowId: request.params.flowId,
@@ -49,12 +49,12 @@ export const webhookController: FastifyPluginAsync = async (app) => {
                     body: request.body,
                     queryParams: request.query as Record<string, string>,
                 },
-            });
+            })
 
-            await reply.status(StatusCodes.OK).send();
+            await reply.status(StatusCodes.OK).send()
         }
-    );
-};
+    )
+}
 
 const handler = async (request: FastifyRequest, flowId: string) => {
     await webhookService.callback({
@@ -65,5 +65,5 @@ const handler = async (request: FastifyRequest, flowId: string) => {
             body: request.body,
             queryParams: request.query as Record<string, string>,
         },
-    });
-};
+    })
+}

@@ -1,6 +1,6 @@
-import { EntitySchema } from 'typeorm';
-import { Flow, FlowVersion } from '@activepieces/shared';
-import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity';
+import { EntitySchema } from 'typeorm'
+import { Flow, FlowVersion } from '@activepieces/shared'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity'
 
 interface FlowVersionSchema extends FlowVersion {
     flow: Flow;
@@ -44,4 +44,4 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             },
         },
     },
-});
+})

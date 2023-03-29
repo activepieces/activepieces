@@ -11,6 +11,8 @@
         "@typescript-eslint/indent": ["error", 4],
         "quotes": "off",
         "@typescript-eslint/quotes": ["error", "single"],
+        "semi": "off",
+        "@typescript-eslint/semi": ["error", "never"],
         "no-console": "error"
       }
     },
