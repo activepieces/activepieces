@@ -81,7 +81,7 @@ export const gmailNewEmailTrigger = createTrigger({
       before: now
     })
 
-    await store?.put<TriggerData>('gmail_new_email_trigger', { last_read: now })
+    await store.put<TriggerData>('gmail_new_email_trigger', { last_read: now })
     return response.messages;
   }
 });

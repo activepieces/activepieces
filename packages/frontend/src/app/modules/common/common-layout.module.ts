@@ -82,6 +82,8 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { HotspotComponent } from './components/hotspot/hotspot.component';
 import { LoopStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/loop-step-mention-item/loop-step-mention-item.component';
 import { CustomPathMentionDialogComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component';
+import { WarningBoxComponent } from './components/warning-box/warning-box.component';
+import { PieceTriggerMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component';
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
   hideDelay: 0,
@@ -132,6 +134,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     HotspotComponent,
     LoopStepMentionItemComponent,
     CustomPathMentionDialogComponent,
+    WarningBoxComponent,
+    PieceTriggerMentionItemComponent,
   ],
   imports: [
     FontAwesomeModule,
@@ -211,6 +215,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatDividerModule,
     MatButtonToggleModule,
     HotspotComponent,
+    WarningBoxComponent,
+    PieceTriggerMentionItemComponent,
   ],
   providers: [
     HighlightService,

@@ -8,11 +8,12 @@
 
   <ng-container *ngIf="rightSidebarType === sidebarType.EDIT_STEP">
     <div class="ap-relative" #editStepSection
-      [class.top-resizer-section]="(currentStep$ | async)?.type === TriggerType.WEBHOOK"
+      [class.top-resizer-section]="(currentStep$ | async)?.type === TriggerType.WEBHOOK ||(currentStep$ | async)?.type === TriggerType.PIECE "
       [class.ap-transition-all]="animateSectionsHeightChange">
       <app-edit-step-sidebar>
       </app-edit-step-sidebar>
     </div>
+
     <ng-container *ngIf="currentStep$ | async as currentStep">
       <ng-container *ngIf="currentStep.type === TriggerType.WEBHOOK">
         <div class="resizer-area" #resizerArea>
@@ -22,10 +23,21 @@
           </app-horizontal-sidebar-separator>
         </div>
         <div class="bottom-resizer-section" #selectedStepResultContainer>
-          <app-test-step></app-test-step>
+          <app-test-webhook-trigger></app-test-webhook-trigger>
         </div>
       </ng-container>
+    </ng-container>
 
+    <ng-container *ngIf="isCurrentStepPollingTrigger$ | async">
+      <div class="resizer-area" #resizerArea>
+        <app-horizontal-sidebar-separator [resizerArea]="resizerArea" topStyle="calc( 100% - 10px )"
+          (resetTopResizerSectionHeight)="resetTopResizerSectionHeight()" (resizerDragged)="resizerDragged($event)"
+          (resizerDragStarted)="resizerDragStarted()">
+        </app-horizontal-sidebar-separator>
+      </div>
+      <div class="bottom-resizer-section" #selectedStepResultContainer>
+        <app-test-polling-trigger></app-test-polling-trigger>
+      </div>
     </ng-container>
 
   </ng-container>

@@ -1,9 +1,12 @@
 {
-  "extends": ["../../../../packages/.eslintrc.json"],
+  "extends": ["../../../../.eslintrc.json"],
   "ignorePatterns": ["!**/*"],
   "overrides": [
     {
       "files": ["*.ts"],
+      "parserOptions": {
+        "project":["packages/ee/product-embed/product-sdk/tsconfig.*?.json"]
+      },
       "rules": {
         "rxjs/no-async-subscribe": "error",
         "rxjs/no-nested-subscribe": "error",

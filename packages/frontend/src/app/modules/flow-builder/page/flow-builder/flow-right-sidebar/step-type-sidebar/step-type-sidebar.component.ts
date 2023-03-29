@@ -193,6 +193,9 @@ export class StepTypeSidebarComponent implements OnInit {
             pieceVersion: triggerDetails.extra!.appVersion,
             triggerName: '',
             input: {},
+            inputUiInfo: {
+              currentSelectedData: '',
+            },
           },
         };
         break;
