@@ -10,6 +10,7 @@ import {
 	ShortTextProperty,
 } from "./base-prop";
 import { BasicAuthProperty } from "./basic-auth-prop";
+import { CustomAuthProperty } from "./custom-auth-prop";
 import { DropdownProperty, MultiSelectDropdownProperty, StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown-prop";
 import { DynamicProperties } from "./dynamic-prop";
 import { OAuth2Property } from "./oauth2-prop";
@@ -30,7 +31,9 @@ export interface PieceProperty {
 	| MultiSelectDropdownProperty<unknown, boolean>
 	| StaticMultiSelectDropdownProperty<unknown,boolean>
 	| DynamicProperties<boolean>
+	| CustomAuthProperty<boolean>
 }
+
 
 export type StaticPropsValue<T extends PieceProperty> = {
 	[P in keyof T]: T[P] extends { required: true } ? T[P]['valueSchema'] : T[P]['valueSchema'] | undefined;
@@ -63,6 +66,9 @@ export const Property = {
 	},
 	BasicAuth<R extends boolean>(request: Properties<BasicAuthProperty<R>>): R extends true ? BasicAuthProperty<true> : BasicAuthProperty<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.BASIC_AUTH } as unknown as R extends true ? BasicAuthProperty<true> : BasicAuthProperty<false>;
+	},
+	CustomAuth<R extends boolean>(request: Properties<CustomAuthProperty<R>>): R extends true ? CustomAuthProperty<true> : CustomAuthProperty<false> {
+		return { ...request, valueSchema: undefined, type: PropertyType.CUSTOM_AUTH } as unknown as R extends true ? CustomAuthProperty<true> : CustomAuthProperty<false>;
 	},
 	OAuth2<R extends boolean>(request: Properties<OAuth2Property<R>>): R extends true ? OAuth2Property<true> : OAuth2Property<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.OAUTH2 } as unknown as R extends true ? OAuth2Property<true> : OAuth2Property<false>;

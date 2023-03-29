@@ -1,6 +1,6 @@
 <div (click)="clickHandler()" (dblclick)="doubleClickHandler()">
-  <div *ngIf="!this._editing" class=" {{ cssClasses }} viewed-text-container " #viewedText
-    [style.max-width]="viewedTextMaxWidth"
+  <div *ngIf="!this._editing" class=" {{ cssClasses }} viewed-text-container"
+    [class.!ap-cursor-pointer]="allowDoubleClick" #viewedText [style.max-width]="viewedTextMaxWidth"
     [matTooltip]="viewedText.scrollWidth > viewedText.clientWidth && value? value:'' ">
     {{ value }}
   </div>

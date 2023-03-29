@@ -2,6 +2,9 @@ import { createTrigger } from '@activepieces/framework';
 import { TriggerStrategy } from '@activepieces/shared';
 import { googleSheetsCommon } from '../common/common';
 
+const alphabet ='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const sampleData = Array.from(alphabet).map(c=>`${c} Value`);
+Array.from(alphabet).forEach(c=>sampleData.push(`${c}${c} Value`));
 export const newRowAdded = createTrigger({
   name: 'new_row_added',
   displayName: 'New Row',
@@ -12,11 +15,7 @@ export const newRowAdded = createTrigger({
     sheet_id: googleSheetsCommon.sheet_id
   },
   sampleData: {
-    "value": [
-      "1",
-      "1",
-      "1"
-    ]
+    "value": sampleData
   },
   type: TriggerStrategy.POLLING,
   async onEnable(context) {

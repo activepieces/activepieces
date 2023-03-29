@@ -17,16 +17,12 @@ export type ProjectJson = {
 }
 
 const readJsonFile = async <T> (path: string): Promise<T> => {
-  console.info(`[readJsonFile] path=${path}`)
-
   const jsonFile = await readFile(path, { encoding: 'utf-8' })
   return JSON.parse(jsonFile) as T
 }
 
 const writeJsonFile = async (path: string, data: unknown): Promise<void> => {
-  console.info(`[writeJsonFile]`)
-
-  const serializedData = JSON.stringify(data)
+  const serializedData = JSON.stringify(data, null, 2)
   await writeFile(path, serializedData, { encoding: 'utf-8' })
 }
 
