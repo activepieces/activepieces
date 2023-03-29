@@ -37,7 +37,7 @@ export const triggerHelper = {
     const appListeners: Listener[] = [];
     const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : '';
     let scheduleOptions: ScheduleOptions = {
-      cronExpression: "*/1 * * * *",
+      cronExpression: "*/5 * * * *",
       timezone: "UTC"
     } 
     const context = {

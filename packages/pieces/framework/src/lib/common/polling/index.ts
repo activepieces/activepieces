@@ -80,7 +80,7 @@ export const pollingHelper = {
                 return getFirstFiveOrAll(items);
             }
             case DedupeStrategy.LAST_ITEM:
-                return (await polling.items({ propsValue }));
+                return getFirstFiveOrAll(await polling.items({ propsValue }));
         }
     }
 }
