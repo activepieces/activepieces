@@ -1,9 +1,9 @@
-import { EntitySchemaColumnOptions } from 'typeorm';
+import { EntitySchemaColumnOptions } from 'typeorm'
 
 export const ApIdSchema = {
     type: String,
     length: 21,
-} as EntitySchemaColumnOptions;
+} as EntitySchemaColumnOptions
 
 export const BaseColumnSchemaPart = {
     id: {
@@ -20,4 +20,4 @@ export const BaseColumnSchemaPart = {
         type: 'timestamp with time zone',
         updateDate: true,
     } as EntitySchemaColumnOptions,
-};
+}

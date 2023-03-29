@@ -1,7 +1,7 @@
-import { FastifyInstance, FastifyRequest } from 'fastify';
-import { storeEntryService } from './store-entry.service';
-import { PrincipalType, PutStoreEntryRequest } from '@activepieces/shared';
-import { StatusCodes } from 'http-status-codes';
+import { FastifyInstance, FastifyRequest } from 'fastify'
+import { storeEntryService } from './store-entry.service'
+import { PrincipalType, PutStoreEntryRequest } from '@activepieces/shared'
+import { StatusCodes } from 'http-status-codes'
 
 export const storeEntryController = async (fastify: FastifyInstance) => {
     fastify.post(
@@ -18,13 +18,13 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
             _reply,
         ) => {
             if (request.principal.type !== PrincipalType.WORKER) {
-                _reply.status(StatusCodes.FORBIDDEN).send();
+                _reply.status(StatusCodes.FORBIDDEN).send()
             }
             else {
-                return await storeEntryService.upsert(request.principal.collectionId, request.body);
+                return await storeEntryService.upsert(request.principal.collectionId, request.body)
             }
         },
-    );
+    )
 
     fastify.get(
         '/',
@@ -49,11 +49,11 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
             _reply,
         ) => {
             if (request.principal.type !== PrincipalType.WORKER) {
-                _reply.status(StatusCodes.FORBIDDEN).send();
+                _reply.status(StatusCodes.FORBIDDEN).send()
             }
             else {
-                return await storeEntryService.getOne(request.principal.collectionId, request.query.key);
+                return await storeEntryService.getOne(request.principal.collectionId, request.query.key)
             }
         },
-    );
-};
+    )
+}

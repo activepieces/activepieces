@@ -1,6 +1,6 @@
-import { EntitySchema } from 'typeorm';
-import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity';
-import { Collection, Flow, Project } from '@activepieces/shared';
+import { EntitySchema } from 'typeorm'
+import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
+import { Collection, Flow, Project } from '@activepieces/shared'
 
 export interface CollectionSchema extends Collection {
     project: Project;
@@ -42,4 +42,4 @@ export const CollectionEntity = new EntitySchema<CollectionSchema>({
             inverseSide: 'collection',
         },
     },
-});
+})

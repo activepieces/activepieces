@@ -15,25 +15,25 @@ import {
     Collection,
     TelemetryEventName,
     ApEdition,
-} from '@activepieces/shared';
-import { getEdition } from '../helper/secret-helper';
-import { collectionRepo } from '../collections/collection.service';
-import { databaseConnection } from '../database/database-connection';
-import { flowVersionService } from '../flows/flow-version/flow-version.service';
-import { buildPaginator } from '../helper/pagination/build-paginator';
-import { paginationHelper } from '../helper/pagination/pagination-utils';
-import { Order } from '../helper/pagination/paginator';
-import { telemetry } from '../helper/telemetry.utils';
-import { FlowRunEntity } from './flow-run-entity';
-import { flowRunSideEffects } from './flow-run-side-effects';
-import { usageService } from '@ee/billing/backend/usage.service';
-import { logger } from '../helper/logger';
+} from '@activepieces/shared'
+import { getEdition } from '../helper/secret-helper'
+import { collectionRepo } from '../collections/collection.service'
+import { databaseConnection } from '../database/database-connection'
+import { flowVersionService } from '../flows/flow-version/flow-version.service'
+import { buildPaginator } from '../helper/pagination/build-paginator'
+import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { Order } from '../helper/pagination/paginator'
+import { telemetry } from '../helper/telemetry.utils'
+import { FlowRunEntity } from './flow-run-entity'
+import { flowRunSideEffects } from './flow-run-side-effects'
+import { usageService } from '@ee/billing/backend/usage.service'
+import { logger } from '../helper/logger'
 
-export const repo = databaseConnection.getRepository(FlowRunEntity);
+export const repo = databaseConnection.getRepository(FlowRunEntity)
 
 export const flowRunService = {
     async list({ projectId, cursor, limit }: ListParams): Promise<SeekPage<FlowRun>> {
-        const decodedCursor = paginationHelper.decodeCursor(cursor);
+        const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: FlowRunEntity,
             paginationKeys: ['created'],
@@ -43,14 +43,14 @@ export const flowRunService = {
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
-        });
+        })
 
         const query = repo.createQueryBuilder('flow_run').where({
             projectId,
             environment: RunEnvironment.PRODUCTION,
-        });
-        const { data, cursor: newCursor } = await paginator.paginate(query);
-        return paginationHelper.createPage<FlowRun>(data, newCursor);
+        })
+        const { data, cursor: newCursor } = await paginator.paginate(query)
+        return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
 
     async finish(
@@ -62,22 +62,22 @@ export const flowRunService = {
             logsFileId,
             status,
             finishTime: new Date().toISOString(),
-        });
-        return await this.getOne({ id: flowRunId });
+        })
+        return await this.getOne({ id: flowRunId })
     },
 
     async start({ flowVersionId, collectionId, payload, environment }: StartParams): Promise<FlowRun> {
-        logger.info(`[flowRunService#start]  flowVersionId=${flowVersionId} collectionVersionId=${flowVersionId}`);
+        logger.info(`[flowRunService#start]  flowVersionId=${flowVersionId} collectionVersionId=${flowVersionId}`)
 
-        const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId);
-        const collection = await getCollectionOrThrowWithoutProjectId(collectionId);
+        const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
+        const collection = await getCollectionOrThrowWithoutProjectId(collectionId)
 
-        const edition = await getEdition();
+        const edition = await getEdition()
         if (edition === ApEdition.ENTERPRISE) {
             await usageService.limit({
                 projectId: collection.projectId,
                 flowVersion: flowVersion,
-            });
+            })
         }
 
         const flowRun: Partial<FlowRun> = {
@@ -91,9 +91,9 @@ export const flowRunService = {
             collectionDisplayName: collection.displayName,
             status: ExecutionOutputStatus.RUNNING,
             startTime: new Date().toISOString(),
-        };
+        }
 
-        const savedFlowRun = await repo.save(flowRun);
+        const savedFlowRun = await repo.save(flowRun)
 
         telemetry.trackProject(flowRun.projectId, {
             name: TelemetryEventName.FLOW_RUN_CREATED,
@@ -103,26 +103,26 @@ export const flowRunService = {
                 flowId: flowVersion.flowId,
                 environment: flowRun.environment,
             },
-        });
+        })
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,
             payload,
-        });
+        })
 
-        return savedFlowRun;
+        return savedFlowRun
     },
 
     async getOne({ projectId, id }: GetOneParams): Promise<FlowRun | null> {
         return await repo.findOneBy({
             projectId,
             id,
-        });
+        })
     },
-};
+}
 
 
 async function getCollectionOrThrowWithoutProjectId(collectionId: CollectionId): Promise<Collection> {
-    const collection = await collectionRepo.findOneBy({ id: collectionId });
+    const collection = await collectionRepo.findOneBy({ id: collectionId })
 
     if (collection === null) {
         throw new ActivepiecesError({
@@ -130,9 +130,9 @@ async function getCollectionOrThrowWithoutProjectId(collectionId: CollectionId):
             params: {
                 id: collectionId,
             },
-        });
+        })
     }
-    return collection;
+    return collection
 };
 
 interface ListParams {

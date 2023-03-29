@@ -1,6 +1,6 @@
-import { EntitySchema } from 'typeorm';
-import { Project, User } from '@activepieces/shared';
-import { BaseColumnSchemaPart } from '../helper/base-entity';
+import { EntitySchema } from 'typeorm'
+import { Project, User } from '@activepieces/shared'
+import { BaseColumnSchemaPart } from '../helper/base-entity'
 
 export interface UserSchema extends User {
     projects: Project[];
@@ -42,4 +42,4 @@ export const UserEntity = new EntitySchema<UserSchema>({
             inverseSide: 'owner',
         },
     },
-});
+})
