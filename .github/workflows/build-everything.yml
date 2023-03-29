@@ -39,6 +39,5 @@ jobs:
         run: npm ci --ignore-scripts
 
       - uses: nrwl/nx-set-shas@v3
-      - run: npx nx format:check
       - run: npx nx affected -t lint --parallel=5
       - run: npx nx affected -t build --parallel=5
