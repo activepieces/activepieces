@@ -19,15 +19,25 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      - name: install npm deps
-        run: npm ci
+      - name: Cache dependencies
+        id: cache-npm
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
 
-      - name: lint the backend
-        run: npx nx lint backend
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List the state of node modules
+        continue-on-error: true
+        run: npm list
 
-      - name: lint the frontend
-        run: npx nx lint frontend
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
 
-      - name: build everything
-        run: npx nx run-many --target=build
+      - uses: nrwl/nx-set-shas@v3
+      - run: npx nx affected -t lint --parallel=5
+      - run: npx nx affected -t build --parallel=5

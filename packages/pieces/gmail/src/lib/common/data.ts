@@ -64,7 +64,7 @@ export const GmailRequests = {
       }
     })
   },
-  searchMail: async ({ access_token, max_results = 25, page_token: pageToken, ...mail }: SearchMailProps) => {
+  searchMail: async ({ access_token, max_results = 1, page_token: pageToken, ...mail }: SearchMailProps) => {
     const query = []
 
     if (mail.from) query.push(`from:(${mail.from})`)
@@ -89,7 +89,7 @@ export const GmailRequests = {
       }
     })
 
-    console.log("searchMail response", response)
+    console.debug("searchMail response", response)
 
     if (response.body.messages) {
       const messages = await Promise.all(
