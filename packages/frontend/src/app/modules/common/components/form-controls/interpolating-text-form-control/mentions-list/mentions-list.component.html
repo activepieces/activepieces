@@ -25,20 +25,15 @@
       </ng-container>
 
       <ng-container *ngSwitchCase="TriggerType.PIECE">
-        <app-piece-step-mention-item [stepIndex]="1" (mentionClicked)="mentionClicked($event)"
-          [stepMention]="stepMention"></app-piece-step-mention-item>
+        <app-piece-trigger-mention-item [stepIndex]="1" (mentionClicked)="mentionClicked($event)"
+          [stepMention]="stepMention"></app-piece-trigger-mention-item>
       </ng-container>
 
       <ng-container *ngSwitchCase="TriggerType.WEBHOOK">
         <app-webhook-trigger-mention-item [stepIndex]="1" (mentionEmitted)="mentionClicked($event)"
           [stepMention]="stepMention"></app-webhook-trigger-mention-item>
       </ng-container>
-      <ng-container *ngSwitchDefault>
-        <button mat-menu-item (click)="mentionClicked(stepMention)" class="!ap-px-[9px]">
-          <app-generic-step-mention-item [stepIndex]="stepMention.step.indexInDfsTraversal || 1" [indentation]="true"
-            [stepMention]="stepMention"></app-generic-step-mention-item>
-        </button>
-      </ng-container>
+
       <mat-divider></mat-divider>
     </ng-container>
 

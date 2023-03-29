@@ -97,6 +97,7 @@ export class AppComponent implements OnDestroy, AfterViewInit {
       Object.keys(SubscribeParamsValidationObject)
     );
     const subject = this.getEventSubject(eventName);
+    // eslint-disable-next-line rxjs-angular/prefer-async-pipe
     const subscription = subject.subscribe((val: any) => {
       callback(val);
     });
@@ -187,18 +188,21 @@ export class AppComponent implements OnDestroy, AfterViewInit {
 
 export interface SubscribeParams {
   eventName: SdkEvent;
+  // eslint-disable-next-line @typescript-eslint/ban-types
   callback: Function;
 }
 
 const SubscribeParamsValidationObject: SubscribeParams = {
   eventName: SdkEvent.CONNECTION,
-  callback: () => {},
+  callback: () => {
+    // Empty function
+  },
 };
 
 export interface InitParams {
   token: string;
   projectId: ProjectId;
-  host: String;
+  host: string;
   styles?: {
     primaryColor: string;
   };
