@@ -31,16 +31,16 @@ const initLogger = () => {
         : 'info';
 
     return pino({
-      level,
-      transport: {
-          target: 'pino-pretty',
-          options: {
-              translateTime: 'HH:MM:ss Z',
-              colorize: true,
-              ignore: 'pid,hostname',
-          },
-      },
-  })
+        level,
+        transport: {
+            target: 'pino-pretty',
+            options: {
+                translateTime: 'HH:MM:ss Z',
+                colorize: true,
+                ignore: 'pid,hostname',
+            },
+        },
+    })
 }
 
 export const logger = initLogger();
