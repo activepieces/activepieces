@@ -2,7 +2,7 @@ import pino from 'pino';
 import * as Sentry from '@sentry/node';
 import { system } from './system/system';
 import { SystemProp } from './system/system-prop';
-import { ApEnvironment } from '../../../../shared/src';
+import { ApEnvironment } from '@activepieces/shared';
 
 const sentryDsn = system.get(SystemProp.SENTRY_DSN);
 
