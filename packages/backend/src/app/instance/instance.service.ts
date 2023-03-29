@@ -93,12 +93,15 @@ export const instanceService = {
         }
         const instance: Instance | null = await instanceRepo.findOneBy({ projectId, collectionId: request.collectionId });
         if(instance) {
+            const oldInstanceStatus= instance.status;
             instance.status = request.status;
-            if(instance.status === InstanceStatus.ENABLED) {
-                await instanceSideEffects.enable(instance);
-            }
-            else {
-                await instanceSideEffects.disable(instance);
+            if(oldInstanceStatus !== instance.status) {
+                if(instance.status === InstanceStatus.ENABLED ) {
+                    await instanceSideEffects.enable(instance);
+                }
+                else {
+                    await instanceSideEffects.disable(instance);
+                }
             }
             instanceRepo.save(instance);
             return instance;

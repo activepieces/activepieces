@@ -20,7 +20,7 @@ export class InstanceService {
   }
   updateStatus(request: UpsertInstanceRequest): Observable<Instance> {
     return this.http.post<Instance>(
-      environment.apiUrl + `/instances/updateStatus`,
+      environment.apiUrl + `/instances/update-status`,
       request
     );
   }

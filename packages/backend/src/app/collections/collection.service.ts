@@ -6,6 +6,7 @@ import {
     CollectionStatus,
     CreateCollectionRequest,
     Cursor,
+    Instance,
     InstanceStatus,
     ProjectId,
     SeekPage,
@@ -80,9 +81,8 @@ export const collectionService = {
         for(const c of collections.data) {
             const instance = await instanceService.getByCollectionId({projectId:c.projectId,collectionId: c.id});
             const dto= {...c,
-                status: instance?
-                 instance.status === InstanceStatus.DISABLED ? CollectionStatus.DISABLED: CollectionStatus.ENABLED :
-                  CollectionStatus.UNPUBLISHED } as unknown as  CollectionListDto;
+                status: findCollectionStatus(instance) 
+            } as unknown as  CollectionListDto;
             result.data.push(dto);
         }
         return result;
@@ -117,4 +117,12 @@ export const collectionService = {
         instanceSideEffects.onCollectionDelete({ projectId, collectionId });
         await collectionRepo.delete({ projectId: projectId, id: collectionId });
     },
+    
 };
+function findCollectionStatus(instance:Instance|undefined) {
+    if(instance) {
+        const status=  instance.status === InstanceStatus.DISABLED ? CollectionStatus.DISABLED: CollectionStatus.ENABLED;
+        return status;
+    }
+    return CollectionStatus.UNPUBLISHED;
+}

@@ -130,7 +130,10 @@ export class CollectionsTableComponent implements OnInit {
             control.enable();
             control.setValue(res.status === InstanceStatus.ENABLED);
             this.collectionsUpdateStatusRequest$[collectionDto.id] = null;
-            collectionDto.status = res.status === InstanceStatus.ENABLED? CollectionStatus.ENABLED : CollectionStatus.DISABLED;
+            collectionDto.status =
+              res.status === InstanceStatus.ENABLED
+                ? CollectionStatus.ENABLED
+                : CollectionStatus.DISABLED;
           }),
           map(() => void 0)
         );

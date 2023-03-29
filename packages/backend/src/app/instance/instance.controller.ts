@@ -52,7 +52,7 @@ export const instanceController = async (app: FastifyInstance) => {
     });
     // update status
     app.post(
-        "/updateStatus",
+        "/update-status",
         {
             schema: {
                 body: UpsertInstanceRequest,
