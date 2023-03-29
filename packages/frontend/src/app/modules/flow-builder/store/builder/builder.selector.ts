@@ -454,6 +454,9 @@ const selectAllStepsForMentionsDropdown = createSelector(
     });
   }
 );
+const selectStepValidity = createSelector(selectCurrentStep, (step) => {
+  return step?.valid || false;
+});
 function findStepLogoUrlForMentions(
   step: FlowItem,
   flowItemsDetailsState: FlowItemsDetailsState
@@ -547,4 +550,5 @@ export const BuilderSelectors = {
   selectStepLogoUrl,
   selectCurrentStepSettings,
   selectStepSelectedSampleData,
+  selectStepValidity,
 };
