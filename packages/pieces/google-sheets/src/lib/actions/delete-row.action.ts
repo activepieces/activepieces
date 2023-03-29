@@ -16,16 +16,19 @@ export const deleteRowAction = createAction({
         })
     },
     async run(context) {
-        const sheetName = await googleSheetsCommon.findSheetName(context.propsValue['authentication']!['access_token'],context.propsValue['spreadsheet_id']!,context.propsValue['sheet_id']!);
-        if(!sheetName)
-        {
+        const sheetName = await googleSheetsCommon.findSheetName(context.propsValue['authentication']!['access_token'], context.propsValue['spreadsheet_id']!, context.propsValue['sheet_id']!);
+        if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
-
-        await googleSheetsCommon.deleteRow(context.propsValue.spreadsheet_id, context.propsValue.sheet_id, context.propsValue.row_id, context.propsValue['authentication']!['access_token'])
-
+    
+        // Subtract 1 from the row_id to convert it to 0-indexed
+        const adjustedRowIndex = context.propsValue.row_id - 1;
+    
+        const response = await googleSheetsCommon.deleteRow(context.propsValue.spreadsheet_id, context.propsValue.sheet_id, adjustedRowIndex, context.propsValue['authentication']!['access_token'])
+    
         return {
             success: true,
+            body: response
         };
     },
 });

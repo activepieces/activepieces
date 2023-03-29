@@ -142,7 +142,6 @@ async function getValues(spreadsheetId: string, accessToken: string, sheetId: nu
 }
 
 async function deleteRow(spreadsheetId: string, sheetId: number, rowIndex: number, accessToken: string) {
-    const sheetName = await findSheetName(accessToken, spreadsheetId, sheetId);
     const request: HttpRequest = {
         method: HttpMethod.POST,
         url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/:batchUpdate`,
