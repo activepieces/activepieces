@@ -12,13 +12,12 @@ export interface PaginationOptions<Entity> {
   entity: EntitySchema<Entity>;
   alias?: string;
   query?: PagingQuery;
-  paginationKeys: Array<Extract<keyof Entity, string>>;
 }
 
 export function buildPaginator<Entity extends ObjectLiteral>(options: PaginationOptions<Entity>): Paginator<Entity> {
-    const { entity, query = {}, alias = entity.options.name.toLowerCase(), paginationKeys } = options;
+    const { entity, query = {}, alias = entity.options.name.toLowerCase() } = options;
 
-    const paginator = new Paginator(entity, paginationKeys);
+    const paginator = new Paginator<Entity>(entity);
 
     paginator.setAlias(alias);
 

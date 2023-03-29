@@ -38,7 +38,6 @@ export const triggerEventService = {
         const flowId = flowVersion.flowId;
         const paginator = buildPaginator({
             entity: TriggerEventEntity,
-            paginationKeys: ["created"],
             query: {
                 limit,
                 order: Order.DESC,

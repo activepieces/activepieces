@@ -53,9 +53,12 @@ export class CustomAuthConnectionDialogComponent {
     Object.entries(this.dialogData.pieceAuthConfig.customAuthProps!).forEach(
       ([propName, prop]) => {
         if (prop.required) {
-          props[propName] = new FormControl('', Validators.required);
+          props[propName] = new FormControl(
+            prop.defaultValue ?? '',
+            Validators.required
+          );
         } else {
-          props[propName] = new FormControl('');
+          props[propName] = new FormControl(prop.defaultValue ?? '');
         }
       }
     );
