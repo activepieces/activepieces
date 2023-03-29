@@ -6,14 +6,14 @@ import {
     Instance,
     InstanceStatus,
     ProjectId,
-} from "@activepieces/shared";
-import { In } from "typeorm";
-import { logger } from "../helper/logger";
-import { flowVersionRepo } from "../flows/flow-version/flow-version-repo";
-import { flowVersionService } from "../flows/flow-version/flow-version.service";
-import { flowService } from "../flows/flow.service";
-import { triggerUtils } from "../helper/trigger-utils";
-import { instanceService } from "./instance.service";
+} from '@activepieces/shared';
+import { In } from 'typeorm';
+import { logger } from '../helper/logger';
+import { flowVersionRepo } from '../flows/flow-version/flow-version-repo';
+import { flowVersionService } from '../flows/flow-version/flow-version.service';
+import { flowService } from '../flows/flow.service';
+import { triggerUtils } from '../helper/trigger-utils';
+import { instanceService } from './instance.service';
 
 export const instanceSideEffects = {
     async enable(instance: Instance): Promise<void> {

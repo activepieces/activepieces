@@ -1,13 +1,13 @@
-import { EntitySchema } from "typeorm";
-import { Project, User } from "@activepieces/shared";
-import { BaseColumnSchemaPart } from "../helper/base-entity";
+import { EntitySchema } from 'typeorm';
+import { Project, User } from '@activepieces/shared';
+import { BaseColumnSchemaPart } from '../helper/base-entity';
 
 export interface UserSchema extends User {
     projects: Project[];
 }
 
 export const UserEntity = new EntitySchema<UserSchema>({
-    name: "user",
+    name: 'user',
     columns: {
         ...BaseColumnSchemaPart,
         email: {
@@ -37,9 +37,9 @@ export const UserEntity = new EntitySchema<UserSchema>({
     },
     relations: {
         projects: {
-            type: "one-to-many",
-            target: "user",
-            inverseSide: "owner",
+            type: 'one-to-many',
+            target: 'user',
+            inverseSide: 'owner',
         },
     },
 });

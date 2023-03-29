@@ -1,7 +1,7 @@
-import { apId, SignUpRequest, User, UserId, UserStatus } from "@activepieces/shared";
-import { passwordHasher } from "../authentication/lib/password-hasher";
-import { databaseConnection } from "../database/database-connection";
-import { UserEntity } from "./user-entity";
+import { apId, SignUpRequest, User, UserId, UserStatus } from '@activepieces/shared';
+import { passwordHasher } from '../authentication/lib/password-hasher';
+import { databaseConnection } from '../database/database-connection';
+import { UserEntity } from './user-entity';
 
 const userRepo = databaseConnection.getRepository(UserEntity);
 

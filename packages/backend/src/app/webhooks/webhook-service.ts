@@ -149,7 +149,7 @@ const getLatestFlowVersionOrThrow = async (flowId: FlowId, projectId: ProjectId)
 
 const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
     if (isNil(flowId)) {
-        logger.error(`[WebhookService#getFlowOrThrow] error=flow_id_is_undefined`);
+        logger.error('[WebhookService#getFlowOrThrow] error=flow_id_is_undefined');
         throw new ActivepiecesError({
             code: ErrorCode.FLOW_NOT_FOUND,
             params: {

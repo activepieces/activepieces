@@ -1,9 +1,9 @@
-import { Queue } from "bullmq";
-import { ApId, ScheduleOptions } from "@activepieces/shared";
-import { createRedisClient } from "../../database/redis-connection";
-import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { OneTimeJobData, RepeatableJobData } from "./job-data";
-import { logger } from "../../helper/logger";
+import { Queue } from 'bullmq';
+import { ApId, ScheduleOptions } from '@activepieces/shared';
+import { createRedisClient } from '../../database/redis-connection';
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
+import { OneTimeJobData, RepeatableJobData } from './job-data';
+import { logger } from '../../helper/logger';
 
 interface BaseAddParams {
     id: ApId;
@@ -24,8 +24,8 @@ interface RemoveParams {
     id: ApId;
 }
 
-export const ONE_TIME_JOB_QUEUE = "oneTimeJobs";
-export const REPEATABLE_JOB_QUEUE = "repeatableJobs";
+export const ONE_TIME_JOB_QUEUE = 'oneTimeJobs';
+export const REPEATABLE_JOB_QUEUE = 'repeatableJobs';
 
 const oneTimeJobQueue = new Queue<OneTimeJobData, unknown, ApId>(ONE_TIME_JOB_QUEUE, {
     connection: createRedisClient(),
@@ -39,7 +39,7 @@ const repeatableJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
 export const flowQueue = {
     async add(params: AddParams): Promise<void> {
-        logger.info("[flowQueue#add] params=", params);
+        logger.info('[flowQueue#add] params=', params);
         if (isRepeatable(params)) {
             const { id, data, scheduleOptions } = params;
 

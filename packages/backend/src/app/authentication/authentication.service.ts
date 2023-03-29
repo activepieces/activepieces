@@ -1,12 +1,12 @@
-import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName, ApFlagId } from "@activepieces/shared";
-import { userService } from "../user/user-service";
-import { passwordHasher } from "./lib/password-hasher";
-import { tokenUtils } from "./lib/token-utils";
-import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { projectService } from "../project/project.service";
-import { flagService } from "../flags/flag.service";
-import { QueryFailedError } from "typeorm";
-import { telemetry } from "../helper/telemetry.utils";
+import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName, ApFlagId } from '@activepieces/shared';
+import { userService } from '../user/user-service';
+import { passwordHasher } from './lib/password-hasher';
+import { tokenUtils } from './lib/token-utils';
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
+import { projectService } from '../project/project.service';
+import { flagService } from '../flags/flag.service';
+import { QueryFailedError } from 'typeorm';
+import { telemetry } from '../helper/telemetry.utils';
 
 export const authenticationService = {
     signUp: async (request: SignUpRequest): Promise<AuthenticationResponse> => {
@@ -16,7 +16,7 @@ export const authenticationService = {
             await flagService.save({ id: ApFlagId.USER_CREATED, value: true });
 
             const project = await projectService.create({
-                displayName: "Project",
+                displayName: 'Project',
                 ownerId: user.id,
             });
 

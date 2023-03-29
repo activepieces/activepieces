@@ -1,6 +1,6 @@
-import fs from "fs";
-import {codeRunner} from "../../../src/app/workers/code-worker/code-runner";
-import SandboxManager, {Sandbox} from "../../../src/app/workers/sandbox";
+import fs from 'fs';
+import {codeRunner} from '../../../src/app/workers/code-worker/code-runner';
+import SandboxManager, {Sandbox} from '../../../src/app/workers/sandbox';
 
 describe('Code Runner', () => {
     test('Running Code Successfully', async () => {

@@ -1,6 +1,6 @@
-import { EntitySchema } from "typeorm";
-import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
-import { Collection, Flow, FlowRun, Project } from "@activepieces/shared";
+import { EntitySchema } from 'typeorm';
+import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity';
+import { Collection, Flow, FlowRun, Project } from '@activepieces/shared';
 
 interface FlowRunSchema extends FlowRun {
     project: Project;
@@ -9,7 +9,7 @@ interface FlowRunSchema extends FlowRun {
 }
 
 export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
-    name: "flow_run",
+    name: 'flow_run',
     columns: {
         ...BaseColumnSchemaPart,
         projectId: ApIdSchema,
@@ -31,49 +31,49 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: String,
         },
         startTime: {
-            type: "timestamp with time zone",
+            type: 'timestamp with time zone',
         },
         finishTime: {
             nullable: true,
-            type: "timestamp with time zone",
+            type: 'timestamp with time zone',
         },
     },
     indices: [
         {
-            name: "idx_run_project_id",
-            columns: ["projectId"],
+            name: 'idx_run_project_id',
+            columns: ['projectId'],
             unique: false,
         }
     ],
     relations: {
         project: {
-            type: "many-to-one",
-            target: "project",
+            type: 'many-to-one',
+            target: 'project',
             cascade: true,
-            onDelete: "CASCADE",
+            onDelete: 'CASCADE',
             joinColumn: {
-                name: "projectId",
-                foreignKeyConstraintName: "fk_flow_run_project_id",
+                name: 'projectId',
+                foreignKeyConstraintName: 'fk_flow_run_project_id',
             },
         },
         flow: {
-            type: "many-to-one",
-            target: "flow",
+            type: 'many-to-one',
+            target: 'flow',
             cascade: true,
-            onDelete: "CASCADE",
+            onDelete: 'CASCADE',
             joinColumn: {
-                name: "flowId",
-                foreignKeyConstraintName: "fk_flow_run_flow_id",
+                name: 'flowId',
+                foreignKeyConstraintName: 'fk_flow_run_flow_id',
             },
         },
         collection: {
-            type: "many-to-one",
-            target: "collection",
+            type: 'many-to-one',
+            target: 'collection',
             cascade: true,
-            onDelete: "CASCADE",
+            onDelete: 'CASCADE',
             joinColumn: {
-                name: "collectionId",
-                foreignKeyConstraintName: "fk_flow_run_collection_id",
+                name: 'collectionId',
+                foreignKeyConstraintName: 'fk_flow_run_collection_id',
             },
         }
     },

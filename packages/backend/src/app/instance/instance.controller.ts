@@ -1,7 +1,7 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { StatusCodes } from "http-status-codes";
-import { GetInstanceRequest, InstanceId, UpsertInstanceRequest } from "@activepieces/shared";
-import { instanceService as service } from "./instance.service";
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { StatusCodes } from 'http-status-codes';
+import { GetInstanceRequest, InstanceId, UpsertInstanceRequest } from '@activepieces/shared';
+import { instanceService as service } from './instance.service';
 
 
 interface GetOnePathParams {
@@ -11,7 +11,7 @@ interface GetOnePathParams {
 export const instanceController = async (app: FastifyInstance) => {
     // upsert
     app.post(
-        "/",
+        '/',
         {
             schema: {
                 body: UpsertInstanceRequest,
@@ -25,7 +25,7 @@ export const instanceController = async (app: FastifyInstance) => {
 
     // list
     app.get(
-        "/",
+        '/',
         {
             schema: {
                 querystring: GetInstanceRequest
@@ -43,7 +43,7 @@ export const instanceController = async (app: FastifyInstance) => {
     );
 
     // delete one
-    app.delete("/:id", async (request: FastifyRequest<{ Params: GetOnePathParams }>, reply: FastifyReply) => {
+    app.delete('/:id', async (request: FastifyRequest<{ Params: GetOnePathParams }>, reply: FastifyReply) => {
         await service.deleteOne({
             id: request.params.id,
             projectId: request.principal.projectId

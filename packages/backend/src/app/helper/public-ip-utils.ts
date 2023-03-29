@@ -1,7 +1,7 @@
-import dns from "node:dns/promises";
+import dns from 'node:dns/promises';
 
-const GOOGLE_DNS = "216.239.32.10";
-const PUBLIC_IP_ADDRESS_QUERY = "o-o.myaddr.l.google.com";
+const GOOGLE_DNS = '216.239.32.10';
+const PUBLIC_IP_ADDRESS_QUERY = 'o-o.myaddr.l.google.com';
 
 let ipMetadata: IpMetadata | undefined;
 
@@ -12,7 +12,7 @@ export const getPublicIp = async (): Promise<IpMetadata> => {
 
     dns.setServers([GOOGLE_DNS]);
 
-    const ipList = await dns.resolve(PUBLIC_IP_ADDRESS_QUERY, "TXT");
+    const ipList = await dns.resolve(PUBLIC_IP_ADDRESS_QUERY, 'TXT');
 
     ipMetadata = {
         ip: ipList[0][0],

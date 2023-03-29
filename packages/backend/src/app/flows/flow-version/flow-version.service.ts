@@ -1,6 +1,6 @@
-import { TSchema, Type } from "@sinclair/typebox";
+import { TSchema, Type } from '@sinclair/typebox';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
-import { PieceProperty } from "@activepieces/framework";
+import { PieceProperty } from '@activepieces/framework';
 import {
     ActionType,
     apId,
@@ -20,12 +20,12 @@ import {
     ProjectId,
     PropertyType,
     TriggerType,
-} from "@activepieces/shared";
-import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
-import { fileService } from "../../file/file.service";
-import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { flowVersionRepo } from "./flow-version-repo";
-import { getPiece } from "@activepieces/pieces-apps";
+} from '@activepieces/shared';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { fileService } from '../../file/file.service';
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
+import { flowVersionRepo } from './flow-version-repo';
+import { getPiece } from '@activepieces/pieces-apps';
 
 const branchSetttingsValidaotr = TypeCompiler.Compile(BranchActionSettingsWithValidation);
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation);
@@ -73,7 +73,7 @@ export const flowVersionService = {
                 id: versionId,
             },
             order: {
-                created: "DESC",
+                created: 'DESC',
             },
         });
         if (includeArtifacts) {
@@ -310,7 +310,7 @@ async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSett
 
 async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
     if (codeSettings.artifact !== undefined) {
-        const bufferFromBase64 = Buffer.from(codeSettings.artifact, "base64");
+        const bufferFromBase64 = Buffer.from(codeSettings.artifact, 'base64');
         const savedFile = await fileService.save(projectId, bufferFromBase64);
         codeSettings.artifact = undefined;
         codeSettings.artifactSourceId = savedFile.id;

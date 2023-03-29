@@ -1,8 +1,8 @@
-import fs from "node:fs/promises";
-import decompress from "decompress";
-import { sandboxManager } from "../sandbox";
-import { logger } from "../../helper/logger";
-import { packageManager, PackageManagerDependencies } from "../../helper/package-manager";
+import fs from 'node:fs/promises';
+import decompress from 'decompress';
+import { sandboxManager } from '../sandbox';
+import { logger } from '../../helper/logger';
+import { packageManager, PackageManagerDependencies } from '../../helper/package-manager';
 
 const webpackConfig = `
   const path = require("node:path");
@@ -60,31 +60,31 @@ async function build(artifact: Buffer): Promise<Buffer> {
         await downloadFiles(artifact, buildPath);
 
         const dependencies: PackageManagerDependencies = {
-            "@tsconfig/node18": "1.0.1",
-            "ts-loader": "9.4.2",
-            "typescript": "4.8.4",
-            "webpack": "5.74.0",
-            "webpack-cli": "4.10.0",
+            '@tsconfig/node18': '1.0.1',
+            'ts-loader': '9.4.2',
+            'typescript': '4.8.4',
+            'webpack': '5.74.0',
+            'webpack-cli': '4.10.0',
         };
 
         await packageManager.addDependencies(buildPath, dependencies);
 
-        await packageManager.runLocalDependency(buildPath, "webpack");
+        await packageManager.runLocalDependency(buildPath, 'webpack');
 
         bundledFile = await fs.readFile(`${buildPath}/dist/index.js`);
 
         logger.info(`Finished Building in sandbox: ${buildPath}, duration: ${Date.now() - startTime}ms`);
     }
     catch (e) {
-        logger.error(e, "code builder");
+        logger.error(e, 'code builder');
 
-        const invalidArtifactTemplate = await fs.readFile("./packages/backend/src/assets/invalid-code.js");
+        const invalidArtifactTemplate = await fs.readFile('./packages/backend/src/assets/invalid-code.js');
 
         const invalidArtifactFile = invalidArtifactTemplate
-            .toString("utf-8")
-            .replace("${ERROR_MESSAGE}", JSON.stringify(e.toString()).replace(/"/g, '\\"'));
+            .toString('utf-8')
+            .replace('${ERROR_MESSAGE}', JSON.stringify(e.toString()).replace(/"/g, '\\"'));
 
-        bundledFile = Buffer.from(invalidArtifactFile, "utf-8");
+        bundledFile = Buffer.from(invalidArtifactFile, 'utf-8');
     }
     finally {
         sandboxManager.returnSandbox(sandbox.boxId);

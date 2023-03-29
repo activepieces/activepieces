@@ -1,17 +1,17 @@
-import { arch, cwd } from "node:process";
-import { exec } from "node:child_process";
-import fs from "node:fs/promises";
-import path from "node:path";
-import { system } from "../helper/system/system";
-import { SystemProp } from "../helper/system/system-prop";
-import { logger } from "../helper/logger";
-import { packageManager } from "../helper/package-manager";
+import { arch, cwd } from 'node:process';
+import { exec } from 'node:child_process';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { system } from '../helper/system/system';
+import { SystemProp } from '../helper/system/system-prop';
+import { logger } from '../helper/logger';
+import { packageManager } from '../helper/package-manager';
 
 const getIsolateExecutableName = () => {
-    const defaultName = "isolate";
+    const defaultName = 'isolate';
     const executableNameMap: Record<string, string> = {
-        "arm": "isolate-arm",
-        "arm64": "isolate-arm",
+        'arm': 'isolate-arm',
+        'arm64': 'isolate-arm',
     };
     return executableNameMap[arch] ?? defaultName;
 };
@@ -25,29 +25,29 @@ export class Sandbox {
     constructor(public readonly boxId: number) {}
 
     async cleanAndInit(): Promise<void> {
-        await Sandbox.runIsolate("--box-id=" + this.boxId + " --cleanup");
-        await Sandbox.runIsolate("--box-id=" + this.boxId + " --init");
+        await Sandbox.runIsolate('--box-id=' + this.boxId + ' --cleanup');
+        await Sandbox.runIsolate('--box-id=' + this.boxId + ' --init');
         await packageManager.initProject(this.getSandboxFolderPath());
     }
 
     async runCommandLine(commandLine: string): Promise<string> {
-        const metaFile = this.getSandboxFilePath("meta.txt");
-        const etcDir = path.resolve("./packages/backend/src/assets/etc/");
+        const metaFile = this.getSandboxFilePath('meta.txt');
+        const etcDir = path.resolve('./packages/backend/src/assets/etc/');
 
         return await Sandbox.runIsolate(
             `--dir=/usr/bin/ --dir=/etc/=${etcDir} --share-net --box-id=` +
         this.boxId +
         ` --processes --wall-time=${Sandbox.sandboxRunTimeSeconds} --meta=` +
         metaFile +
-        " --stdout=_standardOutput.txt" +
-        " --stderr=_standardError.txt --run " +
-        " --env=AP_ENVIRONMENT " +
+        ' --stdout=_standardOutput.txt' +
+        ' --stderr=_standardError.txt --run ' +
+        ' --env=AP_ENVIRONMENT ' +
         commandLine
         );
     }
 
     async parseFunctionOutput(): Promise<string | undefined> {
-        const outputFile = this.getSandboxFilePath("_functionOutput.txt");
+        const outputFile = this.getSandboxFilePath('_functionOutput.txt');
         if(!(await this.fileExists(outputFile))) {
             return undefined;
         }
@@ -70,20 +70,20 @@ export class Sandbox {
 
 
     parseStandardOutput(): Promise<string> {
-        return fs.readFile(this.getSandboxFilePath("_standardOutput.txt"), {encoding: "utf-8"});
+        return fs.readFile(this.getSandboxFilePath('_standardOutput.txt'), {encoding: 'utf-8'});
     }
 
     parseStandardError(): Promise<string> {
-        return fs.readFile(this.getSandboxFilePath("_standardError.txt",), {encoding: "utf-8"});
+        return fs.readFile(this.getSandboxFilePath('_standardError.txt',), {encoding: 'utf-8'});
     }
 
     async parseMetaFile(): Promise<Record<string, unknown>> {
-        const metaFile = this.getSandboxFilePath("meta.txt");
-        const lines = (await fs.readFile(metaFile, {encoding: "utf-8"})).split("\n");
+        const metaFile = this.getSandboxFilePath('meta.txt');
+        const lines = (await fs.readFile(metaFile, {encoding: 'utf-8'})).split('\n');
         const result: Record<string, unknown> = {};
 
         lines.forEach((line: string) => {
-            const parts = line.split(":");
+            const parts = line.split(':');
             result[parts[0]] = parts[1];
         });
         return result;
@@ -91,15 +91,15 @@ export class Sandbox {
 
     async timedOut(): Promise<boolean> {
         const meta = await this.parseMetaFile();
-        return meta["status"] === "TO";
+        return meta['status'] === 'TO';
     }
 
     getSandboxFilePath(subFile: string) {
-        return this.getSandboxFolderPath() + "/" + subFile;
+        return this.getSandboxFolderPath() + '/' + subFile;
     }
 
     getSandboxFolderPath(): string {
-        return "/var/local/lib/isolate/" + this.boxId + "/box";
+        return '/var/local/lib/isolate/' + this.boxId + '/box';
     }
 
     private static runIsolate(cmd: string): Promise<string> {
@@ -142,7 +142,7 @@ export default class SandboxManager {
 
     private constructor() {
         if (SandboxManager._instance != null) {
-            throw new Error("Use Singleton.instance instead of new.");
+            throw new Error('Use Singleton.instance instead of new.');
         }
         for (let boxId = 0; boxId < 100; ++boxId) {
             this.queue.push(boxId);
@@ -153,7 +153,7 @@ export default class SandboxManager {
     obtainSandbox(): Sandbox {
         const sandboxId = this.queue.pop();
         if (sandboxId === undefined) {
-            throw new Error("Unexpected error, ran out of sandboxes");
+            throw new Error('Unexpected error, ran out of sandboxes');
         }
         return new Sandbox(sandboxId);
     }

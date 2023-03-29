@@ -1,4 +1,4 @@
-import { FlowEntity } from "./flow.entity";
+import { FlowEntity } from './flow.entity';
 import {
     apId,
     CollectionId,
@@ -15,15 +15,15 @@ import {
     SeekPage,
     TelemetryEventName,
     TriggerType,
-} from "@activepieces/shared";
-import { flowVersionService } from "./flow-version/flow-version.service";
-import { paginationHelper } from "../helper/pagination/pagination-utils";
-import { buildPaginator } from "../helper/pagination/build-paginator";
-import { createRedisLock } from "../database/redis-connection";
-import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { flowRepo } from "./flow.repo";
-import { instanceSideEffects } from "../instance/instance-side-effects";
-import { telemetry } from "../helper/telemetry.utils";
+} from '@activepieces/shared';
+import { flowVersionService } from './flow-version/flow-version.service';
+import { paginationHelper } from '../helper/pagination/pagination-utils';
+import { buildPaginator } from '../helper/pagination/build-paginator';
+import { createRedisLock } from '../database/redis-connection';
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
+import { flowRepo } from './flow.repo';
+import { instanceSideEffects } from '../instance/instance-side-effects';
+import { telemetry } from '../helper/telemetry.utils';
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
@@ -37,8 +37,8 @@ export const flowService = {
             displayName: request.displayName,
             valid: false,
             trigger: {
-                displayName: "Select Trigger",
-                name: "trigger",
+                displayName: 'Select Trigger',
+                name: 'trigger',
                 type: TriggerType.EMPTY,
                 settings: {},
                 valid: false,
@@ -78,15 +78,15 @@ export const flowService = {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
         const paginator = buildPaginator({
             entity: FlowEntity,
-            paginationKeys: ["created"],
+            paginationKeys: ['created'],
             query: {
                 limit,
-                order: "ASC",
+                order: 'ASC',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
         });
-        const queryBuilder = flowRepo.createQueryBuilder("flow").where({ collectionId, projectId });
+        const queryBuilder = flowRepo.createQueryBuilder('flow').where({ collectionId, projectId });
         const { data, cursor } = await paginator.paginate(queryBuilder.where({ collectionId }));
         const flowVersionsPromises: Array<Promise<FlowVersion | null>> = [];
         data.forEach((collection) => {

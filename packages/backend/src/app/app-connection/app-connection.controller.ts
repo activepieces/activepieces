@@ -1,14 +1,14 @@
-import { FastifyInstance, FastifyRequest } from "fastify";
-import { StatusCodes } from "http-status-codes";
-import { AppConnectionId, ListAppConnectionRequest, UpsertConnectionRequest } from "@activepieces/shared";
-import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { appConnectionService } from "./app-connection.service";
+import { FastifyInstance, FastifyRequest } from 'fastify';
+import { StatusCodes } from 'http-status-codes';
+import { AppConnectionId, ListAppConnectionRequest, UpsertConnectionRequest } from '@activepieces/shared';
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
+import { appConnectionService } from './app-connection.service';
 
 const DEFAULT_PAGE_SIZE = 10;
 export const appConnectionController = async (fastify: FastifyInstance) => {
 
     fastify.post(
-        "/",
+        '/',
         {
             schema: {
                 body: UpsertConnectionRequest
@@ -29,7 +29,7 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
 
 
     fastify.get(
-        "/:connectionName",
+        '/:connectionName',
         async (
             request: FastifyRequest<{
                 Params: {
@@ -52,7 +52,7 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
     );
 
     fastify.get(
-        "/",
+        '/',
         {
             schema: {
                 querystring: ListAppConnectionRequest
@@ -71,7 +71,7 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
     );
 
     fastify.delete(
-        "/:connectionId",
+        '/:connectionId',
         async (
             request: FastifyRequest<{
                 Params: {

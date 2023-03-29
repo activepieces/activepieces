@@ -1,4 +1,4 @@
-import fs from "node:fs/promises";
+import fs from 'node:fs/promises';
 import {
     ApEnvironment,
     apId,
@@ -18,17 +18,17 @@ import {
     PrincipalType,
     ProjectId,
     TriggerHookType,
-} from "@activepieces/shared";
-import { Sandbox, sandboxManager } from "../workers/sandbox";
-import { system } from "./system/system";
-import { SystemProp } from "./system/system-prop";
-import { tokenUtils } from "../authentication/lib/token-utils";
-import { DropdownState, DynamicPropsValue } from "@activepieces/framework";
-import { logger } from "../helper/logger";
-import chalk from "chalk";
-import { getEdition, getWebhookSecret } from "./secret-helper";
-import { packageManager } from "./package-manager";
-import { appEventRoutingService } from "../app-event-routing/app-event-routing.service";
+} from '@activepieces/shared';
+import { Sandbox, sandboxManager } from '../workers/sandbox';
+import { system } from './system/system';
+import { SystemProp } from './system/system-prop';
+import { tokenUtils } from '../authentication/lib/token-utils';
+import { DropdownState, DynamicPropsValue } from '@activepieces/framework';
+import { logger } from '../helper/logger';
+import chalk from 'chalk';
+import { getEdition, getWebhookSecret } from './secret-helper';
+import { packageManager } from './package-manager';
+import { appEventRoutingService } from '../app-event-routing/app-event-routing.service';
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH);
 const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH);
@@ -70,7 +70,7 @@ export const engineHelper = {
 
             const buildPath = sandbox.getSandboxFolderPath();
             const { pieceName } = operation;
-            await installPieceDependency(buildPath, pieceName, "latest");
+            await installPieceDependency(buildPath, pieceName, 'latest');
             result = await execute(EngineOperationType.EXTRACT_EVENT_DATA, sandbox, operation);
         }
         finally {
@@ -153,7 +153,7 @@ async function execute(operation: EngineOperationType, sandbox: Sandbox, input: 
 
     await fs.writeFile(`${sandboxPath}/input.json`, JSON.stringify({
         ...input,
-        apiUrl: "http://127.0.0.1:3000"
+        apiUrl: 'http://127.0.0.1:3000'
     }));
 
     await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ${operation}`);
@@ -161,15 +161,15 @@ async function execute(operation: EngineOperationType, sandbox: Sandbox, input: 
     const standardOutput = await sandbox.parseStandardOutput();
     const standardError = await sandbox.parseStandardError();
 
-    standardOutput.split("\n").forEach(f => {
+    standardOutput.split('\n').forEach(f => {
         if (f.trim().length > 0) logger.info({}, chalk.yellow(f))
     });
 
-    standardError.split("\n").forEach(f => {
+    standardError.split('\n').forEach(f => {
         if (f.trim().length > 0) logger.error({}, chalk.red(f))
     });
 
-    const outputFilePath = sandbox.getSandboxFilePath("output.json");
+    const outputFilePath = sandbox.getSandboxFilePath('output.json');
     const outputFile = await fs.readFile(outputFilePath, { encoding: 'utf-8' });
 
     return JSON.parse(outputFile);

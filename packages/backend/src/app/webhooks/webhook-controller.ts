@@ -1,12 +1,12 @@
-import { FastifyPluginAsync, FastifyRequest } from "fastify";
-import { StatusCodes } from "http-status-codes";
-import { WebhookUrlParams } from "@activepieces/shared";
-import { webhookService } from "./webhook-service";
-import { logger } from "../helper/logger";
+import { FastifyPluginAsync, FastifyRequest } from 'fastify';
+import { StatusCodes } from 'http-status-codes';
+import { WebhookUrlParams } from '@activepieces/shared';
+import { webhookService } from './webhook-service';
+import { logger } from '../helper/logger';
 
 export const webhookController: FastifyPluginAsync = async (app) => {
     app.all(
-        "/:flowId",
+        '/:flowId',
         {
             schema: {
                 params: WebhookUrlParams,
@@ -19,7 +19,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
     );
 
     app.all(
-        "/",
+        '/',
         {
             schema: {
                 querystring: WebhookUrlParams,
@@ -32,7 +32,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
     );
 
     app.all(
-        "/:flowId/simulate",
+        '/:flowId/simulate',
         {
             schema: {
                 params: WebhookUrlParams,

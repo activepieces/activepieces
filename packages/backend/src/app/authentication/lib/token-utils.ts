@@ -1,17 +1,17 @@
-import { randomBytes } from "node:crypto";
-import { promisify } from "node:util";
-import jwt, { SignOptions, VerifyOptions } from "jsonwebtoken";
-import { Principal } from "@activepieces/shared";
-import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { system } from "../../helper/system/system";
-import { SystemProp } from "../../helper/system/system-prop";
-import { redisStore } from "../../helper/store";
+import { randomBytes } from 'node:crypto';
+import { promisify } from 'node:util';
+import jwt, { SignOptions, VerifyOptions } from 'jsonwebtoken';
+import { Principal } from '@activepieces/shared';
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
+import { system } from '../../helper/system/system';
+import { SystemProp } from '../../helper/system/system-prop';
+import { redisStore } from '../../helper/store';
 
-const ALGORITHM = "HS256";
-const KEY_ID = "1";
+const ALGORITHM = 'HS256';
+const KEY_ID = '1';
 // TODO MAKE IT SHORT LIVE WITH REFRESH TOKEN STRATEGY
 const EXPIRES_IN_SECONDS = 7 * 24 * 3600;
-const ISSUER = "activepieces";
+const ISSUER = 'activepieces';
 
 let secret: string | null = null;
 
@@ -35,7 +35,7 @@ const getSecretFromStore = async (): Promise<string | null> => {
 const generateAndStoreSecret = async (): Promise<string> => {
     const secretLengthInBytes = 32;
     const secretBuffer = await promisify(randomBytes)(secretLengthInBytes);
-    const secret = secretBuffer.toString("base64");
+    const secret = secretBuffer.toString('base64');
     await redisStore.save(SystemProp.JWT_SECRET, secret);
     return secret;
 };

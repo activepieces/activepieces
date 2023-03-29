@@ -1,24 +1,24 @@
-import { FastifyInstance, FastifyRequest } from "fastify";
+import { FastifyInstance, FastifyRequest } from 'fastify';
 import {
     CreateFlowRequest,
     FlowId,
     FlowOperationRequest,
     FlowVersionId,
     ListFlowsRequest,
-} from "@activepieces/shared";
-import { StatusCodes } from "http-status-codes";
-import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { flowService } from "./flow.service";
-import { GuessFlowRequest } from "@activepieces/shared";
-import { flowGuessService } from "@ee/magic-wand/openai";
-import { flowVersionService } from "./flow-version/flow-version.service";
-import { logger } from "../helper/logger";
+} from '@activepieces/shared';
+import { StatusCodes } from 'http-status-codes';
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
+import { flowService } from './flow.service';
+import { GuessFlowRequest } from '@activepieces/shared';
+import { flowGuessService } from '@ee/magic-wand/openai';
+import { flowVersionService } from './flow-version/flow-version.service';
+import { logger } from '../helper/logger';
 
 const DEFUALT_PAGE_SIZE = 10;
 
 export const flowController = async (fastify: FastifyInstance) => {
     fastify.post(
-        "/guess",
+        '/guess',
         {
             schema: {
                 body: GuessFlowRequest
@@ -30,7 +30,7 @@ export const flowController = async (fastify: FastifyInstance) => {
             }>
         ) => {
             const trigger = await flowGuessService.guessFlow(request.body.prompt);
-            logger.info("Cleaned Actions " + JSON.stringify(trigger));
+            logger.info('Cleaned Actions ' + JSON.stringify(trigger));
             const flow = await flowService.create({
                 projectId: request.principal.projectId, request: {
                     displayName: request.body.displayName,
@@ -47,7 +47,7 @@ export const flowController = async (fastify: FastifyInstance) => {
     );
 
     fastify.post(
-        "/",
+        '/',
         {
             schema: {
                 body: CreateFlowRequest
@@ -63,7 +63,7 @@ export const flowController = async (fastify: FastifyInstance) => {
     );
 
     fastify.post(
-        "/:flowId",
+        '/:flowId',
         {
             schema: {
                 body: FlowOperationRequest,
@@ -86,7 +86,7 @@ export const flowController = async (fastify: FastifyInstance) => {
     );
 
     fastify.get(
-        "/",
+        '/',
         {
             schema: {
                 querystring: ListFlowsRequest
@@ -102,7 +102,7 @@ export const flowController = async (fastify: FastifyInstance) => {
     );
 
     fastify.get(
-        "/:flowId",
+        '/:flowId',
         async (
             request: FastifyRequest<{
                 Params: {
@@ -125,7 +125,7 @@ export const flowController = async (fastify: FastifyInstance) => {
     );
 
     fastify.delete(
-        "/:flowId",
+        '/:flowId',
         async (
             request: FastifyRequest<{
                 Params: {

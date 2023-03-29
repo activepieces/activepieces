@@ -1,11 +1,11 @@
-import { EntitySchema, ObjectLiteral } from "typeorm";
-import Paginator, { Order } from "./paginator";
+import { EntitySchema, ObjectLiteral } from 'typeorm';
+import Paginator, { Order } from './paginator';
 
 export interface PagingQuery {
     afterCursor?: string;
     beforeCursor?: string;
     limit?: number;
-    order?: Order | "ASC" | "DESC";
+    order?: Order | 'ASC' | 'DESC';
 }
 
 export interface PaginationOptions<Entity> {

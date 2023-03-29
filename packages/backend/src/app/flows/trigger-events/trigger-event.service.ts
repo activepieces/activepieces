@@ -10,17 +10,17 @@ import {
     TriggerEvent ,
     TriggerHookType,
     TriggerType,
-} from "@activepieces/shared";
-import { databaseConnection } from "../../database/database-connection";
-import { engineHelper } from "../../helper/engine-helper";
-import { logger } from "../../helper/logger";
-import { buildPaginator } from "../../helper/pagination/build-paginator";
-import { paginationHelper } from "../../helper/pagination/pagination-utils";
-import { Order } from "../../helper/pagination/paginator";
-import { triggerUtils } from "../../helper/trigger-utils";
-import { webhookService } from "../../webhooks/webhook-service";
-import { flowService } from "../flow.service";
-import { TriggerEventEntity } from "./trigger-event.entity";
+} from '@activepieces/shared';
+import { databaseConnection } from '../../database/database-connection';
+import { engineHelper } from '../../helper/engine-helper';
+import { logger } from '../../helper/logger';
+import { buildPaginator } from '../../helper/pagination/build-paginator';
+import { paginationHelper } from '../../helper/pagination/pagination-utils';
+import { Order } from '../../helper/pagination/paginator';
+import { triggerUtils } from '../../helper/trigger-utils';
+import { webhookService } from '../../webhooks/webhook-service';
+import { flowService } from '../flow.service';
+import { TriggerEventEntity } from './trigger-event.entity';
 
 const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity);
 
@@ -42,7 +42,7 @@ export const triggerEventService = {
         const emptyPage = paginationHelper.createPage<TriggerEvent>([], null);
         switch (trigger.type) {
             case TriggerType.WEBHOOK:
-                throw new Error("Cannot be tested");
+                throw new Error('Cannot be tested');
             case TriggerType.PIECE: {
                 const testResult =( await engineHelper.executeTrigger({
                     hookType: TriggerHookType.TEST,
@@ -99,7 +99,7 @@ export const triggerEventService = {
         const flowId = flow.id;
         const paginator = buildPaginator({
             entity: TriggerEventEntity,
-            paginationKeys: ["created"],
+            paginationKeys: ['created'],
             query: {
                 limit,
                 order: Order.DESC,
@@ -107,7 +107,7 @@ export const triggerEventService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         });
-        const query = triggerEventRepo.createQueryBuilder("trigger_event").where({
+        const query = triggerEventRepo.createQueryBuilder('trigger_event').where({
             projectId,
             flowId,
             sourceName,
@@ -123,7 +123,7 @@ function getSourceName(trigger: Trigger): string {
             return TriggerType.WEBHOOK;
         case TriggerType.PIECE:{
             const pieceTrigger = trigger as PieceTrigger;
-            return pieceTrigger.settings.pieceName +"@" + pieceTrigger.settings.pieceVersion + ":" + pieceTrigger.settings.triggerName;
+            return pieceTrigger.settings.pieceName +'@' + pieceTrigger.settings.pieceVersion + ':' + pieceTrigger.settings.triggerName;
         }
         case TriggerType.EMPTY:
             return TriggerType.EMPTY;

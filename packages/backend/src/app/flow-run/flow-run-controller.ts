@@ -1,7 +1,7 @@
-import { FastifyPluginCallback, FastifyReply, FastifyRequest } from "fastify";
-import { CreateFlowRunRequest, FlowRunId, ListFlowRunsRequest, RunEnvironment } from "@activepieces/shared";
-import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { flowRunService, flowRunService as service } from "./flow-run-service";
+import { FastifyPluginCallback, FastifyReply, FastifyRequest } from 'fastify';
+import { CreateFlowRunRequest, FlowRunId, ListFlowRunsRequest, RunEnvironment } from '@activepieces/shared';
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
+import { flowRunService, flowRunService as service } from './flow-run-service';
 
 const DEFAULT_PAGING_LIMIT = 10;
 
@@ -13,7 +13,7 @@ interface GetOnePathParams {
 export const flowRunController: FastifyPluginCallback = (app, _options, done): void => {
 
     app.post(
-        "/",
+        '/',
         {
             schema: {
                 body: CreateFlowRunRequest,
@@ -33,7 +33,7 @@ export const flowRunController: FastifyPluginCallback = (app, _options, done): v
     );
 
     // list
-    app.get("/", {
+    app.get('/', {
         schema: ListFlowRunsRequest
     }, async (request: FastifyRequest<{ Querystring: ListFlowRunsRequest }>, reply: FastifyReply) => {
         const flowRunPage = await service.list({
@@ -46,7 +46,7 @@ export const flowRunController: FastifyPluginCallback = (app, _options, done): v
     });
 
     // get one
-    app.get("/:id", async (request: FastifyRequest<{ Params: GetOnePathParams }>, reply: FastifyReply) => {
+    app.get('/:id', async (request: FastifyRequest<{ Params: GetOnePathParams }>, reply: FastifyReply) => {
         const flowRun = await service.getOne({
             projectId: request.principal.projectId,
             id: request.params.id,

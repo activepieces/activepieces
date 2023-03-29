@@ -1,11 +1,11 @@
-import { apId, CollectionId, Instance, InstanceId, ProjectId, TelemetryEventName, UpsertInstanceRequest } from "@activepieces/shared";
-import { collectionService } from "../collections/collection.service";
-import { databaseConnection } from "../database/database-connection";
-import { flowService } from "../flows/flow.service";
-import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { InstanceEntity } from "./instance.entity";
-import { instanceSideEffects } from "./instance-side-effects";
-import { telemetry } from "../helper/telemetry.utils";
+import { apId, CollectionId, Instance, InstanceId, ProjectId, TelemetryEventName, UpsertInstanceRequest } from '@activepieces/shared';
+import { collectionService } from '../collections/collection.service';
+import { databaseConnection } from '../database/database-connection';
+import { flowService } from '../flows/flow.service';
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
+import { InstanceEntity } from './instance.entity';
+import { instanceSideEffects } from './instance-side-effects';
+import { telemetry } from '../helper/telemetry.utils';
 
 export const instanceRepo = databaseConnection.getRepository(InstanceEntity);
 

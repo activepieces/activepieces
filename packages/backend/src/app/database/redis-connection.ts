@@ -1,7 +1,7 @@
-import Redis from "ioredis";
-import { system } from "../helper/system/system";
-import { SystemProp } from "../helper/system/system-prop";
-import { createLock } from "@microfleet/ioredis-lock";
+import Redis from 'ioredis';
+import { system } from '../helper/system/system';
+import { SystemProp } from '../helper/system/system-prop';
+import { createLock } from '@microfleet/ioredis-lock';
 
 const url = system.get(SystemProp.REDIS_URL);
 const username = system.get(SystemProp.REDIS_USER);

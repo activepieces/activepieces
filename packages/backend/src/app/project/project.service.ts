@@ -1,6 +1,6 @@
-import { databaseConnection } from "../database/database-connection";
-import { ProjectEntity } from "./project.entity";
-import { apId, Project, ProjectId, UserId } from "@activepieces/shared";
+import { databaseConnection } from '../database/database-connection';
+import { ProjectEntity } from './project.entity';
+import { apId, Project, ProjectId, UserId } from '@activepieces/shared';
 
 const projectRepo = databaseConnection.getRepository(ProjectEntity);
 

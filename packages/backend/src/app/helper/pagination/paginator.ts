@@ -5,12 +5,12 @@ import {
     OrderByCondition,
     SelectQueryBuilder,
     WhereExpressionBuilder,
-} from "typeorm";
-import { atob, btoa, decodeByType, encodeByType } from "./pagination-utils";
+} from 'typeorm';
+import { atob, btoa, decodeByType, encodeByType } from './pagination-utils';
 
 export enum Order {
-    ASC = "ASC",
-    DESC = "DESC",
+    ASC = 'ASC',
+    DESC = 'DESC',
 }
 
 export type CursorParam = Record<string, any>;
@@ -123,7 +123,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
     private buildCursorQuery(where: WhereExpressionBuilder, cursors: CursorParam): void {
         const operator = this.getOperator();
         const params: CursorParam = {};
-        let query = "";
+        let query = '';
         this.paginationKeys.forEach((key) => {
             params[key] = cursors[key];
             where.orWhere(`${query}${this.alias}.${key} ${operator} :${key}`, params);
@@ -133,14 +133,14 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
     private getOperator(): string {
         if (this.hasAfterCursor()) {
-            return this.order === Order.ASC ? ">" : "<";
+            return this.order === Order.ASC ? '>' : '<';
         }
 
         if (this.hasBeforeCursor()) {
-            return this.order === Order.ASC ? "<" : ">";
+            return this.order === Order.ASC ? '<' : '>';
         }
 
-        return "=";
+        return '=';
     }
 
     private buildOrder(): OrderByCondition {
@@ -173,16 +173,16 @@ export default class Paginator<Entity extends ObjectLiteral> {
                 const value = encodeByType(type, entity[key]);
                 return `${key}:${value}`;
             })
-            .join(",");
+            .join(',');
 
         return btoa(payload);
     }
 
     private decode(cursor: string): CursorParam {
         const cursors: CursorParam = {};
-        const columns = atob(cursor).split(",");
+        const columns = atob(cursor).split(',');
         columns.forEach((column) => {
-            const [key, raw] = column.split(":");
+            const [key, raw] = column.split(':');
             const type = this.getEntityPropertyType(key);
             const value = decodeByType(type, raw);
             cursors[key] = value;
@@ -194,7 +194,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
     private getEntityPropertyType(key: string): string {
         const col = this.entity.options.columns[key];
         if (col === undefined) {
-            throw new Error("entity property not found " + key);
+            throw new Error('entity property not found ' + key);
         }
         return col.type.toString();
     }

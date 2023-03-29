@@ -8,14 +8,14 @@ import {
     SeekPage,
     TelemetryEventName,
     UpdateCollectionRequest,
-} from "@activepieces/shared";
-import { CollectionEntity } from "./collection.entity";
-import { paginationHelper } from "../helper/pagination/pagination-utils";
-import { buildPaginator } from "../helper/pagination/build-paginator";
-import { databaseConnection } from "../database/database-connection";
-import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { instanceSideEffects } from "../instance/instance-side-effects";
-import { telemetry } from "../helper/telemetry.utils";
+} from '@activepieces/shared';
+import { CollectionEntity } from './collection.entity';
+import { paginationHelper } from '../helper/pagination/pagination-utils';
+import { buildPaginator } from '../helper/pagination/build-paginator';
+import { databaseConnection } from '../database/database-connection';
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
+import { instanceSideEffects } from '../instance/instance-side-effects';
+import { telemetry } from '../helper/telemetry.utils';
 
 export const collectionRepo = databaseConnection.getRepository(CollectionEntity);
 
@@ -54,15 +54,15 @@ export const collectionService = {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
         const paginator = buildPaginator({
             entity: CollectionEntity,
-            paginationKeys: ["created"],
+            paginationKeys: ['created'],
             query: {
                 limit,
-                order: "ASC",
+                order: 'ASC',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
         });
-        const queryBuilder = collectionRepo.createQueryBuilder("collection").where({ projectId });
+        const queryBuilder = collectionRepo.createQueryBuilder('collection').where({ projectId });
         const { data, cursor } = await paginator.paginate(queryBuilder.where({ projectId }));
         return paginationHelper.createPage<Collection>(data, cursor);
     },

@@ -1,14 +1,14 @@
-import { FastifyInstance, FastifyRequest } from "fastify";
-import { collectionService } from "./collection.service";
+import { FastifyInstance, FastifyRequest } from 'fastify';
+import { collectionService } from './collection.service';
 import {
     CollectionId,
     CreateCollectionRequest,
     ListCollectionsRequest,
     UpdateCollectionRequest
-} from "@activepieces/shared";
-import { StatusCodes } from "http-status-codes";
-import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { Static, Type } from "@sinclair/typebox";
+} from '@activepieces/shared';
+import { StatusCodes } from 'http-status-codes';
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
+import { Static, Type } from '@sinclair/typebox';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -20,12 +20,12 @@ type CollectionIdParams = Static<typeof CollectionIdParams>;
 
 export const collectionController = async (fastify: FastifyInstance) => {
     fastify.delete(
-        "/:collectionId",
+        '/:collectionId',
         {
             schema: {
-                description: "Delete a collection",
-                tags: ["collection"],
-                summary: "Delete a collection",
+                description: 'Delete a collection',
+                tags: ['collection'],
+                summary: 'Delete a collection',
                 params: CollectionIdParams,
             }
         },
@@ -41,7 +41,7 @@ export const collectionController = async (fastify: FastifyInstance) => {
     );
 
     fastify.get(
-        "/:collectionId",
+        '/:collectionId',
         async (
             request: FastifyRequest<{
                 Params: {
@@ -61,7 +61,7 @@ export const collectionController = async (fastify: FastifyInstance) => {
     );
 
     fastify.post(
-        "/:collectionId",
+        '/:collectionId',
         {
             schema: {
                 body: UpdateCollectionRequest
@@ -87,12 +87,12 @@ export const collectionController = async (fastify: FastifyInstance) => {
     );
 
     fastify.get(
-        "/",
+        '/',
         {
             schema: {
-                description: "List Collections",
-                tags: ["collection"],
-                summary: "List Collections",
+                description: 'List Collections',
+                tags: ['collection'],
+                summary: 'List Collections',
                 querystring: ListCollectionsRequest,
             },
         },
@@ -106,7 +106,7 @@ export const collectionController = async (fastify: FastifyInstance) => {
     );
 
     fastify.post(
-        "/",
+        '/',
         {
             schema: {
                 body: CreateCollectionRequest

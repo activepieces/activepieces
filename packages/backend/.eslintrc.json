@@ -9,6 +9,8 @@
         "@typescript-eslint/brace-style": ["error", "stroustrup"],
         "indent": "off",
         "@typescript-eslint/indent": ["error", 4],
+        "quotes": "off",
+        "@typescript-eslint/quotes": ["error", "single"],
         "no-console": "error"
       }
     },

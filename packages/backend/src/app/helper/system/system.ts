@@ -1,5 +1,5 @@
-import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
-import { SystemProp } from "./system-prop";
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
+import { SystemProp } from './system-prop';
 
 export const system = {
     get(prop: SystemProp): string | undefined {
@@ -27,7 +27,7 @@ export const system = {
         if (env === undefined) {
             return undefined;
         }
-        return getEnvVar(prop) === "true";
+        return getEnvVar(prop) === 'true';
     },
 
     getOrThrow(prop: SystemProp): string {
@@ -53,7 +53,7 @@ const getEnvVar = (prop: SystemProp): string | undefined => {
 
 export const validateEnvPropsOnStartup = () => {
     const encryptionKey = system.getOrThrow(SystemProp.ENCRYPTION_KEY);
-    const encryptionKeyLength = Buffer.from(encryptionKey, "binary");
+    const encryptionKeyLength = Buffer.from(encryptionKey, 'binary');
     if(encryptionKeyLength.length !== 32) {
         throw new ActivepiecesError({
             code: ErrorCode.SYSTEM_PROP_INVALID,

@@ -1,11 +1,11 @@
-import { ApFlagId, Flag } from "@activepieces/shared";
-import { databaseConnection } from "../database/database-connection";
-import { system } from "../helper/system/system";
-import { SystemProp } from "../helper/system/system-prop";
-import { FlagEntity } from "./flag.entity";
-import axios from "axios";
-import { webhookService } from "../webhooks/webhook-service";
-import { getEdition } from "../helper/secret-helper";
+import { ApFlagId, Flag } from '@activepieces/shared';
+import { databaseConnection } from '../database/database-connection';
+import { system } from '../helper/system/system';
+import { SystemProp } from '../helper/system/system-prop';
+import { FlagEntity } from './flag.entity';
+import axios from 'axios';
+import { webhookService } from '../webhooks/webhook-service';
+import { getEdition } from '../helper/secret-helper';
 
 const flagRepo = databaseConnection.getRepository(FlagEntity);
 
@@ -96,7 +96,7 @@ export const flagService = {
     },
     async getLatestPackageDotJson() {
         try {
-            const pkgJson = (await axios.get("https://raw.githubusercontent.com/activepieces/activepieces/main/package.json")).data;
+            const pkgJson = (await axios.get('https://raw.githubusercontent.com/activepieces/activepieces/main/package.json')).data;
             return pkgJson;
         }
         catch (ex) {

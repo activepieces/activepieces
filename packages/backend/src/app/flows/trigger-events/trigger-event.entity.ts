@@ -1,6 +1,6 @@
-import { EntitySchema } from "typeorm";
-import { Flow, Project, TriggerEvent } from "@activepieces/shared";
-import { ApIdSchema, BaseColumnSchemaPart } from "../../helper/base-entity";
+import { EntitySchema } from 'typeorm';
+import { Flow, Project, TriggerEvent } from '@activepieces/shared';
+import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity';
 
 interface TriggerEventSchema extends TriggerEvent {
     flow: Flow;
@@ -8,7 +8,7 @@ interface TriggerEventSchema extends TriggerEvent {
 }
 
 export const TriggerEventEntity = new EntitySchema<TriggerEventSchema>({
-    name: "trigger_event",
+    name: 'trigger_event',
     columns: {
         ...BaseColumnSchemaPart,
         flowId: ApIdSchema,
@@ -17,35 +17,35 @@ export const TriggerEventEntity = new EntitySchema<TriggerEventSchema>({
             type: String,
         },
         payload: {
-            type: "jsonb"
+            type: 'jsonb'
         },
     },
     indices: [
         {
-            name: "idx_trigger_event_flow_id",
-            columns: ["flowId"],
+            name: 'idx_trigger_event_flow_id',
+            columns: ['flowId'],
             unique: false,
         },
     ],
     relations: {
         project: {
-            type: "many-to-one",
-            target: "project",
+            type: 'many-to-one',
+            target: 'project',
             cascade: true,
-            onDelete: "CASCADE",
+            onDelete: 'CASCADE',
             joinColumn: {
-                name: "projectId",
-                foreignKeyConstraintName: "fk_trigger_event_project_id",
+                name: 'projectId',
+                foreignKeyConstraintName: 'fk_trigger_event_project_id',
             },
         },
         flow: {
-            type: "many-to-one",
-            target: "flow",
+            type: 'many-to-one',
+            target: 'flow',
             cascade: true,
-            onDelete: "CASCADE",
+            onDelete: 'CASCADE',
             joinColumn: {
-                name: "flowId",
-                foreignKeyConstraintName: "fk_trigger_event_flow_id",
+                name: 'flowId',
+                foreignKeyConstraintName: 'fk_trigger_event_flow_id',
             },
         },
     },

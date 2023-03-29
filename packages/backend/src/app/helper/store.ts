@@ -1,4 +1,4 @@
-import { createRedisClient } from "../database/redis-connection";
+import { createRedisClient } from '../database/redis-connection';
 
 const redis = createRedisClient();
 

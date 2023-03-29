@@ -13,16 +13,16 @@ import {
     ProjectId,
     SeekPage,
     UpsertConnectionRequest,
-} from "@activepieces/shared";
-import { databaseConnection } from "../database/database-connection";
-import { buildPaginator } from "../helper/pagination/build-paginator";
-import { paginationHelper } from "../helper/pagination/pagination-utils";
-import { AppConnectionEntity } from "./app-connection.entity";
-import axios, { AxiosError } from "axios";
-import { createRedisLock } from "../database/redis-connection";
-import { decryptObject, encryptObject } from "../helper/encryption";
-import { getEdition } from "../helper/secret-helper";
-import { logger } from "../helper/logger";
+} from '@activepieces/shared';
+import { databaseConnection } from '../database/database-connection';
+import { buildPaginator } from '../helper/pagination/build-paginator';
+import { paginationHelper } from '../helper/pagination/pagination-utils';
+import { AppConnectionEntity } from './app-connection.entity';
+import axios, { AxiosError } from 'axios';
+import { createRedisLock } from '../database/redis-connection';
+import { decryptObject, encryptObject } from '../helper/encryption';
+import { getEdition } from '../helper/secret-helper';
+import { logger } from '../helper/logger';
 
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
@@ -54,7 +54,7 @@ export const appConnectionService = {
                 break;
         }
         const claimedUpsertRequest = { ...request, value: { ...response, ...request.value }, id: apId(), projectId };
-        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId, value: encryptObject(claimedUpsertRequest.value) }, ["name", "projectId"]);
+        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId, value: encryptObject(claimedUpsertRequest.value) }, ['name', 'projectId']);
         const connection = await appConnectionRepo.findOneByOrFail({
             projectId: projectId,
             name: request.name
@@ -97,15 +97,15 @@ export const appConnectionService = {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
         const paginator = buildPaginator({
             entity: AppConnectionEntity,
-            paginationKeys: ["created"],
+            paginationKeys: ['created'],
             query: {
                 limit,
-                order: "ASC",
+                order: 'ASC',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
         });
-        let queryBuilder = appConnectionRepo.createQueryBuilder("app_connection").where({ projectId });
+        let queryBuilder = appConnectionRepo.createQueryBuilder('app_connection').where({ projectId });
         if (appName !== undefined) {
             queryBuilder = queryBuilder.where({ appName });
         }
@@ -175,7 +175,7 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
         tokenUrl: connectionValue.token_url,
     };
     const response = (
-        await axios.post("https://secrets.activepieces.com/refresh", requestBody)
+        await axios.post('https://secrets.activepieces.com/refresh', requestBody)
     ).data;;
 
     return {
@@ -198,11 +198,11 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
                 client_id: settings.client_id,
                 client_secret: settings.client_secret,
                 redirect_uri: settings.redirect_url,
-                grant_type: "refresh_token",
+                grant_type: 'refresh_token',
                 refresh_token: appConnection.refresh_token,
             }),
             {
-                headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
+                headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
             }
         )
     ).data;
@@ -222,18 +222,18 @@ async function claim(request: {
             client_id: request.clientId,
             client_secret: request.clientSecret,
             redirect_uri: request.redirectUrl,
-            grant_type: "authorization_code",
+            grant_type: 'authorization_code',
             code: request.code,
         };
         if (request.codeVerifier) {
-            params["code_verifier"] = request.codeVerifier;
+            params['code_verifier'] = request.codeVerifier;
         }
         const response = (
             await axios.post(
                 request.tokenUrl,
                 new URLSearchParams(params),
                 {
-                    headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
+                    headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
                 }
             )
         ).data;
@@ -255,7 +255,7 @@ async function claimWithCloud(request: {
     pieceName: string; code: string; codeVerifier: string, edition: string; clientId: string
 }): Promise<unknown> {
     try {
-        return (await axios.post("https://secrets.activepieces.com/claim", request)).data;
+        return (await axios.post('https://secrets.activepieces.com/claim', request)).data;
     }
     catch (e: unknown | AxiosError) {
         logger.error(e);
@@ -270,16 +270,16 @@ async function claimWithCloud(request: {
 function formatOAuth2Response(response: Record<string, any>) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000);
     const formattedResponse: BaseOAuth2ConnectionValue = {
-        access_token: response["access_token"],
-        expires_in: response["expires_in"],
+        access_token: response['access_token'],
+        expires_in: response['expires_in'],
         claimed_at: secondsSinceEpoch,
-        refresh_token: response["refresh_token"],
-        scope: response["scope"],
-        token_type: response["token_type"],
+        refresh_token: response['refresh_token'],
+        scope: response['scope'],
+        token_type: response['token_type'],
         data: response,
     };
 
-    deleteProps(formattedResponse.data, ['access_token', "access_token", "expires_in", "refresh_token", "scope", "token_type"]);
+    deleteProps(formattedResponse.data, ['access_token', 'access_token', 'expires_in', 'refresh_token', 'scope', 'token_type']);
     return formattedResponse;
 }
 

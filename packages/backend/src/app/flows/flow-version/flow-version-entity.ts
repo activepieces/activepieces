@@ -1,13 +1,13 @@
-import { EntitySchema } from "typeorm";
-import { Flow, FlowVersion } from "@activepieces/shared";
-import { ApIdSchema, BaseColumnSchemaPart } from "../../helper/base-entity";
+import { EntitySchema } from 'typeorm';
+import { Flow, FlowVersion } from '@activepieces/shared';
+import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity';
 
 interface FlowVersionSchema extends FlowVersion {
     flow: Flow;
 }
 
 export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
-    name: "flow_version",
+    name: 'flow_version',
     columns: {
         ...BaseColumnSchemaPart,
         flowId: ApIdSchema,
@@ -15,7 +15,7 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             type: String,
         },
         trigger: {
-            type: "jsonb",
+            type: 'jsonb',
             nullable: true,
         },
         valid: {
@@ -27,20 +27,20 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
     },
     indices: [
         {
-            name: "idx_flow_version_flow_id",
-            columns: ["flowId"],
+            name: 'idx_flow_version_flow_id',
+            columns: ['flowId'],
             unique: false,
         },
     ],
     relations: {
         flow: {
-            type: "many-to-one",
-            target: "flow",
+            type: 'many-to-one',
+            target: 'flow',
             cascade: true,
-            onDelete: "CASCADE",
+            onDelete: 'CASCADE',
             joinColumn: {
-                name: "flowId",
-                foreignKeyConstraintName: "fk_flow_version_flow",
+                name: 'flowId',
+                foreignKeyConstraintName: 'fk_flow_version_flow',
             },
         },
     },
