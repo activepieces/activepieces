@@ -48,10 +48,10 @@ export const mondayCreateAnItem = createAction({
   },
   async run(context) {
     const { authentication, ...itemValues } = context.propsValue
-
-    const item = Object
+    const item: string = Object
       .entries(itemValues)
       .map(value => `${value[0]}: ${value[1]}`)
+      .join(", ")
 
     const result = await httpClient.sendRequest({
       url: "https://api.monday.com/v2",
@@ -67,7 +67,6 @@ export const mondayCreateAnItem = createAction({
     if (result.status === 200) {
       return result.body
     }
-    
     return result
   }
 })
