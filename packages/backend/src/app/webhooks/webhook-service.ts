@@ -78,6 +78,7 @@ export const webhookService = {
 
         await Promise.all(eventSaveJobs);
 
+        // TODO: make sure triggerUtils#disable is called once
         await triggerUtils.disable({
             projectId,
             collectionId,
