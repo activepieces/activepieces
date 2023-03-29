@@ -1,0 +1,36 @@
+{
+  "name": "pieces-constant-contact",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/constant-contact/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/constant-contact",
+        "tsConfig": "packages/pieces/constant-contact/tsconfig.lib.json",
+        "packageJson": "packages/pieces/constant-contact/package.json",
+        "main": "packages/pieces/constant-contact/src/index.ts",
+        "assets": [
+          "packages/pieces/constant-contact/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/constant-contact/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

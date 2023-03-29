@@ -36,6 +36,7 @@ type ErrorParams =
   | TriggerFailedErrorParams
   | SystemInvalidErrorParams
   | SystemPropNotDefinedErrorParams
+  | OpenAiFailedErrorParams
   | FlowOperationErrorParams;
 
 
@@ -176,6 +177,11 @@ export type SystemPropNotDefinedErrorParams = BaseErrorParams<
   }
 >;
 
+export type OpenAiFailedErrorParams = BaseErrorParams<
+  ErrorCode.OPENAI_FAILED,
+  Record<string, never>
+>;
+
 export type FlowOperationErrorParams = BaseErrorParams<
   ErrorCode.FLOW_OPERATION_INVALID,
   Record<string, never>
@@ -220,4 +226,5 @@ export enum ErrorCode {
   SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
   TRIGGER_FAILED = "TRIGGER_FAILED",
   FLOW_OPERATION_INVALID = "FLOW_OPERATION_INVALID",
+  OPENAI_FAILED = "OPENAI_FAILED",
 }

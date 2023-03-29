@@ -10,6 +10,7 @@ import { AuthenticationService } from '../../../../../common/service/authenticat
 
 import { map, Observable, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-feedback',
@@ -25,6 +26,7 @@ export class FeedbackComponent {
   sendingFeedback = false;
   openFeedbackPopOver$: Observable<void>;
   constructor(
+    public dialog: MatDialog,
     public authenticationService: AuthenticationService,
     private snackbarService: MatSnackBar
   ) {
