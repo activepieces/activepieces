@@ -1,4 +1,4 @@
-import { apId, CollectionId, Instance, InstanceId, InstanceStatus, ProjectId, TelemetryEventName, UpsertInstanceRequest } from "@activepieces/shared";
+import { apId, CollectionId, Instance, InstanceId, InstanceStatus, ProjectId, TelemetryEventName, UpdateInstanceRequest, UpsertInstanceRequest } from "@activepieces/shared";
 import { collectionService } from "../collections/collection.service";
 import { databaseConnection } from "../database/database-connection";
 import { flowService } from "../flows/flow.service";
@@ -11,7 +11,7 @@ export const instanceRepo = databaseConnection.getRepository(InstanceEntity);
 
 export const instanceService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertInstanceRequest }): Promise<Instance> {
-        const collection = await collectionService.getOne({ projectId: projectId, id: request.collectionId});
+        const collection = await collectionService.getOne({ projectId: projectId, id: request.collectionId });
         if (collection == null) {
             throw new ActivepiecesError({
                 code: ErrorCode.COLLECTION_NOT_FOUND,
@@ -22,16 +22,17 @@ export const instanceService = {
         }
 
         const flowPage = await flowService.list({
-            projectId: projectId, 
+            projectId: projectId,
             collectionId: request.collectionId,
-            cursorRequest: null, 
-            limit: Number.MAX_SAFE_INTEGER });
+            cursorRequest: null,
+            limit: Number.MAX_SAFE_INTEGER
+        });
 
         const flowIdToVersionId = Object.fromEntries(flowPage.data.map((flow) => [flow.id, flow.version.id]));
 
         const oldInstance: Partial<Instance | null> = await instanceRepo.findOneBy({ projectId, collectionId: request.collectionId });
 
-        if (oldInstance !== null && oldInstance !== undefined) {
+        if (oldInstance) {
             await instanceRepo.delete(oldInstance.id);
         }
 
@@ -45,7 +46,7 @@ export const instanceService = {
 
         const savedInstance = await instanceRepo.save(newInstance);
 
-        if (oldInstance !== null) {
+        if (oldInstance) {
             await instanceSideEffects.disable(oldInstance);
         }
         telemetry.trackProject(
@@ -73,7 +74,7 @@ export const instanceService = {
             projectId,
             id,
         });
-        if (instance !== null && instance !== undefined) {
+        if (instance) {
             await instanceSideEffects.disable(instance);
         }
         await instanceRepo.delete({
@@ -81,22 +82,21 @@ export const instanceService = {
             projectId
         });
     },
-    async updateInstanceStatusByCollectionId({ projectId,request }: { projectId: ProjectId, request: UpsertInstanceRequest }) {
-        const collection = await collectionService.getOne({ projectId: projectId, id: request.collectionId});
-        if (collection == null) {
+    async updateInstanceStatusByCollectionId({ projectId, request, collectionId }: { projectId: ProjectId, collectionId: CollectionId, request: UpdateInstanceRequest }) {
+        const instance: Instance | null = await instanceService.getByCollectionId({ projectId, collectionId: collectionId });
+        if (instance === null) {
             throw new ActivepiecesError({
-                code: ErrorCode.COLLECTION_NOT_FOUND,
+                code: ErrorCode.INSTANCE_NOT_FOUND,
                 params: {
-                    id: request.collectionId,
+                    id: collectionId,
                 },
             });
         }
-        const instance: Instance | null = await instanceRepo.findOneBy({ projectId, collectionId: request.collectionId });
-        if(instance) {
-            const oldInstanceStatus= instance.status;
+        if (instance) {
+            const oldInstanceStatus = instance.status;
             instance.status = request.status;
-            if(oldInstanceStatus !== instance.status) {
-                if(instance.status === InstanceStatus.ENABLED ) {
+            if (oldInstanceStatus !== instance.status) {
+                if (instance.status === InstanceStatus.ENABLED) {
                     await instanceSideEffects.enable(instance);
                 }
                 else {

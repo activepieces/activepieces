@@ -75,7 +75,7 @@ export const collectionController = async (fastify: FastifyInstance) => {
                 Body: UpdateCollectionRequest;
             }>
         ) => {
-            const collection = await collectionService.getOne({ id: request.params.collectionId,projectId: request.principal.projectId });
+            const collection = await collectionService.getOne({ id: request.params.collectionId, projectId: request.principal.projectId });
             if (collection === null) {
                 throw new ActivepiecesError({
                     code: ErrorCode.COLLECTION_NOT_FOUND,
@@ -101,9 +101,7 @@ export const collectionController = async (fastify: FastifyInstance) => {
                 Querystring: ListCollectionsRequest;
             }>
         ) => {
-            const collections = await collectionService.list(request.principal.projectId, request.query.cursor, request.query.limit ?? DEFAULT_PAGE_SIZE);
-            const collectionsDtoList= await collectionService.findInstanceStatusForCollections(collections);
-            return collectionsDtoList;
+            return await collectionService.list(request.principal.projectId, request.query.cursor, request.query.limit ?? DEFAULT_PAGE_SIZE);
         }
     );
     fastify.post(

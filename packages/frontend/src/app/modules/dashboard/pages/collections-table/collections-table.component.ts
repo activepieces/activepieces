@@ -118,8 +118,7 @@ export class CollectionsTableComponent implements OnInit {
     control.disable();
     this.collectionsUpdateStatusRequest$[collectionDto.id] =
       this.instanceService
-        .updateStatus({
-          collectionId: collectionDto.id,
+        .updateStatus(collectionDto.id, {
           status:
             collectionDto.status === CollectionStatus.ENABLED
               ? InstanceStatus.DISABLED

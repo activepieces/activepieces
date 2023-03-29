@@ -56,7 +56,7 @@ export const collectionService = {
 
         return collection;
     },
-    async list(projectId: ProjectId, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<Collection>> {
+    async list(projectId: ProjectId, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<CollectionListDto>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
         const paginator = buildPaginator({
             entity: CollectionEntity,
@@ -69,23 +69,8 @@ export const collectionService = {
         });
         const queryBuilder = collectionRepo.createQueryBuilder("collection").where({ projectId });
         const { data, cursor } = await paginator.paginate(queryBuilder.where({ projectId }));
-        return paginationHelper.createPage<Collection>(data, cursor);
-    },
-    async findInstanceStatusForCollections(collections:SeekPage<Collection>):Promise<SeekPage<CollectionListDto>> {
-        const result:SeekPage<CollectionListDto> = {
-            next:collections.next,
-            previous:collections.previous,
-            data:[]
-        };
-    
-        for(const c of collections.data) {
-            const instance = await instanceService.getByCollectionId({projectId:c.projectId,collectionId: c.id});
-            const dto= {...c,
-                status: findCollectionStatus(instance) 
-            } as unknown as  CollectionListDto;
-            result.data.push(dto);
-        }
-        return result;
+        const enrichedData = await findInstanceStatusForCollections(data);
+        return paginationHelper.createPage<CollectionListDto>(enrichedData, cursor);
     },
 
     async update({ projectId, collectionId, request }: { projectId: ProjectId, collectionId: CollectionId, request: UpdateCollectionRequest }): Promise<Collection | null> {
@@ -117,12 +102,32 @@ export const collectionService = {
         instanceSideEffects.onCollectionDelete({ projectId, collectionId });
         await collectionRepo.delete({ projectId: projectId, id: collectionId });
     },
-    
+
 };
-function findCollectionStatus(instance:Instance|undefined) {
-    if(instance) {
-        const status=  instance.status === InstanceStatus.DISABLED ? CollectionStatus.DISABLED: CollectionStatus.ENABLED;
-        return status;
+function findCollectionStatus(instance: Instance | undefined) : CollectionStatus{
+    if (instance) {
+        switch (instance.status) {
+        case InstanceStatus.ENABLED:
+            return CollectionStatus.ENABLED;
+        case InstanceStatus.DISABLED:
+            return CollectionStatus.DISABLED;
+        }
     }
     return CollectionStatus.UNPUBLISHED;
+}
+
+async function findInstanceStatusForCollections(data: Collection[]): Promise<CollectionListDto[]> {
+    const dataPromise: Promise<CollectionListDto>[] = data.map(collection => {
+        return new Promise((resolve, reject) => {
+            instanceService.getByCollectionId({ projectId: collection.projectId, collectionId: collection.id })
+                .then(instance => {
+                    const collectionStatus = findCollectionStatus(instance);
+                    resolve({ ...collection, status: collectionStatus });
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    });
+    return Promise.all(dataPromise);
 }

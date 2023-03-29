@@ -17,10 +17,11 @@ export const Collection = Type.Object({
   displayName: Type.String(),
 });
 
-export const CollectionListDto = Type.Object({
-  ...BaseModelSchema,
-  projectId: Type.String(),
-  displayName: Type.String(),
-  status: Type.Enum(CollectionStatus),
-});
+export const CollectionListDto = Type.Composite([
+  Type.Object({
+    status: Type.Enum(CollectionStatus),
+  }),
+  Collection
+]);
+
 export type CollectionListDto = Static<typeof CollectionListDto>;
