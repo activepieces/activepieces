@@ -8,12 +8,12 @@ export const hubspot = createPiece({
 	name: 'hubspot',
 	displayName: "HubSpot",
 	logoUrl: 'https://cdn.activepieces.com/pieces/hubspot.png',
-  version: packageJson.version,
+	version: packageJson.version,
 	authors: ['khaledmashaly'],
 	actions: [
-    createHubspotContact,
-    hubSpotContactsCreateOrUpdateAction,
-    hubSpotListsAddContactAction,
-  ],
+		createHubspotContact,
+		hubSpotContactsCreateOrUpdateAction,
+		hubSpotListsAddContactAction,
+	],
 	triggers: [],
 });

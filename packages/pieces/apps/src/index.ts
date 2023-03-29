@@ -29,6 +29,7 @@ import { pipedrive } from '@activepieces/piece-pipedrive';
 import { posthog } from '@activepieces/piece-posthog';
 import { rssFeed } from '@activepieces/piece-rss';
 import { sendgrid } from '@activepieces/piece-sendgrid';
+import { sendinblue } from '@activepieces/piece-sendinblue';
 import { slack } from '@activepieces/piece-slack';
 import { storage } from '@activepieces/piece-store';
 import { stripe } from '@activepieces/piece-stripe';
@@ -47,6 +48,10 @@ import { square } from '@activepieces/piece-square';
 import { delay } from '@activepieces/piece-delay';
 import { dataMapper } from '@activepieces/piece-data-mapper';
 import { schedule } from '@activepieces/piece-schedule';
+import { shopify } from '@activepieces/piece-shopify';
+import { constantContact } from '@activepieces/piece-constant-contact';
+import { salesforce } from '@activepieces/piece-salesforce';
+
 
 export const pieces: Piece[] = [
     airtable,
@@ -80,6 +85,7 @@ export const pieces: Piece[] = [
     posthog,
     rssFeed,
     sendgrid,
+    sendinblue,
     slack,
     storage,
     stripe,
@@ -96,7 +102,10 @@ export const pieces: Piece[] = [
     delay,
     dataMapper,
     intercom,
-    schedule
+    schedule,
+    shopify,
+    constantContact,
+    salesforce
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {

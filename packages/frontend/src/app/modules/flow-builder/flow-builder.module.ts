@@ -68,9 +68,11 @@ import { BranchLineConnectionComponent } from './page/flow-builder/flow-item-tre
 import { CanvasPannerDirective } from './page/flow-builder/canvas-utils/panning/panner.directive';
 import { BranchStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/branch-step-input-form/branch-step-input-form.component';
 import { CanvasUtilsComponent } from './page/flow-builder/canvas-utils/canvas-utils.component';
+import { MagicWandDialogComponent } from './page/flow-builder/flow-builder-header/magic-wand-dialog/magic-flow-dialog.component';
 import { HorizontalSidebarSeparatorComponent } from './page/flow-builder/canvas-utils/horizontal-sidebar-separator/horizontal-sidebar-separator.component';
 import { TestingStepsAndTriggersModule } from '../testing-steps-and-triggers/testing-steps-and-triggers.module';
 import { StepNameEditorComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/step-name-editor/step-name-editor.component';
+import { CustomAuthConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/custom-auth-connection-dialog/custom-auth-connection-dialog.component';
 
 @NgModule({
   imports: [
@@ -153,8 +155,10 @@ import { StepNameEditorComponent } from './page/flow-builder/flow-right-sidebar/
     CanvasPannerDirective,
     BranchStepInputFormComponent,
     CanvasUtilsComponent,
+    MagicWandDialogComponent,
     HorizontalSidebarSeparatorComponent,
     StepNameEditorComponent,
+    CustomAuthConnectionDialogComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [FlowBuilderHeaderComponent],

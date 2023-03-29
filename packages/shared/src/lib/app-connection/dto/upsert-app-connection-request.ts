@@ -6,6 +6,14 @@ const commonAuthProps = {
     appName: Type.String({}),
 };
 
+export const UpsertCustomAuthRequest = Type.Object({
+    ...commonAuthProps,
+    value: Type.Object({
+        type: Type.Literal(AppConnectionType.CUSTOM_AUTH),
+        props:Type.Record(Type.String(),Type.Unknown())
+    })
+});
+
 
 export const UpsertCloudOAuth2Request = Type.Object({
     ...commonAuthProps,
@@ -56,5 +64,6 @@ export type UpsertCloudOAuth2Request = Static<typeof UpsertCloudOAuth2Request>;
 export type UpsertOAuth2Request = Static<typeof UpsertOAuth2Request>;
 export type UpsertSecretTextRequest = Static<typeof UpsertSecretTextRequest>;
 export type UpsertBasicAuthRequest = Static<typeof UpsertBasicAuthRequest>;
+export type UpsertCustomAuthRequest = Static<typeof UpsertCustomAuthRequest>;
 export type UpsertConnectionRequest = Static<typeof UpsertConnectionRequest>;
-export const UpsertConnectionRequest = Type.Union([UpsertSecretTextRequest, UpsertOAuth2Request, UpsertCloudOAuth2Request, UpsertBasicAuthRequest]);
+export const UpsertConnectionRequest = Type.Union([UpsertSecretTextRequest, UpsertOAuth2Request, UpsertCloudOAuth2Request, UpsertBasicAuthRequest,UpsertCustomAuthRequest]);

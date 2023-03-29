@@ -20,12 +20,45 @@ import { BuilderSelectors } from '../../flow-builder/store/builder/builder.selec
 import { findDefaultFlowDisplayName } from '../utils';
 import { Store } from '@ngrx/store';
 import { FlowsActions } from '../../flow-builder/store/flow/flows.action';
+import { GuessFlowRequest } from '@activepieces/shared';
 
 @Injectable({
   providedIn: 'root',
 })
 export class FlowService {
   constructor(private store: Store, private http: HttpClient) {}
+
+  guessFlow(prompt: string) {
+    return forkJoin({
+      collection: this.store
+        .select(BuilderSelectors.selectCurrentCollection)
+        .pipe(take(1)),
+      flows: this.store.select(BuilderSelectors.selectFlows).pipe(take(1)),
+    })
+      .pipe(
+        switchMap((collectionWIthFlows) => {
+          const flowDisplayName = findDefaultFlowDisplayName(
+            collectionWIthFlows.flows
+          );
+          const request: GuessFlowRequest = {
+            collectionId: collectionWIthFlows.collection.id,
+            displayName: flowDisplayName,
+            prompt: prompt,
+          };
+          return this.http.post<Flow>(
+            environment.apiUrl + '/flows/guess',
+            request
+          );
+        })
+      )
+      .pipe(
+        tap((response) => {
+          if (response) {
+            this.store.dispatch(FlowsActions.addFlow({ flow: response }));
+          }
+        })
+      );
+  }
 
   createEmptyFlow() {
     return forkJoin({
