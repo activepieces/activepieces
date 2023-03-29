@@ -8,7 +8,9 @@ export const mattermost = createPiece({
   displayName: 'Mattermost',
   logoUrl: 'https://cdn.activepieces.com/pieces/mattermost.png',
   version: packageJson.version,
+  minimumSupportedRelease: '0.3.9',
   authors: [
+    "abuaboud"
   ],
   actions: [
     sendMessage

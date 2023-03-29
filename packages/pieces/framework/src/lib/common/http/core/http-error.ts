@@ -2,17 +2,30 @@ import { AxiosError } from 'axios';
 
 export class HttpError extends Error {
 	constructor(
-		public readonly requestBody: unknown,
-		public readonly err: AxiosError,
+		private readonly _requestBody: unknown,
+		private readonly _err: AxiosError,
 	) {
 		super(JSON.stringify({
 			response: {
-				status: err?.response?.status || 500,
-				body: err?.response?.data
+				status: _err?.response?.status || 500,
+				body: _err?.response?.data
 			},
 			request: {
-				body: requestBody
+				body: _requestBody
 			}
 		}));
+	}
+
+	get response() {
+		return {
+			status: this._err?.response?.status || 500,
+			body: this._err?.response?.data
+		};
+	}
+
+	get request() {
+		return {
+			body: this._requestBody
+		};
 	}
 }

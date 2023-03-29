@@ -1,48 +1,65 @@
-import { createAction, httpClient, HttpMethod, Property } from "@activepieces/framework";
+import { AuthenticationType, createAction, httpClient, HttpError, HttpMethod, Property } from "@activepieces/framework";
 
 export const sendMessage = createAction({
     name: "send_message",
     displayName: "Send Message",
     description: "Send a message to a Mattermost channel",
     props: {
-        webhook_url: Property.ShortText({
-            displayName: "Incoming Webhook URL",
-            description: "The webhook URL for the Mattermost channel",
+        authentication: Property.CustomAuth({
+            displayName: "Authentication",
+            description: "The authentication method to use",
+            required: true,
+            props: {
+                workspace_url: Property.ShortText({
+                    displayName: "Workspace URL",
+                    description: "The workspace URL of the Mattermost instance (e.g https://activepieces.mattermost.com)",
+                    required: true,
+                }),
+                token: Property.ShortText({
+                    displayName: "Bot Token",
+                    description: "The bot token to use to authenticate",
+                    required: true,
+                })
+            }
+        }),
+        channel_id: Property.ShortText({
+            displayName: "Channel ID",
+            description: "The channel to send the message to, get that ID by clicking on info near start call butto",
             required: true,
         }),
         text: Property.LongText({
             displayName: "Message Text",
             description: "The text of the message to send",
             required: true,
-        }),
-        username: Property.ShortText({
-            displayName: "Username",
-            description: "The username to use when sending the message, check the documentation to see how allow username to be overridden",
-            required: false,
-        }),
-        channel: Property.ShortText({
-            displayName: "Channel",
-            description: "The channel to send the message to, make sure the webhook is configured to allow channel to be overridden",
-            required: false,
-        }),
-        icon_url: Property.ShortText({
-            displayName: "Icon URL",
-            description: "The URL of the icon to use when sending the message, check the documentation to see how allow icon to be overridden",
-            required: false,
-        }),
+        })
 
     },
     sampleData: {},
     async run(context) {
-        return await httpClient.sendRequest({
-            url: `${context.propsValue.webhook_url}`,
-            method: HttpMethod.POST,
-            body: {
-                text: context.propsValue.text,
-                username: context.propsValue.username,
-                icon_url: context.propsValue.icon_url,
-                channel: context.propsValue.channel,
-            },
-        })
+        // Remove trailling slash from workspace URL
+        const baseUrl = context.propsValue.authentication.workspace_url.replace(/\/$/, "");
+        try {
+            return await httpClient.sendRequest({
+                url: `${baseUrl}/api/v4/posts`,
+                method: HttpMethod.POST,
+                authentication: {
+                    type: AuthenticationType.BEARER_TOKEN,
+                    token: context.propsValue.authentication.token,
+                },
+                body: {
+                    channel_id: context.propsValue.channel_id,
+                    message: context.propsValue.text,
+                },
+            })
+        } catch (e: HttpError | unknown) {
+            if (e instanceof HttpError) {
+                const httpError = e as HttpError;
+                console.log(httpError);
+                if(httpError?.response.status === 403){
+                    throw new Error("Please make sure you have the correct bot token and channel ID.");
+                }
+            }
+            throw e;
+        }
     }
 })
