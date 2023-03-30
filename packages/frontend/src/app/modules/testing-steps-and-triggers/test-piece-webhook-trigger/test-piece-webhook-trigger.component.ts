@@ -24,7 +24,7 @@ import { FlowsActions } from '../../flow-builder/store/flow/flows.action';
 import { TestStepCoreComponent } from '../test-steps-core';
 import { ActionMetaService } from '../../flow-builder/service/action-meta.service';
 
-export interface WebhookHistoricalData {
+export interface TriggerHistoricalData {
   payload: unknown;
   created: string;
 }
@@ -33,13 +33,13 @@ export interface WebhookHistoricalData {
   templateUrl: './test-piece-webhook-trigger.component.html',
 })
 export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
-  currentResults$: BehaviorSubject<WebhookHistoricalData[]>;
-  testStep$: Observable<WebhookHistoricalData[]>;
+  currentResults$: BehaviorSubject<TriggerHistoricalData[]>;
+  testStep$: Observable<TriggerHistoricalData[]>;
   foundNewResult$: Subject<boolean> = new Subject();
   loading = false;
   selectedDataControl: FormControl<unknown> = new FormControl();
   saveNewSelectedData$: Observable<void>;
-  initialHistoricalData$: Observable<WebhookHistoricalData[]>;
+  initialHistoricalData$: Observable<TriggerHistoricalData[]>;
   initaillySelectedSampleData$: Observable<unknown>;
   stopSelectedDataControlListener$ = new Subject<boolean>();
   cancelTesting$ = new Subject<boolean>();
@@ -47,6 +47,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   startSimulating$: Observable<void>;
   simulationMessage$: Observable<string | null>;
   isValid$: Observable<boolean>;
+
   constructor(
     testStepService: TestStepService,
     private store: Store,
@@ -70,7 +71,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
           return res.data;
         }),
         tap((res) => {
-          this.currentResults$ = new BehaviorSubject<WebhookHistoricalData[]>(
+          this.currentResults$ = new BehaviorSubject<TriggerHistoricalData[]>(
             res
           );
         })
