@@ -54,6 +54,7 @@ import { shopify } from '@activepieces/piece-shopify';
 import { constantContact } from '@activepieces/piece-constant-contact';
 import { salesforce } from '@activepieces/piece-salesforce';
 import { smtp } from '@activepieces/piece-smtp';
+import { mailerLite } from '@activepieces/piece-mailer-lite';
 
 export const pieces: Piece[] = [
     airtable,
@@ -82,6 +83,7 @@ export const pieces: Piece[] = [
     http,
     hubspot,
     mailchimp,
+    mailerLite,
     openai,
     pipedrive,
     posthog,

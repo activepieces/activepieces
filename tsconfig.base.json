@@ -79,6 +79,9 @@
       "@activepieces/piece-mailchimp": [
         "packages/pieces/mailchimp/src/index.ts"
       ],
+      "@activepieces/piece-mailer-lite": [
+        "packages/pieces/mailer-lite/src/index.ts"
+      ],
       "@activepieces/piece-mastodon": ["packages/pieces/mastodon/src/index.ts"],
       "@activepieces/piece-mattermost": [
         "packages/pieces/mattermost/src/index.ts"
