@@ -46,7 +46,7 @@ export const newTicketInView = createTrigger({
                 const authentication = value['authentication'] as AuthProps;
                 if (!authentication?.['email'] || !authentication?.['subdomain'] || !authentication?.['token']) {
                     return {
-                        placeholder: 'Fill your subdomain and authentication first',
+                        placeholder: 'Fill your authentication first',
                         disabled: true,
                         options: [],
                     }
