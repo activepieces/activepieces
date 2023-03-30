@@ -1,6 +1,13 @@
-import { BasicAuthConnectionValue, TriggerStrategy } from "@activepieces/shared";
+import { TriggerStrategy } from "@activepieces/shared";
 import { AuthenticationType, createTrigger, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper, Property } from "@activepieces/framework";
 
+const markdownProperty = `
+**Organization**: The organization name can be found in the URL (e.g https://ORGANIZATION_NAME.zendesk.com).
+
+**Agent Email**: The email you use to log in to Zendesk.
+
+**API Token**: You can find this in the Zendesk Admin Panel under Settings > APIs > Zendesk API.
+`
 
 export const newTicketInView = createTrigger({
     name: 'new_ticket_in_view',
@@ -10,7 +17,7 @@ export const newTicketInView = createTrigger({
     props: {
         authentication: Property.CustomAuth({
             displayName: 'Authentication',
-            description: 'The authentication to use to connect to Zendesk',
+            description: markdownProperty,
             props: {
                 email: Property.ShortText({
                     displayName: 'Agent Email',
@@ -23,7 +30,7 @@ export const newTicketInView = createTrigger({
                     required: true,
                 }),
                 subdomain: Property.ShortText({
-                    displayName: 'Organisation (e.g activepieceshelp)',
+                    displayName: 'Organization (e.g activepieceshelp)',
                     description: 'The subdomain of your Zendesk instance',
                     required: true,
                 }),
