@@ -59,10 +59,7 @@ export const gmailNewEmailTrigger = createTrigger({
     },
   },
   type: TriggerStrategy.POLLING,
-  async onEnable({ store, propsValue, setSchedule}) {
-    setSchedule({
-      cronExpression: '*/1 * * * *',
-    });
+  async onEnable({ store, propsValue}) {
     return pollingHelper.onEnable(polling, {
       store,
       propsValue
