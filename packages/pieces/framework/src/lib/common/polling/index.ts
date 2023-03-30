@@ -74,14 +74,18 @@ export const pollingHelper = {
         }
     },
     async test<INPUT>(polling: Polling<INPUT>, { propsValue }: { store: Store, propsValue: INPUT }): Promise<unknown[]> {
+        let items = [];
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED: {
-                const items = await polling.items({ propsValue, lastFetchEpochMS: 0 });
-                return getFirstFiveOrAll(items);
+                items = await polling.items({ propsValue, lastFetchEpochMS: 0 });
+                break;
             }
-            case DedupeStrategy.LAST_ITEM:
-                return getFirstFiveOrAll(await polling.items({ propsValue }));
+            case DedupeStrategy.LAST_ITEM: {
+                items = await polling.items({ propsValue });
+                break;
+            }
         }
+        return getFirstFiveOrAll(items.map((item) => item.data));
     }
 }
 
