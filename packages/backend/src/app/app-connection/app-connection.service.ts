@@ -36,6 +36,7 @@ export const appConnectionService = {
                 pieceName: request.appName,
                 code: request.value.code,
                 clientId: request.value.client_id,
+                tokenUrl: request.value.token_url,
                 edition: await getEdition(),
                 codeVerifier: request.value.code_challenge
             })
@@ -251,7 +252,7 @@ async function claim(request: {
 }
 
 async function claimWithCloud(request: {
-    pieceName: string; code: string; codeVerifier: string, edition: string; clientId: string
+    pieceName: string; code: string; codeVerifier: string, edition: string; clientId: string, tokenUrl: string
 }): Promise<unknown> {
     try {
         return (await axios.post("https://secrets.activepieces.com/claim", request)).data;

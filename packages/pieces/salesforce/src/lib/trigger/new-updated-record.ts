@@ -59,7 +59,7 @@ const polling: Polling<{ authentication: OAuth2PropertyValue, object: string }> 
   items: async ({ propsValue, lastFetchEpochMS }) => {
     const items = await getRecords(propsValue.authentication, propsValue.object, dayjs(lastFetchEpochMS).toISOString());
     return items.map((item) => ({
-      epochMillSeconds: dayjs(item.LastModifiedDate).valueOf(),
+      epochMilliSeconds: dayjs(item.LastModifiedDate).valueOf(),
       data: item,
     }));
   }
