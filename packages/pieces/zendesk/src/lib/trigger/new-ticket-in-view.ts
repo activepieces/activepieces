@@ -1,5 +1,5 @@
 import { BasicAuthConnectionValue, TriggerStrategy } from "@activepieces/shared";
-import { AuthenticationType, BasicAuthPropertyValue, createTrigger, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper, Property } from "@activepieces/framework";
+import { AuthenticationType, createTrigger, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper, Property } from "@activepieces/framework";
 
 
 export const newTicketInView = createTrigger({
@@ -8,46 +8,49 @@ export const newTicketInView = createTrigger({
     description: 'Triggers when a new ticket is created in a view',
     type: TriggerStrategy.POLLING,
     props: {
-        authentication: Property.BasicAuth({
+        authentication: Property.CustomAuth({
             displayName: 'Authentication',
-            username: {
-                displayName: 'Email Address',
-                description: 'The email address you use to login to Zendesk',
+            description: 'The authentication to use to connect to Zendesk',
+            props: {
+                email: Property.ShortText({
+                    displayName: 'Agent Email',
+                    description: 'The email address you use to login to Zendesk',
+                    required: true,
+                }),
+                token: Property.ShortText({
+                    displayName: 'Token',
+                    description: 'The API token you can generate in Zendesk',
+                    required: true,
+                }),
+                subdomain: Property.ShortText({
+                    displayName: 'Organisation (e.g activepieceshelp)',
+                    description: 'The subdomain of your Zendesk instance',
+                    required: true,
+                }),
             },
-            password: {
-                displayName: 'Token',
-                description: 'The API token you can generate in Zendesk',
-            },
-            required: true,
-        }),
-        // TODO move this to a connection
-        subdomain: Property.ShortText({
-            displayName: 'Subdomain',
-            description: 'The subdomain of your Zendesk instance',
             required: true,
         }),
         view_id: Property.Dropdown({
             displayName: 'View',
             description: 'The view to monitor for new tickets',
-            refreshers: ['subdomain', 'authentication'],
+            refreshers: ['authentication'],
             required: true,
             options: async (value) => {
-                if (!value['subdomain'] || !value['authentication']) {
+                const authentication = value['authentication'] as AuthProps;
+                if (!authentication?.['email'] || !authentication?.['subdomain'] || !authentication?.['token']) {
                     return {
                         placeholder: 'Fill your subdomain and authentication first',
                         disabled: true,
                         options: [],
                     }
                 }
-                const { subdomain, authentication } = value;
-                const { username, password } = authentication as BasicAuthConnectionValue;
                 const response = await httpClient.sendRequest<{ views: any[] }>({
-                    url: `https://${subdomain}.zendesk.com/api/v2/views.json`,
+                    url: `https://${authentication.subdomain}.zendesk.com/api/v2/views.json`,
                     method: HttpMethod.GET,
                     authentication: {
                         type: AuthenticationType.BASIC,
-                        username: username + "/token",
-                        password,
+                        username: authentication.email + "/token",
+                        password: authentication.token,
                     }
                 })
                 return {
@@ -109,9 +112,6 @@ export const newTicketInView = createTrigger({
         "from_messaging_channel": false
     },
     onEnable: async (context) => {
-        context.setSchedule({
-            cronExpression: "*/1 * * * *"
-        });
         await pollingHelper.onEnable(polling, {
             store: context.store,
             propsValue: context.propsValue,
@@ -137,10 +137,16 @@ export const newTicketInView = createTrigger({
     }
 });
 
-const polling: Polling<{ subdomain: string, authentication: BasicAuthPropertyValue, view_id: string }> = {
+type AuthProps = {
+    email: string;
+    token: string;
+    subdomain: string;
+}
+
+const polling: Polling<{ authentication: AuthProps, view_id: string }> = {
     strategy: DedupeStrategy.LAST_ITEM,
     items: async ({ propsValue }) => {
-        const items = await getTickets(propsValue.subdomain, propsValue.authentication, propsValue.view_id);
+        const items = await getTickets(propsValue.authentication, propsValue.view_id);
         return items.map((item) => ({
             id: item.id,
             data: item,
@@ -148,15 +154,15 @@ const polling: Polling<{ subdomain: string, authentication: BasicAuthPropertyVal
     }
 }
 
-async function getTickets(subdomain: string, authentication: BasicAuthPropertyValue, view_id: string) {
-    const { username, password } = authentication;
+async function getTickets(authentication: AuthProps, view_id: string) {
+    const { email, token, subdomain } = authentication;
     const response = await httpClient.sendRequest<{ tickets: any[] }>({
         url: `https://${subdomain}.zendesk.com/api/v2/views/${view_id}/tickets.json?sort_order=desc&sort_by=created_at&per_page=200`,
         method: HttpMethod.GET,
         authentication: {
             type: AuthenticationType.BASIC,
-            username: username + "/token",
-            password,
+            username: email + "/token",
+            password: token,
         }
     })
     return response.body.tickets;
