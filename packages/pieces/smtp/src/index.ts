@@ -5,7 +5,7 @@ import { sendEmail } from './lib/actions/send-email';
 
 export const smtp = createPiece({
   name: 'smtp',
-  displayName: 'smtp',
+  displayName: 'SMTP',
   logoUrl: 'https://cdn.activepieces.com/pieces/smtp.png',
   version: packageJson.version,
   authors: [
