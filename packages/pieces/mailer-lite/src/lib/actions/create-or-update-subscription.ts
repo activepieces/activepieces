@@ -2,9 +2,9 @@ import MailerLite from "@mailerlite/mailerlite-nodejs";
 import { createAction, Property } from "@activepieces/framework";
 
 export const createOrUpdateSubscriber = createAction({
-    name: 'add_member_to_list',
-    displayName: "Add Member to an Audience (List)",
-    description: "Add a member to an existing MailerLite audience (list)",
+    name: 'add_or_update_subscriber',
+    displayName: "Add or Update subscriber",
+    description: "Create or update a existing subscription",
     props: {
         api_key: Property.ShortText({
             description: "Paste your api key",
