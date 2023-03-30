@@ -2,7 +2,7 @@
   <ng-container *ngIf="triggers$ | async else loading">
     <mat-form-field class="ap-w-full" appearance="outline">
       <mat-label> Trigger </mat-label>
-      <mat-select placeholder="Select an Trigger" [formControlName]="TRIGGER_FORM_CONTROL_NAME"
+      <mat-select placeholder="Select a Trigger" [formControlName]="TRIGGER_FORM_CONTROL_NAME"
         [compareWith]="triggerDropdownCompareFn">
         <mat-select-trigger>
           <ng-container *ngIf="selectedTrigger$ | async as selectedTrigger">

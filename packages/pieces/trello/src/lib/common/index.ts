@@ -1,9 +1,19 @@
 import { BasicAuthPropertyValue, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework"
 
+const markdownProperty = `
+To obtain your API key and token, follow these steps:
+
+1. Go to https://trello.com/app-key
+2. Copy **Personal Key** and enter it into the Trello API Key connection
+3. Click **generate a Token** in trello
+4. Copy the token and paste it into the Trello Token connection
+5. Your connection should now work!
+`
+
 export const trelloCommon = {
     baseUrl: "https://api.trello.com/1/",
     authentication: Property.BasicAuth({
-        description: "Trello API & Token key acquired from your Trello Settings",
+        description: markdownProperty,
         displayName: "Trello Connection",
         required: true,
         username: {
@@ -32,7 +42,7 @@ export const trelloCommon = {
             const basicAuthProperty = propsValue['authentication'] as BasicAuthPropertyValue;
             const user = await getAuthorisedUser(basicAuthProperty.username, basicAuthProperty.password);
             const boards = await listBoards(basicAuthProperty.username, basicAuthProperty.password, user['id']);
-        
+
             return {
                 options: boards.map((board: { id: string; name: string; }) => ({
                     value: board.id,
@@ -57,7 +67,7 @@ export const trelloCommon = {
 
             const basicAuthProperty = propsValue['authentication'] as BasicAuthPropertyValue;
             const lists = await listBoardLists(basicAuthProperty.username, basicAuthProperty.password, propsValue['board_id'] as string);
-        
+
             console.log(lists);
 
             return {
@@ -77,12 +87,12 @@ export const trelloCommon = {
  * @returns JSON containing Trello user
  */
 async function getAuthorisedUser(apikey: string, token: string) {
-    
+
     const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${trelloCommon.baseUrl}members/me`
-        + `?key=` + apikey
-        + `&token=` + token,
+            + `?key=` + apikey
+            + `&token=` + token,
         headers: {
             Accept: 'application/json'
         },
@@ -102,12 +112,12 @@ async function getAuthorisedUser(apikey: string, token: string) {
  * @returns JSON Array of boards user has access to
  */
 async function listBoards(apikey: string, token: string, user_id: string) {
-    
+
     const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${trelloCommon.baseUrl}members/${user_id}/boards`
-        + `?key=` + apikey
-        + `&token=` + token,
+            + `?key=` + apikey
+            + `&token=` + token,
         headers: {
             Accept: 'application/json'
         },
@@ -127,12 +137,12 @@ async function listBoards(apikey: string, token: string, user_id: string) {
  * @returns JSON Array of lists
  */
 async function listBoardLists(apikey: string, token: string, board_id: string) {
-    
+
     const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${trelloCommon.baseUrl}boards/${board_id}/lists`
-        + `?key=` + apikey
-        + `&token=` + token,
+            + `?key=` + apikey
+            + `&token=` + token,
         headers: {
             Accept: 'application/json'
         },
