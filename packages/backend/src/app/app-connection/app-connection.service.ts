@@ -1,4 +1,19 @@
-import { ActivepiecesError, apId, AppConnection, AppConnectionId, AppConnectionStatus, AppConnectionType, BaseOAuth2ConnectionValue, CloudOAuth2ConnectionValue, Cursor, ErrorCode, OAuth2ConnectionValueWithApp, ProjectId, SeekPage, UpsertConnectionRequest } from "@activepieces/shared";
+import {
+    ActivepiecesError,
+    apId,
+    AppConnection,
+    AppConnectionId,
+    AppConnectionStatus,
+    AppConnectionType,
+    BaseOAuth2ConnectionValue,
+    CloudOAuth2ConnectionValue,
+    Cursor,
+    ErrorCode,
+    OAuth2ConnectionValueWithApp,
+    ProjectId,
+    SeekPage,
+    UpsertConnectionRequest,
+} from "@activepieces/shared";
 import { databaseConnection } from "../database/database-connection";
 import { buildPaginator } from "../helper/pagination/build-paginator";
 import { paginationHelper } from "../helper/pagination/pagination-utils";
@@ -7,6 +22,7 @@ import axios, { AxiosError } from "axios";
 import { createRedisLock } from "../database/redis-connection";
 import { decryptObject, encryptObject } from "../helper/encryption";
 import { getEdition } from "../helper/secret-helper";
+import { logger } from "../helper/logger";
 
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity);
@@ -20,6 +36,7 @@ export const appConnectionService = {
                 pieceName: request.appName,
                 code: request.value.code,
                 clientId: request.value.client_id,
+                tokenUrl: request.value.token_url,
                 edition: await getEdition(),
                 codeVerifier: request.value.code_challenge
             })
@@ -81,7 +98,6 @@ export const appConnectionService = {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest);
         const paginator = buildPaginator({
             entity: AppConnectionEntity,
-            paginationKeys: ["created"],
             query: {
                 limit,
                 order: "ASC",
@@ -224,7 +240,7 @@ async function claim(request: {
         return { ...formatOAuth2Response(response), client_id: request.clientId, client_secret: request.clientSecret };
     }
     catch (e: unknown | AxiosError) {
-        console.error(e)
+        logger.error(e)
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CLAIM, params: {
                 clientId: request.clientId,
@@ -235,13 +251,14 @@ async function claim(request: {
     }
 }
 
-async function claimWithCloud(request: { 
-    pieceName: string; code: string; codeVerifier: string, edition: string; clientId: string }): Promise<unknown> {
+async function claimWithCloud(request: {
+    pieceName: string; code: string; codeVerifier: string, edition: string; clientId: string, tokenUrl: string
+}): Promise<unknown> {
     try {
         return (await axios.post("https://secrets.activepieces.com/claim", request)).data;
     }
     catch (e: unknown | AxiosError) {
-        console.error(e);
+        logger.error(e);
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CLOUD_CLAIM, params: {
                 appName: request.pieceName

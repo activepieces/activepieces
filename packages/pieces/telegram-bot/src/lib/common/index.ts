@@ -1,9 +1,13 @@
 import { Property } from "@activepieces/framework";
 
+const markdownDescription = `
+Refer to the [Telegram piece documentation](https://activepieces.com/docs/pieces/apps/telegram) for more information on how to obtain the bot token.
+`;
+
 export const telegramCommons = {
     bot_token: Property.SecretText({
         displayName: "Bot Token",
-        description: "Check activepieces documentation (https://activepieces.com/docs/pieces/apps/telegram) for how to obtain one",
+        description: markdownDescription,
         required: true,
     }),
     getApiUrl: (botToken: string, methodName: string) => {

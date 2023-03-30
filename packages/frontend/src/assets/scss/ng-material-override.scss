@@ -674,3 +674,7 @@ mat-form-field.\!ap-bg-white
 {
 	overflow: hidden !important;
 }
+
+.ap-markdown {
+	@include mat.typography-level($ap-typography, 'body-1');
+}

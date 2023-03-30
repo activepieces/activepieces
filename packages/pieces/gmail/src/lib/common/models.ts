@@ -22,7 +22,7 @@ export interface GmailMessage {
   ],
   snippet: string
   historyId: string
-  internalDate: string
+  internalDate: number
   payload: {
     partId: string
     mimeType: string
@@ -32,9 +32,11 @@ export interface GmailMessage {
       value: string
     }[]
     body: {
+      data: any;
       size: number
     },
     parts: {
+      parts: any[];
       partId: string
       mimeType: string
       filename: string

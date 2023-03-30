@@ -39,7 +39,7 @@ export const triggerHelper = {
     let scheduleOptions: ScheduleOptions = {
       cronExpression: "*/5 * * * *",
       timezone: "UTC"
-    } 
+    }
     const context = {
       store: createContextStore(prefix, params.flowVersion.flowId),
       app: {

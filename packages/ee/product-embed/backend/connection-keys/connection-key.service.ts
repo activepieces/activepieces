@@ -87,7 +87,6 @@ export const connectionKeyService = {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest ?? null);
         const paginator = buildPaginator({
             entity: ConnectionKeyEntity,
-            paginationKeys: ["created"],
             query: {
                 limit,
                 order: "ASC",

@@ -8,6 +8,7 @@ import {
   UpdateCollectionRequest,
   CollectionId,
   CreateCollectionRequest,
+  CollectionListDto,
 } from '@activepieces/shared';
 
 @Injectable({
@@ -43,7 +44,7 @@ export class CollectionService {
     projectId: string;
     limit: number;
     cursor: string;
-  }): Observable<SeekPage<Collection>> {
+  }): Observable<SeekPage<CollectionListDto>> {
     const queryParams: { [key: string]: string | number } = {
       limit: params.limit,
       projectId: params.projectId,
@@ -51,7 +52,7 @@ export class CollectionService {
     if (params.cursor) {
       queryParams['cursor'] = params.cursor;
     }
-    return this.http.get<SeekPage<Collection>>(
+    return this.http.get<SeekPage<CollectionListDto>>(
       environment.apiUrl + '/collections',
       {
         params: queryParams,

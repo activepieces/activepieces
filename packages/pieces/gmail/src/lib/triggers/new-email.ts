@@ -1,8 +1,8 @@
-import { createTrigger } from '@activepieces/framework';
+import { createTrigger, DedupeStrategy, OAuth2PropertyValue, Polling, pollingHelper } from '@activepieces/framework';
 import { TriggerStrategy } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { GmailRequests } from '../common/data';
-import { GmailLabel } from '../common/models';
+import { GmailLabel, GmailMessage } from '../common/models';
 import { GmailProps } from '../common/props';
 
 export const gmailNewEmailTrigger = createTrigger({
@@ -33,6 +33,9 @@ export const gmailNewEmailTrigger = createTrigger({
       "historyId": '99742',
       "internalDate": '1665284181000'
     },
+    "body_html": "<div dir=\"ltr\">Hello World</div>",
+    "body_plain": "Hello World",
+    "subject": "Hello World",
     "thread": {
       "id": '382baac18543beg8',
       "historyId": '183baac185',
@@ -56,37 +59,67 @@ export const gmailNewEmailTrigger = createTrigger({
     },
   },
   type: TriggerStrategy.POLLING,
-  async onEnable({ store }) {
-    const last_read = dayjs().unix()
-
-    await store?.put<TriggerData>('gmail_new_email_trigger', {
-      last_read
+  async onEnable({ store, propsValue}) {
+    return pollingHelper.onEnable(polling, {
+      store,
+      propsValue
     });
   },
-  async onDisable({ store }) {
-    await store.put('gmail_new_email_trigger', undefined);
+  async onDisable({ store, propsValue }) {
+    return pollingHelper.onDisable(polling, {
+      store,
+      propsValue
+    });
   },
-  async run({ store, propsValue: { authentication, from, to, subject, label, category } }) {
-    const data = await store.get<TriggerData>('gmail_new_email_trigger');
-    const now = dayjs().unix();
-
-    const response = await GmailRequests.searchMail({
-      access_token: (authentication.access_token as string),
-      from: from as string,
-      to: to as string,
-      subject: subject as string,
-      label: label as GmailLabel,
-      category: category as string,
-      after: data?.last_read,
-      before: now
-    })
-
-    await store?.put<TriggerData>('gmail_new_email_trigger', { last_read: now })
-    return response.messages;
+  async test({ store, propsValue }) {
+    return pollingHelper.test(polling, {
+      store,
+      propsValue
+    });
+  },
+  async run({ store, propsValue }) {
+    return pollingHelper.poll(polling, {
+      store,
+      propsValue
+    });
   }
 });
 
 
-interface TriggerData {
-  last_read: number
+interface PropsValue {
+  authentication: OAuth2PropertyValue,
+  from: string | undefined,
+  to: string | undefined,
+  subject: string | undefined,
+  label: GmailLabel | undefined,
+  category: string | undefined
+
+}
+
+const polling: Polling<PropsValue> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ propsValue, lastFetchEpochMS }) => {
+    const items = await getEmail(lastFetchEpochMS === 0 ? 5 : 100, Math.floor(lastFetchEpochMS / 1000), propsValue);
+    return items.map((item) => {
+      const mail = item as GmailMessage;
+      return {
+        epochMilliSeconds: dayjs(mail?.internalDate).valueOf(),
+        data: item,
+      }
+    });
+  }
+}
+
+
+async function getEmail(max_result: number, after_unix_seconds: number, { authentication, from, to, subject, label, category, }: PropsValue) {
+  return (await GmailRequests.searchMail({
+    max_results: max_result,
+    access_token: (authentication.access_token as string),
+    from: from as string,
+    to: to as string,
+    subject: subject as string,
+    label: label as GmailLabel,
+    category: category as string,
+    after: after_unix_seconds
+  }))?.messages ?? [];
 }

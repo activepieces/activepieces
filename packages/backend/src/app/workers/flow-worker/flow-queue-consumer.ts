@@ -68,6 +68,7 @@ const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
         collectionId: data.collectionId,
         flowVersion: flowVersion,
         payload: null,
+        simulate: false,
     });
 
     logger.info(`[flowQueueConsumer#consumePieceTrigger] payloads.length=${payloads.length}`);
