@@ -28,6 +28,19 @@
       </ng-container>
     </ng-container>
 
+    <ng-container *ngIf="isCurrentStepPieceWebhookTrigger$ | async">
+      <div class="resizer-area" #resizerArea>
+        <app-horizontal-sidebar-separator [resizerArea]="resizerArea" topStyle="calc( 100% - 10px )"
+          (resetTopResizerSectionHeight)="resetTopResizerSectionHeight()" (resizerDragged)="resizerDragged($event)"
+          (resizerDragStarted)="resizerDragStarted()">
+        </app-horizontal-sidebar-separator>
+      </div>
+      <div class="bottom-resizer-section" #selectedStepResultContainer>
+        <app-test-piece-webhook-trigger></app-test-piece-webhook-trigger>
+
+      </div>
+    </ng-container>
+
     <ng-container *ngIf="isCurrentStepPollingTrigger$ | async">
       <div class="resizer-area" #resizerArea>
         <app-horizontal-sidebar-separator [resizerArea]="resizerArea" topStyle="calc( 100% - 10px )"
@@ -39,6 +52,7 @@
         <app-test-polling-trigger></app-test-polling-trigger>
       </div>
     </ng-container>
+
 
   </ng-container>
 

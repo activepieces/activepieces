@@ -33,4 +33,14 @@ export class TestStepService {
       }
     );
   }
+  startPieceWebhookSimulation(flowId: string) {
+    return this.http.get<SeekPage<TriggerEvent>>(
+      environment.apiUrl + '/trigger-events/simulate',
+      {
+        params: {
+          flowId: flowId,
+        },
+      }
+    );
+  }
 }

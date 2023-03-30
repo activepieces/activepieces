@@ -39,6 +39,7 @@ export class FlowRightSidebarComponent implements OnInit {
   elevateResizer$: Observable<void>;
   animateSectionsHeightChange = false;
   isCurrentStepPollingTrigger$: Observable<boolean>;
+  isCurrentStepPieceWebhookTrigger$: Observable<boolean>;
   constructor(
     private store: Store,
     private ngZone: NgZone,
@@ -51,20 +52,12 @@ export class FlowRightSidebarComponent implements OnInit {
     this.rightSidebarType$ = this.store.select(
       BuilderSelectors.selectCurrentRightSideBarType
     );
-    this.currentStep$ = this.store
-      .select(BuilderSelectors.selectCurrentStep)
-      .pipe(
-        tap(() => {
-          this.elevateResizer$ = this.testStepService.elevateResizer$.pipe(
-            tap((shouldAnimate) => {
-              if (shouldAnimate) {
-                this.resizerAnimation();
-              }
-            }),
-            map(() => void 0)
-          );
-        })
-      );
+    this.listenToStepChangeAndAnimateResizer();
+    this.checkIfCurrentStepIsPollingTrigger();
+    this.checkIfCurrentStepIsPieceWebhookTrigger();
+  }
+
+  private checkIfCurrentStepIsPollingTrigger() {
     this.isCurrentStepPollingTrigger$ = this.currentStep$.pipe(
       switchMap((step) => {
         if (
@@ -90,6 +83,51 @@ export class FlowRightSidebarComponent implements OnInit {
         return of(false);
       })
     );
+  }
+
+  private checkIfCurrentStepIsPieceWebhookTrigger() {
+    this.isCurrentStepPieceWebhookTrigger$ = this.currentStep$.pipe(
+      switchMap((step) => {
+        if (
+          step &&
+          step.type === TriggerType.PIECE &&
+          step.settings.pieceName !== 'schedule'
+        ) {
+          return this.actionMetaDataService
+            .getPieceMetadata(
+              step.settings.pieceName,
+              step.settings.pieceVersion
+            )
+            .pipe(
+              map((res) => {
+                return (
+                  res.triggers[step.settings.triggerName] &&
+                  res.triggers[step.settings.triggerName].type ===
+                    TriggerStrategy.WEBHOOK
+                );
+              })
+            );
+        }
+        return of(false);
+      })
+    );
+  }
+
+  private listenToStepChangeAndAnimateResizer() {
+    this.currentStep$ = this.store
+      .select(BuilderSelectors.selectCurrentStep)
+      .pipe(
+        tap(() => {
+          this.elevateResizer$ = this.testStepService.elevateResizer$.pipe(
+            tap((shouldAnimate) => {
+              if (shouldAnimate) {
+                this.resizerAnimation();
+              }
+            }),
+            map(() => void 0)
+          );
+        })
+      );
   }
 
   get sidebarType() {

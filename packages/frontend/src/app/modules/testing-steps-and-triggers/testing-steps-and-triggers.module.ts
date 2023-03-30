@@ -4,10 +4,19 @@ import { TestWebhookTriggerComponent } from './test-webhook-trigger/test-webhook
 import { CommonLayoutModule } from '../common/common-layout.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TestPollingTriggerComponent } from './test-polling-trigger/test-polling-trigger.component';
+import { TestPieceWebhookTriggerComponent } from './test-piece-webhook-trigger/test-piece-webhook-trigger.component';
 
 @NgModule({
-  declarations: [TestWebhookTriggerComponent, TestPollingTriggerComponent],
-  exports: [TestWebhookTriggerComponent, TestPollingTriggerComponent],
+  declarations: [
+    TestWebhookTriggerComponent,
+    TestPollingTriggerComponent,
+    TestPieceWebhookTriggerComponent,
+  ],
+  exports: [
+    TestWebhookTriggerComponent,
+    TestPollingTriggerComponent,
+    TestPieceWebhookTriggerComponent,
+  ],
   imports: [CommonModule, CommonLayoutModule, FormsModule, ReactiveFormsModule],
 })
 export class TestingStepsAndTriggersModule {}
