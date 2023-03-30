@@ -13,7 +13,7 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-                Body: PutStoreEntryRequest;
+                Body: PutStoreEntryRequest
             }>,
             _reply,
         ) => {
@@ -41,10 +41,10 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-                Body: PutStoreEntryRequest;
+                Body: PutStoreEntryRequest
                 Querystring: {
-                    key: string;
-                };
+                    key: string
+                }
             }>,
             _reply,
         ) => {

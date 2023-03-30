@@ -100,7 +100,7 @@ export const paginationHelper = {
             data,
         }
     },
-    decodeCursor(encodedCursor: string | null): { nextCursor: string | undefined; previousCursor: string | undefined } {
+    decodeCursor(encodedCursor: string | null): { nextCursor: string | undefined, previousCursor: string | undefined } {
         if (encodedCursor === null || encodedCursor === undefined) {
             return {
                 nextCursor: undefined,

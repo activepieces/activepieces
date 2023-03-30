@@ -210,11 +210,11 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
 }
 
 async function claim(request: {
-    clientSecret: string,
-    clientId: string,
-    tokenUrl: string,
-    redirectUrl: string,
-    code: string,
+    clientSecret: string
+    clientId: string
+    tokenUrl: string
+    redirectUrl: string
+    code: string
     codeVerifier: string
 }): Promise<Record<string, unknown>> {
     try {
@@ -251,9 +251,7 @@ async function claim(request: {
     }
 }
 
-async function claimWithCloud(request: {
-    pieceName: string; code: string; codeVerifier: string, edition: string; clientId: string
-}): Promise<Record<string, unknown>> {
+async function claimWithCloud(request: claimWithCloudRequest): Promise<Record<string, unknown>> {
     try {
         return (await axios.post('https://secrets.activepieces.com/claim', request)).data
     }
@@ -302,4 +300,12 @@ function getStatus(connection: AppConnection): AppConnectionStatus {
             break
     }
     return connectionStatus
+}
+
+type claimWithCloudRequest = {
+    pieceName: string
+    code: string
+    codeVerifier: string
+    edition: string
+    clientId: string
 }

@@ -80,12 +80,12 @@ export const instanceService = {
     },
 }
 
-interface GetOneParams {
-    projectId: ProjectId,
-    collectionId: CollectionId;
+type GetOneParams = {
+    projectId: ProjectId
+    collectionId: CollectionId
 }
 
-interface DeleteOneParams {
-    id: InstanceId;
-    projectId: ProjectId;
+type DeleteOneParams = {
+    id: InstanceId
+    projectId: ProjectId
 }

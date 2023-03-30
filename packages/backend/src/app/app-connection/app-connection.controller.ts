@@ -16,7 +16,7 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-                Body: UpsertConnectionRequest;
+                Body: UpsertConnectionRequest
             }>,
         ) => {
             const connection = await appConnectionService.upsert({ projectId: request.principal.projectId, request: request.body })
@@ -33,8 +33,8 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
         async (
             request: FastifyRequest<{
                 Params: {
-                    connectionName: string;
-                };
+                    connectionName: string
+                }
             }>,
         ) => {
             const appCredential = await appConnectionService.getOne({ projectId: request.principal.projectId, name: request.params.connectionName })
@@ -60,7 +60,7 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-                Querystring: ListAppConnectionRequest;
+                Querystring: ListAppConnectionRequest
             }>,
         ) => {
             const query = request.query
@@ -75,8 +75,8 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
         async (
             request: FastifyRequest<{
                 Params: {
-                    connectionId: AppConnectionId;
-                };
+                    connectionId: AppConnectionId
+                }
             }>,
             _reply,
         ) => {

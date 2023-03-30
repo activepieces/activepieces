@@ -19,9 +19,9 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-                Body: unknown;
+                Body: unknown
                 Params: {
-                    pieceName: string;
+                    pieceName: string
                 }
             }>,
             requestReply,

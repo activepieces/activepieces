@@ -13,10 +13,10 @@ export const appEventRoutingService = {
         return await appEventRoutingRepo.findBy({ appName, event, identifierValue })
     },
     async createListeners({ appName, events, identifierValue, flowId, projectId }: {
-        appName: string,
-        events: string[],
-        identifierValue: string,
-        flowId: FlowId,
+        appName: string
+        events: string[]
+        identifierValue: string
+        flowId: FlowId
         projectId: ProjectId
     }): Promise<AppEventRouting[]> {
         logger.info(`Creating listeners for ${appName}, events=${events}, identifierValue=${identifierValue}`)

@@ -135,20 +135,20 @@ async function getCollectionOrThrowWithoutProjectId(collectionId: CollectionId):
     return collection
 };
 
-interface ListParams {
-    projectId: ProjectId;
-    cursor: Cursor | null;
-    limit: number;
+type ListParams = {
+    projectId: ProjectId
+    cursor: Cursor | null
+    limit: number
 }
 
-interface GetOneParams {
-    id: FlowRunId;
-    projectId: ProjectId;
+type GetOneParams = {
+    id: FlowRunId
+    projectId: ProjectId
 }
 
-interface StartParams {
-    environment: RunEnvironment;
-    flowVersionId: FlowVersionId;
-    collectionId: CollectionId;
-    payload: unknown;
+type StartParams = {
+    environment: RunEnvironment
+    flowVersionId: FlowVersionId
+    collectionId: CollectionId
+    payload: unknown
 }

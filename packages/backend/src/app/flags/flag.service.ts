@@ -113,7 +113,7 @@ export type FlagType =
     | BaseFlagStructure<ApFlagId.WARNING_TEXT_BODY, string>
     | BaseFlagStructure<ApFlagId.WARNING_TEXT_HEADER, string>
 
-interface BaseFlagStructure<K extends ApFlagId, V> {
-    id: K;
-    value: V;
+type BaseFlagStructure<K extends ApFlagId, V> = {
+    id: K
+    value: V
 }

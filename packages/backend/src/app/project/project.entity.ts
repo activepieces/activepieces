@@ -4,16 +4,16 @@ import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
 import { ConnectionKey } from '@ee/product-embed/shared/connection-keys/connection-key'
 import { AppCredential } from '@ee/product-embed/shared/app-credentials/app-credentials'
 
-interface ProjectSchema extends Project {
-    owner: User;
-    collections: Collection[];
-    flows: Flow[];
-    connectionKeys: ConnectionKey[];
-    appCredentials: AppCredential[];
-    files: File[];
-    events: TriggerEvent[];
-    appConnections: AppConnection[];
-}
+type ProjectSchema = {
+    owner: User
+    collections: Collection[]
+    flows: Flow[]
+    connectionKeys: ConnectionKey[]
+    appCredentials: AppCredential[]
+    files: File[]
+    events: TriggerEvent[]
+    appConnections: AppConnection[]
+} & Project
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
     name: 'project',

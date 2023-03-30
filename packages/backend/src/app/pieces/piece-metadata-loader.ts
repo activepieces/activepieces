@@ -13,12 +13,12 @@ type PieceMetadataLoader = {
     /**
      * returns a list of all available pieces and their metadata without actions and triggers.
      */
-    manifest(): Promise<PieceMetadataSummary[]>;
+    manifest(): Promise<PieceMetadataSummary[]>
 
     /**
      * returns metadata for a specific piece version including actions and triggers.
      */
-    pieceMetadata(name: string, version: string): Promise<PieceMetadata>;
+    pieceMetadata(name: string, version: string): Promise<PieceMetadata>
 }
 
 /**

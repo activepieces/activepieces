@@ -6,9 +6,9 @@ const encryptionKey = system.getOrThrow(SystemProp.ENCRYPTION_KEY)
 const algorithm = 'aes-256-cbc'
 const ivLength = 16
 
-export interface EncryptedObject {
-    iv: string;
-    data: string;
+export type EncryptedObject = {
+    iv: string
+    data: string
 }
 
 export function encryptObject(object: unknown): EncryptedObject {

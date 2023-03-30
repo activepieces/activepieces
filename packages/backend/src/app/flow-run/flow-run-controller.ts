@@ -6,8 +6,8 @@ import { flowRunService, flowRunService as service } from './flow-run-service'
 const DEFAULT_PAGING_LIMIT = 10
 
 
-interface GetOnePathParams {
-    id: FlowRunId;
+type GetOnePathParams = {
+    id: FlowRunId
 }
 
 export const flowRunController: FastifyPluginCallback = (app, _options, done): void => {

@@ -1,9 +1,9 @@
 import { EntitySchema} from 'typeorm'
 import { Collection, Instance } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
-export interface InstanceSchema extends Instance {
-    collection: Collection;
-}
+export type InstanceSchema = {
+    collection: Collection
+} & Instance
 
 export const InstanceEntity = new EntitySchema<InstanceSchema>({
     name: 'instance',

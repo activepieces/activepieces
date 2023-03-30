@@ -13,8 +13,8 @@ export const piecesController: FastifyPluginAsync = async (app) => {
         },
         async (
             request: FastifyRequest<{
-                Params: { pieceName: string };
-                Body: PieceOptionRequest;
+                Params: { pieceName: string }
+                Body: PieceOptionRequest
             }>,
         ) => {
             return engineHelper.executeProp({
@@ -43,8 +43,8 @@ export const piecesController: FastifyPluginAsync = async (app) => {
         },
         async (
             request: FastifyRequest<{
-                Params: GetPieceRequestParams;
-                Querystring: GetPieceRequestQuery;
+                Params: GetPieceRequestParams
+                Querystring: GetPieceRequestQuery
             }>,
         ) => {
             const { name } = request.params

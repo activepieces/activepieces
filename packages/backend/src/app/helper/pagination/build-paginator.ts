@@ -1,18 +1,18 @@
 import { EntitySchema, ObjectLiteral } from 'typeorm'
 import Paginator, { Order } from './paginator'
 
-export interface PagingQuery {
-    afterCursor?: string;
-    beforeCursor?: string;
-    limit?: number;
-    order?: Order | 'ASC' | 'DESC';
+export type PagingQuery = {
+    afterCursor?: string
+    beforeCursor?: string
+    limit?: number
+    order?: Order | 'ASC' | 'DESC'
 }
 
-export interface PaginationOptions<Entity> {
-    entity: EntitySchema<Entity>;
-    alias?: string;
-    query?: PagingQuery;
-    paginationKeys: Array<Extract<keyof Entity, string>>;
+export type PaginationOptions<Entity> = {
+    entity: EntitySchema<Entity>
+    alias?: string
+    query?: PagingQuery
+    paginationKeys: Array<Extract<keyof Entity, string>>
 }
 
 export function buildPaginator<Entity extends ObjectLiteral>(options: PaginationOptions<Entity>): Paginator<Entity> {

@@ -2,9 +2,9 @@ import { EntitySchema } from 'typeorm'
 import { Flow, FlowVersion } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity'
 
-interface FlowVersionSchema extends FlowVersion {
-    flow: Flow;
-}
+type FlowVersionSchema = {
+    flow: Flow
+} & FlowVersion
 
 export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
     name: 'flow_version',

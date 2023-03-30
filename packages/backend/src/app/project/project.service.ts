@@ -5,7 +5,7 @@ import { apId, Project, ProjectId, UserId } from '@activepieces/shared'
 const projectRepo = databaseConnection.getRepository(ProjectEntity)
 
 export const projectService = {
-    async create(request: { ownerId: UserId; displayName: string }): Promise<Project> {
+    async create(request: { ownerId: UserId, displayName: string }): Promise<Project> {
         return await projectRepo.save({ id: apId(), ...request })
     },
     async getOne(projectId: ProjectId): Promise<Project | null> {

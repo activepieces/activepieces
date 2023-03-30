@@ -21,6 +21,6 @@ export const getPublicIp = async (): Promise<IpMetadata> => {
     return ipMetadata
 }
 
-interface IpMetadata {
-    ip: string;
+type IpMetadata = {
+    ip: string
 }

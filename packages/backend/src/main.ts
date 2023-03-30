@@ -105,7 +105,7 @@ app.register(appEventRoutingModule)
 app.get(
     '/redirect',
     async (
-        request: FastifyRequest<{ Querystring: { code: string; } }>, reply,
+        request: FastifyRequest<{ Querystring: { code: string } }>, reply,
     ) => {
         const params = {
             'code': request.query.code,

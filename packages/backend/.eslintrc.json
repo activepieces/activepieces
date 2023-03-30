@@ -45,6 +45,14 @@
           "warn",
           "never"
         ],
+        "@typescript-eslint/member-delimiter-style": [
+          "warn",
+          {
+            "multiline": { "delimiter": "none" },
+            "singleline": { "delimiter": "comma", "requireLast": false }
+          }
+        ],
+        "@typescript-eslint/consistent-type-definitions": ["error", "type"],
         "no-unused-vars": "off",
         "@typescript-eslint/no-explicit-any": "error",
         "@typescript-eslint/no-unused-vars": "error",

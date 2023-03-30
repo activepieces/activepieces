@@ -4,8 +4,8 @@ import { GetInstanceRequest, InstanceId, UpsertInstanceRequest } from '@activepi
 import { instanceService as service } from './instance.service'
 
 
-interface GetOnePathParams {
-    id: InstanceId;
+type GetOnePathParams = {
+    id: InstanceId
 }
 
 export const instanceController = async (app: FastifyInstance) => {

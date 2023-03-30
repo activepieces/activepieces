@@ -131,13 +131,13 @@ function getSourceName(trigger: Trigger): string {
 }
 
 type SimulateParams = {
-    flowId: FlowId;
-    projectId: ProjectId;
+    flowId: FlowId
+    projectId: ProjectId
 }
 
 type ListParams = {
-    projectId: ProjectId;
-    flow: Flow;
-    cursor: Cursor | null;
-    limit: number;
+    projectId: ProjectId
+    flow: Flow
+    cursor: Cursor | null
+    limit: number
 }

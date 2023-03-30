@@ -103,6 +103,6 @@ const lockVersions = async ({ flowVersions }: LockVersionsParams): Promise<void>
     await Promise.all(saveLockedVersions)
 }
 
-interface LockVersionsParams {
-    flowVersions: FlowVersion[];
+type LockVersionsParams = {
+    flowVersions: FlowVersion[]
 }

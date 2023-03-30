@@ -2,9 +2,9 @@ import { EntitySchema } from 'typeorm'
 import { Project, User } from '@activepieces/shared'
 import { BaseColumnSchemaPart } from '../helper/base-entity'
 
-export interface UserSchema extends User {
-    projects: Project[];
-}
+export type UserSchema = {
+    projects: Project[]
+} & User
 
 export const UserEntity = new EntitySchema<UserSchema>({
     name: 'user',

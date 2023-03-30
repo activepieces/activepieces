@@ -204,14 +204,14 @@ const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
 }
 
 type BaseParams = {
-    collectionId: CollectionId;
-    projectId: ProjectId;
-    flowVersion: FlowVersion;
-    simulate: boolean;
+    collectionId: CollectionId
+    projectId: ProjectId
+    flowVersion: FlowVersion
+    simulate: boolean
 }
 
 type EnableOrDisableParams = BaseParams
 
 type ExecuteTrigger = BaseParams & {
-    payload: unknown;
+    payload: unknown
 }

@@ -26,7 +26,7 @@ export const flowController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-                Body: GuessFlowRequest;
+                Body: GuessFlowRequest
             }>,
         ) => {
             const trigger = await flowGuessService.guessFlow(request.body.prompt)
@@ -55,7 +55,7 @@ export const flowController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-                Body: CreateFlowRequest;
+                Body: CreateFlowRequest
             }>,
         ) => {
             return await flowService.create({ projectId: request.principal.projectId, request: request.body })
@@ -72,9 +72,9 @@ export const flowController = async (fastify: FastifyInstance) => {
         async (
             request: FastifyRequest<{
                 Params: {
-                    flowId: FlowId;
-                };
-                Body: FlowOperationRequest;
+                    flowId: FlowId
+                }
+                Body: FlowOperationRequest
             }>,
         ) => {
             const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, includeArtifacts: false })
@@ -94,7 +94,7 @@ export const flowController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-                Querystring: ListFlowsRequest;
+                Querystring: ListFlowsRequest
             }>,
         ) => {
             return await flowService.list({ projectId: request.principal.projectId, collectionId: request.query.collectionId, cursorRequest: request.query.cursor ?? null, limit: request.query.limit ?? DEFUALT_PAGE_SIZE })
@@ -106,12 +106,12 @@ export const flowController = async (fastify: FastifyInstance) => {
         async (
             request: FastifyRequest<{
                 Params: {
-                    flowId: FlowId;
-                };
+                    flowId: FlowId
+                }
                 Querystring: {
-                    versionId: FlowVersionId | undefined;
-                    includeArtifacts: boolean | undefined;
-                };
+                    versionId: FlowVersionId | undefined
+                    includeArtifacts: boolean | undefined
+                }
             }>,
         ) => {
             const versionId: FlowVersionId | undefined = request.query.versionId
@@ -129,8 +129,8 @@ export const flowController = async (fastify: FastifyInstance) => {
         async (
             request: FastifyRequest<{
                 Params: {
-                    flowId: FlowId;
-                };
+                    flowId: FlowId
+                }
             }>,
             _reply,
         ) => {

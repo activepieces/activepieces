@@ -3,8 +3,8 @@ import { exec } from './exec'
 import { logger } from './logger'
 
 type PackageManagerOutput = {
-    stdout: string;
-    stderr: string;
+    stdout: string
+    stderr: string
 }
 
 type PnpmCoreCommand = 'add' | 'init'

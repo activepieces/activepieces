@@ -5,23 +5,23 @@ import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { OneTimeJobData, RepeatableJobData } from './job-data'
 import { logger } from '../../helper/logger'
 
-interface BaseAddParams {
-    id: ApId;
+type BaseAddParams = {
+    id: ApId
 }
 
-interface RepeatableJobAddParams extends BaseAddParams {
-    data: RepeatableJobData;
-    scheduleOptions: ScheduleOptions;
-}
+type RepeatableJobAddParams = {
+    data: RepeatableJobData
+    scheduleOptions: ScheduleOptions
+} & BaseAddParams
 
-interface OneTimeJobAddParams extends BaseAddParams {
-    data: OneTimeJobData;
-}
+type OneTimeJobAddParams = {
+    data: OneTimeJobData
+} & BaseAddParams
 
 type AddParams = OneTimeJobAddParams | RepeatableJobAddParams
 
-interface RemoveParams {
-    id: ApId;
+type RemoveParams = {
+    id: ApId
 }
 
 export const ONE_TIME_JOB_QUEUE = 'oneTimeJobs'

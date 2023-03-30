@@ -177,11 +177,11 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
 type WebhookUrlSuffix = '' | '/simulate'
 
 type GetWebhookUrlParams = {
-    flowId: FlowId;
-    simulate?: boolean;
+    flowId: FlowId
+    simulate?: boolean
 }
 
 type CallbackParams = {
-    flowId: FlowId;
-    payload: EventPayload;
+    flowId: FlowId
+    payload: EventPayload
 }

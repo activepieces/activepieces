@@ -10,8 +10,8 @@ export const fileController = async (fastify: FastifyInstance) => {
         async (
             request: FastifyRequest<{
                 Params: {
-                    fileId: FileId;
-                };
+                    fileId: FileId
+                }
             }>,
             _reply,
         ) => {

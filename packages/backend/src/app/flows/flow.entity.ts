@@ -2,13 +2,13 @@ import { EntitySchema } from 'typeorm'
 import { Collection, Flow, FlowRun, FlowVersion, Project, TriggerEvent } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
 
-interface FlowSchema extends Flow {
-    versions: FlowVersion[];
-    collection: Collection;
-    project: Project;
-    runs: FlowRun[];
-    events: TriggerEvent[];
-}
+type FlowSchema = {
+    versions: FlowVersion[]
+    collection: Collection
+    project: Project
+    runs: FlowRun[]
+    events: TriggerEvent[]
+} & Flow
 
 export const FlowEntity = new EntitySchema<FlowSchema>({
     name: 'flow',

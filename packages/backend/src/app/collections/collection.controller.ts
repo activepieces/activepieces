@@ -31,7 +31,7 @@ export const collectionController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-                Params: CollectionIdParams;
+                Params: CollectionIdParams
             }>,
             reply,
         ) => {
@@ -45,8 +45,8 @@ export const collectionController = async (fastify: FastifyInstance) => {
         async (
             request: FastifyRequest<{
                 Params: {
-                    collectionId: CollectionId;
-                };
+                    collectionId: CollectionId
+                }
             }>,
         ) => {
             const collection = await collectionService.getOne({ id: request.params.collectionId, projectId: request.principal.projectId })
@@ -70,9 +70,9 @@ export const collectionController = async (fastify: FastifyInstance) => {
         async (
             request: FastifyRequest<{
                 Params: {
-                    collectionId: CollectionId;
-                };
-                Body: UpdateCollectionRequest;
+                    collectionId: CollectionId
+                }
+                Body: UpdateCollectionRequest
             }>,
         ) => {
             const collection = await collectionService.getOne({ id: request.params.collectionId, projectId: request.principal.projectId })
@@ -98,7 +98,7 @@ export const collectionController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-                Querystring: ListCollectionsRequest;
+                Querystring: ListCollectionsRequest
             }>,
         ) => {
             return await collectionService.list(request.principal.projectId, request.query.cursor, request.query.limit ?? DEFAULT_PAGE_SIZE)
@@ -114,7 +114,7 @@ export const collectionController = async (fastify: FastifyInstance) => {
         },
         async (
             request: FastifyRequest<{
-                Body: CreateCollectionRequest;
+                Body: CreateCollectionRequest
             }>,
         ) => {
             return await collectionService.create({ projectId: request.principal.projectId, request: request.body })

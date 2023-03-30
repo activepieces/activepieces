@@ -15,14 +15,14 @@ export enum Order {
 
 export type CursorParam = Record<string, unknown>
 
-export interface CursorResult {
-    beforeCursor: string | null;
-    afterCursor: string | null;
+export type CursorResult = {
+    beforeCursor: string | null
+    afterCursor: string | null
 }
 
-export interface PagingResult<Entity> {
-    data: Entity[];
-    cursor: CursorResult;
+export type PagingResult<Entity> = {
+    data: Entity[]
+    cursor: CursorResult
 }
 
 export default class Paginator<Entity extends ObjectLiteral> {

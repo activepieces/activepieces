@@ -4,15 +4,15 @@ import { EntitySchema } from 'typeorm'
 
 export type AppEventRoutingId = string
 
-export interface AppEventRouting {
-    id: AppEventRoutingId;
-    created: string;
-    updated: string;
-    appName: string;
-    projectId: ProjectId;
-    flowId: FlowId;
-    identifierValue: string;
-    event: string;
+export type AppEventRouting = {
+    id: AppEventRoutingId
+    created: string
+    updated: string
+    appName: string
+    projectId: ProjectId
+    flowId: FlowId
+    identifierValue: string
+    event: string
 }
 
 export const AppEventRoutingEntity = new EntitySchema<AppEventRouting>({
