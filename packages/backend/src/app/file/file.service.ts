@@ -1,5 +1,6 @@
 import { apId, File, FileId, ProjectId } from "@activepieces/shared";
 import { databaseConnection } from "../database/database-connection";
+import { logger } from "../helper/logger";
 import { FileEntity } from "./file.entity";
 
 const fileRepo = databaseConnection.getRepository<File>(FileEntity);
@@ -11,7 +12,7 @@ export const fileService = {
             projectId: projectId,
             data: buffer,
         });
-        console.log("Saved File id " + savedFile.id + " number of bytes " + buffer.length);
+        logger.info("Saved File id " + savedFile.id + " number of bytes " + buffer.length);
         return savedFile;
     },
     async getOne({projectId, fileId}: {fileId: FileId, projectId: ProjectId}): Promise<File | null> {
@@ -21,7 +22,7 @@ export const fileService = {
         });
     },
     async delete({ projectId, fileId }: { projectId: ProjectId, fileId: FileId }): Promise<void> {
-        console.log("Deleted file with Id " + fileId);
+        logger.info("Deleted file with Id " + fileId);
         await fileRepo.delete({ id: fileId, projectId: projectId });
     },
 };

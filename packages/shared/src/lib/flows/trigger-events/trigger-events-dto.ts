@@ -8,11 +8,19 @@ export const ListTriggerEventsRequest = Type.Object({
     cursor: Type.Optional(Type.String({})),
 });
 
-export type ListTriggerEventsRequest = Omit<Omit<Static<typeof ListTriggerEventsRequest>, "flowId">, "cursor"> & { flowId: FlowId, cursor: Cursor | undefined };
+export type ListTriggerEventsRequest = Omit<Static<typeof ListTriggerEventsRequest>, "flowId" | "cursor"> & {
+  flowId: FlowId;
+  cursor: Cursor | undefined;
+};
 
-export const TestTriggerRequest = Type.Object({
+export const TestPollingTriggerRequest = Type.Object({
     flowId: Type.String({}),
 });
 
-export type TestTriggerRequest = Omit<Static<typeof ListTriggerEventsRequest>, "flowId"> & { flowId: FlowId };
+export type TestPollingTriggerRequest = Static<typeof TestPollingTriggerRequest>;
 
+export const SimulateTriggerRequest = Type.Object({
+  flowId: Type.String({}),
+});
+
+export type SimulateTriggerRequest = Static<typeof SimulateTriggerRequest>;

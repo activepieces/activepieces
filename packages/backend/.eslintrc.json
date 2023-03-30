@@ -6,7 +6,8 @@
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
       "rules": {
         "brace-style": ["error", "stroustrup"],
-        "indent": ["error", 4]
+        "indent": ["error", 4],
+        "no-console": "error"
       }
     },
     {
