@@ -103,7 +103,7 @@ const polling: Polling<PropsValue> = {
     return items.map((item) => {
       const mail = item as GmailMessage;
       return {
-        epochMillSeconds: dayjs(mail?.internalDate).valueOf(),
+        epochMilliSeconds: dayjs(mail?.internalDate).valueOf(),
         data: item,
       }
     });
