@@ -123,8 +123,6 @@ export const GmailRequests = {
       }
     })
 
-    console.debug("searchMail response", response)
-
     if (response.body.messages) {
       const messages = await Promise.all(
         response.body

@@ -1,9 +1,9 @@
 <app-dialog-title-template>{{title}}</app-dialog-title-template>
 <mat-dialog-content>
-    <div class="code-container">
-        <div class="code-area ap-min-w-[500px] ap-min-h-[500px] ap-max-h[500px] ap-max-w[700px] ">
+    <div class="code-container  ap-min-w-[500px] ap-min-h-[500px] ap-max-h-[500px] ap-max-w-[750px]">
+        <div class="code-area">
             <pre class="line-numbers ap-max-h-[500px] ap-pb-1"><code class="language-js"
-                [innerHTML]="content | outputLog"></code></pre>
+                [innerHTML]="content | outputLog:false"></code></pre>
         </div>
     </div>
 </mat-dialog-content>
