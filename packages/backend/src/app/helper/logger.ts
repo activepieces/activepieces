@@ -2,6 +2,7 @@ import pino from 'pino';
 import * as Sentry from '@sentry/node';
 import { system } from './system/system';
 import { SystemProp } from './system/system-prop';
+import { ApEnvironment } from '@activepieces/shared';
 
 const sentryDsn = system.get(SystemProp.SENTRY_DSN);
 
@@ -22,14 +23,24 @@ export const captureException = (error: Error) => {
     }
 }
 
+const initLogger = () => {
+    const env = system.getOrThrow(SystemProp.ENVIRONMENT);
 
-export const logger = pino({
-    transport: {
-        target: 'pino-pretty',
-        options: {
-            translateTime: 'HH:MM:ss Z',
-            colorize: true,
-            ignore: 'pid,hostname',
+    const level: pino.Level = env === ApEnvironment.DEVELOPMENT
+        ? 'debug'
+        : 'info';
+
+    return pino({
+        level,
+        transport: {
+            target: 'pino-pretty',
+            options: {
+                translateTime: 'HH:MM:ss Z',
+                colorize: true,
+                ignore: 'pid,hostname',
+            },
         },
-    },
-})
+    })
+}
+
+export const logger = initLogger();

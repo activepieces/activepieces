@@ -39,7 +39,7 @@ const repeatableJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
 export const flowQueue = {
     async add(params: AddParams): Promise<void> {
-        console.log("[flowQueue#add] params=", params);
+        logger.info("[flowQueue#add] params=", params);
         if (isRepeatable(params)) {
             const { id, data, scheduleOptions } = params;
 

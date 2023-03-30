@@ -19,6 +19,7 @@ export { StepOutputStatus } from "./lib/flow-run/execution/step-output";
 export * from "./lib/instance";
 export * from "./lib/pieces";
 export * from "./lib/store-entry/dto/store-entry-request";
+export * from "./lib/webhook";
 
 export { CodeRunStatus } from "./lib/workers/code-worker/code-run-status";
 export { CodeExecutionResult } from "./lib/workers/code-worker/code-execution-result";
