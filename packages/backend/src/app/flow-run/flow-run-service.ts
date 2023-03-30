@@ -133,7 +133,7 @@ async function getCollectionOrThrowWithoutProjectId(collectionId: CollectionId):
         })
     }
     return collection
-};
+}
 
 type ListParams = {
     projectId: ProjectId
