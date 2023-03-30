@@ -1,11 +1,10 @@
-import { FastifyPluginCallback, FastifyRequest } from "fastify";
+import { FastifyPluginAsync, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
-import { Static, Type } from "@sinclair/typebox";
-import { ApId } from "@activepieces/shared";
+import { WebhookUrlParams } from "@activepieces/shared";
 import { webhookService } from "./webhook-service";
+import { logger } from "../helper/logger";
 
-export const webhookController: FastifyPluginCallback = (app, _opts, done): void => {
-
+export const webhookController: FastifyPluginAsync = async (app) => {
     app.all(
         "/:flowId",
         {
@@ -18,7 +17,6 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
             await reply.status(StatusCodes.OK).send();
         }
     );
-
 
     app.all(
         "/",
@@ -33,10 +31,32 @@ export const webhookController: FastifyPluginCallback = (app, _opts, done): void
         }
     );
 
-    done();
+    app.all(
+        "/:flowId/simulate",
+        {
+            schema: {
+                params: WebhookUrlParams,
+            },
+        },
+        async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+            logger.debug(`[WebhookController#simulate] flowId=${request.params.flowId}`);
+
+            await webhookService.simulationCallback({
+                flowId: request.params.flowId,
+                payload: {
+                    method: request.method,
+                    headers: request.headers as Record<string, string>,
+                    body: request.body,
+                    queryParams: request.query as Record<string, string>,
+                },
+            });
+
+            await reply.status(StatusCodes.OK).send();
+        }
+    );
 };
 
-async function handler(request: FastifyRequest, flowId: string){
+const handler = async (request: FastifyRequest, flowId: string) => {
     await webhookService.callback({
         flowId: flowId,
         payload: {
@@ -46,9 +66,4 @@ async function handler(request: FastifyRequest, flowId: string){
             queryParams: request.query as Record<string, string>,
         },
     });
-}
-const WebhookUrlParams = Type.Object({
-    flowId: ApId,
-});
-
-type WebhookUrlParams = Static<typeof WebhookUrlParams>;
+};

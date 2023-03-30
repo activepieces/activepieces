@@ -1,14 +1,10 @@
 {
-  "extends": ["../../.eslintrc.json"],
+  "extends": ["../../../.eslintrc.json"],
   "ignorePatterns": ["!**/*"],
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
-      "rules": {
-        "brace-style": ["error", "stroustrup"],
-        "indent": ["error", 4],
-        "no-console": "error"
-      }
+      "rules": {}
     },
     {
       "files": ["*.ts", "*.tsx"],

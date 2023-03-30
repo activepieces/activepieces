@@ -27,6 +27,7 @@ import { telemetry } from "../helper/telemetry.utils";
 import { FlowRunEntity } from "./flow-run-entity";
 import { flowRunSideEffects } from "./flow-run-side-effects";
 import { usageService } from "@ee/billing/backend/usage.service";
+import { logger } from "../helper/logger";
 
 export const repo = databaseConnection.getRepository(FlowRunEntity);
 
@@ -65,7 +66,7 @@ export const flowRunService = {
     },
 
     async start({ flowVersionId, collectionId, payload, environment }: StartParams): Promise<FlowRun> {
-        console.log(`[flowRunService#start]  flowVersionId=${flowVersionId} collectionVersionId=${flowVersionId}`);
+        logger.info(`[flowRunService#start]  flowVersionId=${flowVersionId} collectionVersionId=${flowVersionId}`);
 
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId);
         const collection = await getCollectionOrThrowWithoutProjectId(collectionId);

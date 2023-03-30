@@ -27,7 +27,7 @@ export class encryptCredentials1676505294811 implements MigrationInterface {
                 await appConnections.update(currentConnection.id, currentConnection);
             }
             catch (e) {
-                console.error(e);
+                logger.error(e);
             }
         }
         logger.info('encryptCredentials1676505294811 down: finished');

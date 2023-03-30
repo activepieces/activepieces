@@ -54,6 +54,7 @@ import { mastodon } from '@activepieces/piece-mastodon';
 import { shopify } from '@activepieces/piece-shopify';
 import { constantContact } from '@activepieces/piece-constant-contact';
 import { salesforce } from '@activepieces/piece-salesforce';
+import { smtp } from '@activepieces/piece-smtp';
 
 export const pieces: Piece[] = [
     airtable,
@@ -110,7 +111,8 @@ export const pieces: Piece[] = [
     mastodon,
     shopify,
     constantContact,
-    salesforce
+    salesforce,
+    smtp,
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {
