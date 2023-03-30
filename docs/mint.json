@@ -107,6 +107,7 @@
         "pieces/apps/sendinblue",
         "pieces/apps/shopify",
         "pieces/apps/slack",
+        "pieces/apps/smtp",
         "pieces/apps/square",
         "pieces/apps/store",
         "pieces/apps/stripe",

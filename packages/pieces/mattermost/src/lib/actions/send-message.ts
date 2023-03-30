@@ -1,5 +1,11 @@
 import { AuthenticationType, createAction, httpClient, HttpError, HttpMethod, Property } from "@activepieces/framework";
 
+const markdownDescription = `
+**Workspace URL**: The url of mattermost instance (e.g \`https://activepieces.mattermost.com\`)
+
+**Bot Token**: Obtain it from settings > integrations > bot accounts > add bot account
+`;
+
 export const sendMessage = createAction({
     name: "send_message",
     displayName: "Send Message",
@@ -7,7 +13,7 @@ export const sendMessage = createAction({
     props: {
         authentication: Property.CustomAuth({
             displayName: "Authentication",
-            description: "The authentication method to use",
+            description: markdownDescription,
             required: true,
             props: {
                 workspace_url: Property.ShortText({
@@ -55,7 +61,7 @@ export const sendMessage = createAction({
             if (e instanceof HttpError) {
                 const httpError = e as HttpError;
                 console.log(httpError);
-                if(httpError?.response.status === 403){
+                if (httpError?.response.status === 403) {
                     throw new Error("Please make sure you have the correct bot token and channel ID.");
                 }
             }
