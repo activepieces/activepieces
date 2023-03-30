@@ -105,9 +105,9 @@ export const newContact = createTrigger({
             },
             displayName: "Authentication",
             description: "Authentication for Zoho CRM",
-            scope: ["ZohoCRM.modules.READ"], // Todo Fix this
+            scope: ["ZohoCRM.modules.READ"],
             authUrl: "https://accounts.{location}/oauth/v2/auth",
-            tokenUrl: "https://accounts.zoho.eu/oauth/v2/token",
+            tokenUrl: "https://accounts.{location}/oauth/v2/token",
             required: true,
         })
     },
@@ -117,7 +117,7 @@ export const newContact = createTrigger({
     async test({ propsValue, store }): Promise<unknown[]> {
         return await pollingHelper.test(polling, { store: store, propsValue: propsValue });
     },
-    async onEnable({ propsValue, store, setSchedule }): Promise<void> {
+    async onEnable({ propsValue, store }): Promise<void> {
         await pollingHelper.onEnable(polling, { store: store, propsValue: propsValue });
     },
     async onDisable({ propsValue, store }): Promise<void> {
@@ -130,8 +130,14 @@ const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ propsValue }) => {
         const response = await httpClient.sendRequest<{ data: { Created_Time: string }[] }>({
-            url: `${propsValue.authentication['data']['api_domain']}/crm/v4/Contacts?perPage=200&fields=Owner,Email,$currency_symbol,$field_states,Other_Phone,Mailing_State,Other_State,$sharing_permission,Other_Country,Last_Activity_Time,Department,$state,Unsubscribed_Mode,$process_flow,Assistant,Mailing_Country,id,Reporting_To,$approval,Enrich_Status__s,Other_City,Created_Time,$wizard_connection_path,$editable,Home_Phone,Created_By,$zia_owner_assignment,Secondary_Email,Description,Vendor_Name,Mailing_Zip,$review_process,Twitter,Other_Zip,Mailing_Street,$canvas_id,Salutation,First_Name,Full_Name,Asst_Phone,Record_Image,Modified_By,$review,Skype_ID,Phone,Account_Name?sort_order=desc&sort_by=Created_Time`,
+            url: `${propsValue.authentication['data']['api_domain']}/crm/v4/Contacts`,
             method: HttpMethod.GET,
+            queryParams: {
+                perPage: "200",
+                sort_order: "desc",
+                sort_by: "Created_Time",
+                fields: ["Owner", "Email", "$currency_symbol", "$field_states", "Other_Phone", "Mailing_State", "Other_State", "$sharing_permission", "Other_Country", "Last_Activity_Time", "Department", "$state", "Unsubscribed_Mode", "$process_flow", "Assistant", "Mailing_Country", "id", "Reporting_To", "$approval", "Enrich_Status__s", "Other_City", "Created_Time", "$wizard_connection_path", "$editable", "Home_Phone", "Created_By", "$zia_owner_assignment", "Secondary_Email", "Description", "Vendor_Name", "Mailing_Zip", "$review_process", "Twitter", "Other_Zip", "Mailing_Street", "$canvas_id", "Salutation", "First_Name", "Full_Name", "Asst_Phone", "Record_Image", "Modified_By", "$review", "Skype_ID", "Phone", "Account_Name"].join(","),
+            },
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: propsValue.authentication.access_token
