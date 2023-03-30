@@ -6,7 +6,7 @@ import packageJson from "../package.json";
 export const mailerLite = createPiece({
   name: "mailer-lite",
   displayName: "MailerLite",
-  logoUrl: "https://th.bing.com/th/id/OIP.0maQAaoUZ0QxEAxyoBkhAQHaHa?pid=ImgDet&rs=1",
+  logoUrl: "https://cdn.activepieces.com/pieces/mailer-lite.png",
   version: packageJson.version,
   authors: ["Willianwg"],
   actions: [createOrUpdateSubscriber],

@@ -6,7 +6,7 @@ export const createOrUpdateSubscriber = createAction({
     displayName: "Add or Update subscriber",
     description: "Create or update a existing subscription",
     props: {
-        api_key: Property.ShortText({
+        api_key: Property.SecretText({
             description: "Paste your api key",
             displayName: 'Authentication',
             required: true,
@@ -28,25 +28,23 @@ export const createOrUpdateSubscriber = createAction({
         const api_key = context.propsValue.api_key;
         const mailerLite = new MailerLite({ api_key });
 
-        const params : MailerLiteParams = {
+        const params: MailerLiteParams = {
             email: context.propsValue.email,
         };
 
-        if(context.propsValue.name) params.fields = { name: context.propsValue.name };
+        if (context.propsValue.name) params.fields = { name: context.propsValue.name };
 
-        try{
-            const response = await mailerLite.subscribers.createOrUpdate(params);
-            return response.data;
-        } catch(err){
-            return err
-        }
+
+        const response = await mailerLite.subscribers.createOrUpdate(params);
+        return response.data;
+
     },
 });
 
 
 type MailerLiteParams = {
     email: string;
-    fields?:{
+    fields?: {
         name: string;
     }
 
