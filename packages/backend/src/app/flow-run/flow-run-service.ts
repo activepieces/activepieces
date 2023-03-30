@@ -36,7 +36,6 @@ export const flowRunService = {
         const decodedCursor = paginationHelper.decodeCursor(cursor);
         const paginator = buildPaginator({
             entity: FlowRunEntity,
-            paginationKeys: ["created"],
             query: {
                 limit,
                 order: Order.DESC,

@@ -10,15 +10,15 @@ import {
 	ShortTextProperty,
 } from "./base-prop";
 import { BasicAuthProperty } from "./basic-auth-prop";
-import { CustomAuthProperty } from "./custom-auth-prop";
+import { CustomAuthProperty, CustomAuthProps } from "./custom-auth-prop";
 import { DropdownProperty, MultiSelectDropdownProperty, StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown-prop";
 import { DynamicProperties } from "./dynamic-prop";
-import { OAuth2Property } from "./oauth2-prop";
+import { OAuth2Property, OAuth2Props } from "./oauth2-prop";
 
 export interface PieceProperty {
 	[name: string]: ShortTextProperty<boolean>
 	| LongTextProperty<boolean>
-	| OAuth2Property<boolean>
+	| OAuth2Property<boolean, OAuth2Props>
 	| CheckboxProperty<boolean>
 	| DropdownProperty<any, boolean>
 	| StaticDropdownProperty<any, boolean>
@@ -29,9 +29,9 @@ export interface PieceProperty {
 	| ObjectProperty<boolean>
 	| JsonProperty<boolean>
 	| MultiSelectDropdownProperty<unknown, boolean>
-	| StaticMultiSelectDropdownProperty<unknown,boolean>
+	| StaticMultiSelectDropdownProperty<unknown, boolean>
 	| DynamicProperties<boolean>
-	| CustomAuthProperty<boolean>
+	| CustomAuthProperty<boolean, CustomAuthProps>
 }
 
 
@@ -67,11 +67,12 @@ export const Property = {
 	BasicAuth<R extends boolean>(request: Properties<BasicAuthProperty<R>>): R extends true ? BasicAuthProperty<true> : BasicAuthProperty<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.BASIC_AUTH } as unknown as R extends true ? BasicAuthProperty<true> : BasicAuthProperty<false>;
 	},
-	CustomAuth<R extends boolean>(request: Properties<CustomAuthProperty<R>>): R extends true ? CustomAuthProperty<true> : CustomAuthProperty<false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.CUSTOM_AUTH } as unknown as R extends true ? CustomAuthProperty<true> : CustomAuthProperty<false>;
+	CustomAuth<R extends boolean, T extends CustomAuthProps>(request: Properties<CustomAuthProperty<R, T>>):
+		R extends true ? CustomAuthProperty<true, T> : CustomAuthProperty<false, T> {
+		return { ...request, valueSchema: undefined, type: PropertyType.CUSTOM_AUTH } as unknown as R extends true ? CustomAuthProperty<true, T> : CustomAuthProperty<false, T>;
 	},
-	OAuth2<R extends boolean>(request: Properties<OAuth2Property<R>>): R extends true ? OAuth2Property<true> : OAuth2Property<false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.OAUTH2 } as unknown as R extends true ? OAuth2Property<true> : OAuth2Property<false>;
+	OAuth2<R extends boolean, T extends OAuth2Props>(request: Properties<OAuth2Property<R, T>>): R extends true ? OAuth2Property<true, T> : OAuth2Property<false, T> {
+		return { ...request, valueSchema: undefined, type: PropertyType.OAUTH2 } as unknown as R extends true ? OAuth2Property<true, T> : OAuth2Property<false, T>;
 	},
 	Dropdown<T, R extends boolean = boolean>(request: Properties<DropdownProperty<T, R>>): R extends true ? DropdownProperty<T, true> : DropdownProperty<T, false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.DROPDOWN } as unknown as R extends true ? DropdownProperty<T, true> : DropdownProperty<T, false>;

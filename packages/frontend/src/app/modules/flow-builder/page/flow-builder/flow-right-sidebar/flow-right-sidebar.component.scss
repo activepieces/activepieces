@@ -2,16 +2,16 @@
 
 .top-resizer-section
 {
-    height:calc(100% - 160px);
-    max-height: calc(100% - 160px);
+    height:calc(100% - 200px);
+    max-height: calc(100% - 200px);
 }
 .bottom-resizer-section
 {
-    max-height: 160px;
-    min-height: 160px;
+    max-height: 200px;
+    min-height: 200px;
 }
 
 .resizer-area{
-    height: calc(100% - 205px);
+    height: calc(100% - 245px);
   }
   
