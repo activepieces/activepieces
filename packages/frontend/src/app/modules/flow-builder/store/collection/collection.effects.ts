@@ -141,8 +141,7 @@ export class CollectionEffects {
       ]),
       switchMap(([action, collection]) => {
         return this.instanceService
-          .publish({
-            collectionId: collection.id,
+          .updateStatus(collection.id, {
             status: InstanceStatus.ENABLED,
           })
           .pipe(
@@ -171,8 +170,7 @@ export class CollectionEffects {
       ]),
       switchMap(([action, collection]) => {
         return this.instanceService
-          .publish({
-            collectionId: collection.id,
+          .updateStatus(collection.id, {
             status: InstanceStatus.DISABLED,
           })
           .pipe(

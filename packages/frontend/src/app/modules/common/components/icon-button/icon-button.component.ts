@@ -21,4 +21,7 @@ export class IconButtonComponent {
   @Input() buttonDisabled = false;
   @Input() ariaLabel = '';
   @Output() buttonClicked: EventEmitter<boolean> = new EventEmitter();
+  emit() {
+    this.buttonClicked.emit(true);
+  }
 }

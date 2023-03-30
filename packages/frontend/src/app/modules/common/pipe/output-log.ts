@@ -2,7 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({ name: 'outputLog', pure: true })
 export class OutputLogPipe implements PipeTransform {
-  transform(value: any): string {
+  transform(value: any, truncate = true): string {
     let result = '';
     if (typeof value === 'object') {
       result = JSON.stringify(value, null, 2);
@@ -11,9 +11,11 @@ export class OutputLogPipe implements PipeTransform {
     } else {
       result = this.repr(value);
     }
-    return result.length > 8092
-      ? result.substr(0, 8092) + ' (truncated)'
-      : result;
+    if (truncate) {
+      return result.length > 8092
+        ? result.substring(0, 8092) + ' (truncated)'
+        : result;
+    } else return result;
   }
 
   repr(obj) {

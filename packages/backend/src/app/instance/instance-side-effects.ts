@@ -39,6 +39,7 @@ export const instanceSideEffects = {
                     collectionId: instance.collectionId,
                     projectId: instance.projectId,
                     flowVersion,
+                    simulate: false,
                 })
         );
 
@@ -54,7 +55,12 @@ export const instanceSideEffects = {
         const flowVersions = await flowVersionRepo.findBy({
             id: In(flowVersionIds),
         });
-        const disableTriggers = flowVersions.map((version) => triggerUtils.disable({ collectionId: instance.collectionId, flowVersion: version, projectId: instance.projectId }));
+        const disableTriggers = flowVersions.map((version) => triggerUtils.disable({
+            collectionId: instance.collectionId,
+            flowVersion: version,
+            projectId: instance.projectId,
+            simulate: false,
+        }));
         await Promise.all(disableTriggers);
     },
     async onCollectionDelete({ projectId, collectionId }: { projectId: ProjectId, collectionId: CollectionId }) {
@@ -73,7 +79,12 @@ export const instanceSideEffects = {
             if (flowVersionId) {
                 const flowVersion = (await flowVersionService.getOneOrThrow(flowVersionId));
                 logger.info(`Flow ${flowId} is deleted, running intstance side effects first`);
-                await triggerUtils.disable({ collectionId: instance.collectionId, flowVersion: flowVersion, projectId: instance.projectId })
+                await triggerUtils.disable({
+                    collectionId: instance.collectionId,
+                    flowVersion: flowVersion,
+                    projectId: instance.projectId,
+                    simulate: false,
+                });
             }
         }
     }

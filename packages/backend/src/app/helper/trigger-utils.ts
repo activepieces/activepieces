@@ -19,7 +19,8 @@ import { appEventRoutingService } from "../app-event-routing/app-event-routing.s
 import { captureException } from "@sentry/node";
 
 export const triggerUtils = {
-    async executeTrigger({ payload, flowVersion, projectId, collectionId}: ExecuteTrigger): Promise<unknown[]> {
+    async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
+        const { payload, flowVersion, projectId, collectionId, simulate } = params;
         const flowTrigger = flowVersion.trigger;
         let payloads = [];
         switch (flowTrigger.type) {
@@ -31,7 +32,10 @@ export const triggerUtils = {
                     flowVersion: flowVersion,
                     triggerPayload: payload,
                     collectionId,
-                    webhookUrl: await webhookService.getWebhookUrl(flowVersion.flowId),
+                    webhookUrl: await webhookService.getWebhookUrl({
+                        flowId: flowVersion.flowId,
+                        simulate,
+                    }),
                     projectId: projectId
                 }) as unknown[];
             }
@@ -57,20 +61,30 @@ export const triggerUtils = {
         return payloads;
     },
 
-    async enable({ collectionId, flowVersion, projectId }: EnableOrDisableParams): Promise<void> {
+    async enable({ collectionId, flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
         switch (flowVersion.trigger.type) {
         case TriggerType.PIECE:
-            await enablePieceTrigger({ collectionId, projectId, flowVersion });
+            await enablePieceTrigger({
+                collectionId,
+                projectId,
+                flowVersion,
+                simulate,
+            });
             break;
         default:
             break;
         }
     },
 
-    async disable({ collectionId, flowVersion, projectId }: EnableOrDisableParams): Promise<void> {
+    async disable({ collectionId, flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
         switch (flowVersion.trigger.type) {
         case TriggerType.PIECE:
-            await disablePieceTrigger({ collectionId, projectId, flowVersion });
+            await disablePieceTrigger({
+                collectionId,
+                projectId,
+                flowVersion,
+                simulate,
+            });
             break;
         default:
             break;
@@ -78,16 +92,22 @@ export const triggerUtils = {
     },
 };
 
-const disablePieceTrigger = async ({ flowVersion, projectId, collectionId }: EnableOrDisableParams): Promise<void> => {
+const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
+    const { flowVersion, projectId, collectionId, simulate } = params;
     const flowTrigger = flowVersion.trigger as PieceTrigger;
     const pieceTrigger = getPieceTrigger(flowTrigger);
+
     await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_DISABLE,
         flowVersion: flowVersion,
         collectionId,
-        webhookUrl: await webhookService.getWebhookUrl(flowVersion.flowId),
+        webhookUrl: await webhookService.getWebhookUrl({
+            flowId: flowVersion.flowId,
+            simulate,
+        }),
         projectId: projectId
     });
+
     switch (pieceTrigger.type) {
     case TriggerStrategy.APP_WEBHOOK:
         await appEventRoutingService.deleteListeners({projectId, flowId: flowVersion.flowId });
@@ -102,23 +122,36 @@ const disablePieceTrigger = async ({ flowVersion, projectId, collectionId }: Ena
     }
 };
 
-const enablePieceTrigger = async ({ flowVersion, projectId, collectionId }: EnableOrDisableParams): Promise<void> => {
+const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
+    const { flowVersion, projectId, collectionId, simulate } = params;
     const flowTrigger = flowVersion.trigger as PieceTrigger;
     const pieceTrigger = getPieceTrigger(flowTrigger);
+
+    const webhookUrl = await webhookService.getWebhookUrl({
+        flowId: flowVersion.flowId,
+        simulate,
+    });
 
     const response = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion: flowVersion,
         collectionId,
-        webhookUrl: await webhookService.getWebhookUrl(flowVersion.flowId),
+        webhookUrl,
         projectId: projectId
     });
+
     switch (pieceTrigger.type) {
     case TriggerStrategy.APP_WEBHOOK: {
         const appName = flowTrigger.settings.pieceName;
         const listeners = (response as ExecuteTriggerResponse).listeners;
         for(const listener of listeners){
-            await appEventRoutingService.createListeners({projectId, flowId: flowVersion.flowId, appName, events: listener.events, identifierValue: listener.identifierValue });
+            await appEventRoutingService.createListeners({
+                projectId,
+                flowId: flowVersion.flowId,
+                appName,
+                events: listener.events,
+                identifierValue: listener.identifierValue,
+            });
         }
         break;
     }
@@ -170,15 +203,15 @@ const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
     return pieceTrigger;
 };
 
-interface EnableOrDisableParams {
-  collectionId: CollectionId;
-  flowVersion: FlowVersion;
-  projectId: ProjectId;
+type BaseParams = {
+    collectionId: CollectionId;
+    projectId: ProjectId;
+    flowVersion: FlowVersion;
+    simulate: boolean;
 }
 
-interface ExecuteTrigger {
-  payload: unknown;
-  projectId: ProjectId;
-  collectionId: CollectionId;
-  flowVersion: FlowVersion;
+type EnableOrDisableParams = BaseParams;
+
+type ExecuteTrigger = BaseParams & {
+    payload: unknown;
 }

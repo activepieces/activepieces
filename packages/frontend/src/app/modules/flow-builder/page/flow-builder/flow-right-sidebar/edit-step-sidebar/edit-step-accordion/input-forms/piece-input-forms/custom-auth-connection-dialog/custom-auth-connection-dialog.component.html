@@ -47,6 +47,12 @@
                     </mat-error>
                 </mat-form-field>
             </ng-container>
+            <mat-checkbox
+                *ngIf="prop.value.type === PropertyType.CHECKBOX"
+                [formControlName]="prop.key"
+                [matTooltip]="prop.value.description">
+                {{ prop.value.displayName }}
+            </mat-checkbox>
         </ng-container>
     </form>
 </mat-dialog-content>
