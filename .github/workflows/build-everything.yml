@@ -39,5 +39,15 @@ jobs:
         run: npm ci --ignore-scripts
 
       - uses: nrwl/nx-set-shas@v3
-      - run: npx nx affected -t lint --parallel=5
-      - run: npx nx affected -t build --parallel=5
+      
+      - name: Run lint and build in parallel
+        id: lint-build
+        run: |
+          npx nx affected -t lint --parallel=5 &
+          npx nx affected -t build --parallel=5 &
+          wait
+        continue-on-error: true
+
+      - name: Check if lint and build succeeded
+        if: ${{ steps.lint-build.outcome == 'failure' || steps.lint-build.outputs.EXIT_CODE != 0 }}
+        run: echo "Lint or build failed" && exit 1
