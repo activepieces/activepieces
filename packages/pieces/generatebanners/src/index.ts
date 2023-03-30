@@ -5,7 +5,7 @@ import { renderTemplate } from './lib/actions/renderTemplate.action';
 
 export const generatebanners = createPiece({
   name: 'generatebanners',
-  displayName: 'generatebanners',
+  displayName: 'GenerateBanners',
   logoUrl: 'https://cdn.activepieces.com/pieces/generatebanners.png',
   version: packageJson.version,
   authors: [

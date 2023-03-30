@@ -1,6 +1,18 @@
 import { AuthenticationType, createAction, httpClient, HttpMethod, Property } from "@activepieces/framework";
 
 
+
+const markdownDescription = `
+**Base Url**: The base url of your Mastodon instance (e.g \`https://mastodon.social\`)
+
+**Access Token**: To get your access token, follow the steps below:
+
+1. Go to your **Profile** -> **Preferences** -> **Development** -> **New Application**
+2. Fill the Information
+3. Click on **Create Application**
+4. Copy access token from **Your access token**
+`;
+
 export const postStatus = createAction({
     name: 'post_status',
     displayName: 'Post Status',
@@ -9,6 +21,7 @@ export const postStatus = createAction({
     props: {
         authentication: Property.CustomAuth({
             displayName: "Authentication",
+            description: markdownDescription,
             props: {
                 base_url: Property.ShortText({
                     displayName: 'Base URL',
