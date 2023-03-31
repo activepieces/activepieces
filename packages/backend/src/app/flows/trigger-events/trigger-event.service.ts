@@ -1,6 +1,9 @@
 import {
+    ActivepiecesError,
     apId,
     Cursor,
+    ErrorCode,
+    ExecuteTestOrRunTriggerResponse,
     Flow,
     FlowId,
     PieceTrigger,
@@ -53,23 +56,31 @@ export const triggerEventService = {
                         simulate: true,
                     }),
                     projectId: projectId,
-                }) )as unknown[]
+                }) )as ExecuteTestOrRunTriggerResponse
                 await triggerEventRepo.delete({
                     projectId,
                     flowId: flow.id,
                 })
-                for(let i = 0; i < testResult.length; i++) {
+                if(!testResult.success) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.TEST_TRIGGER_FAILED,
+                        params: {
+                            message: testResult.message,
+                        },
+                    })
+                }
+                for(let i = 0; i < testResult.output.length; i++) {
                     await triggerEventService.saveEvent({
                         projectId,
                         flowId: flow.id,
-                        payload: testResult[i],
+                        payload: testResult.output[i],
                     })
                 }
                 return triggerEventService.list({
                     projectId,
                     flow,
                     cursor: null,
-                    limit: testResult.length,
+                    limit: testResult.output.length,
                 })
             }
             case TriggerType.EMPTY:

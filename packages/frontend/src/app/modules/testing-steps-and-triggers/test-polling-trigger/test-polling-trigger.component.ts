@@ -4,6 +4,7 @@ import { Store } from '@ngrx/store';
 import deepEqual from 'deep-equal';
 import {
   BehaviorSubject,
+  catchError,
   map,
   Observable,
   of,
@@ -11,7 +12,7 @@ import {
   take,
   tap,
 } from 'rxjs';
-import { TriggerType } from '@activepieces/shared';
+import { ActivepiecesError, TriggerType } from '@activepieces/shared';
 import { TestStepService } from '../../flow-builder/service/test-step.service';
 import { BuilderSelectors } from '../../flow-builder/store/builder/builder.selector';
 import { FlowsActions } from '../../flow-builder/store/flow/flows.action';
@@ -33,6 +34,7 @@ export class TestPollingTriggerComponent extends TestStepCoreComponent {
   initaillySelectedSampleData$: Observable<unknown>;
   testStep$: Observable<PollingHistoricalData[]>;
   loading = false;
+  failed = false;
   hasBeenTested = false;
   isValid$: Observable<boolean>;
   constructor(testStepService: TestStepService, private store: Store) {
@@ -83,6 +85,7 @@ export class TestPollingTriggerComponent extends TestStepCoreComponent {
   }
   testStep() {
     this.loading = true;
+    this.failed = false;
     this.hasBeenTested = true;
     this.testStep$ = this.store
       .select(BuilderSelectors.selectCurrentFlowId)
@@ -98,7 +101,15 @@ export class TestPollingTriggerComponent extends TestStepCoreComponent {
                   this.selectedDataControl.setValue(res.data[0].payload);
                 this.testStepService.elevateResizer$.next(true);
               }),
-              map((res) => res.data)
+              map((res) => res.data),
+              catchError((e: ActivepiecesError) => {
+                console.error(e);
+                this.loading = false;
+                this.failed = true;
+                this.currentResults$.next([]);
+                this.testStepService.elevateResizer$.next(true);
+                return of([]);
+              })
             );
           }
           return of([]);

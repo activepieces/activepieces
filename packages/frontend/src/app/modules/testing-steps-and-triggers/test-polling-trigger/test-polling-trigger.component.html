@@ -68,7 +68,8 @@
                         [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Load Data</app-button>
                 </div>
 
-                <p class="ap-mt-2">Please add some data then press "Load Data"</p>
+                <p class="ap-mt-2" *ngIf="!failed">Please add some data then press "Load Data"</p>
+                <p class="ap-mt-2" *ngIf="failed">Testing data failed. Please ensure that the settings are correct or try again.</p>
             </ng-container>
         </ng-container>
 
