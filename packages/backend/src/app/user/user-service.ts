@@ -1,17 +1,17 @@
-import { apId, SignUpRequest, User, UserId, UserStatus } from "@activepieces/shared";
-import { passwordHasher } from "../authentication/lib/password-hasher";
-import { databaseConnection } from "../database/database-connection";
-import { UserEntity } from "./user-entity";
+import { apId, SignUpRequest, User, UserId, UserStatus } from '@activepieces/shared'
+import { passwordHasher } from '../authentication/lib/password-hasher'
+import { databaseConnection } from '../database/database-connection'
+import { UserEntity } from './user-entity'
 
-const userRepo = databaseConnection.getRepository(UserEntity);
+const userRepo = databaseConnection.getRepository(UserEntity)
 
-interface GetOneQuery {
-  email: string;
+type GetOneQuery = {
+    email: string
 }
 
 export const userService = {
     async create(request: SignUpRequest): Promise<User> {
-        const hashedPassword = await passwordHasher.hash(request.password);
+        const hashedPassword = await passwordHasher.hash(request.password)
         const user = {
             id: apId(),
             email: request.email,
@@ -21,13 +21,13 @@ export const userService = {
             trackEvents: request.trackEvents,
             newsLetter: request.newsLetter,
             status: UserStatus.VERIFIED,
-        };
-        return await userRepo.save(user);
+        }
+        return await userRepo.save(user)
     },
     async getOne({id}: {id: UserId}): Promise<User | null> {
-        return await userRepo.findOneBy({id});
+        return await userRepo.findOneBy({id})
     },
     async getOneByEmail(query: GetOneQuery): Promise<User | null> {
-        return await userRepo.findOneBy(query);
+        return await userRepo.findOneBy(query)
     },
-};
+}

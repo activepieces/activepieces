@@ -95,6 +95,7 @@
         "pieces/apps/hubspot",
         "pieces/apps/intercom",
         "pieces/apps/mailchimp",
+        "pieces/apps/mailer-lite",
         "pieces/apps/mastodon",
         "pieces/apps/mattermost",
         "pieces/apps/openai",
@@ -118,6 +119,8 @@
         "pieces/apps/typeform",
         "pieces/apps/wordpress",
         "pieces/apps/youtube",
+        "pieces/apps/zendesk",
+        "pieces/apps/zoho-crm",
         "pieces/apps/zoom"
       ]
     },

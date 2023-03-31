@@ -1,9 +1,9 @@
-import { FlowRun } from "@activepieces/shared";
-import { flowQueue } from "../workers/flow-worker/flow-queue";
+import { FlowRun } from '@activepieces/shared'
+import { flowQueue } from '../workers/flow-worker/flow-queue'
 
-interface StartParams {
-  flowRun: FlowRun;
-  payload: unknown;
+type StartParams = {
+    flowRun: FlowRun
+    payload: unknown
 }
 
 export const flowRunSideEffects = {
@@ -18,6 +18,6 @@ export const flowRunSideEffects = {
                 collectionId: flowRun.collectionId,
                 payload,
             },
-        });
+        })
     },
-};
+}
