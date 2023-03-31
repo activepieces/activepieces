@@ -36,6 +36,7 @@ export const appConnectionService = {
                     pieceName: request.appName,
                     code: request.value.code,
                     clientId: request.value.client_id,
+                    tokenUrl: request.value.token_url,
                     edition: await getEdition(),
                     codeVerifier: request.value.code_challenge,
                 })
@@ -307,4 +308,5 @@ type claimWithCloudRequest = {
     codeVerifier: string
     edition: string
     clientId: string
+    tokenUrl: string
 }

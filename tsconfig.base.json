@@ -117,6 +117,7 @@
         "packages/pieces/wordpress/src/index.ts"
       ],
       "@activepieces/piece-youtube": ["packages/pieces/youtube/src/index.ts"],
+      "@activepieces/piece-zoho-crm": ["packages/pieces/zoho-crm/src/index.ts"],
       "@activepieces/piece-zendesk": ["packages/pieces/zendesk/src/index.ts"],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],

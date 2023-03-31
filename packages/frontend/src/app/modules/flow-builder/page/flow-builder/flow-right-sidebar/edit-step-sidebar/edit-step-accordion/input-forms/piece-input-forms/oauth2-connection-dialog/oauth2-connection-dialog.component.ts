@@ -263,7 +263,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     return {
       auth_url: authUrl,
       client_id: formValue.client_id,
-      extraParams: this.pieceAuthConfig.oAuthProps || {},
+      extraParams: this.pieceAuthConfig.extra || {},
       redirect_url: formValue.redirect_url,
       pkce: this.pieceAuthConfig.pkce,
       scope: this.pieceAuthConfig.scope!.join(' '),
