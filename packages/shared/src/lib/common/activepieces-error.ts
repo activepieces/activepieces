@@ -37,6 +37,7 @@ type ErrorParams =
   | SystemInvalidErrorParams
   | SystemPropNotDefinedErrorParams
   | OpenAiFailedErrorParams
+  | TestTriggerFailedErrorParams
   | FlowOperationErrorParams;
 
 
@@ -201,6 +202,14 @@ export type TaskQuotaExeceededErrorParams = BaseErrorParams<
   }
 >
 
+export type TestTriggerFailedErrorParams = BaseErrorParams<
+  ErrorCode.TEST_TRIGGER_FAILED,
+  {
+    message: string;
+  }
+>
+
+
 export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
   COLLECTION_VERSION_NOT_FOUND = "COLLECTION_VERSION_NOT_FOUND",
@@ -227,4 +236,5 @@ export enum ErrorCode {
   TRIGGER_FAILED = "TRIGGER_FAILED",
   FLOW_OPERATION_INVALID = "FLOW_OPERATION_INVALID",
   OPENAI_FAILED = "OPENAI_FAILED",
+  TEST_TRIGGER_FAILED = "TEST_TRIGGER_FAILED"
 }
