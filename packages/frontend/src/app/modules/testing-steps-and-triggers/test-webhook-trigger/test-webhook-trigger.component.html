@@ -1,69 +1,78 @@
-<div class="ap-px-4  ap-py-3 " *ngIf="currentResults$ |async as currentResults; else loadingSpinner">
-
-
-    <div class="ap-flex ap-flex-col ap-gap-2 ap-items-center ap-justify-center ap-h-[136px]"
-        *ngIf="currentResults.length === 0 && !loading ">
-        <div class="ap-relative">
-            <app-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
-                matTooltip="Test this step to generate sample data that can be used in the next steps"
-                matTooltipPosition="above"> </app-hotspot>
-            <app-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()">Test
-                Trigger</app-button>
-        </div>
+<div class="ap-px-4  ap-py-3 ">
+    <div class="ap-typography-body-1 !ap-font-semibold">
+        Generate Sample Data
     </div>
-
-    <ng-container *ngIf="currentResults.length >0 && !loading">
-        <div class="ap-flex ap-items-center">
-            <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
-                <svg-icon src="assets/img/custom/success-step-result.svg" [svgStyle]="{ width: '21px', height: '20px' }"
-                    matTooltip="Step succeeded"></svg-icon> Tested Successfully
+    <ng-container *ngIf="currentResults$ |async as currentResults; else loadingSpinner">
+        <div class="ap-flex ap-flex-col ap-gap-2 ap-items-center ap-justify-center ap-h-[132px]"
+            *ngIf="currentResults.length === 0 && !loading ">
+            <div class="ap-relative">
+                <app-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
+                    matTooltip="Test this step to generate sample data that can be used in the next steps"
+                    matTooltipPosition="above"> </app-hotspot>
+                <app-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()">Send
+                    Data </app-button>
             </div>
-            <div class="ap-flex-grow">
-
-            </div>
-            <app-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                (buttonClicked)="testStep()">Retest</app-button>
         </div>
 
-        <mat-form-field class="ap-w-full ap-mt-2" appearance="outline" subscriptSizing="dynamic">
-            <mat-label>
-                Data
-            </mat-label>
-            <mat-select [formControl]="selectedDataControl" [compareWith]="dropdownCompareWithFunction">
-                <mat-option *ngFor="let res of currentResults; let idx= index" [value]="res.payload">
-                    <div> (Result {{currentResults.length-idx}})</div>
-                    <div class="ap-text-description ap-typography-body-2"> {{res.created | date:"short"}}</div>
-                </mat-option>
-            </mat-select>
-        </mat-form-field>
-        <div class="ap-typography-caption ap-text-description ap-my-2">
-            This sample data can be used in the next steps
-        </div>
-        <app-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
-            [content]="selectedDataControl.value"></app-json-viewer>
+        <ng-container *ngIf="currentResults.length >0 && !loading">
+            <div class="ap-flex ap-items-center">
+                <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
+                    <svg-icon src="assets/img/custom/success-step-result.svg"
+                        [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon> Tested
+                    Successfully
+                </div>
+                <div class="ap-flex-grow">
 
-
-    </ng-container>
-    <ng-container *ngIf="loading">
-        <div class="ap-flex ap-flex-col ap-gap-2">
-            <div class="ap-flex ap-gap-2 ap-items-center">
-                <div class="spinner-border dark-spinner" role="status"></div> Testing trigger
-                <div class="ap-flex-grow"></div>
+                </div>
                 <app-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                    (buttonClicked)="cancelTesting()">Cancel</app-button>
+                    (buttonClicked)="testStep()">Retest</app-button>
             </div>
 
-            <div class="ap-font-semibold ap-flex ap-items-center ap-gap-2 ap-ml-[-3px]">
-                <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">
-                </svg-icon> Action Required
+            <mat-form-field class="ap-w-full ap-mt-2" appearance="outline" subscriptSizing="dynamic">
+                <mat-label>
+                    Data
+                </mat-label>
+                <mat-select [formControl]="selectedDataControl" [compareWith]="dropdownCompareWithFunction">
+                    <mat-option *ngFor="let res of currentResults; let idx= index" [value]="res.payload">
+                        <div> (Result {{currentResults.length-idx}})</div>
+                        <div class="ap-text-description ap-typography-body-2"> {{res.created | date:"short"}}</div>
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+            <div class="ap-typography-caption ap-text-description ap-my-2">
+                This sample data can be used in the next steps
             </div>
-            <p>
-                Please send data to the webhook endpoint to
-                test the step.
-            </p>
-        </div>
+            <app-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
+                [content]="selectedDataControl.value"></app-json-viewer>
 
+
+        </ng-container>
+        <ng-container *ngIf="loading">
+            <div class="ap-flex ap-flex-col ap-gap-2.5">
+                <div class="ap-flex ap-gap-2 ap-items-center">
+                    <div class="spinner-border dark-spinner" role="status"></div> Testing trigger
+                    <div class="ap-flex-grow"></div>
+                    <app-button btnColor="primary" btnStyle="stroked" btnSize="medium"
+                        (buttonClicked)="cancelTesting()">Cancel</app-button>
+                </div>
+
+                <app-warning-box>
+                    <div class="ap-flex ap-items-center ap-gap-2 ap-ml-[-3px] ">
+                        <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">
+                        </svg-icon> Action Required
+                    </div>
+                    <p>
+                        Please send data to the webhook endpoint to
+                        test the step.
+                    </p>
+
+                </app-warning-box>
+
+
+            </div>
+        </ng-container>
     </ng-container>
+
 </div>
 <ng-template #loadingSpinner>
     <div class="ap-flex ap-flex-grow ap-justify-center ap-items-center ap-h-[160px]">

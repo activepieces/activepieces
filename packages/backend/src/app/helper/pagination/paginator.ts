@@ -25,6 +25,8 @@ export type PagingResult<Entity> = {
     cursor: CursorResult
 }
 
+const PAGINATION_KEY = 'created'
+
 export default class Paginator<Entity extends ObjectLiteral> {
     private afterCursor: string | null = null
 
@@ -42,8 +44,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
     public constructor(
         private readonly entity: EntitySchema,
-        private readonly paginationKeys: Array<Extract<keyof Entity, string>>,
-    ) {}
+    ) { }
 
     public setAlias(alias: string): void {
         this.alias = alias
@@ -122,13 +123,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
     private buildCursorQuery(where: WhereExpressionBuilder, cursors: CursorParam): void {
         const operator = this.getOperator()
-        const params: CursorParam = {}
-        let query = ''
-        this.paginationKeys.forEach((key) => {
-            params[key] = cursors[key]
-            where.orWhere(`${query}${this.alias}.${key} ${operator} :${key}`, params)
-            query = `${query}${this.alias}.${key} = :${key} AND `
-        })
+        where.orWhere(`DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) ${operator} DATE_TRUNC('second', :${PAGINATION_KEY}::timestamp)`, cursors)
     }
 
     private getOperator(): string {
@@ -151,9 +146,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
         }
 
         const orderByCondition: OrderByCondition = {}
-        this.paginationKeys.forEach((key) => {
-            orderByCondition[`${this.alias}.${key}`] = order
-        })
+        orderByCondition[`${this.alias}.${PAGINATION_KEY}`] = order
 
         return orderByCondition
     }
@@ -167,13 +160,9 @@ export default class Paginator<Entity extends ObjectLiteral> {
     }
 
     private encode(entity: Entity): string {
-        const payload = this.paginationKeys
-            .map((key) => {
-                const type = this.getEntityPropertyType(key)
-                const value = encodeByType(type, entity[key])
-                return `${key}:${value}`
-            })
-            .join(',')
+        const type = this.getEntityPropertyType(PAGINATION_KEY)
+        const value = encodeByType(type, entity[PAGINATION_KEY])
+        const payload = `${PAGINATION_KEY}:${value}`
 
         return btoa(payload)
     }

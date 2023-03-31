@@ -67,7 +67,11 @@ export class FlowRightSidebarComponent implements OnInit {
       );
     this.isCurrentStepPollingTrigger$ = this.currentStep$.pipe(
       switchMap((step) => {
-        if (step && step.type === TriggerType.PIECE) {
+        if (
+          step &&
+          step.type === TriggerType.PIECE &&
+          step.settings.pieceName !== 'schedule'
+        ) {
           return this.actionMetaDataService
             .getPieceMetadata(
               step.settings.pieceName,

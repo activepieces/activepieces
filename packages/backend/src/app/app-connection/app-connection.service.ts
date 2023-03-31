@@ -97,7 +97,6 @@ export const appConnectionService = {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: AppConnectionEntity,
-            paginationKeys: ['created'],
             query: {
                 limit,
                 order: 'ASC',

@@ -7,8 +7,14 @@ export const UpsertInstanceRequest = Type.Object({
     status: Type.Enum(InstanceStatus),
 });
 
-export type UpsertInstanceRequest = 
+export type UpsertInstanceRequest =
     Omit<Static<typeof UpsertInstanceRequest>, "collectionId">
     & {
         collectionId: CollectionId;
     };
+
+export const UpdateInstanceRequest = Type.Object({
+    status: Type.Enum(InstanceStatus),
+});
+
+export type UpdateInstanceRequest = Static<typeof UpdateInstanceRequest>;

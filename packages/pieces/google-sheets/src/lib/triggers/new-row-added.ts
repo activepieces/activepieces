@@ -15,36 +15,20 @@ export const newRowAdded = createTrigger({
     sheet_id: googleSheetsCommon.sheet_id
   },
   sampleData: {
-    "value": sampleData
+    "value": sampleData,
+    "rowId": 1
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
     const sheetId = context.propsValue['sheet_id'];
     const accessToken = context.propsValue['authentication']['access_token'];
     const spreadSheetId = context.propsValue['spreadsheet_id'];
-    const rowCount = (await context.store?.get<number>("rowCount_testing")) ?? 0;
     const allValues =  await googleSheetsCommon.getValues(spreadSheetId, accessToken, sheetId);    
     if(!allValues)
     {
       return [];
     }
-    context.store?.put("rowCount_testing", allValues.length);
-    if(rowCount ===0)
-    {
-      return allValues.slice(0,5).map(s => {
-        return {
-          value:s
-        }
-      });;
-    }
-    else
-    {
-      return allValues.slice(0,5).map(s => {
-        return {
-          value:s
-        }
-      });
-    }
+    return allValues.slice(Math.max(allValues.length-5,0));
   },
   async onEnable(context) {
     const sheetId = context.propsValue['sheet_id'];
@@ -57,7 +41,7 @@ export const newRowAdded = createTrigger({
   async onDisable(context) {
     console.log("Disabling new google sheets trigger");
    },
-  async run(context) {
+   async run(context) {
     const sheetId = context.propsValue['sheet_id'];
     const accessToken = context.propsValue['authentication']['access_token'];
     const spreadSheetId = context.propsValue['spreadsheet_id'];
@@ -66,14 +50,16 @@ export const newRowAdded = createTrigger({
     let payloads: unknown[] = [];
     console.log(`The spreadsheet ${spreadSheetId} has now ${currentValues.length} rows, previous # of rows ${rowCount}`);
     if (currentValues.length > rowCount) {
-      payloads = currentValues.slice(rowCount).map(value => {
+      payloads = currentValues.slice(rowCount).map((value, index) => {
+        const rowIndex = rowCount + index;
         return {
-          value: value
+          value: value,
+          rowId: rowIndex
         }
       });
     }
     context.store?.put("rowCount", currentValues.length);
     return payloads;
-  },
+},
 });
 

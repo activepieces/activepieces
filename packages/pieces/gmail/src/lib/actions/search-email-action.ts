@@ -5,8 +5,8 @@ import { GmailProps } from "../common/props";
 
 export const gmailSearchMail = createAction({
   name: 'gmail_search_mail',
-  description: 'Search for an email in your Gmail account',
-  displayName: 'Search Email',
+  description: 'Find for an email in your Gmail account',
+  displayName: 'Find Email',
   props: {
     authentication: GmailProps.authentication,
     subject: GmailProps.subject,

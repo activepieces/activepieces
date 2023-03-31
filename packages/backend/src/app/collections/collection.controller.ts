@@ -104,7 +104,6 @@ export const collectionController = async (fastify: FastifyInstance) => {
             return await collectionService.list(request.principal.projectId, request.query.cursor, request.query.limit ?? DEFAULT_PAGE_SIZE)
         },
     )
-
     fastify.post(
         '/',
         {

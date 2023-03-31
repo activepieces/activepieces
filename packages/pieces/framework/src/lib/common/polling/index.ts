@@ -34,7 +34,7 @@ export const pollingHelper = {
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED: {
                 const lastEpochMillSeconds = (await store.get<number>("lastPoll")) ?? 0;
-                const items = await polling.items({ propsValue, lastFetchEpochMS: lastEpochMillSeconds});
+                const items = await polling.items({ propsValue, lastFetchEpochMS: lastEpochMillSeconds });
                 const newLastEpochMillSeconds = items.reduce((acc, item) => Math.max(acc, item.epochMillSeconds), lastEpochMillSeconds);
                 await store.put("lastPoll", newLastEpochMillSeconds);
                 return items.filter(f => f.epochMillSeconds > lastEpochMillSeconds).map((item) => item.data);
@@ -74,11 +74,25 @@ export const pollingHelper = {
         }
     },
     async test<INPUT>(polling: Polling<INPUT>, { propsValue }: { store: Store, propsValue: INPUT }): Promise<unknown[]> {
+        let items = [];
         switch (polling.strategy) {
-            case DedupeStrategy.TIMEBASED:
-                return (await polling.items({ propsValue , lastFetchEpochMS: 0 }));
-            case DedupeStrategy.LAST_ITEM:
-                return (await polling.items({ propsValue }));
+            case DedupeStrategy.TIMEBASED: {
+                items = await polling.items({ propsValue, lastFetchEpochMS: 0 });
+                break;
+            }
+            case DedupeStrategy.LAST_ITEM: {
+                items = await polling.items({ propsValue });
+                break;
+            }
         }
+        return getFirstFiveOrAll(items.map((item) => item.data));
+    }
+}
+
+function getFirstFiveOrAll(array: unknown[]) {
+    if (array.length <= 5) {
+        return array;
+    } else {
+        return array.slice(0, 5);
     }
 }

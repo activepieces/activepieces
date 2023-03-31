@@ -20,14 +20,14 @@
   <ng-template #testTriggerTemplate>
     <div class="ap-my-3 ap-px-2">
       <div class="ap-typography-body-1 ap-text-center ap-mb-1">
-        Test Trigger First
+        Send sample data first
       </div>
       <div class="ap-typography-body-2 ap-text-center ap-mb-3">
-        This trigger needs to be tested in order to view its data.
+        This trigger needs to have data sent to it, to use as sample data
       </div>
       <div class="ap-text-center">
         <app-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
-          (click)="$event.stopPropagation(); selectStep()">Go to step
+          (click)="$event.stopPropagation(); selectStep()">Go to trigger
         </app-button>
       </div>
     </div>

@@ -9,5 +9,5 @@ export interface BaseModel<T> {
 export const BaseModelSchema = {
   id: Type.String(),
   created: Type.String(),
-  update: Type.String(),
+  updated: Type.String(),
 }
