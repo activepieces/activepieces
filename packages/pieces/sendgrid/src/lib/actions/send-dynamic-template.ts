@@ -42,11 +42,11 @@ export const sendDynamicTemplate = createAction({
         const { to, from, template_id, template_data, reply_to, from_name } = context.propsValue;
         const message = {
             personalizations: to.map(email => ({
-                to: [{ email: (email as string).trim() }]
+                to: [{ email: (email as string).trim() }],
+                dynamic_template_data: template_data,
             })),
             from: { email: from, name: from_name },
             reply_to: { email: reply_to ?? from },
-            dynamic_template_data: template_data,
             template_id
         };
 
