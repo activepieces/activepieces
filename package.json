@@ -37,6 +37,7 @@
     "@ngrx/effects": "^15.1.0",
     "@ngrx/store": "^15.1.0",
     "@ngrx/store-devtools": "^15.1.0",
+    "@nrwl/nx-cloud": "^15.3.4",
     "@sentry/node": "^7.38.0",
     "@sinclair/typebox": "^0.26.3",
     "airtable": "^0.11.6",
