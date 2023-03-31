@@ -9,6 +9,7 @@ export const youtube = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/youtube.png',
   version: packageJson.version,
   authors: [
+    "abuaboud"
   ],
   actions: [
   ],

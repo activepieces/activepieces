@@ -8,6 +8,7 @@ import {
     ExecuteEventParserOperation,
     ExecuteFlowOperation,
     ExecutePropsOptions,
+    ExecuteTestOrRunTriggerResponse,
     ExecuteTriggerOperation,
     ExecuteTriggerResponse,
     ExecutionOutput,
@@ -79,7 +80,7 @@ export const engineHelper = {
         return result as ParseEventResponse;
     },
 
-    async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | ExecuteTriggerResponse> {
+    async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | ExecuteTestOrRunTriggerResponse | ExecuteTriggerResponse> {
         const sandbox = sandboxManager.obtainSandbox();
         let result;
         try {
@@ -102,7 +103,10 @@ export const engineHelper = {
         finally {
             sandboxManager.returnSandbox(sandbox.boxId);
         }
-        if (operation.hookType === TriggerHookType.RUN || operation.hookType === TriggerHookType.TEST) {
+        if (operation.hookType === TriggerHookType.TEST) {
+            return result as ExecuteTestOrRunTriggerResponse;
+        }
+        if (operation.hookType === TriggerHookType.RUN) {
             return result as unknown[];
         }
         return result as void;
