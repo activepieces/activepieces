@@ -1,8 +1,8 @@
-import { createTrigger } from '@activepieces/framework';
+import { createTrigger, DedupeStrategy, Polling, pollingHelper } from '@activepieces/framework';
 import { TriggerStrategy } from '@activepieces/shared';
-import { wordpressCommon } from '../common';
+import { wordpressCommon, WordpressConnection } from '../common';
+import dayjs from "dayjs";
 
-const triggerNameInStore = 'wordpress_new_post_trigger';
 export const wordpressNewPost = createTrigger({
   name: 'newPost',
   displayName: 'New Post',
@@ -111,45 +111,57 @@ export const wordpressNewPost = createTrigger({
   description: 'Triggers when a new post is published',
   props: {
     connection: wordpressCommon.connection,
-    website_url: wordpressCommon.website_url,
     authors: wordpressCommon.authors
   },
   type: TriggerStrategy.POLLING,
-  async onEnable(context) {
-    const currentDate = (new Date()).toISOString();
-    await context.store?.put<string>(triggerNameInStore, currentDate);
+  async test(ctx) {
+    return await pollingHelper.test(polling, {
+      store: ctx.store,
+      propsValue: ctx.propsValue
+    });
   },
-  async onDisable(context) {
-    await context.store.put<undefined>(triggerNameInStore, undefined);
+  async onEnable(ctx) {
+    await pollingHelper.onEnable(polling, {
+      store: ctx.store,
+      propsValue: ctx.propsValue
+    });
   },
-  async run(context) {
-    let payloads: unknown[] = [];
-    const lastPollDate = await context.store.get<string>(triggerNameInStore);
-    if (!lastPollDate) {
-      throw Error("Activepieces- last poll date wasn't found");
-    }
-
-    let pageCursor = 1;
-    const getPostsParams = {
-      websiteUrl: context.propsValue['website_url'].toString().trim(),
-      username: context.propsValue['connection']['username'],
-      password: context.propsValue['connection']['password'],
-      authors: context.propsValue['authors'],
-      afterDate: lastPollDate,
-      page: pageCursor
-    };
-    let newPosts = await wordpressCommon.getPosts(getPostsParams);
-    //This means there is only one page
-    if (newPosts.totalPages === 0) {
-      payloads = [...newPosts.posts];
-    }
-    while (newPosts.posts.length > 0 && pageCursor <= newPosts.totalPages) {
-      payloads = [...payloads, ...newPosts.posts];
-      pageCursor++;
-      newPosts = await wordpressCommon.getPosts({ ...getPostsParams, page: pageCursor });
-    }
-    const currentDate = (new Date()).toISOString();
-    await context.store.put<string>(triggerNameInStore, currentDate);
-    return payloads;
+  async onDisable(ctx) {
+    await pollingHelper.onDisable(polling, {
+      store: ctx.store,
+      propsValue: ctx.propsValue
+    });
   },
+  async run(ctx) {
+    return await pollingHelper.poll(polling, {
+      store: ctx.store,
+      propsValue: ctx.propsValue
+    });
+  }
 });
+
+
+const polling: Polling<{ connection: WordpressConnection, authors: string | undefined }> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ propsValue, lastFetchEpochMS }) => {
+    const items = await getPosts(propsValue.connection, propsValue.authors!, lastFetchEpochMS);
+    return items.map((item) => ({
+      epochMilliSeconds: dayjs(item.date).valueOf(),
+      data: item,
+    }));
+  }
+}
+
+
+const getPosts = async (connection: WordpressConnection, authors: string, startDate: number) => {
+  const getPostsParams = {
+    websiteUrl: connection['website_url'].toString().trim(),
+    username: connection['username'],
+    password: connection['password'],
+    authors: authors,
+    afterDate: dayjs(startDate).toISOString(),
+    page: 1
+  };
+  return (await wordpressCommon.getPosts(getPostsParams)).posts;
+}
+
