@@ -152,7 +152,7 @@ function snakeToNormal(str: string): string {
 
 
 async function buildExamples(userQuestion: string): Promise<string> {
-    const context = [];
+    const context: unknown[] = [];
     for (const piece of pieces) {
         const actions = Object.keys(piece.metadata().actions);
         const triggers = Object.keys(piece.metadata().triggers);
@@ -165,7 +165,7 @@ async function buildExamples(userQuestion: string): Promise<string> {
     const flowPrompt = (await fs.readFile('./packages/ee/magic-wand/openai/find_examples_prompt.txt', 'utf8')).replace('{question}', userQuestion).replace('{context}', JSON.stringify(context));
     const openAiResponse = await callOpenAI(flowPrompt);
     logger.info("Examples to Provide " + JSON.stringify(openAiResponse));
-    const flowExamples = [];
+    const flowExamples: unknown[] = [];
     const examplesOutput = JSON.parse(openAiResponse);
     for (let i = 0; i < examplesOutput.length; i++) {
         const pieceName = examplesOutput[i].pieceName;
