@@ -22,7 +22,7 @@
               [applyClass]="true">
             </svg-icon>
           </div>
-          <div *ngIf="!opt.label.isWebhook" matTooltip="Checks for changes every 5 minutes"
+          <div *ngIf="!opt.label.isWebhook && pieceName !== 'schedule'" matTooltip="Checks for changes every 5 minutes"
             class="ap-rounded-full  ap-drop-shadow-md ap-min-h-[30px] ap-justify-center ap-min-w-[30px] ap-flex ap-items-center">
             <svg-icon src="assets/img/custom/triggers/periodic.svg" class="ap-w-[25px] ap-h-[25px] ap-fill-body"
               [applyClass]="true">

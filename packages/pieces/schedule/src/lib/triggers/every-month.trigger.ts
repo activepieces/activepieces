@@ -4,7 +4,7 @@ import { DAY_HOURS, MONTH_DAYS,  validateHours,  validateMonthDays  } from "../c
 
 export const everyMonthTrigger= createTrigger({
     name: 'every_month',
-    displayName: 'Every Month',
+    displayName: 'Every Month (UTC+0)',
     description: 'Triggers the current flow every month',
     type: TriggerStrategy.POLLING,
     sampleData: {},

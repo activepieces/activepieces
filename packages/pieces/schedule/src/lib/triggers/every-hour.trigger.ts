@@ -4,7 +4,7 @@ import { createTrigger, Property } from "@activepieces/framework";
 
 export const everyHourTrigger= createTrigger({
     name: 'every_hour',
-    displayName: 'Every Hour',
+    displayName: 'Every Hour (UTC+0)',
     description: 'Triggers the current flow every hour',
     type: TriggerStrategy.POLLING,
     sampleData: {},
@@ -22,7 +22,7 @@ export const everyHourTrigger= createTrigger({
     run(ctx) {
         const cronExpression = ctx.propsValue.run_on_weekends? `0 * * * *` : `0 * * * 1-5`
         return Promise.resolve([{
-            cronExpression:cronExpression
+            cron_expression:cronExpression
         }]);
     },
     onDisable: async () => {

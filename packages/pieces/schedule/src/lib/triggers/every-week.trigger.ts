@@ -4,7 +4,7 @@ import { DAY_HOURS, validateWeekDays, validateHours, WEEK_DAYS,  } from "../comm
 
 export const everyWeekTrigger= createTrigger({
     name: 'every_week',
-    displayName: 'Every Week',
+    displayName: 'Every Week (UTC+0)',
     description: 'Triggers the current flow every week',
     type: TriggerStrategy.POLLING,
     sampleData: {},

@@ -4,7 +4,7 @@ import { DAY_HOURS, validateHours,  } from "../common";
 
 export const everyDayTrigger= createTrigger({
     name: 'every_day',
-    displayName: 'Every Day',
+    displayName: 'Every Day (UTC+0)',
     description: 'Triggers the current flow every day',
     type: TriggerStrategy.POLLING,
     sampleData: {},
