@@ -2,54 +2,45 @@ import { AuthenticationType, BasicAuthPropertyValue, httpClient, HttpMethod, Htt
 
 export type WordpressMedia = { id: string, title: { rendered: string } }
 
-export type WordpressConnection = {
-    website_url: string,
-    username: string;
-    password: string;
-}
-
 // TODO This needs a better description
 const markdownPropertyDescription = `
-To use this piece, your Wordpress website needs basic authentication. However, Wordpress does not support basic authentication by default. 
-
-To enable it, please download and install the plugin available at this repository: https://github.com/WP-API/Basic-Auth
+Enable basic authentication for your Wordpress website by downloading and installing the plugin from this repository: https://github.com/WP-API/Basic-Auth.
 `
 
 export const wordpressCommon = {
-    connection: Property.CustomAuth({
+    connection: Property.BasicAuth({
         displayName: "Connection",
-        description: markdownPropertyDescription,
         required: true,
-        props: {
-            website_url: Property.ShortText({
-                displayName: 'Website URL',
-                required: true,
-                description: "URL of the wordpress url i.e https://www.example-website.com"
-            }),
-            username: Property.ShortText({
-                displayName: "Username",
-                required: true
-            }),
-            password: Property.SecretText({
-                displayName: "Password",
-                required: true,
-            })
-        }
+        description: markdownPropertyDescription,
+        username: Property.ShortText({
+            displayName: "Username",
+            required: true
+        }),
+        password: Property.SecretText({
+            displayName: "Password",
+            required: true,
+        }),
+    }),
+    website_url: Property.ShortText({
+        displayName: 'Website URL',
+        required: true,
+        description: "URL of the wordpress url i.e https://www.example-website.com"
     }),
     authors: Property.Dropdown({
         displayName: 'Authors',
         required: false,
-        refreshers: ['connection'],
+        refreshers: ['connection', 'website_url'],
         options: async (props) => {
-            const connection = props['connection'] as WordpressConnection;
-            if (!connection?.username || !connection?.password || !connection?.website_url) {
+            const connection = props['connection'] as BasicAuthPropertyValue;
+            const websiteUrl = props['website_url'] as string;
+            if (!connection?.username || !connection?.password || !websiteUrl) {
                 return {
                     disabled: true,
                     placeholder: 'Connect your account first',
                     options: [],
                 };
             }
-            if (!wordpressCommon.urlExists(connection.website_url.trim())) {
+            if (!wordpressCommon.urlExists(websiteUrl.trim())) {
                 return {
                     disabled: true,
                     placeholder: 'Incorrect website url',
@@ -59,7 +50,7 @@ export const wordpressCommon = {
             const authProp: BasicAuthPropertyValue = props['connection'] as BasicAuthPropertyValue;
             const request: HttpRequest = {
                 method: HttpMethod.GET,
-                url: `${connection.website_url.toString().trim()}/wp-json/wp/v2/users`,
+                url: `${websiteUrl.trim()}/wp-json/wp/v2/users`,
                 authentication: {
                     type: AuthenticationType.BASIC,
                     username: authProp.username,

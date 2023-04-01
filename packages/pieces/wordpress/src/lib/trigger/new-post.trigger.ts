@@ -1,10 +1,10 @@
-import { createTrigger, DedupeStrategy, Polling, pollingHelper } from '@activepieces/framework';
+import { BasicAuthPropertyValue, createTrigger, DedupeStrategy, Polling, pollingHelper } from '@activepieces/framework';
 import { TriggerStrategy } from '@activepieces/shared';
-import { wordpressCommon, WordpressConnection } from '../common';
+import { wordpressCommon } from '../common';
 import dayjs from "dayjs";
 
 export const wordpressNewPost = createTrigger({
-  name: 'newPost',
+  name: 'new_post',
   displayName: 'New Post',
   sampleData: {
     "id": 60,
@@ -111,6 +111,7 @@ export const wordpressNewPost = createTrigger({
   description: 'Triggers when a new post is published',
   props: {
     connection: wordpressCommon.connection,
+    website_url: wordpressCommon.website_url,
     authors: wordpressCommon.authors
   },
   type: TriggerStrategy.POLLING,
@@ -141,10 +142,10 @@ export const wordpressNewPost = createTrigger({
 });
 
 
-const polling: Polling<{ connection: WordpressConnection, authors: string | undefined }> = {
+const polling: Polling<{ website_url: string, connection: BasicAuthPropertyValue, authors: string | undefined }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ propsValue, lastFetchEpochMS }) => {
-    const items = await getPosts(propsValue.connection, propsValue.authors!, lastFetchEpochMS);
+    const items = await getPosts(propsValue.connection, propsValue.website_url, propsValue.authors!, lastFetchEpochMS);
     return items.map((item) => ({
       epochMilliSeconds: dayjs(item.date).valueOf(),
       data: item,
@@ -153,9 +154,9 @@ const polling: Polling<{ connection: WordpressConnection, authors: string | unde
 }
 
 
-const getPosts = async (connection: WordpressConnection, authors: string, startDate: number) => {
+const getPosts = async (connection: BasicAuthPropertyValue, website_url: string, authors: string, startDate: number) => {
   const getPostsParams = {
-    websiteUrl: connection['website_url'].toString().trim(),
+    websiteUrl: website_url.toString().trim(),
     username: connection['username'],
     password: connection['password'],
     authors: authors,
