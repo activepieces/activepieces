@@ -7,6 +7,7 @@ import { blackbaud } from '@activepieces/piece-blackbaud';
 import { calcom } from '@activepieces/piece-cal-com';
 import { calendly } from '@activepieces/piece-calendly';
 import { clickup } from '@activepieces/piece-clickup';
+import { convertkit } from '@activepieces/piece-convertkit';
 import { csv } from '@activepieces/piece-csv';
 import { discord } from '@activepieces/piece-discord';
 import { drip } from '@activepieces/piece-drip';
@@ -59,6 +60,7 @@ export const pieces: Piece[] = [
     calendly,
     csv,
     clickup,
+    convertkit,
     discord,
     drip,
     dropbox,
