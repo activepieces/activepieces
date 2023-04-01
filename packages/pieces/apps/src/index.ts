@@ -3,6 +3,7 @@ import { airtable } from '@activepieces/piece-airtable';
 import { asana } from '@activepieces/piece-asana';
 import { bannerbear } from '@activepieces/piece-bannerbear';
 import { binance } from '@activepieces/piece-binance';
+import { bigcommerce } from '@activepieces/piece-bigcommerce';
 import { blackbaud } from '@activepieces/piece-blackbaud';
 import { calcom } from '@activepieces/piece-cal-com';
 import { calendly } from '@activepieces/piece-calendly';
@@ -54,6 +55,7 @@ export const pieces: Piece[] = [
     asana,
     bannerbear,
     binance,
+    bigcommerce,
     blackbaud,
     calcom,
     calendly,
