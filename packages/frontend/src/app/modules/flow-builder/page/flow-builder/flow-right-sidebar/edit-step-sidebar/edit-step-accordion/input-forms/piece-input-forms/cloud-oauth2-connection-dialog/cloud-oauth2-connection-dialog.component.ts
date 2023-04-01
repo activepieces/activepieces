@@ -220,7 +220,6 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     };
   }
 
-
   getTokenAndUrl() {
     let authUrl = this.pieceAuthConfig.authUrl!;
     let tokenUrl = this.pieceAuthConfig.tokenUrl!;
