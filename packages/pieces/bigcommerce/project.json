@@ -1,0 +1,36 @@
+{
+  "name": "pieces-bigcommerce",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/bigcommerce/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/bigcommerce",
+        "tsConfig": "packages/pieces/bigcommerce/tsconfig.lib.json",
+        "packageJson": "packages/pieces/bigcommerce/package.json",
+        "main": "packages/pieces/bigcommerce/src/index.ts",
+        "assets": [
+          "packages/pieces/bigcommerce/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/bigcommerce/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
