@@ -7,9 +7,9 @@ export const sendEmail = createAction({
     description: "Send a text or HTML email",
     props: {
         authentication: sendgridCommon.authentication,
-        to: Property.ShortText({
+        to: Property.Array({
             displayName: 'To',
-            description: 'Emails of the recipients, separated by commas (,)',
+            description: 'Emails of the recipients',
             required: true,
         }),
         from: Property.ShortText({
@@ -54,37 +54,33 @@ export const sendEmail = createAction({
         }),
     },
     async run(context) {
-        const configsWithoutAuthentication: Record<string, unknown> = { ...context.propsValue };
-        delete configsWithoutAuthentication['authentication'];
-
-        const message = {
-            personalizations: (configsWithoutAuthentication['to'] as string).split(',').map(x => {
-                return {
-                    to: [{
-                        email: x.trim()
-                    }]
-                }
-            }),
-            from: {
-                email: configsWithoutAuthentication['from'],
-                name: configsWithoutAuthentication['from_name']
-            },
-            reply_to: {
-                email: configsWithoutAuthentication['reply_to']
-            },
-            subject: configsWithoutAuthentication['subject'],
-            content: [
-                {
-                    type: configsWithoutAuthentication['content_type'] == 'text' ? 'text/plain' : 'text/html',
-                    value: configsWithoutAuthentication['content']
-                }
-            ],
-        };
-
+        const {to, from, from_name, reply_to, subject, content_type, content} = context.propsValue;
         const request: HttpRequest = {
             method: HttpMethod.POST,
             url: `${sendgridCommon.baseUrl}/mail/send`,
-            body: message,
+            body: {
+                personalizations: to.map(x => {
+                    return {
+                        to: [{
+                            email: (x as string).trim()
+                        }]
+                    }
+                }),
+                from: {
+                    email: from,
+                    name: from_name
+                },
+                reply_to: {
+                    email: reply_to??from
+                },
+                subject: subject,
+                content: [
+                    {
+                        type:  content_type == 'text' ? 'text/plain' : 'text/html',
+                        value: content
+                    }
+                ],
+            },
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: context.propsValue.authentication,

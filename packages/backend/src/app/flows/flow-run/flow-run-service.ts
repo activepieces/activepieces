@@ -16,19 +16,19 @@ import {
     TelemetryEventName,
     ApEdition,
 } from '@activepieces/shared'
-import { getEdition } from '../helper/secret-helper'
-import { collectionRepo } from '../collections/collection.service'
-import { databaseConnection } from '../database/database-connection'
-import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { buildPaginator } from '../helper/pagination/build-paginator'
-import { paginationHelper } from '../helper/pagination/pagination-utils'
-import { Order } from '../helper/pagination/paginator'
-import { telemetry } from '../helper/telemetry.utils'
+import { getEdition } from '../../helper/secret-helper'
+import { collectionRepo } from '../../collections/collection.service'
+import { databaseConnection } from '../../database/database-connection'
+import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { Order } from '../../helper/pagination/paginator'
+import { telemetry } from '../../helper/telemetry.utils'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { usageService } from '@ee/billing/backend/usage.service'
-import { logger } from '../helper/logger'
-import { notifications } from '../helper/notifications'
+import { logger } from '../../helper/logger'
+import { notifications } from '../../helper/notifications'
 
 export const repo = databaseConnection.getRepository(FlowRunEntity)
 

@@ -16,14 +16,14 @@ import {
     TelemetryEventName,
     TriggerType,
 } from '@activepieces/shared'
-import { flowVersionService } from './flow-version/flow-version.service'
-import { paginationHelper } from '../helper/pagination/pagination-utils'
-import { buildPaginator } from '../helper/pagination/build-paginator'
-import { createRedisLock } from '../database/redis-connection'
+import { flowVersionService } from '../flow-version/flow-version.service'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { createRedisLock } from '../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRepo } from './flow.repo'
-import { instanceSideEffects } from '../instance/instance-side-effects'
-import { telemetry } from '../helper/telemetry.utils'
+import { instanceSideEffects } from '../../instance/instance-side-effects'
+import { telemetry } from '../../helper/telemetry.utils'
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {

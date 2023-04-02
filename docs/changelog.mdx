@@ -11,6 +11,49 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+## 04/02/2023
+
+<Tip>
+Please upgrade your instance to ensure that you can see the latest pieces, as some new pieces may not be compatible with older versions.
+</Tip>
+
+**Pieces:**
+- SendinBlue: Create or Update Contacts Action
+- Constant Contact: Create or Update Contact
+- Salesforce: New Record / Updated Record Trigger
+- Shopify: New Cancelled Order / New Customer / New Paid Order / New Order Trigger
+- Mastodon: Post Status Action
+- Mattermost: Send Message to Channel
+- Google Sheets: Delete Row Action
+- SMTP Piece: Send Email
+- MailerLite: Create or Update Subscriber
+- Zendesk: New Ticket in View
+- ZohoCrm: New Contact Trigger
+- Sendgrid: Send Dynamic Template Email Action
+
+**Enhancements:**
+- Pieces now have authentication instructions without the need to refer to the documentation.
+- Polling Triggers now have a test button to get the most recent items.
+- Collection statuses now appear in the main dashboard to know whether they are published or not.
+
+**Bug Fixes:**
+- Polling triggers used to run sequentially; now they are concurrent by configurable environment variable.
+- Branch Conditions "Exists" and "Does not Exist" are now working.
+- Gmail Piece: Search Email used to take a long time; now it returns one email.
+- OAuth2: Sometimes the OAuth2 connection popup closes suddenly due to extensions sending browser events. This is now fixed.
+
+**Chore:**
+- Added polling library for contributors.
+- Added custom authentication property in piece framework.
+
+## Contributors
+* @Willianwg created MailerLite
+* @kanarelo created SendInBlue.
+* @abaza738 created SMTP piece.
+
+**Full Changelog:**
+https://github.com/activepieces/activepieces/compare/0.3.8...0.3.9
+
 ## 03/27/2023
 
 <Tip>
