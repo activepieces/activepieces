@@ -39,6 +39,7 @@ export class FlowRightSidebarComponent implements OnInit {
   elevateResizer$: Observable<void>;
   animateSectionsHeightChange = false;
   isCurrentStepPollingTrigger$: Observable<boolean>;
+  currentStepPieceVersion$: Observable<string>;
   constructor(
     private store: Store,
     private ngZone: NgZone,
@@ -48,6 +49,21 @@ export class FlowRightSidebarComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.currentStepPieceVersion$ = this.store
+      .select(BuilderSelectors.selectCurrentStepPieceVersionAndName)
+      .pipe(
+        switchMap((res) => {
+          return this.actionMetaDataService.getPiecesManifest().pipe(
+            map((manifest) => {
+              const piece = manifest.find((p) => p.name === res?.pieceName);
+              if (piece && piece.version === res?.version) {
+                return `${res.version} (latest)`;
+              }
+              return res?.version || '';
+            })
+          );
+        })
+      );
     this.rightSidebarType$ = this.store.select(
       BuilderSelectors.selectCurrentRightSideBarType
     );
@@ -119,7 +135,7 @@ export class FlowRightSidebarComponent implements OnInit {
     this.renderer2.setStyle(
       this.editStepSection.nativeElement,
       'height',
-      `calc(50% - 30px)`
+      `calc(50% - 48px)`
     );
     this.renderer2.setStyle(
       this.selectedStepResultContainer.nativeElement,

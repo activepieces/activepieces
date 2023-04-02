@@ -7,11 +7,15 @@
 
 
   <ng-container *ngIf="rightSidebarType === sidebarType.EDIT_STEP">
-    <div class="ap-relative" #editStepSection
+    <div class="ap-relative ap-pb-[18px]" #editStepSection
       [class.top-resizer-section]="(currentStep$ | async)?.type === TriggerType.WEBHOOK ||(currentStep$ | async)?.type === TriggerType.PIECE "
       [class.ap-transition-all]="animateSectionsHeightChange">
       <app-edit-step-sidebar>
       </app-edit-step-sidebar>
+      <div *ngIf="currentStepPieceVersion$ | async as version"
+        class="ap-absolute ap-left-[0px] ap-bottom-[0px] ap-bg-white ap-body-2 !ap-text-description ap-w-full ap-px-4 ap-py-1 ap-z-50">
+        v{{version}}
+      </div>
     </div>
 
     <ng-container *ngIf="currentStep$ | async as currentStep">

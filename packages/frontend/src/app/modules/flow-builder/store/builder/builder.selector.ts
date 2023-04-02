@@ -489,7 +489,18 @@ function findStepLogoUrlForMentions(
     return 'assets/img/custom/piece/code_mention.png';
   }
 }
-
+const selectCurrentStepPieceVersionAndName = createSelector(
+  selectCurrentStep,
+  (s) => {
+    if (s?.type === TriggerType.PIECE || s?.type === ActionType.PIECE) {
+      return {
+        version: s.settings.pieceVersion,
+        pieceName: s.settings.pieceName,
+      };
+    }
+    return undefined;
+  }
+);
 const selectStepLogoUrl = (stepName: string) => {
   return createSelector(
     selectAllFlowSteps,
@@ -551,4 +562,5 @@ export const BuilderSelectors = {
   selectCurrentStepSettings,
   selectStepSelectedSampleData,
   selectStepValidity,
+  selectCurrentStepPieceVersionAndName,
 };
