@@ -14,5 +14,6 @@ export interface User extends BaseModel<UserId> {
 }
 
 export enum UserStatus{
-  VERIFIED = "VERIFIED"
+  VERIFIED = "VERIFIED",
+  SHADOW = "SHADOW",
 }

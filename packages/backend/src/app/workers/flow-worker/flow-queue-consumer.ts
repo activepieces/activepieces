@@ -6,7 +6,7 @@ import { triggerUtils } from '../../helper/trigger-utils'
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from './flow-queue'
 import { flowWorker } from './flow-worker'
 import { OneTimeJobData, RepeatableJobData } from './job-data'
-import { logger } from '../../helper/logger'
+import { captureException, logger } from '../../helper/logger'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { instanceService } from '../../instance/instance.service'
@@ -49,7 +49,7 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
                 }
             }
             else {
-                throw e
+                captureException(e)
             }
         }
         logger.info(`[repeatableJobConsumer] done job.id=${job.name} job.type=${job.data.triggerType}`)

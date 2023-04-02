@@ -23,6 +23,7 @@ import { system, validateEnvPropsOnStartup } from './app/helper/system/system'
 import { SystemProp } from './app/helper/system/system-prop'
 import swagger from '@fastify/swagger'
 import { databaseConnection } from './app/database/database-connection'
+import { projectMemberModule } from '@ee/teams/backend/project-member.module'
 import { initilizeSentry, logger } from './app/helper/logger'
 import { firebaseAuthenticationModule } from '@ee/firebase-auth/backend/firebase-authentication.module'
 import { billingModule } from '@ee/billing/backend/billing.module'
@@ -141,6 +142,9 @@ const start = async () => {
         else {
             app.register(authenticationModule)
         }
+        // TODO RERMOVE
+        app.register(projectMemberModule)
+
         await app.listen({
             host: '0.0.0.0',
             port: 3000,

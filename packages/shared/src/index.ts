@@ -56,7 +56,8 @@ export { apId, ApId } from './lib/common/id-generator'
 export * from "./lib/flows/trigger-events/trigger-events-dto";
 export * from "./lib/flows/trigger-events/trigger-event";
 export {SampleDataSettings} from './lib/flows/sample-data'
-import { TypeSystem } from '@sinclair/typebox/system'
+export * from './lib/common/base-model';
 
+import { TypeSystem } from '@sinclair/typebox/system'
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 TypeSystem.ExactOptionalPropertyTypes = false;

@@ -35,6 +35,13 @@ export const UserEntity = new EntitySchema<UserSchema>({
             nullable: true,
         },
     },
+    indices: [
+        {
+            name: 'idx_user_email',
+            columns: ['email'],
+            unique: true,
+        },
+    ],
     relations: {
         projects: {
             type: 'one-to-many',
