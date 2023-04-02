@@ -24,6 +24,7 @@ import { hackernews } from '@activepieces/piece-hackernews';
 import { http } from '@activepieces/piece-http';
 import { hubspot } from '@activepieces/piece-hubspot';
 import { mailchimp } from '@activepieces/piece-mailchimp';
+import { mindee } from '@activepieces/piece-mindee';
 import { openai } from '@activepieces/piece-openai';
 import { pipedrive } from '@activepieces/piece-pipedrive';
 import { posthog } from '@activepieces/piece-posthog';
@@ -86,6 +87,7 @@ export const pieces: Piece[] = [
     hubspot,
     mailchimp,
     mailerLite,
+    mindee,
     openai,
     pipedrive,
     posthog,
