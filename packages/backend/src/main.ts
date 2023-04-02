@@ -6,7 +6,7 @@ import { authenticationModule } from './app/authentication/authentication.module
 import { collectionModule } from './app/collections/collection.module'
 import { projectModule } from './app/project/project.module'
 import { openapiModule } from './app/helper/openapi/openapi.module'
-import { flowModule } from './app/flows/flow.module'
+import { flowModule } from './app/flows/flow/flow.module'
 import { fileModule } from './app/file/file.module'
 import { piecesController } from './app/pieces/pieces.controller'
 import { tokenVerifyMiddleware } from './app/authentication/token-verify-middleware'

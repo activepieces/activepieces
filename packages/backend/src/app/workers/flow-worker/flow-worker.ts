@@ -125,8 +125,8 @@ async function downloadFiles(
             await fs.writeFile(`${buildPath}/codes/${artifact.id}.js`, artifact.data)
         }
 
-        await fs.mkdir(`${buildPath}/flows/`)
-        await fs.writeFile(`${buildPath}/flows/${flowVersion.id}.json`, JSON.stringify(flowVersion))
+        await fs.mkdir(`${buildPath}/flows/flow/`)
+        await fs.writeFile(`${buildPath}/flows/flow/${flowVersion.id}.json`, JSON.stringify(flowVersion))
 
     }
     finally {
