@@ -37,7 +37,7 @@ export const pollingHelper = {
                 const items = await polling.items({ propsValue, lastFetchEpochMS: lastEpochMilliSeconds});
                 const newLastEpochMilliSeconds = items.reduce((acc, item) => Math.max(acc, item.epochMilliSeconds), lastEpochMilliSeconds);
                 await store.put("lastPoll", newLastEpochMilliSeconds);
-                return items.filter(f => f.epochMilliSeconds > newLastEpochMilliSeconds).map((item) => item.data);
+                return items.filter(f => f.epochMilliSeconds > lastEpochMilliSeconds).map((item) => item.data);
             }
             case DedupeStrategy.LAST_ITEM: {
                 const lastItemId = (await store.get<unknown>("lastItem"));
