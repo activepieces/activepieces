@@ -155,12 +155,18 @@ const polling: Polling<{ website_url: string, connection: BasicAuthPropertyValue
 
 
 const getPosts = async (connection: BasicAuthPropertyValue, website_url: string, authors: string, startDate: number) => {
+  //Wordpress accepts date only if they come after the start of the unix time stamp in 1970
+  let afterDate = dayjs(startDate).toISOString();
+  if(startDate=== 0)
+  {
+    afterDate = dayjs(startDate).add(1,'day').toISOString();
+  }
   const getPostsParams = {
     websiteUrl: website_url.toString().trim(),
     username: connection['username'],
     password: connection['password'],
     authors: authors,
-    afterDate: dayjs(startDate).toISOString(),
+    afterDate: afterDate,
     page: 1
   };
   return (await wordpressCommon.getPosts(getPostsParams)).posts;
