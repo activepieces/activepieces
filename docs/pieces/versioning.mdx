@@ -3,18 +3,15 @@ title: "Piece Versions"
 description: ""
 ---
 
-Pieces are versioned for the sole purpose of not breaking flows with each update we roll out.
+All pieces are versioned. When you select a piece from the step picker, it ensures that the flow will not break when the piece is updated, and pieces will not be updated automatically.
 
-You can check the current step's piece version by looking under the step's settings.
+To check the current step's piece version, look under the step's settings.
 ![Piece Versions](/resources/screenshots/piece-version-screenshot.png)
-To update a step's piece version, you will need to remove the step and add it again.
+
+<Tip>
+To update a step's piece version, you need to remove the step and add it again.
+</Tip>
 
 <Warning>
-We plan to streamline the process of upgrading pieces in the future
+We plan to streamline the process of upgrading pieces in the future.
 </Warning>
-
-Semantic versioning is a standardized way of versioning software projects. It uses a three-part version number in the format `X.Y.Z`, where:
-
-**X** is the major version number, which is incremented for significant or breaking changes to the software.<br />
-**Y** is the minor version number, which is incremented for new features or functionality that is backwards-compatible with the previous version.<br />
-**Z** is the patch number, which is incremented for bug fixes and other small changes that do not add new features or break backwards compatibility.
