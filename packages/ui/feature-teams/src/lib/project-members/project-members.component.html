@@ -1,0 +1,27 @@
+<div class="ap-h-full">
+    <div class="ap-min-h-[70%]">
+        <table mat-table class="ap-w-[100%]" aria-label="Runs">
+            <ng-container matColumnDef="user">
+                <th mat-header-cell *matHeaderCellDef>Collection</th>
+                <td mat-cell *matCellDef="let run">{{ run.collectionDisplayName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="flowName">
+                <th mat-header-cell *matHeaderCellDef>Flow</th>
+                <td mat-cell *matCellDef="let run">{{ run.flowDisplayName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="started">
+                <th mat-header-cell *matHeaderCellDef>Started</th>
+                <td mat-cell *matCellDef="let run">{{ run.startTime | date: 'short' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="finished">
+                <th mat-header-cell *matHeaderCellDef>Finished</th>
+                <td mat-cell *matCellDef="let run">{{ run.finishTime | date: 'short' }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        </table>
+    </div>
+
+</div>

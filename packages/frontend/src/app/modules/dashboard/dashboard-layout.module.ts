@@ -16,6 +16,7 @@ import { PageTitleComponent } from './components/page-title/page-title.component
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { RunsLeftSnackbarComponent } from '@ee/billing/frontend/runs-left-snackbar/runs-left-snackbar.component';
 import { DeleteEntityDialogComponent } from './components/delete-enity-dialog/delete-collection-dialog.component';
+import { UiFeatureTeamsModule } from '@activepieces/ui/feature-teams';
 
 @NgModule({
   declarations: [
@@ -37,6 +38,7 @@ import { DeleteEntityDialogComponent } from './components/delete-enity-dialog/de
     ReactiveFormsModule,
     FontAwesomeModule,
     NgxSkeletonLoaderModule,
+    UiFeatureTeamsModule,
   ],
   exports: [],
   providers: [],
