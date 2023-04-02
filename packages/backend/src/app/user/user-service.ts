@@ -1,4 +1,4 @@
-import { apId, SignUpRequest, User, UserId, UserStatus } from '@activepieces/shared'
+import { apId, SignUpRequest, User, UserId, UserMeta, UserStatus } from '@activepieces/shared'
 import { passwordHasher } from '../authentication/lib/password-hasher'
 import { databaseConnection } from '../database/database-connection'
 import { UserEntity } from './user-entity'
@@ -24,8 +24,17 @@ export const userService = {
         }
         return await userRepo.save(user)
     },
-    async getOne({id}: {id: UserId}): Promise<User | null> {
-        return await userRepo.findOneBy({id})
+    async getMetaInfo({id}: {id: UserId}): Promise<UserMeta | null> {
+        const user = await userRepo.findOneBy({id})
+        if(!user){
+            return null
+        }
+        return {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+        }
     },
     async getOneByEmail(query: GetOneQuery): Promise<User | null> {
         return await userRepo.findOneBy(query)

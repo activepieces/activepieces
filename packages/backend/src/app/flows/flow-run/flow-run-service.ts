@@ -28,6 +28,7 @@ import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { usageService } from '@ee/billing/backend/usage.service'
 import { logger } from '../../helper/logger'
+import { notifications } from '../../helper/notifications'
 
 export const repo = databaseConnection.getRepository(FlowRunEntity)
 
@@ -56,13 +57,17 @@ export const flowRunService = {
         flowRunId: FlowRunId,
         status: ExecutionOutputStatus,
         logsFileId: FileId | null,
-    ): Promise<FlowRun | null> {
+    ): Promise<FlowRun> {
         await repo.update(flowRunId, {
             logsFileId,
             status,
             finishTime: new Date().toISOString(),
         })
-        return await this.getOne({ id: flowRunId })
+        const flowRun = await this.getOne({ id: flowRunId })
+        notifications.notifyRun({
+            flowRun,
+        })
+        return flowRun
     },
 
     async start({ flowVersionId, collectionId, payload, environment }: StartParams): Promise<FlowRun> {
