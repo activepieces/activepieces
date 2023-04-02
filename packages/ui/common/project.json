@@ -1,0 +1,28 @@
+{
+  "name": "ui-common",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/ui/common/src",
+  "prefix": "ap",
+  "targets": {
+    "test": {
+      "executor": "@angular-devkit/build-angular:karma",
+      "options": {
+        "tsConfig": "packages/ui/common/tsconfig.spec.json",
+        "karmaConfig": "packages/ui/common/karma.conf.js",
+        "polyfills": ["zone.js", "zone.js/testing"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/ui/common/**/*.ts",
+          "packages/ui/common/**/*.html"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

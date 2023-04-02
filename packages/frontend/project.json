@@ -29,9 +29,7 @@
           "./node_modules/codemirror/theme/lucario.css",
           "packages/frontend/src/styles.scss"
         ],
-        "scripts": [
-          "node_modules/marked/marked.min.js"
-        ]
+        "scripts": ["node_modules/marked/marked.min.js"]
       },
       "configurations": {
         "ee": {

@@ -52,7 +52,7 @@ a{
   @apply ap-underline ap-text-blueLink ap-typography-caption
 }
 
-app-markdown {
+ap-markdown {
   @apply ap-typography-body-1;
   
   a {
@@ -86,7 +86,7 @@ app-builder-autocomplete-mentions-dropdown
   border-right-color: transparent;
 }
 
-app-markdown {
+ap-markdown {
   ul, ol {
       margin-top: 1em;
       margin-bottom: 1em;
