@@ -11,6 +11,7 @@ import { csv } from '@activepieces/piece-csv';
 import { discord } from '@activepieces/piece-discord';
 import { drip } from '@activepieces/piece-drip';
 import { dropbox } from '@activepieces/piece-dropbox';
+import { eventbrite } from '@activepieces/piece-eventbrite';
 import { figma } from '@activepieces/piece-figma';
 import { freshsales } from '@activepieces/piece-freshsales';
 import { github } from '@activepieces/piece-github';
@@ -71,6 +72,7 @@ export const pieces: Piece[] = [
     discord,
     drip,
     dropbox,
+    eventbrite,
     figma,
     freshsales,
     generatebanners,

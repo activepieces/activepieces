@@ -46,6 +46,9 @@
       "@activepieces/piece-discord": ["packages/pieces/discord/src/index.ts"],
       "@activepieces/piece-drip": ["packages/pieces/drip/src/index.ts"],
       "@activepieces/piece-dropbox": ["packages/pieces/dropbox/src/index.ts"],
+      "@activepieces/piece-eventbrite": [
+        "packages/pieces/eventbrite/src/index.ts"
+      ],
       "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
       "@activepieces/piece-freshsales": [
         "packages/pieces/freshsales/src/index.ts"
@@ -117,8 +120,8 @@
         "packages/pieces/wordpress/src/index.ts"
       ],
       "@activepieces/piece-youtube": ["packages/pieces/youtube/src/index.ts"],
-      "@activepieces/piece-zoho-crm": ["packages/pieces/zoho-crm/src/index.ts"],
       "@activepieces/piece-zendesk": ["packages/pieces/zendesk/src/index.ts"],
+      "@activepieces/piece-zoho-crm": ["packages/pieces/zoho-crm/src/index.ts"],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],

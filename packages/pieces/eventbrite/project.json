@@ -1,0 +1,36 @@
+{
+  "name": "pieces-eventbrite",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/eventbrite/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/eventbrite",
+        "tsConfig": "packages/pieces/eventbrite/tsconfig.lib.json",
+        "packageJson": "packages/pieces/eventbrite/package.json",
+        "main": "packages/pieces/eventbrite/src/index.ts",
+        "assets": [
+          "packages/pieces/eventbrite/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/eventbrite/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
