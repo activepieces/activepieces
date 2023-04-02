@@ -1,0 +1,36 @@
+{
+  "name": "pieces-clickfunnels",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/clickfunnels/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/clickfunnels",
+        "tsConfig": "packages/pieces/clickfunnels/tsconfig.lib.json",
+        "packageJson": "packages/pieces/clickfunnels/package.json",
+        "main": "packages/pieces/clickfunnels/src/index.ts",
+        "assets": [
+          "packages/pieces/clickfunnels/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/clickfunnels/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

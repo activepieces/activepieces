@@ -31,6 +31,9 @@
       ],
       "@activepieces/piece-cal-com": ["packages/pieces/cal-com/src/index.ts"],
       "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
+      "@activepieces/piece-clickfunnels": [
+        "packages/pieces/clickfunnels/src/index.ts"
+      ],
       "@activepieces/piece-clickup": ["packages/pieces/clickup/src/index.ts"],
       "@activepieces/piece-connections": [
         "packages/pieces/connections/src/index.ts"
@@ -117,8 +120,8 @@
         "packages/pieces/wordpress/src/index.ts"
       ],
       "@activepieces/piece-youtube": ["packages/pieces/youtube/src/index.ts"],
-      "@activepieces/piece-zoho-crm": ["packages/pieces/zoho-crm/src/index.ts"],
       "@activepieces/piece-zendesk": ["packages/pieces/zendesk/src/index.ts"],
+      "@activepieces/piece-zoho-crm": ["packages/pieces/zoho-crm/src/index.ts"],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
