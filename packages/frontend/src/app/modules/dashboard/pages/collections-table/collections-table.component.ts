@@ -115,26 +115,28 @@ export class CollectionsTableComponent implements OnInit {
     collectionDto: CollectionListDto,
     control: FormControl<boolean>
   ) {
-    control.disable();
-    this.collectionsUpdateStatusRequest$[collectionDto.id] =
-      this.instanceService
-        .updateStatus(collectionDto.id, {
-          status:
-            collectionDto.status === CollectionStatus.ENABLED
-              ? InstanceStatus.DISABLED
-              : InstanceStatus.ENABLED,
-        })
-        .pipe(
-          tap((res) => {
-            control.enable();
-            control.setValue(res.status === InstanceStatus.ENABLED);
-            this.collectionsUpdateStatusRequest$[collectionDto.id] = null;
-            collectionDto.status =
-              res.status === InstanceStatus.ENABLED
-                ? CollectionStatus.ENABLED
-                : CollectionStatus.DISABLED;
-          }),
-          map(() => void 0)
-        );
+    if (control.enabled) {
+      control.disable();
+      this.collectionsUpdateStatusRequest$[collectionDto.id] =
+        this.instanceService
+          .updateStatus(collectionDto.id, {
+            status:
+              collectionDto.status === CollectionStatus.ENABLED
+                ? InstanceStatus.DISABLED
+                : InstanceStatus.ENABLED,
+          })
+          .pipe(
+            tap((res) => {
+              control.enable();
+              control.setValue(res.status === InstanceStatus.ENABLED);
+              this.collectionsUpdateStatusRequest$[collectionDto.id] = null;
+              collectionDto.status =
+                res.status === InstanceStatus.ENABLED
+                  ? CollectionStatus.ENABLED
+                  : CollectionStatus.DISABLED;
+            }),
+            map(() => void 0)
+          );
+    }
   }
 }

@@ -119,7 +119,7 @@ export class FlowRightSidebarComponent implements OnInit {
     this.renderer2.setStyle(
       this.editStepSection.nativeElement,
       'height',
-      `calc(50% - 30px)`
+      `calc(50% - 46px)`
     );
     this.renderer2.setStyle(
       this.selectedStepResultContainer.nativeElement,
