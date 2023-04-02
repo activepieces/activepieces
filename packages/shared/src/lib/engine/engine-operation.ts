@@ -3,7 +3,7 @@ import { FlowVersion, FlowVersionId } from "../flows/flow-version";
 import { ProjectId } from "../project/project";
 
 export enum EngineOperationType {
-    EXECUTE_FLOW = "EXECEUTE_FLOW",
+    EXECUTE_FLOW = "EXECUTE_FLOW",
     EXECUTE_PROPERTY = "EXECUTE_PROPERTY",
     EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK",
     EXTRACT_EVENT_DATA = "EXTRACT_EVENT_DATA",
