@@ -22,7 +22,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { triggerUtils } from '../../helper/trigger-utils'
 import { webhookService } from '../../webhooks/webhook-service'
-import { flowService } from '../flow.service'
+import { flowService } from '../flow/flow.service'
 import { TriggerEventEntity } from './trigger-event.entity'
 
 const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
