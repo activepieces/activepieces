@@ -7,8 +7,8 @@
 
 
   <ng-container *ngIf="rightSidebarType === sidebarType.EDIT_STEP">
-    <div class="ap-relative ap-pb-[18px]" #editStepSection
-      [class.top-resizer-section]="(currentStep$ | async)?.type === TriggerType.WEBHOOK ||(currentStep$ | async)?.type === TriggerType.PIECE "
+    <div class="ap-relative" #editStepSection [class.top-resizer-section]="(currentStep$ | async)?.type === TriggerType.WEBHOOK ||
+       ((currentStep$ | async)?.type === TriggerType.PIECE && (isCurrentStepPollingTrigger$ | async)) "
       [class.ap-transition-all]="animateSectionsHeightChange">
       <app-edit-step-sidebar>
       </app-edit-step-sidebar>

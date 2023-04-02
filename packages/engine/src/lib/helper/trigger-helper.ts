@@ -91,7 +91,7 @@ export const triggerHelper = {
             output: []
           }
         }
-      case TriggerHookType.RUN:
+      case TriggerHookType.RUN: {
         if (trigger.type === TriggerStrategy.APP_WEBHOOK) {
           if (params.edition === ApEdition.COMMUNITY) {
             return [];
@@ -120,7 +120,12 @@ export const triggerHelper = {
             return [];
           }
         }
-        return trigger.run(context as any);
+        const items = await trigger.run(context as any);
+        if (!Array.isArray(items)) {
+          throw new Error(`Trigger run should return an array of items, but returned ${typeof items}`)
+        }
+        return items;
+      }
     }
   },
 }

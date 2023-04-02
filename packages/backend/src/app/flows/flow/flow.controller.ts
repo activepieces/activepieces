@@ -11,8 +11,8 @@ import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowService } from './flow.service'
 import { GuessFlowRequest } from '@activepieces/shared'
 import { flowGuessService } from '@ee/magic-wand/openai'
-import { flowVersionService } from './flow-version/flow-version.service'
-import { logger } from '../helper/logger'
+import { flowVersionService } from '../flow-version/flow-version.service'
+import { logger } from '../../helper/logger'
 
 const DEFUALT_PAGE_SIZE = 10
 
