@@ -144,7 +144,7 @@ export default class SandboxManager {
         if (SandboxManager._instance != null) {
             throw new Error('Use Singleton.instance instead of new.')
         }
-        for (let boxId = 0; boxId < 100; ++boxId) {
+        for (let boxId = 0; boxId < 1000; ++boxId) {
             this.queue.push(boxId)
         }
         SandboxManager._instance = this
