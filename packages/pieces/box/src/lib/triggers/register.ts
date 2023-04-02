@@ -10,7 +10,7 @@ interface Props {
   props?: object
 }
 
-export const boxRegisterTrigger = ({ name, event, displayName, description, sampleData, props }: Props) => createTrigger({
+export const boxRegisterTrigger = ({ name, event, displayName, description, sampleData }: Props) => createTrigger({
   name: `box_trigger_${name}`,
   displayName: displayName,
   description: description,
@@ -23,24 +23,31 @@ export const boxRegisterTrigger = ({ name, event, displayName, description, samp
       tokenUrl: 'https://api.box.com/oauth2/token',
       scope: ['manage_webhook']
     }),
-    ...(props ?? {})
+    id: Property.ShortText({
+      displayName: 'Item ID',
+      description: 'The ID of the item to trigger a webhook',
+      required: true
+    }),
+    type: Property.StaticDropdown({
+      displayName: 'Item Type',
+      description: 'The type of the item to trigger a webhook',
+      required: true,
+      options: {
+        options: [
+          { label: "File", value: "file" },
+          { label: "Folder", value: "folder" }
+        ]
+      }
+    })
   },
   sampleData: sampleData,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const target: Record<string, unknown> = {}
+    const target: Record<string, unknown> = {
+      id: context.propsValue.id,
+      type: context.propsValue.type
+    }
     const authentication: OAuth2PropertyValue = context.propsValue['authentication']
-    const body: Record<string, unknown> = {
-      address: context.webhookUrl,
-      triggers: [event]
-    }
-
-    if ('id' in context.propsValue && 'type' in context.propsValue) {
-      target['id'] = context.propsValue.id
-      target['type'] = context.propsValue.type
-      body['target'] = target
-    }
-
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.box.com/2.0/webhooks`,
@@ -48,7 +55,11 @@ export const boxRegisterTrigger = ({ name, event, displayName, description, samp
         type: AuthenticationType.BEARER_TOKEN,
         token: authentication.access_token,
       },
-      body
+      body: {
+        address: context.webhookUrl,
+        triggers: [event],
+        target: target
+      }
     }
 
     const { body: webhook } = await httpClient.sendRequest<WebhookInformation>(request);
