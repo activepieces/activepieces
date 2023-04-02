@@ -17,6 +17,7 @@ import { FlowItem } from '../../../../common/model/flow-builder/flow-item';
 import { ActionType, TriggerStrategy, TriggerType } from '@activepieces/shared';
 import { TestStepService } from '../../../service/test-step.service';
 import { ActionMetaService } from '../../../service/action-meta.service';
+import { isOverflown } from '../../../../common/utils';
 
 @Component({
   selector: 'app-flow-right-sidebar',
@@ -24,6 +25,7 @@ import { ActionMetaService } from '../../../service/action-meta.service';
   styleUrls: ['./flow-right-sidebar.component.scss'],
 })
 export class FlowRightSidebarComponent implements OnInit {
+  isOverflown = isOverflown;
   ActionType = ActionType;
   TriggerType = TriggerType;
   rightSidebarType$: Observable<RightSideBarType>;
@@ -172,5 +174,11 @@ export class FlowRightSidebarComponent implements OnInit {
   }
   resetTopResizerSectionHeight() {
     this.renderer2.removeStyle(this.editStepSection.nativeElement, 'height');
+  }
+  openVersionDocs() {
+    window.open(
+      'https://www.activepieces.com/docs/pieces/versioning',
+      '_blank'
+    );
   }
 }
