@@ -11,7 +11,7 @@ import { In } from 'typeorm'
 import { logger } from '../helper/logger'
 import { flowVersionRepo } from '../flows/flow-version/flow-version-repo'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { flowService } from '../flows/flow.service'
+import { flowService } from '../flows/flow/flow.service'
 import { triggerUtils } from '../helper/trigger-utils'
 import { instanceService } from './instance.service'
 
