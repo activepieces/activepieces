@@ -1,0 +1,36 @@
+{
+  "name": "pieces-surveymonkey",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/surveymonkey/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/surveymonkey",
+        "tsConfig": "packages/pieces/surveymonkey/tsconfig.lib.json",
+        "packageJson": "packages/pieces/surveymonkey/package.json",
+        "main": "packages/pieces/surveymonkey/src/index.ts",
+        "assets": [
+          "packages/pieces/surveymonkey/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/surveymonkey/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

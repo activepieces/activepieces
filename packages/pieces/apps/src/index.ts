@@ -33,6 +33,7 @@ import { sendinblue } from '@activepieces/piece-sendinblue';
 import { slack } from '@activepieces/piece-slack';
 import { storage } from '@activepieces/piece-store';
 import { stripe } from '@activepieces/piece-stripe';
+import { surveymonkey } from '@activepieces/piece-surveymonkey';
 import { telegramBot } from '@activepieces/piece-telegram-bot';
 import { todoist } from '@activepieces/piece-todoist';
 import { twilio } from '@activepieces/piece-twilio';
@@ -95,6 +96,7 @@ export const pieces: Piece[] = [
     slack,
     storage,
     stripe,
+    surveymonkey,
     telegramBot,
     todoist,
     twilio,
