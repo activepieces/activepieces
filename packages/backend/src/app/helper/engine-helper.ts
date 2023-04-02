@@ -92,7 +92,7 @@ export const engineHelper = {
             result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
                 edition: await getEdition(),
-                appWebhookUrl: await appEventRoutingService.getAppWebookUrl({ appName: pieceName }),
+                appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({ appName: pieceName }),
                 webhookSecret: await getWebhookSecret(operation.flowVersion),
                 workerToken: await workerToken({
                     collectionId: operation.collectionId,
