@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
-  selector: 'app-state-icon',
+  selector: 'ap-state-icon',
   templateUrl: './state-icon.component.html',
 })
 export class StateIconComponent implements OnInit {

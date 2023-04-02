@@ -2,11 +2,11 @@
     <ng-container *ngFor="let val of formArray.controls; let idx = index; let isLast = last; let isFirst=first">
         <div class="ap-flex" *ngIf="!(isLast && formArray.disabled && idx>0)">
             <div class="delete-btn-container">
-                <app-icon-button *ngIf="formArray.enabled" [width]="9" [height]="9" iconFilename="delete.svg"
+                <ap-icon-button *ngIf="formArray.enabled" [width]="9" [height]="9" iconFilename="delete.svg"
                     [tooltipText]=" !deleteButton.isHovered && !valueInput.isHovered ?'' :'Remove Item'"
                     class="delete-btn ap-z-40" [class.opacity-0]="!deleteButton.isHovered  && !valueInput.isHovered"
                     appTrackHover #deleteButton="hoverTrackerDirective"
-                    (buttonClicked)="removeValue(idx)"></app-icon-button>
+                    (buttonClicked)="removeValue(idx)"></ap-icon-button>
             </div>
 
             <div class="form-control value-control" [class.first]="isFirst && formArray.controls.length>1"
@@ -24,9 +24,9 @@
 
     </ng-container>
     <div class="ap-flex">
-        <app-button btnColor="primary" btnStyle="basic" *ngIf="formArray.enabled" (buttonClicked)="addValue()"
+        <ap-button btnColor="primary" btnStyle="basic" *ngIf="formArray.enabled" (buttonClicked)="addValue()"
             type="button" class="add-btn" btnSize="medium"> + Add Item
-        </app-button>
+        </ap-button>
         <div class="ap-flex-grow" #spacer></div>
     </div>
 

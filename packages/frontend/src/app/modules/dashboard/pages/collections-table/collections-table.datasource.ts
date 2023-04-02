@@ -9,7 +9,7 @@ import {
   catchError,
 } from 'rxjs';
 import { CollectionListDto, CollectionStatus } from '@activepieces/shared';
-import { ApPaginatorComponent } from '../../../common/components/pagination/ap-paginator.component';
+import { ApPaginatorComponent } from '@/ui/common/src/lib/components/pagination/ap-paginator.component';
 import { ProjectService } from '../../../common/service/project.service';
 import { CollectionService } from '../../../common/service/collection.service';
 import { FormControl } from '@angular/forms';

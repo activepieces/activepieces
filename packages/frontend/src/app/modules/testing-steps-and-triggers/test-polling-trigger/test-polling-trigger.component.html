@@ -10,12 +10,12 @@
                 *ngIf="currentResults.length === 0  && !hasBeenTested">
 
                 <div class="ap-relative">
-                    <app-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
+                    <ap-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
                         matTooltip="Load sample data from your account to be used in the next steps"
-                        matTooltipPosition="above"> </app-hotspot>
-                    <app-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()"
+                        matTooltipPosition="above"> </ap-hotspot>
+                    <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()"
                         [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : ''"
-                        [disabled]="(isValid$ | async) === false">Load Data</app-button>
+                        [disabled]="(isValid$ | async) === false">Load Data</ap-button>
                 </div>
             </div>
 
@@ -30,9 +30,9 @@
                     <div class="ap-flex-grow">
 
                     </div>
-                    <app-button btnColor="primary" btnStyle="stroked" btnSize="medium"
+                    <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
                         [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 'Load sample data from your account to be used in the next steps'"
-                        [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Load Data</app-button>
+                        [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Load Data</ap-button>
                 </div>
 
                 <mat-form-field class="ap-w-full ap-mt-2" appearance="outline" subscriptSizing="dynamic">
@@ -60,9 +60,9 @@
                     <div class="ap-flex-grow">
 
                     </div>
-                    <app-button btnColor="primary" btnStyle="stroked" btnSize="medium"
+                    <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
                         [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 'Load sample data from your account to be used in the next steps'"
-                        [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Load Data</app-button>
+                        [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Load Data</ap-button>
                 </div>
 
                 <p class="ap-mt-2" *ngIf="!failed">Please add some data then press "Load Data"</p>
@@ -77,7 +77,7 @@
 
 <ng-template #loadingSpinner>
     <div class="ap-flex ap-flex-grow ap-justify-center ap-items-center ap-h-[136px]">
-        <app-loading-icon class="ap-mr-[-10px]"></app-loading-icon>
+        <ap-loading-icon class="ap-mr-[-10px]"></ap-loading-icon>
     </div>
 </ng-template>
 <ng-container *ngIf="initialHistoricalData$ | async"></ng-container>

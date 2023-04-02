@@ -5,7 +5,7 @@ import { Observable, tap } from 'rxjs';
 import { DEFAULT_PAGE_SIZE, PAGE_SIZES } from './tables.utils';
 
 @Component({
-  selector: 'app-ap-paginator',
+  selector: 'ap-paginator',
   templateUrl: './ap-paginator.component.html',
 })
 export class ApPaginatorComponent implements OnInit {

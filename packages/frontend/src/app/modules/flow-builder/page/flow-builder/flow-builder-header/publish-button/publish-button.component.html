@@ -1,5 +1,5 @@
 <div [matTooltip]="(buttonTooltipText$ | async)!">
-  <app-button btnSize="medium" placement="bottom" [disabled]="disableDeployButton$ |async"
+  <ap-button btnSize="medium" placement="bottom" [disabled]="disableDeployButton$ |async"
     [class.invalid-deploy]="disableDeployButton$| async" (buttonClicked)="publish()">
     <ng-container *ngIf="collectionState$ | async as collectionState">
       <div class="ap-flex ap-items-center loading-template">
@@ -9,6 +9,6 @@
         {{ buttonText$ | async}}
       </div>
     </ng-container>
-  </app-button>
+  </ap-button>
 </div>
 <ng-container *ngIf="deploying$ | async"></ng-container>

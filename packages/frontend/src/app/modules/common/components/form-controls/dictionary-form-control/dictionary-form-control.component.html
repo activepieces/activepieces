@@ -3,11 +3,11 @@
     <div class="ap-flex" *ngIf="!(isLast && disabled && idx>0)" [formGroup]="getPair(idx)">
       <div class="delete-btn-container">
 
-        <app-icon-button [width]="9" [height]="9" iconFilename="delete.svg" *ngIf="pairs.enabled"
+        <ap-icon-button [width]="9" [height]="9" iconFilename="delete.svg" *ngIf="pairs.enabled"
           [tooltipText]=" !deleteButton.isHovered && !keyInput.isHovered && !valueInput.isHovered ?'' :'Remove Item'"
           class="delete-btn ap-z-40"
           [class.opacity-0]="!deleteButton.isHovered && !keyInput.isHovered && !valueInput.isHovered" appTrackHover
-          #deleteButton="hoverTrackerDirective" (click)="removePair(idx)"></app-icon-button>
+          #deleteButton="hoverTrackerDirective" (click)="removePair(idx)"></ap-icon-button>
       </div>
 
       <input #key name="key" class="form-control key-control" [class.first]="isFirst && pairs.controls.length>1"
@@ -30,9 +30,9 @@
 
   </ng-container>
   <div class="ap-flex">
-    <app-button btnColor="primary" btnStyle="basic" *ngIf="form.enabled" (buttonClicked)="addNewPair()" type="button"
+    <ap-button btnColor="primary" btnStyle="basic" *ngIf="form.enabled" (buttonClicked)="addNewPair()" type="button"
       class="add-btn" btnSize="medium"> + Add Item
-    </app-button>
+    </ap-button>
     <div class="ap-flex-grow" #spacer></div>
   </div>
 

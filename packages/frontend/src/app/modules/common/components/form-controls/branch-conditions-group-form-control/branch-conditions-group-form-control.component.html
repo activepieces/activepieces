@@ -18,11 +18,11 @@
     </div>
 
     <div class="ap-flex ap-gap-1 ap-mt-2 ap-justify-center" *ngIf="conditionsForm.enabled">
-        <app-button btnColor="basic" btnSize="medium" btnStyle="basic" (buttonClicked)="andButtonPressed()">+
-            And</app-button>
-        <app-button btnColor="basic" btnSize="medium" btnStyle="basic" *ngIf="isLastConditionGroup"
+        <ap-button btnColor="basic" btnSize="medium" btnStyle="basic" (buttonClicked)="andButtonPressed()">+
+            And</ap-button>
+        <ap-button btnColor="basic" btnSize="medium" btnStyle="basic" *ngIf="isLastConditionGroup"
             (buttonClicked)="orButtonPressed()">
-            + Or</app-button>
+            + Or</ap-button>
     </div>
 </form>
 <ng-container *ngIf="valueChanges$ | async"></ng-container>

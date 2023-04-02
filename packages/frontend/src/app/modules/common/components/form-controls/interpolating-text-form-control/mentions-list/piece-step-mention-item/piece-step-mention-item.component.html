@@ -9,10 +9,10 @@
     </ng-container>
 
   </div>
-  <app-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+  <ap-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
     class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
     (click)="mentionClicked.emit(_stepMention)">Select
-  </app-button>
+  </ap-button>
 
 </button>
 <ng-container *ngIf="expandSample">

@@ -12,10 +12,10 @@ import {
   DeleteEntityDialogData,
 } from '../../components/delete-enity-dialog/delete-collection-dialog.component';
 import { ConnectionsTableDataSource } from './connections-table.datasource';
-import { ApPaginatorComponent } from '../../../common/components/pagination/ap-paginator.component';
+import { ApPaginatorComponent } from '@/ui/common/src/lib/components/pagination/ap-paginator.component';
 import { ProjectService } from '../../../common/service/project.service';
 import { AppConnectionsService } from '../../../common/service/app-connections.service';
-import { DEFAULT_PAGE_SIZE } from '../../../common/components/pagination/tables.utils';
+import { DEFAULT_PAGE_SIZE } from '@/ui/common/src/lib/components/pagination/tables.utils';
 
 @Component({
   templateUrl: './connections-table.component.html',

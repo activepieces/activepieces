@@ -8,20 +8,20 @@ import {
 } from '@angular/core';
 
 @Component({
-  selector: 'app-editable-text',
+  selector: 'ap-editable-text',
   templateUrl: './editable-text.component.html',
   styleUrls: ['./editable-text.component.css'],
 })
 export class EditableTextComponent {
   @Input() value: string | undefined;
-  @Input() cssClasses: string;
+  @Input() cssClasses: string | undefined;
   @Input() allowClick = false;
   @Input() allowDoubleClick = false;
   @Input() disableEditing = false;
   @Input() viewedTextMaxWidth = '200px';
   @Output() valueChanges: EventEmitter<string> = new EventEmitter<string>();
   @Output() editingChanges: EventEmitter<boolean> = new EventEmitter<boolean>();
-  @ViewChild('editableText') editableText: ElementRef;
+  @ViewChild('editableText') editableText: ElementRef= new ElementRef(null);
   @Input() hideOverflowWhileEditing = true;
   @Input() hideOverflownTextTooltip = false;
   valueOnEditingStarted = '';

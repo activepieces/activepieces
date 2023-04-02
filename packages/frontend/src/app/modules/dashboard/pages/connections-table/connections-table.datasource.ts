@@ -1,7 +1,7 @@
 import { DataSource } from '@angular/cdk/collections';
 import { Observable, combineLatest, switchMap, tap, map } from 'rxjs';
 import { AppConnection, FlowRun } from '@activepieces/shared';
-import { ApPaginatorComponent } from '../../../common/components/pagination/ap-paginator.component';
+import { ApPaginatorComponent } from '@/ui/common/src/lib/components/pagination/ap-paginator.component';
 import { ProjectService } from '../../../common/service/project.service';
 import { AppConnectionsService } from '../../../common/service/app-connections.service';
 

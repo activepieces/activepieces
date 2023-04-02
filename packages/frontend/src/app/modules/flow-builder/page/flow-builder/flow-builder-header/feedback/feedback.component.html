@@ -1,9 +1,9 @@
-<app-button [matMenuTriggerFor]="menu" #menuTrigger="matMenuTrigger" btnStyle="basic" btnColor="basic" btnSize="medium"
+<ap-button [matMenuTriggerFor]="menu" #menuTrigger="matMenuTrigger" btnStyle="basic" btnColor="basic" btnSize="medium"
     (menuOpened)="menuOpened()">
     <div class="ap-flex ap-items-center ap-font-semibold">
         📣 Feedback
     </div>
-</app-button>
+</ap-button>
 <mat-menu #menu="matMenu" xPosition="before">
     <div (click)="$event.stopPropagation()"
         class="ap-flex ap-flex-col ap-gap-2 ap-min-w-[250px] md:ap-min-w-[325px] -ap-mt-2">
@@ -12,15 +12,15 @@
                 placeholder="Have any feedback for us? "></textarea>
         </mat-form-field>
         <div class="ap-flex ap-px-4">
-            <app-button btnSize="medium" btnColor="basic" btnStyle="stroked" placement="bottom"
+            <ap-button btnSize="medium" btnColor="basic" btnStyle="stroked" placement="bottom"
                 (click)="menuTrigger.closeMenu()">
                 Close
-            </app-button>
+            </ap-button>
             <div class="ap-flex-grow"></div>
-            <app-button btnSize="medium" placement="bottom" [loading]="sendingFeedback"
+            <ap-button btnSize="medium" placement="bottom" [loading]="sendingFeedback"
                 (buttonClicked)="sendFeedback()">
                 Send Feedback
-            </app-button>
+            </ap-button>
         </div>
         <div class="ap-px-4 ap-typography-body-2 ap-text-description">
             <span class="ap-font-semibold">Need Help?</span>&nbsp; <span><a class="!ap-typography-body-2"

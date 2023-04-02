@@ -7,6 +7,7 @@ import { SignInComponent } from './pages/sign-in/sign-in.component';
 import { CommonLayoutModule } from '../common/common-layout.module';
 import { AuthLayoutComponent } from './auth.component';
 import { SignUpComponent } from './pages/sign-up/sign-up.component';
+import { UiCommonModule } from '@/ui/common/src';
 
 @NgModule({
   imports: [
@@ -15,6 +16,7 @@ import { SignUpComponent } from './pages/sign-up/sign-up.component';
     FormsModule,
     ReactiveFormsModule,
     CommonLayoutModule,
+    UiCommonModule,
   ],
   declarations: [AuthLayoutComponent, SignInComponent, SignUpComponent],
 })

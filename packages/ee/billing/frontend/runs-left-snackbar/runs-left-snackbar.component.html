@@ -2,10 +2,10 @@
     <div class="ap-typography-1 ap-font-semibold ap-flex ap-mb-2 text-container ap-items-center">
         <div>Tasks: {{stats.runsExecuted}}/{{stats.runsCap}} (Resets in {{stats.daysLeftBeforeReset}} days)</div>
         <div class="ap-flex-grow"></div>
-        <app-button btnColor="primary" btnStyle="basic" (buttonClicked)="openPricingPlans(stats.customerPortalUrl)" type="button"
+        <ap-button btnColor="primary" btnStyle="basic" (buttonClicked)="openPricingPlans(stats.customerPortalUrl)" type="button"
             btnSize="small">
             View Plans
-        </app-button>
+        </ap-button>
     </div>
     <mat-progress-bar mode="determinate" [value]="(stats.runsExecuted/stats.runsCap )*100 "></mat-progress-bar>
 </div>

@@ -5,9 +5,9 @@
   </mat-icon>
   <app-generic-step-mention-item matTooltip="Webhook Trigger" [stepIndex]="stepIndex"
     [stepMention]="_stepMention"></app-generic-step-mention-item>
-  <app-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+  <ap-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
     class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true" (click)="openPathDialog()">Custom Path
-  </app-button>
+  </ap-button>
 </button>
 
 
@@ -26,9 +26,9 @@
         This trigger needs to have data sent to it, to use as sample data
       </div>
       <div class="ap-text-center">
-        <app-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
+        <ap-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
           (click)="$event.stopPropagation(); selectStep()">Go to trigger
-        </app-button>
+        </ap-button>
       </div>
     </div>
   </ng-template>

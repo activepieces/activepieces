@@ -3,13 +3,13 @@
     Code Editor
     <div class="ap-flex-grow"></div>
 
-    <app-button *ngIf="!readOnly" btnStyle="flat" (buttonClicked)="openNpmPackageModal()" btnSize="small">
+    <ap-button *ngIf="!readOnly" btnStyle="flat" (buttonClicked)="openNpmPackageModal()" btnSize="small">
       Add npm package
-    </app-button>
-    <app-button [loading]="testLoading" btnStyle="flat" class="ap-ml-1" btnSize="small"
+    </ap-button>
+    <ap-button [loading]="testLoading" btnStyle="flat" class="ap-ml-1" btnSize="small"
       (buttonClicked)="openTestCodeModal()">Test code
-    </app-button>
-    <app-icon-button (click)="hide()" iconFilename="minimize.svg" matTooltip="Close"></app-icon-button>
+    </ap-button>
+    <ap-icon-button (click)="hide()" iconFilename="minimize.svg" matTooltip="Close"></ap-icon-button>
   </div>
 
 
@@ -60,14 +60,14 @@
         <div class="console-size code-height-auto ap-h-full">
           <div class="ap-flex ap-flex-col ap-h-full">
             <div class="ap-flex ap-gap-2">
-              <app-button btnColor="primary"
+              <ap-button btnColor="primary"
                 [btnStyle]="selectedTab === SelectedTabInFullscreenCodeEditor.OUTPUT? 'flat':'stroked'" class="mr-2"
                 btnSize="small" (buttonClicked)="selectTab(SelectedTabInFullscreenCodeEditor.OUTPUT)"> Output
-              </app-button>
-              <app-button btnColor="primary" btnSize="small"
+              </ap-button>
+              <ap-button btnColor="primary" btnSize="small"
                 [btnStyle]="selectedTab === SelectedTabInFullscreenCodeEditor.CONSOLE? 'flat':'stroked'"
                 (buttonClicked)="selectTab(SelectedTabInFullscreenCodeEditor.CONSOLE)"> Console
-              </app-button>
+              </ap-button>
             </div>
             <div class="ap-mt-2 ap-flex-grow ap-relative">
               <form [formGroup]="testResultForm" class="ap-h-full">
@@ -79,7 +79,7 @@
               </form>
               <div class="test-code-loading-container" *ngIf="testLoading">
                 <div>
-                  <app-loading-icon [whiteLoader]="true"> </app-loading-icon>
+                  <ap-loading-icon [whiteLoader]="true"> </ap-loading-icon>
                 </div>
               </div>
             </div>

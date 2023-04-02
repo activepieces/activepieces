@@ -21,12 +21,12 @@
 
 <mat-dialog-actions align="end">
   <div class="ap-flex ap-gap-2.5">
-    <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="!!deleteFlow$">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="!!deleteFlow$">
       Cancel
-    </app-button>
-    <app-button btnSize="default" (click)=" deleteFlow()" [loading]="!!deleteFlow$" btnColor="warn">
+    </ap-button>
+    <ap-button btnSize="default" (click)=" deleteFlow()" [loading]="!!deleteFlow$" btnColor="warn">
       Confirm
-    </app-button>
+    </ap-button>
   </div>
 </mat-dialog-actions>
 

@@ -16,12 +16,13 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
 } from '../../components/delete-enity-dialog/delete-collection-dialog.component';
-import { ApPaginatorComponent } from '../../../common/components/pagination/ap-paginator.component';
 import { ProjectService } from '../../../common/service/project.service';
 import { FlowService } from '../../../common/service/flow.service';
-import { DEFAULT_PAGE_SIZE } from '../../../common/components/pagination/tables.utils';
 import { FormControl } from '@angular/forms';
 import { InstanceService } from '../../../common/service/instance.service';
+import { ApPaginatorComponent } from '@/ui/common/src/lib/components/pagination/ap-paginator.component';
+import { DEFAULT_PAGE_SIZE } from '@/ui/common/src/lib/components/pagination/tables.utils';
+
 @Component({
   templateUrl: './collections-table.component.html',
 })

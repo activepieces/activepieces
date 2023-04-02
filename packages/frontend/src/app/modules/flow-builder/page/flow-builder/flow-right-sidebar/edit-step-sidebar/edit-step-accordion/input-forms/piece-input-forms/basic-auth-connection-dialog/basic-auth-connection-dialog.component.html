@@ -47,12 +47,12 @@
 
 <mat-dialog-actions align="end">
     <div class="ap-flex ap-gap-2.5">
-        <app-button btnColor="basic" mat-dialog-close btnSize="default">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default">
             Cancel
-        </app-button>
-        <app-button btnSize="default" (click)="submit()" btnColor="primary" type="submit" [loading]="loading">
+        </ap-button>
+        <ap-button btnSize="default" (click)="submit()" btnColor="primary" type="submit" [loading]="loading">
             Save
-        </app-button>
+        </ap-button>
     </div>
 </mat-dialog-actions>
 <ng-container *ngIf="upsert$ |async"></ng-container>
