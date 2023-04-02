@@ -17,6 +17,7 @@ import { FlowItem } from '../../../../common/model/flow-builder/flow-item';
 import { ActionType, TriggerStrategy, TriggerType } from '@activepieces/shared';
 import { TestStepService } from '../../../service/test-step.service';
 import { ActionMetaService } from '../../../service/action-meta.service';
+import { isOverflown } from '../../../../common/utils';
 
 @Component({
   selector: 'app-flow-right-sidebar',
@@ -24,6 +25,7 @@ import { ActionMetaService } from '../../../service/action-meta.service';
   styleUrls: ['./flow-right-sidebar.component.scss'],
 })
 export class FlowRightSidebarComponent implements OnInit {
+  isOverflown = isOverflown;
   ActionType = ActionType;
   TriggerType = TriggerType;
   rightSidebarType$: Observable<RightSideBarType>;
@@ -39,6 +41,14 @@ export class FlowRightSidebarComponent implements OnInit {
   elevateResizer$: Observable<void>;
   animateSectionsHeightChange = false;
   isCurrentStepPollingTrigger$: Observable<boolean>;
+  currentStepPieceVersion$: Observable<
+    | {
+        version: string;
+        latest: boolean;
+        tooltipText: string;
+      }
+    | undefined
+  >;
   constructor(
     private store: Store,
     private ngZone: NgZone,
@@ -48,6 +58,7 @@ export class FlowRightSidebarComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.checkCurrentStepPieceVersion();
     this.rightSidebarType$ = this.store.select(
       BuilderSelectors.selectCurrentRightSideBarType
     );
@@ -92,6 +103,37 @@ export class FlowRightSidebarComponent implements OnInit {
     );
   }
 
+  private checkCurrentStepPieceVersion() {
+    this.currentStepPieceVersion$ = this.store
+      .select(BuilderSelectors.selectCurrentStepPieceVersionAndName)
+      .pipe(
+        switchMap((res) => {
+          if (res) {
+            return this.actionMetaDataService.getPiecesManifest().pipe(
+              map((manifest) => {
+                const piece = manifest.find((p) => p.name === res?.pieceName);
+                if (piece && piece.version === res?.version) {
+                  return {
+                    version: res.version,
+                    latest: true,
+                    tooltipText: `You are using the latest version of ${piece.displayName}. Click to learn more`,
+                  };
+                }
+                return {
+                  version: res.version,
+                  latest: false,
+                  tooltipText:
+                    `You are using an old version of ${piece?.displayName}. Click to learn more` ||
+                    ``,
+                };
+              })
+            );
+          }
+          return of(undefined);
+        })
+      );
+  }
+
   get sidebarType() {
     return RightSideBarType;
   }
@@ -119,7 +161,7 @@ export class FlowRightSidebarComponent implements OnInit {
     this.renderer2.setStyle(
       this.editStepSection.nativeElement,
       'height',
-      `calc(50% - 46px)`
+      `calc(50% - 48px)`
     );
     this.renderer2.setStyle(
       this.selectedStepResultContainer.nativeElement,
@@ -132,5 +174,11 @@ export class FlowRightSidebarComponent implements OnInit {
   }
   resetTopResizerSectionHeight() {
     this.renderer2.removeStyle(this.editStepSection.nativeElement, 'height');
+  }
+  openVersionDocs() {
+    window.open(
+      'https://www.activepieces.com/docs/pieces/versioning',
+      '_blank'
+    );
   }
 }

@@ -58,7 +58,8 @@
       "group": "Pieces",
       "pages": [
         "pieces/overview",
-        "pieces/custom-pieces"
+        "pieces/custom-pieces",
+        "pieces/versioning"
       ]
     },
     {
