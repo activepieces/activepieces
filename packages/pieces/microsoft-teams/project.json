@@ -1,0 +1,36 @@
+{
+  "name": "pieces-microsoft-teams",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/microsoft-teams/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/microsoft-teams",
+        "tsConfig": "packages/pieces/microsoft-teams/tsconfig.lib.json",
+        "packageJson": "packages/pieces/microsoft-teams/package.json",
+        "main": "packages/pieces/microsoft-teams/src/index.ts",
+        "assets": [
+          "packages/pieces/microsoft-teams/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/microsoft-teams/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
