@@ -17,7 +17,6 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["packages/*"],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
