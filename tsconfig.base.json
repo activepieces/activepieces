@@ -18,7 +18,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["packages/*"],
-      "@activepieces/engine": ["packages/engine/src/index.ts"],
+      "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-asana": ["packages/pieces/asana/src/index.ts"],
@@ -124,8 +124,7 @@
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@backend/*": ["packages/backend/src/app/*"],
       "@ee/*": ["packages/ee/*"],
-      "@frontend/*": ["packages/frontend/src/app/*"],
-      "@shared/*": ["packages/shared/src/lib/*"]
+      "@frontend/*": ["packages/frontend/src/app/*"]
     },
     "resolveJsonModule": true
   },
