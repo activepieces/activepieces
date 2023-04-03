@@ -1,4 +1,42 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { BranchCondition, singleValueConditions } from '@activepieces/shared';
+import { isValidCron } from 'cron-validator';
+
+export function branchConditionValidator(
+  control: AbstractControl
+): ValidationErrors | null {
+  const val: BranchCondition = control.value;
+  return validateCondition(val);
+}
+
+export function branchConditionGroupValidator(
+  control: AbstractControl
+): ValidationErrors | null {
+  const val: BranchCondition[] = control.value;
+  const hasError = val.some((c) => {
+    return !!validateCondition(c);
+  });
+
+  if (hasError) {
+    return { invalid: true };
+  }
+  return null;
+}
+function validateCondition(val: BranchCondition) {
+  if (!val.firstValue) {
+    return { invalidFirstValue: true };
+  }
+  if (!val.operator) {
+    return { invalidOperator: true };
+  }
+  if (
+    !singleValueConditions.find((o) => o === val.operator) &&
+    !('secondValue' in val) // Check if `val` has `secondValue` property
+  ) {
+    return { invalidSecondValue: true };
+  }  
+  return null;
+}
 
 export function containsSpecialCharacter(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -44,4 +82,25 @@ export function checkboxIsTrue(): ValidatorFn {
     }
     return null;
   };
+}
+
+export function jsonValidator(
+  control: AbstractControl
+): ValidationErrors | null {
+  try {
+    JSON.parse(control.value);
+  } catch (e) {
+    return { jsonInvalid: true };
+  }
+
+  return null;
+}
+
+export function cronJobValidator(
+  control: AbstractControl
+): ValidationErrors | null {
+  if (isValidCron(control.value, { seconds: false })) {
+    return null;
+  }
+  return { 'invalid-cron-job': true };
 }

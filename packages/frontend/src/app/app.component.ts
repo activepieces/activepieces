@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import { NavigationStart, Router } from '@angular/router';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
-import { CommonActions } from './modules/common/store/common.action';
+import { CommonActions } from '../../../ui/common/src/lib/store/common.action';
 import { FlagService } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
 import { ApFlagId } from '@activepieces/shared';

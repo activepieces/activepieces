@@ -37,7 +37,6 @@ import {
   ActionMetaService,
   DropdownState,
 } from '../../../flow-builder/service/action-meta.service';
-import { fadeInUp400ms } from '../../../../../../../ui/common/src/lib/animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
 import {
   PieceConfig,
@@ -50,10 +49,10 @@ import { BuilderSelectors } from '../../../flow-builder/store/builder/builder.se
 import deepEqual from 'deep-equal';
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
 import { InsertMentionOperation } from '../form-controls/interpolating-text-form-control/utils';
-import { jsonValidator } from '../../validators/json-validator';
 import { CodeService } from '../../../flow-builder/service/code.service';
 import { PropertyType } from '@activepieces/shared';
 import { InterpolatingTextFormControlComponent } from '../form-controls/interpolating-text-form-control/interpolating-text-form-control.component';
+import { jsonValidator, fadeInUp400ms } from '@activepieces/ui/common';
 
 type ConfigKey = string;
 

@@ -18,7 +18,7 @@ import {
   takeWhile,
   tap,
 } from 'rxjs';
-import { fadeInUp400ms } from '../../../../../../../ui/common/src/lib/animation/fade-in-up.animation';
+import { fadeInUp400ms , jsonValidator} from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/builder/builder.selector';
 import { TestRunBarComponent } from '../../page/flow-builder/test-run-bar/test-run-bar.component';
@@ -39,7 +39,6 @@ import {
   TriggerType,
 } from '@activepieces/shared';
 import { ActionMetaService } from '../../service/action-meta.service';
-import { jsonValidator } from '../../../common/validators/json-validator';
 import { initializedRun } from '../../../common/model/flow-run.interface';
 
 @Component({

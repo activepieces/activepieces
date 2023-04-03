@@ -11,7 +11,7 @@ import {
 import { map, Observable, tap } from 'rxjs';
 import { BranchCondition } from '@activepieces/shared';
 import { BranchFormValue } from '../branch-condition-form-control/branch-condition-form-control.component';
-import { branchConditionValidator } from '../../../validators/branch-condition.validator';
+import { branchConditionValidator } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-branch-conditions-group-form-control',
