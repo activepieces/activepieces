@@ -23,8 +23,8 @@ export const microsoftTeamsSendChannelMessage = createAction({
       scope: ['ChannelMessage.Send']
     }),
     team_id: Property.ShortText({
-      displayName: 'Channel ID',
-      description: 'The Id of the channel to send message via',
+      displayName: 'Team ID',
+      description: 'The Id of the team that owns the channel',
       required: true,
     }),
     channel_id: Property.ShortText({
@@ -36,7 +36,7 @@ export const microsoftTeamsSendChannelMessage = createAction({
       displayName: 'Message',
       description: 'The Message text to send to channel',
       required: true,
-    }),
+    })
   },
   sampleData: {
     "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#teams('fbe2bf47-16c8-47cf-b4a5-4b9b187c508b')/channels('19%3A4a95f7d8db4c4e7fae857bcebe0623e6%40thread.tacv2')/messages/$entity",
