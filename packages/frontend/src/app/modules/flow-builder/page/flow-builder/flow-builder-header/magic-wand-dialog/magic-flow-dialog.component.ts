@@ -8,7 +8,7 @@ import {
 import { MatDialogRef } from '@angular/material/dialog';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { Flow } from '@activepieces/shared';
-import { fadeInUp400ms } from '../../../../../../../../../ui/common/src/lib/animation/fade-in-up.animation';
+import { fadeInUp400ms } from '@activepieces/ui/common';
 import { FlowService } from '../../../../../common/service/flow.service';
 
 @Component({

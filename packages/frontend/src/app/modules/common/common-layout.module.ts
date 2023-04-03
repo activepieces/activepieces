@@ -31,7 +31,7 @@ import { CodeArtifactFormControlComponent } from './components/form-controls/cod
 import { CodeArtifactControlFullscreenComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { TestCodeFormModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/test-code-form-modal/test-code-form-modal.component';
 import { AddNpmPackageModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component';
-import { projectReducer } from '../../../../../ui/common/src/lib/store/project/project.reducer';
+import { projectReducer } from '@activepieces/ui/common';
 import { TrackHoverDirective } from './components/form-controls/dictionary-form-control/track-hover.directive';
 import { MatCardModule } from '@angular/material/card';
 import {

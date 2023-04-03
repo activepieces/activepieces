@@ -7,7 +7,7 @@ import {
 import { FlowItemDetails } from './flow-item-details';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { Observable, tap } from 'rxjs';
-import { fadeIn400ms } from '../../../../../../../../../../ui/common/src/lib/animation/fade-in.animations';
+import { fadeIn400ms } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-step-type-item',

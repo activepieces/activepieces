@@ -19,6 +19,9 @@
     "paths": {
       "@/*": ["packages/*"],
       "@activepieces/engine": ["packages/engine/src/index.ts"],
+      "@activepieces/ui/feature-dashboard": [
+        "packages/ui/feature-dashboard/src/index.ts"
+      ],
       "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-asana": ["packages/pieces/asana/src/index.ts"],

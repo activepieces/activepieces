@@ -4,15 +4,12 @@ import { Store } from '@ngrx/store';
 import { NavigationStart, Router } from '@angular/router';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
-import { CommonActions } from '../../../ui/common/src/lib/store/common.action';
-import { FlagService } from '@activepieces/ui/common';
+
+import { FlagService, CommonActions } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
 import { ApFlagId } from '@activepieces/shared';
 import { TelemetryService } from './modules/common/service/telemetry.service';
-import {
-  AuthenticationService,
-  fadeInUp400ms,
-} from '@activepieces/ui/common';
+import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;

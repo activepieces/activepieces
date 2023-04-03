@@ -23,7 +23,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { ApButtonComponent } from './components/ap-button/ap-button.component';
 import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
-
+import { MatTableModule } from '@angular/material/table';
+import { MatDialogModule } from '@angular/material/dialog';
+import {MatSidenavModule} from '@angular/material/sidenav';
+import { DialogTitleTemplateComponent } from './components/dialog-title-template/dialog-title-template.component';
+import {MatProgressBarModule} from '@angular/material/progress-bar';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -35,7 +41,25 @@ const exportedImports = [
   MatMenuModule,
   MatButtonModule,
   MatCardModule,
+  MatTableModule,
+  MatDialogModule,
+  MatSidenavModule,
+  MatProgressBarModule,
+  MatButtonToggleModule,
+  MatSlideToggleModule
 ];
+const exportedDeclarations = [
+  DialogTitleTemplateComponent,
+  MarkdownComponent,
+  EditableTextComponent,
+  ApButtonComponent,
+  WarningBoxComponent,
+  StateIconComponent,
+  LoadingIconComponent,
+  ApPaginatorComponent,
+  HotspotComponent,
+  IconButtonComponent,
+]
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
   hideDelay: 0,
@@ -77,27 +101,11 @@ export function markedOptionsFactory(): MarkedOptions {
     { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
   ],
   declarations: [
-    MarkdownComponent,
-    EditableTextComponent,
-    ApButtonComponent,
-    WarningBoxComponent,
-    StateIconComponent,
-    LoadingIconComponent,
-    ApPaginatorComponent,
-    HotspotComponent,
-    IconButtonComponent,
+    ...exportedDeclarations
   ],
   exports: [
-    MarkdownComponent,
-    EditableTextComponent,
-    ApButtonComponent,
-    WarningBoxComponent,
-    StateIconComponent,
-    LoadingIconComponent,
-    ApPaginatorComponent,
-    HotspotComponent,
-    IconButtonComponent,
     ...exportedImports,
+    ...exportedDeclarations
   ],
 })
 export class UiCommonModule {}

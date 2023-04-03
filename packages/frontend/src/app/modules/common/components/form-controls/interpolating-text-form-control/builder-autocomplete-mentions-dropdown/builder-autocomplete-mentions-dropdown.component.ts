@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { UUID } from 'angular2-uuid';
 import { BehaviorSubject, Observable, of, switchMap, take, tap } from 'rxjs';
-import { fadeIn400ms } from '../../../../../../../../../ui/common/src/lib/animation/fade-in.animations';
+import { fadeIn400ms } from '@activepieces/ui/common';
 import { BuilderAutocompleteMentionsDropdownService } from './builder-autocomplete-mentions-dropdown.service';
 import { InsertMentionOperation } from '../utils';
 import { Store } from '@ngrx/store';

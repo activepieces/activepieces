@@ -15,5 +15,3 @@ export const environment = {
   },
   // END EE
 };
-
-// TODO REMOVE

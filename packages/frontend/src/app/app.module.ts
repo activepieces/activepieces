@@ -26,9 +26,9 @@ import { Route, Router } from '@angular/router';
 import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { FirebaseAuthContainerComponent } from '@ee/firebase-auth/frontend/auth-container/firebase-auth-container.component';
-import { DashboardContainerComponent } from './modules/dashboard/dashboard-container.component';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { AuthLayoutComponent } from '@/ui/feature-authentication/src/lib/auth.component';
+import { DashboardContainerComponent } from '@activepieces/ui/feature-dashboard';
 
 @NgModule({
   declarations: [AppComponent, NotFoundComponent, RedirectUrlComponent],
@@ -94,8 +94,8 @@ function dynamicRoutes(edition: string) {
         {
           path: '',
           loadChildren: () =>
-            import('./modules/dashboard/dashboard-layout.module').then(
-              (m) => m.DashboardLayoutModule
+            import('@activepieces/ui/feature-dashboard').then(
+              (m) => m.UiFeatureDashboardModule
             ),
         },
       ],

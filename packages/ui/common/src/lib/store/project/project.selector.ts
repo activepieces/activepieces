@@ -1,10 +1,6 @@
-import { createFeatureSelector, createSelector } from '@ngrx/store';
+import { createSelector } from '@ngrx/store';
 import { CommonStateModel, ProjectsState } from '../common-state.model';
-
-export const COMMON_STATE = 'commonState';
-
-export const selectCommonState =
-  createFeatureSelector<CommonStateModel>(COMMON_STATE);
+import { selectCommonState } from '../common.selector';
 
 export const selectProjectState = createSelector(
   selectCommonState,

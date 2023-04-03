@@ -3,7 +3,7 @@ import { Resolve } from '@angular/router';
 import { map, Observable, switchMap } from 'rxjs';
 import { CollectionService } from '../../common/service/collection.service';
 import { ProjectService } from '../../common/service/project.service';
-import { DEFAULT_PAGE_SIZE } from '../../../../../../ui/common/src/lib/components/pagination/tables.utils';
+import { DEFAULT_PAGE_SIZE } from '../../../../../../ui/common/src/lib/tables.utils';
 
 @Injectable({
   providedIn: 'root',

@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CodeService } from '../../../../../../flow-builder/service/code.service';
-import { jsonValidator , fadeInUp400ms} from '@activepieces/ui/common';
+import { jsonValidator, fadeInUp400ms } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-test-code-form-modal',
