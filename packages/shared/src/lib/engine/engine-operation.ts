@@ -30,8 +30,9 @@ export type ExecuteActionOperation = {
     pieceVersion: string
     input: Record<string, unknown>
     projectId: ProjectId
-    apiUrl?: string
+    collectionId: CollectionId
     workerToken?: string
+    apiUrl?: string
 }
 
 export interface ExecuteEventParserOperation {
