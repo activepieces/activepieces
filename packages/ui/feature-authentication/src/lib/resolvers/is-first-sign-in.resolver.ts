@@ -1,7 +1,7 @@
+import { FlagService } from '@activepieces/ui/common';
 import { Injectable } from '@angular/core';
 import { Router, Resolve } from '@angular/router';
 import { Observable, tap } from 'rxjs';
-import { FlagService } from '../../common/service/flag.service';
 
 @Injectable({
   providedIn: 'root',

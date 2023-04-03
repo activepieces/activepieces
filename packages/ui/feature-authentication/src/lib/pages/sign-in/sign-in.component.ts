@@ -8,8 +8,7 @@ import {
 } from '@angular/forms';
 
 import { HttpErrorResponse } from '@angular/common/http';
-import { AuthenticationService } from '../../../common/service/authentication.service';
-import { fadeInUp400ms } from '../../../common/animation/fade-in-up.animation';
+import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { StatusCodes } from 'http-status-codes';
 interface SignInForm {
@@ -26,7 +25,7 @@ export class SignInComponent {
   loginForm: FormGroup<SignInForm>;
   showInvalidEmailOrPasswordMessage = false;
   loading = false;
-  authenticate$: Observable<void>;
+  authenticate$: Observable<void> | undefined;
   constructor(
     private router: Router,
     private formBuilder: FormBuilder,

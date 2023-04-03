@@ -1,4 +1,4 @@
-@import "packages/frontend/src/assets/scss/variables.scss";
+@import '../../../../../../frontend/src/assets/scss/variables.scss';
 
 .forgot-password {
   float: right;
@@ -29,7 +29,6 @@
   color: $description;
   font-size: 0.875rem;
 }
-
 
 .card {
   border: 1px solid $dividers;

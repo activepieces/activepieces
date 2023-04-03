@@ -37,7 +37,7 @@ import {
   ActionMetaService,
   DropdownState,
 } from '../../../flow-builder/service/action-meta.service';
-import { fadeInUp400ms } from '../../animation/fade-in-up.animation';
+import { fadeInUp400ms } from '../../../../../../../ui/common/src/lib/animation/fade-in-up.animation';
 import { ThemeService } from '../../service/theme.service';
 import {
   PieceConfig,

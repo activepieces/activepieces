@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { User } from '@activepieces/shared';
+import { SignInRequest, SignUpRequest, User } from '@activepieces/shared';
+import { environment } from '../environment';
 
 @Injectable({
   providedIn: 'root',
@@ -22,7 +22,7 @@ export class AuthenticationService {
     );
   }
 
-  signIn(request: { email; password }): Observable<HttpResponse<User>> {
+  signIn(request: SignInRequest): Observable<HttpResponse<User>> {
     return this.http.post<User>(
       environment.apiUrl + '/authentication/sign-in',
       request,
@@ -32,14 +32,7 @@ export class AuthenticationService {
     );
   }
 
-  signUp(request: {
-    email;
-    password;
-    firstName;
-    lastName;
-    newsLetter;
-    trackEvents;
-  }): Observable<HttpResponse<User>> {
+  signUp(request: SignUpRequest): Observable<HttpResponse<User>> {
     return this.http.post<User>(
       environment.apiUrl + '/authentication/sign-up',
       request,
@@ -90,6 +83,7 @@ export class AuthenticationService {
     this.router.navigate(['sign-in']);
   }
 
+  // TODO - move to a separate service
   saveNewsLetterSubscriber(email: string) {
     return this.http.post(
       'https://us-central1-activepieces-b3803.cloudfunctions.net/addContact',
@@ -97,6 +91,7 @@ export class AuthenticationService {
     );
   }
 
+  // TODO - move to a separate service
   sendFeedback(feedback: string) {
     return this.http.post(
       'https://cloud.activepieces.com/api/v1/webhooks?flowId=uKCHMo6jwgMfzvSHb6CKQ',

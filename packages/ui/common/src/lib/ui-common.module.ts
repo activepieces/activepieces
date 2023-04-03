@@ -21,6 +21,8 @@ import { IconButtonComponent } from './components/icon-button/icon-button.compon
 import { HotspotComponent } from './components/hotspot/hotspot.component';
 import { MatButtonModule } from '@angular/material/button';
 import { ApButtonComponent } from './components/ap-button/ap-button.component';
+import { MatCardModule } from '@angular/material/card';
+import { MatMenuModule } from '@angular/material/menu';
 
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -50,20 +52,48 @@ export function markedOptionsFactory(): MarkedOptions {
   };
 }
 @NgModule({
-  imports: [CommonModule, MatTooltipModule, AngularSvgIconModule, 
+  imports: [
+    CommonModule,
+    MatTooltipModule,
+    AngularSvgIconModule,
     MatFormFieldModule,
     ReactiveFormsModule,
     MatSelectModule,
     MatInputModule,
+    MatMenuModule,
     MatButtonModule,
+    MatCardModule,
     MarkdownModule.forRoot({
-    markedOptions: {
-      provide: MarkedOptions,
-      useFactory: markedOptionsFactory,
-    },
-  }),],
-  providers: [{ provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },],
-  declarations: [MarkdownComponent, EditableTextComponent, ApButtonComponent, WarningBoxComponent, StateIconComponent, LoadingIconComponent, ApPaginatorComponent, HotspotComponent, IconButtonComponent],
-  exports: [MarkdownComponent, EditableTextComponent, ApButtonComponent, WarningBoxComponent, StateIconComponent, LoadingIconComponent, ApPaginatorComponent, HotspotComponent, IconButtonComponent],
+      markedOptions: {
+        provide: MarkedOptions,
+        useFactory: markedOptionsFactory,
+      },
+    }),
+  ],
+  providers: [
+    { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults }
+  ],
+  declarations: [
+    MarkdownComponent,
+    EditableTextComponent,
+    ApButtonComponent,
+    WarningBoxComponent,
+    StateIconComponent,
+    LoadingIconComponent,
+    ApPaginatorComponent,
+    HotspotComponent,
+    IconButtonComponent,
+  ],
+  exports: [
+    MarkdownComponent,
+    EditableTextComponent,
+    ApButtonComponent,
+    WarningBoxComponent,
+    StateIconComponent,
+    LoadingIconComponent,
+    ApPaginatorComponent,
+    HotspotComponent,
+    IconButtonComponent,
+  ],
 })
-export class UiCommonModule { }
+export class UiCommonModule {}

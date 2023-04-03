@@ -43,7 +43,7 @@ import {
 } from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
 import { PieceActionInputFormSchema } from '../../input-forms-schema';
 import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
-import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
+import { fadeInUp400ms } from '../../../../../../../../../../../../../ui/common/src/lib/animation/fade-in-up.animation';
 import { FlowsActions } from '../../../../../../../../store/flow/flows.action';
 import { isOverflown } from '../../../../../../../../../common/utils';
 declare type ActionDropdownOptionValue = {

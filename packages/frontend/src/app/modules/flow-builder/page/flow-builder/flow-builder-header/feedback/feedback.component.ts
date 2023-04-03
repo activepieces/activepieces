@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatMenuTrigger } from '@angular/material/menu';
-import { AuthenticationService } from '../../../../../common/service/authentication.service';
+import { AuthenticationService } from '@activepieces/ui/common';
 
 import { map, Observable, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';

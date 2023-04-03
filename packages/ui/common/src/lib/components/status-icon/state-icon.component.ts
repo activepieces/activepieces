@@ -6,7 +6,7 @@ import { Component, Input, OnInit } from '@angular/core';
 })
 export class StateIconComponent implements OnInit {
   @Input() size = 16;
-  @Input() succeeded: boolean;
+  @Input() succeeded: boolean | undefined;
   @Input() showStatusText = true;
   @Input() textAfter = '';
   ngOnInit(): void {

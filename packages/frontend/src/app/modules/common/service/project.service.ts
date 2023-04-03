@@ -7,7 +7,7 @@ import { ProjectSelectors } from '../store/project/project.selector';
 import { ProjectActions } from '../store/project/project.action';
 import { Project } from '@activepieces/shared';
 import { Router } from '@angular/router';
-import { AuthenticationService } from './authentication.service';
+import { AuthenticationService } from '@activepieces/ui/common';
 
 @Injectable({
   providedIn: 'root',

@@ -13,9 +13,9 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IconButtonComponent {
-  @Input() color: 'primary' | 'accent' | 'warn' | '';
+  @Input() color: 'primary' | 'accent' | 'warn' | '' | undefined;
   @Input() width = 15;
-  @Input() iconFilename: string;
+  @Input() iconFilename: string | undefined;
   @Input() height = 15;
   @Input() tooltipText = '';
   @Input() buttonDisabled = false;

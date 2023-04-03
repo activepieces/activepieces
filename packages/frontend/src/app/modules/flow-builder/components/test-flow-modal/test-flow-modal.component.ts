@@ -18,7 +18,7 @@ import {
   takeWhile,
   tap,
 } from 'rxjs';
-import { fadeInUp400ms } from '../../../common/animation/fade-in-up.animation';
+import { fadeInUp400ms } from '../../../../../../../ui/common/src/lib/animation/fade-in-up.animation';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/builder/builder.selector';
 import { TestRunBarComponent } from '../../page/flow-builder/test-run-bar/test-run-bar.component';

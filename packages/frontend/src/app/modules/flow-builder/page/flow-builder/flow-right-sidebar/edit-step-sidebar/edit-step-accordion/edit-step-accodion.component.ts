@@ -26,7 +26,7 @@ import {
 import { FlowItem } from '../../../../../../common/model/flow-builder/flow-item';
 import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
 import { FlowsActions } from '../../../../../store/flow/flows.action';
-import { FlagService } from '../../../../../../common/service/flag.service';
+import { FlagService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-edit-step-accodion',

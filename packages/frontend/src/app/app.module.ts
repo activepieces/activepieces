@@ -23,12 +23,12 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { CommonLayoutModule } from './modules/common/common-layout.module';
 import { FirebaseAuthLayoutModule } from '../../../ee/firebase-auth/frontend/firebase-auth.module';
 import { Route, Router } from '@angular/router';
-import { FlagService } from './modules/common/service/flag.service';
+import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { FirebaseAuthContainerComponent } from '@ee/firebase-auth/frontend/auth-container/firebase-auth-container.component';
-import { AuthLayoutComponent } from './modules/auth/auth.component';
 import { DashboardContainerComponent } from './modules/dashboard/dashboard-container.component';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
+import { AuthLayoutComponent } from '@/ui/feature-authentication/src/lib/auth.component';
 
 @NgModule({
   declarations: [AppComponent, NotFoundComponent, RedirectUrlComponent],
@@ -152,8 +152,8 @@ function dynamicRoutes(edition: string) {
             {
               path: '',
               loadChildren: () =>
-                import('./modules/auth/auth.module').then(
-                  (m) => m.AuthLayoutModule
+                import('@activepieces/ui/feature-authentication').then(
+                  (m) => m.UiFeatureAuthenticationModule
                 ),
             },
           ],

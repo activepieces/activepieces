@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CodeService } from '../../../../../../flow-builder/service/code.service';
-import { fadeInUp400ms } from '../../../../../animation/fade-in-up.animation';
+import { fadeInUp400ms } from '../../../../../../../../../../ui/common/src/lib/animation/fade-in-up.animation';
 import { jsonValidator } from '../../../../../validators/json-validator';
 
 @Component({

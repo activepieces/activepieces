@@ -1,7 +1,7 @@
-@import "packages/frontend/src/assets/scss/variables.scss";
+@import '../../../../frontend/src/assets/scss/variables.scss';
 
 .auth-form-background {
-  background-image: url("/assets/img/custom/forms-background.png");
+  background-image: url('/assets/img/custom/forms-background.png');
   background-repeat: no-repeat;
   background-size: cover;
 }
@@ -15,7 +15,7 @@
 }
 
 .auth-form-container {
-  width:100%;
+  width: 100%;
   max-width: 480px;
   padding: 1.75rem;
   position: relative;

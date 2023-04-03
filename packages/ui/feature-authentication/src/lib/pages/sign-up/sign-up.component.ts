@@ -6,16 +6,15 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthenticationService } from '../../../common/service/authentication.service';
 import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
-import { fadeInUp400ms } from '../../../common/animation/fade-in-up.animation';
-import { FlagService } from '../../../common/service/flag.service';
+import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
+import { FlagService } from '@activepieces/ui/common';
 import {
   containsSpecialCharacter,
   containsUppercaseCharacter,
   containsLowercaseCharacter,
   containsNumber,
-} from '../../../common/validators';
+} from '@activepieces/ui/common';
 
 export interface UserInfo {
   firstName: FormControl<string>;
@@ -38,7 +37,7 @@ export class SignUpComponent {
   emailExists = false;
   emailChanged = false;
   emailValueChanged$: Observable<string>;
-  signUp$: Observable<void>;
+  signUp$: Observable<void> | undefined;
   signedUpEnabled$: Observable<boolean>;
   constructor(
     private formBuilder: FormBuilder,

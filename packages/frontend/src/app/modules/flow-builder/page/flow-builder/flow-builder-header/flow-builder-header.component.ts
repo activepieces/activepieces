@@ -14,7 +14,7 @@ import {
 import { Collection, Instance } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import { ThemeService } from '../../../../common/service/theme.service';
-import { fadeIn400ms } from '../../../../common/animation/fade-in.animations';
+import { fadeIn400ms } from '../../../../../../../../ui/common/src/lib/animation/fade-in.animations';
 import { MagicWandDialogComponent } from './magic-wand-dialog/magic-flow-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 

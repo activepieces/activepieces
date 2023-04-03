@@ -2,7 +2,7 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable, shareReplay } from 'rxjs';
-import { environment } from '../../../../environments/environment';
+import { environment } from '../environment';
 
 type FlagsMap = Record<string, boolean | string | object | undefined>;
 
@@ -10,7 +10,7 @@ type FlagsMap = Record<string, boolean | string | object | undefined>;
   providedIn: 'root',
 })
 export class FlagService {
-  flags$: Observable<FlagsMap>;
+  flags$: Observable<FlagsMap> | undefined;
 
   constructor(private http: HttpClient) {}
 

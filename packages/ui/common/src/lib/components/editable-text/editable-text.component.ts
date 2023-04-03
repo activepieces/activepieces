@@ -21,7 +21,7 @@ export class EditableTextComponent {
   @Input() viewedTextMaxWidth = '200px';
   @Output() valueChanges: EventEmitter<string> = new EventEmitter<string>();
   @Output() editingChanges: EventEmitter<boolean> = new EventEmitter<boolean>();
-  @ViewChild('editableText') editableText: ElementRef= new ElementRef(null);
+  @ViewChild('editableText') editableText: ElementRef = new ElementRef(null);
   @Input() hideOverflowWhileEditing = true;
   @Input() hideOverflownTextTooltip = false;
   valueOnEditingStarted = '';

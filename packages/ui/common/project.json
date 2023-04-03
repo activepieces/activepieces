@@ -3,8 +3,24 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "packages/ui/common/src",
-  "prefix": "ap",
+  "prefix": "activepieces",
   "targets": {
+    "build": {
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "options": {
+        "project": "packages/ui/common/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/ui/common/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/ui/common/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
     "test": {
       "executor": "@angular-devkit/build-angular:karma",
       "options": {

@@ -15,7 +15,7 @@ import { map, Observable, startWith, tap } from 'rxjs';
 import { RunDetailsService } from '../iteration-details.service';
 import { FlowsActions } from '../../../../../store/flow/flows.action';
 import { StepOutput, StepOutputStatus } from '@activepieces/shared';
-import { fadeInAnimation } from '../../../../../../common/animation/fade-in.animations';
+import { fadeInAnimation } from '../../../../../../../../../../ui/common/src/lib/animation/fade-in.animations';
 import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
 
 @Component({
