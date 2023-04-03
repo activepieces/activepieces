@@ -170,7 +170,7 @@ async function createStripeDetails({ projectId }: { projectId: ProjectId }): Pro
             return currentPlan;
         }
         const project = await projectService.getOne(projectId);
-        const user = await userService.getOne({ id: project.ownerId });
+        const user = await userService.getMetaInfo({ id: project.ownerId });
         const planLimits = parsePlanFromId(defaultPlanId);
         const stripeCustomer = await stripe.customers.create({
             email: user.email,

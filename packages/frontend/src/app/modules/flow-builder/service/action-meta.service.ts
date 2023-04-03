@@ -16,7 +16,7 @@ import { HttpClient } from '@angular/common/http';
 import { PieceProperty } from '../../common/components/configs-form/connector-action-or-config';
 import { Observable, shareReplay, map, forkJoin } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { FlagService } from '../../common/service/flag.service';
+import { FlagService } from '@activepieces/ui/common';
 
 type TriggersMetadata = Record<string, TriggerBase>;
 

@@ -6,11 +6,11 @@
   <div *ngIf="allOptionalConfigs.length > 0" class="ap-flex ap-items-center optional-input-label-container">
     <div> Optional Inputs </div>
     <div #spacer class="ap-flex-grow"></div>
-    <app-button *ngIf="selectedOptionalConfigs.length !== allOptionalConfigs.length && form.enabled" btnColor="primary"
+    <ap-button *ngIf="selectedOptionalConfigs.length !== allOptionalConfigs.length && form.enabled" btnColor="primary"
       btnSize="medium" btnStyle="basic" #menuTrigger="matMenuTrigger" (menuOpened)="optionalConfigsMenuOpened=true"
       (menuClosed)="optionalConfigsMenuOpened=false" [matMenuTriggerFor]="bodyTypesMenu">
       + Add Input
-    </app-button>
+    </ap-button>
     <mat-menu #bodyTypesMenu="matMenu">
       <ng-container *ngFor="let config of allOptionalConfigs">
         <ng-container *ngIf="!selectedOptionalConfigs.includes(config)">
@@ -353,7 +353,7 @@
 
       <ng-template #loading>
         <div class="ap-flex ap-flex-grow ap-justify-center ap-items-center ap-h-[250px]">
-          <app-loading-icon> </app-loading-icon>
+          <ap-loading-icon> </ap-loading-icon>
         </div>
       </ng-template>
     </ng-container>

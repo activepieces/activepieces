@@ -64,6 +64,9 @@
       "@activepieces/piece-google-drive": [
         "packages/pieces/google-drive/src/index.ts"
       ],
+      "@activepieces/piece-google-forms": [
+        "packages/pieces/google-forms/src/index.ts"
+      ],
       "@activepieces/piece-google-sheets": [
         "packages/pieces/google-sheets/src/index.ts"
       ],
@@ -123,7 +126,10 @@
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@activepieces/ui/feature-teams": [
-        "packages/ui/feature-teams/src/index.ts"
+        "packages/ui/feature-teams/src/index.ts"],
+      "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
+      "@activepieces/ui/feature-authentication": [
+        "packages/ui/feature-authentication/src/index.ts"
       ],
       "@backend/*": ["packages/backend/src/app/*"],
       "@ee/*": ["packages/ee/*"],

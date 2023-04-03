@@ -6,11 +6,11 @@
         <div class="ap-flex ap-flex-col ap-gap-2 ap-items-center ap-justify-center ap-h-[132px]"
             *ngIf="currentResults.length === 0 && !loading ">
             <div class="ap-relative">
-                <app-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
+                <ap-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
                     matTooltip="Test this step to generate sample data that can be used in the next steps"
-                    matTooltipPosition="above"> </app-hotspot>
-                <app-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()">Send
-                    Data </app-button>
+                    matTooltipPosition="above"> </ap-hotspot>
+                <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()">Send
+                    Data </ap-button>
             </div>
         </div>
 
@@ -24,8 +24,8 @@
                 <div class="ap-flex-grow">
 
                 </div>
-                <app-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                    (buttonClicked)="testStep()">Retest</app-button>
+                <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
+                    (buttonClicked)="testStep()">Retest</ap-button>
             </div>
 
             <mat-form-field class="ap-w-full ap-mt-2" appearance="outline" subscriptSizing="dynamic">
@@ -52,11 +52,11 @@
                 <div class="ap-flex ap-gap-2 ap-items-center">
                     <div class="spinner-border dark-spinner" role="status"></div> Testing trigger
                     <div class="ap-flex-grow"></div>
-                    <app-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                        (buttonClicked)="cancelTesting()">Cancel</app-button>
+                    <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
+                        (buttonClicked)="cancelTesting()">Cancel</ap-button>
                 </div>
 
-                <app-warning-box>
+                <ap-warning-box>
                     <div class="ap-flex ap-items-center ap-gap-2 ap-ml-[-3px] ">
                         <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">
                         </svg-icon> Action Required
@@ -66,7 +66,7 @@
                         test the step.
                     </p>
 
-                </app-warning-box>
+                </ap-warning-box>
 
 
             </div>
@@ -76,7 +76,7 @@
 </div>
 <ng-template #loadingSpinner>
     <div class="ap-flex ap-flex-grow ap-justify-center ap-items-center ap-h-[160px]">
-        <app-loading-icon class="ap-mr-[-10px]"> </app-loading-icon>
+        <ap-loading-icon class="ap-mr-[-10px]"> </ap-loading-icon>
     </div>
 </ng-template>
 <ng-container *ngIf="initialHistoricalData$ | async"></ng-container>

@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Observable, tap } from 'rxjs';
-import { fadeInUp400ms } from '../../../../../../common/animation/fade-in-up.animation';
+import { fadeInUp400ms } from '../../../../../../../../../../ui/common/src/lib/animation/fade-in-up.animation';
 import { CodeService } from '../../../../../../flow-builder/service/code.service';
 type PackageName = string;
 type PackageVersion = string;

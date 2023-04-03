@@ -1,19 +1,12 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EditableTextComponent } from './components/editable-text/editable-text.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { IconButtonComponent } from './components/icon-button/icon-button.component';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { HighlightService } from './service/highlight.service';
-import { StateIconComponent } from './components/status-icon/state-icon.component';
 import { JsonViewComponent } from './components/json-view/json-view.component';
-import { ApPaginatorComponent } from './components/pagination/ap-paginator.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ApButtonComponent } from './components/ap-button/ap-button.component';
 import { ApImgComponent } from './components/ap-img/ap-img.component';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
-import { LoadingSkeletonComponent } from './components/loading-skeleton/loading-skeleton.component';
-import { LoadingIconComponent } from './components/loading-icon/loading-icon.component';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
@@ -38,7 +31,7 @@ import { CodeArtifactFormControlComponent } from './components/form-controls/cod
 import { CodeArtifactControlFullscreenComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { TestCodeFormModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/test-code-form-modal/test-code-form-modal.component';
 import { AddNpmPackageModalComponent } from './components/form-controls/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component';
-import { projectReducer } from './store/project/project.reducer';
+import { projectReducer } from '../../../../../ui/common/src/lib/store/project/project.reducer';
 import { TrackHoverDirective } from './components/form-controls/dictionary-form-control/track-hover.directive';
 import { MatCardModule } from '@angular/material/card';
 import {
@@ -79,35 +72,10 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { BranchConditionFormControlComponent } from './components/form-controls/branch-condition-form-control/branch-condition-form-control.component';
 import { BranchConditionsGroupFormControlComponent } from './components/form-controls/branch-conditions-group-form-control/branch-conditions-group-form-control.component';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { HotspotComponent } from './components/hotspot/hotspot.component';
 import { LoopStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/loop-step-mention-item/loop-step-mention-item.component';
 import { CustomPathMentionDialogComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component';
-import { WarningBoxComponent } from './components/warning-box/warning-box.component';
 import { PieceTriggerMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component';
-import { MarkdownModule, MarkedOptions, MarkedRenderer } from 'ngx-markdown';
-import { MarkdownComponent } from './components/markdown/markdown.component';
-
-export function markedOptionsFactory(): MarkedOptions {
-  const renderer = new MarkedRenderer();
-  const linkRenderer = renderer.link;
-
-  renderer.link = (href, title, text) => {
-    const html = linkRenderer.call(renderer, href, title, text);
-    return html.replace(
-      /^<a /,
-      '<a role="link" tabindex="0" target="_blank" rel="nofollow noopener noreferrer" '
-    );
-  };
-
-  return {
-    renderer,
-    gfm: true,
-    breaks: false,
-    pedantic: false,
-    smartLists: true,
-    smartypants: false,
-  };
-}
+import { UiCommonModule } from '@/ui/common/src';
 
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -117,15 +85,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 
 @NgModule({
   declarations: [
-    EditableTextComponent,
-    IconButtonComponent,
-    StateIconComponent,
     JsonViewComponent,
-    ApPaginatorComponent,
-    ApButtonComponent,
     ApImgComponent,
-    LoadingSkeletonComponent,
-    LoadingIconComponent,
     DefaultFalsePipe,
     DefaultTruePipe,
     OutputLogPipe,
@@ -156,11 +117,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     AddEditConnectionButtonComponent,
     BranchConditionFormControlComponent,
     BranchConditionsGroupFormControlComponent,
-    HotspotComponent,
     LoopStepMentionItemComponent,
     CustomPathMentionDialogComponent,
-    MarkdownComponent,
-    WarningBoxComponent,
     PieceTriggerMentionItemComponent,
   ],
   imports: [
@@ -173,6 +131,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     CodemirrorModule,
     FormsModule,
     MatMenuModule,
+    UiCommonModule,
     QuillModule.forRoot({}),
     StoreModule.forFeature('commonState', {
       projectsState: projectReducer,
@@ -195,24 +154,11 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatIconModule,
     MatDividerModule,
     MatTreeModule,
-    MarkdownModule.forRoot({
-      markedOptions: {
-        provide: MarkedOptions,
-        useFactory: markedOptionsFactory,
-      },
-    }),
     MatButtonToggleModule,
   ],
   exports: [
-    EditableTextComponent,
-    IconButtonComponent,
-    StateIconComponent,
     JsonViewComponent,
-    ApPaginatorComponent,
-    ApButtonComponent,
     ApImgComponent,
-    LoadingSkeletonComponent,
-    LoadingIconComponent,
     DefaultFalsePipe,
     DefaultTruePipe,
     AngularSvgIconModule,
@@ -221,7 +167,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatButtonModule,
     OAuth2ConnectControlComponent,
     DictionaryFormControlComponent,
-    MarkdownComponent,
     ConfigsFormComponent,
     CodeArtifactFormControlComponent,
     MatTooltipModule,
@@ -247,8 +192,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     BranchConditionsGroupFormControlComponent,
     MatDividerModule,
     MatButtonToggleModule,
-    HotspotComponent,
-    WarningBoxComponent,
     PieceTriggerMentionItemComponent,
   ],
   providers: [

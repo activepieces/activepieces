@@ -16,12 +16,13 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
 } from '../../components/delete-enity-dialog/delete-collection-dialog.component';
-import { ApPaginatorComponent } from '../../../common/components/pagination/ap-paginator.component';
 import { ProjectService } from '../../../common/service/project.service';
 import { FlowService } from '../../../common/service/flow.service';
-import { DEFAULT_PAGE_SIZE } from '../../../common/components/pagination/tables.utils';
 import { FormControl } from '@angular/forms';
 import { InstanceService } from '../../../common/service/instance.service';
+import { ApPaginatorComponent } from '@/ui/common/src/lib/components/pagination/ap-paginator.component';
+import { DEFAULT_PAGE_SIZE } from '@/ui/common/src/lib/components/pagination/tables.utils';
+
 @Component({
   templateUrl: './collections-table.component.html',
 })
@@ -115,26 +116,28 @@ export class CollectionsTableComponent implements OnInit {
     collectionDto: CollectionListDto,
     control: FormControl<boolean>
   ) {
-    control.disable();
-    this.collectionsUpdateStatusRequest$[collectionDto.id] =
-      this.instanceService
-        .updateStatus(collectionDto.id, {
-          status:
-            collectionDto.status === CollectionStatus.ENABLED
-              ? InstanceStatus.DISABLED
-              : InstanceStatus.ENABLED,
-        })
-        .pipe(
-          tap((res) => {
-            control.enable();
-            control.setValue(res.status === InstanceStatus.ENABLED);
-            this.collectionsUpdateStatusRequest$[collectionDto.id] = null;
-            collectionDto.status =
-              res.status === InstanceStatus.ENABLED
-                ? CollectionStatus.ENABLED
-                : CollectionStatus.DISABLED;
-          }),
-          map(() => void 0)
-        );
+    if (control.enabled) {
+      control.disable();
+      this.collectionsUpdateStatusRequest$[collectionDto.id] =
+        this.instanceService
+          .updateStatus(collectionDto.id, {
+            status:
+              collectionDto.status === CollectionStatus.ENABLED
+                ? InstanceStatus.DISABLED
+                : InstanceStatus.ENABLED,
+          })
+          .pipe(
+            tap((res) => {
+              control.enable();
+              control.setValue(res.status === InstanceStatus.ENABLED);
+              this.collectionsUpdateStatusRequest$[collectionDto.id] = null;
+              collectionDto.status =
+                res.status === InstanceStatus.ENABLED
+                  ? CollectionStatus.ENABLED
+                  : CollectionStatus.DISABLED;
+            }),
+            map(() => void 0)
+          );
+    }
   }
 }

@@ -34,6 +34,7 @@ import { UiFeatureTeamsModule } from '@activepieces/ui/feature-teams';
   imports: [
     CommonModule,
     CommonLayoutModule,
+    UiCommonModule,
     RouterModule.forChild(DashboardLayoutRouting),
     ReactiveFormsModule,
     FontAwesomeModule,

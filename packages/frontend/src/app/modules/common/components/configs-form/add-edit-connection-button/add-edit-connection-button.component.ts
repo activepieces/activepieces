@@ -49,7 +49,7 @@ import {
 import { ActionMetaService } from '../../../../flow-builder/service/action-meta.service';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
 import { CloudAuthConfigsService } from '../../../service/cloud-auth-configs.service';
-import { FlagService } from '../../../service/flag.service';
+import { FlagService } from '@activepieces/ui/common';
 import { PieceConfig } from '../connector-action-or-config';
 
 @Component({

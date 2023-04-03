@@ -12,6 +12,7 @@ import { FirebaseEmailVerificationComponent } from './email-verification/firebas
 import { FirebaseForgotPasswordComponent } from './forgot-password/firebase-forgot-password.component';
 import { environment } from '../../../frontend/src/environments/environment';
 import { CommonLayoutModule } from '../../../frontend/src/app/modules/common/common-layout.module';
+import { UiCommonModule } from '../../../ui/common/src';
 
 @NgModule({
 	imports: [
@@ -22,6 +23,7 @@ import { CommonLayoutModule } from '../../../frontend/src/app/modules/common/com
 		FormsModule,
 		ReactiveFormsModule,
 		CommonLayoutModule,
+		UiCommonModule
 	],
 	declarations: [FirebaseSignInComponent, FirebaseSignUpComponent, FirebaseAuthContainerComponent, FirebaseForgotPasswordComponent, FirebaseEmailVerificationComponent],
 })

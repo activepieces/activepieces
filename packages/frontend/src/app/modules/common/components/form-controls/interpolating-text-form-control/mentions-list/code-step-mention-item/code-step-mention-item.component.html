@@ -12,10 +12,10 @@
     <span *ngIf="testing$|async" class="spinner-border dark-spinner ap-w-[16px] ap-h-[16px] ap-ml-1"
       role="status"></span>
     <div class="ap-flex-grow"></div>
-    <app-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+    <ap-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
       class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true" [darkLoadingSpinner]="true"
       (click)="$event.stopPropagation();" (buttonClicked)="mentionClicked.emit(stepMention)">Select
-    </app-button>
+    </ap-button>
   </div>
 </button>
 
@@ -25,7 +25,7 @@
     (mentionClicked)="emitMention($event)"></app-step-mentions-tree>
   <div class=" ap-min-h-[48px] ap-flex ap-items-center"
     [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'" *ngIf="result.error && expandCodeCollapse">
-    <app-state-icon [showStatusText]="true" [succeeded]="false" textAfter="Step failed"></app-state-icon>
+    <ap-state-icon [showStatusText]="true" [succeeded]="false" textAfter="Step failed"></ap-state-icon>
   </div>
 </ng-container>
 <ng-container *ngIf="codeStepTest$ | async as result">
@@ -50,9 +50,9 @@
         This step needs to be tested in order to view its data.
       </div>
       <div class="ap-text-center">
-        <app-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
+        <ap-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
           [loading]="(testing$|async)!" (click)="$event.stopPropagation();" (buttonClicked)="openTestCodeModal();">Test
-        </app-button>
+        </ap-button>
       </div>
     </div>
 

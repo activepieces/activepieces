@@ -1,7 +1,6 @@
 import { Component, NgZone, OnInit } from '@angular/core';
 import { distinctUntilChanged, map, Observable } from 'rxjs';
 import { UUID } from 'angular2-uuid';
-import { TimeHelperService } from '../../../../../common/service/time-helper.service';
 import { BuilderSelectors } from '../../../../store/builder/builder.selector';
 import { Store } from '@ngrx/store';
 import { RunDetailsService } from './iteration-details.service';
@@ -42,7 +41,6 @@ export class RunDetailsComponent implements OnInit {
   selectedStepName$: Observable<string | null>;
   constructor(
     private store: Store,
-    public timeHelperService: TimeHelperService,
     public runDetailsService: RunDetailsService,
     private ngZone: NgZone
   ) {}

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import posthog from 'posthog-js';
 import { ApFlagId, User } from '@activepieces/shared';
-import { FlagService } from './flag.service';
+import { FlagService } from '@activepieces/ui/common';
 
 @Injectable({
   providedIn: 'root',

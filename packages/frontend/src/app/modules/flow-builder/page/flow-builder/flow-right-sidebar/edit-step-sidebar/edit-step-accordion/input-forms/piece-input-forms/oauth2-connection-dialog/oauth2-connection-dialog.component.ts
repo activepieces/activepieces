@@ -19,7 +19,7 @@ import {
 } from '@activepieces/shared';
 
 import deepEqual from 'deep-equal';
-import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
+import { fadeInUp400ms } from '../../../../../../../../../../../../../ui/common/src/lib/animation/fade-in-up.animation';
 import { PieceConfig } from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
 import { AppConnectionsService } from '../../../../../../../../../common/service/app-connections.service';
 import { CloudAuthConfigsService } from '../../../../../../../../../common/service/cloud-auth-configs.service';

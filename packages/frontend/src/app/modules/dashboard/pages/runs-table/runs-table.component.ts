@@ -10,8 +10,8 @@ import { map, Observable } from 'rxjs';
 import { RunsTableDataSource } from './runs-table.datasource';
 import { ProjectService } from '../../../common/service/project.service';
 import { InstanceRunService } from '../../../common/service/flow-run.service';
-import { DEFAULT_PAGE_SIZE } from '../../../common/components/pagination/tables.utils';
-import { ApPaginatorComponent } from '../../../common/components/pagination/ap-paginator.component';
+import { ApPaginatorComponent } from '@/ui/common/src/lib/components/pagination/ap-paginator.component';
+import { DEFAULT_PAGE_SIZE } from '@/ui/common/src/lib/components/pagination/tables.utils';
 @Component({
   templateUrl: './runs-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

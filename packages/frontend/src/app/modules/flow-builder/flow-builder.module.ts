@@ -73,6 +73,7 @@ import { HorizontalSidebarSeparatorComponent } from './page/flow-builder/canvas-
 import { TestingStepsAndTriggersModule } from '../testing-steps-and-triggers/testing-steps-and-triggers.module';
 import { StepNameEditorComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/step-name-editor/step-name-editor.component';
 import { CustomAuthConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/custom-auth-connection-dialog/custom-auth-connection-dialog.component';
+import { UiCommonModule } from '@/ui/common/src';
 
 @NgModule({
   imports: [
@@ -81,6 +82,7 @@ import { CustomAuthConnectionDialogComponent } from './page/flow-builder/flow-ri
     FormsModule,
     ReactiveFormsModule,
     CommonLayoutModule,
+    UiCommonModule,
     CodemirrorModule,
     DragDropModule,
     AngularSvgIconModule.forRoot(),

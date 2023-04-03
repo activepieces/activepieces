@@ -7,10 +7,10 @@
       ap-border-line ap-min-w-[50px] ap-min-h-[50px]"
       *ngIf="(readonly$ | async)===undefined || (readonly$ | async)===null  || (readonly$ | async)===false"
       [class.ap-opacity-100]="hover" [class.ap-opacity-0]="!hover">
-      <app-icon-button *ngIf="trigger" iconFilename="replace.svg" tooltipText="Change Trigger" [width]="17"
-        [height]="17" (buttonClicked)="changeTrigger()"></app-icon-button>
-      <app-icon-button *ngIf="!trigger" iconFilename="trash.svg" color="warn" tooltipText="Delete Step"
-        (buttonClicked)="deleteStep()"></app-icon-button>
+      <ap-icon-button *ngIf="trigger" iconFilename="replace.svg" tooltipText="Change Trigger" [width]="17"
+        [height]="17" (buttonClicked)="changeTrigger()"></ap-icon-button>
+      <ap-icon-button *ngIf="!trigger" iconFilename="trash.svg" color="warn" tooltipText="Delete Step"
+        (buttonClicked)="deleteStep()"></ap-icon-button>
     </div>
   </div>
 
@@ -50,12 +50,12 @@
               <ng-container *ngIf="actionStatus === actionStatusEnum.RUNNING">
                 <div class="spinner-border !ap-border-primary !ap-border-r-transparent " role="status"></div>
               </ng-container>
-              <app-state-icon [showStatusText]="false" *ngIf="actionStatus !== actionStatusEnum.RUNNING"
-                [succeeded]="actionStatus === actionStatusEnum.SUCCEEDED"></app-state-icon>
+              <ap-state-icon [showStatusText]="false" *ngIf="actionStatus !== actionStatusEnum.RUNNING"
+                [succeeded]="actionStatus === actionStatusEnum.SUCCEEDED"></ap-state-icon>
             </ng-container>
             <ng-template #stepInsideLoopStatusTemplate>
-              <app-state-icon *ngIf="stepInsideLoopStatus$ | async as stepInsideLoopStatus" [showStatusText]="false"
-                [succeeded]="stepInsideLoopStatus === actionStatusEnum.SUCCEEDED"></app-state-icon>
+              <ap-state-icon *ngIf="stepInsideLoopStatus$ | async as stepInsideLoopStatus" [showStatusText]="false"
+                [succeeded]="stepInsideLoopStatus === actionStatusEnum.SUCCEEDED"></ap-state-icon>
             </ng-template>
           </div>
         </ng-container>

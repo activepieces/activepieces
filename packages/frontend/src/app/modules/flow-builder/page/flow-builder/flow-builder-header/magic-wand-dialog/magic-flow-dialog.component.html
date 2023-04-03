@@ -20,11 +20,11 @@
 
 <mat-dialog-actions align="end">
   <div class="ap-flex ap-gap-2.5">
-    <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [loading]="loading">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [loading]="loading">
       Cancel
-    </app-button>
-    <app-button cdkFocusInitial btnSize="default" (click)="guessAi()"  [loading]="loading" btnColor="primary">
+    </ap-button>
+    <ap-button cdkFocusInitial btnSize="default" (click)="guessAi()"  [loading]="loading" btnColor="primary">
       Guess
-    </app-button>
+    </ap-button>
   </div>
 <ng-container *ngIf="guessAi$ | async"></ng-container>

@@ -6,8 +6,8 @@
         <div class="ap-mt-1">
           <ng-container *ngIf="webhookUrl$ | async as url">
             <section class="ap-typography-body-2">
-              <p class="ap-mt-1 ap-flex ap-items-center">Url: <app-icon-button [width]="15" [height]="15"
-                  [iconFilename]="'copy.svg'" [tooltipText]="'copy'" (buttonClicked)="copyUrl(url)"></app-icon-button>
+              <p class="ap-mt-1 ap-flex ap-items-center">Url: <ap-icon-button [width]="15" [height]="15"
+                  [iconFilename]="'copy.svg'" [tooltipText]="'copy'" (buttonClicked)="copyUrl(url)"></ap-icon-button>
               </p>
               <div class="ap-typography-caption ap-flex ap-flex-col ap-gap-2">
                 <p [matTooltip]="url" class="ap-truncate"> {{url}} </p>

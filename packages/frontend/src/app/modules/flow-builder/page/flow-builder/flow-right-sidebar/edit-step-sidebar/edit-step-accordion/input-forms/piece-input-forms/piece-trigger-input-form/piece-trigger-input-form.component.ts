@@ -13,7 +13,7 @@ import {
 } from '@angular/forms';
 import { forkJoin, map, Observable, of, shareReplay, take, tap } from 'rxjs';
 import { TriggerType, UpdateTriggerRequest } from '@activepieces/shared';
-import { fadeInUp400ms } from '../../../../../../../../../common/animation/fade-in-up.animation';
+import { fadeInUp400ms } from '../../../../../../../../../../../../../ui/common/src/lib/animation/fade-in-up.animation';
 import {
   PieceConfig,
   PieceProperty,

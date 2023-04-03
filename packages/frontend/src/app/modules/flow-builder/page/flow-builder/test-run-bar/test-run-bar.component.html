@@ -2,11 +2,11 @@
   <ng-container *ngIf="selectedRun$ | async as selectedRun; else InitialisingRunTemplate">
     <ng-container [ngSwitch]="selectedRun.status">
       <ng-container *ngSwitchCase="instanceRunStatus.SUCCEEDED">
-        <app-state-icon [succeeded]="true" [showStatusText]="false"></app-state-icon>
+        <ap-state-icon [succeeded]="true" [showStatusText]="false"></ap-state-icon>
         <span class="ap-text-white">Run succeeded ({{ selectedRun.id }})</span>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.FAILED">
-        <app-state-icon [succeeded]="false" [showStatusText]="false"></app-state-icon>
+        <ap-state-icon [succeeded]="false" [showStatusText]="false"></ap-state-icon>
         <span class="ap-text-white">Run failed ({{ selectedRun.id }})</span>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.RUNNING">
@@ -16,8 +16,8 @@
     </ng-container>
   </ng-container>
   <ng-template #InitialisingRunTemplate> Initialising run...</ng-template>
-  <app-button [hidden]="hideExit$ | async" btnColor="basic" btnStyle="basic" btnSize="medium"
-    (buttonClicked)="exitButtonClicked.next()"> Exit Run </app-button>
+  <ap-button [hidden]="hideExit$ | async" btnColor="basic" btnStyle="basic" btnSize="medium"
+    (buttonClicked)="exitButtonClicked.next()"> Exit Run </ap-button>
 </div>
 
 <ng-container *ngIf="exitRun$|async"></ng-container>

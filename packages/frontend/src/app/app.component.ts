@@ -1,16 +1,19 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { map, Observable, of, tap } from 'rxjs';
-import { AuthenticationService } from './modules/common/service/authentication.service';
 import { Store } from '@ngrx/store';
 import { NavigationStart, Router } from '@angular/router';
-import { fadeInUp400ms } from './modules/common/animation/fade-in-up.animation';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
-import { CommonActions } from './modules/common/store/common.action';
-import { FlagService } from './modules/common/service/flag.service';
+import { CommonActions } from '../../../ui/common/src/lib/store/common.action';
+import { FlagService } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
 import { ApFlagId } from '@activepieces/shared';
 import { TelemetryService } from './modules/common/service/telemetry.service';
+import {
+  AuthenticationService,
+  fadeInUp400ms,
+} from '@activepieces/ui/common';
+
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
   ignoreNotification: boolean;

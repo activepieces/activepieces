@@ -1,11 +1,11 @@
 <ng-container *ngIf="selectedFlow$ | async as currentFLow">
   <ng-container *ngIf="selectedCollection$ | async as currentCollection">
-    <app-button [hidden]="(instanceRunStatus$ | async) === statusEnum.RUNNING"
+    <ap-button [hidden]="(instanceRunStatus$ | async) === statusEnum.RUNNING"
       (buttonClicked)="testFlowButtonClicked(currentFLow, currentCollection,modalTemplate)" btnStyle="basic"
       btnColor="primary" [disabled]="shouldDisableTestButton$ | async" [tooltip]="testFlowButtonDisabledTooltip"
       placement="bottom" btnSize="medium">
       Test flow
-    </app-button>
+    </ap-button>
   </ng-container>
 </ng-container>
 
@@ -56,12 +56,12 @@
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <div class="ap-flex ap-gap-2.5">
-          <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
+          <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
             Cancel
-          </app-button>
-          <app-button btnSize="default" btnColor="primary" (click)="testFlowWithPayload(currentCollection,currentFLow)">
+          </ap-button>
+          <ap-button btnSize="default" btnColor="primary" (click)="testFlowWithPayload(currentCollection,currentFLow)">
             Test
-          </app-button>
+          </ap-button>
         </div>
       </mat-dialog-actions>
     </ng-container>

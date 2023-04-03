@@ -14,7 +14,7 @@ import {
   BranchActionSettings,
   BranchCondition,
 } from '@activepieces/shared';
-import { branchConditionGroupValidator } from '../../../../../../../../common/validators/branch-condition.validator';
+import { branchConditionGroupValidator } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-branch-step-input-form',
