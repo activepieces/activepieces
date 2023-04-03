@@ -57,7 +57,7 @@ import { constantContact } from '@activepieces/piece-constant-contact';
 import { salesforce } from '@activepieces/piece-salesforce';
 import { smtp } from '@activepieces/piece-smtp';
 import { mailerLite } from '@activepieces/piece-mailer-lite';
-import { microsoftTeams } from '@activepieces/piece-microsoft-teams';
+import { microsoftGraph } from '@activepieces/piece-microsoft-graph';
 
 export const pieces: Piece[] = [
     airtable,
@@ -87,7 +87,7 @@ export const pieces: Piece[] = [
     hubspot,
     mailchimp,
     mailerLite,
-    microsoftTeams,
+    microsoftGraph,
     openai,
     pipedrive,
     posthog,

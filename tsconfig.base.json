@@ -86,8 +86,8 @@
       "@activepieces/piece-mattermost": [
         "packages/pieces/mattermost/src/index.ts"
       ],
-      "@activepieces/piece-microsoft-teams": [
-        "packages/pieces/microsoft-teams/src/index.ts"
+      "@activepieces/piece-microsoft-graph": [
+        "packages/pieces/microsoft-graph/src/index.ts"
       ],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pipedrive": [
