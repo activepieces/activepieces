@@ -1,0 +1,36 @@
+{
+  "name": "pieces-microsoft-graph",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/microsoft-graph/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/microsoft-graph",
+        "tsConfig": "packages/pieces/microsoft-graph/tsconfig.lib.json",
+        "packageJson": "packages/pieces/microsoft-graph/package.json",
+        "main": "packages/pieces/microsoft-graph/src/index.ts",
+        "assets": [
+          "packages/pieces/microsoft-graph/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/microsoft-graph/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
