@@ -10,7 +10,7 @@ interface Props {
   props?: object
 }
 
-export const webflowRegisterTrigger = ({ name, event, displayName, description }: Props) => createTrigger({
+export const webflowRegisterTrigger = ({ name, event, displayName, description, props }: Props) => createTrigger({
   name: `webflow_trigger_${name}`,
   displayName: displayName,
   description: description,
@@ -27,7 +27,8 @@ export const webflowRegisterTrigger = ({ name, event, displayName, description }
       displayName: 'Site Id',
       description: 'Your Site Id',
       required: true
-    })
+    }),
+    ...(props ?? {})
   },
   sampleData: {
     "_id": "582266e0cd48de0f0e3c6d8b",
@@ -47,7 +48,8 @@ export const webflowRegisterTrigger = ({ name, event, displayName, description }
       },
       body: {
         triggerType: event,
-        url: context.webhookUrl
+        url: context.webhookUrl,
+        ...('filter' in context.propsValue ? {filter: context.propsValue.filter} : {})
       }
     }
 

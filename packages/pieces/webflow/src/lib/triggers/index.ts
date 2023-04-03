@@ -1,3 +1,4 @@
+import { Property } from '@activepieces/framework'
 import { webflowRegisterTrigger } from "./register";
 
 export const webflowTriggers = [
@@ -5,7 +6,14 @@ export const webflowTriggers = [
     name: 'form_submission',
     event: 'form_submission',
     description: 'Sends the form_submission event',
-    displayName: 'Form Submission'
+    displayName: 'Form Submission',
+    props: {
+      filter: Property.Object({
+        displayName: 'Filter',
+        description: 'filter for selecting which events you want webhooks to be triggered for.',
+        required: false
+      })
+    }
   },
   {
     name: 'site_publish',
