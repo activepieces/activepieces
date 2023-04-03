@@ -25,6 +25,7 @@
     "@fastify/cors": "^8.2.0",
     "@fastify/formbody": "^7.4.0",
     "@fastify/swagger": "^8.3.1",
+    "@fastify/type-provider-typebox": "^3.0.0",
     "@firebase/auth": "^0.21.3",
     "@fortawesome/angular-fontawesome": "^0.12.1",
     "@fortawesome/fontawesome-svg-core": "^6.2.1",
