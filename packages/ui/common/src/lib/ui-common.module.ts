@@ -24,6 +24,18 @@ import { ApButtonComponent } from './components/ap-button/ap-button.component';
 import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
 
+const exportedImports = [
+  CommonModule,
+  MatTooltipModule,
+  AngularSvgIconModule,
+  MatFormFieldModule,
+  ReactiveFormsModule,
+  MatSelectModule,
+  MatInputModule,
+  MatMenuModule,
+  MatButtonModule,
+  MatCardModule,
+];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
   hideDelay: 0,
@@ -53,16 +65,7 @@ export function markedOptionsFactory(): MarkedOptions {
 }
 @NgModule({
   imports: [
-    CommonModule,
-    MatTooltipModule,
-    AngularSvgIconModule,
-    MatFormFieldModule,
-    ReactiveFormsModule,
-    MatSelectModule,
-    MatInputModule,
-    MatMenuModule,
-    MatButtonModule,
-    MatCardModule,
+    ...exportedImports,
     MarkdownModule.forRoot({
       markedOptions: {
         provide: MarkedOptions,
@@ -71,7 +74,7 @@ export function markedOptionsFactory(): MarkedOptions {
     }),
   ],
   providers: [
-    { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults }
+    { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
   ],
   declarations: [
     MarkdownComponent,
@@ -94,6 +97,7 @@ export function markedOptionsFactory(): MarkedOptions {
     ApPaginatorComponent,
     HotspotComponent,
     IconButtonComponent,
+    ...exportedImports,
   ],
 })
 export class UiCommonModule {}
