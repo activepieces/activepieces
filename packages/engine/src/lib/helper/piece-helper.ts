@@ -8,7 +8,6 @@ import {
     DynamicPropsValue,
     MultiSelectDropdownProperty,
     Piece,
-    Property,
     StaticPropsValue,
 } from "@activepieces/framework";
 import {
@@ -200,7 +199,7 @@ export const pieceHelper = {
             }
 
             const dropdownProperty = property as DropdownProperty<unknown, boolean>
-            const dropdownInput = property as Record<string, any>;
+            const dropdownInput = resolvedInput as Record<string, any>;
             return await dropdownProperty.options(dropdownInput);
         } catch (e) {
             console.error(e);

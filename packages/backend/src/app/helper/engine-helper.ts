@@ -114,6 +114,8 @@ export const engineHelper = {
     },
 
     async executeProp(operation: ExecutePropsOptions): Promise<DropdownState<unknown> | Record<string, DynamicPropsValue>> {
+        logger.debug(operation, '[EngineHelper#executeProp] operation')
+
         const sandbox = sandboxManager.obtainSandbox()
         let result
 
