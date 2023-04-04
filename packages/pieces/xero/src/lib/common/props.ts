@@ -13,7 +13,7 @@ export const props = {
     ]
   }),
   tenant_id: Property.Dropdown({
-    displayName: 'Tenant ID',
+    displayName: 'Organization',
     description: 'Tenant ID',
     refreshers: ['authentication'],
     required: true,
@@ -69,6 +69,16 @@ export const props = {
   contact_id: (required=false) => Property.ShortText({
     displayName: "Contact ID",
     description: "ID of the contact to create invoice for.",
+    required: required
+  }),
+  contact_name: (required = false) => Property.ShortText({
+    displayName: "Name",
+    description: "Contact name, in full.",
+    required: required
+  }),
+  contact_email: (required = false) => Property.ShortText({
+    displayName: "Email",
+    description: "Email address of the contact.",
     required: required
   })
 }

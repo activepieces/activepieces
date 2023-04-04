@@ -22,17 +22,9 @@ export const xeroCreateContact = createAction({
   props: {
     authentication: props.authentication,
     tenant_id: props.tenant_id,
-    contact_id: props.contact_id(),
-    name: Property.ShortText({
-      displayName: "Name",
-      description: "Contact name, in full.",
-      required: true
-    }),
-    email: Property.ShortText({
-      displayName: "Email",
-      description: "Email address of the contact.",
-      required: true
-    })
+    contact_id: props.contact_id(false),
+    name: props.contact_name(true),
+    email: props.contact_email(false)
   },
   async run(context) {
     const { name, email, contact_id, tenant_id } = context.propsValue

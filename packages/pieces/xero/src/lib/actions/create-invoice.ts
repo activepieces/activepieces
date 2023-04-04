@@ -116,7 +116,9 @@ export const xeroCreateInvoice = createAction({
     authentication: props.authentication,
     tenant_id: props.tenant_id,
     invoice_id: props.invoice_id,
-    contact_id: props.contact_id(true),
+    contact_id: props.contact_id(false),
+    name: props.contact_name(true),
+    email: props.contact_email(false),
     line_item: Property.Object({
       displayName: "Line Item",
       description: "Invoice line items",
@@ -133,12 +135,12 @@ export const xeroCreateInvoice = createAction({
     date: Property.ShortText({
       displayName: "Date Prepared",
       description: "Date the invoice was created. Format example: 2019-03-11",
-      required: true,
-      defaultValue: dayjs().format('YYYY-MM-DD')
+      required: false,
     }),
     due_date: Property.ShortText({
       displayName: "Due Date",
       description: "Due date of the invoice. Format example: 2019-03-11",
+      defaultValue: dayjs().format('YYYY-MM-DD'),
       required: true
     }),
     reference: Property.ShortText({
@@ -163,14 +165,16 @@ export const xeroCreateInvoice = createAction({
     })
   },
   async run(context) {
-    const { invoice_id, contact_id, tenant_id, ...invoice } = context.propsValue
+    const { invoice_id, contact_id, email, name, tenant_id, ...invoice } = context.propsValue
+    
+    const contact: Record<string, unknown> = { Name: name }
+    if (email) contact['EmailAddress'] = email
+    if (contact_id) contact['ContactID'] = contact_id
 
     const body = {
       Invoices: [{
         Type: "ACCREC",
-        Contact: {
-          ContactID: contact_id
-        },
+        Contact: contact,
         LineItems: invoice.line_item ? [invoice.line_item] : [],
         Date: invoice.date,
         DueDate: invoice.due_date,
