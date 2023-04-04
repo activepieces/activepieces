@@ -202,7 +202,7 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
                 refresh_token: appConnection.refresh_token,
             }),
             {
-                headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
+                headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json', authorization: `Basic ${Buffer.from(`${settings.client_id}:${settings.client_secret}`).toString('base64')}` },
             },
         )
     ).data
@@ -233,7 +233,7 @@ async function claim(request: {
                 request.tokenUrl,
                 new URLSearchParams(params),
                 {
-                    headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
+                    headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json', authorization: `Basic ${Buffer.from(`${request.clientId}:${request.clientSecret}`).toString('base64')}` },
                 },
             )
         ).data
