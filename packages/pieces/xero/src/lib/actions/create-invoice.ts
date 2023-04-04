@@ -122,14 +122,14 @@ export const xeroCreateInvoice = createAction({
     line_item: Property.Object({
       displayName: "Line Item",
       description: "Invoice line items",
-      required: false,
+      required: true,
       defaultValue: {
         AccountCode: 200,
         Quantity: 0,
         UnitAmount: 0,
         LineAmount: 0,
         TaxType: "NONE",
-        Description: "",
+        Description: "description",
       }
     }),
     date: Property.ShortText({
@@ -146,7 +146,7 @@ export const xeroCreateInvoice = createAction({
     reference: Property.ShortText({
       displayName: "Invoice Reference",
       description: "Reference number of the Invoice",
-      required: true
+      required: false
     }),
     status: Property.StaticDropdown({
       displayName: "Status",

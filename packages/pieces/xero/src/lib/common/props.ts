@@ -21,7 +21,6 @@ export const props = {
   }),
   tenant_id: Property.Dropdown({
     displayName: 'Organization',
-    description: 'Tenant ID',
     refreshers: ['authentication'],
     required: true,
     options: async ({ authentication }) => {
@@ -55,7 +54,7 @@ export const props = {
         return {
           disabled: false,
           options: [{
-            label: `Tenant Id: ${result.body?.[0].tenantId}`, 
+            label: result.body?.[0].tenantName, 
             value: result.body?.[0].tenantId
           }]
         }
