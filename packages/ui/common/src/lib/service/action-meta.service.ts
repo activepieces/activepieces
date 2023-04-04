@@ -13,7 +13,6 @@ import {
   TriggerType,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
-
 import { Observable, shareReplay, map, forkJoin } from 'rxjs';
 import { environment } from '../environment';
 import { FlagService, FlowItemDetails } from '@activepieces/ui/common';
