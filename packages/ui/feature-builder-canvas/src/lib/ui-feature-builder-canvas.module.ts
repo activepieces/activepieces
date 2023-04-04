@@ -9,6 +9,8 @@ import { FlowItemComponent } from './flow-item-tree/flow-item/flow-item.componen
 import { FlowItemContentComponent } from './flow-item-tree/flow-item/flow-item-content/flow-item-content.component';
 import { FlowItemTreeComponent } from './flow-item-tree/flow-item-tree.component';
 import { CanvasUtilsComponent } from './canvas-utils/canvas-utils.component';
+import { CanvasPannerDirective } from './canvas-utils/panning/panner.directive';
+import { DeleteStepDialogComponent } from './flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
 
 @NgModule({
   imports: [CommonModule, UiCommonModule],
@@ -21,7 +23,9 @@ import { CanvasUtilsComponent } from './canvas-utils/canvas-utils.component';
     FlowItemContentComponent,
     FlowItemTreeComponent,
     CanvasUtilsComponent,
+    DeleteStepDialogComponent,
+    CanvasPannerDirective,
   ],
-  exports: [FlowItemTreeComponent, CanvasUtilsComponent],
+  exports: [FlowItemTreeComponent, CanvasUtilsComponent, CanvasPannerDirective],
 })
 export class UiFeatureBuilderCanvasModule {}

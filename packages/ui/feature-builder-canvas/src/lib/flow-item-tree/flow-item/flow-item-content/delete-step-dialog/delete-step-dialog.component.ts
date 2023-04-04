@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
-import { FlowsActions } from '../../../../../../store/flow/flows.action';
+import { FlowsActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-delete-step-dialog',

@@ -7,7 +7,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { CollectionBuilderService } from '../../service/collection-builder.service';
+import { CollectionBuilderService } from '@activepieces/ui/feature-builder-store';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../store/builder/builder.selector';
@@ -29,9 +29,8 @@ import {
 } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
-import { PannerService } from './canvas-utils/panning/panner.service';
 import { TestStepService } from '../../service/test-step.service';
-
+import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 @Component({
   selector: 'app-collection-builder',
   templateUrl: './collection-builder.component.html',

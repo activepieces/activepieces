@@ -6,5 +6,5 @@
     [flowItem]="castToBranchItem()" [insideLoopOrBranch]="insideLoopOrBranch">
   </app-branch-line-connection>
   <app-simple-line-connection *ngIf="flowItem.type !== ActionType.LOOP_ON_ITEMS && flowItem.type !== ActionType.BRANCH"
-    [flowItem]="flowItem" [viewMode]="viewMode" [insideLoopOrBranch]="insideLoopOrBranch"></app-simple-line-connection>
+    [flowItem]="flowItem" [viewMode]="viewMode"></app-simple-line-connection>
 </div>
