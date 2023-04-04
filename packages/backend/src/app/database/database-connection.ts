@@ -31,6 +31,7 @@ import { removeCollectionVersion1678492809093 } from './migration/1678492809093-
 import { addEventRouting1678382946390 } from './migration/1678382946390-add-event-routing'
 import { bumpFixPieceVersions1678928503715 } from './migration/1678928503715-bump-fix-piece-versions'
 import { migrateSchedule1679014156667 } from './migration/1679014156667-migrate-schedule'
+import { addNotificationsStatus1680563747425 } from './migration/1680563747425-add-notifications-status'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -65,6 +66,7 @@ const getMigrations = () => {
         addEventRouting1678382946390,
         bumpFixPieceVersions1678928503715,
         migrateSchedule1679014156667,
+        addNotificationsStatus1680563747425,
     ]
 }
 

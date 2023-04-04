@@ -9,6 +9,8 @@ To configure activepieces, you will need to set some environment variables, Ther
 When you execute the deploy.sh script in the Docker installation tutorial, it will produce these values.
 </Tip>
 
+## Environment Variables
+
 | Variable                     | Description                                                                                                 | Default Value          | Example
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------  | --------
 | `AP_JWT_SECRET`              | ❗️ Encryption key used for generating JWT tokens                                                            | `None`                 | https://demo.activepieces.com
@@ -27,6 +29,7 @@ When you execute the deploy.sh script in the Docker installation tutorial, it wi
 | `AP_REDIS_PORT`              | ❗️ The port number for the Redis server                                                                     | `None`                 |
 | `AP_REDIS_USE_SSL`           | Connect to Redis with SSL                                                                                   | `false`                |
 | `AP_NOTIFICATION_URL`        | The notification URL is triggered whenever a run fails.                                                     | `false`                |
+| `AP_NOTIFICATION_SETTING_TEXT`| The text to show in the notification settings of the runs tab when a notification is triggered due to a failed run.	        | `Send notification on failed runs`|
 | `AP_TELEMETRY_ENABLED`       | Collect telemetry information                                                                               | `false`                |
 | `AP_SIGN_UP_ENABLED`         | Enable Signed Up                                                                                            | `false`                |
 
@@ -40,3 +43,47 @@ It must be accessible to third parties to send data.
 The default URL is set to the machine's IP address. To ensure proper operation, ensure that this address is accessible or specify an `AP_FRONTEND_URL` environment variable.
 
 One possible solution for this is using a service like ngrok (https://ngrok.com/), which can be used to expose the frontend port (4200) to the internet.
+
+
+### Setting Notification for Failed Runs:
+
+To get notified when a flow execution fails outside of testing, set a URL for `AP_NOTIFICATION_URL`.
+
+To make a personalized notification channel, use activepieces to create a flow with a webhook trigger and choose your notification preference (e.g. Slack, Email). Copy the webhook URL and set it for `AP_NOTIFICATION_URL`.
+
+Here's an example payload send by activepieces:
+
+```json
+{
+  "body": {
+    "type": "run.failed",
+    "payload": {
+      "run": {
+        "id": "0km7v4Ke44TgEtA3HUnts",
+        "flowId": "oyvBZc2seQ4LTPXLamgOo",
+        "status": "FAILED",
+        "created": "2023-03-31T22:07:42.513Z",
+        "updated": "2023-03-31T22:07:43.536Z",
+        "projectId": "g1EcUOGl2LaNQQA3AsQmN",
+        "startTime": "2023-03-31T22:07:42.511Z",
+        "finishTime": "2023-03-31T22:07:43.535Z",
+        "environment": "PRODUCTION",
+        "collectionId": "4EZ7ZqEvneuKRc62SmPA4",
+        "flowVersionId": "6nxv1FXCQaaa2pxzLDfIx",
+        "flowDisplayName": "Flow 1",
+        "collectionDisplayName": "Testing"
+      },
+      "owner": {
+        "id": "LFknXPv6FMhiUQFfVMZl0",
+        "email": "mo@example.com",
+        "lastName": "Doe",
+        "firstName": "John"
+      }
+    }
+  },
+  "method": "POST",
+  "headers": {},
+  "queryParams": {}
+}
+```
+

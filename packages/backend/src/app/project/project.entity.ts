@@ -23,6 +23,10 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         displayName: {
             type: String,
         },
+        notifications: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {

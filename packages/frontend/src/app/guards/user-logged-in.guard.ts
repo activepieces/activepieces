@@ -10,7 +10,9 @@ export class UserLoggedIn implements CanActivate {
 
   canActivate(): boolean {
     if (!this.auth.isLoggedIn()) {
-      this.router.navigate(['/sign-in']);
+      this.router.navigate(['/sign-in'], {
+        queryParams: { redirect_url: window.location.href },
+      });
       return false;
     }
     return true;

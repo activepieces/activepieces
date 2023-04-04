@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormBuilder,
   FormControl,
@@ -29,6 +29,7 @@ export class SignInComponent {
   authenticate$: Observable<void>;
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private formBuilder: FormBuilder,
     private authenticationService: AuthenticationService
   ) {
@@ -63,11 +64,20 @@ export class SignInComponent {
         tap((response) => {
           if (response) {
             this.authenticationService.saveUser(response);
-            this.router.navigate(['/']);
+            this.redirectToBack();
           }
         }),
         map(() => void 0)
       );
+    }
+  }
+
+  redirectToBack() {
+    const redirectUrl = this.route.snapshot.queryParamMap.get('redirect_url');
+    if (redirectUrl) {
+      window.location.href = redirectUrl;
+    } else {
+      this.router.navigate(['/']);
     }
   }
 }

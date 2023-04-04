@@ -20,6 +20,7 @@ type ErrorParams =
   | FileNotFoundErrorParams
   | FlowNotFoundErrorParams
   | FlowRunNotFoundErrorParams
+  | ProjectNotFoundErrorParams
   | FlowVersionNotFoundErrorParams
   | InstanceNotFoundErrorParams
   | InvalidBearerTokenParams
@@ -90,7 +91,14 @@ export type InstanceNotFoundErrorParams = BaseErrorParams<
 >
 
 export type FlowRunNotFoundErrorParams = BaseErrorParams<
-  ErrorCode.INSTANCE_NOT_FOUND,
+  ErrorCode.FLOW_RUN_NOT_FOUND,
+  {
+    id: FlowRunId;
+  }
+>
+
+export type ProjectNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.PROJECT_NOT_FOUND,
   {
     id: FlowRunId;
   }
@@ -229,6 +237,7 @@ export enum ErrorCode {
   STEP_NOT_FOUND = "STEP_NOT_FOUND",
   SYSTEM_PROP_NOT_DEFINED = "SYSTEM_PROP_NOT_DEFINED",
   INVALID_CLAIM = "INVALID_CLAIM",
+  PROJECT_NOT_FOUND = "PROJECT_NOT_FOUND",
   INVALID_CLOUD_CLAIM = "INVALID_CLOUD_CLAIM",
   INVALID_OR_EXPIRED_JWT_TOKEN = "INVALID_OR_EXPIRED_JWT_TOKEN",
   TASK_QUOTA_EXCEEDED = "TASK_QUOTA_EXCEEDED",
