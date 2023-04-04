@@ -118,6 +118,7 @@
       "@activepieces/piece-wordpress": [
         "packages/pieces/wordpress/src/index.ts"
       ],
+      "@activepieces/piece-xero": ["packages/pieces/xero/src/index.ts"],
       "@activepieces/piece-youtube": ["packages/pieces/youtube/src/index.ts"],
       "@activepieces/piece-zendesk": ["packages/pieces/zendesk/src/index.ts"],
       "@activepieces/piece-zoho-crm": ["packages/pieces/zoho-crm/src/index.ts"],

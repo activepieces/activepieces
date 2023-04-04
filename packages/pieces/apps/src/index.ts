@@ -45,6 +45,7 @@ import { youtube } from '@activepieces/piece-youtube';
 import { intercom } from '@activepieces/piece-intercom';
 import { trello } from '@activepieces/piece-trello';
 import { square } from '@activepieces/piece-square';
+import { xero } from '@activepieces/piece-xero';
 import { delay } from '@activepieces/piece-delay';
 import { dataMapper } from '@activepieces/piece-data-mapper';
 import { schedule } from '@activepieces/piece-schedule';
@@ -110,6 +111,7 @@ export const pieces: Piece[] = [
     dataMapper,
     intercom,
     schedule,
+    xero,
     zohoCrm,
     zendesk,
     mattermost,
