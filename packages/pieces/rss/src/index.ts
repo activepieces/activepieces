@@ -6,7 +6,7 @@ export const rssFeed = createPiece({
 	name: 'rss',
 	displayName: "RSS Feed",
 	logoUrl: 'https://cdn.activepieces.com/pieces/rss.png',
-  version: packageJson.version,
+	version: packageJson.version,
 	actions: [],
 	triggers: [rssNewItemTrigger],
 });

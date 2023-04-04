@@ -1,4 +1,13 @@
-import { AuthenticationType, createAction, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework"
+import {  createAction, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework"
+
+const markdownDescription = `
+To obtain your API key and bundle alias, follow these steps:
+
+1. Log in to your Freshsales account.
+2. Click on your profile icon in the top-right corner of the screen and select **Settings** from the dropdown menu.
+3. In the settings menu, select **API Settings** from the left-hand navigation panel.
+4. You should now see your API key displayed on the screen. If you don't see an API key, and copy the alias e.g **https://<alias>.myfreshworks.com**
+`
 
 export const freshSalesCreateContact = createAction({
   name: "freshsales_create_contact",
@@ -7,6 +16,7 @@ export const freshSalesCreateContact = createAction({
   props: {
     authentication: Property.BasicAuth({
       displayName: "Authentication",
+      description: markdownDescription,
       username: Property.ShortText({
         displayName: "Bundle alias",
         description: "Your Freshsales bundle alias (e.g. https://<alias>.myfreshworks.com)",
@@ -212,7 +222,7 @@ export const freshSalesCreateContact = createAction({
       "latest_campaign": null,
       "latest_medium": null,
       "latest_source": null,
-      "mcr_id": 1628422895780106202,
+      "mcr_id": 162842289578010620,
       "phone_numbers": [],
       "tags": []
     }

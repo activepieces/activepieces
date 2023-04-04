@@ -5,7 +5,7 @@ import { figmaGetRequest } from '../common/utils';
 
 export const getFileAction = createAction({
   name: 'get_file',
-  displayName: 'Get file',
+  displayName: 'Get File',
   description: 'Get file',
   sampleData: {
     success: true,

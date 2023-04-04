@@ -6,6 +6,9 @@ export class FlowItemDetails {
     public name: string,
     public description: string,
     public logoUrl?: string,
-    public extra?: { appName: string }
+    public extra?: {
+      appName: string;
+      appVersion: string;
+    }
   ) {}
 }

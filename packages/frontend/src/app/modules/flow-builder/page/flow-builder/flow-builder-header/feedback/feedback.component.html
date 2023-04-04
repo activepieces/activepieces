@@ -1,14 +1,14 @@
-<app-button [matMenuTriggerFor]="menu" #menuTrigger="matMenuTrigger" btnStyle="basic" btnColor="basic" btnSize="medium">
+<app-button [matMenuTriggerFor]="menu" #menuTrigger="matMenuTrigger" btnStyle="basic" btnColor="basic" btnSize="medium"
+    (menuOpened)="menuOpened()">
     <div class="ap-flex ap-items-center ap-font-semibold">
         📣 Feedback
     </div>
-
 </app-button>
 <mat-menu #menu="matMenu" xPosition="before">
     <div (click)="$event.stopPropagation()"
         class="ap-flex ap-flex-col ap-gap-2 ap-min-w-[250px] md:ap-min-w-[325px] -ap-mt-2">
         <mat-form-field appearance="fill" class="ap-w-full !ap-bg-white" subscriptSizing="dynamic">
-            <textarea [formControl]="feedbackControl" rows="4" matInput
+            <textarea #focusItem [formControl]="feedbackControl" rows="4" matInput
                 placeholder="Have any feedback for us? "></textarea>
         </mat-form-field>
         <div class="ap-flex ap-px-4">

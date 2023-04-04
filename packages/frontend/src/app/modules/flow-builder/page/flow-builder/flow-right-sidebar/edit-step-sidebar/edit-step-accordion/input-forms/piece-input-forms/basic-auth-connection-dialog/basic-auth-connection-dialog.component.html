@@ -1,14 +1,15 @@
-<app-dialog-title-template>
-    <ng-container *ngIf="!dialogData.connectionToUpdate; else editConnectionHeader">New Connection</ng-container>
-    <ng-template #editConnectionHeader>Edit {{dialogData.connectionToUpdate!.name}}</ng-template>
+<app-dialog-title-template><ng-container *ngIf="!dialogData.connectionToUpdate; else editConnectionHeader">New
+        Connection</ng-container><ng-template #editConnectionHeader>Edit
+        {{dialogData.connectionToUpdate!.name}}</ng-template>
 </app-dialog-title-template>
 
 <mat-dialog-content>
-
-    <form class="ap-flex ap-flex-col ap-gap-2 ap-w-[430px]" [formGroup]="settingsForm" (submit)="submit()">
+    <app-markdown *ngIf="dialogData.pieceAuthConfig!.description" [data]="dialogData.pieceAuthConfig!.description"></app-markdown>
+    <form class="ap-pt-4 ap-flex ap-flex-col ap-gap-2 ap-max-w-[720px] ap-min-w-[420px]" [formGroup]="settingsForm" (submit)="submit()">
         <mat-form-field class="ap-w-full" appearance="outline">
             <mat-label>Name</mat-label>
-            <input [matTooltip]="keyTooltip" [formControl]="settingsForm.controls.name" matInput type="text" />
+            <input [matTooltip]="keyTooltip" cdkFocusInitial [formControl]="settingsForm.controls.name" matInput
+                type="text" />
             <mat-error *ngIf="settingsForm.controls.name.invalid">
                 <ng-container *ngIf="settingsForm.controls.name.getError('required'); else patternErrorOrAlreadyUsed">
                     Name is required
@@ -49,8 +50,7 @@
         <app-button btnColor="basic" mat-dialog-close btnSize="default">
             Cancel
         </app-button>
-        <app-button cdkFocusInitial btnSize="default" (click)="submit()" btnColor="primary" type="submit"
-            [loading]="loading">
+        <app-button btnSize="default" (click)="submit()" btnColor="primary" type="submit" [loading]="loading">
             Save
         </app-button>
     </div>

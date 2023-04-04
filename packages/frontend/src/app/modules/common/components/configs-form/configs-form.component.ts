@@ -109,12 +109,14 @@ export class ConfigsFormComponent implements ControlValueAccessor {
   allOptionalConfigs: PieceConfig[] = [];
   selectedOptionalConfigs: PieceConfig[] = [];
   optionalConfigsMenuOpened = false;
-  @Input() stepName: string;
+  @Input() actionOrTriggerName: string;
   @Input() pieceName: string;
+  @Input() pieceVersion: string;
   @Input() pieceDisplayName: string;
   @ViewChildren('textControl', { read: ElementRef })
   theInputs: QueryList<ElementRef>;
   form!: UntypedFormGroup;
+  setDefaultValue$: Observable<null>;
   OnChange: (value) => void;
   OnTouched: () => void;
 
@@ -130,19 +132,22 @@ export class ConfigsFormComponent implements ControlValueAccessor {
       BuilderSelectors.selectAppConnectionsDropdownOptions
     );
   }
+  writeValue(obj: {
+    configs: PieceConfig[];
+    customizedInputs?: Record<string, boolean>;
+    setDefaultValues: boolean;
+  }): void {
+    this.configs = obj.configs;
+    this.customizedInputs = obj.customizedInputs;
 
-  writeValue(
-    obj:
-      | { configs: PieceConfig[]; customizedInputs: Record<string, boolean> }
-      | PieceConfig[]
-  ): void {
-    if (Array.isArray(obj)) {
-      this.configs = obj;
-    } else {
-      this.configs = obj.configs;
-      this.customizedInputs = obj.customizedInputs;
-    }
     this.createForm();
+    if (obj.setDefaultValues) {
+      this.setDefaultValue$ = of(null).pipe(
+        tap(() => {
+          this.form.setValue(this.form.value);
+        })
+      );
+    }
     this.cd.markForCheck();
   }
   registerOnChange(fn: (value) => void): void {
@@ -290,11 +295,11 @@ export class ConfigsFormComponent implements ControlValueAccessor {
           switchMap((collection) => {
             return this.actionMetaDataService.getPieceActionConfigOptions<T>(
               {
-                pieceVersion: '0.0.0',
+                pieceVersion: this.pieceVersion,
                 propertyName: c.key,
-                stepName: this.stepName,
+                stepName: this.actionOrTriggerName,
                 input: res,
-                collectionVersionId: collection.version!.id,
+                collectionId: collection.id,
               },
               this.pieceName
             );
@@ -341,7 +346,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         }
         if (typeof c.value === 'object') {
           controls[c.key] = new UntypedFormControl(
-            JSON.stringify(c.value || c.defaultValue),
+            JSON.stringify(c.value || c.defaultValue, null, 2),
             validators
           );
         } else {
@@ -410,7 +415,6 @@ export class ConfigsFormComponent implements ControlValueAccessor {
 
   formValueMiddleWare(formValue: object) {
     const formattedValue = { ...formValue };
-
     Object.keys(formValue).forEach((configKey) => {
       if (
         this.configs.find((c) => c.key === configKey)!.type ===

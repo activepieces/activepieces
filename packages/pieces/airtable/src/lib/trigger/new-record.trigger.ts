@@ -1,8 +1,22 @@
-import { deepStrictEqual } from 'assert';
-import { createTrigger, TriggerStrategy } from '@activepieces/framework';
-import { airtableCommon, AirtableRecord } from '../common';
+import { createTrigger, pollingHelper, DedupeStrategy, Polling } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/shared';
+import { airtableCommon } from '../common';
 
-const triggerNameInStore = 'airtable_new_record_trigger';
+const polling: Polling<{ authentication: string, tableId: string | undefined, base: string }> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ propsValue }: { propsValue: { authentication: string, tableId: string | undefined, base: string } }) => {
+    const records = await airtableCommon.getTableSnapshot({
+      personalToken: propsValue.authentication,
+      baseId: propsValue.base,
+      tableId: propsValue.tableId!,
+    });
+    return records.map((record) => ({
+      epochMilliSeconds: Date.parse(record.createdTime),
+      data: record,
+    }));
+  }
+}
+
 export const airtableNewRecord = createTrigger({
   name: 'new_record',
   displayName: 'New Record',
@@ -10,40 +24,23 @@ export const airtableNewRecord = createTrigger({
   props: {
     authentication: airtableCommon.authentication,
     base: airtableCommon.base,
-    table: airtableCommon.table
+    tableId: airtableCommon.tableId
   },
   sampleData: {},
   type: TriggerStrategy.POLLING,
+  async test(context) {
+    return await pollingHelper.test(polling, { store: context.store, propsValue: context.propsValue });
+  },
   async onEnable(context) {
-    const currentTableSnapshot = await airtableCommon.getTableSnapshot({
-      personalToken: context.propsValue['authentication'],
-      baseId: context.propsValue['base'],
-      tableId: context.propsValue['table']
-    })
-
-    await context.store?.put<AirtableRecord[]>(triggerNameInStore, currentTableSnapshot);
+    await pollingHelper.onEnable(polling, { store: context.store, propsValue: context.propsValue });
 
   },
+
   async onDisable(context) {
-    await context.store.put<undefined>(triggerNameInStore, undefined);
+    await pollingHelper.onDisable(polling, { store: context.store, propsValue: context.propsValue });
   },
+
   async run(context) {
-    const currentTableSnapshot = await airtableCommon.getTableSnapshot({
-      personalToken: context.propsValue['authentication'],
-      baseId: context.propsValue['base'],
-      tableId: context.propsValue['table']
-    });
-    const lastSnapshot = await context.store.get<AirtableRecord[]>(triggerNameInStore) || [];
-    const payloads = currentTableSnapshot.filter(r => !lastSnapshot.find(or => {
-      try {
-        deepStrictEqual(r, or);
-        return true;
-      }
-      catch (err) {
-        return false;
-      }
-    }));
-    await context.store?.put<AirtableRecord[]>(triggerNameInStore, currentTableSnapshot);
-    return payloads;
+    return await pollingHelper.poll(polling, { store: context.store, propsValue: context.propsValue });
   },
 });

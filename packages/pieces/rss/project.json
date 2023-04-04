@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/rss/tsconfig.lib.json",
         "packageJson": "packages/pieces/rss/package.json",
         "main": "packages/pieces/rss/src/index.ts",
-        "assets": ["packages/pieces/rss/*.md"]
+        "assets": ["packages/pieces/rss/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

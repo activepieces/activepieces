@@ -1,11 +1,25 @@
-import { cwd } from 'node:process'
-import { resolve } from 'node:path'
-import { readdir } from 'node:fs/promises'
+import assert from 'node:assert'
 import { PieceMetadata } from '../../../packages/shared/src'
+import { getAvailablePieceNames } from '../utils/get-available-piece-names'
+import { readPackageJson, PackageJson } from '../utils/files'
+import { validateMetadata } from './validate-metadata'
 
 type Piece = {
-  displayName: string;
-  metadata(): PieceMetadata;
+    name: string
+    displayName: string
+    version: string
+    metadata(): PieceMetadata
+}
+
+const extractPieceNameFromPackageJson = (packageJson: PackageJson): string => {
+    const { name } = packageJson
+    const pieceNameRegex = /^@activepieces\/piece-(?<pieceName>.+)$/
+    const matchResult = name.match(pieceNameRegex)
+    const pieceName = matchResult?.groups?.pieceName
+
+    assert(pieceName, `[generateMetadata] package name "${name}" is not on the form "@activepieces/piece-xyz`)
+
+    return pieceName;
 }
 
 const byDisplayNameIgnoreCase = (a: Piece, b: Piece) => {
@@ -17,29 +31,23 @@ const byDisplayNameIgnoreCase = (a: Piece, b: Piece) => {
 export const generateMetadata = async (): Promise<PieceMetadata[]> => {
     console.log('generateMetadata')
 
-    const piecePath = resolve(cwd(), 'packages', 'pieces', 'apps', 'src', 'lib')
-    const pieceDirectories = await readdir(piecePath)
-
     const pieces: Piece[] = [];
 
-    /* pieces that aren't yet migrated to a standalone package */
-    for (const pieceDirectory of pieceDirectories) {
-        const index = resolve(piecePath, pieceDirectory, 'index.ts')
-        const module = await import(index)
-        const piece = Object.values<Piece>(module)[0]
-        pieces.push(piece)
-    }
+    const piecePackageNames = await getAvailablePieceNames();
 
-    const frameworkPackages = ['framework', 'apps']
-    const piecePackagePath = resolve(cwd(), 'packages', 'pieces')
-    const piecePackageDirectories = await readdir(piecePackagePath)
-    const filteredPiecePackageDirectories = piecePackageDirectories.filter(d => !frameworkPackages.includes(d))
+    for (const packageName of piecePackageNames) {
+        const packagePath = `packages/pieces/${packageName}`
 
-    /* pieces that are migrated to a standalone package */
-    for (const pieceDirectory of filteredPiecePackageDirectories) {
-        const index = resolve(piecePackagePath, pieceDirectory, 'src', 'index.ts')
-        const module = await import(index)
+        const packageJson = await readPackageJson(packagePath)
+        const pieceName = extractPieceNameFromPackageJson(packageJson)
+
+        const module = await import(`${packagePath}/src/index.ts`)
         const piece = Object.values<Piece>(module)[0]
+
+        piece.name = pieceName
+        piece.version = packageJson.version
+
+        validateMetadata(piece.metadata())
         pieces.push(piece)
     }
 

@@ -1,6 +1,5 @@
 import { AppConnectionId } from "../app-connection/app-connection";
 import { CollectionId } from "../collections/collection";
-import { CollectionVersionId } from "../collections/collection-version";
 import { FileId } from "../file/file";
 import { FlowRunId } from "../flow-run/flow-run";
 import { FlowId } from "../flows/flow";
@@ -16,7 +15,6 @@ export class ActivepiecesError extends Error {
 
 type ErrorParams =
   | CollectionNotFoundErrorParams
-  | CollectionVersionNotFoundErrorParams
   | ConfigNotFoundErrorParams
   | ExistingUserErrorParams
   | FileNotFoundErrorParams
@@ -35,8 +33,11 @@ type ErrorParams =
   | InvalidCloudClaimParams
   | InvalidJwtTokenErrorParams
   | TaskQuotaExeceededErrorParams
+  | TriggerFailedErrorParams
   | SystemInvalidErrorParams
   | SystemPropNotDefinedErrorParams
+  | OpenAiFailedErrorParams
+  | TestTriggerFailedErrorParams
   | FlowOperationErrorParams;
 
 
@@ -77,13 +78,6 @@ export type CollectionNotFoundErrorParams = BaseErrorParams<
   ErrorCode.COLLECTION_NOT_FOUND,
   {
     id: CollectionId;
-  }
->
-
-export type CollectionVersionNotFoundErrorParams = BaseErrorParams<
-  ErrorCode.COLLECTION_VERSION_NOT_FOUND,
-  {
-    id: CollectionVersionId;
   }
 >
 
@@ -149,6 +143,17 @@ export type PieceTriggerNotFoundErrorParams = BaseErrorParams<
   }
 >
 
+export type TriggerFailedErrorParams = BaseErrorParams<
+  ErrorCode.TRIGGER_FAILED,
+  {
+    pieceName: string;
+    pieceVersion: string;
+    triggerName: string;
+    error: Error;
+  }
+>
+
+
 export type ConfigNotFoundErrorParams = BaseErrorParams<
   ErrorCode.CONFIG_NOT_FOUND,
   {
@@ -173,6 +178,11 @@ export type SystemPropNotDefinedErrorParams = BaseErrorParams<
   }
 >;
 
+export type OpenAiFailedErrorParams = BaseErrorParams<
+  ErrorCode.OPENAI_FAILED,
+  Record<string, never>
+>;
+
 export type FlowOperationErrorParams = BaseErrorParams<
   ErrorCode.FLOW_OPERATION_INVALID,
   Record<string, never>
@@ -191,6 +201,14 @@ export type TaskQuotaExeceededErrorParams = BaseErrorParams<
     projectId: string;
   }
 >
+
+export type TestTriggerFailedErrorParams = BaseErrorParams<
+  ErrorCode.TEST_TRIGGER_FAILED,
+  {
+    message: string;
+  }
+>
+
 
 export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
@@ -215,5 +233,8 @@ export enum ErrorCode {
   INVALID_OR_EXPIRED_JWT_TOKEN = "INVALID_OR_EXPIRED_JWT_TOKEN",
   TASK_QUOTA_EXCEEDED = "TASK_QUOTA_EXCEEDED",
   SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
+  TRIGGER_FAILED = "TRIGGER_FAILED",
   FLOW_OPERATION_INVALID = "FLOW_OPERATION_INVALID",
+  OPENAI_FAILED = "OPENAI_FAILED",
+  TEST_TRIGGER_FAILED = "TEST_TRIGGER_FAILED"
 }

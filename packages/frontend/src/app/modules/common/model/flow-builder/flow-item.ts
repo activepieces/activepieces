@@ -9,9 +9,11 @@ export type FlowItemRenderInfo = {
   width?: number;
   height?: number;
   nextAction?: FlowItem;
+  indexInDfsTraversal?: number;
 };
 
 export type FlowItem = (Action | Trigger) & FlowItemRenderInfo;
+export type ActionFlowItem = Action & FlowItemRenderInfo;
 
 export interface BoundingBox {
   width: number;

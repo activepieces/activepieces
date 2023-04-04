@@ -1,11 +1,18 @@
 <form [formGroup]="loopStepForm" class="ap-flex ap-flex-col ap-gap-2">
-  <mat-form-field class="ap-w-full" appearance="outline">
-    <mat-label>Items</mat-label>
-    <input matInput placeholder="Variable or JSON array" class="ap-bg-white" formControlName="items" />
-    <mat-error *ngIf="loopStepForm.controls.items.invalid">
-      Items are required.
-    </mat-error>
-  </mat-form-field>
+  <div>
+    <mat-form-field class="ap-w-full" appearance="outline" (click)="itemsMentionsDropdown.showMenuSubject$.next(true)">
+      <mat-label>Items</mat-label>
+      <app-interpolating-text-form-control #ItemsTextControl formControlName="items" [disabled]="true"
+        [onlyAllowOneMentionToBeAdded]="true"
+        (keyup)="$event.key ==='Escape'? itemsMentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
+      <mat-error *ngIf="loopStepForm.controls.items.invalid">
+        Items are required.
+      </mat-error>
+    </mat-form-field>
+    <app-builder-autocomplete-mentions-dropdown #itemsMentionsDropdown width="calc(100% - 2rem)"
+      (menuClosed)="ItemsTextControl.focusEditor()" marginTop="-20px"
+      (addMention)="addMention(ItemsTextControl,$event)"></app-builder-autocomplete-mentions-dropdown>
+  </div>
 </form>
 
 <ng-container *ngIf="updateComponentValue$ | async"></ng-container>

@@ -1,6 +1,4 @@
-
-import { BaseModel } from "@shared/common/base-model";
-import { ProjectId } from "@activepieces/shared";
+import { ProjectId, BaseModel } from "@activepieces/shared";
 
 export type ProjectPlanId = string;
 

@@ -2,6 +2,7 @@ import {
   AppConnection,
   AppConnectionType,
   BasicAuthConnection,
+  CustomAuthConnection,
   OAuth2AppConnection,
   PropertyType,
   SecretKeyAppConnection,
@@ -34,6 +35,10 @@ import {
   USE_MY_OWN_CREDENTIALS,
 } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
 import {
+  CustomAuthConnectionDialogComponent,
+  CustomAuthDialogData,
+} from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/custom-auth-connection-dialog/custom-auth-connection-dialog.component';
+import {
   OAuth2ConnectionDialogComponent,
   USE_CLOUD_CREDENTIALS,
 } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/oauth2-connection-dialog/oauth2-connection-dialog.component';
@@ -41,6 +46,7 @@ import {
   SecretTextConnectionDialogComponent,
   SecretTextConnectionDialogData,
 } from '../../../../flow-builder/page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
+import { ActionMetaService } from '../../../../flow-builder/service/action-meta.service';
 import { BuilderSelectors } from '../../../../flow-builder/store/builder/builder.selector';
 import { CloudAuthConfigsService } from '../../../service/cloud-auth-configs.service';
 import { FlagService } from '../../../service/flag.service';
@@ -65,7 +71,11 @@ export class AddEditConnectionButtonComponent {
   @Input()
   pieceName: string;
   @Input()
+  pieceVersion: string;
+  @Input()
   isEditConnectionButton = false;
+  @Input()
+  triggerName: string;
   @Output()
   connectionPropertyValueChanged: EventEmitter<{
     configKey: string;
@@ -77,7 +87,8 @@ export class AddEditConnectionButtonComponent {
     private store: Store,
     private dialogService: MatDialog,
     private cloudAuthConfigsService: CloudAuthConfigsService,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private actionMetaService: ActionMetaService
   ) {}
 
   buttonClicked() {
@@ -93,9 +104,36 @@ export class AddEditConnectionButtonComponent {
       this.newOAuth2AuthenticationDialogProcess();
     } else if (this.config.type === PropertyType.SECRET_TEXT) {
       this.openNewSecretKeyConnection();
+    } else if (this.config.type === PropertyType.CUSTOM_AUTH) {
+      this.openNewCustomAuthConnection();
     } else {
       this.openNewBasicAuthConnection();
     }
+  }
+
+  private openNewCustomAuthConnection() {
+    const dialogData: CustomAuthDialogData = {
+      pieceAuthConfig: this.config,
+      pieceName: this.pieceName,
+    };
+
+    this.updateOrAddConnectionDialogClosed$ = this.dialogService
+      .open(CustomAuthConnectionDialogComponent, {
+        data: dialogData,
+      })
+      .afterClosed()
+      .pipe(
+        tap((result: AppConnection | null) => {
+          if (result) {
+            const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
+            this.connectionPropertyValueChanged.emit({
+              configKey: this.config.key,
+              value: authConfigOptionValue,
+            });
+          }
+        }),
+        map(() => void 0)
+      );
   }
 
   private openNewBasicAuthConnection() {
@@ -162,13 +200,40 @@ export class AddEditConnectionButtonComponent {
           map((res) => {
             return res[this.pieceName];
           }),
-          tap((cloudAuth2Config: { clientId: string }) => {
-            if (cloudAuth2Config) {
-              this.openNewCloudOAuth2ConnectionModal(cloudAuth2Config.clientId);
-            } else {
-              this.openNewOAuth2ConnectionDialog();
-            }
+          switchMap((res: { clientId: string }) => {
+            return this.actionMetaService
+              .getPieceMetadata(this.pieceName, this.pieceVersion)
+              .pipe(
+                map((p) => {
+                  let isTriggerAppWebhook = false;
+                  Object.keys(p.triggers).forEach((k) => {
+                    isTriggerAppWebhook =
+                      isTriggerAppWebhook ||
+                      (this.triggerName === k &&
+                        p.triggers[k].type === 'APP_WEBHOOK');
+                  });
+                  return {
+                    cloudAuth2Config: res,
+                    isTriggerAppWebhook: isTriggerAppWebhook,
+                  };
+                })
+              );
           }),
+          tap(
+            (res: {
+              cloudAuth2Config: { clientId: string };
+              isTriggerAppWebhook: boolean;
+            }) => {
+              if (res.cloudAuth2Config) {
+                this.openNewCloudOAuth2ConnectionModal(
+                  res.cloudAuth2Config.clientId,
+                  res.isTriggerAppWebhook
+                );
+              } else {
+                this.openNewOAuth2ConnectionDialog();
+              }
+            }
+          ),
           map(() => void 0)
         );
     }
@@ -209,7 +274,8 @@ export class AddEditConnectionButtonComponent {
                       }),
                       tap((cloudAuth2Config: { clientId: string }) => {
                         this.openNewCloudOAuth2ConnectionModal(
-                          cloudAuth2Config.clientId
+                          cloudAuth2Config.clientId,
+                          false
                         );
                       }),
                       map(() => void 0)
@@ -228,13 +294,17 @@ export class AddEditConnectionButtonComponent {
       );
   }
 
-  private openNewCloudOAuth2ConnectionModal(clientId: string) {
+  private openNewCloudOAuth2ConnectionModal(
+    clientId: string,
+    isTriggerAppWebhook: boolean
+  ) {
     this.updateOrAddConnectionDialogClosed$ = this.dialogService
       .open(CloudOAuth2ConnectionDialogComponent, {
         data: {
           pieceAuthConfig: this.config,
           pieceName: this.pieceName,
           clientId: clientId,
+          isTriggerAppWebhook: isTriggerAppWebhook,
         },
       })
       .afterClosed()
@@ -273,11 +343,33 @@ export class AddEditConnectionButtonComponent {
     );
     if (this.config.type === PropertyType.OAUTH2) {
       this.editOAuth2Property(currentConnection$);
+    } else if (this.config.type === PropertyType.CUSTOM_AUTH) {
+      this.editCustomAuthConnection(currentConnection$);
     } else if (this.config.type === PropertyType.SECRET_TEXT) {
       this.editSecretKeyConnection(currentConnection$);
     } else {
       this.editBasicAuthConnection(currentConnection$);
     }
+  }
+
+  private editCustomAuthConnection(
+    currentConnection$: Observable<AppConnection>
+  ) {
+    this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(
+      switchMap((connection) => {
+        const customAuthConnection = connection as CustomAuthConnection;
+        const dialogData: CustomAuthDialogData = {
+          pieceName: this.pieceName,
+          pieceAuthConfig: this.config,
+          connectionToUpdate: customAuthConnection,
+        };
+        return this.dialogService
+          .open(CustomAuthConnectionDialogComponent, {
+            data: dialogData,
+          })
+          .afterClosed();
+      })
+    );
   }
 
   private editSecretKeyConnection(

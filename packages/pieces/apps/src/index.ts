@@ -29,8 +29,8 @@ import { pipedrive } from '@activepieces/piece-pipedrive';
 import { posthog } from '@activepieces/piece-posthog';
 import { rssFeed } from '@activepieces/piece-rss';
 import { sendgrid } from '@activepieces/piece-sendgrid';
+import { sendinblue } from '@activepieces/piece-sendinblue';
 import { slack } from '@activepieces/piece-slack';
-import { trello } from './lib/trello';
 import { storage } from '@activepieces/piece-store';
 import { stripe } from '@activepieces/piece-stripe';
 import { telegramBot } from '@activepieces/piece-telegram-bot';
@@ -43,6 +43,22 @@ import { generatebanners } from '@activepieces/piece-generatebanners';
 import { connections } from '@activepieces/piece-connections';
 import { notion } from '@activepieces/piece-notion';
 import { youtube } from '@activepieces/piece-youtube';
+import { intercom } from '@activepieces/piece-intercom';
+import { trello } from '@activepieces/piece-trello';
+import { square } from '@activepieces/piece-square';
+import { delay } from '@activepieces/piece-delay';
+import { dataMapper } from '@activepieces/piece-data-mapper';
+import { schedule } from '@activepieces/piece-schedule';
+import { zohoCrm } from '@activepieces/piece-zoho-crm';
+import { zendesk } from '@activepieces/piece-zendesk';
+import { mattermost } from '@activepieces/piece-mattermost';
+import { mastodon } from '@activepieces/piece-mastodon';
+import { shopify } from '@activepieces/piece-shopify';
+import { constantContact } from '@activepieces/piece-constant-contact';
+import { salesforce } from '@activepieces/piece-salesforce';
+import { smtp } from '@activepieces/piece-smtp';
+import { mailerLite } from '@activepieces/piece-mailer-lite';
+import { googleForms }  from '@activepieces/piece-google-forms';
 
 export const pieces: Piece[] = [
     airtable,
@@ -71,11 +87,13 @@ export const pieces: Piece[] = [
     http,
     hubspot,
     mailchimp,
+    mailerLite,
     openai,
     pipedrive,
     posthog,
     rssFeed,
     sendgrid,
+    sendinblue,
     slack,
     storage,
     stripe,
@@ -89,6 +107,20 @@ export const pieces: Piece[] = [
     connections,
     notion,
     youtube,
+    square,
+    delay,
+    dataMapper,
+    intercom,
+    schedule,
+    zohoCrm,
+    zendesk,
+    mattermost,
+    mastodon,
+    shopify,
+    constantContact,
+    salesforce,
+    smtp,
+    googleForms
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {

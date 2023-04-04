@@ -236,7 +236,7 @@
 
 
     <ng-container
-      *ngIf="config.type === PropertyType.OAUTH2 || config.type === PropertyType.SECRET_TEXT || config.type === PropertyType.BASIC_AUTH">
+      *ngIf="config.type === PropertyType.OAUTH2 || config.type === PropertyType.SECRET_TEXT || config.type === PropertyType.BASIC_AUTH || config.type === PropertyType.CUSTOM_AUTH">
       <div class="ap-flex">
         <div class="ap-flex-grow"></div>
         <div class="ap-cursor-pointer">
@@ -252,8 +252,9 @@
         <div class="ap-relative">
           <app-add-edit-connection-button class="edit-selected-auth"
             *ngIf="formGroup.enabled && formGroup.get(config.key)!.value" btnSize="extraSmall"
-            [isEditConnectionButton]="true" [config]="config" [pieceName]="pieceName"
-            [selectedConnectionInterpolatedString]="formGroup.get(config.key)!.value">
+            [isEditConnectionButton]="true" [config]="config" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
+            [selectedConnectionInterpolatedString]="formGroup.get(config.key)!.value"
+            [triggerName]="actionOrTriggerName">
             Edit
           </app-add-edit-connection-button>
           <mat-form-field class="ap-w-full" appearance="outline">
@@ -270,6 +271,7 @@
                   <div class="ap-flex-grow">No connections</div>
                   <app-add-edit-connection-button class="edit-selected-auth" btnSize="small" *ngIf="formGroup.enabled"
                     [isEditConnectionButton]="false" [config]="config" [pieceName]="pieceName"
+                    [pieceVersion]="pieceVersion" [triggerName]="actionOrTriggerName"
                     (connectionPropertyValueChanged)="connectionValueChanged($event)">
                     + Add
                   </app-add-edit-connection-button>
@@ -281,7 +283,8 @@
             </mat-error>
           </mat-form-field>
           <app-add-edit-connection-button btnSize="medium" *ngIf="formGroup.enabled" [isEditConnectionButton]="false"
-            [config]="config" [pieceName]="pieceName" (connectionPropertyValueChanged)="connectionValueChanged($event)">
+            [config]="config" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
+            (connectionPropertyValueChanged)="connectionValueChanged($event)" [triggerName]="actionOrTriggerName">
             + New Connection
           </app-add-edit-connection-button>
         </div>
@@ -333,15 +336,18 @@
     </ng-container>
 
     <ng-container *ngSwitchCase="PropertyType.DYNAMIC">
-      <ng-container *ngIf="(refreshableConfigsLoadingFlags$[config.key] | async) === false || 
-        (refreshableConfigsLoadingFlags$[config.key] | async) === undefined || 
+      <ng-container *ngIf="(refreshableConfigsLoadingFlags$[config.key] | async) === false ||
+        (refreshableConfigsLoadingFlags$[config.key] | async) === undefined ||
         (refreshableConfigsLoadingFlags$[config.key] | async) === null; else loading">
 
-        <div *ngFor="let c of dynamicPropsObservables$[config.key] | async; let i = index">
-          <ng-container
-            *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:c, configIndex:i, formGroup:formGroup.get(config.key)}">
-          </ng-container>
+        <div class="ap-flex ap-flex-col ap-gap-2">
+          <div *ngFor="let c of dynamicPropsObservables$[config.key] | async; let i = index"><ng-container
+              *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:c, configIndex:i, formGroup:formGroup.get(config.key)}">
+            </ng-container></div>
         </div>
+
+
+
 
       </ng-container>
 
@@ -367,10 +373,10 @@
 
 <ng-template #textInputTemplate let-config let-formGroup="formGroup">
   <div [formGroup]="formGroup">
-    <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-form-field class="ap-w-full" appearance="outline" (click)="mentionsDropdown.showMenuSubject$.next(true)">
       <mat-label>{{config.label}}</mat-label>
       <app-interpolating-text-form-control #textControl [matTooltip]="config.description" [formControlName]="config.key"
-        [attr.name]="config.key" (click)="mentionsDropdown.showMenuSubject$.next(true)"
+        [attr.name]="config.key"
         (keyup)="$event.key ==='Escape'? mentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
       <mat-error *ngIf="formGroup.get(config.key)?.invalid">
         {{config.label}} is required
@@ -389,3 +395,5 @@
     matTooltip="Dynamic Value" (click)="toggleCustomizedInputFlag(config.key)">
   </svg-icon>
 </ng-template>
+
+<ng-container *ngIf="setDefaultValue$ | async"></ng-container>

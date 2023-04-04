@@ -25,10 +25,12 @@ import {
   Collection,
   ExecutionOutputStatus,
   Instance,
+  TriggerType,
 } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
 import { PannerService } from './canvas-utils/panning/panner.service';
+import { TestStepService } from '../../service/test-step.service';
 
 @Component({
   selector: 'app-collection-builder',
@@ -49,6 +51,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   leftSidebarDragging = false;
   loadInitialData$: Observable<void> = new Observable<void>();
   cursorStyle$: Observable<string>;
+  TriggerType = TriggerType;
+  testingStepSectionIsRendered$: Observable<boolean>;
   constructor(
     private store: Store,
     public pieceBuilderService: CollectionBuilderService,
@@ -57,8 +61,11 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     private snackbar: MatSnackBar,
     private runDetailsService: RunDetailsService,
     private titleService: Title,
-    private pannerService: PannerService
+    private pannerService: PannerService,
+    private testStepService: TestStepService
   ) {
+    this.testingStepSectionIsRendered$ =
+      this.testStepService.testingStepSectionIsRendered$.asObservable();
     this.cursorStyle$ = this.pannerService.isGrabbing$.asObservable().pipe(
       map((val) => {
         if (val) {
@@ -84,7 +91,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
             })
           );
 
-          this.titleService.setTitle(`AP-${collection.version?.displayName}`);
+          this.titleService.setTitle(`AP-${collection.displayName}`);
           this.snackbar.openFromComponent(TestRunBarComponent, {
             duration: undefined,
           });
@@ -92,7 +99,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
           const collection: Collection = value['collection'];
           const flows = value['flows'];
           const instance: Instance | undefined = value['instance'];
-          this.titleService.setTitle(`AP-${collection.version?.displayName}`);
+          this.titleService.setTitle(`AP-${collection.displayName}`);
           this.store.dispatch(
             BuilderActions.loadInitial({
               collection: collection,

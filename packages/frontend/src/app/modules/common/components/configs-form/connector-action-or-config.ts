@@ -23,6 +23,7 @@ export interface PieceConfig {
     string,
     Pick<PieceProperty, 'displayName' | 'description' | 'type' | 'options'>
   >;
+  customAuthProps?: Record<string, PieceProperty>;
   staticDropdownState?: DropdownState<unknown>;
   defaultValue?: unknown;
 }
@@ -62,7 +63,9 @@ export const propsConvertor = {
       refreshers: prop.refreshers,
       staticDropdownState: prop.options,
       defaultValue: prop.defaultValue,
+      customAuthProps: prop.props,
     };
+
     if (prop.username && prop.password) {
       pieceConfig.basicAuthConfigs = {
         password: prop.password,
@@ -92,6 +95,6 @@ type propMap = Record<
     description: string;
     props: Record<string, PieceProperty>;
     sampleData?: object;
-    type?: 'POLLING' | 'WEBHOOK';
+    type?: 'POLLING' | 'WEBHOOK' | 'APP_WEBHOOK';
   }
 >;

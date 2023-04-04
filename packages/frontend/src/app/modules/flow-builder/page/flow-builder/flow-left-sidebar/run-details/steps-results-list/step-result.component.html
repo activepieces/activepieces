@@ -11,7 +11,7 @@
               <div class="ap-flex ap-items-center ap-w-full">
                 <div class="nested-level-padding" [style.min-width]="nestingLevelPadding"></div>
                 <div class="ap-flex icon-and-name-gap">
-                  <div class="ap-flex icons-gap" [class.expanded]="expansionPanelTemplate.expanded">
+                  <div class="ap-flex icons-gap ap-items-center" [class.expanded]="expansionPanelTemplate.expanded">
                     <svg-icon src="assets/img/custom/debug-icons/caret.svg" *ngIf="selectedIteration.length > 0"
                       [applyClass]="true" class="loop-caret"></svg-icon>
                     <ng-container *ngTemplateOutlet="stepIcon"></ng-container>
@@ -22,9 +22,10 @@
 
                 <div #spacer class="ap-flex-grow"></div>
                 <ng-container *ngIf="showIterationInput; else allIterations">
+
                   <div class="ap-flex ap-items-center done-iteration-container"
                     [style.width]="iterationInputFocusDirective.isFocused? '100%' : 'auto'">
-                    <ng-container @fadeIn *ngIf="!iterationInputFocusDirective.isFocused">
+                    <ng-container *ngIf="!iterationInputFocusDirective.isFocused">
                       <label (click)="$event.stopPropagation()" [for]="stepNameAndResult.stepName" @fadeIn>Iteration:
                         &nbsp;</label>
                     </ng-container>
@@ -33,7 +34,7 @@
 
                       <div class="done-iteration-section ap-items-center" #doneButtonSection
                         (click)="$event.stopPropagation();" dir="ltr"
-                        [hidden]="!iterationInputFocusDirective.isFocused">
+                        [class.ap-invisible]="!iterationInputFocusDirective.isFocused">
                         <span (click)="iterationInput.focus()">
                           /{{stepNameAndResult.result.output.iterations?.length}}
                         </span>
@@ -65,9 +66,6 @@
                   </ng-container>
                 </ng-template>
 
-
-
-
               </div>
             </mat-panel-title>
           </mat-expansion-panel-header>
@@ -91,7 +89,7 @@
               <div class="nested-level-padding" [style.width]="nestingLevelPadding"></div>
 
               <div class="ap-flex icon-and-name-gap">
-                <div class="ap-flex icons-gap" [class.expanded]="expansionPanelTemplate.expanded">
+                <div class="ap-flex icons-gap ap-items-center" [class.expanded]="expansionPanelTemplate.expanded">
                   <ng-container *ngTemplateOutlet="stepIcon"></ng-container>
                 </div>
                 {{ stepNameAndResult.stepName }}
@@ -108,14 +106,8 @@
 </div>
 
 <ng-template #stepIcon>
-  <svg-icon src="assets/img/custom/debug-icons/loop.svg" *ngIf="iterationsAccordionList.length > 0" [applyClass]="true"
-    class="step-icon"></svg-icon>
+  <img [src]="stepLogoUrl$ | async" class="ap-h-[24px] ap-w-[24px] ap-min-w-[24px] ap-object-contain step-icon">
 
-  <svg-icon src="assets/img/custom/debug-icons/action.svg" *ngIf="!isTrigger && iterationsAccordionList.length === 0"
-    [applyClass]="true" class="step-icon"></svg-icon>
-
-  <svg-icon src="assets/img/custom/debug-icons/trigger.svg" *ngIf="isTrigger" [applyClass]="true" class="step-icon">
-  </svg-icon>
 </ng-template>
 
 <ng-container *ngIf="hideIterationInput$|async"></ng-container>

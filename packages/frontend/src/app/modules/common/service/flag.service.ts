@@ -1,4 +1,4 @@
-import { ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable, shareReplay } from 'rxjs';
@@ -81,10 +81,18 @@ export class FlagService {
     );
   }
 
-  getEdition(): Observable<string> {
+  getEdition(): Observable<ApEdition> {
     return this.getAllFlags().pipe(
       map((flags) => {
-        return flags[ApFlagId.EDITION] as string;
+        return flags[ApFlagId.EDITION] as ApEdition;
+      })
+    );
+  }
+
+  getRelease(): Observable<string> {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return flags[ApFlagId.CURRENT_VERSION] as string;
       })
     );
   }

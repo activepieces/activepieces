@@ -10,8 +10,8 @@
 </ng-container>
 
 
-<div [hidden]="(instanceRunStatus$ | async) !== statusEnum.RUNNING"
-  class="ap-text-center  ap-typography-button ap-text-success">
+<div [class.ap-hidden]="(instanceRunStatus$ | async) !== statusEnum.RUNNING"
+  class="ap-text-center  ap-typography-button ap-text-success ap-min-h-[36px] ap-flex ap-items-center ap-pr-0.5">
   Running...
 </div>
 <ng-container *ngIf="executeTest$ |async"></ng-container>
@@ -23,7 +23,7 @@
   <ng-container *ngIf="selectedFlow$ | async as currentFLow">
     <ng-container *ngIf="selectedCollection$ | async as currentCollection">
       <mat-dialog-content>
-        <div class="ap-w-[450px] ap-max-w-[500px]">
+        <div class="ap-w-[450px] ap-max-w-[500px] json-editor">
           <div class="ap-mb-2 ap-pointer-events-none">Webhook Payload (JSON)
             <p class="ap-typography-caption">Pass the following object in as the webhook payload:</p>
           </div>
@@ -37,7 +37,8 @@
                   matTooltip="beautify" class="ap-cursor-pointer" (click)="beautify()"> </svg-icon>
               </div>
             </div>
-            <ngx-codemirror [formControl]="payloadControl" [options]="codeEditorOptions"></ngx-codemirror>
+            <ngx-codemirror cdkFocusInitial [formControl]="payloadControl" [autoFocus]="true"
+              [options]="codeEditorOptions"></ngx-codemirror>
           </div>
           <div *ngIf="submitted && payloadControl.invalid">
             <p @fadeInUp *ngIf="payloadControl.hasError('required');else invalidJson"
@@ -58,8 +59,7 @@
           <app-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
             Cancel
           </app-button>
-          <app-button cdkFocusInitial btnSize="default" btnColor="primary"
-            (click)="testFlowWithPayload(currentCollection,currentFLow)">
+          <app-button btnSize="default" btnColor="primary" (click)="testFlowWithPayload(currentCollection,currentFLow)">
             Test
           </app-button>
         </div>

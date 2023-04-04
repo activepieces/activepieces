@@ -3,7 +3,8 @@ import { registerWebhooks } from "./register-webhook";
 
 export const triggers = [
   {
-    type: EventTrigger.BOOKING_CANCELLED, displayName: "Booking Cancelled", sampleData: {
+    type: EventTrigger.BOOKING_CANCELLED, 
+    displayName: "Booking Cancelled", sampleData: {
       "triggerEvent": "BOOKING_CANCELLED",
       "createdAt": "2023-02-18T12:11:37.975Z",
       "payload": {

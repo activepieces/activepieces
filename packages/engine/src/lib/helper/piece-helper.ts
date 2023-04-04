@@ -1,34 +1,206 @@
-import { DropdownProperty, DropdownState, DynamicProperties, MultiSelectDropdownProperty } from "@activepieces/framework";
-import { getPiece } from "@activepieces/pieces-apps";
-import { ActivepiecesError, ErrorCode, ExecutePropsOptions, ExecutionState, PropertyType } from "@activepieces/shared";
+import { env } from 'node:process';
+import {
+    Action,
+    ActionContext,
+    DropdownProperty,
+    DropdownState,
+    DynamicProperties,
+    DynamicPropsValue,
+    MultiSelectDropdownProperty,
+    Piece,
+    StaticPropsValue,
+} from "@activepieces/framework";
+import {
+    ActivepiecesError,
+    ApEnvironment,
+    ErrorCode,
+    ExecuteActionOperation,
+    ExecutePropsOptions,
+    ExecutionState,
+    getPackageAliasForPiece,
+    PropertyType,
+} from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
+import { getPiece } from '@activepieces/pieces-apps';
+import { isNil } from 'lodash';
+import { createContextStore } from '../services/storage.service';
+import { globals } from '../globals';
+import { connectionService } from '../services/connections.service';
+
+type LoadPieceParams = {
+    pieceName: string
+    pieceVersion: string
+}
+
+type GetActionParams = {
+    pieceName: string
+    pieceVersion: string
+    actionName: string
+}
+
+const loadPieceFromDisk = async (params: LoadPieceParams): Promise<Piece | undefined> => {
+    const { pieceName } = params;
+
+    console.info(`[engine] PieceHelper#loadPieceFromDisk, pieceName=${pieceName}`);
+
+    return getPiece(params.pieceName);
+}
+
+const loadPieceFromPackageManager = async (params: LoadPieceParams): Promise<Piece | undefined> => {
+    const { pieceName, pieceVersion } = params;
+
+    console.info(`[engine] PieceHelper#loadPieceFromPackageManager, pieceName=${pieceName} pieceVersion=${pieceVersion}`);
+
+    const packageName = getPackageAliasForPiece({
+        pieceName,
+        pieceVersion,
+    });
+
+    const pieceModule = await import(packageName);
+    return Object.values<Piece>(pieceModule)[0];
+}
+
+const loadPieceOrThrow = async (pieceName: string, pieceVersion: string): Promise<Piece> => {
+    const apEnv = env['AP_ENVIRONMENT'];
+
+    const pieceLoader = apEnv === ApEnvironment.DEVELOPMENT
+        ? loadPieceFromDisk
+        : loadPieceFromPackageManager
+
+    const piece = await pieceLoader({
+        pieceName,
+        pieceVersion,
+    })
+
+    if (isNil(piece)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.PIECE_NOT_FOUND,
+            params: {
+                pieceName: pieceName,
+                pieceVersion: pieceVersion,
+            },
+        });
+    }
+
+    return piece
+}
+
+const getActionOrThrow = async (params: GetActionParams): Promise<Action> => {
+    const { pieceName, pieceVersion, actionName } = params;
+
+    const piece = await loadPieceOrThrow(pieceName, pieceVersion);
+
+    const action = piece.getAction(actionName)
+
+    if (isNil(action)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.STEP_NOT_FOUND,
+            params: {
+                pieceName: pieceName,
+                pieceVersion: pieceVersion,
+                stepName: actionName,
+            },
+        });
+    }
+
+    return action;
+}
+
+const getPropOrThrow = async (params: ExecutePropsOptions) => {
+    const { pieceName, pieceVersion, stepName, propertyName } = params;
+
+    const piece = await loadPieceOrThrow(pieceName, pieceVersion);
+
+    const action = piece.getAction(stepName) ?? piece.getTrigger(stepName)
+
+    if (isNil(action)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.STEP_NOT_FOUND,
+            params: {
+                pieceName,
+                pieceVersion,
+                stepName,
+            },
+        });
+    }
+
+    const prop = action.props[propertyName]
+
+    if (isNil(prop)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.CONFIG_NOT_FOUND,
+            params: {
+                stepName,
+                pieceName,
+                pieceVersion,
+                configName: propertyName,
+            },
+        })
+    }
+
+    return prop
+}
+
+const resolveInput = async (input: unknown): Promise<unknown> => {
+    const variableService = new VariableService()
+    const executionState = new ExecutionState()
+    return await variableService.resolve(input, executionState)
+}
 
 export const pieceHelper = {
-    async executeProps(params: ExecutePropsOptions) {
-        const property = getProperty(params);
-        if (property === undefined) {
-            throw new ActivepiecesError({
-                code: ErrorCode.CONFIG_NOT_FOUND,
-                params: {
-                    stepName: params.stepName,
-                    pieceName: params.pieceName,
-                    pieceVersion: params.pieceVersion,
-                    configName: params.propertyName,
-                },
-            });
+    async executeAction(params: ExecuteActionOperation): Promise<unknown> {
+        const { actionName, pieceName, pieceVersion, input } = params;
+
+        const action = await getActionOrThrow({
+            pieceName,
+            pieceVersion,
+            actionName,
+        })
+
+        const resolvedInput = await resolveInput(input)
+
+        const context: ActionContext<StaticPropsValue<Record<string, any>>> = {
+            propsValue: resolvedInput as Record<string, any>,
+            store: createContextStore('', globals.flowId),
+            connections: {
+              get: async (key: string) => {
+                try {
+                  const connection = await connectionService.obtain(key);
+                  if (!connection) {
+                    return null;
+                  }
+                  return connection;
+                } catch (e) {
+                  return null;
+                }
+              }
+            }
         }
+
+        return await action.run(context)
+    },
+
+    async executeProps(params: ExecutePropsOptions) {
+        const property = await getPropOrThrow(params);
+
         try {
-            const variableService = new VariableService();
-            const executionState = new ExecutionState();
-            executionState.insertConfigs(params.collectionVersion);
-            const resolvedInput = await variableService.resolve(params.input, executionState);
-            if(property.type === PropertyType.DYNAMIC){
-                return await (property as DynamicProperties<boolean>).props(resolvedInput);
+            const resolvedInput = await resolveInput(params.input)
+
+            if (property.type === PropertyType.DYNAMIC) {
+                const dynamicProperty = property as DynamicProperties<boolean>
+                const dynamicInput = resolvedInput as Record<string, DynamicPropsValue>
+                return await dynamicProperty.props(dynamicInput);
             }
-            if(property.type === PropertyType.MULTI_SELECT_DROPDOWN){
-                return await (property as MultiSelectDropdownProperty<unknown, boolean>).options(resolvedInput);
+
+            if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
+                const multiSelectProperty = property as MultiSelectDropdownProperty<unknown, boolean>
+                const multiSelectInput = resolvedInput as Record<string, any>
+                return await multiSelectProperty.options(multiSelectInput);
             }
-            return await (property as DropdownProperty<unknown, boolean>).options(resolvedInput);
+
+            const dropdownProperty = property as DropdownProperty<unknown, boolean>
+            const dropdownInput = resolvedInput as Record<string, any>;
+            return await dropdownProperty.options(dropdownInput);
         } catch (e) {
             console.error(e);
             return {
@@ -37,32 +209,7 @@ export const pieceHelper = {
                 placeholder: "Throws an error, reconnect or refresh the page"
             } as DropdownState<unknown>;
         }
-    }
-}
+    },
 
-function getProperty(params: ExecutePropsOptions){
-    const component = getPiece(params.pieceName);
-    if (component === undefined) {
-        throw new ActivepiecesError({
-            code: ErrorCode.PIECE_NOT_FOUND,
-            params: {
-                pieceName: params.pieceName,
-                pieceVersion: params.pieceVersion,
-            },
-        });
-    }
-    const action = component.getAction(params.stepName);
-    const trigger = component.getTrigger(params.stepName);
-    if (action === undefined && trigger === undefined) {
-        throw new ActivepiecesError({
-            code: ErrorCode.STEP_NOT_FOUND,
-            params: {
-                pieceName: params.pieceName,
-                pieceVersion: params.pieceVersion,
-                stepName: params.stepName,
-            },
-        });
-    }
-    const props = action !== undefined ? action.props : trigger!.props;
-    return props[params.propertyName];
-}
+    loadPieceOrThrow,
+};

@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/discord/tsconfig.lib.json",
         "packageJson": "packages/pieces/discord/package.json",
         "main": "packages/pieces/discord/src/index.ts",
-        "assets": ["packages/pieces/discord/*.md"]
+        "assets": ["packages/pieces/discord/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

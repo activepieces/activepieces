@@ -124,10 +124,10 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
           andGroup = andGroup && !castedCondition.firstValue;
           break;
         case BranchOperator.EXISTS:
-          andGroup = andGroup && castedCondition.firstValue !== undefined && castedCondition.firstValue !== null;
+          andGroup = andGroup && castedCondition.firstValue !== undefined && castedCondition.firstValue !== null && castedCondition.firstValue !== "";
           break;
         case BranchOperator.DOES_NOT_EXIST:
-          andGroup = andGroup && castedCondition.firstValue === undefined && castedCondition.firstValue === null;
+          andGroup = andGroup && (castedCondition.firstValue === undefined || castedCondition.firstValue === null || castedCondition.firstValue === "");
           break;
         default:
           throw new Error(`Unknown operator ${castedCondition.operator}`);

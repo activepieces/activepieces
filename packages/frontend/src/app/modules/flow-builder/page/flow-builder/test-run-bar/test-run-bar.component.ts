@@ -27,7 +27,7 @@ export class TestRunBarComponent implements OnInit {
   exitButtonClicked: EventEmitter<void> = new EventEmitter();
 
   ngOnInit(): void {
-    this.hideExit$ = this.store.select(BuilderSelectors.selectInstanceRunView);
+    this.hideExit$ = this.store.select(BuilderSelectors.selectIsInDebugMode);
     this.selectedRun$ = this.store.select(
       BuilderSelectors.selectCurrentFlowRun
     );

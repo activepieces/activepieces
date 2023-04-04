@@ -17,8 +17,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["packages/*"],
-      "@activepieces/engine": ["packages/engine/src/index.ts"],
+      "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-asana": ["packages/pieces/asana/src/index.ts"],
@@ -35,7 +34,14 @@
       "@activepieces/piece-connections": [
         "packages/pieces/connections/src/index.ts"
       ],
+      "@activepieces/piece-constant-contact": [
+        "packages/pieces/constant-contact/src/index.ts"
+      ],
       "@activepieces/piece-csv": ["packages/pieces/csv/src/index.ts"],
+      "@activepieces/piece-data-mapper": [
+        "packages/pieces/data-mapper/src/index.ts"
+      ],
+      "@activepieces/piece-delay": ["packages/pieces/delay/src/index.ts"],
       "@activepieces/piece-discord": ["packages/pieces/discord/src/index.ts"],
       "@activepieces/piece-drip": ["packages/pieces/drip/src/index.ts"],
       "@activepieces/piece-dropbox": ["packages/pieces/dropbox/src/index.ts"],
@@ -57,6 +63,9 @@
       "@activepieces/piece-google-drive": [
         "packages/pieces/google-drive/src/index.ts"
       ],
+      "@activepieces/piece-google-forms": [
+        "packages/pieces/google-forms/src/index.ts"
+      ],
       "@activepieces/piece-google-sheets": [
         "packages/pieces/google-sheets/src/index.ts"
       ],
@@ -68,37 +77,57 @@
       ],
       "@activepieces/piece-http": ["packages/pieces/http/src/index.ts"],
       "@activepieces/piece-hubspot": ["packages/pieces/hubspot/src/index.ts"],
+      "@activepieces/piece-intercom": ["packages/pieces/intercom/src/index.ts"],
       "@activepieces/piece-mailchimp": [
         "packages/pieces/mailchimp/src/index.ts"
       ],
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
+      "@activepieces/piece-mailer-lite": [
+        "packages/pieces/mailer-lite/src/index.ts"
+      ],
+      "@activepieces/piece-mastodon": ["packages/pieces/mastodon/src/index.ts"],
+      "@activepieces/piece-mattermost": [
+        "packages/pieces/mattermost/src/index.ts"
+      ],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/pipedrive/src/index.ts"
       ],
       "@activepieces/piece-posthog": ["packages/pieces/posthog/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
+      "@activepieces/piece-salesforce": [
+        "packages/pieces/salesforce/src/index.ts"
+      ],
+      "@activepieces/piece-schedule": ["packages/pieces/schedule/src/index.ts"],
       "@activepieces/piece-sendgrid": ["packages/pieces/sendgrid/src/index.ts"],
+      "@activepieces/piece-sendinblue": [
+        "packages/pieces/sendinblue/src/index.ts"
+      ],
+      "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
+      "@activepieces/piece-smtp": ["packages/pieces/smtp/src/index.ts"],
+      "@activepieces/piece-square": ["packages/pieces/square/src/index.ts"],
       "@activepieces/piece-store": ["packages/pieces/store/src/index.ts"],
       "@activepieces/piece-stripe": ["packages/pieces/stripe/src/index.ts"],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/telegram-bot/src/index.ts"
       ],
       "@activepieces/piece-todoist": ["packages/pieces/todoist/src/index.ts"],
+      "@activepieces/piece-trello": ["packages/pieces/trello/src/index.ts"],
       "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
       "@activepieces/piece-wordpress": [
         "packages/pieces/wordpress/src/index.ts"
       ],
       "@activepieces/piece-youtube": ["packages/pieces/youtube/src/index.ts"],
+      "@activepieces/piece-zendesk": ["packages/pieces/zendesk/src/index.ts"],
+      "@activepieces/piece-zoho-crm": ["packages/pieces/zoho-crm/src/index.ts"],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@backend/*": ["packages/backend/src/app/*"],
       "@ee/*": ["packages/ee/*"],
-      "@frontend/*": ["packages/frontend/src/app/*"],
-      "@shared/*": ["packages/shared/src/lib/*"]
+      "@frontend/*": ["packages/frontend/src/app/*"]
     },
     "resolveJsonModule": true
   },

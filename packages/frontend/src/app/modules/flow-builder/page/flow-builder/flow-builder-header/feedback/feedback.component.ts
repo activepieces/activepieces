@@ -1,10 +1,16 @@
-import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  ViewChild,
+} from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { AuthenticationService } from '../../../../../common/service/authentication.service';
 
 import { map, Observable, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-feedback',
@@ -12,12 +18,15 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeedbackComponent {
+  @ViewChild('focusItem', { read: ElementRef })
+  feedbackTextarea: ElementRef;
   @ViewChild(MatMenuTrigger) matMenuTrigger: MatMenuTrigger;
   feedbackControl = new FormControl<string>('', { nonNullable: true });
   sendFeedback$: Observable<void>;
   sendingFeedback = false;
   openFeedbackPopOver$: Observable<void>;
   constructor(
+    public dialog: MatDialog,
     public authenticationService: AuthenticationService,
     private snackbarService: MatSnackBar
   ) {
@@ -46,5 +55,8 @@ export class FeedbackComponent {
     } else {
       this.matMenuTrigger.closeMenu();
     }
+  }
+  menuOpened() {
+    this.feedbackTextarea.nativeElement.focus();
   }
 }

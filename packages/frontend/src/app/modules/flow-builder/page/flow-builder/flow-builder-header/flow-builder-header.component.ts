@@ -15,6 +15,8 @@ import { Collection, Instance } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import { ThemeService } from '../../../../common/service/theme.service';
 import { fadeIn400ms } from '../../../../common/animation/fade-in.animations';
+import { MagicWandDialogComponent } from './magic-wand-dialog/magic-flow-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -29,9 +31,11 @@ export class FlowBuilderHeaderComponent implements OnInit {
   viewMode$: Observable<boolean>;
   collectionActions$: Observable<ChevronDropdownOption[]>;
   newCollectionCheck$: Observable<Params>;
+  magicWandEnabled$: Observable<boolean>;
   collectionInstance$: Observable<Instance | undefined>;
   collectionNameHovered = false;
   constructor(
+    public dialog: MatDialog,
     private store: Store,
     public themeService: ThemeService,
     private router: Router,
@@ -70,10 +74,20 @@ export class FlowBuilderHeaderComponent implements OnInit {
         },
       ])
     );
+    this.magicWandEnabled$ = this.route.queryParams.pipe(
+      map((params) => {
+        return !!params['magicWand'];
+      })
+    );
     this.newCollectionCheck$ = this.route.queryParams.pipe(
       tap((params) => {
         if (params['newCollection']) {
           this.editing = true;
+          //remove query params after activating editing for new collection name
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {},
+          });
         }
       })
     );
@@ -84,6 +98,10 @@ export class FlowBuilderHeaderComponent implements OnInit {
     } else if (actionId === 'RENAME') {
       this.editing = true;
     }
+  }
+
+  guessAi() {
+    this.dialog.open(MagicWandDialogComponent);
   }
 
   openCollectionVersionsLists() {

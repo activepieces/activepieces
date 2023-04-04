@@ -15,6 +15,7 @@ assert(process.env.DO_SPACES_SECRET)
 
 const doSpacesClient = new S3({
     forcePathStyle: false, // Configures to use subdomain/virtual calling format.
+    region: 'us-east-1', // dummy region needed by S3 client
     endpoint: 'https://fra1.digitaloceanspaces.com',
     credentials: {
         accessKeyId: process.env.DO_SPACES_KEY,
@@ -84,8 +85,10 @@ const uploadPiecesManifest = async (piecesMetadata: PieceMetadata[]) => {
         description: p.description,
         logoUrl: p.logoUrl,
         version: p.version,
-        actions: p.actions.size,
-        triggers: p.triggers.size,
+        minimumSupportedRelease: p.minimumSupportedRelease,
+        maximumSupportedRelease: p.maximumSupportedRelease,
+        actions: Object.keys(p.actions).length,
+        triggers: Object.keys(p.triggers).length,
     }))
 
     const fileName = `pieces/metadata/latest.json`

@@ -1,4 +1,5 @@
-import { Type, Static } from '@sinclair/typebox';
+import { Type, Static, } from '@sinclair/typebox';
+
 import { SemVerType } from '../../pieces';
 
 export enum ActionType {
@@ -12,7 +13,6 @@ const commonActionProps = {
   name: Type.String({}),
   valid: Type.Boolean({}),
   displayName: Type.String({}),
-  nextAction: Type.Optional(Type.Any({}))
 }
 
 // Code Action
@@ -27,14 +27,11 @@ export const CodeActionSettings = Type.Object({
 
 export type CodeActionSettings = Static<typeof CodeActionSettings>;
 
-export const CodeAction = Type.Object({
+export const CodeActionSchema = Type.Object({
   ...commonActionProps,
   type: Type.Literal(ActionType.CODE),
   settings: CodeActionSettings
 });
-
-
-export type CodeAction = Static<typeof CodeAction>;
 
 
 // Piece Action
@@ -48,37 +45,30 @@ export const PieceActionSettings = Type.Object({
 
 export type PieceActionSettings = Static<typeof PieceActionSettings>;
 
-export const PieceAction = Type.Object({
+export const PieceActionSchema = Type.Object({
   ...commonActionProps,
   type: Type.Literal(ActionType.PIECE),
   settings: PieceActionSettings,
 });
 
-export type PieceAction = Static<typeof PieceAction>;
-
-// Storage Action
-
-export enum StoreOperation {
-  PUT = 'PUT',
-  GET = 'GET',
-}
-
 // Loop Items
-export type LoopOnItemsActionSettings = {
-  items: unknown;
-};
+export const LoopOnItemsActionSettingsWithValidation = Type.Object({
+  items: Type.String({minLength: 1})
+});
+export type LoopOnItemsActionSettingsWithValidation = Static<typeof LoopOnItemsActionSettings>;
 
-export const LoopOnItemsAction = Type.Object({
-  ...commonActionProps,
-  type: Type.Literal(ActionType.LOOP_ON_ITEMS),
-  settings: Type.Object({
-    items: Type.Array(Type.Any({})),
-  }),
-  firstLoopAction: Type.Optional(Type.Any({})),
+
+export const LoopOnItemsActionSettings = Type.Object({
+  items: Type.String()
 });
 
+export type LoopOnItemsActionSettings = Static<typeof LoopOnItemsActionSettings>;
 
-export type LoopOnItemsAction = Static<typeof LoopOnItemsAction> & { firstLoopAction?: Action };
+export const LoopOnItemsActionSchema = Type.Object({
+  ...commonActionProps,
+  type: Type.Literal(ActionType.LOOP_ON_ITEMS),
+  settings: LoopOnItemsActionSettings,
+});
 
 // Loop Items
 
@@ -105,50 +95,69 @@ export const singleValueConditions = [
   BranchOperator.BOOLEAN_IS_TRUE,
   BranchOperator.BOOLEAN_IS_FALSE
 ]
-export const BranchCondition = Type.Union([
+
+const BranchConditionValid = (addMinLength: boolean) => Type.Union([
   Type.Object({
-    firstValue: Type.String({}),
-    secondValue: Type.String({}),
+    firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
+    secondValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
     operator: Type.Optional(Type.Union([...Object.values(BranchOperator).
-      filter(c => singleValueConditions.find(sc => sc === c) === undefined).map(c=>{
-      return Type.Literal(c)
-    }) ]))
+      filter(c => singleValueConditions.find(sc => sc === c) === undefined).map(c => {
+        return Type.Literal(c)
+      })]))
   }),
   Type.Object({
-    firstValue: Type.String({}),
-    operator:  Type.Optional (Type.Union([...Object.values(BranchOperator).
-      filter(c => singleValueConditions.find(sc => sc === c) !== undefined).map(c=>{
-      return Type.Literal(c)
-    }) ]))
+    firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
+    operator: Type.Optional(Type.Union([...Object.values(BranchOperator).
+      filter(c => singleValueConditions.find(sc => sc === c) !== undefined).map(c => {
+        return Type.Literal(c)
+      })]))
   })
 ]);
 
+export const BranchActionSettingsWithValidation = Type.Object({
+  conditions: Type.Array(Type.Array(BranchConditionValid(true))),
+})
+
+export const BranchCondition = BranchConditionValid(false);
 export type BranchCondition = Static<typeof BranchCondition>;
 
-export type BranchActionSettings = {
-  conditions: BranchCondition[][];
-};
+export const BranchActionSettings = Type.Object({
+  conditions: Type.Array(Type.Array(BranchConditionValid(false))),
+})
+export type BranchActionSettings = Static<typeof BranchActionSettings>;
 
-export const BranchAction = Type.Object({
+export const BranchActionSchema = Type.Object({
   ...commonActionProps,
   type: Type.Literal(ActionType.BRANCH),
-  settings: Type.Object({
-    conditions: Type.Array(Type.Array(BranchCondition)),
-  }),
-  onSuccessAction: Type.Optional(Type.Any({})),
-  onFailureAction: Type.Optional(Type.Any({})),
+  settings: BranchActionSettings
 });
-
-export type BranchAction = Static<typeof BranchAction> & { onSuccessAction?: Action, onFailureAction?: Action };
-
 
 // Union of all actions
 
-export const Action = Type.Union([
-  CodeAction,
-  PieceAction,
-  LoopOnItemsAction,
-  BranchAction
-]);
+export const Action = Type.Recursive(action => Type.Union([
+  Type.Intersect([CodeActionSchema, Type.Object({
+    nextAction: Type.Optional(action),
+  })]),
+  Type.Intersect([PieceActionSchema, Type.Object({
+    nextAction: Type.Optional(action),
+  })]),
+  Type.Intersect([LoopOnItemsActionSchema, Type.Object({
+    nextAction: Type.Optional(action),
+    firstLoopAction: Type.Optional(action)
+  })]),
+  Type.Intersect([BranchActionSchema, Type.Object({
+    nextAction: Type.Optional(action),
+    onSuccessAction: Type.Optional(action),
+    onFailureAction: Type.Optional(action)
+  })])
+]));
 
-export type Action = Static<typeof Action> & { nextAction?: Action };
+export type Action = Static<typeof Action>;
+
+export type BranchAction = Static<typeof BranchActionSchema> & { nextAction?: Action, onFailureAction?: Action, onSuccessAction?: Action };
+
+export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema> & { nextAction?: Action, firstLoopAction?: Action };
+
+export type PieceAction = Static<typeof PieceActionSchema> & { nextAction?: Action };
+
+export type CodeAction = Static<typeof CodeActionSchema> & { nextAction?: Action };

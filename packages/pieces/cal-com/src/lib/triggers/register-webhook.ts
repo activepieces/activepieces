@@ -1,5 +1,5 @@
-import { httpClient, HttpRequest, HttpMethod, Property, createTrigger, Trigger, TriggerStrategy } from "@activepieces/framework"
-import { WebhookTrigger } from "@activepieces/shared"
+import { httpClient, HttpRequest, HttpMethod, Property, createTrigger, Trigger } from "@activepieces/framework"
+import { TriggerStrategy, WebhookTrigger } from "@activepieces/shared"
 
 export const registerWebhooks = ({
   name,

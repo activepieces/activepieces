@@ -9,7 +9,7 @@ export const GmailProps = {
     authUrl: "https://accounts.google.com/o/oauth2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     required: true,
-    scope: ["https://mail.google.com/"]
+    scope: ["https://www.googleapis.com/auth/gmail.send", "https://www.googleapis.com/auth/gmail.readonly"]
   }),
   from: Property.ShortText({
     displayName: 'Email sender',
@@ -62,7 +62,7 @@ export const GmailProps = {
       }
 
       const response = await GmailRequests.getLabels(authentication as OAuth2PropertyValue)
-      
+
       return {
         disabled: false,
         options: response.body.labels.map((label) => (

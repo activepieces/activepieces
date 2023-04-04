@@ -11,7 +11,112 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+### 04/02/2023
+
+<Tip>
+Please upgrade your instance to ensure that you can see the latest pieces, as some new pieces may not be compatible with older versions.
+</Tip>
+
+**Pieces:**
+- SendinBlue: Create or Update Contacts Action
+- Constant Contact: Create or Update Contact
+- Salesforce: New Record / Updated Record Trigger
+- Shopify: New Cancelled Order / New Customer / New Paid Order / New Order Trigger
+- Mastodon: Post Status Action
+- Mattermost: Send Message to Channel
+- Google Sheets: Delete Row Action
+- SMTP Piece: Send Email
+- MailerLite: Create or Update Subscriber
+- Zendesk: New Ticket in View
+- ZohoCrm: New Contact Trigger
+- Sendgrid: Send Dynamic Template Email Action
+
+**Enhancements:**
+- Pieces now have authentication instructions without the need to refer to the documentation.
+- Polling Triggers now have a test button to get the most recent items.
+- Collection statuses now appear in the main dashboard to know whether they are published or not.
+
+**Bug Fixes:**
+- Polling triggers used to run sequentially; now they are concurrent by configurable environment variable.
+- Branch Conditions "Exists" and "Does not Exist" are now working.
+- Gmail Piece: Search Email used to take a long time; now it returns one email.
+- OAuth2: Sometimes the OAuth2 connection popup closes suddenly due to extensions sending browser events. This is now fixed.
+
+**Chore:**
+- Added polling library for contributors.
+- Added custom authentication property in piece framework.
+
+**Contributors**
+* @Willianwg created MailerLite
+* @kanarelo created SendInBlue.
+* @abaza738 created SMTP piece.
+
+**Full Changelog:**
+https://github.com/activepieces/activepieces/compare/0.3.8...0.3.9
+
+### 03/27/2023
+
+<Tip>
+Please upgrade your instance to ensure that you can see the latest pieces as some new pieces may not be compatible with older versions.
+</Tip>
+
+**Enhancements:**
+- Simple Scheduler Piece (Every Hour / Every Day / Every Week / Cron Expression)
+- Loops Piece
+- Remove Accordions from Edit Step Panel
+
+**Bug Fixes:**
+- New pieces version that require new version of activepieces will no longer shows.
+- Allowing multiple versions of the same piece in the flow.
+- Webhook URL is no longer truncated when it's too long.
+
+**Chore:**
+- Validation pipeline to make sure version is incremented when modify existing piece.
+- Dervie the piece code name from the package name, so avoid possible bugs.
+
+**Full Changelog:**
+https://github.com/activepieces/activepieces/compare/0.3.7...0.3.8
+
+### 03/16/2023
+
+**New Pieces:**
+- OpenAI: Additional optional parameters have been added.
+- Airtable: Create Record Action.
+- Square: New Customer / Customer Updated / New Payment / New Order / Order Updated / New Booking / New Invoice Triggers.
+- Intercom: Create Contact / Create Or Get Contact / Send Message Actions.
+- Delay: An action that introduces a delay of up to 5 minutes.
+- Data Mapper: An advanced mapping action that allows mapping between two objects in a JSON editor where autocomplete is available.
+
+
+**Enhancements:**
+- Webhooks trigger now simulates real testing, including fetching real sample data.
+- Deploy to Easypanel documentation has been added.
+- All pieces are now versioned, ensuring that your running flows are safe from changes.
+- All pieces are now published to [npm](https://www.npmjs.com/search?q=%40activepieces).
+- Pieces will be automatically released to the registry without new releases.
+
+**Bug Fixes:**
+- Clickup: New connections no longer fail.
+- Youtube: Livestream videos no longer get triggered twice.
+- Deploy.sh script now works on MacOS.
+- Intercom: Create Contact Action / Create or Get Contact Action / Send Message Action.
+
+**Contributors:**
+- @astorozhevsky added OpenAI additional variables.
+- @J0LGER encoded code variable in malicious redirection by third party.
+- @veverkap fixed a typo in the frontend.
+- @berksmbl documented Easy Panel deployment.
+- @kanarelo created Airtable new record.
+
+**Full Changelog:**
+https://github.com/activepieces/activepieces/compare/0.3.6...0.3.7
+
 ### 03/09/2023
+
+<Warning>
+**Breaking Changes:** The feature of having configurations in collections has been removed for the time being. However, we plan to reintroduce it in a different form at a later stage. Currently, the workaround is to have a code piece that returns the configurations and use it in other places.
+</Warning>
+
 
 **New Features:**
 - Gmail: New Email Trigger / Get Email Id / Search Emails
