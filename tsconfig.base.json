@@ -88,6 +88,7 @@
       "@activepieces/piece-mattermost": [
         "packages/pieces/mattermost/src/index.ts"
       ],
+      "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/pipedrive/src/index.ts"
