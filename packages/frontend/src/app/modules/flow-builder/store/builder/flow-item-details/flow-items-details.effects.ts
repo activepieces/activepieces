@@ -87,8 +87,10 @@ export class FlowItemsDetailsEffects {
     indicesOfPiecesInSource.forEach((idx) => {
       target = [...target, { ...source[idx] }];
     });
-    indicesOfPiecesInSource.forEach((idx) => {
-      source.splice(idx, 1);
+    piecesNamesToMove.forEach((pieceName) => {
+      const index = source.findIndex((p) => p.extra?.appName === pieceName);
+      source.splice(index, 1);
+      return index;
     });
     return target.sort((a, b) => {
       return a.name.localeCompare(b.name);

@@ -49,6 +49,16 @@ import { square } from '@activepieces/piece-square';
 import { delay } from '@activepieces/piece-delay';
 import { dataMapper } from '@activepieces/piece-data-mapper';
 import { schedule } from '@activepieces/piece-schedule';
+import { zohoCrm } from '@activepieces/piece-zoho-crm';
+import { zendesk } from '@activepieces/piece-zendesk';
+import { mattermost } from '@activepieces/piece-mattermost';
+import { mastodon } from '@activepieces/piece-mastodon';
+import { shopify } from '@activepieces/piece-shopify';
+import { constantContact } from '@activepieces/piece-constant-contact';
+import { salesforce } from '@activepieces/piece-salesforce';
+import { smtp } from '@activepieces/piece-smtp';
+import { mailerLite } from '@activepieces/piece-mailer-lite';
+import { googleForms }  from '@activepieces/piece-google-forms';
 
 export const pieces: Piece[] = [
     airtable,
@@ -78,6 +88,7 @@ export const pieces: Piece[] = [
     http,
     hubspot,
     mailchimp,
+    mailerLite,
     openai,
     pipedrive,
     posthog,
@@ -100,7 +111,16 @@ export const pieces: Piece[] = [
     delay,
     dataMapper,
     intercom,
-    schedule
+    schedule,
+    zohoCrm,
+    zendesk,
+    mattermost,
+    mastodon,
+    shopify,
+    constantContact,
+    salesforce,
+    smtp,
+    googleForms
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {

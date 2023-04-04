@@ -1,20 +1,88 @@
 {
-  "extends": ["../../.eslintrc.json"],
-  "ignorePatterns": ["!**/*"],
+  "extends": [
+    "../../.eslintrc.json",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "ignorePatterns": [
+    "!**/*"
+  ],
   "overrides": [
     {
-      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "files": [
+        "*.ts",
+        "*.tsx",
+        "*.js",
+        "*.jsx"
+      ],
+      "parserOptions": {
+        "project": [
+          "packages/backend/tsconfig.*?.json"
+        ]
+      },
       "rules": {
-        "brace-style": ["error", "stroustrup"],
-        "indent": ["error", 4]
+        "brace-style": "off",
+        "comma-dangle": "off",
+        "indent": "off",
+        "no-console": "error",
+        "quotes": "off",
+        "semi": "off",
+        "@typescript-eslint/brace-style": [
+          "error",
+          "stroustrup"
+        ],
+        "@typescript-eslint/comma-dangle": [
+          "error",
+          "always-multiline"
+        ],
+        "@typescript-eslint/indent": [
+          "error",
+          4
+        ],
+        "@typescript-eslint/quotes": [
+          "error",
+          "single"
+        ],
+        "@typescript-eslint/semi": [
+          "warn",
+          "never"
+        ],
+        "@typescript-eslint/member-delimiter-style": [
+          "warn",
+          {
+            "multiline": { "delimiter": "none" },
+            "singleline": { "delimiter": "comma", "requireLast": false }
+          }
+        ],
+        "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+        "no-unused-vars": "off",
+        "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/no-unused-vars": "error",
+        "@typescript-eslint/no-redundant-type-constituents": "error",
+        "@typescript-eslint/await-thenable": "error",
+        "@typescript-eslint/adjacent-overload-signatures": "error",
+        "comma-spacing": "off",
+        "@typescript-eslint/comma-spacing": [
+          "error",
+          {
+            "before": false,
+            "after": true
+          }
+        ]
       }
     },
     {
-      "files": ["*.ts", "*.tsx"],
+      "files": [
+        "*.ts",
+        "*.tsx"
+      ],
       "rules": {}
     },
     {
-      "files": ["*.js", "*.jsx"],
+      "files": [
+        "*.js",
+        "*.jsx"
+      ],
       "rules": {}
     }
   ]
