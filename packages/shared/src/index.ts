@@ -19,6 +19,7 @@ export { StepOutputStatus } from "./lib/flow-run/execution/step-output";
 export * from "./lib/instance";
 export * from "./lib/pieces";
 export * from "./lib/store-entry/dto/store-entry-request";
+export * from "./lib/webhook";
 
 export { CodeRunStatus } from "./lib/workers/code-worker/code-run-status";
 export { CodeExecutionResult } from "./lib/workers/code-worker/code-execution-result";
@@ -33,10 +34,10 @@ export {
     PieceActionSettings, LoopOnItemsActionSettings, Action, ActionType, CodeActionSettings
 } from './lib/flows/actions/action'
 export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry';
-export { User, UserStatus, UserId } from './lib/user/user';
+export * from './lib/user/user';
 export { CreateFlowRunRequest } from './lib/flow-run/create-flow-run-request';
 export { TriggerStrategy, Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType } from './lib/flows/triggers/trigger';
-export { Collection, CollectionId } from './lib/collections/collection';
+export { Collection, CollectionId, CollectionListDto, CollectionStatus } from './lib/collections/collection';
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version';
 export { Flow, FlowId } from './lib/flows/flow';
 export { File, FileId } from './lib/file/file'
@@ -48,7 +49,7 @@ export { ListCollectionsRequest, } from './lib/collections/dto/list-collections-
 export { ListFlowsRequest } from './lib/flows/dto/list-flows-request';
 export { CreateCollectionRequest } from './lib/collections/dto/create-collection-request';
 export { UpdateCollectionRequest } from './lib/collections/dto/update-collection-request';
-export { CreateFlowRequest } from './lib/flows/dto/create-flow-request';
+export * from './lib/flows/dto/create-flow-request';
 export { CloneFlowVersionRequest } from './lib/flows/dto/clone-flow-version-request';
 export { SeekPage, Cursor } from './lib/common/seek-page';
 export { apId, ApId } from './lib/common/id-generator'

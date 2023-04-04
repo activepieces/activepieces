@@ -11,7 +11,7 @@ const polling: Polling<{ authentication: string, tableId: string | undefined, ba
       tableId: propsValue.tableId!,
     });
     return records.map((record) => ({
-      epochMillSeconds: Date.parse(record.createdTime),
+      epochMilliSeconds: Date.parse(record.createdTime),
       data: record,
     }));
   }

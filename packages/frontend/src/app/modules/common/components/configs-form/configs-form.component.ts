@@ -346,7 +346,7 @@ export class ConfigsFormComponent implements ControlValueAccessor {
         }
         if (typeof c.value === 'object') {
           controls[c.key] = new UntypedFormControl(
-            JSON.stringify(c.value || c.defaultValue),
+            JSON.stringify(c.value || c.defaultValue, null, 2),
             validators
           );
         } else {

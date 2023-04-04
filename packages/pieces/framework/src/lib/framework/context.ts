@@ -36,7 +36,7 @@ export interface ActionContext<T> {
 }
 
 export interface ConnectionsManager {
-    get(key: string): Promise<AppConnectionValue | string | null>;
+    get(key: string): Promise<AppConnectionValue | Record<string, unknown> | string | null>;
 }
 
 export interface Store {

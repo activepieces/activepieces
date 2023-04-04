@@ -3,9 +3,9 @@ import { Store, } from "../../framework";
 interface TimebasedPolling<INPUT> {
     strategy: DedupeStrategy.TIMEBASED;
     items: (
-        { propsValue }: { propsValue: INPUT },
+        { propsValue, lastFetchEpochMS }: { propsValue: INPUT, lastFetchEpochMS: number },
     ) => Promise<{
-        epochMillSeconds: number;
+        epochMilliSeconds: number;
         data: unknown;
     }[]
     >;
@@ -33,17 +33,17 @@ export const pollingHelper = {
     async poll<INPUT>(polling: Polling<INPUT>, { store, propsValue }: { store: Store, propsValue: INPUT }): Promise<unknown[]> {
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED: {
-                const lastEpochMillSeconds = (await store.get<number>("lastPoll"))!;
-                const items = await polling.items({ propsValue });
-                const newLastEpochMillSeconds = items.reduce((acc, item) => Math.max(acc, item.epochMillSeconds), lastEpochMillSeconds);
-                await store.put("lastPoll", newLastEpochMillSeconds);
-                return items.filter(f => f.epochMillSeconds > lastEpochMillSeconds).map((item) => item.data);
+                const lastEpochMilliSeconds = (await store.get<number>("lastPoll")) ?? 0;
+                const items = await polling.items({ propsValue, lastFetchEpochMS: lastEpochMilliSeconds});
+                const newLastEpochMilliSeconds = items.reduce((acc, item) => Math.max(acc, item.epochMilliSeconds), lastEpochMilliSeconds);
+                await store.put("lastPoll", newLastEpochMilliSeconds);
+                return items.filter(f => f.epochMilliSeconds > lastEpochMilliSeconds).map((item) => item.data);
             }
             case DedupeStrategy.LAST_ITEM: {
                 const lastItemId = (await store.get<unknown>("lastItem"));
                 const items = await polling.items({ propsValue });
                 const newLastItem = items?.[0]?.id;
-                if(!newLastItem) {
+                if (!newLastItem) {
                     return items;
                 }
                 await store.put("lastItem", newLastItem);
@@ -60,7 +60,7 @@ export const pollingHelper = {
                 break;
             }
             case DedupeStrategy.LAST_ITEM: {
-                const items = (await polling.items({ propsValue }));   
+                const items = (await polling.items({ propsValue }));
                 await store.put("lastItem", items?.[0]?.id);
                 break;
             }
@@ -74,10 +74,25 @@ export const pollingHelper = {
         }
     },
     async test<INPUT>(polling: Polling<INPUT>, { propsValue }: { store: Store, propsValue: INPUT }): Promise<unknown[]> {
+        let items = [];
         switch (polling.strategy) {
-            case DedupeStrategy.TIMEBASED:
-            case DedupeStrategy.LAST_ITEM:
-                return (await polling.items({ propsValue }));
+            case DedupeStrategy.TIMEBASED: {
+                items = await polling.items({ propsValue, lastFetchEpochMS: 0 });
+                break;
+            }
+            case DedupeStrategy.LAST_ITEM: {
+                items = await polling.items({ propsValue });
+                break;
+            }
         }
+        return getFirstFiveOrAll(items.map((item) => item.data));
+    }
+}
+
+function getFirstFiveOrAll(array: unknown[]) {
+    if (array.length <= 5) {
+        return array;
+    } else {
+        return array.slice(0, 5);
     }
 }

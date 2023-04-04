@@ -82,6 +82,33 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { HotspotComponent } from './components/hotspot/hotspot.component';
 import { LoopStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/loop-step-mention-item/loop-step-mention-item.component';
 import { CustomPathMentionDialogComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component';
+import { WarningBoxComponent } from './components/warning-box/warning-box.component';
+import { PieceTriggerMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component';
+import { MarkdownModule, MarkedOptions, MarkedRenderer } from 'ngx-markdown';
+import { MarkdownComponent } from './components/markdown/markdown.component';
+
+export function markedOptionsFactory(): MarkedOptions {
+  const renderer = new MarkedRenderer();
+  const linkRenderer = renderer.link;
+
+  renderer.link = (href, title, text) => {
+    const html = linkRenderer.call(renderer, href, title, text);
+    return html.replace(
+      /^<a /,
+      '<a role="link" tabindex="0" target="_blank" rel="nofollow noopener noreferrer" '
+    );
+  };
+
+  return {
+    renderer,
+    gfm: true,
+    breaks: false,
+    pedantic: false,
+    smartLists: true,
+    smartypants: false,
+  };
+}
+
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
   hideDelay: 0,
@@ -132,6 +159,9 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     HotspotComponent,
     LoopStepMentionItemComponent,
     CustomPathMentionDialogComponent,
+    MarkdownComponent,
+    WarningBoxComponent,
+    PieceTriggerMentionItemComponent,
   ],
   imports: [
     FontAwesomeModule,
@@ -165,6 +195,12 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatIconModule,
     MatDividerModule,
     MatTreeModule,
+    MarkdownModule.forRoot({
+      markedOptions: {
+        provide: MarkedOptions,
+        useFactory: markedOptionsFactory,
+      },
+    }),
     MatButtonToggleModule,
   ],
   exports: [
@@ -185,6 +221,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatButtonModule,
     OAuth2ConnectControlComponent,
     DictionaryFormControlComponent,
+    MarkdownComponent,
     ConfigsFormComponent,
     CodeArtifactFormControlComponent,
     MatTooltipModule,
@@ -211,6 +248,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatDividerModule,
     MatButtonToggleModule,
     HotspotComponent,
+    WarningBoxComponent,
+    PieceTriggerMentionItemComponent,
   ],
   providers: [
     HighlightService,

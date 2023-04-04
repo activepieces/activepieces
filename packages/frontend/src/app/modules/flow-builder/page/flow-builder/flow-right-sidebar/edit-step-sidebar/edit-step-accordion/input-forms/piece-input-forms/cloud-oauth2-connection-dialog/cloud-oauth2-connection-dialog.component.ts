@@ -78,7 +78,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       redirect_url: 'https://secrets.activepieces.com/redirect',
       scope: this.pieceAuthConfig.scope!.join(' '),
       pkce: this.pieceAuthConfig.pkce,
-      extraParams: this.pieceAuthConfig.extra!,
+      extraParams: this.pieceAuthConfig.extra || {},
       client_id: dialogData.clientId,
     };
     this.isTriggerAppWebhook = dialogData.isTriggerAppWebhook;
@@ -137,10 +137,11 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       ? this.connectionToUpdate.name
       : this.settingsForm.controls.name.value;
     const popupResponse = this.settingsForm.value.value!;
+    const { tokenUrl } = this.getTokenAndUrl();
     const newConnection: UpsertCloudOAuth2Request = {
       appName: this.pieceName,
       value: {
-        token_url: this.settingsForm.value['token_url'],
+        token_url: tokenUrl,
         code: popupResponse.code,
         code_challenge: popupResponse.code_challenge,
         client_id: this._cloudConnectionPopupSettings.client_id,
@@ -208,9 +209,21 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   }
 
   get cloudConnectionPopupSettings(): OAuth2PopupParams {
+    const { authUrl } = this.getTokenAndUrl();
+    return {
+      auth_url: authUrl!,
+      client_id: this._cloudConnectionPopupSettings.client_id,
+      extraParams: this.pieceAuthConfig.extra || {},
+      redirect_url: this._cloudConnectionPopupSettings.redirect_url,
+      pkce: this.pieceAuthConfig.pkce,
+      scope: this.pieceAuthConfig.scope!.join(' '),
+    };
+  }
+
+  getTokenAndUrl() {
+    let authUrl = this.pieceAuthConfig.authUrl!;
+    let tokenUrl = this.pieceAuthConfig.tokenUrl!;
     if (this.pieceAuthConfig.oAuthProps) {
-      let authUrl = this.pieceAuthConfig.authUrl!;
-      let tokenUrl = this.pieceAuthConfig.tokenUrl!;
       Object.keys(this.pieceAuthConfig.oAuthProps).forEach((key) => {
         authUrl = authUrl.replaceAll(
           `{${key}}`,
@@ -223,12 +236,8 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       });
     }
     return {
-      auth_url: this.pieceAuthConfig.authUrl!,
-      client_id: this._cloudConnectionPopupSettings.client_id,
-      extraParams: this.pieceAuthConfig.oAuthProps || {},
-      redirect_url: this._cloudConnectionPopupSettings.redirect_url,
-      pkce: this.pieceAuthConfig.pkce,
-      scope: this.pieceAuthConfig.scope!.join(' '),
+      authUrl: authUrl,
+      tokenUrl: tokenUrl,
     };
   }
 

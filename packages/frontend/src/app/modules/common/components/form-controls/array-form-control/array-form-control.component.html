@@ -5,7 +5,8 @@
                 <app-icon-button *ngIf="formArray.enabled" [width]="9" [height]="9" iconFilename="delete.svg"
                     [tooltipText]=" !deleteButton.isHovered && !valueInput.isHovered ?'' :'Remove Item'"
                     class="delete-btn ap-z-40" [class.opacity-0]="!deleteButton.isHovered  && !valueInput.isHovered"
-                    appTrackHover #deleteButton="hoverTrackerDirective" (click)="removeValue(idx)"></app-icon-button>
+                    appTrackHover #deleteButton="hoverTrackerDirective"
+                    (buttonClicked)="removeValue(idx)"></app-icon-button>
             </div>
 
             <div class="form-control value-control" [class.first]="isFirst && formArray.controls.length>1"
