@@ -36,6 +36,10 @@ import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
 import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
 import { SidebarHeaderComponent } from './components/sidebar-header/sidebar-header.component';
+import { JsonViewComponent } from './components/json-view/json-view.component';
+import { JsonViewDialogComponent } from './components/json-view/json-view-dialog/json-view-dialog.component';
+import { HorizontalSidebarSeparatorComponent } from './components/horizontal-sidebar-separator/horizontal-sidebar-separator.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -53,6 +57,7 @@ const exportedImports = [
   MatProgressBarModule,
   MatButtonToggleModule,
   MatSlideToggleModule,
+  DragDropModule,
 ];
 const exportedDeclarations = [
   DialogTitleTemplateComponent,
@@ -72,7 +77,10 @@ const exportedDeclarations = [
   DefaultFalsePipe,
   DefaultTruePipe,
   CenterMatMenuDirective,
-  SidebarHeaderComponent
+  SidebarHeaderComponent,
+  JsonViewComponent,
+  JsonViewDialogComponent,
+  HorizontalSidebarSeparatorComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

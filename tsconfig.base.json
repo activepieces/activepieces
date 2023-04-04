@@ -141,6 +141,9 @@
       "@activepieces/ui/feature-dashboard": [
         "packages/ui/feature-dashboard/src/index.ts"
       ],
+      "@activepieces/ui/feautre-builder-left-sidebar": [
+        "packages/ui/feautre-builder-left-sidebar/src/index.ts"
+      ],
       "@backend/*": ["packages/backend/src/app/*"],
       "@ee/*": ["packages/ee/*"],
       "@frontend/*": ["packages/frontend/src/app/*"],

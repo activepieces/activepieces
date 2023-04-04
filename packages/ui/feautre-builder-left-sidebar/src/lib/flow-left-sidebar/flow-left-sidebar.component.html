@@ -1,0 +1,3 @@
+<ng-container [ngSwitch]="leftSideBar$ | async">
+  <app-run-details *ngSwitchCase="leftSideBarType.SHOW_RUN"></app-run-details>
+</ng-container>
