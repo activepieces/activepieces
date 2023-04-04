@@ -12,7 +12,6 @@ import { exhaustMap, fromEvent, map, Observable, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { FlowsActions } from '../../../store/flow/flows.action';
 import { UUID } from 'angular2-uuid';
-import { ViewModeEnum } from '../../../store/model/enums/view-mode.enum';
 import { BuilderSelectors } from '../../../store/builder/builder.selector';
 import { Flow } from '@activepieces/shared';
 import { FlowService } from '../../../../common/service/flow.service';
@@ -24,7 +23,6 @@ import { FlowService } from '../../../../common/service/flow.service';
 })
 export class FlowBuilderTabsComponent implements OnInit, AfterViewInit {
   flows$: Observable<Flow[]>;
-  viewMode$: Observable<ViewModeEnum>;
   isFlowSelected$: Observable<boolean>;
   viewSingleMode: boolean;
 
@@ -48,7 +46,6 @@ export class FlowBuilderTabsComponent implements OnInit, AfterViewInit {
     this.isFlowSelected$ = this.store.select(
       BuilderSelectors.selectFlowSelectedId
     );
-    this.viewMode$ = this.store.select(BuilderSelectors.selectViewMode);
     this.readOnlyMode$ = this.store.select(BuilderSelectors.selectReadOnly);
     this.flows$ = this.store.select(BuilderSelectors.selectFlows);
   }
@@ -72,10 +69,6 @@ export class FlowBuilderTabsComponent implements OnInit, AfterViewInit {
 
   changeSelectedFlow(flow: Flow) {
     this.store.dispatch(FlowsActions.selectFlow({ flowId: flow.id }));
-  }
-
-  get viewMode() {
-    return ViewModeEnum;
   }
 
   scrollFlowTabsLeft(tabsContainer: HTMLDivElement) {

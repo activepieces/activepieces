@@ -7,15 +7,17 @@ import {
   ViewChild,
 } from '@angular/core';
 import { RightSideBarType } from '../../../../common/model/enum/right-side-bar-type.enum';
-import { map, Observable, tap } from 'rxjs';
+import { map, Observable, of, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 
 import { FormControl } from '@angular/forms';
 import { BuilderSelectors } from '../../../store/builder/builder.selector';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { FlowItem } from '../../../../common/model/flow-builder/flow-item';
-import { ActionType, TriggerType } from '@activepieces/shared';
+import { ActionType, TriggerStrategy, TriggerType } from '@activepieces/shared';
 import { TestStepService } from '../../../service/test-step.service';
+import { ActionMetaService } from '../../../service/action-meta.service';
+import { isOverflown } from '../../../../common/utils';
 
 @Component({
   selector: 'app-flow-right-sidebar',
@@ -23,6 +25,7 @@ import { TestStepService } from '../../../service/test-step.service';
   styleUrls: ['./flow-right-sidebar.component.scss'],
 })
 export class FlowRightSidebarComponent implements OnInit {
+  isOverflown = isOverflown;
   ActionType = ActionType;
   TriggerType = TriggerType;
   rightSidebarType$: Observable<RightSideBarType>;
@@ -37,14 +40,25 @@ export class FlowRightSidebarComponent implements OnInit {
   selectedStepResultContainer: ElementRef;
   elevateResizer$: Observable<void>;
   animateSectionsHeightChange = false;
+  isCurrentStepPollingTrigger$: Observable<boolean>;
+  currentStepPieceVersion$: Observable<
+    | {
+        version: string;
+        latest: boolean;
+        tooltipText: string;
+      }
+    | undefined
+  >;
   constructor(
     private store: Store,
     private ngZone: NgZone,
     private testStepService: TestStepService,
-    private renderer2: Renderer2
+    private renderer2: Renderer2,
+    private actionMetaDataService: ActionMetaService
   ) {}
 
   ngOnInit(): void {
+    this.checkCurrentStepPieceVersion();
     this.rightSidebarType$ = this.store.select(
       BuilderSelectors.selectCurrentRightSideBarType
     );
@@ -60,6 +74,62 @@ export class FlowRightSidebarComponent implements OnInit {
             }),
             map(() => void 0)
           );
+        })
+      );
+    this.isCurrentStepPollingTrigger$ = this.currentStep$.pipe(
+      switchMap((step) => {
+        if (
+          step &&
+          step.type === TriggerType.PIECE &&
+          step.settings.pieceName !== 'schedule'
+        ) {
+          return this.actionMetaDataService
+            .getPieceMetadata(
+              step.settings.pieceName,
+              step.settings.pieceVersion
+            )
+            .pipe(
+              map((res) => {
+                return (
+                  res.triggers[step.settings.triggerName] &&
+                  res.triggers[step.settings.triggerName].type ===
+                    TriggerStrategy.POLLING
+                );
+              })
+            );
+        }
+        return of(false);
+      })
+    );
+  }
+
+  private checkCurrentStepPieceVersion() {
+    this.currentStepPieceVersion$ = this.store
+      .select(BuilderSelectors.selectCurrentStepPieceVersionAndName)
+      .pipe(
+        switchMap((res) => {
+          if (res) {
+            return this.actionMetaDataService.getPiecesManifest().pipe(
+              map((manifest) => {
+                const piece = manifest.find((p) => p.name === res?.pieceName);
+                if (piece && piece.version === res?.version) {
+                  return {
+                    version: res.version,
+                    latest: true,
+                    tooltipText: `You are using the latest version of ${piece.displayName}. Click to learn more`,
+                  };
+                }
+                return {
+                  version: res.version,
+                  latest: false,
+                  tooltipText:
+                    `You are using an old version of ${piece?.displayName}. Click to learn more` ||
+                    ``,
+                };
+              })
+            );
+          }
+          return of(undefined);
         })
       );
   }
@@ -91,7 +161,7 @@ export class FlowRightSidebarComponent implements OnInit {
     this.renderer2.setStyle(
       this.editStepSection.nativeElement,
       'height',
-      `calc(50% - 30px)`
+      `calc(50% - 48px)`
     );
     this.renderer2.setStyle(
       this.selectedStepResultContainer.nativeElement,
@@ -104,5 +174,11 @@ export class FlowRightSidebarComponent implements OnInit {
   }
   resetTopResizerSectionHeight() {
     this.renderer2.removeStyle(this.editStepSection.nativeElement, 'height');
+  }
+  openVersionDocs() {
+    window.open(
+      'https://www.activepieces.com/docs/pieces/versioning',
+      '_blank'
+    );
   }
 }

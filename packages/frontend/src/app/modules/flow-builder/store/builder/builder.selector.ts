@@ -454,6 +454,9 @@ const selectAllStepsForMentionsDropdown = createSelector(
     });
   }
 );
+const selectStepValidity = createSelector(selectCurrentStep, (step) => {
+  return step?.valid || false;
+});
 function findStepLogoUrlForMentions(
   step: FlowItem,
   flowItemsDetailsState: FlowItemsDetailsState
@@ -486,7 +489,18 @@ function findStepLogoUrlForMentions(
     return 'assets/img/custom/piece/code_mention.png';
   }
 }
-
+const selectCurrentStepPieceVersionAndName = createSelector(
+  selectCurrentStep,
+  (s) => {
+    if (s?.type === TriggerType.PIECE || s?.type === ActionType.PIECE) {
+      return {
+        version: s.settings.pieceVersion,
+        pieceName: s.settings.pieceName,
+      };
+    }
+    return undefined;
+  }
+);
 const selectStepLogoUrl = (stepName: string) => {
   return createSelector(
     selectAllFlowSteps,
@@ -547,4 +561,6 @@ export const BuilderSelectors = {
   selectStepLogoUrl,
   selectCurrentStepSettings,
   selectStepSelectedSampleData,
+  selectStepValidity,
+  selectCurrentStepPieceVersionAndName,
 };

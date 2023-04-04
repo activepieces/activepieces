@@ -6,6 +6,7 @@ import {
   CollectionId,
   Instance,
   InstanceId,
+  UpdateInstanceRequest,
   UpsertInstanceRequest,
 } from '@activepieces/shared';
 
@@ -17,6 +18,16 @@ export class InstanceService {
 
   publish(request: UpsertInstanceRequest): Observable<Instance> {
     return this.http.post<Instance>(environment.apiUrl + `/instances`, request);
+  }
+
+  updateStatus(
+    collectionId: CollectionId,
+    request: UpdateInstanceRequest
+  ): Observable<Instance> {
+    return this.http.post<Instance>(
+      environment.apiUrl + `/instances/` + collectionId,
+      request
+    );
   }
 
   get(collectionId: CollectionId): Observable<Instance> {

@@ -6,7 +6,7 @@ export const telegramBot = createPiece({
 	name: 'telegram-bot',
 	displayName: "Telegram bot",
 	logoUrl: 'https://cdn.activepieces.com/pieces/telegram_bot.png',
-  version: packageJson.version,
+	version: packageJson.version,
 	actions: [telegramSendMessageAction],
 	authors: ['abuaboud'],
 	triggers: [],
