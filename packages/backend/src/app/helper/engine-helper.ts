@@ -5,6 +5,7 @@ import {
     CollectionId,
     EngineOperation,
     EngineOperationType,
+    ExecuteActionOperation,
     ExecuteEventParserOperation,
     ExecuteFlowOperation,
     ExecutePropsOptions,
@@ -92,7 +93,7 @@ export const engineHelper = {
             result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
                 edition: await getEdition(),
-                appWebhookUrl: await appEventRoutingService.getAppWebookUrl({ appName: pieceName }),
+                appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({ appName: pieceName }),
                 webhookSecret: await getWebhookSecret(operation.flowVersion),
                 workerToken: await workerToken({
                     collectionId: operation.collectionId,
@@ -113,6 +114,8 @@ export const engineHelper = {
     },
 
     async executeProp(operation: ExecutePropsOptions): Promise<DropdownState<unknown> | Record<string, DynamicPropsValue>> {
+        logger.debug(operation, '[EngineHelper#executeProp] operation')
+
         const sandbox = sandboxManager.obtainSandbox()
         let result
 
@@ -136,6 +139,33 @@ export const engineHelper = {
         }
 
         return result
+    },
+
+    async executeAction(operation: ExecuteActionOperation): Promise<unknown> {
+        logger.debug(operation, '[EngineHelper#executeAction] operation')
+
+        const sandbox = sandboxManager.obtainSandbox()
+
+        try {
+            await sandbox.cleanAndInit()
+
+            const buildPath = sandbox.getSandboxFolderPath()
+            const { pieceName, pieceVersion } = operation
+            await installPieceDependency(buildPath, pieceName, pieceVersion)
+
+            const result = await execute(EngineOperationType.EXECUTE_ACTION, sandbox, {
+                ...operation,
+                workerToken: await workerToken({
+                    collectionId: operation.collectionId,
+                    projectId: operation.projectId,
+                }),
+            })
+
+            return result
+        }
+        finally {
+            sandboxManager.returnSandbox(sandbox.boxId)
+        }
     },
 }
 
