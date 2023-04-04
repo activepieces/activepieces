@@ -1,0 +1,22 @@
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { UiCommonModule } from '../../../common/src';
+import { BasicAuthConnectionDialogComponent } from './dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component';
+import { CloudOAuth2ConnectionDialogComponent } from './dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
+import { OAuth2ConnectControlComponent } from './form-controls/o-auth2-connect-control/o-auth2-connect-control.component';
+import { CustomAuthConnectionDialogComponent } from './dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component';
+import { OAuth2ConnectionDialogComponent } from './dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component';
+import { SecretTextConnectionDialogComponent } from './dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component';
+
+@NgModule({
+  imports: [CommonModule, UiCommonModule],
+  declarations: [
+    BasicAuthConnectionDialogComponent,
+    CloudOAuth2ConnectionDialogComponent,
+    OAuth2ConnectControlComponent,
+    CustomAuthConnectionDialogComponent,
+    OAuth2ConnectionDialogComponent,
+    SecretTextConnectionDialogComponent,
+  ],
+})
+export class UiFeatureConnectionsModule {}

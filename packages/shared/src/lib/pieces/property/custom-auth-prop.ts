@@ -4,9 +4,9 @@ import { BasePropertySchema, CheckboxProperty, NumberProperty, SecretTextPropert
 import { StaticDropdownProperty } from "./dropdown-prop";
 import { StaticPropsValue } from "./property";
 
-
+export type CustomAuthProp = ShortTextProperty<boolean> | SecretTextProperty<boolean> | NumberProperty<boolean> | StaticDropdownProperty<unknown, boolean> | CheckboxProperty<boolean>;
 export interface CustomAuthProps {
-	[name: string]: ShortTextProperty<boolean> | SecretTextProperty<boolean> | NumberProperty<boolean> | StaticDropdownProperty<unknown, boolean> | CheckboxProperty<boolean>;
+	[name: string]: CustomAuthProp;
 }
 
 export type CustomAuthPropertyValue<T extends CustomAuthProps> = StaticPropsValue<T>;

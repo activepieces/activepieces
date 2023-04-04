@@ -141,6 +141,9 @@
       "@activepieces/ui/feature-builder-tabs": [
         "packages/ui/feature-builder-tabs/src/index.ts"
       ],
+      "@activepieces/ui/feature-connections": [
+        "packages/ui/feature-connections/src/index.ts"
+      ],
       "@activepieces/ui/feature-dashboard": [
         "packages/ui/feature-dashboard/src/index.ts"
       ],

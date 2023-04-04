@@ -4,7 +4,7 @@ import { BasePropertySchema, NumberProperty, SecretTextProperty, ShortTextProper
 import { StaticDropdownProperty } from "./dropdown-prop";
 import { StaticPropsValue } from "./property";
 
-type OAuthProp = ShortTextProperty<true> | SecretTextProperty<true> | NumberProperty<true> | StaticDropdownProperty<any, true>;
+export type OAuth2Prop = ShortTextProperty<true> | SecretTextProperty<true> | NumberProperty<true> | StaticDropdownProperty<any, true>;
 
 export interface OAuth2Props {
 	[name: string]: ShortTextProperty<boolean> | SecretTextProperty<boolean> | NumberProperty<boolean> | StaticDropdownProperty<unknown, boolean>;
@@ -13,7 +13,7 @@ export interface OAuth2Props {
 export type OAuthPropsValue<T extends OAuth2Props> = StaticPropsValue<T>;
 
 export type OAuth2PropertySchema = BasePropertySchema & {
-	props?: Record<string, OAuthProp>
+	props?: Record<string, OAuth2Prop>
 	authUrl: string;
 	tokenUrl: string;
 	scope: string[];
