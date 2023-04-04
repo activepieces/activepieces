@@ -5,10 +5,10 @@ import { convertKitTriggers } from "./lib/triggers";
 
 export const convertkit = createPiece({
   name: "convertkit",
-  displayName: "Convertkit",
-  logoUrl: "https://media.convertkit.com/images/logos/convertkit-logomark-red.png",
+  displayName: "ConvertKit",
+  logoUrl: "https://cdn.activepieces.com/pieces/convertkit.png",
   version: packageJson.version,
-  authors: [],
+  authors: ["mukewa"],
   actions: [],
   triggers: convertKitTriggers,
 });

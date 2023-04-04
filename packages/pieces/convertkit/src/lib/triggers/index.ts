@@ -10,8 +10,7 @@ const triggerData = [
     sampleData: {
       id: 3580202,
       account_id: 1348380,
-      event: { name: 'form_subscribe', form_id: 5016504 },
-      target_url: 'https://b3ac-197-156-137-157.eu.ngrok.io/v1/webhooks/EJffn0ILoGFPzTVLLhkHr'
+      event: { name: 'form_subscribe', form_id: 5016504 }
     }
   },
   {
@@ -22,8 +21,7 @@ const triggerData = [
     sampleData: {
       id: 3580202,
       account_id: 1348380,
-      event: { name: 'form_subscribe', form_id: 5016504 },
-      target_url: 'https://b3ac-197-156-137-157.eu.ngrok.io/v1/webhooks/EJffn0ILoGFPzTVLLhkHr'
+      event: { name: 'form_subscribe', form_id: 5016504 }
     }
   },
   {
@@ -35,8 +33,7 @@ const triggerData = [
       rule: {
         id: 3580202,
         account_id: 1348380,
-        event: { name: 'form_subscribe', form_id: 5016504 },
-        target_url: 'https://b3ac-197-156-137-157.eu.ngrok.io/v1/webhooks/EJffn0ILoGFPzTVLLhkHr'
+        event: { name: 'form_subscribe', form_id: 5016504 }
       }
     },
     props: {
