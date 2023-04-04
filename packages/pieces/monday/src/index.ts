@@ -1,7 +1,9 @@
 
 import { createPiece } from "@activepieces/framework";
 import packageJson from "../package.json";
+
 import { mondayCreateAnItem } from "./lib/actions/create-item";
+import { mondayTriggers } from "./lib/triggers";
 
 export const monday = createPiece({
   name: "monday",
@@ -11,5 +13,5 @@ export const monday = createPiece({
   version: packageJson.version,
   authors: ['kanarelo'],
   actions: [mondayCreateAnItem],
-  triggers: [],
+  triggers: mondayTriggers,
 });
