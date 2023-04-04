@@ -2,7 +2,14 @@ import { AuthenticationType, httpClient, HttpMethod, HttpRequest, OAuth2Property
 
 export const props = {
   authentication: Property.OAuth2({
-    description: "",
+    description: `
+    1. Log in to Xero
+    2. Go to (Developer portal)[https://developer.xero.com/app/manage/]
+    3. Click on the App you want to integrate
+    4. On the left, click on \`Configuration\`
+    5. Enter your \`redirect url\`
+    6. Copy the \`Client Id\` and \`Client Secret\`
+    `,
     displayName: 'Authentication',
     authUrl: "https://login.xero.com/identity/connect/authorize",
     tokenUrl: "https://identity.xero.com/connect/token",
@@ -72,12 +79,12 @@ export const props = {
     required: required
   }),
   contact_name: (required = false) => Property.ShortText({
-    displayName: "Name",
+    displayName: "Contact Name",
     description: "Contact name, in full.",
     required: required
   }),
   contact_email: (required = false) => Property.ShortText({
-    displayName: "Email",
+    displayName: "Contact Email",
     description: "Email address of the contact.",
     required: required
   })

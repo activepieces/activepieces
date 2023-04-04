@@ -1,4 +1,4 @@
-import { AuthenticationType, createAction, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework";
+import { AuthenticationType, createAction, httpClient, HttpMethod, HttpRequest } from "@activepieces/framework";
 import { props } from "../common/props";
 
 export const xeroCreateContact = createAction({

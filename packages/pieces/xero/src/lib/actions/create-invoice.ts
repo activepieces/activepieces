@@ -157,7 +157,6 @@ export const xeroCreateInvoice = createAction({
           { label: 'Draft', value: 'DRAFT' },
           { label: 'Submitted', value: 'SUBMITTED' },
           { label: 'Authorised', value: 'AUTHORISED' },
-          { label: 'Submitted', value: 'SUBMITTED' },
           { label: 'Deleted', value: 'DELETED' },
           { label: 'Voided', value: 'VOIDED' },
         ]
