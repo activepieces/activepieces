@@ -1,4 +1,4 @@
-import { PropertyType } from "@activepieces/shared";
+import { OAuth2AuthorizationMethod, PropertyType } from "@activepieces/shared";
 import { BasePropertySchema, NumberProperty, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
 import { StaticDropdownProperty } from "./dropdown-prop";
 import { StaticPropsValue } from "./property";
@@ -17,6 +17,7 @@ export type OAuth2PropertySchema = BasePropertySchema & {
 	tokenUrl: string;
 	scope: string[];
 	pkce?: boolean;
+	authorizationMethod?: OAuth2AuthorizationMethod,
 	extra?: Record<string, unknown>
 }
 

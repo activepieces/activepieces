@@ -35,6 +35,11 @@ export interface BasicAuthConnectionValue {
 }
 
 
+export enum OAuth2AuthorizationMethod {
+  HEADER = "HEADER",
+  BODY = "BODY"
+}
+
 export interface BaseOAuth2ConnectionValue {
   expires_in: number;
   token_type: string;
@@ -42,6 +47,7 @@ export interface BaseOAuth2ConnectionValue {
   claimed_at: number;
   refresh_token: string;
   scope: string;
+  authorization_method?: OAuth2AuthorizationMethod,
   data: Record<string, any>
 }
 
