@@ -19,9 +19,6 @@
     "paths": {
       "@/*": ["packages/*"],
       "@activepieces/engine": ["packages/engine/src/index.ts"],
-      "@activepieces/ui/feature-dashboard": [
-        "packages/ui/feature-dashboard/src/index.ts"
-      ],
       "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-asana": ["packages/pieces/asana/src/index.ts"],
@@ -131,6 +128,12 @@
       "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
       "@activepieces/ui/feature-authentication": [
         "packages/ui/feature-authentication/src/index.ts"
+      ],
+      "@activepieces/ui/feature-builder-store": [
+        "packages/ui/feature-builder-store/src/index.ts"
+      ],
+      "@activepieces/ui/feature-dashboard": [
+        "packages/ui/feature-dashboard/src/index.ts"
       ],
       "@backend/*": ["packages/backend/src/app/*"],
       "@ee/*": ["packages/ee/*"],

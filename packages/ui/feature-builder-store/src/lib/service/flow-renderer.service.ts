@@ -1,9 +1,12 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { Point } from '../../common/model/helper/point';
-import { AddButtonAndFlowItemNameContainer } from '../../common/model/flow-builder/flow-add-button';
-import { FlowRenderUtil } from './flowRenderUtil';
-import { FlowItem } from '../../common/model/flow-builder/flow-item';
+
+import { AddButtonAndFlowItemNameContainer } from '../model/flow-add-button';
+import { FlowItem } from '../model/flow-item';
+import { FlowRenderUtil } from '../utils/flowRenderUtil';
+import { Point } from '../model/point';
+
+
 
 @Injectable({
   providedIn: 'root',

@@ -4,9 +4,7 @@
   "overrides": [
     {
       "files": ["*.ts"],
-      "parserOptions": {
-        "project":["packages/frontend/tsconfig.*?.json"]
-      },
+    
       "rules": {
         "rxjs/no-async-subscribe": "error",
         "rxjs/no-nested-subscribe": "error",
@@ -29,7 +27,7 @@
             "style": "kebab-case"
           }
         ]
-      },
+      }, 
       "extends": [
         "plugin:@nrwl/nx/angular",
         "plugin:@angular-eslint/template/process-inline-templates",
