@@ -16,10 +16,15 @@ export class RedirectUrlComponent implements OnInit {
       .pipe(
         tap((params) => {
           if (window.opener && params['code'] != undefined) {
-            window.opener.postMessage(params, '*');
+            window.opener.postMessage(
+              {
+                code: params['code'],
+              },
+              '*'
+            );
           }
         })
       )
-      .pipe(map((value) => void 0));
+      .pipe(map(() => void 0));
   }
 }

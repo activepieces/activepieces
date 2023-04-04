@@ -1,22 +1,22 @@
-import { FlowId, ProjectId } from "@activepieces/shared";
-import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
-import { EntitySchema } from "typeorm";
+import { FlowId, ProjectId } from '@activepieces/shared'
+import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
+import { EntitySchema } from 'typeorm'
 
-export type AppEventRoutingId = string;
+export type AppEventRoutingId = string
 
-export interface AppEventRouting {
-    id: AppEventRoutingId;
-    created: string;
-    updated: string;
-    appName: string;
-    projectId: ProjectId;
-    flowId: FlowId;
-    identifierValue: string;
-    event: string;
+export type AppEventRouting = {
+    id: AppEventRoutingId
+    created: string
+    updated: string
+    appName: string
+    projectId: ProjectId
+    flowId: FlowId
+    identifierValue: string
+    event: string
 }
 
 export const AppEventRoutingEntity = new EntitySchema<AppEventRouting>({
-    name: "app_event_routing",
+    name: 'app_event_routing',
     columns: {
         ...BaseColumnSchemaPart,
         appName: {
@@ -25,22 +25,22 @@ export const AppEventRoutingEntity = new EntitySchema<AppEventRouting>({
         projectId: ApIdSchema,
         flowId: ApIdSchema,
         identifierValue: {
-            type: String
+            type: String,
         },
         event: {
-            type: String
-        }
+            type: String,
+        },
     },
     indices: [
         {
-            name: "idx_app_event_routing_flow_id",
-            columns: ["flowId"],
+            name: 'idx_app_event_routing_flow_id',
+            columns: ['flowId'],
             unique: false,
         },
         {
-            name: "idx_app_event_project_id_appName_identifier_value_event",
-            columns: ["appName", "projectId", "identifierValue", "event"],
+            name: 'idx_app_event_project_id_appName_identifier_value_event',
+            columns: ['appName', 'projectId', 'identifierValue', 'event'],
             unique: true,
         },
     ],
-});
+})

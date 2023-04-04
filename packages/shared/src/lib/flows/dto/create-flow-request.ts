@@ -7,3 +7,12 @@ export const CreateFlowRequest = Type.Object({
 });
 
 export type CreateFlowRequest = Omit<Static<typeof CreateFlowRequest>,"collectionId"> & {collectionId: CollectionId};
+
+
+export const GuessFlowRequest = Type.Object({
+    prompt: Type.String({}),
+    displayName: Type.String({}),
+    collectionId: Type.String({}),
+});
+
+export type GuessFlowRequest = Static<typeof GuessFlowRequest>;

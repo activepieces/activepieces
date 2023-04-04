@@ -1,5 +1,6 @@
 import { Property, createAction, HttpRequest, HttpMethod, httpClient, AuthenticationType } from "@activepieces/framework";
 import { ProjectCreateRequest, ProjectCreateResponse } from "../common/models";
+import { posthogAuthentication } from "../common/props";
 
 export const posthogCreateProject = createAction({
   name: 'create_project',
@@ -60,11 +61,7 @@ export const posthogCreateProject = createAction({
     "inject_web_apps": true
   },
   props: {
-    api_key: Property.SecretText({ 
-      displayName: "Personal API Key", 
-      description: "Check https://posthog.com/docs/api/overview#personal-api-keys-recommended for more information." , 
-      required: true
-    }),
+    api_key: posthogAuthentication,
     name: Property.ShortText({ 
       displayName: "Name", 
       description: "Project Name" , 
