@@ -22,7 +22,7 @@ import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
 import { FlowsActions } from '../../../../../store/flow/flows.action';
 import { FlowItemDetails } from '../../../flow-right-sidebar/step-type-sidebar/step-type-item/flow-item-details';
-import { RunDetailsService } from '../../../flow-left-sidebar/run-details/iteration-details.service';
+import { RunDetailsService } from '@activepieces/ui/feautre-builder-left-sidebar';
 import { DeleteStepDialogComponent } from './delete-step-dialog/delete-step-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import {

@@ -2,8 +2,6 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { HighlightService } from './service/highlight.service';
-import { JsonViewComponent } from './components/json-view/json-view.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ApImgComponent } from './components/ap-img/ap-img.component';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
@@ -45,7 +43,6 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialogModule } from '@angular/material/dialog';
-import { JsonViewDialogComponent } from './components/json-view/json-view-dialog/json-view-dialog.component';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AuthConfigsPipe } from './components/configs-form/auth-configs.pipe';
@@ -84,12 +81,10 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 
 @NgModule({
   declarations: [
-    JsonViewComponent,
     ApImgComponent,
     DefaultFalsePipe,
     DefaultTruePipe,
     OutputLogPipe,
-    JsonViewComponent,
     DictionaryFormControlComponent,
     OAuth2ConnectControlComponent,
     ConfigsFormComponent,
@@ -98,7 +93,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     TestCodeFormModalComponent,
     AddNpmPackageModalComponent,
     TrackHoverDirective,
-    JsonViewDialogComponent,
     AuthConfigsPipe,
     InterpolatingTextFormControlComponent,
     StepMentionsListComponent,
@@ -155,7 +149,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatButtonToggleModule,
   ],
   exports: [
-    JsonViewComponent,
     ApImgComponent,
     DefaultFalsePipe,
     DefaultTruePipe,
@@ -192,7 +185,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     PieceTriggerMentionItemComponent,
   ],
   providers: [
-    HighlightService,
     {
       provide: MAT_SNACK_BAR_DEFAULT_OPTIONS,
       useValue: { duration: 3000, panelClass: 'ap-text-center' },

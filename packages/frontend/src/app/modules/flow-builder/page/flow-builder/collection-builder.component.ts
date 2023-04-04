@@ -16,10 +16,10 @@ import { ViewModeEnum } from '../../store/model/enums/view-mode.enum';
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { TestRunBarComponent } from './test-run-bar/test-run-bar.component';
+import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { BuilderActions } from '../../store/builder/builder.action';
 import { FlowItemDetailsActions } from '../../store/builder/flow-item-details/flow-items-details.action';
-import { RunDetailsService } from './flow-left-sidebar/run-details/iteration-details.service';
+import { RunDetailsService } from '@activepieces/ui/feautre-builder-left-sidebar';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
 import {
   Collection,

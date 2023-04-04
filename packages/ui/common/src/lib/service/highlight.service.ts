@@ -8,7 +8,7 @@ import 'prismjs/components/prism-javascript';
 
 declare let Prism: { highlightAll: () => void };
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class HighlightService {
   constructor(@Inject(PLATFORM_ID) private platformId: object) {}
 

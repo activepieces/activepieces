@@ -8,6 +8,11 @@ import { viewModeReducer } from './store/builder/viewmode/view-mode.reducer';
 import { flowItemsDetailsReducer } from './store/builder/flow-item-details/flow-items-details.reducer';
 import { appConnectionsReducer } from './store/app-connections/app-connections.reducer';
 import { UiCommonModule } from '@activepieces/ui/common';
+import { CollectionEffects } from './store/collection/collection.effects';
+import { FlowsEffects } from './store/flow/flow.effects';
+import { ViewModeEffects } from './store/builder/viewmode/viewMode.effects';
+import { FlowItemsDetailsEffects } from './store/builder/flow-item-details/flow-items-details.effects';
+import { EffectsModule } from '@ngrx/effects';
 
 @NgModule({
   imports: [
@@ -20,6 +25,12 @@ import { UiCommonModule } from '@activepieces/ui/common';
       flowItemsDetailsState: flowItemsDetailsReducer,
       appConnectionsState: appConnectionsReducer,
     }),
+    EffectsModule.forFeature([
+      CollectionEffects,
+      FlowsEffects,
+      ViewModeEffects,
+      FlowItemsDetailsEffects,
+    ]),
   ],
   declarations: [TestRunBarComponent],
 })

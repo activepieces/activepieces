@@ -7,10 +7,10 @@ import { Directive, HostListener } from '@angular/core';
 export class TrackFocusDirective {
   isFocused = false;
 
-  @HostListener('focus', ['$event']) onFocus(e) {
+  @HostListener('focus', ['$event']) onFocus() {
     this.isFocused = true;
   }
-  @HostListener('blur', ['$event']) onblur(e) {
+  @HostListener('blur', ['$event']) onblur() {
     this.isFocused = false;
   }
 }
