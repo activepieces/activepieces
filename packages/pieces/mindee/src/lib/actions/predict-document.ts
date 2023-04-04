@@ -2,17 +2,15 @@ import { createAction, httpClient, HttpMethod, Property } from "@activepieces/fr
 import { createReadStream } from "fs"
 import FormData from "form-data";
 
-import * as path from 'path';
-
 export const mindeePredictDocumentAction = createAction({
   name: 'mindee_predict_document',
   displayName: 'Extract Document',
   description: 'Parse details of a document using OCR.',
   props: {
     authentication: Property.SecretText({
-      displayName: 'API KEY',
+      displayName: 'Api Key',
       description: `
-      #### To access your API KEY
+      #### To obtain access your Api Key
       1. Sign up and log in to Mindee
       2. Go to [API Key page](https://platform.mindee.com/api-keys)
       3. Copy the Key and paste below.
@@ -43,7 +41,7 @@ export const mindeePredictDocumentAction = createAction({
       }
     }),
     file: Property.LongText({
-      displayName: 'File',
+      displayName: 'File URL',
       description: 'Remote file URL or Base64 string. We currently support .pdf (slower), .jpg, .png, .webp, .tiff and .heic formats',
       required: true
     })
