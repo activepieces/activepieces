@@ -34,7 +34,7 @@ export {
     PieceActionSettings, LoopOnItemsActionSettings, Action, ActionType, CodeActionSettings
 } from './lib/flows/actions/action'
 export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry';
-export { User, UserStatus, UserId } from './lib/user/user';
+export * from './lib/user/user';
 export { CreateFlowRunRequest } from './lib/flow-run/create-flow-run-request';
 export { TriggerStrategy, Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType } from './lib/flows/triggers/trigger';
 export { Collection, CollectionId, CollectionListDto, CollectionStatus } from './lib/collections/collection';

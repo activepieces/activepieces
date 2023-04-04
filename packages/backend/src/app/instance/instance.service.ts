@@ -1,7 +1,7 @@
 import { apId, CollectionId, Instance, InstanceId, InstanceStatus, ProjectId, TelemetryEventName, UpdateInstanceRequest, UpsertInstanceRequest } from '@activepieces/shared'
 import { collectionService } from '../collections/collection.service'
 import { databaseConnection } from '../database/database-connection'
-import { flowService } from '../flows/flow.service'
+import { flowService } from '../flows/flow/flow.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { InstanceEntity } from './instance.entity'
 import { instanceSideEffects } from './instance-side-effects'
