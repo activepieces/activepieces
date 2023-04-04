@@ -8,13 +8,10 @@ import {
 import { Store } from '@ngrx/store';
 import { FlowsActions } from '../../../../store/flow/flows.action';
 
-import {
-  ChevronDropdownOption,
-  ChevronDropdownOptionType,
-} from '../../../../components/chevron-dropdown-menu/chevron-dropdown-option';
 import { DeleteFlowDialogComponent } from './delete-flow-dialog/delete-flow-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { Flow } from '@activepieces/shared';
+import { ChevronDropdownOption,ChevronDropdownOptionType } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-flow-builder-tab',

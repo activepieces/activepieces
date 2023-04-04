@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { distinctUntilChanged } from 'rxjs';
-import { BuilderSelectors } from '../builder/builder.selector';
 import { FlowFactoryUtil } from '../utils/flowFactoryUtil';
 import { FlowRendererService } from './flow-renderer.service';
-
+import { BuilderSelectors } from '../store/builder';
 
 @Injectable({
   providedIn: 'root',

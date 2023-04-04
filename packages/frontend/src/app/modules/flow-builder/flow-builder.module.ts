@@ -4,13 +4,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FlowLayoutRouting } from './flow-builder.routing';
 import { CollectionBuilderComponent } from './page/flow-builder/collection-builder.component';
-import { FlowBuilderHeaderComponent } from './page/flow-builder/flow-builder-header/flow-builder-header.component';
 import { FlowItemComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item.component';
 import { FlowRightSidebarComponent } from './page/flow-builder/flow-right-sidebar/flow-right-sidebar.component';
 import { FlowBuilderTabsComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tabs.component';
 import { CommonLayoutModule } from '../common/common-layout.module';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { ChevronDropdownMenuComponent } from './components/chevron-dropdown-menu/chevron-dropdown-menu.component';
 import { FlowBuilderTabComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tab/flow-builder-tab.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { FlowItemTreeComponent } from './page/flow-builder/flow-item-tree/flow-item-tree.component';
@@ -41,15 +39,12 @@ import { RunDetailsComponent } from './page/flow-builder/flow-left-sidebar/run-d
 import { TestFlowModalComponent } from './components/test-flow-modal/test-flow-modal.component';
 import { FlowLeftSidebarComponent } from './page/flow-builder/flow-left-sidebar/flow-left-sidebar.component';
 import { TestRunBarComponent } from './page/flow-builder/test-run-bar/test-run-bar.component';
-import { SidebarHeaderComponent } from './components/sidebar-header/sidebar-header.component';
 import { flowItemsDetailsReducer } from './store/builder/flow-item-details/flow-items-details.reducer';
 import { FlowItemsDetailsEffects } from './store/builder/flow-item-details/flow-items-details.effects';
 import { EditStepAccordionComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/edit-step-accodion.component';
 import { CodeStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/code-step-input-form/code-step-input-form.component';
 import { LoopStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/loop-step-input-form/loop-step-input-form.component';
-import { PublishButtonComponent } from './page/flow-builder/flow-builder-header/publish-button/publish-button.component';
 import { TrackFocusDirective } from './page/flow-builder/flow-left-sidebar/run-details/steps-results-list/track-focus.directive';
-import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
 import { OAuth2ConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/oauth2-connection-dialog/oauth2-connection-dialog.component';
 import { PieceActionInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/piece-action-input-form/piece-action-input-form.component';
 import { PieceTriggerInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component';
@@ -58,25 +53,24 @@ import { HttpInterceptorService } from './service/interceptor.service';
 import { MatTabsModule } from '@angular/material/tabs';
 import { DeleteFlowDialogComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tab/delete-flow-dialog/delete-flow-dialog.component';
 import { DeleteStepDialogComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
-import { ToggleInstanceStateComponent } from './page/flow-builder/flow-builder-header/toggle-instance-state/toggle-instance-state.component';
 import { CloudOAuth2ConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
 import { appConnectionsReducer } from './store/app-connections/app-connections.reducer';
 import { SecretTextConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/secret-text-connection-dialog/secret-text-connection-dialog.component';
 import { BasicAuthConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/basic-auth-connection-dialog/basic-auth-connection-dialog.component';
-import { FeedbackComponent } from './page/flow-builder/flow-builder-header/feedback/feedback.component';
 import { BranchLineConnectionComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-connection/branch-line-connection/branch-line-connection.component';
 import { CanvasPannerDirective } from './page/flow-builder/canvas-utils/panning/panner.directive';
 import { BranchStepInputFormComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/branch-step-input-form/branch-step-input-form.component';
 import { CanvasUtilsComponent } from './page/flow-builder/canvas-utils/canvas-utils.component';
-import { MagicWandDialogComponent } from './page/flow-builder/flow-builder-header/magic-wand-dialog/magic-flow-dialog.component';
 import { HorizontalSidebarSeparatorComponent } from './page/flow-builder/canvas-utils/horizontal-sidebar-separator/horizontal-sidebar-separator.component';
 import { TestingStepsAndTriggersModule } from '../testing-steps-and-triggers/testing-steps-and-triggers.module';
 import { StepNameEditorComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/step-name-editor/step-name-editor.component';
 import { CustomAuthConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/custom-auth-connection-dialog/custom-auth-connection-dialog.component';
 import { UiCommonModule } from '@/ui/common/src';
+import { UiFeatureBuilderHeaderModule } from '@activepieces/ui/feature-builder-header';
 
 @NgModule({
   imports: [
+    UiFeatureBuilderHeaderModule,
     CommonModule,
     RouterModule.forChild(FlowLayoutRouting),
     FormsModule,
@@ -114,9 +108,7 @@ import { UiCommonModule } from '@/ui/common/src';
   ],
   declarations: [
     CollectionBuilderComponent,
-    FlowBuilderHeaderComponent,
     FlowItemComponent,
-    ChevronDropdownMenuComponent,
     FlowRightSidebarComponent,
     FlowBuilderTabsComponent,
     FlowBuilderTabComponent,
@@ -127,7 +119,6 @@ import { UiCommonModule } from '@/ui/common/src';
     TestFlowModalComponent,
     RunDetailsComponent,
     TestRunBarComponent,
-    SidebarHeaderComponent,
     NewEditPieceSidebarComponent,
     StepTypItemComponent,
     StepTypeListComponent,
@@ -142,27 +133,22 @@ import { UiCommonModule } from '@/ui/common/src';
     CodeStepInputFormComponent,
     PieceActionInputFormComponent,
     OAuth2ConnectionDialogComponent,
-    PublishButtonComponent,
     TrackFocusDirective,
-    CenterMatMenuDirective,
     PieceTriggerInputFormComponent,
     DeleteFlowDialogComponent,
     DeleteStepDialogComponent,
-    ToggleInstanceStateComponent,
     CloudOAuth2ConnectionDialogComponent,
     SecretTextConnectionDialogComponent,
     BasicAuthConnectionDialogComponent,
-    FeedbackComponent,
     BranchLineConnectionComponent,
     CanvasPannerDirective,
     BranchStepInputFormComponent,
     CanvasUtilsComponent,
-    MagicWandDialogComponent,
     HorizontalSidebarSeparatorComponent,
     StepNameEditorComponent,
     CustomAuthConnectionDialogComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  exports: [FlowBuilderHeaderComponent],
+  exports: [],
 })
 export class FlowBuilderModule {}

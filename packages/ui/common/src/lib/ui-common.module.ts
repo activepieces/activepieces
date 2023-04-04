@@ -34,6 +34,8 @@ import { ChevronDropdownMenuComponent } from './components/chevron-dropdown-menu
 import { OutputLogPipe } from './pipe/output-log.pipe';
 import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
+import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
+import { SidebarHeaderComponent } from './components/sidebar-header/sidebar-header.component';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -69,6 +71,8 @@ const exportedDeclarations = [
   OutputLogPipe,
   DefaultFalsePipe,
   DefaultTruePipe,
+  CenterMatMenuDirective,
+  SidebarHeaderComponent
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

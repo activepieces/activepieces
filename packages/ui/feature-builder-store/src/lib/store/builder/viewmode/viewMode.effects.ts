@@ -3,7 +3,7 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 
 import { BuilderActions } from '../builder.action';
 import { EMPTY, of, switchMap } from 'rxjs';
-import { ViewModeEnum } from '../../model/enums/view-mode.enum';
+import { ViewModeEnum } from '../../../model/enums/view-mode.enum';
 import { ViewModeActions } from './view-mode.action';
 
 @Injectable()

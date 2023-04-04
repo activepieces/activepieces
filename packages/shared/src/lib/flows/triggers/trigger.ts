@@ -24,7 +24,7 @@ const commonProps = {
 export const EmptyTrigger = Type.Object({
   ...commonProps,
   type: Type.Literal(TriggerType.EMPTY),
-  settings: Type.Undefined(),
+  settings: Type.Any(),
 });
 
 export type EmptyTrigger = Static<typeof EmptyTrigger>;

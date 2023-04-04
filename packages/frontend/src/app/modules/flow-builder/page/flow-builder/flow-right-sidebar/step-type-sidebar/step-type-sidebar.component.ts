@@ -170,7 +170,7 @@ export class StepTypeSidebarComponent implements OnInit {
           ...base,
           valid: false,
           type: TriggerType.EMPTY,
-          settings: {},
+          settings: undefined,
         };
         break;
       case TriggerType.WEBHOOK:

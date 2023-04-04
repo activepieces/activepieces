@@ -44,7 +44,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
-import { DialogTitleTemplateComponent } from './components/dialog-title-template/dialog-title-template.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { JsonViewDialogComponent } from './components/json-view/json-view-dialog/json-view-dialog.component';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -99,7 +98,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     TestCodeFormModalComponent,
     AddNpmPackageModalComponent,
     TrackHoverDirective,
-    DialogTitleTemplateComponent,
     JsonViewDialogComponent,
     AuthConfigsPipe,
     InterpolatingTextFormControlComponent,
@@ -180,7 +178,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatSidenavModule,
     MatSelectModule,
     MatTableModule,
-    DialogTitleTemplateComponent,
     MatDialogModule,
     MatToolbarModule,
     InterpolatingTextFormControlComponent,

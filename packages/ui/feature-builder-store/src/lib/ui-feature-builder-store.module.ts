@@ -7,9 +7,11 @@ import { flowsReducer } from './store/flow/flows.reducer';
 import { viewModeReducer } from './store/builder/viewmode/view-mode.reducer';
 import { flowItemsDetailsReducer } from './store/builder/flow-item-details/flow-items-details.reducer';
 import { appConnectionsReducer } from './store/app-connections/app-connections.reducer';
+import { UiCommonModule } from '@activepieces/ui/common';
 
 @NgModule({
   imports: [
+    UiCommonModule,
     CommonModule,
     StoreModule.forFeature('builderState', {
       collectionState: collectionReducer,
