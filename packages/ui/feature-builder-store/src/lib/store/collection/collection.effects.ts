@@ -5,8 +5,6 @@ import { concatMap, map, switchMap } from 'rxjs/operators';
 import {
   CollectionActions,
   CollectionModifyingState,
-  savedFailed,
-  savedSuccess,
 } from './collection.action';
 
 import { Store } from '@ngrx/store';
@@ -50,7 +48,9 @@ export class CollectionEffects {
               this.collectionBuilderService.lastSuccessfulSaveDate = `Last saved on ${nowDate} at ${nowTime}.`;
             }),
             concatMap((collection) => {
-              return of(savedSuccess({ collection: collection }));
+              return of(
+                CollectionActions.savedSuccess({ collection: collection })
+              );
             }),
             catchError((error) => {
               const shownBar = this.snackBar.open(
@@ -59,7 +59,7 @@ export class CollectionEffects {
                 { panelClass: 'error', duration: undefined }
               );
               shownBar.afterDismissed().subscribe(() => location.reload());
-              return of(savedFailed(error));
+              return of(CollectionActions.savedFailed(error));
             })
           );
       })

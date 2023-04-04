@@ -33,7 +33,7 @@ import {
 import { TestRunBarComponent } from '../../test-run-bar/test-run-bar.component';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
-import { TabState } from '../../model/tab-state';
+import { NO_PROPS, TabState } from '../../model/tab-state';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { RunDetailsService } from '../../service/run-details.service';
 import { FlowService } from '@activepieces/ui/common';
@@ -115,7 +115,7 @@ export class FlowsEffects {
           return of(
             FlowsActions.setRightSidebar({
               sidebarType: RightSideBarType.NONE,
-              props: RightSideBarType.NONE,
+              props: NO_PROPS,
             })
           );
         }
@@ -216,14 +216,14 @@ export class FlowsEffects {
           return of(
             FlowsActions.setRightSidebar({
               sidebarType: RightSideBarType.TRIGGER_TYPE,
-              props: RightSideBarType.NONE,
+              props: NO_PROPS,
             })
           );
         }
         const actionsToDispatch: Array<any> = [
           FlowsActions.setRightSidebar({
             sidebarType: RightSideBarType.EDIT_STEP,
-            props: RightSideBarType.NONE,
+            props: NO_PROPS,
           }),
         ];
         if (run) {

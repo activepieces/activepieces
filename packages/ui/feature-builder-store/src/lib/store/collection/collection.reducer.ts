@@ -1,9 +1,10 @@
 import { CollectionActions } from './collection.action';
 import { Action, createReducer, on } from '@ngrx/store';
-import { CollectionStateEnum } from '../model/enums/collection-state.enum';
-import { CollectionState } from '../model/collection-state.model';
+
 import { FlowsActions } from '../flow/flows.action';
 import { Collection } from '@activepieces/shared';
+import { CollectionState } from '../../model/collection-state.model';
+import { CollectionStateEnum } from '../../model/enums/collection-state.enum';
 
 const initialState: CollectionState = {
   state: CollectionStateEnum.NONE,

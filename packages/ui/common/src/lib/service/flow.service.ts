@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../environment';
-import {  map, Observable, of, switchMap } from 'rxjs';
+import { map, Observable, of, switchMap } from 'rxjs';
 import {
   CollectionId,
   CreateFlowRequest,
@@ -14,6 +14,7 @@ import {
   FlowOperationRequest,
   FlowRun,
   FlowVersionId,
+  GuessFlowRequest,
   SeekPage,
 } from '@activepieces/shared';
 @Injectable({
@@ -32,7 +33,7 @@ export class FlowService {
     flowId: FlowId,
     flowVersionId: undefined | FlowVersionId
   ): Observable<Flow> {
-    const params:Record<string,string> = {};
+    const params: Record<string, string> = {};
     if (flowVersionId) {
       params['versionId'] = flowVersionId;
     }
@@ -85,5 +86,14 @@ export class FlowService {
     return this.http.get<ExecutionState>(
       environment.apiUrl + `/files/${fileId}`
     );
+  }
+
+  guessFlow(prompt: string, newFlowName: string, collectionId: string) {
+    const request: GuessFlowRequest = {
+      collectionId: collectionId,
+      displayName: newFlowName,
+      prompt: prompt,
+    };
+    return this.http.post<Flow>(environment.apiUrl + '/flows/guess', request);
   }
 }

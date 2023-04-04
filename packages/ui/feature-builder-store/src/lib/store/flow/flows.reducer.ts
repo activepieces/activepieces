@@ -4,7 +4,7 @@ import { UUID } from 'angular2-uuid';
 import { Flow, flowHelper, FlowOperationType } from '@activepieces/shared';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
-import { TabState } from '../../model/tab-state';
+import { NO_PROPS, TabState } from '../../model/tab-state';
 import { FlowItem } from '../../model/flow-item';
 
 type FlowsState = {
@@ -26,7 +26,7 @@ const initialTabState: TabState = {
   },
   rightSidebar: {
     type: RightSideBarType.NONE,
-    props: RightSideBarType.NONE,
+    props: NO_PROPS,
   },
   focusedStep: undefined,
   selectedStepName: 'initialVal',

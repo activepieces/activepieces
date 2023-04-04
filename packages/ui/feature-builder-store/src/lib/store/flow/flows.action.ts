@@ -14,6 +14,7 @@ import {
 import { AddButtonType } from '../../model/enums/add-button-type';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
+import { NO_PROPS } from '../../model';
 
 export enum FlowsActionType {
   // Flow Version Modifying Action
@@ -40,99 +41,96 @@ export enum FlowsActionType {
   DELETE_SUCCESS = '[FLOWS] DELETE_SUCCESS',
 }
 
-export const updateTrigger = createAction(
+const updateTrigger = createAction(
   FlowsActionType.UPDATE_TRIGGER,
   props<{ operation: UpdateTriggerRequest }>()
 );
 
-export const addAction = createAction(
+const addAction = createAction(
   FlowsActionType.ADD_ACTION,
   props<{ operation: AddActionRequest }>()
 );
 
-export const updateAction = createAction(
+const updateAction = createAction(
   FlowsActionType.UPDATE_ACTION,
   props<{ operation: UpdateActionRequest }>()
 );
 
-export const deleteAction = createAction(
+const deleteAction = createAction(
   FlowsActionType.DELETE_ACTION,
   props<{ operation: DeleteActionRequest }>()
 );
 
-export const savedSuccess = createAction(
+const savedSuccess = createAction(
   FlowsActionType.SAVED_SUCCESS,
   props<{ saveRequestId: UUID; flow: Flow }>()
 );
 
-export const savedFailed = createAction(
+const savedFailed = createAction(
   FlowsActionType.SAVED_FAILED,
   props<{ error: any }>()
 );
 
-export const deleteFlow = createAction(
+const deleteFlow = createAction(
   FlowsActionType.DELETE_FLOW,
   props<{ flowId: FlowId }>()
 );
 
-export const addFlow = createAction(
-  FlowsActionType.ADD_FLOW,
-  props<{ flow: Flow }>()
-);
+const addFlow = createAction(FlowsActionType.ADD_FLOW, props<{ flow: Flow }>());
 
-export const changeName = createAction(
+const changeName = createAction(
   FlowsActionType.CHANGE_NAME,
   props<{ flowId: FlowId; displayName: string }>()
 );
 
-export const setInitial = createAction(
+const setInitial = createAction(
   FlowsActionType.SET_INITIAL,
   props<{ flows: Flow[]; run: FlowRun | undefined }>()
 );
 
-export const applyUpdateOperation = createAction(
+const applyUpdateOperation = createAction(
   FlowsActionType.APPLY_UPDATE_OPERATION,
   props<{ flow: Flow; operation: FlowOperationRequest; saveRequestId: UUID }>()
 );
 
-export const deleteFlowStarted = createAction(
+const deleteFlowStarted = createAction(
   FlowsActionType.DELETE_FLOW_STARTED,
   props<{ flowId: FlowId; saveRequestId: UUID }>()
 );
 
-export const selectFlow = createAction(
+const selectFlow = createAction(
   FlowsActionType.SELECT_FLOW,
   props<{ flowId: FlowId }>()
 );
 
-export const exitRun = createAction(
+const exitRun = createAction(
   FlowsActionType.EXIT_RUN,
   props<{ flowId: FlowId }>()
 );
 
-export const setRun = createAction(
+const setRun = createAction(
   FlowsActionType.SET_RUN,
   props<{ flowId: FlowId; run: FlowRun }>()
 );
 
-export const deselectStep = createAction(FlowsActionType.DESELECT_STEP);
+const deselectStep = createAction(FlowsActionType.DESELECT_STEP);
 
-export const selectStepByName = createAction(
+const selectStepByName = createAction(
   FlowsActionType.SELECT_STEP_BY_NAME,
   props<{ stepName: string }>()
 );
 
-export const deleteSuccess = createAction(
+const deleteSuccess = createAction(
   FlowsActionType.DELETE_SUCCESS,
   props<{ saveRequestId: UUID }>()
 );
 
-export const setLeftSidebar = createAction(
+const setLeftSidebar = createAction(
   FlowsActionType.SET_LEFT_SIDEBAR,
   props<{ sidebarType: LeftSideBarType }>()
 );
 
-export const setRightSidebar = createAction(
+const setRightSidebar = createAction(
   FlowsActionType.SET_RIGHT_SIDEBAR,
   props<{
     sidebarType: RightSideBarType;
@@ -145,7 +143,7 @@ export const setRightSidebar = createAction(
           stepName: string;
           buttonType: AddButtonType;
         }
-      | RightSideBarType.NONE;
+      | typeof NO_PROPS;
   }>()
 );
 

@@ -14,40 +14,29 @@ export enum CollectionActionType {
 
 export const CollectionModifyingState = [CollectionActionType.CHANGE_NAME];
 
-export const changeName = createAction(
+const changeName = createAction(
   CollectionActionType.CHANGE_NAME,
   props<{ displayName: string }>()
 );
-
-export const changeDescription = createAction(
-  CollectionActionType.CHANGE_NAME,
-  props<{ description: string }>()
-);
-
-export const savedSuccess = createAction(
+const savedSuccess = createAction(
   CollectionActionType.COLLECTION_SAVED_SUCCESS,
   props<{ collection: Collection }>()
 );
-export const enableInstance = createAction(
-  CollectionActionType.ENABLE_INSTANCE
-);
-export const disableInstance = createAction(
-  CollectionActionType.DISABLE_INSTANCE
-);
-export const publish = createAction(CollectionActionType.PUBLISH_COLLECTION);
-export const publishFailed = createAction(
+const enableInstance = createAction(CollectionActionType.ENABLE_INSTANCE);
+const disableInstance = createAction(CollectionActionType.DISABLE_INSTANCE);
+const publish = createAction(CollectionActionType.PUBLISH_COLLECTION);
+const publishFailed = createAction(
   CollectionActionType.PUBLISH_COLLECTION_FAILED
 );
-export const publishSuccess = createAction(
+const publishSuccess = createAction(
   CollectionActionType.PUBLISH_COLLECTION_SUCCESS,
   props<{ instance: Instance; showSnackbar: boolean }>()
 );
-export const savedFailed = createAction(
+const savedFailed = createAction(
   CollectionActionType.COLLECTION_SAVED_FAILED,
   props<{ error: any }>()
 );
-
-export const setInitial = createAction(
+const setInitial = createAction(
   CollectionActionType.SET_INITIAL,
   props<{ collection: Collection; instance?: Instance }>()
 );

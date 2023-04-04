@@ -1,5 +1,5 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
-import { GlobalBuilderState } from '../model/builder-state.model';
+import { GlobalBuilderState } from '../../model/builder-state.model';
 
 import {
   AppConnection,
@@ -7,24 +7,24 @@ import {
   FlowRun,
   SampleDataSettings,
 } from '@activepieces/shared';
-import { TabState } from '../model/tab-state';
-import { ViewModeEnum } from '../model/enums/view-mode.enum';
+import { NO_PROPS, TabState } from '../../model/tab-state';
+import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 
-import { FlowItemsDetailsState } from '../model/flow-items-details-state.model';
-import { FlowsState } from '../model/flows-state.model';
-import { CollectionStateEnum } from '../model/enums/collection-state.enum';
+import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
+import { FlowsState } from '../../model/flows-state.model';
+import { CollectionStateEnum } from '../../model/enums/collection-state.enum';
 import { ActionType, Collection, TriggerType } from '@activepieces/shared';
 
 import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
 } from './flow-item-details/flow-items-details.effects';
-import { LeftSideBarType } from '../model/enums/left-side-bar-type.enum';
-import { RightSideBarType } from '../model/enums/right-side-bar-type.enum';
-import { FlowItem } from '../model/flow-item';
-import { MentionListItem } from '../model/mention-list-item';
-import { FlowStructureUtil } from '../utils/flowStructureUtil';
-import { ConnectionDropdownItem } from '../model/connections-dropdown-item';
+import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
+import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
+import { FlowItem } from '../../model/flow-item';
+import { MentionListItem } from '../../model/mention-list-item';
+import { FlowStructureUtil } from '../../utils/flowStructureUtil';
+import { ConnectionDropdownItem } from '../../model/connections-dropdown-item';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -183,10 +183,11 @@ const selectCurrentStepSettings = createSelector(
 const selectStepSelectedSampleData = createSelector(
   selectCurrentStepSettings,
   (settings) => {
-    if (settings ) {
-      if(Object.keys(settings).find(s=> s === 'inputUiInfo'))
-      {
-        const sampleDataSettings = (settings as Record<string,unknown>)['inputUiInfo'] as SampleDataSettings;
+    if (settings) {
+      if (Object.keys(settings).find((s) => s === 'inputUiInfo')) {
+        const sampleDataSettings = (settings as Record<string, unknown>)[
+          'inputUiInfo'
+        ] as SampleDataSettings;
         return sampleDataSettings.currentSelectedData;
       }
     }
@@ -279,7 +280,7 @@ export const selectCurrentRightSideBar = createSelector(
     if (state.flowsState.selectedFlowId == undefined) {
       return {
         type: RightSideBarType.NONE,
-        props: {},
+        props: NO_PROPS,
       };
     }
     const tabState: TabState =
@@ -287,7 +288,7 @@ export const selectCurrentRightSideBar = createSelector(
     if (tabState == undefined) {
       return {
         type: RightSideBarType.NONE,
-        props: {},
+        props: NO_PROPS,
       };
     }
     return tabState.rightSidebar;
@@ -349,11 +350,11 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
         CORE_PIECES_ACTIONS_NAMES.find((n) => n === flowItem.settings.pieceName)
       ) {
         return state.coreFlowItemsDetails.find(
-          (c) => c.extra.appName === flowItem.settings.pieceName
+          (c) => c.extra?.appName === flowItem.settings.pieceName
         );
       }
       return state.customPiecesActionsFlowItemDetails.find(
-        (f) => f.extra.appName === flowItem.settings.pieceName
+        (f) => f.extra?.appName === flowItem.settings.pieceName
       );
     }
     if (flowItem.type === TriggerType.PIECE) {
@@ -363,7 +364,7 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
         );
       }
       return state.customPiecesTriggersFlowItemDetails.find(
-        (f) => f.extra.appName === flowItem.settings.pieceName
+        (f) => f.extra?.appName === flowItem.settings.pieceName
       );
     }
 
@@ -394,7 +395,7 @@ const selectAppConnectionsDropdownOptions = createSelector(
   selectAllAppConnections,
   (connections: AppConnection[]) => {
     return [...connections].map((c) => {
-      const result:ConnectionDropdownItem = {
+      const result: ConnectionDropdownItem = {
         label: { appName: c.appName, name: c.name },
         value: `\${connections.${c.name}}`,
       };
@@ -473,14 +474,14 @@ function findStepLogoUrlForMentions(
     }
     return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(
       (i) => i.extra?.appName === step.settings.pieceName
-    ).logoUrl;
+    )?.logoUrl;
   } else if (step.type === TriggerType.PIECE) {
     if (CORE_PIECES_TRIGGERS.find((n) => n === step.settings.pieceName)) {
       return `assets/img/custom/piece/${step.settings.pieceName}_mention.png`;
     }
     return flowItemsDetailsState.customPiecesTriggersFlowItemDetails.find(
       (i) => i.extra?.appName === step.settings.pieceName
-    ).logoUrl;
+    )?.logoUrl;
   } else {
     if (step.type === TriggerType.EMPTY || step.type === TriggerType.WEBHOOK) {
       const fileName =
