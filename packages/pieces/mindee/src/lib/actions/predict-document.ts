@@ -12,7 +12,7 @@ export const mindeePredictDocumentAction = createAction({
     authentication: Property.SecretText({
       displayName: 'API KEY',
       description: `
-      To access your API KEY
+      #### To access your API KEY
       1. Sign up and log in to Mindee
       2. Go to [API Key page](https://platform.mindee.com/api-keys)
       3. Copy the Key and paste below.
@@ -44,7 +44,7 @@ export const mindeePredictDocumentAction = createAction({
     }),
     file: Property.LongText({
       displayName: 'File',
-      description: 'Remote file URL or Base64 string',
+      description: 'Remote file URL or Base64 string. We currently support .pdf (slower), .jpg, .png, .webp, .tiff and .heic formats',
       required: true
     })
   },
