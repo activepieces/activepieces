@@ -7,21 +7,38 @@ const triggerData = [
     displayName: "Subscriber Activated",
     description: "Triggered on `subscriber_activate`",
     event: "subscriber.subscriber_activate",
-    sampleData: {}
+    sampleData: {
+      id: 3580202,
+      account_id: 1348380,
+      event: { name: 'form_subscribe', form_id: 5016504 },
+      target_url: 'https://b3ac-197-156-137-157.eu.ngrok.io/v1/webhooks/EJffn0ILoGFPzTVLLhkHr'
+    }
   },
   {
     name: "subscriber_unsubscribed",
     displayName: "Subscriber Unsubscribed",
     description: "Triggered on `subscriber_unsubscribe`",
     event: "subscriber.subscriber_unsubscribe",
-    sampleData: {}
+    sampleData: {
+      id: 3580202,
+      account_id: 1348380,
+      event: { name: 'form_subscribe', form_id: 5016504 },
+      target_url: 'https://b3ac-197-156-137-157.eu.ngrok.io/v1/webhooks/EJffn0ILoGFPzTVLLhkHr'
+    }
   },
   {
     name: "form_subscribed",
     displayName: "Form Subscribed",
     description: "Triggered on `form_subscribe`",
     event: "subscriber.form_subscribe",
-    sampleData: {},
+    sampleData: {
+      rule: {
+        id: 3580202,
+        account_id: 1348380,
+        event: { name: 'form_subscribe', form_id: 5016504 },
+        target_url: 'https://b3ac-197-156-137-157.eu.ngrok.io/v1/webhooks/EJffn0ILoGFPzTVLLhkHr'
+      }
+    },
     props: {
       form_id: Property.ShortText({
         displayName: 'Form Id',

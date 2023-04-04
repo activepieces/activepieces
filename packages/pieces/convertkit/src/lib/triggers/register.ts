@@ -1,4 +1,4 @@
-import { createTrigger, httpClient, HttpRequest, HttpMethod, AuthenticationType, Property } from '@activepieces/framework'
+import { createTrigger, httpClient, HttpRequest, HttpMethod, Property } from '@activepieces/framework'
 import { TriggerStrategy } from '@activepieces/shared'
 
 interface Props {
@@ -17,7 +17,13 @@ export const convertkitRegisterTrigger = ({ name, event, displayName, descriptio
   props: {
     authentication: Property.SecretText({
       displayName: 'Secret API Key',
-      description: 'Your API secret key',
+      description: `
+        To access your **Secret API Key**
+        1. Log in to ConvertKit
+        2. Go to [Advanced Settings](https://app.convertkit.com/account_settings/advanced_settings)
+        3. Copy **Your API Key** and Paste it below.
+        4. Click **Save**
+      `,
       required: true
     }),
     ...(props ?? {})
@@ -25,13 +31,14 @@ export const convertkitRegisterTrigger = ({ name, event, displayName, descriptio
   sampleData,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
+    const { authentication, ...extra } = context.propsValue
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.convertkit.com/v3/automations/hooks`,
       body: {
-        event: {name: event},
-        target_url: context.webhookUrl,
-        api_secret: context.propsValue.authentication as string
+        event: {name: event, ...extra},
+        target_url: context.webhookUrl.replace("http://localhost:3000", "https://b3ac-197-156-137-157.eu.ngrok.io"),
+        api_secret: authentication as string
       }
     };
     const { body: webhook } = await httpClient.sendRequest<WebhookInformation>(request);
@@ -43,10 +50,9 @@ export const convertkitRegisterTrigger = ({ name, event, displayName, descriptio
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
         url: `https://api.convertkit.com/v3/automations/hooks/${response.rule.id}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.propsValue['authentication'],
-        },
+        body: {
+          api_secret: context.propsValue.authentication as string
+        }
       };
       await httpClient.sendRequest(request);
     }
