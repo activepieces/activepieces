@@ -15,9 +15,10 @@ export * from './lib/service/project.service';
 export * from './lib/service/app-connections.service';
 export * from './lib/utils/utils';
 export * from './lib/utils/tables.utils';
-export * from './lib/store/common.action'
-export * from './lib/store/common.selector'
-export * from './lib/store/project/project.action'
-export * from './lib/store/project/project.reducer'
-export * from './lib/store/project/project.selector'
-export * from './lib/models/flow-item-details'
+export * from './lib/store/common.action';
+export * from './lib/store/common.selector';
+export * from './lib/store/project/project.action';
+export * from './lib/store/project/project.reducer';
+export * from './lib/store/project/project.selector';
+export * from './lib/models/flow-item-details';
+export * from './lib/models/chevron-dropdown-option';

@@ -25,11 +25,12 @@ import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialogModule } from '@angular/material/dialog';
-import {MatSidenavModule} from '@angular/material/sidenav';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { DialogTitleTemplateComponent } from './components/dialog-title-template/dialog-title-template.component';
-import {MatProgressBarModule} from '@angular/material/progress-bar';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { ChevronDropdownMenuComponent } from './components/chevron-dropdown-menu/chevron-dropdown-menu.component';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -46,7 +47,7 @@ const exportedImports = [
   MatSidenavModule,
   MatProgressBarModule,
   MatButtonToggleModule,
-  MatSlideToggleModule
+  MatSlideToggleModule,
 ];
 const exportedDeclarations = [
   DialogTitleTemplateComponent,
@@ -59,7 +60,10 @@ const exportedDeclarations = [
   ApPaginatorComponent,
   HotspotComponent,
   IconButtonComponent,
-]
+  ApButtonComponent,
+  ChevronDropdownMenuComponent,
+  DialogTitleTemplateComponent,
+];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
   hideDelay: 0,
@@ -100,12 +104,7 @@ export function markedOptionsFactory(): MarkedOptions {
   providers: [
     { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
   ],
-  declarations: [
-    ...exportedDeclarations
-  ],
-  exports: [
-    ...exportedImports,
-    ...exportedDeclarations
-  ],
+  declarations: [...exportedDeclarations],
+  exports: [...exportedImports, ...exportedDeclarations],
 })
 export class UiCommonModule {}
