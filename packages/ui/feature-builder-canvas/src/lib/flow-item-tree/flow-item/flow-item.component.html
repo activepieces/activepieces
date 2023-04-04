@@ -1,0 +1,12 @@
+<div [ngStyle]="flowGraphContainer" [style.transform]="transformObs$|async">
+  <div [ngStyle]="flowContentContainer()" #flowItem>
+    <app-flow-item-content [trigger]="trigger" [flowItem]="_flowItemData" [viewMode]="viewMode$ | async | defaultTrue"
+      [selected]="selected$ | async | defaultFalse" [style.opacity]="1"></app-flow-item-content>
+  </div>
+  <div class="ap-relative" [ngStyle]="{ height: _flowItemData.connectionsBox!.height + 'px' }">
+    <app-flow-item-connection [insideLoopOrBranch]="insideLoopOrBranch" [colorLine]="hoverState"
+      [flowItem]="_flowItemData" [viewMode]="viewMode$ | async | defaultTrue"></app-flow-item-connection>
+  </div>
+  <app-flow-item *ngIf="_flowItemData.nextAction" [hoverState]="hoverState" [flowItemData]="_flowItemData.nextAction"
+    [insideLoopOrBranch]="insideLoopOrBranch"></app-flow-item>
+</div>

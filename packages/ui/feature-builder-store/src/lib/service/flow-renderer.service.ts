@@ -6,8 +6,6 @@ import { FlowItem } from '../model/flow-item';
 import { FlowRenderUtil } from '../utils/flowRenderUtil';
 import { Point } from '../model/point';
 
-
-
 @Injectable({
   providedIn: 'root',
 })
