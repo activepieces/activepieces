@@ -12,7 +12,7 @@ import {
   DeleteEntityDialogData,
 } from '../../components/delete-enity-dialog/delete-collection-dialog.component';
 import { ConnectionsTableDataSource } from './connections-table.datasource';
-import { ApPaginatorComponent } from '@/ui/common/src/lib/components/pagination/ap-paginator.component';
+import { ApPaginatorComponent } from '@activepieces/ui/common';
 import {
   ProjectService,
   DEFAULT_PAGE_SIZE,

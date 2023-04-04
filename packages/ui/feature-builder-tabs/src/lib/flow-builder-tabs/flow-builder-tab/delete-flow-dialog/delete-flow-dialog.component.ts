@@ -9,10 +9,11 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { Observable, take } from 'rxjs';
 import { Flow } from '@activepieces/shared';
+import {
+  BuilderSelectors,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
 import { DeleteFlowValidator } from '../../../validators/deleteFlowValidator';
-import { FlowsActions } from '../../../../../store/flow/flows.action';
-import { BuilderSelectors } from '../../../../../store/builder/builder.selector';
-
 @Component({
   templateUrl: './delete-flow-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

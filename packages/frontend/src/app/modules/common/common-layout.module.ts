@@ -74,7 +74,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { LoopStepMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/loop-step-mention-item/loop-step-mention-item.component';
 import { CustomPathMentionDialogComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component';
 import { PieceTriggerMentionItemComponent } from './components/form-controls/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component';
-import { UiCommonModule } from '@/ui/common/src';
+import { UiCommonModule } from '@activepieces/ui/common';
 
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

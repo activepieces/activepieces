@@ -5,7 +5,6 @@ import {
   OnInit,
   TemplateRef,
 } from '@angular/core';
-import { FlowService } from '../../../common/service/flow.service';
 import {
   catchError,
   combineLatest,
@@ -18,18 +17,20 @@ import {
   takeWhile,
   tap,
 } from 'rxjs';
-import { fadeInUp400ms, jsonValidator } from '@activepieces/ui/common';
+import {
+  ActionMetaService,
+  FlowService,
+  InstanceRunService,
+  fadeInUp400ms,
+  initializedRun,
+  jsonValidator,
+} from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '../../store/builder/builder.selector';
-import { TestRunBarComponent } from '../../page/flow-builder/test-run-bar/test-run-bar.component';
-import { FlowsActions } from '../../store/flow/flows.action';
-import { InstanceRunService } from '../../../common/service/flow-run.service';
 import { HttpStatusCode } from '@angular/common/http';
 import { UntypedFormControl } from '@angular/forms';
 import jsonlint from 'jsonlint-mod';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { CodeService } from '../../service/code.service';
 import {
   Collection,
   ExecutionOutputStatus,
@@ -38,8 +39,12 @@ import {
   PieceTriggerSettings,
   TriggerType,
 } from '@activepieces/shared';
-import { ActionMetaService } from '../../service/action-meta.service';
-import { initializedRun } from '../../../common/model/flow-run.interface';
+import {
+  BuilderSelectors,
+  CodeService,
+  FlowsActions,
+  TestRunBarComponent,
+} from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-test-flow-modal',

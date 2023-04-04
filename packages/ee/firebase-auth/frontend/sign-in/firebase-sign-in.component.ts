@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { FirebaseAuthService } from '../firebase-auth.service';
-import { fadeInUp400ms } from '@/ui/common/src/lib/animation/fade-in-up.animation';
+import { fadeInUp400ms } from '@activepieces/ui/common';
 import * as auth from 'firebase/auth';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { FirebaseError } from 'firebase/app';

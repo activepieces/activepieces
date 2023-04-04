@@ -15,7 +15,7 @@ import {
   DeleteEntityDialogData,
 } from '../../components/delete-enity-dialog/delete-collection-dialog.component';
 import { FormControl } from '@angular/forms';
-import { ApPaginatorComponent } from '@/ui/common/src/lib/components/pagination/ap-paginator.component';
+import { ApPaginatorComponent } from '@activepieces/ui/common';
 import {
   CollectionService,
   ProjectService,

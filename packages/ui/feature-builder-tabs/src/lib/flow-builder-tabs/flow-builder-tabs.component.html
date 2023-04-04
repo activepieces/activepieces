@@ -3,8 +3,7 @@
   <div *ngIf="!(readOnlyMode$ | async | defaultFalse)"
     class="ap-border-solid ap-border-b-[1px] ap-border-line ap-min-w-[36px] ap-cursor-pointer ap-self-stretch ap-bg-white ap-h-[36px] ap-mt-auto ap-z-50 ap-flex ap-justify-center  ap-items-center"
     #addFlowBtn matTooltip="Add Flow">
-    <svg-icon src="assets/img/custom/plus.svg"
-      [svgStyle]="{ 'width.px':15, 'height.px':15, 'fill':themeService.BODY_COLOR}">
+    <svg-icon [applyClass]="true" src="assets/img/custom/plus.svg" class="ap-w-[15px] ap-h-[15px] ap-fill-body">
     </svg-icon>
   </div>
 

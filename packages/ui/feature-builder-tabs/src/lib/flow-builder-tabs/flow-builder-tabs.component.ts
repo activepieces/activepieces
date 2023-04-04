@@ -7,14 +7,27 @@ import {
   ViewChild,
   ViewChildren,
 } from '@angular/core';
-import { ThemeService } from '../../../../common/service/theme.service';
-import { exhaustMap, fromEvent, map, Observable, tap } from 'rxjs';
+import {
+  exhaustMap,
+  forkJoin,
+  fromEvent,
+  map,
+  Observable,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import { Store } from '@ngrx/store';
-import { FlowsActions } from '../../../store/flow/flows.action';
 import { UUID } from 'angular2-uuid';
-import { BuilderSelectors } from '../../../store/builder/builder.selector';
 import { Flow } from '@activepieces/shared';
-import { FlowService } from '../../../../common/service/flow.service';
+import {
+  FlowService,
+  findDefaultFlowDisplayName,
+} from '@activepieces/ui/common';
+import {
+  BuilderSelectors,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-flow-builder-tabs',
@@ -33,11 +46,7 @@ export class FlowBuilderTabsComponent implements OnInit, AfterViewInit {
 
   addFlowButton$: Observable<void> = new Observable<void>();
 
-  constructor(
-    public themeService: ThemeService,
-    private flowService: FlowService,
-    private store: Store
-  ) {}
+  constructor(private flowService: FlowService, private store: Store) {}
 
   ngOnInit(): void {
     this.selectedFlowId$ = this.store.select(
@@ -56,7 +65,7 @@ export class FlowBuilderTabsComponent implements OnInit, AfterViewInit {
 
   setupAddFlowButtonListener() {
     this.addFlowButton$ = fromEvent(this.addFlowButton.nativeElement, 'click')
-      .pipe(exhaustMap(() => this.flowService.createEmptyFlow()))
+      .pipe(exhaustMap(() => this.createEmptyFlow()))
       .pipe(
         tap((response) => {
           if (response) {
@@ -123,5 +132,31 @@ export class FlowBuilderTabsComponent implements OnInit, AfterViewInit {
         inline: 'end',
       });
     }, 400);
+  }
+  createEmptyFlow() {
+    return forkJoin({
+      collection: this.store
+        .select(BuilderSelectors.selectCurrentCollection)
+        .pipe(take(1)),
+      flows: this.store.select(BuilderSelectors.selectFlows).pipe(take(1)),
+    })
+      .pipe(
+        switchMap((collectionWIthFlows) => {
+          const flowDisplayName = findDefaultFlowDisplayName(
+            collectionWIthFlows.flows
+          );
+          return this.flowService.create({
+            collectionId: collectionWIthFlows.collection.id,
+            displayName: flowDisplayName,
+          });
+        })
+      )
+      .pipe(
+        tap((response) => {
+          if (response) {
+            this.store.dispatch(FlowsActions.addFlow({ flow: response }));
+          }
+        })
+      );
   }
 }

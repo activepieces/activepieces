@@ -2,7 +2,7 @@
   <ng-container *ngIf="selectedCollection$ | async as currentCollection">
     <ap-button [hidden]="(instanceRunStatus$ | async) === statusEnum.RUNNING"
       (buttonClicked)="testFlowButtonClicked(currentFLow, currentCollection,modalTemplate)" btnStyle="basic"
-      btnColor="primary" [disabled]="shouldDisableTestButton$ | async" [tooltip]="testFlowButtonDisabledTooltip"
+      btnColor="primary" [disabled]="shouldDisableTestButton$ | async" [tooltipText]="testFlowButtonDisabledTooltip"
       placement="bottom" btnSize="medium">
       Test flow
     </ap-button>

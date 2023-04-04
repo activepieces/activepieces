@@ -1,0 +1,44 @@
+{
+  "name": "ui-feature-builder-tabs",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/ui/feature-builder-tabs/src",
+  "prefix": "activepieces",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "options": {
+        "project": "packages/ui/feature-builder-tabs/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/ui/feature-builder-tabs/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/ui/feature-builder-tabs/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@angular-devkit/build-angular:karma",
+      "options": {
+        "tsConfig": "packages/ui/feature-builder-tabs/tsconfig.spec.json",
+        "karmaConfig": "packages/ui/feature-builder-tabs/karma.conf.js",
+        "polyfills": ["zone.js", "zone.js/testing"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/ui/feature-builder-tabs/**/*.ts",
+          "packages/ui/feature-builder-tabs/**/*.html"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

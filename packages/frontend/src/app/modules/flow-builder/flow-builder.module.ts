@@ -6,10 +6,8 @@ import { FlowLayoutRouting } from './flow-builder.routing';
 import { CollectionBuilderComponent } from './page/flow-builder/collection-builder.component';
 import { FlowItemComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item.component';
 import { FlowRightSidebarComponent } from './page/flow-builder/flow-right-sidebar/flow-right-sidebar.component';
-import { FlowBuilderTabsComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tabs.component';
 import { CommonLayoutModule } from '../common/common-layout.module';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { FlowBuilderTabComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tab/flow-builder-tab.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { FlowItemTreeComponent } from './page/flow-builder/flow-item-tree/flow-item-tree.component';
 import { SimpleLineConnectionComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-connection/simple-line-connection/simple-line-connection.component';
@@ -36,7 +34,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FlowItemConnectionComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-connection/flow-item-connection.component';
 import { FlowItemContentComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-content/flow-item-content.component';
 import { RunDetailsComponent } from './page/flow-builder/flow-left-sidebar/run-details/run-details.component';
-import { TestFlowModalComponent } from './components/test-flow-modal/test-flow-modal.component';
 import { FlowLeftSidebarComponent } from './page/flow-builder/flow-left-sidebar/flow-left-sidebar.component';
 import { TestRunBarComponent } from './page/flow-builder/test-run-bar/test-run-bar.component';
 import { flowItemsDetailsReducer } from './store/builder/flow-item-details/flow-items-details.reducer';
@@ -51,7 +48,6 @@ import { PieceTriggerInputFormComponent } from './page/flow-builder/flow-right-s
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { HttpInterceptorService } from './service/interceptor.service';
 import { MatTabsModule } from '@angular/material/tabs';
-import { DeleteFlowDialogComponent } from './page/flow-builder/flow-builder-tabs/flow-builder-tab/delete-flow-dialog/delete-flow-dialog.component';
 import { DeleteStepDialogComponent } from './page/flow-builder/flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
 import { CloudOAuth2ConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
 import { appConnectionsReducer } from './store/app-connections/app-connections.reducer';
@@ -65,7 +61,8 @@ import { HorizontalSidebarSeparatorComponent } from './page/flow-builder/canvas-
 import { TestingStepsAndTriggersModule } from '../testing-steps-and-triggers/testing-steps-and-triggers.module';
 import { StepNameEditorComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/step-name-editor/step-name-editor.component';
 import { CustomAuthConnectionDialogComponent } from './page/flow-builder/flow-right-sidebar/edit-step-sidebar/edit-step-accordion/input-forms/piece-input-forms/custom-auth-connection-dialog/custom-auth-connection-dialog.component';
-import { UiCommonModule } from '@/ui/common/src';
+import { UiCommonModule } from '@activepieces/ui/common';
+import { UiFeatureBuilderTabsModule } from '@activepieces/ui/feature-builder-tabs';
 import { UiFeatureBuilderHeaderModule } from '@activepieces/ui/feature-builder-header';
 
 @NgModule({
@@ -98,6 +95,7 @@ import { UiFeatureBuilderHeaderModule } from '@activepieces/ui/feature-builder-h
     MonacoEditorModule,
     MatTabsModule,
     TestingStepsAndTriggersModule,
+    UiFeatureBuilderTabsModule,
   ],
   providers: [
     {
@@ -110,13 +108,10 @@ import { UiFeatureBuilderHeaderModule } from '@activepieces/ui/feature-builder-h
     CollectionBuilderComponent,
     FlowItemComponent,
     FlowRightSidebarComponent,
-    FlowBuilderTabsComponent,
-    FlowBuilderTabComponent,
     FlowItemTreeComponent,
     FlowItemConnectionComponent,
     FlowItemContentComponent,
     FlowLeftSidebarComponent,
-    TestFlowModalComponent,
     RunDetailsComponent,
     TestRunBarComponent,
     NewEditPieceSidebarComponent,
@@ -135,7 +130,6 @@ import { UiFeatureBuilderHeaderModule } from '@activepieces/ui/feature-builder-h
     OAuth2ConnectionDialogComponent,
     TrackFocusDirective,
     PieceTriggerInputFormComponent,
-    DeleteFlowDialogComponent,
     DeleteStepDialogComponent,
     CloudOAuth2ConnectionDialogComponent,
     SecretTextConnectionDialogComponent,
