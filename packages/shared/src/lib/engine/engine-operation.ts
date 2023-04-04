@@ -80,6 +80,12 @@ export interface AppEventListener {
     identifierValue: string,
 };
 
+export interface ExecuteTestOrRunTriggerResponse {
+    success: boolean;
+    message?: string;
+    output: unknown[];
+}
+
 export interface ExecuteTriggerResponse {
     listeners: AppEventListener[];
     scheduleOptions: ScheduleOptions;

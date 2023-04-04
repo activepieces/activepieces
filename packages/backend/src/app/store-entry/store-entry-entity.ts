@@ -1,11 +1,11 @@
-import { EntitySchema } from "typeorm";
-import { ApIdSchema, BaseColumnSchemaPart } from "../helper/base-entity";
-import { StoreEntry } from "@activepieces/shared";
+import { EntitySchema } from 'typeorm'
+import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
+import { StoreEntry } from '@activepieces/shared'
 
 type StoreEntrySchema = StoreEntry
 
 export const StoreEntryEntity = new EntitySchema<StoreEntrySchema>({
-    name: "store-entry",
+    name: 'store-entry',
     columns: {
         ...BaseColumnSchemaPart,
         key: {
@@ -13,7 +13,7 @@ export const StoreEntryEntity = new EntitySchema<StoreEntrySchema>({
         },
         collectionId: ApIdSchema,
         value: {
-            type: "jsonb",
+            type: 'jsonb',
         },
     },
-});
+})
