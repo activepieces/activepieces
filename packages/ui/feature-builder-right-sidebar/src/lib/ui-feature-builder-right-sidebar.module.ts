@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UiCommonModule } from '../../../common/src';
+import { UiCommonModule } from '@activepieces/ui/common';
+import { UiFeatureBuilderTestStepsModule } from '@activepieces/ui/feature-builder-test-steps';
 import { EditStepFormContainerComponent as EditStepFormContainerComponent } from './flow-right-sidebar/edit-step-sidebar/edit-step-form-container/edit-step-form-container.component';
 import { StepNameEditorComponent } from './flow-right-sidebar/edit-step-sidebar/step-name-editor/step-name-editor.component';
 import { BranchStepInputFormComponent } from './flow-right-sidebar/input-forms/branch-step-input-form/branch-step-input-form.component';
@@ -14,12 +15,14 @@ import { StepTypeItemComponent } from './flow-right-sidebar/step-type-sidebar/st
 import { UiFeatureBuilderFormControlsModule } from '../../../feature-builder-form-controls/src';
 import { MatTabsModule } from '@angular/material/tabs';
 import { FlowRightSidebarComponent } from './flow-right-sidebar/flow-right-sidebar.component';
+import { NewEditPieceSidebarComponent } from './flow-right-sidebar/edit-step-sidebar/edit-step-sidebar.component';
 @NgModule({
   imports: [
     CommonModule,
     UiCommonModule,
     UiFeatureBuilderFormControlsModule,
     MatTabsModule,
+    UiFeatureBuilderTestStepsModule,
   ],
   declarations: [
     EditStepFormContainerComponent,
@@ -33,6 +36,7 @@ import { FlowRightSidebarComponent } from './flow-right-sidebar/flow-right-sideb
     StepTypeSidebarComponent,
     StepTypeItemComponent,
     FlowRightSidebarComponent,
+    NewEditPieceSidebarComponent,
   ],
 })
 export class UiFeatureBuilderRightSidebarModule {}
