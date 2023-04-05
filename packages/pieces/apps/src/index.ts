@@ -58,6 +58,7 @@ import { constantContact } from '@activepieces/piece-constant-contact';
 import { salesforce } from '@activepieces/piece-salesforce';
 import { smtp } from '@activepieces/piece-smtp';
 import { mailerLite } from '@activepieces/piece-mailer-lite';
+import { googleForms }  from '@activepieces/piece-google-forms';
 
 export const pieces: Piece[] = [
     airtable,
@@ -119,6 +120,7 @@ export const pieces: Piece[] = [
     constantContact,
     salesforce,
     smtp,
+    googleForms
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 export const getPiece = (name: string): Piece | undefined => {

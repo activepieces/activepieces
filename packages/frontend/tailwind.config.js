@@ -29,7 +29,7 @@ module.exports = {
 					light: '#efa2a980',
 				},
 				primary: { DEFAULT: '#6e41e2', light: '#EEE8FC' },
-				warn: '#ffff7cb8',
+				warn: '#f78a3b',
 				blueLink: '#1890ff',
 				sidebar: '#FAFBFC',
 				blueBorder: '#6385dc',

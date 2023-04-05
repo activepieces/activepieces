@@ -65,6 +65,9 @@
       "@activepieces/piece-google-drive": [
         "packages/pieces/google-drive/src/index.ts"
       ],
+      "@activepieces/piece-google-forms": [
+        "packages/pieces/google-forms/src/index.ts"
+      ],
       "@activepieces/piece-google-sheets": [
         "packages/pieces/google-sheets/src/index.ts"
       ],
