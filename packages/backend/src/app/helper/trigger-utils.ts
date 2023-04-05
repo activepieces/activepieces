@@ -179,7 +179,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
 const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
     const piece = getPiece(trigger.settings.pieceName)
 
-    if (piece === null) {
+    if (piece == null) {
         throw new ActivepiecesError({
             code: ErrorCode.PIECE_NOT_FOUND,
             params: {

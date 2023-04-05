@@ -1,4 +1,4 @@
-import { createTrigger, httpClient, HttpRequest, HttpMethod, AuthenticationType, PieceProperty, OAuth2PropertyValue } from '@activepieces/framework'
+import { createTrigger, httpClient, HttpRequest, HttpMethod, AuthenticationType, PieceProperty } from '@activepieces/framework'
 import { TriggerStrategy } from '@activepieces/shared'
 
 interface Props {
@@ -19,26 +19,26 @@ export const surveyMonkeyRegisterTrigger = ({ name, event, displayName, descript
   type: TriggerStrategy.WEBHOOK,
   async onEnable({ propsValue, webhookUrl, store }) {
     const body: Record<string, unknown> = {
-      name,
+      name: `Webhook ${name}`,
       event_type: event,
-      subscription_url: webhookUrl
+      subscription_url: webhookUrl,
+      object_ids: propsValue?.['survey_ids'] ?? null,
+      object_type: propsValue?.['survey_ids'] ? 'survey' : null,
+      authorization: ""
     }
-
-    if ('object_ids' in propsValue) body['object_ids'] = propsValue['object_ids']
-    if ('object_type' in propsValue) body['object_type'] = propsValue['object_type']
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `https://api.surveymonkey.com/v3/webhooks/`,
+      url: `https://api.surveymonkey.com/v3/webhooks`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: (propsValue['authentication'] as OAuth2PropertyValue).access_token
+        token: (propsValue['authentication'])
       },
       body
     }
 
-    const { body: webhook } = await httpClient.sendRequest<WebhookInformation>(request);
-    await store.put<WebhookInformation>(`surveymonkey_${name}_trigger`, webhook);
+    const response = await httpClient.sendRequest<WebhookInformation>(request);
+    await store.put<WebhookInformation>(`surveymonkey_${name}_trigger`, response.body);
   },
   async onDisable({ store, propsValue }) {
     const webhook = await store.get<WebhookInformation>(`surveymonkey_${name}_trigger`);
@@ -49,7 +49,7 @@ export const surveyMonkeyRegisterTrigger = ({ name, event, displayName, descript
         url: `https://api.surveymonkey.com/v3/webhooks/${webhook.id}`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: (propsValue['authentication'] as OAuth2PropertyValue).access_token
+          token: (propsValue['authentication'])
         }
       };
       await httpClient.sendRequest(request)
