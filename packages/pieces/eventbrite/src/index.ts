@@ -6,7 +6,7 @@ import { eventbriteTriggers } from "./lib/triggers";
 export const eventbrite = createPiece({
   name: "eventbrite",
   displayName: "Eventbrite",
-  logoUrl: "https://www.eventbrite.com/blog/wp-content/uploads/files/2016/01/Eventbrite_logo_blog1.png",
+  logoUrl: "https://cdn.evbstatic.com/s3-s3/static/images/support_site/support_about_us/eventbrite_logo.jpg",
   version: packageJson.version,
   authors: [],
   actions: [],

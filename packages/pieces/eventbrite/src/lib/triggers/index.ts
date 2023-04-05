@@ -40,7 +40,7 @@ const triggerData = [
     name: 'order_placed',
     displayName: 'order.placed',
     event: 'order.placed',
-    description: 'Triggers when an order is placed for an event. Generated Webhook\'s API endpoint is to the Order endpoint.',
+    description: 'Triggers when an order is placed for an event.',
     sampleData: {}
   },
   {
