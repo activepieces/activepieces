@@ -16,7 +16,7 @@ import { DropdownProperty, MultiSelectDropdownProperty, StaticDropdownProperty, 
 import { DynamicProperties } from "./dynamic-prop";
 import { OAuth2Property, OAuth2Props } from "./oauth2-prop";
 
-export interface PieceProperty {
+export interface PiecePropertyMap {
 	[name: string]: ShortTextProperty<boolean>
 	| LongTextProperty<boolean>
 	| OAuth2Property<boolean, OAuth2Props>
@@ -34,9 +34,24 @@ export interface PieceProperty {
 	| DynamicProperties<boolean>
 	| CustomAuthProperty<boolean, CustomAuthProps>
 }
+export type PiecePropertyTypes=ShortTextProperty<boolean>
+| LongTextProperty<boolean>
+| OAuth2Property<boolean, OAuth2Props>
+| CheckboxProperty<boolean>
+| DropdownProperty<any, boolean>
+| StaticDropdownProperty<any, boolean>
+| NumberProperty<boolean>
+| SecretTextProperty<boolean>
+| BasicAuthProperty<boolean>
+| ArrayProperty<boolean>
+| ObjectProperty<boolean>
+| JsonProperty<boolean>
+| MultiSelectDropdownProperty<unknown, boolean>
+| StaticMultiSelectDropdownProperty<unknown, boolean>
+| DynamicProperties<boolean>
+| CustomAuthProperty<boolean, CustomAuthProps>;
 
-
-export type StaticPropsValue<T extends PieceProperty> = {
+export type StaticPropsValue<T extends PiecePropertyMap> = {
 	[P in keyof T]: T[P] extends { required: true } ? T[P]['valueSchema'] : T[P]['valueSchema'] | undefined;
 }
 

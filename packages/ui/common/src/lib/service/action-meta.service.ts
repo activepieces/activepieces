@@ -4,10 +4,11 @@ import {
   ApEdition,
   ApEnvironment,
   compareSemVer,
+  DropdownState,
   PieceMetadata,
   PieceMetadataSummary,
   PieceOptionRequest,
-  PieceProperty,
+  PiecePropertyMap,
   TriggerBase,
   TriggerStrategy,
   TriggerType,
@@ -163,7 +164,7 @@ export class ActionMetaService {
   }
 
   getPieceActionConfigOptions<
-    T extends DropdownState<any> | Record<string, PieceProperty>
+    T extends DropdownState<unknown> | PiecePropertyMap
   >(req: PieceOptionRequest, pieceName: string) {
     return this.http.post<T>(
       environment.apiUrl + `/pieces/${pieceName}/options`,
@@ -171,14 +172,3 @@ export class ActionMetaService {
     );
   }
 }
-
-export type DropdownState<T> = {
-  disabled?: boolean;
-  placeholder?: string;
-  options: DropdownOption<T>[];
-};
-
-export type DropdownOption<T> = {
-  label: string;
-  value: T;
-};

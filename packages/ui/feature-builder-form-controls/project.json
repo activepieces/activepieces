@@ -1,22 +1,22 @@
 {
-  "name": "ui-feature-connections",
+  "name": "ui-feature-builder-form-controls",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "sourceRoot": "packages/ui/feature-connections/src",
+  "sourceRoot": "packages/ui/feature-builder-form-controls/src",
   "prefix": "app",
   "targets": {
     "build": {
       "executor": "@nrwl/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "options": {
-        "project": "packages/ui/feature-connections/ng-package.json"
+        "project": "packages/ui/feature-builder-form-controls/ng-package.json"
       },
       "configurations": {
         "production": {
-          "tsConfig": "packages/ui/feature-connections/tsconfig.lib.prod.json"
+          "tsConfig": "packages/ui/feature-builder-form-controls/tsconfig.lib.prod.json"
         },
         "development": {
-          "tsConfig": "packages/ui/feature-connections/tsconfig.lib.json"
+          "tsConfig": "packages/ui/feature-builder-form-controls/tsconfig.lib.json"
         }
       },
       "defaultConfiguration": "production"
@@ -24,8 +24,8 @@
     "test": {
       "executor": "@angular-devkit/build-angular:karma",
       "options": {
-        "tsConfig": "packages/ui/feature-connections/tsconfig.spec.json",
-        "karmaConfig": "packages/ui/feature-connections/karma.conf.js",
+        "tsConfig": "packages/ui/feature-builder-form-controls/tsconfig.spec.json",
+        "karmaConfig": "packages/ui/feature-builder-form-controls/karma.conf.js",
         "polyfills": ["zone.js", "zone.js/testing"]
       }
     },
@@ -34,8 +34,8 @@
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
-          "packages/ui/feature-connections/**/*.ts",
-          "packages/ui/feature-connections/**/*.html"
+          "packages/ui/feature-builder-form-controls/**/*.ts",
+          "packages/ui/feature-builder-form-controls/**/*.html"
         ]
       }
     }
