@@ -1,11 +1,17 @@
 import { AuthenticationType, BasicAuthPropertyValue, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework";
 
 export type WordpressMedia = { id: string, title: { rendered: string } }
+
+// TODO This needs a better description
+const markdownPropertyDescription = `
+Enable basic authentication for your Wordpress website by downloading and installing the plugin from this repository: https://github.com/WP-API/Basic-Auth.
+`
+
 export const wordpressCommon = {
     connection: Property.BasicAuth({
         displayName: "Connection",
         required: true,
-        description: "Username and Password",
+        description: markdownPropertyDescription,
         username: Property.ShortText({
             displayName: "Username",
             required: true
@@ -25,21 +31,16 @@ export const wordpressCommon = {
         required: false,
         refreshers: ['connection', 'website_url'],
         options: async (props) => {
-            if (!props['connection']) {
+            const connection = props['connection'] as BasicAuthPropertyValue;
+            const websiteUrl = props['website_url'] as string;
+            if (!connection?.username || !connection?.password || !websiteUrl) {
                 return {
                     disabled: true,
                     placeholder: 'Connect your account first',
                     options: [],
                 };
             }
-            if (!props['website_url']) {
-                return {
-                    disabled: true,
-                    placeholder: 'Set your website url first',
-                    options: [],
-                };
-            }
-            if (!wordpressCommon.urlExists((props['website_url'] as string).trim())) {
+            if (!wordpressCommon.urlExists(websiteUrl.trim())) {
                 return {
                     disabled: true,
                     placeholder: 'Incorrect website url',
@@ -49,7 +50,7 @@ export const wordpressCommon = {
             const authProp: BasicAuthPropertyValue = props['connection'] as BasicAuthPropertyValue;
             const request: HttpRequest = {
                 method: HttpMethod.GET,
-                url: `${props['website_url'].toString().trim()}/wp-json/wp/v2/users`,
+                url: `${websiteUrl.trim()}/wp-json/wp/v2/users`,
                 authentication: {
                     type: AuthenticationType.BASIC,
                     username: authProp.username,
@@ -83,7 +84,7 @@ export const wordpressCommon = {
             },
             queryParams: queryParams
         };
-        const response = await httpClient.sendRequest<unknown[]>(request);
+        const response = await httpClient.sendRequest<{ date: string }[]>(request);
         return {
             posts: response.body,
             totalPages: response.headers && response.headers['X-WP-TotalPages'] ? Number(response.headers['X-WP-TotalPages']) : 0

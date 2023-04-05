@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity'
 import { Collection, Flow, FlowRun, Project } from '@activepieces/shared'
 
 type FlowRunSchema = FlowRun & {
