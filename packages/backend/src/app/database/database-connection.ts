@@ -31,6 +31,7 @@ import { removeCollectionVersion1678492809093 } from './migration/1678492809093-
 import { addEventRouting1678382946390 } from './migration/1678382946390-add-event-routing'
 import { bumpFixPieceVersions1678928503715 } from './migration/1678928503715-bump-fix-piece-versions'
 import { migrateSchedule1679014156667 } from './migration/1679014156667-migrate-schedule'
+import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -99,5 +100,6 @@ export const databaseConnection = new DataSource({
         AppConnectionEntity,
         ProjectPlanEntity,
         ProjectUsageEntity,
+        WebhookSimulationEntity,
     ],
 })
