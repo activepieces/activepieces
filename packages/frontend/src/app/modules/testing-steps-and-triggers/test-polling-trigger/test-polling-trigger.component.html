@@ -42,7 +42,6 @@
                     <mat-select [formControl]="selectedDataControl" [compareWith]="dropdownCompareWithFunction">
                         <mat-option *ngFor="let res of currentResults; let idx= index" [value]="res.payload">
                             <div> (Result {{currentResults.length-idx}})</div>
-                            <div class="ap-text-description ap-typography-body-2"> {{res.created | date:"short"}}</div>
                         </mat-option>
                     </mat-select>
                 </mat-form-field>
@@ -51,8 +50,6 @@
                 </div>
                 <app-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
                     [content]="selectedDataControl.value"></app-json-viewer>
-
-
             </ng-container>
             <ng-container *ngIf="currentResults.length === 0  && hasBeenTested">
                 <div class="ap-flex ap-items-center">
@@ -69,7 +66,8 @@
                 </div>
 
                 <p class="ap-mt-2" *ngIf="!failed">Please add some data then press "Load Data"</p>
-                <p class="ap-mt-2" *ngIf="failed">Testing data failed. Please ensure that the settings are correct or try again.</p>
+                <p class="ap-mt-2" *ngIf="failed">Testing data failed. Please ensure that the settings are correct or
+                    try again.</p>
             </ng-container>
         </ng-container>
 

@@ -1,5 +1,5 @@
 import { FlowRun } from '@activepieces/shared'
-import { flowQueue } from '../workers/flow-worker/flow-queue'
+import { flowQueue } from '../../workers/flow-worker/flow-queue'
 
 type StartParams = {
     flowRun: FlowRun

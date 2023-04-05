@@ -58,7 +58,8 @@
       "group": "Pieces",
       "pages": [
         "pieces/overview",
-        "pieces/custom-pieces"
+        "pieces/custom-pieces",
+        "pieces/versioning"
       ]
     },
     {
@@ -88,6 +89,7 @@
         "pieces/apps/google-calendar",
         "pieces/apps/google-contacts",
         "pieces/apps/google-drive",
+        "pieces/apps/google-forms",
         "pieces/apps/google-sheets",
         "pieces/apps/google-tasks",
         "pieces/apps/hackernews",
