@@ -8,10 +8,10 @@ export const mondayProps = {
     tokenUrl: "https://auth.monday.com/oauth2/token",
     required: true,
     scope: [
-      'workspaces:read', 
-      'webhooks:read', 
+      'workspaces:read',
+      'webhooks:read',
       'webhooks:write',
-      'boards:read', 
+      'boards:read',
       'boards:write'
     ]
   }),
@@ -22,34 +22,22 @@ export const mondayProps = {
     defaultValue: 'main',
     refreshers: ['authentication'],
     options: async ({ authentication }) => {
-      if (!authentication) {
-        return {
-          disabled: true,
-          placeholder: 'connect your account first',
-          options: [],
-        }
-      }
+      if (!authentication) return { disabled: true, placeholder: 'connect your account first', options: [] }
 
-      const response: HttpResponse<WorkspaceResponse> = await mondayMakeRequest<WorkspaceResponse>(
-        (authentication as OAuth2PropertyValue).access_token,
-        `query { workspaces(limit:10) { id name } }`,
-        HttpMethod.GET
-      )
-      
+      const response: HttpResponse<WorkspaceResponse> =
+        await mondayMakeRequest<WorkspaceResponse>(
+          (authentication as OAuth2PropertyValue).access_token,
+          `query { workspaces(limit:10) { id name } }`,
+          HttpMethod.GET
+        )
+
+      const options = response.body.data.workspaces
+        .map((workspace) => ({ label: workspace.name, value: workspace.id }))
+
       return {
         disabled: false,
-        options: [{
-            label: 'Main Workspace',
-            value: 'main'
-          }].concat(
-            response.body.data.workspaces.map((workspace) => {
-              return {
-                label: workspace.name,
-                value: workspace.id
-              }
-            })
-          )
-      };
+        options: [{ label: 'Main Workspace', value: 'main' }].concat(options)
+      }
     }
   }),
   board_id: (required = false, refreshers = ['authentication', 'workspace_id']) => Property.Dropdown({
@@ -58,29 +46,18 @@ export const mondayProps = {
     required: required,
     refreshers: refreshers,
     options: async ({ authentication, workspace_id }) => {
-      if (!authentication) {
-        return {
-          disabled: true,
-          placeholder: 'connect your account first',
-          options: [],
-        }
-      }
-      
+      if (!authentication) return { disabled: true, placeholder: 'connect your account first', options: [] }
+
       const response: HttpResponse<BoardResponse> = await getBoard(
         (authentication as OAuth2PropertyValue).access_token,
         workspace_id as string
       )
-      
+
       return {
         disabled: false,
         options: response.body.data.boards
           .filter((value) => value.type === BoardType.BOARD)
-          .map((board) => {
-          return {
-            label: board['name'] as string,
-            value: board['id'] as string
-          }
-        })
+          .map((board) => ({ label: board['name'] as string, value: board['id'] as string }))
       }
     }
   }),
@@ -90,20 +67,10 @@ export const mondayProps = {
     required: required,
     refreshers: ['authentication', 'board_id'],
     options: async ({ authentication, board_id }) => {
-      if (!authentication) {
-        return {
-          disabled: true,
-          placeholder: 'connect your account first',
-          options: [],
-        }
-      }
-      if (!board_id) {
-        return {
-          disabled: true,
-          placeholder: 'Select a board first',
-          options: [],
-        }
-      }
+      if (!authentication)
+        return { disabled: true, placeholder: 'connect your account first', options: [] }
+      if (!board_id)
+        return { disabled: true, placeholder: 'Select a board first', options: [] }
 
       const response: HttpResponse<BoardResponse> = await mondayMakeRequest<BoardResponse>(
         (authentication as OAuth2PropertyValue).access_token,
@@ -116,23 +83,25 @@ export const mondayProps = {
         `,
         HttpMethod.GET
       )
-      
+
+      const boards = response.body?.data.boards
+      if (!boards) 
+        return { disabled: true, placeholder: 'Error fetching your boards', options: [] }
+
       return {
         disabled: false,
-        options: response.body.data.boards?.[0].groups.map((group) => {
-          
-          return {
-            label: group.title,
-            value: group.id
-          }
-        }),
+        options: (
+          boards.length > 0 
+            ? boards[0].groups.map((group) => ({ label: group.title, value: group.id }))
+            : []
+        )
       };
     }
   }),
 }
 
-type BoardResponse = { data: {  boards: Board[] }, account_id: number }
-type WorkspaceResponse = { data: {  workspaces: Workspace[] }, account_id: number }
+type BoardResponse = { data: { boards: Board[] }, account_id: number }
+type WorkspaceResponse = { data: { workspaces: Workspace[] }, account_id: number }
 
 interface Board {
   id: string
@@ -171,9 +140,9 @@ export async function mondayMakeRequest<T extends HttpMessageBody>(access_token:
 
 export async function getBoard(access_token: string, workspace_id?: string) {
   const query =
-  `query {
+    `query {
     boards(
-      ${workspace_id === 'main' ? `` :`workspace_ids: ${workspace_id},`}
+      ${workspace_id === 'main' ? `` : `workspace_ids: ${workspace_id},`}
       limit:10
     ) { id name type } 
   }`

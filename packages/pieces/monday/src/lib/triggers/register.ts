@@ -41,7 +41,6 @@ export const mondayRegisterTrigger = ({ name, event, displayName, description, s
       query,
       HttpMethod.POST
     )
-    console.debug(">>>>>>>>>>>>>>>>>>>>>>", query, webhook)
 
     await context.store.put<WebhookInformation>(`monday_${name}_trigger`, webhook as WebhookInformation);
   },
@@ -56,10 +55,13 @@ export const mondayRegisterTrigger = ({ name, event, displayName, description, s
       )
     }
   },
-  async run(context) {
-    console.debug("payload received", context.payload.body)
+  async run({ payload }) {
+    console.debug("payload received", payload.body)
 
-    return [context.payload.body];
+    if ("challenge" in payload.body && Object.keys(payload).length === 1) 
+      return payload.body
+
+    return [payload.body]
   },
 });
 
