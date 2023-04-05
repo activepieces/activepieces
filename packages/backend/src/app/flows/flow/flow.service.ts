@@ -19,7 +19,7 @@ import {
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { createRedisLock } from '../../database/redis-connection'
+import { acquireLock } from '../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRepo } from './flow.repo'
 import { instanceSideEffects } from '../../instance/instance-side-effects'
@@ -112,10 +112,10 @@ export const flowService = {
         }
     },
     async update({ flowId, projectId, request }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
-        const flowLock = createRedisLock()
+        const flowLock = await acquireLock([flowId], {
+            timeout: 5000,
+        })
         try {
-            await flowLock.acquire(flowId)
-
             let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, false))
             if (lastVersion.state === FlowVersionState.LOCKED) {
                 lastVersion = await flowVersionService.createVersion(flowId, lastVersion)
