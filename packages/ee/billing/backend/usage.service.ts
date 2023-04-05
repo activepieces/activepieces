@@ -11,7 +11,8 @@ const projectUsageRepo = databaseConnection.getRepository<ProjectUsage>(ProjectU
 
 export const usageService = {
     async limit(request: { projectId: ProjectId; flowVersion: FlowVersion; }): Promise<{ perform: true }> {
-        const quotaLock = await acquireLock([`usage_${request.projectId}}`], {
+        const quotaLock = await acquireLock({
+            key: `usage_${request.projectId}`,
             timeout: 30000,
         })
         try {

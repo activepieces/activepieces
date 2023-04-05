@@ -18,9 +18,3 @@ export const TestPollingTriggerRequest = Type.Object({
 });
 
 export type TestPollingTriggerRequest = Static<typeof TestPollingTriggerRequest>;
-
-export const SimulateTriggerRequest = Type.Object({
-  flowId: Type.String({}),
-});
-
-export type SimulateTriggerRequest = Static<typeof SimulateTriggerRequest>;

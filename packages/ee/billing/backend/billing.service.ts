@@ -119,7 +119,8 @@ export const billingService = {
 
 async function updatePlan({ projectPlan, stripeSubscription }: { projectPlan: ProjectPlan, stripeSubscription: Stripe.Subscription }): Promise<void> {
     logger.info('Updating plan for project ' + projectPlan.projectId)
-    const projectPlanLock = await acquireLock([`project_plan_${projectPlan.projectId}}`], {
+    const projectPlanLock = await acquireLock({
+        key: `project_plan_${projectPlan.projectId}`,
         timeout: 30 * 1000,
     });
     try {
@@ -138,7 +139,8 @@ async function updatePlan({ projectPlan, stripeSubscription }: { projectPlan: Pr
 
 async function downgradeToFreeTier({ projectId }: { projectId: ProjectId }): Promise<void> {
     logger.info('Downgrading project ' + projectId + ' to free tier');
-    const projectPlanLock = await acquireLock([`project_plan_${projectId}}`], {
+    const projectPlanLock = await acquireLock({
+        key: `project_plan_${projectId}`,
         timeout: 30 * 1000,
     });
     const defaultPlanId = getDefaultPlanId();
@@ -162,7 +164,8 @@ async function downgradeToFreeTier({ projectId }: { projectId: ProjectId }): Pro
 }
 
 async function createStripeDetails({ projectId }: { projectId: ProjectId }): Promise<ProjectPlan> {
-    const projectPlanLock = await acquireLock([`project_plan_${projectId}}`], {
+    const projectPlanLock = await acquireLock({
+        key: `project_plan_${projectId}`,
         timeout: 30 * 1000,
     });
     const defaultPlanId = getDefaultPlanId();
