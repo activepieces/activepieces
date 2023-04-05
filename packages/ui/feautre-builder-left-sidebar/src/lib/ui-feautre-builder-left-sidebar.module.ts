@@ -6,7 +6,8 @@ import { FlowLeftSidebarComponent } from './flow-left-sidebar/flow-left-sidebar.
 import { IterationAccordionComponent } from './flow-left-sidebar/run-details/steps-results-list/iteration-accordion/iteration-accordion.component';
 import { StepResultComponent } from './flow-left-sidebar/run-details/steps-results-list/step-result.component';
 import { RunDetailsComponent } from './flow-left-sidebar/run-details/run-details.component';
-import {MatExpansionModule} from '@angular/material/expansion';
+import { MatExpansionModule } from '@angular/material/expansion';
+
 
 @NgModule({
   imports: [CommonModule, UiCommonModule,MatExpansionModule],
@@ -18,7 +19,6 @@ import {MatExpansionModule} from '@angular/material/expansion';
     RunDetailsComponent
   ],
   exports:[
-    TrackFocusDirective,
     FlowLeftSidebarComponent
   ]
 })

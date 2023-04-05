@@ -1,5 +1,5 @@
 export interface MentionListItem {
-    label: string;
-    value: string;
-    logoUrl?: string;
-  }
+  label: string;
+  value: string;
+  logoUrl?: string;
+}

@@ -12,19 +12,20 @@ import {
   Validators,
 } from '@angular/forms';
 import { forkJoin, map, Observable, of, shareReplay, take, tap } from 'rxjs';
-import { TriggerType, UpdateTriggerRequest } from '@activepieces/shared';
-import { fadeInUp400ms } from '@activepieces/ui/common';
 import {
-  PieceConfig,
-  PieceProperty,
-  propsConvertor,
-} from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
+  PiecePropertyMap,
+  TriggerStrategy,
+  TriggerType,
+  UpdateTriggerRequest,
+} from '@activepieces/shared';
+import { fadeInUp400ms } from '@activepieces/ui/common';
 import { DropdownItem } from '../../../../../../../../../common/model/dropdown-item.interface';
 import { ActionMetaService } from '../../../../../../../../service/action-meta.service';
 import { ComponentTriggerInputFormSchema } from '../../input-forms-schema';
 import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
 import { FlowsActions } from '../../../../../../../../store/flow/flows.action';
 import { Store } from '@ngrx/store';
+import { PiecePropertiesFormValue } from '../../../../../../../../../../../../../ui/feature-builder-form-controls/src';
 
 declare type TriggerDropdownOption = {
   label: {
@@ -32,12 +33,12 @@ declare type TriggerDropdownOption = {
     description: string;
     isWebhook: boolean;
   };
-  value: { triggerName: string; configs: PieceConfig[]; separator?: boolean };
+  value: { triggerName: string; properties: PiecePropertyMap };
   disabled?: boolean;
 };
 
 const TRIGGER_FORM_CONTROL_NAME = 'triggers';
-const CONFIGS_FORM_CONTROL_NAME = 'configs';
+const PIECE_PROPERTIES_FORM_CONTROL_NAME = 'configs';
 
 @Component({
   selector: 'app-piece-trigger-input-form',
@@ -60,8 +61,8 @@ const CONFIGS_FORM_CONTROL_NAME = 'configs';
 })
 export class PieceTriggerInputFormComponent {
   readonly TRIGGER_FORM_CONTROL_NAME = TRIGGER_FORM_CONTROL_NAME;
-  readonly CONFIGS_FORM_CONTROL_NAME = CONFIGS_FORM_CONTROL_NAME;
-  componentForm: UntypedFormGroup;
+  readonly CONFIGS_FORM_CONTROL_NAME = PIECE_PROPERTIES_FORM_CONTROL_NAME;
+  pieceTriggerInputForm: UntypedFormGroup;
   initialSetup$: Observable<TriggerDropdownOption[]>;
   pieceName: string;
   pieceVersion: string;
@@ -74,7 +75,7 @@ export class PieceTriggerInputFormComponent {
   valueChanges$: Observable<void>;
   triggerDropdownValueChanged$: Observable<{
     triggerName: string;
-    configs: PieceConfig[];
+    properties: PiecePropertyMap;
   }>;
   allAuthConfigs$: Observable<DropdownItem[]>;
   updateStepName$: Observable<void>;
@@ -92,7 +93,7 @@ export class PieceTriggerInputFormComponent {
     private store: Store
   ) {
     this.buildForm();
-    this.triggerDropdownValueChanged$ = this.componentForm
+    this.triggerDropdownValueChanged$ = this.pieceTriggerInputForm
       .get(TRIGGER_FORM_CONTROL_NAME)!
       .valueChanges.pipe(
         tap((val) => {
@@ -112,14 +113,14 @@ export class PieceTriggerInputFormComponent {
   }
 
   private buildForm() {
-    this.componentForm = this.fb.group({
+    this.pieceTriggerInputForm = this.fb.group({
       [TRIGGER_FORM_CONTROL_NAME]: new UntypedFormControl(
         null,
         Validators.required
       ),
     });
-    this.componentForm.markAllAsTouched();
-    this.valueChanges$ = this.componentForm.valueChanges.pipe(
+    this.pieceTriggerInputForm.markAllAsTouched();
+    this.valueChanges$ = this.pieceTriggerInputForm.valueChanges.pipe(
       tap(() => {
         this.onChange(this.getFormattedFormData());
       })
@@ -133,33 +134,24 @@ export class PieceTriggerInputFormComponent {
     );
 
     this.triggers$ = piece$.pipe(
-      map((component) => {
-        const triggersKeys = Object.keys(component.triggers);
-        return triggersKeys.map((triggerName) => {
-          const trigger = component.triggers[triggerName];
-
-          const configs = Object.entries(trigger.props).map(
-            ([propName, prop]) => {
-              return propsConvertor.convertToFrontEndConfig(
-                propName,
-                prop as PieceProperty
-              );
-            }
-          );
-          return {
-            value: {
-              triggerName: triggerName,
-              configs: configs,
-            },
-            label: {
-              name: trigger.displayName,
-              description: trigger.description,
-              isWebhook:
-                component.triggers[triggerName].type === 'WEBHOOK' ||
-                component.triggers[triggerName].type === 'APP_WEBHOOK',
-            },
-          };
-        });
+      map((pieceMetadata) => {
+        return Object.entries(pieceMetadata.triggers).map(
+          ([triggerName, trigger]) => {
+            return {
+              label: {
+                name: trigger.displayName,
+                description: trigger.description,
+                isWebhook:
+                  trigger.type === TriggerStrategy.WEBHOOK ||
+                  trigger.type === TriggerStrategy.APP_WEBHOOK,
+              },
+              value: {
+                triggerName: triggerName,
+                properties: trigger.props,
+              },
+            };
+          }
+        );
       }),
       shareReplay(1)
     );
@@ -174,7 +166,7 @@ export class PieceTriggerInputFormComponent {
       this.intialComponentTriggerInputFormValue &&
       this.intialComponentTriggerInputFormValue.triggerName
     ) {
-      this.componentForm
+      this.pieceTriggerInputForm
         .get(TRIGGER_FORM_CONTROL_NAME)!
         .setValue(
           items.find(
@@ -195,25 +187,19 @@ export class PieceTriggerInputFormComponent {
       ).pipe(
         tap((selectedTrigger) => {
           if (selectedTrigger) {
-            const configs = [...selectedTrigger.value.configs];
-            const configsValues =
-              this.intialComponentTriggerInputFormValue?.input;
-            if (configsValues) {
-              Object.keys(configsValues).forEach((key) => {
-                const config = configs.find((c) => c.key === key);
-                if (config) {
-                  config.value = configsValues[key];
-                }
-              });
-            }
-            this.componentForm.addControl(
-              CONFIGS_FORM_CONTROL_NAME,
+            const properties = { ...selectedTrigger.value.properties };
+            const propertiesValues =
+              this.intialComponentTriggerInputFormValue!.input;
+            const propertiesFormValue: PiecePropertiesFormValue = {
+              properties: properties,
+              propertiesValues: propertiesValues,
+              setDefaultValues: false,
+            };
+            this.pieceTriggerInputForm.addControl(
+              PIECE_PROPERTIES_FORM_CONTROL_NAME,
               new UntypedFormControl({
-                value: {
-                  configs: configs,
-                  setDefaultValues: false,
-                },
-                disabled: this.componentForm.disabled,
+                value: propertiesFormValue,
+                disabled: this.pieceTriggerInputForm.disabled,
               }),
               {
                 emitEvent: false,
@@ -229,12 +215,15 @@ export class PieceTriggerInputFormComponent {
     this.intialComponentTriggerInputFormValue = obj;
     this.pieceName = obj.pieceName;
     this.pieceVersion = obj.pieceVersion;
-    this.componentForm
+    this.pieceTriggerInputForm
       .get(TRIGGER_FORM_CONTROL_NAME)
       ?.setValue(undefined, { emitEvent: false });
-    this.componentForm.removeControl(CONFIGS_FORM_CONTROL_NAME, {
-      emitEvent: false,
-    });
+    this.pieceTriggerInputForm.removeControl(
+      PIECE_PROPERTIES_FORM_CONTROL_NAME,
+      {
+        emitEvent: false,
+      }
+    );
 
     if (obj.type === TriggerType.PIECE) {
       this.fetchTriggers(obj.pieceName, obj.pieceVersion);
@@ -250,12 +239,12 @@ export class PieceTriggerInputFormComponent {
   }
 
   validate() {
-    if (this.componentForm.valid) return null;
+    if (this.pieceTriggerInputForm.valid) return null;
     return { invalid: true };
   }
 
   triggerSelectValueChanged(
-    selectedValue: { triggerName: string; configs: PieceConfig[] } | null
+    selectedValue: { triggerName: string; properties: PiecePropertyMap } | null
   ) {
     if (selectedValue) {
       this.triggerSelected(selectedValue);
@@ -273,25 +262,27 @@ export class PieceTriggerInputFormComponent {
   }
   private triggerSelected(selectedValue: {
     triggerName: string;
-    configs: PieceConfig[];
+    properties: PiecePropertyMap;
   }) {
-    const configsForm = this.componentForm.get(CONFIGS_FORM_CONTROL_NAME);
-    if (!configsForm) {
-      this.componentForm.addControl(
-        CONFIGS_FORM_CONTROL_NAME,
-        new UntypedFormControl({
-          configs: [...selectedValue.configs],
-          setDefaultValues: true,
-        })
+    const propertiesForm = this.pieceTriggerInputForm.get(
+      PIECE_PROPERTIES_FORM_CONTROL_NAME
+    );
+    const properties = { ...selectedValue.properties };
+    const propertiesFormValue: PiecePropertiesFormValue = {
+      properties: properties,
+      propertiesValues: {},
+      setDefaultValues: true,
+    };
+    if (!propertiesForm) {
+      this.pieceTriggerInputForm.addControl(
+        PIECE_PROPERTIES_FORM_CONTROL_NAME,
+        new UntypedFormControl(propertiesFormValue)
       );
     } else {
-      configsForm.setValue({
-        configs: [...selectedValue.configs],
-        setDefaultValues: true,
-      });
+      propertiesForm.setValue(propertiesFormValue);
     }
     this.cd.detectChanges();
-    this.componentForm.updateValueAndValidity();
+    this.pieceTriggerInputForm.updateValueAndValidity();
     this.updateStepName(selectedValue.triggerName);
   }
 
@@ -299,9 +290,12 @@ export class PieceTriggerInputFormComponent {
     triggerName: string;
     input: { [configKey: string]: any };
   } {
-    const trigger = this.componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value;
+    const trigger = this.pieceTriggerInputForm.get(
+      TRIGGER_FORM_CONTROL_NAME
+    )!.value;
     const configs =
-      this.componentForm.get(CONFIGS_FORM_CONTROL_NAME)?.value || {};
+      this.pieceTriggerInputForm.get(PIECE_PROPERTIES_FORM_CONTROL_NAME)
+        ?.value || {};
     const res = {
       triggerName: trigger?.triggerName,
       input: {
@@ -315,9 +309,9 @@ export class PieceTriggerInputFormComponent {
   }
   setDisabledState?(isDisabled: boolean): void {
     if (isDisabled) {
-      this.componentForm.disable();
+      this.pieceTriggerInputForm.disable();
     } else {
-      this.componentForm.enable();
+      this.pieceTriggerInputForm.enable();
     }
   }
   updateStepName(triggerName: string) {

@@ -17,7 +17,7 @@ import { CollectionStateEnum } from '../model/enums/collection-state.enum';
 import { ActionType, Collection, TriggerType } from '@activepieces/shared';
 import { FlowStructureUtil } from '../../service/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../../common/model/dropdown-item.interface';
-import { MentionListItem } from '../../../common/components/form-controls/interpolating-text-form-control/utils';
+import { MentionListItem } from '@activepieces/ui/feature-builder-store';
 import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,

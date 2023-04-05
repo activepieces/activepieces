@@ -1,9 +1,0 @@
-<ap-button *ngIf="!responseData.code" btnColor="primary" (buttonClicked)="openPopup()" [fullWidthOfContainer]="true"
-  type="button" [disabled]="!settingsValid || isDisabled" class="ap-w-full"> Connect</ap-button>
-<ap-button *ngIf="responseData.code" btnColor="warn" class="ap-w-full" (buttonClicked)="clearControlValue()"
-  [fullWidthOfContainer]="true" type="button" [disabled]="isDisabled">Disconnect</ap-button>
-<p *ngIf="popUpError" class="ap-typography-caption ap-text-danger" @fadeInUp>
-  Please make sure this connections's credentials are correct.
-</p>
-
-<ng-container *ngIf="popupOpened$ | async"></ng-container>

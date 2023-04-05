@@ -53,9 +53,10 @@ import {
   BuilderSelectors,
   CodeService,
   ConnectionDropdownItem,
-} from '../../../../feature-builder-store/src';
+} from '@activepieces/ui/feature-builder-store';
 import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
+import { PiecePropertiesFormValue } from '../models/piece-properties-form-value';
 
 type ConfigKey = string;
 
@@ -132,12 +133,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       BuilderSelectors.selectAppConnectionsDropdownOptions
     );
   }
-  writeValue(obj: {
-    properties: PiecePropertyMap;
-    propertiesValues: Record<string, unknown>;
-    customizedInputs?: Record<string, boolean>;
-    setDefaultValues: boolean;
-  }): void {
+  writeValue(obj: PiecePropertiesFormValue): void {
     this.properties = obj.properties;
     this.customizedInputs = obj.customizedInputs;
 
@@ -296,9 +292,9 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         distinctUntilChanged((prev, curr) => {
           return JSON.stringify(prev) === JSON.stringify(curr);
         }),
-        startWith(this.form.controls[rk].value),
+        startWith(this.form.controls[obj.propertyKey].value),
         tap(() => {
-          this.refreshableConfigsLoadingFlags$[rk].next(true);
+          this.refreshableConfigsLoadingFlags$[obj.propertyKey].next(true);
         }),
         debounceTime(150)
       );

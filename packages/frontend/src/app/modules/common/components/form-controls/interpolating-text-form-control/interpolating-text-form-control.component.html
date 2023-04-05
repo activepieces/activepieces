@@ -1,8 +1,0 @@
-<div #quill [class.editor-allows-only-one-mention-as-value]="readOnly && !disabled">
-  <quill-editor [formControl]="editorFormControl" [style]="{width:'100%'}" format="object" [modules]="modules"
-    [readOnly]="readOnly" [preserveWhitespace]="true" trackChanges="all" (onBlur)="onBlur()" (click)="focusEditor()"
-    [placeholder]="!insideMatField || shouldLabelFloat? placeholder: ''" (onFocus)="onFocus()"
-    (onEditorCreated)="editorCreated()" [debounceTime]="0">
-  </quill-editor>
-</div>
-<ng-container *ngIf="valueChanges$|async"></ng-container>

@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-
-import { FlowItem } from '../../../../../model/flow-builder/flow-item';
 import { MentionListItem } from '../../utils';
+import { FlowItem } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-generic-step-mention-item',

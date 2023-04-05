@@ -8,12 +8,12 @@ import {
   PieceMetadata,
   PieceMetadataSummary,
   PieceOptionRequest,
+  PiecePropertyMap,
   TriggerBase,
   TriggerStrategy,
   TriggerType,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
-import { PieceProperty } from '../../common/components/configs-form/connector-action-or-config';
 import { Observable, shareReplay, map, forkJoin } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { FlagService } from '@activepieces/ui/common';
@@ -163,9 +163,10 @@ export class ActionMetaService {
     return this.piecesCache.get(cacheKey)!;
   }
 
-  getPieceActionConfigOptions<
-    T extends DropdownState<any> | Record<string, PieceProperty>
-  >(req: PieceOptionRequest, pieceName: string) {
+  getPieceActionConfigOptions<T extends DropdownState<any> | PiecePropertyMap>(
+    req: PieceOptionRequest,
+    pieceName: string
+  ) {
     return this.http.post<T>(
       environment.apiUrl + `/pieces/${pieceName}/options`,
       req

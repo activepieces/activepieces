@@ -1,4 +1,5 @@
 import { TriggerStrategy } from "../../flows/triggers/trigger";
+import { PiecePropertyMap } from "../property";
 
 export type PieceBase = {
   name: string;
@@ -15,7 +16,7 @@ export type ActionBase = {
   displayName: string,
   description: string,
   sampleData: unknown,
-  props: Record<string, unknown>,
+  props: PiecePropertyMap,
 }
 
 export type TriggerBase = ActionBase & {

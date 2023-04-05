@@ -27,7 +27,12 @@ import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AuthConfigsPipe } from './piece-properties-form/auth-configs.pipe';
-import { PiecePropertiesFormComponent as PiecePropertiesFormComponent } from './piece-properties-form/piece-properties-form.component';
+import { PiecePropertiesFormComponent } from './piece-properties-form/piece-properties-form.component';
+import { MatTreeModule } from '@angular/material/tree';
+import { MatIconModule } from '@angular/material/icon';
+import { QuillModule } from 'ngx-quill';
+import { MatDividerModule } from '@angular/material/divider';
+import { WebhookTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -36,6 +41,8 @@ const exportedDeclarations = [
   DictionaryFormControlComponent,
   InterpolatingTextFormControlComponent,
   TrackHoverDirective,
+  PiecePropertiesFormComponent,
+  BuilderAutocompleteMentionsDropdownComponent,
 ];
 @NgModule({
   imports: [
@@ -46,6 +53,10 @@ const exportedDeclarations = [
     ReactiveFormsModule,
     FormsModule,
     UiFeatureConnectionsModule,
+    MatTreeModule,
+    MatIconModule,
+    QuillModule.forRoot({}),
+    MatDividerModule,
   ],
   declarations: [
     ...exportedDeclarations,
@@ -53,7 +64,6 @@ const exportedDeclarations = [
     TestCodeFormModalComponent,
     CodeArtifactControlFullscreenComponent,
     MentionsListComponent,
-    BuilderAutocompleteMentionsDropdownComponent,
     CodeStepMentionItemComponent,
     CustomPathMentionDialogComponent,
     GenericMentionItemComponent,
@@ -63,8 +73,8 @@ const exportedDeclarations = [
     PieceStepMentionItemComponent,
     PieceTriggerMentionItemComponent,
     StepMentionsTreeComponent,
+    WebhookTriggerMentionItemComponent,
     AuthConfigsPipe,
-    PiecePropertiesFormComponent,
   ],
   exports: [...exportedDeclarations],
 })

@@ -1,6 +1,0 @@
-<ap-button btnColor="primary" btnStyle="basic" [btnSize]="btnSize" [darkLoadingSpinner]="true"
-    [loading]="(checkingOAuth2CloudManager$ | async)!" (buttonClicked)="buttonClicked()"> <ng-content></ng-content>
-</ap-button>
-
-<ng-container *ngIf="updateOrAddConnectionDialogClosed$ | async "></ng-container>
-<ng-container *ngIf="cloudAuthCheck$ | async"></ng-container>

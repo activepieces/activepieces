@@ -31,9 +31,11 @@
     <ng-container
       *ngIf="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value && pieceActionForm.get(CONFIGS_FORM_CONTROL_NAME)">
       <div>
-        <app-configs-form [actionOrTriggerName]="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value?.actionName"
+        <app-piece-properties-form
+          [actionOrTriggerName]="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value?.actionName"
           [pieceName]="pieceName" [pieceVersion]="pieceVersion" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
-        </app-configs-form>
+        </app-piece-properties-form>
+
       </div>
     </ng-container>
   </ng-container>

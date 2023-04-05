@@ -33,23 +33,19 @@ import { FlowItemsDetailsState } from '../../../../../../../../store/model/flow-
 import {
   ActionType,
   PieceActionSettings,
+  PiecePropertyMap,
   UpdateActionRequest,
 } from '@activepieces/shared';
-import { DropdownItem } from '../../../../../../../../../common/model/dropdown-item.interface';
-import {
-  PieceConfig,
-  PieceProperty,
-  propsConvertor,
-} from '../../../../../../../../../common/components/configs-form/connector-action-or-config';
+import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
 import { PieceActionInputFormSchema } from '../../input-forms-schema';
 import { BuilderSelectors } from '../../../../../../../../store/builder/builder.selector';
 import { fadeInUp400ms } from '@activepieces/ui/common';
 import { FlowsActions } from '../../../../../../../../store/flow/flows.action';
 import { isOverflown } from '../../../../../../../../../common/utils';
+import { ConnectionDropdownItem } from '@activepieces/ui/feature-builder-store';
 declare type ActionDropdownOptionValue = {
   actionName: string;
-  configs: PieceConfig[];
-  separator?: boolean;
+  properties: PiecePropertyMap;
 };
 
 declare type ActionDropdownOption = {
@@ -61,7 +57,7 @@ declare type ActionDropdownOption = {
   disabled?: boolean;
 };
 const ACTION_FORM_CONTROL_NAME = 'action';
-const CONFIGS_FORM_CONTROL_NAME = 'configs';
+const PIECE_PROPERTIES_FORM_CONTROL_NAME = 'configs';
 declare type ConfigsFormControlValue = {
   input: Record<string, string | Array<any> | object>;
   customizedInputs: Record<string, boolean>;
@@ -69,7 +65,7 @@ declare type ConfigsFormControlValue = {
 
 declare type ComponentFormValue = {
   [ACTION_FORM_CONTROL_NAME]: string;
-  [CONFIGS_FORM_CONTROL_NAME]: ConfigsFormControlValue;
+  [PIECE_PROPERTIES_FORM_CONTROL_NAME]: ConfigsFormControlValue;
 };
 @Component({
   selector: 'app-piece-action-input-form',
@@ -94,7 +90,7 @@ export class PieceActionInputFormComponent
   implements ControlValueAccessor, AfterViewInit
 {
   readonly ACTION_FORM_CONTROL_NAME = ACTION_FORM_CONTROL_NAME;
-  readonly CONFIGS_FORM_CONTROL_NAME = CONFIGS_FORM_CONTROL_NAME;
+  readonly CONFIGS_FORM_CONTROL_NAME = PIECE_PROPERTIES_FORM_CONTROL_NAME;
   updateStepName$: Observable<void>;
   pieceActionForm: UntypedFormGroup;
   initialSetup$: Observable<ActionDropdownOption[]>;
@@ -107,9 +103,9 @@ export class PieceActionInputFormComponent
   valueChanges$: Observable<void>;
   actionDropdownValueChanged$: Observable<{
     actionName: string;
-    configs: PieceConfig[];
+    properties: PiecePropertyMap;
   }>;
-  allAuthConfigs$: Observable<DropdownItem[]>;
+  allAuthConfigs$: Observable<ConnectionDropdownItem[]>;
   flowItemDetails$: Observable<FlowItemsDetailsState>;
   isOverflown = isOverflown;
   onChange: (val) => void = (value) => {
@@ -168,31 +164,22 @@ export class PieceActionInputFormComponent
       pieceName,
       pieceVersion
     );
-
     this.actions$ = pieceMetadata$.pipe(
       map((pieceMetadata) => {
-        const actionsKeys = Object.keys(pieceMetadata.actions);
-        return actionsKeys.map((actionName) => {
-          const action = pieceMetadata.actions[actionName];
-          const configs = Object.entries(action.props).map(
-            ([propName, prop]) => {
-              return propsConvertor.convertToFrontEndConfig(
-                propName,
-                prop as PieceProperty
-              );
-            }
-          );
-          return {
-            value: {
-              actionName: actionName,
-              configs: configs,
-            },
-            label: {
-              name: action.displayName,
-              description: action.description,
-            },
-          };
-        });
+        return Object.entries(pieceMetadata.actions).map(
+          ([actionName, action]) => {
+            return {
+              label: {
+                name: action.displayName,
+                description: action.description,
+              },
+              value: {
+                actionName: actionName,
+                properties: action.props,
+              },
+            };
+          }
+        );
       }),
       tap(() => {
         this.triggerInitialSetup$.next(true);
@@ -245,26 +232,20 @@ export class PieceActionInputFormComponent
     selectedAction: ActionDropdownOption | undefined
   ) {
     if (selectedAction) {
-      const configs = [...selectedAction.value.configs];
-      const configsValues = this.intialComponentInputFormValue!.input;
-      if (configsValues) {
-        Object.keys(configsValues).forEach((key) => {
-          const config = configs.find((c) => c.key === key);
-          if (config) {
-            config.value = configsValues[key];
-          }
-        });
-      }
+      const properties = { ...selectedAction.value.properties };
+      const propertiesValues = this.intialComponentInputFormValue!.input;
+      const propertiesFormValue: PiecePropertiesFormValue = {
+        properties: properties,
+        propertiesValues: propertiesValues,
+        setDefaultValues: false,
+        customizedInputs:
+          this.intialComponentInputFormValue!.inputUiInfo?.customizedInputs ||
+          {},
+      };
       this.pieceActionForm.addControl(
-        CONFIGS_FORM_CONTROL_NAME,
+        PIECE_PROPERTIES_FORM_CONTROL_NAME,
         new UntypedFormControl({
-          value: {
-            configs: [...configs],
-            customizedInputs:
-              this.intialComponentInputFormValue!.inputUiInfo
-                ?.customizedInputs || {},
-            setDefaultValues: false,
-          },
+          value: propertiesFormValue,
           disabled: this.pieceActionForm.disabled,
         }),
         {
@@ -281,7 +262,7 @@ export class PieceActionInputFormComponent
     this.pieceActionForm
       .get(ACTION_FORM_CONTROL_NAME)
       ?.setValue(undefined, { emitEvent: false });
-    this.pieceActionForm.removeControl(CONFIGS_FORM_CONTROL_NAME, {
+    this.pieceActionForm.removeControl(PIECE_PROPERTIES_FORM_CONTROL_NAME, {
       emitEvent: false,
     });
 
@@ -304,7 +285,10 @@ export class PieceActionInputFormComponent
   }
 
   actionSelectValueChanged(
-    selectedActionValue: { actionName: string; configs: PieceConfig[] } | null
+    selectedActionValue: {
+      actionName: string;
+      properties: PiecePropertyMap;
+    } | null
   ) {
     if (selectedActionValue) {
       this.actionSelected(selectedActionValue);
@@ -316,24 +300,24 @@ export class PieceActionInputFormComponent
 
   private actionSelected(selectedActionValue: {
     actionName: string;
-    configs: PieceConfig[];
+    properties: PiecePropertyMap;
   }) {
-    const configsForm = this.pieceActionForm.get(CONFIGS_FORM_CONTROL_NAME);
-    if (!configsForm) {
+    const piecePropertiesForm = this.pieceActionForm.get(
+      PIECE_PROPERTIES_FORM_CONTROL_NAME
+    );
+    const propertiesFormValue: PiecePropertiesFormValue = {
+      properties: selectedActionValue.properties,
+      setDefaultValues: true,
+      customizedInputs: {},
+      propertiesValues: {},
+    };
+    if (!piecePropertiesForm) {
       this.pieceActionForm.addControl(
-        CONFIGS_FORM_CONTROL_NAME,
-        new UntypedFormControl({
-          configs: [...selectedActionValue.configs],
-          customizedInputs: {},
-          setDefaultValues: true,
-        })
+        PIECE_PROPERTIES_FORM_CONTROL_NAME,
+        new UntypedFormControl(propertiesFormValue)
       );
     } else {
-      configsForm.setValue({
-        configs: [...selectedActionValue.configs],
-        customizedInputs: {},
-        setDefaultValues: true,
-      });
+      piecePropertiesForm.setValue(propertiesFormValue);
     }
     this.cd.detectChanges();
     this.pieceActionForm.updateValueAndValidity();
@@ -352,13 +336,14 @@ export class PieceActionInputFormComponent
       customizedInputs = {};
     } else {
       customizedInputs =
-        oldAndCurrentValues[1][CONFIGS_FORM_CONTROL_NAME].customizedInputs;
+        oldAndCurrentValues[1][PIECE_PROPERTIES_FORM_CONTROL_NAME]
+          .customizedInputs;
     }
     const action: ActionDropdownOptionValue = this.pieceActionForm.get(
       ACTION_FORM_CONTROL_NAME
     )!.value;
     const configs: ConfigsFormControlValue =
-      this.pieceActionForm.get(CONFIGS_FORM_CONTROL_NAME)?.value || {};
+      this.pieceActionForm.get(PIECE_PROPERTIES_FORM_CONTROL_NAME)?.value || {};
     const res = {
       actionName: action?.actionName,
       input: {

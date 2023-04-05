@@ -1,4 +1,4 @@
-<form [formGroup]="componentForm" class="ap-flex ap-flex-col ap-gap-2">
+<form [formGroup]="pieceTriggerInputForm" class="ap-flex ap-flex-col ap-gap-2">
   <ng-container *ngIf="triggers$ | async else loading">
     <mat-form-field class="ap-w-full" appearance="outline">
       <mat-label> Trigger </mat-label>
@@ -38,16 +38,18 @@
           No options available
         </mat-option>
       </mat-select>
-      <mat-error *ngIf="componentForm.get(TRIGGER_FORM_CONTROL_NAME)?.invalid">
+      <mat-error *ngIf="pieceTriggerInputForm.get(TRIGGER_FORM_CONTROL_NAME)?.invalid">
         Trigger is required
       </mat-error>
     </mat-form-field>
     <ng-container
-      *ngIf="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value && componentForm.get(CONFIGS_FORM_CONTROL_NAME)">
+      *ngIf="pieceTriggerInputForm.get(TRIGGER_FORM_CONTROL_NAME)!.value && pieceTriggerInputForm.get(CONFIGS_FORM_CONTROL_NAME)">
       <div>
-        <app-configs-form [actionOrTriggerName]="componentForm.get(TRIGGER_FORM_CONTROL_NAME)!.value?.triggerName"
+
+        <app-piece-properties-form
+          [actionOrTriggerName]="pieceTriggerInputForm.get(TRIGGER_FORM_CONTROL_NAME)!.value?.actionName"
           [pieceName]="pieceName" [pieceVersion]="pieceVersion" [formControlName]="CONFIGS_FORM_CONTROL_NAME">
-        </app-configs-form>
+        </app-piece-properties-form>
       </div>
     </ng-container>
   </ng-container>
