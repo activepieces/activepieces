@@ -7,18 +7,20 @@ import {
   ViewChild,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { CollectionBuilderService } from '@activepieces/ui/feature-builder-store';
+import {
+  BuilderActions,
+  BuilderSelectors,
+  CollectionBuilderService,
+  FlowItemDetailsActions,
+  ViewModeEnum,
+} from '@activepieces/ui/feature-builder-store';
 import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '../../store/builder/builder.selector';
 import { map, Observable, tap } from 'rxjs';
-import { ViewModeEnum } from '../../store/model/enums/view-mode.enum';
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
-import { BuilderActions } from '../../store/builder/builder.action';
-import { FlowItemDetailsActions } from '../../store/builder/flow-item-details/flow-items-details.action';
 import { RunDetailsService } from '@activepieces/ui/feautre-builder-left-sidebar';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
 import {
@@ -28,8 +30,8 @@ import {
   TriggerType,
 } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
-import { LeftSideBarType } from '../../../common/model/enum/left-side-bar-type.enum';
-import { TestStepService } from '../../service/test-step.service';
+import { LeftSideBarType } from '@activepieces/ui/feature-builder-store';
+import { TestStepService } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 @Component({
   selector: 'app-collection-builder',

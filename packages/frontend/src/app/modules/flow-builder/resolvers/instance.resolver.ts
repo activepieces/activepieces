@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { catchError, Observable, of } from 'rxjs';
-import { InstanceService } from '../../common/service/instance.service';
+import { InstanceService } from '@activepieces/ui/common';
 import { Instance } from '@activepieces/shared';
 
 @Injectable({

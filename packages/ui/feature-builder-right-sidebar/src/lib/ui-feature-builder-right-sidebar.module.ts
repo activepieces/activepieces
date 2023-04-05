@@ -38,5 +38,6 @@ import { NewEditPieceSidebarComponent } from './flow-right-sidebar/edit-step-sid
     FlowRightSidebarComponent,
     NewEditPieceSidebarComponent,
   ],
+  exports: [FlowRightSidebarComponent],
 })
 export class UiFeatureBuilderRightSidebarModule {}

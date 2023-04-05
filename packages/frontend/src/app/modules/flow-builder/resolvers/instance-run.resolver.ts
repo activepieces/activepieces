@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, of, switchMap } from 'rxjs';
-import { CollectionService } from '../../common/service/collection.service';
-import { FlowService } from '../../common/service/flow.service';
-import { InstanceRunService } from '../../common/service/flow-run.service';
+
+import { FlowService } from '@activepieces/ui/common';
+import { InstanceRunService, CollectionService } from '@activepieces/ui/common';
 import { Collection, Flow, FlowRun } from '@activepieces/shared';
 
 export type InstanceRunInfo = {
