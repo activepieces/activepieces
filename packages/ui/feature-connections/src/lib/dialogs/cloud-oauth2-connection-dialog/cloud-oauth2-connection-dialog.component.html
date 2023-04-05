@@ -1,5 +1,6 @@
-<app-dialog-title-template><ng-container *ngIf="!connectionToUpdate; else editConnectionHeader">New
-    Connection</ng-container><ng-template #editConnectionHeader>Edit {{connectionToUpdate!.name}}</ng-template>
+<app-dialog-title-template><ng-container *ngIf="!dialogData.connectionToUpdate; else editConnectionHeader">New
+    Connection</ng-container><ng-template #editConnectionHeader>Edit
+    {{dialogData.connectionToUpdate!.name}}</ng-template>
 </app-dialog-title-template>
 
 <mat-dialog-content>
@@ -54,7 +55,8 @@
       </p>
     </div>
   </form>
-  <a class="ap-cursor-pointer ap-mt-2" *ngIf="!connectionToUpdate && !isTriggerAppWebhook" (click)="useOwnCred()">I
+  <a class="ap-cursor-pointer ap-mt-2" *ngIf="!dialogData.connectionToUpdate && !isTriggerAppWebhook"
+    (click)="useOwnCred()">I
     would like
     to use my own
     app credentials </a>

@@ -1,4 +1,4 @@
-import { Component, Inject, Input, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -47,8 +47,6 @@ export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
 })
 export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   readonly FAKE_CODE = 'FAKE_CODE';
-
-  @Input() connectionToUpdate: CloudAuth2Connection | undefined;
   _cloudConnectionPopupSettings: OAuth2PopupParams;
   PropertyType = PropertyType;
   settingsForm: FormGroup<AuthConfigSettings>;
@@ -113,12 +111,14 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       ),
       props: this.fb.group(propsControls),
     });
-    if (this.connectionToUpdate) {
-      this.settingsForm.controls.name.setValue(this.connectionToUpdate.name);
+    if (this.dialogData.connectionToUpdate) {
+      this.settingsForm.controls.name.setValue(
+        this.dialogData.connectionToUpdate.name
+      );
       this.settingsForm.controls.name.disable();
-      if (this.connectionToUpdate.value.props) {
+      if (this.dialogData.connectionToUpdate.value.props) {
         this.settingsForm.controls.props.setValue(
-          this.connectionToUpdate.value.props
+          this.dialogData.connectionToUpdate.value.props
         );
         this.settingsForm.controls.props.disable();
       }
@@ -135,8 +135,8 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     }
   }
   constructConnection() {
-    const connectionName = this.connectionToUpdate
-      ? this.connectionToUpdate.name
+    const connectionName = this.dialogData.connectionToUpdate
+      ? this.dialogData.connectionToUpdate.name
       : this.settingsForm.controls.name.value;
     const popupResponse = this.settingsForm.value.value!;
     const { tokenUrl } = this.getTokenAndUrl();
