@@ -1,7 +1,7 @@
-import { Lock } from '@microfleet/ioredis-lock'
+import { Lock } from 'redlock'
 import { isNil } from 'lodash'
 import { ActivepiecesError, apId, ErrorCode, FlowId, ProjectId, WebhookSimulation } from '@activepieces/shared'
-import { createRedisLock } from '../../database/redis-connection'
+import { acquireLock } from '../../database/redis-connection'
 import { databaseConnection } from '../../database/database-connection'
 import { WebhookSimulationEntity } from './webhook-simulation-entity'
 import { webhookSideEffects } from './webhook-simulation-side-effects'
@@ -21,11 +21,9 @@ type AcquireLockParams = {
     op: 'create' | 'delete'
 }
 
-const acquireLock = async ({ flowId, op }: AcquireLockParams): Promise<Lock> => {
-    const lock = createRedisLock()
+const createLock = async ({ flowId, op }: AcquireLockParams): Promise<Lock> => {
     const key = `${flowId}-${op}-webhook-simulation`
-    await lock.acquire(key)
-    return lock
+    return await acquireLock({ key })
 }
 
 const webhookSimulationRepo = databaseConnection.getRepository(WebhookSimulationEntity)
@@ -36,7 +34,7 @@ export const webhookSimulationService = {
 
         const { flowId, projectId } = params
 
-        const lock = await acquireLock({
+        const lock = await createLock({
             flowId,
             op: 'create',
         })
@@ -93,7 +91,7 @@ export const webhookSimulationService = {
 
         const { flowId, projectId } = params
 
-        const lock = await acquireLock({
+        const lock = await createLock({
             flowId,
             op: 'delete',
         })
