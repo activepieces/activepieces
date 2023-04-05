@@ -17,8 +17,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["packages/*"],
-      "@activepieces/engine": ["packages/engine/src/index.ts"],
+      "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-asana": ["packages/pieces/asana/src/index.ts"],
@@ -92,6 +91,7 @@
       "@activepieces/piece-mattermost": [
         "packages/pieces/mattermost/src/index.ts"
       ],
+      "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/pipedrive/src/index.ts"
@@ -122,6 +122,7 @@
       "@activepieces/piece-wordpress": [
         "packages/pieces/wordpress/src/index.ts"
       ],
+      "@activepieces/piece-xero": ["packages/pieces/xero/src/index.ts"],
       "@activepieces/piece-youtube": ["packages/pieces/youtube/src/index.ts"],
       "@activepieces/piece-zendesk": ["packages/pieces/zendesk/src/index.ts"],
       "@activepieces/piece-zoho-crm": ["packages/pieces/zoho-crm/src/index.ts"],
@@ -130,8 +131,7 @@
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@backend/*": ["packages/backend/src/app/*"],
       "@ee/*": ["packages/ee/*"],
-      "@frontend/*": ["packages/frontend/src/app/*"],
-      "@shared/*": ["packages/shared/src/lib/*"]
+      "@frontend/*": ["packages/frontend/src/app/*"]
     },
     "resolveJsonModule": true
   },

@@ -1,6 +1,4 @@
-
-import { BaseModel } from "@shared/common/base-model";
-import { ProjectId } from "@activepieces/shared";
+import { BaseModel, ProjectId } from "@activepieces/shared";
 
 export type AppCredentialId = string;
 
