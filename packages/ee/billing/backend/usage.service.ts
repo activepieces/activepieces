@@ -1,7 +1,7 @@
 import { billingService } from "./billing.service";
 import { ActivepiecesError, ErrorCode, FlowVersion, ProjectId, Trigger, Action, apId } from "@activepieces/shared";
 import { databaseConnection } from "@backend/database/database-connection";
-import { createRedisLock } from "@backend/database/redis-connection";
+import { acquireLock } from "@backend/database/redis-connection";
 import { ProjectUsage } from "../shared/usage";
 import { ProjectUsageEntity } from "./usage.entity";
 import { captureException, logger } from "@backend/helper/logger";
@@ -11,9 +11,10 @@ const projectUsageRepo = databaseConnection.getRepository<ProjectUsage>(ProjectU
 
 export const usageService = {
     async limit(request: { projectId: ProjectId; flowVersion: FlowVersion; }): Promise<{ perform: true }> {
-        const quotaLock = await createRedisLock(15 * 1000);
+        const quotaLock = await acquireLock([`usage_${request.projectId}}`], {
+            timeout: 30000,
+        })
         try {
-            await quotaLock.acquire(`usage_${request.projectId}}`);
             const projectUsage = await usageService.getUsage({ projectId: request.projectId });
             const numberOfSteps = countSteps(request.flowVersion);
             const projectPlan = await billingService.getPlan({ projectId: request.projectId });
@@ -33,7 +34,7 @@ export const usageService = {
                 captureException(e);
             }
         } finally {
-            quotaLock.release();
+            await quotaLock.release();
         };
         return {
             perform: true,
