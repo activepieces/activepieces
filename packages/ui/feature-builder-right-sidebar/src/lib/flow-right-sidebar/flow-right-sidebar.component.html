@@ -9,8 +9,8 @@
     <div class="ap-relative ap-h-full" #editStepSection [class.top-resizer-section]="(currentStep$ | async)?.type === TriggerType.WEBHOOK ||
        ((currentStep$ | async)?.type === TriggerType.PIECE && (isCurrentStepPollingTrigger$ | async)) "
       [class.ap-transition-all]="animateSectionsHeightChange">
-      <app-edit-step-form-container>
-      </app-edit-step-form-container>
+      <app-edit-step-sidebar>
+      </app-edit-step-sidebar>
       <div *ngIf="currentStepPieceVersion$ | async as result"
         class=" ap-left-[0px] ap-bottom-[0px] ap-bg-white ap-body-2 !ap-text-description ap-w-full ap-px-4 ap-py-1 ap-z-50 ap-flex "
         [class.ap-absolute]="!isOverflown(editStepSection)">
