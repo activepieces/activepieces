@@ -37,7 +37,7 @@ export const convertkitRegisterTrigger = ({ name, event, displayName, descriptio
       url: `https://api.convertkit.com/v3/automations/hooks`,
       body: {
         event: {name: event, ...extra},
-        target_url: context.webhookUrl.replace("http://localhost:3000", "https://b3ac-197-156-137-157.eu.ngrok.io"),
+        target_url: context.webhookUrl,
         api_secret: authentication as string
       }
     };
