@@ -16,7 +16,7 @@ export type ActionBase = {
   displayName: string,
   description: string,
   sampleData: unknown,
-  props: PiecePropertyMap,
+  props: PiecePropertyMap ,
 }
 
 export type TriggerBase = ActionBase & {
@@ -24,8 +24,8 @@ export type TriggerBase = ActionBase & {
 };
 
 export type PieceMetadata = PieceBase & {
-  actions: Record<string, ActionBase>;
-  triggers: Record<string, TriggerBase>;
+  actions: Record<string, ActionBase >;
+  triggers: Record<string, TriggerBase> ;
 };
 
 export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> & {

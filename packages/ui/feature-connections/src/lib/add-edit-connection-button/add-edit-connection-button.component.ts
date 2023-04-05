@@ -320,7 +320,7 @@ export class AddEditConnectionButtonComponent {
     this.updateOrAddConnectionDialogClosed$ = this.dialogService
       .open(CloudOAuth2ConnectionDialogComponent, {
         data: {
-          pieceAuthConfig: this.authProperty,
+          pieceAuthProperty: this.authProperty,
           pieceName: this.pieceName,
           clientId: clientId,
           isTriggerAppWebhook: isTriggerAppWebhook,
@@ -443,7 +443,7 @@ export class AddEditConnectionButtonComponent {
             .open(OAuth2ConnectionDialogComponent, {
               data: {
                 connectionToUpdate: connection,
-                pieceAuthConfig: this.authProperty,
+                pieceAuthProperty: this.authProperty,
                 pieceName: this.pieceName,
               },
             })
@@ -463,7 +463,7 @@ export class AddEditConnectionButtonComponent {
                 .open(CloudOAuth2ConnectionDialogComponent, {
                   data: {
                     connectionToUpdate: connection,
-                    pieceAuthConfig: this.authProperty,
+                    pieceAuthProperty: this.authProperty,
                     pieceName: this.pieceName,
                     clientId: clientId,
                   },

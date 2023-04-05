@@ -33,6 +33,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { QuillModule } from 'ngx-quill';
 import { MatDividerModule } from '@angular/material/divider';
 import { WebhookTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component';
+import { ObjectToArrayPipe } from './piece-properties-form/object-to-array.pipe';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -75,6 +76,7 @@ const exportedDeclarations = [
     StepMentionsTreeComponent,
     WebhookTriggerMentionItemComponent,
     AuthConfigsPipe,
+    ObjectToArrayPipe,
   ],
   exports: [...exportedDeclarations],
 })

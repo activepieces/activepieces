@@ -33,7 +33,7 @@ import { UiFeatureBuilderHeaderModule } from '@activepieces/ui/feature-builder-h
 import { UiFeautreBuilderLeftSidebarModule } from '@activepieces/ui/feautre-builder-left-sidebar';
 import { UiFeatureBuilderStoreModule } from '@activepieces/ui/feature-builder-store';
 import { UiFeatureBuilderCanvasModule } from '@activepieces/ui/feature-builder-canvas';
-import { UiFeatureBuilderFormControlsModule } from '../../../../../ui/feature-builder-form-controls/src';
+import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 
 @NgModule({
   imports: [

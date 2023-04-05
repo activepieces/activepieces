@@ -136,7 +136,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   writeValue(obj: PiecePropertiesFormValue): void {
     this.properties = obj.properties;
     this.customizedInputs = obj.customizedInputs;
-
     this.createForm(obj.propertiesValues);
     if (obj.setDefaultValues) {
       this.setDefaultValue$ = of(null).pipe(
@@ -170,7 +169,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     this.requiredProperties = {};
     this.allOptionalProperties = {};
     this.selectedOptionalProperties = {};
-    Object.keys(this.properties).forEach((pk) => {
+    Object.entries(this.properties).forEach(([pk]) => {
       if (this.properties[pk].required) {
         this.requiredProperties[pk] = this.properties[pk];
       } else {
@@ -180,6 +179,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         }
       }
     });
+
     const requiredConfigsControls = this.createConfigsFormControls(
       this.requiredProperties,
       propertiesValues
@@ -193,6 +193,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       ...requiredConfigsControls,
       ...optionalConfigsControls,
     });
+
     this.createDropdownConfigsObservables();
     this.createDynamicConfigsObservables();
     this.updateValueOnChange$ = this.form.valueChanges.pipe(
@@ -292,7 +293,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         distinctUntilChanged((prev, curr) => {
           return JSON.stringify(prev) === JSON.stringify(curr);
         }),
-        startWith(this.form.controls[obj.propertyKey].value),
+        startWith(this.form.controls[rk].value),
         tap(() => {
           this.refreshableConfigsLoadingFlags$[obj.propertyKey].next(true);
         }),

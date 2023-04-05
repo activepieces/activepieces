@@ -11,32 +11,18 @@ import {
 	ShortTextProperty,
 } from "./base-prop";
 import { BasicAuthProperty } from "./basic-auth-prop";
-import { CustomAuthProperty, CustomAuthProps } from "./custom-auth-prop";
+import { CustomAuthProp, CustomAuthProperty, CustomAuthProps } from "./custom-auth-prop";
 import { DropdownProperty, MultiSelectDropdownProperty, StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown-prop";
-import { DynamicProperties } from "./dynamic-prop";
-import { OAuth2Property, OAuth2Props } from "./oauth2-prop";
-
+import {  DynamicProperties } from "./dynamic-prop";
+import { OAuth2Prop, OAuth2Property, OAuth2Props } from "./oauth2-prop";
+type ActivepiecesPropertyIndex ={ activepiecesPropertyIndex?:number}
 export interface PiecePropertyMap {
-	[name: string]: ShortTextProperty<boolean>
-	| LongTextProperty<boolean>
-	| OAuth2Property<boolean, OAuth2Props>
-	| CheckboxProperty<boolean>
-	| DropdownProperty<any, boolean>
-	| StaticDropdownProperty<any, boolean>
-	| NumberProperty<boolean>
-	| SecretTextProperty<boolean>
-	| BasicAuthProperty<boolean>
-	| ArrayProperty<boolean>
-	| ObjectProperty<boolean>
-	| JsonProperty<boolean>
-	| MultiSelectDropdownProperty<unknown, boolean>
-	| StaticMultiSelectDropdownProperty<unknown, boolean>
-	| DynamicProperties<boolean>
-	| CustomAuthProperty<boolean, CustomAuthProps>
+	[name: string]: PiecePropertyTypes & ActivepiecesPropertyIndex
 }
-export type PiecePropertyTypes=ShortTextProperty<boolean>
+export type PiecePropertyTypes=
+ ShortTextProperty<boolean>
 | LongTextProperty<boolean>
-| OAuth2Property<boolean, OAuth2Props>
+| OAuth2Property<boolean, OAuth2Props> &{props?: Record<string, OAuth2Prop & ActivepiecesPropertyIndex>}
 | CheckboxProperty<boolean>
 | DropdownProperty<any, boolean>
 | StaticDropdownProperty<any, boolean>
@@ -49,7 +35,7 @@ export type PiecePropertyTypes=ShortTextProperty<boolean>
 | MultiSelectDropdownProperty<unknown, boolean>
 | StaticMultiSelectDropdownProperty<unknown, boolean>
 | DynamicProperties<boolean>
-| CustomAuthProperty<boolean, CustomAuthProps>;
+| CustomAuthProperty<boolean, CustomAuthProps> &{props:Record<string,CustomAuthProp & ActivepiecesPropertyIndex>};
 
 export type StaticPropsValue<T extends PiecePropertyMap> = {
 	[P in keyof T]: T[P] extends { required: true } ? T[P]['valueSchema'] : T[P]['valueSchema'] | undefined;

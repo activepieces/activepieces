@@ -1,21 +1,21 @@
 <form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col ap-gap-2">
-  <div *ngFor="let property of requiredProperties|keyvalue; let i = index">
+  <div *ngFor="let property of requiredProperties|objectToArray; let i = index">
     <ng-container
       *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, configIndex:i,formGroup:form}"></ng-container>
   </div>
-  <div *ngIf="(allOptionalProperties|keyvalue).length > 0"
+  <div *ngIf="(allOptionalProperties|objectToArray).length > 0"
     class="ap-flex ap-items-center optional-input-label-container">
     <div> Optional Inputs </div>
     <div #spacer class="ap-flex-grow"></div>
     <ap-button
-      *ngIf="(selectedOptionalProperties|keyvalue).length !== (allOptionalProperties|keyvalue).length && form.enabled"
+      *ngIf="(selectedOptionalProperties|objectToArray).length !== (allOptionalProperties|objectToArray).length && form.enabled"
       btnColor="primary" btnSize="medium" btnStyle="basic" #menuTrigger="matMenuTrigger"
       (menuOpened)="optionalConfigsMenuOpened=true" (menuClosed)="optionalConfigsMenuOpened=false"
       [matMenuTriggerFor]="bodyTypesMenu">
       + Add Input
     </ap-button>
     <mat-menu #bodyTypesMenu="matMenu">
-      <ng-container *ngFor="let property of allOptionalProperties|keyvalue">
+      <ng-container *ngFor="let property of allOptionalProperties|objectToArray">
         <ng-container *ngIf="!selectedOptionalProperties[property.key]">
           <div (click)="addOptionalProperty(property.key,property.value)" mat-menu-item>
             {{property.value.displayName}}
@@ -24,7 +24,7 @@
       </ng-container>
     </mat-menu>
   </div>
-  <div *ngFor="let property of selectedOptionalProperties|keyvalue; let i = index">
+  <div *ngFor="let property of selectedOptionalProperties|objectToArray; let i = index">
     <ng-container *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, propertyIndex:i, formGroup:form}">
     </ng-container>
   </div>
@@ -165,7 +165,7 @@
             <mat-label> {{ property.value.displayName }} </mat-label>
             <mat-select [matTooltip]="property.value.description" [formControlName]="property.key"
               [compareWith]="dropdownCompareWithFunction">
-              <mat-option *ngFor="let opt of property.options.options" [value]="opt.value">
+              <mat-option *ngFor="let opt of property.value.options.options" [value]="opt.value">
                 {{opt.label}}
               </mat-option>
             </mat-select>
@@ -193,7 +193,7 @@
             <mat-label> {{ property.value.displayName }} </mat-label>
             <mat-select [matTooltip]="property.value.description" [formControlName]="property.key" multiple
               [compareWith]="dropdownCompareWithFunction">
-              <mat-option *ngFor="let opt of property.options.options" [value]="opt.value">
+              <mat-option *ngFor="let opt of property.value.options.options" [value]="opt.value">
                 {{opt.label}}
               </mat-option>
             </mat-select>
@@ -354,9 +354,11 @@
         (refreshableConfigsLoadingFlags$[property.key] | async) === null; else loading">
 
         <div class="ap-flex ap-flex-col ap-gap-2">
-          <div *ngFor="let cp of (dynamicPropsObservables$[property.key] | async)|keyvalue; let i = index"><ng-container
+          <div *ngFor="let cp of (dynamicPropsObservables$[property.key] | async)| objectToArray; let i = index">
+            <ng-container
               *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:cp, configIndex:i, formGroup:formGroup.get(property.key)}">
-            </ng-container></div>
+            </ng-container>
+          </div>
         </div>
 
 
@@ -376,13 +378,10 @@
 </ng-template>
 
 <ng-container *ngIf="updateValueOnChange$ | async"></ng-container>
-<ng-container *ngFor="let obs$  of 	dropdownOptionsObservables$ | keyvalue">
-  <ng-container *ngIf=" obs$.value | async "></ng-container>
-</ng-container>
 <ng-container *ngFor="let obs$  of 	dynamicPropsObservables$ | keyvalue">
   <ng-container *ngIf=" obs$.value | async "></ng-container>
 </ng-container>
-<ng-container *ngIf="configDropdownChanged$  | async"></ng-container>
+<ng-container *ngIf="configDropdownChanged$  | keyvalue"></ng-container>
 
 <ng-template #textInputTemplate let-property let-formGroup="formGroup">
   <div [formGroup]="formGroup">

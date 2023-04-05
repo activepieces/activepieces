@@ -47,7 +47,7 @@ export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
 })
 export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   readonly FAKE_CODE = 'FAKE_CODE';
-  @Input() pieceName: string;
+
   @Input() connectionToUpdate: CloudAuth2Connection | undefined;
   _cloudConnectionPopupSettings: OAuth2PopupParams;
   PropertyType = PropertyType;
@@ -86,21 +86,24 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   ngOnInit(): void {
     const propsControls = this.createPropsFormGroup();
     this.settingsForm = this.fb.group({
-      name: new FormControl(this.pieceName.replace(/[^A-Za-z0-9_\\-]/g, '_'), {
-        nonNullable: true,
-        validators: [
-          Validators.required,
-          Validators.pattern('[A-Za-z0-9_\\-]*'),
-        ],
-        asyncValidators: [
-          ConnectionValidator.createValidator(
-            this.store
-              .select(BuilderSelectors.selectAllAppConnections)
-              .pipe(take(1)),
-            undefined
-          ),
-        ],
-      }),
+      name: new FormControl(
+        this.dialogData.pieceName.replace(/[^A-Za-z0-9_\\-]/g, '_'),
+        {
+          nonNullable: true,
+          validators: [
+            Validators.required,
+            Validators.pattern('[A-Za-z0-9_\\-]*'),
+          ],
+          asyncValidators: [
+            ConnectionValidator.createValidator(
+              this.store
+                .select(BuilderSelectors.selectAllAppConnections)
+                .pipe(take(1)),
+              undefined
+            ),
+          ],
+        }
+      ),
       value: new FormControl(
         { code: '' },
         {
@@ -138,7 +141,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     const popupResponse = this.settingsForm.value.value!;
     const { tokenUrl } = this.getTokenAndUrl();
     const newConnection: UpsertCloudOAuth2Request = {
-      appName: this.pieceName,
+      appName: this.dialogData.pieceName,
       value: {
         token_url: tokenUrl,
         code: popupResponse.code,

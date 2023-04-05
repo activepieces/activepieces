@@ -3,7 +3,7 @@ import { PropertyType } from "../model/property-type";
 import { BasePropertySchema, NumberProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
 import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown-prop";
 
-type DynamicProp = ShortTextProperty<boolean> | NumberProperty<boolean> | StaticDropdownProperty<any, boolean> | StaticMultiSelectDropdownProperty<any,boolean>;
+export type DynamicProp = ShortTextProperty<boolean> | NumberProperty<boolean> | StaticDropdownProperty<any, boolean> | StaticMultiSelectDropdownProperty<any,boolean>;
 
 export type DynamicPropsValue = Record<string, DynamicProp['valueSchema']>;
 
