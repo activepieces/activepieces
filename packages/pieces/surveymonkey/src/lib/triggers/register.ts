@@ -1,4 +1,4 @@
-import { createTrigger, httpClient, HttpRequest, HttpMethod, Property, AuthenticationType } from '@activepieces/framework'
+import { createTrigger, httpClient, HttpRequest, HttpMethod, AuthenticationType, PieceProperty, OAuth2PropertyValue } from '@activepieces/framework'
 import { TriggerStrategy } from '@activepieces/shared'
 
 interface Props {
@@ -7,51 +7,41 @@ interface Props {
   displayName: string,
   description: string,
   sampleData: object,
-  props?: object
+  props: PieceProperty
 }
 
 export const surveyMonkeyRegisterTrigger = ({ name, event, displayName, description, sampleData, props }: Props) => createTrigger({
   name: `surveymonkey_trigger_${name}`,
   displayName: displayName,
   description: description,
-  props: {
-    authentication: Property.SecretText({
-      displayName: 'Private Token',
-      description: 'Your Private Token',
-      required: true
-    }),
-    ...(props ?? {})
-  },
+  props,
   sampleData: sampleData,
   type: TriggerStrategy.WEBHOOK,
-  async onEnable(context) {
+  async onEnable({ propsValue, webhookUrl, store }) {
     const body: Record<string, unknown> = {
       name,
       event_type: event,
-      subscription_url: context.webhookUrl
+      subscription_url: webhookUrl
     }
 
-    if ('object_type' in context.propsValue)
-      body['object_type'] = context.propsValue.object_type
-
-    if ('object_ids' in context.propsValue)
-      body['object_ids'] = context.propsValue.object_ids
+    if ('object_ids' in propsValue) body['object_ids'] = propsValue['object_ids']
+    if ('object_type' in propsValue) body['object_type'] = propsValue['object_type']
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.surveymonkey.com/v3/webhooks/`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.propsValue.authentication
+        token: (propsValue['authentication'] as OAuth2PropertyValue).access_token
       },
       body
     }
 
     const { body: webhook } = await httpClient.sendRequest<WebhookInformation>(request);
-    await context.store.put<WebhookInformation>(`surveymonkey_${name}_trigger`, webhook);
+    await store.put<WebhookInformation>(`surveymonkey_${name}_trigger`, webhook);
   },
-  async onDisable(context) {
-    const webhook = await context.store.get<WebhookInformation>(`surveymonkey_${name}_trigger`);
+  async onDisable({ store, propsValue }) {
+    const webhook = await store.get<WebhookInformation>(`surveymonkey_${name}_trigger`);
 
     if (webhook) {
       const request: HttpRequest = {
@@ -59,10 +49,10 @@ export const surveyMonkeyRegisterTrigger = ({ name, event, displayName, descript
         url: `https://api.surveymonkey.com/v3/webhooks/${webhook.id}`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: context.propsValue.authentication
+          token: (propsValue['authentication'] as OAuth2PropertyValue).access_token
         }
       };
-      await httpClient.sendRequest(request);
+      await httpClient.sendRequest(request)
     }
   },
   async run(context) {
