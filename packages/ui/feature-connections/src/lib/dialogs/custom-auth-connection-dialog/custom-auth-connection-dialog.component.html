@@ -25,7 +25,7 @@
                 </ng-template></mat-error>
         </mat-form-field>
 
-        <ng-container *ngFor="let prop of dialogData.pieceAuthProperty.props |keyvalue">
+        <ng-container *ngFor="let prop of dialogData.pieceAuthProperty.props |objectToArray">
             <mat-form-field class="ap-w-full" appearance="outline"
                 *ngIf="prop.value.type === PropertyType.SECRET_TEXT || prop.value.type === PropertyType.SHORT_TEXT ">
                 <mat-label>{{prop.value.displayName}}</mat-label>

@@ -11,10 +11,10 @@ import {
 	ShortTextProperty,
 } from "./base-prop";
 import { BasicAuthProperty } from "./basic-auth-prop";
-import { CustomAuthProp, CustomAuthProperty, CustomAuthProps } from "./custom-auth-prop";
+import {  CustomAuthProperty, CustomAuthProps } from "./custom-auth-prop";
 import { DropdownProperty, MultiSelectDropdownProperty, StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown-prop";
 import {  DynamicProperties } from "./dynamic-prop";
-import { OAuth2Prop, OAuth2Property, OAuth2Props } from "./oauth2-prop";
+import {  OAuth2Property, OAuth2Props } from "./oauth2-prop";
 type ActivepiecesPropertyIndex ={ activepiecesPropertyIndex?:number}
 export interface PiecePropertyMap {
 	[name: string]: PiecePropertyTypes & ActivepiecesPropertyIndex
@@ -22,7 +22,7 @@ export interface PiecePropertyMap {
 export type PiecePropertyTypes=
  ShortTextProperty<boolean>
 | LongTextProperty<boolean>
-| OAuth2Property<boolean, OAuth2Props> &{props?: Record<string, OAuth2Prop & ActivepiecesPropertyIndex>}
+| OAuth2Property<boolean, OAuth2Props> 
 | CheckboxProperty<boolean>
 | DropdownProperty<any, boolean>
 | StaticDropdownProperty<any, boolean>
@@ -35,7 +35,7 @@ export type PiecePropertyTypes=
 | MultiSelectDropdownProperty<unknown, boolean>
 | StaticMultiSelectDropdownProperty<unknown, boolean>
 | DynamicProperties<boolean>
-| CustomAuthProperty<boolean, CustomAuthProps> &{props:Record<string,CustomAuthProp & ActivepiecesPropertyIndex>};
+| CustomAuthProperty<boolean, CustomAuthProps>;
 
 export type StaticPropsValue<T extends PiecePropertyMap> = {
 	[P in keyof T]: T[P] extends { required: true } ? T[P]['valueSchema'] : T[P]['valueSchema'] | undefined;

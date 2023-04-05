@@ -41,6 +41,7 @@ import { JsonViewDialogComponent } from './components/json-view/json-view-dialog
 import { HorizontalSidebarSeparatorComponent } from './components/horizontal-sidebar-separator/horizontal-sidebar-separator.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TrackFocusDirective } from './directives/track-focus.directive';
+import { ObjectToArrayPipe } from './pipe/object-to-array.pipe';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -83,6 +84,7 @@ const exportedDeclarations = [
   JsonViewDialogComponent,
   HorizontalSidebarSeparatorComponent,
   TrackFocusDirective,
+  ObjectToArrayPipe,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

@@ -23,7 +23,7 @@
         </ng-template></mat-error>
     </mat-form-field>
     <div *ngIf="dialogData.pieceAuthProperty.props" [formGroup]="settingsForm.controls.props">
-      <ng-container *ngFor="let prop of dialogData.pieceAuthProperty.props |keyvalue">
+      <ng-container *ngFor="let prop of dialogData.pieceAuthProperty.props |objectToArray">
         <mat-form-field *ngIf="prop.value.type !== PropertyType.STATIC_DROPDOWN" class="ap-w-full" appearance="outline">
           <mat-label>{{prop.value.displayName}}</mat-label>
           <input [matTooltip]="prop.value.description || ''" [formControlName]="prop.key" matInput type="text" />
