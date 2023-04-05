@@ -88,6 +88,7 @@
       "@activepieces/piece-mattermost": [
         "packages/pieces/mattermost/src/index.ts"
       ],
+      "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/pipedrive/src/index.ts"
@@ -118,6 +119,7 @@
       "@activepieces/piece-wordpress": [
         "packages/pieces/wordpress/src/index.ts"
       ],
+      "@activepieces/piece-xero": ["packages/pieces/xero/src/index.ts"],
       "@activepieces/piece-youtube": ["packages/pieces/youtube/src/index.ts"],
       "@activepieces/piece-zendesk": ["packages/pieces/zendesk/src/index.ts"],
       "@activepieces/piece-zoho-crm": ["packages/pieces/zoho-crm/src/index.ts"],
