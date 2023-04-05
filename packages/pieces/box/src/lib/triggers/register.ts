@@ -21,7 +21,11 @@ export const boxRegisterTrigger = ({ name, event, displayName, description, samp
       required: true,
       authUrl: 'https://account.box.com/api/oauth2/authorize',
       tokenUrl: 'https://api.box.com/oauth2/token',
-      scope: ['manage_webhook']
+      scope: [
+        'manage_webhook',
+        'root_readonly',
+        'root_readwrite'
+      ]
     }),
     id: Property.ShortText({
       displayName: 'Item ID',
@@ -83,6 +87,8 @@ export const boxRegisterTrigger = ({ name, event, displayName, description, samp
   },
   async run(context) {
     console.debug("payload received", context.payload.body)
+
+    //TODO: Verify; https://developer.box.com/guides/webhooks/v2/signatures-v2/
     return [context.payload.body];
   },
 });

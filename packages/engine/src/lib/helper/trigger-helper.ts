@@ -24,8 +24,8 @@ export const triggerHelper = {
   async executeTrigger(params: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | ExecuteTestOrRunTriggerResponse | unknown[]> {
     const { pieceName, pieceVersion, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
 
-    const piece = await pieceHelper.loadPiece(pieceName, pieceVersion);
-    const trigger = piece?.getTrigger(triggerName);
+    const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
+    const trigger = piece.getTrigger(triggerName);
 
     if (trigger === undefined) {
       throw new Error(`trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
