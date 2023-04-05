@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { ListTriggerEventsRequest, SimulateTriggerRequest, TestPollingTriggerRequest } from '@activepieces/shared'
 import { triggerEventService } from './trigger-event.service'
-import { flowService } from '../flow.service'
+import { flowService } from '../flow/flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
 

@@ -1,7 +1,7 @@
 import { FastifyPluginCallback, FastifyReply, FastifyRequest } from 'fastify'
 import { CreateFlowRunRequest, FlowRunId, ListFlowRunsRequest, RunEnvironment } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { flowRunService, flowRunService as service } from './flow-run-service'
+import { flowRunService } from './flow-run-service'
 
 const DEFAULT_PAGING_LIMIT = 10
 
@@ -36,7 +36,7 @@ export const flowRunController: FastifyPluginCallback = (app, _options, done): v
     app.get('/', {
         schema: ListFlowRunsRequest,
     }, async (request: FastifyRequest<{ Querystring: ListFlowRunsRequest }>, reply: FastifyReply) => {
-        const flowRunPage = await service.list({
+        const flowRunPage = await flowRunService.list({
             projectId: request.principal.projectId,
             cursor: request.query.cursor ?? null,
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
@@ -47,7 +47,7 @@ export const flowRunController: FastifyPluginCallback = (app, _options, done): v
 
     // get one
     app.get('/:id', async (request: FastifyRequest<{ Params: GetOnePathParams }>, reply: FastifyReply) => {
-        const flowRun = await service.getOne({
+        const flowRun = await flowRunService.getOne({
             projectId: request.principal.projectId,
             id: request.params.id,
         })

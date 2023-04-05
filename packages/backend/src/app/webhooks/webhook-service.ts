@@ -7,11 +7,11 @@ import {
     ProjectId,
     RunEnvironment,
 } from '@activepieces/shared'
-import { flowRunService } from '../flow-run/flow-run-service'
+import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { triggerUtils } from '../helper/trigger-utils'
-import { flowRepo } from '../flows/flow.repo'
+import { flowRepo } from '../flows/flow/flow.repo'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { getPublicIp } from '../helper/public-ip-utils'
