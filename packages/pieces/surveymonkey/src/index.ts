@@ -8,7 +8,7 @@ export const surveymonkey = createPiece({
   displayName: "Surveymonkey",
   logoUrl: "https://play-lh.googleusercontent.com/QBR4_b0G2bXWnNx8WOOL-3XmSC6yLkBrX8IuAM6Jpq_aDTnB3crN8GI0bdIp1eJPrW8",
   version: packageJson.version,
-  authors: [],
+  authors: ['kanarelo'],
   actions: [],
   triggers: surveyMonkeyTriggers,
 });
