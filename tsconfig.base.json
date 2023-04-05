@@ -138,6 +138,9 @@
       "@activepieces/ui/feature-builder-header": [
         "packages/ui/feature-builder-header/src/index.ts"
       ],
+      "@activepieces/ui/feature-builder-right-sidebar": [
+        "packages/ui/feature-builder-right-sidebar/src/index.ts"
+      ],
       "@activepieces/ui/feature-builder-store": [
         "packages/ui/feature-builder-store/src/index.ts"
       ],

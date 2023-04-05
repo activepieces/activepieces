@@ -5,3 +5,4 @@ export * from './mention-list-item';
 export * from './point';
 export * from './tab-state';
 export * from './enums';
+export * from './flow-items-details-state.model';

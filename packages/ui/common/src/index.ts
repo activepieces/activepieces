@@ -25,3 +25,4 @@ export * from './lib/models/chevron-dropdown-option';
 export * from './lib/models/artifact.interface';
 export * from './lib/models/flow-run.interface';
 export * from './lib/environment';
+export * from './lib/service/test-step.service';

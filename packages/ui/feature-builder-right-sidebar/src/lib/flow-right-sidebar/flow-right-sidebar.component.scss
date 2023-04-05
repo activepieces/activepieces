@@ -1,0 +1,17 @@
+@import "packages/frontend/src/assets/scss/horizontal-sidebar-separator.scss";
+
+.top-resizer-section
+{
+    height:calc(100% - 200px);
+    max-height: calc(100% - 200px);
+}
+.bottom-resizer-section
+{
+    max-height: 200px;
+    min-height: 200px;
+}
+
+.resizer-area{
+    height: calc(100% - 245px);
+  }
+  
