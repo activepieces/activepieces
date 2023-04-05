@@ -111,7 +111,8 @@ async function downloadFiles(
     flowVersion: FlowVersion,
 ): Promise<void> {
     logger.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
-    const flowLock = await acquireLock([flowVersion.id], {
+    const flowLock = await acquireLock({
+        key: flowVersion.id,
         timeout: 30000,
     })
     try {

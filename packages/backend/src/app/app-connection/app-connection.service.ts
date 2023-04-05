@@ -73,7 +73,8 @@ export const appConnectionService = {
         }
         // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
         // which could result in the wrong request saving incorrect data.
-        const refreshLock = await acquireLock([`${projectId}_${name}`], {
+        const refreshLock = await acquireLock({
+            key: `${projectId}_${name}`,
             timeout: 10000,
         })
         try {

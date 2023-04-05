@@ -41,7 +41,7 @@ const redLock = new RedLock(
 
 type AcquireLockParams = {
     key: string
-    timeout?: number | undefined
+    timeout?: number
 }
 
 export const acquireLock = async ({ key, timeout = 3000 }: AcquireLockParams): Promise<Lock> => {
