@@ -6,7 +6,7 @@ import { clickFunnelTriggers } from "./lib/triggers"
 export const clickfunnels = createPiece({
   name: "clickfunnels",
   displayName: "Clickfunnels",
-  logoUrl: "https://statics.myclickfunnels.com/image/18323/file/6878b605c266ff9e27a89ea5d0e7ce01.svg",
+  logoUrl: "https://seeklogo.com/images/C/clickfunnels-logo-660D51E840-seeklogo.com.png",
   version: packageJson.version,
   authors: [],
   actions: [],

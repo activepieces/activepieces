@@ -15,6 +15,20 @@ const triggerData = [
     description: 'Triggers on `contact_updated`',
     event: 'contact_updated',
     sampleData: {}
+  },
+  {
+    name: 'purchase_created',
+    displayName: "Purchase Created",
+    description: 'Triggers on `purchase_created`',
+    event: 'purchase_created',
+    sampleData: {}
+  },
+  {
+    name: 'purchase_updated',
+    displayName: "Purchase Updated",
+    description: 'Triggers on `purchase_updated`',
+    event: 'purchase_updated',
+    sampleData: {}
   }
 ]
 
