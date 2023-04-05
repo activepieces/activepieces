@@ -218,6 +218,17 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
             property: property,
             propertyKey: pk,
           }).pipe(
+            map((res) => {
+              if (res.options.length === 0) {
+                const emptyDropdownState: DropdownState<unknown> = {
+                  options: [],
+                  disabled: true,
+                  placeholder: `No ${property.displayName} Available`,
+                };
+                return emptyDropdownState;
+              }
+              return res;
+            }),
             catchError(() => {
               return of({
                 options: [],
