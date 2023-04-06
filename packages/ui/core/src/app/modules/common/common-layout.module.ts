@@ -5,9 +5,6 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { DefaultFalsePipe } from './pipe/default-false.pipe';
-import { DefaultTruePipe } from './pipe/default-true.pipe';
-import { OutputLogPipe } from './pipe/output-log';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { StoreModule } from '@ngrx/store';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -54,9 +51,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 
 @NgModule({
   declarations: [
-    DefaultFalsePipe,
-    DefaultTruePipe,
-    OutputLogPipe,
     ImgFallbackDirective,
   ],
   imports: [
@@ -95,8 +89,6 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatButtonToggleModule,
   ],
   exports: [
-    DefaultFalsePipe,
-    DefaultTruePipe,
     AngularSvgIconModule,
     FontAwesomeModule,
     MatSnackBarModule,

@@ -14,7 +14,6 @@ import {
   FlowItemDetailsActions,
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
-import { RightSideBarType } from '../../../common/model/enum/right-side-bar-type.enum';
 import { Store } from '@ngrx/store';
 import { map, Observable, tap } from 'rxjs';
 import { MatDrawerContainer } from '@angular/material/sidenav';
@@ -30,7 +29,7 @@ import {
   TriggerType,
 } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
-import { LeftSideBarType } from '@activepieces/ui/feature-builder-store';
+import { LeftSideBarType, RightSideBarType} from '@activepieces/ui/feature-builder-store';
 import { TestStepService } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 @Component({

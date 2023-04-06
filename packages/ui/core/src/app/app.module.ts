@@ -12,7 +12,6 @@ import { HttpClientModule } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { environment } from '@activepieces/ui/common';;
 import { JwtModule } from '@auth0/angular-jwt';
-import { tokenGetter } from './modules/common/helper/helpers';
 import { NotFoundComponent } from './modules/not-found/not-found.component';
 import { RedirectUrlComponent } from './modules/redirect-url/redirect-url.component';
 import { StoreModule } from '@ngrx/store';
@@ -29,6 +28,12 @@ import { FirebaseAuthContainerComponent } from '@ee/firebase-auth/frontend/auth-
 import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { AuthLayoutComponent } from '@/ui/feature-authentication/src/lib/auth.component';
 import { DashboardContainerComponent } from '@activepieces/ui/feature-dashboard';
+
+export function tokenGetter() {
+  const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
+
+  return jwtToken;
+}
 
 @NgModule({
   declarations: [AppComponent, NotFoundComponent, RedirectUrlComponent],
