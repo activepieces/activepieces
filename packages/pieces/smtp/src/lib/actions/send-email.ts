@@ -23,12 +23,13 @@ export const sendEmail = createAction({
                     displayName: 'Password',
                     required: true,
                 }),
-                port: Property.Number({
+                port: Property.ShortText({
                     displayName: 'Port',
                     required: true,
                 }),
                 TLS: Property.Checkbox({
                     displayName: 'Use TLS',
+                    defaultValue: false,
                     required: true,
                 }),
             },

@@ -1,4 +1,4 @@
-import { ExecutionOutputStatus, FlowRun, RunEnvironment, UserMeta } from '@/shared/src'
+import { ExecutionOutputStatus, FlowRun, RunEnvironment, UserMeta } from '@activepieces/shared'
 import { logger } from './logger'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'

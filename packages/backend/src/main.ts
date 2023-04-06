@@ -33,6 +33,7 @@ import { appCredentialModule } from '@ee/product-embed/backend/app-credentials/a
 import { connectionKeyModule } from '@ee/product-embed/backend/connection-keys/connection-key.module'
 import { triggerEventModule } from './app/flows/trigger-events/trigger-event.module'
 import { seedDevData } from './app/database/seeds/dev-seeds'
+import { stepRunModule } from './app/flows/step-run/step-run-module'
 
 const app = fastify({
     logger,
@@ -80,7 +81,11 @@ app.addHook('onRequest', async (request, reply) => {
         url: request.url,
     })
     if (!route) {
-        reply.code(404).send('Oops! It looks like we hit a dead end. The endpoint you\'re searching for is nowhere to be found. We suggest turning around and trying another path. Good luck!')
+        reply.code(404).send(`
+            Oops! It looks like we hit a dead end.
+            The endpoint you're searching for is nowhere to be found.
+            We suggest turning around and trying another path. Good luck!
+        `)
     }
 })
 
@@ -101,6 +106,7 @@ app.register(appConnectionModule)
 app.register(openapiModule)
 app.register(triggerEventModule)
 app.register(appEventRoutingModule)
+app.register(stepRunModule)
 
 app.get(
     '/redirect',
@@ -154,7 +160,7 @@ const start = async () => {
  / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
-started on ${system.get(SystemProp.FRONTEND_URL)}
+The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variable.
     `)
     }
     catch (err) {

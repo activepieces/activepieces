@@ -11,6 +11,7 @@ export * from "./lib/flow-run/dto/list-flow-runs-request";
 export * from "./lib/flow-run/execution/execution-output";
 export * from "./lib/flow-run/execution/step-output";
 export * from "./lib/flows/flow-operations";
+export * from "./lib/flows/step-run";
 export * from './lib/instance';
 export * from "./lib/app-connection/app-connection";
 export * from "./lib/app-connection/dto/upsert-app-connection-request";
