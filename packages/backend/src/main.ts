@@ -6,7 +6,7 @@ import { authenticationModule } from './app/authentication/authentication.module
 import { collectionModule } from './app/collections/collection.module'
 import { projectModule } from './app/project/project.module'
 import { openapiModule } from './app/helper/openapi/openapi.module'
-import { flowModule } from './app/flows/flow/flow.module'
+import { flowModule } from './app/flows/flow.module'
 import { fileModule } from './app/file/file.module'
 import { piecesController } from './app/pieces/pieces.controller'
 import { tokenVerifyMiddleware } from './app/authentication/token-verify-middleware'
@@ -33,7 +33,6 @@ import { appCredentialModule } from '@ee/product-embed/backend/app-credentials/a
 import { connectionKeyModule } from '@ee/product-embed/backend/connection-keys/connection-key.module'
 import { triggerEventModule } from './app/flows/trigger-events/trigger-event.module'
 import { seedDevData } from './app/database/seeds/dev-seeds'
-import { stepRunModule } from './app/flows/step-run/step-run-module'
 
 const app = fastify({
     logger,
@@ -106,7 +105,6 @@ app.register(appConnectionModule)
 app.register(openapiModule)
 app.register(triggerEventModule)
 app.register(appEventRoutingModule)
-app.register(stepRunModule)
 
 app.get(
     '/redirect',
