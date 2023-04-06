@@ -11,7 +11,7 @@ COPY packages/ui/core/nginx.conf /etc/nginx/nginx.conf
 WORKDIR /usr/src/app
 COPY . .
 RUN npm ci
-RUN npx nx run-many --target=build --projects=backend,frontend
+RUN npx nx run-many --target=build --projects=backend,ui-core
 
 # Copy frontend files to Nginx document root directory
 RUN cp -r /usr/src/app/dist/packages/ui/core/* /usr/share/nginx/html
