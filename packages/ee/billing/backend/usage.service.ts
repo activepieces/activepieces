@@ -3,7 +3,6 @@ import { ActivepiecesError, ErrorCode, FlowVersion, ProjectId, Trigger, Action, 
 import { databaseConnection } from "@backend/database/database-connection";
 import { ProjectUsage } from "@activepieces/ee/shared";
 import { acquireLock } from "@backend/database/redis-connection";
-import { ProjectUsage } from "../shared/usage";
 import { ProjectUsageEntity } from "./usage.entity";
 import { captureException, logger } from "@backend/helper/logger";
 import dayjs from "dayjs";

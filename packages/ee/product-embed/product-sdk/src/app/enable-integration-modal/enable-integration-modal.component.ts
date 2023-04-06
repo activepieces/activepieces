@@ -3,7 +3,7 @@ import { catchError, mapTo, Observable, switchMap, tap } from 'rxjs';
 import {
   AppCredential,
   AppCredentialType,
-} from '@ee/product-embed/shared/app-credentials/app-credentials';
+} from '@/ee/shared/src/lib/app-credentials/app-credentials';
 import { DialogRef } from '@angular/cdk/dialog';
 import { ConnectionService } from '../service/connection.service';
 import { getLocal, getRedrectUrl, StorageName } from '../helper/helper';

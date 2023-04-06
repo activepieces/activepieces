@@ -4,7 +4,7 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { Router } from '@angular/router';
 import * as auth from 'firebase/auth';
 import { catchError, forkJoin, from, map, of, switchMap, tap } from 'rxjs';
-import { FirebaseSignUpRequest, FirebaseSignInRequest } from "@ee/firebase-auth/shared/index"
+import { FirebaseSignUpRequest, FirebaseSignInRequest } from "@activepieces/ee/shared"
 import { User } from '@activepieces/shared';
 import { AuthenticationService } from '@activepieces/ui/common';
 import { environment } from '../../../frontend/src/environments/environment';

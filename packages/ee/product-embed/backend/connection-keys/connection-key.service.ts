@@ -3,9 +3,8 @@ import jsonwebtoken from "jsonwebtoken";
 import { databaseConnection } from "@backend/database/database-connection";
 import { ConnectionKeyEntity } from "./connection-key.entity";
 import { SeekPage, AppConnection, ActivepiecesError, ErrorCode, AppConnectionType } from "@activepieces/shared";
-import { UpsertSigningKeyConnection, GetOrDeleteConnectionFromTokenRequest, UpsertConnectionFromToken } from "../../shared/connection-keys/connection-requests";
+import { ConnectionKey, ConnectionKeyId, UpsertSigningKeyConnection, GetOrDeleteConnectionFromTokenRequest, UpsertConnectionFromToken } from "@activepieces/ee/shared";
 import { appCredentialService } from "../app-credentials/app-credentials.service";
-import { ConnectionKey, ConnectionKeyId } from "../../shared/connection-keys/connection-key";
 import { ProjectId, Cursor, apId } from "@activepieces/shared";
 import { paginationHelper } from "@backend/helper/pagination/pagination-utils";
 import { appConnectionService } from "@backend/app-connection/app-connection.service";
@@ -66,7 +65,7 @@ export const connectionKeyService = {
                 format: "pem",
             },
         });
-        let savedConnection: ConnectionKey = await connectonKeyRepo.save({
+        const savedConnection: ConnectionKey = await connectonKeyRepo.save({
             id: apId(),
             projectId: projectId,
             settings: {
