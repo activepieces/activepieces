@@ -10,7 +10,7 @@ module.exports = function (config) {
     ...baseConfig,
     coverageReporter: {
       ...baseConfig.coverageReporter,
-      dir: join(__dirname, '../../../coverage/packages/ui/corer'),
+      dir: join(__dirname, '../../../coverage/packages/ui/core'),
     },
   });
 };

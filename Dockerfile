@@ -14,7 +14,7 @@ RUN npm ci
 RUN npx nx run-many --target=build --projects=backend,frontend
 
 # Copy frontend files to Nginx document root directory
-RUN cp -r /usr/src/app/dist/packages/frontend/* /usr/share/nginx/html
+RUN cp -r /usr/src/app/dist/packages/ui/core/* /usr/share/nginx/html
 
 # Set up entrypoint script
 COPY docker-entrypoint.sh /
