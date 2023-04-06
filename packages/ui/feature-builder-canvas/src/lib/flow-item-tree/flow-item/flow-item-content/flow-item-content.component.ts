@@ -16,7 +16,7 @@ import {
   tap,
 } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { RunDetailsService } from '@activepieces/ui/feautre-builder-left-sidebar';
+import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import { DeleteStepDialogComponent } from './delete-step-dialog/delete-step-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import {

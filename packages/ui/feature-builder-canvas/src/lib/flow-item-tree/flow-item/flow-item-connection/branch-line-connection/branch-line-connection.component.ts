@@ -33,7 +33,7 @@ import {
   FlowsActions,
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
-import { FlowRenderUtil } from '../../../../../../../feature-builder-store/src/lib/utils/flowRenderUtil';
+import { FlowRenderUtil } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-branch-line-connection',

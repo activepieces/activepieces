@@ -5,6 +5,8 @@
     "declaration": false,
     "declarationMap": false,
     "inlineSources": true,
+    // TODO REMOVE THIS LINE
+    "strict": false,
     "types": []
   },
   "exclude": ["src/**/*.spec.ts", "jest.config.ts", "src/**/*.test.ts"],

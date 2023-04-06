@@ -44,7 +44,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import {
   BuilderSelectors,
   FlowItem,
-} from '../../../../feature-builder-store/src';
+} from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-interpolating-text-form-control',
@@ -173,7 +173,7 @@ export class InterpolatingTextFormControlComponent
     this._readOnly = this.onlyAllowOneMentionToBeAdded;
     this.valueChanges$ = this.editorFormControl.valueChanges.pipe(
       skip(1),
-      tap((val) => {
+      tap((val: QuillEditorOperationsObject) => {
         if (val.ops.length === 1 && val.ops[0].insert === '\n') {
           this._value = '';
           this.onChange('');

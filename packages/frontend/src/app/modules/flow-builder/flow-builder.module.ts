@@ -17,7 +17,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { UiFeatureBuilderTabsModule } from '@activepieces/ui/feature-builder-tabs';
 import { UiFeatureBuilderHeaderModule } from '@activepieces/ui/feature-builder-header';
-import { UiFeautreBuilderLeftSidebarModule } from '@activepieces/ui/feautre-builder-left-sidebar';
+import { UiFeatureBuilderLeftSidebarModule } from '@activepieces/ui/feature-builder-left-sidebar';
 import { UiFeatureBuilderStoreModule } from '@activepieces/ui/feature-builder-store';
 import { UiFeatureBuilderCanvasModule } from '@activepieces/ui/feature-builder-canvas';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
@@ -39,7 +39,7 @@ import { UiFeatureBuilderRightSidebarModule } from '../../../../../ui/feature-bu
     MonacoEditorModule,
     MatTabsModule,
     UiFeatureBuilderTabsModule,
-    UiFeautreBuilderLeftSidebarModule,
+    UiFeatureBuilderLeftSidebarModule,
     UiFeatureBuilderHeaderModule,
     UiFeatureBuilderStoreModule,
     UiFeatureBuilderCanvasModule,

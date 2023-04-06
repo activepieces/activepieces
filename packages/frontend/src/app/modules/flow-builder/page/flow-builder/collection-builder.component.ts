@@ -21,7 +21,7 @@ import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
-import { RunDetailsService } from '@activepieces/ui/feautre-builder-left-sidebar';
+import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
 import {
   Collection,

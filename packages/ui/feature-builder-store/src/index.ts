@@ -9,3 +9,5 @@ export * from './lib/store/flow/index';
 export * from './lib/model';
 export * from './lib/test-run-bar/test-run-bar.component';
 export * from './lib/utils/flowStructureUtil';
+export * from './lib/utils/flowRenderUtil';
+export * from './lib/utils/flowFactoryUtil';

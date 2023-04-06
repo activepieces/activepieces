@@ -12,10 +12,11 @@ import { PieceTriggerInputFormComponent } from './flow-right-sidebar/input-forms
 import { StepTypeListComponent } from './flow-right-sidebar/step-type-sidebar/step-type-list/step-type-list.component';
 import { StepTypeSidebarComponent } from './flow-right-sidebar/step-type-sidebar/step-type-sidebar.component';
 import { StepTypeItemComponent } from './flow-right-sidebar/step-type-sidebar/step-type-item/step-type-item.component';
-import { UiFeatureBuilderFormControlsModule } from '../../../feature-builder-form-controls/src';
 import { MatTabsModule } from '@angular/material/tabs';
 import { FlowRightSidebarComponent } from './flow-right-sidebar/flow-right-sidebar.component';
 import { NewEditPieceSidebarComponent } from './flow-right-sidebar/edit-step-sidebar/edit-step-sidebar.component';
+import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
+
 @NgModule({
   imports: [
     CommonModule,

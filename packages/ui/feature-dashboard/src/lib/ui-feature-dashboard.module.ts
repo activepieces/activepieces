@@ -10,14 +10,15 @@ import { UserAvatarComponent } from './components/user-avatar/user-avatar.compon
 import { PageTitleComponent } from './components/page-title/page-title.component';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { DeleteEntityDialogComponent } from './components/delete-enity-dialog/delete-collection-dialog.component';
-import { RunsLeftSnackbarComponent } from '@ee/billing/frontend/runs-left-snackbar/runs-left-snackbar.component';
 import { RouterModule } from '@angular/router';
 import { DashboardLayoutRouting } from './dashboard.routing';
+// import { EeBillingUiModule } from '@activepieces/ee/billing/ui';
 
 @NgModule({
   imports: [
     CommonModule,
     UiCommonModule,
+    // EeBillingUiModule,
     RouterModule.forChild(DashboardLayoutRouting),
   ],
   declarations: [
@@ -30,7 +31,6 @@ import { DashboardLayoutRouting } from './dashboard.routing';
     PageTitleComponent,
     ConnectionsTableComponent,
     DeleteEntityDialogComponent,
-    RunsLeftSnackbarComponent,
   ],
 })
 export class UiFeatureDashboardModule {}

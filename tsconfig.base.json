@@ -18,6 +18,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["packages/*"],
+      "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
+      "@activepieces/ee/shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/engine": ["packages/engine/src/index.ts"],
       "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
@@ -138,6 +140,9 @@
       "@activepieces/ui/feature-builder-header": [
         "packages/ui/feature-builder-header/src/index.ts"
       ],
+      "@activepieces/ui/feature-builder-left-sidebar": [
+        "packages/ui/feature-builder-left-sidebar/src/index.ts"
+      ],
       "@activepieces/ui/feature-builder-right-sidebar": [
         "packages/ui/feature-builder-right-sidebar/src/index.ts"
       ],
@@ -155,9 +160,6 @@
       ],
       "@activepieces/ui/feature-dashboard": [
         "packages/ui/feature-dashboard/src/index.ts"
-      ],
-      "@activepieces/ui/feautre-builder-left-sidebar": [
-        "packages/ui/feautre-builder-left-sidebar/src/index.ts"
       ],
       "@backend/*": ["packages/backend/src/app/*"],
       "@ee/*": ["packages/ee/*"],

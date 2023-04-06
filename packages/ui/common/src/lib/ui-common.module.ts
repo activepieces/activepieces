@@ -34,7 +34,7 @@ import { ChevronDropdownMenuComponent } from './components/chevron-dropdown-menu
 import { OutputLogPipe } from './pipe/output-log.pipe';
 import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
-import { CenterMatMenuDirective } from './components/chevron-dropdown-menu/center-mat-menu.directive';
+import { CenterMatMenuDirective } from './directives/center-mat-menu.directive';
 import { SidebarHeaderComponent } from './components/sidebar-header/sidebar-header.component';
 import { JsonViewComponent } from './components/json-view/json-view.component';
 import { JsonViewDialogComponent } from './components/json-view/json-view-dialog/json-view-dialog.component';
@@ -64,7 +64,6 @@ const exportedImports = [
   MatCheckboxModule,
 ];
 const exportedDeclarations = [
-  DialogTitleTemplateComponent,
   MarkdownComponent,
   EditableTextComponent,
   ApButtonComponent,

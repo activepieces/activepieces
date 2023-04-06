@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UiCommonModule } from '../../../common/src';
+import { UiCommonModule } from '@activepieces/ui/common';
 import { BasicAuthConnectionDialogComponent } from './dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component';
 import { CloudOAuth2ConnectionDialogComponent } from './dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
 import { OAuth2ConnectControlComponent } from './form-controls/o-auth2-connect-control/o-auth2-connect-control.component';

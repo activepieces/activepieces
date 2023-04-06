@@ -32,27 +32,6 @@
         "scripts": ["node_modules/marked/marked.min.js"]
       },
       "configurations": {
-        "ee": {
-          "budgets": [
-            {
-              "type": "initial",
-              "maximumWarning": "5mb",
-              "maximumError": "5mb"
-            },
-            {
-              "type": "anyComponentStyle",
-              "maximumWarning": "1024kb",
-              "maximumError": "1024kb"
-            }
-          ],
-          "fileReplacements": [
-            {
-              "replace": "packages/frontend/src/environments/environment.ts",
-              "with": "packages/frontend/src/environments/environment.ee.ts"
-            }
-          ],
-          "outputHashing": "all"
-        },
         "production": {
           "budgets": [
             {

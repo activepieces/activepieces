@@ -26,3 +26,6 @@ export * from './lib/models/artifact.interface';
 export * from './lib/models/flow-run.interface';
 export * from './lib/environment';
 export * from './lib/service/test-step.service';
+export * from './lib/pipe/index';
+export * from './lib/directives/index';
+export * from './lib/environment';

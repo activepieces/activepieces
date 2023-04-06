@@ -16,7 +16,8 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { Observable, shareReplay, map, forkJoin } from 'rxjs';
 import { environment } from '../environment';
-import { FlagService, FlowItemDetails } from '@activepieces/ui/common';
+import { FlowItemDetails } from '../models/flow-item-details';
+import { FlagService } from './flag.service';
 
 type TriggersMetadata = Record<string, TriggerBase>;
 
@@ -76,7 +77,7 @@ export class ActionMetaService {
     },
   ];
 
-  constructor(private http: HttpClient, private flagsService: FlagService) {}
+  constructor(private http: HttpClient, private flagsService: FlagService) { }
 
   private filterUnSupportedPieces = (params: FilterUnSupportedPiecesParams) => {
     const { piecesManifest, release } = params;

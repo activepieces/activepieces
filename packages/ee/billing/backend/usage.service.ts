@@ -2,7 +2,7 @@ import { billingService } from "./billing.service";
 import { ActivepiecesError, ErrorCode, FlowVersion, ProjectId, Trigger, Action, apId } from "@activepieces/shared";
 import { databaseConnection } from "@backend/database/database-connection";
 import { createRedisLock } from "@backend/database/redis-connection";
-import { ProjectUsage } from "../shared/usage";
+import { ProjectUsage } from "@activepieces/ee/shared";
 import { ProjectUsageEntity } from "./usage.entity";
 import { captureException, logger } from "@backend/helper/logger";
 import dayjs from "dayjs";

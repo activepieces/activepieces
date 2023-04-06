@@ -175,7 +175,7 @@ export class TestFlowModalComponent implements OnInit {
       this.cd.detectChanges();
     }
   }
-  executeTest(collection: Collection, flow: Flow, payload: object) {
+  executeTest(collection: Collection, flow: Flow, payload: unknown) {
     return this.flowService
       .execute({
         collectionId: collection.id,

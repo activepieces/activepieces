@@ -18,12 +18,12 @@ export class CanvasPannerDirective {
   }
 
   @HostListener('mouseup', ['$event'])
-  mouseUp(ignoredEvent) {
+  mouseUp(ignoredEvent: unknown) {
     this.pannerService.dragState.isDragging = false;
     this.pannerService.isGrabbing$.next(false);
   }
   @HostListener('mouseleave', ['$event'])
-  mouseleave(ignoredEvent) {
+  mouseleave(ignoredEvent: unknown) {
     this.pannerService.dragState.isDragging = false;
     this.pannerService.isGrabbing$.next(false);
   }
