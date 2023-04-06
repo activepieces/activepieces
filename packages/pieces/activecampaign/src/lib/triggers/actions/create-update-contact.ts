@@ -3,10 +3,15 @@ import { activeCampaignProps } from "../../common";
 
 export const activeCampaignCreateContact = createAction({
   name: 'create_contact',
-  description: 'Create a new Contact',
-  displayName: 'Create Contact',
+  description: 'Create a new Contact, or update existing Contact',
+  displayName: 'Create or Update Contact',
   props: {
     ...activeCampaignProps,
+    contact_id: Property.ShortText({
+      displayName: "Contact Id",
+      description: "Contact Id of the Contact to update",
+      required: false
+    }),
     first_name: Property.ShortText({
       displayName: "First Name",
       description: "Contact first name",
@@ -34,9 +39,10 @@ export const activeCampaignCreateContact = createAction({
     })
   },
   async run({ propsValue }) {
+    const url = `https://${propsValue.account_name}.api-us1.com/api/3/contacts`
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `https://${propsValue.account_name}.api-us1.com/api/3/contacts`,
+      url: propsValue.contact_id ? `${url}/${propsValue.contact_id}` : url,
       headers: {
         'Api-Token': propsValue.authentication
       },

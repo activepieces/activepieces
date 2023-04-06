@@ -3,7 +3,7 @@ import { createPiece } from "@activepieces/framework"
 import { activeCampaignTriggers } from "./lib/triggers"
 
 import packageJson from "../package.json"
-import { activeCampaignCreateContact } from "./lib/triggers/actions/create-contact";
+import { activeCampaignCreateContact } from "./lib/triggers/actions/create-update-contact";
 
 export const activecampaign = createPiece({
   name: "activecampaign",
