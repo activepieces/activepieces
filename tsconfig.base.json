@@ -19,6 +19,9 @@
     "paths": {
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
+      "@activepieces/piece-activecampaign": [
+        "packages/pieces/activecampaign/src/index.ts"
+      ],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-asana": ["packages/pieces/asana/src/index.ts"],
       "@activepieces/piece-bannerbear": [

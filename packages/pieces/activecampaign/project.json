@@ -1,0 +1,36 @@
+{
+  "name": "pieces-activecampaign",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/activecampaign/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/activecampaign",
+        "tsConfig": "packages/pieces/activecampaign/tsconfig.lib.json",
+        "packageJson": "packages/pieces/activecampaign/package.json",
+        "main": "packages/pieces/activecampaign/src/index.ts",
+        "assets": [
+          "packages/pieces/activecampaign/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/activecampaign/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
