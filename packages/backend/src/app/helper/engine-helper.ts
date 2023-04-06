@@ -2,7 +2,6 @@ import fs from 'node:fs/promises'
 import {
     ApEnvironment,
     apId,
-    CollectionId,
     EngineOperation,
     EngineOperationType,
     ExecuteActionOperation,
@@ -61,7 +60,7 @@ export const engineHelper = {
     async executeFlow(sandbox: Sandbox, operation: ExecuteFlowOperation): Promise<ExecutionOutput> {
         return await execute(EngineOperationType.EXECUTE_FLOW, sandbox, {
             ...operation,
-            workerToken: await workerToken({ collectionId: operation.collectionId, projectId: operation.projectId }),
+            workerToken: await workerToken({ projectId: operation.projectId }),
         }) as ExecutionOutput
     },
     async executeParseEvent(operation: ExecuteEventParserOperation): Promise<ParseEventResponse> {
@@ -96,7 +95,6 @@ export const engineHelper = {
                 appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({ appName: pieceName }),
                 webhookSecret: await getWebhookSecret(operation.flowVersion),
                 workerToken: await workerToken({
-                    collectionId: operation.collectionId,
                     projectId: operation.projectId,
                 }),
             })
@@ -129,7 +127,6 @@ export const engineHelper = {
             result = await execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, {
                 ...operation,
                 workerToken: await workerToken({
-                    collectionId: operation.collectionId,
                     projectId: operation.projectId,
                 }),
             })
@@ -156,7 +153,6 @@ export const engineHelper = {
             const result = await execute(EngineOperationType.EXECUTE_ACTION, sandbox, {
                 ...operation,
                 workerToken: await workerToken({
-                    collectionId: operation.collectionId,
                     projectId: operation.projectId,
                 }),
             })
@@ -169,12 +165,11 @@ export const engineHelper = {
     },
 }
 
-function workerToken(request: { projectId: ProjectId, collectionId: CollectionId }): Promise<string> {
+function workerToken(request: { projectId: ProjectId }): Promise<string> {
     return tokenUtils.encode({
         type: PrincipalType.WORKER,
         id: apId(),
         projectId: request.projectId,
-        collectionId: request.collectionId,
     })
 }
 

@@ -21,7 +21,10 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
                 _reply.status(StatusCodes.FORBIDDEN).send()
             }
             else {
-                return await storeEntryService.upsert(request.principal.collectionId, request.body)
+                return await storeEntryService.upsert({
+                    projectId: request.principal.projectId,
+                    request: request.body,
+                })
             }
         },
     )
@@ -52,7 +55,9 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
                 _reply.status(StatusCodes.FORBIDDEN).send()
             }
             else {
-                return await storeEntryService.getOne(request.principal.collectionId, request.query.key)
+                return await storeEntryService.getOne({
+                    projectId: request.principal.projectId, key: request.query.key,
+                })
             }
         },
     )

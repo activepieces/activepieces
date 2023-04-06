@@ -34,7 +34,6 @@ export const flowController = async (fastify: FastifyInstance) => {
             const flow = await flowService.create({
                 projectId: request.principal.projectId, request: {
                     displayName: request.body.displayName,
-                    collectionId: request.body.collectionId,
                 },
             })
             const flowVersion = {
@@ -97,7 +96,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 Querystring: ListFlowsRequest
             }>,
         ) => {
-            return await flowService.list({ projectId: request.principal.projectId, collectionId: request.query.collectionId, cursorRequest: request.query.cursor ?? null, limit: request.query.limit ?? DEFUALT_PAGE_SIZE })
+            return await flowService.list({ projectId: request.principal.projectId, cursorRequest: request.query.cursor ?? null, limit: request.query.limit ?? DEFUALT_PAGE_SIZE })
         },
     )
 

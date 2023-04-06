@@ -23,7 +23,7 @@ import { webhookSimulationService } from './webhook-simulation/webhook-simulatio
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
         const flow = await getFlowOrThrow(flowId)
-        const { projectId, collectionId } = flow
+        const { projectId } = flow
         const flowVersion = await getLatestFlowVersionOrThrow(flowId, projectId)
 
         triggerEventService.saveEvent({
@@ -34,7 +34,6 @@ export const webhookService = {
 
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId,
-            collectionId,
             flowVersion,
             payload,
             simulate: false,
@@ -43,7 +42,6 @@ export const webhookService = {
         const createFlowRuns = payloads.map((payload) =>
             flowRunService.start({
                 environment: RunEnvironment.PRODUCTION,
-                collectionId,
                 flowVersionId: flowVersion.id,
                 payload,
             }),
@@ -54,12 +52,11 @@ export const webhookService = {
 
     async simulationCallback({ flowId, payload }: CallbackParams): Promise<void> {
         const flow = await getFlowOrThrow(flowId)
-        const { projectId, collectionId } = flow
+        const { projectId } = flow
         const flowVersion = await getLatestFlowVersionOrThrow(flowId, projectId)
 
         const events = await triggerUtils.executeTrigger({
             projectId,
-            collectionId,
             flowVersion,
             payload,
             simulate: true,

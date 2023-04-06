@@ -3,7 +3,6 @@ import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import qs from 'qs'
 import { authenticationModule } from './app/authentication/authentication.module'
-import { collectionModule } from './app/collections/collection.module'
 import { projectModule } from './app/project/project.module'
 import { openapiModule } from './app/helper/openapi/openapi.module'
 import { flowModule } from './app/flows/flow.module'
@@ -11,7 +10,6 @@ import { fileModule } from './app/file/file.module'
 import { piecesController } from './app/pieces/pieces.controller'
 import { tokenVerifyMiddleware } from './app/authentication/token-verify-middleware'
 import { storeEntryModule } from './app/store-entry/store-entry.module'
-import { instanceModule } from './app/instance/instance.module'
 import { flowRunModule } from './app/flows/flow-run/flow-run-module'
 import { flagModule } from './app/flags/flag.module'
 import { codeModule } from './app/workers/code-worker/code.module'
@@ -33,6 +31,7 @@ import { appCredentialModule } from '@ee/product-embed/backend/app-credentials/a
 import { connectionKeyModule } from '@ee/product-embed/backend/connection-keys/connection-key.module'
 import { triggerEventModule } from './app/flows/trigger-events/trigger-event.module'
 import { seedDevData } from './app/database/seeds/dev-seeds'
+import { flowInstanceModule } from './app/flows/flow-instance/flow-instance.module'
 
 const app = fastify({
     logger,
@@ -90,7 +89,6 @@ app.addHook('onRequest', async (request, reply) => {
 
 app.addHook('onRequest', tokenVerifyMiddleware)
 app.register(projectModule)
-app.register(collectionModule)
 app.register(fileModule)
 app.register(flagModule)
 app.register(storeEntryModule)
@@ -98,7 +96,7 @@ app.register(flowModule)
 app.register(codeModule)
 app.register(flowWorkerModule)
 app.register(piecesController)
-app.register(instanceModule)
+app.register(flowInstanceModule)
 app.register(flowRunModule)
 app.register(webhookModule)
 app.register(appConnectionModule)

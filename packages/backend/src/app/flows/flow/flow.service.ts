@@ -1,7 +1,6 @@
 import { FlowEntity } from './flow.entity'
 import {
     apId,
-    CollectionId,
     CreateFlowRequest,
     Cursor,
     EmptyTrigger,
@@ -22,15 +21,14 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { acquireLock } from '../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRepo } from './flow.repo'
-import { instanceSideEffects } from '../../instance/instance-side-effects'
 import { telemetry } from '../../helper/telemetry.utils'
+import { flowInstanceService } from '../flow-instance/flow-instance.service'
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
         const flow: Partial<Flow> = {
             id: apId(),
             projectId: projectId,
-            collectionId: request.collectionId,
         }
         const savedFlow = await flowRepo.save(flow)
         await flowVersionService.createVersion(savedFlow.id, {
@@ -50,7 +48,6 @@ export const flowService = {
             {
                 name: TelemetryEventName.FLOW_CREATED,
                 payload: {
-                    collectionId: flow.collectionId,
                     flowId: flow.id,
                 },
             },
@@ -74,7 +71,7 @@ export const flowService = {
 
         return flow
     },
-    async list({ projectId, collectionId, cursorRequest, limit }: { projectId: ProjectId, collectionId: CollectionId, cursorRequest: Cursor | null, limit: number }): Promise<SeekPage<Flow>> {
+    async list({ projectId, cursorRequest, limit }: { projectId: ProjectId, cursorRequest: Cursor | null, limit: number }): Promise<SeekPage<Flow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: FlowEntity,
@@ -85,8 +82,7 @@ export const flowService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = flowRepo.createQueryBuilder('flow').where({ collectionId, projectId })
-        const { data, cursor } = await paginator.paginate(queryBuilder.where({ collectionId }))
+        const { data, cursor } = await paginator.paginate(flowRepo.createQueryBuilder('flow').where({ projectId }))
         const flowVersionsPromises: Array<Promise<FlowVersion | null>> = []
         data.forEach((collection) => {
             flowVersionsPromises.push(flowVersionService.getFlowVersion(projectId, collection.id, undefined, false))
@@ -129,8 +125,7 @@ export const flowService = {
         return await flowService.getOne({ id: flowId, versionId: undefined, projectId: projectId, includeArtifacts: false })
     },
     async delete({ projectId, flowId }: { projectId: ProjectId, flowId: FlowId }): Promise<void> {
-        await instanceSideEffects.onFlowDelete({ projectId, flowId })
-
+        await flowInstanceService.onFlowDelete({ projectId, flowId })
         await flowRepo.delete({ projectId: projectId, id: flowId })
     },
 }

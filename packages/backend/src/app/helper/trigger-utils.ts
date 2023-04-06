@@ -1,6 +1,5 @@
 import { Trigger } from '@activepieces/framework'
 import {
-    CollectionId,
     ExecuteTriggerResponse,
     FlowVersion,
     PieceTrigger,
@@ -20,7 +19,7 @@ import { captureException } from '@sentry/node'
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
-        const { payload, flowVersion, projectId, collectionId, simulate } = params
+        const { payload, flowVersion, projectId, simulate } = params
         const flowTrigger = flowVersion.trigger
         let payloads = []
         switch (flowTrigger.type) {
@@ -31,7 +30,6 @@ export const triggerUtils = {
                         hookType: TriggerHookType.RUN,
                         flowVersion: flowVersion,
                         triggerPayload: payload,
-                        collectionId,
                         webhookUrl: await webhookService.getWebhookUrl({
                             flowId: flowVersion.flowId,
                             simulate,
@@ -61,11 +59,10 @@ export const triggerUtils = {
         return payloads
     },
 
-    async enable({ collectionId, flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
+    async enable({ flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
         switch (flowVersion.trigger.type) {
             case TriggerType.PIECE:
                 await enablePieceTrigger({
-                    collectionId,
                     projectId,
                     flowVersion,
                     simulate,
@@ -76,11 +73,10 @@ export const triggerUtils = {
         }
     },
 
-    async disable({ collectionId, flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
+    async disable({ flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
         switch (flowVersion.trigger.type) {
             case TriggerType.PIECE:
                 await disablePieceTrigger({
-                    collectionId,
                     projectId,
                     flowVersion,
                     simulate,
@@ -93,14 +89,13 @@ export const triggerUtils = {
 }
 
 const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
-    const { flowVersion, projectId, collectionId, simulate } = params
+    const { flowVersion, projectId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
     const pieceTrigger = getPieceTrigger(flowTrigger)
 
     await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_DISABLE,
         flowVersion: flowVersion,
-        collectionId,
         webhookUrl: await webhookService.getWebhookUrl({
             flowId: flowVersion.flowId,
             simulate,
@@ -110,7 +105,7 @@ const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void>
 
     switch (pieceTrigger.type) {
         case TriggerStrategy.APP_WEBHOOK:
-            await appEventRoutingService.deleteListeners({projectId, flowId: flowVersion.flowId })
+            await appEventRoutingService.deleteListeners({ projectId, flowId: flowVersion.flowId })
             break
         case TriggerStrategy.WEBHOOK:
             break
@@ -123,7 +118,7 @@ const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void>
 }
 
 const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
-    const { flowVersion, projectId, collectionId, simulate } = params
+    const { flowVersion, projectId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
     const pieceTrigger = getPieceTrigger(flowTrigger)
 
@@ -135,7 +130,6 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
     const response = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion: flowVersion,
-        collectionId,
         webhookUrl,
         projectId: projectId,
     })
@@ -144,7 +138,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
         case TriggerStrategy.APP_WEBHOOK: {
             const appName = flowTrigger.settings.pieceName
             const listeners = (response as ExecuteTriggerResponse).listeners
-            for(const listener of listeners){
+            for (const listener of listeners) {
                 await appEventRoutingService.createListeners({
                     projectId,
                     flowId: flowVersion.flowId,
@@ -164,7 +158,6 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
                 data: {
                     projectId,
                     environment: RunEnvironment.PRODUCTION,
-                    collectionId,
                     flowVersion,
                     triggerType: TriggerType.PIECE,
                 },
@@ -204,7 +197,6 @@ const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
 }
 
 type BaseParams = {
-    collectionId: CollectionId
     projectId: ProjectId
     flowVersion: FlowVersion
     simulate: boolean

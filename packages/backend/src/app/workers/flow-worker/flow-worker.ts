@@ -19,7 +19,6 @@ import { fileService } from '../../file/file.service'
 import { codeBuilder } from '../code-worker/code-builder'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { OneTimeJobData } from './job-data'
-import { collectionService } from '../../collections/collection.service'
 import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
@@ -65,8 +64,6 @@ const installPieceDependencies = async (sandbox: Sandbox, flowVersion: FlowVersi
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId)
-    const collection = await collectionService.getOneOrThrow({ projectId: jobData.projectId, id: jobData.collectionId })
-
     const sandbox = sandboxManager.obtainSandbox()
     logger.info(`[${jobData.runId}] Executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`)
     try {
@@ -76,8 +73,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
 
         const executionOutput = await engineHelper.executeFlow(sandbox, {
             flowVersionId: flowVersion.id,
-            collectionId: collection.id,
-            projectId: collection.projectId,
+            projectId: jobData.projectId,
             triggerPayload: {
                 duration: 0,
                 input: {},

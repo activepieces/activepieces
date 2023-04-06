@@ -1,10 +1,9 @@
 import { EntitySchema } from 'typeorm'
-import { Collection, Flow, FlowRun, FlowVersion, Project, TriggerEvent } from '@activepieces/shared'
+import { Flow, FlowRun, FlowVersion, Project, TriggerEvent } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity'
 
 type FlowSchema = {
     versions: FlowVersion[]
-    collection: Collection
     project: Project
     runs: FlowRun[]
     events: TriggerEvent[]
@@ -15,12 +14,11 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         projectId: {...ApIdSchema, nullable: true},
-        collectionId: ApIdSchema,
     },
     indices: [
         {
-            name: 'idx_flow_collection_id',
-            columns: ['collectionId'],
+            name: 'idx_flow_project_id',
+            columns: ['projectId'],
             unique: false,
         },
     ],
@@ -48,16 +46,6 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_flow_project_id',
-            },
-        },
-        collection: {
-            type: 'many-to-one',
-            target: 'collection',
-            cascade: true,
-            onDelete: 'CASCADE',
-            joinColumn: {
-                name: 'collectionId',
-                foreignKeyConstraintName: 'fk_flow_collection_id',
             },
         },
     },

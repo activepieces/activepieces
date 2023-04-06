@@ -9,8 +9,8 @@ import { OneTimeJobData, RepeatableJobData } from './job-data'
 import { logger } from '../../helper/logger'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
-import { instanceService } from '../../instance/instance.service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { flowInstanceService } from '../../flows/flow-instance/flow-instance.service'
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
     ONE_TIME_JOB_QUEUE,
@@ -42,10 +42,9 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
         catch (e) {
             if (e instanceof ActivepiecesError) {
                 const apError: ActivepiecesError = e as ActivepiecesError
-                const instance = await instanceService.getByCollectionId({ projectId: data.projectId, collectionId: data.collectionId })
                 if (apError.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
                     logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
-                    await instanceService.deleteOne({ projectId: data.projectId, id: instance.id })
+                    await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowVersion.flowId })
                 }
             }
             else {
@@ -65,7 +64,6 @@ const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
     const flowVersion = await flowVersionService.getOne(data.flowVersion.id)
     const payloads: unknown[] = await triggerUtils.executeTrigger({
         projectId: data.projectId,
-        collectionId: data.collectionId,
         flowVersion: flowVersion,
         payload: null,
         simulate: false,
@@ -76,7 +74,6 @@ const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
     const createFlowRuns = payloads.map((payload) =>
         flowRunService.start({
             environment: RunEnvironment.PRODUCTION,
-            collectionId: data.collectionId,
             flowVersionId: data.flowVersion.id,
             payload,
         }),

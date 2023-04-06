@@ -2,12 +2,10 @@ import { TlsOptions } from 'node:tls'
 import { DataSource } from 'typeorm'
 import { UserEntity } from '../user/user-entity'
 import { ProjectEntity } from '../project/project.entity'
-import { CollectionEntity } from '../collections/collection.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FileEntity } from '../file/file.entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
-import { InstanceEntity } from '../instance/instance.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { system } from '../helper/system/system'
@@ -33,6 +31,8 @@ import { bumpFixPieceVersions1678928503715 } from './migration/1678928503715-bum
 import { migrateSchedule1679014156667 } from './migration/1679014156667-migrate-schedule'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { CreateWebhookSimulationSchema1680698259291 } from './migration/1680698259291-create-webhook-simulation-schema'
+import { FlowInstanceEntity } from '../flows/flow-instance/flow-instance.entity'
+import { RemoveCollections1680874103828 } from './migration/1680874103828-RemoveCollections'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -68,6 +68,7 @@ const getMigrations = () => {
         bumpFixPieceVersions1678928503715,
         migrateSchedule1679014156667,
         CreateWebhookSimulationSchema1680698259291,
+        RemoveCollections1680874103828,
     ]
 }
 
@@ -86,15 +87,14 @@ export const databaseConnection = new DataSource({
     migrations: getMigrations(),
     entities: [
         TriggerEventEntity,
+        FlowInstanceEntity,
         AppEventRoutingEntity,
         AppCredentialEntity,
         ConnectionKeyEntity,
-        CollectionEntity,
         FileEntity,
         FlagEntity,
         FlowEntity,
         FlowVersionEntity,
-        InstanceEntity,
         FlowRunEntity,
         ProjectEntity,
         StoreEntryEntity,

@@ -1,29 +1,28 @@
-import { apId, CollectionId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared'
+import { apId, ProjectId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { StoreEntryEntity } from './store-entry-entity'
 
 const storeEntryRepo = databaseConnection.getRepository<StoreEntry>(StoreEntryEntity)
 
 export const storeEntryService = {
-    async upsert(collectionId: CollectionId, request: PutStoreEntryRequest): Promise<StoreEntry | null> {
-        const previousEntry = await this.getOne(collectionId, request.key)
+    async upsert({ projectId, request }: { projectId: ProjectId, request: PutStoreEntryRequest }): Promise<StoreEntry | null> {
+        const previousEntry = await this.getOne({ projectId, key: request.key })
         if (previousEntry !== null) {
             await storeEntryRepo.update(previousEntry.id, request)
-            return await this.getOne(collectionId, request.key)
+            return await this.getOne({ projectId, key: request.key })
         }
         else {
             const entryRequest: Partial<StoreEntry> = {
                 id: apId(),
-                collectionId,
                 key: request.key,
                 value: request.value,
             }
             return await storeEntryRepo.save(entryRequest)
         }
     },
-    async getOne(collectionId: CollectionId, key: string): Promise<StoreEntry | null> {
+    async getOne({ projectId, key }: { projectId: ProjectId, key: string }): Promise<StoreEntry | null> {
         return await storeEntryRepo.findOneBy({
-            collectionId,
+            projectId,
             key,
         })
     },

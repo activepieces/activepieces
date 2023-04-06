@@ -9,15 +9,10 @@ import {
     ProjectId,
     SeekPage,
     RunEnvironment,
-    CollectionId,
-    ActivepiecesError,
-    ErrorCode,
-    Collection,
     TelemetryEventName,
     ApEdition,
 } from '@activepieces/shared'
 import { getEdition } from '../../helper/secret-helper'
-import { collectionRepo } from '../../collections/collection.service'
 import { databaseConnection } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -29,6 +24,7 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { usageService } from '@ee/billing/backend/usage.service'
 import { logger } from '../../helper/logger'
 import { notifications } from '../../helper/notifications'
+import { flowRepo } from '../flow/flow.repo'
 
 export const repo = databaseConnection.getRepository(FlowRunEntity)
 
@@ -70,29 +66,26 @@ export const flowRunService = {
         return flowRun
     },
 
-    async start({ flowVersionId, collectionId, payload, environment }: StartParams): Promise<FlowRun> {
-        logger.info(`[flowRunService#start]  flowVersionId=${flowVersionId} collectionVersionId=${flowVersionId}`)
+    async start({ flowVersionId, payload, environment }: StartParams): Promise<FlowRun> {
+        logger.info(`[flowRunService#start]  flowVersionId=${flowVersionId}`)
 
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
-        const collection = await getCollectionOrThrowWithoutProjectId(collectionId)
-
+        const flow = await flowRepo.findOneBy({ id: flowVersion.flowId })
         const edition = await getEdition()
         if (edition === ApEdition.ENTERPRISE) {
             await usageService.limit({
-                projectId: collection.projectId,
+                projectId: flow.projectId,
                 flowVersion: flowVersion,
             })
         }
 
         const flowRun: Partial<FlowRun> = {
             id: apId(),
-            projectId: collection.projectId,
-            collectionId: collection.id,
+            projectId: flow.projectId,
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
             environment: environment,
             flowDisplayName: flowVersion.displayName,
-            collectionDisplayName: collection.displayName,
             status: ExecutionOutputStatus.RUNNING,
             startTime: new Date().toISOString(),
         }
@@ -103,7 +96,6 @@ export const flowRunService = {
             name: TelemetryEventName.FLOW_RUN_CREATED,
             payload: {
                 projectId: flowRun.projectId,
-                collectionId: flowRun.collectionId,
                 flowId: flowVersion.flowId,
                 environment: flowRun.environment,
             },
@@ -125,20 +117,6 @@ export const flowRunService = {
 }
 
 
-async function getCollectionOrThrowWithoutProjectId(collectionId: CollectionId): Promise<Collection> {
-    const collection = await collectionRepo.findOneBy({ id: collectionId })
-
-    if (collection === null) {
-        throw new ActivepiecesError({
-            code: ErrorCode.COLLECTION_NOT_FOUND,
-            params: {
-                id: collectionId,
-            },
-        })
-    }
-    return collection
-}
-
 type ListParams = {
     projectId: ProjectId
     cursor: Cursor | null
@@ -153,6 +131,5 @@ type GetOneParams = {
 type StartParams = {
     environment: RunEnvironment
     flowVersionId: FlowVersionId
-    collectionId: CollectionId
     payload: unknown
 }
