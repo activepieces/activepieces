@@ -1,4 +1,5 @@
 import { Piece } from '@activepieces/framework';
+import { activecampaign } from '@activepieces/piece-activecampaign';
 import { airtable } from '@activepieces/piece-airtable';
 import { asana } from '@activepieces/piece-asana';
 import { bannerbear } from '@activepieces/piece-bannerbear';
@@ -62,6 +63,7 @@ import { mailerLite } from '@activepieces/piece-mailer-lite';
 import { googleForms }  from '@activepieces/piece-google-forms';
 
 export const pieces: Piece[] = [
+    activecampaign,
     airtable,
     asana,
     bannerbear,
