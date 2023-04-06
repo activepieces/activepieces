@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../environment';
+import { environment } from '../environments/environment';
 import {  Observable, map, of, switchMap, take, tap } from 'rxjs';
 import { Project } from '@activepieces/shared';
 import { Store } from '@ngrx/store';

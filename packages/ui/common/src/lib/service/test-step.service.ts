@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { SeekPage, TriggerEvent } from '@activepieces/shared';
-import { environment } from '../environment';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root',

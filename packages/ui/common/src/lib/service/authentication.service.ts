@@ -4,7 +4,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { SignInRequest, SignUpRequest, User } from '@activepieces/shared';
-import { environment } from '../environment';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root',

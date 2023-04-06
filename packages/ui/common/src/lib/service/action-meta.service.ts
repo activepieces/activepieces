@@ -15,7 +15,7 @@ import {
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import { Observable, shareReplay, map, forkJoin } from 'rxjs';
-import { environment } from '../environment';
+import { environment } from '../environments/environment';
 import { FlowItemDetails } from '../models/flow-item-details';
 import { FlagService } from './flag.service';
 

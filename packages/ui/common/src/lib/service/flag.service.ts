@@ -2,7 +2,7 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable, shareReplay } from 'rxjs';
-import { environment } from '../environment';
+import { environment } from '../environments/environment';
 
 type FlagsMap = Record<string, boolean | string | object | undefined>;
 

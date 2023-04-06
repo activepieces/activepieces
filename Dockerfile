@@ -5,7 +5,7 @@ RUN apt-get update && \
     apt-get install -y nginx
 
 # Copy Nginx configuration template
-COPY packages/frontend/nginx.conf /etc/nginx/nginx.conf
+COPY packages/ui/core/nginx.conf /etc/nginx/nginx.conf
 
 # Set up backend
 WORKDIR /usr/src/app
