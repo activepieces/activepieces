@@ -2,7 +2,10 @@
   "name": "activepieces",
   "version": "0.3.9",
   "scripts": {
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "start:frontend": "nx serve ui-core",
+    "start:backend": "nx serve backend",
+    "start": "npm run start:backend & npm run start:frontend"
   },
   "private": true,
   "dependencies": {
