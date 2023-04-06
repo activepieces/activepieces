@@ -1,0 +1,44 @@
+@import 'packages/ui/core/src/assets/scss/variables.scss';
+
+@keyframes loading-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spin-animation {
+  svg {
+    transform-origin: 25px 25px 0;
+    animation-name: loading-spin;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+  }
+  fill: $description;
+}
+
+.route-loader {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: calc($appended-to-body-z-index + 1);
+  background-color: $white;
+}
+
+.grey-spinner {
+  fill: $description;
+}
+
+:host {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}

@@ -6,7 +6,7 @@ import { projectService } from "@backend/project/project.service";
 import { userService } from "@backend/user/user-service";
 import { SystemProp } from "@backend/helper/system/system-prop";
 import { system } from "@backend/helper/system/system";
-import { ProjectPlan } from "../shared/plan";
+import { ProjectPlan } from "@activepieces/ee/shared";
 import { ProjectPlanEntity } from "./plan.entity";
 import Stripe from 'stripe';
 import dayjs from "dayjs";

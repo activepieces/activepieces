@@ -1,38 +1,28 @@
 {
-  "name":"pieces-zendesk",
-  "$schema":"../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot":"packages/pieces/zendesk/src",
-  "projectType":"library",
-  "targets":{
-    "build":{
-      "executor":"@nrwl/js:tsc",
-      "outputs":[
-        "{options.outputPath}"
-      ],
-      "options":{
-        "outputPath":"dist/packages/pieces/zendesk",
-        "tsConfig":"packages/pieces/zendesk/tsconfig.lib.json",
-        "packageJson":"packages/pieces/zendesk/package.json",
-        "main":"packages/pieces/zendesk/src/index.ts",
-        "assets":[
-          "packages/pieces/zendesk/*.md"
-        ],
-        "buildableProjectDepsInPackageJsonType":"dependencies"
+  "name": "pieces-zendesk",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/zendesk/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/zendesk",
+        "tsConfig": "packages/pieces/zendesk/tsconfig.lib.json",
+        "packageJson": "packages/pieces/zendesk/package.json",
+        "main": "packages/pieces/zendesk/src/index.ts",
+        "assets": ["packages/pieces/zendesk/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
-    "lint":{
-      "executor":"@nrwl/linter:eslint",
-      "outputs":[
-        "{options.outputFile}"
-      ],
-      "options":{
-        "lintFilePatterns":[
-          "packages/pieces/zendesk/**/*.ts"
-        ]
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/zendesk/**/*.ts"]
       }
     }
   },
-  "tags":[
-    
-  ]
+  "tags": []
 }
