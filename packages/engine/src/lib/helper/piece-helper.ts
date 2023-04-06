@@ -141,15 +141,25 @@ const getPropOrThrow = async (params: ExecutePropsOptions) => {
     return prop
 }
 
-const resolveInput = async (input: unknown): Promise<unknown> => {
-    const variableService = new VariableService()
+type ResolveInputParams = {
+    input: Record<string, unknown>
+    executionContext?: Record<string, unknown>
+}
+
+const resolveInput = async ({ input, executionContext = {}}: ResolveInputParams): Promise<unknown> => {
     const executionState = new ExecutionState()
+
+    for (const [stepName, stepOutput] of Object.entries(executionContext)) {
+        executionState.updateLastStep(stepOutput, stepName)
+    }
+
+    const variableService = new VariableService()
     return await variableService.resolve(input, executionState)
 }
 
 export const pieceHelper = {
     async executeAction(params: ExecuteActionOperation): Promise<unknown> {
-        const { actionName, pieceName, pieceVersion, input } = params;
+        const { actionName, pieceName, pieceVersion, input, testExecutionContext } = params;
 
         const action = await getActionOrThrow({
             pieceName,
@@ -157,7 +167,10 @@ export const pieceHelper = {
             actionName,
         })
 
-        const resolvedInput = await resolveInput(input)
+        const resolvedInput = await resolveInput({
+            input,
+            executionContext: testExecutionContext,
+        })
 
         const context: ActionContext<StaticPropsValue<Record<string, any>>> = {
             propsValue: resolvedInput as Record<string, any>,
@@ -184,7 +197,9 @@ export const pieceHelper = {
         const property = await getPropOrThrow(params);
 
         try {
-            const resolvedInput = await resolveInput(params.input)
+            const resolvedInput = await resolveInput({
+                input: params.input,
+            })
 
             if (property.type === PropertyType.DYNAMIC) {
                 const dynamicProperty = property as DynamicProperties<boolean>

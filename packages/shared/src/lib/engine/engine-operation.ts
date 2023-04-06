@@ -29,6 +29,7 @@ export type ExecuteActionOperation = {
     pieceName: string
     pieceVersion: string
     input: Record<string, unknown>
+    testExecutionContext: Record<string, unknown>
     projectId: ProjectId
     collectionId: CollectionId
     workerToken?: string
