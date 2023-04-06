@@ -40,6 +40,7 @@ type ErrorParams =
   | TestTriggerFailedErrorParams
   | FlowOperationErrorParams
   | EntityNotFoundErrorParams
+  | ValidationErrorParams
 
 
 export interface BaseErrorParams<T, V> {
@@ -217,6 +218,13 @@ export type EntityNotFoundErrorParams = BaseErrorParams<
   }
 >
 
+export type ValidationErrorParams = BaseErrorParams<
+  ErrorCode.VALIDATION,
+  {
+    message: string
+  }
+>
+
 export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
   COLLECTION_VERSION_NOT_FOUND = "COLLECTION_VERSION_NOT_FOUND",
@@ -245,4 +253,5 @@ export enum ErrorCode {
   OPENAI_FAILED = "OPENAI_FAILED",
   TEST_TRIGGER_FAILED = "TEST_TRIGGER_FAILED",
   ENTITY_NOT_FOUND = "ENTITY_NOT_FOUND",
+  VALIDATION = "VALIDATION",
 }
