@@ -65,10 +65,10 @@ export const engineHelper = {
         }) as ExecutionOutput
     },
     async executeParseEvent(operation: ExecuteEventParserOperation): Promise<ParseEventResponse> {
-        const sandbox = sandboxManager.obtainSandbox()
+        const sandbox = await sandboxManager.obtainSandbox(apId())
         let result
         try {
-            await sandbox.cleanAndInit()
+            await sandbox.recreate()
 
             const buildPath = sandbox.getSandboxFolderPath()
             const { pieceName } = operation
@@ -82,14 +82,19 @@ export const engineHelper = {
     },
 
     async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | ExecuteTestOrRunTriggerResponse | ExecuteTriggerResponse> {
-        const sandbox = sandboxManager.obtainSandbox()
+        const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
+        const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
         let result
         try {
-            await sandbox.cleanAndInit()
-            const buildPath = sandbox.getSandboxFolderPath()
-            const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
-            await installPieceDependency(buildPath, pieceName, pieceVersion)
 
+            if (sandbox.cached) {
+                await sandbox.clean()
+            }
+            else {
+                await sandbox.recreate()
+                const buildPath = sandbox.getSandboxFolderPath()
+                await installPieceDependency(buildPath, pieceName, pieceVersion)
+            }
             result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
                 edition: await getEdition(),
@@ -115,17 +120,20 @@ export const engineHelper = {
 
     async executeProp(operation: ExecutePropsOptions): Promise<DropdownState<unknown> | Record<string, DynamicPropsValue>> {
         logger.debug(operation, '[EngineHelper#executeProp] operation')
+        const { pieceName, pieceVersion } = operation
 
-        const sandbox = sandboxManager.obtainSandbox()
+        const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
         let result
 
         try {
-            await sandbox.cleanAndInit()
-
-            const buildPath = sandbox.getSandboxFolderPath()
-            const { pieceName, pieceVersion } = operation
-            await installPieceDependency(buildPath, pieceName, pieceVersion)
-
+            if (sandbox.cached) {
+                await sandbox.recreate()
+                const buildPath = sandbox.getSandboxFolderPath()
+                await installPieceDependency(buildPath, pieceName, pieceVersion)
+            }
+            else {
+                await sandbox.clean()
+            }
             result = await execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, {
                 ...operation,
                 workerToken: await workerToken({
@@ -143,16 +151,19 @@ export const engineHelper = {
 
     async executeAction(operation: ExecuteActionOperation): Promise<unknown> {
         logger.debug(operation, '[EngineHelper#executeAction] operation')
+        const { pieceName, pieceVersion } = operation
 
-        const sandbox = sandboxManager.obtainSandbox()
+        const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
 
         try {
-            await sandbox.cleanAndInit()
-
-            const buildPath = sandbox.getSandboxFolderPath()
-            const { pieceName, pieceVersion } = operation
-            await installPieceDependency(buildPath, pieceName, pieceVersion)
-
+            if (sandbox.cached) {
+                await sandbox.recreate()
+                const buildPath = sandbox.getSandboxFolderPath()
+                await installPieceDependency(buildPath, pieceName, pieceVersion)
+            }
+            else {
+                await sandbox.clean()
+            }
             const result = await execute(EngineOperationType.EXECUTE_ACTION, sandbox, {
                 ...operation,
                 workerToken: await workerToken({
