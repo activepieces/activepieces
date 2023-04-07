@@ -88,7 +88,7 @@ async function build(artifact: Buffer): Promise<Buffer> {
         bundledFile = Buffer.from(invalidArtifactFile, 'utf-8')
     }
     finally {
-        sandboxManager.returnSandbox(sandbox.boxId)
+        await sandboxManager.returnSandbox(sandbox.boxId)
     }
 
     return bundledFile

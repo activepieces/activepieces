@@ -6,6 +6,7 @@ import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { logger } from '../helper/logger'
 import { packageManager } from '../helper/package-manager'
+import { Mutex } from 'async-mutex'
 
 const getIsolateExecutableName = () => {
     const defaultName = 'isolate'
@@ -167,40 +168,12 @@ export class Sandbox {
 
 }
 
-class Mutex {
-    private _locked = false
-    private _waiting: (() => void)[] = []
-
-    public lock(): Promise<void> {
-        return new Promise((resolve) => {
-            if (this._locked) {
-                this._waiting.push(() => {
-                    this.lock().then(() => resolve())
-                })
-            } else {
-                this._locked = true
-                resolve()
-            }
-        })
-    }
-
-    public unlock(): void {
-        if (this._locked) {
-            const next = this._waiting.shift()
-            if (next) {
-                next()
-            } else {
-                this._locked = false
-            }
-        }
-    }
-}
 
 export default class SandboxManager {
     private static _instance?: SandboxManager
 
     private readonly sandboxes: Map<number, Sandbox> = new Map()
-    private readonly lock = new Mutex()
+    private readonly mutex: Mutex = new Mutex()
 
     private constructor() {
         if (SandboxManager._instance != null) {
@@ -219,13 +192,19 @@ export default class SandboxManager {
     }
 
     async obtainSandbox(key: string): Promise<Sandbox> {
-        await this.lock.lock()
+        // Acquire the lock
+        const release = await this.mutex.acquire()
 
         // Find sandbox with resourceId equal to key and not used
         const sandbox = Array.from(this.sandboxes.values()).find(s => s.resourceId === key && !s.used)
         if (sandbox) {
             sandbox.used = true
+            sandbox.lastUsed = Date.now()
             sandbox.cached = true
+
+            // Release the lock
+            release()
+
             return sandbox
         }
 
@@ -243,19 +222,25 @@ export default class SandboxManager {
         if (oldestSandbox === null) {
             new Error('No sandbox available')
         }
-        oldestSandbox.cached = false
+        oldestSandbox.lastUsed = Date.now()
         oldestSandbox.used = true
+        oldestSandbox.cached = false
         oldestSandbox.resourceId = key
+
+        // Release the lock
+        release()
+
         return oldestSandbox
     }
 
-    returnSandbox(sandboxId: number): void {
-        this.lock.unlock()
+    async returnSandbox(sandboxId: number): Promise<void> {
+        const release = await this.mutex.acquire()
         const sandbox = this.sandboxes.get(sandboxId)
         if (!sandbox) {
             throw new Error('Sandbox not found')
         }
         sandbox.used = false
+        release()
     }
 
     static get instance(): SandboxManager {

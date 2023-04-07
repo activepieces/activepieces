@@ -64,7 +64,7 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
         logger.info(`Finished Executing in sandbox: ${buildPath}, duration: ${Date.now() - startTime}ms`)
     }
     finally {
-        sandboxManager.returnSandbox(sandbox.boxId)
+        await sandboxManager.returnSandbox(sandbox.boxId)
     }
 
     return executionResult

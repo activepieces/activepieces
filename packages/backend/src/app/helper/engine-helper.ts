@@ -76,7 +76,7 @@ export const engineHelper = {
             result = await execute(EngineOperationType.EXTRACT_EVENT_DATA, sandbox, operation)
         }
         finally {
-            sandboxManager.returnSandbox(sandbox.boxId)
+            await sandboxManager.returnSandbox(sandbox.boxId)
         }
         return result as ParseEventResponse
     },
@@ -107,7 +107,7 @@ export const engineHelper = {
             })
         }
         finally {
-            sandboxManager.returnSandbox(sandbox.boxId)
+            await sandboxManager.returnSandbox(sandbox.boxId)
         }
         if (operation.hookType === TriggerHookType.TEST) {
             return result as ExecuteTestOrRunTriggerResponse
@@ -143,7 +143,7 @@ export const engineHelper = {
             })
         }
         finally {
-            sandboxManager.returnSandbox(sandbox.boxId)
+            await sandboxManager.returnSandbox(sandbox.boxId)
         }
 
         return result
@@ -175,7 +175,7 @@ export const engineHelper = {
             return result
         }
         finally {
-            sandboxManager.returnSandbox(sandbox.boxId)
+            await sandboxManager.returnSandbox(sandbox.boxId)
         }
     },
 }
