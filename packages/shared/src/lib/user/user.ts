@@ -13,6 +13,8 @@ export interface User extends BaseModel<UserId> {
   status: UserStatus;
 }
 
+export type UserMeta = Pick<User, "id" | "email" | "firstName" | "lastName">;
+
 export enum UserStatus{
   VERIFIED = "VERIFIED"
 }

@@ -4,7 +4,8 @@
     "outDir": "../../dist/out-tsc",
     "module": "CommonJS",
     "types": ["node"],
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "noImplicitThis": true
   },
   "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
   "include": [

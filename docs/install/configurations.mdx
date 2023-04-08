@@ -13,18 +13,20 @@ When you execute the deploy.sh script in the Docker installation tutorial, it wi
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------  | --------
 | `AP_JWT_SECRET`              | ❗️ Encryption key used for generating JWT tokens                                                            | `None`                 | https://demo.activepieces.com
 | `AP_FRONTEND_URL`            | ❗️ Url that will be used to specify redirect url and webhook url.                                           | `None`                 | https://demo.activepieces.com/api
-| `AP_POSTGRES_DATABASE`       | ❗️ The name of the PostgreSQL database                                                                      | `None`         |
-| `AP_POSTGRES_HOST`           | ❗️ The hostname or IP address of the PostgreSQL server                                                      | `None`             |
+| `AP_POSTGRES_DATABASE`       | ❗️ The name of the PostgreSQL database                                                                      | `None`                 |
+| `AP_POSTGRES_HOST`           | ❗️ The hostname or IP address of the PostgreSQL server                                                      | `None`                 |
 | `AP_POSTGRES_PASSWORD`       | ❗️ The password for the PostgreSQL user                                                                     | `None`                 |
 | `AP_POSTGRES_PORT`           | ❗️ The port number for the PostgreSQL server                                                                | `None`                 |
-| `AP_POSTGRES_USERNAME`       | ❗️ The username for the PostgreSQL user                                                                     | `None`             |
+| `AP_POSTGRES_USERNAME`       | ❗️ The username for the PostgreSQL user                                                                     | `None`                 |
 | `AP_POSTGRES_USE_SSL`        | Use SSL to connect the postgres database                                                                    | `false`                |
+| `AP_POSTGRES_SSL_CA`         | Use SSL Certificate to connect to the postgres database                                                     | `None`                 |
 | `AP_REDIS_URL`               | If a Redis connection URL is specified, all other Redis properties will be ignored.                         | `None`                 |
 | `AP_REDIS_USER`              | ❗️ Username to use when connect to redis                                                                    | `None`                 |
 | `AP_REDIS_PASSWORD`          | ❗️ Password to use when connect to redis                                                                    | `None`                 |
-| `AP_REDIS_HOST`              | ❗️ The hostname or IP address of the Redis server                                                           | `None`                |
+| `AP_REDIS_HOST`              | ❗️ The hostname or IP address of the Redis server                                                           | `None`                 |
 | `AP_REDIS_PORT`              | ❗️ The port number for the Redis server                                                                     | `None`                 |
 | `AP_REDIS_USE_SSL`           | Connect to Redis with SSL                                                                                   | `false`                |
+| `AP_NOTIFICATION_URL`        | The notification URL is triggered whenever a run fails.                                                     | `false`                |
 | `AP_TELEMETRY_ENABLED`       | Collect telemetry information                                                                               | `false`                |
 | `AP_SIGN_UP_ENABLED`         | Enable Signed Up                                                                                            | `false`                |
 

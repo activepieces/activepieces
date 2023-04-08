@@ -1,34 +1,34 @@
-import { ApFlagId, Flag } from "@activepieces/shared";
-import { databaseConnection } from "../database/database-connection";
-import { system } from "../helper/system/system";
-import { SystemProp } from "../helper/system/system-prop";
-import { FlagEntity } from "./flag.entity";
-import axios from "axios";
-import { webhookService } from "../webhooks/webhook-service";
-import { getEdition } from "../helper/secret-helper";
+import { ApFlagId, Flag } from '@activepieces/shared'
+import { databaseConnection } from '../database/database-connection'
+import { system } from '../helper/system/system'
+import { SystemProp } from '../helper/system/system-prop'
+import { FlagEntity } from './flag.entity'
+import axios from 'axios'
+import { webhookService } from '../webhooks/webhook-service'
+import { getEdition } from '../helper/secret-helper'
 
-const flagRepo = databaseConnection.getRepository(FlagEntity);
+const flagRepo = databaseConnection.getRepository(FlagEntity)
 
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {
         return await flagRepo.save({
             id: flag.id,
             value: flag.value,
-        });
+        })
     },
     async getOne(flagId: ApFlagId): Promise<Flag | null> {
         return await flagRepo.findOneBy({
             id: flagId,
-        });
+        })
     },
     async getAll(): Promise<Flag[]> {
-        const flags = await flagRepo.find({});
-        const now = new Date().toISOString();
-        const created = now;
-        const updated = now;
+        const flags = await flagRepo.find({})
+        const now = new Date().toISOString()
+        const created = now
+        const updated = now
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const currentVersion = (await import('../../../../../package.json')).version;
-        const latestVersion = (await flagService.getLatestPackageDotJson()).version;
+        const currentVersion = (await import('../../../../../package.json')).version
+        const latestVersion = (await flagService.getLatestPackageDotJson()).version
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
@@ -89,21 +89,21 @@ export const flagService = {
                 value: latestVersion,
                 created,
                 updated,
-            }
-        );
+            },
+        )
 
-        return flags;
+        return flags
     },
     async getLatestPackageDotJson() {
         try {
-            const pkgJson = (await axios.get("https://raw.githubusercontent.com/activepieces/activepieces/main/package.json")).data;
-            return pkgJson;
+            const pkgJson = (await axios.get('https://raw.githubusercontent.com/activepieces/activepieces/main/package.json')).data
+            return pkgJson
         }
         catch (ex) {
             return { version: '0.0.0' }
         }
-    }
-};
+    },
+}
 
 export type FlagType =
     | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>
@@ -111,9 +111,9 @@ export type FlagType =
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.WARNING_TEXT_BODY, string>
-    | BaseFlagStructure<ApFlagId.WARNING_TEXT_HEADER, string>;
+    | BaseFlagStructure<ApFlagId.WARNING_TEXT_HEADER, string>
 
-interface BaseFlagStructure<K extends ApFlagId, V> {
-    id: K;
-    value: V;
+type BaseFlagStructure<K extends ApFlagId, V> = {
+    id: K
+    value: V
 }

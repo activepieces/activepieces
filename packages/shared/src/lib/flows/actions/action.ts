@@ -1,6 +1,7 @@
 import { Type, Static, } from '@sinclair/typebox';
 
 import { SemVerType } from '../../pieces';
+import { SampleDataSettingsObject } from '../sample-data';
 
 export enum ActionType {
   CODE = 'CODE',
@@ -40,7 +41,7 @@ export const PieceActionSettings = Type.Object({
   pieceVersion: SemVerType,
   actionName: Type.Optional(Type.String({})),
   input: Type.Record(Type.String({}), Type.Any()),
-  inputUiInfo: Type.Record(Type.String({}), Type.Any())
+  inputUiInfo: SampleDataSettingsObject,
 });
 
 export type PieceActionSettings = Static<typeof PieceActionSettings>;

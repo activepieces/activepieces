@@ -34,9 +34,44 @@ export const GmailRequests = {
         format
       }
     })
-    console.debug("getMail response", response)
+    let bodyHtml = '';
+    let bodyPlain = '';
+    const payload = response.body.payload;
+    let bodyParts = payload.parts || [];
+    const headers = payload.headers.reduce((obj: { [key: string]: string }, header) => {
+      obj[header.name.toLowerCase()] = header.value;
+      return obj;
+    }, {});
+    const alternateBodyPart = bodyParts.find((part) => part.mimeType.startsWith('multipart/alternative'));
+    if (alternateBodyPart && alternateBodyPart?.parts) {
+      bodyParts = alternateBodyPart.parts;
+    }
+    const subject = headers['subject'] || '';
+    // Determine the content type of the message body
+    const contentType = headers['content-type'] || 'text/plain';
+    const isMultipart = contentType.startsWith('multipart/');
 
-    return response.body
+    if (isMultipart) {
+      // If the message is multipart, extract the plain text and HTML parts
+      const textPart = bodyParts.find((part) => part.mimeType === 'text/plain');
+      const htmlPart = bodyParts.find((part) => part.mimeType === 'text/html');
+
+      // If the message is an "alternative" multipart, use the plain text part if it exists
+      const preferredPart = textPart || htmlPart;
+      bodyHtml = htmlPart ? decodeBase64(htmlPart.body.data) : '';
+      bodyPlain = preferredPart ? decodeBase64(preferredPart.body.data) : '';
+    } else {
+      // If the message is not multipart, use the body as-is
+      bodyPlain = decodeBase64(payload.body.data);
+      bodyHtml = '';
+    }
+
+    return {
+      subject: subject,
+      body_html: bodyHtml,
+      body_plain: bodyPlain,
+      ...response.body
+    }
   },
   getThread: async ({ access_token, format, thread_id }: GetMailProps) => {
     const response = await httpClient.sendRequest<GmailThread>({
@@ -50,7 +85,6 @@ export const GmailRequests = {
         format
       }
     })
-    console.debug("getThread response", response)
 
     return response.body
   },
@@ -64,7 +98,7 @@ export const GmailRequests = {
       }
     })
   },
-  searchMail: async ({ access_token, max_results = 25, page_token: pageToken, ...mail }: SearchMailProps) => {
+  searchMail: async ({ access_token, max_results = 1, page_token: pageToken, ...mail }: SearchMailProps) => {
     const query = []
 
     if (mail.from) query.push(`from:(${mail.from})`)
@@ -72,7 +106,7 @@ export const GmailRequests = {
     if (mail.subject) query.push(`subject:(${mail.subject})`)
     if (mail.label) query.push(`label:${mail.label.name}`)
     if (mail.category) query.push(`category:${mail.category}`)
-    if (mail.after != null) query.push(`after:${mail.after}`)
+    if (mail.after != null && mail.after > 0) query.push(`after:${mail.after}`)
     if (mail.before != null) query.push(`before:${mail.before}`)
 
     const response = await httpClient.sendRequest<GmailMessageList>({
@@ -88,8 +122,6 @@ export const GmailRequests = {
         ...(pageToken ? { pageToken } : {})
       }
     })
-
-    console.log("searchMail response", response)
 
     if (response.body.messages) {
       const messages = await Promise.all(
@@ -122,4 +154,8 @@ export const GmailRequests = {
 
     return response.body
   }
+}
+
+function decodeBase64(data: any) {
+  return Buffer.from(data, 'base64').toString();
 }

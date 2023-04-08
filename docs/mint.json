@@ -58,7 +58,8 @@
       "group": "Pieces",
       "pages": [
         "pieces/overview",
-        "pieces/custom-pieces"
+        "pieces/custom-pieces",
+        "pieces/versioning"
       ]
     },
     {
@@ -73,6 +74,7 @@
         "pieces/apps/calendly",
         "pieces/apps/clickup",
         "pieces/apps/connections",
+        "pieces/apps/constant-contact",
         "pieces/apps/csv",
         "pieces/apps/data-mapper",
         "pieces/apps/delay",
@@ -87,6 +89,7 @@
         "pieces/apps/google-calendar",
         "pieces/apps/google-contacts",
         "pieces/apps/google-drive",
+        "pieces/apps/google-forms",
         "pieces/apps/google-sheets",
         "pieces/apps/google-tasks",
         "pieces/apps/hackernews",
@@ -94,14 +97,20 @@
         "pieces/apps/hubspot",
         "pieces/apps/intercom",
         "pieces/apps/mailchimp",
+        "pieces/apps/mailer-lite",
+        "pieces/apps/mastodon",
+        "pieces/apps/mattermost",
         "pieces/apps/openai",
         "pieces/apps/pipedrive",
         "pieces/apps/posthog",
         "pieces/apps/rss",
+        "pieces/apps/salesforce",
         "pieces/apps/schedule",
         "pieces/apps/sendgrid",
         "pieces/apps/sendinblue",
+        "pieces/apps/shopify",
         "pieces/apps/slack",
+        "pieces/apps/smtp",
         "pieces/apps/square",
         "pieces/apps/store",
         "pieces/apps/stripe",
@@ -111,7 +120,10 @@
         "pieces/apps/twilio",
         "pieces/apps/typeform",
         "pieces/apps/wordpress",
+        "pieces/apps/xero",
         "pieces/apps/youtube",
+        "pieces/apps/zendesk",
+        "pieces/apps/zoho-crm",
         "pieces/apps/zoom"
       ]
     },

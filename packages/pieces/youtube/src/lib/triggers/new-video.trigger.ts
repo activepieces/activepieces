@@ -1,4 +1,4 @@
-import { createTrigger, httpClient, HttpMethod} from '@activepieces/framework';
+import { createTrigger, httpClient, HttpMethod } from '@activepieces/framework';
 import { TriggerStrategy } from '@activepieces/shared';
 import { channelIdentifier } from '../common/props';
 import dayjs from 'dayjs';
@@ -207,6 +207,13 @@ export const youtubeNewVideoTrigger = createTrigger({
                 "#": "2020-12-29T17:29:29+00:00"
             }
         }
+    },
+    async test({ propsValue }): Promise<unknown[]> {
+        const channelId = await getChannelId(propsValue.channel_identifier);
+        if (!channelId) {
+            return [];
+        }
+        return (await getRssItems(channelId)) || [];
     },
     async onEnable({ propsValue, store }): Promise<void> {
         const channelId = await getChannelId(propsValue.channel_identifier);

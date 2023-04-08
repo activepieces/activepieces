@@ -1,9 +1,8 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
-import { GetOrDeleteConnectionFromTokenRequest, ListConnectionKeysRequest, UpsertConnectionFromToken, UpsertSigningKeyConnection} from "@ee/product-embed/shared/connection-keys/connection-requests";
+import { ConnectionKeyId, GetOrDeleteConnectionFromTokenRequest, ListConnectionKeysRequest, UpsertConnectionFromToken, UpsertSigningKeyConnection} from "@activepieces/ee/shared";
 import { appConnectionService } from "@backend/app-connection/app-connection.service";
 import { connectionKeyService } from "./connection-key.service";
 import { StatusCodes } from "http-status-codes";
-import { ConnectionKeyId } from "../../shared/connection-keys/connection-key";
 
 export const connectionKeyModule = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
   app.register(connectionKeyController, { prefix: "/v1/connection-keys" });

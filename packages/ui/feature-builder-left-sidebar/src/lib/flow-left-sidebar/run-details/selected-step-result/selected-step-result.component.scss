@@ -1,0 +1,13 @@
+@import '../../../../../../core/src/assets/scss/variables.scss';
+
+.status-icon {
+  margin-top: -4px;
+}
+.detail-item {
+  font-weight: 500;
+  gap: 0.625rem;
+  margin-bottom: 0.5rem;
+  .description {
+    color: $description;
+  }
+}

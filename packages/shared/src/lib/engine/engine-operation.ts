@@ -3,7 +3,8 @@ import { FlowVersion, FlowVersionId } from "../flows/flow-version";
 import { ProjectId } from "../project/project";
 
 export enum EngineOperationType {
-    EXECUTE_FLOW = "EXECEUTE_FLOW",
+    EXECUTE_ACTION = "EXECUTE_ACTION",
+    EXECUTE_FLOW = "EXECUTE_FLOW",
     EXECUTE_PROPERTY = "EXECUTE_PROPERTY",
     EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK",
     EXTRACT_EVENT_DATA = "EXTRACT_EVENT_DATA",
@@ -13,10 +14,27 @@ export enum TriggerHookType {
     ON_ENABLE = "ON_ENABLE",
     ON_DISABLE = "ON_DISABLE",
     RUN = "RUN",
-    TEST = "TEST"
+    TEST = "TEST",
 }
 
-export type EngineOperation = ExecuteFlowOperation | ExecutePropsOptions | ExecuteTriggerOperation | ExecuteEventParserOperation;
+export type EngineOperation =
+    | ExecuteActionOperation
+    | ExecuteFlowOperation
+    | ExecutePropsOptions
+    | ExecuteTriggerOperation
+    | ExecuteEventParserOperation
+
+export type ExecuteActionOperation = {
+    actionName: string
+    pieceName: string
+    pieceVersion: string
+    input: Record<string, unknown>
+    testExecutionContext: Record<string, unknown>
+    projectId: ProjectId
+    collectionId: CollectionId
+    workerToken?: string
+    apiUrl?: string
+}
 
 export interface ExecuteEventParserOperation {
     pieceName: string;
@@ -79,6 +97,12 @@ export interface AppEventListener {
     events: string[],
     identifierValue: string,
 };
+
+export interface ExecuteTestOrRunTriggerResponse {
+    success: boolean;
+    message?: string;
+    output: unknown[];
+}
 
 export interface ExecuteTriggerResponse {
     listeners: AppEventListener[];

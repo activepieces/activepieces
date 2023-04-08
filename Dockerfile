@@ -5,16 +5,16 @@ RUN apt-get update && \
     apt-get install -y nginx
 
 # Copy Nginx configuration template
-COPY packages/frontend/nginx.conf /etc/nginx/nginx.conf
+COPY packages/ui/core/nginx.conf /etc/nginx/nginx.conf
 
 # Set up backend
 WORKDIR /usr/src/app
 COPY . .
 RUN npm ci
-RUN npx nx run-many --target=build --projects=backend,frontend
+RUN npx nx run-many --target=build --projects=backend,ui-core
 
 # Copy frontend files to Nginx document root directory
-RUN cp -r /usr/src/app/dist/packages/frontend/* /usr/share/nginx/html
+RUN cp -r /usr/src/app/dist/packages/ui/core/* /usr/share/nginx/html
 
 # Set up entrypoint script
 COPY docker-entrypoint.sh /
