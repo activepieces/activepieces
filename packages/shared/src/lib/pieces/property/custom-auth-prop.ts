@@ -1,10 +1,10 @@
 
 import { PropertyType } from "../model/property-type";
-import { BasePropertySchema, CheckboxProperty, NumberProperty, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
+import { BasePropertySchema, CheckboxProperty, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
 import { StaticDropdownProperty } from "./dropdown-prop";
 import { StaticPropsValue } from "./property";
 
-export type CustomAuthProp = ShortTextProperty<boolean> | SecretTextProperty<boolean> | NumberProperty<boolean> | StaticDropdownProperty<unknown, boolean> | CheckboxProperty<boolean>;
+export type CustomAuthProp = ShortTextProperty<boolean> | SecretTextProperty<boolean> | StaticDropdownProperty<unknown, boolean> | CheckboxProperty<boolean>;
 export interface CustomAuthProps {
 	[name: string]: CustomAuthProp;
 }
