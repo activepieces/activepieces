@@ -1,4 +1,4 @@
-import { createPiece } from '@activepieces/framework'
+import { createPiece } from '@activepieces/pieces-framework'
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action'
 import { slackSendMessageAction } from './lib/actions/send-message-action'
 import { version } from '../package.json'

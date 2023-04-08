@@ -1,5 +1,6 @@
 import { Static, Type } from "@sinclair/typebox";
-import { AppConnectionType, OAuth2AuthorizationMethod } from "../app-connection";
+import { AppConnectionType } from "../app-connection";
+import { OAuth2AuthorizationMethod } from "../oauth2-authorization-method";
 
 const commonAuthProps = {
     name: Type.String({}),

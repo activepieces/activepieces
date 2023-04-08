@@ -1,5 +1,5 @@
 
-import { createPiece } from "@activepieces/framework";
+import { createPiece } from "@activepieces/pieces-framework";
 import { createOrUpdateSubscriber } from "./lib/actions/create-or-update-subscription";
 import packageJson from "../package.json";
 

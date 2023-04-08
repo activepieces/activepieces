@@ -7,7 +7,7 @@ import {
 } from '../../models/chevron-dropdown-option';
 
 @Component({
-  selector: 'app-chevron-dropdown-menu',
+  selector: 'ap-chevron-dropdown-menu',
   templateUrl: './chevron-dropdown-menu.component.html',
   styleUrls: ['./chevron-dropdown-menu.component.scss'],
 })

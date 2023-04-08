@@ -1,5 +1,5 @@
-import { createTrigger, getAccessTokenOrThrow, httpClient, HttpMethod, AuthenticationType } from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { getAccessTokenOrThrow, httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
 import { getMailChimpServerPrefix, mailChimpAuth, mailChimpListIdDropdown } from '../common';
 import { MailChimpSubscribeWebhookRequest } from '../common/types';
 

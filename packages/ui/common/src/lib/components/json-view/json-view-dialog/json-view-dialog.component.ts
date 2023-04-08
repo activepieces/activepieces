@@ -8,7 +8,7 @@ import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { HighlightService } from '../../../service/highlight.service';
 
 @Component({
-  selector: 'app-json-view-dialog',
+  selector: 'ap-json-view-dialog',
   templateUrl: './json-view-dialog.component.html',
   styleUrls: ['./json-view-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

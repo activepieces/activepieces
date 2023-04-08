@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/framework';
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { getCalendars } from './helper';
 
 export const googleCalendarCommon = {

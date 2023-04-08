@@ -1,5 +1,5 @@
-import { TriggerStrategy } from '@activepieces/shared';
-import { createTrigger, DedupeStrategy, httpClient, HttpMethod, OAuth2PropertyValue, Polling, pollingHelper } from '@activepieces/framework';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import dayjs from "dayjs";
 import { notionCommon } from '../common';
 import { Client } from "@notionhq/client";

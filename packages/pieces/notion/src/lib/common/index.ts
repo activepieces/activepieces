@@ -1,5 +1,4 @@
-import { OAuth2AuthorizationMethod } from "@/shared/src";
-import { OAuth2PropertyValue, Property } from "@activepieces/framework";
+import { OAuth2PropertyValue, Property, OAuth2AuthorizationMethod } from "@activepieces/pieces-framework";
 import { Client } from "@notionhq/client";
 
 export const notionCommon = {

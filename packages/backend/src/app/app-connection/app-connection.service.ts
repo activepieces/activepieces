@@ -9,7 +9,6 @@ import {
     CloudOAuth2ConnectionValue,
     Cursor,
     ErrorCode,
-    OAuth2AuthorizationMethod,
     OAuth2ConnectionValueWithApp,
     ProjectId,
     SeekPage,
@@ -24,6 +23,7 @@ import { acquireLock } from '../database/redis-connection'
 import { decryptObject, encryptObject } from '../helper/encryption'
 import { getEdition } from '../helper/secret-helper'
 import { logger } from '../helper/logger'
+import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity)
 

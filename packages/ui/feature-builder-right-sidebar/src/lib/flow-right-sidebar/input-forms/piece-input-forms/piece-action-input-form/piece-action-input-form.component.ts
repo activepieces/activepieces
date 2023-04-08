@@ -31,7 +31,6 @@ import { Store } from '@ngrx/store';
 import {
   ActionType,
   PieceActionSettings,
-  PiecePropertyMap,
   UpdateActionRequest,
 } from '@activepieces/shared';
 import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
@@ -47,6 +46,7 @@ import {
   FlowsActions,
   FlowItemsDetailsState,
 } from '@activepieces/ui/feature-builder-store';
+import { PiecePropertyMap } from '@activepieces/pieces-framework';
 
 declare type ActionDropdownOptionValue = {
   actionName: string;

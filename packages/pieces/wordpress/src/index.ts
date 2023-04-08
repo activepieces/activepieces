@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { createWordpressPost } from './lib/actions/create-post.action';
 import { wordpressNewPost } from './lib/trigger/new-post.trigger';
 export const wordpress = createPiece({

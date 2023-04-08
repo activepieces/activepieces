@@ -1,4 +1,4 @@
-import { Piece } from '@activepieces/framework';
+import { Piece } from '@activepieces/pieces-framework';
 import { airtable } from '@activepieces/piece-airtable';
 import { asana } from '@activepieces/piece-asana';
 import { bannerbear } from '@activepieces/piece-bannerbear';

@@ -17,11 +17,10 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["packages/*"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/ee/shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
-      "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
+      "@activepieces/pieces-framework": ["packages/pieces/framework/src/index.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-asana": ["packages/pieces/asana/src/index.ts"],
       "@activepieces/piece-bannerbear": [
@@ -85,11 +84,11 @@
         "packages/pieces/mailchimp/src/index.ts"
       ],
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
-      "@activepieces/piece-matrix": ["packages/pieces/matrix/src/index.ts"],
       "@activepieces/piece-mailer-lite": [
         "packages/pieces/mailer-lite/src/index.ts"
       ],
       "@activepieces/piece-mastodon": ["packages/pieces/mastodon/src/index.ts"],
+      "@activepieces/piece-matrix": ["packages/pieces/matrix/src/index.ts"],
       "@activepieces/piece-mattermost": [
         "packages/pieces/mattermost/src/index.ts"
       ],
@@ -130,6 +129,7 @@
       "@activepieces/piece-zoho-crm": ["packages/pieces/zoho-crm/src/index.ts"],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
+      "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
       "@activepieces/ui/feature-authentication": [

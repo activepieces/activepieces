@@ -1,4 +1,5 @@
-import { createAction, Property, assertNotNullOrUndefined } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
+import { assertNotNullOrUndefined } from "@activepieces/pieces-common";
 import { figmaAuth } from '../common/props';
 import { figmaCommon } from "../common";
 import { figmaPostRequestWithMessage } from '../common/utils';

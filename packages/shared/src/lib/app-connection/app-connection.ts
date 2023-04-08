@@ -1,4 +1,5 @@
 import { BaseModel } from "../common/base-model";
+import { OAuth2AuthorizationMethod } from "./oauth2-authorization-method";
 
 export type AppConnectionId = string;
 
@@ -32,12 +33,6 @@ export interface BasicAuthConnectionValue {
   username: string;
   password: string;
   type: AppConnectionType.BASIC_AUTH
-}
-
-
-export enum OAuth2AuthorizationMethod {
-  HEADER = "HEADER",
-  BODY = "BODY"
 }
 
 export interface BaseOAuth2ConnectionValue {
