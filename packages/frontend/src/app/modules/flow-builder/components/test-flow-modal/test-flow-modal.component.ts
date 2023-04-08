@@ -140,7 +140,8 @@ export class TestFlowModalComponent implements OnInit {
     if (flow.version!.trigger?.type === TriggerType.WEBHOOK) {
       this.dialogRef = this.dialogService.open(testFlowTemplate);
     } else if (flow.version!.trigger!.type === TriggerType.PIECE) {
-      const { pieceName, pieceVersion } = flow.version!.trigger.settings;
+      const { pieceName, pieceVersion, inputUiInfo } =
+        flow.version!.trigger.settings;
       this.executeTest$ = this.actionMetaDataService
         .getPieceMetadata(pieceName, pieceVersion)
         .pipe(
@@ -153,7 +154,11 @@ export class TestFlowModalComponent implements OnInit {
             );
           }),
           switchMap((sampleData) =>
-            this.executeTest(collection, flow, sampleData)
+            this.executeTest(
+              collection,
+              flow,
+              inputUiInfo.currentSelectedData ?? sampleData
+            )
           )
         );
     } else {
