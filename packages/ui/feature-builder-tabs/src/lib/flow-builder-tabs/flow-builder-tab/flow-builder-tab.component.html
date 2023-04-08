@@ -8,8 +8,8 @@
     (editingChanges)="this.editing = $event" [viewedTextMaxWidth]="'150px'" [style.color]="'#4F4F4F'">
   </ap-editable-text>
 
-  <app-chevron-dropdown-menu [hidden]="readonlyMode" class="chevron-dropdown"
+  <ap-chevron-dropdown-menu [hidden]="readonlyMode" class="chevron-dropdown"
     [class.show-chevron]="true || hovered || dropDownOpened || tabSelected" [data]="flowActions"
     (selectValueChange)="actionHandler($event)" *ngIf="!this.editing" [appendToBody]="true"
-    (dropDownOpenedChanged)="dropDownOpened = $event" IdEntityName="Flow"></app-chevron-dropdown-menu>
+    (dropDownOpenedChanged)="dropDownOpened = $event" IdEntityName="Flow"></ap-chevron-dropdown-menu>
 </div>

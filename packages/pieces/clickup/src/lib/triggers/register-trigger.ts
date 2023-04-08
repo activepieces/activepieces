@@ -1,11 +1,13 @@
 import {
   createTrigger,
+  TriggerStrategy
+} from '@activepieces/framework';
+import {
   httpClient,
   HttpRequest,
   HttpMethod,
   AuthenticationType,
-} from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+} from "@activepieces/pieces-common";
 import { callClickupGetTask, clickupCommon } from '../common';
 import { ClickupEventType, ClickupWebhookPayload } from '../common/models';
 

@@ -1,4 +1,5 @@
-import { AuthenticationType, createAction, httpClient, HttpError, HttpMethod, Property } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/framework";
+import { AuthenticationType, httpClient, HttpError, HttpMethod } from "@activepieces/pieces-common";
 
 const markdownDescription = `
 **Workspace URL**: The url of mattermost instance (e.g \`https://activepieces.mattermost.com\`)

@@ -12,11 +12,11 @@ import { map, Observable, pairwise, startWith, tap } from 'rxjs';
 import {
   BranchCondition,
   BranchOperator,
-  DropdownOption,
   singleValueConditions,
 } from '@activepieces/shared';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
+import { DropdownOption } from '@activepieces/framework';
 
 interface BranchForm {
   firstValue: FormControl<string | null>;

@@ -1,4 +1,4 @@
-import { TriggerStrategy } from "@activepieces/shared";
+import { TriggerStrategy } from "@activepieces/framework";
 import { createTrigger } from "@activepieces/framework";
 import { squareAuthentication } from "../common/props";
 

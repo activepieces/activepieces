@@ -1,4 +1,4 @@
-import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from '@activepieces/framework'
+import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 
 export const slackSendMessage = async ({ text, conversationId, token }: SlackSendMessageParams) => {
   const request: HttpRequest<SlackSendMessageRequestBody> = {

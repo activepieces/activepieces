@@ -1,4 +1,5 @@
-import { createAction, Property, OAuth2PropertyValue, httpClient, HttpMethod, AuthenticationType } from "@activepieces/framework";
+import { createAction, Property, OAuth2PropertyValue } from "@activepieces/framework";
+import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
 import FormData from "form-data";
 
 export const googleDriveCreateNewTextFile = createAction({

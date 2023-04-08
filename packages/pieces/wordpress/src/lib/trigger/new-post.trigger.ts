@@ -1,5 +1,5 @@
-import { BasicAuthPropertyValue, createTrigger, DedupeStrategy, Polling, pollingHelper } from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import { BasicAuthPropertyValue, createTrigger, TriggerStrategy } from '@activepieces/framework';
+import { DedupeStrategy, Polling, pollingHelper } from "@activepieces/pieces-common";
 import { wordpressCommon } from '../common';
 import dayjs from "dayjs";
 
@@ -157,9 +157,8 @@ const polling: Polling<{ website_url: string, connection: BasicAuthPropertyValue
 const getPosts = async (connection: BasicAuthPropertyValue, website_url: string, authors: string, startDate: number) => {
   //Wordpress accepts date only if they come after the start of the unix time stamp in 1970
   let afterDate = dayjs(startDate).toISOString();
-  if(startDate=== 0)
-  {
-    afterDate = dayjs(startDate).add(1,'day').toISOString();
+  if (startDate === 0) {
+    afterDate = dayjs(startDate).add(1, 'day').toISOString();
   }
   const getPostsParams = {
     websiteUrl: website_url.toString().trim(),

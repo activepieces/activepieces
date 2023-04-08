@@ -1,4 +1,5 @@
-import { AuthenticationType, httpClient, HttpMethod, Property } from "@activepieces/framework";
+import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { Property } from '@activepieces/framework';
 
 export const intercomCommon = {
     connection: Property.OAuth2({

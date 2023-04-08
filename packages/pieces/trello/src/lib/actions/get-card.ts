@@ -1,4 +1,5 @@
-import { createAction, httpClient, HttpRequest, HttpMethod, Property } from '@activepieces/framework';
+import { createAction, Property } from '@activepieces/framework';
+import {httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
 import { trelloCommon } from '../common';
 import { TrelloCard } from '../common/props/card';
 

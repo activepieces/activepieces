@@ -1,5 +1,5 @@
-import { BasicAuthPropertyValue, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework"
-
+import { BasicAuthPropertyValue, Property } from '@activepieces/framework';
+import {httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
 const markdownProperty = `
 To obtain your API key and token, follow these steps:
 

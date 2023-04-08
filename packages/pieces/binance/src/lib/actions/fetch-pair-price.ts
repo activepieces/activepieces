@@ -1,4 +1,5 @@
-import { createAction, Property, httpClient, HttpMethod } from "@activepieces/framework";
+import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { createAction, Property } from "@activepieces/framework";
 
 
 export const fetchCryptoPairPrice = createAction({

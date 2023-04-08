@@ -1,4 +1,5 @@
-import { createAction, Property, assertNotNullOrUndefined } from '@activepieces/framework';
+import { createAction, Property } from '@activepieces/framework';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-common';
 import { todoistRestClient } from '../common/client/rest-client';
 import { todoistAuthentication, todoistProjectIdDropdown } from '../common/props';
 

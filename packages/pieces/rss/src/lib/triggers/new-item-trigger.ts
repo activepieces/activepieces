@@ -1,5 +1,5 @@
-import { createTrigger, DedupeStrategy, Polling, pollingHelper } from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { TriggerStrategy , createTrigger} from "@activepieces/framework";
 import { rssFeedUrl } from '../common/props';
 import FeedParser from 'feedparser';
 import axios from 'axios';

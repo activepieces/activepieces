@@ -1,4 +1,4 @@
-import { TriggerStrategy } from "@activepieces/shared";
+import { TriggerStrategy } from "@activepieces/framework";
 import { createTrigger, Property } from "@activepieces/framework";
 
 export const cronExpressionTrigger = createTrigger({

@@ -12,12 +12,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { forkJoin, map, Observable, of, shareReplay, take, tap } from 'rxjs';
-import {
-  PiecePropertyMap,
-  TriggerStrategy,
-  TriggerType,
-  UpdateTriggerRequest,
-} from '@activepieces/shared';
+import { TriggerType, UpdateTriggerRequest } from '@activepieces/shared';
+import { TriggerStrategy } from '@activepieces/framework';
 import { ActionMetaService, fadeInUp400ms } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import {
@@ -27,6 +23,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
 import { ComponentTriggerInputFormSchema } from '../../input-forms-schema';
+import { PiecePropertyMap } from '@activepieces/framework';
 declare type TriggerDropdownOption = {
   label: {
     name: string;

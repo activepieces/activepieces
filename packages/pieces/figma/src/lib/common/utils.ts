@@ -1,4 +1,4 @@
-import { httpClient, HttpMethod, HttpRequest, AuthenticationType } from "@activepieces/framework";
+import { httpClient, HttpMethod, HttpRequest, AuthenticationType } from "@activepieces/pieces-common";
 
 export const figmaGetRequest = async ( { token, url }: FigmaGetRequestParams ) => {
     const request: HttpRequest = {

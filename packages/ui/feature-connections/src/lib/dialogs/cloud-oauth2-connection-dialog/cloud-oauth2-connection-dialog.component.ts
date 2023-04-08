@@ -14,10 +14,7 @@ import {
   AppConnection,
   UpsertCloudOAuth2Request,
   CloudAuth2Connection,
-  PropertyType,
   AppConnectionType,
-  OAuth2Property,
-  OAuth2Prop,
 } from '@activepieces/shared';
 import deepEqual from 'deep-equal';
 import { fadeInUp400ms } from '@activepieces/ui/common';
@@ -31,6 +28,11 @@ import {
   OAuth2PopupParams,
   OAuth2PopupResponse,
 } from '../../models/oauth2-popup-params.interface';
+import {
+  PropertyType,
+  OAuth2Property,
+  OAuth2Props,
+} from '@activepieces/framework';
 
 interface AuthConfigSettings {
   name: FormControl<string>;
@@ -63,7 +65,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     private snackbar: MatSnackBar,
     @Inject(MAT_DIALOG_DATA)
     public dialogData: {
-      pieceAuthProperty: OAuth2Property<true, Record<string, OAuth2Prop>>;
+      pieceAuthProperty: OAuth2Property<true, OAuth2Props>;
       pieceName: string;
       connectionToUpdate: CloudAuth2Connection | undefined;
       clientId: string;

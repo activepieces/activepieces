@@ -1,4 +1,5 @@
-import { createAction, Property, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/framework";
+import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
 import { googleContactsCommon } from "../common";
 
 export const googleContactsAddContactAction = createAction({

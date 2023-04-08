@@ -1,6 +1,7 @@
 import { blackbaudCommon } from '../common/common';
 import Ajv from "ajv";
-import { createAction, Property, HttpRequest, HttpMethod, httpClient } from '@activepieces/framework';
+import { createAction, Property } from '@activepieces/framework';
+import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 
 const ajv = new Ajv();
 

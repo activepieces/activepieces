@@ -1,5 +1,6 @@
 import Airtable from "airtable";
-import { Property, HttpRequest, HttpMethod, AuthenticationType, httpClient, DynamicPropsValue } from "@activepieces/framework";
+import { Property, DynamicPropsValue } from "@activepieces/framework";
+import { HttpMethod, AuthenticationType, httpClient, HttpRequest } from "@activepieces/pieces-common";
 import { AirtableBase, AirtableEnterpriseFields, AirtableField, AirtableFieldMapping, AirtableRecord, AirtableTable } from "./models";
 
 

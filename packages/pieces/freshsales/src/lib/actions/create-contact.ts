@@ -1,4 +1,5 @@
-import {  createAction, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework"
+import { createAction, Property } from "@activepieces/framework"
+import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common"
 
 const markdownDescription = `
 To obtain your API key and bundle alias, follow these steps:

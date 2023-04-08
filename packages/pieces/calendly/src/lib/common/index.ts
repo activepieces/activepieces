@@ -1,4 +1,5 @@
-import { Property, HttpRequest, HttpMethod, httpClient } from "@activepieces/framework";
+import { Property} from "@activepieces/framework";
+import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common";
 
 interface CalendlyUser {
     /**User uri */

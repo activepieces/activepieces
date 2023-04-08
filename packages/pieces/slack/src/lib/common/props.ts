@@ -1,4 +1,5 @@
-import { AuthenticationType, httpClient, HttpMethod, HttpRequest, OAuth2PropertyValue, Property } from '@activepieces/framework'
+import { OAuth2PropertyValue, Property } from "@activepieces/framework";
+import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 
 export const slackAuth = Property.OAuth2({
   description: '',
@@ -18,7 +19,7 @@ export const slackAuth = Property.OAuth2({
   ],
 })
 
-export const slackChannel =  Property.Dropdown({
+export const slackChannel = Property.Dropdown({
   displayName: 'Channel',
   description: 'Channel, private group, or IM channel to send message to.',
   required: true,

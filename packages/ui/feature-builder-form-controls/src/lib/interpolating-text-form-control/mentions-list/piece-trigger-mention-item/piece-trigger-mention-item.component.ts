@@ -17,11 +17,8 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import {
-  PieceTrigger,
-  TriggerStrategy,
-  TriggerType,
-} from '@activepieces/shared';
+import { PieceTrigger, TriggerType } from '@activepieces/shared';
+import { TriggerStrategy } from '@activepieces/framework';
 import {
   MentionListItem,
   MentionTreeNode,

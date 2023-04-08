@@ -1,4 +1,5 @@
-import { Property, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
+import { Property } from "@activepieces/framework";
+import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 
 export const pipedriveCommon = {
     authentication: Property.OAuth2({

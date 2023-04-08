@@ -1,5 +1,5 @@
-import { createTrigger, httpClient, HttpMethod } from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import { createTrigger, TriggerStrategy } from '@activepieces/framework';
+import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { channelIdentifier } from '../common/props';
 import dayjs from 'dayjs';
 import cheerio from "cheerio";

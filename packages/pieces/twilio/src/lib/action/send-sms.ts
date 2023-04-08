@@ -1,4 +1,5 @@
-import { createAction, Property, HttpMethod } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/framework";
+import { HttpMethod } from "@activepieces/pieces-common";
 import { callTwilioApi, twilioCommon } from "../common";
 
 export const twilioSendSms = createAction({

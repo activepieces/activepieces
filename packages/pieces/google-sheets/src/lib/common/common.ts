@@ -1,4 +1,5 @@
-import { Property, OAuth2PropertyValue, httpClient, HttpMethod, AuthenticationType, HttpRequest } from "@activepieces/framework";
+import { Property, OAuth2PropertyValue } from "@activepieces/framework";
+import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from "@activepieces/pieces-common";
 
 export const googleSheetsCommon = {
     baseUrl: "https://sheets.googleapis.com/v4/spreadsheets",
@@ -19,7 +20,7 @@ export const googleSheetsCommon = {
                 return {
                     disabled: true,
                     options: [],
-                    placeholder:'Please authenticate first'
+                    placeholder: 'Please authenticate first'
                 }
             }
             const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
@@ -54,7 +55,7 @@ export const googleSheetsCommon = {
                 return {
                     disabled: true,
                     options: [],
-                    placeholder:'Please select a spreadsheet first'
+                    placeholder: 'Please select a spreadsheet first'
                 }
             }
             const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
@@ -72,7 +73,7 @@ export const googleSheetsCommon = {
     }),
     getValues: getValues,
     appendGoogleSheetValues: appendGoogleSheetValues,
-    findSheetName:findSheetName,
+    findSheetName: findSheetName,
     deleteRow: deleteRow,
 }
 

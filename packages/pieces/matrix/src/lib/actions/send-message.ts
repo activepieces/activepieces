@@ -1,5 +1,5 @@
-import { AuthenticationType, HttpMethod, Property, createAction, httpClient } from "@activepieces/framework";
-
+import { createAction, Property } from "@activepieces/framework";
+import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 export const sendMessage = createAction({
     name: "send_message",

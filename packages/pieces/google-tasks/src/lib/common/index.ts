@@ -1,4 +1,5 @@
-import { Property, OAuth2PropertyValue, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
+import { Property, OAuth2PropertyValue } from "@activepieces/framework";
+import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
 
 export enum TaskStatus {
     NEEDS_ACTION = 'needsAction',

@@ -1,4 +1,5 @@
-import { createAction, Property, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/framework";
+import { HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
 import { sendgridCommon } from "../common";
 
 export const sendDynamicTemplate = createAction({

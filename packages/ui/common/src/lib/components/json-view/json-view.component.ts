@@ -9,7 +9,7 @@ import { HighlightService } from '../../service/highlight.service';
 import { JsonViewDialogComponent } from './json-view-dialog/json-view-dialog.component';
 
 @Component({
-  selector: 'app-json-viewer',
+  selector: 'ap-json-viewer',
   templateUrl: './json-view.component.html',
   styleUrls: ['./json-view.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

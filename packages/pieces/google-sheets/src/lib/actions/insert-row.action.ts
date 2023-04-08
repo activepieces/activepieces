@@ -8,7 +8,7 @@ export const insertRowAction = createAction({
     displayName: 'Insert Row',
     props: {
         authentication: googleSheetsCommon.authentication,
-        spreadsheet_id:googleSheetsCommon.spreadsheet_id,
+        spreadsheet_id: googleSheetsCommon.spreadsheet_id,
         sheet_id: googleSheetsCommon.sheet_id,
         as_string: Property.Checkbox({
             displayName: 'As String',
@@ -23,17 +23,17 @@ export const insertRowAction = createAction({
     },
     async run(context) {
         const values = context.propsValue['values'];
-        const sheetName = await googleSheetsCommon.findSheetName(context.propsValue['authentication']!['access_token'],context.propsValue['spreadsheet_id']!,context.propsValue['sheet_id']!);
-        if(!sheetName)
-        {
+        const sheetName = await googleSheetsCommon.findSheetName(context.propsValue['authentication']['access_token'], 
+        context.propsValue['spreadsheet_id'], context.propsValue['sheet_id']);
+        if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
-         if (Array.isArray(values)) {
+        if (Array.isArray(values)) {
             await googleSheetsCommon.appendGoogleSheetValues({
-                accessToken: context.propsValue['authentication']!['access_token'],
+                accessToken: context.propsValue['authentication']['access_token'],
                 majorDimension: Dimension.COLUMNS,
                 range: sheetName,
-                spreadSheetId: context.propsValue['spreadsheet_id']!,
+                spreadSheetId: context.propsValue['spreadsheet_id'],
                 valueInputOption: context.propsValue['as_string']
                     ? ValueInputOption.RAW
                     : ValueInputOption.USER_ENTERED,

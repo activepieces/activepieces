@@ -1,4 +1,6 @@
-import { AuthenticationType, createAction, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework";
+import { Property, createAction } from "@activepieces/framework";
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from "@activepieces/pieces-common";
+
 import { props } from "../common/props";
 import dayjs from "dayjs";
 

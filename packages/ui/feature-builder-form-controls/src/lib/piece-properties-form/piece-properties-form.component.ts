@@ -40,10 +40,10 @@ import {
   DropdownState,
   DynamicProperties,
   MultiSelectDropdownProperty,
+  PieceProperty,
   PiecePropertyMap,
-  PiecePropertyTypes,
   PropertyType,
-} from '@activepieces/shared';
+} from '@activepieces/framework';
 import {
   jsonValidator,
   fadeInUp400ms,
@@ -430,7 +430,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     this.selectedOptionalProperties = newSelectedOptionalConfigsObj;
   }
 
-  addOptionalProperty(propertyKey: string, property: PiecePropertyTypes) {
+  addOptionalProperty(propertyKey: string, property: PieceProperty) {
     this.form.addControl(
       propertyKey,
       new UntypedFormControl(

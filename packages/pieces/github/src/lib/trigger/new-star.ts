@@ -1,5 +1,13 @@
-import { createTrigger, HttpRequest, HttpMethod, AuthenticationType, httpClient } from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import {
+  createTrigger,
+  TriggerStrategy
+} from '@activepieces/framework';
+import {
+  httpClient,
+  HttpRequest,
+  HttpMethod,
+  AuthenticationType
+} from "@activepieces/pieces-common";
 import { githubCommon } from '../common';
 
 export const githubNewRepoEvent = createTrigger({

@@ -1,5 +1,5 @@
-import { AuthenticationType, BasicAuthPropertyValue, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework";
-
+import { BasicAuthPropertyValue, Property } from "@activepieces/framework";
+import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 export type WordpressMedia = { id: string, title: { rendered: string } }
 
 // TODO This needs a better description

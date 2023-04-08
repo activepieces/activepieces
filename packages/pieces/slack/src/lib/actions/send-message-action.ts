@@ -1,8 +1,8 @@
 import {
-  assertNotNullOrUndefined,
   createAction,
   Property,
 } from '@activepieces/framework'
+import { assertNotNullOrUndefined } from '@activepieces/pieces-common'
 import { slackAuth, slackChannel } from '../common/props'
 import { slackSendMessage } from '../common/utils'
 

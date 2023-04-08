@@ -1,5 +1,5 @@
 import { createTrigger } from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import { TriggerStrategy } from "@activepieces/framework";
 import { stripeCommon } from '../common';
 
 export const stripeNewSubscription = createTrigger({

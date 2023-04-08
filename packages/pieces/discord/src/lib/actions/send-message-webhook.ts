@@ -1,4 +1,5 @@
-import { createAction, Property, HttpRequest, HttpMethod, httpClient } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/framework";
+import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common";
 
 export const discordSendMessageWebhook = createAction({
 name: 'send_message_webhook',

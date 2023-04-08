@@ -1,4 +1,5 @@
-import { createAction, Property, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework"
+import { createAction, Property} from "@activepieces/framework"
+import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common"
 
 export const dropboxCreateNewFolder = createAction({
   name: 'create_new_dropbox_folder',

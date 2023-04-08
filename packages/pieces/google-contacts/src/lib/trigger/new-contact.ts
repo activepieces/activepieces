@@ -1,5 +1,5 @@
-import { createTrigger, getAccessTokenOrThrow, HttpResponse, httpClient, HttpMethod, AuthenticationType } from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import { createTrigger, TriggerStrategy } from '@activepieces/framework';
+import { getAccessTokenOrThrow, HttpResponse, httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common"
 import { googleContactsCommon } from '../common';
 
 export const googleContactNewOrUpdatedContact = createTrigger({

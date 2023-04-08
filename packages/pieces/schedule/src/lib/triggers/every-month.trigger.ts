@@ -1,4 +1,4 @@
-import { TriggerStrategy } from "@activepieces/shared";
+import { TriggerStrategy } from "@activepieces/framework";
 import { createTrigger, Property } from "@activepieces/framework";
 import { DAY_HOURS, MONTH_DAYS,  validateHours,  validateMonthDays  } from "../common";
 

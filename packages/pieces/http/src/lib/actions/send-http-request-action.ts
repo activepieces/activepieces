@@ -1,4 +1,5 @@
-import { createAction, Property, assertNotNullOrUndefined, HttpRequest, HttpHeaders, QueryParams, httpClient } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/framework";
+import {assertNotNullOrUndefined, HttpRequest, HttpHeaders, QueryParams, httpClient} from "@activepieces/pieces-common";
 import { httpMethodDropdown } from "../common/props";
 
 export const httpSendRequestAction = createAction({

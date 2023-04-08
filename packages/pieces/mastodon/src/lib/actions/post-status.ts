@@ -1,5 +1,5 @@
-import { AuthenticationType, createAction, httpClient, HttpMethod, Property } from "@activepieces/framework";
-
+import { Property, createAction} from "@activepieces/framework";
+import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 
 const markdownDescription = `

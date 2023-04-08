@@ -1,11 +1,13 @@
 import {
   createTrigger,
+  TriggerStrategy
+} from '@activepieces/framework';
+import {
   httpClient,
   HttpRequest,
   HttpMethod,
-  AuthenticationType,
-} from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+  AuthenticationType
+} from "@activepieces/pieces-common";
 import { githubCommon } from '../common';
 
 export const githubRegisterTrigger = ({

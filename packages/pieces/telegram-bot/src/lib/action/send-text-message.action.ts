@@ -1,4 +1,5 @@
-import { createAction, Property, httpClient, HttpMethod } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/framework";
+import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 import { telegramCommons } from "../common";
 
 export const telegramSendMessageAction = createAction({

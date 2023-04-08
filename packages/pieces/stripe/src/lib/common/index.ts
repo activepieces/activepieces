@@ -1,4 +1,5 @@
-import { Property, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
+import { Property} from "@activepieces/framework";
+import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
 
 export const stripeCommon = {
     baseUrl:  "https://api.stripe.com/v1",
