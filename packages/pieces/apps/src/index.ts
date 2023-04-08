@@ -57,6 +57,7 @@ import { mastodon } from '@activepieces/piece-mastodon';
 import { shopify } from '@activepieces/piece-shopify';
 import { constantContact } from '@activepieces/piece-constant-contact';
 import { salesforce } from '@activepieces/piece-salesforce';
+import { matrix } from "@activepieces/piece-matrix";
 import { smtp } from '@activepieces/piece-smtp';
 import { mailerLite } from '@activepieces/piece-mailer-lite';
 import { googleForms }  from '@activepieces/piece-google-forms';
@@ -121,6 +122,7 @@ export const pieces: Piece[] = [
     shopify,
     constantContact,
     salesforce,
+    matrix,
     smtp,
     googleForms
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
