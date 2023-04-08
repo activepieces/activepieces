@@ -69,7 +69,6 @@ export const engineHelper = {
         let result
         try {
             await sandbox.recreate()
-
             const buildPath = sandbox.getSandboxFolderPath()
             const { pieceName } = operation
             await installPieceDependency(buildPath, pieceName, 'latest')
@@ -83,18 +82,13 @@ export const engineHelper = {
 
     async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | ExecuteTestOrRunTriggerResponse | ExecuteTriggerResponse> {
         const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
-        const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
+        const sandbox = await getSandbox({
+            pieceName,
+            pieceVersion,
+        })
         let result
         try {
 
-            if (sandbox.cached) {
-                await sandbox.clean()
-            }
-            else {
-                await sandbox.recreate()
-                const buildPath = sandbox.getSandboxFolderPath()
-                await installPieceDependency(buildPath, pieceName, pieceVersion)
-            }
             result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
                 edition: await getEdition(),
@@ -122,18 +116,13 @@ export const engineHelper = {
         logger.debug(operation, '[EngineHelper#executeProp] operation')
         const { pieceName, pieceVersion } = operation
 
-        const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
-        let result
+        const sandbox = await getSandbox({
+            pieceName,
+            pieceVersion,
+        })
 
+        let result
         try {
-            if (sandbox.cached) {
-                await sandbox.recreate()
-                const buildPath = sandbox.getSandboxFolderPath()
-                await installPieceDependency(buildPath, pieceName, pieceVersion)
-            }
-            else {
-                await sandbox.clean()
-            }
             result = await execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, {
                 ...operation,
                 workerToken: await workerToken({
@@ -153,17 +142,12 @@ export const engineHelper = {
         logger.debug(operation, '[EngineHelper#executeAction] operation')
         const { pieceName, pieceVersion } = operation
 
-        const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
+        const sandbox = await getSandbox({
+            pieceName,
+            pieceVersion,
+        })
 
         try {
-            if (sandbox.cached) {
-                await sandbox.recreate()
-                const buildPath = sandbox.getSandboxFolderPath()
-                await installPieceDependency(buildPath, pieceName, pieceVersion)
-            }
-            else {
-                await sandbox.clean()
-            }
             const result = await execute(EngineOperationType.EXECUTE_ACTION, sandbox, {
                 ...operation,
                 workerToken: await workerToken({
@@ -187,6 +171,24 @@ function workerToken(request: { projectId: ProjectId, collectionId: CollectionId
         projectId: request.projectId,
         collectionId: request.collectionId,
     })
+}
+
+async function getSandbox({ pieceName, pieceVersion }: {
+    pieceName: string
+    pieceVersion: string
+}): Promise<Sandbox> {
+    const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
+    if (sandbox.cached) {
+        logger.info(`Resuing sandox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`);
+        await sandbox.clean()
+    }
+    else {
+        logger.info(`Preparing sandbox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`)
+        await sandbox.recreate()
+        const buildPath = sandbox.getSandboxFolderPath()
+        await installPieceDependency(buildPath, pieceName, pieceVersion)
+    }
+    return sandbox
 }
 
 async function execute(operation: EngineOperationType, sandbox: Sandbox, input: EngineOperation): Promise<unknown> {
