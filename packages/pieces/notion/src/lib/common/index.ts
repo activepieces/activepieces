@@ -1,3 +1,4 @@
+import { OAuth2AuthorizationMethod } from "@/shared/src";
 import { OAuth2PropertyValue, Property } from "@activepieces/framework";
 import { Client } from "@notionhq/client";
 
@@ -11,6 +12,7 @@ export const notionCommon = {
         extra: {
             owner: "user"
         },
+        authorizationMethod: OAuth2AuthorizationMethod.HEADER,
         required: true,
     }),
     database_id: Property.Dropdown<string>({

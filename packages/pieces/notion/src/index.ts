@@ -8,8 +8,9 @@ export const notion = createPiece({
   displayName: 'notion',
   logoUrl: 'https://cdn.activepieces.com/pieces/notion.png',
   version: packageJson.version,
+  minimumSupportedRelease: '0.3.10',
   authors: [
-    'Shay Punter', 'abuaboud'
+    'ShayPunter', 'abuaboud'
   ],
   actions: [
 
