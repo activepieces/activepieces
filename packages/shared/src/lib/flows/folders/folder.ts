@@ -1,0 +1,13 @@
+import { Static, Type } from "@sinclair/typebox";
+import { BaseModelSchema } from "../../common";
+
+export type FolderId = string;
+
+export const Folder = Type.Object({
+    ...BaseModelSchema,
+    id: Type.String(),
+    projectId: Type.String(),
+    displayName: Type.String()
+});
+
+export type Folder = Static<typeof Folder>

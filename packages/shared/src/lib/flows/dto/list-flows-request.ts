@@ -2,6 +2,7 @@ import { Static, Type } from "@sinclair/typebox";
 import { Cursor } from "../../common/seek-page";
 
 export const ListFlowsRequest = Type.Object({
+    folderId: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number({})),
     cursor: Type.Optional(Type.String({})),
 });

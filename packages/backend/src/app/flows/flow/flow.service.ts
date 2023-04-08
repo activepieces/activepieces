@@ -7,6 +7,7 @@ import {
     Flow,
     FlowId,
     FlowOperationRequest,
+    FlowOperationType,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -71,7 +72,7 @@ export const flowService = {
 
         return flow
     },
-    async list({ projectId, cursorRequest, limit }: { projectId: ProjectId, cursorRequest: Cursor | null, limit: number }): Promise<SeekPage<Flow>> {
+    async list({ projectId, cursorRequest, limit, folderId }: { projectId: ProjectId, cursorRequest: Cursor | null, limit: number, folderId: string | undefined }): Promise<SeekPage<Flow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: FlowEntity,
@@ -82,7 +83,7 @@ export const flowService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const { data, cursor } = await paginator.paginate(flowRepo.createQueryBuilder('flow').where({ projectId }))
+        const { data, cursor } = await paginator.paginate(flowRepo.createQueryBuilder('flow').where({ projectId, folderId }))
         const flowVersionsPromises: Array<Promise<FlowVersion | null>> = []
         data.forEach((collection) => {
             flowVersionsPromises.push(flowVersionService.getFlowVersion(projectId, collection.id, undefined, false))
@@ -112,12 +113,19 @@ export const flowService = {
             key: flowId,
             timeout: 5000,
         })
+        const rawFlow = await flowRepo.findOneBy({ projectId: projectId, id: flowId })
         try {
-            let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, false))
-            if (lastVersion.state === FlowVersionState.LOCKED) {
-                lastVersion = await flowVersionService.createVersion(flowId, lastVersion)
+            if (request.type === FlowOperationType.CHANGE_FOLDER) {
+                rawFlow.folderId = request.request.folderId
+                await flowRepo.update(rawFlow.id, rawFlow)
             }
-            await flowVersionService.applyOperation(projectId, lastVersion, request)
+            else {
+                let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, false))
+                if (lastVersion.state === FlowVersionState.LOCKED) {
+                    lastVersion = await flowVersionService.createVersion(flowId, lastVersion)
+                }
+                await flowVersionService.applyOperation(projectId, lastVersion, request)
+            }
         }
         finally {
             await flowLock.release()

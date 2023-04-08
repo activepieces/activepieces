@@ -32,7 +32,8 @@ import { migrateSchedule1679014156667 } from './migration/1679014156667-migrate-
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { CreateWebhookSimulationSchema1680698259291 } from './migration/1680698259291-create-webhook-simulation-schema'
 import { FlowInstanceEntity } from '../flows/flow-instance/flow-instance.entity'
-import { RemoveCollections1680874103828 } from './migration/1680874103828-RemoveCollections'
+import { FolderEntity } from '../flows/folder/folder.entity'
+import { RemoveCollections1680986182074 } from './migration/1680986182074-RemoveCollections'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -68,7 +69,7 @@ const getMigrations = () => {
         bumpFixPieceVersions1678928503715,
         migrateSchedule1679014156667,
         CreateWebhookSimulationSchema1680698259291,
-        RemoveCollections1680874103828,
+        RemoveCollections1680986182074,
     ]
 }
 
@@ -103,5 +104,6 @@ export const databaseConnection = new DataSource({
         ProjectPlanEntity,
         ProjectUsageEntity,
         WebhookSimulationEntity,
+        FolderEntity,
     ],
 })

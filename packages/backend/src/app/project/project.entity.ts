@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { AppConnection, Flow, Project, TriggerEvent, User } from '@activepieces/shared'
+import { AppConnection, Flow, Folder, Project, TriggerEvent, User } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
 import { ConnectionKey, AppCredential } from '@activepieces/ee/shared'
 
@@ -9,6 +9,7 @@ type ProjectSchema = {
     connectionKeys: ConnectionKey[]
     appCredentials: AppCredential[]
     files: File[]
+    folders: Folder[]
     events: TriggerEvent[]
     appConnections: AppConnection[]
 } & Project
@@ -30,6 +31,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         },
     ],
     relations: {
+        folders: {
+            type: 'one-to-many',
+            target: 'folder',
+            inverseSide: 'project',
+        },
         appConnections: {
             type: 'one-to-many',
             target: 'app_connection',

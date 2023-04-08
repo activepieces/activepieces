@@ -55,6 +55,8 @@ export * from "./lib/flows/trigger-events/trigger-event";
 export {SampleDataSettings} from './lib/flows/sample-data'
 export * from './lib/common/base-model';
 export * from './lib/flows/flow-instances';
+export * from "./lib/flows/folders/folder";
+export * from "./lib/flows/folders/folder-requests";
 
 import { TypeSystem } from '@sinclair/typebox/system'
 // Look at https://github.com/sinclairzx81/typebox/issues/350

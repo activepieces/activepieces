@@ -27,7 +27,7 @@ export const FlowInstanceEntity = new EntitySchema<FlowInstanceSchema>({
     ],
     relations: {
         flow: {
-            type: 'many-to-one',
+            type: 'one-to-one',
             target: 'flow',
             cascade: true,
             onDelete: 'CASCADE',
@@ -38,7 +38,7 @@ export const FlowInstanceEntity = new EntitySchema<FlowInstanceSchema>({
             },
         },
         flowVersion: {
-            type: 'many-to-one',
+            type: 'one-to-one',
             target: 'flow_version',
             cascade: true,
             onDelete: 'CASCADE',
