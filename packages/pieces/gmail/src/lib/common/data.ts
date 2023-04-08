@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue } from "@activepieces/framework"
+import { OAuth2PropertyValue } from "@activepieces/pieces-framework"
 import { GmailLabel, GmailMessage, GmailThread, GmailMessageFormat, GmailMessageResponse as GmailMessageList } from "./models"
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 

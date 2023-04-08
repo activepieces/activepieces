@@ -32,7 +32,7 @@ import {
   PropertyType,
   OAuth2Property,
   OAuth2Props,
-} from '@activepieces/framework';
+} from '@activepieces/pieces-framework';
 
 interface AuthConfigSettings {
   name: FormControl<string>;

@@ -1,4 +1,4 @@
-import { Property, BasicAuthPropertyValue } from "@activepieces/framework";
+import { Property, BasicAuthPropertyValue } from "@activepieces/pieces-framework";
 import { HttpMethod, HttpMessageBody, httpClient, AuthenticationType } from "@activepieces/pieces-common";
 
 export const twilioCommon = {

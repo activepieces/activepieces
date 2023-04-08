@@ -1,4 +1,4 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/framework';
+import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common"
 
 export const googleFormsCommon = {

@@ -1,7 +1,7 @@
 import {
   createTrigger,
   TriggerStrategy
-} from '@activepieces/framework';
+} from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpRequest,

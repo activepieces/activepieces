@@ -1,4 +1,4 @@
-import { Store } from "@activepieces/framework";
+import { Store } from "@activepieces/pieces-framework";
 
 interface TimebasedPolling<INPUT> {
     strategy: DedupeStrategy.TIMEBASED;

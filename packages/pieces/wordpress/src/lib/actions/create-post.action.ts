@@ -1,4 +1,4 @@
-import { BasicAuthPropertyValue, createAction, Property } from "@activepieces/framework";
+import { BasicAuthPropertyValue, createAction, Property } from "@activepieces/pieces-framework";
 import { wordpressCommon, WordpressMedia } from "../common";
 import { httpClient, HttpMethod, HttpRequest, AuthenticationType } from "@activepieces/pieces-common";
 

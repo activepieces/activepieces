@@ -1,4 +1,4 @@
-import { Trigger, TriggerStrategy } from '@activepieces/framework'
+import { Trigger, TriggerStrategy } from '@activepieces/pieces-framework'
 import {
     CollectionId,
     ExecuteTriggerResponse,

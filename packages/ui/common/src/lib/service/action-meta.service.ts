@@ -19,7 +19,7 @@ import {
   TriggerBase,
   PieceMetadata,
   PieceMetadataSummary,
-} from '@activepieces/framework';
+} from '@activepieces/pieces-framework';
 
 type TriggersMetadata = Record<string, TriggerBase>;
 

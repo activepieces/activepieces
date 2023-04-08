@@ -1,6 +1,6 @@
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
-import { PieceProperty, PropertyType } from '@activepieces/framework'
+import { PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import {
     ActionType,
     apId,

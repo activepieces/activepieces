@@ -1,5 +1,5 @@
 import { HttpRequest, HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { TriggerStrategy , createTrigger} from "@activepieces/framework";
+import { TriggerStrategy , createTrigger} from "@activepieces/pieces-framework";
 import { dripCommon } from '../common';
 
 const triggerNameInStore = 'drip_new_subscriber_trigger';

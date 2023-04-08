@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow, HttpResponse, httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common"
 import { googleContactsCommon } from '../common';
 

@@ -1,5 +1,5 @@
-import { createTrigger } from '@activepieces/framework';
-import { TriggerStrategy } from "@activepieces/framework";
+import { createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { googleSheetsCommon } from '../common/common';
 
 const alphabet ='ABCDEFGHIJKLMNOPQRSTUVWXYZ';

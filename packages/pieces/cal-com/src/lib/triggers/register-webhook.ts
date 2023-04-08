@@ -1,4 +1,4 @@
-import { createTrigger, Trigger, TriggerStrategy, Property} from "@activepieces/framework"
+import { createTrigger, Trigger, TriggerStrategy, Property} from "@activepieces/pieces-framework"
 import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
 
 export const registerWebhooks = ({

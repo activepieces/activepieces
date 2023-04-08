@@ -21,7 +21,7 @@ import {
   ActionMetaService,
   isOverflown,
 } from '@activepieces/ui/common';
-import { TriggerStrategy } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/pieces-framework';
 
 @Component({
   selector: 'app-flow-right-sidebar',

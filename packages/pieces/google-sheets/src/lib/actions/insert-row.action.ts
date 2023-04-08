@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { Dimension, ValueInputOption } from '../common/common';
 import { googleSheetsCommon } from '../common/common';
 

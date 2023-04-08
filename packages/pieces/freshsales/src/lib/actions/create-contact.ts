@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/framework"
+import { createAction, Property } from "@activepieces/pieces-framework"
 import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common"
 
 const markdownDescription = `

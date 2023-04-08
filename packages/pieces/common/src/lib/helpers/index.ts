@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue } from "@activepieces/framework";
+import { OAuth2PropertyValue } from "@activepieces/pieces-framework";
 
 export const getAccessTokenOrThrow = (auth: OAuth2PropertyValue | undefined): string => {
   const accessToken = auth?.access_token;

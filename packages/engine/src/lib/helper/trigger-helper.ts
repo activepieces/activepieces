@@ -4,7 +4,7 @@ import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./piece-helper";
 import { isValidCron } from 'cron-validator';
-import { TriggerStrategy } from "@activepieces/framework";
+import { TriggerStrategy } from "@activepieces/pieces-framework";
 
 type Listener = {
   events: string[];

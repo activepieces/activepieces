@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, Property, createAction } from "@activepieces/framework";
+import { OAuth2PropertyValue, Property, createAction } from "@activepieces/pieces-framework";
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { constantContactProps } from "../common/props";
 

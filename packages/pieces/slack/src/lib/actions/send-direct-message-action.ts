@@ -2,7 +2,7 @@ import {
   OAuth2PropertyValue,
   createAction,
   Property,
-} from '@activepieces/framework'
+} from '@activepieces/pieces-framework'
 import {
   assertNotNullOrUndefined,
   AuthenticationType,

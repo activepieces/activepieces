@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { airtableCommon } from '../common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 

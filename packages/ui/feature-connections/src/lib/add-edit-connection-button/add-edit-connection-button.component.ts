@@ -14,7 +14,7 @@ import {
   PropertyType,
   SecretTextProperty,
   CustomAuthProps,
-} from '@activepieces/framework';
+} from '@activepieces/pieces-framework';
 import {
   ChangeDetectionStrategy,
   Component,

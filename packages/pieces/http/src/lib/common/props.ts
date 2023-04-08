@@ -1,4 +1,4 @@
-import { Property } from "@activepieces/framework";
+import { Property } from "@activepieces/pieces-framework";
 import { HttpMethod } from "@activepieces/pieces-common";
 
 const httpMethodDropdownOptions = Object.values(HttpMethod).map(m => ({

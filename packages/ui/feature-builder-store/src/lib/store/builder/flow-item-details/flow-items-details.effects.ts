@@ -4,7 +4,7 @@ import { forkJoin, map, of, switchMap } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItemDetailsActions } from './flow-items-details.action';
 import { ActionMetaService, FlowItemDetails } from '@activepieces/ui/common';
-import { PieceMetadataSummary } from '@activepieces/framework';
+import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 
 export const CORE_PIECES_ACTIONS_NAMES = [
   'store',

@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { channelIdentifier } from '../common/props';
 import dayjs from 'dayjs';

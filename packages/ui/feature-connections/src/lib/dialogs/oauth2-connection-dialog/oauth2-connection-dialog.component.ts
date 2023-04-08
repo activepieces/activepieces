@@ -20,7 +20,7 @@ import {
   OAuth2Property,
   OAuth2Props,
   PropertyType,
-} from '@activepieces/framework';
+} from '@activepieces/pieces-framework';
 import deepEqual from 'deep-equal';
 import { environment, fadeInUp400ms } from '@activepieces/ui/common';
 import {

@@ -1,4 +1,4 @@
-import { Property, createAction } from "@activepieces/framework";
+import { Property, createAction } from "@activepieces/pieces-framework";
 import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from "@activepieces/pieces-common";
 
 import { props } from "../common/props";

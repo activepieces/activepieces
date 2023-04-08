@@ -18,7 +18,7 @@ import {
   tap,
 } from 'rxjs';
 import { PieceTrigger, TriggerType } from '@activepieces/shared';
-import { TriggerStrategy } from '@activepieces/framework';
+import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   MentionListItem,
   MentionTreeNode,

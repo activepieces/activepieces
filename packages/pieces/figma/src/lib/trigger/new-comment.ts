@@ -1,4 +1,4 @@
-import { createTrigger, Property, TriggerStrategy } from "@activepieces/framework";
+import { createTrigger, Property, TriggerStrategy } from "@activepieces/pieces-framework";
 import { assertNotNullOrUndefined } from "@activepieces/pieces-common";
 import { nanoid } from 'nanoid'
 import { figmaAuth } from '../common/props';

@@ -1,4 +1,4 @@
-import { DynamicPropsValue, OAuth2PropertyValue, Property, createAction } from "@activepieces/framework";
+import { DynamicPropsValue, OAuth2PropertyValue, Property, createAction } from "@activepieces/pieces-framework";
 import { AuthenticationType, getAccessTokenOrThrow, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { intercomCommon } from "../common";
 

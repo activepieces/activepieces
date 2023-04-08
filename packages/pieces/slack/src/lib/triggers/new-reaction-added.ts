@@ -1,4 +1,4 @@
-import { createTrigger, Property, TriggerStrategy } from "@activepieces/framework";
+import { createTrigger, Property, TriggerStrategy } from "@activepieces/pieces-framework";
 import { slackAuth } from "../common/props";
 
 

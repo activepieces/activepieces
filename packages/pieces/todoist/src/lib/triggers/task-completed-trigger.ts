@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from "@activepieces/pieces-common";
 import dayjs from 'dayjs';
 import { todoistSyncClient } from '../common/client/sync-client'

@@ -1,5 +1,5 @@
-import { TriggerStrategy } from "@activepieces/framework";
-import { createTrigger, Property } from "@activepieces/framework";
+import { TriggerStrategy } from "@activepieces/pieces-framework";
+import { createTrigger, Property } from "@activepieces/pieces-framework";
 import { DAY_HOURS, validateHours,  } from "../common";
 
 export const everyDayTrigger= createTrigger({

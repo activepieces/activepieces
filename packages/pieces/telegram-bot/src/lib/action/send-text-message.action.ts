@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 import { telegramCommons } from "../common";
 

@@ -1,4 +1,4 @@
-import { Property, OAuth2PropertyValue } from "@activepieces/framework";
+import { Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common";
 import mailchimp from "@mailchimp/mailchimp_marketing";
 

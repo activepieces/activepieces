@@ -1,4 +1,4 @@
-import { TriggerStrategy, OAuth2PropertyValue, createTrigger } from "@activepieces/framework";
+import { TriggerStrategy, OAuth2PropertyValue, createTrigger } from "@activepieces/pieces-framework";
 import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { querySalesforceApi, salesforcesCommon } from '../common';
 import dayjs from "dayjs";

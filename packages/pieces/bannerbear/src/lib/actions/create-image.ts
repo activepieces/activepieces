@@ -1,4 +1,4 @@
-import { createAction, Property, DynamicPropsValue } from '@activepieces/framework';
+import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 
 export const createImageFromTemplate = createAction({

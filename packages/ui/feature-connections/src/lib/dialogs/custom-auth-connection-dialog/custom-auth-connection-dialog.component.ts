@@ -18,7 +18,7 @@ import {
   CustomAuthProps,
   CustomAuthProperty,
   PropertyType,
-} from '@activepieces/framework';
+} from '@activepieces/pieces-framework';
 import deepEqual from 'deep-equal';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AppConnectionsService } from '../../services/app-connections.service';

@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 import { asanaCommon, callAsanaApi } from "../common";
 import { getAccessTokenOrThrow, HttpMethod } from "@activepieces/pieces-common";
 

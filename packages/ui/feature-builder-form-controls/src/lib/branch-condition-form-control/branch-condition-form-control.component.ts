@@ -16,7 +16,7 @@ import {
 } from '@activepieces/shared';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
-import { DropdownOption } from '@activepieces/framework';
+import { DropdownOption } from '@activepieces/pieces-framework';
 
 interface BranchForm {
   firstValue: FormControl<string | null>;

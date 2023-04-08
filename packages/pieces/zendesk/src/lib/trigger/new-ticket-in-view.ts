@@ -1,4 +1,4 @@
-import { TriggerStrategy, createTrigger , Property } from "@activepieces/framework";
+import { TriggerStrategy, createTrigger , Property } from "@activepieces/pieces-framework";
 import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper } from "@activepieces/pieces-common";
 
 const markdownProperty = `

@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
 import { GmailProps } from "../common/props";
 

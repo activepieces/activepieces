@@ -1,4 +1,4 @@
-import { createTrigger, OAuth2PropertyValue, TriggerStrategy } from '@activepieces/framework';
+import { createTrigger, OAuth2PropertyValue, TriggerStrategy } from '@activepieces/pieces-framework';
 import {  Polling, pollingHelper, DedupeStrategy } from "@activepieces/pieces-common";
 import dayjs from 'dayjs';
 import { GmailRequests } from '../common/data';

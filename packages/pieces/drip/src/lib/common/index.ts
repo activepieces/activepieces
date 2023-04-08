@@ -1,4 +1,4 @@
-import { Property} from "@activepieces/framework"
+import { Property} from "@activepieces/pieces-framework"
 import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common"
 
 export const dripCommon = {

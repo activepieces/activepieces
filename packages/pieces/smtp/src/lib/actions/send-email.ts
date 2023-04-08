@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import nodemailer from 'nodemailer';
 
 export const sendEmail = createAction({

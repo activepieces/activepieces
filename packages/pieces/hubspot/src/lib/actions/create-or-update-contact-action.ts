@@ -1,6 +1,6 @@
 import { hubSpotAuthentication } from '../common/props';
 import { hubSpotClient } from '../common/client';
-import { createAction, Property } from '@activepieces/framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from "@activepieces/pieces-common";
 
 export const hubSpotContactsCreateOrUpdateAction = createAction({

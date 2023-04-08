@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { googleContactsAddContactAction } from './lib/action/create-contact';
 import { googleContactNewOrUpdatedContact } from './lib/trigger/new-contact';
 

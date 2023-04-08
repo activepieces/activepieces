@@ -1,4 +1,4 @@
-import { createAction } from "@activepieces/framework";
+import { createAction } from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
 import { RegistrationResponse } from "../common/models";
 import { getRegistarantProps } from "../common/props";

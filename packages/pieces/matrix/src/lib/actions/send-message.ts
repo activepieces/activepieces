@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 export const sendMessage = createAction({

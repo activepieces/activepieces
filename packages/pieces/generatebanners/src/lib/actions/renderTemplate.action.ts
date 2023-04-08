@@ -2,7 +2,7 @@ import {
   createAction,
   Property,
   BasicAuthPropertyValue,
-} from '@activepieces/framework';
+} from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   HttpRequest,

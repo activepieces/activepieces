@@ -46,7 +46,7 @@ import {
   FlowsActions,
   FlowItemsDetailsState,
 } from '@activepieces/ui/feature-builder-store';
-import { PiecePropertyMap } from '@activepieces/framework';
+import { PiecePropertyMap } from '@activepieces/pieces-framework';
 
 declare type ActionDropdownOptionValue = {
   actionName: string;

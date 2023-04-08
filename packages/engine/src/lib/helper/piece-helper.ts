@@ -10,7 +10,7 @@ import {
     Piece,
     PropertyType,
     StaticPropsValue,
-} from "@activepieces/framework";
+} from "@activepieces/pieces-framework";
 import {
     ActivepiecesError,
     ApEnvironment,

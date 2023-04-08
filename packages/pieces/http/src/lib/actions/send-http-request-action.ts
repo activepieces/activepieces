@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 import {assertNotNullOrUndefined, HttpRequest, HttpHeaders, QueryParams, httpClient} from "@activepieces/pieces-common";
 import { httpMethodDropdown } from "../common/props";
 

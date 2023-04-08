@@ -1,4 +1,4 @@
-import { BasicAuthPropertyValue, createTrigger, TriggerStrategy } from '@activepieces/framework';
+import { BasicAuthPropertyValue, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from "@activepieces/pieces-common";
 import { wordpressCommon } from '../common';
 import dayjs from "dayjs";

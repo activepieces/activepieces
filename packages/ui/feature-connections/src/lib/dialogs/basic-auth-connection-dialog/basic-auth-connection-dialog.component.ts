@@ -21,7 +21,7 @@ import {
   BuilderSelectors,
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { BasicAuthProperty } from '@activepieces/framework';
+import { BasicAuthProperty } from '@activepieces/pieces-framework';
 
 interface BasicAuthForm {
   name: FormControl<string>;

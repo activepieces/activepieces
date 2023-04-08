@@ -43,7 +43,7 @@ import {
   PieceProperty,
   PiecePropertyMap,
   PropertyType,
-} from '@activepieces/framework';
+} from '@activepieces/pieces-framework';
 import {
   jsonValidator,
   fadeInUp400ms,

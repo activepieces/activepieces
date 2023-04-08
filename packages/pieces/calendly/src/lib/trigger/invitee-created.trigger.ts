@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from "@activepieces/framework";
+import { createTrigger, TriggerStrategy } from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
 import { calendlyCommon, CalendlyWebhookInformation } from "../common";
 
