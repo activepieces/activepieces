@@ -24,6 +24,7 @@ import { hackernews } from '@activepieces/piece-hackernews';
 import { http } from '@activepieces/piece-http';
 import { hubspot } from '@activepieces/piece-hubspot';
 import { mailchimp } from '@activepieces/piece-mailchimp';
+import { mindee } from '@activepieces/piece-mindee';
 import { openai } from '@activepieces/piece-openai';
 import { pipedrive } from '@activepieces/piece-pipedrive';
 import { posthog } from '@activepieces/piece-posthog';
@@ -46,6 +47,7 @@ import { youtube } from '@activepieces/piece-youtube';
 import { intercom } from '@activepieces/piece-intercom';
 import { trello } from '@activepieces/piece-trello';
 import { square } from '@activepieces/piece-square';
+import { xero } from '@activepieces/piece-xero';
 import { delay } from '@activepieces/piece-delay';
 import { dataMapper } from '@activepieces/piece-data-mapper';
 import { schedule } from '@activepieces/piece-schedule';
@@ -56,6 +58,7 @@ import { mastodon } from '@activepieces/piece-mastodon';
 import { shopify } from '@activepieces/piece-shopify';
 import { constantContact } from '@activepieces/piece-constant-contact';
 import { salesforce } from '@activepieces/piece-salesforce';
+import { matrix } from "@activepieces/piece-matrix";
 import { smtp } from '@activepieces/piece-smtp';
 import { mailerLite } from '@activepieces/piece-mailer-lite';
 import { googleForms }  from '@activepieces/piece-google-forms';
@@ -88,6 +91,7 @@ export const pieces: Piece[] = [
     hubspot,
     mailchimp,
     mailerLite,
+    mindee,
     openai,
     pipedrive,
     posthog,
@@ -112,6 +116,7 @@ export const pieces: Piece[] = [
     dataMapper,
     intercom,
     schedule,
+    xero,
     zohoCrm,
     zendesk,
     mattermost,
@@ -119,6 +124,7 @@ export const pieces: Piece[] = [
     shopify,
     constantContact,
     salesforce,
+    matrix,
     smtp,
     googleForms
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);

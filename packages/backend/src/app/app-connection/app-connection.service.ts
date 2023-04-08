@@ -20,7 +20,7 @@ import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { AppConnectionEntity } from './app-connection.entity'
 import axios from 'axios'
-import { createRedisLock } from '../database/redis-connection'
+import { acquireLock } from '../database/redis-connection'
 import { decryptObject, encryptObject } from '../helper/encryption'
 import { getEdition } from '../helper/secret-helper'
 import { logger } from '../helper/logger'
@@ -74,9 +74,11 @@ export const appConnectionService = {
         }
         // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
         // which could result in the wrong request saving incorrect data.
-        const refreshLock = createRedisLock(10 * 1000)
+        const refreshLock = await acquireLock({
+            key: `${projectId}_${name}`,
+            timeout: 10000,
+        })
         try {
-            await refreshLock.acquire(`${projectId}_${name}`)
 
             appConnection.value = decryptObject(appConnection.value)
             const refreshedAppConnection = await refresh(appConnection)
@@ -88,7 +90,7 @@ export const appConnectionService = {
             appConnection.status = AppConnectionStatus.ERROR
         }
         finally {
-            refreshLock.release()
+            await refreshLock.release()
         }
         return appConnection
     },

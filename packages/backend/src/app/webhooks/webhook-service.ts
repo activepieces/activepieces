@@ -18,6 +18,7 @@ import { getPublicIp } from '../helper/public-ip-utils'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
 import { isEmpty, isNil } from 'lodash'
 import { logger } from '../helper/logger'
+import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
@@ -78,13 +79,7 @@ export const webhookService = {
 
         await Promise.all(eventSaveJobs)
 
-        // TODO: make sure triggerUtils#disable is called once
-        await triggerUtils.disable({
-            projectId,
-            collectionId,
-            flowVersion,
-            simulate: true,
-        })
+        await webhookSimulationService.delete({ flowId, projectId })
     },
 
     async getWebhookPrefix(): Promise<string> {

@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { ListTriggerEventsRequest, SimulateTriggerRequest, TestPollingTriggerRequest } from '@activepieces/shared'
+import { ListTriggerEventsRequest, TestPollingTriggerRequest } from '@activepieces/shared'
 import { triggerEventService } from './trigger-event.service'
 import { flowService } from '../flow/flow.service'
 
@@ -30,25 +30,6 @@ const triggerEventController = async (fastify: FastifyInstance) => {
             return await triggerEventService.test({
                 projectId: request.principal.projectId,
                 flow: flow,
-            })
-        },
-    )
-
-    fastify.get(
-        '/simulate',
-        {
-            schema: {
-                querystring: SimulateTriggerRequest,
-            },
-        },
-        async (
-            request: FastifyRequest<{
-                Querystring: SimulateTriggerRequest
-            }>,
-        ) => {
-            await triggerEventService.simulate({
-                flowId: request.query.flowId,
-                projectId: request.principal.projectId,
             })
         },
     )

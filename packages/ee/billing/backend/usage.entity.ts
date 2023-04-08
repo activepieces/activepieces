@@ -1,7 +1,7 @@
 import { EntitySchema} from "typeorm";
 import { Project } from "@activepieces/shared";
 import { ApIdSchema, BaseColumnSchemaPart } from "@backend/helper/base-entity";
-import { ProjectUsage } from "../shared/usage";
+import { ProjectUsage } from "@activepieces/ee/shared";
 
 export interface ProjectUsageSchema extends ProjectUsage {
     project: Project;

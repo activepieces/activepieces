@@ -1,0 +1,53 @@
+@import "../../../../../core/src/assets/scss/variables.scss";
+.code-container {
+  height: 100%;
+}
+
+.modal-body {
+  background: $sidebar;
+}
+
+.file-active {
+  background: $white;
+  border: 2px solid $line !important;
+}
+
+.file-container {
+  border: 2px solid transparent;
+  box-sizing: border-box;
+  border-radius: 4px;
+
+  width: 140px;
+  cursor: pointer;
+}
+
+
+.modal-title {
+  color: $white;
+}
+
+.modal-background
+{
+  background-color: $primary;
+}
+
+.code-file-icon
+{
+  line-height: 100%;
+  vertical-align: "middle";
+}
+.test-code-loading-container
+{
+  position: absolute;
+  left:50%;
+  top:50%;
+}
+
+.code-editor
+{
+  .modal-header
+  {
+    background:$primary;
+    gap:0.5rem;
+  }
+}

@@ -3,8 +3,7 @@ import { AppCredentialEntity } from "./app-credentials.entity";
 import { buildPaginator } from "@backend/helper/pagination/build-paginator"
 import { paginationHelper } from "@backend/helper/pagination/pagination-utils";
 import { databaseConnection } from "@backend/database/database-connection";
-import { AppCredential, AppCredentialId } from "../../shared/app-credentials/app-credentials";
-import { UpsertAppCredentialRequest } from "../../shared/app-credentials/app-credentials-requests";
+import { AppCredential, AppCredentialId, UpsertAppCredentialRequest}from "@activepieces/ee/shared";
 
 
 export const appCredentialRepo = databaseConnection.getRepository(AppCredentialEntity);

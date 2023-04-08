@@ -24,7 +24,7 @@ const commonProps = {
 export const EmptyTrigger = Type.Object({
   ...commonProps,
   type: Type.Literal(TriggerType.EMPTY),
-  settings: Type.Object({}),
+  settings: Type.Any(),
 });
 
 export type EmptyTrigger = Static<typeof EmptyTrigger>;
@@ -45,8 +45,7 @@ export const PieceTriggerSettings = Type.Object({
   pieceVersion: SemVerType,
   triggerName: Type.String({}),
   input: Type.Record(Type.String({}), Type.Any()),
-  inputUiInfo:SampleDataSettingsObject
-  
+  inputUiInfo: SampleDataSettingsObject
 });
 
 export type PieceTriggerSettings = Static<typeof PieceTriggerSettings>;

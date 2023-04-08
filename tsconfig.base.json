@@ -17,6 +17,9 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@/*": ["packages/*"],
+      "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
+      "@activepieces/ee/shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
@@ -82,6 +85,7 @@
         "packages/pieces/mailchimp/src/index.ts"
       ],
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
+      "@activepieces/piece-matrix": ["packages/pieces/matrix/src/index.ts"],
       "@activepieces/piece-mailer-lite": [
         "packages/pieces/mailer-lite/src/index.ts"
       ],
@@ -89,6 +93,7 @@
       "@activepieces/piece-mattermost": [
         "packages/pieces/mattermost/src/index.ts"
       ],
+      "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/pipedrive/src/index.ts"
@@ -119,12 +124,47 @@
       "@activepieces/piece-wordpress": [
         "packages/pieces/wordpress/src/index.ts"
       ],
+      "@activepieces/piece-xero": ["packages/pieces/xero/src/index.ts"],
       "@activepieces/piece-youtube": ["packages/pieces/youtube/src/index.ts"],
       "@activepieces/piece-zendesk": ["packages/pieces/zendesk/src/index.ts"],
       "@activepieces/piece-zoho-crm": ["packages/pieces/zoho-crm/src/index.ts"],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
       "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
+      "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
+      "@activepieces/ui/feature-authentication": [
+        "packages/ui/feature-authentication/src/index.ts"
+      ],
+      "@activepieces/ui/feature-builder-canvas": [
+        "packages/ui/feature-builder-canvas/src/index.ts"
+      ],
+      "@activepieces/ui/feature-builder-form-controls": [
+        "packages/ui/feature-builder-form-controls/src/index.ts"
+      ],
+      "@activepieces/ui/feature-builder-header": [
+        "packages/ui/feature-builder-header/src/index.ts"
+      ],
+      "@activepieces/ui/feature-builder-left-sidebar": [
+        "packages/ui/feature-builder-left-sidebar/src/index.ts"
+      ],
+      "@activepieces/ui/feature-builder-right-sidebar": [
+        "packages/ui/feature-builder-right-sidebar/src/index.ts"
+      ],
+      "@activepieces/ui/feature-builder-store": [
+        "packages/ui/feature-builder-store/src/index.ts"
+      ],
+      "@activepieces/ui/feature-builder-tabs": [
+        "packages/ui/feature-builder-tabs/src/index.ts"
+      ],
+      "@activepieces/ui/feature-builder-test-steps": [
+        "packages/ui/feature-builder-test-steps/src/index.ts"
+      ],
+      "@activepieces/ui/feature-connections": [
+        "packages/ui/feature-connections/src/index.ts"
+      ],
+      "@activepieces/ui/feature-dashboard": [
+        "packages/ui/feature-dashboard/src/index.ts"
+      ],
       "@backend/*": ["packages/backend/src/app/*"],
       "@ee/*": ["packages/ee/*"],
       "@frontend/*": ["packages/frontend/src/app/*"]

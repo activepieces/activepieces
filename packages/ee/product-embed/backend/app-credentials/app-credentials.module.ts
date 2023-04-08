@@ -1,9 +1,8 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from "fastify";
 import { StatusCodes } from "http-status-codes";
-import { AppCredential, AppCredentialId, AppCredentialType } from "../../shared/app-credentials/app-credentials";
 import { SeekPage } from "@activepieces/shared";
 import { appCredentialService } from "./app-credentials.service";
-import { ListAppCredentialsRequest, UpsertAppCredentialRequest } from "../../shared/app-credentials/app-credentials-requests";
+import { ListAppCredentialsRequest, UpsertAppCredentialRequest,  AppCredential, AppCredentialId, AppCredentialType} from "@activepieces/ee/shared";
 
 export const appCredentialModule = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
   app.register(appCredentialController, { prefix: "/v1/app-credentials" });

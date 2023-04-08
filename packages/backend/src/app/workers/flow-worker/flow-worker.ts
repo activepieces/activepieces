@@ -21,7 +21,7 @@ import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { OneTimeJobData } from './job-data'
 import { collectionService } from '../../collections/collection.service'
 import { engineHelper } from '../../helper/engine-helper'
-import { createRedisLock } from '../../database/redis-connection'
+import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
 import { packageManager, PackageManagerDependencies } from '../../helper/package-manager'
 import { SystemProp } from '../../helper/system/system-prop'
@@ -110,11 +110,12 @@ async function downloadFiles(
     projectId: ProjectId,
     flowVersion: FlowVersion,
 ): Promise<void> {
-    const flowLock = createRedisLock()
+    logger.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
+    const flowLock = await acquireLock({
+        key: flowVersion.id,
+        timeout: 30000,
+    })
     try {
-        logger.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
-        await flowLock.acquire(flowVersion.id)
-
         const buildPath = sandbox.getSandboxFolderPath()
 
         // This has to be before flows, since it does modify code settings and fill it with packaged file id.

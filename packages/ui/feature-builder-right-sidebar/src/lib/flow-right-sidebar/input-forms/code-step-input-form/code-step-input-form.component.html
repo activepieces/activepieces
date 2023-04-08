@@ -1,0 +1,20 @@
+<form [formGroup]="codeStepForm" class="ng-submitted">
+  <div class="ap-flex ap-flex-col ap-gap-2">
+    <div>
+      <div class="ap-mb-2 ap-pointer-events-none">Parameters</div>
+      <app-dictonary-form-control formControlName="input"></app-dictonary-form-control>
+    </div>
+    <div>
+      <div class="ap-mb-2 ap-pointer-events-none">Code</div>
+      <app-code-artifact-form-control *ngIf="_stepArtifact$ |async; else loading"
+        formControlName="artifact"></app-code-artifact-form-control>
+    </div>
+  </div>
+</form>
+
+<ng-container *ngIf="formValueChanged$ | async"></ng-container>
+<ng-template #loading>
+  <div class="ap-flex ap-items-center ap-justify-center artifact-loading-container">
+    <ap-loading-icon [whiteLoader]="true"></ap-loading-icon>
+  </div>
+</ng-template>
