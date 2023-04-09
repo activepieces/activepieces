@@ -1,10 +1,8 @@
+import crypto from 'node:crypto'
 import { createPiece } from '@activepieces/pieces-framework'
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action'
 import { slackSendMessageAction } from './lib/actions/send-message-action'
 import { version } from '../package.json'
-import { newMessage as newSlackMessage } from './lib/triggers/new-message'
-import crypto from 'crypto'
-import { newReactionAdded } from './lib/triggers/new-reaction-added'
 
 export const slack = createPiece({
   name: 'slack',
@@ -38,5 +36,5 @@ export const slack = createPiece({
       return signature === computedSignature;
     }
   },
-  triggers: [newSlackMessage, newReactionAdded]
+  triggers: []
 })
