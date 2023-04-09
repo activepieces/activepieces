@@ -57,6 +57,7 @@ export const flowRunService = {
         flowRunId: FlowRunId,
         status: ExecutionOutputStatus,
         logsFileId: FileId | null,
+        tasks: number,
     ): Promise<FlowRun> {
         await repo.update(flowRunId, {
             logsFileId,
@@ -64,6 +65,13 @@ export const flowRunService = {
             finishTime: new Date().toISOString(),
         })
         const flowRun = await this.getOne({ id: flowRunId, projectId: undefined })
+        const edition = await getEdition()
+        if (edition === ApEdition.ENTERPRISE) {
+            await usageService.countTasks({
+                projectId: flowRun.projectId,
+                tasks: tasks,
+            })
+        }
         notifications.notifyRun({
             flowRun,
         })

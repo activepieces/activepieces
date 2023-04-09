@@ -87,16 +87,17 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         })
 
         const logsFile = await fileService.save(jobData.projectId, Buffer.from(JSON.stringify(executionOutput)))
-        await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id)
+        await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id, executionOutput.tasks)
     }
     catch (e: unknown) {
         logger.error(e, `[${jobData.runId}] Error executing flow`)
         if (sandbox.timedOut()) {
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null)
+            // TODO Flow timed out, consume one task
+            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null, 1)
         }
         else {
             captureException(e as Error)
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null)
+            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null, 0)
         }
     }
     finally {

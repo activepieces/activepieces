@@ -9,6 +9,15 @@ class Globals {
   private _projectId = '';
   private _apiUrl = '';
   private _flowId = '';
+  private _tasks = 0;
+
+  addOneTask(){
+    this._tasks++;
+  }
+
+  get tasks() {
+    return this._tasks;
+  }
 
   set flowId(_flowId: string) {
     this._flowId = _flowId;

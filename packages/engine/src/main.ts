@@ -26,6 +26,7 @@ const executeFlow = async (): Promise<void> => {
     executionState.insertStep(input.triggerPayload!, 'trigger', []);
     const executor = new FlowExecutor(executionState);
     const output = await executor.executeFlow(input.flowVersionId);
+    
     Utils.writeToJsonFile(globals.outputFile, output);
   } catch (e) {
     console.error(e);

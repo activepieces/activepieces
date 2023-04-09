@@ -33,6 +33,7 @@ import { bumpFixPieceVersions1678928503715 } from './migration/1678928503715-bum
 import { migrateSchedule1679014156667 } from './migration/1679014156667-migrate-schedule'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { CreateWebhookSimulationSchema1680698259291 } from './migration/1680698259291-create-webhook-simulation-schema'
+import { StoreAllPeriods1681019096716 } from './migration/1681019096716-StoreAllPeriods'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -68,6 +69,7 @@ const getMigrations = () => {
         bumpFixPieceVersions1678928503715,
         migrateSchedule1679014156667,
         CreateWebhookSimulationSchema1680698259291,
+        StoreAllPeriods1681019096716,
     ]
 }
 

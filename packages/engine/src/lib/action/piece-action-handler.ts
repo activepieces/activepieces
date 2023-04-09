@@ -8,6 +8,7 @@ import {
 } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { PieceExecutor } from '../executors/piece-executor';
+import { globals } from '../globals';
 
 export class PieceActionHandler extends BaseActionHandler<PieceAction> {
   variableService: VariableService;
@@ -32,6 +33,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       executionState
     );
 
+    globals.addOneTask();
     stepOutput.input = config;
 
     if(!actionName){

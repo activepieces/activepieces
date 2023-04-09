@@ -13,6 +13,7 @@ import dayjs from "dayjs";
 
 const projectPlanRepo = databaseConnection.getRepository<ProjectPlan>(ProjectPlanEntity);
 const stripeSecret = system.get(SystemProp.STRIPE_SECRET_KEY);
+
 export const stripe = new Stripe(stripeSecret, {
     apiVersion: '2022-11-15',
 });
