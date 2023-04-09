@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { map, Observable, tap } from 'rxjs';
@@ -15,10 +15,8 @@ import {
   BuilderSelectors,
   CollectionActions,
   CollectionBuilderService,
-  FlowsActions,
-  NO_PROPS,
-  RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
+import { SwitchFlowDialogComponent } from './switch-flow-dialog/switch-flow-dialog.component';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -44,6 +42,17 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private route: ActivatedRoute,
     private titleService: Title
   ) {}
+
+  @HostListener('window:keydown', ['$event'])
+  onKeyPress($event: KeyboardEvent) {
+    if (
+      ($event.ctrlKey || $event.metaKey) &&
+      ($event.key == 'k' || $event.key == 'K')
+    ) {
+      this.dialog.open(SwitchFlowDialogComponent);
+      $event.preventDefault();
+    }
+  }
 
   ngOnInit(): void {
     this.collectionInstance$ = this.store.select(
@@ -94,24 +103,13 @@ export class FlowBuilderHeaderComponent implements OnInit {
     );
   }
   actionHandler(actionId: string) {
-    if (actionId === 'VERSIONS') {
-      this.openCollectionVersionsLists();
-    } else if (actionId === 'RENAME') {
+    if (actionId === 'RENAME') {
       this.editing = true;
     }
   }
 
   guessAi() {
     this.dialog.open(MagicWandDialogComponent);
-  }
-
-  openCollectionVersionsLists() {
-    this.store.dispatch(
-      FlowsActions.setRightSidebar({
-        sidebarType: RightSideBarType.COLLECTION_VERSIONS,
-        props: NO_PROPS,
-      })
-    );
   }
 
   changeEditValue(event: boolean) {

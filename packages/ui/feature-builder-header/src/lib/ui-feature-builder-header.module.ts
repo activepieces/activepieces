@@ -7,6 +7,7 @@ import { FeedbackComponent } from './flow-builder-header/feedback/feedback.compo
 import { MagicWandDialogComponent } from './flow-builder-header/magic-wand-dialog/magic-flow-dialog.component';
 import { ToggleInstanceStateComponent } from './flow-builder-header/toggle-instance-state/toggle-instance-state.component';
 import { PublishButtonComponent } from './flow-builder-header/publish-button/publish-button.component';
+import { SwitchFlowDialogComponent } from './flow-builder-header/switch-flow-dialog/switch-flow-dialog.component';
 
 const exportedDeclarations = [
   FlowBuilderHeaderComponent,
@@ -14,6 +15,7 @@ const exportedDeclarations = [
   MagicWandDialogComponent,
   ToggleInstanceStateComponent,
   PublishButtonComponent,
+  SwitchFlowDialogComponent,
 ];
 @NgModule({
   imports: [CommonModule, UiCommonModule, UiFeatureBuilderStoreModule],

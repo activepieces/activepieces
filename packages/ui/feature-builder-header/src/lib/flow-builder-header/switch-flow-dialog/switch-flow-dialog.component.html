@@ -1,0 +1,27 @@
+<ng-container *ngIf="(flows$ | async) as flows;">
+
+  <mat-dialog-content class="search-dialog ap-min-w-[400px] border-gray-300 border" tabindex="-1">
+    <div class="ap-flex ap-items-center ap-justify-center">
+      <form class="ap-w-full" [formGroup]="searchForm">
+        <div class="ap-relative ap-w-full ap-text-gray-600 ap-focus-within:text-gray-400">
+          <mat-form-field appearance="outline" class="ap-w-full">
+            <input matInput (keydown)="onKeyDown($event, flows)" [formControl]="searchForm.controls.query"
+              class="ap-text-sm ap-text-gray-900 ap-placeholder-gray-500 ap-border-0 ap-rounded-lg ap-focus:ap-outline-none ap-focus:border-blue-500 ap-w-full ap-pl-10 border-b-2 border-gray-300"
+              type="text" placeholder="Go to">
+          </mat-form-field>
+        </div>
+      </form>
+    </div>
+    <div class="ap-bg-white ap-rounded-lg ap-shadow-lg ap-mt-2 ap-max-h-[200px] ap-overflow-y-scroll">
+      <div class="ap-p-2 ap-text-sm ap-text-gray-700">
+        <ul>
+          <li tabindex="0" [class.ap-bg-primary]="selectedIndex === i" [class.ap-text-white]="selectedIndex === i"
+            *ngFor="let flow of flows; let i = index" (click)="openFlow(flow)" tabindex="0"
+            class="ap-py-2 ap-px-4 ap-cursor-pointer ap-transition-colors ap-duration-200 hover:ap-bg-primary hover:ap-text-white">
+            {{flow.version.displayName}}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </mat-dialog-content>
+</ng-container>
