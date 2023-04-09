@@ -1,8 +1,13 @@
 import { Pipe, PipeTransform } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Pipe({ name: 'outputLog', pure: true })
 export class OutputLogPipe implements PipeTransform {
-  transform(value: any, truncate = true): string {
+
+  constructor(private sanitizer: DomSanitizer) { }
+
+ 
+  transform(value: any, truncate = true): SafeHtml {
     let result = '';
     if (typeof value === 'object') {
       result = JSON.stringify(value, null, 2);
@@ -12,10 +17,17 @@ export class OutputLogPipe implements PipeTransform {
       result = this.repr(value);
     }
     if (truncate) {
-      return result.length > 8092
+      result = result.length > 8092
         ? result.substring(0, 8092) + ' (truncated)'
         : result;
-    } else return result;
+    }
+    const escaped = this.escapeHtmlTags(result);
+    return this.sanitizer.bypassSecurityTrustHtml(escaped);
+  }
+
+
+  escapeHtmlTags(str: string) {
+    return str.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   repr(obj: unknown): string {
