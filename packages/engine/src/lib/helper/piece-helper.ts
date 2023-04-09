@@ -8,8 +8,9 @@ import {
     DynamicPropsValue,
     MultiSelectDropdownProperty,
     Piece,
+    PropertyType,
     StaticPropsValue,
-} from "@activepieces/framework";
+} from "@activepieces/pieces-framework";
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -18,7 +19,6 @@ import {
     ExecutePropsOptions,
     ExecutionState,
     getPackageAliasForPiece,
-    PropertyType,
 } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
 import { getPiece } from '@activepieces/pieces-apps';

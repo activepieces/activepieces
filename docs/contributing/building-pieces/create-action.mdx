@@ -22,7 +22,7 @@ The piece will be generated at `packages/pieces/hacker-news/`,
 the `src/index.ts` file should contain the following code
 
 ```ts
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import packageJson from '../package.json';
 
 export const hackerNews = createPiece({
@@ -60,10 +60,7 @@ You can ask ChatGPT3 to write the function to get top stories from hackernews.
 </Tip>
 
 ```typescript
-import { createAction } from '@activepieces/framework';
-import { HttpMethod } from '@activepieces/framework';
-import { httpClient } from '@activepieces/framework';
-import { Property } from '@activepieces/framework';
+import { createPiece, HttpMethod, httpClient, Property } from '@activepieces/pieces-framework';
 
 export const fetchTopStories = createAction({
 	name: 'fetch_top_stories', // Must be a unique across the piece, this shouldn't be changed.
@@ -116,7 +113,7 @@ The `run` function first defines the URL of the Hacker News API, and then makes 
 To make the action readable by Activepieces, add it to the array of actions in the piece definition.
 
 ```typescript
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 // Don't forget to add the following import.
 import { fetchTopStories } from './lib/actions/fetch-top-stories';
 

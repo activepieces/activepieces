@@ -10,7 +10,7 @@ import { map, Observable, of, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { FormControl } from '@angular/forms';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
-import { ActionType, TriggerStrategy, TriggerType } from '@activepieces/shared';
+import { ActionType, TriggerType } from '@activepieces/shared';
 import {
   BuilderSelectors,
   FlowItem,
@@ -21,6 +21,7 @@ import {
   ActionMetaService,
   isOverflown,
 } from '@activepieces/ui/common';
+import { TriggerStrategy } from '@activepieces/pieces-framework';
 
 @Component({
   selector: 'app-flow-right-sidebar',

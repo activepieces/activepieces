@@ -2,17 +2,19 @@ import {
   AppConnection,
   AppConnectionType,
   BasicAuthConnection,
-  BasicAuthProperty,
   CustomAuthConnection,
-  CustomAuthProperty,
   OAuth2AppConnection,
-  OAuth2Property,
-  OAuth2Prop,
-  PropertyType,
   SecretKeyAppConnection,
-  SecretTextProperty,
-  CustomAuthProp,
 } from '@activepieces/shared';
+import {
+  BasicAuthProperty,
+  CustomAuthProperty,
+  OAuth2Property,
+  OAuth2Props,
+  PropertyType,
+  SecretTextProperty,
+  CustomAuthProps,
+} from '@activepieces/pieces-framework';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -72,8 +74,8 @@ export class AddEditConnectionButtonComponent {
   );
   @Input()
   authProperty:
-    | OAuth2Property<boolean, Record<string, OAuth2Prop>>
-    | CustomAuthProperty<boolean, Record<string, CustomAuthProp>>
+    | OAuth2Property<boolean, OAuth2Props>
+    | CustomAuthProperty<boolean, CustomAuthProps>
     | SecretTextProperty<boolean>
     | BasicAuthProperty<boolean>;
   @Input()
@@ -127,7 +129,7 @@ export class AddEditConnectionButtonComponent {
     const dialogData: CustomAuthDialogData = {
       pieceAuthProperty: this.authProperty as CustomAuthProperty<
         boolean,
-        Record<string, CustomAuthProp>
+        CustomAuthProps
       >,
       pieceName: this.pieceName,
     };
@@ -261,7 +263,7 @@ export class AddEditConnectionButtonComponent {
           const dialogData: OAuth2ConnectionDialogData = {
             pieceAuthProperty: this.authProperty as OAuth2Property<
               boolean,
-              Record<string, OAuth2Prop>
+              OAuth2Props
             >,
             pieceName: this.pieceName,
             serverUrl: serverUrl,
@@ -381,7 +383,7 @@ export class AddEditConnectionButtonComponent {
           pieceName: this.pieceName,
           pieceAuthProperty: this.authProperty as CustomAuthProperty<
             boolean,
-            Record<string, CustomAuthProp>
+            CustomAuthProps
           >,
           connectionToUpdate: customAuthConnection,
         };

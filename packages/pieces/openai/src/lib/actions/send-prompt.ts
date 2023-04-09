@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { Configuration, OpenAIApi } from 'openai';
 
 export const askOpenAI = createAction({

@@ -2,12 +2,6 @@ import { Type, Static } from '@sinclair/typebox';
 import { SemVerType } from '../../pieces';
 import { SampleDataSettingsObject } from '../sample-data';
 
-export enum TriggerStrategy {
-  POLLING = 'POLLING',
-  WEBHOOK = 'WEBHOOK',
-  APP_WEBHOOK = "APP_WEBHOOK"
-}
-
 export enum TriggerType {
   EMPTY = 'EMPTY',
   WEBHOOK = 'WEBHOOK',

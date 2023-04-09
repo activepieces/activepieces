@@ -1,4 +1,5 @@
-import { httpClient, HttpMethod, HttpRequest, createAction, Property, AuthenticationType } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
+import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 import { EventBody, EventCaptureResponse } from "../common/models";
 import { posthogAuthentication } from "../common/props";
 
@@ -59,11 +60,11 @@ export const posthogCreateEvent = createAction({
     const body: EventBody = {
       event: context.propsValue.event,
       type: context.propsValue.event_type!,
-      api_key: context.propsValue.project_api_key!,
+      api_key: context.propsValue.project_api_key,
       messageId: context.propsValue.message_id,
       context: context.propsValue.context || {},
       properties: context.propsValue.properties || {},
-      distinct_id: context.propsValue.distinct_id!,
+      distinct_id: context.propsValue.distinct_id,
       category: context.propsValue.category
     }
 

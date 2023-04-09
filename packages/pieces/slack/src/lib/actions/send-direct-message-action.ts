@@ -1,13 +1,15 @@
 import {
+  OAuth2PropertyValue,
+  createAction,
+  Property,
+} from '@activepieces/pieces-framework'
+import {
   assertNotNullOrUndefined,
   AuthenticationType,
-  createAction,
   httpClient,
   HttpMethod,
   HttpRequest,
-  OAuth2PropertyValue,
-  Property,
-} from '@activepieces/framework'
+} from '@activepieces/pieces-common'
 import { slackAuth } from '../common/props'
 import { slackSendMessage } from '../common/utils'
 

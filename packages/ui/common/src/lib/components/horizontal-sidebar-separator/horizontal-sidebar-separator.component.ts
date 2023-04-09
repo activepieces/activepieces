@@ -10,7 +10,7 @@ import { map, Observable, tap } from 'rxjs';
 import { TestStepService } from '../../service/test-step.service';
 
 @Component({
-  selector: 'app-horizontal-sidebar-separator',
+  selector: 'ap-horizontal-sidebar-separator',
   templateUrl: './horizontal-sidebar-separator.component.html',
   styleUrls: ['./horizontal-sidebar-separator.component.scss'],
 })

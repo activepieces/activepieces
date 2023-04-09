@@ -34,7 +34,7 @@ function validateCondition(val: BranchCondition) {
     !('secondValue' in val) // Check if `val` has `secondValue` property
   ) {
     return { invalidSecondValue: true };
-  }  
+  }
   return null;
 }
 

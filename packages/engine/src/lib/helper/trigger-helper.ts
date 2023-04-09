@@ -1,9 +1,10 @@
 import { pieces } from "@activepieces/pieces-apps";
-import { ApEdition, EventPayload, ExecuteEventParserOperation, ExecuteTestOrRunTriggerResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, ScheduleOptions, TriggerHookType, TriggerStrategy } from "@activepieces/shared";
+import { ApEdition, EventPayload, ExecuteEventParserOperation, ExecuteTestOrRunTriggerResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./piece-helper";
 import { isValidCron } from 'cron-validator';
+import { TriggerStrategy } from "@activepieces/pieces-framework";
 
 type Listener = {
   events: string[];

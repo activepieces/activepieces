@@ -31,15 +31,15 @@
       Duration:
       <span class="description"> {{ selectedStepResult.duration }}ms </span>
     </div>
-    <app-json-viewer
+    <ap-json-viewer
       class="json-viewer"
       title="Input"
       [maxHeight]="400"
       [content]="selectedStepResult.input"
-    ></app-json-viewer>
-    <app-json-viewer
+    ></ap-json-viewer>
+    <ap-json-viewer
       title="Output"
       [content]="selectedStepResult.errorMessage ?? selectedStepResult.output"
-    ></app-json-viewer>
+    ></ap-json-viewer>
   </div>
 </div>

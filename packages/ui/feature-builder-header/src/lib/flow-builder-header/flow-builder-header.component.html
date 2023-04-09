@@ -9,10 +9,10 @@
       (valueChanges)="savePieceName($event)" [disableEditing]="viewMode$ | async | defaultTrue" [allowClick]="true"
       [cssClasses]="'ap-typography-headline-6 ap-font-bold'" class="ap-text-title"
       (mouseenter)="collectionNameHovered=true" (mouseleave)="collectionNameHovered=false"></ap-editable-text>
-    <app-chevron-dropdown-menu [hidden]="
+    <ap-chevron-dropdown-menu [hidden]="
         (viewMode$ | async | defaultFalse) || (flowsCount$ | async) === 0
       " [data]="pipeActions" (selectValueChange)="actionHandler($event)" *ngIf="!editing" [useChevron]="true"
-      IdEntityName="Collection"></app-chevron-dropdown-menu>
+      IdEntityName="Collection"></ap-chevron-dropdown-menu>
   </div>
   <div class="ap-flex ap-items-center">
     <ap-icon-button [width]="22" [height]="20" [iconFilename]="'logo/logo.svg'" [tooltipText]="'Home'"

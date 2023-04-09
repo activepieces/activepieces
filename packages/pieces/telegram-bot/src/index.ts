@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { telegramSendMessageAction } from './lib/action/send-text-message.action';
 
 export const telegramBot = createPiece({

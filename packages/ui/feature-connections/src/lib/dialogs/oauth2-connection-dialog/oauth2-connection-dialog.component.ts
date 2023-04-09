@@ -14,12 +14,13 @@ import {
   AppConnection,
   AppConnectionType,
   OAuth2AppConnection,
-  OAuth2Property,
-  OAuth2Prop,
-  PropertyType,
   UpsertOAuth2Request,
 } from '@activepieces/shared';
-
+import {
+  OAuth2Property,
+  OAuth2Props,
+  PropertyType,
+} from '@activepieces/pieces-framework';
 import deepEqual from 'deep-equal';
 import { environment, fadeInUp400ms } from '@activepieces/ui/common';
 import {
@@ -44,7 +45,7 @@ interface OAuth2PropertySettings {
 }
 export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
 export interface OAuth2ConnectionDialogData {
-  pieceAuthProperty: OAuth2Property<boolean, Record<string, OAuth2Prop>>;
+  pieceAuthProperty: OAuth2Property<boolean, OAuth2Props>;
   pieceName: string;
   connectionToUpdate?: OAuth2AppConnection;
   serverUrl: string;
