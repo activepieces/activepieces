@@ -11,7 +11,8 @@
         "outputPath": "dist/packages/pieces/common",
         "main": "packages/pieces/common/src/index.ts",
         "tsConfig": "packages/pieces/common/tsconfig.lib.json",
-        "assets": ["packages/pieces/common/*.md"]
+        "assets": ["packages/pieces/common/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
