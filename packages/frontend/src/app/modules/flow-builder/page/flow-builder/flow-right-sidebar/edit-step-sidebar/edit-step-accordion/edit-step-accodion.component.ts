@@ -79,16 +79,14 @@ export class EditStepAccordionComponent {
       })
     );
     this.stepForm = this.formBuilder.group({
-      input: new UntypedFormControl({}),
-      inputUiInfo: new UntypedFormControl({}),
+      settings: new UntypedFormControl({}),
     });
   }
 
   updateFormValue(stepSelected: FlowItem) {
-    const inputControl = this.stepForm.get('input')!;
-    const settings = stepSelected.settings;
-    inputControl.setValue({
-      ...settings,
+    const settingsControl = this.stepForm.get('settings')!;
+    settingsControl.setValue({
+      ...stepSelected.settings,
       type: stepSelected.type,
     });
   }
@@ -119,22 +117,23 @@ export class EditStepAccordionComponent {
   }
 
   prepareStepDataToSave(): UpdateActionRequest | UpdateTriggerRequest {
-    const inputControlValue = this.stepForm.get('input')!.value;
+    const inputControlValue = this.stepForm.get('settings')!.value;
     const stepToSave: UpdateActionRequest = JSON.parse(
       JSON.stringify(this._selectedStep)
     );
     stepToSave.settings = inputControlValue;
     stepToSave.name = this._selectedStep.name;
     stepToSave.valid = this.stepForm.valid;
-    if (
-      this._selectedStep.type === ActionType.PIECE ||
-      this._selectedStep.type === TriggerType.PIECE
-    ) {
-      const componentSettings = {
-        ...this._selectedStep.settings,
-        ...inputControlValue,
-      };
-      stepToSave.settings = componentSettings;
+    switch (this._selectedStep.type) {
+      case ActionType.PIECE:
+      case TriggerType.PIECE:
+        stepToSave.settings = {
+          ...this._selectedStep.settings,
+          ...inputControlValue,
+        };
+        break;
+      default:
+        break;
     }
     return stepToSave;
   }
