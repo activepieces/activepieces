@@ -1,4 +1,4 @@
-import { Property } from "@activepieces/framework";
+import { Property } from "@activepieces/pieces-framework";
 
 export const constantContactProps = {
     authentication: Property.OAuth2({

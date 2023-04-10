@@ -1,4 +1,4 @@
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { gmailGetEmail } from './lib/actions/get-mail-action';
 import { gmailGetThread } from './lib/actions/get-thread-action';
 import { gmailSearchMail } from './lib/actions/search-email-action';

@@ -1,24 +1,24 @@
-import { readdir } from "node:fs/promises";
-import { resolve } from "node:path";
-import { cwd } from "node:process";
-import axios from "axios";
-import sortBy from "lodash/sortBy";
-import { Piece } from "@activepieces/framework";
-import { ActivepiecesError, ApEnvironment, ErrorCode, PieceMetadata, PieceMetadataSummary } from "@activepieces/shared";
-import { system } from "../helper/system/system";
-import { SystemProp } from "../helper/system/system-prop";
-import { captureException, logger } from "../helper/logger";
+import { readdir } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import { cwd } from 'node:process'
+import axios from 'axios'
+import sortBy from 'lodash/sortBy'
+import { Piece, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
+import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
+import { system } from '../helper/system/system'
+import { SystemProp } from '../helper/system/system-prop'
+import { captureException, logger } from '../helper/logger'
 
 type PieceMetadataLoader = {
     /**
      * returns a list of all available pieces and their metadata without actions and triggers.
      */
-    manifest(): Promise<PieceMetadataSummary[]>;
+    manifest(): Promise<PieceMetadataSummary[]>
 
     /**
      * returns metadata for a specific piece version including actions and triggers.
      */
-    pieceMetadata(name: string, version: string): Promise<PieceMetadata>;
+    pieceMetadata(name: string, version: string): Promise<PieceMetadata>
 }
 
 /**
@@ -26,30 +26,30 @@ type PieceMetadataLoader = {
  * Used in production.
  */
 const cdnPieceMetadataLoader = (): PieceMetadataLoader => {
-    const CDN = 'https://activepieces-cdn.fra1.digitaloceanspaces.com/pieces/metadata';
+    const CDN = 'https://activepieces-cdn.fra1.digitaloceanspaces.com/pieces/metadata'
 
     return {
         async manifest() {
-            const response = await axios<PieceMetadataSummary[]>(`${CDN}/latest.json`);
-            return response.data;
+            const response = await axios<PieceMetadataSummary[]>(`${CDN}/latest.json`)
+            return response.data
         },
 
         async pieceMetadata(pieceName: string, version: string) {
             try {
-                const response = await axios<PieceMetadata>(`${CDN}/${pieceName}/${version}.json`);
-                return response.data;
+                const response = await axios<PieceMetadata>(`${CDN}/${pieceName}/${version}.json`)
+                return response.data
             }
             catch (e) {
-                logger.error(e, 'cdnPieceMetadataLoader.pieceMetadata');
+                logger.error(e, 'cdnPieceMetadataLoader.pieceMetadata')
                 throw new ActivepiecesError({
                     code: ErrorCode.PIECE_NOT_FOUND,
                     params: {
                         pieceName,
                         pieceVersion: version,
                     },
-                });
+                })
             }
-        }
+        },
     }
 }
 
@@ -59,12 +59,12 @@ const cdnPieceMetadataLoader = (): PieceMetadataLoader => {
  */
 const filePieceMetadataLoader = (): PieceMetadataLoader => {
     const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
-        const frameworkPackages = ['framework', 'apps', 'dist']
+        const ignoredPackages = ['framework', 'apps', 'dist', 'common']
         const piecesPath = resolve(cwd(), 'packages', 'pieces')
         const piecePackages = await readdir(piecesPath)
-        const filteredPiecePackages = piecePackages.filter(d => !frameworkPackages.includes(d))
+        const filteredPiecePackages = piecePackages.filter(d => !ignoredPackages.includes(d))
 
-        const piecesMetadata: PieceMetadata[] = [];
+        const piecesMetadata: PieceMetadata[] = []
 
         for (const piecePackage of filteredPiecePackages) {
             try {
@@ -73,8 +73,8 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
                 piecesMetadata.push(piece.metadata())
             }
             catch(ex) {
-                captureException(ex);
-                logger.error(ex);
+                captureException(ex)
+                logger.error(ex)
             }
         }
 
@@ -83,7 +83,7 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
 
     return {
         async manifest() {
-            const piecesMetadata = await loadPiecesMetadata();
+            const piecesMetadata = await loadPiecesMetadata()
 
             return piecesMetadata.map(p => ({
                 name: p.name,
@@ -99,8 +99,8 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
         },
 
         async pieceMetadata(pieceName: string) {
-            const piecesMetadata = await loadPiecesMetadata();
-            const pieceMetadata = piecesMetadata.find(p => p.name === pieceName);
+            const piecesMetadata = await loadPiecesMetadata()
+            const pieceMetadata = piecesMetadata.find(p => p.name === pieceName)
 
             if (pieceMetadata === undefined) {
                 throw new ActivepiecesError({
@@ -109,22 +109,22 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
                         pieceName,
                         pieceVersion: pieceMetadata.version,
                     },
-                });
+                })
             }
 
-            return pieceMetadata;
-        }
+            return pieceMetadata
+        },
     }
-};
-
-const getPieceMetadataLoader = (): PieceMetadataLoader => {
-    const env = system.getOrThrow(SystemProp.ENVIRONMENT);
-
-    if (env === ApEnvironment.PRODUCTION) {
-        return cdnPieceMetadataLoader();
-    }
-
-    return filePieceMetadataLoader();
 }
 
-export const pieceMetadataLoader = getPieceMetadataLoader();
+const getPieceMetadataLoader = (): PieceMetadataLoader => {
+    const env = system.getOrThrow(SystemProp.ENVIRONMENT)
+
+    if (env === ApEnvironment.PRODUCTION) {
+        return cdnPieceMetadataLoader()
+    }
+
+    return filePieceMetadataLoader()
+}
+
+export const pieceMetadataLoader = getPieceMetadataLoader()

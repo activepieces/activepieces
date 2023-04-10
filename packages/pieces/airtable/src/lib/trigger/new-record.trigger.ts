@@ -1,6 +1,6 @@
-import { createTrigger, pollingHelper, DedupeStrategy, Polling } from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { airtableCommon } from '../common';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 const polling: Polling<{ authentication: string, tableId: string | undefined, base: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -11,7 +11,7 @@ const polling: Polling<{ authentication: string, tableId: string | undefined, ba
       tableId: propsValue.tableId!,
     });
     return records.map((record) => ({
-      epochMillSeconds: Date.parse(record.createdTime),
+      epochMilliSeconds: Date.parse(record.createdTime),
       data: record,
     }));
   }

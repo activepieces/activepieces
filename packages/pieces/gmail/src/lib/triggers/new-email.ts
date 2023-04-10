@@ -1,5 +1,5 @@
-import { createTrigger, DedupeStrategy, OAuth2PropertyValue, Polling, pollingHelper } from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import { createTrigger, OAuth2PropertyValue, TriggerStrategy } from '@activepieces/pieces-framework';
+import {  Polling, pollingHelper, DedupeStrategy } from "@activepieces/pieces-common";
 import dayjs from 'dayjs';
 import { GmailRequests } from '../common/data';
 import { GmailLabel, GmailMessage } from '../common/models';
@@ -103,7 +103,7 @@ const polling: Polling<PropsValue> = {
     return items.map((item) => {
       const mail = item as GmailMessage;
       return {
-        epochMillSeconds: dayjs(mail?.internalDate).valueOf(),
+        epochMilliSeconds: dayjs(mail?.internalDate).valueOf(),
         data: item,
       }
     });

@@ -1,5 +1,5 @@
 
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import packageJson from '../package.json';
 import { squareTriggers } from './lib/triggers';
 import crypto from 'crypto'

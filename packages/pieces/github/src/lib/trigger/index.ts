@@ -1,4 +1,4 @@
-import { Trigger } from "@activepieces/framework";
+import { Trigger } from "@activepieces/pieces-framework";
 import { githubRegisterTrigger } from "./register-trigger"
 
 export enum GithubEventType {

@@ -1,4 +1,5 @@
-import { OAuth2PropertyValue, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
+import { OAuth2PropertyValue } from "@activepieces/pieces-framework";
+import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 import { randomUUID } from "crypto";
 import { googleCalendarCommon } from ".";
 import { GoogleWatchResponse, GoogleWatchType, CalendarObject, CalendarList, GoogleCalendarEvent, GoogleCalendarEventList } from "./types";

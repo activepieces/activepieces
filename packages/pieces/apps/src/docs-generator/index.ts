@@ -3,8 +3,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { cwd } from "node:process";
 import sortBy from "lodash/sortBy";
-import { Piece } from '@activepieces/framework';
-import { ActionBase, PieceMetadata } from '@activepieces/shared';
+import { Piece, ActionBase, PieceMetadata} from '@activepieces/pieces-framework';
 
 type PieceInfo = PieceMetadata & {
   directory: string;

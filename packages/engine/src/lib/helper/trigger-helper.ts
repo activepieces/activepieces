@@ -1,9 +1,10 @@
 import { pieces } from "@activepieces/pieces-apps";
-import { ApEdition, EventPayload, ExecuteEventParserOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, ScheduleOptions, TriggerHookType, TriggerStrategy } from "@activepieces/shared";
+import { ApEdition, EventPayload, ExecuteEventParserOperation, ExecuteTestOrRunTriggerResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./piece-helper";
 import { isValidCron } from 'cron-validator';
+import { TriggerStrategy } from "@activepieces/pieces-framework";
 
 type Listener = {
   events: string[];
@@ -21,11 +22,11 @@ export const triggerHelper = {
     return piece.events?.parseAndReply({ payload: params.event });
   },
 
-  async executeTrigger(params: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | unknown[] | unknown> {
+  async executeTrigger(params: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | ExecuteTestOrRunTriggerResponse | unknown[]> {
     const { pieceName, pieceVersion, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
 
-    const piece = await pieceHelper.loadPiece(pieceName, pieceVersion);
-    const trigger = piece?.getTrigger(triggerName);
+    const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
+    const trigger = piece.getTrigger(triggerName);
 
     if (trigger === undefined) {
       throw new Error(`trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
@@ -47,13 +48,13 @@ export const triggerHelper = {
           appListeners.push({ events, identifierValue, identifierKey });
         }
       },
-      setSchedule(request : ScheduleOptions) {
+      setSchedule(request: ScheduleOptions) {
         if (!isValidCron(request.cronExpression)) {
           throw new Error(`Invalid cron expression: ${request.cronExpression}`);
         }
         scheduleOptions = {
           cronExpression: request.cronExpression,
-          timezone: request.timezone??"UTC"
+          timezone: request.timezone ?? "UTC"
         };
       },
       webhookUrl: params.webhookUrl,
@@ -65,6 +66,9 @@ export const triggerHelper = {
       case TriggerHookType.ON_DISABLE:
         await trigger.onDisable(context);
         return {
+          scheduleOptions: {
+            cronExpression: ''
+          },
           listeners: []
         }
       case TriggerHookType.ON_ENABLE:
@@ -75,8 +79,20 @@ export const triggerHelper = {
         }
       case TriggerHookType.TEST:
         // TODO: fix types to remove use of any
-        return trigger.test(context as any);
-      case TriggerHookType.RUN:
+        try {
+          return {
+            success: true,
+            output: await trigger.test(context as any)
+          }
+        } catch (e: any) {
+          console.error(e);
+          return {
+            success: false,
+            message: e.toString(),
+            output: []
+          }
+        }
+      case TriggerHookType.RUN: {
         if (trigger.type === TriggerStrategy.APP_WEBHOOK) {
           if (params.edition === ApEdition.COMMUNITY) {
             return [];
@@ -105,7 +121,12 @@ export const triggerHelper = {
             return [];
           }
         }
-        return trigger.run(context as any);
+        const items = await trigger.run(context as any);
+        if (!Array.isArray(items)) {
+          throw new Error(`Trigger run should return an array of items, but returned ${typeof items}`)
+        }
+        return items;
+      }
     }
   },
 }

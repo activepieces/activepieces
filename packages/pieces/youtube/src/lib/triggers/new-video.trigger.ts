@@ -1,5 +1,5 @@
-import { createTrigger, httpClient, HttpMethod} from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { channelIdentifier } from '../common/props';
 import dayjs from 'dayjs';
 import cheerio from "cheerio";
@@ -207,6 +207,13 @@ export const youtubeNewVideoTrigger = createTrigger({
                 "#": "2020-12-29T17:29:29+00:00"
             }
         }
+    },
+    async test({ propsValue }): Promise<unknown[]> {
+        const channelId = await getChannelId(propsValue.channel_identifier);
+        if (!channelId) {
+            return [];
+        }
+        return (await getRssItems(channelId)) || [];
     },
     async onEnable({ propsValue, store }): Promise<void> {
         const channelId = await getChannelId(propsValue.channel_identifier);

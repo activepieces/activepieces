@@ -1,5 +1,5 @@
 import packageJson from "../package.json";
-import { createPiece } from "@activepieces/framework";
+import { createPiece } from "@activepieces/pieces-framework";
 import { createAsanaTask } from "./lib/actions/create-task";
 
 export const asana = createPiece({
