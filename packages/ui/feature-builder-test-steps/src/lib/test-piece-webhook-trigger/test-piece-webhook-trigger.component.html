@@ -6,9 +6,9 @@
         <div class="ap-flex ap-flex-col ap-gap-2 ap-items-center ap-justify-center ap-h-[132px]"
             *ngIf="currentResults.length === 0 && !loading ">
             <div class="ap-relative">
-                <app-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
-                    matTooltip="Test this step to generate sample data that can be used in the next steps"
-                    matTooltipPosition="above"> </app-hotspot>
+                <ap-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
+                    matTooltip="Test this trigger to generate sample data that can be used in the next steps"
+                    matTooltipPosition="above"> </ap-hotspot>
                 <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()"
                     [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 'After the trigger is tested, you will be able to use its sample data in the next steps'"
                     [disabled]="(isValid$ | async) === false">Test Trigger </ap-button>
