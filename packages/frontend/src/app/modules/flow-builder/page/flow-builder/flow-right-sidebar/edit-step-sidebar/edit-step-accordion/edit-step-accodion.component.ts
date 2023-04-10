@@ -80,6 +80,7 @@ export class EditStepAccordionComponent {
     );
     this.stepForm = this.formBuilder.group({
       input: new UntypedFormControl({}),
+      inputUiInfo: new UntypedFormControl({}),
     });
   }
 
