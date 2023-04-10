@@ -63,7 +63,11 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
       .select(BuilderSelectors.selectCurrentFlowId)
       .pipe(
         switchMap((res) => {
-          return this.testStepService.getTriggerEventsResults(res!.toString());
+          if(res)
+          {
+            return this.testStepService.getTriggerEventsResults(res.toString());
+          }
+        throw new Error("No flow is selected");
         }),
         map((res) => {
           return res.data;

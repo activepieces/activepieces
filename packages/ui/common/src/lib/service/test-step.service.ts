@@ -35,18 +35,19 @@ export class TestStepService {
   }
   startPieceWebhookSimulation(flowId: string) {
     return this.http.post<SeekPage<TriggerEvent>>(
-      environment.apiUrl + '/webhook-simulation/',{
-        flowId
+      environment.apiUrl + '/webhook-simulation/',
+      {
+        flowId,
       }
     );
   }
   deletePieceWebhookSimulation(flowId: string) {
     return this.http.delete<SeekPage<TriggerEvent>>(
-      environment.apiUrl + '/webhook-simulation/',{
-        params:
-        {
-          flowId
-        }
+      environment.apiUrl + '/webhook-simulation/',
+      {
+        params: {
+          flowId,
+        },
       }
     );
   }

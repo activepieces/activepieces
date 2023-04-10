@@ -3,10 +3,8 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Pipe({ name: 'outputLog', pure: true })
 export class OutputLogPipe implements PipeTransform {
+  constructor(private sanitizer: DomSanitizer) {}
 
-  constructor(private sanitizer: DomSanitizer) { }
-
- 
   transform(value: any, truncate = true): SafeHtml {
     let result = '';
     if (typeof value === 'object') {
@@ -17,14 +15,14 @@ export class OutputLogPipe implements PipeTransform {
       result = this.repr(value);
     }
     if (truncate) {
-      result = result.length > 8092
-        ? result.substring(0, 8092) + ' (truncated)'
-        : result;
+      result =
+        result.length > 8092
+          ? result.substring(0, 8092) + ' (truncated)'
+          : result;
     }
     const escaped = this.escapeHtmlTags(result);
     return this.sanitizer.bypassSecurityTrustHtml(escaped);
   }
-
 
   escapeHtmlTags(str: string) {
     return str.replace(/</g, '&lt;').replace(/>/g, '&gt;');
