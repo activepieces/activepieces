@@ -3,9 +3,9 @@
     <div class="ap-flex-grow">
       <span class="ap-typography-subtitle-2">{{title}}</span>
     </div>
-    <div>
+    <div class="ap-flex ap-items-center">
       <svg-icon class="ap-h-[16px] ap-w-[16px] ap-cursor-pointer" src="/assets/img/custom/maximize-black.svg"
-        matTooltip="Expand" (click)="openModal()"></svg-icon>
+        [applyClass]="true" matTooltip="Expand" (click)="openModal()"></svg-icon>
     </div>
   </div>
   <div class="code-area">

@@ -4,7 +4,7 @@
   <div class="ap-typography-body-1 ap-text-description ap-mb-4">
     Please type "DELETE" to confirm delete this collection
   </div>
-  <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" (submit)="deleteCollection()">
+  <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" (submit)="submit()">
     <mat-form-field class="ap-w-full" appearance="outline">
       <input cdkFocusInitial formControlName="confirmation" matInput type="text" placeholder="DELETE" />
       <mat-error *ngIf="confirmationForm.controls.confirmation.invalid">Please write the confirmation message
@@ -21,8 +21,7 @@
     <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="!!deleteOperation$">
       Cancel
     </ap-button>
-    <ap-button btnSize="default" type="submit" (click)="deleteCollection();" [loading]="!!deleteOperation$"
-      btnColor="warn">
+    <ap-button btnSize="default" type="submit" (click)="submit();" [loading]="!!deleteOperation$" btnColor="warn">
       Confirm
     </ap-button>
   </div>

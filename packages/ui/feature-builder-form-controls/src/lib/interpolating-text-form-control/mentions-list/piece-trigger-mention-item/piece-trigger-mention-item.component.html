@@ -2,11 +2,11 @@
   <div class="ap-flex" (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true">
     <ng-container *ngIf="sampleData$ | async as result">
       <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]"
-        *ngIf="result.children && result.children.length>0 || (isPollingTrigger$|async)">
+        *ngIf="(isScheduleTrigger$ | async) === false || (isScheduleTrigger$ | async) === undefined">
         {{expandSample ? 'expand_less' : 'expand_more'}}
       </mat-icon>
       <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"
-        [indentation]="!result.children || result.children.length===0 && (isPollingTrigger$|async) !== true"></app-generic-step-mention-item>
+        [indentation]="(isScheduleTrigger$ | async) === true"></app-generic-step-mention-item>
     </ng-container>
 
   </div>
@@ -27,10 +27,13 @@
         {{result.error}}
       </div>
     </ng-container>
-    <ng-container *ngIf="result.children?.length === 0 && (isPollingTrigger$| async)">
+    <ng-container *ngIf="result.children?.length === 0">
       <div class="ap-my-3 ap-px-2">
         <div class="ap-typography-body-1 ap-text-center ap-mb-1">
-          Load sample data first
+          {{
+          (isPollingTrigger$| async)? 'Load sample data first' : 'Test trigger first'
+          }}
+
         </div>
         <div class="ap-typography-body-2 ap-text-center ap-mb-3">
           This trigger needs to have data loaded from your account, to use as sample data

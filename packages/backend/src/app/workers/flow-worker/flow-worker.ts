@@ -1,12 +1,14 @@
-import fs from 'node:fs/promises'
+import fs from 'fs-extra'
 import {
     ActionType,
     ApEnvironment,
+    apId,
     CodeActionSettings,
     ExecutionOutputStatus,
     File,
     flowHelper,
     FlowVersion,
+    FlowVersionState,
     getPackageAliasForPiece,
     getPackageVersionForPiece,
     ProjectId,
@@ -67,13 +69,22 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId)
     const collection = await collectionService.getOneOrThrow({ projectId: jobData.projectId, id: jobData.collectionId })
 
-    const sandbox = sandboxManager.obtainSandbox()
+    // Don't use sandbox for draft versions, since they are mutable and we don't want to cache them.
+    const key = flowVersion.id + (FlowVersionState.DRAFT === flowVersion.state ? '-draft' + apId() : '')
+    const sandbox = await sandboxManager.obtainSandbox(key)
+    const startTime = Date.now()
     logger.info(`[${jobData.runId}] Executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`)
     try {
-        await sandbox.cleanAndInit()
-        await downloadFiles(sandbox, jobData.projectId, flowVersion)
-        await installPieceDependencies(sandbox, flowVersion)
-
+        if (!sandbox.cached) {
+            await sandbox.recreate()
+            await downloadFiles(sandbox, jobData.projectId, flowVersion)
+            await installPieceDependencies(sandbox, flowVersion)
+            logger.info(`[${jobData.runId}] Preparing sandbox ${sandbox.boxId} took ${Date.now() - startTime}ms`)
+        }
+        else {
+            await sandbox.clean()
+            logger.info(`[${jobData.runId}] Reusing sandbox ${sandbox.boxId} took ${Date.now() - startTime}ms`)
+        }
         const executionOutput = await engineHelper.executeFlow(sandbox, {
             flowVersionId: flowVersion.id,
             collectionId: collection.id,
@@ -85,7 +96,6 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
                 status: StepOutputStatus.SUCCEEDED,
             },
         })
-
         const logsFile = await fileService.save(jobData.projectId, Buffer.from(JSON.stringify(executionOutput)))
         await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id)
     }
@@ -100,9 +110,9 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         }
     }
     finally {
-        sandboxManager.returnSandbox(sandbox.boxId)
+        await sandboxManager.returnSandbox(sandbox.boxId)
     }
-    logger.info(`[${jobData.runId}] Finished executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`)
+    logger.info(`[${jobData.runId}] Finished executing flow ${flowVersion.id} in sandbox ${sandbox.boxId} in ${Date.now() - startTime}ms`)
 }
 
 async function downloadFiles(
@@ -113,20 +123,21 @@ async function downloadFiles(
     logger.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
     const flowLock = await acquireLock({
         key: flowVersion.id,
-        timeout: 30000,
+        timeout: 60000,
     })
     try {
         const buildPath = sandbox.getSandboxFolderPath()
 
         // This has to be before flows, since it does modify code settings and fill it with packaged file id.
-        await fs.mkdir(`${buildPath}/codes/`)
+        await fs.ensureDir(`${buildPath}/codes/`)
         const artifacts: File[] = await buildCodes(projectId, flowVersion)
 
+        logger.info('NUMBER OF ARTIFACTS: ' + artifacts.length)
         for (const artifact of artifacts) {
             await fs.writeFile(`${buildPath}/codes/${artifact.id}.js`, artifact.data)
         }
 
-        await fs.mkdir(`${buildPath}/flows/`)
+        await fs.ensureDir(`${buildPath}/flows/`)
         await fs.writeFile(`${buildPath}/flows/${flowVersion.id}.json`, JSON.stringify(flowVersion))
 
     }

@@ -39,7 +39,7 @@ export class DeleteEntityDialogComponent {
       }),
     });
   }
-  deleteCollection() {
+  submit() {
     if (this.confirmationForm.valid && !this.deleteOperation$) {
       this.deleteOperation$ = this.data.deleteEntity$.pipe(
         catchError((err) => {

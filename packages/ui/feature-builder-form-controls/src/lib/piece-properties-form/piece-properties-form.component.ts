@@ -5,6 +5,7 @@ import {
   ElementRef,
   Input,
   QueryList,
+  ViewChild,
   ViewChildren,
 } from '@angular/core';
 import {
@@ -57,6 +58,7 @@ import {
 import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { PiecePropertiesFormValue } from '../models/piece-properties-form-value';
+import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
 
 type ConfigKey = string;
 
@@ -117,6 +119,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   @Input() pieceDisplayName: string;
   @ViewChildren('textControl', { read: ElementRef })
   theInputs: QueryList<ElementRef>;
+  @ViewChild('addConnectionBtn')
+  addConnectionBtn: AddEditConnectionButtonComponent;
   form!: UntypedFormGroup;
   setDefaultValue$: Observable<null>;
   OnChange: (value: unknown) => void;
@@ -205,7 +209,9 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
 
     this.form.markAllAsTouched();
   }
-
+  addNewConnectionButtonPress() {
+    this.addConnectionBtn.buttonClicked();
+  }
   createDropdownConfigsObservables() {
     Object.keys(this.properties).forEach((pk) => {
       const property = this.properties[pk];
@@ -302,6 +308,14 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     obj.property.refreshers.forEach((rk) => {
       refreshers$[rk] = this.form.controls[rk].valueChanges.pipe(
         distinctUntilChanged((prev, curr) => {
+          if (
+            this.properties[rk].type === PropertyType.OAUTH2 ||
+            this.properties[rk].type === PropertyType.CUSTOM_AUTH ||
+            this.properties[rk].type === PropertyType.SECRET_TEXT ||
+            this.properties[rk].type === PropertyType.BASIC_AUTH
+          ) {
+            return false;
+          }
           return JSON.stringify(prev) === JSON.stringify(curr);
         }),
         startWith(this.form.controls[rk].value),
@@ -447,7 +461,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     propertyKey: string;
     value: `\${connections.${string}}`;
   }) {
-    this.form.get(event.propertyKey)!.setValue(event.value);
+    this.form.get(event.propertyKey)!.setValue(event.value.toString());
   }
   dropdownCompareWithFunction = (opt: string, formControlValue: string) => {
     return formControlValue !== undefined && deepEqual(opt, formControlValue);
@@ -554,5 +568,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     mentionOp: InsertMentionOperation
   ) {
     await textControl.addMention(mentionOp);
+  }
+  checkIfTheDivIsTheTarget($event: MouseEvent, noConnectionDiv: HTMLElement) {
+    return $event.target === noConnectionDiv;
   }
 }
