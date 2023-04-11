@@ -4,7 +4,8 @@
 
 <mat-dialog-content>
 
-  <form class="ap-flex ap-flex-col ap-gap-2 ap-w-[430px]" [formGroup]="settingsForm" (submit)="submit()">
+  <form class="ap-flex ap-flex-col ap-gap-2 ap-w-[430px]" [formGroup]="settingsForm" (submit)="submit()"
+    (keyup.enter)="submit()">
     <mat-form-field class="ap-w-full" appearance="outline">
       <mat-label>Name</mat-label>
       <input cdkFocusInitial [matTooltip]="keyTooltip" formControlName="name" matInput type="text" />

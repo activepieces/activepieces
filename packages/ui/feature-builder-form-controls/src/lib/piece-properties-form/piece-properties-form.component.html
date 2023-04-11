@@ -265,7 +265,7 @@
             [isEditConnectionButton]="true" [authProperty]="property.value" [pieceName]="pieceName"
             [pieceVersion]="pieceVersion" [propertyKey]="property.key"
             [selectedConnectionInterpolatedString]="formGroup.get(property.key)!.value"
-            [triggerName]="actionOrTriggerName">
+            (connectionPropertyValueChanged)="connectionValueChanged($event)" [triggerName]="actionOrTriggerName">
             Edit
           </app-add-edit-connection-button>
           <mat-form-field class="ap-w-full" appearance="outline">
@@ -279,12 +279,13 @@
                 [style.display]="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0 ? 'flex': 'none'"
                 class="add-auth">
                 <div class="ap-flex">
-                  <div class="ap-flex-grow">No connections</div>
-                  <app-add-edit-connection-button class="edit-selected-auth" btnSize="small" *ngIf="formGroup.enabled"
+                  <div class="ap-flex-grow" #noConnectionDiv
+                    (click)="checkIfTheDivIsTheTarget($event,noConnectionDiv)? addConnectionBtn.buttonClicked():null ">
+                    No connections</div>
+                  <app-add-edit-connection-button class="edit-selected-auth" btnSize="small"
                     [isEditConnectionButton]="false" [authProperty]="property.value" [pieceName]="pieceName"
-                    [propertyKey]="property.key
-                    " [pieceVersion]="pieceVersion" [triggerName]="actionOrTriggerName"
-                    (connectionPropertyValueChanged)="connectionValueChanged($event)">
+                    [propertyKey]="property.key" [pieceVersion]="pieceVersion" [triggerName]="actionOrTriggerName"
+                    (connectionPropertyValueChanged)="connectionValueChanged($event);">
                     + Add
                   </app-add-edit-connection-button>
                 </div>
@@ -295,7 +296,7 @@
             </mat-error>
           </mat-form-field>
           <app-add-edit-connection-button btnSize="medium" *ngIf="formGroup.enabled" [isEditConnectionButton]="false"
-            [authProperty]="property.value" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
+            #addConnectionBtn [authProperty]="property.value" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
             [propertyKey]="property.key" (connectionPropertyValueChanged)="connectionValueChanged($event)"
             [triggerName]="actionOrTriggerName">
             + New Connection

@@ -13,7 +13,7 @@ import {
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-} from '../../components/delete-enity-dialog/delete-collection-dialog.component';
+} from '../../components/delete-enity-dialog/delete-entity-dialog.component';
 import { FormControl } from '@angular/forms';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
 import {
