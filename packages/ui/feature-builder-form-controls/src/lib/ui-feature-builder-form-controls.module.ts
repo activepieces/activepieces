@@ -29,7 +29,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AuthConfigsPipe } from './piece-properties-form/auth-configs.pipe';
 import { PiecePropertiesFormComponent } from './piece-properties-form/piece-properties-form.component';
 import { MatTreeModule } from '@angular/material/tree';
-import { MatIconModule } from '@angular/material/icon';
 import { QuillModule } from 'ngx-quill';
 import { MatDividerModule } from '@angular/material/divider';
 import { WebhookTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component';
@@ -54,7 +53,6 @@ const exportedDeclarations = [
     FormsModule,
     UiFeatureConnectionsModule,
     MatTreeModule,
-    MatIconModule,
     QuillModule.forRoot({}),
     MatDividerModule,
   ],

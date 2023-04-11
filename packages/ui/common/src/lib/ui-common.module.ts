@@ -43,6 +43,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TrackFocusDirective } from './directives/track-focus.directive';
 import { ObjectToArrayPipe } from './pipe/object-to-array.pipe';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -62,6 +63,7 @@ const exportedImports = [
   MatSlideToggleModule,
   DragDropModule,
   MatCheckboxModule,
+  MatIconModule,
 ];
 const exportedDeclarations = [
   MarkdownComponent,

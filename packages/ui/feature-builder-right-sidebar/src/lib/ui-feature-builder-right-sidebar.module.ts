@@ -23,7 +23,7 @@ import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-bui
     UiCommonModule,
     UiFeatureBuilderFormControlsModule,
     MatTabsModule,
-    UiFeatureBuilderTestStepsModule,
+    UiFeatureBuilderTestStepsModule
   ],
   declarations: [
     EditStepFormContainerComponent,
