@@ -9,21 +9,10 @@ export const convertJsonToXml = createAction({
         json: Property.Json({
             displayName: 'JSON',
             required: true,
-        }),
-        label: Property.ShortText({
-            displayName: 'Label',
-            description: 'Label of the data content',
-            required: true,
-        }),
+        })
     },
     async run(context) {
-        const { json, label } = context.propsValue;
-
-        const convertedToXml = js2xml({
-            [label]: JSON.parse(JSON.stringify(json))
-        });
-
-        return convertedToXml;
+        return js2xml(JSON.parse(JSON.stringify(context.propsValue.json)));
 
     },
 });
