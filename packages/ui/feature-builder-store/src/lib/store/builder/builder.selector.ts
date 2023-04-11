@@ -141,6 +141,33 @@ export const selectFlow = (flowId: string) =>
   createSelector(selectFlowsState, (state: FlowsState): Flow | undefined => {
     return state.flows.find((f) => f.id === flowId);
   });
+
+export const selectSearchItems = (command: string) =>
+  createSelector(selectFlowsState, (state: FlowsState) => {
+    const options = state.flows
+      .filter(
+        (flow) =>
+          !command || flow.version.displayName.toLowerCase().includes(command)
+      )
+      .map((f) => {
+        return {
+          label: f.version.displayName,
+          value: f.id,
+          icon: '/assets/img/custom/dashboard/collections.svg',
+          type: 'FLOW',
+        };
+      });
+    return [
+      {
+        label: 'Test Flow',
+        value: 'test',
+        icon: '/assets/img/custom/dashboard/runs.svg',
+        type: 'TEST',
+      },
+      ...options,
+    ];
+  });
+
 export const selectCurrentFlowValidity = createSelector(
   selectCurrentFlow,
   (flow: Flow | undefined) => {
@@ -550,6 +577,7 @@ export const BuilderSelectors = {
   selectTabState,
   selectAllFlowItemsDetails,
   selectFlowItemDetails,
+  selectSearchItems,
   selectAllFlowItemsDetailsLoadedState,
   selectCoreFlowItemsDetails,
   selectFlowItemDetailsForCoreTriggers,

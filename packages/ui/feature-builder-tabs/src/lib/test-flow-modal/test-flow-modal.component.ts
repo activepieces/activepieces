@@ -2,12 +2,14 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  HostListener,
   OnInit,
   TemplateRef,
 } from '@angular/core';
 import {
   catchError,
   combineLatest,
+  EMPTY,
   interval,
   map,
   Observable,
@@ -97,6 +99,18 @@ export class TestFlowModalComponent implements OnInit {
     (<any>window).jsonlint = jsonlint;
   }
 
+  @HostListener('window:keydown', ['$event'])
+  onKeyPress($event: KeyboardEvent) {
+    if (
+      ($event.ctrlKey || $event.metaKey) &&
+      $event.key.toLocaleLowerCase() === 'z'
+    ) {
+      const f: any = '';
+      // TODO FIX
+      this.testFlowButtonClicked(f);
+    }
+  }
+
   ngOnInit() {
     this.isSaving$ = this.store.select(BuilderSelectors.selectIsSaving);
     this.selectedCollection$ = this.store.select(
@@ -135,35 +149,42 @@ export class TestFlowModalComponent implements OnInit {
     );
   }
 
-  testFlowButtonClicked(
-    flow: Flow,
-    collection: Collection,
-    testFlowTemplate: TemplateRef<any>
-  ) {
+  testFlowButtonClicked(testFlowTemplate: TemplateRef<any>) {
     this.submitted = true;
-    if (flow.version!.trigger?.type === TriggerType.WEBHOOK) {
-      this.dialogRef = this.dialogService.open(testFlowTemplate);
-    } else if (flow.version!.trigger!.type === TriggerType.PIECE) {
-      const { pieceName, pieceVersion } = flow.version!.trigger.settings;
-      this.executeTest$ = this.actionMetaDataService
-        .getPieceMetadata(pieceName, pieceVersion)
-        .pipe(
-          map((pieceMetadata) => {
-            return (
-              pieceMetadata.triggers[
-                (flow.version?.trigger!.settings as PieceTriggerSettings)
-                  .triggerName
-              ].sampleData || {}
+    this.executeTest$ = combineLatest([
+      this.selectedCollection$,
+      this.selectedFlow$,
+    ]).pipe(
+      switchMap(([collection, nullableFlow]) => {
+        const flow = nullableFlow!;
+        if (flow.version!.trigger?.type === TriggerType.WEBHOOK) {
+          this.dialogRef = this.dialogService.open(testFlowTemplate);
+          return EMPTY;
+        } else if (flow.version!.trigger!.type === TriggerType.PIECE) {
+          const { pieceName, pieceVersion } = flow.version!.trigger.settings;
+          console.log('SAW THERE');
+          return this.actionMetaDataService
+            .getPieceMetadata(pieceName, pieceVersion)
+            .pipe(
+              map((pieceMetadata) => {
+                return (
+                  pieceMetadata.triggers[
+                    (flow.version?.trigger!.settings as PieceTriggerSettings)
+                      .triggerName
+                  ].sampleData || {}
+                );
+              }),
+              switchMap((sampleData) =>
+                this.executeTest(collection, flow, sampleData)
+              )
             );
-          }),
-          switchMap((sampleData) =>
-            this.executeTest(collection, flow, sampleData)
-          )
-        );
-    } else {
-      this.executeTest$ = this.executeTest(collection, flow, {});
-    }
+        } else {
+          return this.executeTest(collection, flow, {});
+        }
+      })
+    );
   }
+
   testFlowWithPayload(collection: Collection, flow: Flow) {
     if (this.payloadControl.valid) {
       this.dialogRef.close();
@@ -176,6 +197,7 @@ export class TestFlowModalComponent implements OnInit {
     }
   }
   executeTest(collection: Collection, flow: Flow, payload: unknown) {
+    console.log('STARTED');
     return this.flowService
       .execute({
         collectionId: collection.id,
@@ -185,6 +207,8 @@ export class TestFlowModalComponent implements OnInit {
       .pipe(
         tap({
           next: (instanceRun: FlowRun) => {
+            console.log('YALLA');
+
             this.testRunSnackbar = this.snackbar.openFromComponent(
               TestRunBarComponent,
               {

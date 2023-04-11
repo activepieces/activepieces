@@ -49,7 +49,11 @@ export class FlowBuilderHeaderComponent implements OnInit {
       ($event.ctrlKey || $event.metaKey) &&
       ($event.key == 'k' || $event.key == 'K')
     ) {
-      this.dialog.open(SwitchFlowDialogComponent);
+      this.dialog.open(SwitchFlowDialogComponent, {
+        position: {
+          top: '5%',
+        },
+      });
       $event.preventDefault();
     }
   }

@@ -145,7 +145,6 @@ export class ActionMetaService {
     if (this.piecesCache.has(cacheKey)) {
       return this.piecesCache.get(cacheKey)!;
     }
-
     const pieceMetadata$ = forkJoin({
       pieceMetadata: this.fetchPieceMetadata(pieceName, pieceVersion),
       edition: this.edition$,
