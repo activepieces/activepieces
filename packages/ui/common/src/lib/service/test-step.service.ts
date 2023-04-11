@@ -33,4 +33,11 @@ export class TestStepService {
       }
     );
   }
+  testPieceStep(req: {
+    stepName: string;
+    collectionId: string;
+    flowVersionId: string;
+  }) {
+    return this.http.post<unknown>(environment.apiUrl + '/step-run', req);
+  }
 }

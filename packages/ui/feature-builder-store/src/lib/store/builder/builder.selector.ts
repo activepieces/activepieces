@@ -131,6 +131,13 @@ export const selectCurrentFlow = createSelector(
     return flowsState.flows.find((f) => f.id === flowsState.selectedFlowId);
   }
 );
+export const selectCurrentFlowVersionId = createSelector(
+  selectFlowsState,
+  (flowsState: FlowsState) => {
+    return flowsState.flows.find((f) => f.id === flowsState.selectedFlowId)!
+      .version.id;
+  }
+);
 
 export const selectTabState = (flowId: string) =>
   createSelector(selectFlowsState, (state: FlowsState): TabState => {
@@ -180,7 +187,21 @@ const selectCurrentStepSettings = createSelector(
     return undefined;
   }
 );
-const selectStepSelectedSampleData = createSelector(
+const selectTriggerSelectedSampleData = createSelector(
+  selectCurrentStepSettings,
+  (settings) => {
+    if (settings) {
+      if (Object.keys(settings).find((s) => s === 'inputUiInfo')) {
+        const sampleDataSettings = (settings as Record<string, unknown>)[
+          'inputUiInfo'
+        ] as SampleDataSettings;
+        return sampleDataSettings.currentSelectedData;
+      }
+    }
+    return undefined;
+  }
+);
+const selectStepTestSampleData = createSelector(
   selectCurrentStepSettings,
   (settings) => {
     if (settings) {
@@ -567,7 +588,9 @@ export const BuilderSelectors = {
   selectAnyFlowHasSteps,
   selectStepLogoUrl,
   selectCurrentStepSettings,
-  selectStepSelectedSampleData,
+  selectTriggerSelectedSampleData,
   selectStepValidity,
   selectCurrentStepPieceVersionAndName,
+  selectCurrentFlowVersionId,
+  selectStepTestSampleData,
 };

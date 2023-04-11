@@ -27,7 +27,7 @@ const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, 
     for (const step of flowSteps) {
         if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {
             const { name, settings: { inputUiInfo } } = step
-            testContext[name] = inputUiInfo.currentTestSampleData
+            testContext[name] = inputUiInfo.currentSelectedData
         }
     }
 
@@ -64,7 +64,7 @@ export const stepRunService = {
 
         const result = await engineHelper.executeAction(operation)
 
-        step.settings.inputUiInfo.currentTestSampleData = result
+        step.settings.inputUiInfo.currentSelectedData = result
         await flowVersionService.overwriteVersion(flowVersionId, flowVersion)
 
         return result
