@@ -88,7 +88,7 @@ export class PieceStepMentionItemComponent implements OnInit {
     let cachedResult: undefined | MentionTreeNode[] = undefined;
     if (
       step.type === ActionType.PIECE &&
-      step.settings.inputUiInfo.currentSelectedData
+      step.settings.inputUiInfo.currentSelectedData !== undefined
     ) {
       cachedResult = traverseStepOutputAndReturnMentionTree(
         step.settings.inputUiInfo.currentSelectedData,
