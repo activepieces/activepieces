@@ -20,7 +20,7 @@ export default defineConfig({
                         const fileNameRegex = /^.+pieces\/(?<pieceName>.+)\/src.+$/
                         const matchResult = file.name.match(fileNameRegex)
                         const pieceName = matchResult?.groups?.pieceName
-                        return `piece-${pieceName}`
+                        return `pieces-${pieceName}`
                     })
                     .filter(Boolean)
                     .join(',')
