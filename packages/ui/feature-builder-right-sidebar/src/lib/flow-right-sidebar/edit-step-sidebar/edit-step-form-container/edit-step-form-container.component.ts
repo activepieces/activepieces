@@ -20,6 +20,7 @@ import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   ActionType,
+  CodeActionSettings,
   PieceActionSettings,
   TriggerType,
   UpdateActionRequest,
@@ -148,6 +149,17 @@ export class EditStepFormContainerComponent {
             .inputUiInfo.customizedInputs,
           currentSelectedData:
             currentStep.settings.inputUiInfo.currentSelectedData,
+        },
+      };
+      stepToSave.settings = componentSettings;
+    }
+    if (currentStep.type === ActionType.CODE) {
+      const componentSettings: CodeActionSettings = {
+        ...currentStep.settings,
+        ...inputControlValue,
+        inputUiInfo: {
+          currentSelectedData:
+            currentStep.settings.inputUiInfo?.currentSelectedData,
         },
       };
       stepToSave.settings = componentSettings;

@@ -8,15 +8,15 @@
                 <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
                     <svg-icon src="assets/img/custom/success-step-result.svg"
                         [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon>
-                    Loaded
+                    Tested
                     Successfully
                 </div>
                 <div class="ap-flex-grow">
                 </div>
                 <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
                     [tooltipText]=" (currentStepValidity$ | async) === false ? 'Please fix the step inputs first' : 'Test step to generate sample data to use in the next steps'"
-                    [disabled]="(currentStepValidity$ | async) === false" (buttonClicked)="testStep()">Test
-                    step</ap-button>
+                    [disabled]="(currentStepValidity$ | async) === false"
+                    (buttonClicked)="testStep()">Retest</ap-button>
             </div>
             <div class="ap-typography-caption ap-text-description ap-my-2">
                 This sample data can be used in the next steps
@@ -36,7 +36,7 @@
             </ap-hotspot>
             <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()"
                 [tooltipText]=" (currentStepValidity$ | async) === false ? 'Please fix the step inputs first' : ''"
-                [disabled]="(currentStepValidity$ | async) === false">Load Data</ap-button>
+                [disabled]="(currentStepValidity$ | async) === false">Test step</ap-button>
         </div>
     </div>
 </ng-template>

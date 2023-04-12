@@ -65,6 +65,7 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
         }),
         tap((res) => {
           this.loading = false;
+          this.testStepService.elevateResizer$.next(true);
           if (res) {
             this.saveStepTestResult(res);
           } else {
