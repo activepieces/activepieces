@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { map, Observable, of, switchMap } from 'rxjs';
 import {
-  CollectionId,
   CreateFlowRequest,
   CreateFlowRunRequest,
   ExecutionOutputStatus,
@@ -25,7 +24,6 @@ export class FlowService {
   create(request: CreateFlowRequest): Observable<Flow> {
     return this.http.post<Flow>(environment.apiUrl + '/flows', {
       displayName: request.displayName,
-      collectionId: request.collectionId,
     });
   }
 
@@ -46,11 +44,10 @@ export class FlowService {
     return this.http.delete<void>(environment.apiUrl + '/flows/' + flowId);
   }
 
-  listByCollection(collectionId: CollectionId): Observable<SeekPage<Flow>> {
+  list(): Observable<SeekPage<Flow>> {
     return this.http.get<SeekPage<Flow>>(environment.apiUrl + '/flows', {
       params: {
         limit: 100000,
-        collectionId: collectionId,
       },
     });
   }
@@ -88,9 +85,8 @@ export class FlowService {
     );
   }
 
-  guessFlow(prompt: string, newFlowName: string, collectionId: string) {
+  guessFlow(prompt: string, newFlowName: string) {
     const request: GuessFlowRequest = {
-      collectionId: collectionId,
       displayName: newFlowName,
       prompt: prompt,
     };

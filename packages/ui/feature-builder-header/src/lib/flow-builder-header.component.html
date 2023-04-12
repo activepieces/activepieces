@@ -1,0 +1,17 @@
+<nav class="navbar-container navbar-expand">
+  <div class="ap-flex ap-items-center">
+    <ap-icon-button [width]="22" [height]="20" [iconFilename]="'logo/logo.svg'" [tooltipText]="'Home'"
+      (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
+    <div class="ap-flex-grow" #spacer></div>
+    <div class="ap-flex ap-items-center ap-gap-2">
+      <ap-button btnStyle="basic" btnColor="basic" btnSize="medium" (click)="guessAi()"
+        *ngIf="magicWandEnabled$ | async">
+        <div class="ap-flex ap-items-center ap-font-semibold">
+          🪄 Magic Wand
+        </div>
+      </ap-button>
+      <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
+      <app-publish-button *ngIf="(viewMode$ | async) === false"></app-publish-button>
+    </div>
+  </div>
+</nav>

@@ -1,12 +1,7 @@
 import { createAction, props } from '@ngrx/store';
-import {
-  AppConnection,
-  Collection,
-  Flow,
-  FlowRun,
-  Instance,
-} from '@activepieces/shared';
+import { AppConnection, Flow, FlowRun } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
+import { BuilderState } from '../../model';
 
 export enum BuilderActionType {
   LOAD_INITIAL = '[BUILDER] LOAD_INITIAL',
@@ -15,11 +10,10 @@ export enum BuilderActionType {
 export const loadInitial = createAction(
   BuilderActionType.LOAD_INITIAL,
   props<{
-    collection: Collection;
-    flows: Flow[];
+    flow: Flow;
+    builderState: BuilderState;
     viewMode: ViewModeEnum;
     run?: FlowRun;
-    instance?: Instance;
     appConnections: AppConnection[];
   }>()
 );

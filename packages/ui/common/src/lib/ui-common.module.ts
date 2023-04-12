@@ -30,7 +30,6 @@ import { DialogTitleTemplateComponent } from './components/dialog-title-template
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { ChevronDropdownMenuComponent } from './components/chevron-dropdown-menu/chevron-dropdown-menu.component';
 import { OutputLogPipe } from './pipe/output-log.pipe';
 import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
@@ -74,7 +73,6 @@ const exportedDeclarations = [
   HotspotComponent,
   IconButtonComponent,
   ApButtonComponent,
-  ChevronDropdownMenuComponent,
   DialogTitleTemplateComponent,
   OutputLogPipe,
   DefaultFalsePipe,

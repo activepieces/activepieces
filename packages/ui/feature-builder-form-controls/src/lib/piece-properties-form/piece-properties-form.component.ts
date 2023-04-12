@@ -316,20 +316,14 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     }
     return combineLatest(refreshers$).pipe(
       switchMap((res) => {
-        return this.store.select(BuilderSelectors.selectCurrentCollection).pipe(
-          take(1),
-          switchMap((collection) => {
-            return this.actionMetaDataService.getPieceActionConfigOptions<T>(
-              {
-                pieceVersion: this.pieceVersion,
-                propertyName: obj.propertyKey,
-                stepName: this.actionOrTriggerName,
-                input: res,
-                collectionId: collection.id,
-              },
-              this.pieceName
-            );
-          })
+        return this.actionMetaDataService.getPieceActionConfigOptions<T>(
+          {
+            pieceVersion: this.pieceVersion,
+            propertyName: obj.propertyKey,
+            stepName: this.actionOrTriggerName,
+            input: res,
+          },
+          this.pieceName
         );
       }),
       catchError((err) => {
