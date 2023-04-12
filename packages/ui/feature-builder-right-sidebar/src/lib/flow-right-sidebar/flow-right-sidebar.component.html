@@ -13,7 +13,7 @@
       <app-edit-step-sidebar>
       </app-edit-step-sidebar>
       <div *ngIf="currentStepPieceVersion$ | async as result"
-        class=" ap-left-[0px] ap-bottom-[0px] ap-bg-white ap-body-2 !ap-text-description ap-w-full ap-px-4 ap-py-1 ap-z-50 ap-flex "
+        class=" ap-left-[0px] ap-bottom-[0px] ap-bg-white ap-body-2 !ap-text-description ap-w-full ap-px-4 ap-py-1 ap-z-40 ap-flex "
         [class.ap-absolute]="!isOverflown(editStepSection)">
         <div class="ap-flex ap-items-center ap-gap-2 ap-cursor-pointer" [matTooltip]="result.tooltipText"
           (click)="openVersionDocs()">
