@@ -127,6 +127,9 @@ export const pieces: Piece[] = [
     googleForms
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
+/**
+ * @deprecated this will be removed, don't use it
+ */
 export const getPiece = (name: string): Piece | undefined => {
     return pieces.find((f) => name.toLowerCase() === f.name.toLowerCase());
 };
