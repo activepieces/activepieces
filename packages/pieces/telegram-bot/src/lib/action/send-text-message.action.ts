@@ -16,7 +16,7 @@ export const telegramSendMessageAction = createAction({
         message: Property.LongText({
             displayName: 'Message',
             description: 'The message to be sent',
-            required: false,
+            required: true,
         })
     },
     sampleData: {},
