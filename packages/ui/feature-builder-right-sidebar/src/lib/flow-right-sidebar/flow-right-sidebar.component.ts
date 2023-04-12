@@ -45,6 +45,7 @@ export class FlowRightSidebarComponent implements OnInit {
   elevateResizer$: Observable<void>;
   animateSectionsHeightChange = false;
   isCurrentStepPollingTrigger$: Observable<boolean>;
+  isResizerGrabbed = false;
   currentStepPieceVersion$: Observable<
     | {
         version: string;
@@ -72,7 +73,7 @@ export class FlowRightSidebarComponent implements OnInit {
         tap(() => {
           this.elevateResizer$ = this.testStepService.elevateResizer$.pipe(
             tap((shouldAnimate) => {
-              if (shouldAnimate) {
+              if (shouldAnimate && !this.isResizerGrabbed) {
                 this.resizerAnimation();
               }
             }),
@@ -142,6 +143,7 @@ export class FlowRightSidebarComponent implements OnInit {
     return RightSideBarType;
   }
   resizerDragStarted() {
+    this.isResizerGrabbed = true;
     this.editStepSectionRect =
       this.editStepSection.nativeElement.getBoundingClientRect();
   }
