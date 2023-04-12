@@ -25,7 +25,7 @@ const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, 
     const testContext: Record<string, unknown> = {}
 
     for (const step of flowSteps) {
-        if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {
+        if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE || step.type === ActionType.CODE) {
             const { name, settings: { inputUiInfo } } = step
             testContext[name] = inputUiInfo.currentSelectedData
         }
@@ -38,7 +38,6 @@ export const stepRunService = {
     async create({ projectId, collectionId, flowVersionId, stepName }: CreateParams): Promise<unknown> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowHelper.getStep(flowVersion, stepName)
-
         if (step.type !== ActionType.PIECE) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
