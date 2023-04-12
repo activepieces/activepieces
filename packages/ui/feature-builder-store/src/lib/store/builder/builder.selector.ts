@@ -496,6 +496,12 @@ function findStepLogoUrlForMentions(
     return 'assets/img/custom/piece/code_mention.png';
   }
 }
+const selectIsSchduleTrigger = createSelector(selectCurrentFlow, (flow) => {
+  if (flow?.version?.trigger.type === TriggerType.PIECE) {
+    return flow.version.trigger.settings.pieceName === 'schedule';
+  }
+  return false;
+});
 const selectCurrentStepPieceVersionAndName = createSelector(
   selectCurrentStep,
   (s) => {
@@ -569,5 +575,6 @@ export const BuilderSelectors = {
   selectCurrentStepSettings,
   selectStepSelectedSampleData,
   selectStepValidity,
+  selectIsSchduleTrigger,
   selectCurrentStepPieceVersionAndName,
 };

@@ -14,6 +14,9 @@ module.exports = {
       fontFamily: {
         sans: ['Open Sans,sans-serif', ...defaultTheme.fontFamily.sans],
       },
+      boxShadow:{
+        'step-container-ds':'0px 0px 22px rgba(186, 186, 191, 0.3)'
+      },
       backgroundImage: {
         authBg: "url('/assets/img/custom/auth/auth-bg.png')",
         nofbg: "url('/assets/img/custom/auth/404.svg')",

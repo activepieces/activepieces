@@ -30,17 +30,14 @@ const initLogger = () => {
         ? 'debug'
         : 'info'
 
+    const transports = env === ApEnvironment.DEVELOPMENT
+    ? { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss Z', colorize: true, ignore: 'pid,hostname' } }
+    : {};
+
     return pino({
-        level,
-        transport: {
-            target: 'pino-pretty',
-            options: {
-                translateTime: 'HH:MM:ss Z',
-                colorize: true,
-                ignore: 'pid,hostname',
-            },
-        },
-    })
+    level,
+    transports,
+    });
 }
 
 export const logger = initLogger()

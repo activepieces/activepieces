@@ -7,10 +7,11 @@
             *ngIf="currentResults.length === 0 && !loading ">
             <div class="ap-relative">
                 <ap-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
-                    matTooltip="Send a request to generate sample data that can be used in the next steps"
+                    matTooltip="Test this trigger to generate sample data that can be used in the next steps"
                     matTooltipPosition="above"> </ap-hotspot>
-                <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()">Send
-                    Data </ap-button>
+                <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()"
+                    [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 'After the trigger is tested, you will be able to use its sample data in the next steps'"
+                    [disabled]="(isValid$ | async) === false">Test Trigger </ap-button>
             </div>
         </div>
 
@@ -25,7 +26,8 @@
 
                 </div>
                 <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                    (buttonClicked)="testStep()">Retest</ap-button>
+                    [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 'After the trigger is tested, you will be able to use its sample data in the next steps'"
+                    [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Retest</ap-button>
             </div>
 
             <mat-form-field class="ap-w-full ap-mt-2" appearance="outline" subscriptSizing="dynamic">
@@ -62,10 +64,8 @@
                         </svg-icon> Action Required
                     </div>
                     <p>
-                        Please send data to the webhook endpoint to
-                        test the step.
+                        {{ simulationMessage$|async }}
                     </p>
-
                 </ap-warning-box>
 
 
@@ -84,3 +84,5 @@
 <ng-container *ngIf="testStep$ | async"></ng-container>
 <ng-container *ngIf="saveNewSelectedData$ | async"></ng-container>
 <ng-container *ngIf="saveAfterNewDataIsLoaded$ | async"></ng-container>
+<ng-container *ngIf="startSimulating$ | async"></ng-container>
+<ng-container *ngIf="deleteWebhookSimulation$ | async"></ng-container>

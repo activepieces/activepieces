@@ -62,8 +62,10 @@ import { matrix } from "@activepieces/piece-matrix";
 import { smtp } from '@activepieces/piece-smtp';
 import { mailerLite } from '@activepieces/piece-mailer-lite';
 import { googleForms }  from '@activepieces/piece-google-forms';
+import { xml }  from '@activepieces/piece-xml';
 
 export const pieces: Piece[] = [
+    xml,
     airtable,
     asana,
     bannerbear,

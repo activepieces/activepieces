@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises'
-import { CodeExecutionResult, CodeRunStatus } from '@activepieces/shared'
+import { CodeExecutionResult, CodeRunStatus, apId } from '@activepieces/shared'
 import { sandboxManager } from '../sandbox'
 import { codeBuilder } from './code-builder'
 import { system } from '../../helper/system/system'
@@ -27,14 +27,14 @@ function fromStatus(code: string): CodeRunStatus {
 }
 
 async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResult> {
-    const sandbox = sandboxManager.obtainSandbox()
+    const sandbox = await sandboxManager.obtainSandbox(apId())
     const buildPath = sandbox.getSandboxFolderPath()
     let executionResult: CodeExecutionResult
     try {
         const startTime = Date.now()
         logger.info(`Started Executing Code in sandbox: ${buildPath}`)
 
-        await sandbox.cleanAndInit()
+        await sandbox.recreate()
 
         const bundledCode = await codeBuilder.build(artifact)
         const codeExecutor = await fs.readFile('packages/backend/src/assets/code-executor.js')
@@ -64,7 +64,7 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
         logger.info(`Finished Executing in sandbox: ${buildPath}, duration: ${Date.now() - startTime}ms`)
     }
     finally {
-        sandboxManager.returnSandbox(sandbox.boxId)
+        await sandboxManager.returnSandbox(sandbox.boxId)
     }
 
     return executionResult
