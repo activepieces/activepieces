@@ -133,15 +133,19 @@ export class EditStepFormContainerComponent {
   prepareStepDataToSave(
     currentStep: FlowItem
   ): UpdateActionRequest | UpdateTriggerRequest {
-    const inputControlValue = this.stepForm.get('input')?.value;
     const stepToSave: UpdateActionRequest = JSON.parse(
       JSON.stringify(currentStep)
     );
-    stepToSave.settings = inputControlValue;
     stepToSave.name = currentStep.name;
-    stepToSave.valid = currentStep.valid;
+    stepToSave.valid = this.stepForm.valid;
+    stepToSave.settings = this.createNewStepSettings(currentStep);
+    return stepToSave;
+  }
+
+  createNewStepSettings(currentStep: FlowItem) {
+    const inputControlValue = this.stepForm.get('input')?.value;
     if (currentStep.type === ActionType.PIECE) {
-      const componentSettings: PieceActionSettings = {
+      const stepSettings: PieceActionSettings = {
         ...currentStep.settings,
         ...inputControlValue,
         inputUiInfo: {
@@ -151,10 +155,10 @@ export class EditStepFormContainerComponent {
             currentStep.settings.inputUiInfo.currentSelectedData,
         },
       };
-      stepToSave.settings = componentSettings;
+      return stepSettings;
     }
     if (currentStep.type === ActionType.CODE) {
-      const componentSettings: CodeActionSettings = {
+      const stepSettings: CodeActionSettings = {
         ...currentStep.settings,
         ...inputControlValue,
         inputUiInfo: {
@@ -162,18 +166,17 @@ export class EditStepFormContainerComponent {
             currentStep.settings.inputUiInfo?.currentSelectedData,
         },
       };
-      stepToSave.settings = componentSettings;
+      return stepSettings;
     }
     if (currentStep.type === TriggerType.PIECE) {
-      const componentSettings = {
+      const stepSettings = {
         ...currentStep.settings,
         ...inputControlValue,
       };
-      stepToSave.settings = componentSettings;
+      return stepSettings;
     }
-    return stepToSave;
+    return inputControlValue;
   }
-
   copyUrl(url: string) {
     navigator.clipboard.writeText(url);
     this.snackbar.open('Webhook url copied to clipboard');
