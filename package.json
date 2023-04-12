@@ -95,7 +95,7 @@
     "quill": "^1.3.7",
     "quill-mention": "^3.1.0",
     "redlock": "^5.0.0-beta.2",
-    "rss-parser": "^3.12.0",
+    "rss-parser": "^3.13.0",
     "rxjs": "~7.8.0",
     "shade-generator": "^1.2.7",
     "string-replace-async": "^3.0.2",
