@@ -1,5 +1,6 @@
 import { Static, Type } from "@sinclair/typebox";
 import { AppConnectionType } from "../app-connection";
+import { OAuth2AuthorizationMethod } from "../oauth2-authorization-method";
 
 const commonAuthProps = {
     name: Type.String({}),
@@ -19,6 +20,7 @@ export const UpsertCloudOAuth2Request = Type.Object({
     ...commonAuthProps,
     value: Type.Object({
         client_id: Type.String(),
+        authorization_method: Type.Optional(Type.Enum(OAuth2AuthorizationMethod)),
         code: Type.String(),
         code_challenge: Type.Optional(Type.String()),
         props: Type.Optional(Type.Record(Type.String(), Type.String())),
@@ -45,6 +47,7 @@ export const UpsertOAuth2Request = Type.Object({
         props: Type.Optional(Type.Record(Type.String(), Type.Any())),
         scope: Type.String(),
         code: Type.String(),
+        authorization_method: Type.Optional(Type.Enum(OAuth2AuthorizationMethod)),
         code_challenge: Type.Optional(Type.String()),
         redirect_url: Type.String({}),
         type: Type.Literal(AppConnectionType.OAUTH2),

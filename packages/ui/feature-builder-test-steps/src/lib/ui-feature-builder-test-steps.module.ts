@@ -5,11 +5,13 @@ import { TestPollingTriggerComponent } from './test-polling-trigger/test-polling
 import { TestWebhookTriggerComponent } from './test-webhook-trigger/test-webhook-trigger.component';
 import { TestPieceStepComponent } from './test-piece-step/test-piece-step.component';
 import { TestCodeStepComponent } from './test-code-step/test-code-step.component';
+import { TestPieceWebhookTriggerComponent } from './test-piece-webhook-trigger/test-piece-webhook-trigger.component';
 const exportedDeclarations = [
   TestPollingTriggerComponent,
   TestWebhookTriggerComponent,
   TestPieceStepComponent,
   TestCodeStepComponent,
+  TestPieceWebhookTriggerComponent,
 ];
 @NgModule({
   imports: [CommonModule, UiCommonModule],

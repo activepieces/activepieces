@@ -18,6 +18,7 @@ export type OAuth2PropertySchema = BasePropertySchema & {
 	tokenUrl: string;
 	scope: string[];
 	pkce?: boolean;
+	authorizationMethod?: OAuth2AuthorizationMethod,
 	extra?: Record<string, unknown>
 }
 
@@ -32,3 +33,8 @@ export type OAuth2Property<R extends boolean, T extends OAuth2Props> = OAuth2Pro
 	PropertyType.OAUTH2,
 	R
 >;
+
+export enum OAuth2AuthorizationMethod {
+	HEADER = "HEADER",
+	BODY = "BODY"
+}

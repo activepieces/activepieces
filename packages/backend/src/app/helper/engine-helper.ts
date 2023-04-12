@@ -65,30 +65,29 @@ export const engineHelper = {
         }) as ExecutionOutput
     },
     async executeParseEvent(operation: ExecuteEventParserOperation): Promise<ParseEventResponse> {
-        const sandbox = sandboxManager.obtainSandbox()
+        const sandbox = await sandboxManager.obtainSandbox(apId())
         let result
         try {
-            await sandbox.cleanAndInit()
-
+            await sandbox.recreate()
             const buildPath = sandbox.getSandboxFolderPath()
             const { pieceName } = operation
             await installPieceDependency(buildPath, pieceName, 'latest')
             result = await execute(EngineOperationType.EXTRACT_EVENT_DATA, sandbox, operation)
         }
         finally {
-            sandboxManager.returnSandbox(sandbox.boxId)
+            await sandboxManager.returnSandbox(sandbox.boxId)
         }
         return result as ParseEventResponse
     },
 
     async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | ExecuteTestOrRunTriggerResponse | ExecuteTriggerResponse> {
-        const sandbox = sandboxManager.obtainSandbox()
+        const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
+        const sandbox = await getSandbox({
+            pieceName,
+            pieceVersion,
+        })
         let result
         try {
-            await sandbox.cleanAndInit()
-            const buildPath = sandbox.getSandboxFolderPath()
-            const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
-            await installPieceDependency(buildPath, pieceName, pieceVersion)
 
             result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
@@ -102,7 +101,7 @@ export const engineHelper = {
             })
         }
         finally {
-            sandboxManager.returnSandbox(sandbox.boxId)
+            await sandboxManager.returnSandbox(sandbox.boxId)
         }
         if (operation.hookType === TriggerHookType.TEST) {
             return result as ExecuteTestOrRunTriggerResponse
@@ -115,17 +114,15 @@ export const engineHelper = {
 
     async executeProp(operation: ExecutePropsOptions): Promise<DropdownState<unknown> | Record<string, DynamicPropsValue>> {
         logger.debug(operation, '[EngineHelper#executeProp] operation')
+        const { pieceName, pieceVersion } = operation
 
-        const sandbox = sandboxManager.obtainSandbox()
+        const sandbox = await getSandbox({
+            pieceName,
+            pieceVersion,
+        })
+
         let result
-
         try {
-            await sandbox.cleanAndInit()
-
-            const buildPath = sandbox.getSandboxFolderPath()
-            const { pieceName, pieceVersion } = operation
-            await installPieceDependency(buildPath, pieceName, pieceVersion)
-
             result = await execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, {
                 ...operation,
                 workerToken: await workerToken({
@@ -135,7 +132,7 @@ export const engineHelper = {
             })
         }
         finally {
-            sandboxManager.returnSandbox(sandbox.boxId)
+            await sandboxManager.returnSandbox(sandbox.boxId)
         }
 
         return result
@@ -143,16 +140,14 @@ export const engineHelper = {
 
     async executeAction(operation: ExecuteActionOperation): Promise<unknown> {
         logger.debug(operation, '[EngineHelper#executeAction] operation')
+        const { pieceName, pieceVersion } = operation
 
-        const sandbox = sandboxManager.obtainSandbox()
+        const sandbox = await getSandbox({
+            pieceName,
+            pieceVersion,
+        })
 
         try {
-            await sandbox.cleanAndInit()
-
-            const buildPath = sandbox.getSandboxFolderPath()
-            const { pieceName, pieceVersion } = operation
-            await installPieceDependency(buildPath, pieceName, pieceVersion)
-
             const result = await execute(EngineOperationType.EXECUTE_ACTION, sandbox, {
                 ...operation,
                 workerToken: await workerToken({
@@ -164,7 +159,7 @@ export const engineHelper = {
             return result
         }
         finally {
-            sandboxManager.returnSandbox(sandbox.boxId)
+            await sandboxManager.returnSandbox(sandbox.boxId)
         }
     },
 }
@@ -176,6 +171,24 @@ function workerToken(request: { projectId: ProjectId, collectionId: CollectionId
         projectId: request.projectId,
         collectionId: request.collectionId,
     })
+}
+
+async function getSandbox({ pieceName, pieceVersion }: {
+    pieceName: string
+    pieceVersion: string
+}): Promise<Sandbox> {
+    const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
+    if (sandbox.cached) {
+        logger.info(`Resuing sandox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`)
+        await sandbox.clean()
+    }
+    else {
+        logger.info(`Preparing sandbox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`)
+        await sandbox.recreate()
+        const buildPath = sandbox.getSandboxFolderPath()
+        await installPieceDependency(buildPath, pieceName, pieceVersion)
+    }
+    return sandbox
 }
 
 async function execute(operation: EngineOperationType, sandbox: Sandbox, input: EngineOperation): Promise<unknown> {
