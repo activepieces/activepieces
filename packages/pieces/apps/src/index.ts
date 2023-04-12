@@ -62,6 +62,9 @@ import { smtp } from '@activepieces/piece-smtp';
 import { mailerLite } from '@activepieces/piece-mailer-lite';
 import { googleForms }  from '@activepieces/piece-google-forms';
 
+/**
+ * @deprecated this will be removed, don't use it
+ */
 export const pieces: Piece[] = [
     airtable,
     asana,
