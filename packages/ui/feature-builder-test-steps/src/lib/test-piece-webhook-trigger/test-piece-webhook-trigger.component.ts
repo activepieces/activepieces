@@ -20,7 +20,10 @@ import { FormControl } from '@angular/forms';
 import deepEqual from 'deep-equal';
 import { TestStepCoreComponent } from '../test-steps-core.component';
 import { ActionMetaService, TestStepService } from '@activepieces/ui/common';
-import { BuilderSelectors, FlowsActions } from '@activepieces/ui/feature-builder-store';
+import {
+  BuilderSelectors,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
 
 export interface TriggerHistoricalData {
   payload: unknown;
@@ -45,7 +48,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   startSimulating$: Observable<void>;
   simulationMessage$: Observable<string | null>;
   isValid$: Observable<boolean>;
-  deleteWebhookSimulation$:Observable<void>;
+  deleteWebhookSimulation$: Observable<void>;
   constructor(
     testStepService: TestStepService,
     private store: Store,
@@ -63,11 +66,10 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
       .select(BuilderSelectors.selectCurrentFlowId)
       .pipe(
         switchMap((res) => {
-          if(res)
-          {
+          if (res) {
             return this.testStepService.getTriggerEventsResults(res.toString());
           }
-        throw new Error("No flow is selected");
+          throw new Error('No flow is selected');
         }),
         map((res) => {
           return res.data;
@@ -80,7 +82,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
       );
 
     this.initaillySelectedSampleData$ = this.store
-      .select(BuilderSelectors.selectStepSelectedSampleData)
+      .select(BuilderSelectors.selectStepTestSampleData)
       .pipe(
         tap((res) => {
           this.stopSelectedDataControlListener$.next(true);
@@ -192,17 +194,21 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   cancelTesting() {
     this.loading = false;
     this.cancelTesting$.next(true);
-    this.deleteWebhookSimulation$ = this.store.select(BuilderSelectors.selectCurrentFlowId).pipe(
-      switchMap((flowId)=>{
-  
-        if(flowId)
-       { return this.testStepService.deletePieceWebhookSimulation(flowId.toString());}
-        throw new Error('flow Id is null');
-      }),
-      map(res=>{
-        return void 0;
-      })
-    )
+    this.deleteWebhookSimulation$ = this.store
+      .select(BuilderSelectors.selectCurrentFlowId)
+      .pipe(
+        switchMap((flowId) => {
+          if (flowId) {
+            return this.testStepService.deletePieceWebhookSimulation(
+              flowId.toString()
+            );
+          }
+          throw new Error('flow Id is null');
+        }),
+        map((res) => {
+          return void 0;
+        })
+      );
   }
   setSimultionMessage() {
     this.simulationMessage$ = this.store
