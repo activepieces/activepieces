@@ -36,7 +36,6 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
   foundNewResult$: Subject<boolean> = new Subject();
   loading = false;
   selectedDataControl: FormControl<unknown> = new FormControl();
-
   saveNewSelectedData$: Observable<void>;
   initialHistoricalData$: Observable<WebhookHistoricalData[]>;
   initaillySelectedSampleData$: Observable<unknown>;
@@ -98,7 +97,7 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
               this.cancelTesting$,
               this.foundNewResult$
             );
-            return interval(500).pipe(
+            return interval(this.POLLING_TEST_INTERVAL_MS).pipe(
               takeUntil(stopListening$),
               switchMap(() => {
                 return this.createResultsChecker(id.toString());

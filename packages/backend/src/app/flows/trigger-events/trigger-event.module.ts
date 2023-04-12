@@ -55,4 +55,5 @@ const triggerEventController = async (fastify: FastifyInstance) => {
             })
         },
     )
+    
 }

@@ -10,7 +10,7 @@ import {
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-} from '../../components/delete-enity-dialog/delete-collection-dialog.component';
+} from '../../components/delete-enity-dialog/delete-entity-dialog.component';
 import { ConnectionsTableDataSource } from './connections-table.datasource';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
 import {
