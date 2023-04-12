@@ -62,9 +62,12 @@ import { smtp } from '@activepieces/piece-smtp';
 import { mailerLite } from '@activepieces/piece-mailer-lite';
 import { googleForms }  from '@activepieces/piece-google-forms';
 import { xml }  from '@activepieces/piece-xml';
+import { vtex }  from '@activepieces/piece-vtex';
+
 
 export const pieces: Piece[] = [
     xml,
+    vtex,
     airtable,
     asana,
     bannerbear,
