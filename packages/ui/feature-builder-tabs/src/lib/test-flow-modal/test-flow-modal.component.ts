@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  HostListener,
   OnInit,
   TemplateRef,
 } from '@angular/core';
@@ -15,6 +14,7 @@ import {
   Observable,
   of,
   switchMap,
+  take,
   takeUntil,
   takeWhile,
   tap,
@@ -99,18 +99,6 @@ export class TestFlowModalComponent implements OnInit {
     (<any>window).jsonlint = jsonlint;
   }
 
-  @HostListener('window:keydown', ['$event'])
-  onKeyPress($event: KeyboardEvent) {
-    if (
-      ($event.ctrlKey || $event.metaKey) &&
-      $event.key.toLocaleLowerCase() === 'z'
-    ) {
-      const f: any = '';
-      // TODO FIX
-      this.testFlowButtonClicked(f);
-    }
-  }
-
   ngOnInit() {
     this.isSaving$ = this.store.select(BuilderSelectors.selectIsSaving);
     this.selectedCollection$ = this.store.select(
@@ -155,6 +143,7 @@ export class TestFlowModalComponent implements OnInit {
       this.selectedCollection$,
       this.selectedFlow$,
     ]).pipe(
+      take(1),
       switchMap(([collection, nullableFlow]) => {
         const flow = nullableFlow!;
         if (flow.version!.trigger?.type === TriggerType.WEBHOOK) {
@@ -162,7 +151,6 @@ export class TestFlowModalComponent implements OnInit {
           return EMPTY;
         } else if (flow.version!.trigger!.type === TriggerType.PIECE) {
           const { pieceName, pieceVersion } = flow.version!.trigger.settings;
-          console.log('SAW THERE');
           return this.actionMetaDataService
             .getPieceMetadata(pieceName, pieceVersion)
             .pipe(
@@ -196,8 +184,8 @@ export class TestFlowModalComponent implements OnInit {
       this.cd.detectChanges();
     }
   }
+
   executeTest(collection: Collection, flow: Flow, payload: unknown) {
-    console.log('STARTED');
     return this.flowService
       .execute({
         collectionId: collection.id,
@@ -207,8 +195,6 @@ export class TestFlowModalComponent implements OnInit {
       .pipe(
         tap({
           next: (instanceRun: FlowRun) => {
-            console.log('YALLA');
-
             this.testRunSnackbar = this.snackbar.openFromComponent(
               TestRunBarComponent,
               {

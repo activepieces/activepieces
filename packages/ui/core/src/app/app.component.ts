@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnInit } from '@angular/core';
 import { map, Observable, of, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { NavigationStart, Router } from '@angular/router';
@@ -10,6 +10,8 @@ import { compareVersions } from 'compare-versions';
 import { ApFlagId } from '@activepieces/shared';
 import { TelemetryService } from './modules/common/service/telemetry.service';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
+import { SwitchFlowDialogComponent } from '@/feature-command-bar/src/lib/switch-flow-dialog/switch-flow-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
@@ -31,6 +33,7 @@ export class AppComponent implements OnInit {
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;
   constructor(
+    public dialog: MatDialog,
     private store: Store,
     private authenticationService: AuthenticationService,
     private flagService: FlagService,
@@ -91,6 +94,21 @@ export class AppComponent implements OnInit {
         }
       })
     );
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onKeyPress($event: KeyboardEvent) {
+    if (
+      ($event.ctrlKey || $event.metaKey) &&
+      ($event.key == 'k' || $event.key == 'K')
+    ) {
+      this.dialog.open(SwitchFlowDialogComponent, {
+        position: {
+          top: '5%',
+        },
+      });
+      $event.preventDefault();
+    }
   }
 
   ngOnInit(): void {

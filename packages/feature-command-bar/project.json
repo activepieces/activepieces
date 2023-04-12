@@ -1,0 +1,44 @@
+{
+  "name": "feature-command-bar",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/feature-command-bar/src",
+  "prefix": "activepieces",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "options": {
+        "project": "packages/feature-command-bar/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/feature-command-bar/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/feature-command-bar/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@angular-devkit/build-angular:karma",
+      "options": {
+        "tsConfig": "packages/feature-command-bar/tsconfig.spec.json",
+        "karmaConfig": "packages/feature-command-bar/karma.conf.js",
+        "polyfills": ["zone.js", "zone.js/testing"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/feature-command-bar/**/*.ts",
+          "packages/feature-command-bar/**/*.html"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

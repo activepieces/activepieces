@@ -56,14 +56,24 @@ export class SwitchFlowDialogComponent {
     this.selectedIndex = index;
   }
 
-  openFlow(flowId: string) {
-    this.router.navigate(['flows', flowId]);
+  doAction(type: string, value: string) {
+    switch (type) {
+      case 'FLOWS':
+        this.router.navigate(['flows', value]);
+        break;
+      case 'RUNS':
+        this.router.navigate(['runs']);
+        break;
+    }
     this.dialogRef.close();
   }
 
   onKeyDown(event: KeyboardEvent, options: SearchItem[]): void {
     if (event.key === 'Enter') {
-      this.openFlow(options[this.selectedIndex].value);
+      this.doAction(
+        options[this.selectedIndex].type,
+        options[this.selectedIndex].value
+      );
     } else if (event.key === 'ArrowUp') {
       this.selectedIndex = Math.max(0, this.selectedIndex - 1);
     } else if (event.key === 'ArrowDown') {

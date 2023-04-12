@@ -28,6 +28,7 @@ import { FirebaseAuthContainerComponent } from '@ee/firebase-auth/frontend/auth-
 import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { AuthLayoutComponent } from '@/ui/feature-authentication/src/lib/auth.component';
 import { DashboardContainerComponent } from '@activepieces/ui/feature-dashboard';
+import { FeatureCommandBarModule } from '@activepieces/feature-command-bar';
 
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
@@ -43,6 +44,7 @@ export function tokenGetter() {
     FlowBuilderModule,
     AppRoutingModule,
     BrowserAnimationsModule,
+    FeatureCommandBarModule,
     StoreModule.forRoot({}),
     StoreDevtoolsModule.instrument({
       maxAge: 25, // Retains last 25 states

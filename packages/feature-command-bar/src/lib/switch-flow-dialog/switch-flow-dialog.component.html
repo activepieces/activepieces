@@ -21,7 +21,7 @@
         <ul>
           <li tabindex="0" [class.ap-bg-primary-dark]="selectedIndex === i" (mouseenter)="selectFlow(i)"
             [class.ap-text-white]="selectedIndex === i" *ngFor="let option of options; let i = index"
-            (click)="openFlow(option.value)" tabindex="0" class="ap-py-2 ap-px-4 ap-cursor-pointer ap-transition-colors
+            (click)="doAction(option.type, option.value)" tabindex="0" class="ap-py-2 ap-px-4 ap-cursor-pointer ap-transition-colors
             ap-rounded-lg
             ap-flex
             ap-duration-200">

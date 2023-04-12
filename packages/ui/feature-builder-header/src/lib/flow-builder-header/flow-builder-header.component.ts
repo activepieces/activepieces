@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { map, Observable, tap } from 'rxjs';
@@ -16,7 +16,6 @@ import {
   CollectionActions,
   CollectionBuilderService,
 } from '@activepieces/ui/feature-builder-store';
-import { SwitchFlowDialogComponent } from './switch-flow-dialog/switch-flow-dialog.component';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -41,22 +40,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     public collectionBuilderService: CollectionBuilderService,
     private route: ActivatedRoute,
     private titleService: Title
-  ) {}
-
-  @HostListener('window:keydown', ['$event'])
-  onKeyPress($event: KeyboardEvent) {
-    if (
-      ($event.ctrlKey || $event.metaKey) &&
-      ($event.key == 'k' || $event.key == 'K')
-    ) {
-      this.dialog.open(SwitchFlowDialogComponent, {
-        position: {
-          top: '5%',
-        },
-      });
-      $event.preventDefault();
-    }
-  }
+  ) { }
 
   ngOnInit(): void {
     this.collectionInstance$ = this.store.select(

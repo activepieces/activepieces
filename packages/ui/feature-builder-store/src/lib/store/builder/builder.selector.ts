@@ -152,17 +152,17 @@ export const selectSearchItems = (command: string) =>
       .map((f) => {
         return {
           label: f.version.displayName,
-          value: f.id,
+          value: f.collectionId,
           icon: '/assets/img/custom/dashboard/collections.svg',
           type: 'FLOW',
         };
       });
     return [
       {
-        label: 'Test Flow',
-        value: 'test',
+        label: 'View Runs',
+        value: 'runs',
         icon: '/assets/img/custom/dashboard/runs.svg',
-        type: 'TEST',
+        type: 'RUNS',
       },
       ...options,
     ];
