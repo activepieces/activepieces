@@ -179,7 +179,7 @@ async function getSandbox({ pieceName, pieceVersion }: {
 }): Promise<Sandbox> {
     const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
     if (sandbox.cached) {
-        logger.info(`Resuing sandox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`);
+        logger.info(`Resuing sandox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`)
         await sandbox.clean()
     }
     else {

@@ -243,7 +243,7 @@ async function claim(request: {
         if (request.codeVerifier) {
             body['code_verifier'] = request.codeVerifier
         }
-        const headers = { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' };
+        const headers = { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' }
         const authorizationMethod = request.authorizationMethod || OAuth2AuthorizationMethod.BODY
         switch (authorizationMethod) {
             case OAuth2AuthorizationMethod.BODY:
