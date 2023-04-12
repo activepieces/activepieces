@@ -42,6 +42,7 @@ import { wordpress } from '@activepieces/piece-wordpress';
 import { zoom } from '@activepieces/piece-zoom';
 import { generatebanners } from '@activepieces/piece-generatebanners';
 import { connections } from '@activepieces/piece-connections';
+import { notion } from '@activepieces/piece-notion';
 import { youtube } from '@activepieces/piece-youtube';
 import { intercom } from '@activepieces/piece-intercom';
 import { trello } from '@activepieces/piece-trello';
@@ -110,6 +111,7 @@ export const pieces: Piece[] = [
     wordpress,
     zoom,
     connections,
+    notion,
     youtube,
     square,
     delay,

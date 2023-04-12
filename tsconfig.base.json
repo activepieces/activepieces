@@ -17,7 +17,6 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["packages/*"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/ee/shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
@@ -83,6 +82,7 @@
       "@activepieces/piece-mailchimp": [
         "packages/pieces/mailchimp/src/index.ts"
       ],
+      "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
       "@activepieces/piece-mailer-lite": [
         "packages/pieces/mailer-lite/src/index.ts"
       ],
