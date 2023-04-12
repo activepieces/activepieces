@@ -1,4 +1,3 @@
-import { pieces } from "@activepieces/pieces-apps";
 import { ApEdition, EventPayload, ExecuteEventParserOperation, ExecuteTestOrRunTriggerResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
@@ -12,13 +11,13 @@ type Listener = {
   identifierKey: string;
 }
 
-
 export const triggerHelper = {
   async executeEventParser(params: ExecuteEventParserOperation): Promise<ParseEventResponse | undefined> {
-    const piece = pieces.find((p) => p.name === params.pieceName);
-    if (piece === undefined) {
-      throw new Error(`Piece is not found ${params.pieceName}`)
-    }
+    const { pieceName } = params
+    const pieceVersion = 'latest'
+
+    const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
+
     return piece.events?.parseAndReply({ payload: params.event });
   },
 
