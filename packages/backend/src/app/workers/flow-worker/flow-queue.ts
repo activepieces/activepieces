@@ -27,13 +27,13 @@ type RemoveParams = {
 export const ONE_TIME_JOB_QUEUE = 'oneTimeJobs'
 export const REPEATABLE_JOB_QUEUE = 'repeatableJobs'
 
-const FIVE_SECONDS = 5000
+const EIGHT_MINUTES_IN_MILLISECONDS = 8 * 60 * 1000
 
 const defaultJobOptions: DefaultJobOptions = {
     attempts: 5,
     backoff: {
         type: 'exponential',
-        delay: FIVE_SECONDS,
+        delay: EIGHT_MINUTES_IN_MILLISECONDS,
     },
 }
 
