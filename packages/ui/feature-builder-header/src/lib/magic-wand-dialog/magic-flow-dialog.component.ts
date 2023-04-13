@@ -5,11 +5,9 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { MatDialogRef } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { Flow } from '@activepieces/shared';
-import { FlowService, fadeInUp400ms } from '@activepieces/ui/common';
-import { Store } from '@ngrx/store';
+import { fadeInUp400ms } from '@activepieces/ui/common';
 
 @Component({
   templateUrl: './magic-flow-dialog.component.html',
@@ -22,9 +20,6 @@ export class MagicWandDialogComponent {
   failed = false;
   constructor(
     private formBuilder: FormBuilder,
-    private flowService: FlowService,
-    private dialogRef: MatDialogRef<MagicWandDialogComponent>,
-    private store: Store
   ) {
     this.promptForm = this.formBuilder.group({
       prompt: new FormControl('', {

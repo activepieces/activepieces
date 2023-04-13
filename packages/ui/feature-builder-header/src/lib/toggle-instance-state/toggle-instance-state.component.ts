@@ -5,7 +5,6 @@ import {
   OnInit,
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { Store } from '@ngrx/store';
 import { Observable, tap } from 'rxjs';
 import { Instance, InstanceStatus } from '@activepieces/shared';
 

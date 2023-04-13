@@ -23,13 +23,14 @@ import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
 import {
-  Collection,
   ExecutionOutputStatus,
-  Instance,
   TriggerType,
 } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
-import { LeftSideBarType, RightSideBarType} from '@activepieces/ui/feature-builder-store';
+import {
+  LeftSideBarType,
+  RightSideBarType,
+} from '@activepieces/ui/feature-builder-store';
 import { TestStepService } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 @Component({
@@ -78,41 +79,37 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
       tap((value) => {
         const runInformation: InstanceRunInfo = value['runInformation'];
         if (runInformation !== undefined) {
-          const collection = runInformation.collection;
           const flow = runInformation.flow;
           const run = runInformation.run;
           this.store.dispatch(
             BuilderActions.loadInitial({
-              collection: collection,
-              flows: [flow],
+              flow: flow,
               viewMode: ViewModeEnum.VIEW_INSTANCE_RUN,
               run: run,
               appConnections: value['connections'],
             })
           );
 
-          this.titleService.setTitle(`AP-${collection.displayName}`);
+          this.titleService.setTitle(`AP-${flow.version.displayName}`);
           this.snackbar.openFromComponent(TestRunBarComponent, {
             duration: undefined,
           });
         } else {
-          const collection: Collection = value['collection'];
-          const flows = value['flows'];
-          const instance: Instance | undefined = value['instance'];
-          this.titleService.setTitle(`AP-${collection.displayName}`);
+          const flow = value['flow'];
+          // TODO DO WE NEED THIS?
+          // const instance: Instance | undefined = value['instance'];
+          this.titleService.setTitle(`AP-${flow.version.displayName}`);
           this.store.dispatch(
             BuilderActions.loadInitial({
-              collection: collection,
-              flows: flows.data,
+              flow: flow,
               viewMode: ViewModeEnum.BUILDING,
               run: undefined,
-              instance: instance,
               appConnections: value['connections'],
             })
           );
         }
       }),
-      map((value) => void 0)
+      map(() => void 0)
     );
 
     this.leftSidebar$ = this.store.select(

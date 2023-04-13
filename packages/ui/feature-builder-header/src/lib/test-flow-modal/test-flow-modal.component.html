@@ -1,12 +1,10 @@
 <ng-container *ngIf="selectedFlow$ | async as currentFLow">
-  <ng-container *ngIf="selectedCollection$ | async as currentCollection">
-    <ap-button [hidden]="(instanceRunStatus$ | async) === statusEnum.RUNNING"
-      (buttonClicked)="testFlowButtonClicked(currentFLow, currentCollection,modalTemplate)" btnStyle="basic"
-      btnColor="primary" [disabled]="shouldDisableTestButton$ | async" [tooltipText]="testFlowButtonDisabledTooltip"
-      placement="bottom" btnSize="medium">
-      Test flow
-    </ap-button>
-  </ng-container>
+  <ap-button [hidden]="(instanceRunStatus$ | async) === statusEnum.RUNNING"
+    (buttonClicked)="testFlowButtonClicked(currentFLow,modalTemplate)" btnStyle="basic" btnColor="primary"
+    [disabled]="shouldDisableTestButton$ | async" [tooltipText]="testFlowButtonDisabledTooltip" placement="bottom"
+    btnSize="medium">
+    Test flow
+  </ap-button>
 </ng-container>
 
 
@@ -21,50 +19,48 @@
     Test Flow
   </app-dialog-title-template>
   <ng-container *ngIf="selectedFlow$ | async as currentFLow">
-    <ng-container *ngIf="selectedCollection$ | async as currentCollection">
-      <mat-dialog-content>
-        <div class="ap-w-[450px] ap-max-w-[500px] json-editor">
-          <div class="ap-mb-2 ap-pointer-events-none">Webhook Payload (JSON)
-            <p class="ap-typography-caption">Pass the following object in as the webhook payload:</p>
-          </div>
-          <div class="code-font-sm code-size-200 code-block">
-            <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
-              <div class="ap-flex-grow">
-                <span class="ap-text-white">Payload</span>
-              </div>
-              <div>
-                <svg-icon src="/assets/img/custom/beautify.svg" [svgStyle]="{width:'16px', height:'16px'}"
-                  matTooltip="beautify" class="ap-cursor-pointer" (click)="beautify()"> </svg-icon>
-              </div>
+    <mat-dialog-content>
+      <div class="ap-w-[450px] ap-max-w-[500px] json-editor">
+        <div class="ap-mb-2 ap-pointer-events-none">Webhook Payload (JSON)
+          <p class="ap-typography-caption">Pass the following object in as the webhook payload:</p>
+        </div>
+        <div class="code-font-sm code-size-200 code-block">
+          <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
+            <div class="ap-flex-grow">
+              <span class="ap-text-white">Payload</span>
             </div>
-            <ngx-codemirror cdkFocusInitial [formControl]="payloadControl" [autoFocus]="true"
-              [options]="codeEditorOptions"></ngx-codemirror>
+            <div>
+              <svg-icon src="/assets/img/custom/beautify.svg" [svgStyle]="{width:'16px', height:'16px'}"
+                matTooltip="beautify" class="ap-cursor-pointer" (click)="beautify()"> </svg-icon>
+            </div>
           </div>
-          <div *ngIf="submitted && payloadControl.invalid">
-            <p @fadeInUp *ngIf="payloadControl.hasError('required');else invalidJson"
-              class="ap-text-danger ap-typography-caption">
-              Payload is required
+          <ngx-codemirror cdkFocusInitial [formControl]="payloadControl" [autoFocus]="true"
+            [options]="codeEditorOptions"></ngx-codemirror>
+        </div>
+        <div *ngIf="submitted && payloadControl.invalid">
+          <p @fadeInUp *ngIf="payloadControl.hasError('required');else invalidJson"
+            class="ap-text-danger ap-typography-caption">
+            Payload is required
+          </p>
+          <ng-template #invalidJson>
+            <p @fadeInUp class="ap-text-danger ap-typography-caption">
+              Payload is not a valid JSON object, please use double quotations.
             </p>
-            <ng-template #invalidJson>
-              <p @fadeInUp class="ap-text-danger ap-typography-caption">
-                Payload is not a valid JSON object, please use double quotations.
-              </p>
-            </ng-template>
-          </div>
+          </ng-template>
         </div>
+      </div>
 
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <div class="ap-flex ap-gap-2.5">
-          <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
-            Cancel
-          </ap-button>
-          <ap-button btnSize="default" btnColor="primary" (click)="testFlowWithPayload(currentFLow)">
-            Test
-          </ap-button>
-        </div>
-      </mat-dialog-actions>
-    </ng-container>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
+          Cancel
+        </ap-button>
+        <ap-button btnSize="default" btnColor="primary" (click)="testFlowWithPayload(currentFLow)">
+          Test
+        </ap-button>
+      </div>
+    </mat-dialog-actions>
   </ng-container>
 
 

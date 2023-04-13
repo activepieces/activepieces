@@ -8,16 +8,17 @@ import {
   map,
   catchError,
 } from 'rxjs';
-import { CollectionListDto, CollectionStatus } from '@activepieces/shared';
 import {
   ApPaginatorComponent,
   ProjectService,
-  CollectionService,
+  FlowService,
 } from '@activepieces/ui/common';
 
 import { FormControl } from '@angular/forms';
+import { Flow } from '@activepieces/shared';
 
-type CollectionListDtoWithInstanceStatusToggleControl = CollectionListDto & {
+// TODO FIX
+type CollectionListDtoWithInstanceStatusToggleControl = Flow & {
   instanceToggleControl: FormControl<boolean>;
 };
 
@@ -26,7 +27,7 @@ type CollectionListDtoWithInstanceStatusToggleControl = CollectionListDto & {
  * encapsulate all logic for fetching and manipulating the displayed data
  * (including sorting, pagination, and filtering).
  */
-export class CollectionsTableDataSource extends DataSource<CollectionListDtoWithInstanceStatusToggleControl> {
+export class FlowsTableDataSource extends DataSource<CollectionListDtoWithInstanceStatusToggleControl> {
   data: CollectionListDtoWithInstanceStatusToggleControl[] = [];
   public isLoading = true;
   constructor(
@@ -34,7 +35,7 @@ export class CollectionsTableDataSource extends DataSource<CollectionListDtoWith
     private pageCursor$: Observable<string>,
     private paginator: ApPaginatorComponent,
     private projectService: ProjectService,
-    private collectionService: CollectionService,
+    private flowService: FlowService,
     private refresh$: Observable<boolean>
   ) {
     super();
@@ -56,8 +57,7 @@ export class CollectionsTableDataSource extends DataSource<CollectionListDtoWith
         this.isLoading = true;
       }),
       switchMap((res) => {
-        return this.collectionService.list({
-          projectId: res.project.id,
+        return this.flowService.list({
           limit: res.pageSize,
           cursor: res.pageCursor,
         });
@@ -88,12 +88,13 @@ export class CollectionsTableDataSource extends DataSource<CollectionListDtoWith
   disconnect(): void {
     //ignore
   }
-  createTogglesControls(collections: CollectionListDto[]) {
+  createTogglesControls(collections: Flow[]) {
     const controls: Record<string, FormControl> = {};
     collections.forEach((c) => {
+      // TODO FIX
       controls[c.id] = new FormControl({
-        value: c.status === CollectionStatus.ENABLED ? true : false,
-        disabled: c.status === CollectionStatus.UNPUBLISHED,
+        value: false,
+        disabled: true,
       });
     });
     return controls;

@@ -14,13 +14,14 @@ import {
   FlowRun,
   FlowVersionId,
   GuessFlowRequest,
+  ListFlowsRequest,
   SeekPage,
 } from '@activepieces/shared';
 @Injectable({
   providedIn: 'root',
 })
 export class FlowService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
   create(request: CreateFlowRequest): Observable<Flow> {
     return this.http.post<Flow>(environment.apiUrl + '/flows', {
       displayName: request.displayName,
@@ -44,11 +45,12 @@ export class FlowService {
     return this.http.delete<void>(environment.apiUrl + '/flows/' + flowId);
   }
 
-  list(): Observable<SeekPage<Flow>> {
+  list(request: ListFlowsRequest): Observable<SeekPage<Flow>> {
+    const queryParams: { [key: string]: string | number } = {
+      limit: request.limit ?? 10,
+    };
     return this.http.get<SeekPage<Flow>>(environment.apiUrl + '/flows', {
-      params: {
-        limit: 100000,
-      },
+      params: queryParams,
     });
   }
 

@@ -1,89 +1,78 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { map, Observable, startWith, Subject, switchMap, tap } from 'rxjs';
-import { CollectionsTableDataSource } from './collections-table.datasource';
+import { map, Observable, startWith, Subject, tap } from 'rxjs';
+import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import {
-  Collection,
-  CollectionListDto,
-  CollectionStatus,
-  Flow,
-  InstanceStatus,
-} from '@activepieces/shared';
+import { Flow } from '@activepieces/shared';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
 } from '../../components/delete-enity-dialog/delete-collection-dialog.component';
-import { FormControl } from '@angular/forms';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
 import {
-  CollectionService,
   ProjectService,
   FlowService,
-  InstanceService,
   DEFAULT_PAGE_SIZE,
 } from '@activepieces/ui/common';
-import { ARE_THERE_COLLECTIONS_FLAG } from '../../resolvers/are-there-collections.resolver';
+import { ARE_THERE_FLOWS_FLAG } from '../../resolvers/are-there-flows.resolver';
 
 @Component({
-  templateUrl: './collections-table.component.html',
+  templateUrl: './flows-table.component.html',
 })
-export class CollectionsTableComponent implements OnInit {
+export class FlowsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
-  creatingCollection = false;
-  archiveCollectionDialogClosed$: Observable<void>;
-  createCollection$: Observable<Flow>;
-  dataSource!: CollectionsTableDataSource;
+  creatingFlow = false;
+  archiveFlowDialogClosed$: Observable<void>;
+  createFlow$: Observable<Flow>;
+  dataSource!: FlowsTableDataSource;
   displayedColumns = ['name', 'created', 'status', 'action'];
-  collectionDeleted$: Subject<boolean> = new Subject();
-  areThereCollections$: Observable<boolean>;
-  collectionsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
+  flowDeleted$: Subject<boolean> = new Subject();
+  areThereFlows$: Observable<boolean>;
+  flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
-    private collectionService: CollectionService,
     private dialogService: MatDialog,
     private projectService: ProjectService,
-    private flowService: FlowService,
-    private instanceService: InstanceService
+    private flowService: FlowService
   ) {}
 
   ngOnInit(): void {
-    this.dataSource = new CollectionsTableDataSource(
+    this.dataSource = new FlowsTableDataSource(
       this.activatedRoute.queryParams.pipe(
         map((res) => res['limit'] || DEFAULT_PAGE_SIZE)
       ),
       this.activatedRoute.queryParams.pipe(map((res) => res['cursor'])),
       this.paginator,
       this.projectService,
-      this.collectionService,
-      this.collectionDeleted$.asObservable().pipe(startWith(true))
+      this.flowService,
+      this.flowDeleted$.asObservable().pipe(startWith(true))
     );
-    this.areThereCollections$ = this.activatedRoute.data.pipe(
+    this.areThereFlows$ = this.activatedRoute.data.pipe(
       map((res) => {
-        return res[ARE_THERE_COLLECTIONS_FLAG];
+        return res[ARE_THERE_FLOWS_FLAG];
       })
     );
   }
 
-  openBuilder(collection: Collection) {
-    const link = '/flows/' + collection.id;
+  openBuilder(flow: Flow) {
+    const link = '/flows/' + flow.id;
     this.router.navigate([link]);
   }
 
-  deleteCollection(collection: Collection) {
+  deleteFlow(flow: Flow) {
     const dialogData: DeleteEntityDialogData = {
-      deleteEntity$: this.collectionService.delete(collection.id),
-      entityName: collection.displayName,
+      deleteEntity$: this.flowService.delete(flow.id),
+      entityName: flow.version.displayName,
     };
     const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
       data: dialogData,
     });
-    this.archiveCollectionDialogClosed$ = dialogRef.beforeClosed().pipe(
+    this.archiveFlowDialogClosed$ = dialogRef.beforeClosed().pipe(
       tap((res) => {
         if (res) {
-          this.collectionDeleted$.next(true);
+          this.flowDeleted$.next(true);
         }
       }),
       map(() => {
@@ -92,30 +81,23 @@ export class CollectionsTableComponent implements OnInit {
     );
   }
 
-  createCollection() {
-    if (!this.creatingCollection) {
-      this.creatingCollection = true;
-      const collectionDiplayName = 'Untitled';
-      this.createCollection$ = this.collectionService
+  createFlow() {
+    if (!this.creatingFlow) {
+      this.creatingFlow = true;
+      this.createFlow$ = this.flowService
         .create({
-          displayName: collectionDiplayName,
+          displayName: 'Untitled',
         })
         .pipe(
-          switchMap((collection) => {
-            return this.flowService.create({
-              collectionId: collection.id,
-              displayName: 'Flow 1',
-            });
-          }),
           tap((flow) => {
-            this.router.navigate(['/flows/', flow.collectionId], {
+            this.router.navigate(['/flows/', flow.id], {
               queryParams: { newCollection: true },
             });
           })
         );
     }
   }
-  toggleCollectionStatus(
+  /*toggleCollectionStatus(
     collectionDto: CollectionListDto,
     control: FormControl<boolean>
   ) {
@@ -142,5 +124,5 @@ export class CollectionsTableComponent implements OnInit {
             map(() => void 0)
           );
     }
-  }
+  }*/
 }

@@ -8,6 +8,7 @@ import { FlowBuilderHeaderComponent } from './flow-builder-header.component';
 import { ToggleInstanceStateComponent } from './toggle-instance-state/toggle-instance-state.component';
 import { PublishButtonComponent } from './publish-button/publish-button.component';
 import { TestFlowModalComponent } from './test-flow-modal/test-flow-modal.component';
+import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 
 const exportedDeclarations = [
   FlowBuilderHeaderComponent,
@@ -18,7 +19,12 @@ const exportedDeclarations = [
   TestFlowModalComponent,
 ];
 @NgModule({
-  imports: [CommonModule, UiCommonModule, UiFeatureBuilderStoreModule],
+  imports: [
+    CommonModule,
+    UiCommonModule,
+    UiFeatureBuilderStoreModule,
+    CodemirrorModule,
+  ],
   declarations: [...exportedDeclarations],
   exports: [...exportedDeclarations],
 })

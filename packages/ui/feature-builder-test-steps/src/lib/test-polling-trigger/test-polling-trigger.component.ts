@@ -49,11 +49,11 @@ export class TestPollingTriggerComponent extends TestStepCoreComponent {
       map(() => void 0)
     );
     this.initialHistoricalData$ = this.store
-      .select(BuilderSelectors.selectCurrentFlowId)
+      .select(BuilderSelectors.selectCurrentFlow)
       .pipe(
         take(1),
-        switchMap((res) => {
-          return this.testStepService.getTriggerEventsResults(res?.toString() || '');
+        switchMap((flow) => {
+          return this.testStepService.getTriggerEventsResults(flow.id?.toString() || '');
         }),
         map((res) => {
           return res.data;
@@ -87,31 +87,28 @@ export class TestPollingTriggerComponent extends TestStepCoreComponent {
     this.failed = false;
     this.hasBeenTested = true;
     this.testStep$ = this.store
-      .select(BuilderSelectors.selectCurrentFlowId)
+      .select(BuilderSelectors.selectCurrentFlow)
       .pipe(
         take(1),
-        switchMap((id) => {
-          if (id) {
-            return this.testStepService.getPollingResults(id.toString()).pipe(
-              tap((res) => {
-                this.loading = false;
-                this.currentResults$.next(res.data);
-                if (res.data.length > 0)
-                  this.selectedDataControl.setValue(res.data[0].payload);
-                this.testStepService.elevateResizer$.next(true);
-              }),
-              map((res) => res.data),
-              catchError((e: ActivepiecesError) => {
-                console.error(e);
-                this.loading = false;
-                this.failed = true;
-                this.currentResults$.next([]);
-                this.testStepService.elevateResizer$.next(true);
-                return of([]);
-              })
-            );
-          }
-          return of([]);
+        switchMap((flow) => {
+          return this.testStepService.getPollingResults(flow.id.toString()).pipe(
+            tap((res) => {
+              this.loading = false;
+              this.currentResults$.next(res.data);
+              if (res.data.length > 0)
+                this.selectedDataControl.setValue(res.data[0].payload);
+              this.testStepService.elevateResizer$.next(true);
+            }),
+            map((res) => res.data),
+            catchError((e: ActivepiecesError) => {
+              console.error(e);
+              this.loading = false;
+              this.failed = true;
+              this.currentResults$.next([]);
+              this.testStepService.elevateResizer$.next(true);
+              return of([]);
+            })
+          );
         })
       );
   }

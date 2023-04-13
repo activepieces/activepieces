@@ -6,8 +6,8 @@
       Put Activepieces to work by creating your first flow.<br> It's easy to build!
     </div>
   </div>
-  <ap-button class="text-center" btnCSS="btn btn-primary" [loading]="creatingCollection"
-    (buttonClicked)="createCollection()">Start building</ap-button>
-  <ng-container *ngIf="createCollection$ | async"> </ng-container>
+  <ap-button class="text-center" btnCSS="btn btn-primary" [loading]="creatingFlow"
+    (buttonClicked)="createFlow()">Start building</ap-button>
+  <ng-container *ngIf="createFlow$ | async"> </ng-container>
 
 </div>

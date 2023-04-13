@@ -30,7 +30,6 @@ import {
   shareReplay,
   startWith,
   switchMap,
-  take,
   tap,
 } from 'rxjs';
 import deepEqual from 'deep-equal';
