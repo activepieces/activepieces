@@ -1,5 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import http from "https";
+import axios from "axios";
 
 export const getProductById = createAction({
     name: "get-product-by-id",
@@ -8,7 +8,7 @@ export const getProductById = createAction({
     props: {
         hostUrl: Property.ShortText({
             displayName: "Host Url",
-            description:"{accountName}.{environment}.com",
+            description: "{accountName}.{environment}.com",
             required: true,
         }),
         productId: Property.Number({
@@ -29,37 +29,16 @@ export const getProductById = createAction({
     },
     async run(context) {
         const { hostUrl, productId, appKey, appToken } = context.propsValue;
+        const apiRoute = "/api/catalog/pvt/product/";
+ 
+        const headers = {
+            "X-VTEX-API-AppKey": appKey,
+            "X-VTEX-API-AppToken": appToken
+        };
 
-        const options = {
-            "method": "GET",
-            "hostname": hostUrl,
-            "path": "/api/catalog/pvt/product/" + productId,
-            "headers": {
-              "Accept": "application/json",
-              "Content-Type": "application/json",
-              "X-VTEX-API-AppKey": appKey,
-              "X-VTEX-API-AppToken": appToken
-            }
-          };
+        const request = await axios.get("https://" + hostUrl + apiRoute + productId, { headers });
 
-        return new Promise((resolve, reject) => {
-            http.request(options, function (res) {
-                const chunks : Buffer[] = [];
-
-                res.on("data", function (chunk) {
-                    chunks.push(chunk);
-                });
-
-                res.on("end", function () {
-                    if (res.statusCode !== 200) reject("Product Not Found");
-                    const body = Buffer.concat(chunks);
-                    resolve(body.toString());
-                });
-
-            }).on("error", (err) => {
-                reject(err)
-            }).end()
-        })
+        return request.data;
 
     },
 });

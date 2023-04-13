@@ -1,5 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import http from "https";
+import axios from "axios";
 
 export const createProduct = createAction({
     name: "create-product",
@@ -98,85 +98,18 @@ export const createProduct = createAction({
     },
     async run(context) {
         const { hostUrl, appKey, appToken } = context.propsValue;
-        const {
-            Id,
-            Name,
-            CategoryId,
-            BrandName,
-            BrandId,
-            LinkId,
-            RefId,
-            IsVisible,
-            Description,
-            DescriptionShort,
-            ReleaseDate,
-            KeyWords,
-            Title,
-            IsActive,
-            TaxCode,
-            MetaTagDescription,
-            ShowWithoutStock,
-            Score
-        } = context.propsValue;
+        const apiRoute = "/api/catalog/pvt/product/";
+        const productData: Partial<typeof context.propsValue> = { ...context.propsValue };
+        delete productData.hostUrl;
+        delete productData.appKey;
+        delete productData.appToken;
 
-        const options = {
-            "method": "POST",
-            "hostname": hostUrl,
-            "path": "/api/catalog/pvt/product/",
-            "headers": {
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-                "X-VTEX-API-AppKey": appKey,
-                "X-VTEX-API-AppToken": appToken
-            }
+        const headers = {
+            "X-VTEX-API-AppKey": appKey,
+            "X-VTEX-API-AppToken": appToken
         };
 
-        return new Promise((resolve, reject) => {
-            const request = http.request(options, function (res) {
-                const chunks: Buffer[] = [];
-
-                res.on("data", function (chunk) {
-                    chunks.push(chunk);
-                });
-
-                res.on("end", function () {
-                    const body = Buffer.concat(chunks).toString();
-
-                    if (res.statusCode !== 200 && res.statusCode !== 201) reject({
-                        statusCode: res.statusCode,
-                        error: body ? body : "Something went wrong",
-                    });
-
-                    resolve(body);
-                });
-
-            })
-
-            request.write(JSON.stringify({
-                Id,
-                Name,
-                CategoryId,
-                BrandName,
-                BrandId,
-                LinkId,
-                RefId,
-                IsVisible,
-                Description,
-                DescriptionShort,
-                ReleaseDate,
-                KeyWords,
-                Title,
-                IsActive,
-                TaxCode,
-                MetaTagDescription,
-                ShowWithoutStock,
-                Score
-
-            }));
-
-            request.on("error", (err) => reject(err))
-            request.end();
-        })
-
+        const request = await axios.post("https://" + hostUrl + apiRoute, productData, { headers });
+        return request.data;
     },
 });
