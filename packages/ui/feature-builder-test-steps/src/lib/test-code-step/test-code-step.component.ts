@@ -20,6 +20,7 @@ import {
 } from 'rxjs';
 import {
   ActionType,
+  CodeAction,
   CodeActionSettings,
   CodeExecutionResult,
 } from '@activepieces/shared';
@@ -42,6 +43,7 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
   lastTestResult$: Observable<unknown | undefined>;
   saveTestResult$: Observable<void>;
   saveStepAfterTesting$: Observable<void>;
+  lastTestDate$: Observable<string | undefined>;
   constructor(
     private codeService: CodeService,
     private dialogService: MatDialog,
@@ -54,6 +56,13 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
       .pipe(
         distinctUntilChanged((prev, current) => {
           return deepEqual(prev, current);
+        })
+      );
+    this.lastTestDate$ = this.store
+      .select(BuilderSelectors.selectLastTestDate)
+      .pipe(
+        distinctUntilChanged((prev, current) => {
+          return prev === current;
         })
       );
   }
@@ -113,11 +122,12 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
           take(1),
           tap((step) => {
             if (step && step.type === ActionType.CODE) {
-              const clone = { ...step };
+              const clone: CodeAction = { ...step };
               clone.settings = {
                 ...clone.settings,
                 inputUiInfo: {
                   currentSelectedData: result.output,
+                  lastTestDate: new Date().toString(),
                 },
               };
               this.store.dispatch(

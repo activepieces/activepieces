@@ -14,7 +14,7 @@ import {
   BuilderSelectors,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { ActionType } from '@activepieces/shared';
+import { ActionType, PieceAction } from '@activepieces/shared';
 import { TestStepCoreComponent } from '../test-steps-core.component';
 import deepEqual from 'deep-equal';
 
@@ -29,6 +29,7 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
   currentStepValidity$: Observable<boolean>;
   lastTestResult$: Observable<unknown | undefined>;
   saveStepAfterTesting$: Observable<void>;
+  lastTestDate$: Observable<string | undefined>;
   constructor(testStepService: TestStepService, private store: Store) {
     super(testStepService);
     this.currentStepValidity$ = this.store.select(
@@ -39,6 +40,13 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
       .pipe(
         distinctUntilChanged((prev, current) => {
           return deepEqual(prev, current);
+        })
+      );
+    this.lastTestDate$ = this.store
+      .select(BuilderSelectors.selectLastTestDate)
+      .pipe(
+        distinctUntilChanged((prev, current) => {
+          return prev === current;
         })
       );
   }
@@ -82,12 +90,13 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
         take(1),
         tap((step) => {
           if (step && step.type === ActionType.PIECE) {
-            const clone = { ...step };
+            const clone: PieceAction = { ...step };
             clone.settings = {
               ...clone.settings,
               inputUiInfo: {
                 customizedInputs: clone.settings.inputUiInfo.customizedInputs,
                 currentSelectedData: testResult,
+                lastTestDate: new Date().toString(),
               },
             };
             this.store.dispatch(

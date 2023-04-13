@@ -215,6 +215,20 @@ const selectStepTestSampleData = createSelector(
     return undefined;
   }
 );
+const selectLastTestDate = createSelector(
+  selectCurrentStepSettings,
+  (settings) => {
+    if (settings) {
+      if (Object.keys(settings).find((s) => s === 'inputUiInfo')) {
+        const sampleDataSettings = (settings as Record<string, unknown>)[
+          'inputUiInfo'
+        ] as SampleDataSettings;
+        return sampleDataSettings.lastTestDate;
+      }
+    }
+    return undefined;
+  }
+);
 export const selectCurrentStepName = createSelector(
   selectCurrentStep,
   (selectedStep) => {
@@ -600,4 +614,5 @@ export const BuilderSelectors = {
   selectCurrentStepPieceVersionAndName,
   selectCurrentFlowVersionId,
   selectStepTestSampleData,
+  selectLastTestDate,
 };

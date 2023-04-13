@@ -6,7 +6,7 @@ import { TestStepService } from '@activepieces/ui/common';
 })
 export class TestStepCoreComponent implements OnDestroy, OnInit {
   constructor(protected testStepService: TestStepService) {}
-  readonly POLLING_TEST_INTERVAL_MS = 3000;
+  readonly POLLING_TEST_INTERVAL_MS = 1500;
   ngOnInit(): void {
     this.testStepService.testingStepSectionIsRendered$.next(true);
   }

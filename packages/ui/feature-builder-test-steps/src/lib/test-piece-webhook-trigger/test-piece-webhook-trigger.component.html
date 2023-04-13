@@ -30,7 +30,7 @@
                     [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Retest</ap-button>
             </div>
 
-            <mat-form-field class="ap-w-full ap-mt-2" appearance="outline" subscriptSizing="dynamic">
+            <mat-form-field class="ap-w-full ap-my-2" appearance="outline" subscriptSizing="dynamic">
                 <mat-label>
                     Data
                 </mat-label>
@@ -41,9 +41,6 @@
                     </mat-option>
                 </mat-select>
             </mat-form-field>
-            <div class="ap-typography-caption ap-text-description ap-my-2">
-                This sample data can be used in the next steps
-            </div>
             <ap-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
                 [content]="selectedDataControl.value"></ap-json-viewer>
 

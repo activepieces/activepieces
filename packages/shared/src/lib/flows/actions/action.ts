@@ -25,7 +25,8 @@ export const CodeActionSettings = Type.Object({
   input: Type.Record(Type.String({}), Type.Any()),
   inputUiInfo:Type.Optional(Type.Object(
     {
-      currentSelectedData: Type.Optional(Type.Unknown())
+      currentSelectedData: Type.Optional(Type.Unknown()),
+      lastTestDate: Type.Optional(Type.String()),
     },
     {
       additionalProperties: true

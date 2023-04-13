@@ -149,10 +149,9 @@ export class EditStepFormContainerComponent {
         ...currentStep.settings,
         ...inputControlValue,
         inputUiInfo: {
+          ...currentStep.settings.inputUiInfo,
           customizedInputs: (inputControlValue as PieceActionSettings)
             .inputUiInfo.customizedInputs,
-          currentSelectedData:
-            currentStep.settings.inputUiInfo.currentSelectedData,
         },
       };
       return stepSettings;
@@ -161,13 +160,11 @@ export class EditStepFormContainerComponent {
       const stepSettings: CodeActionSettings = {
         ...currentStep.settings,
         ...inputControlValue,
-        inputUiInfo: {
-          currentSelectedData:
-            currentStep.settings.inputUiInfo?.currentSelectedData,
-        },
+        inputUiInfo: currentStep.settings.inputUiInfo,
       };
       return stepSettings;
     }
+
     if (currentStep.type === TriggerType.PIECE) {
       const stepSettings = {
         ...currentStep.settings,

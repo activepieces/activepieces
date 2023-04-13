@@ -25,8 +25,9 @@
                     tooltipText="Test step to generate sample data to use in the next steps"
                     (buttonClicked)="testStep()">Retest</ap-button>
             </div>
-            <div class="ap-typography-caption ap-text-description ap-my-2" *ngIf="!(stepTest$ | async)?.standardError">
-                This sample data can be used in the next steps
+            <div class="ap-typography-body-2 ap-text-body ap--mt-2 ap-mb-4 ap-pl-0.5"
+                *ngIf="!(stepTest$ | async)?.standardError || (stepTest$ | async) === undefined">
+                {{ (lastTestDate$ | async) | timeago:true}}
             </div>
             <ap-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
                 [content]="!(stepTest$ | async)?.standardError ? (lastTestResult$|async) : (stepTest$ | async)?.standardError"></ap-json-viewer>

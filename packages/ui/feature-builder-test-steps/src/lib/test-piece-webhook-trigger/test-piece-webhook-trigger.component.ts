@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   BehaviorSubject,
+  distinctUntilChanged,
   EMPTY,
   forkJoin,
   interval,
@@ -49,6 +50,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   simulationMessage$: Observable<string | null>;
   isValid$: Observable<boolean>;
   deleteWebhookSimulation$: Observable<void>;
+  lastTestDate$: Observable<string | undefined>;
   constructor(
     testStepService: TestStepService,
     private store: Store,
@@ -62,6 +64,13 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   private initialObservables() {
     this.isValid$ = this.store.select(BuilderSelectors.selectStepValidity);
     this.setSelectedDataControlListener();
+    this.lastTestDate$ = this.store
+      .select(BuilderSelectors.selectLastTestDate)
+      .pipe(
+        distinctUntilChanged((prev, current) => {
+          return prev === current;
+        })
+      );
     this.initialHistoricalData$ = this.store
       .select(BuilderSelectors.selectCurrentFlowId)
       .pipe(
@@ -176,6 +185,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
               ...clone.settings,
               inputUiInfo: {
                 currentSelectedData: this.selectedDataControl.value,
+                lastTestDate: new Date().toString(),
               },
             };
             this.store.dispatch(
