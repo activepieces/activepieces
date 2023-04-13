@@ -1,4 +1,4 @@
-import { Queue } from 'bullmq'
+import { DefaultJobOptions, Queue } from 'bullmq'
 import { ApId, ScheduleOptions } from '@activepieces/shared'
 import { createRedisClient } from '../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
@@ -27,12 +27,24 @@ type RemoveParams = {
 export const ONE_TIME_JOB_QUEUE = 'oneTimeJobs'
 export const REPEATABLE_JOB_QUEUE = 'repeatableJobs'
 
+const EIGHT_MINUTES_IN_MILLISECONDS = 8 * 60 * 1000
+
+const defaultJobOptions: DefaultJobOptions = {
+    attempts: 5,
+    backoff: {
+        type: 'exponential',
+        delay: EIGHT_MINUTES_IN_MILLISECONDS,
+    },
+}
+
 const oneTimeJobQueue = new Queue<OneTimeJobData, unknown, ApId>(ONE_TIME_JOB_QUEUE, {
     connection: createRedisClient(),
+    defaultJobOptions,
 })
 
 const repeatableJobQueue = new Queue<RepeatableJobData, unknown, ApId>(REPEATABLE_JOB_QUEUE, {
     connection: createRedisClient(),
+    defaultJobOptions,
 })
 
 const repeatableJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
