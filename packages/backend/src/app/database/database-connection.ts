@@ -66,7 +66,7 @@ const getMigrations = () => {
         addEventRouting1678382946390,
         bumpFixPieceVersions1678928503715,
         migrateSchedule1679014156667,
-        AddInputUiInfo1681107443963
+        AddInputUiInfo1681107443963,
     ]
 }
 

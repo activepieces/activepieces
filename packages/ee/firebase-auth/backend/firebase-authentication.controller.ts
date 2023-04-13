@@ -10,9 +10,13 @@ import { projectService } from "@backend/project/project.service";
 import { tokenUtils } from "@backend/authentication/lib/token-utils";
 
 import { AuthenticationResponse } from "@activepieces/shared";
+import { system } from "@backend/helper/system/system";
+import { SystemProp } from "@backend/helper/system/system-prop";
 
 
-const firebaseAdminApp = initializeApp();
+const firebaseAdminApp = initializeApp({
+    credential: cert(JSON.parse(system.get(SystemProp.FIREBASE_ADMIN_CREDENTIALS))),
+});
 const firebaseAuth = getAuth(firebaseAdminApp);
 
 export const firebaseAuthenticationController = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
@@ -25,7 +29,7 @@ export const firebaseAuthenticationController = async (app: FastifyInstance, _op
             },
         },
         async (request: FastifyRequest<{ Body: FirebaseSignInRequest }>, reply: FastifyReply) => {
-           try {
+            try {
                 const verifiedToken = await firebaseAuth.verifyIdToken(request.body.token);
                 const user = await userService.getOneByEmail({ email: verifiedToken.email });
                 if (user !== null) {
