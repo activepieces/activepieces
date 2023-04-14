@@ -1,8 +1,10 @@
 import fs from 'fs-extra'
 import {
     ActionType,
+    ActivepiecesError,
     apId,
     CodeActionSettings,
+    ErrorCode,
     ExecutionOutputStatus,
     File,
     flowHelper,
@@ -23,6 +25,7 @@ import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
 import { pieceManager } from '../../flows/common/piece-installer'
+import { isNil } from 'lodash'
 
 type FlowPiece = {
     name: string
@@ -106,7 +109,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     }
     catch (e: unknown) {
         log.error(e, `[${jobData.runId}] Error executing flow`)
-        if (sandbox.timedOut()) {
+        if (await sandbox.timedOut()) {
             await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null)
         }
         else {
@@ -173,13 +176,29 @@ async function buildCodes(projectId: ProjectId, flowVersion: FlowVersion): Promi
 const getArtifactFile = async (projectId: ProjectId, codeActionSettings: CodeActionSettings): Promise<File> => {
     if (codeActionSettings.artifactPackagedId === undefined) {
         log.info(`Building package for file id ${codeActionSettings.artifactSourceId}`)
+
         const sourceId = codeActionSettings.artifactSourceId
-        const fileEntity = await fileService.getOne({ projectId: projectId, fileId: sourceId })
+
+        if (isNil(sourceId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'artifactSourceId is undefined',
+                },
+            })
+        }
+
+        const fileEntity = await fileService.getOneOrThrow({ projectId: projectId, fileId: sourceId })
         const builtFile = await codeBuilder.build(fileEntity.data)
-        const savedPackagedFile: File = await fileService.save(projectId, builtFile)
+        const savedPackagedFile = await fileService.save(projectId, builtFile)
         codeActionSettings.artifactPackagedId = savedPackagedFile.id
     }
-    const file: File = (await fileService.getOne({ projectId: projectId, fileId: codeActionSettings.artifactPackagedId }))
+
+    const file = await fileService.getOneOrThrow({
+        projectId: projectId,
+        fileId: codeActionSettings.artifactPackagedId,
+    })
+
     return file
 }
 
