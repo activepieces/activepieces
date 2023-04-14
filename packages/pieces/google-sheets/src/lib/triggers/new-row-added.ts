@@ -1,10 +1,12 @@
-import { createTrigger } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { googleSheetsCommon } from '../common/common';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
-const alphabet ='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-const sampleData = Array.from(alphabet).map(c=>`${c} Value`);
-Array.from(alphabet).forEach(c=>sampleData.push(`${c}${c} Value`));
+const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const sampleData = Array.from(alphabet).map(c => `${c} Value`);
+Array.from(alphabet).forEach(c => sampleData.push(`${c}${c} Value`));
+
 export const newRowAdded = createTrigger({
   name: 'new_row_added',
   displayName: 'New Row',
@@ -14,52 +16,48 @@ export const newRowAdded = createTrigger({
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     sheet_id: googleSheetsCommon.sheet_id
   },
+  type: TriggerStrategy.POLLING,
   sampleData: {
     "value": sampleData,
     "rowId": 1
   },
-  type: TriggerStrategy.POLLING,
-  async test(context) {
-    const sheetId = context.propsValue['sheet_id'];
-    const accessToken = context.propsValue['authentication']['access_token'];
-    const spreadSheetId = context.propsValue['spreadsheet_id'];
-    const allValues =  await googleSheetsCommon.getValues(spreadSheetId, accessToken, sheetId);    
-    if(!allValues)
-    {
-      return [];
-    }
-    return allValues.slice(Math.max(allValues.length-5,0));
+  onEnable: async (context) => {
+    await pollingHelper.onEnable(polling, {
+      store: context.store,
+      propsValue: context.propsValue,
+    })
   },
-  async onEnable(context) {
-    const sheetId = context.propsValue['sheet_id'];
-    const accessToken = context.propsValue['authentication']['access_token'];
-    const spreadSheetId = context.propsValue['spreadsheet_id'];
-    const currentValues = await googleSheetsCommon.getValues(spreadSheetId, accessToken, sheetId);
-    console.log(`The spreadsheet ${spreadSheetId} started with ${currentValues.length} rows`);
-    context.store?.put("rowCount", currentValues.length);
+  onDisable: async (context) => {
+    await pollingHelper.onDisable(polling, {
+      store: context.store,
+      propsValue: context.propsValue,
+    })
   },
-  async onDisable(context) {
-    console.log("Disabling new google sheets trigger");
-   },
-   async run(context) {
-    const sheetId = context.propsValue['sheet_id'];
-    const accessToken = context.propsValue['authentication']['access_token'];
-    const spreadSheetId = context.propsValue['spreadsheet_id'];
-    const rowCount = (await context.store?.get<number>("rowCount")) ?? 0;
-    const currentValues = await googleSheetsCommon.getValues(spreadSheetId, accessToken, sheetId)
-    let payloads: unknown[] = [];
-    console.log(`The spreadsheet ${spreadSheetId} has now ${currentValues.length} rows, previous # of rows ${rowCount}`);
-    if (currentValues.length > rowCount) {
-      payloads = currentValues.slice(rowCount).map((value, index) => {
-        const rowIndex = rowCount + index;
-        return {
-          value: value,
-          rowId: rowIndex
-        }
-      });
-    }
-    context.store?.put("rowCount", currentValues.length);
-    return payloads;
-},
+  run: async (context) => {
+    return await pollingHelper.poll(polling, {
+      store: context.store,
+      propsValue: context.propsValue,
+    });
+  },
+  test: async (context) => {
+    return await pollingHelper.poll(polling, {
+      store: context.store,
+      propsValue: context.propsValue,
+    });
+  },
 });
 
+
+const polling: Polling<{ authentication: OAuth2PropertyValue, spreadsheet_id: string, sheet_id: number}> = {
+  strategy: DedupeStrategy.LAST_ITEM,
+  items: async ({ propsValue }) => {
+      const currentValues = await googleSheetsCommon.getValues(propsValue.spreadsheet_id, propsValue.authentication.access_token, propsValue.sheet_id)
+      return currentValues.reverse().map((item, index) => ({
+          id: currentValues.length - index,
+          data: {
+            value: item,
+            rowId: currentValues.length - index
+          },
+      }));
+  }
+};
