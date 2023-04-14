@@ -9,6 +9,7 @@ import {
   BuilderSelectors,
   CollectionBuilderService,
 } from '@activepieces/ui/feature-builder-store';
+import { FlowInstance } from '@/shared/src';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -19,6 +20,7 @@ import {
 export class FlowBuilderHeaderComponent implements OnInit {
   viewMode$: Observable<boolean>;
   magicWandEnabled$: Observable<boolean>;
+  instance$: Observable<FlowInstance | undefined>;
 
   constructor(
     public dialog: MatDialog,
@@ -29,6 +31,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.instance$ = this.store.select(BuilderSelectors.selectCurrentInstance);
     this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
     this.magicWandEnabled$ = this.route.queryParams.pipe(
       map((params) => {

@@ -1,6 +1,12 @@
 import { Action, createReducer, on } from '@ngrx/store';
 import { FlowsActions } from './flows.action';
-import { Flow, flowHelper, FlowOperationType } from '@activepieces/shared';
+import {
+  Flow,
+  flowHelper,
+  FlowOperationType,
+  FlowVersionState,
+  TriggerType,
+} from '@activepieces/shared';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { NO_PROPS, BuilderState } from '../../model/builder-state';
@@ -11,10 +17,41 @@ type FlowsState = {
   builderState: BuilderState;
 };
 
-// TODO FIX
 const initialState: FlowsState = {
-  flow: '' as any,
-  builderState: '' as any,
+  flow: {
+    projectId: '1',
+    id: '1',
+    updated: '',
+    created: '',
+    version: {
+      flowId: '1',
+      displayName: 'Flow version',
+      valid: false,
+      updated: '',
+      created: '',
+      id: '',
+      trigger: {
+        name: 'empty',
+        valid: false,
+        displayName: 'Empty Trigger',
+        type: TriggerType.EMPTY,
+        settings: {},
+      },
+      state: FlowVersionState.DRAFT,
+    },
+  },
+  builderState: {
+    selectedRun: undefined,
+    leftSidebar: {
+      type: LeftSideBarType.NONE,
+    },
+    rightSidebar: {
+      type: RightSideBarType.NONE,
+      props: NO_PROPS,
+    },
+    focusedStep: undefined,
+    selectedStepName: 'initialVal',
+  },
 };
 
 const _flowsReducer = createReducer(

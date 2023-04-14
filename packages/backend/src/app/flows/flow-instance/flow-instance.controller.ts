@@ -1,4 +1,4 @@
-import { GetFlowInstanceRequest, UpsertFlowInstanceRequest } from '@activepieces/shared'
+import { GetFlowInstanceRequest, UpdateFlowInstanceRequest, UpsertFlowInstanceRequest } from '@activepieces/shared'
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { flowInstanceService } from './flow-instance.service'
 
@@ -14,6 +14,21 @@ export const flowInstanceController = async (app: FastifyInstance) => {
         },
         async (request: FastifyRequest<{ Body: UpsertFlowInstanceRequest }>) => {
             return flowInstanceService.upsert({ projectId: request.principal.projectId, request: request.body })
+        },
+    )
+
+    app.post(
+        '/:flowId',
+        {
+            schema: {
+                params: GetFlowInstanceRequest,
+                body: UpdateFlowInstanceRequest,
+            },
+        },
+        async (request: FastifyRequest<{ Body: UpdateFlowInstanceRequest, Params: GetFlowInstanceRequest }>) => {
+            return flowInstanceService.update({ projectId: request.principal.projectId, 
+                status: request.body.status, 
+                flowId: request.params.flowId })
         },
     )
 

@@ -4,6 +4,7 @@ import { FlowInstanceEntity } from './flow-instance.entity'
 import { triggerUtils } from '../../helper/trigger-utils'
 import { flowService } from '../flow/flow.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
+import { logger } from '../../helper/logger'
 
 
 export const flowInstanceRepo = databaseConnection.getRepository(FlowInstanceEntity)
@@ -74,18 +75,19 @@ export const flowInstanceService = {
                 },
             })
         }
+        const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
         if (flowInstance.status !== status) {
             switch (status) {
                 case FlowInstanceStatus.ENABLED:
                     triggerUtils.enable({
-                        flowVersion: flowInstance.flowVersion,
+                        flowVersion: flowVersion,
                         projectId: flowInstance.projectId,
                         simulate: false,
                     })
                     break
                 case FlowInstanceStatus.DISABLED:
                     triggerUtils.disable({
-                        flowVersion: flowInstance.flowVersion,
+                        flowVersion: flowVersion,
                         projectId: flowInstance.projectId,
                         simulate: false,
                     })

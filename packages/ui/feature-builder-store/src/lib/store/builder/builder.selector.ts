@@ -16,7 +16,6 @@ import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
 } from './flow-item-details/flow-items-details.effects';
-import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { FlowItem } from '../../model/flow-item';
 import { MentionListItem } from '../../model/mention-list-item';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
@@ -38,6 +37,12 @@ export const selectIsSaving = createSelector(
   (state: GlobalBuilderState) => state.state === BuilderStateEnum.SAVING_FLOW
 );
 
+export const selectFlowHasAnySteps = createSelector(
+  selectBuilderState,
+  (state: GlobalBuilderState) =>
+    !!state.flowState.flow.version.trigger?.nextAction
+);
+
 export const selectViewMode = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => state.viewMode
@@ -54,9 +59,18 @@ export const selectReadOnly = createSelector(
   (state: GlobalBuilderState) => state.viewMode !== ViewModeEnum.BUILDING
 );
 
+export const selectCurrentInstance = createSelector(
+  selectBuilderState,
+  (state: GlobalBuilderState) => {
+    return state.instance;
+  }
+);
+
 export const selectCurrentFlow = createSelector(
   selectBuilderState,
-  (state: GlobalBuilderState) => state.flowState.flow
+  (state: GlobalBuilderState) => {
+    return state.flowState.flow;
+  }
 );
 
 export const selectTabState = createSelector(
@@ -150,9 +164,9 @@ export const selectCurrentRightSideBar = createSelector(
 );
 
 export const selectCurrentRightSideBarType = createSelector(
-  selectCurrentRightSideBar,
-  (state: { type: RightSideBarType }) => {
-    return state.type;
+  selectBuilderState,
+  (state: GlobalBuilderState) => {
+    return state.flowState.builderState.rightSidebar.type;
   }
 );
 
@@ -373,10 +387,12 @@ export const BuilderSelectors = {
   selectViewMode,
   selectCurrentFlowRun,
   selectCurrentFlow,
+  selectCurrentInstance,
   selectCurrentRightSideBar,
   selectCurrentStep,
   selectIsPublishing,
   selectIsSaving,
+  selectFlowHasAnySteps,
   selectCurrentLeftSidebarType,
   selectCurrentStepName,
   selectCurrentRightSideBarType,

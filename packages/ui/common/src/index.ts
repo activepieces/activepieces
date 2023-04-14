@@ -11,6 +11,7 @@ export * from './lib/service/action-meta.service';
 export * from './lib/service/instance-run.service';
 export * from './lib/service/project.service';
 export * from './lib/service/app-connections.service';
+export * from './lib/service/flow-instance.service';
 export * from './lib/utils/utils';
 export * from './lib/utils/tables.utils';
 export * from './lib/store/common.action';

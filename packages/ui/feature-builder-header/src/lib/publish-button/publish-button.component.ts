@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { combineLatest, delay, map, Observable, of } from 'rxjs';
-import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
+import {
+  BuilderSelectors,
+  FlowInstanceActions,
+} from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-publish-button',
@@ -10,7 +13,7 @@ import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PublishButtonComponent implements OnInit {
-  collectionState$: Observable<{ isSaving: boolean; isPublishing: boolean }>;
+  flowState$: Observable<{ isSaving: boolean; isPublishing: boolean }>;
   isDeployingOrIsSaving$: Observable<boolean>;
   deploying$: Observable<boolean> = of(false);
   disableDeployButton$: Observable<boolean>;
@@ -23,38 +26,37 @@ export class PublishButtonComponent implements OnInit {
   }
 
   private setCollectionStateListener() {
-    this.collectionState$ = combineLatest({
+    this.flowState$ = combineLatest({
       isSaving: this.store.select(BuilderSelectors.selectIsSaving),
       isPublishing: this.store.select(BuilderSelectors.selectIsPublishing),
     });
     this.disableDeployButton$ = combineLatest({
-      publishingSavingStates: this.collectionState$,
+      publishingSavingStates: this.flowState$,
+      flowHasSteps: this.store.select(BuilderSelectors.selectFlowHasAnySteps),
     }).pipe(
       map((res) => {
         return (
           res.publishingSavingStates.isPublishing ||
-          res.publishingSavingStates.isSaving
-          // || !res.anyFlowHasSteps TODO FIX
+          res.publishingSavingStates.isSaving ||
+          !res.flowHasSteps
         );
       })
     );
     this.buttonTooltipText$ = combineLatest({
       buttonIsDisabled: this.disableDeployButton$,
+      flowHasSteps: this.store.select(BuilderSelectors.selectFlowHasAnySteps),
     }).pipe(
       delay(100),
       map((res) => {
-        // TODO FIX THIS
-        /*if (!res.anyFlowHasSteps) {
-          return 'At least one flow has to have a step after its trigger';
+        if (!res.flowHasSteps) {
+          return 'Flow has to have atleast one step after its trigger';
         } else if (res.buttonIsDisabled) {
-          return 'Please fix all flows';
-        } else {
-          return 'Publish collection';
-        }*/
-        return 'Publish collection';
+          return 'Please fix the flow';
+        }
+        return 'Publish Flow';
       })
     );
-    this.buttonText$ = this.collectionState$.pipe(
+    this.buttonText$ = this.flowState$.pipe(
       delay(100),
       map((res) => {
         if (res.isSaving) {
@@ -68,7 +70,6 @@ export class PublishButtonComponent implements OnInit {
   }
 
   publish() {
-    // TODO FIX
-    //this.store.dispatch(CollectionActions.publish());
+    this.store.dispatch(FlowInstanceActions.publish());
   }
 }

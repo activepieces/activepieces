@@ -22,10 +22,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
-import {
-  ExecutionOutputStatus,
-  TriggerType,
-} from '@activepieces/shared';
+import { ExecutionOutputStatus, TriggerType } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import {
   LeftSideBarType,
@@ -96,12 +93,12 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
           });
         } else {
           const flow = value['flow'];
-          // TODO DO WE NEED THIS?
-          // const instance: Instance | undefined = value['instance'];
+          const instance = value['instance'];
           this.titleService.setTitle(`AP-${flow.version.displayName}`);
           this.store.dispatch(
             BuilderActions.loadInitial({
               flow: flow,
+              instance: instance,
               viewMode: ViewModeEnum.BUILDING,
               run: undefined,
               appConnections: value['connections'],

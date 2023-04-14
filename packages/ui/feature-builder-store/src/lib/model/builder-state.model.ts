@@ -1,4 +1,4 @@
-import { Flow } from '@activepieces/shared';
+import { Flow, FlowInstance } from '@activepieces/shared';
 import { AppConnectionsState } from './app-connections-state.model';
 import { BuilderStateEnum } from './enums';
 import { ViewModeEnum } from './enums/view-mode.enum';
@@ -11,6 +11,7 @@ export class GlobalBuilderState {
     flow: Flow;
     builderState: BuilderState;
   };
+  readonly instance?: FlowInstance;
   readonly viewMode: ViewModeEnum;
   readonly flowItemsDetailsState: FlowItemsDetailsState;
   readonly appConnectionsState: AppConnectionsState;

@@ -18,9 +18,7 @@ export class MagicWandDialogComponent {
   guessAi$: Observable<Flow | undefined>;
   loading = false;
   failed = false;
-  constructor(
-    private formBuilder: FormBuilder,
-  ) {
+  constructor(private formBuilder: FormBuilder) {
     this.promptForm = this.formBuilder.group({
       prompt: new FormControl('', {
         nonNullable: true,

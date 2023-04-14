@@ -1,12 +1,11 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Input,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
-import { Instance, InstanceStatus } from '@activepieces/shared';
+import { FlowInstance, FlowInstanceStatus } from '@activepieces/shared';
+import { Store } from '@ngrx/store';
+import {
+  FlowInstanceActions,
+} from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-toggle-instance-state',
@@ -16,24 +15,21 @@ import { Instance, InstanceStatus } from '@activepieces/shared';
 export class ToggleInstanceStateComponent implements OnInit {
   toggleFormControl: FormControl<boolean> = new FormControl();
   instanceStateChanged$: Observable<boolean>;
-  _collectionInstance: Instance | undefined;
-  @Input() collectionId: string;
-  @Input() set collectionInstance(instance: Instance | undefined) {
-    if (instance && this.toggleFormControl) {
-      this.toggleFormControl.setValue(
-        instance.status === InstanceStatus.ENABLED,
-        { emitEvent: false }
-      );
-    }
-    this._collectionInstance = instance;
-  }
+  @Input() instance: FlowInstance;
+  constructor(private store: Store) {}
+
   ngOnInit(): void {
     this.toggleFormControl.setValue(
-      this._collectionInstance?.status === InstanceStatus.ENABLED
+      this.instance.status === FlowInstanceStatus.ENABLED
     );
+
     this.instanceStateChanged$ = this.toggleFormControl.valueChanges.pipe(
-      tap((res) => {
-        // TODO FIX THIS
+      tap((toggleValue) => {
+        if (toggleValue) {
+          this.store.dispatch(FlowInstanceActions.enableInstance());
+        } else {
+          this.store.dispatch(FlowInstanceActions.disableInstance());
+        }
       })
     );
   }

@@ -11,7 +11,13 @@
         </div>
       </ap-button>
       <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
-      <app-publish-button *ngIf="(viewMode$ | async) === false"></app-publish-button>
+      <app-test-flow-modal></app-test-flow-modal>
+      <ng-container *ngIf=" (viewMode$ | async)===false">
+          <ng-container *ngIf="(instance$ | async) as instance">
+            <app-toggle-instance-state [instance]="instance"></app-toggle-instance-state>
+          </ng-container>
+        <app-publish-button *ngIf="(viewMode$ | async) === false"></app-publish-button>
+      </ng-container>
     </div>
   </div>
 </nav>

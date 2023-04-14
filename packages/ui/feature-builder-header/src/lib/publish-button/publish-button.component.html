@@ -1,9 +1,9 @@
 <div [matTooltip]="(buttonTooltipText$ | async)!">
   <ap-button btnSize="medium" placement="bottom" [disabled]="disableDeployButton$ |async"
     [class.invalid-deploy]="disableDeployButton$| async" (buttonClicked)="publish()">
-    <ng-container *ngIf="collectionState$ | async as collectionState">
+    <ng-container *ngIf="flowState$ | async as flowState">
       <div class="ap-flex ap-items-center loading-template">
-        <svg-icon *ngIf="collectionState.isPublishing || collectionState.isSaving;" src="assets/img/custom/loading.svg"
+        <svg-icon *ngIf="flowState.isPublishing || flowState.isSaving;" src="assets/img/custom/loading.svg"
           class="loading-spin-animation white-loader" [applyClass]="true">
         </svg-icon>
         {{ buttonText$ | async}}

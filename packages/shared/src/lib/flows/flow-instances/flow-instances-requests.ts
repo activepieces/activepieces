@@ -1,5 +1,6 @@
 import { Static, Type } from "@sinclair/typebox";
 import { FlowId } from "../flow";
+import { FlowInstanceStatus } from "./flow-instance";
 
 export const GetFlowInstanceRequest = Type.Object({
     flowId: Type.String(),
@@ -19,8 +20,7 @@ export type UpsertFlowInstanceRequest =
     };
 
 export const UpdateFlowInstanceRequest = Type.Object({
-    flowId: Type.String(),
-    status: Type.String(),
+    status: Type.Enum(FlowInstanceStatus),
 });
 
 export type UpdateFlowInstanceRequest = Static<typeof UpdateFlowInstanceRequest>;

@@ -3,7 +3,7 @@ import { CollectionBuilderComponent } from './page/flow-builder/collection-build
 import { UserLoggedIn } from '../../guards/user-logged-in.guard';
 import { GetInstanceRunResolver } from './resolvers/instance-run.resolver';
 import { GetFlowResolver } from './resolvers/list-flows.resolver';
-import { InstacneResolver as GetInstanceResolver } from './resolvers/instance.resolver';
+import { InstanceResolver as GetInstanceResolver } from './resolvers/instance.resolver';
 import { ConnectionsResolver } from './resolvers/connections.resolver';
 import { BuilderSavingGuard } from '../../guards/builder-saving.guard';
 

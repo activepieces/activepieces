@@ -10,3 +10,4 @@ export * from './lib/test-run-bar/test-run-bar.component';
 export * from './lib/utils/flowStructureUtil';
 export * from './lib/utils/flowRenderUtil';
 export * from './lib/utils/flowFactoryUtil';
+export * from './lib/store/builder/flow-instance/flow-instance.action';
