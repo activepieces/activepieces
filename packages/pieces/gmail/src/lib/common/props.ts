@@ -9,7 +9,8 @@ export const GmailProps = {
     authUrl: "https://accounts.google.com/o/oauth2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     required: true,
-    scope: ["https://www.googleapis.com/auth/gmail.send", "https://www.googleapis.com/auth/gmail.readonly"]
+    // TODO add https://www.googleapis.com/auth/gmail.readonly when we have the permission
+    scope: ["https://www.googleapis.com/auth/gmail.send"]
   }),
   from: Property.ShortText({
     displayName: 'Email sender',
