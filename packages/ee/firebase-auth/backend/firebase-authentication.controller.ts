@@ -27,16 +27,16 @@ export const firebaseAuthenticationController = async (app: FastifyInstance, _op
         async (request: FastifyRequest<{ Body: FirebaseSignInRequest }>, reply: FastifyReply) => {
            try {
                 const verifiedToken = await firebaseAuth.verifyIdToken(request.body.token);
-                const user = await userService.getOneByEmail({ email: verifiedToken.email });
+                const user = await userService.getOneByEmail({ email: verifiedToken.email! });
                 if (user !== null) {
                     const projects = await projectService.getAll(user.id);
                     const token = await tokenUtils.encode({
                         id: user.id,
                         type: PrincipalType.USER,
-                        projectId: projects[0].id
+                        projectId: projects![0].id
                     });
                     const response: AuthenticationResponse = {
-                        projectId: projects[0].id,
+                        projectId: projects![0].id,
                         token: token,
                         ...user
                     }
@@ -44,7 +44,7 @@ export const firebaseAuthenticationController = async (app: FastifyInstance, _op
                 } else {
                     throw new ActivepiecesError({
                         code: ErrorCode.INVALID_CREDENTIALS,
-                        params: { email: verifiedToken.email },
+                        params: { email: verifiedToken.email! },
                     })
                 }
             } catch (e) {
@@ -66,16 +66,16 @@ export const firebaseAuthenticationController = async (app: FastifyInstance, _op
         async (request: FastifyRequest<{ Body: FirebaseSignUpRequest }>, reply: FastifyReply) => {
             try {
                 const verifiedToken = await firebaseAuth.verifyIdToken(request.body.token);
-                const user = await userService.getOneByEmail({ email: verifiedToken.email });
+                const user = await userService.getOneByEmail({ email: verifiedToken.email! });
                 if (user !== null) {
                     const projects = await projectService.getAll(user.id);
                     const token = await tokenUtils.encode({
                         id: user.id,
                         type: PrincipalType.USER,
-                        projectId: projects[0].id
+                        projectId: projects![0].id
                     });
                     const response: AuthenticationResponse = {
-                        projectId: projects[0].id,
+                        projectId: projects![0].id,
                         token: token,
                         ...user
                     }
@@ -83,7 +83,7 @@ export const firebaseAuthenticationController = async (app: FastifyInstance, _op
                 } else {
                     const response = await authenticationService.signUp({
                         ...request.body,
-                        email: verifiedToken.email,
+                        email: verifiedToken.email!,
                         password: crypto.randomBytes(32).toString("hex")
                     })
                     return response;
