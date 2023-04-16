@@ -79,16 +79,24 @@ export class BuilderAutocompleteMentionsDropdownComponent {
         const containerRect = this.container.getBoundingClientRect();
         const MENTIONS_DROPDOWN_HEIGHT =
           this.mentionsList.nativeElement.getBoundingClientRect().height;
+        const editStepSectionRect =
+          this.interpolatingTextFormControlService.editStepSection?.nativeElement?.getBoundingClientRect() || {
+            top: 0,
+            height: window.innerHeight,
+          };
         const thereIsSpaceBeneath =
-          window.innerHeight -
+          editStepSectionRect.top +
+            editStepSectionRect.height -
             containerRect.top -
             containerRect.height -
             MENTIONS_DROPDOWN_HEIGHT >
           0;
         if (!thereIsSpaceBeneath) {
-          const marginInNumber = 5;
+          const offsetFromAboveContainer = 5;
           this.calculatedMarginTop =
-            (containerRect.height + marginInNumber + MENTIONS_DROPDOWN_HEIGHT) *
+            (containerRect.height +
+              offsetFromAboveContainer +
+              MENTIONS_DROPDOWN_HEIGHT) *
               -1 +
             'px';
         } else {
