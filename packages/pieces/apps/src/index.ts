@@ -64,6 +64,9 @@ import { mailerLite } from '@activepieces/piece-mailer-lite';
 import { googleForms }  from '@activepieces/piece-google-forms';
 import { xml }  from '@activepieces/piece-xml';
 
+/**
+ * @deprecated this will be removed, don't use it
+ */
 export const pieces: Piece[] = [
     xml,
     airtable,
@@ -131,6 +134,9 @@ export const pieces: Piece[] = [
     googleForms
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
+/**
+ * @deprecated this will be removed, don't use it
+ */
 export const getPiece = (name: string): Piece | undefined => {
     return pieces.find((f) => name.toLowerCase() === f.name.toLowerCase());
 };
