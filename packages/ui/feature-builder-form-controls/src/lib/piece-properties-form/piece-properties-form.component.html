@@ -386,7 +386,8 @@
 
 <ng-template #textInputTemplate let-property let-formGroup="formGroup">
   <div [formGroup]="formGroup">
-    <mat-form-field class="ap-w-full" appearance="outline" (click)="mentionsDropdown.showMenuSubject$.next(true)">
+    <mat-form-field class="ap-w-full" appearance="outline"
+      (click)="isTriggerPieceForm?null: mentionsDropdown.showMenuSubject$.next(true)">
       <mat-label>{{property.value.displayName}}</mat-label>
       <app-interpolating-text-form-control #textControl [matTooltip]="property.value.description"
         [formControlName]="property.key" [attr.name]="property.key"
