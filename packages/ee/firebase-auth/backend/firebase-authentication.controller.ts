@@ -14,8 +14,10 @@ import { system } from "@backend/helper/system/system";
 import { SystemProp } from "@backend/helper/system/system-prop";
 
 
+const credential = SystemProp.FIREBASE_ADMIN_CREDENTIALS ? cert(JSON.parse(system.get(SystemProp.FIREBASE_ADMIN_CREDENTIALS))) : undefined;
+
 const firebaseAdminApp = initializeApp({
-    credential: cert(JSON.parse(system.get(SystemProp.FIREBASE_ADMIN_CREDENTIALS))),
+    credential
 });
 const firebaseAuth = getAuth(firebaseAdminApp);
 
