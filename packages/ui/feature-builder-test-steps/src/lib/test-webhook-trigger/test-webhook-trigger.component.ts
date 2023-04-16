@@ -56,7 +56,6 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
       .select(BuilderSelectors.selectCurrentFlowId)
       .pipe(
         switchMap((res) => {
-          debugger;
           return this.testStepService.getTriggerEventsResults(
             res?.toString() || ''
           );
@@ -152,7 +151,6 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
       .pipe(
         take(1),
         tap((step) => {
-          debugger;
           if (step && step.type === TriggerType.WEBHOOK) {
             const clone = { ...step };
             clone.settings = {
