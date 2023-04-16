@@ -1,6 +1,6 @@
 <div [formGroup]="form" class="ap-flex ap-flex-col ap-gap-2 ap-rounded">
 
-    <div>
+    <div #interpolatingTextControlContainer>
         <mat-form-field class="ap-w-full" appearance="outline"
             (click)="firstValueMentionsDropdown.showMenuSubject$.next(true)">
             <mat-label>{{(showSecondValue())? 'First':''}} Value</mat-label>
@@ -13,6 +13,7 @@
         </mat-form-field>
         <app-builder-autocomplete-mentions-dropdown #firstValueMentionsDropdown width="calc(100% - 2.4rem)"
             (menuClosed)="firstValueTextControl.focusEditor()" marginTop="-20px"
+            [container]="interpolatingTextControlContainer"
             (addMention)="addMention(firstValueTextControl,$event)"></app-builder-autocomplete-mentions-dropdown>
     </div>
 
