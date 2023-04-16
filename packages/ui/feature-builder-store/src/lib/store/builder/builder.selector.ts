@@ -1,12 +1,7 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../../model/builder-state.model';
 
-import {
-  AppConnection,
-  Flow,
-  FlowRun,
-  SampleDataSettings,
-} from '@activepieces/shared';
+import { AppConnection, Flow, FlowRun } from '@activepieces/shared';
 import { NO_PROPS, TabState } from '../../model/tab-state';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 
@@ -206,20 +201,16 @@ const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
   }
   return undefined;
 });
-const selectLastTestDate = createSelector(
-  selectCurrentStepSettings,
-  (settings) => {
-    if (settings) {
-      if (Object.keys(settings).find((s) => s === 'inputUiInfo')) {
-        const sampleDataSettings = (settings as Record<string, unknown>)[
-          'inputUiInfo'
-        ] as SampleDataSettings;
-        return sampleDataSettings.lastTestDate;
-      }
-    }
-    return undefined;
+const selectLastTestDate = createSelector(selectCurrentStep, (step) => {
+  if (
+    step &&
+    (step.type === ActionType.PIECE || step.type === ActionType.CODE) &&
+    step.settings.inputUiInfo
+  ) {
+    return step.settings.inputUiInfo.lastTestDate;
   }
-);
+  return undefined;
+});
 export const selectCurrentStepName = createSelector(
   selectCurrentStep,
   (selectedStep) => {
