@@ -9,10 +9,25 @@ export const convertJsonToXml = createAction({
         json: Property.Json({
             displayName: 'JSON',
             required: true,
+        }),
+        attributes_key: Property.ShortText({
+            displayName: 'Attribute field',
+            description: "Field to add your tag's attributes",
+            required: false,
+        }),
+        header: Property.Checkbox({
+            displayName: 'Header',
+            description: "Add XML header",
+            required: false,
         })
     },
     async run(context) {
-        return js2xml(JSON.parse(JSON.stringify(context.propsValue.json)));
+        const { json } = context.propsValue;
+        
+        const attributes_key = context.propsValue.attributes_key ? context.propsValue.attributes_key : "attr";
+        const header = context.propsValue.header ? context.propsValue.header : false;
+        
+        return js2xml(JSON.parse(JSON.stringify(json)), { attributes_key, header });
 
     },
 });

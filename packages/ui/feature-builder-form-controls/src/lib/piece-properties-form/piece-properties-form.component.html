@@ -260,7 +260,7 @@
       </ng-container>
       <ng-template #connectionDropdownInputTemplate>
         <div class="ap-relative">
-          <app-add-edit-connection-button class="edit-selected-auth"
+          <app-add-edit-connection-button class="edit-selected-auth ap-z-40"
             *ngIf="formGroup.enabled && formGroup.get(property.key)!.value" btnSize="extraSmall"
             [isEditConnectionButton]="true" [authProperty]="property.value" [pieceName]="pieceName"
             [pieceVersion]="pieceVersion" [propertyKey]="property.key"
@@ -282,7 +282,7 @@
                   <div class="ap-flex-grow" #noConnectionDiv
                     (click)="checkIfTheDivIsTheTarget($event,noConnectionDiv)? addConnectionBtn.buttonClicked():null ">
                     No connections</div>
-                  <app-add-edit-connection-button class="edit-selected-auth" btnSize="small"
+                  <app-add-edit-connection-button class="edit-selected-auth ap-z-40" btnSize="small"
                     [isEditConnectionButton]="false" [authProperty]="property.value" [pieceName]="pieceName"
                     [propertyKey]="property.key" [pieceVersion]="pieceVersion" [triggerName]="actionOrTriggerName"
                     (connectionPropertyValueChanged)="connectionValueChanged($event);">
@@ -320,7 +320,7 @@
       </ng-container>
 
       <ng-template #jsonInputTemplate>
-        <div class="code-font-sm code-size-200 code-block">
+        <div class="code-font-sm code-size-200 code-block" #interpolatingTextControlContainer>
           <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
             <div class="ap-flex-grow">
               <span class="ap-text-white">{{property.value.displayName}}</span>
@@ -332,7 +332,7 @@
           </div>
           <ngx-codemirror [formControlName]="property.key" #jsonControl [options]="editorOptions"
             (focusChange)="$event? mentionsDropdown.showMenuSubject$.next(true): null"></ngx-codemirror>
-          <app-builder-autocomplete-mentions-dropdown #mentionsDropdown
+          <app-builder-autocomplete-mentions-dropdown #mentionsDropdown [container]="interpolatingTextControlContainer"
             (addMention)="addMentionToJsonControl(jsonControl,$event)"></app-builder-autocomplete-mentions-dropdown>
         </div>
         <div *ngIf="getControl(property.key)!.invalid" class="ap-p-2">
@@ -385,7 +385,7 @@
 <ng-container *ngIf="configDropdownChanged$  | keyvalue"></ng-container>
 
 <ng-template #textInputTemplate let-property let-formGroup="formGroup">
-  <div [formGroup]="formGroup">
+  <div [formGroup]="formGroup" #interpolatingTextComponentContainer>
     <mat-form-field class="ap-w-full" appearance="outline"
       (click)="isTriggerPieceForm?null: mentionsDropdown.showMenuSubject$.next(true)">
       <mat-label>{{property.value.displayName}}</mat-label>
@@ -397,7 +397,8 @@
       </mat-error>
     </mat-form-field>
     <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
-      marginTop="-20px" (addMention)="addMention(textControl,$event)"></app-builder-autocomplete-mentions-dropdown>
+      [container]="interpolatingTextComponentContainer" marginTop="-20px"
+      (addMention)="addMention(textControl,$event)"></app-builder-autocomplete-mentions-dropdown>
   </div>
 </ng-template>
 
