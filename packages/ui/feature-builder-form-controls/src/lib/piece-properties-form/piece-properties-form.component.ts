@@ -117,6 +117,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   @Input() pieceName: string;
   @Input() pieceVersion: string;
   @Input() pieceDisplayName: string;
+  @Input() isTriggerPieceForm = false;
   @ViewChildren('textControl', { read: ElementRef })
   theInputs: QueryList<ElementRef>;
   @ViewChild('addConnectionBtn')
