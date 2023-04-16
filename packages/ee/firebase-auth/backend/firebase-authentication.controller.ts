@@ -14,12 +14,10 @@ import { system } from "@backend/helper/system/system";
 import { SystemProp } from "@backend/helper/system/system-prop";
 
 
-const credential = SystemProp.FIREBASE_ADMIN_CREDENTIALS ? cert(JSON.parse(system.get(SystemProp.FIREBASE_ADMIN_CREDENTIALS))) : undefined;
-
-const firebaseAdminApp = initializeApp({
+const credential = system.get(SystemProp.FIREBASE_ADMIN_CREDENTIALS) ? cert(JSON.parse(system.get(SystemProp.FIREBASE_ADMIN_CREDENTIALS))) : undefined;
+const firebaseAuth =  credential ? getAuth(initializeApp({
     credential
-});
-const firebaseAuth = getAuth(firebaseAdminApp);
+})) : undefined;
 
 export const firebaseAuthenticationController = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
 
