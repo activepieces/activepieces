@@ -26,8 +26,8 @@ const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, 
 
     for (const step of flowSteps) {
         if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE || step.type === ActionType.CODE) {
-            const { name, settings: { inputUiInfo } } = step
-            testContext[name] = inputUiInfo.currentSelectedData
+            const { name, settings: { inputUiInfo } } = step;
+            testContext[name] = inputUiInfo?.currentSelectedData
         }
     }
 
@@ -50,7 +50,6 @@ export const stepRunService = {
         const { pieceName, pieceVersion, actionName, input } = step.settings
 
         const testExecutionContext = generateTestExecutionContext(flowVersion)
-
         const operation: ExecuteActionOperation = {
             pieceName,
             pieceVersion,

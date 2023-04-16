@@ -74,8 +74,8 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
         tap((res) => {
           this.loading = false;
           this.testStepService.elevateResizer$.next(true);
-          if (res) {
-            this.saveStepTestResult(res);
+          if (res.output !== undefined) {
+            this.saveStepTestResult(res.output);
           } else {
             this.saveStepTestResult('' + res);
           }
@@ -90,13 +90,15 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
         take(1),
         tap((step) => {
           if (step && step.type === ActionType.PIECE) {
-            const clone: PieceAction = { ...step };
-            clone.settings = {
-              ...clone.settings,
-              inputUiInfo: {
-                customizedInputs: clone.settings.inputUiInfo.customizedInputs,
-                currentSelectedData: testResult,
-                lastTestDate: new Date().toString(),
+            const clone: PieceAction = {
+              ...step,
+              settings: {
+                ...step.settings,
+                inputUiInfo: {
+                  customizedInputs: step.settings.inputUiInfo.customizedInputs,
+                  currentSelectedData: testResult,
+                  lastTestDate: new Date().toString(),
+                },
               },
             };
             this.store.dispatch(

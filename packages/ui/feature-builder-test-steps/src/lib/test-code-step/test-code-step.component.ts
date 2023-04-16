@@ -122,12 +122,14 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
           take(1),
           tap((step) => {
             if (step && step.type === ActionType.CODE) {
-              const clone: CodeAction = { ...step };
-              clone.settings = {
-                ...clone.settings,
-                inputUiInfo: {
-                  currentSelectedData: result.output,
-                  lastTestDate: new Date().toString(),
+              const clone: CodeAction = {
+                ...step,
+                settings: {
+                  ...step.settings,
+                  inputUiInfo: {
+                    currentSelectedData: result.output,
+                    lastTestDate: new Date().toString(),
+                  },
                 },
               };
               this.store.dispatch(

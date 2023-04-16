@@ -188,33 +188,24 @@ const selectCurrentStepSettings = createSelector(
   }
 );
 const selectTriggerSelectedSampleData = createSelector(
-  selectCurrentStepSettings,
-  (settings) => {
-    if (settings) {
-      if (Object.keys(settings).find((s) => s === 'inputUiInfo')) {
-        const sampleDataSettings = (settings as Record<string, unknown>)[
-          'inputUiInfo'
-        ] as SampleDataSettings;
-        return sampleDataSettings.currentSelectedData;
-      }
+  selectCurrentStep,
+  (step) => {
+    if (step && step.type === TriggerType.PIECE && step.settings.inputUiInfo) {
+      return step.settings.inputUiInfo.currentSelectedData;
     }
     return undefined;
   }
 );
-const selectStepTestSampleData = createSelector(
-  selectCurrentStepSettings,
-  (settings) => {
-    if (settings) {
-      if (Object.keys(settings).find((s) => s === 'inputUiInfo')) {
-        const sampleDataSettings = (settings as Record<string, unknown>)[
-          'inputUiInfo'
-        ] as SampleDataSettings;
-        return sampleDataSettings.currentSelectedData;
-      }
-    }
-    return undefined;
+const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
+  if (
+    step &&
+    (step.type === ActionType.PIECE || step.type === ActionType.CODE) &&
+    step.settings.inputUiInfo
+  ) {
+    return step.settings.inputUiInfo.currentSelectedData;
   }
-);
+  return undefined;
+});
 const selectLastTestDate = createSelector(
   selectCurrentStepSettings,
   (settings) => {
