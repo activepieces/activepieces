@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { askOpenAI } from './lib/actions/send-prompt';
 
 export const openai = createPiece({

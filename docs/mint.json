@@ -99,7 +99,9 @@
         "pieces/apps/mailchimp",
         "pieces/apps/mailer-lite",
         "pieces/apps/mastodon",
+        "pieces/apps/matrix",
         "pieces/apps/mattermost",
+        "pieces/apps/mindee",
         "pieces/apps/openai",
         "pieces/apps/pipedrive",
         "pieces/apps/posthog",
@@ -161,17 +163,17 @@
       ]
     },
     {
-      "group": "Contributing",
+      "group": "Overview",
       "pages": [
-        "contributing/overview",
-        "contributing/repo-structure",
-        {
-          "group": "Development Setup",
-          "pages": [
-            "contributing/development-setup/codespaces",
-            "contributing/development-setup/local-development"
-          ]
-        }
+        "contributing/overview"
+      ]
+    },
+    {
+      "group": "Development Setup",
+      "pages": [
+        "contributing/development-setup/codespaces",
+        "contributing/development-setup/docker-compose",
+        "contributing/development-setup/local-development"
       ]
     },
     {
@@ -179,9 +181,19 @@
       "pages": [
         "contributing/building-pieces/overview",
         "contributing/building-pieces/create-action",
-        "contributing/building-pieces/create-trigger",
+        "contributing/building-pieces/triggers",
+        "contributing/building-pieces/create-polling-trigger",
+        "contributing/building-pieces/create-webhook-trigger",
         "contributing/building-pieces/reference",
         "contributing/building-pieces/examples"
+      ]
+    },
+    {
+      "group": "Architecture",
+      "pages": [
+        "contributing/architecture/repo-structure",
+        "contributing/architecture/flow-worker",
+        "contributing/architecture/code-worker"
       ]
     },
     {

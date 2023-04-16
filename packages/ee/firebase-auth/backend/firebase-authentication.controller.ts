@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } f
 import { cert, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth'
 import * as crypto from "crypto";
-import { FirebaseSignInRequest, FirebaseSignUpRequest } from "../shared/index";
+import { FirebaseSignInRequest, FirebaseSignUpRequest } from "@activepieces/ee/shared";
 import { PrincipalType, ActivepiecesError, ErrorCode } from "@activepieces/shared";
 import { userService } from "@backend/user/user-service";
 import { authenticationService } from "@backend/authentication/authentication.service";

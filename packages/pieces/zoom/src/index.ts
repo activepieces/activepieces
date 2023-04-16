@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { zoomCreateMeeting } from './lib/actions/create-meeting';
 import { zoomCreateMeetingRegistrant } from './lib/actions/create-meeting-registrant';
 

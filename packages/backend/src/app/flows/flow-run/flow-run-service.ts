@@ -63,7 +63,7 @@ export const flowRunService = {
             status,
             finishTime: new Date().toISOString(),
         })
-        const flowRun = await this.getOne({ id: flowRunId })
+        const flowRun = await this.getOne({ id: flowRunId, projectId: undefined })
         notifications.notifyRun({
             flowRun,
         })

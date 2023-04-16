@@ -1,6 +1,6 @@
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
-import { PieceProperty } from '@activepieces/framework'
+import { PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import {
     ActionType,
     apId,
@@ -18,7 +18,6 @@ import {
     PieceActionSettings,
     PieceTriggerSettings,
     ProjectId,
-    PropertyType,
     TriggerType,
 } from '@activepieces/shared'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'

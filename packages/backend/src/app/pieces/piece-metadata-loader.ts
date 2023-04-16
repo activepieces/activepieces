@@ -3,8 +3,8 @@ import { resolve } from 'node:path'
 import { cwd } from 'node:process'
 import axios from 'axios'
 import sortBy from 'lodash/sortBy'
-import { Piece } from '@activepieces/framework'
-import { ActivepiecesError, ApEnvironment, ErrorCode, PieceMetadata, PieceMetadataSummary } from '@activepieces/shared'
+import { Piece, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
+import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { captureException, logger } from '../helper/logger'
@@ -59,10 +59,10 @@ const cdnPieceMetadataLoader = (): PieceMetadataLoader => {
  */
 const filePieceMetadataLoader = (): PieceMetadataLoader => {
     const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
-        const frameworkPackages = ['framework', 'apps', 'dist']
+        const ignoredPackages = ['framework', 'apps', 'dist', 'common']
         const piecesPath = resolve(cwd(), 'packages', 'pieces')
         const piecePackages = await readdir(piecesPath)
-        const filteredPiecePackages = piecePackages.filter(d => !frameworkPackages.includes(d))
+        const filteredPiecePackages = piecePackages.filter(d => !ignoredPackages.includes(d))
 
         const piecesMetadata: PieceMetadata[] = []
 

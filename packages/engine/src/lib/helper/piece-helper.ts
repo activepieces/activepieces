@@ -8,8 +8,9 @@ import {
     DynamicPropsValue,
     MultiSelectDropdownProperty,
     Piece,
+    PropertyType,
     StaticPropsValue,
-} from "@activepieces/framework";
+} from "@activepieces/pieces-framework";
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -18,16 +19,15 @@ import {
     ExecutePropsOptions,
     ExecutionState,
     getPackageAliasForPiece,
-    PropertyType,
+    getPackageNameForPiece,
 } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
-import { getPiece } from '@activepieces/pieces-apps';
 import { isNil } from 'lodash';
 import { createContextStore } from '../services/storage.service';
 import { globals } from '../globals';
 import { connectionService } from '../services/connections.service';
 
-type LoadPieceParams = {
+type GetPackageNameParams = {
     pieceName: string
     pieceVersion: string
 }
@@ -38,39 +38,33 @@ type GetActionParams = {
     actionName: string
 }
 
-const loadPieceFromDisk = async (params: LoadPieceParams): Promise<Piece | undefined> => {
-    const { pieceName } = params;
+const apEnv = env['AP_ENVIRONMENT'];
 
-    console.info(`[engine] PieceHelper#loadPieceFromDisk, pieceName=${pieceName}`);
-
-    return getPiece(params.pieceName);
-}
-
-const loadPieceFromPackageManager = async (params: LoadPieceParams): Promise<Piece | undefined> => {
+const getPackageName = (params: GetPackageNameParams): string => {
     const { pieceName, pieceVersion } = params;
 
-    console.info(`[engine] PieceHelper#loadPieceFromPackageManager, pieceName=${pieceName} pieceVersion=${pieceVersion}`);
-
-    const packageName = getPackageAliasForPiece({
-        pieceName,
-        pieceVersion,
-    });
-
-    const pieceModule = await import(packageName);
-    return Object.values<Piece>(pieceModule)[0];
+    if (apEnv === ApEnvironment.DEVELOPMENT) {
+        return getPackageNameForPiece({
+            pieceName,
+            pieceVersion,
+        })
+    }
+    else {
+        return getPackageAliasForPiece({
+            pieceName,
+            pieceVersion,
+        })
+    }
 }
 
 const loadPieceOrThrow = async (pieceName: string, pieceVersion: string): Promise<Piece> => {
-    const apEnv = env['AP_ENVIRONMENT'];
-
-    const pieceLoader = apEnv === ApEnvironment.DEVELOPMENT
-        ? loadPieceFromDisk
-        : loadPieceFromPackageManager
-
-    const piece = await pieceLoader({
+    const packageName = getPackageName({
         pieceName,
         pieceVersion,
     })
+
+    const pieceModule = await import(packageName);
+    const piece = Object.values<Piece>(pieceModule)[0];
 
     if (isNil(piece)) {
         throw new ActivepiecesError({
@@ -141,15 +135,25 @@ const getPropOrThrow = async (params: ExecutePropsOptions) => {
     return prop
 }
 
-const resolveInput = async (input: unknown): Promise<unknown> => {
-    const variableService = new VariableService()
+type ResolveInputParams = {
+    input: Record<string, unknown>
+    executionContext?: Record<string, unknown>
+}
+
+const resolveInput = async ({ input, executionContext = {} }: ResolveInputParams): Promise<unknown> => {
     const executionState = new ExecutionState()
+
+    for (const [stepName, stepOutput] of Object.entries(executionContext)) {
+        executionState.updateLastStep(stepOutput, stepName)
+    }
+
+    const variableService = new VariableService()
     return await variableService.resolve(input, executionState)
 }
 
 export const pieceHelper = {
     async executeAction(params: ExecuteActionOperation): Promise<unknown> {
-        const { actionName, pieceName, pieceVersion, input } = params;
+        const { actionName, pieceName, pieceVersion, input, testExecutionContext } = params;
 
         const action = await getActionOrThrow({
             pieceName,
@@ -157,23 +161,26 @@ export const pieceHelper = {
             actionName,
         })
 
-        const resolvedInput = await resolveInput(input)
+        const resolvedInput = await resolveInput({
+            input,
+            executionContext: testExecutionContext,
+        })
 
         const context: ActionContext<StaticPropsValue<Record<string, any>>> = {
             propsValue: resolvedInput as Record<string, any>,
             store: createContextStore('', globals.flowId),
             connections: {
-              get: async (key: string) => {
-                try {
-                  const connection = await connectionService.obtain(key);
-                  if (!connection) {
-                    return null;
-                  }
-                  return connection;
-                } catch (e) {
-                  return null;
+                get: async (key: string) => {
+                    try {
+                        const connection = await connectionService.obtain(key);
+                        if (!connection) {
+                            return null;
+                        }
+                        return connection;
+                    } catch (e) {
+                        return null;
+                    }
                 }
-              }
             }
         }
 
@@ -184,7 +191,9 @@ export const pieceHelper = {
         const property = await getPropOrThrow(params);
 
         try {
-            const resolvedInput = await resolveInput(params.input)
+            const resolvedInput = await resolveInput({
+                input: params.input,
+            })
 
             if (property.type === PropertyType.DYNAMIC) {
                 const dynamicProperty = property as DynamicProperties<boolean>
