@@ -42,6 +42,7 @@ const exportedDeclarations = [
   TrackHoverDirective,
   PiecePropertiesFormComponent,
   BuilderAutocompleteMentionsDropdownComponent,
+  TestCodeFormModalComponent,
 ];
 @NgModule({
   imports: [
@@ -59,7 +60,6 @@ const exportedDeclarations = [
   declarations: [
     ...exportedDeclarations,
     AddNpmPackageModalComponent,
-    TestCodeFormModalComponent,
     CodeArtifactControlFullscreenComponent,
     MentionsListComponent,
     CodeStepMentionItemComponent,

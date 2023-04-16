@@ -6,6 +6,7 @@ import {
   of,
   skipWhile,
   Subject,
+  switchMap,
   take,
   takeUntil,
   tap,
@@ -19,6 +20,8 @@ import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   ActionType,
+  CodeActionSettings,
+  PieceActionSettings,
   TriggerType,
   UpdateActionRequest,
   UpdateTriggerRequest,
@@ -36,9 +39,7 @@ import {
   styleUrls: ['./edit-step-form-container.component.scss'],
 })
 export class EditStepFormContainerComponent {
-  autoSaveListener$: Observable<{
-    input: any;
-  }>;
+  autoSaveListener$: Observable<void>;
   readOnly$: Observable<boolean> = of(false);
   cancelAutoSaveListener$: Subject<boolean> = new Subject();
   _selectedStep: FlowItem;
@@ -95,49 +96,81 @@ export class EditStepFormContainerComponent {
     this.autoSaveListener$ = this.stepForm.valueChanges.pipe(
       takeUntil(this.cancelAutoSaveListener$),
       skipWhile(() => this.stepForm.disabled),
-      tap(() => {
+      switchMap(() => {
+        return this.store
+          .select(BuilderSelectors.selectCurrentStep)
+          .pipe(take(1));
+      }),
+      tap((res) => {
         if (
           this._selectedStep.type === TriggerType.PIECE ||
           this._selectedStep.type === TriggerType.WEBHOOK
         ) {
           this.store.dispatch(
             FlowsActions.updateTrigger({
-              operation: this.prepareStepDataToSave() as UpdateTriggerRequest,
+              operation: this.prepareStepDataToSave(
+                res!
+              ) as UpdateTriggerRequest,
             })
           );
         } else {
           this.store.dispatch(
             FlowsActions.updateAction({
-              operation: this.prepareStepDataToSave() as UpdateActionRequest,
+              operation: this.prepareStepDataToSave(
+                res!
+              ) as UpdateActionRequest,
             })
           );
         }
-      })
+      }),
+      map(() => void 0)
     );
   }
 
-  prepareStepDataToSave(): UpdateActionRequest | UpdateTriggerRequest {
-    const inputControlValue = this.stepForm.get('settings')!.value;
+  prepareStepDataToSave(
+    currentStep: FlowItem
+  ): UpdateActionRequest | UpdateTriggerRequest {
     const stepToSave: UpdateActionRequest = JSON.parse(
-      JSON.stringify(this._selectedStep)
+      JSON.stringify(currentStep)
     );
-    stepToSave.settings = inputControlValue;
-    stepToSave.name = this._selectedStep.name;
+    stepToSave.name = currentStep.name;
     stepToSave.valid = this.stepForm.valid;
-    switch (this._selectedStep.type) {
-      case ActionType.PIECE:
-      case TriggerType.PIECE:
-        stepToSave.settings = {
-          ...this._selectedStep.settings,
-          ...inputControlValue,
-        };
-        break;
-      default:
-        break;
-    }
+    stepToSave.settings = this.createNewStepSettings(currentStep);
     return stepToSave;
   }
 
+  createNewStepSettings(currentStep: FlowItem) {
+    const inputControlValue = this.stepForm.get('settings')?.value;
+    if (currentStep.type === ActionType.PIECE) {
+      const stepSettings: PieceActionSettings = {
+        ...currentStep.settings,
+        ...inputControlValue,
+        inputUiInfo: {
+          ...currentStep.settings.inputUiInfo,
+          customizedInputs: (inputControlValue as PieceActionSettings)
+            .inputUiInfo.customizedInputs,
+        },
+      };
+      return stepSettings;
+    }
+    if (currentStep.type === ActionType.CODE) {
+      const stepSettings: CodeActionSettings = {
+        ...currentStep.settings,
+        ...inputControlValue,
+        inputUiInfo: currentStep.settings.inputUiInfo,
+      };
+      return stepSettings;
+    }
+
+    if (currentStep.type === TriggerType.PIECE) {
+      const stepSettings = {
+        ...currentStep.settings,
+        ...inputControlValue,
+      };
+      return stepSettings;
+    }
+    return inputControlValue;
+  }
   copyUrl(url: string) {
     navigator.clipboard.writeText(url);
     this.snackbar.open('Webhook url copied to clipboard');

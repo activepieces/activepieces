@@ -33,6 +33,16 @@ export class TestStepService {
       }
     );
   }
+  testPieceStep(req: {
+    stepName: string;
+    collectionId: string;
+    flowVersionId: string;
+  }) {
+    return this.http.post<{ output: unknown }>(
+      environment.apiUrl + '/step-run',
+      req
+    );
+  }
   startPieceWebhookSimulation(flowId: string) {
     return this.http.post<SeekPage<TriggerEvent>>(
       environment.apiUrl + '/webhook-simulation/',

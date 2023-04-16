@@ -661,3 +661,8 @@ mat-form-field.\!ap-bg-white {
 .mdc-switch--disabled .mdc-switch__icons {
   cursor: not-allowed !important;
 }
+
+app-mentions-list .mat-mdc-menu-item
+{
+  overflow:initial !important;
+}
