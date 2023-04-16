@@ -55,7 +55,11 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
       this._stepMention.step.name,
       this._stepMention.step.displayName
     ).children;
-
+    if (this.sampleData) {
+      this.mentionsTreeCache.setStepMentionsTree(this._stepMention.step.name, {
+        children: this.sampleData,
+      });
+    }
     this.nodesFilteredWithSearch$ =
       this.mentionsTreeCache.listSearchBarObs$.pipe(
         map((res) => {

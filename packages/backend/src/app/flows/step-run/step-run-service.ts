@@ -25,9 +25,9 @@ const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, 
     const testContext: Record<string, unknown> = {}
 
     for (const step of flowSteps) {
-        if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {
-            const { name, settings: { inputUiInfo } } = step
-            testContext[name] = inputUiInfo.currentTestSampleData
+        if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE || step.type === ActionType.CODE) {
+            const { name, settings: { inputUiInfo } } = step;
+            testContext[name] = inputUiInfo?.currentSelectedData
         }
     }
 
@@ -38,7 +38,6 @@ export const stepRunService = {
     async create({ projectId, collectionId, flowVersionId, stepName }: CreateParams): Promise<unknown> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowHelper.getStep(flowVersion, stepName)
-
         if (step.type !== ActionType.PIECE) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -51,7 +50,6 @@ export const stepRunService = {
         const { pieceName, pieceVersion, actionName, input } = step.settings
 
         const testExecutionContext = generateTestExecutionContext(flowVersion)
-
         const operation: ExecuteActionOperation = {
             pieceName,
             pieceVersion,
@@ -64,7 +62,7 @@ export const stepRunService = {
 
         const result = await engineHelper.executeAction(operation)
 
-        step.settings.inputUiInfo.currentTestSampleData = result
+        step.settings.inputUiInfo.currentSelectedData = result
         await flowVersionService.overwriteVersion(flowVersionId, flowVersion)
 
         return result
