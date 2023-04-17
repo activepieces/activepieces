@@ -5,14 +5,12 @@ import {
     EngineOperation,
     EngineOperationType,
     ExecuteActionOperation,
-    ExecuteEventParserOperation,
     ExecuteFlowOperation,
     ExecutePropsOptions,
     ExecuteTestOrRunTriggerResponse,
     ExecuteTriggerOperation,
     ExecuteTriggerResponse,
     ExecutionOutput,
-    ParseEventResponse,
     PieceTrigger,
     PrincipalType,
     ProjectId,
@@ -63,28 +61,6 @@ export const engineHelper = {
             workerToken: await workerToken({ collectionId: operation.collectionId, projectId: operation.projectId }),
         }) as ExecutionOutput
     },
-    async executeParseEvent(operation: ExecuteEventParserOperation): Promise<ParseEventResponse> {
-        const sandbox = await sandboxManager.obtainSandbox(apId())
-        let result
-        try {
-            await sandbox.recreate()
-            const path = sandbox.getSandboxFolderPath()
-            const { pieceName } = operation
-
-            await installPiece({
-                path,
-                pieceName,
-                pieceVersion: 'latest',
-            })
-
-            result = await execute(EngineOperationType.EXTRACT_EVENT_DATA, sandbox, operation)
-        }
-        finally {
-            await sandboxManager.returnSandbox(sandbox.boxId)
-        }
-        return result as ParseEventResponse
-    },
-
     async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | ExecuteTestOrRunTriggerResponse | ExecuteTriggerResponse> {
         const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
         const sandbox = await getSandbox({
