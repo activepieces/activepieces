@@ -1,11 +1,11 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { Product } from "../common/Product";
-import { Replace } from "../common/types";
+import { Product } from "../../common/Product";
+import { Replace } from "../../common/types";
 
-export const createProduct = createAction({
-    name: "create-product",
-    displayName: "Create New Product",
-    description: "Create a new product to your catalog",
+export const updateProduct = createAction({
+    name: "Update-product",
+    displayName: "Update a Product",
+    description: "Update a product in your catalog",
     props: {
         hostUrl: Property.ShortText({
             displayName: "Host Url",
@@ -20,6 +20,11 @@ export const createProduct = createAction({
         appToken: Property.SecretText({
             displayName: "App Token",
             description: "VTEX App Token",
+            required: true,
+        }),
+        productId: Property.Number({
+            displayName: "Product ID",
+            description: "Set the product ID",
             required: true,
         }),
         Name: Property.ShortText({
@@ -42,6 +47,10 @@ export const createProduct = createAction({
             displayName: "Category ID",
             required: true,
         }),
+        DepartmentId: Property.Number({
+            displayName: "DepartmentId",
+            required: true,
+        }),
         LinkId: Property.ShortText({
             displayName: "Link ID",
             required: false,
@@ -50,9 +59,8 @@ export const createProduct = createAction({
             displayName: "Ref ID",
             required: false,
         }),
-        Id: Property.Number({
-            displayName: "Product ID",
-            description: "Set the product ID",
+        BrandName: Property.ShortText({
+            displayName: "Brand Name",
             required: false,
         }),
         IsVisible: Property.Checkbox({
@@ -94,14 +102,15 @@ export const createProduct = createAction({
         }),
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue;
-        const productData: Replace<typeof context.propsValue, { hostUrl?: string; appKey?:string; appToken?: string}> = { ...context.propsValue };
+        const { hostUrl, appKey, appToken, productId } = context.propsValue;
+        const productData: Replace<typeof context.propsValue, { hostUrl?: string; appKey?:string; appToken?: string; productId?: number}> = { ...context.propsValue };
         delete productData.hostUrl;
         delete productData.appKey;
         delete productData.appToken;
+        delete productData.productId;
         
         const product = new Product(hostUrl, appKey, appToken);
 
-        return await product.createProduct(productData);
+        return await product.updateProduct(productId, productData);
     },
 });

@@ -1,19 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { Product } from "../common/Product";
+import { Brand } from "../../common/Brand";
 
-export const getProductById = createAction({
-    name: "get-product-by-id",
-    displayName: "Get Product By ID",
-    description: "Find a product in your catalog by it's id",
+export const getBrandById = createAction({
+    name: "get-brand-by-id",
+    displayName: "Get Brand By ID",
+    description: "Find a Brand in your catalog by it's id",
     props: {
         hostUrl: Property.ShortText({
             displayName: "Host Url",
             description: "{accountName}.{environment}.com",
-            required: true,
-        }),
-        productId: Property.Number({
-            displayName: "Product ID",
-            description: "The product ID",
             required: true,
         }),
         appKey: Property.SecretText({
@@ -25,14 +20,19 @@ export const getProductById = createAction({
             displayName: "App Token",
             description: "VTEX App Token",
             required: true,
+        }),
+        BrandId: Property.Number({
+            displayName: "Brand ID",
+            description: "The Brand ID",
+            required: true,
         })
     },
     async run(context) {
-        const { hostUrl, productId, appKey, appToken } = context.propsValue;
+        const { hostUrl, BrandId, appKey, appToken } = context.propsValue;
         
-        const product = new Product(hostUrl, appKey, appToken);
+        const brand = new Brand(hostUrl, appKey, appToken);
 
-        return await product.getProductById(productId);
+        return await brand.getBrandById(BrandId);
 
     },
 });

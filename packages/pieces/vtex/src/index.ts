@@ -1,11 +1,11 @@
 
 import { createPiece } from "@activepieces/pieces-framework";
 import packageJson from "../package.json";
-import { getProductById } from "./lib/actions/get-product-by-id";
-import { createProduct } from "./lib/actions/create-product";
-import { updateProduct } from "./lib/actions/update-product";
-import { getBrandList } from "./lib/actions/get-brand-list";
-import { getBrandById } from "./lib/actions/get-brand-by-id";
+import { getProductById } from "./lib/actions/Product/get-product-by-id";
+import { createProduct } from "./lib/actions/Product/create-product";
+import { updateProduct } from "./lib/actions/Product/update-product";
+import { getBrandList } from "./lib/actions/Brand/get-brand-list";
+import { getBrandById } from "./lib/actions/Brand/get-brand-by-id";
 
 export const vtex = createPiece({
   name: "vtex",

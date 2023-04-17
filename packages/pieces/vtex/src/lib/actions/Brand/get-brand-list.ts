@@ -1,5 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { Brand } from "../common/Brand";
+import { Brand } from "../../common/Brand";
 
 export const getBrandList = createAction({
     name: "get-brand-list",
