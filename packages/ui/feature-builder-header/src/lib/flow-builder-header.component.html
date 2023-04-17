@@ -1,8 +1,12 @@
-<nav class="navbar-container navbar-expand">
+<nav class="navbar-container navbar-expand ap-relative">
+  <svg-icon [svgStyle]="{ width: '125px', height: '20px' }" src="assets/img/custom/logo/full-logo.svg" class="ap-logo">
+  </svg-icon>
   <div class="ap-flex ap-items-center">
     <ap-icon-button [width]="22" [height]="20" [iconFilename]="'logo/logo.svg'" [tooltipText]="'Home'"
       (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
-    <div class="ap-flex-grow" #spacer></div>
+    <div class="ap-flex-grow ap-flex ap-align-center" #spacer>
+
+    </div>
     <div class="ap-flex ap-items-center ap-gap-2">
       <ap-button btnStyle="basic" btnColor="basic" btnSize="medium" (click)="guessAi()"
         *ngIf="magicWandEnabled$ | async">
@@ -13,9 +17,9 @@
       <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
       <app-test-flow-modal></app-test-flow-modal>
       <ng-container *ngIf=" (viewMode$ | async)===false">
-          <ng-container *ngIf="(instance$ | async) as instance">
-            <app-toggle-instance-state [instance]="instance"></app-toggle-instance-state>
-          </ng-container>
+        <ng-container *ngIf="(instance$ | async) as instance">
+          <app-toggle-instance-state [instance]="instance"></app-toggle-instance-state>
+        </ng-container>
         <app-publish-button *ngIf="(viewMode$ | async) === false"></app-publish-button>
       </ng-container>
     </div>
