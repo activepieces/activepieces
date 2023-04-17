@@ -6,6 +6,8 @@ import { createProduct } from "./lib/actions/Product/create-product";
 import { updateProduct } from "./lib/actions/Product/update-product";
 import { getBrandList } from "./lib/actions/Brand/get-brand-list";
 import { getBrandById } from "./lib/actions/Brand/get-brand-by-id";
+import { createBrand } from "./lib/actions/Brand/create-brand";
+import { updateBrand } from "./lib/actions/Brand/update-brand";
 
 export const vtex = createPiece({
   name: "vtex",
@@ -13,6 +15,6 @@ export const vtex = createPiece({
   logoUrl: "https://cdn.activepieces.com/pieces/vtex.png",
   version: packageJson.version,
   authors: ["Willianwg"],
-  actions: [getProductById, createProduct, updateProduct, getBrandList, getBrandById],
+  actions: [getProductById, createProduct, updateProduct, getBrandList, getBrandById, createBrand, updateBrand],
   triggers: [],
 });
