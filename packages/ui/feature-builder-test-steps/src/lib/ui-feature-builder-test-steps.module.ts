@@ -7,6 +7,7 @@ import { TestPieceStepComponent } from './test-piece-step/test-piece-step.compon
 import { TestCodeStepComponent } from './test-code-step/test-code-step.component';
 import { TestPieceWebhookTriggerComponent } from './test-piece-webhook-trigger/test-piece-webhook-trigger.component';
 import { TimeagoModule } from 'ngx-timeago';
+
 const exportedDeclarations = [
   TestPollingTriggerComponent,
   TestWebhookTriggerComponent,

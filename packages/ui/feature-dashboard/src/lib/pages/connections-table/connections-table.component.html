@@ -29,7 +29,7 @@
       </ng-container>
 
       <ng-container matColumnDef="created">
-        <th mat-header-cell *matHeaderCellDef>created</th>
+        <th mat-header-cell *matHeaderCellDef>Created</th>
         <td mat-cell *matCellDef="let connection">
           <span [matTooltip]="(connection.created | date: 'medium' )||''">{{ connection.created | date: 'short' }}
           </span>
@@ -37,7 +37,7 @@
       </ng-container>
 
       <ng-container matColumnDef="updated">
-        <th mat-header-cell *matHeaderCellDef>updated</th>
+        <th mat-header-cell *matHeaderCellDef>Updated</th>
         <td mat-cell *matCellDef="let connection">
           <span [matTooltip]="(connection.updated | date: 'medium' )||''">{{
             connection.updated | date: 'short' }}</span>
