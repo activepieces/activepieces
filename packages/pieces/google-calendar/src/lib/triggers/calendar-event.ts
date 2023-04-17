@@ -11,7 +11,7 @@ export const calendarEventChanged = createTrigger({
   description: 'Triggers when there is an event added or updated',
   props: {
     authentication: googleCalendarCommon.authentication,
-    calendar_id: googleCalendarCommon.calendarDropdown,
+    calendar_id: googleCalendarCommon.calendarDropdown(),
   },
   sampleData: {
     kind: 'calendar#event',
