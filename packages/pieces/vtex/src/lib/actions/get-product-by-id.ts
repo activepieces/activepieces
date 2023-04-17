@@ -1,5 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import axios from "axios";
+import { Product } from "../common/Product";
 
 export const getProductById = createAction({
     name: "get-product-by-id",
@@ -29,16 +29,10 @@ export const getProductById = createAction({
     },
     async run(context) {
         const { hostUrl, productId, appKey, appToken } = context.propsValue;
-        const apiRoute = "/api/catalog/pvt/product/";
- 
-        const headers = {
-            "X-VTEX-API-AppKey": appKey,
-            "X-VTEX-API-AppToken": appToken
-        };
+        
+        const product = new Product(hostUrl, appKey, appToken);
 
-        const request = await axios.get("https://" + hostUrl + apiRoute + productId, { headers });
-
-        return request.data;
+        return await product.getProductById(productId);
 
     },
 });
