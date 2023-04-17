@@ -1,4 +1,5 @@
 import { BaseModel } from "../common/base-model";
+import { OAuth2AuthorizationMethod } from "./oauth2-authorization-method";
 
 export type AppConnectionId = string;
 
@@ -34,7 +35,6 @@ export interface BasicAuthConnectionValue {
   type: AppConnectionType.BASIC_AUTH
 }
 
-
 export interface BaseOAuth2ConnectionValue {
   expires_in: number;
   token_type: string;
@@ -42,6 +42,7 @@ export interface BaseOAuth2ConnectionValue {
   claimed_at: number;
   refresh_token: string;
   scope: string;
+  authorization_method?: OAuth2AuthorizationMethod,
   data: Record<string, any>
 }
 

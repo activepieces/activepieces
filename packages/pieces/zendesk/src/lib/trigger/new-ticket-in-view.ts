@@ -137,7 +137,7 @@ export const newTicketInView = createTrigger({
         });
     },
     test: async (context) => {
-        return await pollingHelper.poll(polling, {
+        return await pollingHelper.test(polling, {
             store: context.store,
             propsValue: context.propsValue,
         });

@@ -7,7 +7,7 @@ type PackageManagerOutput = {
     stderr: string
 }
 
-type PnpmCoreCommand = 'add' | 'init'
+type PnpmCoreCommand = 'add' | 'init' | 'link'
 type PnpmDependencyCommand = 'webpack'
 type PnpmCommand = PnpmCoreCommand | PnpmDependencyCommand
 
@@ -52,5 +52,9 @@ export const packageManager = {
 
     async runLocalDependency(directory: string, command: PnpmDependencyCommand): Promise<PackageManagerOutput> {
         return await executePnpm(directory, command)
+    },
+
+    async linkDependency(directory: string, dependencyDirectory: string) {
+        return await executePnpm(directory, 'link', dependencyDirectory)
     },
 }

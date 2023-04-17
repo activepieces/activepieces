@@ -190,6 +190,8 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         code: this.settingsForm.controls.value.value.code,
         code_challenge: this.settingsForm.controls.value.value.code_challenge,
         type: AppConnectionType.OAUTH2,
+        authorization_method:
+          this.dialogData.pieceAuthProperty.authorizationMethod,
         client_id: this.settingsForm.controls.client_id.value,
         client_secret: this.settingsForm.controls.client_secret.value,
         redirect_url: this.settingsForm.controls.redirect_url.getRawValue(),

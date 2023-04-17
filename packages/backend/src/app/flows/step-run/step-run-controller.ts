@@ -13,10 +13,10 @@ export const stepRunController: FastifyPluginCallbackTypebox = (app, _opts, done
             flowVersionId,
             stepName,
         })
-
         return {
-            result,
+            output:result,
         }
+
     })
 
     done()

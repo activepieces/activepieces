@@ -15,7 +15,10 @@ import {
 import { ActivepiecesError, TriggerType } from '@activepieces/shared';
 import { TestStepCoreComponent } from '../test-steps-core.component';
 import { TestStepService } from '@activepieces/ui/common';
-import { BuilderSelectors, FlowsActions } from '@activepieces/ui/feature-builder-store';
+import {
+  BuilderSelectors,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
 export interface PollingHistoricalData {
   payload: unknown;
   created: string;
@@ -53,7 +56,9 @@ export class TestPollingTriggerComponent extends TestStepCoreComponent {
       .pipe(
         take(1),
         switchMap((res) => {
-          return this.testStepService.getTriggerEventsResults(res?.toString() || '');
+          return this.testStepService.getTriggerEventsResults(
+            res?.toString() || ''
+          );
         }),
         map((res) => {
           return res.data;
@@ -65,7 +70,7 @@ export class TestPollingTriggerComponent extends TestStepCoreComponent {
         })
       );
     this.initaillySelectedSampleData$ = this.store
-      .select(BuilderSelectors.selectStepSelectedSampleData)
+      .select(BuilderSelectors.selectTriggerSelectedSampleData)
       .pipe(
         take(1),
         tap((res) => {
