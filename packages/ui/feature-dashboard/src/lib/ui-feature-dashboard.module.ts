@@ -9,7 +9,6 @@ import { EmptyFlowsTableComponent } from './pages/flows-table/empty-flows-table/
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 import { PageTitleComponent } from './components/page-title/page-title.component';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
-import { DeleteEntityDialogComponent } from './components/delete-enity-dialog/delete-collection-dialog.component';
 import { RouterModule } from '@angular/router';
 import { DashboardLayoutRouting } from './dashboard.routing';
 // import { EeBillingUiModule } from '@activepieces/ee/billing/ui';
@@ -30,7 +29,6 @@ import { DashboardLayoutRouting } from './dashboard.routing';
     UserAvatarComponent,
     PageTitleComponent,
     ConnectionsTableComponent,
-    DeleteEntityDialogComponent,
   ],
 })
 export class UiFeatureDashboardModule {}

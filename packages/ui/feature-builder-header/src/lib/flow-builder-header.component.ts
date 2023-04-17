@@ -1,8 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { map, Observable } from 'rxjs';
-import { fadeIn400ms } from '@activepieces/ui/common';
+import { map, Observable, tap } from 'rxjs';
+import {
+  DeleteEntityDialogComponent,
+  DeleteEntityDialogData,
+  FlowService,
+  fadeIn400ms,
+} from '@activepieces/ui/common';
 import { MagicWandDialogComponent } from './magic-wand-dialog/magic-flow-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -12,7 +17,6 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { Flow, FlowInstance } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { DeleteFlowDialogComponent } from './delete-flow-dialog/delete-flow-dialog.component';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -26,13 +30,15 @@ export class FlowBuilderHeaderComponent implements OnInit {
   instance$: Observable<FlowInstance | undefined>;
   flow$: Observable<Flow>;
   editingFlowName = false;
+  deleteFlowDialogClosed$: Observable<void>;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
     private router: Router,
     public collectionBuilderService: CollectionBuilderService,
     private route: ActivatedRoute,
-    private snackbar: MatSnackBar
+    private snackbar: MatSnackBar,
+    private flowService: FlowService
   ) {}
 
   ngOnInit(): void {
@@ -71,6 +77,22 @@ export class FlowBuilderHeaderComponent implements OnInit {
     navigator.clipboard.writeText(id);
   }
   deleteFlow(flow: Flow) {
-    this.dialogService.open(DeleteFlowDialogComponent, { data: flow });
+    const dialogData: DeleteEntityDialogData = {
+      deleteEntity$: this.flowService.delete(flow.id),
+      entityName: flow.version.displayName,
+    };
+    const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
+      data: dialogData,
+    });
+    this.deleteFlowDialogClosed$ = dialogRef.beforeClosed().pipe(
+      tap((res) => {
+        if (res) {
+          this.router.navigate(['/']);
+        }
+      }),
+      map(() => {
+        return void 0;
+      })
+    );
   }
 }

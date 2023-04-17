@@ -9,7 +9,6 @@ import { ToggleInstanceStateComponent } from './toggle-instance-state/toggle-ins
 import { PublishButtonComponent } from './publish-button/publish-button.component';
 import { TestFlowModalComponent } from './test-flow-modal/test-flow-modal.component';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
-import { DeleteFlowDialogComponent } from './delete-flow-dialog/delete-flow-dialog.component';
 
 const exportedDeclarations = [
   FlowBuilderHeaderComponent,
@@ -27,7 +26,7 @@ const exportedDeclarations = [
     CodemirrorModule,
     UiCommonModule,
   ],
-  declarations: [...exportedDeclarations, DeleteFlowDialogComponent],
+  declarations: [...exportedDeclarations],
   exports: [...exportedDeclarations],
 })
 export class UiFeatureBuilderHeaderModule {}

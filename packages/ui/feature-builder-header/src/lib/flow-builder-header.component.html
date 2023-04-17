@@ -2,7 +2,6 @@
   <svg-icon [svgStyle]="{ width: '125px', height: '20px' }" src="assets/img/custom/logo/full-logo.svg" class="ap-logo">
   </svg-icon>
   <div class="ap-text-center ap-flex ap-items-center ap-justify-center">
-
   </div>
 
   <div class="ap-flex ap-items-center">
@@ -51,3 +50,4 @@
     </div>
   </div>
 </nav>
+<ng-container *ngIf="deleteFlowDialogClosed$|async"></ng-container>
