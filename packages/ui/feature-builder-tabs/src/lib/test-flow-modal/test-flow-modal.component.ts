@@ -145,21 +145,28 @@ export class TestFlowModalComponent implements OnInit {
       this.dialogRef = this.dialogService.open(testFlowTemplate);
     } else if (flow.version!.trigger!.type === TriggerType.PIECE) {
       const { pieceName, pieceVersion } = flow.version!.trigger.settings;
-      const realSampleData =flow.version.trigger.settings.inputUiInfo.currentSelectedData;
-      this.executeTest$ =( realSampleData? of(realSampleData): this.actionMetaDataService
-        .getPieceMetadata(pieceName, pieceVersion)
-        .pipe(
-          map((pieceMetadata) => {
-            return (
-              pieceMetadata.triggers[
-                (flow.version?.trigger!.settings as PieceTriggerSettings)
-                  .triggerName
-              ].sampleData || {}
-            );
-          })
-        )).pipe( switchMap((sampleData) =>
-        this.executeTest(collection, flow, sampleData)
-      ))
+      const realSampleData =
+        flow.version.trigger.settings.inputUiInfo.currentSelectedData;
+      this.executeTest$ = (
+        realSampleData
+          ? of(realSampleData)
+          : this.actionMetaDataService
+              .getPieceMetadata(pieceName, pieceVersion)
+              .pipe(
+                map((pieceMetadata) => {
+                  return (
+                    pieceMetadata.triggers[
+                      (flow.version?.trigger!.settings as PieceTriggerSettings)
+                        .triggerName
+                    ].sampleData || {}
+                  );
+                })
+              )
+      ).pipe(
+        switchMap((sampleData) =>
+          this.executeTest(collection, flow, sampleData)
+        )
+      );
     } else {
       this.executeTest$ = this.executeTest(collection, flow, {});
     }

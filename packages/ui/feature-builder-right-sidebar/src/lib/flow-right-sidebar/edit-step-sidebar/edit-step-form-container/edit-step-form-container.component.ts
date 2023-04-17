@@ -80,19 +80,16 @@ export class EditStepFormContainerComponent {
       })
     );
     this.stepForm = this.formBuilder.group({
-      input: new UntypedFormControl({}),
+      settings: new UntypedFormControl({}),
     });
   }
 
   updateFormValue(stepSelected: FlowItem) {
-    const inputControl = this.stepForm.get('input');
-    if (inputControl) {
-      const settings = stepSelected.settings;
-      inputControl.setValue({
-        ...settings,
-        type: stepSelected.type,
-      });
-    }
+    const settingsControl = this.stepForm.get('settings')!;
+    settingsControl.setValue({
+      ...stepSelected.settings,
+      type: stepSelected.type,
+    });
   }
 
   setAutoSaveListener() {
@@ -143,7 +140,7 @@ export class EditStepFormContainerComponent {
   }
 
   createNewStepSettings(currentStep: FlowItem) {
-    const inputControlValue = this.stepForm.get('input')?.value;
+    const inputControlValue = this.stepForm.get('settings')?.value;
     if (currentStep.type === ActionType.PIECE) {
       const stepSettings: PieceActionSettings = {
         ...currentStep.settings,
