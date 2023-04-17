@@ -10,7 +10,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FlowBuilderModule } from './modules/flow-builder/flow-builder.module';
 import { HttpClientModule } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { environment } from '@activepieces/ui/common';
+import { UiCommonModule, environment } from '@activepieces/ui/common';
 import { JwtModule } from '@auth0/angular-jwt';
 import { NotFoundComponent } from './modules/not-found/not-found.component';
 import { RedirectUrlComponent } from './modules/redirect-url/redirect-url.component';
@@ -27,7 +27,7 @@ import { ApEdition } from '@activepieces/shared';
 import { FirebaseAuthContainerComponent } from '@ee/firebase-auth/frontend/auth-container/firebase-auth-container.component';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { DashboardContainerComponent } from '@activepieces/ui/feature-dashboard';
-import { AuthLayoutComponent } from 'packages/ui/feature-authentication/src/lib/auth.component';
+import { AuthLayoutComponent } from '@activepieces/ui/feature-authentication';
 
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
@@ -60,6 +60,7 @@ export function tokenGetter() {
     ...dynamicModules(),
     AngularSvgIconModule,
     CommonLayoutModule,
+    UiCommonModule,
   ],
   providers: [
     {
