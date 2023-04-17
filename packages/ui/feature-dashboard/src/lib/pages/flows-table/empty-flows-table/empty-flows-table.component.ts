@@ -20,7 +20,7 @@ export class EmptyFlowsTableComponent {
       this.creatingFlow = true;
       this.createFlow$ = this.flowService
         .create({
-          displayName: 'Untitled Flow',
+          displayName: 'Untitled',
         })
         .pipe(
           tap((flow) => {

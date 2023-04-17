@@ -12,6 +12,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { Flow, FlowInstance } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { DeleteFlowDialogComponent } from './delete-flow-dialog/delete-flow-dialog.component';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -26,7 +27,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   flow$: Observable<Flow>;
   editingFlowName = false;
   constructor(
-    public dialog: MatDialog,
+    public dialogService: MatDialog,
     private store: Store,
     private router: Router,
     public collectionBuilderService: CollectionBuilderService,
@@ -48,7 +49,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.editingFlowName = event;
   }
   guessAi() {
-    this.dialog.open(MagicWandDialogComponent);
+    this.dialogService.open(MagicWandDialogComponent);
   }
 
   redirectHome(newWindow: boolean) {
@@ -62,12 +63,14 @@ export class FlowBuilderHeaderComponent implements OnInit {
       this.router.navigate([fixedUrl]);
     }
   }
-  saveFlowName(flowName:string)
-  {
-    this.store.dispatch(FlowsActions.changeName({displayName:flowName}));
+  saveFlowName(flowName: string) {
+    this.store.dispatch(FlowsActions.changeName({ displayName: flowName }));
   }
-  copyId(id:string) {
+  copyId(id: string) {
     this.snackbar.open(`ID copied`);
     navigator.clipboard.writeText(id);
+  }
+  deleteFlow(flow: Flow) {
+    this.dialogService.open(DeleteFlowDialogComponent, { data: flow });
   }
 }
