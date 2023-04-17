@@ -10,8 +10,14 @@ import {
     ProjectId,
     TriggerType,
 } from '@activepieces/shared'
+import { isEmpty } from 'lodash'
 import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
+
+type CreateReturn = {
+    success: boolean
+    output: unknown
+}
 
 type CreateParams = {
     projectId: ProjectId
@@ -35,7 +41,7 @@ const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, 
 }
 
 export const stepRunService = {
-    async create({ projectId, collectionId, flowVersionId, stepName }: CreateParams): Promise<unknown> {
+    async create({ projectId, collectionId, flowVersionId, stepName }: CreateParams): Promise<CreateReturn> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowHelper.getStep(flowVersion, stepName)
         if (step.type !== ActionType.PIECE) {
@@ -61,10 +67,16 @@ export const stepRunService = {
         }
 
         const result = await engineHelper.executeAction(operation)
+        const success = isEmpty(result.standardError)
 
-        step.settings.inputUiInfo.currentSelectedData = result
-        await flowVersionService.overwriteVersion(flowVersionId, flowVersion)
+        if (success) {
+            step.settings.inputUiInfo.currentSelectedData = result.output
+            await flowVersionService.overwriteVersion(flowVersionId, flowVersion)
+        }
 
-        return result
+        return {
+            success,
+            output: result.output,
+        }
     },
 }
