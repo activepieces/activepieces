@@ -8,7 +8,6 @@ import {
   ExecuteFlowOperation,
   ExecuteTriggerOperation,
   ExecutionState,
-  ExecuteEventParserOperation,
   ExecuteActionOperation,
 } from '@activepieces/shared';
 import { pieceHelper } from './lib/helper/piece-helper';
@@ -42,19 +41,6 @@ const executeProps = async (): Promise<void> => {
     globals.apiUrl = input.apiUrl!;
 
     const output = await pieceHelper.executeProps(input);
-    Utils.writeToJsonFile(globals.outputFile, output);
-  }
-  catch (e) {
-    console.error(e);
-    Utils.writeToJsonFile(globals.outputFile, (e as Error).message);
-  }
-}
-
-const executeEventParser = async (): Promise<void> => {
-  const input: ExecuteEventParserOperation = Utils.parseJsonFile(globals.inputFile);
-
-  try {
-    const output = await triggerHelper.executeEventParser(input)
     Utils.writeToJsonFile(globals.outputFile, output);
   }
   catch (e) {
@@ -103,9 +89,6 @@ async function execute() {
   switch (operationType) {
     case EngineOperationType.EXECUTE_FLOW:
       executeFlow();
-      break;
-    case EngineOperationType.EXTRACT_EVENT_DATA:
-      executeEventParser();
       break;
     case EngineOperationType.EXECUTE_PROPERTY:
       executeProps();
