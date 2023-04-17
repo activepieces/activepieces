@@ -4,7 +4,7 @@
       <mat-label>Items</mat-label>
       <app-interpolating-text-form-control #ItemsTextControl formControlName="items" [disabled]="true"
         [onlyAllowOneMentionToBeAdded]="true"
-        (keyup)="$event.key ==='Escape'? itemsMentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
+        (keyup)="$event.key ==='Escape'? itemsMentionsDropdown.close() : null"></app-interpolating-text-form-control>
       <mat-error *ngIf="loopStepForm.controls.items.invalid">
         Items are required.
       </mat-error>

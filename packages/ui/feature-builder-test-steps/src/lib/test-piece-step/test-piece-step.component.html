@@ -3,7 +3,7 @@
         Generate Sample Data
     </div>
     <ng-container *ngIf="!loading else loadingSpinner">
-        <ng-container *ngIf="lastTestResult$ |async as lastTestResult; else firstTimeTest">
+        <ng-container *ngIf="(lastTestDate$| async); else firstTimeTest">
             <div class="ap-flex ap-items-center">
                 <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
                     <svg-icon src="assets/img/custom/success-step-result.svg"
@@ -22,7 +22,7 @@
                 {{ (lastTestDate$ | async) | timeago:true}}
             </div>
             <ap-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
-                [content]="lastTestResult"></ap-json-viewer>
+                [content]="(lastTestResult$ |async)"></ap-json-viewer>
         </ng-container>
     </ng-container>
 </div>

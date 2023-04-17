@@ -100,9 +100,7 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
                     }),
                     tap((res) => {
                       this.testStepService.elevateResizer$.next(true);
-                      if (!res.standardError) {
-                        this.saveTestResult(res);
-                      }
+                      this.saveTestResult(res);
                       this.testing$.next(false);
                     }),
                     shareReplay(1)
@@ -127,7 +125,10 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
                 settings: {
                   ...step.settings,
                   inputUiInfo: {
-                    currentSelectedData: result.output,
+                    currentSelectedData:
+                      result.output === null || result.output === undefined
+                        ? JSON.stringify(result.output)
+                        : result.output,
                     lastTestDate: new Date().toString(),
                   },
                 },
