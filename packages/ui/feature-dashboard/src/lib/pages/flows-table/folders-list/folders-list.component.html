@@ -1,0 +1,37 @@
+<div class="ap-flex ap-items-center ap-mb-[30px]">
+    <div class="ap-flex-grow">Folders </div><ap-icon-button iconFilename="add.svg" [width]="14" tooltipText="New Folder"
+        (buttonClicked)="createFolder()" [height]="14"></ap-icon-button>
+</div>
+<div class="ap-flex ap-items-center ap-gap-4 ap-p-4 ap-cursor-pointer hover:ap-bg-graySelect ">
+    <svg-icon src="assets/img/custom/all-flows.svg" class="ap-h-[15px] ap-w-[15px] ap-fill-bleachedGray  folder-icon"
+        [applyClass]="true"></svg-icon>
+    <div class="ap-body-1 ap-flex-grow">
+        All flows
+    </div>
+    <div class="ap-typography-body-1 ap-text-description">
+        11
+    </div>
+</div>
+<div class="ap-flex ap-items-center ap-gap-4 ap-p-4 ap-cursor-pointer hover:ap-bg-graySelect ">
+    <svg-icon src="assets/img/custom/uncategorized-folder.svg"
+        class="ap-h-[15px] ap-w-[15px] ap-fill-bleachedGray hover:ap-fill-title  folder-icon"
+        [applyClass]="true"></svg-icon>
+    <div class="ap-body-1 ap-flex-grow">
+        Uncategorized
+    </div>
+    <div class="ap-typography-body-1 ap-text-description">
+        11
+    </div>
+</div>
+<mat-divider></mat-divider>
+<div class="ap-flex ap-items-center ap-gap-4 ap-p-4 ap-cursor-pointer hover:ap-bg-graySelect selected-folder-item">
+    <svg-icon src="assets/img/custom/folder.svg"
+        class="ap-h-[15px] ap-w-[15px] ap-fill-bleachedGray hover:ap-fill-title  folder-icon"
+        [applyClass]="true"></svg-icon>
+    <div class="ap-body-1 ap-flex-grow">
+        New Folder
+    </div>
+    <div class="ap-typography-body-1 ap-text-description">
+        11
+    </div>
+</div>

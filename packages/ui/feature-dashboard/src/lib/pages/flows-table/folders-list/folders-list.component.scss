@@ -1,0 +1,8 @@
+@import "../../../../../../core/src/assets/scss/variables.scss";
+.selected-folder-item{
+    background-color:  $graySelect;
+    .folder-icon
+    {
+        fill:$title;
+    }
+}

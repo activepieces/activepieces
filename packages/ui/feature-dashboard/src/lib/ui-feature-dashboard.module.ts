@@ -12,6 +12,8 @@ import { ConnectionsTableComponent } from './pages/connections-table/connections
 import { RouterModule } from '@angular/router';
 import { DashboardLayoutRouting } from './dashboard.routing';
 import { FlowsTableTitleComponent } from './pages/flows-table/flows-table-title/flows-table-title.component';
+import { FoldersListComponent } from './pages/flows-table/folders-list/folders-list.component';
+import { NewFolderDialogComponent } from './pages/flows-table/new-folder-dialog/new-folder-dialog.component';
 // import { EeBillingUiModule } from '@activepieces/ee/billing/ui';
 
 @NgModule({
@@ -31,6 +33,8 @@ import { FlowsTableTitleComponent } from './pages/flows-table/flows-table-title/
     PageTitleComponent,
     ConnectionsTableComponent,
     FlowsTableTitleComponent,
+    FoldersListComponent,
+    NewFolderDialogComponent,
   ],
 })
 export class UiFeatureDashboardModule {}
