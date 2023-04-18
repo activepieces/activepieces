@@ -142,6 +142,7 @@
     "@types/node": "16.11.7",
     "@types/nodemailer": "^6.4.7",
     "@types/papaparse": "^5.3.7",
+    "@types/pg": "^8.6.6",
     "@types/prismjs": "^1.26.0",
     "@types/qs": "^6.9.7",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
