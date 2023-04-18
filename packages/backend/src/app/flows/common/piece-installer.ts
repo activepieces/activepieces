@@ -26,7 +26,9 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
     log.debug(params, '[linkDependencies] params')
 
     const { projectPath, pieces } = params
-    const baseLinkPath = '/usr/src/app/dist/packages/pieces'
+    // Get Path before /dist
+    const basePath = __dirname.split('/dist')[0]
+    const baseLinkPath =`${basePath}/dist/packages/pieces`
 
     for (const piece of pieces) {
         await packageManager.linkDependency(projectPath, `${baseLinkPath}/${piece.name}`)

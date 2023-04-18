@@ -68,7 +68,7 @@ export class Sandbox {
         const etcDir = path.resolve('./packages/backend/src/assets/etc/')
 
         return await Sandbox.runIsolate(
-            `--dir=/usr/bin/ --dir=/etc/=${etcDir} --share-net --box-id=` +
+            `--dir=/usr/bin/ --dir=/etc/=${etcDir} --dir=/workspace=/workspace:maybe --share-net --box-id=` +
             this.boxId +
             ` --processes --wall-time=${Sandbox.sandboxRunTimeSeconds} --meta=` +
             metaFile +

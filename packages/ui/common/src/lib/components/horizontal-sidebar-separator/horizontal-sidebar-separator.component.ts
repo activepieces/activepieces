@@ -23,12 +23,13 @@ export class HorizontalSidebarSeparatorComponent implements OnDestroy {
   @Output() resizerDragStarted = new EventEmitter();
   @Output() resizerDragStopped = new EventEmitter();
   @Output() resetTopResizerSectionHeight = new EventEmitter();
+  isResizerGrabbed = false;
   dragPosition = { x: 0, y: 0 };
   elevateResizer$: Observable<void>;
   constructor(private testStepService: TestStepService) {
     this.elevateResizer$ = this.testStepService.elevateResizer$.pipe(
       tap((shouldAnimate) => {
-        if (shouldAnimate) {
+        if (shouldAnimate && !this.isResizerGrabbed) {
           this.dragPosition = { x: 0, y: 0 };
           this.topStyle = 'calc(50% + 17px)';
           setTimeout(() => {

@@ -6,8 +6,12 @@
 
 
   <ng-container *ngIf="rightSidebarType === sidebarType.EDIT_STEP">
-    <div class="ap-relative ap-h-full" #editStepSection [class.top-resizer-section]="(currentStep$ | async)?.type === TriggerType.WEBHOOK ||
-       (currentStep$ | async)?.type === TriggerType.PIECE " [class.ap-transition-all]="animateSectionsHeightChange">
+    <div class="ap-relative ap-h-full" #editStepSection [class.top-resizer-section]="
+       (currentStep$ | async)?.type === TriggerType.WEBHOOK ||
+       (isCurrentStepPieceWebhookTrigger$ | async)||
+       (isCurrentStepPollingTrigger$ | async) ||
+       (currentStep$ | async)?.type === ActionType.PIECE || 
+       (currentStep$ | async)?.type === ActionType.CODE " [class.ap-transition-all]="animateSectionsHeightChange">
       <app-edit-step-sidebar>
       </app-edit-step-sidebar>
       <div *ngIf="currentStepPieceVersion$ | async as result"
@@ -19,7 +23,6 @@
             class="ap-rounded-full ap-border ap-border-warn ap-bg-warn ap-h-[8px] ap-w-[8px]">
           </div>
         </div>
-
       </div>
     </div>
 
@@ -28,11 +31,34 @@
         <div class="resizer-area" #resizerArea>
           <ap-horizontal-sidebar-separator [resizerArea]="resizerArea" topStyle="calc( 100% - 10px )"
             (resetTopResizerSectionHeight)="resetTopResizerSectionHeight()" (resizerDragged)="resizerDragged($event)"
-            (resizerDragStarted)="resizerDragStarted()">
+            (resizerDragStopped)="isResizerGrabbed=false" (resizerDragStarted)="resizerDragStarted()">
           </ap-horizontal-sidebar-separator>
         </div>
         <div class="bottom-resizer-section" #selectedStepResultContainer>
           <app-test-webhook-trigger></app-test-webhook-trigger>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="currentStep.type === ActionType.CODE">
+        <div class="resizer-area" #resizerArea>
+          <ap-horizontal-sidebar-separator [resizerArea]="resizerArea" topStyle="calc( 100% - 10px )"
+            (resetTopResizerSectionHeight)="resetTopResizerSectionHeight()" (resizerDragged)="resizerDragged($event)"
+            (resizerDragStopped)="isResizerGrabbed=false" (resizerDragStarted)="resizerDragStarted()">
+          </ap-horizontal-sidebar-separator>
+        </div>
+        <div class="bottom-resizer-section" #selectedStepResultContainer>
+          <app-test-code-step></app-test-code-step>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="currentStep.type === ActionType.PIECE">
+        <div class="resizer-area" #resizerArea>
+          <ap-horizontal-sidebar-separator [resizerArea]="resizerArea" topStyle="calc( 100% - 10px )"
+            (resetTopResizerSectionHeight)="resetTopResizerSectionHeight()" (resizerDragged)="resizerDragged($event)"
+            (resizerDragStopped)="isResizerGrabbed=false" (resizerDragStarted)="resizerDragStarted()">
+          </ap-horizontal-sidebar-separator>
+        </div>
+        <div class="bottom-resizer-section" #selectedStepResultContainer>
+          <app-test-piece-step></app-test-piece-step>
         </div>
       </ng-container>
     </ng-container>
@@ -53,7 +79,7 @@
       <div class="resizer-area" #resizerArea>
         <ap-horizontal-sidebar-separator [resizerArea]="resizerArea" topStyle="calc( 100% - 10px )"
           (resetTopResizerSectionHeight)="resetTopResizerSectionHeight()" (resizerDragged)="resizerDragged($event)"
-          (resizerDragStarted)="resizerDragStarted()">
+          (resizerDragStopped)="isResizerGrabbed=false" (resizerDragStarted)="resizerDragStarted()">
         </ap-horizontal-sidebar-separator>
       </div>
       <div class="bottom-resizer-section" #selectedStepResultContainer>

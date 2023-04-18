@@ -140,7 +140,6 @@ async function downloadFiles(
         await fs.ensureDir(`${buildPath}/codes/`)
         const artifacts: File[] = await buildCodes(projectId, flowVersion)
 
-        logger.info('NUMBER OF ARTIFACTS: ' + artifacts.length)
         for (const artifact of artifacts) {
             await fs.writeFile(`${buildPath}/codes/${artifact.id}.js`, artifact.data)
         }

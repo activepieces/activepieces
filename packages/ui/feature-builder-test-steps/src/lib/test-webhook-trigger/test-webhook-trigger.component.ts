@@ -20,7 +20,10 @@ import { FormControl } from '@angular/forms';
 import deepEqual from 'deep-equal';
 import { TestStepCoreComponent } from '../test-steps-core.component';
 import { TestStepService } from '@activepieces/ui/common';
-import { BuilderSelectors, FlowsActions } from '@activepieces/ui/feature-builder-store';
+import {
+  BuilderSelectors,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
 
 export interface WebhookHistoricalData {
   payload: unknown;
@@ -53,7 +56,9 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
       .select(BuilderSelectors.selectCurrentFlowId)
       .pipe(
         switchMap((res) => {
-          return this.testStepService.getTriggerEventsResults(res?.toString() || '');
+          return this.testStepService.getTriggerEventsResults(
+            res?.toString() || ''
+          );
         }),
         map((res) => {
           return res.data;
@@ -65,7 +70,7 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
         })
       );
     this.initaillySelectedSampleData$ = this.store
-      .select(BuilderSelectors.selectStepSelectedSampleData)
+      .select(BuilderSelectors.selectTriggerSelectedSampleData)
       .pipe(
         tap((res) => {
           this.stopSelectedDataControlListener$.next(true);
