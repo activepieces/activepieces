@@ -4,42 +4,42 @@ const triggerData = [
   {
     name: 'file_uploaded',
     displayName: "File Uploaded",
-    description: 'Triggers on `FILE.UPLOADED`',
+    description: 'Triggers on file upload',
     event: 'FILE.UPLOADED',
     sampleData: {}
   },
   {
     name: 'file_downloaded',
     displayName: "File Downloaded",
-    description: 'Triggers on `FILE.DOWNLOADED`',
+    description: 'Triggers on file download',
     event: 'FILE.DOWNLOADED',
     sampleData: {}
   },
   {
     name: 'file_deleted',
     displayName: "File Deleted",
-    description: 'Triggers on `FILE.DELETED`',
+    description: 'Trigger on file deletion',
     event: 'FILE.DELETED',
     sampleData: {}
   },
   {
     name: 'folder_created',
     displayName: "Folder Created",
-    description: 'Triggers on `FOLDER.CREATED`',
+    description: 'Triggers on folder creation',
     event: 'FOLDER.CREATED',
     sampleData: {}
   },
   {
     name: 'folder_downloaded',
     displayName: "Folder Downloaded",
-    description: 'Triggers on `FOLDER.DOWNLOADED`',
+    description: 'Triggers on folder download',
     event: 'FOLDER.DOWNLOADED',
     sampleData: {}
   },
   {
     name: 'folder_deleted',
     displayName: "Folder Deleted",
-    description: 'Triggers on `FOLDER.DELETED`',
+    description: 'Triggers on folder deletion',
     event: 'FOLDER.DELETED',
     sampleData: {}
   }

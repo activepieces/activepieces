@@ -1,5 +1,5 @@
-import { createTrigger, httpClient, HttpRequest, HttpMethod, Property, AuthenticationType, OAuth2PropertyValue } from '@activepieces/framework'
-import { TriggerStrategy } from '@activepieces/shared'
+import { createTrigger, TriggerStrategy, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework'
+import { HttpRequest, HttpMethod, httpClient, AuthenticationType} from '@activepieces/pieces-common'
 
 interface Props {
   name: string,
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export const boxRegisterTrigger = ({ name, event, displayName, description, sampleData }: Props) => createTrigger({
-  name: `box_trigger_${name}`,
+  name: `box_${name}`,
   displayName: displayName,
   description: description,
   props: {
@@ -67,7 +67,7 @@ export const boxRegisterTrigger = ({ name, event, displayName, description, samp
     }
 
     const { body: webhook } = await httpClient.sendRequest<WebhookInformation>(request);
-    await context.store.put<WebhookInformation>(`box_${name}_trigger`, webhook);
+    await context.store.put(`box_${name}_trigger`, webhook);
   },
   async onDisable(context) {
     const webhook = await context.store.get<WebhookInformation>(`box_${name}_trigger`);
@@ -85,11 +85,9 @@ export const boxRegisterTrigger = ({ name, event, displayName, description, samp
       await httpClient.sendRequest(request);
     }
   },
-  async run(context) {
-    console.debug("payload received", context.payload.body)
-
-    //TODO: Verify; https://developer.box.com/guides/webhooks/v2/signatures-v2/
-    return [context.payload.body];
+  async run(ctx) {
+    console.debug("payload received", ctx.payload.body)
+    return [ctx.payload.body];
   },
 });
 
