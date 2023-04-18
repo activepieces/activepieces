@@ -63,7 +63,7 @@ export interface CloudOAuth2ConnectionValue extends BaseOAuth2ConnectionValue {
   scope: string;
   data: Record<string, any>
   props?: Record<string, any>;
-  token_url?: string;
+  token_url: string;
 }
 
 export interface OAuth2ConnectionValueWithApp extends BaseOAuth2ConnectionValue {

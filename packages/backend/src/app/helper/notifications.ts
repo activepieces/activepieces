@@ -21,11 +21,11 @@ export const notifications = {
             return
         }
         const project = await projectService.getOne(flowRun.projectId)
-        const user = await userService.getMetaInfo({ id: project.ownerId })
+        const user = await userService.getMetaInfo({ id: project!.ownerId })
         await sendWebhook({
             type: NotificationEventEnum.RUN_FAILED,
             payload: {
-                user: user,
+                user: user!,
                 run: flowRun,
             },
         })
@@ -50,7 +50,7 @@ enum NotificationEventEnum {
 
 async function sendWebhook(payload: RunFailedWebhookPayload): Promise<void> {
     try {
-        const response = await axios.post(notificationUrl, payload, {
+        const response = await axios.post(notificationUrl!, payload, {
             headers: {
                 'Content-Type': 'application/json',
             },

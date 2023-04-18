@@ -1,3 +1,4 @@
+import { FlowVersion } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '../../helper/logger'
 
@@ -23,7 +24,7 @@ export class AddInputUiInfo1681107443963 implements MigrationInterface {
         const flowVersions = await flowVersionRepo.find()
 
         for (const flowVersion of flowVersions) {
-            const steps = getAllSteps(flowVersion)
+            const steps = getAllSteps(flowVersion as FlowVersion)
             let changed = false
             for (const step of steps) {
                 if (step.type === 'PIECE_TRIGGER' || step.type === 'PIECE') {
@@ -59,6 +60,6 @@ function traverseFlowInternal(step: Step | undefined): Step[] {
     return steps
 }
 
-function getAllSteps(flowVersion): Step[] {
+function getAllSteps(flowVersion: FlowVersion): Step[] {
     return traverseFlowInternal(flowVersion.trigger)
 }
