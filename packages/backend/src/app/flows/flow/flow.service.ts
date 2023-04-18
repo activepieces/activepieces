@@ -50,14 +50,14 @@ export const flowService = {
             {
                 name: TelemetryEventName.FLOW_CREATED,
                 payload: {
-                    collectionId: flow.collectionId,
-                    flowId: flow.id,
+                    collectionId: flow.collectionId!,
+                    flowId: flow.id!,
                 },
             },
         )
         return {
             ...savedFlow,
-            version: latestFlowVersion,
+            version: latestFlowVersion!,
         }
     },
     async getOneOrThrow({ projectId, id }: { projectId: ProjectId, id: FlowId }): Promise<Flow> {
@@ -93,7 +93,7 @@ export const flowService = {
         })
         const versions: Array<FlowVersion | null> = await Promise.all(flowVersionsPromises)
         for (let i = 0; i < data.length; ++i) {
-            data[i] = { ...data[i], version: versions[i] }
+            data[i] = { ...data[i], version: versions[i]! }
         }
         return paginationHelper.createPage<Flow>(data, cursor)
     },
@@ -108,7 +108,7 @@ export const flowService = {
         const flowVersion = await flowVersionService.getFlowVersion(projectId, id, versionId, includeArtifacts)
         return {
             ...flow,
-            version: flowVersion,
+            version: flowVersion!,
         }
     },
     async update({ flowId, projectId, request }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
@@ -118,10 +118,10 @@ export const flowService = {
         })
         try {
             let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, false))
-            if (lastVersion.state === FlowVersionState.LOCKED) {
-                lastVersion = await flowVersionService.createVersion(flowId, lastVersion)
+            if (lastVersion!.state === FlowVersionState.LOCKED) {
+                lastVersion = await flowVersionService.createVersion(flowId, lastVersion!)
             }
-            await flowVersionService.applyOperation(projectId, lastVersion, request)
+            await flowVersionService.applyOperation(projectId, lastVersion!, request)
         }
         finally {
             await flowLock.release()

@@ -102,21 +102,22 @@ export const engineHelper = {
             pieceVersion,
         })
 
-        let result
         try {
-            result = await execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, {
-                ...operation,
-                workerToken: await workerToken({
-                    collectionId: operation.collectionId,
-                    projectId: operation.projectId,
-                }),
-            })
+            return await execute<DropdownState<unknown> | Record<string, DynamicPropsValue>>(
+                EngineOperationType.EXECUTE_PROPERTY,
+                sandbox,
+                {
+                    ...operation,
+                    workerToken: await workerToken({
+                        collectionId: operation.collectionId,
+                        projectId: operation.projectId,
+                    }),
+                },
+            )
         }
         finally {
             await sandboxManager.returnSandbox(sandbox.boxId)
         }
-
-        return result
     },
 
     async executeAction(operation: ExecuteActionOperation): Promise<unknown> {
@@ -178,7 +179,7 @@ async function getSandbox({ pieceName, pieceVersion }: {
     return sandbox
 }
 
-async function execute(operation: EngineOperationType, sandbox: Sandbox, input: EngineOperation): Promise<unknown> {
+async function execute<T>(operation: EngineOperationType, sandbox: Sandbox, input: EngineOperation): Promise<T> {
     log.info(`Executing ${operation} inside sandbox number ${sandbox.boxId}`)
 
     const sandboxPath = sandbox.getSandboxFolderPath()
@@ -206,5 +207,5 @@ async function execute(operation: EngineOperationType, sandbox: Sandbox, input: 
     const outputFilePath = sandbox.getSandboxFilePath('output.json')
     const outputFile = await fs.readFile(outputFilePath, { encoding: 'utf-8' })
 
-    return JSON.parse(outputFile)
+    return JSON.parse(outputFile) as T
 }

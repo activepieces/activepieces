@@ -7,7 +7,7 @@ import { StatusCodes } from "http-status-codes";
 import { usageService } from "./usage.service";
 
 
-const stripeSecret = system.get(SystemProp.STRIPE_WEBHOOK_SECRET);
+const stripeSecret = system.getOrThrow(SystemProp.STRIPE_WEBHOOK_SECRET);
 
 export const billingModule = async (app: FastifyInstance, _options: FastifyPluginOptions) => {
   app.register(billingController, { prefix: "/v1/billing" });
@@ -44,7 +44,7 @@ const billingController = async (fastify: FastifyInstance, options: FastifyPlugi
       const sig = request.headers["stripe-signature"] as string;
       try {
         const event = stripe.webhooks.constructEvent(
-          payloadString,
+          payloadString!,
           sig,
           stripeSecret
         );
