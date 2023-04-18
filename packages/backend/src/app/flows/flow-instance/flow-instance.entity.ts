@@ -22,7 +22,7 @@ export const FlowInstanceEntity = new EntitySchema<FlowInstanceSchema>({
         {
             name: 'idx_flow_instance_project_id_flow_id',
             columns: ['projectId', 'flowId'],
-            unique: false,
+            unique: true,
         },
     ],
     relations: {

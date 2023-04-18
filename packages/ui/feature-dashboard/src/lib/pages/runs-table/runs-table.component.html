@@ -2,11 +2,6 @@
   <app-page-title title="Runs"></app-page-title>
   <div class="ap-min-h-[70%]">
     <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Runs">
-      <ng-container matColumnDef="collectionName">
-        <th mat-header-cell *matHeaderCellDef>Collection</th>
-        <td mat-cell *matCellDef="let run">{{ run.collectionDisplayName }}</td>
-      </ng-container>
-
       <ng-container matColumnDef="flowName">
         <th mat-header-cell *matHeaderCellDef>Flow</th>
         <td mat-cell *matCellDef="let run">{{ run.flowDisplayName }}</td>

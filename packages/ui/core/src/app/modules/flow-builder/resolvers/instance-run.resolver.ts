@@ -3,11 +3,10 @@ import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, of, switchMap } from 'rxjs';
 
 import { FlowService } from '@activepieces/ui/common';
-import { InstanceRunService, CollectionService } from '@activepieces/ui/common';
-import { Collection, Flow, FlowRun } from '@activepieces/shared';
+import { InstanceRunService } from '@activepieces/ui/common';
+import { Flow, FlowRun } from '@activepieces/shared';
 
 export type InstanceRunInfo = {
-  collection: Collection;
   flow: Flow;
   run: FlowRun;
 };
@@ -20,8 +19,7 @@ export class GetInstanceRunResolver
 {
   constructor(
     private instanceRunService: InstanceRunService,
-    private flowService: FlowService,
-    private collectionService: CollectionService
+    private flowService: FlowService
   ) {}
 
   resolve(snapshot: ActivatedRouteSnapshot): Observable<InstanceRunInfo> {
@@ -30,11 +28,7 @@ export class GetInstanceRunResolver
       switchMap((run) => {
         return this.flowService.get(run.flowId, run.flowVersionId).pipe(
           switchMap((flow) => {
-            return this.collectionService.get(flow.collectionId).pipe(
-              switchMap((collection) => {
-                return of({ collection: collection, flow: flow, run: run });
-              })
-            );
+            return of({ flow: flow, run: run });
           })
         );
       })

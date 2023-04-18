@@ -83,7 +83,12 @@ export const flowService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const { data, cursor } = await paginator.paginate(flowRepo.createQueryBuilder('flow').where({ projectId, folderId }))
+        const queryWhere = { projectId }
+        if (folderId) {
+            queryWhere['folderId'] = folderId
+        }
+
+        const { data, cursor } = await paginator.paginate(flowRepo.createQueryBuilder('flow').where(queryWhere))
         const flowVersionsPromises: Array<Promise<FlowVersion | null>> = []
         data.forEach((collection) => {
             flowVersionsPromises.push(flowVersionService.getFlowVersion(projectId, collection.id, undefined, false))

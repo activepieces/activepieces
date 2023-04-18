@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { map, Observable, of, switchMap } from 'rxjs';
 import {
-  CollectionId,
   CreateFlowRequest,
   CreateFlowRunRequest,
   ExecutionOutputStatus,
@@ -15,17 +14,17 @@ import {
   FlowRun,
   FlowVersionId,
   GuessFlowRequest,
+  ListFlowsRequest,
   SeekPage,
 } from '@activepieces/shared';
 @Injectable({
   providedIn: 'root',
 })
 export class FlowService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
   create(request: CreateFlowRequest): Observable<Flow> {
     return this.http.post<Flow>(environment.apiUrl + '/flows', {
       displayName: request.displayName,
-      collectionId: request.collectionId,
     });
   }
 
@@ -46,12 +45,12 @@ export class FlowService {
     return this.http.delete<void>(environment.apiUrl + '/flows/' + flowId);
   }
 
-  listByCollection(collectionId: CollectionId): Observable<SeekPage<Flow>> {
+  list(request: ListFlowsRequest): Observable<SeekPage<Flow>> {
+    const queryParams: { [key: string]: string | number } = {
+      limit: request.limit ?? 10,
+    };
     return this.http.get<SeekPage<Flow>>(environment.apiUrl + '/flows', {
-      params: {
-        limit: 100000,
-        collectionId: collectionId,
-      },
+      params: queryParams,
     });
   }
 
@@ -88,9 +87,8 @@ export class FlowService {
     );
   }
 
-  guessFlow(prompt: string, newFlowName: string, collectionId: string) {
+  guessFlow(prompt: string, newFlowName: string) {
     const request: GuessFlowRequest = {
-      collectionId: collectionId,
       displayName: newFlowName,
       prompt: prompt,
     };

@@ -5,13 +5,21 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
     name = 'RemoveCollections1680986182074'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info("Running RemoveCollections1680986182074 migration");
+        logger.info('Running RemoveCollections1680986182074 migration')
+        // Data Queries
+        await queryRunner.query(`
+        UPDATE "store-entry"
+        SET "collectionId" = "collection"."projectId"
+        FROM "collection"
+        WHERE "store-entry"."collectionId" = "collection"."id";
+        `)
+        // Schema Queries
         await queryRunner.query('ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_collection_id"')
         await queryRunner.query('ALTER TABLE "flow_run" DROP CONSTRAINT "fk_flow_run_collection_id"')
         await queryRunner.query('DROP INDEX "public"."idx_flow_collection_id"')
         await queryRunner.query('ALTER TABLE "store-entry" RENAME COLUMN "collectionId" TO "projectId"')
         await queryRunner.query('CREATE TABLE "flow_instance" ("id" character varying(21) NOT NULL, "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "projectId" character varying(21) NOT NULL, "flowId" character varying(21) NOT NULL, "flowVersionId" character varying(21) NOT NULL, "status" character varying NOT NULL, CONSTRAINT "REL_cb897f5e48cc3cba1418966326" UNIQUE ("flowId"), CONSTRAINT "REL_ec72f514c21734fb7a08797d75" UNIQUE ("flowVersionId"), CONSTRAINT "PK_5b0308060b7de5abec61ac5d2db" PRIMARY KEY ("id"))')
-        await queryRunner.query('CREATE INDEX "idx_flow_instance_project_id_flow_id" ON "flow_instance" ("projectId", "flowId") ')
+        await queryRunner.query('CREATE UNIQUE INDEX "idx_flow_instance_project_id_flow_id" ON "flow_instance" ("projectId", "flowId") ')
         await queryRunner.query('CREATE TABLE "folder" ("id" character varying(21) NOT NULL, "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "displayName" character varying NOT NULL, "projectId" character varying(21) NOT NULL, CONSTRAINT "PK_6278a41a706740c94c02e288df8" PRIMARY KEY ("id"))')
         await queryRunner.query('CREATE INDEX "idx_folder_project_id" ON "folder" ("projectId") ')
         await queryRunner.query('ALTER TABLE "flow" DROP COLUMN "collectionId"')
@@ -27,10 +35,11 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         await queryRunner.query('ALTER TABLE "flow" ADD CONSTRAINT "fk_flow_folder_id" FOREIGN KEY ("folderId") REFERENCES "folder"("id") ON DELETE SET NULL ON UPDATE NO ACTION')
         await queryRunner.query('ALTER TABLE "flow" ADD CONSTRAINT "fk_flow_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION')
         await queryRunner.query('ALTER TABLE "folder" ADD CONSTRAINT "fk_folder_project" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION')
-        logger.info("Finished Running RemoveCollections1680986182074 migration");
+        logger.info('Finished Running RemoveCollections1680986182074 migration')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        // Schema Queries
         await queryRunner.query('ALTER TABLE "folder" DROP CONSTRAINT "fk_folder_project"')
         await queryRunner.query('ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_project_id"')
         await queryRunner.query('ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_folder_id"')
@@ -52,6 +61,12 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         await queryRunner.query('CREATE INDEX "idx_flow_collection_id" ON "flow" ("collectionId") ')
         await queryRunner.query('ALTER TABLE "flow_run" ADD CONSTRAINT "fk_flow_run_collection_id" FOREIGN KEY ("collectionId") REFERENCES "collection"("id") ON DELETE CASCADE ON UPDATE NO ACTION')
         await queryRunner.query('ALTER TABLE "flow" ADD CONSTRAINT "fk_flow_collection_id" FOREIGN KEY ("collectionId") REFERENCES "collection"("id") ON DELETE CASCADE ON UPDATE NO ACTION')
+        // Data queries
+        await queryRunner.query(`
+        UPDATE "store-entry"
+        SET "collectionId" = "collection"."id"
+        FROM "collection"
+        WHERE "store-entry"."collectionId" = "collection"."projectId";`)
     }
 
 }

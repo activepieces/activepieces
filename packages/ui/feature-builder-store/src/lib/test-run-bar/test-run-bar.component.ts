@@ -36,9 +36,7 @@ export class TestRunBarComponent implements OnInit {
         this.snackbarRef.dismiss();
         //wait for animation to be done
         setTimeout(() => {
-          this.store.dispatch(
-            FlowsActions.exitRun({ flowId: this.data.flowId })
-          );
+          this.store.dispatch(FlowsActions.exitRun());
         }, 150);
       })
     );

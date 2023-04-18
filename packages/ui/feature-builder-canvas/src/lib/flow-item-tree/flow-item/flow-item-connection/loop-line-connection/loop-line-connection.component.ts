@@ -28,7 +28,6 @@ import {
 } from '@activepieces/shared';
 import {
   AddButtonAndFlowItemNameContainer,
-  AddButtonType,
   FlowItem,
   FlowItemRenderInfo,
   FlowRendererService,
@@ -272,7 +271,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
       FlowsActions.setRightSidebar({
         sidebarType: RightSideBarType.STEP_TYPE,
         props: {
-          buttonType: AddButtonType.NEXT_ACTION,
+          stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
           stepName: this.flowItem.name,
         },
       })

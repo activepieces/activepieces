@@ -51,10 +51,10 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
   private initialObservables() {
     this.setSelectedDataControlListener();
     this.initialHistoricalData$ = this.store
-      .select(BuilderSelectors.selectCurrentFlowId)
+      .select(BuilderSelectors.selectCurrentFlow)
       .pipe(
-        switchMap((res) => {
-          return this.testStepService.getTriggerEventsResults(res?.toString() || '');
+        switchMap((flow) => {
+          return this.testStepService.getTriggerEventsResults(flow.id?.toString() || '');
         }),
         map((res) => {
           return res.data;
@@ -89,22 +89,20 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
   testStep() {
     this.loading = true;
     this.testStep$ = this.store
-      .select(BuilderSelectors.selectCurrentFlowId)
+      .select(BuilderSelectors.selectCurrentFlow)
       .pipe(
         take(1),
-        switchMap((id) => {
-          if (id) {
-            const stopListening$ = merge(
-              this.cancelTesting$,
-              this.foundNewResult$
-            );
-            return interval(500).pipe(
-              takeUntil(stopListening$),
-              switchMap(() => {
-                return this.createResultsChecker(id.toString());
-              })
-            );
-          }
+        switchMap((flow) => {
+          const stopListening$ = merge(
+            this.cancelTesting$,
+            this.foundNewResult$
+          );
+          return interval(500).pipe(
+            takeUntil(stopListening$),
+            switchMap(() => {
+              return this.createResultsChecker(flow.id.toString());
+            })
+          );
           return EMPTY;
         })
       );

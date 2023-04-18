@@ -1,20 +1,22 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { catchError, Observable, of } from 'rxjs';
-import { InstanceService } from '@activepieces/ui/common';
-import { Instance } from '@activepieces/shared';
+import { Observable, catchError, of } from 'rxjs';
+import { FlowInstance } from '@activepieces/shared';
+import { FlowInstanceService } from '@/ui/common/src';
 
 @Injectable({
   providedIn: 'root',
 })
-export class InstacneResolver
-  implements Resolve<Observable<Instance | undefined>>
+export class InstanceResolver
+  implements Resolve<Observable<FlowInstance | undefined>>
 {
-  constructor(private instanceService: InstanceService) {}
+  constructor(private instanceService: FlowInstanceService) {}
 
-  resolve(snapshot: ActivatedRouteSnapshot): Observable<Instance | undefined> {
-    const collectionId = snapshot.paramMap.get('id') as string;
-    return this.instanceService.get(collectionId).pipe(
+  resolve(
+    snapshot: ActivatedRouteSnapshot
+  ): Observable<FlowInstance | undefined> {
+    const flowId = snapshot.paramMap.get('id') as string;
+    return this.instanceService.get(flowId).pipe(
       catchError((err) => {
         return of(undefined);
       })
