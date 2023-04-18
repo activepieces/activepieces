@@ -1,0 +1,8 @@
+<div class="ap-flex ap-mb-[25px]">
+    <div class="ap-flex-grow ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
+            src="assets/img/custom/all-flows.svg" class="ap-h-[15px] ap-w-[15px]" [applyClass]="true"></svg-icon> All
+        flows</div>
+    <ap-button btnColor="primary" btnSize="medium" (buttonClicked)="createFlow()" [loading]="creatingFlow"> + New
+        Flow</ap-button>
+</div>
+<ng-container *ngIf="createFlow$ | async"> </ng-container>

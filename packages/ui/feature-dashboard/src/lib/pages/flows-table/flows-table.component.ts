@@ -29,18 +29,17 @@ export class FlowsTableComponent implements OnInit {
   paginator!: ApPaginatorComponent;
   creatingFlow = false;
   archiveFlowDialogClosed$: Observable<void>;
-  createFlow$: Observable<Flow>;
   dataSource!: FlowsTableDataSource;
   displayedColumns = ['name', 'created', 'status', 'action'];
   flowDeleted$: Subject<boolean> = new Subject();
   areThereFlows$: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   constructor(
-    private router: Router,
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
     private projectService: ProjectService,
     private flowService: FlowService,
+    private router: Router,
     private instanceService: FlowInstanceService
   ) {}
 
@@ -85,23 +84,6 @@ export class FlowsTableComponent implements OnInit {
         return void 0;
       })
     );
-  }
-
-  createFlow() {
-    if (!this.creatingFlow) {
-      this.creatingFlow = true;
-      this.createFlow$ = this.flowService
-        .create({
-          displayName: 'Untitled',
-        })
-        .pipe(
-          tap((flow) => {
-            this.router.navigate(['/flows/', flow.id], {
-              queryParams: { newCollection: true },
-            });
-          })
-        );
-    }
   }
   toggleFlowStatus(flowDto: FlowTableDto, control: FormControl<boolean>) {
     if (control.enabled) {

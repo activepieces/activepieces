@@ -11,6 +11,7 @@ import { PageTitleComponent } from './components/page-title/page-title.component
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { RouterModule } from '@angular/router';
 import { DashboardLayoutRouting } from './dashboard.routing';
+import { FlowsTableTitleComponent } from './pages/flows-table/flows-table-title/flows-table-title.component';
 // import { EeBillingUiModule } from '@activepieces/ee/billing/ui';
 
 @NgModule({
@@ -29,6 +30,7 @@ import { DashboardLayoutRouting } from './dashboard.routing';
     UserAvatarComponent,
     PageTitleComponent,
     ConnectionsTableComponent,
+    FlowsTableTitleComponent,
   ],
 })
 export class UiFeatureDashboardModule {}
