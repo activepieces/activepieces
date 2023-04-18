@@ -38,10 +38,3 @@ export class Product {
     return response.data;
   }
 }
-
-const product = new Product(baseUrl, apiKey, apiToken);
-product.getProductById(1)
-  .then(data => console.log(data))
-  .catch(err => {
-    console.log(err.message)
-  })
