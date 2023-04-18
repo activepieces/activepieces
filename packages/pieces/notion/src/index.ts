@@ -5,7 +5,7 @@ import { newDatabaseItem } from './lib/triggers/new-database-item';
 
 export const notion = createPiece({
   name: 'notion',
-  displayName: 'notion',
+  displayName: 'Notion',
   logoUrl: 'https://cdn.activepieces.com/pieces/notion.png',
   version: packageJson.version,
   minimumSupportedRelease: '0.3.10',
