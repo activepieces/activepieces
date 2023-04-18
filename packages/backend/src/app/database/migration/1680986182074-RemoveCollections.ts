@@ -1,5 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '../../helper/logger'
+import { apId } from '@activepieces/shared'
 
 export class RemoveCollections1680986182074 implements MigrationInterface {
     name = 'RemoveCollections1680986182074'
@@ -13,6 +14,19 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         FROM "collection"
         WHERE "store-entry"."collectionId" = "collection"."id";
         `)
+        await queryRunner.query('CREATE TABLE "folder" ("id" character varying(21) NOT NULL, "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "displayName" character varying NOT NULL, "projectId" character varying(21) NOT NULL, CONSTRAINT "PK_6278a41a706740c94c02e288df8" PRIMARY KEY ("id"))')
+        await queryRunner.query('CREATE INDEX "idx_folder_project_id" ON "folder" ("projectId") ')
+        await queryRunner.query('ALTER TABLE "flow" ADD "folderId" character varying(21)')
+
+        let countFolders = 0
+        const collections = await queryRunner.query('SELECT * FROM "collection"')
+        for(const collection of collections) {
+            const randomId = apId();
+            await queryRunner.query(`INSERT INTO "folder" ("id", "created", "updated", "displayName", "projectId") VALUES ('${randomId}', 'NOW()', 'NOW()', '${collection.displayName}', '${collection.projectId}')`)
+            await queryRunner.query(`UPDATE "flow" SET "folderId" = '${randomId}' WHERE "collectionId" = '${collection.id}'`)
+            countFolders++
+        }
+        logger.info(`RemoveCollections1680986182074 Migrated ${countFolders} folders`)
         // Schema Queries
         await queryRunner.query('ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_collection_id"')
         await queryRunner.query('ALTER TABLE "flow_run" DROP CONSTRAINT "fk_flow_run_collection_id"')
@@ -20,12 +34,9 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         await queryRunner.query('ALTER TABLE "store-entry" RENAME COLUMN "collectionId" TO "projectId"')
         await queryRunner.query('CREATE TABLE "flow_instance" ("id" character varying(21) NOT NULL, "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "projectId" character varying(21) NOT NULL, "flowId" character varying(21) NOT NULL, "flowVersionId" character varying(21) NOT NULL, "status" character varying NOT NULL, CONSTRAINT "REL_cb897f5e48cc3cba1418966326" UNIQUE ("flowId"), CONSTRAINT "REL_ec72f514c21734fb7a08797d75" UNIQUE ("flowVersionId"), CONSTRAINT "PK_5b0308060b7de5abec61ac5d2db" PRIMARY KEY ("id"))')
         await queryRunner.query('CREATE UNIQUE INDEX "idx_flow_instance_project_id_flow_id" ON "flow_instance" ("projectId", "flowId") ')
-        await queryRunner.query('CREATE TABLE "folder" ("id" character varying(21) NOT NULL, "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "displayName" character varying NOT NULL, "projectId" character varying(21) NOT NULL, CONSTRAINT "PK_6278a41a706740c94c02e288df8" PRIMARY KEY ("id"))')
-        await queryRunner.query('CREATE INDEX "idx_folder_project_id" ON "folder" ("projectId") ')
         await queryRunner.query('ALTER TABLE "flow" DROP COLUMN "collectionId"')
         await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN "collectionId"')
         await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN "collectionDisplayName"')
-        await queryRunner.query('ALTER TABLE "flow" ADD "folderId" character varying(21)')
         await queryRunner.query('ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_project_id"')
         await queryRunner.query('ALTER TABLE "flow" ALTER COLUMN "projectId" SET NOT NULL')
         await queryRunner.query('CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId") ')
@@ -35,7 +46,20 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         await queryRunner.query('ALTER TABLE "flow" ADD CONSTRAINT "fk_flow_folder_id" FOREIGN KEY ("folderId") REFERENCES "folder"("id") ON DELETE SET NULL ON UPDATE NO ACTION')
         await queryRunner.query('ALTER TABLE "flow" ADD CONSTRAINT "fk_flow_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION')
         await queryRunner.query('ALTER TABLE "folder" ADD CONSTRAINT "fk_folder_project" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION')
-        logger.info('Finished Running RemoveCollections1680986182074 migration')
+        
+        const instances = await queryRunner.query('SELECT * FROM "instance"')
+        let count = 0
+        for (const instance of instances) {
+            const flowIdToVersionId = instance['flowIdToVersionId']
+            for (const flowId of Object.keys(flowIdToVersionId)) {
+                const flowVersionId = flowIdToVersionId[flowId]
+                const randomId = apId();
+                await queryRunner.query(`INSERT INTO "flow_instance" ("id", "created", "updated", "projectId", "flowId", "flowVersionId", "status") VALUES ('${randomId}', 'NOW()', 'NOW()', '${instance.projectId}', '${flowId}', '${flowVersionId}', '${instance.status}')`)
+                count++
+            }
+        }
+        
+        logger.info(`Finished Running RemoveCollections1680986182074 migration with ${count} flow instances`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
