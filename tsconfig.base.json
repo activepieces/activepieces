@@ -82,7 +82,6 @@
       "@activepieces/piece-mailchimp": [
         "packages/pieces/mailchimp/src/index.ts"
       ],
-      "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
       "@activepieces/piece-mailer-lite": [
         "packages/pieces/mailer-lite/src/index.ts"
       ],
@@ -92,6 +91,7 @@
         "packages/pieces/mattermost/src/index.ts"
       ],
       "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
+      "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/pipedrive/src/index.ts"

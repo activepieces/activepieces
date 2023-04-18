@@ -129,6 +129,7 @@
     "@nrwl/node": "15.6.2",
     "@nrwl/webpack": "15.6.2",
     "@nrwl/workspace": "15.6.2",
+    "@playwright/test": "^1.32.3",
     "@schematics/angular": "^15.1.1",
     "@types/bcrypt": "^5.0.0",
     "@types/decompress": "^4.2.4",
