@@ -28,3 +28,4 @@ export * from './lib/service/test-step.service';
 export * from './lib/pipe/index';
 export * from './lib/directives/index';
 export * from './lib/environments/environment';
+export * from './lib/components/delete-enity-dialog/delete-entity-dialog.component';

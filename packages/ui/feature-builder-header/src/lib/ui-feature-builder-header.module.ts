@@ -24,6 +24,7 @@ const exportedDeclarations = [
     UiCommonModule,
     UiFeatureBuilderStoreModule,
     CodemirrorModule,
+    UiCommonModule,
   ],
   declarations: [...exportedDeclarations],
   exports: [...exportedDeclarations],

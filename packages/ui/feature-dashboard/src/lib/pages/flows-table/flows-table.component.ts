@@ -4,10 +4,7 @@ import { map, Observable, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
 import { Flow } from '@activepieces/shared';
-import {
-  DeleteEntityDialogComponent,
-  DeleteEntityDialogData,
-} from '../../components/delete-enity-dialog/delete-collection-dialog.component';
+
 import { ApPaginatorComponent } from '@activepieces/ui/common';
 import {
   ProjectService,
@@ -15,6 +12,10 @@ import {
   DEFAULT_PAGE_SIZE,
 } from '@activepieces/ui/common';
 import { ARE_THERE_FLOWS_FLAG } from '../../resolvers/are-there-flows.resolver';
+import {
+  DeleteEntityDialogComponent,
+  DeleteEntityDialogData,
+} from '@activepieces/ui/common';
 
 @Component({
   templateUrl: './flows-table.component.html',

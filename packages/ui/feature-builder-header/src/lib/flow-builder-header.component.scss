@@ -3,8 +3,9 @@
 .navbar-container {
   padding: 0.75rem 0.875rem 0.75rem 0rem !important;
   position: relative;
-  background-color: $header;
+  background-color: $white;
   box-shadow: 0px 1px 0px $line;
+  border-bottom: solid 1px $dividers;
 }
 
 .navbar-nav {
@@ -75,3 +76,8 @@
   top: 0;
 }
 
+.ap-logo{
+  position: absolute;
+  left:calc(50% - 62.5px);
+  top:calc(50% - 10px);
+}

@@ -1,15 +1,22 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { map, Observable } from 'rxjs';
-import { fadeIn400ms } from '@activepieces/ui/common';
+import { map, Observable, tap } from 'rxjs';
+import {
+  DeleteEntityDialogComponent,
+  DeleteEntityDialogData,
+  FlowService,
+  fadeIn400ms,
+} from '@activepieces/ui/common';
 import { MagicWandDialogComponent } from './magic-wand-dialog/magic-flow-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import {
   BuilderSelectors,
   CollectionBuilderService,
+  FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { FlowInstance } from '@/shared/src';
+import { Flow, FlowInstance } from '@activepieces/shared';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -21,27 +28,34 @@ export class FlowBuilderHeaderComponent implements OnInit {
   viewMode$: Observable<boolean>;
   magicWandEnabled$: Observable<boolean>;
   instance$: Observable<FlowInstance | undefined>;
-
+  flow$: Observable<Flow>;
+  editingFlowName = false;
+  deleteFlowDialogClosed$: Observable<void>;
   constructor(
-    public dialog: MatDialog,
+    public dialogService: MatDialog,
     private store: Store,
     private router: Router,
     public collectionBuilderService: CollectionBuilderService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private snackbar: MatSnackBar,
+    private flowService: FlowService
   ) {}
 
   ngOnInit(): void {
     this.instance$ = this.store.select(BuilderSelectors.selectCurrentInstance);
     this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
+    this.flow$ = this.store.select(BuilderSelectors.selectCurrentFlow);
     this.magicWandEnabled$ = this.route.queryParams.pipe(
       map((params) => {
         return !!params['magicWand'];
       })
     );
   }
-
+  changeEditValue(event: boolean) {
+    this.editingFlowName = event;
+  }
   guessAi() {
-    this.dialog.open(MagicWandDialogComponent);
+    this.dialogService.open(MagicWandDialogComponent);
   }
 
   redirectHome(newWindow: boolean) {
@@ -54,5 +68,31 @@ export class FlowBuilderHeaderComponent implements OnInit {
       const fixedUrl = urlArrays.join('/');
       this.router.navigate([fixedUrl]);
     }
+  }
+  saveFlowName(flowName: string) {
+    this.store.dispatch(FlowsActions.changeName({ displayName: flowName }));
+  }
+  copyId(id: string) {
+    this.snackbar.open(`ID copied`);
+    navigator.clipboard.writeText(id);
+  }
+  deleteFlow(flow: Flow) {
+    const dialogData: DeleteEntityDialogData = {
+      deleteEntity$: this.flowService.delete(flow.id),
+      entityName: flow.version.displayName,
+    };
+    const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
+      data: dialogData,
+    });
+    this.deleteFlowDialogClosed$ = dialogRef.beforeClosed().pipe(
+      tap((res) => {
+        if (res) {
+          this.router.navigate(['/']);
+        }
+      }),
+      map(() => {
+        return void 0;
+      })
+    );
   }
 }

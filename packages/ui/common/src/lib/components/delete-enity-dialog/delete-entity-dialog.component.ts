@@ -59,9 +59,7 @@ export class DeleteEntityDialogComponent {
         }),
         tap(() => {
           this.dialogRef.close(true);
-          this.snackBar.open(
-            `${this.data.entityName} was deleted successfully`
-          );
+          this.snackBar.open(`${this.data.entityName} deleted`);
         })
       );
     }
