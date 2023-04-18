@@ -10,6 +10,7 @@ import { createBrand } from "./lib/actions/Brand/create-brand";
 import { updateBrand } from "./lib/actions/Brand/update-brand";
 import { deleteBrand } from "./lib/actions/Brand/delete-brand";
 import { getCategoryById } from "./lib/actions/Category/get-category-by-id";
+import { getSkuByProductId } from "./lib/actions/SKU/get-sku-by-product-id";
 
 export const vtex = createPiece({
   name: "vtex",
@@ -17,6 +18,6 @@ export const vtex = createPiece({
   logoUrl: "https://cdn.activepieces.com/pieces/vtex.png",
   version: packageJson.version,
   authors: ["Willianwg"],
-  actions: [getProductById, createProduct, updateProduct, getBrandList, getBrandById, createBrand, updateBrand, deleteBrand, getCategoryById],
+  actions: [getProductById, createProduct, updateProduct, getBrandList, getBrandById, createBrand, updateBrand, deleteBrand, getCategoryById, getSkuByProductId],
   triggers: [],
 });
