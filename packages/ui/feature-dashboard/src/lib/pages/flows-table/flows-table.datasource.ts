@@ -15,7 +15,8 @@ import {
 } from '@activepieces/ui/common';
 
 import { FormControl } from '@angular/forms';
-import { Flow } from '@activepieces/shared';
+import { Flow, FlowInstanceStatus } from '@activepieces/shared';
+import { FlowTableDto } from '@activepieces/shared';
 
 // TODO FIX
 type CollectionListDtoWithInstanceStatusToggleControl = Flow & {
@@ -88,13 +89,12 @@ export class FlowsTableDataSource extends DataSource<CollectionListDtoWithInstan
   disconnect(): void {
     //ignore
   }
-  createTogglesControls(collections: Flow[]) {
+  createTogglesControls(flows: FlowTableDto[]) {
     const controls: Record<string, FormControl> = {};
-    collections.forEach((c) => {
-      // TODO FIX
-      controls[c.id] = new FormControl({
-        value: false,
-        disabled: true,
+    flows.forEach((f) => {
+      controls[f.id] = new FormControl({
+        value: f.status === FlowInstanceStatus.ENABLED,
+        disabled: f.status === FlowInstanceStatus.UNPUBLISHED,
       });
     });
     return controls;

@@ -10,6 +10,7 @@ export type FlowInstanceId = ApId;
 export enum FlowInstanceStatus {
     ENABLED = "ENABLED",
     DISABLED = "DISABLED",
+    UNPUBLISHED= "UNPUBLISHED"
 }
 
 export const FlowInstance = Type.Object({

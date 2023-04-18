@@ -40,7 +40,7 @@ export const flowInstanceController = async (app: FastifyInstance) => {
     }, async (request: FastifyRequest<{
         Querystring: GetFlowInstanceRequest
     }>) => {
-        return flowInstanceService.getOneOrThrow({ projectId: request.principal.projectId, flowId: request.query.flowId })
+        return flowInstanceService.get({ projectId: request.principal.projectId, flowId: request.query.flowId })
     })
 
 

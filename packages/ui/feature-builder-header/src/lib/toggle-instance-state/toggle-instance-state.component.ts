@@ -1,11 +1,14 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnInit,
+} from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
 import { FlowInstance, FlowInstanceStatus } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
-import {
-  FlowInstanceActions,
-} from '@activepieces/ui/feature-builder-store';
+import { FlowInstanceActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-toggle-instance-state',

@@ -3,9 +3,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { map, Observable, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import { Flow } from '@activepieces/shared';
+import { Flow, FlowInstanceStatus, FlowTableDto } from '@activepieces/shared';
 
-import { ApPaginatorComponent } from '@activepieces/ui/common';
+import {
+  ApPaginatorComponent,
+  FlowInstanceService,
+} from '@activepieces/ui/common';
 import {
   ProjectService,
   FlowService,
@@ -16,6 +19,7 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
 } from '@activepieces/ui/common';
+import { FormControl } from '@angular/forms';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -36,7 +40,8 @@ export class FlowsTableComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
     private projectService: ProjectService,
-    private flowService: FlowService
+    private flowService: FlowService,
+    private instanceService: FlowInstanceService
   ) {}
 
   ngOnInit(): void {
@@ -98,32 +103,26 @@ export class FlowsTableComponent implements OnInit {
         );
     }
   }
-  /*toggleCollectionStatus(
-    collectionDto: CollectionListDto,
-    control: FormControl<boolean>
-  ) {
+  toggleFlowStatus(flowDto: FlowTableDto, control: FormControl<boolean>) {
     if (control.enabled) {
       control.disable();
-      this.collectionsUpdateStatusRequest$[collectionDto.id] =
-        this.instanceService
-          .updateStatus(collectionDto.id, {
-            status:
-              collectionDto.status === CollectionStatus.ENABLED
-                ? InstanceStatus.DISABLED
-                : InstanceStatus.ENABLED,
-          })
-          .pipe(
-            tap((res) => {
-              control.enable();
-              control.setValue(res.status === InstanceStatus.ENABLED);
-              this.collectionsUpdateStatusRequest$[collectionDto.id] = null;
-              collectionDto.status =
-                res.status === InstanceStatus.ENABLED
-                  ? CollectionStatus.ENABLED
-                  : CollectionStatus.DISABLED;
-            }),
-            map(() => void 0)
-          );
+      debugger;
+      this.flowsUpdateStatusRequest$[flowDto.id] = this.instanceService
+        .updateStatus(flowDto.id, {
+          status:
+            flowDto.status === FlowInstanceStatus.ENABLED
+              ? FlowInstanceStatus.DISABLED
+              : FlowInstanceStatus.ENABLED,
+        })
+        .pipe(
+          tap((res) => {
+            control.enable();
+            control.setValue(res.status === FlowInstanceStatus.ENABLED);
+            this.flowsUpdateStatusRequest$[flowDto.id] = null;
+            flowDto.status = res.status;
+          }),
+          map(() => void 0)
+        );
     }
-  }*/
+  }
 }

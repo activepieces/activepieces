@@ -17,11 +17,12 @@ import {
   ListFlowsRequest,
   SeekPage,
 } from '@activepieces/shared';
+import { FlowTableDto } from '@activepieces/shared';
 @Injectable({
   providedIn: 'root',
 })
 export class FlowService {
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
   create(request: CreateFlowRequest): Observable<Flow> {
     return this.http.post<Flow>(environment.apiUrl + '/flows', {
       displayName: request.displayName,
@@ -45,13 +46,16 @@ export class FlowService {
     return this.http.delete<void>(environment.apiUrl + '/flows/' + flowId);
   }
 
-  list(request: ListFlowsRequest): Observable<SeekPage<Flow>> {
+  list(request: ListFlowsRequest): Observable<SeekPage<FlowTableDto>> {
     const queryParams: { [key: string]: string | number } = {
       limit: request.limit ?? 10,
     };
-    return this.http.get<SeekPage<Flow>>(environment.apiUrl + '/flows', {
-      params: queryParams,
-    });
+    return this.http.get<SeekPage<FlowTableDto>>(
+      environment.apiUrl + '/flows',
+      {
+        params: queryParams,
+      }
+    );
   }
 
   update(flowId: FlowId, opreation: FlowOperationRequest): Observable<Flow> {

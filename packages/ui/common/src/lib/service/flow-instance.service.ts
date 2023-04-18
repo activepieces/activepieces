@@ -6,7 +6,7 @@ import {
   FlowId,
   FlowInstance,
   UpdateFlowInstanceRequest,
-  UpsertFlowInstanceRequest
+  UpsertFlowInstanceRequest,
 } from '@activepieces/shared';
 
 @Injectable({
@@ -16,7 +16,10 @@ export class FlowInstanceService {
   constructor(private http: HttpClient) {}
 
   publish(request: UpsertFlowInstanceRequest): Observable<FlowInstance> {
-    return this.http.post<FlowInstance>(environment.apiUrl + `/flow-instances`, request);
+    return this.http.post<FlowInstance>(
+      environment.apiUrl + `/flow-instances`,
+      request
+    );
   }
 
   updateStatus(
