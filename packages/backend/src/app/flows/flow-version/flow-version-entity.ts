@@ -2,7 +2,7 @@ import { EntitySchema } from 'typeorm'
 import { Flow, FlowVersion } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity'
 
-export type FlowVersionSchema = {
+type FlowVersionSchema = {
     flow: Flow
 } & FlowVersion
 
