@@ -1,6 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { Brand } from "../../common/Brand";
 import { Replace } from "../../common/types";
+import { auth } from "../../common/auth";
 
 export const createBrand = createAction({
     name: "create-brand",
@@ -21,21 +22,7 @@ export const createBrand = createAction({
     }
     ,
     props: {
-        hostUrl: Property.ShortText({
-            displayName: "Host Url",
-            description: "{accountName}.{environment}.com",
-            required: true,
-        }),
-        appKey: Property.SecretText({
-            displayName: "App Key",
-            description: "VTEX App Key",
-            required: true,
-        }),
-        appToken: Property.SecretText({
-            displayName: "App Token",
-            description: "VTEX App Token",
-            required: true,
-        }),
+        authentication: auth,
         Name: Property.ShortText({
             displayName: "Name",
             required: true,
@@ -76,12 +63,10 @@ export const createBrand = createAction({
         }),
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue;
-        const brandData: Replace<typeof context.propsValue, { hostUrl?: string; appKey?: string; appToken?: string }> = { ...context.propsValue };
-        delete brandData.hostUrl;
-        delete brandData.appKey;
-        delete brandData.appToken;
-
+        const { hostUrl, appKey, appToken } = context.propsValue.authentication;
+        const brandData: Replace<typeof context.propsValue, { authentication?: typeof context.propsValue.authentication }> = { ...context.propsValue };
+        delete brandData.authentication;
+       
         const brand = new Brand(hostUrl, appKey, appToken);
 
         return await brand.createBrand(brandData);

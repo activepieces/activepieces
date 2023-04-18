@@ -1,27 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { Product } from "../../common/Product";
 import { Replace } from "../../common/types";
+import { auth } from "../../common/auth";
 
 export const createProduct = createAction({
     name: "create-product",
     displayName: "Create New Product",
     description: "Create a new product to your catalog",
     props: {
-        hostUrl: Property.ShortText({
-            displayName: "Host Url",
-            description: "{accountName}.{environment}.com",
-            required: true,
-        }),
-        appKey: Property.SecretText({
-            displayName: "App Key",
-            description: "VTEX App Key",
-            required: true,
-        }),
-        appToken: Property.SecretText({
-            displayName: "App Token",
-            description: "VTEX App Token",
-            required: true,
-        }),
+        authentication: auth,
         Name: Property.ShortText({
             displayName: "Name",
             required: true,
@@ -94,11 +81,9 @@ export const createProduct = createAction({
         }),
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue;
-        const productData: Replace<typeof context.propsValue, { hostUrl?: string; appKey?:string; appToken?: string}> = { ...context.propsValue };
-        delete productData.hostUrl;
-        delete productData.appKey;
-        delete productData.appToken;
+        const { hostUrl, appKey, appToken } = context.propsValue.authentication;
+        const productData: Replace<typeof context.propsValue, { authentication?: typeof context.propsValue.authentication }> = { ...context.propsValue };
+        delete productData.authentication;
         
         const product = new Product(hostUrl, appKey, appToken);
 
