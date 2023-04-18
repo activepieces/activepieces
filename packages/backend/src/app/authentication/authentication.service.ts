@@ -37,9 +37,11 @@ export const authenticationService = {
                     projectId: project.id,
                 },
             })
-            user.password = ''
+
+            const { password: _, ...filteredUser } = user
+
             return {
-                ...user,
+                ...filteredUser,
                 token,
                 projectId: project.id,
             }
@@ -92,9 +94,10 @@ export const authenticationService = {
             projectId: projects![0].id,
         })
 
-        user.password = ''
+        const { password: _, ...filteredUser } = user
+
         return {
-            ...user,
+            ...filteredUser,
             token,
             projectId: projects![0].id,
         }
