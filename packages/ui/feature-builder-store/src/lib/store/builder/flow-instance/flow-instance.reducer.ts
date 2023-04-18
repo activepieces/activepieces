@@ -17,7 +17,14 @@ const __flowInstanceReducer = createReducer(
   initialState,
   on(FlowInstanceActions.setInitial, (state, { instance }): FlowInstance => {
     return instance;
-  })
+  }),
+  on(
+    FlowInstanceActions.publishSuccess,
+    (state, { instance }): FlowInstance => {
+      debugger;
+      return { ...instance };
+    }
+  )
 );
 
 export function flowInstanceReducer(state: FlowInstanceState, action: Action) {

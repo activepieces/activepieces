@@ -18,14 +18,14 @@ import { FlowInstanceActions } from '@activepieces/ui/feature-builder-store';
 export class ToggleInstanceStateComponent implements OnInit {
   toggleFormControl: FormControl<boolean> = new FormControl();
   instanceStateChanged$: Observable<boolean>;
-  @Input() instance: FlowInstance;
+  @Input() set instance(val: FlowInstance) {
+    this.toggleFormControl.setValue(val.status === FlowInstanceStatus.ENABLED, {
+      emitEvent: false,
+    });
+  }
   constructor(private store: Store) {}
 
   ngOnInit(): void {
-    this.toggleFormControl.setValue(
-      this.instance.status === FlowInstanceStatus.ENABLED
-    );
-
     this.instanceStateChanged$ = this.toggleFormControl.valueChanges.pipe(
       tap((toggleValue) => {
         if (toggleValue) {

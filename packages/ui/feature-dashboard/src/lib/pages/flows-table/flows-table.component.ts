@@ -106,7 +106,6 @@ export class FlowsTableComponent implements OnInit {
   toggleFlowStatus(flowDto: FlowTableDto, control: FormControl<boolean>) {
     if (control.enabled) {
       control.disable();
-      debugger;
       this.flowsUpdateStatusRequest$[flowDto.id] = this.instanceService
         .updateStatus(flowDto.id, {
           status:
