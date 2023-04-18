@@ -25,6 +25,10 @@
     </mat-menu>
   </div>
   <div *ngFor="let property of selectedOptionalProperties|objectToArray; let i = index">
+    <div class="delete-btn-container">
+      <ap-icon-button [width]="9" [height]="9" iconFilename="delete.svg"
+                    class="delete-btn ap-z-40" (buttonClicked)="removeOptionalProperty(property.key)"></ap-icon-button>
+    </div>
     <ng-container *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, propertyIndex:i, formGroup:form}">
     </ng-container>
   </div>

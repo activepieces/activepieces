@@ -457,6 +457,13 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       [propertyKey]: property,
     };
   }
+  
+  removeOptionalProperty(propertyKey: string) {
+    this.form.removeControl(propertyKey);
+    const selectedProps = { ...this.selectedOptionalProperties };
+    delete selectedProps[propertyKey];
+    this.selectedOptionalProperties = selectedProps;
+  }
 
   connectionValueChanged(event: {
     propertyKey: string;

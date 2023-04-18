@@ -55,3 +55,19 @@
   margin-top:0.9375rem;
 }
 
+.delete-btn-container {
+  position: relative;
+
+  .delete-btn {
+    position: absolute;
+    left: -30px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.opacity-0 {
+  opacity: 0;
+}
