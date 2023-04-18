@@ -87,12 +87,12 @@ export const collectionService = {
 
         const savedCollection = await collectionRepo.save(collection)
         telemetry.trackProject(
-            collection.projectId,
+            collection.projectId!,
             {
                 name: TelemetryEventName.COLLECTION_CREATED,
                 payload: {
-                    collectionId: collection.id,
-                    projectId: collection.projectId,
+                    collectionId: collection.id!,
+                    projectId: collection.projectId!,
                 },
             })
         return savedCollection
@@ -121,7 +121,7 @@ async function findInstanceStatusForCollections(data: Collection[]): Promise<Col
         return new Promise((resolve, reject) => {
             instanceService.getByCollectionId({ projectId: collection.projectId, collectionId: collection.id })
                 .then(instance => {
-                    const collectionStatus = findCollectionStatus(instance)
+                    const collectionStatus = findCollectionStatus(instance!)
                     resolve({ ...collection, status: collectionStatus })
                 })
                 .catch(error => {

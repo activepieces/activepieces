@@ -53,5 +53,6 @@ export const acquireLock = async ({ key, timeout = 3000 }: AcquireLockParams): P
     }
     catch (e) {
         captureException(e)
+        throw e
     }
 }

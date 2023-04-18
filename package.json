@@ -130,6 +130,7 @@
     "@nrwl/webpack": "15.6.2",
     "@nrwl/workspace": "15.6.2",
     "@schematics/angular": "^15.1.1",
+    "@types/bcrypt": "^5.0.0",
     "@types/decompress": "^4.2.4",
     "@types/deep-equal": "^1.0.1",
     "@types/feedparser": "^2.2.5",

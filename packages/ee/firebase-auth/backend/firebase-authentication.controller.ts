@@ -14,7 +14,7 @@ import { system } from "@backend/helper/system/system";
 import { SystemProp } from "@backend/helper/system/system-prop";
 
 
-const credential = system.get(SystemProp.FIREBASE_ADMIN_CREDENTIALS) ? cert(JSON.parse(system.get(SystemProp.FIREBASE_ADMIN_CREDENTIALS))) : undefined;
+const credential = system.get(SystemProp.FIREBASE_ADMIN_CREDENTIALS) ? cert(JSON.parse(system.getOrThrow(SystemProp.FIREBASE_ADMIN_CREDENTIALS))) : undefined;
 const firebaseAuth =  credential ? getAuth(initializeApp({
     credential
 })) : undefined;
@@ -30,7 +30,7 @@ export const firebaseAuthenticationController = async (app: FastifyInstance, _op
         },
         async (request: FastifyRequest<{ Body: FirebaseSignInRequest }>, reply: FastifyReply) => {
             try {
-                const verifiedToken = await firebaseAuth.verifyIdToken(request.body.token);
+                const verifiedToken = await firebaseAuth!.verifyIdToken(request.body.token);
                 const user = await userService.getOneByEmail({ email: verifiedToken.email! });
                 if (user !== null) {
                     const projects = await projectService.getAll(user.id);
@@ -69,7 +69,7 @@ export const firebaseAuthenticationController = async (app: FastifyInstance, _op
         },
         async (request: FastifyRequest<{ Body: FirebaseSignUpRequest }>, reply: FastifyReply) => {
             try {
-                const verifiedToken = await firebaseAuth.verifyIdToken(request.body.token);
+                const verifiedToken = await firebaseAuth!.verifyIdToken(request.body.token);
                 const user = await userService.getOneByEmail({ email: verifiedToken.email! });
                 if (user !== null) {
                     const projects = await projectService.getAll(user.id);

@@ -37,7 +37,7 @@ export const authenticationService = {
                     projectId: project.id,
                 },
             })
-            user.password = undefined
+            user.password = ''
             return {
                 ...user,
                 token,
@@ -89,14 +89,14 @@ export const authenticationService = {
         const token = await tokenUtils.encode({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: projects[0].id,
+            projectId: projects![0].id,
         })
 
-        user.password = undefined
+        user.password = ''
         return {
             ...user,
             token,
-            projectId: projects[0].id,
+            projectId: projects![0].id,
         }
     },
 }
