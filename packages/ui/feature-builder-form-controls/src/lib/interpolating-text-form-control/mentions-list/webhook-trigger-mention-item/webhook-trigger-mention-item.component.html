@@ -1,0 +1,36 @@
+<button (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true" mat-menu-item
+  class="!ap-px-[9px]" appTrackHover #hoverTracker="hoverTrackerDirective">
+  <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
+    {{expandSample ? 'expand_less' : 'expand_more'}}
+  </mat-icon>
+  <app-generic-step-mention-item matTooltip="Webhook Trigger" [stepIndex]="stepIndex"
+    [stepMention]="_stepMention"></app-generic-step-mention-item>
+  <ap-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+    class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true" (click)="openPathDialog()">Custom Path
+  </ap-button>
+</button>
+
+
+<ng-container *ngIf="expandSample">
+  <ng-container *ngIf="sampleData; else testTriggerTemplate">
+    <app-step-mentions-tree [stepOutputObjectChildNodes]="sampleData"
+      [markedNodesToShow]="(nodesFilteredWithSearch$ | async)!" [stepDisplayName]="_stepMention.step.displayName"
+      (mentionClicked)="mentionEmitted.emit($event)"></app-step-mentions-tree>
+  </ng-container>
+  <ng-template #testTriggerTemplate>
+    <div class="ap-my-3 ap-px-2">
+      <div class="ap-typography-body-1 ap-text-center ap-mb-1">
+        Send sample data first
+      </div>
+      <div class="ap-typography-body-2 ap-text-center ap-mb-3">
+        This trigger needs to have data sent to it, to use as sample data
+      </div>
+      <div class="ap-text-center">
+        <ap-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
+          (click)="$event.stopPropagation(); selectStep()">Go to trigger
+        </ap-button>
+      </div>
+    </div>
+  </ng-template>
+</ng-container>
+<ng-container *ngIf="customPathDialogClosed$ | async"></ng-container>

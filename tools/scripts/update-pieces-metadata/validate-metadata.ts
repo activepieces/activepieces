@@ -1,4 +1,5 @@
-import { compareSemVer, PieceMetadata, semVerRegex } from '../../../packages/shared/src';
+import { compareSemVer, semVerRegex } from '../../../packages/shared/src'
+import { PieceMetadata } from '../../../packages/pieces/framework/src'
 
 const validateSupportedRelease = (minRelease: string | undefined, maxRelease: string | undefined) => {
   if (minRelease !== undefined && !semVerRegex.test(minRelease)) {

@@ -1,1 +1,28 @@
-{"name":"pieces-mattermost","$schema":"../../../node_modules/nx/schemas/project-schema.json","sourceRoot":"packages/pieces/mattermost/src","projectType":"library","targets":{"build":{"executor":"@nrwl/js:tsc","outputs":["{options.outputPath}"],"options":{"outputPath":"dist/packages/pieces/mattermost","tsConfig":"packages/pieces/mattermost/tsconfig.lib.json","packageJson":"packages/pieces/mattermost/package.json","main":"packages/pieces/mattermost/src/index.ts","assets":["packages/pieces/mattermost/*.md"],"buildableProjectDepsInPackageJsonType":"dependencies"}},"lint":{"executor":"@nrwl/linter:eslint","outputs":["{options.outputFile}"],"options":{"lintFilePatterns":["packages/pieces/mattermost/**/*.ts"]}}},"tags":[]}
+{
+  "name": "pieces-mattermost",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/mattermost/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/mattermost",
+        "tsConfig": "packages/pieces/mattermost/tsconfig.lib.json",
+        "packageJson": "packages/pieces/mattermost/package.json",
+        "main": "packages/pieces/mattermost/src/index.ts",
+        "assets": ["packages/pieces/mattermost/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/mattermost/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

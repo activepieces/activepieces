@@ -1,7 +1,7 @@
-import { TestStepRequestBody } from '@activepieces/shared'
+import { CreateStepRunRequestBody } from '@activepieces/shared'
 
-export const TestStepRequest = {
+export const CreateStepRunRequest = {
     schema: {
-        body: TestStepRequestBody,
+        body: CreateStepRunRequestBody,
     },
 }

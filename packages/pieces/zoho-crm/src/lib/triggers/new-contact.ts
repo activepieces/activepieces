@@ -1,5 +1,5 @@
-import { AuthenticationType, createTrigger, DedupeStrategy, httpClient, HttpMethod, OAuth2PropertyValue, Polling, pollingHelper, Property, } from "@activepieces/framework";
-import { TriggerStrategy } from "@activepieces/shared";
+import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper, } from "@activepieces/pieces-common";
+import { createTrigger, OAuth2PropertyValue, Property, TriggerStrategy } from "@activepieces/pieces-framework";
 import dayjs from "dayjs";
 
 export const newContact = createTrigger({

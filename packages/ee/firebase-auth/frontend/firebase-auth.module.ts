@@ -10,8 +10,7 @@ import { AngularFireAuthModule } from '@angular/fire/compat/auth';
 import { FirebaseSignUpComponent } from './sign-up/firebase-sign-up.component';
 import { FirebaseEmailVerificationComponent } from './email-verification/firebase-email-verification.component';
 import { FirebaseForgotPasswordComponent } from './forgot-password/firebase-forgot-password.component';
-import { environment } from '../../../frontend/src/environments/environment';
-import { CommonLayoutModule } from '../../../frontend/src/app/modules/common/common-layout.module';
+import { environment, UiCommonModule} from '@activepieces/ui/common';
 
 @NgModule({
 	imports: [
@@ -21,7 +20,7 @@ import { CommonLayoutModule } from '../../../frontend/src/app/modules/common/com
 		RouterModule.forChild(FirebaseAuthLayoutRoutes),
 		FormsModule,
 		ReactiveFormsModule,
-		CommonLayoutModule,
+		UiCommonModule
 	],
 	declarations: [FirebaseSignInComponent, FirebaseSignUpComponent, FirebaseAuthContainerComponent, FirebaseForgotPasswordComponent, FirebaseEmailVerificationComponent],
 })

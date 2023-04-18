@@ -6,11 +6,11 @@ import {
 	containsLowercaseCharacter,
 	containsNumber,
 	containsSpecialCharacter,
-} from 'packages/frontend/src/app/modules/common/validators';
+} from '@activepieces/ui/common';
 import * as auth from 'firebase/auth';
 import { FirebaseAuthService } from '../firebase-auth.service';
 import { Router } from '@angular/router';
-import { AuthenticationService } from '../../../../frontend/src/app/modules/common/service/authentication.service';
+import { AuthenticationService } from '@activepieces/ui/common';
 
 
 export interface UserInfo {

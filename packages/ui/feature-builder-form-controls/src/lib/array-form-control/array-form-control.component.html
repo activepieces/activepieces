@@ -1,0 +1,35 @@
+<div class="ap-flex ap-flex-col">
+    <ng-container *ngFor="let val of formArray.controls; let idx = index; let isLast = last; let isFirst=first">
+        <div class="ap-flex" *ngIf="!(isLast && formArray.disabled && idx>0)">
+            <div class="delete-btn-container">
+                <ap-icon-button *ngIf="formArray.enabled" [width]="9" [height]="9" iconFilename="delete.svg"
+                    [tooltipText]=" !deleteButton.isHovered && !valueInput.isHovered ?'' :'Remove Item'"
+                    class="delete-btn ap-z-40" [class.opacity-0]="!deleteButton.isHovered  && !valueInput.isHovered"
+                    appTrackHover #deleteButton="hoverTrackerDirective"
+                    (buttonClicked)="removeValue(idx)"></ap-icon-button>
+            </div>
+
+            <div class="form-control value-control" [class.first]="isFirst && formArray.controls.length>1"
+                [class.last]="isLast && formArray.controls.length>1" [class.only-one]="formArray.controls.length === 1"
+                appTrackHover #valueInput="hoverTrackerDirective" #interpolatingTextControlContainer>
+                <app-interpolating-text-form-control #textControl [insideMatField]="false"
+                    [formControl]="formArray.controls[idx]" placeholder="Value"
+                    (click)="formArray.enabled? mentionsDropdown.showMenuSubject$.next(true):null"
+                    (keyup)="$event.key ==='Escape'? mentionsDropdown.close() : null"></app-interpolating-text-form-control>
+                <app-builder-autocomplete-mentions-dropdown #mentionsDropdown width="calc(100% - 0.5rem)"
+                    (addMention)="addMention(textControl,$event)" [container]="interpolatingTextControlContainer"
+                    (menuClosed)="textControl.focusEditor()"></app-builder-autocomplete-mentions-dropdown>
+            </div>
+        </div>
+
+    </ng-container>
+    <div class="ap-flex">
+        <ap-button btnColor="primary" btnStyle="basic" *ngIf="formArray.enabled" (buttonClicked)="addValue()"
+            type="button" class="add-btn" btnSize="medium"> + Add Item
+        </ap-button>
+        <div class="ap-flex-grow" #spacer></div>
+    </div>
+
+</div>
+
+<ng-container *ngIf="valueChanges$|async"></ng-container>

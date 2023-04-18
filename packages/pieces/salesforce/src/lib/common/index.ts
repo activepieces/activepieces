@@ -1,5 +1,5 @@
-import { AuthenticationType, httpClient, HttpMessageBody, HttpMethod, HttpResponse, OAuth2PropertyValue, Property } from "@activepieces/framework";
-
+import { OAuth2PropertyValue, Property } from "@activepieces/pieces-framework";
+import { AuthenticationType, httpClient, HttpMessageBody, HttpMethod, HttpResponse } from "@activepieces/pieces-common";
 
 export const salesforcesCommon = {
     authentication: Property.OAuth2({

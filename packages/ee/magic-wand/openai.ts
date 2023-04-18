@@ -28,7 +28,7 @@ export const flowGuessService = {
             throw new ActivepiecesError({
                 code: ErrorCode.OPENAI_FAILED,
                 params: {}
-            }, e);
+            }, e instanceof Error ? e.message : '');
         }
     }
 }
@@ -79,7 +79,7 @@ function cleanAndValidateTrigger(step: Trigger): Trigger {
     }
 }
 
-function cleanAction(step: any, count: number): Action {
+function cleanAction(step: any, count: number): Action | undefined {
     if (step === undefined || step === null) {
         return undefined;
     }

@@ -40,10 +40,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": [
-          "nx build-watch backend",
-          "nx serve engine"
-        ]
+        "commands": ["nx build-watch backend", "nx serve engine", "turbowatch turbowatch.ts"]
       }
     },
     "lint": {

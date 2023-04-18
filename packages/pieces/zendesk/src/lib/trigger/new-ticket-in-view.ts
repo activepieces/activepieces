@@ -1,5 +1,5 @@
-import { TriggerStrategy } from "@activepieces/shared";
-import { AuthenticationType, createTrigger, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper, Property } from "@activepieces/framework";
+import { TriggerStrategy, createTrigger , Property } from "@activepieces/pieces-framework";
+import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper } from "@activepieces/pieces-common";
 
 const markdownProperty = `
 **Organization**: The organization name can be found in the URL (e.g https://ORGANIZATION_NAME.zendesk.com).
@@ -137,7 +137,7 @@ export const newTicketInView = createTrigger({
         });
     },
     test: async (context) => {
-        return await pollingHelper.poll(polling, {
+        return await pollingHelper.test(polling, {
             store: context.store,
             propsValue: context.propsValue,
         });
