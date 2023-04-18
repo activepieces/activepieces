@@ -1,5 +1,5 @@
-import { TriggerStrategy } from '@activepieces/shared';
-import { createTrigger, DedupeStrategy, httpClient, HttpMethod, OAuth2PropertyValue, Polling, pollingHelper } from '@activepieces/framework';
+import { DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper  } from "@activepieces/pieces-common";
+import { createTrigger, OAuth2PropertyValue, TriggerStrategy} from '@activepieces/pieces-framework';
 import dayjs from "dayjs";
 import { googleFormsCommon } from '../common/common';
 

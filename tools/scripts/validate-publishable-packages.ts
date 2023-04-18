@@ -8,6 +8,7 @@ const main = async () => {
     ...piecePackageNames.map(p => `packages/pieces/${p}`),
     'packages/pieces/framework',
     'packages/shared',
+    'packages/pieces/common',
   ]
 
   const validationResults = packages.map(p => packagePrePublishChecks(p))

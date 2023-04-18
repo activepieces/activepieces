@@ -1,5 +1,5 @@
-import { createTrigger, OAuth2PropertyValue } from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import { createTrigger, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { googleCalendarCommon } from '../common';
 import { getLatestEvent, stopWatchEvent, watchEvent } from '../common/helper';
 import { GoogleWatchResponse } from '../common/types';
@@ -11,7 +11,7 @@ export const calendarEventChanged = createTrigger({
   description: 'Triggers when there is an event added or updated',
   props: {
     authentication: googleCalendarCommon.authentication,
-    calendar_id: googleCalendarCommon.calendarDropdown,
+    calendar_id: googleCalendarCommon.calendarDropdown(),
   },
   sampleData: {
     kind: 'calendar#event',

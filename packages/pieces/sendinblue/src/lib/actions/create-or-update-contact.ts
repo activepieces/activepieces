@@ -1,4 +1,5 @@
-import { httpClient, HttpMethod, createAction, Property } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
+import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { sendInBluePropsContactsProps } from "../common/props";
 
 export const createOrUpdateContact = createAction({

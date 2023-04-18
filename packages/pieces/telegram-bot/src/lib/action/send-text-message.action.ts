@@ -1,4 +1,5 @@
-import { createAction, Property, httpClient, HttpMethod } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
+import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 import { telegramCommons } from "../common";
 
 export const telegramSendMessageAction = createAction({
@@ -15,7 +16,7 @@ export const telegramSendMessageAction = createAction({
         message: Property.LongText({
             displayName: 'Message',
             description: 'The message to be sent',
-            required: false,
+            required: true,
         })
     },
     sampleData: {},

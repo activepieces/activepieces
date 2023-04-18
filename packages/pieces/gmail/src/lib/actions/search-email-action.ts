@@ -1,4 +1,4 @@
-import { createAction } from "@activepieces/framework";
+import { createAction } from "@activepieces/pieces-framework";
 import { GmailRequests } from "../common/data";
 import { GmailLabel } from "../common/models";
 import { GmailProps } from "../common/props";

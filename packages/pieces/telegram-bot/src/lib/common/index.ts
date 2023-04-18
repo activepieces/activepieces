@@ -1,4 +1,4 @@
-import { Property } from "@activepieces/framework";
+import { Property } from "@activepieces/pieces-framework";
 
 const markdownDescription = `
 Refer to the [Telegram piece documentation](https://activepieces.com/docs/pieces/apps/telegram) for more information on how to obtain the bot token.

@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 
 export const advancedMapping = createAction({
     name: 'advanced_mapping',

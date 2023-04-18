@@ -1,4 +1,4 @@
-import { Property } from "@activepieces/framework";
+import { Property } from "@activepieces/pieces-framework";
 
 export const sendInBluePropsContactsProps = {
   api_key: Property.SecretText({

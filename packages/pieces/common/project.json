@@ -1,0 +1,27 @@
+{
+  "name": "pieces-common",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/common/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/common",
+        "main": "packages/pieces/common/src/index.ts",
+        "tsConfig": "packages/pieces/common/tsconfig.lib.json",
+        "assets": ["packages/pieces/common/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/common/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

@@ -1,8 +1,8 @@
 import assert from 'node:assert'
-import { PieceMetadata } from '../../../packages/shared/src'
 import { getAvailablePieceNames } from '../utils/get-available-piece-names'
 import { readPackageJson, PackageJson } from '../utils/files'
 import { validateMetadata } from './validate-metadata'
+import { PieceMetadata } from '../../../packages/pieces/framework/src'
 
 type Piece = {
     name: string
