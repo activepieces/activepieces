@@ -10,7 +10,7 @@ type PieceInfo = PieceMetadata & {
 }
 
 const loadPiecesMetadata = async (): Promise<PieceInfo[]> => {
-  const frameworkPackages = ['framework', 'apps']
+  const frameworkPackages = ['framework', 'apps', 'common']
   const piecesPath = resolve(cwd(), 'packages', 'pieces')
   const piecePackages = await readdir(piecesPath)
   const filteredPiecePackages = piecePackages.filter(d => !frameworkPackages.includes(d))

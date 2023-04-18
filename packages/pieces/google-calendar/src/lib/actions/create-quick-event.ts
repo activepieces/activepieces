@@ -5,10 +5,10 @@ import { googleCalendarCommon } from '../common';
 export const createQuickCalendarEvent = createAction({
   name: 'create_quick_event',
   description: 'Add Quick Calendar Event',
-  displayName: 'Quick Event',
+  displayName: 'Create Quick Event',
   props: {
     authentication: googleCalendarCommon.authentication,
-    calendar_id: googleCalendarCommon.calendarDropdown,
+    calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     text: Property.LongText({
       displayName: 'Summary',
       description: 'The text describing the event to be created',
@@ -45,7 +45,7 @@ export const createQuickCalendarEvent = createAction({
     const calendarId = configValue.propsValue['calendar_id'];
     const url = `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events/quickAdd`;
     const qParams: Record<string, string> = {
-      text: configValue.propsValue['text']!,
+      text: configValue.propsValue['text'],
       sendUpdates: configValue.propsValue['send_updates'] || "none",
     };
     const request: HttpRequest<Record<string, unknown>> = {
@@ -54,7 +54,7 @@ export const createQuickCalendarEvent = createAction({
       body: {},
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: configValue.propsValue['authentication']!['access_token'],
+        token: configValue.propsValue['authentication']['access_token'],
       },
       queryParams: qParams,
     };

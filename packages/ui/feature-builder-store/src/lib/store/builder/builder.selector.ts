@@ -1,12 +1,7 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../../model/builder-state.model';
 
-import {
-  AppConnection,
-  Flow,
-  FlowRun,
-  SampleDataSettings,
-} from '@activepieces/shared';
+import { AppConnection, Flow, FlowRun } from '@activepieces/shared';
 import { NO_PROPS, TabState } from '../../model/tab-state';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 
@@ -131,6 +126,13 @@ export const selectCurrentFlow = createSelector(
     return flowsState.flows.find((f) => f.id === flowsState.selectedFlowId);
   }
 );
+export const selectCurrentFlowVersionId = createSelector(
+  selectFlowsState,
+  (flowsState: FlowsState) => {
+    return flowsState.flows.find((f) => f.id === flowsState.selectedFlowId)!
+      .version.id;
+  }
+);
 
 export const selectTabState = (flowId: string) =>
   createSelector(selectFlowsState, (state: FlowsState): TabState => {
@@ -180,20 +182,35 @@ const selectCurrentStepSettings = createSelector(
     return undefined;
   }
 );
-const selectStepSelectedSampleData = createSelector(
-  selectCurrentStepSettings,
-  (settings) => {
-    if (settings) {
-      if (Object.keys(settings).find((s) => s === 'inputUiInfo')) {
-        const sampleDataSettings = (settings as Record<string, unknown>)[
-          'inputUiInfo'
-        ] as SampleDataSettings;
-        return sampleDataSettings.currentSelectedData;
-      }
+const selectTriggerSelectedSampleData = createSelector(
+  selectCurrentStep,
+  (step) => {
+    if (step && (step.type === TriggerType.PIECE  || step.type === TriggerType.WEBHOOK) && step.settings.inputUiInfo) {
+      return step.settings.inputUiInfo.currentSelectedData;
     }
     return undefined;
   }
 );
+const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
+  if (
+    step &&
+    (step.type === ActionType.PIECE || step.type === ActionType.CODE) &&
+    step.settings.inputUiInfo
+  ) {
+    return step.settings.inputUiInfo.currentSelectedData;
+  }
+  return undefined;
+});
+const selectLastTestDate = createSelector(selectCurrentStep, (step) => {
+  if (
+    step &&
+    (step.type === ActionType.PIECE || step.type === ActionType.CODE) &&
+    step.settings.inputUiInfo
+  ) {
+    return step.settings.inputUiInfo.lastTestDate;
+  }
+  return undefined;
+});
 export const selectCurrentStepName = createSelector(
   selectCurrentStep,
   (selectedStep) => {
@@ -573,8 +590,11 @@ export const BuilderSelectors = {
   selectAnyFlowHasSteps,
   selectStepLogoUrl,
   selectCurrentStepSettings,
-  selectStepSelectedSampleData,
+  selectTriggerSelectedSampleData,
   selectStepValidity,
   selectIsSchduleTrigger,
   selectCurrentStepPieceVersionAndName,
+  selectCurrentFlowVersionId,
+  selectStepTestSampleData,
+  selectLastTestDate,
 };
