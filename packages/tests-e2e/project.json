@@ -4,12 +4,10 @@
   "sourceRoot": "packages/tests-e2e",
   "projectType": "application",
   "targets": {
-    "e2e": {
-      "executor": "@ns3/nx-playwright:playwright",
+    "test": {
+      "executor": "nx:run-commands",
       "options": {
-        "command": "playwright test",
-        "config": "packages/tests-e2e/playwright.config.ts",
-        "devServerTarget": "tests-e2e:serve"
+        "commands": ["npx playwright test ./packages/tests-e2e/tests/ --project=chrome"]
       }
     },
     "lint": {

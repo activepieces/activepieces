@@ -129,7 +129,6 @@
     "@nrwl/node": "15.6.2",
     "@nrwl/webpack": "15.6.2",
     "@nrwl/workspace": "15.6.2",
-    "@ns3/nx-playwright": "*",
     "@playwright/test": "^1.32.3",
     "@schematics/angular": "^15.1.1",
     "@types/deep-equal": "^1.0.1",

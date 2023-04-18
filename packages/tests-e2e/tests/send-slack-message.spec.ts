@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { testSignIn } from '../helper/test-utils';
+import { testSignIn, getEnvOrThrow } from '../helper/test-utils';
 
 // The account must be empty, and no flows should be present otherwise the test will fail and has a slack connection
 const config = {
-  email: 'mo+1@activepieces.com',
-  password: 'PASSWORD',
-  channel: 'spam',
-  url: 'https://cloud.activepieces.com/'
+  email: getEnvOrThrow('AP_TEST_EMAIL'),
+  password: getEnvOrThrow('AP_TEST_PASSWORD'),
+  channel: getEnvOrThrow('AP_TEST_CHANNEL'),
+  url: getEnvOrThrow('AP_TEST_URL'),
 };
 
 test('Test Send Slack message', async ({ page }) => {
