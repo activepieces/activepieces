@@ -154,7 +154,7 @@ export const flowService = {
     },
     async count(req:{
         projectId:string
-        folderId:string
+        folderId?:string
         allFlows:boolean
     }) :Promise<number>{
         if(req.allFlows) {
