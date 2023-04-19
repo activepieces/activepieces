@@ -2,19 +2,22 @@ import {
   AppConnection,
   AppConnectionType,
   BasicAuthConnection,
-  BasicAuthProperty,
   CustomAuthConnection,
-  CustomAuthProperty,
   OAuth2AppConnection,
-  OAuth2Property,
-  OAuth2Prop,
-  PropertyType,
   SecretKeyAppConnection,
-  SecretTextProperty,
-  CustomAuthProp,
 } from '@activepieces/shared';
 import {
+  BasicAuthProperty,
+  CustomAuthProperty,
+  OAuth2Property,
+  OAuth2Props,
+  PropertyType,
+  SecretTextProperty,
+  CustomAuthProps,
+} from '@activepieces/pieces-framework';
+import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   Input,
@@ -72,8 +75,8 @@ export class AddEditConnectionButtonComponent {
   );
   @Input()
   authProperty:
-    | OAuth2Property<boolean, Record<string, OAuth2Prop>>
-    | CustomAuthProperty<boolean, Record<string, CustomAuthProp>>
+    | OAuth2Property<boolean, OAuth2Props>
+    | CustomAuthProperty<boolean, CustomAuthProps>
     | SecretTextProperty<boolean>
     | BasicAuthProperty<boolean>;
   @Input()
@@ -95,12 +98,18 @@ export class AddEditConnectionButtonComponent {
   }> = new EventEmitter();
   updateOrAddConnectionDialogClosed$: Observable<void>;
   cloudAuthCheck$: Observable<void>;
+  updateConnectionTap = tap((connection: AppConnection | null) => {
+    if (connection) {
+      this.emitNewConnection(connection);
+    }
+  });
   constructor(
     private store: Store,
     private dialogService: MatDialog,
     private cloudAuthConfigsService: CloudAuthConfigsService,
     private flagService: FlagService,
-    private actionMetaService: ActionMetaService
+    private actionMetaService: ActionMetaService,
+    private cd: ChangeDetectorRef
   ) {}
 
   buttonClicked() {
@@ -109,6 +118,7 @@ export class AddEditConnectionButtonComponent {
     } else {
       this.newConnectionDialogProcess();
     }
+    this.cd.markForCheck();
   }
 
   private newConnectionDialogProcess() {
@@ -127,7 +137,7 @@ export class AddEditConnectionButtonComponent {
     const dialogData: CustomAuthDialogData = {
       pieceAuthProperty: this.authProperty as CustomAuthProperty<
         boolean,
-        Record<string, CustomAuthProp>
+        CustomAuthProps
       >,
       pieceName: this.pieceName,
     };
@@ -138,17 +148,17 @@ export class AddEditConnectionButtonComponent {
       })
       .afterClosed()
       .pipe(
-        tap((result: AppConnection | null) => {
-          if (result) {
-            const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
-            this.connectionPropertyValueChanged.emit({
-              propertyKey: this.propertyKey,
-              value: authConfigOptionValue,
-            });
-          }
-        }),
+        this.updateConnectionTap,
         map(() => void 0)
       );
+  }
+
+  private emitNewConnection(result: AppConnection) {
+    const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
+    this.connectionPropertyValueChanged.emit({
+      propertyKey: this.propertyKey,
+      value: authConfigOptionValue,
+    });
   }
 
   private openNewBasicAuthConnection() {
@@ -162,15 +172,7 @@ export class AddEditConnectionButtonComponent {
       })
       .afterClosed()
       .pipe(
-        tap((result: AppConnection | null) => {
-          if (result) {
-            const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
-            this.connectionPropertyValueChanged.emit({
-              propertyKey: this.propertyKey,
-              value: authConfigOptionValue,
-            });
-          }
-        }),
+        this.updateConnectionTap,
         map(() => void 0)
       );
   }
@@ -186,16 +188,10 @@ export class AddEditConnectionButtonComponent {
       })
       .afterClosed()
       .pipe(
-        tap((result: AppConnection | null) => {
-          if (result) {
-            const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
-            this.connectionPropertyValueChanged.emit({
-              propertyKey: this.propertyKey,
-              value: authConfigOptionValue,
-            });
-          }
-        }),
-        map(() => void 0)
+        this.updateConnectionTap,
+        map(() => {
+          return void 0;
+        })
       );
   }
 
@@ -261,7 +257,7 @@ export class AddEditConnectionButtonComponent {
           const dialogData: OAuth2ConnectionDialogData = {
             pieceAuthProperty: this.authProperty as OAuth2Property<
               boolean,
-              Record<string, OAuth2Prop>
+              OAuth2Props
             >,
             pieceName: this.pieceName,
             serverUrl: serverUrl,
@@ -300,11 +296,7 @@ export class AddEditConnectionButtonComponent {
                       map(() => void 0)
                     );
                 } else if (typeof result === 'object') {
-                  const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
-                  this.connectionPropertyValueChanged.emit({
-                    propertyKey: this.propertyKey,
-                    value: authConfigOptionValue,
-                  });
+                  this.emitNewConnection(result);
                 }
               }),
               map(() => void 0)
@@ -330,11 +322,7 @@ export class AddEditConnectionButtonComponent {
       .pipe(
         tap((result: AppConnection | string) => {
           if (typeof result === 'object') {
-            const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
-            this.connectionPropertyValueChanged.emit({
-              propertyKey: this.propertyKey,
-              value: authConfigOptionValue,
-            });
+            this.emitNewConnection(result);
           } else if (result === USE_MY_OWN_CREDENTIALS) {
             this.openNewOAuth2ConnectionDialog();
           }
@@ -381,7 +369,7 @@ export class AddEditConnectionButtonComponent {
           pieceName: this.pieceName,
           pieceAuthProperty: this.authProperty as CustomAuthProperty<
             boolean,
-            Record<string, CustomAuthProp>
+            CustomAuthProps
           >,
           connectionToUpdate: customAuthConnection,
         };
@@ -389,7 +377,11 @@ export class AddEditConnectionButtonComponent {
           .open(CustomAuthConnectionDialogComponent, {
             data: dialogData,
           })
-          .afterClosed();
+          .afterClosed()
+          .pipe(
+            this.updateConnectionTap,
+            map(() => void 0)
+          );
       })
     );
   }
@@ -411,7 +403,11 @@ export class AddEditConnectionButtonComponent {
           .open(SecretTextConnectionDialogComponent, {
             data: dialogData,
           })
-          .afterClosed();
+          .afterClosed()
+          .pipe(
+            this.updateConnectionTap,
+            map(() => void 0)
+          );
       })
     );
   }
@@ -430,7 +426,11 @@ export class AddEditConnectionButtonComponent {
           .open(BasicAuthConnectionDialogComponent, {
             data: dialogData,
           })
-          .afterClosed();
+          .afterClosed()
+          .pipe(
+            this.updateConnectionTap,
+            map(() => void 0)
+          );
       })
     );
   }
@@ -448,7 +448,10 @@ export class AddEditConnectionButtonComponent {
               },
             })
             .afterClosed()
-            .pipe(map(() => void 0));
+            .pipe(
+              this.updateConnectionTap,
+              map(() => void 0)
+            );
         } else {
           if (!this.checkingOAuth2CloudManager$.value) {
             this.checkingOAuth2CloudManager$.next(true);
@@ -469,7 +472,10 @@ export class AddEditConnectionButtonComponent {
                   },
                 })
                 .afterClosed()
-                .pipe(map(() => void 0));
+                .pipe(
+                  this.updateConnectionTap,
+                  map(() => void 0)
+                );
             })
           );
         }

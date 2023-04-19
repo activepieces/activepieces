@@ -7,7 +7,7 @@
             *ngIf="currentResults.length === 0 && !loading ">
             <div class="ap-relative">
                 <ap-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
-                    matTooltip="Test this step to generate sample data that can be used in the next steps"
+                    matTooltip="Send a request to generate sample data that can be used in the next steps"
                     matTooltipPosition="above"> </ap-hotspot>
                 <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()">Send
                     Data </ap-button>
@@ -28,7 +28,7 @@
                     (buttonClicked)="testStep()">Retest</ap-button>
             </div>
 
-            <mat-form-field class="ap-w-full ap-mt-2" appearance="outline" subscriptSizing="dynamic">
+            <mat-form-field class="ap-w-full ap-my-2" appearance="outline" subscriptSizing="dynamic">
                 <mat-label>
                     Data
                 </mat-label>
@@ -39,11 +39,9 @@
                     </mat-option>
                 </mat-select>
             </mat-form-field>
-            <div class="ap-typography-caption ap-text-description ap-my-2">
-                This sample data can be used in the next steps
-            </div>
-            <app-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
-                [content]="selectedDataControl.value"></app-json-viewer>
+
+            <ap-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
+                [content]="selectedDataControl.value"></ap-json-viewer>
 
 
         </ng-container>

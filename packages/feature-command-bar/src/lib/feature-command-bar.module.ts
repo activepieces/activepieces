@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UiCommonModule } from '@/ui/common/src';
+import { UiCommonModule } from '@activepieces/ui/common';
 import { SwitchFlowDialogComponent } from './switch-flow-dialog/switch-flow-dialog.component';
 
 @NgModule({

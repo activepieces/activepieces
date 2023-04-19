@@ -20,7 +20,10 @@ import { FormControl } from '@angular/forms';
 import deepEqual from 'deep-equal';
 import { TestStepCoreComponent } from '../test-steps-core.component';
 import { TestStepService } from '@activepieces/ui/common';
-import { BuilderSelectors, FlowsActions } from '@activepieces/ui/feature-builder-store';
+import {
+  BuilderSelectors,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
 
 export interface WebhookHistoricalData {
   payload: unknown;
@@ -36,7 +39,6 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
   foundNewResult$: Subject<boolean> = new Subject();
   loading = false;
   selectedDataControl: FormControl<unknown> = new FormControl();
-
   saveNewSelectedData$: Observable<void>;
   initialHistoricalData$: Observable<WebhookHistoricalData[]>;
   initaillySelectedSampleData$: Observable<unknown>;
@@ -54,7 +56,9 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
       .select(BuilderSelectors.selectCurrentFlowId)
       .pipe(
         switchMap((res) => {
-          return this.testStepService.getTriggerEventsResults(res?.toString() || '');
+          return this.testStepService.getTriggerEventsResults(
+            res?.toString() || ''
+          );
         }),
         map((res) => {
           return res.data;
@@ -66,7 +70,7 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
         })
       );
     this.initaillySelectedSampleData$ = this.store
-      .select(BuilderSelectors.selectStepSelectedSampleData)
+      .select(BuilderSelectors.selectTriggerSelectedSampleData)
       .pipe(
         tap((res) => {
           this.stopSelectedDataControlListener$.next(true);
@@ -98,7 +102,7 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
               this.cancelTesting$,
               this.foundNewResult$
             );
-            return interval(500).pipe(
+            return interval(this.POLLING_TEST_INTERVAL_MS).pipe(
               takeUntil(stopListening$),
               switchMap(() => {
                 return this.createResultsChecker(id.toString());

@@ -83,11 +83,11 @@ export const webhookService = {
     },
 
     async getWebhookPrefix(): Promise<string> {
-        const environment = system.get(SystemProp.ENVIRONMENT)
+        const environment = system.getOrThrow(SystemProp.ENVIRONMENT)
 
         let url = environment === ApEnvironment.PRODUCTION
-            ? system.get(SystemProp.FRONTEND_URL)
-            : system.get(SystemProp.WEBHOOK_URL)
+            ? system.getOrThrow(SystemProp.FRONTEND_URL)
+            : system.getOrThrow(SystemProp.WEBHOOK_URL)
 
         // Localhost doesn't work with webhooks, so we need try to use the public ip
         if (extractHostname(url) == 'localhost' && environment === ApEnvironment.PRODUCTION) {
@@ -146,9 +146,9 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
     if (isNil(flowId)) {
         logger.error('[WebhookService#getFlowOrThrow] error=flow_id_is_undefined')
         throw new ActivepiecesError({
-            code: ErrorCode.FLOW_NOT_FOUND,
+            code: ErrorCode.VALIDATION,
             params: {
-                id: undefined,
+                message: 'flowId is undefined',
             },
         })
     }

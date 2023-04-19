@@ -50,9 +50,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
 };
 
 @NgModule({
-  declarations: [
-    ImgFallbackDirective,
-  ],
+  declarations: [ImgFallbackDirective],
   imports: [
     FontAwesomeModule,
     CommonModule,

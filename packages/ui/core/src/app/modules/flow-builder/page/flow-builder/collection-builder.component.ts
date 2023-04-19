@@ -29,7 +29,10 @@ import {
   TriggerType,
 } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
-import { LeftSideBarType, RightSideBarType} from '@activepieces/ui/feature-builder-store';
+import {
+  LeftSideBarType,
+  RightSideBarType,
+} from '@activepieces/ui/feature-builder-store';
 import { TestStepService } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 @Component({

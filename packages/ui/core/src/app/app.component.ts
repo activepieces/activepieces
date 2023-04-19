@@ -10,8 +10,8 @@ import { compareVersions } from 'compare-versions';
 import { ApFlagId } from '@activepieces/shared';
 import { TelemetryService } from './modules/common/service/telemetry.service';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
-import { SwitchFlowDialogComponent } from '@/feature-command-bar/src/lib/switch-flow-dialog/switch-flow-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import { SwitchFlowDialogComponent } from '@activepieces/feature-command-bar';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;

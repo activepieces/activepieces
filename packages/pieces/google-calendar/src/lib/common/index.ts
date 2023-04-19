@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/framework';
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { getCalendars } from './helper';
 
 export const googleCalendarCommon = {
@@ -12,31 +12,33 @@ export const googleCalendarCommon = {
     pkce: true,
     scope: ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar.readonly'],
   }),
-  calendarDropdown: Property.Dropdown<string>({
-    displayName: 'Calendar',
-    refreshers: ['authentication'],
-    required: true,
-    options: async (propsValue) => {
-      if (!propsValue['authentication']) {
-        return {
-          disabled: true,
-          placeholder: 'Please connect your account first',
-          options: [],
-        };
-      }
-      const authProp: OAuth2PropertyValue = propsValue[
-        'authentication'
-      ] as OAuth2PropertyValue;
-      const calendars = await getCalendars(authProp);
-      return {
-        disabled: false,
-        options: calendars.map((calendar) => {
+  calendarDropdown: (minAccessRole?: 'writer') => {
+    return Property.Dropdown<string>({
+      displayName: 'Calendar',
+      refreshers: ['authentication'],
+      required: true,
+      options: async (propsValue) => {
+        if (!propsValue['authentication']) {
           return {
-            label: calendar.summary,
-            value: calendar.id,
+            disabled: true,
+            placeholder: 'Please connect your account first',
+            options: [],
           };
-        }),
-      };
-    },
-  }),
+        }
+        const authProp: OAuth2PropertyValue = propsValue[
+          'authentication'
+        ] as OAuth2PropertyValue;
+        const calendars = await getCalendars(authProp, minAccessRole);
+        return {
+          disabled: false,
+          options: calendars.map((calendar) => {
+            return {
+              label: calendar.summary,
+              value: calendar.id,
+            };
+          }),
+        };
+      },
+    })
+  },
 };

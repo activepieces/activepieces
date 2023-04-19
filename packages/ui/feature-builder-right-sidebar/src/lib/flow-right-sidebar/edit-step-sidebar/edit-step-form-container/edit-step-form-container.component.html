@@ -29,15 +29,15 @@
 <ng-template #inputFormSelection>
   <div [formGroup]="stepForm">
     <ng-container [ngSwitch]="_selectedStep.type">
-      <app-loop-step-input-form *ngSwitchCase="ActionType.LOOP_ON_ITEMS" formControlName="input">
+      <app-loop-step-input-form *ngSwitchCase="ActionType.LOOP_ON_ITEMS" formControlName="settings">
       </app-loop-step-input-form>
-      <app-code-step-input-form *ngSwitchCase="ActionType.CODE" formControlName="input">
+      <app-code-step-input-form *ngSwitchCase="ActionType.CODE" formControlName="settings">
       </app-code-step-input-form>
-      <app-piece-action-input-form *ngSwitchCase="ActionType.PIECE" formControlName="input">
+      <app-piece-action-input-form *ngSwitchCase="ActionType.PIECE" formControlName="settings">
       </app-piece-action-input-form>
-      <app-piece-trigger-input-form *ngSwitchCase="TriggerType.PIECE" formControlName="input">
+      <app-piece-trigger-input-form *ngSwitchCase="TriggerType.PIECE" formControlName="settings">
       </app-piece-trigger-input-form>
-      <app-branch-step-input-form *ngSwitchCase="ActionType.BRANCH" formControlName="input">
+      <app-branch-step-input-form *ngSwitchCase="ActionType.BRANCH" formControlName="settings">
       </app-branch-step-input-form>
     </ng-container>
 

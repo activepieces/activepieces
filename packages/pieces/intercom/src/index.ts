@@ -1,4 +1,4 @@
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import packageJson from '../package.json';
 import { createContact } from './lib/actions/create-contact.action';
 import { getOrCreateContact } from './lib/actions/create-or-get-contact.action';

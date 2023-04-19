@@ -1,4 +1,5 @@
-import { AuthenticationType, createAction, getAccessTokenOrThrow, httpClient, HttpError, HttpMethod, HttpResponse, Property } from "@activepieces/framework";
+import { Property, createAction } from "@activepieces/pieces-framework";
+import { AuthenticationType, getAccessTokenOrThrow, httpClient, HttpMethod, HttpResponse } from "@activepieces/pieces-common";
 import { intercomCommon } from "../common";
 
 enum ContactRole {

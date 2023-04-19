@@ -1,5 +1,5 @@
-import { createTrigger, HttpMethod, HttpResponse, httpClient, AuthenticationType } from "@activepieces/framework";
-import { TriggerStrategy } from "@activepieces/shared";
+import { createTrigger, TriggerStrategy } from "@activepieces/pieces-framework";
+import { HttpMethod, HttpResponse, httpClient, AuthenticationType } from "@activepieces/pieces-common";
 import { callTwilioApi, twilioCommon } from "../common";
 
 export const twilioNewIncomingSms = createTrigger({
