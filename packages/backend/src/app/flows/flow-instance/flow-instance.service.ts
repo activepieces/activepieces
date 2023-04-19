@@ -4,7 +4,7 @@ import { FlowInstanceEntity } from './flow-instance.entity'
 import { triggerUtils } from '../../helper/trigger-utils'
 import { flowService } from '../flow/flow.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
-import { logger } from '../../helper/logger'
+import { isNil } from 'lodash'
 
 
 export const flowInstanceRepo = databaseConnection.getRepository(FlowInstanceEntity)
@@ -102,7 +102,7 @@ export const flowInstanceService = {
     },
     async delete({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<void> {
         const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })
-        if (flowInstance == null) {
+        if (isNil(flowInstance)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_INSTANCE_NOT_FOUND,
                 params: {
@@ -110,8 +110,9 @@ export const flowInstanceService = {
                 },
             })
         }
+        const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
         await triggerUtils.disable({
-            flowVersion: flowInstance.flowVersion,
+            flowVersion: flowVersion,
             projectId: flowInstance.projectId,
             simulate: false,
         })
@@ -119,9 +120,10 @@ export const flowInstanceService = {
     },
     async onFlowDelete({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<void> {
         const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })
+        const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
         if (flowInstance) {
             await triggerUtils.disable({
-                flowVersion: flowInstance.flowVersion,
+                flowVersion: flowVersion,
                 projectId: flowInstance.projectId,
                 simulate: false,
             })
