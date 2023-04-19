@@ -30,7 +30,7 @@ const deleteWebhookSimulation = async (params: DeleteWebhookSimulationParams): P
 }
 
 export const flowVersionSideEffects = {
-    async onApplyOperation({ projectId, flowVersion, operation }: OnApplyOperationParams): Promise<void> {
+    async preApplyOperation({ projectId, flowVersion, operation }: OnApplyOperationParams): Promise<void> {
         if (operation.type === FlowOperationType.UPDATE_TRIGGER) {
             await deleteWebhookSimulation({
                 projectId,
