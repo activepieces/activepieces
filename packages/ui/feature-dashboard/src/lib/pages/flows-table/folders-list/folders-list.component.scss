@@ -1,4 +1,11 @@
 @import "../../../../../../core/src/assets/scss/variables.scss";
+
+.folders-list
+{
+    &::-webkit-scrollbar {
+        width: 4px;
+      }
+}
 .selected-folder-item{
     background-color:  $graySelect;
     .folder-icon
