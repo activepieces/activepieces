@@ -50,9 +50,12 @@ export class CodeService {
 
   private downloadFile(url: string) {
     if (!this.cachedFile.get(url)) {
-      this.cachedFile.set(url, this.http.get(url, {
-        responseType: 'arraybuffer',
-      }));
+      this.cachedFile.set(
+        url,
+        this.http.get(url, {
+          responseType: 'arraybuffer',
+        })
+      );
     }
     return this.cachedFile.get(url);
   }
@@ -114,7 +117,7 @@ export class CodeService {
       })
     );
   }
-  public async readFile(file:any) {
+  public async readFile(file: any) {
     const content = { content: '', package: '' };
     const zipFile = await JSZip.loadAsync(file);
     for (const filename of Object.keys(zipFile.files)) {
@@ -147,7 +150,9 @@ export class CodeService {
   ): Observable<{ [key: PackageName]: PackageVersion } | null> {
     return this.getNpmPackage(npmName).pipe(
       map((pkg) => {
-        const pkgJson:{npmName:string} = {npmName:pkg['dist-tags'].latest};
+        const pkgJson: { npmName: string } = {
+          npmName: pkg['dist-tags'].latest,
+        };
         return pkgJson;
       }),
       catchError(() => {

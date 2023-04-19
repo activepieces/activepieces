@@ -49,7 +49,7 @@
   <ng-container *ngIf="expandConnections">
 
     <ng-container *ngFor="let connectionMention of connectionsMentions$|async">
-      <app-generic-mention-item [mention]="connectionMention" leftPadding="56px"
+      <app-generic-mention-item [mention]="connectionMention" leftPadding="56px !important"
         (mentionClicked)="mentionClicked($event)"></app-generic-mention-item>
     </ng-container>
 

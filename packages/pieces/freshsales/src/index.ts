@@ -1,5 +1,5 @@
 import packageJson from "../package.json";
-import { createPiece } from "@activepieces/framework";
+import { createPiece } from "@activepieces/pieces-framework";
 import { freshSalesCreateContact } from "./lib/actions/create-contact";
 
 export const freshsales = createPiece({

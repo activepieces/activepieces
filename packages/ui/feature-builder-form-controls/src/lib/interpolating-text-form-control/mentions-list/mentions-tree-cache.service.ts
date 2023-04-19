@@ -49,7 +49,13 @@ export class MentionsTreeCacheService {
     substr: string
   ): boolean {
     for (const node of tree) {
-      if (node.propertyPath.toLowerCase().includes(substr.toLowerCase())) {
+      if (
+        node.propertyPath.toLowerCase().includes(substr.toLowerCase()) ||
+        (node.value &&
+          JSON.stringify(node.value)
+            .toLowerCase()
+            .includes(substr.toLowerCase()))
+      ) {
         return true;
       }
       if (node.children && this.searchTreeForSubstr(node.children, substr)) {
@@ -65,10 +71,18 @@ export class MentionsTreeCacheService {
     markedNodesToShow: Map<string, boolean>
   ): void {
     for (const node of tree) {
-      const nodeContainsSubstring = node.propertyPath
+      const nodePathContainsSubstring = node.propertyPath
         .toLowerCase()
         .includes(substr.toLowerCase());
-      markedNodesToShow.set(node.propertyPath, nodeContainsSubstring);
+      const nodeValueContainsSubstring = node.value
+        ? JSON.stringify(node.value)
+            .toLowerCase()
+            .includes(substr.toLocaleLowerCase())
+        : false;
+      markedNodesToShow.set(
+        node.propertyPath,
+        nodePathContainsSubstring || nodeValueContainsSubstring
+      );
       if (node.children) {
         this._markNodesToShow(node.children, substr, markedNodesToShow);
         const showAnyChild = node.children.some((c) =>
@@ -76,7 +90,7 @@ export class MentionsTreeCacheService {
         );
         markedNodesToShow.set(
           node.propertyPath,
-          nodeContainsSubstring || showAnyChild
+          nodePathContainsSubstring || showAnyChild
         );
       }
     }

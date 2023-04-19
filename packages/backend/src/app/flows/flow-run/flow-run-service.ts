@@ -73,9 +73,9 @@ export const flowRunService = {
             })
         }
         notifications.notifyRun({
-            flowRun,
+            flowRun: flowRun!,
         })
-        return flowRun
+        return flowRun!
     },
 
     async start({ flowVersionId, collectionId, payload, environment }: StartParams): Promise<FlowRun> {
@@ -107,13 +107,13 @@ export const flowRunService = {
 
         const savedFlowRun = await repo.save(flowRun)
 
-        telemetry.trackProject(flowRun.projectId, {
+        telemetry.trackProject(flowRun.projectId!, {
             name: TelemetryEventName.FLOW_RUN_CREATED,
             payload: {
-                projectId: flowRun.projectId,
-                collectionId: flowRun.collectionId,
-                flowId: flowVersion.flowId,
-                environment: flowRun.environment,
+                projectId: flowRun.projectId!,
+                collectionId: flowRun.collectionId!,
+                flowId: flowVersion.flowId!,
+                environment: flowRun.environment!,
             },
         })
         await flowRunSideEffects.start({
@@ -155,7 +155,7 @@ type ListParams = {
 
 type GetOneParams = {
     id: FlowRunId
-    projectId: ProjectId
+    projectId: ProjectId | undefined
 }
 
 type StartParams = {

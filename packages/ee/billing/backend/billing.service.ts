@@ -13,13 +13,12 @@ import dayjs from "dayjs";
 
 const projectPlanRepo = databaseConnection.getRepository<ProjectPlan>(ProjectPlanEntity);
 const stripeSecret = system.get(SystemProp.STRIPE_SECRET_KEY);
-
-export const stripe = new Stripe(stripeSecret, {
+export const stripe = new Stripe(stripeSecret!, {
     apiVersion: '2022-11-15',
 });
 
 function getDefaultPlanId(): string {
-    if (stripeSecret.startsWith('sk_test')) {
+    if (stripeSecret!.startsWith('sk_test')) {
         return "price_1MeoK3KZ0dZRqLEKXIsGoguO";
     } else {
         return "price_1MgpQ4KZ0dZRqLEKqMiS8vrf";
@@ -149,10 +148,10 @@ async function downgradeToFreeTier({ projectId }: { projectId: ProjectId }): Pro
         const currentPlan = await projectPlanRepo.findOneBy({ projectId });
         const planLimits = parsePlanFromId(defaultPlanId);
         const stripeSubscription = await stripe.subscriptions.create({
-            customer: currentPlan.stripeCustomerId,
+            customer: currentPlan!.stripeCustomerId,
             items: [{ plan: defaultPlanId }],
         });
-        await projectPlanRepo.update(currentPlan.id, {
+        await projectPlanRepo.update(currentPlan!.id, {
             ...currentPlan,
             tasks: planLimits.tasks,
             name: defaultPlanId,
@@ -176,16 +175,16 @@ async function createStripeDetails({ projectId }: { projectId: ProjectId }): Pro
             return currentPlan;
         }
         const project = await projectService.getOne(projectId);
-        const user = await userService.getMetaInfo({ id: project.ownerId });
+        const user = await userService.getMetaInfo({ id: project!.ownerId });
         const planLimits = parsePlanFromId(defaultPlanId);
         const stripeCustomer = await stripe.customers.create({
-            email: user.email,
-            name: user.firstName + " " + user.lastName,
-            description: 'User Id: ' + user.id + ' Project Id: ' + projectId,
+            email: user!.email,
+            name: user!.firstName + " " + user!.lastName,
+            description: 'User Id: ' + user!.id + ' Project Id: ' + projectId,
         });
         const stripeSubscription = await stripe.subscriptions.create({
             customer: stripeCustomer.id,
-            backdate_start_date: dayjs(project.created).unix(),
+            backdate_start_date: dayjs(project!.created).unix(),
             items: [{ plan: defaultPlanId }],
         });
         return await projectPlanRepo.save({
@@ -195,7 +194,7 @@ async function createStripeDetails({ projectId }: { projectId: ProjectId }): Pro
             name: defaultPlanId,
             stripeCustomerId: stripeCustomer.id,
             stripeSubscriptionId: stripeSubscription.id,
-            subscriptionStartDatetime: project.created,
+            subscriptionStartDatetime: project!.created,
         });
     } finally {
         await projectPlanLock.release();

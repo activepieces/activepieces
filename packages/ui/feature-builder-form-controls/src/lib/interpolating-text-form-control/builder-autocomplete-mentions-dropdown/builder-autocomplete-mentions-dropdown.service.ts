@@ -1,10 +1,12 @@
+import { ElementRef } from '@angular/core';
 import { Injectable } from '@angular/core';
 import { UUID } from 'angular2-uuid';
-import { Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class BuilderAutocompleteMentionsDropdownService {
-  lastOpenDropdownId$: Subject<UUID> = new Subject();
+  lastOpenDropdownId$: BehaviorSubject<UUID> = new BehaviorSubject(new UUID());
+  editStepSection?: ElementRef;
 }

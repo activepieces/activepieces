@@ -1,6 +1,6 @@
-import { AuthenticationType, createAction, httpClient, HttpMethod, OAuth2PropertyValue, Property } from "@activepieces/framework";
+import { OAuth2PropertyValue, Property, createAction } from "@activepieces/pieces-framework";
+import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { constantContactProps } from "../common/props";
-
 
 export const createOrUpdateContact = createAction({
     name: "create_or_update_contact",

@@ -2,7 +2,6 @@ import {
   AppConnection,
   AppConnectionType,
   BasicAuthConnection,
-  BasicAuthProperty,
   UpsertBasicAuthRequest,
 } from '@activepieces/shared';
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
@@ -22,6 +21,7 @@ import {
   BuilderSelectors,
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
+import { BasicAuthProperty } from '@activepieces/pieces-framework';
 
 interface BasicAuthForm {
   name: FormControl<string>;

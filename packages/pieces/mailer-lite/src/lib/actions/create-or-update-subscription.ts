@@ -1,5 +1,5 @@
 import MailerLite from "@mailerlite/mailerlite-nodejs";
-import { createAction, Property } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 
 const markdownDescription = `
 To obtain your API key, follow these steps:

@@ -1,4 +1,4 @@
-import { createAction } from "@activepieces/framework";
+import { createAction } from "@activepieces/pieces-framework";
 import { createTask, googleTasksCommon, Task, TaskStatus } from "../common";
 
 export const googleTasksAddNewTaskAction = createAction({

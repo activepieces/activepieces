@@ -4,13 +4,7 @@ import {
   ApEdition,
   ApEnvironment,
   compareSemVer,
-  DropdownState,
-  PieceMetadata,
-  PieceMetadataSummary,
   PieceOptionRequest,
-  PiecePropertyMap,
-  TriggerBase,
-  TriggerStrategy,
   TriggerType,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
@@ -18,6 +12,14 @@ import { Observable, shareReplay, map, forkJoin } from 'rxjs';
 import { environment } from '../environments/environment';
 import { FlowItemDetails } from '../models/flow-item-details';
 import { FlagService } from './flag.service';
+import {
+  DropdownState,
+  PiecePropertyMap,
+  TriggerStrategy,
+  TriggerBase,
+  PieceMetadata,
+  PieceMetadataSummary,
+} from '@activepieces/pieces-framework';
 
 type TriggersMetadata = Record<string, TriggerBase>;
 
@@ -77,7 +79,7 @@ export class ActionMetaService {
     },
   ];
 
-  constructor(private http: HttpClient, private flagsService: FlagService) { }
+  constructor(private http: HttpClient, private flagsService: FlagService) {}
 
   private filterUnSupportedPieces = (params: FilterUnSupportedPiecesParams) => {
     const { piecesManifest, release } = params;

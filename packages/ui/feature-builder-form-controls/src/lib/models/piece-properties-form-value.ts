@@ -1,4 +1,4 @@
-import { PiecePropertyMap } from '@activepieces/shared';
+import { PiecePropertyMap } from '@activepieces/pieces-framework';
 
 export interface PiecePropertiesFormValue {
   properties: PiecePropertyMap;
