@@ -17,6 +17,7 @@ import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { captureException } from '@sentry/node'
 import { isNil } from 'lodash'
+import { logger } from './logger'
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
@@ -76,7 +77,11 @@ export const triggerUtils = {
         }
     },
 
-    async disable({ collectionId, flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
+    async disable(params: EnableOrDisableParams): Promise<void> {
+        logger.debug(params, '[TriggerUtils#disable] params')
+
+        const { collectionId, flowVersion, projectId, simulate } = params
+
         switch (flowVersion.trigger.type) {
             case TriggerType.PIECE:
                 await disablePieceTrigger({
@@ -93,6 +98,8 @@ export const triggerUtils = {
 }
 
 const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
+    logger.debug(params, '[TriggerUtils#disablePieceTrigger] params')
+
     const { flowVersion, projectId, collectionId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
     const pieceTrigger = getPieceTrigger(flowTrigger)
