@@ -1,4 +1,5 @@
 import { Flow, WebhookSimulation } from '@activepieces/shared'
+import { logger } from '../../helper/logger'
 import { flowService } from '../../flows/flow/flow.service'
 import { triggerUtils } from '../../helper/trigger-utils'
 
@@ -22,6 +23,8 @@ export const webhookSideEffects = {
     },
 
     async onDelete(webhookSimulation: WebhookSimulation): Promise<void> {
+        logger.debug(webhookSimulation, '[WebhookSimulationSideEffects#onDelete] webhookSimulation')
+
         const { projectId, collectionId, version: flowVersion } = await getFlowOrThrow(webhookSimulation)
 
         await triggerUtils.disable({
