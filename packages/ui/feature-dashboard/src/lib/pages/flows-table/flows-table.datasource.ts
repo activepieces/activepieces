@@ -7,7 +7,6 @@ import {
   tap,
   map,
   catchError,
-  distinctUntilChanged,
   BehaviorSubject,
 } from 'rxjs';
 import {
@@ -17,10 +16,9 @@ import {
 } from '@activepieces/ui/common';
 
 import { FormControl } from '@angular/forms';
-import { Flow, FlowInstanceStatus, FoldersListDto } from '@activepieces/shared';
+import { Flow, FlowInstanceStatus } from '@activepieces/shared';
 import { FlowTableDto } from '@activepieces/shared';
 import { Params } from '@angular/router';
-
 
 type FlowListDtoWithInstanceStatusToggleControl = Flow & {
   instanceToggleControl: FormControl<boolean>;
@@ -38,12 +36,9 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
     private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
     private flowService: FlowService,
-    private refresh$: Observable<boolean>,
-    private displayAllFlows$: Observable<boolean>,
-    private currentFolder$: Observable<FoldersListDto | undefined>
+    private refresh$: Observable<boolean>
   ) {
     super();
-    this.refresh$;
   }
 
   /**
@@ -52,17 +47,9 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
    * @returns A stream of the items to be rendered.
    */
   connect(): Observable<FlowListDtoWithInstanceStatusToggleControl[]> {
-    const allFlowsAndCurrentFolder$ = combineLatest({
-      displayAllFlows: this.displayAllFlows$,
-      currentFolder: this.currentFolder$,
-    }).pipe(
-      distinctUntilChanged((current, next) => {
-        return JSON.stringify(current) === JSON.stringify(next);
-      })
-    );
     return combineLatest({
       queryParams: this.queryParams$,
-      allFlowsAndCurrentFolder: allFlowsAndCurrentFolder$,
+      refresh: this.refresh$,
     }).pipe(
       tap(() => {
         this.isLoading$.next(true);
@@ -71,9 +58,9 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
         return this.flowService.list({
           limit: res.queryParams['limit'] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams['cursor'],
-          folderId: res.allFlowsAndCurrentFolder.displayAllFlows
-            ? undefined
-            : res.allFlowsAndCurrentFolder.currentFolder?.id || 'NULL',
+          folderId: res.queryParams['folderId']
+            ? res.queryParams['folderId']
+            : undefined,
         });
       }),
       catchError((err) => {

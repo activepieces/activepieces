@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, forkJoin, map, tap } from 'rxjs';
 import { FoldersListDto } from '@activepieces/shared';
 import { FoldersService } from '../services/folders.service';
@@ -26,22 +26,27 @@ export class FoldersResolver
     private flowsService: FlowService
   ) {}
 
-  resolve(): Observable<FoldersResolverResult> {
+  resolve(route: ActivatedRouteSnapshot): Observable<FoldersResolverResult> {
     const countAllFlows$ = this.flowsService.count({
       allFlows: 'true',
     });
     const countUncategorizedFlows$ = this.flowsService.count({
       allFlows: 'false',
     });
-
     const folders$ = this.foldersService.list().pipe(map((res) => res.data));
+    const selectedFolderId = route.queryParams['folderId'];
     return forkJoin({
       allFlowsNumber: countAllFlows$,
       uncategorizedFlowsNumber: countUncategorizedFlows$,
       folders: folders$,
     }).pipe(
       tap((res) => {
-        this.store.dispatch(FolderActions.setInitial(res));
+        this.store.dispatch(
+          FolderActions.setInitial({
+            ...res,
+            selectedFolderId: selectedFolderId,
+          })
+        );
       })
     );
   }

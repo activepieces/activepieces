@@ -20,7 +20,12 @@ export class FoldersListComponent {
   folders$: Observable<FoldersListDto[]>;
   selectedFolder$: Observable<FoldersListDto | undefined>;
   showAllFlows$: Observable<boolean>;
-  constructor(private dialogService: MatDialog, private store: Store,private router: Router,private route:ActivatedRoute ) {
+  constructor(
+    private dialogService: MatDialog,
+    private store: Store,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {
     this.folders$ = this.store.select(FoldersSelectors.selectFolders);
     this.allFlowsNumber$ = this.store.select(
       FoldersSelectors.selectAllFlowsNumber
@@ -38,21 +43,19 @@ export class FoldersListComponent {
   createFolder() {
     this.dialogService.open(NewFolderDialogComponent);
   }
-  setSelectedFolder(folderId?: string) {
+  setSelectedFolder(folderId: string) {
     this.store.dispatch(FolderActions.selectFolder({ folderId }));
-    this.clearCursorParam();
- 
+    this.clearCursorParam(folderId);
   }
   showAllFlows() {
     this.store.dispatch(FolderActions.showAllFlows());
     this.clearCursorParam();
   }
 
-  clearCursorParam()
-  {
+  clearCursorParam(folderId?: string) {
     this.router.navigate(['.'], {
       relativeTo: this.route,
-      queryParams: {cursor:undefined},
+      queryParams: { cursor: undefined, folderId: folderId },
       queryParamsHandling: 'merge',
     });
   }

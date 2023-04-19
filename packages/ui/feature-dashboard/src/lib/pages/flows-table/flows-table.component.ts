@@ -1,4 +1,4 @@
-import {  Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, Observable, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
@@ -16,8 +16,6 @@ import {
   DeleteEntityDialogData,
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
-import { Store,  } from '@ngrx/store';
-import { FoldersSelectors } from '../../store/folders/folders.selector';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -37,8 +35,7 @@ export class FlowsTableComponent implements OnInit {
     private dialogService: MatDialog,
     private flowService: FlowService,
     private router: Router,
-    private instanceService: FlowInstanceService,
-    private store: Store,
+    private instanceService: FlowInstanceService
   ) {}
 
   ngOnInit(): void {
@@ -46,9 +43,7 @@ export class FlowsTableComponent implements OnInit {
       this.activatedRoute.queryParams,
       this.paginator,
       this.flowService,
-      this.flowDeleted$.asObservable().pipe(startWith(true)),
-      this.store.select(FoldersSelectors.selectDisplayAllFlows),
-      this.store.select(FoldersSelectors.selectCurrentFolder)
+      this.flowDeleted$.asObservable().pipe(startWith(true))
     );
     this.areThereFlows$ = this.activatedRoute.data.pipe(
       map((res) => {
