@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { map, Observable, of, switchMap } from 'rxjs';
 import {
+  CountFlowsRequest,
   CreateFlowRequest,
   CreateFlowRunRequest,
   ExecutionOutputStatus,
@@ -97,5 +98,14 @@ export class FlowService {
       prompt: prompt,
     };
     return this.http.post<Flow>(environment.apiUrl + '/flows/guess', request);
+  }
+
+  count(req: CountFlowsRequest) {
+    const params: Record<string, string | number | boolean> = {
+      ...req,
+    };
+    return this.http.get<number>(environment.apiUrl + '/flows/count', {
+      params: params,
+    });
   }
 }

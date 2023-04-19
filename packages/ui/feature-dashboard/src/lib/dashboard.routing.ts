@@ -6,6 +6,7 @@ import {
   AreThereFlowsResovler,
 } from './resolvers/are-there-flows.resolver';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
+import { FoldersResolver } from './resolvers/folders.resolver';
 export const DashboardLayoutRouting: Routes = [
   {
     path: '',
@@ -29,7 +30,10 @@ export const DashboardLayoutRouting: Routes = [
         path: 'flows',
         pathMatch: 'full',
         component: FlowsTableComponent,
-        resolve: { [ARE_THERE_FLOWS_FLAG]: AreThereFlowsResovler },
+        resolve: {
+          [ARE_THERE_FLOWS_FLAG]: AreThereFlowsResovler,
+          folders: FoldersResolver,
+        },
       },
     ],
   },

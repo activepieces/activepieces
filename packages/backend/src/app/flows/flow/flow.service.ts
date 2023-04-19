@@ -151,5 +151,18 @@ export const flowService = {
         await flowInstanceService.onFlowDelete({ projectId, flowId })
         await flowRepo.delete({ projectId: projectId, id: flowId })
     },
+    async count(req:{
+        projectId:string
+        folderId:string
+        allFlows:boolean
+    }) :Promise<number>{
+        if(req.allFlows) {
+            return flowRepo.count()
+        }
+        return flowRepo.count({
+            where:[{folderId:req.folderId, projectId:req.projectId}],
+        })
+    },
     
 }
+
