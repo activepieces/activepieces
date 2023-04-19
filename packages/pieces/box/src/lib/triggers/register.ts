@@ -45,7 +45,7 @@ export const boxRegisterTrigger = ({ name, event, displayName, description, samp
         token: authentication.access_token,
       },
       body: {
-        address: context.webhookUrl.replace("http://localhost:3000", "https://4e63-102-167-31-143.ngrok-free.app"),
+        address: context.webhookUrl,
         triggers: [event],
         target: target
       }
