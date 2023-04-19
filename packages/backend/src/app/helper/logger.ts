@@ -16,7 +16,7 @@ export const initilizeSentry = () => {
     }
 }
 
-export const captureException = (error: Error) => {
+export const captureException = (error: unknown) => {
     logger.error(error)
     if (sentryDsn) {
         Sentry.captureException(error)

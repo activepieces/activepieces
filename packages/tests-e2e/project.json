@@ -1,0 +1,22 @@
+{
+  "name": "tests-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/tests-e2e",
+  "projectType": "application",
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["npx playwright test ./packages/tests-e2e/tests/ --project=chrome"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/tests-e2e/**/*.{js,ts}"]
+      }
+    }
+  },
+  "tags": []
+}

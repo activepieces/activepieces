@@ -4,8 +4,8 @@ import { ApEdition, FlowVersion } from '@activepieces/shared'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 
-let edition = undefined
-let webhookSecrets = undefined
+let edition: string | undefined = undefined
+let webhookSecrets: Record<string, string> | undefined  = undefined
 
 async function verifyLicense(licenseKey: string): Promise<boolean> {
     try {
@@ -22,12 +22,18 @@ async function verifyLicense(licenseKey: string): Promise<boolean> {
 export async function getEdition(): Promise<string> {
     if (edition === undefined) {
         const licenseKey = system.get(SystemProp.LICENSE_KEY)
-        edition = (await verifyLicense(licenseKey)) ? 'ee' : 'ce'
+        if (licenseKey) {
+            edition = (await verifyLicense(licenseKey)) ? 'ee' : 'ce'
+        }
+        else {
+            edition = 'ce'
+        }
     }
+
     return edition
 }
 
-export async function getWebhookSecret(flowVersion: FlowVersion): Promise<string> {
+export async function getWebhookSecret(flowVersion: FlowVersion): Promise<string | undefined> {
     const appName = flowVersion.trigger?.settings['pieceName']
     if(!appName) {
         return undefined

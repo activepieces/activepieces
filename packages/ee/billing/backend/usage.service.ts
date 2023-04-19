@@ -19,14 +19,14 @@ export const usageService = {
             const projectUsage = await usageService.getUsage({ projectId: request.projectId });
             const numberOfSteps = countSteps(request.flowVersion);
             const projectPlan = await billingService.getPlan({ projectId: request.projectId });
-            if (projectUsage.consumedTasks + numberOfSteps > projectPlan.tasks) {
+            if (projectUsage!.consumedTasks + numberOfSteps > projectPlan.tasks) {
                 throw new ActivepiecesError({
                     code: ErrorCode.TASK_QUOTA_EXCEEDED,
                     params: { projectId: request.projectId },
                 });
             }
-            projectUsage.consumedTasks += numberOfSteps;
-            await projectUsageRepo.save(projectUsage);
+            projectUsage!.consumedTasks += numberOfSteps;
+            await projectUsageRepo.save(projectUsage!);
         } catch (e) {
             if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
                 throw e;
@@ -41,7 +41,7 @@ export const usageService = {
             perform: true,
         }
     },
-    async getUsage({ projectId }: { projectId: ProjectId }): Promise<ProjectUsage> {
+    async getUsage({ projectId }: { projectId: ProjectId }): Promise<ProjectUsage | null> {
         let projectUsage = await projectUsageRepo.findOneBy({ projectId });
         const plan = await billingService.getPlan({ projectId });
         const nextReset = nextResetDatetime(plan.subscriptionStartDatetime);

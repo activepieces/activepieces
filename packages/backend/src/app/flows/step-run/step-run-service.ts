@@ -10,8 +10,14 @@ import {
     ProjectId,
     TriggerType,
 } from '@activepieces/shared'
+import { isEmpty, isNil } from 'lodash'
 import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
+
+type CreateReturn = {
+    success: boolean
+    output: unknown
+}
 
 type CreateParams = {
     projectId: ProjectId
@@ -35,19 +41,29 @@ const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, 
 }
 
 export const stepRunService = {
-    async create({ projectId, collectionId, flowVersionId, stepName }: CreateParams): Promise<unknown> {
+    async create({ projectId, collectionId, flowVersionId, stepName }: CreateParams): Promise<CreateReturn> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowHelper.getStep(flowVersion, stepName)
-        if (step.type !== ActionType.PIECE) {
+
+        if (isNil(step) || step.type !== ActionType.PIECE) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: `step is not a piece action stepName=${stepName}`,
+                    message: `invalid stepName (${stepName})`,
                 },
             })
         }
 
         const { pieceName, pieceVersion, actionName, input } = step.settings
+
+        if (isNil(actionName)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'actionName is undefined',
+                },
+            })
+        }
 
         const testExecutionContext = generateTestExecutionContext(flowVersion)
         const operation: ExecuteActionOperation = {
@@ -61,10 +77,16 @@ export const stepRunService = {
         }
 
         const result = await engineHelper.executeAction(operation)
+        const success = isEmpty(result.standardError)
 
-        step.settings.inputUiInfo.currentSelectedData = result
-        await flowVersionService.overwriteVersion(flowVersionId, flowVersion)
+        if (success) {
+            step.settings.inputUiInfo.currentSelectedData = result.output
+            await flowVersionService.overwriteVersion(flowVersionId, flowVersion)
+        }
 
-        return result
+        return {
+            success,
+            output: result.output,
+        }
     },
 }

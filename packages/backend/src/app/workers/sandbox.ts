@@ -26,10 +26,10 @@ export class Sandbox {
     public readonly boxId: number
     public used: boolean
     public cached: boolean
-    public resourceId: string
+    public resourceId: string | null
     public lastUsed: number
 
-    constructor(request: { boxId: number, used: boolean, resourceId: string, lastUsed: number, cached: boolean }) {
+    constructor(request: { boxId: number, used: boolean, resourceId: string | null, lastUsed: number, cached: boolean }) {
         this.boxId = request.boxId
         this.used = request.used
         this.cached = request.cached
@@ -210,14 +210,12 @@ export default class SandboxManager {
 
         // Find oldest sandbox not used
         const oldestSandbox = Array.from(this.sandboxes.values()).reduce((oldest, current) => {
-            if (oldest === null) {
-                return current
-            }
             if (current.lastUsed < oldest.lastUsed) {
                 return current
             }
+
             return oldest
-        }, null)
+        })
 
         if (oldestSandbox === null) {
             new Error('No sandbox available')

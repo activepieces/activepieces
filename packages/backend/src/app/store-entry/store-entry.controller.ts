@@ -18,7 +18,8 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
             _reply,
         ) => {
             if (request.principal.type !== PrincipalType.WORKER) {
-                _reply.status(StatusCodes.FORBIDDEN).send()
+                _reply.status(StatusCodes.FORBIDDEN)
+                return
             }
             else {
                 return await storeEntryService.upsert(request.principal.collectionId, request.body)
@@ -49,7 +50,8 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
             _reply,
         ) => {
             if (request.principal.type !== PrincipalType.WORKER) {
-                _reply.status(StatusCodes.FORBIDDEN).send()
+                _reply.status(StatusCodes.FORBIDDEN)
+                return
             }
             else {
                 return await storeEntryService.getOne(request.principal.collectionId, request.query.key)

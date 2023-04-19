@@ -120,6 +120,7 @@
       "@activepieces/piece-trello": ["packages/pieces/trello/src/index.ts"],
       "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
+      "@activepieces/piece-vtex": ["packages/pieces/vtex/src/index.ts"],
       "@activepieces/piece-wordpress": [
         "packages/pieces/wordpress/src/index.ts"
       ],

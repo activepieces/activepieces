@@ -57,7 +57,12 @@
         "@typescript-eslint/consistent-type-definitions": ["error", "type"],
         "no-unused-vars": "off",
         "@typescript-eslint/no-explicit-any": "error",
-        "@typescript-eslint/no-unused-vars": "error",
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          {
+            "varsIgnorePattern": "^_.*$"
+          }
+        ],
         "@typescript-eslint/no-redundant-type-constituents": "error",
         "@typescript-eslint/await-thenable": "error",
         "@typescript-eslint/adjacent-overload-signatures": "error",
