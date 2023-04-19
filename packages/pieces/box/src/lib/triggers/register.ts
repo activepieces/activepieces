@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework'
+import { createTrigger, TriggerStrategy, Property, OAuth2PropertyValue, PiecePropertyMap } from '@activepieces/pieces-framework'
 import { HttpRequest, HttpMethod, httpClient, AuthenticationType} from '@activepieces/pieces-common'
 
 interface Props {
@@ -7,10 +7,10 @@ interface Props {
   displayName: string,
   description: string,
   sampleData: object,
-  props?: object
+  props?: PiecePropertyMap
 }
 
-export const boxRegisterTrigger = ({ name, event, displayName, description, sampleData }: Props) => createTrigger({
+export const boxRegisterTrigger = ({ name, event, displayName, description, sampleData, props }: Props) => createTrigger({
   name: `box_${name}`,
   displayName: displayName,
   description: description,
@@ -27,31 +27,16 @@ export const boxRegisterTrigger = ({ name, event, displayName, description, samp
         'root_readwrite'
       ]
     }),
-    id: Property.ShortText({
-      displayName: 'Item ID',
-      description: 'The ID of the item to trigger a webhook',
-      required: true
-    }),
-    type: Property.StaticDropdown({
-      displayName: 'Item Type',
-      description: 'The type of the item to trigger a webhook',
-      required: true,
-      options: {
-        options: [
-          { label: "File", value: "file" },
-          { label: "Folder", value: "folder" }
-        ]
-      }
-    })
+    ...props
   },
   sampleData: sampleData,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
+    const { authentication , ...props } = context.propsValue
     const target: Record<string, unknown> = {
-      id: context.propsValue.id,
-      type: context.propsValue.type
-    }
-    const authentication: OAuth2PropertyValue = context.propsValue['authentication']
+      id: (props as Item).id ?? "0",
+      type: (props as Item).type ?? "folder"
+    } 
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.box.com/2.0/webhooks`,
@@ -60,7 +45,7 @@ export const boxRegisterTrigger = ({ name, event, displayName, description, samp
         token: authentication.access_token,
       },
       body: {
-        address: context.webhookUrl,
+        address: context.webhookUrl.replace("http://localhost:3000", "https://4e63-102-167-31-143.ngrok-free.app"),
         triggers: [event],
         target: target
       }
@@ -99,4 +84,9 @@ interface WebhookInformation {
   created_at: string
   created_by: string
   triggers: string[]
+}
+
+interface Item {
+  id: string
+  type?: string
 }
