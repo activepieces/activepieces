@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import {  Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, Observable, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
@@ -9,17 +9,15 @@ import {
   ApPaginatorComponent,
   FlowInstanceService,
 } from '@activepieces/ui/common';
-import {
-  ProjectService,
-  FlowService,
-  DEFAULT_PAGE_SIZE,
-} from '@activepieces/ui/common';
+import { FlowService } from '@activepieces/ui/common';
 import { ARE_THERE_FLOWS_FLAG } from '../../resolvers/are-there-flows.resolver';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
+import { Store,  } from '@ngrx/store';
+import { FoldersSelectors } from '../../store/folders/folders.selector';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -37,22 +35,20 @@ export class FlowsTableComponent implements OnInit {
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
-    private projectService: ProjectService,
     private flowService: FlowService,
     private router: Router,
-    private instanceService: FlowInstanceService
+    private instanceService: FlowInstanceService,
+    private store: Store,
   ) {}
 
   ngOnInit(): void {
     this.dataSource = new FlowsTableDataSource(
-      this.activatedRoute.queryParams.pipe(
-        map((res) => res['limit'] || DEFAULT_PAGE_SIZE)
-      ),
-      this.activatedRoute.queryParams.pipe(map((res) => res['cursor'])),
+      this.activatedRoute.queryParams,
       this.paginator,
-      this.projectService,
       this.flowService,
-      this.flowDeleted$.asObservable().pipe(startWith(true))
+      this.flowDeleted$.asObservable().pipe(startWith(true)),
+      this.store.select(FoldersSelectors.selectDisplayAllFlows),
+      this.store.select(FoldersSelectors.selectCurrentFolder)
     );
     this.areThereFlows$ = this.activatedRoute.data.pipe(
       map((res) => {

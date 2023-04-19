@@ -44,6 +44,17 @@
           <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openBuilder(row)" mat-row
             *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
+        <ng-container *ngIf="dataSource.data.length===0 && !(dataSource.isLoading$ | async)">
+          <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px]">
+            You don't have any flows yet.
+          </div>
+        </ng-container>
+        <ng-container *ngIf="dataSource.data.length===0 && !(dataSource.isLoading$ | async)">
+          <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px]">
+            You don't have any flows yet.
+          </div>
+        </ng-container>
+
       </div>
       <div class="ap-flex ap-justify-end ap-mt-[-73px] ap-pr-[30px]">
         <ap-paginator #paginator> </ap-paginator>
