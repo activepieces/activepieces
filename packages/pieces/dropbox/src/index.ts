@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { dropboxCreateNewFolder } from './lib/actions/create-new-folder';
 import { dropboxCreateNewTextFile } from './lib/actions/create-new-text-file';
 

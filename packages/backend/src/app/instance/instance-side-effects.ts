@@ -56,9 +56,9 @@ export const instanceSideEffects = {
             id: In(flowVersionIds),
         })
         const disableTriggers = flowVersions.map((version) => triggerUtils.disable({
-            collectionId: instance.collectionId,
+            collectionId: instance.collectionId!,
             flowVersion: version,
-            projectId: instance.projectId,
+            projectId: instance.projectId!,
             simulate: false,
         }))
         await Promise.all(disableTriggers)

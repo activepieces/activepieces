@@ -1,5 +1,5 @@
-import { createTrigger, httpClient, HttpRequest, HttpMethod, Property } from '@activepieces/framework'
-import { TriggerStrategy } from '@activepieces/shared'
+import { TriggerStrategy, createTrigger, Property } from '@activepieces/pieces-framework'
+import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common'
 
 interface Props {
   name: string,
@@ -21,27 +21,29 @@ export const convertkitRegisterTrigger = ({ name, event, displayName, descriptio
         To access your **Secret API Key**
         1. Log in to ConvertKit
         2. Go to [Advanced Settings](https://app.convertkit.com/account_settings/advanced_settings)
-        3. Copy **Your API Key** and Paste it below.
+        3. Copy **API Secret** and Paste it below.
         4. Click **Save**
       `,
       required: true
     }),
-    ...(props ?? {})
+    ...props
   },
   sampleData,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const { authentication, ...extra } = context.propsValue
+    const { authentication, ...props } = context.propsValue
+    // TODO add props value to the webhook
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.convertkit.com/v3/automations/hooks`,
       body: {
-        event: {name: event, ...extra},
-        target_url: context.webhookUrl,
+        event: {name: event, ...props},
+        target_url: context.webhookUrl.replace("http://localhost:3000", "https://4e63-102-167-31-143.ngrok-free.app"),
         api_secret: authentication as string
       }
     };
     const { body: webhook } = await httpClient.sendRequest<WebhookInformation>(request);
+    console.debug("webhook created", webhook);
     await context.store.put<WebhookInformation>(`convertkit_${event}_trigger`, webhook);
   },
   async onDisable(context) {

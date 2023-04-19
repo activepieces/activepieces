@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 import { UnparseConfig } from "papaparse";
 import { unparseCSVObject } from "../utils";
 

@@ -1,4 +1,4 @@
-import { createAction, DynamicPropsValue } from "@activepieces/framework";
+import { createAction, DynamicPropsValue } from "@activepieces/pieces-framework";
 import { airtableCommon } from "../common";
 
 export const airtableCreateRecord = createAction({

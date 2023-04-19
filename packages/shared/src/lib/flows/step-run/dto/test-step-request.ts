@@ -1,15 +1,7 @@
-import { Type, Static } from "@sinclair/typebox";
-import { SemVerType } from "../../../pieces";
+import { Type } from "@sinclair/typebox";
 
-export const TestStepRequestBody = Type.Object({
-    actionName: Type.String(),
-    pieceName: Type.String(),
-    pieceVersion: SemVerType,
-    input: Type.Record(
-        Type.String(),
-        Type.Any(),
-    ),
+export const CreateStepRunRequestBody = Type.Object({
     collectionId: Type.String(),
+    flowVersionId: Type.String(),
+    stepName: Type.String(),
 })
-
-export type TestStepRequestBody = Static<typeof TestStepRequestBody>

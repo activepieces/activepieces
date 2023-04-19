@@ -1,6 +1,6 @@
-import { createTrigger, pollingHelper, DedupeStrategy, Polling } from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { airtableCommon } from '../common';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 const polling: Polling<{ authentication: string, tableId: string | undefined, base: string }> = {
   strategy: DedupeStrategy.TIMEBASED,

@@ -1,4 +1,4 @@
-import { Piece } from '@activepieces/framework';
+import { Piece } from '@activepieces/pieces-framework';
 import { airtable } from '@activepieces/piece-airtable';
 import { asana } from '@activepieces/piece-asana';
 import { bannerbear } from '@activepieces/piece-bannerbear';
@@ -43,6 +43,7 @@ import { wordpress } from '@activepieces/piece-wordpress';
 import { zoom } from '@activepieces/piece-zoom';
 import { generatebanners } from '@activepieces/piece-generatebanners';
 import { connections } from '@activepieces/piece-connections';
+import { notion } from '@activepieces/piece-notion';
 import { youtube } from '@activepieces/piece-youtube';
 import { intercom } from '@activepieces/piece-intercom';
 import { trello } from '@activepieces/piece-trello';
@@ -58,11 +59,20 @@ import { mastodon } from '@activepieces/piece-mastodon';
 import { shopify } from '@activepieces/piece-shopify';
 import { constantContact } from '@activepieces/piece-constant-contact';
 import { salesforce } from '@activepieces/piece-salesforce';
+import { matrix } from "@activepieces/piece-matrix";
 import { smtp } from '@activepieces/piece-smtp';
 import { mailerLite } from '@activepieces/piece-mailer-lite';
 import { googleForms }  from '@activepieces/piece-google-forms';
+import { xml }  from '@activepieces/piece-xml';
+import { vtex }  from '@activepieces/piece-vtex';
 
+
+/**
+ * @deprecated this will be removed, don't use it
+ */
 export const pieces: Piece[] = [
+    xml,
+    vtex,
     airtable,
     asana,
     bannerbear,
@@ -109,6 +119,7 @@ export const pieces: Piece[] = [
     wordpress,
     zoom,
     connections,
+    notion,
     youtube,
     square,
     delay,
@@ -123,10 +134,14 @@ export const pieces: Piece[] = [
     shopify,
     constantContact,
     salesforce,
+    matrix,
     smtp,
     googleForms
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
+/**
+ * @deprecated this will be removed, don't use it
+ */
 export const getPiece = (name: string): Piece | undefined => {
     return pieces.find((f) => name.toLowerCase() === f.name.toLowerCase());
 };

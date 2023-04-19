@@ -1,5 +1,5 @@
-import { createTrigger, assertNotNullOrUndefined } from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { assertNotNullOrUndefined } from "@activepieces/pieces-common";
 import dayjs from 'dayjs';
 import { todoistSyncClient } from '../common/client/sync-client'
 import { TodoistCompletedTask } from '../common/models'

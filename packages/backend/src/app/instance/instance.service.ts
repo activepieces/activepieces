@@ -32,7 +32,7 @@ export const instanceService = {
 
         const oldInstance: Partial<Instance | null> = await instanceRepo.findOneBy({ projectId, collectionId: request.collectionId })
 
-        if (oldInstance) {
+        if (oldInstance && oldInstance.id) {
             await instanceRepo.delete(oldInstance.id)
         }
 
@@ -92,20 +92,19 @@ export const instanceService = {
                 },
             })
         }
-        if (instance) {
-            const oldInstanceStatus = instance.status
-            instance.status = request.status
-            if (oldInstanceStatus !== instance.status) {
-                if (instance.status === InstanceStatus.ENABLED) {
-                    await instanceSideEffects.enable(instance)
-                }
-                else {
-                    await instanceSideEffects.disable(instance)
-                }
+
+        const oldInstanceStatus = instance.status
+        instance.status = request.status
+        if (oldInstanceStatus !== instance.status) {
+            if (instance.status === InstanceStatus.ENABLED) {
+                await instanceSideEffects.enable(instance)
             }
-            instanceRepo.save(instance)
-            return instance
+            else {
+                await instanceSideEffects.disable(instance)
+            }
         }
+        instanceRepo.save(instance)
+        return instance
     },
 }
 

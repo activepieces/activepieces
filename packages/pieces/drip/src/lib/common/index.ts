@@ -1,4 +1,5 @@
-import { Property, HttpRequest, HttpMethod, httpClient } from "@activepieces/framework";
+import { Property} from "@activepieces/pieces-framework"
+import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common"
 
 export const dripCommon = {
     baseUrl: (accountId: string) => { return `https://api.getdrip.com/v2/${accountId}` },

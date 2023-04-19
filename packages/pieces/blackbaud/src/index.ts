@@ -1,5 +1,5 @@
 import packageJson from "../package.json";
-import { createPiece } from "@activepieces/framework";
+import { createPiece } from "@activepieces/pieces-framework";
 import { blackbaudCreateContacts } from "./lib/actions/create-contacts-batch";
 import { blackbaudSearchAfterDate } from "./lib/actions/search-contacts-after-date";
 import { blackbaudCreateContactOnEmail } from "./lib/actions/create-contact";

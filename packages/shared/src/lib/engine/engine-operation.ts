@@ -6,8 +6,7 @@ export enum EngineOperationType {
     EXECUTE_ACTION = "EXECUTE_ACTION",
     EXECUTE_FLOW = "EXECUTE_FLOW",
     EXECUTE_PROPERTY = "EXECUTE_PROPERTY",
-    EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK",
-    EXTRACT_EVENT_DATA = "EXTRACT_EVENT_DATA",
+    EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK"
 }
 
 export enum TriggerHookType {
@@ -22,22 +21,17 @@ export type EngineOperation =
     | ExecuteFlowOperation
     | ExecutePropsOptions
     | ExecuteTriggerOperation
-    | ExecuteEventParserOperation
 
 export type ExecuteActionOperation = {
     actionName: string
     pieceName: string
     pieceVersion: string
     input: Record<string, unknown>
+    testExecutionContext: Record<string, unknown>
     projectId: ProjectId
     collectionId: CollectionId
     workerToken?: string
     apiUrl?: string
-}
-
-export interface ExecuteEventParserOperation {
-    pieceName: string;
-    event: EventPayload
 }
 
 export interface ExecutePropsOptions {

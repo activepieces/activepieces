@@ -37,7 +37,7 @@ export {
 export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry';
 export * from './lib/user/user';
 export { CreateFlowRunRequest } from './lib/flow-run/create-flow-run-request';
-export { TriggerStrategy, Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType } from './lib/flows/triggers/trigger';
+export { Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType } from './lib/flows/triggers/trigger';
 export { Collection, CollectionId, CollectionListDto, CollectionStatus } from './lib/collections/collection';
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version';
 export { Flow, FlowId } from './lib/flows/flow';
@@ -57,7 +57,9 @@ export { apId, ApId } from './lib/common/id-generator'
 export * from "./lib/flows/trigger-events/trigger-events-dto";
 export * from "./lib/flows/trigger-events/trigger-event";
 export {SampleDataSettings} from './lib/flows/sample-data'
-import { TypeSystem } from '@sinclair/typebox/system'
+export * from './lib/common/base-model';
 
+
+import { TypeSystem } from '@sinclair/typebox/system'
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 TypeSystem.ExactOptionalPropertyTypes = false;

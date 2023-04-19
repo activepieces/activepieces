@@ -7,6 +7,17 @@ const PIECE_TYPE = 'PIECE'
 const PIECE_TRIGGER_TYPE = 'PIECE_TRIGGER'
 const BRANCH_TYPE = 'BRANCH'
 
+type Step = {
+    type: string
+    settings: {
+        pieceName: string
+        pieceVersion: string
+    }
+    onFailureAction?: Step
+    onSuccessAction?: Step
+    nextAction?: Step
+}
+
 export class bumpFixPieceVersions1678928503715 implements MigrationInterface {
 
 
@@ -62,7 +73,7 @@ export class bumpFixPieceVersions1678928503715 implements MigrationInterface {
             if (appConnection.appName === 'telegram_bot') {
                 appConnection.appName = 'telegram-bot'
                 update = true
-            }      
+            }
             if (update) {
                 connectionCount++
                 await appConnectionRepo.update(appConnection.id, appConnection)
@@ -77,7 +88,7 @@ export class bumpFixPieceVersions1678928503715 implements MigrationInterface {
 
 }
 
-function updateStep(step) {
+function updateStep(step: Step | undefined): boolean {
     let update = false
     while (step) {
         if (step.type === PIECE_TYPE || step.type === PIECE_TRIGGER_TYPE) {
@@ -104,7 +115,7 @@ function updateStep(step) {
             }
             if (step.settings.pieceName === 'telegram_bot') {
                 step.settings.pieceName = 'telegram-bot'
-            }      
+            }
             if (step.settings.pieceName === 'youtube') {
                 // Youtube latest version is 0.1.4
                 step.settings.pieceVersion = '0.1.4'

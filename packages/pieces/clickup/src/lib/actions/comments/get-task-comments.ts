@@ -1,4 +1,5 @@
-import { createAction, Property, HttpMethod, getAccessTokenOrThrow } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
+import {  HttpMethod, getAccessTokenOrThrow } from "@activepieces/pieces-common";
 import { clickupCommon, callClickUpApi } from "../../common";
 
 

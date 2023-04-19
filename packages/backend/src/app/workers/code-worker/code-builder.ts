@@ -3,6 +3,7 @@ import decompress from 'decompress'
 import { sandboxManager } from '../sandbox'
 import { logger } from '../../helper/logger'
 import { packageManager, PackageManagerDependencies } from '../../helper/package-manager'
+import { apId } from '@activepieces/shared'
 
 const webpackConfig = `
   const path = require("node:path");
@@ -49,14 +50,14 @@ const tsConfig = `
 `
 
 async function build(artifact: Buffer): Promise<Buffer> {
-    const sandbox = sandboxManager.obtainSandbox()
+    const sandbox = await sandboxManager.obtainSandbox(apId())
     const buildPath = sandbox.getSandboxFolderPath()
     let bundledFile: Buffer
     try {
         const startTime = Date.now()
         logger.info(`Started Building in sandbox: ${buildPath}`)
 
-        await sandbox.cleanAndInit()
+        await sandbox.recreate()
         await downloadFiles(artifact, buildPath)
 
         const dependencies: PackageManagerDependencies = {
@@ -80,14 +81,16 @@ async function build(artifact: Buffer): Promise<Buffer> {
 
         const invalidArtifactTemplate = await fs.readFile('./packages/backend/src/assets/invalid-code.js')
 
+        const errorMessage = e instanceof Error ? e.message : 'error building code'
+
         const invalidArtifactFile = invalidArtifactTemplate
             .toString('utf-8')
-            .replace('${ERROR_MESSAGE}', JSON.stringify(e.toString()).replace(/"/g, '\\"'))
+            .replace('${ERROR_MESSAGE}', JSON.stringify(errorMessage).replace(/"/g, '\\"'))
 
         bundledFile = Buffer.from(invalidArtifactFile, 'utf-8')
     }
     finally {
-        sandboxManager.returnSandbox(sandbox.boxId)
+        await sandboxManager.returnSandbox(sandbox.boxId)
     }
 
     return bundledFile
