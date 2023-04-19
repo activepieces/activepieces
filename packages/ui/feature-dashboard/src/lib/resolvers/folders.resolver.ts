@@ -28,10 +28,10 @@ export class FoldersResolver
 
   resolve(): Observable<FoldersResolverResult> {
     const countAllFlows$ = this.flowsService.count({
-      allFlows: true,
+      allFlows: 'true',
     });
     const countUncategorizedFlows$ = this.flowsService.count({
-      allFlows: false,
+      allFlows: 'false',
     });
 
     const folders$ = this.foldersService.list().pipe(map((res) => res.data));
