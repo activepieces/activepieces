@@ -26,6 +26,7 @@ import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRepo } from './flow.repo'
 import { telemetry } from '../../helper/telemetry.utils'
 import { flowInstanceService } from '../flow-instance/flow-instance.service'
+import { IsNull } from 'typeorm'
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
@@ -86,8 +87,8 @@ export const flowService = {
             },
         })
         const queryWhere = { projectId }
-        if (folderId) {
-            queryWhere['folderId'] = folderId
+        if (folderId !== undefined) {
+            queryWhere['folderId'] = (folderId === 'NULL' ? IsNull() : folderId)
         }
 
         const paginationResult = await paginator.paginate(flowRepo.createQueryBuilder('flow').where(queryWhere))
