@@ -1,4 +1,4 @@
-import { ApEdition, EventPayload, ExecuteEventParserOperation, ExecuteTestOrRunTriggerResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
+import { ApEdition, EventPayload, ExecuteTestOrRunTriggerResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./piece-helper";
@@ -12,15 +12,6 @@ type Listener = {
 }
 
 export const triggerHelper = {
-  async executeEventParser(params: ExecuteEventParserOperation): Promise<ParseEventResponse | undefined> {
-    const { pieceName } = params
-    const pieceVersion = 'latest'
-
-    const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
-
-    return piece.events?.parseAndReply({ payload: params.event });
-  },
-
   async executeTrigger(params: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | ExecuteTestOrRunTriggerResponse | unknown[]> {
     const { pieceName, pieceVersion, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
 

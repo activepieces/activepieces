@@ -4,6 +4,7 @@ import { createRedisClient } from '../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { OneTimeJobData, RepeatableJobData } from './job-data'
 import { logger } from '../../helper/logger'
+import { isNil } from 'lodash'
 
 type BaseAddParams = {
     id: ApId
@@ -64,8 +65,11 @@ export const flowQueue = {
                 },
             })
 
-            const client = await repeatableJobQueue.client
+            if (isNil(job.repeatJobKey)) {
+                return
+            }
 
+            const client = await repeatableJobQueue.client
             await client.set(repeatableJobKey(id), job.repeatJobKey)
         }
         else {

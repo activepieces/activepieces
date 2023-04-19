@@ -44,9 +44,9 @@ const billingController = async (fastify: FastifyInstance, options: FastifyPlugi
       const sig = request.headers["stripe-signature"] as string;
       try {
         const event = stripe.webhooks.constructEvent(
-          payloadString,
+          payloadString!,
           sig,
-          stripeSecret
+          stripeSecret!
         );
         await billingService.handleWebhook({ webhook: event });
         reply.status(StatusCodes.OK).send();

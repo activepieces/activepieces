@@ -27,7 +27,7 @@ const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
 
 export const triggerEventService = {
     async saveEvent({projectId, flowId, payload}:{projectId: ProjectId, flowId: FlowId, payload: unknown}): Promise<TriggerEvent> {
-        const flow = await flowService.getOne({projectId: projectId, id: flowId, versionId: undefined, includeArtifacts: false})
+        const flow = await flowService.getOneOrThrow({projectId: projectId, id: flowId })
         const sourceName = getSourceName(flow.version.trigger)
         return triggerEventRepo.save({
             id: apId(),
@@ -63,7 +63,7 @@ export const triggerEventService = {
                     throw new ActivepiecesError({
                         code: ErrorCode.TEST_TRIGGER_FAILED,
                         params: {
-                            message: testResult.message,
+                            message: testResult.message!,
                         },
                     })
                 }

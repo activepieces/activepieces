@@ -81,9 +81,11 @@ async function build(artifact: Buffer): Promise<Buffer> {
 
         const invalidArtifactTemplate = await fs.readFile('./packages/backend/src/assets/invalid-code.js')
 
+        const errorMessage = e instanceof Error ? e.message : 'error building code'
+
         const invalidArtifactFile = invalidArtifactTemplate
             .toString('utf-8')
-            .replace('${ERROR_MESSAGE}', JSON.stringify(e.toString()).replace(/"/g, '\\"'))
+            .replace('${ERROR_MESSAGE}', JSON.stringify(errorMessage).replace(/"/g, '\\"'))
 
         bundledFile = Buffer.from(invalidArtifactFile, 'utf-8')
     }

@@ -98,7 +98,7 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
             }))
         },
 
-        async pieceMetadata(pieceName: string) {
+        async pieceMetadata(pieceName: string, pieceVersion: string) {
             const piecesMetadata = await loadPiecesMetadata()
             const pieceMetadata = piecesMetadata.find(p => p.name === pieceName)
 
@@ -107,7 +107,7 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
                     code: ErrorCode.PIECE_NOT_FOUND,
                     params: {
                         pieceName,
-                        pieceVersion: pieceMetadata.version,
+                        pieceVersion,
                     },
                 })
             }

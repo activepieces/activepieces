@@ -31,7 +31,10 @@ export const packageManager = {
 
         if (depsCount === 0) {
             logger.info('[PackageManager#addDependencies] skip adding deps, depsCount=0')
-            return
+            return {
+                stdout: '',
+                stderr: '',
+            }
         }
 
         const options = [

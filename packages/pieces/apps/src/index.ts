@@ -63,12 +63,15 @@ import { smtp } from '@activepieces/piece-smtp';
 import { mailerLite } from '@activepieces/piece-mailer-lite';
 import { googleForms }  from '@activepieces/piece-google-forms';
 import { xml }  from '@activepieces/piece-xml';
+import { vtex }  from '@activepieces/piece-vtex';
+
 
 /**
  * @deprecated this will be removed, don't use it
  */
 export const pieces: Piece[] = [
     xml,
+    vtex,
     airtable,
     asana,
     bannerbear,
