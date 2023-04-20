@@ -36,8 +36,7 @@
 
             </th>
             <td mat-cell *matCellDef="let flow" class="!ap-text-center">
-              <button mat-icon-button (click)="$event.stopImmediatePropagation()" [matMenuTriggerFor]="menu"
-                aria-label="Example icon-button with a menu">
+              <button mat-icon-button (click)="$event.stopImmediatePropagation()" [matMenuTriggerFor]="menu">
                 <mat-icon>more_vert</mat-icon>
               </button>
               <mat-menu #menu="matMenu" xPosition="before">

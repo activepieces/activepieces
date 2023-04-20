@@ -21,6 +21,7 @@ export class FoldersListComponent {
   selectedFolder$: Observable<FoldersListDto | undefined>;
   showAllFlows$: Observable<boolean>;
   createFolderDialogClosed$: Observable<void>;
+  folderIdOfMenuOpened: string | undefined = undefined;
   constructor(
     private dialogService: MatDialog,
     private store: Store,
