@@ -1,4 +1,4 @@
-import {createAction, Property, StoreScope} from "@activepieces/pieces-framework";
+import { createAction, Property, StoreScope } from "@activepieces/pieces-framework";
 
 
 export const storageGetAction = createAction({
@@ -10,8 +10,12 @@ export const storageGetAction = createAction({
             displayName: 'Key',
             required: true
         }),
+        defaultValue: Property.ShortText({
+            displayName: 'Default Value',
+            required: false
+        })
     },
     async run(context) {
-        return await context.store.get(context.propsValue['key'], StoreScope.COLLECTION);
+        return await context.store.get(context.propsValue['key'], StoreScope.COLLECTION) ?? context.propsValue['defaultValue'];
     }
 });
