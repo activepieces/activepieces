@@ -37,10 +37,6 @@ export class FoldersService {
   }
 
   delete(folderId: string) {
-    return this.http.delete<void>(environment.apiUrl + '/folders', {
-      params: {
-        folderId,
-      },
-    });
+    return this.http.delete<void>(environment.apiUrl + `/folders/${folderId}`);
   }
 }

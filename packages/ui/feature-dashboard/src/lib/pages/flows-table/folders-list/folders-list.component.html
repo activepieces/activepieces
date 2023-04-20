@@ -47,13 +47,12 @@
         </div>
 
         <mat-menu [hasBackdrop]="true" #menu="matMenu" xPosition="before">
-            <button mat-menu-item>
+            <button mat-menu-item (click)="deleteFolder(folder)">
                 <div class="ap-flex ap-gap-3 ap-items-center">
                     <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
                         [applyClass]="true"></svg-icon>
                     <span class="ap-text-danger">Delete</span>
                 </div>
-
             </button>
         </mat-menu>
     </div>

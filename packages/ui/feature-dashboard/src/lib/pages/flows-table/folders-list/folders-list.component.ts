@@ -7,6 +7,8 @@ import { Store } from '@ngrx/store';
 import { FoldersSelectors } from '../../../store/folders/folders.selector';
 import { FolderActions } from '../../../store/folders/folders.actions';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FoldersService } from '../../../services/folders.service';
+import { DeleteEntityDialogComponent, DeleteEntityDialogData } from '../../../../../../common/src';
 
 @Component({
   selector: 'app-folders-list',
@@ -26,7 +28,8 @@ export class FoldersListComponent {
     private dialogService: MatDialog,
     private store: Store,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private folderService: FoldersService
   ) {
     this.folders$ = this.store.select(FoldersSelectors.selectFolders);
     this.allFlowsNumber$ = this.store.select(
@@ -70,5 +73,17 @@ export class FoldersListComponent {
       queryParams: { cursor: undefined, folderId: folderId },
       queryParamsHandling: 'merge',
     });
+  }
+  deleteFolder(folder:FoldersListDto)
+  {
+    const dialogData: DeleteEntityDialogData = {
+      deleteEntity$: this.folderService.delete(folder.id).pipe(tap(()=>{
+        this.store.dispatch(FolderActions.deleteFolder({folderId:folder.id}));
+        this.clearCursorParam()
+      })),
+      entityName:folder.displayName,
+      note:"If you delete this folder, we will keep its flows and move them to Uncategorized."
+    }
+    this.dialogService.open(DeleteEntityDialogComponent,{data:dialogData})
   }
 }
