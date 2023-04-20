@@ -123,6 +123,35 @@ const _foldersReducer = createReducer(
         selectedFolder: folders[selectedFolderIdx],
       };
     }
+  }),
+  on(FolderActions.moveFlow, (state, { targetFolderId }) => {
+    const folders = [...state.folders];
+    let uncategorizedFlowsNumber = state.uncategorizedFlowsNumber;
+    const targetFolderIndex = folders.findIndex((f) => f.id === targetFolderId);
+    const currentlySelectedFolderIndex = folders.findIndex(
+      (f) => f.id === state.selectedFolder?.id
+    );
+    if (targetFolderIndex < 0) {
+      uncategorizedFlowsNumber++;
+    } else {
+      folders[targetFolderIndex] = {
+        ...folders[targetFolderIndex],
+        numberOfFlows: folders[targetFolderIndex].numberOfFlows + 1,
+      };
+    }
+    if (currentlySelectedFolderIndex < 0) {
+      uncategorizedFlowsNumber--;
+    } else {
+      folders[currentlySelectedFolderIndex] = {
+        ...folders[currentlySelectedFolderIndex],
+        numberOfFlows: folders[currentlySelectedFolderIndex].numberOfFlows - 1,
+      };
+    }
+    return {
+      ...state,
+      folders: folders,
+      uncategorizedFlowsNumber,
+    };
   })
 );
 export function foldersReducer(

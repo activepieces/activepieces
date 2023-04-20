@@ -26,6 +26,12 @@ const selectUncategorizedFlowsNumber = createSelector(
     return state.uncategorizedFlowsNumber;
   }
 );
+const selectCurrentFolderExceptCurrent = createSelector(
+  selectFoldersState,
+  (state) => {
+    return state.folders.filter((f) => f.id !== state.selectedFolder?.id);
+  }
+);
 
 export const FoldersSelectors = {
   selectDisplayAllFlows,
@@ -33,4 +39,5 @@ export const FoldersSelectors = {
   selectFolders,
   selectAllFlowsNumber,
   selectUncategorizedFlowsNumber,
+  selectCurrentFolderExceptCurrent,
 };

@@ -31,6 +31,7 @@ export class ConnectionsTableComponent {
   displayedColumns = ['app', 'name', 'status', 'created', 'updated', 'action'];
   connectionDeleted$: Subject<boolean> = new Subject();
   deleteConnectionDialogClosed$: Observable<void>;
+  readonly AppConnectionStatus = AppConnectionStatus;
   constructor(
     private activatedRoute: ActivatedRoute,
     private projectService: ProjectService,
@@ -49,10 +50,6 @@ export class ConnectionsTableComponent {
       this.connectionService,
       this.connectionDeleted$.asObservable().pipe(startWith(true))
     );
-  }
-
-  get connectionStatus() {
-    return AppConnectionStatus;
   }
 
   deleteConnection(connection: AppConnection) {

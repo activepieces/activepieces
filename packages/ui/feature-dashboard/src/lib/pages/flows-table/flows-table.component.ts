@@ -18,6 +18,7 @@ import {
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
+import { MoveFlowToFolderDialogComponent } from './move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -26,10 +27,11 @@ export class FlowsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
   creatingFlow = false;
-  archiveFlowDialogClosed$: Observable<void>;
+  deleteFlowDialogClosed$: Observable<void>;
+  moveFlowDialogClosed$: Observable<void>;
   dataSource!: FlowsTableDataSource;
   displayedColumns = ['name', 'created', 'status', 'action'];
-  flowDeleted$: Subject<boolean> = new Subject();
+  refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
   areThereFlows$: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   constructor(
@@ -46,7 +48,7 @@ export class FlowsTableComponent implements OnInit {
       this.activatedRoute.queryParams,
       this.paginator,
       this.flowService,
-      this.flowDeleted$.asObservable().pipe(startWith(true))
+      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true))
     );
     this.areThereFlows$ = this.activatedRoute.data.pipe(
       map((res) => {
@@ -68,10 +70,10 @@ export class FlowsTableComponent implements OnInit {
     const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
       data: dialogData,
     });
-    this.archiveFlowDialogClosed$ = dialogRef.beforeClosed().pipe(
+    this.deleteFlowDialogClosed$ = dialogRef.beforeClosed().pipe(
       tap((res) => {
         if (res) {
-          this.flowDeleted$.next(true);
+          this.refreshTableAtCurrentCursor$.next(true);
           this.store.dispatch(FolderActions.deleteFlow());
         }
       }),
@@ -100,5 +102,18 @@ export class FlowsTableComponent implements OnInit {
           map(() => void 0)
         );
     }
+  }
+  moveFlow(flow: Flow) {
+    this.moveFlowDialogClosed$ = this.dialogService
+      .open(MoveFlowToFolderDialogComponent, { data: flow.id })
+      .afterClosed()
+      .pipe(
+        tap((val: boolean) => {
+          if (val) {
+            this.refreshTableAtCurrentCursor$.next(true);
+          }
+        }),
+        map(() => void 0)
+      );
   }
 }

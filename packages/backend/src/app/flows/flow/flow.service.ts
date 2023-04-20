@@ -133,7 +133,7 @@ export const flowService = {
         const rawFlow = await flowRepo.findOneBy({ projectId: projectId, id: flowId })
         try {
             if (request.type === FlowOperationType.CHANGE_FOLDER) {
-                rawFlow.folderId = request.request.folderId
+                rawFlow.folderId = request.request.folderId? request.request.folderId: null
                 await flowRepo.update(rawFlow.id, rawFlow)
             }
             else {

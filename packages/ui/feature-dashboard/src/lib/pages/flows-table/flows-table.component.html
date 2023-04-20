@@ -41,7 +41,7 @@
                 <mat-icon>more_vert</mat-icon>
               </button>
               <mat-menu #menu="matMenu" xPosition="before">
-                <button mat-menu-item>
+                <button mat-menu-item (click)="moveFlow(flow)">
                   <div class="ap-flex ap-gap-3 ap-items-center">
                     <svg-icon src="assets/img/custom/move.svg" class="ap-w-[20px] ap-h-[20px]"
                       [applyClass]="true"></svg-icon>
@@ -83,7 +83,8 @@
 
 
 <app-empty-flows-table *ngIf="(areThereFlows$|async)===false"></app-empty-flows-table>
-<ng-container *ngIf="archiveFlowDialogClosed$ | async"></ng-container>
+<ng-container *ngIf="deleteFlowDialogClosed$ | async"></ng-container>
+<ng-container *ngIf="moveFlowDialogClosed$ | async"></ng-container>
 <ng-container *ngFor="let obs$ of flowsUpdateStatusRequest$ | keyvalue">
   <ng-container *ngIf="obs$.value | async"></ng-container>
 </ng-container>
