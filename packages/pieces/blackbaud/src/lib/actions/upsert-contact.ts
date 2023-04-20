@@ -2,17 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { blackbaudCommon } from '../common/common';
 
-export const blackbaudCreateContactOnEmail = createAction({
-    name: 'create_contact_if_not_exists',
-    description: 'Create Contact if it does not exist',
-    displayName: 'Create Contact Based on Email',
+export const blackbaudUpsertContact = createAction({
+    name: 'upssert_contact_if_not_exists',
+    description: 'Upsert Contact based on Email',
+    displayName: 'Upsert Contact on Email',
     props: {
         ...blackbaudCommon.auth_props,
-        email: Property.ShortText({
-            displayName: "Email",
-            description: "The email of the contact",
-            required: true,
-        }),
         contact_json: Property.Json({
             displayName: "Contact (JSON)",
             description: "The Contact JSON",
@@ -77,18 +72,29 @@ export const blackbaudCreateContactOnEmail = createAction({
     ],
     async run(configValue) {
         const accessToken = configValue.propsValue['authentication']?.access_token;
-        const duplicatedContact = (await httpClient.sendRequest<{ count: number; }>({
+        const contactJson = configValue.propsValue['contact_json'] as Contact;
+        const emailAddress = contactJson?.email?.address;
+        if (!emailAddress) {
+            throw new Error('Email is required');
+        }
+        const duplicatedContact = (await httpClient.sendRequest<{ count: number; value: { id: string }[] }>({
             method: HttpMethod.GET,
-            url: `https://api.sky.blackbaud.com/constituent/v1/constituents/search?search_text=${configValue.propsValue['email']}`,
+            url: `https://api.sky.blackbaud.com/constituent/v1/constituents/search?search_text=${emailAddress}`,
             headers: {
                 "Bb-Api-Subscription-Key": configValue.propsValue['subscription_key'],
                 Authorization: `Bearer ${accessToken}`,
             }
         }));
         if (duplicatedContact.body.count > 0) {
-            return {
-                message: "Contact already exists"
-            }
+            return (await httpClient.sendRequest({
+                method: HttpMethod.PATCH,
+                url: `https://api.sky.blackbaud.com/constituent/v1/constituents/${duplicatedContact.body.value[0].id}`,
+                body: contactJson,
+                headers: {
+                    "Bb-Api-Subscription-Key": configValue.propsValue['subscription_key'],
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }));
         }
         return (await httpClient.sendRequest({
             method: HttpMethod.POST,
@@ -98,6 +104,12 @@ export const blackbaudCreateContactOnEmail = createAction({
                 "Bb-Api-Subscription-Key": configValue.propsValue['subscription_key'],
                 Authorization: `Bearer ${accessToken}`,
             },
-        })).body;
+        }));
     },
 });
+
+interface Contact {
+    email?: {
+        address?: string;
+    }
+}
