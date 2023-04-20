@@ -166,6 +166,11 @@ export const flowService = {
                 where:[{folderId:req.folderId, projectId:req.projectId}],
             })
         }
+        if(req.folderId) {
+            return flowRepo.count({
+                where:[{folderId:req.folderId, projectId:req.projectId}],
+            })
+        }
         return flowRepo.count({
             where:[{folderId:IsNull(), projectId:req.projectId}],
         })
