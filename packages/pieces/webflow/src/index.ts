@@ -1,5 +1,5 @@
 
-import { createPiece } from "@activepieces/framework";
+import { createPiece } from "@activepieces/pieces-framework";
 import packageJson from "../package.json";
 
 import { webflowTriggers } from "./lib/triggers";

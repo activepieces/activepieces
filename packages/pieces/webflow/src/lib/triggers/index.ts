@@ -1,4 +1,3 @@
-import { Property } from '@activepieces/framework'
 import { webflowRegisterTrigger } from "./register";
 
 export const webflowTriggers = [
@@ -7,30 +6,15 @@ export const webflowTriggers = [
     event: 'form_submission',
     description: 'Sends the form_submission event',
     displayName: 'Form Submission',
-    props: {
-      filter: Property.Object({
-        displayName: 'Filter',
-        description: 'filter for selecting which events you want webhooks to be triggered for.',
-        required: false
-      })
+    sampleData: {
+      "name": "Sample Form",
+      "site": "62749158efef318abc8d5a0f",
+      "data": {
+        "name": "Some One",
+        "email": "some.one@home.com"
+      },
+      "d": "2022-09-14T12:35:16.117Z",
+      "_id": "6321ca84df3949bfc6752327"
     }
-  },
-  {
-    name: 'site_publish',
-    event: 'site_publish',
-    description: 'Sends a site_publish event',
-    displayName: 'Site Publish'
-  },
-  {
-    name: 'ecomm_new_order',
-    event: 'ecomm_new_order',
-    description: 'Sends the new ecomm_new_order event',
-    displayName: 'E-Commerce New Order'
-  },
-  {
-    name: 'memberships_user_account_added',
-    event: 'memberships_user_account_added',
-    description: 'Sends the memberships_user_account_added event',
-    displayName: 'User Account Added'
-  } 
+  }
 ].map(trigger => webflowRegisterTrigger(trigger))
