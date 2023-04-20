@@ -28,7 +28,7 @@ const connectionKeyController = async (fastify: FastifyInstance, options: Fastif
     ) => {
       let appConnection = await connectionKeyService.getConnection(request.query);
       if(appConnection !== null){
-        await appConnectionService.delete({projectId: request.principal.projectId, id: appConnection.id});
+        await appConnectionService.delete({projectId: request.query.projectId, id: appConnection.id});
       }
     }
   );
