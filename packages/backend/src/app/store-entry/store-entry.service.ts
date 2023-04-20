@@ -27,4 +27,10 @@ export const storeEntryService = {
             key,
         })
     },
+    async delete(collectionId: CollectionId, key: string): Promise<void> {
+        await storeEntryRepo.delete({
+            collectionId,
+            key,
+        })
+    }
 }
