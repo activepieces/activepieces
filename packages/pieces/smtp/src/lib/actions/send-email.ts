@@ -1,5 +1,4 @@
-import { createAction } from '@activepieces/framework';
-import { Property } from '@activepieces/framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import nodemailer from 'nodemailer';
 
 export const sendEmail = createAction({
@@ -23,12 +22,13 @@ export const sendEmail = createAction({
                     displayName: 'Password',
                     required: true,
                 }),
-                port: Property.Number({
+                port: Property.ShortText({
                     displayName: 'Port',
                     required: true,
                 }),
                 TLS: Property.Checkbox({
                     displayName: 'Use TLS',
+                    defaultValue: false,
                     required: true,
                 }),
             },

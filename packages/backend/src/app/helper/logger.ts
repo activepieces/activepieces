@@ -16,7 +16,7 @@ export const initilizeSentry = () => {
     }
 }
 
-export const captureException = (error: Error) => {
+export const captureException = (error: unknown) => {
     logger.error(error)
     if (sentryDsn) {
         Sentry.captureException(error)
@@ -32,14 +32,7 @@ const initLogger = () => {
 
     return pino({
         level,
-        transport: {
-            target: 'pino-pretty',
-            options: {
-                translateTime: 'HH:MM:ss Z',
-                colorize: true,
-                ignore: 'pid,hostname',
-            },
-        },
+        transport: env === ApEnvironment.PRODUCTION ? undefined: { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss Z', colorize: true, ignore: 'pid,hostname' } },
     })
 }
 

@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { calendlyInviteeCanceled } from './lib/trigger/invitee-canceled.trigger';
 import { calendlyInviteeCreated } from './lib/trigger/invitee-created.trigger';
 

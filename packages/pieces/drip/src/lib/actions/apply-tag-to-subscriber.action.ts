@@ -1,4 +1,5 @@
-import { createAction, Property, HttpRequest, HttpMethod, httpClient } from "@activepieces/framework";
+import { createAction, Property} from "@activepieces/pieces-framework"
+import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common"
 import { dripCommon } from "../common";
 
 export const dripApplyTagToSubscriber = createAction({

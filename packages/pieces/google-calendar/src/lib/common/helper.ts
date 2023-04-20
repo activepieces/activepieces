@@ -1,4 +1,5 @@
-import { OAuth2PropertyValue, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
+import { OAuth2PropertyValue } from "@activepieces/pieces-framework";
+import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 import { randomUUID } from "crypto";
 import { googleCalendarCommon } from ".";
 import { GoogleWatchResponse, GoogleWatchType, CalendarObject, CalendarList, GoogleCalendarEvent, GoogleCalendarEventList } from "./types";
@@ -47,12 +48,20 @@ export async function watchEvent(
 }
 
 export async function getCalendars(
-  authProp: OAuth2PropertyValue
+  authProp: OAuth2PropertyValue,
+  minAccessRole?: "writer"
 ): Promise<CalendarObject[]> {
   // docs: https://developers.google.com/calendar/api/v3/reference/calendarList/list
+  const queryParams: Record<string, string> = {
+    showDeleted: "false"
+  }
+  if (minAccessRole) {
+    queryParams['minAccessRole'] = minAccessRole;
+  }
   const request: HttpRequest = {
     method: HttpMethod.GET,
     url: `${googleCalendarCommon.baseUrl}/users/me/calendarList`,
+    queryParams: queryParams,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: authProp.access_token,

@@ -1,0 +1,30 @@
+@import "../../../../../../../core/src/assets/scss/variables.scss";
+
+.line-props {
+  stroke: $border;
+  stroke-width: 2px;
+}
+.add-button {
+  position: absolute;
+
+  height: 17px;
+  width: 16px;
+  z-index: 9999999;
+  .drop-point-container {
+    position: absolute;
+    left: -4.5px;
+    top: -3.5px;
+  }
+  .drop-point-border {
+    height: $drop-point-height;
+    width: $drop-point-width;
+    transform: scale(0);
+    border: 2px $border dashed;
+    border-radius: 5px;
+    transition: 200ms transform ease;
+  }
+}
+
+.scale-1 {
+  transform: scale(1) !important;
+}

@@ -39,7 +39,7 @@ services:
      - npx
      - nx
      - serve
-     - frontend
+     - ui-core
     depends_on:
      - backend
 

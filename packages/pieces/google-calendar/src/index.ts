@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { createQuickCalendarEvent } from './lib/actions/create-quick-event';
 import { calendarEventChanged } from './lib/triggers/calendar-event';
 
