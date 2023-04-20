@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { NewFolderDialogComponent } from '../new-folder-dialog/new-folder-dialog.component';
-import { Observable } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { FoldersListDto } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { FoldersSelectors } from '../../../store/folders/folders.selector';
@@ -20,6 +20,7 @@ export class FoldersListComponent {
   folders$: Observable<FoldersListDto[]>;
   selectedFolder$: Observable<FoldersListDto | undefined>;
   showAllFlows$: Observable<boolean>;
+  createFolderDialogClosed$: Observable<void>;
   constructor(
     private dialogService: MatDialog,
     private store: Store,
@@ -41,7 +42,17 @@ export class FoldersListComponent {
     );
   }
   createFolder() {
-    this.dialogService.open(NewFolderDialogComponent);
+    const dialogRef = this.dialogService.open(NewFolderDialogComponent, {
+      restoreFocus: false,
+    });
+    this.createFolderDialogClosed$ = dialogRef.afterClosed().pipe(
+      tap((folderId: string) => {
+        if (folderId) {
+          this.clearCursorParam(folderId);
+        }
+      }),
+      map(() => void 0)
+    );
   }
   setSelectedFolder(folderId: string) {
     this.store.dispatch(FolderActions.selectFolder({ folderId }));
