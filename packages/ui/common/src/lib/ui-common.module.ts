@@ -45,6 +45,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { DeleteEntityDialogComponent } from './components/delete-enity-dialog/delete-entity-dialog.component';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
+import { GenericSnackbarTemplateComponent } from './components/generic-snackbar-template/generic-snackbar-template.component';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -90,6 +91,7 @@ const exportedDeclarations = [
   TrackFocusDirective,
   ObjectToArrayPipe,
   DeleteEntityDialogComponent,
+  GenericSnackbarTemplateComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -131,7 +133,7 @@ export function markedOptionsFactory(): MarkedOptions {
   providers: [
     { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
   ],
-  declarations: [...exportedDeclarations],
+  declarations: [...exportedDeclarations, GenericSnackbarTemplateComponent],
   exports: [...exportedImports, ...exportedDeclarations],
 })
 export class UiCommonModule {}

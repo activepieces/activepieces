@@ -8,6 +8,7 @@ import {
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, map, Observable, of, tap } from 'rxjs';
+import { GenericSnackbarTemplateComponent } from '../generic-snackbar-template/generic-snackbar-template.component';
 
 export interface DeleteEntityDialogData {
   entityName: string;
@@ -27,7 +28,7 @@ export class DeleteEntityDialogComponent {
   deleteOperation$: Observable<void>;
   constructor(
     private formBuilder: FormBuilder,
-    private snackBar: MatSnackBar,
+    private snackbar: MatSnackBar,
     @Inject(MAT_DIALOG_DATA)
     public data: DeleteEntityDialogData,
     private dialogRef: MatDialogRef<DeleteEntityDialogComponent>
@@ -43,7 +44,7 @@ export class DeleteEntityDialogComponent {
     if (this.confirmationForm.valid && !this.deleteOperation$) {
       this.deleteOperation$ = this.data.deleteEntity$.pipe(
         catchError((err) => {
-          this.snackBar.open(
+          this.snackbar.open(
             'An error occurred while deleting, please check your console',
             '',
             {
@@ -59,7 +60,9 @@ export class DeleteEntityDialogComponent {
         }),
         tap(() => {
           this.dialogRef.close(true);
-          this.snackBar.open(`${this.data.entityName} deleted`);
+          this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
+            data: `<b> ${this.data.entityName}</b> Deleted`,
+          });
         })
       );
     }

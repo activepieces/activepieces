@@ -18,7 +18,10 @@ import {
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
-import { MoveFlowToFolderDialogComponent } from './move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
+import {
+  MoveFlowToFolderDialogComponent,
+  MoveFlowToFolderDialogData,
+} from './move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -74,7 +77,11 @@ export class FlowsTableComponent implements OnInit {
       tap((res) => {
         if (res) {
           this.refreshTableAtCurrentCursor$.next(true);
-          this.store.dispatch(FolderActions.deleteFlow());
+          this.store.dispatch(
+            FolderActions.deleteFlow({
+              flowDisplayName: flow.version.displayName,
+            })
+          );
         }
       }),
       map(() => {
@@ -104,8 +111,12 @@ export class FlowsTableComponent implements OnInit {
     }
   }
   moveFlow(flow: Flow) {
+    const dialogData: MoveFlowToFolderDialogData = {
+      flowId: flow.id,
+      folderId: flow.folderId,
+    };
     this.moveFlowDialogClosed$ = this.dialogService
-      .open(MoveFlowToFolderDialogComponent, { data: flow.id })
+      .open(MoveFlowToFolderDialogComponent, { data: dialogData })
       .afterClosed()
       .pipe(
         tap((val: boolean) => {

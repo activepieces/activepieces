@@ -13,6 +13,11 @@ import { FlowService } from '@activepieces/ui/common';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FolderActions } from '../../../store/folders/folders.actions';
 
+export interface MoveFlowToFolderDialogData {
+  flowId: string;
+  folderId?: string;
+}
+
 @Component({
   selector: 'app-move-flow-to-folder-dialog',
   templateUrl: './move-flow-to-folder-dialog.component.html',
@@ -27,7 +32,7 @@ export class MoveFlowToFolderDialogComponent {
     private store: Store,
     private flowService: FlowService,
     @Inject(MAT_DIALOG_DATA)
-    public flowId: string,
+    public data: MoveFlowToFolderDialogData,
     private dialogRef: MatDialogRef<MoveFlowToFolderDialogComponent>
   ) {
     this.foldersForm = this.fb.group({
@@ -43,7 +48,7 @@ export class MoveFlowToFolderDialogComponent {
   moveFlow() {
     if (this.foldersForm.valid) {
       this.movingFlow$ = this.flowService
-        .update(this.flowId, {
+        .update(this.data.flowId, {
           type: FlowOperationType.CHANGE_FOLDER,
           request: {
             folderId:
@@ -53,8 +58,7 @@ export class MoveFlowToFolderDialogComponent {
           },
         })
         .pipe(
-          tap((res) => {
-            console.log(res);
+          tap(() => {
             this.store.dispatch(
               FolderActions.moveFlow({
                 targetFolderId: this.foldersForm.controls.folder.value,

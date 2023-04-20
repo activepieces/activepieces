@@ -2,7 +2,7 @@
 </app-dialog-title-template>
 <mat-dialog-content>
   <div class="ap-typography-body-1 ap-text-description ap-mb-4">
-    Please type "DELETE" to confirm delete this collection
+    Please type "DELETE" to confirm deleting {{data.entityName}}
   </div>
   <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="confirmationForm" (submit)="deleteCollection()">
     <mat-form-field class="ap-w-full" appearance="outline">

@@ -18,6 +18,8 @@ import { FOLDERS_STATE_NAME } from './store/folders/folders.selector';
 import { foldersReducer } from './store/folders/folders.reducer';
 import { StoreModule } from '@ngrx/store';
 import { MoveFlowToFolderDialogComponent } from './pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
+import { EffectsModule } from '@ngrx/effects';
+import { FoldersEffects } from './store/folders/folders.effects';
 // import { EeBillingUiModule } from '@activepieces/ee/billing/ui';
 
 @NgModule({
@@ -27,6 +29,7 @@ import { MoveFlowToFolderDialogComponent } from './pages/flows-table/move-flow-t
     // EeBillingUiModule,
     RouterModule.forChild(DashboardLayoutRouting),
     StoreModule.forFeature(FOLDERS_STATE_NAME, foldersReducer),
+    EffectsModule.forFeature([FoldersEffects]),
   ],
   declarations: [
     DashboardContainerComponent,

@@ -31,7 +31,10 @@ const deleteFolder = createAction(
   FoldersActionType.DELETE_FOLDER,
   props<{ folderId: string }>()
 );
-const deleteFlow = createAction(FoldersActionType.DELETE_FLOW);
+const deleteFlow = createAction(
+  FoldersActionType.DELETE_FLOW,
+  props<{ flowDisplayName: string }>()
+);
 const selectFolder = createAction(
   FoldersActionType.SELECT_FOLDER,
   props<{ folderId?: string }>()
