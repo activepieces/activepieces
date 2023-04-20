@@ -20,6 +20,7 @@ import { StoreModule } from '@ngrx/store';
 import { MoveFlowToFolderDialogComponent } from './pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
 import { EffectsModule } from '@ngrx/effects';
 import { FoldersEffects } from './store/folders/folders.effects';
+import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-dialog/rename-folder-dialog.component';
 // import { EeBillingUiModule } from '@activepieces/ee/billing/ui';
 
 @NgModule({
@@ -44,6 +45,7 @@ import { FoldersEffects } from './store/folders/folders.effects';
     FoldersListComponent,
     NewFolderDialogComponent,
     MoveFlowToFolderDialogComponent,
+    RenameFolderDialogComponent
   ],
 })
 export class UiFeatureDashboardModule {}

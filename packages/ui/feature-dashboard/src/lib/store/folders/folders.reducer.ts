@@ -62,10 +62,10 @@ const _foldersReducer = createReducer(
   on(
     FolderActions.renameFolder,
     (state, { folderId, newName }): FoldersState => {
-      const idx = state.folders.findIndex((f) => (f.id = folderId));
+      const idx = state.folders.findIndex((f) => (f.id === folderId));
       if (idx > -1) {
         const folders = [...state.folders];
-        folders[idx].displayName = newName;
+        folders[idx] = {...folders[idx], displayName:newName};
         return {
           ...state,
           folders: folders,

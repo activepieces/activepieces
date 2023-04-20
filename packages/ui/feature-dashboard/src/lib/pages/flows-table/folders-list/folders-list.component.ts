@@ -9,6 +9,7 @@ import { FolderActions } from '../../../store/folders/folders.actions';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FoldersService } from '../../../services/folders.service';
 import { DeleteEntityDialogComponent, DeleteEntityDialogData } from '../../../../../../common/src';
+import { RenameFolderDialogComponent, RenameFolderDialogData } from '../rename-folder-dialog/rename-folder-dialog.component';
 
 @Component({
   selector: 'app-folders-list',
@@ -85,5 +86,12 @@ export class FoldersListComponent {
       note:"If you delete this folder, we will keep its flows and move them to Uncategorized."
     }
     this.dialogService.open(DeleteEntityDialogComponent,{data:dialogData})
+  }
+  renameFolder(folder:FoldersListDto)
+  {
+    const dialogData: RenameFolderDialogData = {
+       folderId:folder.id
+    }
+    this.dialogService.open(RenameFolderDialogComponent,{data:dialogData})
   }
 }

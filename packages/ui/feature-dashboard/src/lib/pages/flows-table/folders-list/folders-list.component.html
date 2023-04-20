@@ -47,6 +47,14 @@
         </div>
 
         <mat-menu [hasBackdrop]="true" #menu="matMenu" xPosition="before">
+            <button mat-menu-item (click)="renameFolder(folder)">
+                <div class="ap-flex ap-gap-3 ap-items-center">
+                    <svg-icon [applyClass]="true" src="assets/img/custom/pencil-underline.svg"
+                        class="ap-fill-body ap-w-[20px] ap-h-[20px]">
+                    </svg-icon>
+                    <span class="ap-text-body">Rename</span>
+                </div>
+            </button>
             <button mat-menu-item (click)="deleteFolder(folder)">
                 <div class="ap-flex ap-gap-3 ap-items-center">
                     <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"

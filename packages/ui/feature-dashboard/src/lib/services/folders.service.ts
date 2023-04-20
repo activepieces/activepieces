@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
-  CreateFolderRequest,
+  CreateOrRenameFolderRequest,
   Folder,
   FoldersListDto,
   SeekPage,
@@ -14,7 +14,7 @@ import { Observable, map } from 'rxjs';
 })
 export class FoldersService {
   constructor(private http: HttpClient) {}
-  create(req: CreateFolderRequest): Observable<FoldersListDto> {
+  create(req: CreateOrRenameFolderRequest): Observable<FoldersListDto> {
     return this.http.post<Folder>(environment.apiUrl + '/folders', req).pipe(
       map((res) => {
         return {
@@ -39,4 +39,12 @@ export class FoldersService {
   delete(folderId: string) {
     return this.http.delete<void>(environment.apiUrl + `/folders/${folderId}`);
   }
+
+  renameFolder(req:{
+    folderId:string
+  } & CreateOrRenameFolderRequest)
+  {
+    return this.http.put<void>(environment.apiUrl+`/folders/${req.folderId}`,{displayName:req.displayName});
+  }
 }
+
