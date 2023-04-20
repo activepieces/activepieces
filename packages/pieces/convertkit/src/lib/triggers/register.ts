@@ -1,4 +1,4 @@
-import { TriggerStrategy, createTrigger, Property } from '@activepieces/pieces-framework'
+import { TriggerStrategy, createTrigger, Property, PiecePropertyMap } from '@activepieces/pieces-framework'
 import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common'
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
   displayName: string,
   description: string,
   sampleData: object,
-  props?: object
+  props?: PiecePropertyMap
 }
 
 export const convertkitRegisterTrigger = ({ name, event, displayName, description, sampleData, props}: Props) => createTrigger({
@@ -26,25 +26,26 @@ export const convertkitRegisterTrigger = ({ name, event, displayName, descriptio
       `,
       required: true
     }),
-    ...props
+    ...(props ?? {})
   },
-  sampleData,
+  sampleData: sampleData,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const { authentication, ...props } = context.propsValue
-    // TODO add props value to the webhook
+    const { authentication, ...eventProps } = context.propsValue
+
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.convertkit.com/v3/automations/hooks`,
       body: {
-        event: {name: event, ...props},
-        target_url: context.webhookUrl.replace("http://localhost:3000", "https://4e63-102-167-31-143.ngrok-free.app"),
-        api_secret: authentication as string
+        event: {name: event, ...eventProps} ,
+        target_url: context.webhookUrl,
+        api_secret: authentication
       }
     };
-    const { body: webhook } = await httpClient.sendRequest<WebhookInformation>(request);
-    console.debug("webhook created", webhook);
-    await context.store.put<WebhookInformation>(`convertkit_${event}_trigger`, webhook);
+    const { body: webhook } = await httpClient.sendRequest<WebhookInformation>(request)
+    console.debug("webhook created", webhook)
+
+    await context.store.put<WebhookInformation>(`convertkit_${event}_trigger`, webhook)
   },
   async onDisable(context) {
     const response = await context.store.get<WebhookInformation>(`convertkit_${event}_trigger`);
@@ -56,14 +57,14 @@ export const convertkitRegisterTrigger = ({ name, event, displayName, descriptio
           api_secret: context.propsValue.authentication as string
         }
       };
-      await httpClient.sendRequest(request);
+      await httpClient.sendRequest(request)
     }
   },
   async run(context) {
     console.debug("payload received", context.payload.body)
     return [context.payload.body];
-  },
-});
+  }
+})
 
 interface WebhookInformation {
   rule: {

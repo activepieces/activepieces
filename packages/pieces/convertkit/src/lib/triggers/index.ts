@@ -1,11 +1,12 @@
 import { Property } from "@activepieces/pieces-framework";
 import { convertkitRegisterTrigger } from "./register";
+import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 
 const triggerData = [
   {
     name: "subscriber_activated",
-    displayName: "New Subscriber",
-    description: "Triggers when a new subscriber is confirmed within your account",
+    displayName: "Account Subscription",
+    description: "Triggers on a new subscriber in your account",
     event: "subscriber.subscriber_activate",
     sampleData: {
       id: 3580202,
@@ -15,8 +16,8 @@ const triggerData = [
   },
   {
     name: "subscriber_unsubscribed",
-    displayName: "New Unsubscribe",
-    description: "Triggers when a subscriber unsubscribes from your account",
+    displayName: "Account Unsubscription",
+    description: "Triggers on user unsubscription from your account",
     event: "subscriber.subscriber_unsubscribe",
     sampleData: {
       "subscriber": {
@@ -31,8 +32,8 @@ const triggerData = [
   },
   {
     name: "form_subscribed",
-    displayName: "New Form Subscribed",
-    description: "Triggers when a there is a subscription on your form",
+    displayName: "Form Subscription",
+    description: "Triggers on a new form subscription",
     event: "subscriber.form_subscribe",
     sampleData: {
       rule: {
@@ -42,14 +43,57 @@ const triggerData = [
       }
     },
     props: {
-      // TODO change to form dropdown
-      form_id: Property.ShortText({
+      form_id: Property.Dropdown({
         displayName: 'Form Id',
         description: 'The Id of the form',
-        required: true
+        refreshers: ['authentication'],
+        required: true,
+        options: async ({ authentication }) => {
+          if (!authentication)
+            return { disabled: true, options: [], placeholder: 'Please authenticate first' }
+
+          const result = await httpClient.sendRequest<FormResponse>({
+            method: HttpMethod.GET,
+            url: 'https://api.convertkit.com/v3/forms',
+            body: {
+              api_secret: authentication
+            }
+          })
+
+          if (result.status === 200) {
+            return {
+              disabled: false,
+              options: result.body.forms.map(
+                form => ({ label: form.name, value: form.id })
+              )
+            }
+          }
+
+          return {
+            disabled: true,
+            options: [],
+            placeholder: "Error fetching form"
+          }
+        }
       })
     }
   }
 ]
+
+interface FormResponse {
+  forms: {
+    id: number
+    name: string
+    created_at: string
+    type: string
+    url: string
+    embed_js: string
+    embed_url: string
+    title: string
+    description: string
+    sign_up_button_text: string
+    success_message: string
+  }[]
+}
 
 export const convertKitTriggers = triggerData.map((trigger) => convertkitRegisterTrigger(trigger))
