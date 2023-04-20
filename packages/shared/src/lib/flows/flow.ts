@@ -16,3 +16,7 @@ export interface Flow extends BaseModel<FlowId> {
 export interface FlowTableDto extends Flow {
     status: FlowInstanceStatus
 }
+
+export interface FlowBuilderDto extends Flow {
+    folderDisplayName:string;
+}

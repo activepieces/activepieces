@@ -3,7 +3,7 @@ import { GlobalBuilderState } from '../../model/builder-state.model';
 
 import {
   AppConnection,
-  Flow,
+  FlowBuilderDto,
   FlowRun,
   SampleDataSettings,
 } from '@activepieces/shared';
@@ -72,7 +72,12 @@ export const selectCurrentFlow = createSelector(
     return state.flowState.flow;
   }
 );
-
+export const selectCurrentFlowFolderName = createSelector(
+  selectCurrentFlow,
+  (flow: FlowBuilderDto) => {
+    return flow.folderDisplayName;
+  }
+);
 export const selectTabState = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => state.state
@@ -80,7 +85,7 @@ export const selectTabState = createSelector(
 
 export const selectCurrentFlowValidity = createSelector(
   selectCurrentFlow,
-  (flow: Flow | undefined) => {
+  (flow: FlowBuilderDto | undefined) => {
     if (!flow) return false;
     return flow.version?.valid || false;
   }
@@ -274,7 +279,7 @@ const selectAppConnectionsDropdownOptions = createSelector(
 
 const selectAllFlowSteps = createSelector(
   selectCurrentFlow,
-  (flow: Flow | undefined) => {
+  (flow: FlowBuilderDto | undefined) => {
     if (flow && flow.version) {
       return FlowStructureUtil.traverseAllSteps(flow.version.trigger, false);
     }
@@ -418,4 +423,5 @@ export const BuilderSelectors = {
   selectStepSelectedSampleData,
   selectStepValidity,
   selectCurrentStepPieceVersionAndName,
+  selectCurrentFlowFolderName
 };

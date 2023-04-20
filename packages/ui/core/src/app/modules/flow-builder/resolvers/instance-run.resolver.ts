@@ -4,10 +4,10 @@ import { Observable, of, switchMap } from 'rxjs';
 
 import { FlowService } from '@activepieces/ui/common';
 import { InstanceRunService } from '@activepieces/ui/common';
-import { Flow, FlowRun } from '@activepieces/shared';
+import {  FlowBuilderDto, FlowRun } from '@activepieces/shared';
 
 export type InstanceRunInfo = {
-  flow: Flow;
+  flow: FlowBuilderDto;
   run: FlowRun;
 };
 

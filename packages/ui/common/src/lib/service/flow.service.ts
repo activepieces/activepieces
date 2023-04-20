@@ -10,6 +10,7 @@ import {
   ExecutionState,
   FileId,
   Flow,
+  FlowBuilderDto,
   FlowId,
   FlowOperationRequest,
   FlowRun,
@@ -34,12 +35,12 @@ export class FlowService {
   get(
     flowId: FlowId,
     flowVersionId: undefined | FlowVersionId
-  ): Observable<Flow> {
+  ): Observable<FlowBuilderDto> {
     const params: Record<string, string> = {};
     if (flowVersionId) {
       params['versionId'] = flowVersionId;
     }
-    return this.http.get<Flow>(environment.apiUrl + '/flows/' + flowId, {
+    return this.http.get<FlowBuilderDto>(environment.apiUrl + '/flows/' + flowId, {
       params: params,
     });
   }

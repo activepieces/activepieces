@@ -66,5 +66,8 @@ export const flowFolderService = {
         })
         return paginationHelper.createPage<FoldersListDto>(dtosList, paginationResponse.cursor)
     },
+    async getOne({projectId, folderId}){
+        return await folderRepo.findOneBy({projectId,id:folderId})
+    }
     
 }

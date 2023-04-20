@@ -39,7 +39,7 @@ export * from './lib/user/user';
 export { CreateFlowRunRequest } from './lib/flow-run/create-flow-run-request';
 export { TriggerStrategy, Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType } from './lib/flows/triggers/trigger';
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version';
-export { Flow, FlowId, FlowTableDto } from './lib/flows/flow';
+export { Flow, FlowId, FlowTableDto, FlowBuilderDto } from './lib/flows/flow';
 export { File, FileId } from './lib/file/file'
 export * from './lib/flows/flow-helper';
 export { FlowRun, FlowRunId, RunEnvironment } from './lib/flow-run/flow-run'

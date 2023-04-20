@@ -5,6 +5,7 @@ import {
     Cursor,
     EmptyTrigger,
     Flow,
+    FlowBuilderDto,
     FlowId,
     FlowInstance,
     FlowInstanceStatus,
@@ -27,6 +28,7 @@ import { flowRepo } from './flow.repo'
 import { telemetry } from '../../helper/telemetry.utils'
 import { flowInstanceService } from '../flow-instance/flow-instance.service'
 import { IsNull } from 'typeorm'
+import { flowFolderService } from '../folder/folder.service'
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
@@ -110,7 +112,7 @@ export const flowService = {
         })
         return paginationHelper.createPage<Flow>(paginationResult.data, paginationResult.cursor)
     },
-    async getOne({ projectId, id, versionId, includeArtifacts = true }: { projectId: ProjectId, id: FlowId, versionId: FlowVersionId | undefined, includeArtifacts: boolean }): Promise<Flow | null> {
+    async getOne({ projectId, id, versionId, includeArtifacts = true }: { projectId: ProjectId, id: FlowId, versionId: FlowVersionId | undefined, includeArtifacts: boolean }): Promise<FlowBuilderDto | null> {
         const flow: Flow | null = await flowRepo.findOneBy({
             projectId,
             id,
@@ -119,9 +121,11 @@ export const flowService = {
             return null
         }
         const flowVersion = await flowVersionService.getFlowVersion(projectId, id, versionId, includeArtifacts)
+        const folder = await flowFolderService.getOne({projectId,folderId:flow.folderId});
         return {
             ...flow,
             version: flowVersion,
+            folderDisplayName:folder? folder.displayName: 'Uncategorized'
         }
     },
 
@@ -159,7 +163,9 @@ export const flowService = {
         allFlows:string
     }) :Promise<number>{
         if(req.allFlows === 'true') {
-            return flowRepo.count()
+            return flowRepo.count({
+                where:[{ projectId:req.projectId }],
+            })
         }
         if(req.folderId) {
             return flowRepo.count({

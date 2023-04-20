@@ -31,6 +31,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   flow$: Observable<Flow>;
   editingFlowName = false;
   deleteFlowDialogClosed$: Observable<void>;
+  folderDisplayName$:Observable<string>;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -45,6 +46,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.instance$ = this.store.select(BuilderSelectors.selectCurrentInstance);
     this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
     this.flow$ = this.store.select(BuilderSelectors.selectCurrentFlow);
+    this.folderDisplayName$ = this.store.select(BuilderSelectors.selectCurrentFlowFolderName)
     this.magicWandEnabled$ = this.route.queryParams.pipe(
       map((params) => {
         return !!params['magicWand'];
