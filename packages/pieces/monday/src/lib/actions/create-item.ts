@@ -1,5 +1,7 @@
-import { createAction, HttpMethod, Property } from "@activepieces/framework";
-import { mondayMakeRequest, mondayProps } from "../common";
+import { HttpMethod } from "@activepieces/pieces-common"
+import { createAction, Property } from "@activepieces/pieces-framework"
+import { mondayProps } from "../common/props"
+import { mondayMakeRequest } from "../common/data"
 
 export const mondayCreateAnItem = createAction({
   name: 'monday_create_an_item',
