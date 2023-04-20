@@ -12,21 +12,26 @@ export const runQuery = createAction({
                 host: Property.ShortText({
                     displayName: 'Host',
                     required: true,
+                    description: " A string indicating the hostname of the PostgreSQL server to connect to."
                 }),
                 port: Property.ShortText({
                     displayName: 'Port',
+                    description: "An integer indicating the port of the PostgreSQL server to connect to.",
                     required: true,
                 }),
                 user: Property.ShortText({
                     displayName: 'User',
                     required: true,
+                    description: "A string indicating the user to authenticate as when connecting to the PostgreSQL server."
                 }),
                 password: Property.SecretText({
                     displayName: 'Password',
+                    description: "A string indicating the password to use for authentication.",
                     required: true,
                 }),
                 database: Property.ShortText({
                     displayName: 'Database',
+                    description: "A string indicating the name of the database to connect to.",
                     required: true,
                 })
             },
@@ -36,35 +41,30 @@ export const runQuery = createAction({
             displayName: 'Query',
             required: true,
         }),
-        rejectUnauthorized: Property.Checkbox({
+        reject_unauthorized: Property.Checkbox({
             displayName: 'Reject Unauthorized',
             required: true,
             defaultValue: true
         }),
-        keepAlive: Property.Checkbox({
-            displayName: 'Reject Unauthorized',
-            required: false,
-        }),
         query_timeout: Property.Number({
             displayName: 'Query Timeout',
+            description: "An integer indicating the maximum number of milliseconds to wait for a query to complete before timing out.",
             required: false,
         }),
-        statement_timeout: Property.Number({
-            displayName: 'Statement Timeout',
-            required: false,
-        }),
-        connectionTimeoutMillis: Property.Number({
+        connection_timeout_millis: Property.Number({
             displayName: 'Connection Timeout (ms)',
+            description: "An integer indicating the maximum number of milliseconds to wait for a connection to be established before timing out.",
             required: false,
         }),
         application_name: Property.ShortText({
             displayName: 'Application Name',
+            description: "A string indicating the name of the client application connecting to the server.",
             required: false,
         }),
     },
     async run(context) {
         const { host, user, database, password, port } = context.propsValue.authentication;
-        const { query, rejectUnauthorized, keepAlive, query_timeout, statement_timeout, application_name, connectionTimeoutMillis } = context.propsValue;
+        const { query, reject_unauthorized: rejectUnauthorized, query_timeout, application_name, connection_timeout_millis: connectionTimeoutMillis } = context.propsValue;
 
         const client = new pg.Client({
             host,
@@ -73,9 +73,8 @@ export const runQuery = createAction({
             password,
             database,
             ssl: { rejectUnauthorized },
-            keepAlive,
             query_timeout,
-            statement_timeout,
+            statement_timeout: query_timeout,
             application_name,
             connectionTimeoutMillis,
         })
