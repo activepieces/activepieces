@@ -1,7 +1,7 @@
 import { FoldersListDto } from '@activepieces/shared';
 import { createAction, props } from '@ngrx/store';
 
-enum FoldersActionType {
+export enum FoldersActionType {
   INITIALISE = 'INITIALISE',
   ADD_FOLDER = 'ADD_FOLDER',
   DELETE_FOLDER = 'DELETE_FOLDER',
@@ -16,6 +16,7 @@ const setInitial = createAction(
     folders: FoldersListDto[];
     allFlowsNumber: number;
     uncategorizedFlowsNumber: number;
+    selectedFolderId?: string;
   }>()
 );
 

@@ -114,9 +114,9 @@ export const flowInstanceService = {
         await flowInstanceRepo.delete({ projectId, flowId })
     },
     async onFlowDelete({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<void> {
-        const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })
-        const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
+        const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })  
         if (flowInstance) {
+            const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
             await triggerUtils.disable({
                 flowVersion: flowVersion,
                 projectId: flowInstance.projectId,

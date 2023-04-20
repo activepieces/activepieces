@@ -23,12 +23,20 @@ const _foldersReducer = createReducer(
     FolderActions.setInitial,
     (
       state,
-      { folders, allFlowsNumber, uncategorizedFlowsNumber }
+      { folders, allFlowsNumber, uncategorizedFlowsNumber, selectedFolderId }
     ): FoldersState => {
-      return {
-        displayAllFlows: true,
+      const selectedFolder = folders.find((f) => f.id === selectedFolderId);
+      console.log({
+        displayAllFlows: !selectedFolder && selectedFolderId !== 'NULL',
         folders,
-        selectedFolder: undefined,
+        selectedFolder: selectedFolder,
+        allFlowsNumber,
+        uncategorizedFlowsNumber,
+      });
+      return {
+        displayAllFlows: !selectedFolder && selectedFolderId !== 'NULL',
+        folders,
+        selectedFolder: selectedFolder,
         allFlowsNumber,
         uncategorizedFlowsNumber,
       };

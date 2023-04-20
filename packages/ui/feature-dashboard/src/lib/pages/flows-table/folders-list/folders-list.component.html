@@ -16,7 +16,7 @@
     </div>
     <div class="ap-flex ap-items-center ap-gap-4 ap-p-4 ap-cursor-pointer hover:ap-bg-graySelect "
         [class.selected-folder-item]="(selectedFolder$| async) === undefined && (showAllFlows$|async) === false"
-        (click)="setSelectedFolder(undefined)">
+        (click)="setSelectedFolder('NULL')">
         <svg-icon src="assets/img/custom/uncategorized-folder.svg"
             class="ap-h-[15px] ap-w-[15px] ap-fill-bleachedGray hover:ap-fill-title  folder-icon"
             [applyClass]="true"></svg-icon>

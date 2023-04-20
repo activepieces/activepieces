@@ -4,7 +4,8 @@
   </div>
   <div class="ap-container ap-h-full ap-mx-auto ap-pt-[80px]">
     <div class="ap-h-full ap-mb-[40px]">
-      <div class="ap-min-h-[70%] ap-rounded ap-border ap-border-solid ap-border-dividers ap-p-[30px] ap-pb-[80px]">
+      <div
+        class="ap-min-h-[70%] ap-rounded ap-border ap-border-solid ap-border-dividers ap-p-[30px] ap-pb-[80px] ap-flex ap-flex-col">
         <app-flows-table-title></app-flows-table-title>
         <table mat-table [dataSource]="dataSource" class="ap-w-[100%] " aria-label="Flows">
           <ng-container matColumnDef="name">
@@ -42,8 +43,20 @@
 
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openBuilder(row)" mat-row
-            *matRowDef="let row; columns: displayedColumns"></tr>
+            [class.ap-hidden]="dataSource.isLoading$ | async" *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
+        <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
+          <div class="ap-flex ap-items-center ap-justify-center  ap-flex-grow">
+            You don't have any flows yet.
+          </div>
+        </ng-container>
+        <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
+          <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow">
+            <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false"> </ap-loading-icon>
+          </div>
+        </ng-container>
+
+
       </div>
       <div class="ap-flex ap-justify-end ap-mt-[-73px] ap-pr-[30px]">
         <ap-paginator #paginator> </ap-paginator>

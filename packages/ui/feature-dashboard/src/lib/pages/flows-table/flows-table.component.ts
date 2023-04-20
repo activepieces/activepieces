@@ -9,11 +9,7 @@ import {
   ApPaginatorComponent,
   FlowInstanceService,
 } from '@activepieces/ui/common';
-import {
-  ProjectService,
-  FlowService,
-  DEFAULT_PAGE_SIZE,
-} from '@activepieces/ui/common';
+import { FlowService } from '@activepieces/ui/common';
 import { ARE_THERE_FLOWS_FLAG } from '../../resolvers/are-there-flows.resolver';
 import {
   DeleteEntityDialogComponent,
@@ -37,7 +33,6 @@ export class FlowsTableComponent implements OnInit {
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
-    private projectService: ProjectService,
     private flowService: FlowService,
     private router: Router,
     private instanceService: FlowInstanceService
@@ -45,12 +40,8 @@ export class FlowsTableComponent implements OnInit {
 
   ngOnInit(): void {
     this.dataSource = new FlowsTableDataSource(
-      this.activatedRoute.queryParams.pipe(
-        map((res) => res['limit'] || DEFAULT_PAGE_SIZE)
-      ),
-      this.activatedRoute.queryParams.pipe(map((res) => res['cursor'])),
+      this.activatedRoute.queryParams,
       this.paginator,
-      this.projectService,
       this.flowService,
       this.flowDeleted$.asObservable().pipe(startWith(true))
     );

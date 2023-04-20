@@ -7,19 +7,20 @@ import {
   tap,
   map,
   catchError,
+  BehaviorSubject,
 } from 'rxjs';
 import {
   ApPaginatorComponent,
-  ProjectService,
+  DEFAULT_PAGE_SIZE,
   FlowService,
 } from '@activepieces/ui/common';
 
 import { FormControl } from '@angular/forms';
 import { Flow, FlowInstanceStatus } from '@activepieces/shared';
 import { FlowTableDto } from '@activepieces/shared';
+import { Params } from '@angular/router';
 
-// TODO FIX
-type CollectionListDtoWithInstanceStatusToggleControl = Flow & {
+type FlowListDtoWithInstanceStatusToggleControl = Flow & {
   instanceToggleControl: FormControl<boolean>;
 };
 
@@ -28,14 +29,12 @@ type CollectionListDtoWithInstanceStatusToggleControl = Flow & {
  * encapsulate all logic for fetching and manipulating the displayed data
  * (including sorting, pagination, and filtering).
  */
-export class FlowsTableDataSource extends DataSource<CollectionListDtoWithInstanceStatusToggleControl> {
-  data: CollectionListDtoWithInstanceStatusToggleControl[] = [];
-  public isLoading = true;
+export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStatusToggleControl> {
+  data: FlowListDtoWithInstanceStatusToggleControl[] = [];
+  public isLoading$ = new BehaviorSubject(false);
   constructor(
-    private pageSize$: Observable<number>,
-    private pageCursor$: Observable<string>,
+    private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
-    private projectService: ProjectService,
     private flowService: FlowService,
     private refresh$: Observable<boolean>
   ) {
@@ -47,20 +46,21 @@ export class FlowsTableDataSource extends DataSource<CollectionListDtoWithInstan
    * the returned stream emits new items.
    * @returns A stream of the items to be rendered.
    */
-  connect(): Observable<CollectionListDtoWithInstanceStatusToggleControl[]> {
+  connect(): Observable<FlowListDtoWithInstanceStatusToggleControl[]> {
     return combineLatest({
-      pageCursor: this.pageCursor$,
-      pageSize: this.pageSize$,
-      project: this.projectService.getSelectedProject(),
+      queryParams: this.queryParams$,
       refresh: this.refresh$,
     }).pipe(
       tap(() => {
-        this.isLoading = true;
+        this.isLoading$.next(true);
       }),
       switchMap((res) => {
         return this.flowService.list({
-          limit: res.pageSize,
-          cursor: res.pageCursor,
+          limit: res.queryParams['limit'] || DEFAULT_PAGE_SIZE,
+          cursor: res.queryParams['cursor'],
+          folderId: res.queryParams['folderId']
+            ? res.queryParams['folderId']
+            : undefined,
         });
       }),
       catchError((err) => {
@@ -69,7 +69,7 @@ export class FlowsTableDataSource extends DataSource<CollectionListDtoWithInstan
       tap((res) => {
         this.paginator.next = res.next;
         this.paginator.previous = res.previous;
-        this.isLoading = false;
+        this.isLoading$.next(false);
         const instanceTogglesControls = this.createTogglesControls(res.data);
         this.data = res.data.map((c) => {
           return {
