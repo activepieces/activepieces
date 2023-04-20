@@ -33,6 +33,7 @@ export const flowService = {
         const flow: Partial<Flow> = {
             id: apId(),
             projectId: projectId,
+            folderId:request.folderId,
         }
         const savedFlow = await flowRepo.save(flow)
         await flowVersionService.createVersion(savedFlow.id, {
@@ -87,7 +88,7 @@ export const flowService = {
             },
         })
         const queryWhere = { projectId }
-        if (folderId !== undefined) {
+        if (folderId) {
             queryWhere['folderId'] = (folderId === 'NULL' ? IsNull() : folderId)
         }
 
@@ -154,14 +155,19 @@ export const flowService = {
     },
     async count(req:{
         projectId:string
-        folderId:string
-        allFlows:boolean
+        folderId?:string
+        allFlows:string
     }) :Promise<number>{
-        if(req.allFlows) {
-            return flowRepo.count()
+        if(req.allFlows === 'true') {
+            return flowRepo.count({where:{projectId:req.projectId}})
+        }
+        if(req.folderId) {
+            return flowRepo.count({
+                where:[{folderId:req.folderId, projectId:req.projectId}],
+            })
         }
         return flowRepo.count({
-            where:[{folderId:req.folderId, projectId:req.projectId}],
+            where:[{folderId:IsNull(), projectId:req.projectId}],
         })
     },
     

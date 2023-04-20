@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, switchMap, take, tap } from 'rxjs';
 import { FlowService } from '@activepieces/ui/common';
 import { Router } from '@angular/router';
 import { Flow, FoldersListDto } from '@activepieces/shared';
@@ -31,15 +31,23 @@ export class FlowsTableTitleComponent {
   createFlow() {
     if (!this.creatingFlow) {
       this.creatingFlow = true;
-      this.createFlow$ = this.flowService
-        .create({
-          displayName: 'Untitled',
-        })
+      this.createFlow$ = this.store
+        .select(FoldersSelectors.selectCurrentFolder)
         .pipe(
-          tap((flow) => {
-            this.router.navigate(['/flows/', flow.id], {
-              queryParams: { newCollection: true },
-            });
+          take(1),
+          switchMap((res) => {
+            return this.flowService
+              .create({
+                displayName: 'Untitled',
+                folderId: res?.id,
+              })
+              .pipe(
+                tap((flow) => {
+                  this.router.navigate(['/flows/', flow.id], {
+                    queryParams: { newFlow: true },
+                  });
+                })
+              );
           })
         );
     }

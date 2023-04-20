@@ -27,6 +27,7 @@ export class FlowService {
   create(request: CreateFlowRequest): Observable<Flow> {
     return this.http.post<Flow>(environment.apiUrl + '/flows', {
       displayName: request.displayName,
+      folderId: request.folderId,
     });
   }
 
@@ -50,7 +51,11 @@ export class FlowService {
   list(request: ListFlowsRequest): Observable<SeekPage<FlowTableDto>> {
     const queryParams: { [key: string]: string | number } = {
       limit: request.limit ?? 10,
+      cursor: request.cursor || '',
     };
+    if (request.folderId) {
+      queryParams['folderId'] = request.folderId;
+    }
     return this.http.get<SeekPage<FlowTableDto>>(
       environment.apiUrl + '/flows',
       {
@@ -102,8 +107,11 @@ export class FlowService {
 
   count(req: CountFlowsRequest) {
     const params: Record<string, string | number | boolean> = {
-      ...req,
+      allFlows: req.allFlows,
     };
+    if (req.folderId) {
+      params['folderId'] = req.folderId;
+    }
     return this.http.get<number>(environment.apiUrl + '/flows/count', {
       params: params,
     });

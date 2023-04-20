@@ -21,7 +21,6 @@ const __flowInstanceReducer = createReducer(
   on(
     FlowInstanceActions.publishSuccess,
     (state, { instance }): FlowInstance => {
-      debugger;
       return { ...instance };
     }
   )
