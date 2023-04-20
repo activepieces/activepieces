@@ -1,4 +1,7 @@
-import { httpClient, HttpMessageBody, HttpMethod, HttpResponse, OAuth2PropertyValue, Property } from "@activepieces/framework";
+import { HttpMethod, HttpResponse } from "@activepieces/pieces-common";
+import { OAuth2PropertyValue, Property } from "@activepieces/pieces-framework";
+import { getBoards, getItems, mondayMakeRequest } from "./data";
+import { Board, BoardResponse, BoardType, Item, WorkspaceResponse } from "./types";
 
 export const mondayProps = {
   authentication: Property.OAuth2({
@@ -48,22 +51,22 @@ export const mondayProps = {
     options: async ({ authentication, workspace_id }) => {
       if (!authentication) return { disabled: true, placeholder: 'connect your account first', options: [] }
 
-      const response: HttpResponse<BoardResponse> = await getBoard(
+      const boards: Board[] = await getBoards(
         (authentication as OAuth2PropertyValue).access_token,
         workspace_id as string
       )
 
       return {
         disabled: false,
-        options: response.body.data.boards
+        options: boards
           .filter((value) => value.type === BoardType.BOARD)
           .map((board) => ({ label: board['name'] as string, value: board['id'] as string }))
       }
     }
   }),
   group_id: (required = false) => Property.Dropdown({
-    description: 'Monday group to create item in',
-    displayName: 'Group',
+    description: 'Group',
+    displayName: 'Board Group',
     required: required,
     refreshers: ['authentication', 'board_id'],
     options: async ({ authentication, board_id }) => {
@@ -85,71 +88,41 @@ export const mondayProps = {
       )
 
       const boards = response.body?.data.boards
-      if (!boards) 
+      if (!boards)
         return { disabled: true, placeholder: 'Error fetching your boards', options: [] }
 
       return {
         disabled: false,
         options: (
-          boards.length > 0 
+          boards.length > 0
             ? boards[0].groups.map((group) => ({ label: group.title, value: group.id }))
             : []
         )
-      };
+      }
     }
   }),
-}
+  item_id: (required = false) => Property.Dropdown({
+    description: 'Item',
+    displayName: 'Board Item',
+    required: required,
+    refreshers: ['authentication', 'board_id'],
+    options: async ({ authentication, board_id }) => {
+      if (!authentication)
+        return { disabled: true, placeholder: 'connect your account first', options: [] }
+      if (!board_id)
+        return { disabled: true, placeholder: 'Select a board first', options: [] }
 
-type BoardResponse = { data: { boards: Board[] }, account_id: number }
-type WorkspaceResponse = { data: { workspaces: Workspace[] }, account_id: number }
+      const items: Item[] = await getItems({
+        access_token: (authentication as OAuth2PropertyValue).access_token,
+        board_id: board_id as string
+      })
 
-interface Board {
-  id: string
-  name: string
-  groups: Group[],
-  type: BoardType
-}
-enum BoardType {
-  BOARD = 'board',
-  SUB_ITEMS_BOARD = 'sub_items_board',
-  DOCUMENT = 'document',
-  CUSTOM_OBJECT = 'custom_object',
-}
-
-interface Workspace {
-  id: string
-  name: string
-}
-interface Group {
-  id: string
-  title: string
-}
-
-export async function mondayMakeRequest<T extends HttpMessageBody>(access_token: string, query: string, method: HttpMethod): Promise<HttpResponse<T>> {
-  return await httpClient.sendRequest<T>({
-    url: "https://api.monday.com/v2",
-    method,
-    headers: {
-      'Authorization': access_token
-    },
-    body: {
-      query
+      return {
+        disabled: false,
+        options: (
+          items.map((item) => ({ label: item.name, value: item.id }))
+        )
+      }
     }
   })
-}
-
-export async function getBoard(access_token: string, workspace_id?: string) {
-  const query =
-    `query {
-    boards(
-      ${workspace_id === 'main' ? `` : `workspace_ids: ${workspace_id},`}
-      limit:10
-    ) { id name type } 
-  }`
-
-  return await mondayMakeRequest<BoardResponse>(
-    access_token,
-    query,
-    HttpMethod.GET
-  )
 }
