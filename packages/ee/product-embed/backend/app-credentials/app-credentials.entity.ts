@@ -1,6 +1,6 @@
 import { EntitySchema } from "typeorm";
 import { ApIdSchema, BaseColumnSchemaPart } from "@backend/helper/base-entity";
-import { AppCredential } from "../../shared/app-credentials/app-credentials";
+import { AppCredential } from "@activepieces/ee/shared";
 import { Project } from "@activepieces/shared";
 
 export interface AppCredentialSchema extends AppCredential {

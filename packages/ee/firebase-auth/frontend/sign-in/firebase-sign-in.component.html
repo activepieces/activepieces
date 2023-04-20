@@ -1,22 +1,22 @@
 <div class="ap-typography-headline-5 ap-text-center ap-mb-4">Welcome Back</div>
 <div class="text-center ap-mt-2 ap-flex ap-flex-col ap-gap-2">
-	<app-button type="button" (buttonClicked)="signInGoogle()" btnColor="basic" btnStyle="stroked"
+	<ap-button type="button" (buttonClicked)="signInGoogle()" btnColor="basic" btnStyle="stroked"
 		[fullWidthOfContainer]="true">
 		<div class="ap-flex ap-gap-2 ap-items-center ap-justify-center">
 			<svg-icon [svgStyle]="{ width: '15px', height: '15px' }" src="assets/img/custom/auth/google-icon.svg">
 			</svg-icon>
 			Sign In With Google
 		</div>
-	</app-button>
+	</ap-button>
 
-	<app-button type="button" (buttonClicked)="signInGithub()" btnColor="basic" btnStyle="stroked"
+	<ap-button type="button" (buttonClicked)="signInGithub()" btnColor="basic" btnStyle="stroked"
 		[fullWidthOfContainer]="true">
 		<div class="ap-flex ap-gap-2 ap-items-center ap-justify-center">
 			<svg-icon [svgStyle]="{ width: '15px', height: '15px' }" src="assets/img/custom/auth/github.svg">
 			</svg-icon>
 			Sign In With Github
 		</div>
-	</app-button>
+	</ap-button>
 </div>
 <div class="ap-typography-headline ap-text-center ap-mt-2 ap-mb-2">OR</div>
 <form [formGroup]="loginForm" (ngSubmit)="signIn()">
@@ -43,9 +43,9 @@
 		email</mat-error>
 	<mat-error *ngIf="showInvalidEmailOrPasswordMessage" class="ap-text-center">Invalid email or password</mat-error>
 	<div class="text-center ap-mt-2 ap-flex ap-flex-col ap-gap-2 ap-mb-2">
-		<app-button [loading]="loading" (buttonClicked)="signIn()" btnColor="primary" [fullWidthOfContainer]="true">
+		<ap-button [loading]="loading" (buttonClicked)="signIn()" btnColor="primary" [fullWidthOfContainer]="true">
 			Sign in
-		</app-button>
+		</ap-button>
 	</div>
 </form>
 

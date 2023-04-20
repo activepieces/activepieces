@@ -1,0 +1,57 @@
+<button mat-menu-item (click)="expandCodeCollapse = !expandCodeCollapse" class="!ap-px-[9px]">
+  <div appTrackHover #parentNodeHoverTracker="hoverTrackerDirective"
+    class="ap-flex ap-flex-grow ap-min-h-[27px] ap-items-center">
+    <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
+      {{expandCodeCollapse ? 'expand_less' : 'expand_more'}}
+    </mat-icon>
+    <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="stepMention"></app-generic-step-mention-item>
+    <div class="ap-flex-grow"></div>
+    <ap-button *ngIf="parentNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
+      btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
+      [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
+      (buttonClicked)="mentionClicked.emit(stepMention)">Select
+    </ap-button>
+  </div>
+</button>
+
+<ng-container *ngIf="codeStepTest$ | async as result">
+  <app-step-mentions-tree *ngIf="result.children && expandCodeCollapse" [stepOutputObjectChildNodes]="result.children"
+    [markedNodesToShow]="result.markedNodesToShow" [stepDisplayName]="stepMention.step.displayName"
+    (mentionClicked)="emitMention($event)"></app-step-mentions-tree>
+</ng-container>
+<ng-container *ngIf="codeStepTest$ | async as result">
+  <button appTrackHover #resultNodeHoverTracker="hoverTrackerDirective" class="!ap-pl-0"
+    *ngIf="result.value !==undefined && expandCodeCollapse" mat-menu-item (click)="mentionClicked.emit(stepMention)">
+    <span class=" ap-flex-grow ap-transition-all"
+      [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'">result:
+      <span class="ap-transition-all ap-text-primary" [matTooltip]="'' + result.value || ''">{{result.value}}
+      </span></span>
+    <ap-button *ngIf="resultNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
+      btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
+      [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
+      (buttonClicked)="mentionClicked.emit(stepMention)">Select
+    </ap-button>
+  </button>
+
+</ng-container>
+
+<ng-container *ngIf="!codeStepTest$">
+  <ng-container *ngIf="expandCodeCollapse">
+    <div class="ap-my-3 ap-px-2">
+      <div class="ap-typography-body-1 ap-text-center ap-mb-1">
+        Test Code First
+      </div>
+      <div class="ap-typography-body-2 ap-text-center ap-mb-3">
+        This step needs to be tested in order to view its data.
+      </div>
+      <div class="ap-text-center">
+        <ap-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
+          (buttonClicked)="selectStep();">Go to
+          step
+        </ap-button>
+      </div>
+    </div>
+
+  </ng-container>
+
+</ng-container>

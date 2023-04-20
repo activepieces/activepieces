@@ -1,10 +1,20 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { AppConnectionId, ListAppConnectionRequest, UpsertConnectionRequest } from '@activepieces/shared'
+import { AppConnectionId, AppConnectionValue, ListAppConnectionRequest, UpsertConnectionRequest } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { appConnectionService } from './app-connection.service'
 
 const DEFAULT_PAGE_SIZE = 10
+
+const filterSensitiveData = (connectionValue: AppConnectionValue): Record<string, unknown> => {
+    const sensitiveDataKeys = ['client_secret', 'refresh_token']
+
+    const filteredEntries = Object.entries(connectionValue)
+        .filter(([key]) => !sensitiveDataKeys.includes(key))
+
+    return Object.fromEntries(filteredEntries)
+}
+
 export const appConnectionController = async (fastify: FastifyInstance) => {
 
     fastify.post(
@@ -20,10 +30,11 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
             }>,
         ) => {
             const connection = await appConnectionService.upsert({ projectId: request.principal.projectId, request: request.body })
-            // Remove sensitive data from response
-            delete connection.value['client_secret']
-            delete connection.value['refresh_token']
-            return connection
+
+            return {
+                ...connection,
+                value: filterSensitiveData(connection.value),
+            }
         },
     )
 
@@ -44,10 +55,11 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
                     params: { id: request.params.connectionName },
                 })
             }
-            // Remove sensitive data from response
-            delete appCredential.value['client_secret']
-            delete appCredential.value['refresh_token']
-            return appCredential
+
+            return {
+                ...appCredential,
+                value: filterSensitiveData(appCredential.value),
+            }
         },
     )
 

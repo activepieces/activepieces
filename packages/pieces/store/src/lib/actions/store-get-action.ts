@@ -1,4 +1,4 @@
-import {createAction, Property, StoreScope} from "@activepieces/framework";
+import {createAction, Property, StoreScope} from "@activepieces/pieces-framework";
 
 
 export const storageGetAction = createAction({

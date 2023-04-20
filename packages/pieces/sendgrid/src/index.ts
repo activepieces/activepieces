@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { sendEmail } from './lib/actions/send-email';
 import { sendDynamicTemplate } from './lib/actions/send-dynamic-template';
 

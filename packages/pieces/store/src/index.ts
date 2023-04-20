@@ -1,5 +1,5 @@
 import packageJson from "../package.json";
-import { createPiece } from "@activepieces/framework";
+import { createPiece } from "@activepieces/pieces-framework";
 import { storageGetAction } from "./lib/actions/store-get-action";
 import { storagePutAction } from "./lib/actions/store-put-action";
 

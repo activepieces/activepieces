@@ -1,4 +1,5 @@
-import { createAction, Property, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
+import { HttpMethod, AuthenticationType, httpClient, HttpRequest } from "@activepieces/pieces-common";
 import { sendgridCommon } from "../common";
 
 export const sendEmail = createAction({

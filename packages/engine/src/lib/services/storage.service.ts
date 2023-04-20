@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Store, StoreScope } from '@activepieces/framework';
+import { Store, StoreScope } from '@activepieces/pieces-framework';
 import { FlowId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared';
 import { globals } from '../globals';
 

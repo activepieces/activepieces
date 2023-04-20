@@ -1,8 +1,10 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from './app-event-routing.service'
-import { engineHelper } from '../helper/engine-helper'
 import { logger } from '../helper/logger'
+import { getPiece } from '@activepieces/pieces-apps'
+import { isNil } from 'lodash'
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 
 export const appEventRoutingModule = async (app: FastifyInstance) => {
     app.register(appEventRoutingController, { prefix: '/v1/app-events' })
@@ -34,10 +36,19 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
                 method: request.method,
                 queryParams: request.query as Record<string, string>,
             }
-            const {reply, event, identifierValue} = await engineHelper.executeParseEvent({
-                pieceName: pieceName,
-                event: eventPayload,
-            })
+            const piece = getPiece(pieceName)
+
+            if (isNil(piece)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.PIECE_NOT_FOUND,
+                    params: {
+                        pieceName,
+                        pieceVersion: 'latest',
+                    },
+                })
+            }
+
+            const { reply, event, identifierValue } = piece.events!.parseAndReply({ payload: eventPayload })
 
             logger.info(`Received event ${event} with identifier ${identifierValue} in app ${pieceName}`)
             if (event && identifierValue) {
@@ -54,7 +65,7 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
                     })
                 })
             }
-            requestReply.status(200).headers(reply?.headers ?? {}).send(reply?.body?? {})
+            requestReply.status(200).headers(reply?.headers ?? {}).send(reply?.body ?? {})
         },
     )
 
