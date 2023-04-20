@@ -96,6 +96,33 @@ const _foldersReducer = createReducer(
       displayAllFlows: true,
       selectedFolder: undefined,
     };
+  }),
+  on(FolderActions.deleteFlow, (state): FoldersState => {
+    const allFlowsNumber = state.allFlowsNumber - 1;
+    const uncategorizedFlowsNumber = state.selectedFolder
+      ? state.uncategorizedFlowsNumber
+      : state.uncategorizedFlowsNumber - 1;
+    if (state.selectedFolder === undefined) {
+      return {
+        ...state,
+        allFlowsNumber,
+        uncategorizedFlowsNumber,
+      };
+    } else {
+      const folders = [...state.folders];
+      const selectedFolderIdx = folders.findIndex(
+        (f) => f.id === state.selectedFolder?.id
+      );
+      folders[selectedFolderIdx] = {
+        ...folders[selectedFolderIdx],
+        numberOfFlows: folders[selectedFolderIdx].numberOfFlows - 1,
+      };
+      return {
+        ...state,
+        folders,
+        selectedFolder: folders[selectedFolderIdx],
+      };
+    }
   })
 );
 export function foldersReducer(

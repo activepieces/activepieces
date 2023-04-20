@@ -16,6 +16,8 @@ import {
   DeleteEntityDialogData,
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
+import { Store } from '@ngrx/store';
+import { FolderActions } from '../../store/folders/folders.actions';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -35,7 +37,8 @@ export class FlowsTableComponent implements OnInit {
     private dialogService: MatDialog,
     private flowService: FlowService,
     private router: Router,
-    private instanceService: FlowInstanceService
+    private instanceService: FlowInstanceService,
+    private store: Store
   ) {}
 
   ngOnInit(): void {
@@ -69,6 +72,7 @@ export class FlowsTableComponent implements OnInit {
       tap((res) => {
         if (res) {
           this.flowDeleted$.next(true);
+          this.store.dispatch(FolderActions.deleteFlow());
         }
       }),
       map(() => {

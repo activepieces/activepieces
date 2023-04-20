@@ -8,6 +8,7 @@ export enum FoldersActionType {
   RENAME_FOLDER = 'RENAME_FOLDER',
   SELECT_FOLDER = 'SELECT_FOLDER',
   SHOW_ALL_FLOWS = 'SHOW_ALL_FLOWS',
+  DELETE_FLOW = 'DELETE_FLOW',
 }
 
 const setInitial = createAction(
@@ -29,7 +30,7 @@ const deleteFolder = createAction(
   FoldersActionType.DELETE_FOLDER,
   props<{ folderId: string }>()
 );
-
+const deleteFlow = createAction(FoldersActionType.DELETE_FLOW);
 const selectFolder = createAction(
   FoldersActionType.SELECT_FOLDER,
   props<{ folderId?: string }>()
@@ -38,6 +39,7 @@ const renameFolder = createAction(
   FoldersActionType.RENAME_FOLDER,
   props<{ folderId: string; newName: string }>()
 );
+
 const showAllFlows = createAction(FoldersActionType.SHOW_ALL_FLOWS);
 
 export const FolderActions = {
@@ -47,4 +49,5 @@ export const FolderActions = {
   renameFolder,
   selectFolder,
   showAllFlows,
+  deleteFlow,
 };
