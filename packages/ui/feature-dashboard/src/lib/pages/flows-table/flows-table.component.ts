@@ -69,11 +69,8 @@ export class FlowsTableComponent implements OnInit {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
       entityName: flow.version.displayName,
-      note: {
-        danger: true,
-        text: `This will permanently delete the flow, all its data and any background runs.
-         You can't undo this action.`,
-      },
+      note: `This will permanently delete the flow, all its data and any background runs.
+      You can't undo this action.`
     };
     const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
       data: dialogData,

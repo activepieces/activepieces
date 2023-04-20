@@ -9,14 +9,12 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { GenericSnackbarTemplateComponent } from '../generic-snackbar-template/generic-snackbar-template.component';
+import { matchesString } from '../../validators';
 
 export interface DeleteEntityDialogData {
   entityName: string;
   deleteEntity$: Observable<unknown>;
-  note?: {
-    text: string;
-    danger: boolean;
-  };
+  note:string
 }
 
 @Component({
@@ -36,7 +34,7 @@ export class DeleteEntityDialogComponent {
     this.confirmationForm = this.formBuilder.group({
       confirmation: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, Validators.pattern('DELETE')],
+        validators: [Validators.required, matchesString('delete')],
       }),
     });
   }
