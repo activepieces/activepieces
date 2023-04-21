@@ -24,6 +24,7 @@ import { hackernews } from '@activepieces/piece-hackernews';
 import { http } from '@activepieces/piece-http';
 import { hubspot } from '@activepieces/piece-hubspot';
 import { mailchimp } from '@activepieces/piece-mailchimp';
+import { microsoftTeams } from '@activepieces/piece-microsoft-teams';
 import { openai } from '@activepieces/piece-openai';
 import { pipedrive } from '@activepieces/piece-pipedrive';
 import { posthog } from '@activepieces/piece-posthog';
@@ -57,7 +58,6 @@ import { constantContact } from '@activepieces/piece-constant-contact';
 import { salesforce } from '@activepieces/piece-salesforce';
 import { smtp } from '@activepieces/piece-smtp';
 import { mailerLite } from '@activepieces/piece-mailer-lite';
-import { microsoftGraph } from '@activepieces/piece-microsoft-graph';
 
 export const pieces: Piece[] = [
     airtable,
@@ -87,7 +87,7 @@ export const pieces: Piece[] = [
     hubspot,
     mailchimp,
     mailerLite,
-    microsoftGraph,
+    microsoftTeams,
     openai,
     pipedrive,
     posthog,

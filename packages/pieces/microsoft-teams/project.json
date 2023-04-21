@@ -1,7 +1,7 @@
 {
-  "name": "pieces-microsoft-graph",
+  "name": "pieces-microsoft-teams",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/microsoft-graph/src",
+  "sourceRoot": "packages/pieces/microsoft-teams/src",
   "projectType": "library",
   "targets": {
     "build": {
@@ -10,12 +10,12 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/microsoft-graph",
-        "tsConfig": "packages/pieces/microsoft-graph/tsconfig.lib.json",
-        "packageJson": "packages/pieces/microsoft-graph/package.json",
-        "main": "packages/pieces/microsoft-graph/src/index.ts",
+        "outputPath": "dist/packages/pieces/microsoft-teams",
+        "tsConfig": "packages/pieces/microsoft-teams/tsconfig.lib.json",
+        "packageJson": "packages/pieces/microsoft-teams/package.json",
+        "main": "packages/pieces/microsoft-teams/src/index.ts",
         "assets": [
-          "packages/pieces/microsoft-graph/*.md"
+          "packages/pieces/microsoft-teams/*.md"
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
@@ -27,7 +27,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/microsoft-graph/**/*.ts"
+          "packages/pieces/microsoft-teams/**/*.ts"
         ]
       }
     }

@@ -1,12 +1,12 @@
 import packageJson from "../package.json"
 
 import { createPiece } from "@activepieces/framework"
-import { microsoftTeamsSendChannelMessage } from "./lib/actions/microsoft-teams/send-channel-message"
+import { microsoftTeamsSendChannelMessage } from "./lib/actions/send-channel-message"
 
 export const microsoftTeams = createPiece({
-  name: "microsoft-graph",
-  displayName: "Microsoft Graph",
-  logoUrl: "https://learn.microsoft.com/en-us/graph/images/hub/icon04-graphtoolkit.svg",
+  name: "microsoft-teams",
+  displayName: "Microsoft Teams",
+  logoUrl: "https://logodownload.org/wp-content/uploads/2021/08/microsoft-teams-logo-0.png",
   version: packageJson.version,
   authors: [],
   actions: [microsoftTeamsSendChannelMessage],
