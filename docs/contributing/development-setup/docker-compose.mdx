@@ -1,0 +1,24 @@
+---
+title: 'Docker Compose (Windows, Linux)'
+description: ''
+---
+
+<Warning>
+This guide is only for Windows and Linux users. If you are using macOS, please refer to the Dev Container or Codespace guide.
+</Warning>
+
+The `docker-compose.dev.yml` file is a Docker Compose file specifically used for development environments. This file includes the necessary configurations for running a development version of your application.
+
+Here are the steps to use `docker-compose.dev.yml`:
+
+1. Install the npm dependencies:
+
+```bash
+npm ci
+```
+
+2. Run the following command to start the development environment:
+
+```bash
+docker-compose -f docker-compose.dev.yml up -d
+```

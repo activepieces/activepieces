@@ -1,4 +1,5 @@
-import { createAction, Property, OAuth2PropertyValue, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
+import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
+import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
 import { pipedriveCommon } from "../../common";
 
 export const addPerson = createAction({

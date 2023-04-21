@@ -1,5 +1,5 @@
-import { Property, getAccessTokenOrThrow, OAuth2PropertyValue, HttpMethod, HttpMessageBody, HttpResponse, httpClient, AuthenticationType } from "@activepieces/framework";
-
+import { Property, OAuth2PropertyValue} from "@activepieces/pieces-framework";
+import { getAccessTokenOrThrow, HttpMethod, HttpMessageBody, HttpResponse, httpClient, AuthenticationType } from "@activepieces/pieces-common";
 
 export const asanaCommon = {
     authentication: Property.OAuth2({
