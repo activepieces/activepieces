@@ -1,10 +1,14 @@
 import { DedupeStrategy, Polling } from "@activepieces/pieces-common"
 
-import { getItems, getSubitems } from "../common/data";
-import { PollingProps } from "../common/types";
+import { getItems, getUpdates } from "../common/data";
+import { OAuth2PropertyValue } from "@activepieces/pieces-framework";
 
 // check for new items in a board
-export const itemPolling: Polling<PollingProps> = {
+export const itemPolling: Polling<{
+  authentication: OAuth2PropertyValue
+  workspace_id: string | undefined
+  board_id: string | undefined
+}> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ propsValue }) => {
     const items = await getItems({
@@ -19,15 +23,16 @@ export const itemPolling: Polling<PollingProps> = {
   },
 }
 
-// check for new subitems in a board
-export const subitemPolling: Polling<PollingProps> = {
+// check for new updates in items of a board
+export const updatesPolling: Polling<{
+  authentication: OAuth2PropertyValue
+}> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ propsValue }) => {
-    const subitems = await getSubitems({
-      access_token: propsValue.authentication.access_token,
-      board_id: propsValue.board_id
+    const updates = await getUpdates({
+      access_token: propsValue.authentication.access_token
     })
-    return subitems.map((item) => ({
+    return updates.map((item) => ({
       id: item.id,
       data: item,
     }));

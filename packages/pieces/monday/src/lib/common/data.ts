@@ -1,5 +1,5 @@
 import { HttpMessageBody, HttpMethod, HttpResponse, httpClient } from "@activepieces/pieces-common"
-import { Board, BoardResponse, Item, SubItem } from "./types"
+import { Board, BoardResponse, Item, SubItem, Update } from "./types"
 
 export async function mondayMakeRequest<T extends HttpMessageBody>(access_token: string, query: string, method: HttpMethod): Promise<HttpResponse<T>> {
   return await httpClient.sendRequest<T>({
@@ -39,7 +39,7 @@ export async function getItems({
   limit = 10,
   newest_first = true
 }: {
-  access_token: string, 
+  access_token: string,
   board_id?: string,
   limit?: number,
   since?: number,
@@ -72,14 +72,52 @@ export async function getItems({
   return []
 }
 
+export async function getUpdates({
+  access_token,
+  limit = 10
+}: {
+  access_token: string,
+  limit?: number
+}): Promise<Update[]> {
+  const query = `
+    query {
+      updates (limit: ${limit}) {
+        body
+        id
+        created_at
+        creator {
+          name
+          id
+        }
+      }
+    }
+  `
+  const response = await mondayMakeRequest<{ 
+    data: { 
+      updates: Update[] 
+    }, 
+    account_id: number 
+  }>(
+    access_token,
+    query,
+    HttpMethod.GET
+  )
+
+  if (response.status === 200) {
+    return response.body.data.updates
+  }
+
+  return []
+}
+
 export async function getSubitems({
   access_token,
   board_id,
   item_id,
   newest_first = true
 }: {
-  access_token: string, 
-  board_id?: string, 
+  access_token: string,
+  board_id?: string,
   item_id?: string,
   limit?: number,
   since?: number,
@@ -92,7 +130,7 @@ export async function getSubitems({
       boards (ids: [${board_id}]) {
         id
         name
-        items (${ item_id ? `ids: [${item_id}]` : `` }, newest_first: ${newest_first}) {
+        items (${item_id ? `ids: [${item_id}]` : ``}, newest_first: ${newest_first}) {
           id
           subitems {
             id
