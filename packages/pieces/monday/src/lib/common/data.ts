@@ -103,6 +103,7 @@ export async function getUpdates({
     HttpMethod.GET
   )
 
+
   if (response.status === 200) {
     return response.body.data.updates
   }

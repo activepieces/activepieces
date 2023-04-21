@@ -12,14 +12,14 @@ export const mondayProps = {
     required: true,
     scope: [
       'workspaces:read',
-      'webhooks:read',
-      'webhooks:write',
       'boards:read',
-      'boards:write'
+      'boards:write',
+      'updates:read',
+      'updates:write',
     ]
   }),
   workspace_id: (required = false) => Property.Dropdown({
-    displayName: "Workspace ID",
+    displayName: "Workspace",
     description: "The workspace's unique identifier.",
     required: required,
     defaultValue: 'main',
@@ -44,7 +44,7 @@ export const mondayProps = {
     }
   }),
   board_id: (required = false, refreshers = ['authentication', 'workspace_id']) => Property.Dropdown({
-    displayName: "Board ID",
+    displayName: "Board",
     description: "The board's unique identifier.",
     required: required,
     refreshers: refreshers,
@@ -65,8 +65,8 @@ export const mondayProps = {
     }
   }),
   group_id: (required = false) => Property.Dropdown({
-    description: 'Group',
-    displayName: 'Board Group',
+    description: 'Board Group',
+    displayName: 'Group',
     required: required,
     refreshers: ['authentication', 'board_id'],
     options: async ({ authentication, board_id }) => {
@@ -102,8 +102,8 @@ export const mondayProps = {
     }
   }),
   item_id: (required = false) => Property.Dropdown({
-    description: 'Item',
-    displayName: 'Board Item',
+    description: 'Board Item',
+    displayName: 'Item',
     required: required,
     refreshers: ['authentication', 'board_id'],
     options: async ({ authentication, board_id }) => {

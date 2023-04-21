@@ -6,7 +6,7 @@ import { mondayMakeRequest } from "../common/data"
 export const mondayCreateAnItem = createAction({
   name: 'monday_create_an_item',
   displayName: 'Create Item',
-  description: 'This method allows you to create a new item inside a board',
+  description: 'Create a new item inside a board.',
   sampleData: {
     "data": {
       "create_item": {
