@@ -34,7 +34,7 @@ export const telemetry = {
         }
         const project = await projectService.getOne(projectId)
         client.capture({
-            distinctId: project.ownerId,
+            distinctId: project!.ownerId,
             event: event.name,
             properties: {
                 ...event.payload,

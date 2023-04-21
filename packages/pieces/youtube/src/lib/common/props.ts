@@ -1,4 +1,4 @@
-import { Property } from "@activepieces/framework";
+import { Property } from "@activepieces/pieces-framework";
 
 export const channelIdentifier = Property.ShortText({
     displayName: 'Channel ID, URL, or handle',

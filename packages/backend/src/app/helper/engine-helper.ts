@@ -1,20 +1,16 @@
 import fs from 'node:fs/promises'
 import {
-    ApEnvironment,
     apId,
     CollectionId,
     EngineOperation,
     EngineOperationType,
-    ExecuteEventParserOperation,
+    ExecuteActionOperation,
     ExecuteFlowOperation,
     ExecutePropsOptions,
     ExecuteTestOrRunTriggerResponse,
     ExecuteTriggerOperation,
     ExecuteTriggerResponse,
     ExecutionOutput,
-    getPackageAliasForPiece,
-    getPackageVersionForPiece,
-    ParseEventResponse,
     PieceTrigger,
     PrincipalType,
     ProjectId,
@@ -24,118 +20,140 @@ import { Sandbox, sandboxManager } from '../workers/sandbox'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 import { tokenUtils } from '../authentication/lib/token-utils'
-import { DropdownState, DynamicPropsValue } from '@activepieces/framework'
+import { DropdownState, DynamicPropsValue } from '@activepieces/pieces-framework'
 import { logger } from '../helper/logger'
 import chalk from 'chalk'
 import { getEdition, getWebhookSecret } from './secret-helper'
-import { packageManager } from './package-manager'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
+import { pieceManager } from '../flows/common/piece-installer'
+
+type InstallPieceParams = {
+    path: string
+    pieceName: string
+    pieceVersion: string
+}
+
+type ExecuteReturn<T> = {
+    output: T
+    standardError: string
+}
+
+const log = logger.child({ file: 'EngineHelper' })
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH)
 const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH)
 
-const installPieceDependency = async (path: string, pieceName: string, pieceVersion: string) => {
-    const environment = system.get(SystemProp.ENVIRONMENT)
+const installPiece = async (params: InstallPieceParams) => {
+    log.debug(params, '[InstallPiece] params')
 
-    if (environment === ApEnvironment.DEVELOPMENT) {
-        return
-    }
+    const { path, pieceName, pieceVersion } = params
 
-    const packageName = getPackageAliasForPiece({
-        pieceName,
-        pieceVersion,
-    })
-
-    const packageVersion = getPackageVersionForPiece({
-        pieceName,
-        pieceVersion,
-    })
-
-    await packageManager.addDependencies(path, {
-        [packageName]: packageVersion,
+    await pieceManager.install({
+        projectPath: path,
+        pieces: [
+            {
+                name: pieceName,
+                version: pieceVersion,
+            },
+        ],
     })
 }
 
 export const engineHelper = {
     async executeFlow(sandbox: Sandbox, operation: ExecuteFlowOperation): Promise<ExecutionOutput> {
-        return await execute(EngineOperationType.EXECUTE_FLOW, sandbox, {
+        const result = await execute(EngineOperationType.EXECUTE_FLOW, sandbox, {
             ...operation,
             workerToken: await workerToken({ collectionId: operation.collectionId, projectId: operation.projectId }),
-        }) as ExecutionOutput
-    },
-    async executeParseEvent(operation: ExecuteEventParserOperation): Promise<ParseEventResponse> {
-        const sandbox = sandboxManager.obtainSandbox()
-        let result
-        try {
-            await sandbox.cleanAndInit()
+        })
 
-            const buildPath = sandbox.getSandboxFolderPath()
-            const { pieceName } = operation
-            await installPieceDependency(buildPath, pieceName, 'latest')
-            result = await execute(EngineOperationType.EXTRACT_EVENT_DATA, sandbox, operation)
-        }
-        finally {
-            sandboxManager.returnSandbox(sandbox.boxId)
-        }
-        return result as ParseEventResponse
+        return result.output as ExecutionOutput
     },
-
     async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | ExecuteTestOrRunTriggerResponse | ExecuteTriggerResponse> {
-        const sandbox = sandboxManager.obtainSandbox()
-        let result
-        try {
-            await sandbox.cleanAndInit()
-            const buildPath = sandbox.getSandboxFolderPath()
-            const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
-            await installPieceDependency(buildPath, pieceName, pieceVersion)
+        const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
+        const sandbox = await getSandbox({
+            pieceName,
+            pieceVersion,
+        })
 
-            result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
+        try {
+            const result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
                 edition: await getEdition(),
-                appWebhookUrl: await appEventRoutingService.getAppWebookUrl({ appName: pieceName }),
+                appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({ appName: pieceName }),
                 webhookSecret: await getWebhookSecret(operation.flowVersion),
                 workerToken: await workerToken({
                     collectionId: operation.collectionId,
                     projectId: operation.projectId,
                 }),
             })
+
+            if (operation.hookType === TriggerHookType.TEST) {
+                return result.output as ExecuteTestOrRunTriggerResponse
+            }
+            if (operation.hookType === TriggerHookType.RUN) {
+                return result.output as unknown[]
+            }
+            return result.output as void
         }
         finally {
-            sandboxManager.returnSandbox(sandbox.boxId)
+            await sandboxManager.returnSandbox(sandbox.boxId)
         }
-        if (operation.hookType === TriggerHookType.TEST) {
-            return result as ExecuteTestOrRunTriggerResponse
-        }
-        if (operation.hookType === TriggerHookType.RUN) {
-            return result as unknown[]
-        }
-        return result as void
     },
 
     async executeProp(operation: ExecutePropsOptions): Promise<DropdownState<unknown> | Record<string, DynamicPropsValue>> {
-        const sandbox = sandboxManager.obtainSandbox()
-        let result
+        log.debug(operation, '[EngineHelper#executeProp] operation')
+
+        const { pieceName, pieceVersion } = operation
+
+        const sandbox = await getSandbox({
+            pieceName,
+            pieceVersion,
+        })
 
         try {
-            await sandbox.cleanAndInit()
+            const result = await execute<DropdownState<unknown> | Record<string, DynamicPropsValue>>(
+                EngineOperationType.EXECUTE_PROPERTY,
+                sandbox,
+                {
+                    ...operation,
+                    workerToken: await workerToken({
+                        collectionId: operation.collectionId,
+                        projectId: operation.projectId,
+                    }),
+                },
+            )
 
-            const buildPath = sandbox.getSandboxFolderPath()
-            const { pieceName, pieceVersion } = operation
-            await installPieceDependency(buildPath, pieceName, pieceVersion)
+            return result.output
+        }
+        finally {
+            await sandboxManager.returnSandbox(sandbox.boxId)
+        }
+    },
 
-            result = await execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, {
+    async executeAction(operation: ExecuteActionOperation): Promise<ExecuteReturn<unknown>> {
+        logger.debug(operation, '[EngineHelper#executeAction] operation')
+
+        const { pieceName, pieceVersion } = operation
+
+        const sandbox = await getSandbox({
+            pieceName,
+            pieceVersion,
+        })
+
+        try {
+            const result = await execute(EngineOperationType.EXECUTE_ACTION, sandbox, {
                 ...operation,
                 workerToken: await workerToken({
                     collectionId: operation.collectionId,
                     projectId: operation.projectId,
                 }),
             })
+
+            return result
         }
         finally {
-            sandboxManager.returnSandbox(sandbox.boxId)
+            await sandboxManager.returnSandbox(sandbox.boxId)
         }
-
-        return result
     },
 }
 
@@ -148,8 +166,31 @@ function workerToken(request: { projectId: ProjectId, collectionId: CollectionId
     })
 }
 
-async function execute(operation: EngineOperationType, sandbox: Sandbox, input: EngineOperation): Promise<unknown> {
-    logger.info(`Executing ${operation} inside sandbox number ${sandbox.boxId}`)
+async function getSandbox({ pieceName, pieceVersion }: {
+    pieceName: string
+    pieceVersion: string
+}): Promise<Sandbox> {
+    const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
+    if (sandbox.cached) {
+        logger.info(`Resuing sandox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`)
+        await sandbox.clean()
+    }
+    else {
+        logger.info(`Preparing sandbox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`)
+        await sandbox.recreate()
+        const path = sandbox.getSandboxFolderPath()
+
+        await installPiece({
+            path,
+            pieceName,
+            pieceVersion,
+        })
+    }
+    return sandbox
+}
+
+async function execute<T>(operation: EngineOperationType, sandbox: Sandbox, input: EngineOperation): Promise<ExecuteReturn<T>> {
+    log.info(`Executing ${operation} inside sandbox number ${sandbox.boxId}`)
 
     const sandboxPath = sandbox.getSandboxFolderPath()
 
@@ -166,15 +207,20 @@ async function execute(operation: EngineOperationType, sandbox: Sandbox, input: 
     const standardError = await sandbox.parseStandardError()
 
     standardOutput.split('\n').forEach(f => {
-        if (f.trim().length > 0) logger.info({}, chalk.yellow(f))
+        if (f.trim().length > 0) log.info({}, chalk.yellow(f))
     })
 
     standardError.split('\n').forEach(f => {
-        if (f.trim().length > 0) logger.error({}, chalk.red(f))
+        if (f.trim().length > 0) log.error({}, chalk.red(f))
     })
 
     const outputFilePath = sandbox.getSandboxFilePath('output.json')
     const outputFile = await fs.readFile(outputFilePath, { encoding: 'utf-8' })
 
-    return JSON.parse(outputFile)
+    const output = JSON.parse(outputFile) as T
+
+    return {
+        output,
+        standardError,
+    }
 }

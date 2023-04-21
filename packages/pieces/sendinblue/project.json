@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/sendinblue",
         "tsConfig": "packages/pieces/sendinblue/tsconfig.lib.json",
         "packageJson": "packages/pieces/sendinblue/package.json",
         "main": "packages/pieces/sendinblue/src/index.ts",
-        "assets": [
-          "packages/pieces/sendinblue/*.md"
-        ],
+        "assets": ["packages/pieces/sendinblue/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/sendinblue/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/sendinblue/**/*.ts"]
       }
     }
   },

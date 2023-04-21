@@ -5,7 +5,7 @@ import { AppConnection } from '@activepieces/shared';
 import {
   GetOrDeleteConnectionFromTokenRequest,
   UpsertConnectionFromToken,
-} from '@ee/product-embed/shared/connection-keys/connection-requests';
+} from '@activepieces/ee/shared';
 import { getHost } from '../helper/helper';
 
 @Injectable({

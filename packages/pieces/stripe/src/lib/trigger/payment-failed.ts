@@ -1,5 +1,5 @@
-import { createTrigger } from '@activepieces/framework';
-import { TriggerStrategy } from '@activepieces/shared';
+import { createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { stripeCommon } from '../common';
 
 export const stripePaymentFailed = createTrigger({

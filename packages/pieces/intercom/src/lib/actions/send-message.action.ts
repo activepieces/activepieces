@@ -1,4 +1,5 @@
-import { AuthenticationType, createAction, DynamicPropsValue, getAccessTokenOrThrow, httpClient, HttpMethod, OAuth2PropertyValue, Property } from "@activepieces/framework";
+import { DynamicPropsValue, OAuth2PropertyValue, Property, createAction } from "@activepieces/pieces-framework";
+import { AuthenticationType, getAccessTokenOrThrow, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { intercomCommon } from "../common";
 
 enum MessageType {

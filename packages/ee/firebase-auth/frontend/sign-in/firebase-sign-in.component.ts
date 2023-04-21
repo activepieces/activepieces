@@ -2,12 +2,11 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { FirebaseAuthService } from '../firebase-auth.service';
-import { fadeInUp400ms } from 'packages/frontend/src/app/modules/common/animation/fade-in-up.animation';
+import { fadeInUp400ms } from '@activepieces/ui/common';
 import * as auth from 'firebase/auth';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { FirebaseError } from 'firebase/app';
-import { AuthenticationService } from '../../../../frontend/src/app/modules/common/service/authentication.service';
-
+import { AuthenticationService } from '@activepieces/ui/common';
 
 interface LoginForm {
 	email: FormControl<string>;

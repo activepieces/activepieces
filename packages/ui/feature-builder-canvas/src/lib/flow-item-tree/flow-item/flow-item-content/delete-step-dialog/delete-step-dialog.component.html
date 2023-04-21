@@ -1,0 +1,19 @@
+<ap-dialog-title-template>Delete {{stepName}}
+</ap-dialog-title-template>
+<mat-dialog-content>
+    <div class="ap-typography-body-1 ap-text-description ap-mb-4">
+        Are you sure you want to delete {{stepName}}?
+    </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default">
+            Cancel
+        </ap-button>
+        <ap-button cdkFocusInitial btnSize="default" (click)="deleteStep()" btnColor="warn" type="submit">
+            Confirm
+        </ap-button>
+    </div>
+</mat-dialog-actions>

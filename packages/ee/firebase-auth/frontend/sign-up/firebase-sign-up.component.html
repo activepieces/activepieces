@@ -1,23 +1,23 @@
 <ng-container *ngIf="!showVerificationNote; else verificationTemplate">
 	<div class="ap-typography-headline-5 ap-text-center ap-mb-4">Let's Get Started!</div>
 	<div class="text-center ap-mt-2 ap-flex ap-flex-col ap-gap-2">
-		<app-button type="button" (buttonClicked)="signInGoogle()" btnColor="basic" btnStyle="stroked"
+		<ap-button type="button" (buttonClicked)="signInGoogle()" btnColor="basic" btnStyle="stroked"
 			[fullWidthOfContainer]="true">
 			<div class="ap-flex ap-gap-2 ap-items-center ap-justify-center">
 				<svg-icon [svgStyle]="{ width: '15px', height: '15px' }" src="assets/img/custom/auth/google-icon.svg">
 				</svg-icon>
 				Sign Up With Google
 			</div>
-		</app-button>
+		</ap-button>
 
-		<app-button type="button" (buttonClicked)="signInGithub()" btnColor="basic" btnStyle="stroked"
+		<ap-button type="button" (buttonClicked)="signInGithub()" btnColor="basic" btnStyle="stroked"
 			[fullWidthOfContainer]="true">
 			<div class="ap-flex ap-gap-2 ap-items-center ap-justify-center">
 				<svg-icon [svgStyle]="{ width: '15px', height: '15px' }" src="assets/img/custom/auth/github.svg">
 				</svg-icon>
 				Sign Up With Github
 			</div>
-		</app-button>
+		</ap-button>
 	</div>
 	<div class="ap-typography-headline ap-text-center ap-mt-2 ap-mb-2">OR</div>
 	<form [formGroup]="registrationForm" (ngSubmit)="signUp()" class="ap-flex ap-flex-col ap-gap-1">
@@ -127,9 +127,9 @@
 		</p>
 
 		<div class="text-center">
-			<app-button [loading]="loading" (buttonClicked)="signUp()" btnColor="primary" [fullWidthOfContainer]="true">
+			<ap-button [loading]="loading" (buttonClicked)="signUp()" btnColor="primary" [fullWidthOfContainer]="true">
 				Sign up
-			</app-button>
+			</ap-button>
 		</div>
 		<div class="ap-typography-body-2 ap-my-4 ap-text-center">
 			<p>

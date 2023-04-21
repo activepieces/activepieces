@@ -1,0 +1,7 @@
+<app-step-result
+  (childStepSelected)="childStepSelectedHandler()"
+  *ngFor="let iteration of IterationResults"
+  [stepNameAndResult]="iteration"
+  [selectedStepName]="selectedStepName"
+  [nestingLevel]="nestingLevel"
+></app-step-result>

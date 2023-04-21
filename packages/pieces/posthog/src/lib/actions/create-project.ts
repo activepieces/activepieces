@@ -1,4 +1,5 @@
-import { Property, createAction, HttpRequest, HttpMethod, httpClient, AuthenticationType } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
+import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 import { ProjectCreateRequest, ProjectCreateResponse } from "../common/models";
 import { posthogAuthentication } from "../common/props";
 
