@@ -1,78 +1,47 @@
-import { createTrigger, httpClient, HttpRequest, HttpMethod, Property, AuthenticationType, OAuth2PropertyValue } from '@activepieces/framework'
-import { TriggerStrategy } from '@activepieces/shared'
+import { createTrigger, TriggerStrategy } from "@activepieces/pieces-framework"
+import { httpClient, HttpRequest, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { props as eventbriteProps } from "../../common";
 
 interface Props {
   name: string,
   event: string,
   displayName: string,
   description: string,
-  sampleData: object,
   props?: object
 }
 
-export const eventbriteRegisterTrigger = ({ name, event, displayName, description, sampleData }: Props) => createTrigger({
+export const eventbriteRegisterTrigger = ({ name, event, displayName, description, props }: Props) => createTrigger({
   name: `eventbrite_trigger_${name}`,
   displayName: displayName,
   description: description,
   props: {
-    authentication: Property.OAuth2({
-      displayName: 'Authentication',
-      description: 'OAuth',
-      required: true,
-      authUrl: 'https://www.eventbrite.com/oauth/authorize',
-      tokenUrl: 'https://www.eventbrite.com/oauth/token',
-      scope: []
-    }),
-    organization_id: Property.Dropdown({
-      displayName: 'Organization',
-      description: 'The ID of the organization to trigger a webhook',
-      required: true,
-      refreshers: ['authentication'],
-      options: async ({ authentication }) => {
-        if (!authentication)
-          return {
-            disabled: true,
-            placeholder: 'connect your account first',
-            options: [],
-          }
-
-        const response = await httpClient.sendRequest<OrganizationList>({
-          method: HttpMethod.GET,
-          url: `https://www.eventbriteapi.com/v3/users/me/organizations/`,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: (authentication as OAuth2PropertyValue).access_token
-          }
-        })
-
-        return {
-          disabled: false,
-          options: response.body
-            .organizations
-            .map((organization) => ({ label: organization.name, value: organization.id })),
-        };
-      }
-    }),
-    event_id: Property.ShortText({
-      displayName: 'Event ID',
-      description: 'The Event ID that triggers this webhook. Leave blank to attach to all events.',
-      required: false
-    })
+    authentication: eventbriteProps.authentication,
+    organization_id: eventbriteProps.organization_id,
+    ...props
   },
-  sampleData: sampleData,
+  sampleData: {
+    api_url: 'https://www.eventbriteapi.com/{api-endpoint-to-fetch-object-details}/',
+    config: {
+      webhook_id: '11370521',
+      user_id: '1487484873013',
+      action: 'test',
+      endpoint_url: 'https://4e63-102-167-31-143.ngrok-free.app/v1/webhooks/EJffn0ILoGFPzTVLLhkHr'
+    }
+  },
   type: TriggerStrategy.WEBHOOK,
   async onEnable({ propsValue, webhookUrl, store }) {
+    const { authentication, organization_id, ...event_props } = propsValue
     const response = await httpClient.sendRequest<WebhookInformation>({
       method: HttpMethod.POST,
-      url: `https://www.eventbriteapi.com/v3/organizations/${propsValue.organization_id}/webhooks/`,
+      url: `https://www.eventbriteapi.com/v3/organizations/${organization_id}/webhooks/`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: propsValue.authentication.access_token
+        token: authentication.access_token
       },
       body: {
         actions: event,
         endpoint_url: webhookUrl,
-        event_id: propsValue.event_id
+        ...event_props
       }
     });
     await store.put<WebhookInformation>(`eventbrite_${name}_trigger`, response.body);
@@ -106,23 +75,4 @@ interface WebhookInformation {
   resource_uri: string
   created: string
   user_id: string
-}
-
-interface OrganizationList {
-  pagination: {
-    object_count: number
-    page_number: number
-    page_size: number
-    page_count: number
-    continuation: string
-    has_more_items: boolean
-  },
-  organizations: Organization[]
-}
-
-interface Organization {
-  id: string
-  name: string
-  vertical: string
-  image_id: string
 }
