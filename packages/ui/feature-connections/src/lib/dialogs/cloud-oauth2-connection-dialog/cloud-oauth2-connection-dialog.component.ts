@@ -147,7 +147,8 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
       value: {
         token_url: tokenUrl,
         code: popupResponse.code,
-        authorization_method: this.dialogData.pieceAuthProperty.authorizationMethod,
+        authorization_method:
+          this.dialogData.pieceAuthProperty.authorizationMethod,
         code_challenge: popupResponse.code_challenge,
         client_id: this._cloudConnectionPopupSettings.client_id,
         scope: this._cloudConnectionPopupSettings.scope,
