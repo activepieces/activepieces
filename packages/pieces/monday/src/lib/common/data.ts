@@ -14,7 +14,7 @@ export async function mondayMakeRequest<T extends HttpMessageBody>(access_token:
   })
 }
 
-export async function getBoards(access_token: string, workspace_id?: string, limit = 10): Promise<Board[]> {
+export async function getBoards(access_token: string, workspace_id?: string, limit = 50): Promise<Board[]> {
   const query = `
     query {
       boards(

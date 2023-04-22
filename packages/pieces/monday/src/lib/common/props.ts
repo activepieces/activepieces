@@ -30,7 +30,7 @@ export const mondayProps = {
       const response: HttpResponse<WorkspaceResponse> =
         await mondayMakeRequest<WorkspaceResponse>(
           (authentication as OAuth2PropertyValue).access_token,
-          `query { workspaces(limit:10) { id name } }`,
+          `query { workspaces(limit:50) { id name } }`,
           HttpMethod.GET
         )
 
@@ -80,7 +80,7 @@ export const mondayProps = {
         `query { 
           boards(
             ids: ${board_id}, 
-            limit:10
+            limit:50
           ) 
           { groups { id title } } }
         `,
