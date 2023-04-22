@@ -3,7 +3,7 @@ import {
     Action,
     ActionContext,
     DropdownProperty,
-    DropdownState,
+    MainDropdownState,
     DynamicProperties,
     DynamicPropsValue,
     MultiSelectDropdownProperty,
@@ -216,7 +216,7 @@ export const pieceHelper = {
                 disabled: true,
                 options: [],
                 placeholder: "Throws an error, reconnect or refresh the page"
-            } as DropdownState<unknown>;
+            } as MainDropdownState<unknown>; //MainDropdownState extends DropdownState;
         }
     },
 
