@@ -9,6 +9,8 @@ on:
 jobs:
   main:
     name: Nx Cloud - Main Job
+    secrets:
+      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
     uses: nrwl/ci/.github/workflows/nx-cloud-main.yml@v0.11.2
     with:
       number-of-agents: 3
@@ -20,6 +22,8 @@ jobs:
 
   agents:
     name: Nx Cloud - Agents
+    secrets:
+      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
     uses: nrwl/ci/.github/workflows/nx-cloud-agents.yml@v0.11.2
     with:
       number-of-agents: 3
