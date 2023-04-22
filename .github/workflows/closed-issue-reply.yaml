@@ -9,6 +9,7 @@ jobs:
       issues: write # to comment on issues (aws-actions/closed-issue-message)
 
     runs-on: ubuntu-latest
+    if: github.repository_owner == 'activepieces'
     steps:
       - uses: aws-actions/closed-issue-message@v1
         with:
