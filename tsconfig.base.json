@@ -96,6 +96,7 @@
       "@activepieces/piece-pipedrive": [
         "packages/pieces/pipedrive/src/index.ts"
       ],
+      "@activepieces/piece-postgres": ["packages/pieces/postgres/src/index.ts"],
       "@activepieces/piece-posthog": ["packages/pieces/posthog/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-salesforce": [
