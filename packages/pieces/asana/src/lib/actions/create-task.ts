@@ -1,5 +1,6 @@
-import { createAction, getAccessTokenOrThrow, HttpMethod, Property } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 import { asanaCommon, callAsanaApi } from "../common";
+import { getAccessTokenOrThrow, HttpMethod } from "@activepieces/pieces-common";
 
 export const createAsanaTask = createAction({
     name: 'create_task',

@@ -23,16 +23,12 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
-        uses: depot/build-push-action@v1
+        uses: docker/build-push-action@v3
         with:
-          project: du7O4b0e8P
-          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           context: .
           file: ./Dockerfile
           platforms: |
             linux/amd64
-            linux/arm64
-            linux/arm/v7
           push: true
           tags: |
-            activepieces/activepieces:${{ env.RELEASE }}.4-beta
+            activepieces/activepieces:${{ env.RELEASE }}.1-beta

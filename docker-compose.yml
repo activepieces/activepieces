@@ -1,7 +1,7 @@
 version: '3.0'
 services:
   activepieces:
-    image: activepieces/activepieces:0.3.8
+    image: activepieces/activepieces:0.3.11
     container_name: activepieces
     restart: unless-stopped
     privileged: true

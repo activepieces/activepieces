@@ -3,12 +3,12 @@ import { DataSource } from 'typeorm'
 import { UserEntity } from '../user/user-entity'
 import { ProjectEntity } from '../project/project.entity'
 import { CollectionEntity } from '../collections/collection.entity'
-import { FlowEntity } from '../flows/flow.entity'
+import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FileEntity } from '../file/file.entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
 import { InstanceEntity } from '../instance/instance.entity'
-import { FlowRunEntity } from '../flow-run/flow-run-entity'
+import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -31,6 +31,9 @@ import { removeCollectionVersion1678492809093 } from './migration/1678492809093-
 import { addEventRouting1678382946390 } from './migration/1678382946390-add-event-routing'
 import { bumpFixPieceVersions1678928503715 } from './migration/1678928503715-bump-fix-piece-versions'
 import { migrateSchedule1679014156667 } from './migration/1679014156667-migrate-schedule'
+import { AddInputUiInfo1681107443963 } from './migration/1681107443963-AddInputUiInfo'
+import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
+import { CreateWebhookSimulationSchema1680698259291 } from './migration/1680698259291-create-webhook-simulation-schema'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -65,6 +68,8 @@ const getMigrations = () => {
         addEventRouting1678382946390,
         bumpFixPieceVersions1678928503715,
         migrateSchedule1679014156667,
+        AddInputUiInfo1681107443963,
+        CreateWebhookSimulationSchema1680698259291,
     ]
 }
 
@@ -99,5 +104,6 @@ export const databaseConnection = new DataSource({
         AppConnectionEntity,
         ProjectPlanEntity,
         ProjectUsageEntity,
+        WebhookSimulationEntity,
     ],
 })

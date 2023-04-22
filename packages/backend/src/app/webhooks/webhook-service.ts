@@ -7,17 +7,18 @@ import {
     ProjectId,
     RunEnvironment,
 } from '@activepieces/shared'
-import { flowRunService } from '../flow-run/flow-run-service'
+import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { triggerUtils } from '../helper/trigger-utils'
-import { flowRepo } from '../flows/flow.repo'
+import { flowRepo } from '../flows/flow/flow.repo'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { getPublicIp } from '../helper/public-ip-utils'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
 import { isEmpty, isNil } from 'lodash'
 import { logger } from '../helper/logger'
+import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
@@ -78,21 +79,15 @@ export const webhookService = {
 
         await Promise.all(eventSaveJobs)
 
-        // TODO: make sure triggerUtils#disable is called once
-        await triggerUtils.disable({
-            projectId,
-            collectionId,
-            flowVersion,
-            simulate: true,
-        })
+        await webhookSimulationService.delete({ flowId, projectId })
     },
 
     async getWebhookPrefix(): Promise<string> {
-        const environment = system.get(SystemProp.ENVIRONMENT)
+        const environment = system.getOrThrow(SystemProp.ENVIRONMENT)
 
         let url = environment === ApEnvironment.PRODUCTION
-            ? system.get(SystemProp.FRONTEND_URL)
-            : system.get(SystemProp.WEBHOOK_URL)
+            ? system.getOrThrow(SystemProp.FRONTEND_URL)
+            : system.getOrThrow(SystemProp.WEBHOOK_URL)
 
         // Localhost doesn't work with webhooks, so we need try to use the public ip
         if (extractHostname(url) == 'localhost' && environment === ApEnvironment.PRODUCTION) {
@@ -151,9 +146,9 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
     if (isNil(flowId)) {
         logger.error('[WebhookService#getFlowOrThrow] error=flow_id_is_undefined')
         throw new ActivepiecesError({
-            code: ErrorCode.FLOW_NOT_FOUND,
+            code: ErrorCode.VALIDATION,
             params: {
-                id: undefined,
+                message: 'flowId is undefined',
             },
         })
     }

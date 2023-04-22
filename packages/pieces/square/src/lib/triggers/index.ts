@@ -1,5 +1,5 @@
-import { TriggerStrategy } from "@activepieces/shared";
-import { createTrigger } from "@activepieces/framework";
+import { TriggerStrategy } from "@activepieces/pieces-framework";
+import { createTrigger } from "@activepieces/pieces-framework";
 import { squareAuthentication } from "../common/props";
 
 const tirggerData = [

@@ -37,9 +37,11 @@ export const authenticationService = {
                     projectId: project.id,
                 },
             })
-            user.password = undefined
+
+            const { password: _, ...filteredUser } = user
+
             return {
-                ...user,
+                ...filteredUser,
                 token,
                 projectId: project.id,
             }
@@ -89,14 +91,15 @@ export const authenticationService = {
         const token = await tokenUtils.encode({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: projects[0].id,
+            projectId: projects![0].id,
         })
 
-        user.password = undefined
+        const { password: _, ...filteredUser } = user
+
         return {
-            ...user,
+            ...filteredUser,
             token,
-            projectId: projects[0].id,
+            projectId: projects![0].id,
         }
     },
 }

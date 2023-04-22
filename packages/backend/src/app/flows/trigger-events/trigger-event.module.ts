@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { ListTriggerEventsRequest, SimulateTriggerRequest, TestPollingTriggerRequest } from '@activepieces/shared'
+import { ListTriggerEventsRequest, TestPollingTriggerRequest } from '@activepieces/shared'
 import { triggerEventService } from './trigger-event.service'
-import { flowService } from '../flow.service'
+import { flowService } from '../flow/flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -35,25 +35,6 @@ const triggerEventController = async (fastify: FastifyInstance) => {
     )
 
     fastify.get(
-        '/simulate',
-        {
-            schema: {
-                querystring: SimulateTriggerRequest,
-            },
-        },
-        async (
-            request: FastifyRequest<{
-                Querystring: SimulateTriggerRequest
-            }>,
-        ) => {
-            await triggerEventService.simulate({
-                flowId: request.query.flowId,
-                projectId: request.principal.projectId,
-            })
-        },
-    )
-
-    fastify.get(
         '/',
         {
             schema: {
@@ -74,4 +55,5 @@ const triggerEventController = async (fastify: FastifyInstance) => {
             })
         },
     )
+    
 }

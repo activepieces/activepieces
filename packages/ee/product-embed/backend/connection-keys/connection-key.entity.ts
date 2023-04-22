@@ -1,6 +1,6 @@
 import { EntitySchema } from "typeorm";
 import { ApIdSchema, BaseColumnSchemaPart } from "@backend/helper/base-entity";
-import { ConnectionKey } from "../../shared/connection-keys/connection-key";
+import { ConnectionKey } from "@activepieces/ee/shared";
 import { Project } from "@activepieces/shared";
 
 export interface ConnectionKeySchema extends ConnectionKey {

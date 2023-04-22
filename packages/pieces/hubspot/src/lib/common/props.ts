@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/framework';
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { hubSpotClient } from './client';
 
 export const hubSpotAuthentication = Property.OAuth2({

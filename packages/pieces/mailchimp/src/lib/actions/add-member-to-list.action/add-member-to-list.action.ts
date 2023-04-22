@@ -1,6 +1,6 @@
 import { getMailChimpServerPrefix, mailChimpAuth, mailChimpListIdDropdown } from "../../common";
 import mailchimp from "@mailchimp/mailchimp_marketing";
-import { createAction, Property } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 
 
 export const addMemberToList = createAction({

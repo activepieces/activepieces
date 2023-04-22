@@ -1,6 +1,6 @@
-import { AuthenticationType, createAction, httpClient, HttpMethod, HttpRequest, Property } from "@activepieces/framework";
-import { BasicAuthConnectionValue } from "@activepieces/shared";
+import { BasicAuthPropertyValue, createAction, Property } from "@activepieces/pieces-framework";
 import { wordpressCommon, WordpressMedia } from "../common";
+import { httpClient, HttpMethod, HttpRequest, AuthenticationType } from "@activepieces/pieces-common";
 
 
 export const createWordpressPost = createAction({
@@ -35,7 +35,7 @@ export const createWordpressPost = createAction({
             required: false,
             refreshers: ["connection", "website_url"],
             options: async (propsValues) => {
-                const connection = propsValues['connection'] as BasicAuthConnectionValue;
+                const connection = propsValues['connection'] as BasicAuthPropertyValue;
                 if (!connection) {
                     return {
                         disabled: true,
@@ -100,7 +100,7 @@ export const createWordpressPost = createAction({
             required: false,
             refreshers: ["connection", "website_url"],
             options: async (propsValues) => {
-                const connection = propsValues['connection'] as BasicAuthConnectionValue;
+                const connection = propsValues['connection'] as BasicAuthPropertyValue;
                 if (!connection) {
                     return {
                         disabled: true,
@@ -166,7 +166,7 @@ export const createWordpressPost = createAction({
             refreshers: ['connection', 'website_url'],
             options: async (propsValues) => {
 
-                const connection = propsValues['connection'] as BasicAuthConnectionValue;
+                const connection = propsValues['connection'] as BasicAuthPropertyValue;
                 if (!connection) {
                     return {
                         disabled: true,

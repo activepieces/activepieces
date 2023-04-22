@@ -12,7 +12,7 @@ import { piecesController } from './app/pieces/pieces.controller'
 import { tokenVerifyMiddleware } from './app/authentication/token-verify-middleware'
 import { storeEntryModule } from './app/store-entry/store-entry.module'
 import { instanceModule } from './app/instance/instance.module'
-import { flowRunModule } from './app/flow-run/flow-run-module'
+import { flowRunModule } from './app/flows/flow-run/flow-run-module'
 import { flagModule } from './app/flags/flag.module'
 import { codeModule } from './app/workers/code-worker/code.module'
 import { flowWorkerModule } from './app/workers/flow-worker/flow-worker-module'
@@ -80,7 +80,11 @@ app.addHook('onRequest', async (request, reply) => {
         url: request.url,
     })
     if (!route) {
-        reply.code(404).send('Oops! It looks like we hit a dead end. The endpoint you\'re searching for is nowhere to be found. We suggest turning around and trying another path. Good luck!')
+        reply.code(404).send(`
+            Oops! It looks like we hit a dead end.
+            The endpoint you're searching for is nowhere to be found.
+            We suggest turning around and trying another path. Good luck!
+        `)
     }
 })
 
@@ -154,7 +158,7 @@ const start = async () => {
  / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
-started on ${system.get(SystemProp.FRONTEND_URL)}
+The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variable.
     `)
     }
     catch (err) {

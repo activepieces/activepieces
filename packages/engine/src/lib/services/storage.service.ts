@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { Store, StoreScope } from '@activepieces/framework';
-import { FlowId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared';
+import { Store, StoreScope } from '@activepieces/pieces-framework';
+import { DeletStoreEntryRequest, FlowId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared';
 import { globals } from '../globals';
 
 export const storageService = {
@@ -29,6 +29,19 @@ export const storageService = {
         } catch (e) {
             return null;
         }
+    },
+    async delete(request: DeletStoreEntryRequest): Promise<StoreEntry | null> {
+        try {
+            return (
+                await axios.delete(globals.apiUrl + '/v1/store-entries?key=' + request.key, {
+                    headers: {
+                        Authorization: 'Bearer ' + globals.workerToken
+                    }
+                })
+            ).data ?? null;;
+        } catch (e) {
+            return null;
+        }
     }
 
 }
@@ -41,6 +54,12 @@ export function createContextStore(prefix: string, flowId: FlowId): Store {
                 value: value,
             });
             return value;
+        },
+        delete: async function (key: string, scope = StoreScope.FLOW): Promise<void> {
+            const modifiedKey = createKey(prefix, scope, flowId, key);
+            await storageService.delete({
+                key: modifiedKey,
+            });
         },
         get: async function <T>(key: string, scope = StoreScope.FLOW): Promise<T | null> {
             const modifiedKey = createKey(prefix, scope, flowId, key);

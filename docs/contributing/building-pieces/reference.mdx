@@ -167,6 +167,28 @@ Property.OAuth2({
 ```
 
 
+#### Custom Authentication
+
+```typescript
+Property.CustomAuth({
+    displayName: string,
+    description: string,
+    props: {
+        base_url: Property.ShortText({
+            displayName: string,
+            description: string,
+            required: true,
+        }),
+        access_token: Property.SecretText({
+            displayName: string,
+            description: string,
+            required: true
+        })
+    },
+    required: true
+}),
+```
+
 #### Number
 
 ```typescript

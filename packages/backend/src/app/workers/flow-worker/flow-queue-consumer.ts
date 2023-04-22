@@ -1,7 +1,7 @@
 import { Worker } from 'bullmq'
 import { ActivepiecesError, ApId, ErrorCode, RunEnvironment, TriggerType } from '@activepieces/shared'
 import { createRedisClient } from '../../database/redis-connection'
-import { flowRunService } from '../../flow-run/flow-run-service'
+import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { triggerUtils } from '../../helper/trigger-utils'
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from './flow-queue'
 import { flowWorker } from './flow-worker'
@@ -11,6 +11,7 @@ import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { instanceService } from '../../instance/instance.service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { isNil } from 'lodash'
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
     ONE_TIME_JOB_QUEUE,
@@ -43,7 +44,7 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
             if (e instanceof ActivepiecesError) {
                 const apError: ActivepiecesError = e as ActivepiecesError
                 const instance = await instanceService.getByCollectionId({ projectId: data.projectId, collectionId: data.collectionId })
-                if (apError.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
+                if (!isNil(instance) && apError.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
                     logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
                     await instanceService.deleteOne({ projectId: data.projectId, id: instance.id })
                 }
@@ -62,7 +63,8 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
 
 
 const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
-    const flowVersion = await flowVersionService.getOne(data.flowVersion.id)
+    const flowVersion = await flowVersionService.getOneOrThrow(data.flowVersion.id)
+
     const payloads: unknown[] = await triggerUtils.executeTrigger({
         projectId: data.projectId,
         collectionId: data.collectionId,

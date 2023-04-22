@@ -1,25 +1,24 @@
 import { ProjectId, apId } from "@activepieces/shared";
 import { databaseConnection } from "@backend/database/database-connection";
-import { createRedisLock } from "@backend/database/redis-connection";
+import { acquireLock } from "@backend/database/redis-connection";
 import { logger } from "@backend/helper/logger";
 import { projectService } from "@backend/project/project.service";
 import { userService } from "@backend/user/user-service";
 import { SystemProp } from "@backend/helper/system/system-prop";
 import { system } from "@backend/helper/system/system";
-import { ProjectPlan } from "../shared/plan";
+import { ProjectPlan } from "@activepieces/ee/shared";
 import { ProjectPlanEntity } from "./plan.entity";
 import Stripe from 'stripe';
 import dayjs from "dayjs";
 
-
 const projectPlanRepo = databaseConnection.getRepository<ProjectPlan>(ProjectPlanEntity);
 const stripeSecret = system.get(SystemProp.STRIPE_SECRET_KEY);
-export const stripe = new Stripe(stripeSecret, {
+export const stripe = new Stripe(stripeSecret!, {
     apiVersion: '2022-11-15',
 });
 
 function getDefaultPlanId(): string {
-    if (stripeSecret.startsWith('sk_test')) {
+    if (stripeSecret!.startsWith('sk_test')) {
         return "price_1MeoK3KZ0dZRqLEKXIsGoguO";
     } else {
         return "price_1MgpQ4KZ0dZRqLEKqMiS8vrf";
@@ -120,9 +119,11 @@ export const billingService = {
 
 async function updatePlan({ projectPlan, stripeSubscription }: { projectPlan: ProjectPlan, stripeSubscription: Stripe.Subscription }): Promise<void> {
     logger.info('Updating plan for project ' + projectPlan.projectId)
-    const projectPlanLock = await createRedisLock(5 * 1000);
+    const projectPlanLock = await acquireLock({
+        key: `project_plan_${projectPlan.projectId}`,
+        timeout: 30 * 1000,
+    });
     try {
-        await projectPlanLock.acquire(`project_plan_${projectPlan.projectId}}`);
         const limits = parsePlanFromId(stripeSubscription.items.data[0].plan.id);
         await projectPlanRepo.update(projectPlan.id, {
             ...projectPlan,
@@ -132,23 +133,25 @@ async function updatePlan({ projectPlan, stripeSubscription }: { projectPlan: Pr
             subscriptionStartDatetime: dayjs.unix(stripeSubscription.current_period_start).toISOString()
         });
     } finally {
-        projectPlanLock.release();
+        await projectPlanLock.release();
     }
 }
 
 async function downgradeToFreeTier({ projectId }: { projectId: ProjectId }): Promise<void> {
     logger.info('Downgrading project ' + projectId + ' to free tier');
-    const projectPlanLock = await createRedisLock(5 * 1000);
+    const projectPlanLock = await acquireLock({
+        key: `project_plan_${projectId}`,
+        timeout: 30 * 1000,
+    });
     const defaultPlanId = getDefaultPlanId();
     try {
-        await projectPlanLock.acquire(`project_plan_${projectId}}`);
         const currentPlan = await projectPlanRepo.findOneBy({ projectId });
         const planLimits = parsePlanFromId(defaultPlanId);
         const stripeSubscription = await stripe.subscriptions.create({
-            customer: currentPlan.stripeCustomerId,
+            customer: currentPlan!.stripeCustomerId,
             items: [{ plan: defaultPlanId }],
         });
-        await projectPlanRepo.update(currentPlan.id, {
+        await projectPlanRepo.update(currentPlan!.id, {
             ...currentPlan,
             tasks: planLimits.tasks,
             name: defaultPlanId,
@@ -156,30 +159,32 @@ async function downgradeToFreeTier({ projectId }: { projectId: ProjectId }): Pro
             subscriptionStartDatetime: dayjs.unix(stripeSubscription.current_period_start).toISOString(),
         });
     } finally {
-        projectPlanLock.release();
+        await projectPlanLock.release();
     }
 }
 
 async function createStripeDetails({ projectId }: { projectId: ProjectId }): Promise<ProjectPlan> {
-    const projectPlanLock = await createRedisLock(5 * 1000);
+    const projectPlanLock = await acquireLock({
+        key: `project_plan_${projectId}`,
+        timeout: 30 * 1000,
+    });
     const defaultPlanId = getDefaultPlanId();
     try {
-        await projectPlanLock.acquire(`project_plan_${projectId}}`);
         const currentPlan = await projectPlanRepo.findOneBy({ projectId });
         if (currentPlan !== undefined && currentPlan !== null) {
             return currentPlan;
         }
         const project = await projectService.getOne(projectId);
-        const user = await userService.getOne({ id: project.ownerId });
+        const user = await userService.getMetaInfo({ id: project!.ownerId });
         const planLimits = parsePlanFromId(defaultPlanId);
         const stripeCustomer = await stripe.customers.create({
-            email: user.email,
-            name: user.firstName + " " + user.lastName,
-            description: 'User Id: ' + user.id + ' Project Id: ' + projectId,
+            email: user!.email,
+            name: user!.firstName + " " + user!.lastName,
+            description: 'User Id: ' + user!.id + ' Project Id: ' + projectId,
         });
         const stripeSubscription = await stripe.subscriptions.create({
             customer: stripeCustomer.id,
-            backdate_start_date: dayjs(project.created).unix(),
+            backdate_start_date: dayjs(project!.created).unix(),
             items: [{ plan: defaultPlanId }],
         });
         return await projectPlanRepo.save({
@@ -189,9 +194,9 @@ async function createStripeDetails({ projectId }: { projectId: ProjectId }): Pro
             name: defaultPlanId,
             stripeCustomerId: stripeCustomer.id,
             stripeSubscriptionId: stripeSubscription.id,
-            subscriptionStartDatetime: project.created,
+            subscriptionStartDatetime: project!.created,
         });
     } finally {
-        projectPlanLock.release();
+        await projectPlanLock.release();
     }
 }

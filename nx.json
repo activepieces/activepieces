@@ -38,6 +38,9 @@
         "{workspaceRoot}/jest.preset.js",
         "{workspaceRoot}/karma.conf.js"
       ]
+    },
+    "e2e": {
+      "inputs": ["default", "^production"]
     }
   },
   "namedInputs": {

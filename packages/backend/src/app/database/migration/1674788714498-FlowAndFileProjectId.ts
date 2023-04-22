@@ -35,7 +35,7 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
         for (let i = 0; i < flows.length; ++i) {
             const currentFlow = flows[i]
             const collection = await collectionRepo.findOneBy({ id: currentFlow.collectionId })
-            currentFlow.projectId = collection.projectId
+            currentFlow.projectId = collection!.projectId
             await flowRepo.update(currentFlow.id, currentFlow)
         }
 
@@ -51,10 +51,10 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
                     if (packagedFileId !== undefined && packagedFileId !== null) {
                         const packagedFileToUpdate = await fileRepo.findOneBy({ id: packagedFileId })
                         if (packagedFileToUpdate === null) {
-                            logger.error('Found an old packaged artifact file id without file ' + packagedFileId + ' and for flow ' + currentFlow.id)
+                            logger.error('Found an old packaged artifact file id without file ' + packagedFileId + ' and for flow ' + currentFlow!.id)
                         }
                         else {
-                            packagedFileToUpdate.projectId = currentFlow.projectId
+                            packagedFileToUpdate.projectId = currentFlow!.projectId
                             await fileRepo.update(packagedFileId, packagedFileToUpdate)
                         }
                     }
@@ -62,10 +62,10 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
                     if (sourceFileId !== undefined && sourceFileId !== null) {
                         const sourceFileToUpdate = await fileRepo.findOneBy({ id: sourceFileId })
                         if (sourceFileToUpdate === null) {
-                            logger.error('Found an old source artifact file id without file ' + sourceFileId + ' and for flow ' + currentFlow.id)
+                            logger.error('Found an old source artifact file id without file ' + sourceFileId + ' and for flow ' + currentFlow!.id)
                         }
                         else {
-                            sourceFileToUpdate.projectId = currentFlow.projectId
+                            sourceFileToUpdate.projectId = currentFlow!.projectId
                             await fileRepo.update(sourceFileId, sourceFileToUpdate)
                         }
                     }
@@ -80,8 +80,8 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
             const currentFlowRun = flowRuns[i]
             if (currentFlowRun.logsFileId !== undefined && currentFlowRun.logsFileId !== null) {
                 const logFlowRunFile = await fileRepo.findOneBy({ id: currentFlowRun.logsFileId })
-                logFlowRunFile.projectId = currentFlowRun.projectId
-                await fileRepo.update(logFlowRunFile.id, logFlowRunFile)
+                logFlowRunFile!.projectId = currentFlowRun.projectId
+                await fileRepo.update(logFlowRunFile!.id, logFlowRunFile!)
             }
         }
     }

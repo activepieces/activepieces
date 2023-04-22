@@ -1,4 +1,5 @@
-import { createAction, Property, OAuth2PropertyValue, httpClient, HttpMethod, AuthenticationType, HttpRequest } from "@activepieces/framework";
+import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
+import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from "@activepieces/pieces-common";
 
 export const googleDriveCreateNewFolder = createAction({
   name: 'create_new_gdrive_folder',

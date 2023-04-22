@@ -16,20 +16,18 @@ import {
 } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { engineHelper } from '../../helper/engine-helper'
-import { logger } from '../../helper/logger'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
-import { triggerUtils } from '../../helper/trigger-utils'
 import { webhookService } from '../../webhooks/webhook-service'
-import { flowService } from '../flow.service'
+import { flowService } from '../flow/flow.service'
 import { TriggerEventEntity } from './trigger-event.entity'
 
 const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
 
 export const triggerEventService = {
     async saveEvent({projectId, flowId, payload}:{projectId: ProjectId, flowId: FlowId, payload: unknown}): Promise<TriggerEvent> {
-        const flow = await flowService.getOne({projectId: projectId, id: flowId, versionId: undefined, includeArtifacts: false})
+        const flow = await flowService.getOneOrThrow({projectId: projectId, id: flowId })
         const sourceName = getSourceName(flow.version.trigger)
         return triggerEventRepo.save({
             id: apId(),
@@ -65,7 +63,7 @@ export const triggerEventService = {
                     throw new ActivepiecesError({
                         code: ErrorCode.TEST_TRIGGER_FAILED,
                         params: {
-                            message: testResult.message,
+                            message: testResult.message!,
                         },
                     })
                 }
@@ -86,22 +84,6 @@ export const triggerEventService = {
             case TriggerType.EMPTY:
                 return emptyPage
         }
-    },
-
-    async simulate({ flowId, projectId }: SimulateParams): Promise<void> {
-        logger.debug(`[TriggerEventService#simulate] flowId=${flowId} projectId=${projectId}`)
-
-        const flow = await flowService.getOneOrThrow({
-            id: flowId,
-            projectId,
-        })
-
-        await triggerUtils.enable({
-            collectionId: flow.collectionId,
-            flowVersion: flow.version,
-            projectId: flow.projectId,
-            simulate: true,
-        })
     },
 
     async list({projectId, flow, cursor, limit}: ListParams): Promise<SeekPage<TriggerEvent>> {
@@ -138,11 +120,6 @@ function getSourceName(trigger: Trigger): string {
         case TriggerType.EMPTY:
             return TriggerType.EMPTY
     }
-}
-
-type SimulateParams = {
-    flowId: FlowId
-    projectId: ProjectId
 }
 
 type ListParams = {

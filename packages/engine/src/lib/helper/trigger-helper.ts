@@ -1,9 +1,9 @@
-import { pieces } from "@activepieces/pieces-apps";
-import { ApEdition, EventPayload, ExecuteEventParserOperation, ExecuteTestOrRunTriggerResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, ScheduleOptions, TriggerHookType, TriggerStrategy } from "@activepieces/shared";
+import { ApEdition, EventPayload, ExecuteTestOrRunTriggerResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./piece-helper";
 import { isValidCron } from 'cron-validator';
+import { TriggerStrategy } from "@activepieces/pieces-framework";
 
 type Listener = {
   events: string[];
@@ -11,21 +11,12 @@ type Listener = {
   identifierKey: string;
 }
 
-
 export const triggerHelper = {
-  async executeEventParser(params: ExecuteEventParserOperation): Promise<ParseEventResponse | undefined> {
-    const piece = pieces.find((p) => p.name === params.pieceName);
-    if (piece === undefined) {
-      throw new Error(`Piece is not found ${params.pieceName}`)
-    }
-    return piece.events?.parseAndReply({ payload: params.event });
-  },
-
   async executeTrigger(params: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | ExecuteTestOrRunTriggerResponse | unknown[]> {
     const { pieceName, pieceVersion, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
 
-    const piece = await pieceHelper.loadPiece(pieceName, pieceVersion);
-    const trigger = piece?.getTrigger(triggerName);
+    const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
+    const trigger = piece.getTrigger(triggerName);
 
     if (trigger === undefined) {
       throw new Error(`trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
@@ -91,7 +82,7 @@ export const triggerHelper = {
             output: []
           }
         }
-      case TriggerHookType.RUN:
+      case TriggerHookType.RUN: {
         if (trigger.type === TriggerStrategy.APP_WEBHOOK) {
           if (params.edition === ApEdition.COMMUNITY) {
             return [];
@@ -120,7 +111,12 @@ export const triggerHelper = {
             return [];
           }
         }
-        return trigger.run(context as any);
+        const items = await trigger.run(context as any);
+        if (!Array.isArray(items)) {
+          throw new Error(`Trigger run should return an array of items, but returned ${typeof items}`)
+        }
+        return items;
+      }
     }
   },
 }

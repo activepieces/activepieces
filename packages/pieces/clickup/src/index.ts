@@ -1,5 +1,5 @@
 import packageJson from "../package.json";
-import { createPiece } from "@activepieces/framework";
+import { createPiece } from "@activepieces/pieces-framework";
 import { getClickupTaskComments } from "./lib/actions/comments/get-task-comments";
 import { createClickupFolderlessList } from "./lib/actions/lists/create-folderless-list";
 import { createClickupTask } from "./lib/actions/tasks/create-task";
