@@ -64,7 +64,7 @@ import { mailerLite } from '@activepieces/piece-mailer-lite';
 import { googleForms }  from '@activepieces/piece-google-forms';
 import { xml }  from '@activepieces/piece-xml';
 import { vtex }  from '@activepieces/piece-vtex';
-
+import { postgres }  from '@activepieces/piece-postgres';
 
 /**
  * @deprecated this will be removed, don't use it
@@ -134,7 +134,8 @@ export const pieces: Piece[] = [
     salesforce,
     matrix,
     smtp,
-    googleForms
+    googleForms,
+    postgres
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 /**
