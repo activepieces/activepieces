@@ -185,7 +185,11 @@ const selectCurrentStepSettings = createSelector(
 const selectTriggerSelectedSampleData = createSelector(
   selectCurrentStep,
   (step) => {
-    if (step && (step.type === TriggerType.PIECE  || step.type === TriggerType.WEBHOOK) && step.settings.inputUiInfo) {
+    if (
+      step &&
+      (step.type === TriggerType.PIECE || step.type === TriggerType.WEBHOOK) &&
+      step.settings.inputUiInfo
+    ) {
       return step.settings.inputUiInfo.currentSelectedData;
     }
     return undefined;
