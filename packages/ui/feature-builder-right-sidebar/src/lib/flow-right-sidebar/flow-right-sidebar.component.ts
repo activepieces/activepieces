@@ -62,7 +62,7 @@ export class FlowRightSidebarComponent implements OnInit {
     private testStepService: TestStepService,
     private renderer2: Renderer2,
     private actionMetaDataService: ActionMetaService,
-    private builderAutocompleteMentionsDropdownService : BuilderAutocompleteMentionsDropdownService
+    private builderAutocompleteMentionsDropdownService: BuilderAutocompleteMentionsDropdownService
   ) {}
 
   ngOnInit(): void {
@@ -135,10 +135,11 @@ export class FlowRightSidebarComponent implements OnInit {
     this.currentStep$ = this.store
       .select(BuilderSelectors.selectCurrentStep)
       .pipe(
-        tap(() => {     
-          setTimeout(()=>{
-            this.builderAutocompleteMentionsDropdownService.editStepSection=this.editStepSection;
-          },100)
+        tap(() => {
+          setTimeout(() => {
+            this.builderAutocompleteMentionsDropdownService.editStepSection =
+              this.editStepSection;
+          }, 100);
           this.elevateResizer$ = this.testStepService.elevateResizer$.pipe(
             tap((shouldAnimate) => {
               if (shouldAnimate && !this.isResizerGrabbed) {
