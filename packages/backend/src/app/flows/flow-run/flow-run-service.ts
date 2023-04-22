@@ -64,18 +64,18 @@ export const flowRunService = {
             status,
             finishTime: new Date().toISOString(),
         })
-        const flowRun = await this.getOne({ id: flowRunId, projectId: undefined })
+        const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
         const edition = await getEdition()
         if (edition === ApEdition.ENTERPRISE) {
-            await usageService.countTasks({
+            await usageService.addTasksConsumed({
                 projectId: flowRun.projectId,
                 tasks: tasks,
             })
         }
         notifications.notifyRun({
-            flowRun: flowRun!,
+            flowRun: flowRun,
         })
-        return flowRun!
+        return flowRun
     },
 
     async start({ flowVersionId, collectionId, payload, environment }: StartParams): Promise<FlowRun> {

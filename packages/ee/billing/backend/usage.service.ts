@@ -6,16 +6,16 @@ import { acquireLock } from "@backend/database/redis-connection";
 import { ProjectUsageEntity } from "./usage.entity";
 import { captureException, logger } from "@backend/helper/logger";
 import dayjs from "dayjs";
+import { isNil } from "lodash";
 
 const projectUsageRepo = databaseConnection.getRepository<ProjectUsage>(ProjectUsageEntity);
 
 export const usageService = {
-    async countTasks(request: { projectId: ProjectId, tasks: number }): Promise<void> {
+    async addTasksConsumed(request: { projectId: ProjectId, tasks: number }): Promise<void> {
         const quotaLock = await acquireLock({
             key: `usage_${request.projectId}`,
             timeout: 30000,
         })
-
         try {
             const projectUsage = await usageService.getUsage({ projectId: request.projectId });
             projectUsage.consumedTasks += request.tasks;
@@ -56,14 +56,14 @@ export const usageService = {
         let projectUsage = await findLatestProjectUsage(projectId);
         const plan = await billingService.getPlan({ projectId });
         const nextReset = nextResetDatetime(plan.subscriptionStartDatetime);
-        if (projectUsage === undefined || projectUsage === null || isNotSame(nextReset, projectUsage.nextResetDatetime)) {
-            await projectUsageRepo.save({
+        if (isNil(projectUsage) || isNotSame(nextReset, projectUsage.nextResetDatetime)) {
+            const projectUsage = await projectUsageRepo.save({
                 id: apId(),
                 projectId,
                 consumedTasks: 0,
                 nextResetDatetime: nextReset,
             });
-            return findLatestProjectUsage(projectId);
+            return projectUsage;
         }
         return projectUsage;
     },

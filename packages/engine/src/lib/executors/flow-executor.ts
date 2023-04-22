@@ -58,6 +58,7 @@ export class FlowExecutor {
         status: ExecutionOutputStatus.FAILED,
         executionState: this.executionState,
         duration: duration,
+        tasks: globals.tasks,
         errorMessage: this.getError()
       };
     }
@@ -65,6 +66,7 @@ export class FlowExecutor {
       status: ExecutionOutputStatus.SUCCEEDED,
       executionState: this.executionState,
       duration: duration,
+      tasks: globals.tasks,
       errorMessage: undefined
     };
   }

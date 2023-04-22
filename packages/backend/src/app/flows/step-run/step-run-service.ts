@@ -27,7 +27,7 @@ const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, 
 
     for (const step of flowSteps) {
         if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE || step.type === ActionType.CODE) {
-            const { name, settings: { inputUiInfo } } = step;
+            const { name, settings: { inputUiInfo } } = step
             testContext[name] = inputUiInfo?.currentSelectedData
         }
     }

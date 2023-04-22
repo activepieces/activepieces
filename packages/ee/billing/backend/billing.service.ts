@@ -17,51 +17,23 @@ export const stripe = new Stripe(stripeSecret!, {
     apiVersion: '2022-11-15',
 });
 
-function getDefaultPlanId(): string {
-    if (stripeSecret!.startsWith('sk_test')) {
-        return "price_1MeoK3KZ0dZRqLEKXIsGoguO";
-    } else {
-        return "price_1MgpQ4KZ0dZRqLEKqMiS8vrf";
-    }
+type BillingSettings = {
+    defaultPlanId: string;
 }
 
-function parsePlanFromId(id: string | null): { name: string, tasks: number } {
-    switch (id) {
-        // Stripe production plans
-        case 'price_1MgpQ4KZ0dZRqLEKqMiS8vrf':
-            return {
-                name: 'free-1',
-                tasks: 1000
-            }
-        case 'price_1MgpSTKZ0dZRqLEKLejnL5GW':
-            return {
-                name: 'growth-1',
-                tasks: 10000
-            }
-        case 'price_1MfMlJKZ0dZRqLEKWHrxY97A':
-            return {
-                name: 'free-0',
-                tasks: 5000,
-            }
-        case "price_1MfMm6KZ0dZRqLEKOGHDSyQ9":
-            return {
-                name: 'growth-0',
-                tasks: 20000,
-            }
-        // Stripe test plans
-        case 'price_1MeoK3KZ0dZRqLEKXIsGoguO':
-            return {
-                name: 'free-0',
-                tasks: 5000,
-            }
-        case "price_1Mf3hLKZ0dZRqLEKj2ks0bCU":
-            return {
-                name: 'growth-0',
-                tasks: 20000,
-            }
-        default:
-            throw new Error('Unknown plan ' + id);
+const billingSettings: BillingSettings = JSON.parse(system.get(SystemProp.BILLING_SETTINGS) ?? "{}");
+
+function getDefaultPlan(): Promise<Stripe.Plan> {
+    return stripe.plans.retrieve(billingSettings.defaultPlanId);
+}
+
+function getDetailsFromStripe(plan: Stripe.Plan): { tasks: number, nickname: string } {
+    const tasks = plan?.metadata?.['tasks'];
+    const nickname = plan.nickname;
+    if (!nickname || !tasks) {
+        throw new Error(`Plan ${nickname} has no tasks specified`);
     }
+    return { tasks: Number(tasks), nickname };
 }
 
 
@@ -124,11 +96,11 @@ async function updatePlan({ projectPlan, stripeSubscription }: { projectPlan: Pr
         timeout: 30 * 1000,
     });
     try {
-        const limits = parsePlanFromId(stripeSubscription.items.data[0].plan.id);
+        const plan = getDetailsFromStripe(stripeSubscription.items.data[0].plan);
         await projectPlanRepo.update(projectPlan.id, {
             ...projectPlan,
-            tasks: limits.tasks,
-            name: limits.name,
+            tasks: plan.tasks,
+            name: plan.nickname,
             stripeSubscriptionId: stripeSubscription.id,
             subscriptionStartDatetime: dayjs.unix(stripeSubscription.current_period_start).toISOString()
         });
@@ -143,10 +115,10 @@ async function downgradeToFreeTier({ projectId }: { projectId: ProjectId }): Pro
         key: `project_plan_${projectId}`,
         timeout: 30 * 1000,
     });
-    const defaultPlanId = getDefaultPlanId();
+    const defaultPlanId = billingSettings.defaultPlanId;
     try {
         const currentPlan = await projectPlanRepo.findOneBy({ projectId });
-        const planLimits = parsePlanFromId(defaultPlanId);
+        const planLimits = await getDetailsFromStripe(await getDefaultPlan());
         const stripeSubscription = await stripe.subscriptions.create({
             customer: currentPlan!.stripeCustomerId,
             items: [{ plan: defaultPlanId }],
@@ -168,7 +140,7 @@ async function createStripeDetails({ projectId }: { projectId: ProjectId }): Pro
         key: `project_plan_${projectId}`,
         timeout: 30 * 1000,
     });
-    const defaultPlanId = getDefaultPlanId();
+    const defaultPlanId = billingSettings.defaultPlanId;
     try {
         const currentPlan = await projectPlanRepo.findOneBy({ projectId });
         if (currentPlan !== undefined && currentPlan !== null) {
@@ -176,7 +148,7 @@ async function createStripeDetails({ projectId }: { projectId: ProjectId }): Pro
         }
         const project = await projectService.getOne(projectId);
         const user = await userService.getMetaInfo({ id: project!.ownerId });
-        const planLimits = parsePlanFromId(defaultPlanId);
+        const planLimits = await getDetailsFromStripe(await getDefaultPlan());
         const stripeCustomer = await stripe.customers.create({
             email: user!.email,
             name: user!.firstName + " " + user!.lastName,
@@ -187,7 +159,7 @@ async function createStripeDetails({ projectId }: { projectId: ProjectId }): Pro
             backdate_start_date: dayjs(project!.created).unix(),
             items: [{ plan: defaultPlanId }],
         });
-        return await projectPlanRepo.save({
+        await projectPlanRepo.upsert({
             id: apId(),
             projectId,
             tasks: planLimits.tasks,
@@ -195,7 +167,8 @@ async function createStripeDetails({ projectId }: { projectId: ProjectId }): Pro
             stripeCustomerId: stripeCustomer.id,
             stripeSubscriptionId: stripeSubscription.id,
             subscriptionStartDatetime: project!.created,
-        });
+        }, ['projectId']);
+        return (await projectPlanRepo.findOneBy({ projectId }))!;
     } finally {
         await projectPlanLock.release();
     }

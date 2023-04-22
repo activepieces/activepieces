@@ -111,7 +111,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         log.error(e, `[${jobData.runId}] Error executing flow`)
         if (await sandbox.timedOut()) {
             // TODO Flow timed out, consume one task
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null)
+            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null, 1)
         }
         else {
             captureException(e as Error)
