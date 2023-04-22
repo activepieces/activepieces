@@ -32,5 +32,5 @@ export const storeEntryService = {
             collectionId,
             key,
         })
-    }
+    },
 }
