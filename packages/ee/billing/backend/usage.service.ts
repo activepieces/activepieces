@@ -1,15 +1,29 @@
 import { billingService } from "./billing.service";
-import { ActivepiecesError, ErrorCode, FlowVersion, ProjectId, Trigger, Action, apId } from "@activepieces/shared";
+import { ActivepiecesError, ErrorCode, FlowVersion, ProjectId, Trigger, Action, apId, Project } from "@activepieces/shared";
 import { databaseConnection } from "@backend/database/database-connection";
 import { ProjectPlan, ProjectUsage } from "@activepieces/ee/shared";
 import { acquireLock } from "@backend/database/redis-connection";
 import { ProjectUsageEntity } from "./usage.entity";
 import { captureException } from "@backend/helper/logger";
 import dayjs from "dayjs";
+import { isNil } from "lodash";
 
 const projectUsageRepo = databaseConnection.getRepository<ProjectUsage>(ProjectUsageEntity);
 
 export const usageService = {
+    async addTasksConsumed(request: { projectId: ProjectId, tasks: number }): Promise<void> {
+        const quotaLock = await acquireLock({
+            key: `usage_${request.projectId}`,
+            timeout: 30000,
+        })
+        try {
+            const projectUsage = await usageService.getUsage({ projectId: request.projectId });
+            projectUsage.consumedTasks += request.tasks;
+            await projectUsageRepo.save(projectUsage);
+        } finally {
+            await quotaLock.release();
+        }
+    },
     async limit(request: { projectId: ProjectId; flowVersion: FlowVersion; }): Promise<{ perform: true }> {
         const quotaLock = await acquireLock({
             key: `usage_${request.projectId}`,
@@ -17,16 +31,13 @@ export const usageService = {
         })
         try {
             const projectUsage = await usageService.getUsage({ projectId: request.projectId });
-            const numberOfSteps = countSteps(request.flowVersion);
             const projectPlan = await billingService.getPlan({ projectId: request.projectId });
-            if (projectUsage!.consumedTasks + numberOfSteps > projectPlan.tasks) {
+            if (projectUsage.consumedTasks > projectPlan.tasks) {
                 throw new ActivepiecesError({
                     code: ErrorCode.TASK_QUOTA_EXCEEDED,
                     params: { projectId: request.projectId },
                 });
             }
-            projectUsage!.consumedTasks += numberOfSteps;
-            await projectUsageRepo.save(projectUsage!);
         } catch (e) {
             if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
                 throw e;
@@ -36,36 +47,37 @@ export const usageService = {
             }
         } finally {
             await quotaLock.release();
-        };
+        }
         return {
             perform: true,
         }
     },
-    async getUsage({ projectId }: { projectId: ProjectId }): Promise<ProjectUsage | null> {
-        let projectUsage = await projectUsageRepo.findOneBy({ projectId });
+    async getUsage({ projectId }: { projectId: ProjectId }): Promise<ProjectUsage> {
+        let projectUsage = await findLatestProjectUsage(projectId);
         const plan = await billingService.getPlan({ projectId });
         const nextReset = nextResetDatetime(plan.subscriptionStartDatetime);
-        if (projectUsage === undefined || projectUsage === null || isNotSame(nextReset, projectUsage.nextResetDatetime)) {
-            await projectUsageRepo.upsert({
+        if (isNil(projectUsage) || isNotSame(nextReset, projectUsage.nextResetDatetime)) {
+            const projectUsage = await projectUsageRepo.save({
                 id: apId(),
                 projectId,
                 consumedTasks: 0,
                 nextResetDatetime: nextReset,
-            }, ['projectId']);
-            return await projectUsageRepo.findOneBy({ projectId });
+            });
+            return projectUsage;
         }
         return projectUsage;
     },
 }
 
-function countSteps(flowVersion: FlowVersion): number {
-    let steps = 0;
-    let currentStep: Trigger | Action | undefined = flowVersion.trigger;
-    while (currentStep !== undefined) {
-        currentStep = currentStep.nextAction;
-        steps++;
-    }
-    return steps;
+async function findLatestProjectUsage(projectId: ProjectId) {
+    return projectUsageRepo.findOne({
+        where: {
+            projectId
+        },
+        order: {
+            nextResetDatetime: "DESC",
+        }
+    });
 }
 
 function isNotSame(firstDate: string, secondDate: string) {

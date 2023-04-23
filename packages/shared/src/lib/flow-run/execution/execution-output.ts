@@ -12,6 +12,7 @@ export interface ExecutionOutput {
   status: ExecutionOutputStatus;
   executionState: ExecutionState;
   duration: number;
+  tasks: number;
   errorMessage?: ExecutionError;
 }
 
