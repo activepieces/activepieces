@@ -6,6 +6,13 @@ import { acquireLock } from "@backend/database/redis-connection";
 import { ProjectUsageEntity } from "./usage.entity";
 import { captureException } from "@backend/helper/logger";
 import dayjs from "dayjs";
+import sendgrid from '@sendgrid/mail';
+import { SystemProp } from "@backend/helper/system/system-prop";
+import { system } from "@backend/helper/system/system";
+import { projectService } from "@backend/project/project.service";
+import { userService } from "@backend/user/user-service";
+
+sendgrid.setApiKey(system.get(SystemProp.SENDGRID_KEY));
 
 const projectUsageRepo = databaseConnection.getRepository<ProjectUsage>(ProjectUsageEntity);
 
@@ -19,6 +26,7 @@ export const usageService = {
             const projectUsage = await usageService.getUsage({ projectId: request.projectId });
             const numberOfSteps = countSteps(request.flowVersion);
             const projectPlan = await billingService.getPlan({ projectId: request.projectId });
+            handleAlerts({ projectUsage: projectUsage!, projectPlan, numberOfSteps });
             if (projectUsage!.consumedTasks + numberOfSteps > projectPlan.tasks) {
                 throw new ActivepiecesError({
                     code: ErrorCode.TASK_QUOTA_EXCEEDED,
@@ -56,6 +64,37 @@ export const usageService = {
         }
         return projectUsage;
     },
+}
+
+async function handleAlerts({ projectUsage, projectPlan, numberOfSteps }: { projectUsage: ProjectUsage; projectPlan: ProjectPlan; numberOfSteps: number; }) {
+    const alertingEmails = [
+    {
+        templateId: 'd-ff370bf352d940308714afdb37ea4b38',
+        threshold: 0.5,
+    },
+    {
+        threshold: 0.8,
+        templateId: 'd-2159eff164df4f7fac246f04420858a2'
+    },
+    {
+        threshold: 1.0,
+        templateId: 'd-17ad40ee5ae34fc0914b8ce2648a393e '
+    }];
+
+    for (let i = 0; i < alertingEmails.length; ++i) {
+        const thresholdEmail = alertingEmails[i];
+        const threshold = Math.floor(projectUsage.consumedTasks / projectPlan.tasks);
+        const newThreshold = Math.floor((projectUsage.consumedTasks + numberOfSteps) / projectPlan.tasks);
+        if (threshold < thresholdEmail.threshold && newThreshold >= thresholdEmail.threshold) {
+            const project = await projectService.getOne(projectUsage.projectId);
+            const user = await userService.getMetaInfo({ id: project.ownerId });
+            sendgrid.send({
+                to: user.email,
+                from: 'notifications@activepieces.com',
+                templateId: thresholdEmail.templateId,
+            })
+        }
+    }
 }
 
 function countSteps(flowVersion: FlowVersion): number {
