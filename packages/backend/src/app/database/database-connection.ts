@@ -34,6 +34,7 @@ import { migrateSchedule1679014156667 } from './migration/1679014156667-migrate-
 import { AddInputUiInfo1681107443963 } from './migration/1681107443963-AddInputUiInfo'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { CreateWebhookSimulationSchema1680698259291 } from './migration/1680698259291-create-webhook-simulation-schema'
+import { StoreAllPeriods1681019096716 } from './migration/1681019096716-StoreAllPeriods'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -70,6 +71,7 @@ const getMigrations = () => {
         migrateSchedule1679014156667,
         AddInputUiInfo1681107443963,
         CreateWebhookSimulationSchema1680698259291,
+        StoreAllPeriods1681019096716,
     ]
 }
 
