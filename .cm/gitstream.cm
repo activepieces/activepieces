@@ -1,0 +1,29 @@
+# -*- mode: yaml -*-
+# This example configuration for provides basic automations to get started with gitStream.
+# View the gitStream quickstart for more examples: https://docs.gitstream.cm/quick-start/
+manifest:
+  version: 1.0
+automations:
+  # Add a label that indicates how many minutes it will take to review the PR.
+  estimated_time_to_review: 
+    if:
+      - true
+    run:
+      - action: add-label@v1
+      # etr is defined in the last section of this example
+        args:
+          label: "{{ calc.etr }} min review"
+          color: {{ 'E94637' if (calc.etr >= 20) else ('FBBD10' if (calc.etr >= 5) else '36A853') }}
+  # Post a comment that lists the best experts for the files that were modified.
+  code_experts:
+    if: 
+      - true
+    run:
+      - action: add-comment@v1
+      # More info about explainCodeExperts: https://docs.gitstream.cm/filter-functions/#explaincodeexperts
+        args:
+          comment: |
+            {{ repo | explainCodeExperts(gt=10) }}
+# The next function calculates the estimated time to review and makes it available in the automation above.
+calc:
+  etr: {{ branch | estimatedReviewTime }}
