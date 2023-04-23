@@ -1,6 +1,7 @@
+import { isNil } from 'lodash'
 import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project.entity'
-import { apId, NotificationStatus, Project, ProjectId, UpdateProjectRequest, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UpdateProjectRequest, UserId } from '@activepieces/shared'
 
 const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
 
@@ -12,14 +13,18 @@ export const projectService = {
         const project = await projectRepo.findOneBy({
             id: projectId,
         })
-        // This shouldn't happen because we get the project from JWT token.
-        if (!project) {
-            throw new Error(`Project with id ${projectId} not found`)
+        if (isNil(project)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PROJECT_NOT_FOUND,
+                params: {
+                    id: projectId,
+                },
+            })
         }
         await projectRepo.update(projectId, {
             ...project,
             ...request,
-        });
+        })
         return projectRepo.findOneBy({
             id: projectId,
         })

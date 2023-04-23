@@ -21,7 +21,7 @@ export const notifications = {
             return
         }
         const project = await projectService.getOne(flowRun.projectId)
-        if(!project || project.notifications === NotificationStatus.NEVER) {
+        if (!project || project.notifications === NotificationStatus.NEVER) {
             return
         }
         const user = await userService.getMetaInfo({ id: project.ownerId })

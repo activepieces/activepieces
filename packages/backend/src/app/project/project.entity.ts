@@ -24,7 +24,6 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         },
         notifications: {
             type: String,
-            nullable: true,
         },
     },
     indices: [

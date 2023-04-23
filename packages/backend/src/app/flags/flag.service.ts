@@ -37,12 +37,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.NOTIFICATION_SETTING_TEXT,
-                value: system.get(SystemProp.NOTIFICATION_SETTING_TEXT),
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.EDITION,
                 value: await getEdition(),
                 created,
