@@ -19,7 +19,7 @@ import {
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { createRedisLock } from '../../database/redis-connection'
+import { acquireLock } from '../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRepo } from './flow.repo'
 import { instanceSideEffects } from '../../instance/instance-side-effects'
@@ -50,14 +50,14 @@ export const flowService = {
             {
                 name: TelemetryEventName.FLOW_CREATED,
                 payload: {
-                    collectionId: flow.collectionId,
-                    flowId: flow.id,
+                    collectionId: flow.collectionId!,
+                    flowId: flow.id!,
                 },
             },
         )
         return {
             ...savedFlow,
-            version: latestFlowVersion,
+            version: latestFlowVersion!,
         }
     },
     async getOneOrThrow({ projectId, id }: { projectId: ProjectId, id: FlowId }): Promise<Flow> {
@@ -93,7 +93,7 @@ export const flowService = {
         })
         const versions: Array<FlowVersion | null> = await Promise.all(flowVersionsPromises)
         for (let i = 0; i < data.length; ++i) {
-            data[i] = { ...data[i], version: versions[i] }
+            data[i] = { ...data[i], version: versions[i]! }
         }
         return paginationHelper.createPage<Flow>(data, cursor)
     },
@@ -108,19 +108,20 @@ export const flowService = {
         const flowVersion = await flowVersionService.getFlowVersion(projectId, id, versionId, includeArtifacts)
         return {
             ...flow,
-            version: flowVersion,
+            version: flowVersion!,
         }
     },
     async update({ flowId, projectId, request }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
-        const flowLock = createRedisLock()
+        const flowLock = await acquireLock({
+            key: flowId,
+            timeout: 5000,
+        })
         try {
-            await flowLock.acquire(flowId)
-
             let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, false))
-            if (lastVersion.state === FlowVersionState.LOCKED) {
-                lastVersion = await flowVersionService.createVersion(flowId, lastVersion)
+            if (lastVersion!.state === FlowVersionState.LOCKED) {
+                lastVersion = await flowVersionService.createVersion(flowId, lastVersion!)
             }
-            await flowVersionService.applyOperation(projectId, lastVersion, request)
+            await flowVersionService.applyOperation(projectId, lastVersion!, request)
         }
         finally {
             await flowLock.release()

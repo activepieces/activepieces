@@ -11,6 +11,64 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+## 04/20/2023
+
+**Pieces:**
+- VTEX Piece: Create Brand / Update Brand / Delete Brand / Create Product / Update Product / Get Products by Ids / Get Category by Ids
+- Store Piece: Remove / Add To List / Remove From List Actions
+
+**Bug Fixes:**
+- The "Ignore Update Notification" button now works.
+- The testing action with data from the webhook trigger now works.
+- Slack triggers have been added back to the cloud.
+
+**Chore:**
+- Added E2E tests using playwright.
+
+**New Contributors:**
+- @Willianwg created the VTEX piece.
+
+**Full Changelog:** https://github.com/activepieces/activepieces/compare/0.3.10...0.3.11
+
+### 04/17/2023
+
+**Pieces:**
+- Google Forms: New Form Response
+- Xero: Create Invoice / Create Contact
+- Mindee: Extract from Document action
+- Matrix: Send Message Action
+- Notion: New Database Item Trigger
+- XML Piece: JSON to XML Converter action
+
+**Enhancements:**
+- Display piece version on sidebar
+- Action can now fetch real sample data
+- Piece triggers can now fetch real sample data by simulating webhooks
+- Optimized flow and dynamic dropdown execution time by caching sandboxes and minimizing engine size, resulting in execution time overhead reduced from around **1200ms** to under **100ms**
+- Queues now have an exponential retry policy
+
+**Bug Fixes:**
+ - Sample data for piece triggers is now included in test flows
+ - Autocomplete dropdown on trigger fields will no longer appear in the testing panel if there is no space.
+
+**Chore:**
+ - Pino-Pretty only works in development mode, now logs can be parsed as json in production.
+ - Replaced Redis Lock Library
+ - Refactored and organized the frontend into packages.
+
+**Security Upgrades:**
+- Upgraded TypeORM from 0.3.11 to 0.3.14
+- Upgraded RSS-Parser from 3.12.0 to 3.13.0
+- Upgraded webpack from 5.75.0 to 5.76.1
+- Upgraded @angular-devkit/build-angular from 15.1.6 to 15.2.6
+
+**New Contributors:**
+- @abdullahranginwala made their first contribution in https://github.com/activepieces/activepieces/pull/1049
+- @kanarelo created Mindee, Matrix, and Notion pieces
+- @Willianwg created the XML piece
+
+**Full Changelog:** https://github.com/activepieces/activepieces/compare/0.3.9...0.3.10
+
 ### 04/02/2023
 
 <Tip>

@@ -1,6 +1,6 @@
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
-import { PieceProperty } from '@activepieces/framework'
+import { PieceProperty, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import {
     ActionType,
     apId,
@@ -18,7 +18,6 @@ import {
     PieceActionSettings,
     PieceTriggerSettings,
     ProjectId,
-    PropertyType,
     TriggerType,
 } from '@activepieces/shared'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
@@ -26,6 +25,7 @@ import { fileService } from '../../file/file.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowVersionRepo } from './flow-version-repo'
 import { getPiece } from '@activepieces/pieces-apps'
+import { flowVersionSideEffects } from './flow-version-side-effects'
 
 const branchSetttingsValidaotr = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -38,8 +38,15 @@ export const flowVersionService = {
         })
     },
     async applyOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion | null> {
+        await flowVersionSideEffects.preApplyOperation({
+            projectId,
+            flowVersion,
+            operation,
+        })
+
         const mutatedFlowVersion = await applySingleOperation(projectId, flowVersion, operation)
-        await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion)
+        await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>)
+
         return await flowVersionRepo.findOneBy({
             id: flowVersion.id,
         })
@@ -111,7 +118,7 @@ async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersi
         if (step.type === ActionType.CODE) {
             const codeSettings: CodeActionSettings = step.settings
             const artifactPromise = fileService
-                .getOne({ projectId: projectId, fileId: codeSettings.artifactSourceId })
+                .getOne({ projectId: projectId, fileId: codeSettings.artifactSourceId! })
                 .then((artifact) => {
                     if (artifact !== null) {
                         codeSettings.artifactSourceId = undefined
@@ -230,18 +237,18 @@ function validateTrigger(settings: PieceTriggerSettings) {
     return validateProps(trigger.props, settings.input)
 }
 
-function validateProps(props: PieceProperty, input: Record<string, unknown>) {
+function validateProps(props: PiecePropertyMap, input: Record<string, unknown>) {
     const propsSchema = buildSchema(props)
     const propsValidator = TypeCompiler.Compile(propsSchema)
     return propsValidator.Check(input)
 }
 
-function buildSchema(props: PieceProperty): TSchema {
+function buildSchema(props: PiecePropertyMap): TSchema {
     const entries = Object.entries(props)
     const nonNullableUnknownPropType = Type.Not(Type.Null(), Type.Unknown())
     const propsSchema: Record<string, TSchema> = {}
     for (let i = 0; i < entries.length; ++i) {
-        const property = entries[i][1]
+        const property = entries[i][1] as PieceProperty
         const name: string = entries[i][0]
         switch (property.type) {
             case PropertyType.SHORT_TEXT:
@@ -251,7 +258,7 @@ function buildSchema(props: PieceProperty): TSchema {
                 })
                 break
             case PropertyType.CHECKBOX:
-                propsSchema[name] = Type.Union([Type.Boolean(), Type.String({})]) 
+                propsSchema[name] = Type.Union([Type.Boolean(), Type.String({})])
                 break
             case PropertyType.NUMBER:
             // Because it could be a variable

@@ -39,7 +39,9 @@ type ErrorParams =
   | SystemPropNotDefinedErrorParams
   | OpenAiFailedErrorParams
   | TestTriggerFailedErrorParams
-  | FlowOperationErrorParams;
+  | FlowOperationErrorParams
+  | EntityNotFoundErrorParams
+  | ValidationErrorParams
 
 
 export interface BaseErrorParams<T, V> {
@@ -217,6 +219,19 @@ export type TestTriggerFailedErrorParams = BaseErrorParams<
   }
 >
 
+export type EntityNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.ENTITY_NOT_FOUND,
+  {
+    message: string
+  }
+>
+
+export type ValidationErrorParams = BaseErrorParams<
+  ErrorCode.VALIDATION,
+  {
+    message: string
+  }
+>
 
 export enum ErrorCode {
   COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
@@ -245,5 +260,7 @@ export enum ErrorCode {
   TRIGGER_FAILED = "TRIGGER_FAILED",
   FLOW_OPERATION_INVALID = "FLOW_OPERATION_INVALID",
   OPENAI_FAILED = "OPENAI_FAILED",
-  TEST_TRIGGER_FAILED = "TEST_TRIGGER_FAILED"
+  TEST_TRIGGER_FAILED = "TEST_TRIGGER_FAILED",
+  ENTITY_NOT_FOUND = "ENTITY_NOT_FOUND",
+  VALIDATION = "VALIDATION",
 }

@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { insertRowAction } from './lib/actions/insert-row.action';
 import { newRowAdded } from './lib/triggers/new-row-added';
 import { deleteRowAction } from './lib/actions/delete-row.action';

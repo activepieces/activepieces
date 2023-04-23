@@ -1,0 +1,15 @@
+<div class="code-container">
+  <div class="code-header ap-flex">
+    <div class="ap-flex-grow">
+      <span class="ap-typography-subtitle-2">{{title}}</span>
+    </div>
+    <div class="ap-flex ap-items-center">
+      <svg-icon class="ap-h-[16px] ap-w-[16px] ap-cursor-pointer" src="/assets/img/custom/maximize-black.svg"
+        [applyClass]="true" matTooltip="Expand" (click)="openModal()"></svg-icon>
+    </div>
+  </div>
+  <div class="code-area">
+    <pre class="line-numbers ap-pb-1 "><code class="language-js"
+      [innerHTML]="_content | outputLog"></code></pre>
+  </div>
+</div>

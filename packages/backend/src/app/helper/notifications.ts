@@ -1,4 +1,4 @@
-import { ExecutionOutputStatus, FlowRun, NotificationStatus, RunEnvironment, UserMeta } from '@/shared/src'
+import { ExecutionOutputStatus, FlowRun, NotificationStatus, RunEnvironment, UserMeta } from '@activepieces/shared'
 import { logger } from './logger'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
@@ -28,7 +28,7 @@ export const notifications = {
         await sendWebhook({
             type: NotificationEventEnum.RUN_FAILED,
             payload: {
-                owner: user,
+                owner: user!,
                 run: flowRun,
             },
         })
@@ -53,7 +53,7 @@ enum NotificationEventEnum {
 
 async function sendWebhook(payload: RunFailedWebhookPayload): Promise<void> {
     try {
-        const response = await axios.post(notificationUrl, payload, {
+        const response = await axios.post(notificationUrl!, payload, {
             headers: {
                 'Content-Type': 'application/json',
             },

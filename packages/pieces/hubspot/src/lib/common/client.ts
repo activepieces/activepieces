@@ -1,4 +1,4 @@
-import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from '@activepieces/framework';
+import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from '@activepieces/pieces-common';
 import { Contact, HubSpotAddContactsToListRequest, HubSpotAddContactsToListResponse, HubSpotContactsCreateOrUpdateResponse, HubSpotListsResponse, HubSpotRequest } from './models';
 
 const API = 'https://api.hubapi.com';

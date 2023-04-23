@@ -1,0 +1,50 @@
+<button mat-menu-item appTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-[9px]">
+  <div class="ap-flex" (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true">
+    <ng-container *ngIf="sampleData$ | async as result; else noSampleDataNote">
+      <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]" *ngIf="result.children && result.children.length>0">
+        {{expandSample ? 'expand_less' : 'expand_more'}}
+      </mat-icon>
+      <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"
+        [indentation]="!result.children || result.children.length===0"></app-generic-step-mention-item>
+    </ng-container>
+    <ng-template #noSampleDataNote>
+      <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
+        {{expandSample ? 'expand_less' : 'expand_more'}}
+      </mat-icon>
+      <app-generic-step-mention-item [stepIndex]="stepIndex"
+        [stepMention]="_stepMention"></app-generic-step-mention-item>
+    </ng-template>
+  </div>
+  <ap-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+    class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
+    (click)="mentionClicked.emit(_stepMention)">Select
+  </ap-button>
+
+</button>
+<ng-container *ngIf="expandSample">
+  <ng-container *ngIf="sampleData$ | async as result; else testStepTemplate">
+    <app-step-mentions-tree *ngIf="result.children" [stepOutputObjectChildNodes]="result.children"
+      [markedNodesToShow]="result.markedNodesToShow" [stepDisplayName]="_stepMention.step.displayName"
+      (mentionClicked)="mentionClicked.emit($event)"></app-step-mentions-tree>
+    <ng-container *ngIf="result.error">
+      <div class="ap-pl-6 ap-py-2">
+        {{result.error}}
+      </div>
+    </ng-container>
+  </ng-container>
+  <ng-template #testStepTemplate>
+    <div class="ap-my-3 ap-px-2">
+      <div class="ap-typography-body-1 ap-text-center ap-mb-1">
+        Test step
+      </div>
+      <div class="ap-typography-body-2 ap-text-center ap-mb-3">
+        This step needs to be tested, to generate sample data.
+      </div>
+      <div class="ap-text-center">
+        <ap-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
+          (click)="$event.stopPropagation(); selectStep()">Go to step
+        </ap-button>
+      </div>
+    </div>
+  </ng-template>
+</ng-container>

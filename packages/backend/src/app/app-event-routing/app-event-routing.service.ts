@@ -39,7 +39,7 @@ export const appEventRoutingService = {
             flowId: flowId,
         })
     },
-    async getAppWebookUrl({ appName }: { appName: string}): Promise<string | undefined> {
+    async getAppWebhookUrl({ appName }: { appName: string}): Promise<string | undefined> {
         const webhookUrl = system.get(SystemProp.WEBHOOK_URL)
         if(webhookUrl){
             return `${webhookUrl}/v1/app-events/${appName}`

@@ -1,4 +1,4 @@
-import { Property } from "@activepieces/framework";
+import { Property } from "@activepieces/pieces-framework";
 const authenticationMarkdown = `
 [Click here](https://posthog.com/docs/api/overview#personal-api-keys-recommended) to learn how to obtain your Personal API key.
 `;
