@@ -63,6 +63,7 @@ export async function migrateJobs() {
     })
     logger.info('[flowQueue#migrateJobs] obliterate repeatableJobQueue')
     let created = 0
+    let error = 0
     const instances = await instanceRepo.find()
     for (const instance of instances) {
         if (instance.status === InstanceStatus.ENABLED) {
@@ -77,19 +78,25 @@ export async function migrateJobs() {
                     const pieceTrigger = getPieceTrigger(flowTrigger)
                     if (pieceTrigger.type === TriggerStrategy.POLLING) {
                         created++
-                        await triggerUtils.enable({
-                            collectionId: instance.collectionId,
-                            flowVersion: flowVersion,
-                            projectId: instance.projectId,
-                            simulate: false,
-                        })
+                        try {
+                            await triggerUtils.enable({
+                                collectionId: instance.collectionId,
+                                flowVersion: flowVersion,
+                                projectId: instance.projectId,
+                                simulate: false,
+                            })
+                        }
+                        catch (e) {
+                            error++
+                            logger.error(e)
+                        }
                     }
                 }
             }
         }
     }
     const realJobs = await repeatableJobQueue.count()
-    logger.info(`[flowQueue#migrateJobs] created ${created} jobs and now have ${realJobs} jobs`)
+    logger.info(`[flowQueue#migrateJobs] created ${created} jobs and now have ${realJobs} jobs and ${error} errors`)
 }
 export const flowQueue = {
     async add(params: AddParams): Promise<void> {
