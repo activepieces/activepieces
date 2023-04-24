@@ -183,7 +183,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
     }
 }
 
-const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
+export const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
     const piece = getPiece(trigger.settings.pieceName)
 
     if (isNil(piece)) {

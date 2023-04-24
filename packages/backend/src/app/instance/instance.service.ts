@@ -46,7 +46,7 @@ export const instanceService = {
 
         const savedInstance = await instanceRepo.save(newInstance)
 
-        if (oldInstance) {
+        if (oldInstance && oldInstance.status === InstanceStatus.ENABLED) {
             await instanceSideEffects.disable(oldInstance)
         }
         telemetry.trackProject(
@@ -74,7 +74,7 @@ export const instanceService = {
             projectId,
             id,
         })
-        if (instance) {
+        if (instance && instance.status === InstanceStatus.ENABLED) {
             await instanceSideEffects.disable(instance)
         }
         await instanceRepo.delete({

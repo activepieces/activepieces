@@ -6,7 +6,7 @@ import { triggerUtils } from '../../helper/trigger-utils'
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from './flow-queue'
 import { flowWorker } from './flow-worker'
 import { OneTimeJobData, RepeatableJobData } from './job-data'
-import { logger } from '../../helper/logger'
+import { captureException, logger } from '../../helper/logger'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { instanceService } from '../../instance/instance.service'
@@ -30,7 +30,7 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     REPEATABLE_JOB_QUEUE,
     async (job) => {
 
-        logger.info(`[repeatableJobConsumer] job.id=${job.name} job.type=${job.data.triggerType}`)
+        logger.info(`[repeatableJobConsumer] flow.id=${job.data.flowVersion.flowId} ${job.data.flowVersion.id} job.type=${job.data.triggerType}`)
         const { data } = job
 
         try {
@@ -41,7 +41,7 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
             }
         }
         catch (e) {
-            if (e instanceof ActivepiecesError) {
+            if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
                 const apError: ActivepiecesError = e as ActivepiecesError
                 const instance = await instanceService.getByCollectionId({ projectId: data.projectId, collectionId: data.collectionId })
                 if (!isNil(instance) && apError.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
@@ -50,10 +50,10 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
                 }
             }
             else {
-                throw e
+                captureException(e)
             }
         }
-        logger.info(`[repeatableJobConsumer] done job.id=${job.name} job.type=${job.data.triggerType}`)
+        logger.info(`[repeatableJobConsumer] done flow.id=${job.data.flowVersion.flowId} ${job.data.flowVersion.id} job.type=${job.data.triggerType}`)
     },
     {
         connection: createRedisClient(),

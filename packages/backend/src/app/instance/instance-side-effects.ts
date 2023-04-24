@@ -4,7 +4,6 @@ import {
     FlowVersion,
     FlowVersionState,
     Instance,
-    InstanceStatus,
     ProjectId,
 } from '@activepieces/shared'
 import { In } from 'typeorm'
@@ -18,7 +17,6 @@ import { instanceService } from './instance.service'
 export const instanceSideEffects = {
     async enable(instance: Instance): Promise<void> {
         if (
-            instance.status === InstanceStatus.DISABLED ||
             instance.flowIdToVersionId == null
         ) {
             return
@@ -47,7 +45,7 @@ export const instanceSideEffects = {
     },
 
     async disable(instance: Partial<Instance>): Promise<void> {
-        if (instance.status === InstanceStatus.DISABLED || instance.flowIdToVersionId == null) {
+        if (instance.flowIdToVersionId == null) {
             return
         }
         const flowVersionIds = Object.values(instance.flowIdToVersionId)

@@ -1,10 +1,15 @@
 import { DefaultJobOptions, Queue } from 'bullmq'
-import { ApId, ScheduleOptions } from '@activepieces/shared'
+import { ApId, InstanceStatus, PieceTrigger, ScheduleOptions, TriggerType } from '@activepieces/shared'
 import { createRedisClient } from '../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { OneTimeJobData, RepeatableJobData } from './job-data'
 import { logger } from '../../helper/logger'
 import { isNil } from 'lodash'
+import { instanceRepo } from '../../instance/instance.repo'
+import { flowVersionRepo } from '../../flows/flow-version/flow-version-repo'
+import { In } from 'typeorm'
+import { getPieceTrigger, triggerUtils } from '../../helper/trigger-utils'
+import { TriggerStrategy } from '@activepieces/pieces-framework'
 
 type BaseAddParams = {
     id: ApId
@@ -50,6 +55,42 @@ const repeatableJobQueue = new Queue<RepeatableJobData, unknown, ApId>(REPEATABL
 
 const repeatableJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
+export async function migrateJobs() {
+    const jobs = await repeatableJobQueue.count()
+    logger.info('[flowQueue#migrateJobs] start with ' + jobs + ' jobs')
+    await repeatableJobQueue.obliterate({
+        force: true,
+    })
+    logger.info('[flowQueue#migrateJobs] obliterate repeatableJobQueue')
+    let created = 0
+    const instances = await instanceRepo.find()
+    for (const instance of instances) {
+        if (instance.status === InstanceStatus.ENABLED) {
+            const flowVersionIds = Object.values(instance.flowIdToVersionId)
+
+            const flowVersions = await flowVersionRepo.findBy({
+                id: In(flowVersionIds),
+            })
+            for (const flowVersion of flowVersions) {
+                if (flowVersion.trigger.type === TriggerType.PIECE) {
+                    const flowTrigger = flowVersion.trigger as PieceTrigger
+                    const pieceTrigger = getPieceTrigger(flowTrigger)
+                    if (pieceTrigger.type === TriggerStrategy.POLLING) {
+                        created++
+                        await triggerUtils.enable({
+                            collectionId: instance.collectionId,
+                            flowVersion: flowVersion,
+                            projectId: instance.projectId,
+                            simulate: false,
+                        })
+                    }
+                }
+            }
+        }
+    }
+    const realJobs = await repeatableJobQueue.count()
+    logger.info(`[flowQueue#migrateJobs] created ${created} jobs and now have ${realJobs} jobs`)
+}
 export const flowQueue = {
     async add(params: AddParams): Promise<void> {
         logger.info('[flowQueue#add] params=', params)
