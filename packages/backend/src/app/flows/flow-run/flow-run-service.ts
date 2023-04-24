@@ -57,17 +57,25 @@ export const flowRunService = {
         flowRunId: FlowRunId,
         status: ExecutionOutputStatus,
         logsFileId: FileId | null,
+        tasks: number,
     ): Promise<FlowRun> {
         await repo.update(flowRunId, {
             logsFileId,
             status,
             finishTime: new Date().toISOString(),
         })
-        const flowRun = await this.getOne({ id: flowRunId, projectId: undefined })
+        const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
+        const edition = await getEdition()
+        if (edition === ApEdition.ENTERPRISE) {
+            await usageService.addTasksConsumed({
+                projectId: flowRun.projectId,
+                tasks: tasks,
+            })
+        }
         notifications.notifyRun({
-            flowRun: flowRun!,
+            flowRun: flowRun,
         })
-        return flowRun!
+        return flowRun
     },
 
     async start({ flowVersionId, collectionId, payload, environment }: StartParams): Promise<FlowRun> {

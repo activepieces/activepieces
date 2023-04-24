@@ -3,6 +3,8 @@ import { createPiece } from '@activepieces/pieces-framework'
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action'
 import { slackSendMessageAction } from './lib/actions/send-message-action'
 import { version } from '../package.json'
+import { newMessage } from './lib/triggers/new-message'
+import { newReactionAdded } from './lib/triggers/new-reaction-added'
 
 export const slack = createPiece({
   name: 'slack',
@@ -23,7 +25,7 @@ export const slack = createPiece({
           }
         };
       }
-      return { event: payload.body?.event?.type, identifierValue: payload.body.team_id}
+      return { event: payload.body?.event?.type, identifierValue: payload.body.team_id }
     },
     verify: ({ webhookSecret, payload }) => {
       // Construct the signature base string
@@ -36,5 +38,5 @@ export const slack = createPiece({
       return signature === computedSignature;
     }
   },
-  triggers: []
+  triggers: [newMessage, newReactionAdded]
 })

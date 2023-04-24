@@ -7,7 +7,8 @@ To obtain your API key and bundle alias, follow these steps:
 1. Log in to your Freshsales account.
 2. Click on your profile icon in the top-right corner of the screen and select **Settings** from the dropdown menu.
 3. In the settings menu, select **API Settings** from the left-hand navigation panel.
-4. You should now see your API key displayed on the screen. If you don't see an API key, and copy the alias e.g **https://<alias>.myfreshworks.com**
+4. You should now see your API key displayed on the screen. If you don't see an API key.
+5. Copy the alias e.g **https://<alias>.myfreshworks.com**
 `
 
 export const freshSalesCreateContact = createAction({
@@ -33,17 +34,17 @@ export const freshSalesCreateContact = createAction({
     first_name: Property.ShortText({
       displayName: "First name",
       description: "First name of the contact",
-      required: true
+      required: false
     }),
     last_name: Property.ShortText({
       displayName: "Last name",
       description: "Last name of the contact",
-      required: true
+      required: false
     }),
     job_title: Property.ShortText({
       displayName: "Job title",
       description: "Designation of the contact in the account they belong to",
-      required: true
+      required: false
     }),
     email: Property.ShortText({
       displayName: "Email",

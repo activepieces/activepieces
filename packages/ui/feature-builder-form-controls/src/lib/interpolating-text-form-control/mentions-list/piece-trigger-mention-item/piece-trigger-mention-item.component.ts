@@ -8,10 +8,7 @@ import {
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { combineLatest, map, Observable, of, Subject } from 'rxjs';
-import {
-  PieceTrigger,
-  TriggerType,
-} from '@activepieces/shared';
+import { PieceTrigger, TriggerType } from '@activepieces/shared';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   MentionListItem,
