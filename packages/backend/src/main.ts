@@ -161,7 +161,6 @@ const start = async () => {
 
 The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variable.
     `)
-        migrateJobs()
     }
     catch (err) {
         logger.error(err)
