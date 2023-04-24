@@ -74,11 +74,12 @@ export async function migrateJobs() {
             })
             for (const flowVersion of flowVersions) {
                 if (flowVersion.trigger.type === TriggerType.PIECE) {
-                    const flowTrigger = flowVersion.trigger as PieceTrigger
-                    const pieceTrigger = getPieceTrigger(flowTrigger)
-                    if (pieceTrigger.type === TriggerStrategy.POLLING) {
-                        created++
-                        try {
+                    try {
+
+                        const flowTrigger = flowVersion.trigger as PieceTrigger
+                        const pieceTrigger = getPieceTrigger(flowTrigger)
+                        if (pieceTrigger.type === TriggerStrategy.POLLING) {
+                            created++
                             await triggerUtils.enable({
                                 collectionId: instance.collectionId,
                                 flowVersion: flowVersion,
@@ -86,10 +87,10 @@ export async function migrateJobs() {
                                 simulate: false,
                             })
                         }
-                        catch (e) {
-                            error++
-                            logger.error(e)
-                        }
+                    }
+                    catch (e) {
+                        error++
+                        logger.error(e)
                     }
                 }
             }
