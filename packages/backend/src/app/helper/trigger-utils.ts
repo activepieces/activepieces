@@ -1,4 +1,4 @@
-import { Trigger, TriggerStrategy } from '@activepieces/pieces-framework'
+import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework'
 import {
     CollectionId,
     ExecuteTriggerResponse,
@@ -12,12 +12,12 @@ import {
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowQueue } from '../workers/flow-worker/flow-queue'
 import { engineHelper } from './engine-helper'
-import { getPiece } from '@activepieces/pieces-apps'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { captureException } from '@sentry/node'
 import { isNil } from 'lodash'
 import { logger } from './logger'
+import { pieceMetadataLoader } from '../pieces/piece-metadata-loader'
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
@@ -26,7 +26,7 @@ export const triggerUtils = {
         let payloads: unknown[] = []
         switch (flowTrigger.type) {
             case TriggerType.PIECE: {
-                const pieceTrigger = getPieceTrigger(flowTrigger)
+                const pieceTrigger = await getPieceTrigger(flowTrigger)
                 try {
                     payloads = await engineHelper.executeTrigger({
                         hookType: TriggerHookType.RUN,
@@ -102,7 +102,7 @@ const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void>
 
     const { flowVersion, projectId, collectionId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = getPieceTrigger(flowTrigger)
+    const pieceTrigger = await getPieceTrigger(flowTrigger)
 
     await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_DISABLE,
@@ -117,7 +117,7 @@ const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void>
 
     switch (pieceTrigger.type) {
         case TriggerStrategy.APP_WEBHOOK:
-            await appEventRoutingService.deleteListeners({projectId, flowId: flowVersion.flowId })
+            await appEventRoutingService.deleteListeners({ projectId, flowId: flowVersion.flowId })
             break
         case TriggerStrategy.WEBHOOK:
             break
@@ -132,7 +132,7 @@ const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void>
 const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
     const { flowVersion, projectId, collectionId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = getPieceTrigger(flowTrigger)
+    const pieceTrigger = await getPieceTrigger(flowTrigger)
 
     const webhookUrl = await webhookService.getWebhookUrl({
         flowId: flowVersion.flowId,
@@ -151,7 +151,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
         case TriggerStrategy.APP_WEBHOOK: {
             const appName = flowTrigger.settings.pieceName
             const listeners = (response as ExecuteTriggerResponse).listeners
-            for(const listener of listeners){
+            for (const listener of listeners) {
                 await appEventRoutingService.createListeners({
                     projectId,
                     flowId: flowVersion.flowId,
@@ -183,9 +183,8 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
     }
 }
 
-export const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
-    const piece = getPiece(trigger.settings.pieceName)
-
+export async function getPieceTrigger(trigger: PieceTrigger): Promise<TriggerBase> {
+    const piece = await pieceMetadataLoader.pieceMetadata(trigger.settings.pieceName, trigger.settings.pieceVersion);
     if (isNil(piece)) {
         throw new ActivepiecesError({
             code: ErrorCode.PIECE_NOT_FOUND,
@@ -195,7 +194,7 @@ export const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
             },
         })
     }
-    const pieceTrigger = piece.getTrigger(trigger.settings.triggerName)
+    const pieceTrigger = piece.triggers[trigger.settings.triggerName]
     if (isNil(pieceTrigger)) {
         throw new ActivepiecesError({
             code: ErrorCode.PIECE_TRIGGER_NOT_FOUND,
@@ -206,7 +205,6 @@ export const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
             },
         })
     }
-
     return pieceTrigger
 }
 
