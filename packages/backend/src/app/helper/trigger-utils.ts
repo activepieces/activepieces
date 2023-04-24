@@ -184,7 +184,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
 }
 
 export async function getPieceTrigger(trigger: PieceTrigger): Promise<TriggerBase> {
-    const piece = await pieceMetadataLoader.pieceMetadata(trigger.settings.pieceName, trigger.settings.pieceVersion);
+    const piece = await pieceMetadataLoader.pieceMetadata(trigger.settings.pieceName, trigger.settings.pieceVersion)
     if (isNil(piece)) {
         throw new ActivepiecesError({
             code: ErrorCode.PIECE_NOT_FOUND,

@@ -33,7 +33,6 @@ import { appCredentialModule } from '@ee/product-embed/backend/app-credentials/a
 import { connectionKeyModule } from '@ee/product-embed/backend/connection-keys/connection-key.module'
 import { triggerEventModule } from './app/flows/trigger-events/trigger-event.module'
 import { seedDevData } from './app/database/seeds/dev-seeds'
-import { migrateJobs } from './app/workers/flow-worker/flow-queue'
 
 const app = fastify({
     logger,
