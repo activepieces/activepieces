@@ -31,4 +31,4 @@ jobs:
             linux/amd64
           push: true
           tags: |
-            activepieces/activepieces:${{ env.RELEASE }}.2-beta
+            activepieces/activepieces:${{ env.RELEASE }}.3-beta
