@@ -99,7 +99,7 @@ export const collectionService = {
     },
 
     async delete({ projectId, collectionId }: { projectId: ProjectId, collectionId: CollectionId }): Promise<void> {
-        instanceSideEffects.onCollectionDelete({ projectId, collectionId })
+        await instanceSideEffects.onCollectionDelete({ projectId, collectionId })
         await collectionRepo.delete({ projectId: projectId, id: collectionId })
     },
 
