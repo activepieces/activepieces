@@ -77,7 +77,7 @@ export async function migrateJobs() {
                     try {
 
                         const flowTrigger = flowVersion.trigger as PieceTrigger
-                        const pieceTrigger = getPieceTrigger(flowTrigger)
+                        const pieceTrigger = await getPieceTrigger(flowTrigger)
                         if (pieceTrigger.type === TriggerStrategy.POLLING) {
                             created++
                             await triggerUtils.enable({
