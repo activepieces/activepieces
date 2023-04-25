@@ -133,7 +133,7 @@ export function markedOptionsFactory(): MarkedOptions {
   providers: [
     { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
   ],
-  declarations: [...exportedDeclarations, GenericSnackbarTemplateComponent],
+  declarations: [...exportedDeclarations],
   exports: [...exportedImports, ...exportedDeclarations],
 })
 export class UiCommonModule {}

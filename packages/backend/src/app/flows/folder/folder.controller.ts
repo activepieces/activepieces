@@ -32,7 +32,7 @@ export const folderController = async (fastify: FastifyInstance) => {
     )
 
 
-    fastify.put(
+    fastify.post(
         '/:folderId',
         {
             schema: {

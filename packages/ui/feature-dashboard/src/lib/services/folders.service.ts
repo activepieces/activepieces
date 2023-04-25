@@ -44,7 +44,7 @@ export class FoldersService {
     folderId:string
   } & CreateOrRenameFolderRequest)
   {
-    return this.http.put<void>(environment.apiUrl+`/folders/${req.folderId}`,{displayName:req.displayName});
+    return this.http.post<void>(environment.apiUrl+`/folders/${req.folderId}`,{displayName:req.displayName});
   }
 }
 
