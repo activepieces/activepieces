@@ -6,7 +6,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { FoldersService } from '../../../services/folders.service';
-import { FoldersListDto } from '@activepieces/shared';
+import { FolderDto } from '@activepieces/shared';
 import { Observable, tap } from 'rxjs';
 import { FolderActions } from '../../../store/folders/folders.actions';
 import { Store } from '@ngrx/store';
@@ -18,7 +18,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 })
 export class NewFolderDialogComponent {
   folderForm: FormGroup<{ displayName: FormControl<string> }>;
-  creatingFolder$: Observable<FoldersListDto>;
+  creatingFolder$: Observable<FolderDto>;
   constructor(
     private fb: FormBuilder,
     private foldersService: FoldersService,

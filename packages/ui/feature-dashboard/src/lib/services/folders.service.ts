@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import {
   CreateOrRenameFolderRequest,
   FolderCreatedResponse,
-  FoldersListDto,
+  FolderDto,
   SeekPage,
 } from '@activepieces/shared';
 import { environment } from '@activepieces/ui/common';
@@ -21,7 +21,7 @@ export class FoldersService {
     const params: Record<string, string | number> = {
       limit: 1000000,
     };
-    return this.http.get<SeekPage<FoldersListDto>>(
+    return this.http.get<SeekPage<FolderDto>>(
       environment.apiUrl + '/folders',
       {
         params: params,

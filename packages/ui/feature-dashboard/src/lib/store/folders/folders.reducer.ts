@@ -1,10 +1,10 @@
-import { FoldersListDto } from '@activepieces/shared';
+import { FolderDto } from '@activepieces/shared';
 import { Action, createReducer, on } from '@ngrx/store';
 import { FolderActions } from './folders.actions';
 
 export type FoldersState = {
-  folders: FoldersListDto[];
-  selectedFolder?: FoldersListDto;
+  folders: FolderDto[];
+  selectedFolder?: FolderDto;
   displayAllFlows: boolean;
   allFlowsNumber: number;
   uncategorizedFlowsNumber: number;

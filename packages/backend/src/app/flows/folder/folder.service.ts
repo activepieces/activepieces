@@ -1,4 +1,4 @@
-import { ActivepiecesError, Cursor, ErrorCode, Folder, FolderCreatedResponse, FoldersListDto, ProjectId } from '@activepieces/shared'
+import { ActivepiecesError, Cursor, ErrorCode, Folder, FolderCreatedResponse, FolderDto, ProjectId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { FolderEntity } from './folder.entity'
 import { CreateOrRenameFolderRequest, FolderId, apId } from '@activepieces/shared'
@@ -61,17 +61,22 @@ export const flowFolderService = {
         })
         const paginationResponse = await paginator.paginate(folderRepo.createQueryBuilder('folder').where({ projectId }))
         const numberOfFlowForEachFolder :Promise<number>[] =[]
-        const dtosList:FoldersListDto[] =[]
+        const dtosList:FolderDto[] =[]
         paginationResponse.data.forEach((f)=>{
             numberOfFlowForEachFolder.push(flowService.count({projectId:projectId, folderId:f.id}))
         });
         (await Promise.all(numberOfFlowForEachFolder)).forEach((num, idx)=>{
             dtosList.push({...paginationResponse.data[idx], numberOfFlows:num})
         })
-        return paginationHelper.createPage<FoldersListDto>(dtosList, paginationResponse.cursor)
+        return paginationHelper.createPage<FolderDto>(dtosList, paginationResponse.cursor)
     },
-    async getOne({projectId, folderId}){
-        return await folderRepo.findOneBy({projectId,id:folderId})
+    async getOne({projectId, folderId}) : Promise<FolderDto> {
+        const folder = await folderRepo.findOneBy({projectId,id:folderId})
+        const numberOfFlows = await flowService.count({projectId:projectId, folderId:folderId});
+        return {
+            ...folder,
+            numberOfFlows:numberOfFlows
+        }
     }
     
 }

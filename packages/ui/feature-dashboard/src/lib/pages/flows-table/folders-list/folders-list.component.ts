@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { NewFolderDialogComponent } from '../new-folder-dialog/new-folder-dialog.component';
 import { Observable, tap, map } from 'rxjs';
-import { FoldersListDto } from '@activepieces/shared';
+import { FolderDto } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { FoldersSelectors } from '../../../store/folders/folders.selector';
 import { FolderActions } from '../../../store/folders/folders.actions';
@@ -20,8 +20,8 @@ import { RenameFolderDialogComponent, RenameFolderDialogData } from '../rename-f
 export class FoldersListComponent {
   allFlowsNumber$: Observable<number>;
   uncategorizedFlowsNumber$: Observable<number>;
-  folders$: Observable<FoldersListDto[]>;
-  selectedFolder$: Observable<FoldersListDto | undefined>;
+  folders$: Observable<FolderDto[]>;
+  selectedFolder$: Observable<FolderDto | undefined>;
   showAllFlows$: Observable<boolean>;
   createFolderDialogClosed$: Observable<void>;
   folderIdOfMenuOpened: string | undefined = undefined;
@@ -75,7 +75,7 @@ export class FoldersListComponent {
       queryParamsHandling: 'merge',
     });
   }
-  deleteFolder(folder:FoldersListDto)
+  deleteFolder(folder:FolderDto)
   {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.folderService.delete(folder.id).pipe(tap(()=>{
@@ -87,7 +87,7 @@ export class FoldersListComponent {
     }
     this.dialogService.open(DeleteEntityDialogComponent,{data:dialogData})
   }
-  renameFolder(folder:FoldersListDto)
+  renameFolder(folder:FolderDto)
   {
     const dialogData: RenameFolderDialogData = {
        folderId:folder.id

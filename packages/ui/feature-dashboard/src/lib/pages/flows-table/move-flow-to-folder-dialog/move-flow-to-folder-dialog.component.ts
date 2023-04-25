@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Observable, map, tap } from 'rxjs';
-import { FlowOperationType, FoldersListDto } from '@activepieces/shared';
+import { FlowOperationType, FolderDto } from '@activepieces/shared';
 import { FoldersSelectors } from '../../../store/folders/folders.selector';
 import { FlowService } from '@activepieces/ui/common';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -24,7 +24,7 @@ export interface MoveFlowToFolderDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MoveFlowToFolderDialogComponent {
-  folders$: Observable<FoldersListDto[]>;
+  folders$: Observable<FolderDto[]>;
   foldersForm: FormGroup<{ folder: FormControl<string> }>;
   movingFlow$: Observable<void>;
   constructor(
