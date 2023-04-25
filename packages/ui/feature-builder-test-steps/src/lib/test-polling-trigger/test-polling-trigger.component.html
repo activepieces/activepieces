@@ -15,7 +15,7 @@
                         matTooltipPosition="above"> </ap-hotspot>
                     <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()"
                         [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : ''"
-                        [disabled]="(isValid$ | async) === false">Load Data</ap-button>
+                        [disabled]="(isValid$ | async) === false">Load data</ap-button>
                 </div>
             </div>
 
@@ -32,7 +32,7 @@
                     </div>
                     <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
                         [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 'Load sample data from your account to be used in the next steps'"
-                        [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Load Data</ap-button>
+                        [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Load data</ap-button>
                 </div>
 
                 <mat-form-field class="ap-w-full ap-mt-2" appearance="outline" subscriptSizing="dynamic">
@@ -48,8 +48,8 @@
                 <div class="ap-typography-caption ap-text-description ap-my-2">
                     This sample data can be used in the next steps
                 </div>
-                <app-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
-                    [content]="selectedDataControl.value"></app-json-viewer>
+                <ap-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
+                    [content]="selectedDataControl.value"></ap-json-viewer>
             </ng-container>
             <ng-container *ngIf="currentResults.length === 0  && hasBeenTested">
                 <div class="ap-flex ap-items-center">
@@ -62,7 +62,7 @@
                     </div>
                     <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
                         [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 'Load sample data from your account to be used in the next steps'"
-                        [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Load Data</ap-button>
+                        [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Load data</ap-button>
                 </div>
 
                 <p class="ap-mt-2" *ngIf="!failed">Please add some data then press "Load Data"</p>

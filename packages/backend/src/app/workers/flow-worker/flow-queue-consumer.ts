@@ -61,7 +61,8 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
 
 
 const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
-    const flowVersion = await flowVersionService.getOne(data.flowVersion.id)
+    const flowVersion = await flowVersionService.getOneOrThrow(data.flowVersion.id)
+
     const payloads: unknown[] = await triggerUtils.executeTrigger({
         projectId: data.projectId,
         flowVersion: flowVersion,

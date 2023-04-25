@@ -12,7 +12,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FolderValidator } from '../../../validators/folderName.validator';
 import { FoldersSelectors } from '../../../store/folders/folders.selector';
 import { ErrorCode } from '@activepieces/shared';
-import { FoldersService } from '@/ui/common/src';
+import { FoldersService } from '@activepieces/ui/common';
 
 export interface RenameFolderDialogData {
   folderId: string;

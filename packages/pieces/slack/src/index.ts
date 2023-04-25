@@ -1,9 +1,9 @@
-import { createPiece } from '@activepieces/framework'
+import crypto from 'node:crypto'
+import { createPiece } from '@activepieces/pieces-framework'
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action'
 import { slackSendMessageAction } from './lib/actions/send-message-action'
 import { version } from '../package.json'
-import { newMessage as newSlackMessage } from './lib/triggers/new-message'
-import crypto from 'crypto'
+import { newMessage } from './lib/triggers/new-message'
 import { newReactionAdded } from './lib/triggers/new-reaction-added'
 
 export const slack = createPiece({
@@ -25,7 +25,7 @@ export const slack = createPiece({
           }
         };
       }
-      return { event: payload.body?.event?.type, identifierValue: payload.body.team_id}
+      return { event: payload.body?.event?.type, identifierValue: payload.body.team_id }
     },
     verify: ({ webhookSecret, payload }) => {
       // Construct the signature base string
@@ -38,5 +38,5 @@ export const slack = createPiece({
       return signature === computedSignature;
     }
   },
-  triggers: [newSlackMessage, newReactionAdded]
+  triggers: [newMessage, newReactionAdded]
 })

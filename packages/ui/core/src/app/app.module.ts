@@ -26,8 +26,8 @@ import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { FirebaseAuthContainerComponent } from '@ee/firebase-auth/frontend/auth-container/firebase-auth-container.component';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
-import { AuthLayoutComponent } from '@/ui/feature-authentication/src/lib/auth.component';
 import { DashboardContainerComponent } from '@activepieces/ui/feature-dashboard';
+import { AuthLayoutComponent } from '@activepieces/ui/feature-authentication';
 
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);

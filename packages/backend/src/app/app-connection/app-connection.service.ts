@@ -23,7 +23,13 @@ import { acquireLock } from '../database/redis-connection'
 import { decryptObject, encryptObject } from '../helper/encryption'
 import { getEdition } from '../helper/secret-helper'
 import { logger } from '../helper/logger'
+import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
+import { isNil } from 'lodash'
 
+type GetOneParams = {
+    projectId: ProjectId
+    name: string
+}
 
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity)
 
@@ -36,9 +42,10 @@ export const appConnectionService = {
                     pieceName: request.appName,
                     code: request.value.code,
                     clientId: request.value.client_id,
-                    tokenUrl: request.value.token_url,
+                    tokenUrl: request.value.token_url!,
                     edition: await getEdition(),
-                    codeVerifier: request.value.code_challenge,
+                    authorizationMethod: request.value.authorization_method!,
+                    codeVerifier: request.value.code_challenge!,
                 })
                 break
             case AppConnectionType.OAUTH2:
@@ -48,7 +55,8 @@ export const appConnectionService = {
                     tokenUrl: request.value.token_url,
                     redirectUrl: request.value.redirect_url,
                     code: request.value.code,
-                    codeVerifier: request.value.code_challenge,
+                    authorizationMethod: request.value.authorization_method,
+                    codeVerifier: request.value.code_challenge!,
                 })
                 break
             default:
@@ -63,7 +71,8 @@ export const appConnectionService = {
         connection.value = decryptObject(connection.value)
         return connection
     },
-    async getOne({ projectId, name }: { projectId: ProjectId, name: string }): Promise<AppConnection | null> {
+
+    async getOne({ projectId, name }: GetOneParams): Promise<AppConnection | null> {
         const appConnection = await appConnectionRepo.findOneBy({
             projectId: projectId,
             name: name,
@@ -93,6 +102,22 @@ export const appConnectionService = {
         }
         return appConnection
     },
+
+    async getOneOrThrow(params: GetOneParams): Promise<AppConnection> {
+        const connection = await this.getOne(params)
+
+        if (isNil(connection)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.APP_CONNECTION_NOT_FOUND,
+                params: {
+                    id: params.name,
+                },
+            })
+        }
+
+        return connection
+    },
+
     async delete({ projectId, id }: { projectId: ProjectId, id: AppConnectionId }): Promise<void> {
         await appConnectionRepo.delete({ id: id, projectId: projectId })
     },
@@ -123,7 +148,7 @@ export const appConnectionService = {
                     }))
                 }
                 else {
-                    promises.push(this.getOne({ projectId: connection.projectId, name: connection.name }))
+                    promises.push(this.getOneOrThrow({ projectId: connection.projectId, name: connection.name }))
                 }
             }
             catch (e) {
@@ -174,6 +199,7 @@ async function refreshCloud(appName: string, connectionValue: CloudOAuth2Connect
         pieceName: appName,
         clientId: connectionValue.client_id,
         edition: await getEdition(),
+        authorizationMethod: connectionValue.authorization_method,
         tokenUrl: connectionValue.token_url,
     }
     const response = (
@@ -192,23 +218,37 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
         return appConnection
 
     }
-    const settings = appConnection
+    const body: Record<string, string> = {
+        redirect_uri: appConnection.redirect_url,
+        grant_type: 'refresh_token',
+        refresh_token: appConnection.refresh_token,
+    }
+    const headers: Record<string, string> = {
+        'content-type': 'application/x-www-form-urlencoded',
+        accept: 'application/json',
+    }
+    const authorizationMethod = appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
+    switch (authorizationMethod) {
+        case OAuth2AuthorizationMethod.BODY:
+            body['client_id'] = appConnection.client_id
+            body['client_secret'] = appConnection.client_secret
+            break
+        case OAuth2AuthorizationMethod.HEADER:
+            headers['authorization'] = `Basic ${Buffer.from(`${appConnection.client_id}:${appConnection.client_secret}`).toString('base64')}`
+            break
+        default:
+            throw new Error(`Unknown authorization method: ${authorizationMethod}`)
+    }
     const response = (
         await axios.post(
-            settings.token_url,
-            new URLSearchParams({
-                client_id: settings.client_id,
-                client_secret: settings.client_secret,
-                redirect_uri: settings.redirect_url,
-                grant_type: 'refresh_token',
-                refresh_token: appConnection.refresh_token,
-            }),
+            appConnection.token_url,
+            new URLSearchParams(body),
             {
-                headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
+                headers: headers,
             },
         )
     ).data
-    return { ...appConnection, ...formatOAuth2Response(response) }
+    return { ...appConnection, ...formatOAuth2Response({ ...response }) }
 }
 
 async function claim(request: {
@@ -217,29 +257,44 @@ async function claim(request: {
     tokenUrl: string
     redirectUrl: string
     code: string
+    authorizationMethod?: OAuth2AuthorizationMethod
     codeVerifier: string
 }): Promise<Record<string, unknown>> {
     try {
-        const params = {
-            client_id: request.clientId,
-            client_secret: request.clientSecret,
+        const body: Record<string, string> = {
             redirect_uri: request.redirectUrl,
             grant_type: 'authorization_code',
             code: request.code,
         }
         if (request.codeVerifier) {
-            params['code_verifier'] = request.codeVerifier
+            body['code_verifier'] = request.codeVerifier
+        }
+        const headers: Record<string, string> = {
+            'content-type': 'application/x-www-form-urlencoded',
+            accept: 'application/json',
+        }
+        const authorizationMethod = request.authorizationMethod || OAuth2AuthorizationMethod.BODY
+        switch (authorizationMethod) {
+            case OAuth2AuthorizationMethod.BODY:
+                body['client_id'] = request.clientId
+                body['client_secret'] = request.clientSecret
+                break
+            case OAuth2AuthorizationMethod.HEADER:
+                headers['authorization'] = `Basic ${Buffer.from(`${request.clientId}:${request.clientSecret}`).toString('base64')}`
+                break
+            default:
+                throw new Error(`Unknown authorization method: ${authorizationMethod}`)
         }
         const response = (
             await axios.post(
                 request.tokenUrl,
-                new URLSearchParams(params),
+                new URLSearchParams(body),
                 {
-                    headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
+                    headers: headers,
                 },
             )
         ).data
-        return { ...formatOAuth2Response(response), client_id: request.clientId, client_secret: request.clientSecret }
+        return { ...formatOAuth2Response(response), client_id: request.clientId, client_secret: request.clientSecret, authorization_method: authorizationMethod }
     }
     catch (e: unknown) {
         logger.error(e)
@@ -267,7 +322,15 @@ async function claimWithCloud(request: claimWithCloudRequest): Promise<Record<st
     }
 }
 
-function formatOAuth2Response(response: unknown) {
+type UnformattedOauthResponse = {
+    access_token: string
+    expires_in: number
+    refresh_token: string
+    scope: string
+    token_type: string
+}
+
+function formatOAuth2Response(response: UnformattedOauthResponse) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000)
     const formattedResponse: BaseOAuth2ConnectionValue = {
         access_token: response['access_token'],
@@ -308,6 +371,7 @@ type claimWithCloudRequest = {
     pieceName: string
     code: string
     codeVerifier: string
+    authorizationMethod: OAuth2AuthorizationMethod
     edition: string
     clientId: string
     tokenUrl: string

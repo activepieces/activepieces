@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   BehaviorSubject,
-  EMPTY,
   forkJoin,
   interval,
   map,
@@ -20,7 +19,10 @@ import { FormControl } from '@angular/forms';
 import deepEqual from 'deep-equal';
 import { TestStepCoreComponent } from '../test-steps-core.component';
 import { TestStepService } from '@activepieces/ui/common';
-import { BuilderSelectors, FlowsActions } from '@activepieces/ui/feature-builder-store';
+import {
+  BuilderSelectors,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
 
 export interface WebhookHistoricalData {
   payload: unknown;
@@ -36,7 +38,6 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
   foundNewResult$: Subject<boolean> = new Subject();
   loading = false;
   selectedDataControl: FormControl<unknown> = new FormControl();
-
   saveNewSelectedData$: Observable<void>;
   initialHistoricalData$: Observable<WebhookHistoricalData[]>;
   initaillySelectedSampleData$: Observable<unknown>;
@@ -54,7 +55,9 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
       .select(BuilderSelectors.selectCurrentFlow)
       .pipe(
         switchMap((flow) => {
-          return this.testStepService.getTriggerEventsResults(flow.id?.toString() || '');
+          return this.testStepService.getTriggerEventsResults(
+            flow.id?.toString() || ''
+          );
         }),
         map((res) => {
           return res.data;
@@ -66,7 +69,7 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
         })
       );
     this.initaillySelectedSampleData$ = this.store
-      .select(BuilderSelectors.selectStepSelectedSampleData)
+      .select(BuilderSelectors.selectTriggerSelectedSampleData)
       .pipe(
         tap((res) => {
           this.stopSelectedDataControlListener$.next(true);
@@ -88,24 +91,18 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
 
   testStep() {
     this.loading = true;
-    this.testStep$ = this.store
-      .select(BuilderSelectors.selectCurrentFlow)
-      .pipe(
-        take(1),
-        switchMap((flow) => {
-          const stopListening$ = merge(
-            this.cancelTesting$,
-            this.foundNewResult$
-          );
-          return interval(500).pipe(
-            takeUntil(stopListening$),
-            switchMap(() => {
-              return this.createResultsChecker(flow.id.toString());
-            })
-          );
-          return EMPTY;
-        })
-      );
+    this.testStep$ = this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
+      take(1),
+      switchMap((flow) => {
+        const stopListening$ = merge(this.cancelTesting$, this.foundNewResult$);
+        return interval(500).pipe(
+          takeUntil(stopListening$),
+          switchMap(() => {
+            return this.createResultsChecker(flow.id.toString());
+          })
+        );
+      })
+    );
   }
 
   createResultsChecker(flowId: string) {

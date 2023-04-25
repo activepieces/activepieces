@@ -6,8 +6,8 @@ import {
   FolderDto,
   SeekPage,
 } from '@activepieces/shared';
-import { environment } from '@activepieces/ui/common';
 import { Observable } from 'rxjs';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root',

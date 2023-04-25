@@ -56,12 +56,9 @@ export class FlowService {
     if (request.folderId) {
       queryParams['folderId'] = request.folderId;
     }
-    return this.http.get<SeekPage<Flow>>(
-      environment.apiUrl + '/flows',
-      {
-        params: queryParams,
-      }
-    );
+    return this.http.get<SeekPage<Flow>>(environment.apiUrl + '/flows', {
+      params: queryParams,
+    });
   }
 
   update(flowId: FlowId, opreation: FlowOperationRequest): Observable<Flow> {

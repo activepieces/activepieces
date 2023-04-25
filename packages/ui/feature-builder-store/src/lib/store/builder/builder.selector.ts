@@ -1,12 +1,7 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../../model/builder-state.model';
 
-import {
-  AppConnection,
-  Flow,
-  FlowRun,
-  SampleDataSettings,
-} from '@activepieces/shared';
+import { AppConnection, Flow, FlowRun } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 
 import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
@@ -85,7 +80,6 @@ export const selectTabState = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => state.state
 );
-
 export const selectCurrentFlowValidity = createSelector(
   selectCurrentFlow,
   (flow: Flow | undefined) => {
@@ -110,20 +104,39 @@ const selectCurrentStepSettings = createSelector(
     return undefined;
   }
 );
-const selectStepSelectedSampleData = createSelector(
-  selectCurrentStepSettings,
-  (settings) => {
-    if (settings) {
-      if (Object.keys(settings).find((s) => s === 'inputUiInfo')) {
-        const sampleDataSettings = (settings as Record<string, unknown>)[
-          'inputUiInfo'
-        ] as SampleDataSettings;
-        return sampleDataSettings.currentSelectedData;
-      }
+const selectTriggerSelectedSampleData = createSelector(
+  selectCurrentStep,
+  (step) => {
+    if (
+      step &&
+      (step.type === TriggerType.PIECE || step.type === TriggerType.WEBHOOK) &&
+      step.settings.inputUiInfo
+    ) {
+      return step.settings.inputUiInfo.currentSelectedData;
     }
     return undefined;
   }
 );
+const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
+  if (
+    step &&
+    (step.type === ActionType.PIECE || step.type === ActionType.CODE) &&
+    step.settings.inputUiInfo
+  ) {
+    return step.settings.inputUiInfo.currentSelectedData;
+  }
+  return undefined;
+});
+const selectLastTestDate = createSelector(selectCurrentStep, (step) => {
+  if (
+    step &&
+    (step.type === ActionType.PIECE || step.type === ActionType.CODE) &&
+    step.settings.inputUiInfo
+  ) {
+    return step.settings.inputUiInfo.lastTestDate;
+  }
+  return undefined;
+});
 export const selectCurrentStepName = createSelector(
   selectCurrentStep,
   (selectedStep) => {
@@ -137,6 +150,14 @@ export const selectCurrentStepDisplayName = createSelector(
   selectCurrentStep,
   (step) => {
     return step?.displayName || '';
+  }
+);
+
+export const selectCurrentFlowVersionId = createSelector(
+  selectCurrentFlow,
+  (flow: Flow | undefined) => {
+    if (!flow) return undefined;
+    return flow.version?.id;
   }
 );
 
@@ -364,6 +385,12 @@ function findStepLogoUrlForMentions(
     return 'assets/img/custom/piece/code_mention.png';
   }
 }
+const selectIsSchduleTrigger = createSelector(selectCurrentFlow, (flow) => {
+  if (flow?.version?.trigger.type === TriggerType.PIECE) {
+    return flow.version.trigger.settings.pieceName === 'schedule';
+  }
+  return false;
+});
 const selectCurrentStepPieceVersionAndName = createSelector(
   selectCurrentStep,
   (s) => {
@@ -423,8 +450,12 @@ export const BuilderSelectors = {
   selectAppConnectionsForMentionsDropdown,
   selectStepLogoUrl,
   selectCurrentStepSettings,
-  selectStepSelectedSampleData,
+  selectTriggerSelectedSampleData,
   selectStepValidity,
+  selectCurrentFlowVersionId,
+  selectIsSchduleTrigger,
   selectCurrentStepPieceVersionAndName,
   selectCurrentFlowFolderName,
+  selectStepTestSampleData,
+  selectLastTestDate,
 };

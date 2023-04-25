@@ -14,7 +14,7 @@ import { matchesString } from '../../validators';
 export interface DeleteEntityDialogData {
   entityName: string;
   deleteEntity$: Observable<unknown>;
-  note:string
+  note: string;
 }
 
 @Component({
@@ -38,7 +38,7 @@ export class DeleteEntityDialogComponent {
       }),
     });
   }
-  deleteCollection() {
+  submit() {
     if (this.confirmationForm.valid && !this.deleteOperation$) {
       this.deleteOperation$ = this.data.deleteEntity$.pipe(
         catchError((err) => {

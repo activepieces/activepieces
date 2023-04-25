@@ -1,4 +1,4 @@
-import { Trigger } from '@activepieces/framework'
+import { Trigger, TriggerStrategy } from '@activepieces/pieces-framework'
 import {
     ExecuteTriggerResponse,
     FlowVersion,
@@ -7,7 +7,6 @@ import {
     RunEnvironment,
     TriggerHookType,
     TriggerType,
-    TriggerStrategy,
 } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowQueue } from '../workers/flow-worker/flow-queue'
@@ -16,12 +15,13 @@ import { getPiece } from '@activepieces/pieces-apps'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { captureException } from '@sentry/node'
+import { isNil } from 'lodash'
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
         const { payload, flowVersion, projectId, simulate } = params
         const flowTrigger = flowVersion.trigger
-        let payloads = []
+        let payloads: unknown[] = []
         switch (flowTrigger.type) {
             case TriggerType.PIECE: {
                 const pieceTrigger = getPieceTrigger(flowTrigger)
@@ -44,7 +44,7 @@ export const triggerUtils = {
                             triggerName: pieceTrigger.name,
                             pieceName: flowTrigger.settings.pieceName,
                             pieceVersion: flowTrigger.settings.pieceVersion,
-                            error: e,
+                            error: e as Error,
                         },
                     }, `Flow ${flowTrigger.name} with ${pieceTrigger.name} trigger throws and error, returning as zero payload `)
                     captureException(error)
@@ -56,7 +56,7 @@ export const triggerUtils = {
                 payloads = [payload]
                 break
         }
-        return payloads
+        return payloads as unknown[]
     },
 
     async enable({ flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
@@ -172,7 +172,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
 const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
     const piece = getPiece(trigger.settings.pieceName)
 
-    if (piece === null) {
+    if (isNil(piece)) {
         throw new ActivepiecesError({
             code: ErrorCode.PIECE_NOT_FOUND,
             params: {
@@ -182,7 +182,7 @@ const getPieceTrigger = (trigger: PieceTrigger): Trigger => {
         })
     }
     const pieceTrigger = piece.getTrigger(trigger.settings.triggerName)
-    if (pieceTrigger == null) {
+    if (isNil(pieceTrigger)) {
         throw new ActivepiecesError({
             code: ErrorCode.PIECE_TRIGGER_NOT_FOUND,
             params: {

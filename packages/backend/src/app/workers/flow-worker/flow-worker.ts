@@ -1,14 +1,15 @@
-import fs from 'node:fs/promises'
+import fs from 'fs-extra'
 import {
     ActionType,
-    ApEnvironment,
+    ActivepiecesError,
+    apId,
     CodeActionSettings,
+    ErrorCode,
     ExecutionOutputStatus,
     File,
     flowHelper,
     FlowVersion,
-    getPackageAliasForPiece,
-    getPackageVersionForPiece,
+    FlowVersionState,
     ProjectId,
     StepOutputStatus,
     TriggerType,
@@ -22,55 +23,74 @@ import { OneTimeJobData } from './job-data'
 import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
-import { packageManager, PackageManagerDependencies } from '../../helper/package-manager'
-import { SystemProp } from '../../helper/system/system-prop'
-import { system } from '../../helper/system/system'
+import { pieceManager } from '../../flows/common/piece-installer'
+import { isNil } from 'lodash'
 
-const extractPieceDependencies = (flowVersion: FlowVersion): PackageManagerDependencies => {
-    const environment = system.get(SystemProp.ENVIRONMENT)
+type FlowPiece = {
+    name: string
+    version: string
+}
 
-    if (environment === ApEnvironment.DEVELOPMENT) {
-        return {}
-    }
+type InstallPiecesParams = {
+    path: string
+    flowVersion: FlowVersion
+}
 
-    const pieceDependencies: PackageManagerDependencies = {}
-    const flowSteps = flowHelper.getAllSteps(flowVersion)
+const log = logger.child({ file: 'FlowWorker' })
 
-    for (const step of flowSteps) {
+const extractFlowPieces = (flowVersion: FlowVersion): FlowPiece[] => {
+    const pieces: FlowPiece[] = []
+    const steps = flowHelper.getAllSteps(flowVersion)
+
+    for (const step of steps) {
         if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
             const { pieceName, pieceVersion } = step.settings
-
-            const packageName = getPackageAliasForPiece({
-                pieceName,
-                pieceVersion,
+            pieces.push({
+                name: pieceName,
+                version: pieceVersion,
             })
-
-            const packageVersion = getPackageVersionForPiece({
-                pieceName,
-                pieceVersion,
-            })
-
-            pieceDependencies[packageName] = packageVersion
         }
     }
 
-    return pieceDependencies
+    return pieces
 }
 
-const installPieceDependencies = async (sandbox: Sandbox, flowVersion: FlowVersion): Promise<void> => {
-    const pieceDependencies = extractPieceDependencies(flowVersion)
-    await packageManager.addDependencies(sandbox.getSandboxFolderPath(), pieceDependencies)
+const installPieces = async (params: InstallPiecesParams): Promise<void> => {
+    const { path, flowVersion } = params
+    const pieces = extractFlowPieces(flowVersion)
+
+    await pieceManager.install({
+        projectPath: path,
+        pieces,
+    })
 }
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId)
-    const sandbox = sandboxManager.obtainSandbox()
+
+    // Don't use sandbox for draft versions, since they are mutable and we don't want to cache them.
+    const key = flowVersion.id + (FlowVersionState.DRAFT === flowVersion.state ? '-draft' + apId() : '')
+    const sandbox = await sandboxManager.obtainSandbox(key)
+    const startTime = Date.now()
     logger.info(`[${jobData.runId}] Executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`)
     try {
-        await sandbox.cleanAndInit()
-        await downloadFiles(sandbox, jobData.projectId, flowVersion)
-        await installPieceDependencies(sandbox, flowVersion)
+        if (!sandbox.cached) {
+            await sandbox.recreate()
+            await downloadFiles(sandbox, jobData.projectId, flowVersion)
 
+            const path = sandbox.getSandboxFolderPath()
+
+            await installPieces({
+                path,
+                flowVersion,
+            })
+
+            logger.info(`[${jobData.runId}] Preparing sandbox ${sandbox.boxId} took ${Date.now() - startTime}ms`)
+        }
+        else {
+            await sandbox.clean()
+            logger.info(`[${jobData.runId}] Reusing sandbox ${sandbox.boxId} took ${Date.now() - startTime}ms`)
+        }
         const executionOutput = await engineHelper.executeFlow(sandbox, {
             flowVersionId: flowVersion.id,
             projectId: jobData.projectId,
@@ -81,24 +101,24 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
                 status: StepOutputStatus.SUCCEEDED,
             },
         })
-
         const logsFile = await fileService.save(jobData.projectId, Buffer.from(JSON.stringify(executionOutput)))
-        await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id)
+        await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id, executionOutput.tasks)
     }
     catch (e: unknown) {
-        logger.error(e, `[${jobData.runId}] Error executing flow`)
-        if (sandbox.timedOut()) {
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null)
+        log.error(e, `[${jobData.runId}] Error executing flow`)
+        if (await sandbox.timedOut()) {
+            // TODO Flow timed out, consume one task
+            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null, 1)
         }
         else {
             captureException(e as Error)
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null)
+            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null, 0)
         }
     }
     finally {
-        sandboxManager.returnSandbox(sandbox.boxId)
+        await sandboxManager.returnSandbox(sandbox.boxId)
     }
-    logger.info(`[${jobData.runId}] Finished executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`)
+    log.info(`[${jobData.runId}] Finished executing flow ${flowVersion.id} in sandbox ${sandbox.boxId} in ${Date.now() - startTime}ms`)
 }
 
 async function downloadFiles(
@@ -106,28 +126,28 @@ async function downloadFiles(
     projectId: ProjectId,
     flowVersion: FlowVersion,
 ): Promise<void> {
-    logger.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
+    log.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
     const flowLock = await acquireLock({
         key: flowVersion.id,
-        timeout: 30000,
+        timeout: 60000,
     })
     try {
         const buildPath = sandbox.getSandboxFolderPath()
 
         // This has to be before flows, since it does modify code settings and fill it with packaged file id.
-        await fs.mkdir(`${buildPath}/codes/`)
+        await fs.ensureDir(`${buildPath}/codes/`)
         const artifacts: File[] = await buildCodes(projectId, flowVersion)
 
         for (const artifact of artifacts) {
             await fs.writeFile(`${buildPath}/codes/${artifact.id}.js`, artifact.data)
         }
 
-        await fs.mkdir(`${buildPath}/flows/`)
+        await fs.ensureDir(`${buildPath}/flows/`)
         await fs.writeFile(`${buildPath}/flows/${flowVersion.id}.json`, JSON.stringify(flowVersion))
 
     }
     finally {
-        logger.info(`[${flowVersion.id}] Releasing flow lock`)
+        log.info(`[${flowVersion.id}] Releasing flow lock`)
         await flowLock.release()
     }
 
@@ -152,14 +172,30 @@ async function buildCodes(projectId: ProjectId, flowVersion: FlowVersion): Promi
 
 const getArtifactFile = async (projectId: ProjectId, codeActionSettings: CodeActionSettings): Promise<File> => {
     if (codeActionSettings.artifactPackagedId === undefined) {
-        logger.info(`Building package for file id ${codeActionSettings.artifactSourceId}`)
+        log.info(`Building package for file id ${codeActionSettings.artifactSourceId}`)
+
         const sourceId = codeActionSettings.artifactSourceId
-        const fileEntity = await fileService.getOne({ projectId: projectId, fileId: sourceId })
+
+        if (isNil(sourceId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'artifactSourceId is undefined',
+                },
+            })
+        }
+
+        const fileEntity = await fileService.getOneOrThrow({ projectId: projectId, fileId: sourceId })
         const builtFile = await codeBuilder.build(fileEntity.data)
-        const savedPackagedFile: File = await fileService.save(projectId, builtFile)
+        const savedPackagedFile = await fileService.save(projectId, builtFile)
         codeActionSettings.artifactPackagedId = savedPackagedFile.id
     }
-    const file: File = (await fileService.getOne({ projectId: projectId, fileId: codeActionSettings.artifactPackagedId }))
+
+    const file = await fileService.getOneOrThrow({
+        projectId: projectId,
+        fileId: codeActionSettings.artifactPackagedId,
+    })
+
     return file
 }
 

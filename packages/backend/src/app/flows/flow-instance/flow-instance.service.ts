@@ -32,7 +32,7 @@ export const flowInstanceService = {
             flow.version.state = FlowVersionState.LOCKED
             await flowVersionService.overwriteVersion(flow.version.id, flow.version)
         }
-        const oldInstance: Partial<FlowInstance | null> = await flowInstanceRepo.findOneBy({ projectId, flowId: request.flowId })
+        const oldInstance: FlowInstance | null = await flowInstanceRepo.findOneBy({ projectId, flowId: request.flowId })
         if (oldInstance && oldInstance.status === FlowInstanceStatus.ENABLED) {
             triggerUtils.disable({
                 flowVersion: flow.version,
@@ -43,15 +43,15 @@ export const flowInstanceService = {
 
         triggerUtils.enable({
             flowVersion: flow.version,
-            projectId: flowInstance.projectId,
+            projectId: projectId,
             simulate: false,
         })
         await flowInstanceRepo.upsert(flowInstance, ['projectId', 'flowId'])
-
-        return flowInstanceRepo.findOneBy({
+        const savedFlowInstance = (await flowInstanceRepo.findOneBy({
             projectId: projectId,
             flowId: request.flowId,
-        })
+        }))!
+        return savedFlowInstance
     },
     async get({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<FlowInstance | null> {
         const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })
@@ -86,14 +86,16 @@ export const flowInstanceService = {
                     break
             }
         }
-        await flowInstanceRepo.upsert({
+        const updatedInstance: FlowInstance = {
             ...flowInstance,
             status: status,
-        }, ['projectId', 'flowId'])
-        return {
-            ...flowInstance,
-            status:status,
         }
+        await flowInstanceRepo.upsert(updatedInstance, ['projectId', 'flowId'])
+        const savedFlowInstance = (await flowInstanceRepo.findOneBy({
+            projectId: projectId,
+            flowId: flowInstance.flowId,
+        }))!
+        return savedFlowInstance
     },
     async delete({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<void> {
         const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })

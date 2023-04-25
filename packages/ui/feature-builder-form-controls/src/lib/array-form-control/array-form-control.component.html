@@ -11,13 +11,13 @@
 
             <div class="form-control value-control" [class.first]="isFirst && formArray.controls.length>1"
                 [class.last]="isLast && formArray.controls.length>1" [class.only-one]="formArray.controls.length === 1"
-                appTrackHover #valueInput="hoverTrackerDirective">
+                appTrackHover #valueInput="hoverTrackerDirective" #interpolatingTextControlContainer>
                 <app-interpolating-text-form-control #textControl [insideMatField]="false"
                     [formControl]="formArray.controls[idx]" placeholder="Value"
                     (click)="formArray.enabled? mentionsDropdown.showMenuSubject$.next(true):null"
-                    (keyup)="$event.key ==='Escape'? mentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
+                    (keyup)="$event.key ==='Escape'? mentionsDropdown.close() : null"></app-interpolating-text-form-control>
                 <app-builder-autocomplete-mentions-dropdown #mentionsDropdown width="calc(100% - 0.5rem)"
-                    (addMention)="addMention(textControl,$event)"
+                    (addMention)="addMention(textControl,$event)" [container]="interpolatingTextControlContainer"
                     (menuClosed)="textControl.focusEditor()"></app-builder-autocomplete-mentions-dropdown>
             </div>
         </div>

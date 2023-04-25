@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, catchError, of } from 'rxjs';
 import { FlowInstance } from '@activepieces/shared';
-import { FlowInstanceService } from '@/ui/common/src';
+import { FlowInstanceService } from '@activepieces/ui/common';
 
 @Injectable({
   providedIn: 'root',

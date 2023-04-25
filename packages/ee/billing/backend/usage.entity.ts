@@ -23,7 +23,7 @@ export const ProjectUsageEntity = new EntitySchema<ProjectUsageSchema>({
         {
             name: "idx_project_usage_project_id",
             columns: ["projectId"],
-            unique: true,
+            unique: false,
         }
     ],
     relations: {

@@ -5,7 +5,7 @@ import { CreateOrRenameFolderRequest, FolderId, apId } from '@activepieces/share
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { flowService } from '../flow/flow.service'
-import { IsNull } from 'typeorm'
+import { isNil } from 'lodash'
 
 export const folderRepo = databaseConnection.getRepository(FolderEntity)
 
@@ -16,7 +16,7 @@ export const flowFolderService = {
             projectId: projectId,
         })
     },
-    async update({ projectId, folderId, request }: { projectId, folderId: FolderId, request: CreateOrRenameFolderRequest }): Promise<Folder> {
+    async update({ projectId, folderId, request }: { projectId: ProjectId, folderId: FolderId, request: CreateOrRenameFolderRequest }): Promise<Folder> {
         const folder = await folderRepo.findOneBy({
             projectId,
             id: folderId,
@@ -28,7 +28,7 @@ export const flowFolderService = {
         if (folderWithDisplayName && folderWithDisplayName.id !== folderId) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Folder displayName is used' } })
         }
-        if (folder === null || folder === undefined) {
+        if (isNil(folder)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
@@ -36,16 +36,14 @@ export const flowFolderService = {
                 },
             })
         }
-        await folderRepo.update(folderId, {
+        const updatedFolder: Folder = {
             ...folder,
             displayName: request.displayName,
-        })
-        return await folderRepo.findOneBy({
-            projectId,
-            id: folderId,
-        })
+        }
+        await folderRepo.update(folderId, updatedFolder)
+        return updatedFolder
     },
-    async create({ projectId, request }: { projectId, request: CreateOrRenameFolderRequest }): Promise<FolderDto> {
+    async create({ projectId, request }: { projectId: ProjectId, request: CreateOrRenameFolderRequest }): Promise<FolderDto> {
         const folderWithDisplayName = await folderRepo.findOneBy({
             projectId,
             displayName: request.displayName,
@@ -85,7 +83,7 @@ export const flowFolderService = {
         })
         return paginationHelper.createPage<FolderDto>(dtosList, paginationResponse.cursor)
     },
-    async getOne({ projectId, folderId }): Promise<FolderDto | null> {
+    async getOne({ projectId, folderId }: {projectId: ProjectId, folderId: FolderId}): Promise<FolderDto | null> {
         const folder = await folderRepo.findOneBy({ projectId, id: folderId })
         if (!folder) {
             throw new ActivepiecesError({

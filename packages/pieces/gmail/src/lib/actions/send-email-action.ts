@@ -1,4 +1,5 @@
-import { createAction, Property, HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
+import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
 import { GmailProps } from "../common/props";
 
 export const gmailSendEmailAction = createAction({
@@ -36,7 +37,8 @@ export const gmailSendEmailAction = createAction({
 			"mime-version: 1.0",
 			"content-type: text/html"
 		];
-		const message = headers.join("\n") + "\n\n" + (configValue.propsValue['body_html'] ?? configValue.propsValue['body_text'])
+		const plainTextBody = configValue.propsValue['body_text'].replace(/\n/g, '<br>');
+		const message = headers.join("\n") + "\n\n" + (configValue.propsValue['body_html'] ?? plainTextBody);
 		const requestBody: SendEmailRequestBody = {
 			raw: Buffer.from(message).toString("base64").replace(/\+/g, '-').replace(/\//g, '_'),
 		};

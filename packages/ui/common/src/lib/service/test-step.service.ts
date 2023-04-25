@@ -33,4 +33,28 @@ export class TestStepService {
       }
     );
   }
+  testPieceStep(req: { stepName: string; flowVersionId: string }) {
+    return this.http.post<{ output: unknown }>(
+      environment.apiUrl + '/step-run',
+      req
+    );
+  }
+  startPieceWebhookSimulation(flowId: string) {
+    return this.http.post<SeekPage<TriggerEvent>>(
+      environment.apiUrl + '/webhook-simulation/',
+      {
+        flowId,
+      }
+    );
+  }
+  deletePieceWebhookSimulation(flowId: string) {
+    return this.http.delete<SeekPage<TriggerEvent>>(
+      environment.apiUrl + '/webhook-simulation/',
+      {
+        params: {
+          flowId,
+        },
+      }
+    );
+  }
 }

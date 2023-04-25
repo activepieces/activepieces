@@ -1,7 +1,7 @@
 import { Directive, HostListener } from '@angular/core';
 
 @Directive({
-  selector: '[appTrackFocus]',
+  selector: '[apTrackFocus]',
   exportAs: 'focusTrackerDirective',
 })
 export class TrackFocusDirective {

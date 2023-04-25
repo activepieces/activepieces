@@ -1,4 +1,4 @@
-import { CreateOrRenameFolderRequest, FolderId, ListFolderRequest } from '@/shared/src'
+import { CreateOrRenameFolderRequest, FolderId, ListFolderRequest } from '@activepieces/shared'
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { flowFolderService as folderService } from './folder.service'
 import { StatusCodes } from 'http-status-codes'

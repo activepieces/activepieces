@@ -12,7 +12,7 @@ import { Store } from '@ngrx/store';
 import { MatDialogRef } from '@angular/material/dialog';
 import { FolderValidator } from '../../../validators/folderName.validator';
 import { FoldersSelectors } from '../../../store/folders/folders.selector';
-import { FoldersService } from '@/ui/common/src';
+import { FoldersService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-new-folder-dialog',

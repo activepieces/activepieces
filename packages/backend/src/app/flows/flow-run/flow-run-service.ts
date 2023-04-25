@@ -53,15 +53,23 @@ export const flowRunService = {
         flowRunId: FlowRunId,
         status: ExecutionOutputStatus,
         logsFileId: FileId | null,
+        tasks: number,
     ): Promise<FlowRun> {
         await repo.update(flowRunId, {
             logsFileId,
             status,
             finishTime: new Date().toISOString(),
         })
-        const flowRun = await this.getOne({ id: flowRunId, projectId: undefined })
+        const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
+        const edition = await getEdition()
+        if (edition === ApEdition.ENTERPRISE) {
+            await usageService.addTasksConsumed({
+                projectId: flowRun.projectId,
+                tasks: tasks,
+            })
+        }
         notifications.notifyRun({
-            flowRun,
+            flowRun: flowRun,
         })
         return flowRun
     },
@@ -70,7 +78,7 @@ export const flowRunService = {
         logger.info(`[flowRunService#start]  flowVersionId=${flowVersionId}`)
 
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
-        const flow = await flowRepo.findOneBy({ id: flowVersion.flowId })
+        const flow = (await flowRepo.findOneBy({ id: flowVersion.flowId }))!
         const edition = await getEdition()
         if (edition === ApEdition.ENTERPRISE) {
             await usageService.limit({
@@ -92,12 +100,12 @@ export const flowRunService = {
 
         const savedFlowRun = await repo.save(flowRun)
 
-        telemetry.trackProject(flowRun.projectId, {
+        telemetry.trackProject(flow.projectId, {
             name: TelemetryEventName.FLOW_RUN_CREATED,
             payload: {
-                projectId: flowRun.projectId,
-                flowId: flowVersion.flowId,
-                environment: flowRun.environment,
+                projectId: savedFlowRun.projectId,
+                flowId: savedFlowRun.flowId,
+                environment: savedFlowRun.environment,
             },
         })
         await flowRunSideEffects.start({
@@ -125,7 +133,7 @@ type ListParams = {
 
 type GetOneParams = {
     id: FlowRunId
-    projectId: ProjectId
+    projectId: ProjectId | undefined
 }
 
 type StartParams = {

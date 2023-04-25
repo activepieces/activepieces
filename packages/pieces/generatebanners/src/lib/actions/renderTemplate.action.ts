@@ -1,12 +1,14 @@
 import {
   createAction,
   Property,
+  BasicAuthPropertyValue,
+} from '@activepieces/pieces-framework';
+import {
   AuthenticationType,
   HttpRequest,
   HttpMethod,
   httpClient,
-  BasicAuthPropertyValue,
-} from '@activepieces/framework';
+} from "@activepieces/pieces-common";
 
 const markdownDescription = `
 To obtain your GenerateBanners public and secret API Keys, you can follow the steps below:

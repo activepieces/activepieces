@@ -86,7 +86,7 @@ Using the enterprise features (under the packages/ee folder) with a self-hosted 
 
 ## Contributions
 
-We welcome contributions big or small and in different directions. The best way to do this is to check this [document](https://www.activepieces.com/docs/contributing/building-pieces/overview) and we are always up to talk on [our Discord Server](https://discord.gg/2jUXBKDdP8).
+We welcome contributions big or small and in different directions. The best way to do this is to check this [document](https://www.activepieces.com/docs/contributing/building-pieces/create-action) and we are always up to talk on [our Discord Server](https://discord.gg/2jUXBKDdP8).
 
 ## Contributors 🦫
 
@@ -141,6 +141,8 @@ This section is dedicated to individuals who have contributed to 5 or more actio
       <td align="center" valign="top" width="14.28%"><a href="https://about.me/veverkap"><img src="https://avatars.githubusercontent.com/u/22348?v=4?s=100" width="100px;" alt="Patrick Veverka"/><br /><sub><b>Patrick Veverka</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Aveverkap" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://berksmbl.com"><img src="https://avatars.githubusercontent.com/u/10000339?v=4?s=100" width="100px;" alt="Berk Sümbül"/><br /><sub><b>Berk Sümbül</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=berksmbl" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Willianwg"><img src="https://avatars.githubusercontent.com/u/51550522?v=4?s=100" width="100px;" alt="Willian Guedes"/><br /><sub><b>Willian Guedes</b></sub></a><br /><a href="#plugin-Willianwg" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/abdullahranginwala"><img src="https://avatars.githubusercontent.com/u/19731056?v=4?s=100" width="100px;" alt="Abdullah Ranginwala"/><br /><sub><b>Abdullah Ranginwala</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=abdullahranginwala" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/dentych"><img src="https://avatars.githubusercontent.com/u/2256372?v=4?s=100" width="100px;" alt="Dennis Tychsen"/><br /><sub><b>Dennis Tychsen</b></sub></a><br /><a href="#plugin-dentych" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

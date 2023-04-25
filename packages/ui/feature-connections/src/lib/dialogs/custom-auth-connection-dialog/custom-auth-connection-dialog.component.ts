@@ -12,11 +12,13 @@ import {
   AppConnection,
   AppConnectionType,
   CustomAuthConnection,
-  CustomAuthProp,
-  CustomAuthProperty,
-  PropertyType,
   UpsertCustomAuthRequest,
 } from '@activepieces/shared';
+import {
+  CustomAuthProps,
+  CustomAuthProperty,
+  PropertyType,
+} from '@activepieces/pieces-framework';
 import deepEqual from 'deep-equal';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AppConnectionsService } from '../../services/app-connections.service';
@@ -27,10 +29,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 
 export interface CustomAuthDialogData {
-  pieceAuthProperty: CustomAuthProperty<
-    boolean,
-    Record<string, CustomAuthProp>
-  >;
+  pieceAuthProperty: CustomAuthProperty<boolean, CustomAuthProps>;
   pieceName: string;
   connectionToUpdate?: CustomAuthConnection;
 }
@@ -58,6 +57,7 @@ export class CustomAuthConnectionDialogComponent {
     const props: Record<string, FormControl> = {};
     Object.entries(this.dialogData.pieceAuthProperty.props).forEach(
       ([propName, prop]) => {
+        console.log(prop.required);
         if (prop.required) {
           props[propName] = new FormControl(
             prop.defaultValue ?? '',

@@ -6,11 +6,11 @@ import {
   Renderer2,
   ViewChild,
 } from '@angular/core';
-import { map, Observable, of, switchMap, tap } from 'rxjs';
+import { map, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { FormControl } from '@angular/forms';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
-import { ActionType, TriggerStrategy, TriggerType } from '@activepieces/shared';
+import { ActionType, TriggerType } from '@activepieces/shared';
 import {
   BuilderSelectors,
   FlowItem,
@@ -21,6 +21,8 @@ import {
   ActionMetaService,
   isOverflown,
 } from '@activepieces/ui/common';
+import { TriggerStrategy } from '@activepieces/pieces-framework';
+import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/feature-builder-form-controls';
 
 @Component({
   selector: 'app-flow-right-sidebar',
@@ -44,6 +46,8 @@ export class FlowRightSidebarComponent implements OnInit {
   elevateResizer$: Observable<void>;
   animateSectionsHeightChange = false;
   isCurrentStepPollingTrigger$: Observable<boolean>;
+  isResizerGrabbed = false;
+  isCurrentStepPieceWebhookTrigger$: Observable<boolean>;
   currentStepPieceVersion$: Observable<
     | {
         version: string;
@@ -57,7 +61,8 @@ export class FlowRightSidebarComponent implements OnInit {
     private ngZone: NgZone,
     private testStepService: TestStepService,
     private renderer2: Renderer2,
-    private actionMetaDataService: ActionMetaService
+    private actionMetaDataService: ActionMetaService,
+    private builderAutocompleteMentionsDropdownService: BuilderAutocompleteMentionsDropdownService
   ) {}
 
   ngOnInit(): void {
@@ -65,20 +70,12 @@ export class FlowRightSidebarComponent implements OnInit {
     this.rightSidebarType$ = this.store.select(
       BuilderSelectors.selectCurrentRightSideBarType
     );
-    this.currentStep$ = this.store
-      .select(BuilderSelectors.selectCurrentStep)
-      .pipe(
-        tap(() => {
-          this.elevateResizer$ = this.testStepService.elevateResizer$.pipe(
-            tap((shouldAnimate) => {
-              if (shouldAnimate) {
-                this.resizerAnimation();
-              }
-            }),
-            map(() => void 0)
-          );
-        })
-      );
+    this.listenToStepChangeAndAnimateResizer();
+    this.checkIfCurrentStepIsPollingTrigger();
+    this.checkIfCurrentStepIsPieceWebhookTrigger();
+  }
+
+  private checkIfCurrentStepIsPollingTrigger() {
     this.isCurrentStepPollingTrigger$ = this.currentStep$.pipe(
       switchMap((step) => {
         if (
@@ -104,6 +101,56 @@ export class FlowRightSidebarComponent implements OnInit {
         return of(false);
       })
     );
+  }
+
+  private checkIfCurrentStepIsPieceWebhookTrigger() {
+    this.isCurrentStepPieceWebhookTrigger$ = this.currentStep$.pipe(
+      switchMap((step) => {
+        if (
+          step &&
+          step.type === TriggerType.PIECE &&
+          step.settings.pieceName !== 'schedule'
+        ) {
+          return this.actionMetaDataService
+            .getPieceMetadata(
+              step.settings.pieceName,
+              step.settings.pieceVersion
+            )
+            .pipe(
+              map((res) => {
+                return (
+                  res.triggers[step.settings.triggerName] &&
+                  res.triggers[step.settings.triggerName].type ===
+                    TriggerStrategy.WEBHOOK
+                );
+              })
+            );
+        }
+        return of(false);
+      })
+    );
+  }
+
+  private listenToStepChangeAndAnimateResizer() {
+    this.currentStep$ = this.store
+      .select(BuilderSelectors.selectCurrentStep)
+      .pipe(
+        tap(() => {
+          setTimeout(() => {
+            this.builderAutocompleteMentionsDropdownService.editStepSection =
+              this.editStepSection;
+          }, 100);
+          this.elevateResizer$ = this.testStepService.elevateResizer$.pipe(
+            tap((shouldAnimate) => {
+              if (shouldAnimate && !this.isResizerGrabbed) {
+                this.resizerAnimation();
+              }
+            }),
+            map(() => void 0)
+          );
+        }),
+        shareReplay(1)
+      );
   }
 
   private checkCurrentStepPieceVersion() {
@@ -136,11 +183,11 @@ export class FlowRightSidebarComponent implements OnInit {
         })
       );
   }
-
   get sidebarType() {
     return RightSideBarType;
   }
   resizerDragStarted() {
+    this.isResizerGrabbed = true;
     this.editStepSectionRect =
       this.editStepSection.nativeElement.getBoundingClientRect();
   }

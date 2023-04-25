@@ -15,7 +15,7 @@ import { FolderActions } from '../../../store/folders/folders.actions';
 
 export interface MoveFlowToFolderDialogData {
   flowId: string;
-  folderId?: string;
+  folderId?: string | null;
 }
 
 @Component({

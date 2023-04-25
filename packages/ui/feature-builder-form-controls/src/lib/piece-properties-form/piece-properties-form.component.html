@@ -260,12 +260,12 @@
       </ng-container>
       <ng-template #connectionDropdownInputTemplate>
         <div class="ap-relative">
-          <app-add-edit-connection-button class="edit-selected-auth"
+          <app-add-edit-connection-button class="edit-selected-auth ap-z-40"
             *ngIf="formGroup.enabled && formGroup.get(property.key)!.value" btnSize="extraSmall"
             [isEditConnectionButton]="true" [authProperty]="property.value" [pieceName]="pieceName"
             [pieceVersion]="pieceVersion" [propertyKey]="property.key"
             [selectedConnectionInterpolatedString]="formGroup.get(property.key)!.value"
-            [triggerName]="actionOrTriggerName">
+            (connectionPropertyValueChanged)="connectionValueChanged($event)" [triggerName]="actionOrTriggerName">
             Edit
           </app-add-edit-connection-button>
           <mat-form-field class="ap-w-full" appearance="outline">
@@ -279,12 +279,13 @@
                 [style.display]="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0 ? 'flex': 'none'"
                 class="add-auth">
                 <div class="ap-flex">
-                  <div class="ap-flex-grow">No connections</div>
-                  <app-add-edit-connection-button class="edit-selected-auth" btnSize="small" *ngIf="formGroup.enabled"
+                  <div class="ap-flex-grow" #noConnectionDiv
+                    (click)="checkIfTheDivIsTheTarget($event,noConnectionDiv)? addConnectionBtn.buttonClicked():null ">
+                    No connections</div>
+                  <app-add-edit-connection-button class="edit-selected-auth ap-z-40" btnSize="small"
                     [isEditConnectionButton]="false" [authProperty]="property.value" [pieceName]="pieceName"
-                    [propertyKey]="property.key
-                    " [pieceVersion]="pieceVersion" [triggerName]="actionOrTriggerName"
-                    (connectionPropertyValueChanged)="connectionValueChanged($event)">
+                    [propertyKey]="property.key" [pieceVersion]="pieceVersion" [triggerName]="actionOrTriggerName"
+                    (connectionPropertyValueChanged)="connectionValueChanged($event);">
                     + Add
                   </app-add-edit-connection-button>
                 </div>
@@ -295,7 +296,7 @@
             </mat-error>
           </mat-form-field>
           <app-add-edit-connection-button btnSize="medium" *ngIf="formGroup.enabled" [isEditConnectionButton]="false"
-            [authProperty]="property.value" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
+            #addConnectionBtn [authProperty]="property.value" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
             [propertyKey]="property.key" (connectionPropertyValueChanged)="connectionValueChanged($event)"
             [triggerName]="actionOrTriggerName">
             + New Connection
@@ -319,7 +320,7 @@
       </ng-container>
 
       <ng-template #jsonInputTemplate>
-        <div class="code-font-sm code-size-200 code-block">
+        <div class="code-font-sm code-size-200 code-block" #interpolatingTextControlContainer>
           <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
             <div class="ap-flex-grow">
               <span class="ap-text-white">{{property.value.displayName}}</span>
@@ -331,7 +332,7 @@
           </div>
           <ngx-codemirror [formControlName]="property.key" #jsonControl [options]="editorOptions"
             (focusChange)="$event? mentionsDropdown.showMenuSubject$.next(true): null"></ngx-codemirror>
-          <app-builder-autocomplete-mentions-dropdown #mentionsDropdown
+          <app-builder-autocomplete-mentions-dropdown #mentionsDropdown [container]="interpolatingTextControlContainer"
             (addMention)="addMentionToJsonControl(jsonControl,$event)"></app-builder-autocomplete-mentions-dropdown>
         </div>
         <div *ngIf="getControl(property.key)!.invalid" class="ap-p-2">
@@ -384,18 +385,20 @@
 <ng-container *ngIf="configDropdownChanged$  | keyvalue"></ng-container>
 
 <ng-template #textInputTemplate let-property let-formGroup="formGroup">
-  <div [formGroup]="formGroup">
-    <mat-form-field class="ap-w-full" appearance="outline" (click)="mentionsDropdown.showMenuSubject$.next(true)">
+  <div [formGroup]="formGroup" #interpolatingTextComponentContainer>
+    <mat-form-field class="ap-w-full" appearance="outline"
+      (click)="isTriggerPieceForm?null: mentionsDropdown.showMenuSubject$.next(true)">
       <mat-label>{{property.value.displayName}}</mat-label>
       <app-interpolating-text-form-control #textControl [matTooltip]="property.value.description"
         [formControlName]="property.key" [attr.name]="property.key"
-        (keyup)="$event.key ==='Escape'? mentionsDropdown.closePressed=true : null"></app-interpolating-text-form-control>
+        (keyup)="$event.key ==='Escape'? mentionsDropdown.close() : null"></app-interpolating-text-form-control>
       <mat-error *ngIf="formGroup.get(property.key)?.invalid">
         {{property.value.displayName}} is required
       </mat-error>
     </mat-form-field>
     <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
-      marginTop="-20px" (addMention)="addMention(textControl,$event)"></app-builder-autocomplete-mentions-dropdown>
+      [container]="interpolatingTextComponentContainer" marginTop="-20px"
+      (addMention)="addMention(textControl,$event)"></app-builder-autocomplete-mentions-dropdown>
   </div>
 </ng-template>
 

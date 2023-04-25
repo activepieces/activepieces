@@ -15,7 +15,10 @@ import {
 import { ActivepiecesError, TriggerType } from '@activepieces/shared';
 import { TestStepCoreComponent } from '../test-steps-core.component';
 import { TestStepService } from '@activepieces/ui/common';
-import { BuilderSelectors, FlowsActions } from '@activepieces/ui/feature-builder-store';
+import {
+  BuilderSelectors,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
 export interface PollingHistoricalData {
   payload: unknown;
   created: string;
@@ -53,7 +56,9 @@ export class TestPollingTriggerComponent extends TestStepCoreComponent {
       .pipe(
         take(1),
         switchMap((flow) => {
-          return this.testStepService.getTriggerEventsResults(flow.id?.toString() || '');
+          return this.testStepService.getTriggerEventsResults(
+            flow.id?.toString() || ''
+          );
         }),
         map((res) => {
           return res.data;
@@ -65,7 +70,7 @@ export class TestPollingTriggerComponent extends TestStepCoreComponent {
         })
       );
     this.initaillySelectedSampleData$ = this.store
-      .select(BuilderSelectors.selectStepSelectedSampleData)
+      .select(BuilderSelectors.selectTriggerSelectedSampleData)
       .pipe(
         take(1),
         tap((res) => {
@@ -86,31 +91,29 @@ export class TestPollingTriggerComponent extends TestStepCoreComponent {
     this.loading = true;
     this.failed = false;
     this.hasBeenTested = true;
-    this.testStep$ = this.store
-      .select(BuilderSelectors.selectCurrentFlow)
-      .pipe(
-        take(1),
-        switchMap((flow) => {
-          return this.testStepService.getPollingResults(flow.id.toString()).pipe(
-            tap((res) => {
-              this.loading = false;
-              this.currentResults$.next(res.data);
-              if (res.data.length > 0)
-                this.selectedDataControl.setValue(res.data[0].payload);
-              this.testStepService.elevateResizer$.next(true);
-            }),
-            map((res) => res.data),
-            catchError((e: ActivepiecesError) => {
-              console.error(e);
-              this.loading = false;
-              this.failed = true;
-              this.currentResults$.next([]);
-              this.testStepService.elevateResizer$.next(true);
-              return of([]);
-            })
-          );
-        })
-      );
+    this.testStep$ = this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
+      take(1),
+      switchMap((flow) => {
+        return this.testStepService.getPollingResults(flow.id.toString()).pipe(
+          tap((res) => {
+            this.loading = false;
+            this.currentResults$.next(res.data);
+            if (res.data.length > 0)
+              this.selectedDataControl.setValue(res.data[0].payload);
+            this.testStepService.elevateResizer$.next(true);
+          }),
+          map((res) => res.data),
+          catchError((e: ActivepiecesError) => {
+            console.error(e);
+            this.loading = false;
+            this.failed = true;
+            this.currentResults$.next([]);
+            this.testStepService.elevateResizer$.next(true);
+            return of([]);
+          })
+        );
+      })
+    );
   }
   saveNewResultToStep() {
     this.saveAfterNewDataIsLoaded$ = this.store

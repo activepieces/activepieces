@@ -34,7 +34,7 @@ function validateCondition(val: BranchCondition) {
     !('secondValue' in val) // Check if `val` has `secondValue` property
   ) {
     return { invalidSecondValue: true };
-  }  
+  }
   return null;
 }
 
@@ -57,9 +57,8 @@ export function containsLowercaseCharacter(): ValidatorFn {
   };
 }
 
-export function matchesString(val:string): ValidatorFn {
+export function matchesString(val: string): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
-   
     if (!val || val.toLowerCase() !== control.value?.toLowerCase()) {
       return { invalid: true };
     }
@@ -75,7 +74,7 @@ export function containsUppercaseCharacter(): ValidatorFn {
     }
     return null;
   };
-};
+}
 
 export function containsNumber(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -115,4 +114,3 @@ export function cronJobValidator(
   }
   return { 'invalid-cron-job': true };
 }
-

@@ -29,11 +29,13 @@ import { removeCollectionVersion1678492809093 } from './migration/1678492809093-
 import { addEventRouting1678382946390 } from './migration/1678382946390-add-event-routing'
 import { bumpFixPieceVersions1678928503715 } from './migration/1678928503715-bump-fix-piece-versions'
 import { migrateSchedule1679014156667 } from './migration/1679014156667-migrate-schedule'
+import { AddInputUiInfo1681107443963 } from './migration/1681107443963-AddInputUiInfo'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { CreateWebhookSimulationSchema1680698259291 } from './migration/1680698259291-create-webhook-simulation-schema'
 import { FlowInstanceEntity } from '../flows/flow-instance/flow-instance.entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { RemoveCollections1680986182074 } from './migration/1680986182074-RemoveCollections'
+import { StoreAllPeriods1681019096716 } from './migration/1681019096716-StoreAllPeriods'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -68,8 +70,10 @@ const getMigrations = () => {
         addEventRouting1678382946390,
         bumpFixPieceVersions1678928503715,
         migrateSchedule1679014156667,
+        AddInputUiInfo1681107443963,
         CreateWebhookSimulationSchema1680698259291,
         RemoveCollections1680986182074,
+        StoreAllPeriods1681019096716,
     ]
 }
 

@@ -6,11 +6,16 @@ import { Project } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../store/project/project.selector';
 import { ProjectActions } from '../store/project/project.action';
+import { AuthenticationService } from './authentication.service';
 @Injectable({
   providedIn: 'root',
 })
 export class ProjectService {
-  constructor(private http: HttpClient, private store: Store) {}
+  constructor(
+    private http: HttpClient,
+    private store: Store,
+    private authenticationService: AuthenticationService
+  ) {}
 
   getSelectedProject(): Observable<Project> {
     return this.store.select(ProjectSelectors.selectProject).pipe(
@@ -21,6 +26,10 @@ export class ProjectService {
         }
         return this.list().pipe(
           tap((projects) => {
+            if (!projects || projects.length === 0) {
+              console.error('No projects are assigned to current user');
+              this.authenticationService.logout();
+            }
             this.store.dispatch(
               ProjectActions.setProjects({ projects: projects })
             );

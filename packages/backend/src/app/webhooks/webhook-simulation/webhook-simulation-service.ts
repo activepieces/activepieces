@@ -75,6 +75,7 @@ export const webhookSimulationService = {
         })
 
         if (isNil(webhookSimulation)) {
+            logger.debug('[WebhookSimulationService#getByFlowId] not found')
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {

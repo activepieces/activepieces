@@ -1,13 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { forkJoin, map, of, switchMap } from 'rxjs';
-import {
-  ActionType,
-  PieceMetadataSummary,
-  TriggerType,
-} from '@activepieces/shared';
+import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItemDetailsActions } from './flow-items-details.action';
 import { ActionMetaService, FlowItemDetails } from '@activepieces/ui/common';
+import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 
 export const CORE_PIECES_ACTIONS_NAMES = [
   'store',

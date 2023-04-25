@@ -9,7 +9,7 @@ export type FlowId = ApId;
 
 export interface Flow extends BaseModel<FlowId> {
     projectId: ProjectId;
-    folderId?: FolderId;
+    folderId?: FolderId | null;
     version: FlowVersion;
     status: FlowInstanceStatus
 }
