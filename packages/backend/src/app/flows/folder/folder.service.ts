@@ -20,6 +20,14 @@ export const flowFolderService = {
             projectId,
             id: folderId,
         })
+        const folderWithDisplayName = await folderRepo.findOneBy({
+            projectId,
+            displayName:request.displayName
+        })
+        if(folderWithDisplayName && folderWithDisplayName.id !== folderId)
+        {
+            throw new ActivepiecesError({code:ErrorCode.VALIDATION,params:{message:"Folder displayName is used" }});
+        }
         if (folder === null || folder === undefined) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -38,6 +46,14 @@ export const flowFolderService = {
         })
     },
     async create({ projectId, request }: { projectId, request: CreateOrRenameFolderRequest }): Promise<FolderDto> {
+        const folderWithDisplayName = await folderRepo.findOneBy({
+            projectId,
+            displayName:request.displayName
+        })
+        if(folderWithDisplayName)
+        {
+            throw new ActivepiecesError({code:ErrorCode.VALIDATION,params:{message:"Folder displayName is used" }});
+        }
         const folder= await folderRepo.save({
             id: apId(),
             projectId: projectId,

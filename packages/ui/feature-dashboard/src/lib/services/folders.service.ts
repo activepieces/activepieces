@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
   CreateOrRenameFolderRequest,
+  Folder,
   FolderDto,
   SeekPage,
 } from '@activepieces/shared';
@@ -36,7 +37,7 @@ export class FoldersService {
     folderId:string
   } & CreateOrRenameFolderRequest)
   {
-    return this.http.post<void>(environment.apiUrl+`/folders/${req.folderId}`,{displayName:req.displayName});
+    return this.http.post<Folder>(environment.apiUrl+`/folders/${req.folderId}`,{displayName:req.displayName});
   }
 }
 
