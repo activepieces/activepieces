@@ -23,6 +23,7 @@ import {
   MoveFlowToFolderDialogData,
 } from './move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
 
+
 @Component({
   templateUrl: './flows-table.component.html',
 })
@@ -33,10 +34,11 @@ export class FlowsTableComponent implements OnInit {
   deleteFlowDialogClosed$: Observable<void>;
   moveFlowDialogClosed$: Observable<void>;
   dataSource!: FlowsTableDataSource;
-  displayedColumns = ['name', 'created', 'status', 'action'];
+  displayedColumns = ['name', 'created', 'status','folderName', 'action'];
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
   areThereFlows$: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
+  showAllFlows$:Observable<boolean>;
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -44,7 +46,9 @@ export class FlowsTableComponent implements OnInit {
     private router: Router,
     private instanceService: FlowInstanceService,
     private store: Store
-  ) {}
+  ) {
+
+  }
 
   ngOnInit(): void {
     this.dataSource = new FlowsTableDataSource(

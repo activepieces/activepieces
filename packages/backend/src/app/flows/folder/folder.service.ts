@@ -5,6 +5,7 @@ import { CreateOrRenameFolderRequest, FolderId, apId } from '@activepieces/share
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { flowService } from '../flow/flow.service'
+import { IsNull } from 'typeorm'
 
 export const folderRepo = databaseConnection.getRepository(FolderEntity)
 
@@ -87,7 +88,7 @@ export const flowFolderService = {
         return paginationHelper.createPage<FolderDto>(dtosList, paginationResponse.cursor)
     },
     async getOne({projectId, folderId}) : Promise<FolderDto | null> {
-        const folder = await folderRepo.findOneBy({projectId,id:folderId})
+        const folder = await folderRepo.findOneBy({projectId,id:folderId === null? IsNull(): folderId})
         if(!folder)
         {
             return null;
