@@ -160,14 +160,11 @@ export const flowService = {
     async count(req:{
         projectId:string
         folderId?:string
-        allFlows:string
     }) :Promise<number>{
-        if(req.allFlows === 'true') {
-            return flowRepo.count({
-                where:[{ projectId:req.projectId }],
-            })
+        if(req.folderId === undefined) {
+            return flowRepo.count({where:{projectId:req.projectId}})
         }
-        if(req.folderId) {
+        if(req.folderId !== 'NULL') {
             return flowRepo.count({
                 where:[{folderId:req.folderId, projectId:req.projectId}],
             })

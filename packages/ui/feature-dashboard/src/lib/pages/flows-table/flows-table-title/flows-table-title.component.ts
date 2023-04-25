@@ -44,7 +44,7 @@ export class FlowsTableTitleComponent {
               .pipe(
                 tap((flow) => {
                   this.router.navigate(['/flows/', flow.id], {
-                    queryParams: { newCollection: true },
+                    queryParams: { newFlow: true },
                   });
                 })
               );

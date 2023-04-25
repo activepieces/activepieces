@@ -108,7 +108,6 @@ export class FlowService {
 
   count(req: CountFlowsRequest) {
     const params: Record<string, string | number | boolean> = {
-      allFlows: req.allFlows,
     };
     if (req.folderId) {
       params['folderId'] = req.folderId;
