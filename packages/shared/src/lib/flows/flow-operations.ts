@@ -23,7 +23,7 @@ export enum StepLocationRelativeToParent {
 }
 
 export const ChangeFolderRequest = Type.Object({
-    folderId: Type.String({}),
+    folderId: Type.Optional(Type.String({})),
 });
 
 export type ChangeFolderRequest = Static<typeof ChangeFolderRequest>;

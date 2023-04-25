@@ -36,9 +36,26 @@
 
             </th>
             <td mat-cell *matCellDef="let flow" class="!ap-text-center">
-              <ap-icon-button tooltipText="Delete Flow" iconFilename="trash.svg" color="warn" [width]="16" [height]="16"
-                (click)="$event.stopImmediatePropagation(); deleteFlow(flow)"></ap-icon-button>
-            </td>
+              <button mat-icon-button (click)="$event.stopImmediatePropagation()" [matMenuTriggerFor]="menu">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menu="matMenu" xPosition="before">
+                <button mat-menu-item (click)="moveFlow(flow)">
+                  <div class="ap-flex ap-gap-3 ap-items-center">
+                    <svg-icon src="assets/img/custom/move.svg" class="ap-w-[20px] ap-h-[20px]"
+                      [applyClass]="true"></svg-icon>
+                    <span>Move to...</span>
+                  </div>
+                </button>
+                <button (click)="deleteFlow(flow)" mat-menu-item>
+                  <div class="ap-flex ap-gap-3 ap-items-center">
+                    <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
+                      [applyClass]="true"></svg-icon>
+                    <span class="ap-text-danger">Delete</span>
+                  </div>
+
+                </button>
+              </mat-menu>
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -55,8 +72,6 @@
             <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false"> </ap-loading-icon>
           </div>
         </ng-container>
-
-
       </div>
       <div class="ap-flex ap-justify-end ap-mt-[-73px] ap-pr-[30px]">
         <ap-paginator #paginator> </ap-paginator>
@@ -67,7 +82,8 @@
 
 
 <app-empty-flows-table *ngIf="(areThereFlows$|async)===false"></app-empty-flows-table>
-<ng-container *ngIf="archiveFlowDialogClosed$ | async"></ng-container>
+<ng-container *ngIf="deleteFlowDialogClosed$ | async"></ng-container>
+<ng-container *ngIf="moveFlowDialogClosed$ | async"></ng-container>
 <ng-container *ngFor="let obs$ of flowsUpdateStatusRequest$ | keyvalue">
   <ng-container *ngIf="obs$.value | async"></ng-container>
 </ng-container>

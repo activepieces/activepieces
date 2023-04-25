@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
 
-import { Flow, FlowId } from '@activepieces/shared';
+import {   Flow, FlowId } from '@activepieces/shared';
 import { FlowService } from '@activepieces/ui/common';
 
 @Injectable({

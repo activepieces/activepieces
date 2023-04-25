@@ -6,11 +6,11 @@ import {
   Validators,
 } from '@angular/forms';
 import { FoldersService } from '../../../services/folders.service';
-import { FoldersListDto } from '@activepieces/shared';
+import { FolderDto } from '@activepieces/shared';
 import { Observable, tap } from 'rxjs';
-import { DialogRef } from '@angular/cdk/dialog';
 import { FolderActions } from '../../../store/folders/folders.actions';
 import { Store } from '@ngrx/store';
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-new-folder-dialog',
@@ -18,11 +18,11 @@ import { Store } from '@ngrx/store';
 })
 export class NewFolderDialogComponent {
   folderForm: FormGroup<{ displayName: FormControl<string> }>;
-  creatingFolder$: Observable<FoldersListDto>;
+  creatingFolder$: Observable<FolderDto>;
   constructor(
     private fb: FormBuilder,
     private foldersService: FoldersService,
-    public dialogRef: DialogRef,
+    public dialogRef: MatDialogRef<NewFolderDialogComponent>,
     private store: Store
   ) {
     this.folderForm = this.fb.group({
@@ -39,7 +39,7 @@ export class NewFolderDialogComponent {
         .pipe(
           tap((folder) => {
             this.store.dispatch(FolderActions.addFolder({ folder }));
-            this.dialogRef.close();
+            this.dialogRef.close(folder.id);
           })
         );
     }

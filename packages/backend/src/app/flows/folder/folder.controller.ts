@@ -1,4 +1,4 @@
-import { CreateFolderRequest, FolderId, ListFolderRequest } from '@/shared/src'
+import { CreateOrRenameFolderRequest, FolderId, ListFolderRequest } from '@/shared/src'
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { flowFolderService as folderService } from './folder.service'
 import { StatusCodes } from 'http-status-codes'
@@ -19,12 +19,12 @@ export const folderController = async (fastify: FastifyInstance) => {
         '/',
         {
             schema: {
-                body: CreateFolderRequest,
+                body: CreateOrRenameFolderRequest,
             },
         },
         async (
             request: FastifyRequest<{
-                Body: CreateFolderRequest
+                Body: CreateOrRenameFolderRequest
             }>,
         ) => {
             return await folderService.create({ projectId: request.principal.projectId, request: request.body })
@@ -37,13 +37,13 @@ export const folderController = async (fastify: FastifyInstance) => {
         {
             schema: {
                 params: FolderIdParam,
-                body: CreateFolderRequest,
+                body: CreateOrRenameFolderRequest,
             },
         },
         async (
             request: FastifyRequest<{
                 Params: FolderIdParam
-                Body: CreateFolderRequest
+                Body: CreateOrRenameFolderRequest
             }>,
         ) => {
             return await folderService.update({ projectId: request.principal.projectId, folderId: request.params.folderId, request: request.body })

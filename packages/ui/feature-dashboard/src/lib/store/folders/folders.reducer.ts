@@ -1,10 +1,10 @@
-import { FoldersListDto } from '@activepieces/shared';
+import { FolderDto } from '@activepieces/shared';
 import { Action, createReducer, on } from '@ngrx/store';
 import { FolderActions } from './folders.actions';
 
 export type FoldersState = {
-  folders: FoldersListDto[];
-  selectedFolder?: FoldersListDto;
+  folders: FolderDto[];
+  selectedFolder?: FolderDto;
   displayAllFlows: boolean;
   allFlowsNumber: number;
   uncategorizedFlowsNumber: number;
@@ -43,15 +43,18 @@ const _foldersReducer = createReducer(
     }
   ),
   on(FolderActions.deleteFolder, (state, { folderId }): FoldersState => {
-    const idx = state.folders.findIndex((f) => (f.id = folderId));
+    const idx = state.folders.findIndex((f) => (f.id === folderId));
     if (idx > -1) {
       const folders = [...state.folders];
+      const folder = folders[idx];
+      const uncategorizedFlowsNumber = state.uncategorizedFlowsNumber+ folder.numberOfFlows;
       folders.splice(idx, 1);
       return {
         ...state,
         folders: folders,
         displayAllFlows: true,
         selectedFolder: undefined,
+        uncategorizedFlowsNumber:uncategorizedFlowsNumber
       };
     }
     return state;
@@ -59,10 +62,10 @@ const _foldersReducer = createReducer(
   on(
     FolderActions.renameFolder,
     (state, { folderId, newName }): FoldersState => {
-      const idx = state.folders.findIndex((f) => (f.id = folderId));
+      const idx = state.folders.findIndex((f) => (f.id === folderId));
       if (idx > -1) {
         const folders = [...state.folders];
-        folders[idx].displayName = newName;
+        folders[idx] = {...folders[idx], displayName:newName};
         return {
           ...state,
           folders: folders,
@@ -95,6 +98,62 @@ const _foldersReducer = createReducer(
       ...state,
       displayAllFlows: true,
       selectedFolder: undefined,
+    };
+  }),
+  on(FolderActions.deleteFlow, (state): FoldersState => {
+    const allFlowsNumber = state.allFlowsNumber - 1;
+    const uncategorizedFlowsNumber = state.selectedFolder
+      ? state.uncategorizedFlowsNumber
+      : state.uncategorizedFlowsNumber - 1;
+    if (state.selectedFolder === undefined) {
+      return {
+        ...state,
+        allFlowsNumber,
+        uncategorizedFlowsNumber,
+      };
+    } else {
+      const folders = [...state.folders];
+      const selectedFolderIdx = folders.findIndex(
+        (f) => f.id === state.selectedFolder?.id
+      );
+      folders[selectedFolderIdx] = {
+        ...folders[selectedFolderIdx],
+        numberOfFlows: folders[selectedFolderIdx].numberOfFlows - 1,
+      };
+      return {
+        ...state,
+        folders,
+        selectedFolder: folders[selectedFolderIdx],
+      };
+    }
+  }),
+  on(FolderActions.moveFlow, (state, { targetFolderId }) => {
+    const folders = [...state.folders];
+    let uncategorizedFlowsNumber = state.uncategorizedFlowsNumber;
+    const targetFolderIndex = folders.findIndex((f) => f.id === targetFolderId);
+    const currentlySelectedFolderIndex = folders.findIndex(
+      (f) => f.id === state.selectedFolder?.id
+    );
+    if (targetFolderIndex < 0) {
+      uncategorizedFlowsNumber++;
+    } else {
+      folders[targetFolderIndex] = {
+        ...folders[targetFolderIndex],
+        numberOfFlows: folders[targetFolderIndex].numberOfFlows + 1,
+      };
+    }
+    if (currentlySelectedFolderIndex < 0) {
+      uncategorizedFlowsNumber--;
+    } else {
+      folders[currentlySelectedFolderIndex] = {
+        ...folders[currentlySelectedFolderIndex],
+        numberOfFlows: folders[currentlySelectedFolderIndex].numberOfFlows - 1,
+      };
+    }
+    return {
+      ...state,
+      folders: folders,
+      uncategorizedFlowsNumber,
     };
   })
 );

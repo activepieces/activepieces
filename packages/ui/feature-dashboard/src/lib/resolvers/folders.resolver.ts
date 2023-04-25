@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, forkJoin, map, tap } from 'rxjs';
-import { FoldersListDto } from '@activepieces/shared';
+import { FolderDto } from '@activepieces/shared';
 import { FoldersService } from '../services/folders.service';
 import { Store } from '@ngrx/store';
 
@@ -10,7 +10,7 @@ import { FlowService } from '@activepieces/ui/common';
 export const ARE_THERE_FLOWS_FLAG = 'areThererFlows';
 
 type FoldersResolverResult = {
-  folders: FoldersListDto[];
+  folders: FolderDto[];
   allFlowsNumber: number;
   uncategorizedFlowsNumber: number;
 };

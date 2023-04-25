@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
-  CreateFolderRequest,
-  FolderCreatedResponse,
-  FoldersListDto,
+  CreateOrRenameFolderRequest,
+  FolderDto,
   SeekPage,
 } from '@activepieces/shared';
 import { environment } from '@activepieces/ui/common';
@@ -14,14 +13,14 @@ import { Observable } from 'rxjs';
 })
 export class FoldersService {
   constructor(private http: HttpClient) {}
-  create(req: CreateFolderRequest): Observable<FolderCreatedResponse> {
-    return this.http.post<FolderCreatedResponse>(environment.apiUrl + '/folders', req);
+  create(req: CreateOrRenameFolderRequest): Observable<FolderDto> {
+    return this.http.post<FolderDto>(environment.apiUrl + '/folders', req);
   }
   list() {
     const params: Record<string, string | number> = {
       limit: 1000000,
     };
-    return this.http.get<SeekPage<FoldersListDto>>(
+    return this.http.get<SeekPage<FolderDto>>(
       environment.apiUrl + '/folders',
       {
         params: params,
@@ -30,10 +29,14 @@ export class FoldersService {
   }
 
   delete(folderId: string) {
-    return this.http.delete<void>(environment.apiUrl + '/folders', {
-      params: {
-        folderId,
-      },
-    });
+    return this.http.delete<void>(environment.apiUrl + `/folders/${folderId}`);
+  }
+
+  renameFolder(req:{
+    folderId:string
+  } & CreateOrRenameFolderRequest)
+  {
+    return this.http.post<void>(environment.apiUrl+`/folders/${req.folderId}`,{displayName:req.displayName});
   }
 }
+

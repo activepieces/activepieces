@@ -18,7 +18,7 @@ import {
   ListFlowsRequest,
   SeekPage,
 } from '@activepieces/shared';
-import { FlowTableDto } from '@activepieces/shared';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -48,7 +48,7 @@ export class FlowService {
     return this.http.delete<void>(environment.apiUrl + '/flows/' + flowId);
   }
 
-  list(request: ListFlowsRequest): Observable<SeekPage<FlowTableDto>> {
+  list(request: ListFlowsRequest): Observable<SeekPage<Flow>> {
     const queryParams: { [key: string]: string | number } = {
       limit: request.limit ?? 10,
       cursor: request.cursor || '',
@@ -56,7 +56,7 @@ export class FlowService {
     if (request.folderId) {
       queryParams['folderId'] = request.folderId;
     }
-    return this.http.get<SeekPage<FlowTableDto>>(
+    return this.http.get<SeekPage<Flow>>(
       environment.apiUrl + '/flows',
       {
         params: queryParams,

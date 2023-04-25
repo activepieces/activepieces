@@ -1,11 +1,11 @@
 import { Static, Type } from "@sinclair/typebox";
 import { Cursor } from "../../common/seek-page";
 
-export const CreateFolderRequest = Type.Object({
+export const CreateOrRenameFolderRequest = Type.Object({
     displayName: Type.String()
 })
 
-export type CreateFolderRequest = Static<typeof CreateFolderRequest>;
+export type CreateOrRenameFolderRequest = Static<typeof CreateOrRenameFolderRequest>;
 
 export const DeleteFolderRequest = Type.Object({
     id: Type.String()

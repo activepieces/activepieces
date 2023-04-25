@@ -31,6 +31,7 @@ export class ConnectionsTableComponent {
   displayedColumns = ['app', 'name', 'status', 'created', 'updated', 'action'];
   connectionDeleted$: Subject<boolean> = new Subject();
   deleteConnectionDialogClosed$: Observable<void>;
+  readonly AppConnectionStatus = AppConnectionStatus;
   constructor(
     private activatedRoute: ActivatedRoute,
     private projectService: ProjectService,
@@ -51,19 +52,15 @@ export class ConnectionsTableComponent {
     );
   }
 
-  get connectionStatus() {
-    return AppConnectionStatus;
-  }
-
   deleteConnection(connection: AppConnection) {
     const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
       data: {
         deleteEntity$: this.connectionService.delete(connection.id),
         entityName: connection.name,
-        note: {
-          text: 'When this connection is deleted, all steps using it will fail',
-          danger: true,
-        },
+        note:
+        `This will permanently delete the connection, all steps using it will fail.
+         You can't undo this action.`
+     
       } as DeleteEntityDialogData,
     });
     this.deleteConnectionDialogClosed$ = dialogRef.beforeClosed().pipe(

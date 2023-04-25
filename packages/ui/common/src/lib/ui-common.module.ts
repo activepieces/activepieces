@@ -44,6 +44,8 @@ import { ObjectToArrayPipe } from './pipe/object-to-array.pipe';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { DeleteEntityDialogComponent } from './components/delete-enity-dialog/delete-entity-dialog.component';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatIconModule } from '@angular/material/icon';
+import { GenericSnackbarTemplateComponent } from './components/generic-snackbar-template/generic-snackbar-template.component';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -64,6 +66,7 @@ const exportedImports = [
   DragDropModule,
   MatCheckboxModule,
   MatDividerModule,
+  MatIconModule,
 ];
 const exportedDeclarations = [
   MarkdownComponent,
@@ -88,6 +91,7 @@ const exportedDeclarations = [
   TrackFocusDirective,
   ObjectToArrayPipe,
   DeleteEntityDialogComponent,
+  GenericSnackbarTemplateComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

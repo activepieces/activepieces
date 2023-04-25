@@ -1,3 +1,3 @@
 import { Folder } from "../folders/folder";
 
-export type FoldersListDto = Folder & {numberOfFlows:number}
+export type FolderDto = Folder & {numberOfFlows:number}

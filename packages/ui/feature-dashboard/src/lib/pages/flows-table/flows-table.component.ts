@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { map, Observable, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import { Flow, FlowInstanceStatus, FlowTableDto } from '@activepieces/shared';
+import { Flow, FlowInstanceStatus } from '@activepieces/shared';
 
 import {
   ApPaginatorComponent,
@@ -16,6 +16,12 @@ import {
   DeleteEntityDialogData,
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
+import { Store } from '@ngrx/store';
+import { FolderActions } from '../../store/folders/folders.actions';
+import {
+  MoveFlowToFolderDialogComponent,
+  MoveFlowToFolderDialogData,
+} from './move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -24,10 +30,11 @@ export class FlowsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
   creatingFlow = false;
-  archiveFlowDialogClosed$: Observable<void>;
+  deleteFlowDialogClosed$: Observable<void>;
+  moveFlowDialogClosed$: Observable<void>;
   dataSource!: FlowsTableDataSource;
   displayedColumns = ['name', 'created', 'status', 'action'];
-  flowDeleted$: Subject<boolean> = new Subject();
+  refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
   areThereFlows$: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   constructor(
@@ -35,7 +42,8 @@ export class FlowsTableComponent implements OnInit {
     private dialogService: MatDialog,
     private flowService: FlowService,
     private router: Router,
-    private instanceService: FlowInstanceService
+    private instanceService: FlowInstanceService,
+    private store: Store
   ) {}
 
   ngOnInit(): void {
@@ -43,7 +51,7 @@ export class FlowsTableComponent implements OnInit {
       this.activatedRoute.queryParams,
       this.paginator,
       this.flowService,
-      this.flowDeleted$.asObservable().pipe(startWith(true))
+      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true))
     );
     this.areThereFlows$ = this.activatedRoute.data.pipe(
       map((res) => {
@@ -61,14 +69,21 @@ export class FlowsTableComponent implements OnInit {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
       entityName: flow.version.displayName,
+      note: `This will permanently delete the flow, all its data and any background runs.
+      You can't undo this action.`
     };
     const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
       data: dialogData,
     });
-    this.archiveFlowDialogClosed$ = dialogRef.beforeClosed().pipe(
+    this.deleteFlowDialogClosed$ = dialogRef.beforeClosed().pipe(
       tap((res) => {
         if (res) {
-          this.flowDeleted$.next(true);
+          this.refreshTableAtCurrentCursor$.next(true);
+          this.store.dispatch(
+            FolderActions.deleteFlow({
+              flowDisplayName: flow.version.displayName,
+            })
+          );
         }
       }),
       map(() => {
@@ -76,13 +91,13 @@ export class FlowsTableComponent implements OnInit {
       })
     );
   }
-  toggleFlowStatus(flowDto: FlowTableDto, control: FormControl<boolean>) {
+  toggleFlowStatus(flow: Flow, control: FormControl<boolean>) {
     if (control.enabled) {
       control.disable();
-      this.flowsUpdateStatusRequest$[flowDto.id] = this.instanceService
-        .updateStatus(flowDto.id, {
+      this.flowsUpdateStatusRequest$[flow.id] = this.instanceService
+        .updateStatus(flow.id, {
           status:
-            flowDto.status === FlowInstanceStatus.ENABLED
+            flow.status === FlowInstanceStatus.ENABLED
               ? FlowInstanceStatus.DISABLED
               : FlowInstanceStatus.ENABLED,
         })
@@ -90,11 +105,28 @@ export class FlowsTableComponent implements OnInit {
           tap((res) => {
             control.enable();
             control.setValue(res.status === FlowInstanceStatus.ENABLED);
-            this.flowsUpdateStatusRequest$[flowDto.id] = null;
-            flowDto.status = res.status;
+            this.flowsUpdateStatusRequest$[flow.id] = null;
+            flow.status = res.status;
           }),
           map(() => void 0)
         );
     }
+  }
+  moveFlow(flow: Flow) {
+    const dialogData: MoveFlowToFolderDialogData = {
+      flowId: flow.id,
+      folderId: flow.folderId,
+    };
+    this.moveFlowDialogClosed$ = this.dialogService
+      .open(MoveFlowToFolderDialogComponent, { data: dialogData })
+      .afterClosed()
+      .pipe(
+        tap((val: boolean) => {
+          if (val) {
+            this.refreshTableAtCurrentCursor$.next(true);
+          }
+        }),
+        map(() => void 0)
+      );
   }
 }

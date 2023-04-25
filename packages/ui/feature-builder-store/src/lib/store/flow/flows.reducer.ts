@@ -3,6 +3,7 @@ import { FlowsActions } from './flows.action';
 import {
   Flow,
   flowHelper,
+  FlowInstanceStatus,
   FlowOperationType,
   FlowVersionState,
   TriggerType,
@@ -19,6 +20,7 @@ type FlowsState = {
 
 const initialState: FlowsState = {
   flow: {
+    status: FlowInstanceStatus.UNPUBLISHED,
     projectId: '1',
     id: '1',
     updated: '',
@@ -39,6 +41,7 @@ const initialState: FlowsState = {
       },
       state: FlowVersionState.DRAFT,
     },
+    folderDisplayName:'Uncategorized'
   },
   builderState: {
     selectedRun: undefined,
