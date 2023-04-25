@@ -9,7 +9,6 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import {
   FlowsActions,
@@ -30,25 +29,14 @@ import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
 import { NO_PROPS } from '../../model/builder-state';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
-import { FlowService, FoldersService } from '@activepieces/ui/common';
+import { FlowService } from '@activepieces/ui/common';
 @Injectable()
 export class FlowsEffects {
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(BuilderActions.loadInitial),
-      mergeMap(({ flow, run }) => {
-        if (!flow.folderId) {
-          return of(FlowsActions.setInitial({ flow, run }));
-        }
-        return this.folderService.get(flow.folderId).pipe(
-          map((folder) => {
-            return FlowsActions.setInitial({
-              flow,
-              folder,
-              run,
-            });
-          })
-        );
+      switchMap(({ flow, run, folder }) => {
+        return of(FlowsActions.setInitial({ flow, run, folder }));
       }),
       catchError((err) => {
         console.error(err);
@@ -57,7 +45,7 @@ export class FlowsEffects {
     );
   });
 
-  removePieceSelection = createEffect(() => {
+  removeStepSelection$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.setRightSidebar),
       concatLatestFrom(() =>
@@ -311,7 +299,6 @@ export class FlowsEffects {
     private pieceBuilderService: CollectionBuilderService,
     private flowService: FlowService,
     private store: Store,
-    private folderService: FoldersService,
     private actions$: Actions,
     private snackBar: MatSnackBar
   ) {}
