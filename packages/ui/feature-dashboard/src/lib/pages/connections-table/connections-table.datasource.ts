@@ -1,5 +1,5 @@
 import { DataSource } from '@angular/cdk/collections';
-import { Observable, combineLatest, switchMap, tap, map } from 'rxjs';
+import { Observable, combineLatest, switchMap, tap, map, catchError, of } from 'rxjs';
 import { AppConnection, FlowRun } from '@activepieces/shared';
 import {
   ProjectService,
@@ -42,6 +42,14 @@ export class ConnectionsTableDataSource extends DataSource<FlowRun> {
           limit: res.pageSize,
           cursor: res.pageCursor,
         });
+      }),
+      catchError(err=>{
+        console.error(err);
+        return of({
+          next:'',
+          previous:'',
+          data:[]
+        })
       }),
       tap((res) => {
         this.paginator.next = res.next;

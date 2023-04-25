@@ -8,18 +8,20 @@
         <mat-form-field class="ap-w-full" appearance="outline">
             <mat-label>Name</mat-label>
             <input cdkFocusInitial formControlName="displayName" matInput type="text" />
-            <mat-error *ngIf="folderForm.controls.displayName.invalid">Name is required</mat-error>
+            <mat-error
+                *ngIf="folderForm.controls.displayName.invalid && !folderForm.controls.displayName.getError('nameUsed')">Name
+                is required</mat-error>
+            <mat-error *ngIf="folderForm.controls.displayName.getError('nameUsed')">Name is already used</mat-error>
         </mat-form-field>
     </form>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
     <div class="ap-flex ap-gap-2.5">
-        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="!!creatingFolder$">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="loading">
             Cancel
         </ap-button>
-        <ap-button btnSize="default" type="submit" (click)="createFolder();" [loading]="!!creatingFolder$"
-            btnColor="primary">
+        <ap-button btnSize="default" type="submit" (click)="createFolder();" [loading]="loading" btnColor="primary">
             Create
         </ap-button>
     </div>

@@ -63,6 +63,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
         });
       }),
       catchError((err) => {
+        console.error(err);
         throw err;
       }),
       tap((res) => {

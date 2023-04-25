@@ -5,6 +5,7 @@ import { CreateOrRenameFolderRequest, FolderId, apId } from '@activepieces/share
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { flowService } from '../flow/flow.service'
+import { IsNull } from 'typeorm'
 
 export const folderRepo = databaseConnection.getRepository(FolderEntity)
 
@@ -20,6 +21,14 @@ export const flowFolderService = {
             projectId,
             id: folderId,
         })
+        const folderWithDisplayName = await folderRepo.findOneBy({
+            projectId,
+            displayName:request.displayName
+        })
+        if(folderWithDisplayName && folderWithDisplayName.id !== folderId)
+        {
+            throw new ActivepiecesError({code:ErrorCode.VALIDATION,params:{message:"Folder displayName is used" }});
+        }
         if (folder === null || folder === undefined) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -38,6 +47,14 @@ export const flowFolderService = {
         })
     },
     async create({ projectId, request }: { projectId, request: CreateOrRenameFolderRequest }): Promise<FolderDto> {
+        const folderWithDisplayName = await folderRepo.findOneBy({
+            projectId,
+            displayName:request.displayName
+        })
+        if(folderWithDisplayName)
+        {
+            throw new ActivepiecesError({code:ErrorCode.VALIDATION,params:{message:"Folder displayName is used" }});
+        }
         const folder= await folderRepo.save({
             id: apId(),
             projectId: projectId,
@@ -71,7 +88,7 @@ export const flowFolderService = {
         return paginationHelper.createPage<FolderDto>(dtosList, paginationResponse.cursor)
     },
     async getOne({projectId, folderId}) : Promise<FolderDto | null> {
-        const folder = await folderRepo.findOneBy({projectId,id:folderId})
+        const folder = await folderRepo.findOneBy({projectId,id:folderId === null? IsNull(): folderId})
         if(!folder)
         {
             return null;

@@ -91,7 +91,7 @@ export const flowService = {
             },
         })
         const queryWhere = { projectId }
-        if (folderId) {
+        if (folderId !== undefined) {
             queryWhere['folderId'] = (folderId === 'NULL' ? IsNull() : folderId)
         }
 
