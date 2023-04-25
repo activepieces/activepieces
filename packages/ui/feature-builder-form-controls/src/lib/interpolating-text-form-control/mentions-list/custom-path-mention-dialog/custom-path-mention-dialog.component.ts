@@ -34,7 +34,7 @@ export class CustomPathMentionDialogComponent implements OnInit {
     private dialogRef: MatDialogRef<CustomPathMentionDialogComponent>
   ) {}
   ngOnInit(): void {
-    const pathRegex = `${this.data.stepName}((\\.[a-zA-Z_$][a-zA-Z_$0-9]*)(\\[([0-9])+\\])*)*`;
+    const pathRegex = `${this.data.stepName}(\\[([0-9])+\\])*((\\.[a-zA-Z_$][a-zA-Z_$0-9]*)(\\[([0-9])+\\])*)*`;
     this.pathFormGroup = this.formBuilder.group({
       path: new FormControl<string>(this.data.defaultValue, {
         validators: [

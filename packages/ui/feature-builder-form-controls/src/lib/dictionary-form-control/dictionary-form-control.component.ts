@@ -10,6 +10,7 @@ import {
 import { Observable, tap } from 'rxjs';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
+import { BuilderAutocompleteMentionsDropdownComponent } from '../interpolating-text-form-control/builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.component';
 
 @Component({
   selector: 'app-dictonary-form-control',
@@ -123,5 +124,12 @@ export class DictionaryFormControlComponent
     mention: InsertMentionOperation
   ) {
     await textControl.addMention(mention);
+  }
+  showMenu(
+    $event: MouseEvent,
+    mentionsDropdown: BuilderAutocompleteMentionsDropdownComponent
+  ) {
+    $event.stopImmediatePropagation();
+    mentionsDropdown.showMenuSubject$.next(true);
   }
 }

@@ -19,7 +19,7 @@
         [class.last]="isLast && pairs.controls.length>1" [class.only-one]="pairs.controls.length === 1" appTrackHover
         #interpolatingTextControlContainer #valueInput="hoverTrackerDirective">
         <app-interpolating-text-form-control #textControl [insideMatField]="false" formControlName="value"
-          placeholder="Value" (click)="pairs.enabled? mentionsDropdown.showMenuSubject$.next(true):null"
+          placeholder="Value" (click)="pairs.enabled? showMenu($event,mentionsDropdown):null"
           (keyup)="$event.key ==='Escape'? mentionsDropdown.close() : null"></app-interpolating-text-form-control>
         <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
           [container]="interpolatingTextControlContainer" (addMention)="addMention(textControl,$event)" width="100%"
