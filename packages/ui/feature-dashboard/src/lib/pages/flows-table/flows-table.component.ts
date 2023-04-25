@@ -22,6 +22,7 @@ import {
   MoveFlowToFolderDialogComponent,
   MoveFlowToFolderDialogData,
 } from './move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
+import { FoldersSelectors } from '../../store/folders/folders.selector';
 
 
 @Component({
@@ -39,6 +40,7 @@ export class FlowsTableComponent implements OnInit {
   areThereFlows$: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   showAllFlows$:Observable<boolean>;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -47,7 +49,17 @@ export class FlowsTableComponent implements OnInit {
     private instanceService: FlowInstanceService,
     private store: Store
   ) {
-
+    this.showAllFlows$ = this.store.select(FoldersSelectors.selectDisplayAllFlows).pipe(tap((val)=>{
+      const folderColIdx = this.displayedColumns.findIndex(c => c === 'folderName')
+      if(val && folderColIdx<0)
+      {
+      this.displayedColumns.splice(3,0,"folderName");
+      }
+      else if(!val && folderColIdx >-1)
+      {
+        this.displayedColumns.splice(folderColIdx,1);
+      }
+    }))
   }
 
   ngOnInit(): void {
