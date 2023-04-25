@@ -9,10 +9,11 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowService } from './flow.service'
-import { GuessFlowRequest } from '@activepieces/shared'
+import { GuessFlowRequest, CountFlowsRequest } from '@activepieces/shared'
 import { flowGuessService } from '@ee/magic-wand/openai'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { logger } from '../../helper/logger'
+
 
 const DEFUALT_PAGE_SIZE = 10
 
@@ -34,7 +35,6 @@ export const flowController = async (fastify: FastifyInstance) => {
             const flow = await flowService.create({
                 projectId: request.principal.projectId, request: {
                     displayName: request.body.displayName,
-                    collectionId: request.body.collectionId,
                 },
             })
             const flowVersion = {
@@ -97,9 +97,25 @@ export const flowController = async (fastify: FastifyInstance) => {
                 Querystring: ListFlowsRequest
             }>,
         ) => {
-            return await flowService.list({ projectId: request.principal.projectId, collectionId: request.query.collectionId, cursorRequest: request.query.cursor ?? null, limit: request.query.limit ?? DEFUALT_PAGE_SIZE })
+            const flows = await flowService.list({ projectId: request.principal.projectId, 
+                folderId: request.query.folderId,
+                cursorRequest: request.query.cursor ?? null, 
+                limit: request.query.limit ?? DEFUALT_PAGE_SIZE })
+            return flows
         },
     )
+
+    fastify.get(
+        '/count',
+        async (
+            request: FastifyRequest<{
+                Querystring: CountFlowsRequest
+            }>,
+        ) => {
+            return flowService.count({...request.query, projectId:request.principal.projectId})
+        },
+    )
+    
 
     fastify.get(
         '/:flowId',
@@ -138,4 +154,5 @@ export const flowController = async (fastify: FastifyInstance) => {
             _reply.status(StatusCodes.OK).send()
         },
     )
+    
 }

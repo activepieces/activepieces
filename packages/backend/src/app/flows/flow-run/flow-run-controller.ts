@@ -20,11 +20,10 @@ export const flowRunController: FastifyPluginCallback = (app, _options, done): v
             },
         },
         async (request: FastifyRequest<{ Body: CreateFlowRunRequest }>, reply: FastifyReply) => {
-            const { flowVersionId, collectionId, payload } = request.body
+            const { flowVersionId, payload } = request.body
             const flowRun = await flowRunService.start({
                 environment: RunEnvironment.TESTING,
                 flowVersionId,
-                collectionId,
                 payload,
             })
 

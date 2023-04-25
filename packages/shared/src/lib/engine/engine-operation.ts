@@ -1,4 +1,3 @@
-import { CollectionId } from "../collections/collection";
 import { FlowVersion, FlowVersionId } from "../flows/flow-version";
 import { ProjectId } from "../project/project";
 
@@ -29,7 +28,6 @@ export type ExecuteActionOperation = {
     input: Record<string, unknown>
     testExecutionContext: Record<string, unknown>
     projectId: ProjectId
-    collectionId: CollectionId
     workerToken?: string
     apiUrl?: string
 }
@@ -41,14 +39,12 @@ export interface ExecutePropsOptions {
     stepName: string;
     input: Record<string, any>;
     projectId: ProjectId;
-    collectionId: CollectionId,
     apiUrl?: string;
     workerToken?: string;
 }
 
 export interface ExecuteFlowOperation {
     flowVersionId: FlowVersionId,
-    collectionId: CollectionId;
     projectId: ProjectId,
     triggerPayload: unknown,
     workerToken?: string;
@@ -61,7 +57,6 @@ export interface ExecuteTriggerOperation {
     webhookUrl: string,
     triggerPayload?: unknown,
     projectId: ProjectId,
-    collectionId: CollectionId,
     workerToken?: string;
     apiUrl?: string;
     edition?: string;
