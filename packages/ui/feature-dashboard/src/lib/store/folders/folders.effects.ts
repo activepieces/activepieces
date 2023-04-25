@@ -30,7 +30,50 @@ export class FoldersEffects {
     },
     { dispatch: false }
   );
-
+  folderAdded$ = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(FolderActions.addFolder),
+        tap((action) => {
+          this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
+            data: `<b>${action.folder.displayName}</b> added`,
+          });
+        })
+      );
+    },
+    { dispatch: false }
+  );
+  folderRenamed$ = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(FolderActions.renameFolder),
+        tap((action) => {
+          this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
+            data: `Renamed to <b>${action.newName}</b>`,
+          });
+        })
+      );
+    },
+    { dispatch: false }
+  );
+  folderDeleted$ = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(FolderActions.deleteFolder),
+        concatLatestFrom(() => {
+          return this.store.select(FoldersSelectors.selectFolders);
+        }),
+        tap(([actions, folders]) => {
+          const folderName =
+            folders.find((f) => f.id === actions.folderId)?.displayName || '';
+          this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
+            data: `<b>${folderName}</b> deleted`,
+          });
+        })
+      );
+    },
+    { dispatch: false }
+  );
   constructor(
     private store: Store,
     private actions$: Actions,
