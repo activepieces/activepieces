@@ -28,10 +28,9 @@ export class FoldersResolver
 
   resolve(route: ActivatedRouteSnapshot): Observable<FoldersResolverResult> {
     const countAllFlows$ = this.flowsService.count({
-      allFlows: 'true',
     });
     const countUncategorizedFlows$ = this.flowsService.count({
-      allFlows: 'false',
+      folderId: 'NULL'
     });
     const folders$ = this.foldersService.list().pipe(map((res) => res.data));
     const selectedFolderId = route.queryParams['folderId'];

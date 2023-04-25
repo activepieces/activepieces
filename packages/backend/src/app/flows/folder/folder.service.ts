@@ -63,7 +63,7 @@ export const flowFolderService = {
         const numberOfFlowForEachFolder :Promise<number>[] =[]
         const dtosList:FoldersListDto[] =[]
         paginationResponse.data.forEach((f)=>{
-            numberOfFlowForEachFolder.push(flowService.count({projectId:projectId, folderId:f.id, allFlows:'false'}))
+            numberOfFlowForEachFolder.push(flowService.count({projectId:projectId, folderId:f.id}))
         });
         (await Promise.all(numberOfFlowForEachFolder)).forEach((num, idx)=>{
             dtosList.push({...paginationResponse.data[idx], numberOfFlows:num})
