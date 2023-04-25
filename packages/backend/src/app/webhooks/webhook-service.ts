@@ -3,6 +3,7 @@ import {
     EventPayload,
     Flow,
     FlowId,
+    FlowInstanceStatus,
     FlowVersion,
     ProjectId,
     RunEnvironment,
@@ -19,12 +20,25 @@ import { triggerEventService } from '../flows/trigger-events/trigger-event.servi
 import { isEmpty, isNil } from 'lodash'
 import { logger } from '../helper/logger'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
+import { flowInstanceService } from '../flows/flow-instance/flow-instance.service'
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
         const flow = await getFlowOrThrow(flowId)
         const { projectId } = flow
-        const flowVersion = await getLatestFlowVersionOrThrow(flowId, projectId)
+        const flowInstance = await flowInstanceService.get({
+            flowId: flow.id,
+            projectId: flow.projectId,
+        })
+        if (isNil(flowInstance) || flowInstance.status !== FlowInstanceStatus.ENABLED) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_INSTANCE_NOT_FOUND,
+                params: {
+                    id: flow.id,
+                },
+            })
+        }
+        const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId);
 
         triggerEventService.saveEvent({
             flowId,
