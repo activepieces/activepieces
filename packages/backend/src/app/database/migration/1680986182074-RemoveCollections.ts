@@ -21,7 +21,7 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         let countFolders = 0
         const collections = await queryRunner.query('SELECT * FROM "collection"')
         for(const collection of collections) {
-            const randomId = apId();
+            const randomId = apId()
             await queryRunner.query(`INSERT INTO "folder" ("id", "created", "updated", "displayName", "projectId") VALUES ('${randomId}', 'NOW()', 'NOW()', '${collection.displayName}', '${collection.projectId}')`)
             await queryRunner.query(`UPDATE "flow" SET "folderId" = '${randomId}' WHERE "collectionId" = '${collection.id}'`)
             countFolders++
@@ -53,7 +53,7 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
             const flowIdToVersionId = instance['flowIdToVersionId']
             for (const flowId of Object.keys(flowIdToVersionId)) {
                 const flowVersionId = flowIdToVersionId[flowId]
-                const randomId = apId();
+                const randomId = apId()
                 await queryRunner.query(`INSERT INTO "flow_instance" ("id", "created", "updated", "projectId", "flowId", "flowVersionId", "status") VALUES ('${randomId}', 'NOW()', 'NOW()', '${instance.projectId}', '${flowId}', '${flowVersionId}', '${instance.status}')`)
                 count++
             }
