@@ -125,11 +125,11 @@ export const flowService = {
         if (flow === null) {
             return null
         }
-        const flowVersion = await flowVersionService.getFlowVersion(projectId, id, versionId, includeArtifacts)
+        const flowVersion = (await flowVersionService.getFlowVersion(projectId, id, versionId, includeArtifacts))!
         const instance = await flowInstanceService.get({ projectId: projectId, flowId: flow.id })
         return {
             ...flow,
-            version: flowVersion!,
+            version: flowVersion,
             status: instance ? instance.status : FlowInstanceStatus.UNPUBLISHED,
         }
     },
@@ -139,7 +139,7 @@ export const flowService = {
             key: flowId,
             timeout: 5000,
         })
-        const flow: Flow | null = (await flowRepo.findOneBy({ projectId: projectId, id: flowId }))
+        const flow: Omit<Flow, 'version'> | null = (await flowRepo.findOneBy({ projectId: projectId, id: flowId }))
         if (isNil(flow)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_NOT_FOUND,
@@ -150,9 +150,10 @@ export const flowService = {
         }
         try {
             if (request.type === FlowOperationType.CHANGE_FOLDER) {
-                flow.folderId = request.request.folderId ? request.request.folderId : null
-                // TODO FIX
-                // await flowRepo.update(flow.id, flow)
+                await flowRepo.update(flow.id, {
+                    ...flow,
+                    folderId: request.request.folderId ?? null,
+                })
             }
             else {
                 let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, false))!
