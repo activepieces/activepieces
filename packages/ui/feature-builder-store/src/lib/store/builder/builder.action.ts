@@ -20,7 +20,7 @@ export const loadInitial = createAction(
     viewMode: ViewModeEnum;
     run?: FlowRun;
     appConnections: AppConnection[];
-    folder?:Folder
+    folder?: Folder;
   }>()
 );
 
