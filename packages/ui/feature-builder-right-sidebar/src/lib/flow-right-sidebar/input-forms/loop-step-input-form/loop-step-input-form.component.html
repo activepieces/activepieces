@@ -1,4 +1,4 @@
-<form [formGroup]="loopStepForm" class="ap-flex ap-flex-col ap-gap-2">
+<form [formGroup]="loopStepForm" class="ap-flex ap-flex-col ap-gap-2" (click)="$event.stopImmediatePropagation()">
   <div>
     <mat-form-field class="ap-w-full" appearance="outline" (click)="itemsMentionsDropdown.showMenuSubject$.next(true)">
       <mat-label>Items</mat-label>
