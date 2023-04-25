@@ -1,4 +1,4 @@
-import { ActivepiecesError, Cursor, ErrorCode, Folder, FolderCreatedResponse, FolderDto, ProjectId } from '@activepieces/shared'
+import { ActivepiecesError, Cursor, ErrorCode, Folder,  FolderDto, ProjectId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { FolderEntity } from './folder.entity'
 import { CreateOrRenameFolderRequest, FolderId, apId } from '@activepieces/shared'
@@ -37,7 +37,7 @@ export const flowFolderService = {
             id: folderId,
         })
     },
-    async create({ projectId, request }: { projectId, request: CreateOrRenameFolderRequest }): Promise<FolderCreatedResponse> {
+    async create({ projectId, request }: { projectId, request: CreateOrRenameFolderRequest }): Promise<FolderDto> {
         const folder= await folderRepo.save({
             id: apId(),
             projectId: projectId,
@@ -70,8 +70,12 @@ export const flowFolderService = {
         })
         return paginationHelper.createPage<FolderDto>(dtosList, paginationResponse.cursor)
     },
-    async getOne({projectId, folderId}) : Promise<FolderDto> {
+    async getOne({projectId, folderId}) : Promise<FolderDto | null> {
         const folder = await folderRepo.findOneBy({projectId,id:folderId})
+        if(!folder)
+        {
+            return null;
+        }
         const numberOfFlows = await flowService.count({projectId:projectId, folderId:folderId});
         return {
             ...folder,

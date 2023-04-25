@@ -1,7 +1,7 @@
 import { createAction, props } from '@ngrx/store';
 import {
   AppConnection,
-  FlowBuilderDto,
+  Flow,
   FlowInstance,
   FlowRun,
 } from '@activepieces/shared';
@@ -14,7 +14,7 @@ export enum BuilderActionType {
 export const loadInitial = createAction(
   BuilderActionType.LOAD_INITIAL,
   props<{
-    flow: FlowBuilderDto;
+    flow: Flow;
     instance?: FlowInstance;
     viewMode: ViewModeEnum;
     run?: FlowRun;

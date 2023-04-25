@@ -10,7 +10,6 @@ import {
   ExecutionState,
   FileId,
   Flow,
-  FlowBuilderDto,
   FlowId,
   FlowOperationRequest,
   FlowRun,
@@ -19,7 +18,7 @@ import {
   ListFlowsRequest,
   SeekPage,
 } from '@activepieces/shared';
-import { FlowTableDto } from '@activepieces/shared';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -35,12 +34,12 @@ export class FlowService {
   get(
     flowId: FlowId,
     flowVersionId: undefined | FlowVersionId
-  ): Observable<FlowBuilderDto> {
+  ): Observable<Flow> {
     const params: Record<string, string> = {};
     if (flowVersionId) {
       params['versionId'] = flowVersionId;
     }
-    return this.http.get<FlowBuilderDto>(environment.apiUrl + '/flows/' + flowId, {
+    return this.http.get<Flow>(environment.apiUrl + '/flows/' + flowId, {
       params: params,
     });
   }
@@ -49,7 +48,7 @@ export class FlowService {
     return this.http.delete<void>(environment.apiUrl + '/flows/' + flowId);
   }
 
-  list(request: ListFlowsRequest): Observable<SeekPage<FlowTableDto>> {
+  list(request: ListFlowsRequest): Observable<SeekPage<Flow>> {
     const queryParams: { [key: string]: string | number } = {
       limit: request.limit ?? 10,
       cursor: request.cursor || '',
@@ -57,7 +56,7 @@ export class FlowService {
     if (request.folderId) {
       queryParams['folderId'] = request.folderId;
     }
-    return this.http.get<SeekPage<FlowTableDto>>(
+    return this.http.get<SeekPage<Flow>>(
       environment.apiUrl + '/flows',
       {
         params: queryParams,

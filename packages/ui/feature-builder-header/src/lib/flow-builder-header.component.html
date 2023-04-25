@@ -8,7 +8,7 @@
     <div class="ap-flex ap-items-center ap-gap-2">
       <ap-icon-button [width]="7" [height]="14" iconFilename="back.svg" [tooltipText]="'Home'"
         (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
-      <div class="ap-flex-grow ap-flex ap-align-center ap-gap-2" #spacer>
+      <div class="ap-flex-grow ap-flex ap-items-center ap-gap-2" #spacer>
         <div class="ap-typography-body-1 ap-truncate ap-max-w-[150px]" #folderName
           [matTooltip]="folderName.scrollWidth > folderName.clientWidth? (folderDisplayName$|async) || '' : ''">
           {{folderDisplayName$ | async}}

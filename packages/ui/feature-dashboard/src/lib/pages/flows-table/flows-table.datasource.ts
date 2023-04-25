@@ -17,7 +17,6 @@ import {
 
 import { FormControl } from '@angular/forms';
 import { Flow, FlowInstanceStatus } from '@activepieces/shared';
-import { FlowTableDto } from '@activepieces/shared';
 import { Params } from '@angular/router';
 
 type FlowListDtoWithInstanceStatusToggleControl = Flow & {
@@ -89,7 +88,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
   disconnect(): void {
     //ignore
   }
-  createTogglesControls(flows: FlowTableDto[]) {
+  createTogglesControls(flows: Flow[]) {
     const controls: Record<string, FormControl> = {};
     flows.forEach((f) => {
       controls[f.id] = new FormControl({

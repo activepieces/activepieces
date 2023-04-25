@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { map, Observable, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import { Flow, FlowInstanceStatus, FlowTableDto } from '@activepieces/shared';
+import { Flow, FlowInstanceStatus } from '@activepieces/shared';
 
 import {
   ApPaginatorComponent,
@@ -91,13 +91,13 @@ export class FlowsTableComponent implements OnInit {
       })
     );
   }
-  toggleFlowStatus(flowDto: FlowTableDto, control: FormControl<boolean>) {
+  toggleFlowStatus(flow: Flow, control: FormControl<boolean>) {
     if (control.enabled) {
       control.disable();
-      this.flowsUpdateStatusRequest$[flowDto.id] = this.instanceService
-        .updateStatus(flowDto.id, {
+      this.flowsUpdateStatusRequest$[flow.id] = this.instanceService
+        .updateStatus(flow.id, {
           status:
-            flowDto.status === FlowInstanceStatus.ENABLED
+            flow.status === FlowInstanceStatus.ENABLED
               ? FlowInstanceStatus.DISABLED
               : FlowInstanceStatus.ENABLED,
         })
@@ -105,8 +105,8 @@ export class FlowsTableComponent implements OnInit {
           tap((res) => {
             control.enable();
             control.setValue(res.status === FlowInstanceStatus.ENABLED);
-            this.flowsUpdateStatusRequest$[flowDto.id] = null;
-            flowDto.status = res.status;
+            this.flowsUpdateStatusRequest$[flow.id] = null;
+            flow.status = res.status;
           }),
           map(() => void 0)
         );

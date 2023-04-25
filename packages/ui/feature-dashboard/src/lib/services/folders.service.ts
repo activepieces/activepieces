@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
   CreateOrRenameFolderRequest,
-  FolderCreatedResponse,
   FolderDto,
   SeekPage,
 } from '@activepieces/shared';
@@ -14,8 +13,8 @@ import { Observable } from 'rxjs';
 })
 export class FoldersService {
   constructor(private http: HttpClient) {}
-  create(req: CreateOrRenameFolderRequest): Observable<FolderCreatedResponse> {
-    return this.http.post<FolderCreatedResponse>(environment.apiUrl + '/folders', req);
+  create(req: CreateOrRenameFolderRequest): Observable<FolderDto> {
+    return this.http.post<FolderDto>(environment.apiUrl + '/folders', req);
   }
   list() {
     const params: Record<string, string | number> = {

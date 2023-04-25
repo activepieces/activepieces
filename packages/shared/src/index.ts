@@ -39,7 +39,7 @@ export * from './lib/user/user';
 export { CreateFlowRunRequest } from './lib/flow-run/create-flow-run-request';
 export { TriggerStrategy, Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType } from './lib/flows/triggers/trigger';
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version';
-export { Flow, FlowId, FlowTableDto, FlowBuilderDto } from './lib/flows/flow';
+export { Flow, FlowId } from './lib/flows/flow';
 export { File, FileId } from './lib/file/file'
 export * from './lib/flows/flow-helper';
 export { FlowRun, FlowRunId, RunEnvironment } from './lib/flow-run/flow-run'
@@ -48,7 +48,6 @@ export { Project, ProjectId } from './lib/project/project';
 export { ListFlowsRequest } from './lib/flows/dto/list-flows-request';
 export * from './lib/flows/dto/create-flow-request';
 export { CloneFlowVersionRequest } from './lib/flows/dto/clone-flow-version-request';
-export * from './lib/flows/dto/folder-created-response';
 export { SeekPage, Cursor } from './lib/common/seek-page';
 export { apId, ApId } from './lib/common/id-generator'
 export * from "./lib/flows/trigger-events/trigger-events-dto";
