@@ -152,7 +152,7 @@ export const flowService = {
             if (request.type === FlowOperationType.CHANGE_FOLDER) {
                 flow.folderId = request.request.folderId ? request.request.folderId : null
                 // TODO FIX
-               // await flowRepo.update(flow.id, flow)
+                // await flowRepo.update(flow.id, flow)
             }
             else {
                 let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, false))!
