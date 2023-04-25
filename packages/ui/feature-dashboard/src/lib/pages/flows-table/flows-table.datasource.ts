@@ -83,7 +83,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
             ...flow,
             folderDisplayName:
               folders.data.find((folder) => folder.id === flow.folderId)
-                ?.displayName ?? 'No Folder',
+                ?.displayName ?? 'Uncategorized',
             instanceToggleControl: instanceTogglesControls[flow.id],
           };
         });

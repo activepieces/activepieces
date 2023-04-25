@@ -78,12 +78,15 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
         if (runInformation !== undefined) {
           const flow = runInformation.flow;
           const run = runInformation.run;
+          const folder = runInformation.folder;
+          const appConnections = value['connections'];
           this.store.dispatch(
             BuilderActions.loadInitial({
-              flow: flow,
+              flow,
               viewMode: ViewModeEnum.VIEW_INSTANCE_RUN,
-              run: run,
-              appConnections: value['connections'],
+              run,
+              appConnections,
+              folder,
             })
           );
 
@@ -92,16 +95,19 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
             duration: undefined,
           });
         } else {
-          const flow = value['flow'];
+          const flow = value['flowAndFolder'].flow;
+          const folder = value['flowAndFolder'].folder;
           const instance = value['instance'];
+          const appConnections = value['connections'];
           this.titleService.setTitle(`AP-${flow.version.displayName}`);
+
           this.store.dispatch(
             BuilderActions.loadInitial({
-              flow: flow,
-              instance: instance,
+              flow,
+              instance,
               viewMode: ViewModeEnum.BUILDING,
-              run: undefined,
-              appConnections: value['connections'],
+              appConnections,
+              folder,
             })
           );
         }
@@ -123,16 +129,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    document.addEventListener(
-      'mousemove',
-      () => {
-        //ignore
-      },
-      {
-        passive: false,
-        capture: true,
-      }
-    );
     this.store.dispatch(FlowItemDetailsActions.loadFlowItemsDetails());
   }
 
