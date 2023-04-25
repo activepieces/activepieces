@@ -27,11 +27,18 @@
   "anchors": [],
   "navigation": [
     {
-      "group": "Handbook",
+      "group": "Company",
       "pages": [
         "overview",
         "product",
         "values"
+      ]
+    },
+    {
+      "group": "Engineering",
+      "pages": [
+        "engineering/how-we-work",
+        "engineering/on-call"
       ]
     }
   ],
