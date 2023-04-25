@@ -103,13 +103,6 @@ export class PieceTriggerMentionItemComponent implements OnInit {
     return cachedResult;
   }
 
-  getErrorMessage() {
-    const noSampleData = `No sample available`;
-    const error = !this._stepMention.step.settings.triggerName
-      ? `Please select a trigger`
-      : noSampleData;
-    return error;
-  }
   checkIfItIsPollingTrigger() {
     return this.actionMetaDataService
       .getPieceMetadata(
