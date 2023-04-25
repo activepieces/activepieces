@@ -7,9 +7,15 @@ import { Store } from '@ngrx/store';
 import { FoldersSelectors } from '../../../store/folders/folders.selector';
 import { FolderActions } from '../../../store/folders/folders.actions';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FoldersService } from '../../../services/folders.service';
-import { DeleteEntityDialogComponent, DeleteEntityDialogData } from '../../../../../../common/src';
-import { RenameFolderDialogComponent, RenameFolderDialogData } from '../rename-folder-dialog/rename-folder-dialog.component';
+import {
+  DeleteEntityDialogComponent,
+  DeleteEntityDialogData,
+  FoldersService,
+} from '@activepieces/ui/common';
+import {
+  RenameFolderDialogComponent,
+  RenameFolderDialogData,
+} from '../rename-folder-dialog/rename-folder-dialog.component';
 
 @Component({
   selector: 'app-folders-list',
@@ -75,23 +81,25 @@ export class FoldersListComponent {
       queryParamsHandling: 'merge',
     });
   }
-  deleteFolder(folder:FolderDto)
-  {
+  deleteFolder(folder: FolderDto) {
     const dialogData: DeleteEntityDialogData = {
-      deleteEntity$: this.folderService.delete(folder.id).pipe(tap(()=>{
-        this.store.dispatch(FolderActions.deleteFolder({folderId:folder.id}));
-        this.clearCursorParam()
-      })),
-      entityName:folder.displayName,
-      note:"If you delete this folder, we will keep its flows and move them to Uncategorized."
-    }
-    this.dialogService.open(DeleteEntityDialogComponent,{data:dialogData})
+      deleteEntity$: this.folderService.delete(folder.id).pipe(
+        tap(() => {
+          this.store.dispatch(
+            FolderActions.deleteFolder({ folderId: folder.id })
+          );
+          this.clearCursorParam();
+        })
+      ),
+      entityName: folder.displayName,
+      note: 'If you delete this folder, we will keep its flows and move them to Uncategorized.',
+    };
+    this.dialogService.open(DeleteEntityDialogComponent, { data: dialogData });
   }
-  renameFolder(folder:FolderDto)
-  {
+  renameFolder(folder: FolderDto) {
     const dialogData: RenameFolderDialogData = {
-       folderId:folder.id
-    }
-    this.dialogService.open(RenameFolderDialogComponent,{data:dialogData})
+      folderId: folder.id,
+    };
+    this.dialogService.open(RenameFolderDialogComponent, { data: dialogData });
   }
 }

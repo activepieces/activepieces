@@ -13,7 +13,6 @@ import {
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
-    Folder,
     ProjectId,
     SeekPage,
     TelemetryEventName,
@@ -28,8 +27,6 @@ import { flowRepo } from './flow.repo'
 import { telemetry } from '../../helper/telemetry.utils'
 import { flowInstanceService } from '../flow-instance/flow-instance.service'
 import { IsNull } from 'typeorm'
-import { flowFolderService } from '../folder/folder.service'
-
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
@@ -98,21 +95,17 @@ export const flowService = {
         const paginationResult = await paginator.paginate(flowRepo.createQueryBuilder('flow').where(queryWhere))
         const flowVersionsPromises: Array<Promise<FlowVersion | null>> = []
         const flowInstancesPromises:Array<Promise<FlowInstance|null>> =[]
-        const foldersPromises:Array<Promise<Folder|null>> =[]
         paginationResult.data.forEach((flow) => {
             flowVersionsPromises.push(flowVersionService.getFlowVersion(projectId, flow.id, undefined, false))
             flowInstancesPromises.push(flowInstanceService.get({projectId: projectId, flowId: flow.id}))
-            foldersPromises.push(flowFolderService.getOne({projectId,folderId:flow.folderId}));
         })
         const versions: Array<FlowVersion | null> = await Promise.all(flowVersionsPromises)
         const instances: Array<FlowInstance | null> = await Promise.all(flowInstancesPromises)
-        const folders: Array<Folder | null> = await Promise.all(foldersPromises)
         paginationResult.data = paginationResult.data.map((flow, idx)=>{
             return {
                 ...flow,
                 version:versions[idx],
                 status: instances[idx]? instances[idx].status : FlowInstanceStatus.UNPUBLISHED,
-                folderDisplayName:folders[idx]? folders[idx].displayName : 'Uncategorized'
             }
         })
         return paginationHelper.createPage<Flow>(paginationResult.data, paginationResult.cursor)
@@ -127,12 +120,10 @@ export const flowService = {
         }
         const flowVersion = await flowVersionService.getFlowVersion(projectId, id, versionId, includeArtifacts)
         const instance = await flowInstanceService.get({projectId: projectId, flowId: flow.id})
-        const folder = await flowFolderService.getOne({projectId, folderId:flow.folderId});
         return {
             ...flow,
             version: flowVersion,
             status: instance? instance.status : FlowInstanceStatus.UNPUBLISHED,
-            folderDisplayName: folder? folder.displayName: 'Uncategorized'
         }
     },
 

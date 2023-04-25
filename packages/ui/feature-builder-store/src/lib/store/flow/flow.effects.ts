@@ -9,7 +9,7 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, mergeMap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import {
   FlowsActions,
@@ -30,17 +30,29 @@ import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
 import { NO_PROPS } from '../../model/builder-state';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
-import { FlowService } from '@activepieces/ui/common';
+import { FlowService, FoldersService } from '@activepieces/ui/common';
 @Injectable()
 export class FlowsEffects {
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(BuilderActions.loadInitial),
-      map(({ flow, run }) => {
-        return FlowsActions.setInitial({
-          flow: flow,
-          run: run,
-        });
+      mergeMap(({ flow, run }) => {
+        if (!flow.folderId) {
+          return of(FlowsActions.setInitial({ flow, run }));
+        }
+        return this.folderService.get(flow.folderId).pipe(
+          map((folder) => {
+            return FlowsActions.setInitial({
+              flow,
+              folder,
+              run,
+            });
+          })
+        );
+      }),
+      catchError((err) => {
+        console.error(err);
+        throw err;
       })
     );
   });
@@ -299,6 +311,7 @@ export class FlowsEffects {
     private pieceBuilderService: CollectionBuilderService,
     private flowService: FlowService,
     private store: Store,
+    private folderService: FoldersService,
     private actions$: Actions,
     private snackBar: MatSnackBar
   ) {}

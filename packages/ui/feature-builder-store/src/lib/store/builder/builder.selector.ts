@@ -73,9 +73,12 @@ export const selectCurrentFlow = createSelector(
   }
 );
 export const selectCurrentFlowFolderName = createSelector(
-  selectCurrentFlow,
-  (flow: Flow) => {
-    return flow.folderDisplayName;
+  selectBuilderState,
+  (state: GlobalBuilderState) => {
+    if (!state.flowState.folder) {
+      return 'Uncategorized';
+    }
+    return state.flowState.folder.displayName;
   }
 );
 export const selectTabState = createSelector(
@@ -423,5 +426,5 @@ export const BuilderSelectors = {
   selectStepSelectedSampleData,
   selectStepValidity,
   selectCurrentStepPieceVersionAndName,
-  selectCurrentFlowFolderName
+  selectCurrentFlowFolderName,
 };

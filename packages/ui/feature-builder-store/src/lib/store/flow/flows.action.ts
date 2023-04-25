@@ -9,6 +9,7 @@ import {
   FlowRun,
   FlowOperationRequest,
   StepLocationRelativeToParent,
+  Folder,
 } from '@activepieces/shared';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
@@ -71,7 +72,7 @@ const changeName = createAction(
 
 const setInitial = createAction(
   FlowsActionType.SET_INITIAL,
-  props<{ flow: Flow; run: FlowRun | undefined }>()
+  props<{ flow: Flow; run: FlowRun | undefined; folder?: Folder }>()
 );
 
 const applyUpdateOperation = createAction(

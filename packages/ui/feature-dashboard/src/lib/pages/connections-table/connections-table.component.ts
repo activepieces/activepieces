@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { map, Observable, startWith, Subject, tap } from 'rxjs';
@@ -23,7 +28,7 @@ import {
   templateUrl: './connections-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConnectionsTableComponent {
+export class ConnectionsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
   connectionPage$: Observable<SeekPage<AppConnection>>;
@@ -57,10 +62,8 @@ export class ConnectionsTableComponent {
       data: {
         deleteEntity$: this.connectionService.delete(connection.id),
         entityName: connection.name,
-        note:
-        `This will permanently delete the connection, all steps using it will fail.
-         You can't undo this action.`
-     
+        note: `This will permanently delete the connection, all steps using it will fail.
+         You can't undo this action.`,
       } as DeleteEntityDialogData,
     });
     this.deleteConnectionDialogClosed$ = dialogRef.beforeClosed().pipe(

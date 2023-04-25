@@ -18,9 +18,11 @@ import {
 import { FormControl } from '@angular/forms';
 import { Flow, FlowInstanceStatus } from '@activepieces/shared';
 import { Params } from '@angular/router';
+import { FoldersService } from '@activepieces/ui/common';
 
 type FlowListDtoWithInstanceStatusToggleControl = Flow & {
   instanceToggleControl: FormControl<boolean>;
+  folderDisplayName: string;
 };
 
 /**
@@ -33,6 +35,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
   public isLoading$ = new BehaviorSubject(false);
   constructor(
     private queryParams$: Observable<Params>,
+    private folderService: FoldersService,
     private paginator: ApPaginatorComponent,
     private flowService: FlowService,
     private refresh$: Observable<boolean>
@@ -41,7 +44,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
   }
 
   /**
-   * Connect this data source to the table. The table will only update when
+   * Connects this data source to the table. The table will only update when
    * the returned stream emits new items.
    * @returns A stream of the items to be rendered.
    */
@@ -54,27 +57,34 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
         this.isLoading$.next(true);
       }),
       switchMap((res) => {
-        return this.flowService.list({
-          limit: res.queryParams['limit'] || DEFAULT_PAGE_SIZE,
-          cursor: res.queryParams['cursor'],
-          folderId: res.queryParams['folderId']
-            ? res.queryParams['folderId']
-            : undefined,
-        });
+        const { queryParams } = res;
+        return combineLatest([
+          this.flowService.list({
+            limit: queryParams['limit'] || DEFAULT_PAGE_SIZE,
+            cursor: queryParams['cursor'],
+            folderId: queryParams['folderId'] || undefined,
+          }),
+          this.folderService.list(),
+        ]);
       }),
       catchError((err) => {
         console.error(err);
         throw err;
       }),
-      tap((res) => {
-        this.paginator.next = res.next;
-        this.paginator.previous = res.previous;
+      tap(([flowPage, folders]) => {
+        this.paginator.next = flowPage.next;
+        this.paginator.previous = flowPage.previous;
         this.isLoading$.next(false);
-        const instanceTogglesControls = this.createTogglesControls(res.data);
-        this.data = res.data.map((c) => {
+        const instanceTogglesControls = this.createTogglesControls(
+          flowPage.data
+        );
+        this.data = flowPage.data.map((flow) => {
           return {
-            ...c,
-            instanceToggleControl: instanceTogglesControls[c.id],
+            ...flow,
+            folderDisplayName:
+              folders.data.find((folder) => folder.id === flow.folderId)
+                ?.displayName ?? 'No Folder',
+            instanceToggleControl: instanceTogglesControls[flow.id],
           };
         });
       }),

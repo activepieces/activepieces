@@ -50,6 +50,21 @@ export const folderController = async (fastify: FastifyInstance) => {
         },
     )
 
+
+    fastify.get(
+        '/:folderId',
+        async (
+            request: FastifyRequest<{
+                Params: {
+                    folderId: FolderId
+                }
+            }>,
+        ) => {
+            return folderService.getOne({ projectId: request.principal.projectId, folderId: request.params.folderId })
+        },
+    )
+
+
     fastify.get(
         '/',
         {

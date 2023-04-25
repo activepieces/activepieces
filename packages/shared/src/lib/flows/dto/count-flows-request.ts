@@ -1,4 +1,4 @@
 export type CountFlowsRequest =
 {
-    folderId?:string
+    folderId?: string
 }

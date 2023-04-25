@@ -1,4 +1,4 @@
-import { ActivepiecesError, Cursor, ErrorCode, Folder,  FolderDto, ProjectId } from '@activepieces/shared'
+import { ActivepiecesError, Cursor, ErrorCode, Folder, FolderDto, ProjectId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { FolderEntity } from './folder.entity'
 import { CreateOrRenameFolderRequest, FolderId, apId } from '@activepieces/shared'
@@ -16,18 +16,17 @@ export const flowFolderService = {
             projectId: projectId,
         })
     },
-    async update({ projectId, folderId, request }: { projectId, folderId: FolderId, request: CreateOrRenameFolderRequest }) : Promise<Folder>{
+    async update({ projectId, folderId, request }: { projectId, folderId: FolderId, request: CreateOrRenameFolderRequest }): Promise<Folder> {
         const folder = await folderRepo.findOneBy({
             projectId,
             id: folderId,
         })
         const folderWithDisplayName = await folderRepo.findOneBy({
             projectId,
-            displayName:request.displayName
+            displayName: request.displayName,
         })
-        if(folderWithDisplayName && folderWithDisplayName.id !== folderId)
-        {
-            throw new ActivepiecesError({code:ErrorCode.VALIDATION,params:{message:"Folder displayName is used" }});
+        if (folderWithDisplayName && folderWithDisplayName.id !== folderId) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Folder displayName is used' } })
         }
         if (folder === null || folder === undefined) {
             throw new ActivepiecesError({
@@ -49,20 +48,19 @@ export const flowFolderService = {
     async create({ projectId, request }: { projectId, request: CreateOrRenameFolderRequest }): Promise<FolderDto> {
         const folderWithDisplayName = await folderRepo.findOneBy({
             projectId,
-            displayName:request.displayName
+            displayName: request.displayName,
         })
-        if(folderWithDisplayName)
-        {
-            throw new ActivepiecesError({code:ErrorCode.VALIDATION,params:{message:"Folder displayName is used" }});
+        if (folderWithDisplayName) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Folder displayName is used' } })
         }
-        const folder= await folderRepo.save({
+        const folder = await folderRepo.save({
             id: apId(),
             projectId: projectId,
             displayName: request.displayName,
         })
         return {
             ...folder,
-            numberOfFlows:0
+            numberOfFlows: 0,
         }
     },
     async list({ projectId, cursorRequest, limit }: { projectId: ProjectId, cursorRequest: Cursor | null, limit: number }) {
@@ -77,27 +75,31 @@ export const flowFolderService = {
             },
         })
         const paginationResponse = await paginator.paginate(folderRepo.createQueryBuilder('folder').where({ projectId }))
-        const numberOfFlowForEachFolder :Promise<number>[] =[]
-        const dtosList:FolderDto[] =[]
-        paginationResponse.data.forEach((f)=>{
-            numberOfFlowForEachFolder.push(flowService.count({projectId:projectId, folderId:f.id}))
+        const numberOfFlowForEachFolder: Promise<number>[] = []
+        const dtosList: FolderDto[] = []
+        paginationResponse.data.forEach((f) => {
+            numberOfFlowForEachFolder.push(flowService.count({ projectId: projectId, folderId: f.id }))
         });
-        (await Promise.all(numberOfFlowForEachFolder)).forEach((num, idx)=>{
-            dtosList.push({...paginationResponse.data[idx], numberOfFlows:num})
+        (await Promise.all(numberOfFlowForEachFolder)).forEach((num, idx) => {
+            dtosList.push({ ...paginationResponse.data[idx], numberOfFlows: num })
         })
         return paginationHelper.createPage<FolderDto>(dtosList, paginationResponse.cursor)
     },
-    async getOne({projectId, folderId}) : Promise<FolderDto | null> {
-        const folder = await folderRepo.findOneBy({projectId,id:folderId === null? IsNull(): folderId})
-        if(!folder)
-        {
-            return null;
+    async getOne({ projectId, folderId }): Promise<FolderDto | null> {
+        const folder = await folderRepo.findOneBy({ projectId, id: folderId })
+        if (!folder) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: `Folder ${folderId} is not found`,
+                },
+            })
         }
-        const numberOfFlows = await flowService.count({projectId:projectId, folderId:folderId});
+        const numberOfFlows = await flowService.count({ projectId: projectId, folderId: folderId })
         return {
             ...folder,
-            numberOfFlows:numberOfFlows
+            numberOfFlows: numberOfFlows,
         }
-    }
-    
+    },
+
 }
