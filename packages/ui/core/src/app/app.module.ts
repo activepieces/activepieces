@@ -60,7 +60,7 @@ export function tokenGetter() {
     ...dynamicModules(),
     AngularSvgIconModule,
     CommonLayoutModule,
-    UiCommonModule
+    UiCommonModule,
   ],
   providers: [
     {

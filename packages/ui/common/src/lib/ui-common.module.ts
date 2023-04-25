@@ -43,6 +43,7 @@ import { TrackFocusDirective } from './directives/track-focus.directive';
 import { ObjectToArrayPipe } from './pipe/object-to-array.pipe';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { DeleteEntityDialogComponent } from './components/delete-enity-dialog/delete-entity-dialog.component';
+import { MatDividerModule } from '@angular/material/divider';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -62,6 +63,7 @@ const exportedImports = [
   MatSlideToggleModule,
   DragDropModule,
   MatCheckboxModule,
+  MatDividerModule,
 ];
 const exportedDeclarations = [
   MarkdownComponent,

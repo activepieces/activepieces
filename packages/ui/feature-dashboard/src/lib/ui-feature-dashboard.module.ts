@@ -11,6 +11,12 @@ import { PageTitleComponent } from './components/page-title/page-title.component
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { RouterModule } from '@angular/router';
 import { DashboardLayoutRouting } from './dashboard.routing';
+import { FlowsTableTitleComponent } from './pages/flows-table/flows-table-title/flows-table-title.component';
+import { FoldersListComponent } from './pages/flows-table/folders-list/folders-list.component';
+import { NewFolderDialogComponent } from './pages/flows-table/new-folder-dialog/new-folder-dialog.component';
+import { FOLDERS_STATE_NAME } from './store/folders/folders.selector';
+import { foldersReducer } from './store/folders/folders.reducer';
+import { StoreModule } from '@ngrx/store';
 // import { EeBillingUiModule } from '@activepieces/ee/billing/ui';
 
 @NgModule({
@@ -19,6 +25,7 @@ import { DashboardLayoutRouting } from './dashboard.routing';
     UiCommonModule,
     // EeBillingUiModule,
     RouterModule.forChild(DashboardLayoutRouting),
+    StoreModule.forFeature(FOLDERS_STATE_NAME, foldersReducer),
   ],
   declarations: [
     DashboardContainerComponent,
@@ -29,6 +36,9 @@ import { DashboardLayoutRouting } from './dashboard.routing';
     UserAvatarComponent,
     PageTitleComponent,
     ConnectionsTableComponent,
+    FlowsTableTitleComponent,
+    FoldersListComponent,
+    NewFolderDialogComponent,
   ],
 })
 export class UiFeatureDashboardModule {}

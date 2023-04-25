@@ -39,6 +39,9 @@ module.exports = {
         hover: '#fafafa',
         success: '#209e34',
         dividers: '#e0e4e8',
+        graySelect: '#F5F5F5',
+        title:'#262626',
+        bleachedGray:'#A6B1BF'
       },
     },
     container: {

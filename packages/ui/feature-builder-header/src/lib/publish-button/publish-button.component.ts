@@ -22,10 +22,10 @@ export class PublishButtonComponent implements OnInit {
   constructor(private store: Store) {}
 
   ngOnInit(): void {
-    this.setCollectionStateListener();
+    this.setFlowStateListener();
   }
 
-  private setCollectionStateListener() {
+  private setFlowStateListener() {
     this.flowState$ = combineLatest({
       isSaving: this.store.select(BuilderSelectors.selectIsSaving),
       isPublishing: this.store.select(BuilderSelectors.selectIsPublishing),

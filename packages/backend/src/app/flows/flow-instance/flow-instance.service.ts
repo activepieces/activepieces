@@ -53,16 +53,8 @@ export const flowInstanceService = {
             flowId: request.flowId,
         })
     },
-    async getOneOrThrow({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<FlowInstance> {
+    async get({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<FlowInstance | null> {
         const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })
-        if (flowInstance == null) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FLOW_INSTANCE_NOT_FOUND,
-                params: {
-                    id: flowId,
-                },
-            })
-        }
         return flowInstance
     },
     async update({ projectId, flowId, status }: { projectId: ProjectId, flowId: string, status: FlowInstanceStatus }): Promise<FlowInstance> {
@@ -98,7 +90,10 @@ export const flowInstanceService = {
             ...flowInstance,
             status: status,
         }, ['projectId', 'flowId'])
-        return flowInstance
+        return {
+            ...flowInstance,
+            status:status,
+        }
     },
     async delete({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<void> {
         const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })
@@ -119,9 +114,9 @@ export const flowInstanceService = {
         await flowInstanceRepo.delete({ projectId, flowId })
     },
     async onFlowDelete({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<void> {
-        const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })
-        const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
+        const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })  
         if (flowInstance) {
+            const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
             await triggerUtils.disable({
                 flowVersion: flowVersion,
                 projectId: flowInstance.projectId,

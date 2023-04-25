@@ -31,7 +31,7 @@ import { PiecePropertiesFormComponent } from './piece-properties-form/piece-prop
 import { MatTreeModule } from '@angular/material/tree';
 import { MatIconModule } from '@angular/material/icon';
 import { QuillModule } from 'ngx-quill';
-import { MatDividerModule } from '@angular/material/divider';
+
 import { WebhookTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component';
 const exportedDeclarations = [
   ArrayFormControlComponent,
@@ -56,7 +56,6 @@ const exportedDeclarations = [
     MatTreeModule,
     MatIconModule,
     QuillModule.forRoot({}),
-    MatDividerModule,
   ],
   declarations: [
     ...exportedDeclarations,

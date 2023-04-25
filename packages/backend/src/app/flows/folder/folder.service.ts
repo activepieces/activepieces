@@ -1,9 +1,10 @@
-import { ActivepiecesError, Cursor, ErrorCode, Folder, ProjectId } from '@activepieces/shared'
+import { ActivepiecesError, Cursor, ErrorCode, Folder, FolderCreatedResponse, FoldersListDto, ProjectId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { FolderEntity } from './folder.entity'
 import { CreateFolderRequest, FolderId, apId } from '@activepieces/shared'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { flowService } from '../flow/flow.service'
 
 export const folderRepo = databaseConnection.getRepository(FolderEntity)
 
@@ -36,12 +37,16 @@ export const flowFolderService = {
             id: folderId,
         })
     },
-    async create({ projectId, request }: { projectId, request: CreateFolderRequest }): Promise<Folder> {
-        return await folderRepo.save({
+    async create({ projectId, request }: { projectId, request: CreateFolderRequest }): Promise<FolderCreatedResponse> {
+        const folder= await folderRepo.save({
             id: apId(),
             projectId: projectId,
             displayName: request.displayName,
         })
+        return {
+            ...folder,
+            numberOfFlows:0
+        }
     },
     async list({ projectId, cursorRequest, limit }: { projectId: ProjectId, cursorRequest: Cursor | null, limit: number }) {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -54,7 +59,16 @@ export const flowFolderService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const { data, cursor } = await paginator.paginate(folderRepo.createQueryBuilder('folder').where({ projectId }))
-        return paginationHelper.createPage<Folder>(data, cursor)
+        const paginationResponse = await paginator.paginate(folderRepo.createQueryBuilder('folder').where({ projectId }))
+        const numberOfFlowForEachFolder :Promise<number>[] =[]
+        const dtosList:FoldersListDto[] =[]
+        paginationResponse.data.forEach((f)=>{
+            numberOfFlowForEachFolder.push(flowService.count({projectId:projectId, folderId:f.id}))
+        });
+        (await Promise.all(numberOfFlowForEachFolder)).forEach((num, idx)=>{
+            dtosList.push({...paginationResponse.data[idx], numberOfFlows:num})
+        })
+        return paginationHelper.createPage<FoldersListDto>(dtosList, paginationResponse.cursor)
     },
+    
 }

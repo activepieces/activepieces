@@ -6,6 +6,8 @@ import {
     EmptyTrigger,
     Flow,
     FlowId,
+    FlowInstance,
+    FlowInstanceStatus,
     FlowOperationRequest,
     FlowOperationType,
     FlowVersion,
@@ -31,6 +33,7 @@ export const flowService = {
         const flow: Partial<Flow> = {
             id: apId(),
             projectId: projectId,
+            folderId:request.folderId,
         }
         const savedFlow = await flowRepo.save(flow)
         await flowVersionService.createVersion(savedFlow.id, {
@@ -85,19 +88,27 @@ export const flowService = {
             },
         })
         const queryWhere = { projectId }
-        if (folderId !== undefined) {
+        if (folderId) {
             queryWhere['folderId'] = (folderId === 'NULL' ? IsNull() : folderId)
         }
-        const { data, cursor } = await paginator.paginate(flowRepo.createQueryBuilder('flow').where(queryWhere))
+
+        const paginationResult = await paginator.paginate(flowRepo.createQueryBuilder('flow').where(queryWhere))
         const flowVersionsPromises: Array<Promise<FlowVersion | null>> = []
-        data.forEach((collection) => {
-            flowVersionsPromises.push(flowVersionService.getFlowVersion(projectId, collection.id, undefined, false))
+        const flowInstancesPromises:Array<Promise<FlowInstance|null>> =[]
+        paginationResult.data.forEach((flow) => {
+            flowVersionsPromises.push(flowVersionService.getFlowVersion(projectId, flow.id, undefined, false))
+            flowInstancesPromises.push(flowInstanceService.get({projectId: projectId, flowId: flow.id}))
         })
         const versions: Array<FlowVersion | null> = await Promise.all(flowVersionsPromises)
-        for (let i = 0; i < data.length; ++i) {
-            data[i] = { ...data[i], version: versions[i] }
-        }
-        return paginationHelper.createPage<Flow>(data, cursor)
+        const instances: Array<FlowInstance | null> = await Promise.all(flowInstancesPromises)
+        paginationResult.data = paginationResult.data.map((flow, idx)=>{
+            return {
+                ...flow,
+                version:versions[idx],
+                status: instances[idx]? instances[idx].status : FlowInstanceStatus.UNPUBLISHED,
+            }
+        })
+        return paginationHelper.createPage<Flow>(paginationResult.data, paginationResult.cursor)
     },
     async getOne({ projectId, id, versionId, includeArtifacts = true }: { projectId: ProjectId, id: FlowId, versionId: FlowVersionId | undefined, includeArtifacts: boolean }): Promise<Flow | null> {
         const flow: Flow | null = await flowRepo.findOneBy({
@@ -113,6 +124,7 @@ export const flowService = {
             version: flowVersion,
         }
     },
+
     async update({ flowId, projectId, request }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
         const flowLock = await acquireLock({
             key: flowId,
@@ -141,4 +153,22 @@ export const flowService = {
         await flowInstanceService.onFlowDelete({ projectId, flowId })
         await flowRepo.delete({ projectId: projectId, id: flowId })
     },
+    async count(req:{
+        projectId:string
+        folderId?:string
+    }) :Promise<number>{
+        if(req.folderId === undefined) {
+            return flowRepo.count({where:{projectId:req.projectId}})
+        }
+        if(req.folderId !== 'NULL') {
+            return flowRepo.count({
+                where:[{folderId:req.folderId, projectId:req.projectId}],
+            })
+        }
+        return flowRepo.count({
+            where:[{folderId:IsNull(), projectId:req.projectId}],
+        })
+    },
+    
 }
+

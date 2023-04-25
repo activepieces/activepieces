@@ -26,7 +26,7 @@ export class ApPaginatorComponent implements OnInit {
         this.pageSizeChanged.emit(val);
         this.router.navigate(['.'], {
           relativeTo: this.route,
-          queryParams: { limit: val },
+          queryParams: { limit: val, cursor: undefined },
           queryParamsHandling: 'merge',
         });
       })
@@ -56,10 +56,9 @@ export class ApPaginatorComponent implements OnInit {
   setQueryParams(cursor: string) {
     const params: { [key: string]: string | number } = {
       limit: this.pageSizeControl.value,
+      cursor: cursor,
     };
-    if (cursor) {
-      params['cursor'] = cursor;
-    }
+
     this.router.navigate(['.'], {
       relativeTo: this.route,
       queryParams: params,

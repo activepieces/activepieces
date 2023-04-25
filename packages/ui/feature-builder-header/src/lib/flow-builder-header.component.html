@@ -40,12 +40,17 @@
         </div>
       </ap-button>
       <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
-      <app-test-flow-modal></app-test-flow-modal>
+
       <ng-container *ngIf=" (viewMode$ | async)===false">
-        <ng-container *ngIf="(instance$ | async) as instance">
-          <app-toggle-instance-state [instance]="instance"></app-toggle-instance-state>
-        </ng-container>
-        <app-publish-button *ngIf="(viewMode$ | async) === false"></app-publish-button>
+        <div class="ap-flex ap-items-center ap-gap-1">
+          <app-test-flow-modal></app-test-flow-modal>
+          <div class="ap-border-solid ap-border-r ap-border-dividers ap-min-w-[1px] ap-h-[18px]">
+          </div>
+          <ng-container *ngIf="(instance$ | async) as instance">
+            <app-toggle-instance-state [instance]="instance"></app-toggle-instance-state>
+          </ng-container>
+        </div>
+        <app-publish-button></app-publish-button>
       </ng-container>
     </div>
   </div>

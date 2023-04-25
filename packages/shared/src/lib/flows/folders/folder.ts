@@ -10,4 +10,6 @@ export const Folder = Type.Object({
     displayName: Type.String()
 });
 
+export const UncategorizedFolderId = 'UNCATEGORIZED';
 export type Folder = Static<typeof Folder>
+
