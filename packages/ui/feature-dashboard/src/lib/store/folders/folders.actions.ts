@@ -18,7 +18,7 @@ const setInitial = createAction(
     folders: FolderDto[];
     allFlowsNumber: number;
     uncategorizedFlowsNumber: number;
-    selectedFolderId:string
+    selectedFolderId: string;
   }>()
 );
 

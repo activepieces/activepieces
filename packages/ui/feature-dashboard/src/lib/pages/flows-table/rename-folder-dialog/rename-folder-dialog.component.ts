@@ -5,7 +5,6 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { FoldersService } from '../../../services/folders.service';
 import { Observable, catchError, map, of, take, tap } from 'rxjs';
 import { FolderActions } from '../../../store/folders/folders.actions';
 import { Store } from '@ngrx/store';
@@ -13,6 +12,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FolderValidator } from '../../../validators/folderName.validator';
 import { FoldersSelectors } from '../../../store/folders/folders.selector';
 import { ErrorCode } from '@activepieces/shared';
+import { FoldersService } from '@/ui/common/src';
 
 export interface RenameFolderDialogData {
   folderId: string;
@@ -25,53 +25,63 @@ export interface RenameFolderDialogData {
 export class RenameFolderDialogComponent {
   folderForm: FormGroup<{ displayName: FormControl<string> }>;
   renamingFolder$: Observable<void>;
-  displayNameIsReplicated=false;
+  displayNameIsReplicated = false;
   loading = false;
-  valueChanges$:Observable<string>;
+  valueChanges$: Observable<string>;
   constructor(
     private fb: FormBuilder,
     private foldersService: FoldersService,
     public dialogRef: MatDialogRef<RenameFolderDialogComponent>,
     private store: Store,
     @Inject(MAT_DIALOG_DATA)
-    public data: RenameFolderDialogData,
+    public data: RenameFolderDialogData
   ) {
     this.folderForm = this.fb.group({
       displayName: new FormControl('', {
         validators: Validators.required,
-        asyncValidators:FolderValidator.createValidator(this.store.select(FoldersSelectors.selectFolders).pipe(take(1)),this.data.folderId),
+        asyncValidators: FolderValidator.createValidator(
+          this.store.select(FoldersSelectors.selectFolders).pipe(take(1)),
+          this.data.folderId
+        ),
         nonNullable: true,
       }),
     });
-   this.valueChanges$= this.folderForm.controls.displayName.valueChanges.pipe(tap(()=>{
-      this.displayNameIsReplicated=false;
-    }))
+    this.valueChanges$ = this.folderForm.controls.displayName.valueChanges.pipe(
+      tap(() => {
+        this.displayNameIsReplicated = false;
+      })
+    );
   }
   renameFolder() {
     if (this.folderForm.valid) {
       this.renamingFolder$ = this.foldersService
-        .renameFolder({displayName:this.folderForm.controls.displayName.value, folderId:this.data.folderId})
+        .renameFolder({
+          displayName: this.folderForm.controls.displayName.value,
+          folderId: this.data.folderId,
+        })
         .pipe(
-          catchError((err)=>{
-            debugger;
-            if(err.error.code === ErrorCode.VALIDATION)
-            {
+          catchError((err) => {
+            if (err.error.code === ErrorCode.VALIDATION) {
               this.folderForm.controls.displayName.setErrors({
-                'nameUsed':true
-              })
+                nameUsed: true,
+              });
             }
             console.error(err);
             return of(undefined);
           }),
           tap((folder) => {
-            this.loading=false;
-            if(folder)
-            {
-              this.store.dispatch(FolderActions.renameFolder({ folderId:this.data.folderId, newName:this.folderForm.controls.displayName.value }));
+            this.loading = false;
+            if (folder) {
+              this.store.dispatch(
+                FolderActions.renameFolder({
+                  folderId: this.data.folderId,
+                  newName: this.folderForm.controls.displayName.value,
+                })
+              );
               this.dialogRef.close();
             }
           }),
-          map(()=>void 0)
+          map(() => void 0)
         );
     }
   }

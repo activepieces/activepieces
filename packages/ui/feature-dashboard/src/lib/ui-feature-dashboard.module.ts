@@ -45,7 +45,7 @@ import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-d
     FoldersListComponent,
     NewFolderDialogComponent,
     MoveFlowToFolderDialogComponent,
-    RenameFolderDialogComponent
+    RenameFolderDialogComponent,
   ],
 })
 export class UiFeatureDashboardModule {}

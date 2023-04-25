@@ -33,7 +33,7 @@ export const flowInstanceService = {
             await flowVersionService.overwriteVersion(flow.version.id, flow.version)
         }
         const oldInstance: Partial<FlowInstance | null> = await flowInstanceRepo.findOneBy({ projectId, flowId: request.flowId })
-        if (oldInstance) {
+        if (oldInstance && oldInstance.status === FlowInstanceStatus.ENABLED) {
             triggerUtils.disable({
                 flowVersion: flow.version,
                 projectId: oldInstance.projectId,
@@ -106,11 +106,13 @@ export const flowInstanceService = {
             })
         }
         const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
-        await triggerUtils.disable({
-            flowVersion: flowVersion,
-            projectId: flowInstance.projectId,
-            simulate: false,
-        })
+        if(flowInstance.status === FlowInstanceStatus.ENABLED) {
+            await triggerUtils.disable({
+                flowVersion: flowVersion,
+                projectId: flowInstance.projectId,
+                simulate: false,
+            })
+        }
         await flowInstanceRepo.delete({ projectId, flowId })
     },
     async onFlowDelete({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<void> {

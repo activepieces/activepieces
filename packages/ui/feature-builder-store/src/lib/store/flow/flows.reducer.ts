@@ -6,6 +6,7 @@ import {
   FlowInstanceStatus,
   FlowOperationType,
   FlowVersionState,
+  Folder,
   TriggerType,
 } from '@activepieces/shared';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
@@ -15,6 +16,7 @@ import { FlowItem } from '../../model/flow-item';
 
 type FlowsState = {
   flow: Flow;
+  folder?: Folder;
   builderState: BuilderState;
 };
 
@@ -41,8 +43,8 @@ const initialState: FlowsState = {
       },
       state: FlowVersionState.DRAFT,
     },
-    folderDisplayName:'Uncategorized'
   },
+  folder: undefined,
   builderState: {
     selectedRun: undefined,
     leftSidebar: {
@@ -59,9 +61,10 @@ const initialState: FlowsState = {
 
 const _flowsReducer = createReducer(
   initialState,
-  on(FlowsActions.setInitial, (state, { flow, run }): FlowsState => {
+  on(FlowsActions.setInitial, (state, { flow, run, folder }): FlowsState => {
     return {
       flow: flow,
+      folder: folder,
       builderState: {
         selectedRun: run,
         leftSidebar: {
@@ -126,15 +129,12 @@ const _flowsReducer = createReducer(
     clonedState.flow.version.displayName = displayName;
     return clonedState;
   }),
-  on(
-    FlowsActions.savedSuccess,
-    (state, { saveRequestId, flow }): FlowsState => {
-      const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
-      clonedState.flow.version.id = flow.version.id;
-      clonedState.flow.version.state = flow.version.state;
-      return clonedState;
-    }
-  ),
+  on(FlowsActions.savedSuccess, (state, { flow }): FlowsState => {
+    const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
+    clonedState.flow.version.id = flow.version.id;
+    clonedState.flow.version.state = flow.version.state;
+    return clonedState;
+  }),
   on(FlowsActions.setLeftSidebar, (state, { sidebarType }): FlowsState => {
     const clonedState: FlowsState = JSON.parse(JSON.stringify(state));
     return {

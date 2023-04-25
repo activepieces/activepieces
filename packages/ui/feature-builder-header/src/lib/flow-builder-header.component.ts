@@ -31,7 +31,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   flow$: Observable<Flow>;
   editingFlowName = false;
   deleteFlowDialogClosed$: Observable<void>;
-  folderDisplayName$:Observable<string>;
+  folderDisplayName$: Observable<string>;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -46,7 +46,9 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.instance$ = this.store.select(BuilderSelectors.selectCurrentInstance);
     this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
     this.flow$ = this.store.select(BuilderSelectors.selectCurrentFlow);
-    this.folderDisplayName$ = this.store.select(BuilderSelectors.selectCurrentFlowFolderName)
+    this.folderDisplayName$ = this.store.select(
+      BuilderSelectors.selectCurrentFlowFolderName
+    );
     this.magicWandEnabled$ = this.route.queryParams.pipe(
       map((params) => {
         return !!params['magicWand'];
@@ -82,8 +84,8 @@ export class FlowBuilderHeaderComponent implements OnInit {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
       entityName: flow.version.displayName,
-      note:`This will permanently delete the flow, all its data and any background runs.
-      You can't undo this action.`
+      note: `This will permanently delete the flow, all its data and any background runs.
+      You can't undo this action.`,
     };
     const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
       data: dialogData,

@@ -26,13 +26,6 @@ const _foldersReducer = createReducer(
       { folders, allFlowsNumber, uncategorizedFlowsNumber, selectedFolderId }
     ): FoldersState => {
       const selectedFolder = folders.find((f) => f.id === selectedFolderId);
-      console.log({
-        displayAllFlows: !selectedFolder && selectedFolderId !== 'NULL',
-        folders,
-        selectedFolder: selectedFolder,
-        allFlowsNumber,
-        uncategorizedFlowsNumber,
-      });
       return {
         displayAllFlows: !selectedFolder && selectedFolderId !== 'NULL',
         folders,
@@ -43,18 +36,19 @@ const _foldersReducer = createReducer(
     }
   ),
   on(FolderActions.deleteFolder, (state, { folderId }): FoldersState => {
-    const idx = state.folders.findIndex((f) => (f.id === folderId));
+    const idx = state.folders.findIndex((f) => f.id === folderId);
     if (idx > -1) {
       const folders = [...state.folders];
       const folder = folders[idx];
-      const uncategorizedFlowsNumber = state.uncategorizedFlowsNumber+ folder.numberOfFlows;
+      const uncategorizedFlowsNumber =
+        state.uncategorizedFlowsNumber + folder.numberOfFlows;
       folders.splice(idx, 1);
       return {
         ...state,
         folders: folders,
         displayAllFlows: true,
         selectedFolder: undefined,
-        uncategorizedFlowsNumber:uncategorizedFlowsNumber
+        uncategorizedFlowsNumber: uncategorizedFlowsNumber,
       };
     }
     return state;
@@ -62,10 +56,10 @@ const _foldersReducer = createReducer(
   on(
     FolderActions.renameFolder,
     (state, { folderId, newName }): FoldersState => {
-      const idx = state.folders.findIndex((f) => (f.id === folderId));
+      const idx = state.folders.findIndex((f) => f.id === folderId);
       if (idx > -1) {
         const folders = [...state.folders];
-        folders[idx] = {...folders[idx], displayName:newName};
+        folders[idx] = { ...folders[idx], displayName: newName };
         return {
           ...state,
           folders: folders,

@@ -1,3 +1,4 @@
+export * from './lib/service/folders.service';
 export * from './lib/ui-common.module';
 export * from './lib/service/authentication.service';
 export * from './lib/animation/fade-in-up.animation';

@@ -22,6 +22,11 @@ export const FolderEntity = new EntitySchema<FolderSchema>({
             columns: ['projectId'],
             unique: false,
         },
+        {
+            name: 'idx_folder_project_id_display_name',
+            columns: ['projectId', 'displayName'],
+            unique: true,
+        },
     ],
     relations: {
         flows: {
