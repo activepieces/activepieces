@@ -121,13 +121,15 @@ const _foldersReducer = createReducer(
       };
     }
   }),
-  on(FolderActions.moveFlow, (state, { targetFolderId }) => {
+  on(FolderActions.moveFlow, (state, { targetFolderId, flowFolderId }) => {
     const folders = [...state.folders];
     let uncategorizedFlowsNumber = state.uncategorizedFlowsNumber;
+
     const targetFolderIndex = folders.findIndex((f) => f.id === targetFolderId);
-    const currentlySelectedFolderIndex = folders.findIndex(
-      (f) => f.id === state.selectedFolder?.id
-    );
+    const currentlySelectedFolderIndex = !state.displayAllFlows
+      ? folders.findIndex((f) => f.id === state.selectedFolder?.id)
+      : folders.findIndex((f) => f.id === flowFolderId);
+
     if (targetFolderIndex < 0) {
       uncategorizedFlowsNumber++;
     } else {
