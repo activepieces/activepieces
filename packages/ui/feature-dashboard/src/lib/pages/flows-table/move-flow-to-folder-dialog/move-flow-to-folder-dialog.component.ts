@@ -62,6 +62,7 @@ export class MoveFlowToFolderDialogComponent {
             this.store.dispatch(
               FolderActions.moveFlow({
                 targetFolderId: this.foldersForm.controls.folder.value,
+                flowFolderId: this.data.folderId,
               })
             );
             this.dialogRef.close(true);

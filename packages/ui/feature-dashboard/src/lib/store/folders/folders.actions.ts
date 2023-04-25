@@ -41,7 +41,7 @@ const selectFolder = createAction(
 );
 const moveFlow = createAction(
   FoldersActionType.MOVE_FLOW,
-  props<{ targetFolderId: string }>()
+  props<{ targetFolderId: string; flowFolderId?: string | null }>()
 );
 const renameFolder = createAction(
   FoldersActionType.RENAME_FOLDER,
