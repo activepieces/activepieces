@@ -1,0 +1,34 @@
+<div class="ap-flex ap-mb-[25px]">
+    <ng-container *ngIf="showAllFlows$|async;else folderTemplate">
+        <div class="ap-flex-grow ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
+                src="assets/img/custom/all-flows.svg" class="ap-h-[15px] ap-w-[15px] ap-fill-bleachedGray"
+                [applyClass]="true"></svg-icon> All
+            flows</div>
+        <ap-button btnColor="primary" btnSize="medium" (buttonClicked)="createFlow()" [loading]="creatingFlow"> + New
+            Flow</ap-button>
+    </ng-container>
+    <ng-template #folderTemplate>
+        <ng-container *ngIf="currentFolder$| async as folder; else uncategorizedTemplate">
+            <div class="ap-flex-grow ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
+                    src="assets/img/custom/folder.svg" class="ap-h-[15px] ap-w-[15px] ap-fill-bleachedGray"
+                    [applyClass]="true"></svg-icon>{{folder.displayName}}</div>
+            <ap-button btnColor="primary" btnSize="medium" (buttonClicked)="createFlow()" [loading]="creatingFlow"> +
+                New
+                Flow</ap-button>
+        </ng-container>
+        <ng-template #uncategorizedTemplate>
+
+            <div class="ap-flex-grow ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
+                    src="assets/img/custom/uncategorized-folder.svg"
+                    class="ap-h-[15px] ap-w-[15px] ap-fill-bleachedGray" [applyClass]="true"></svg-icon>Uncategorized
+            </div>
+            <ap-button btnColor="primary" btnSize="medium" (buttonClicked)="createFlow()" [loading]="creatingFlow">
+                +
+                New
+                Flow</ap-button>
+
+        </ng-template>
+    </ng-template>
+
+</div>
+<ng-container *ngIf="createFlow$ | async"> </ng-container>

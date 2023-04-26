@@ -15,8 +15,8 @@
         [stepMention]="_stepMention"></app-generic-step-mention-item>
     </ng-template>
   </div>
-  <ap-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
-    class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
+  <ap-button *ngIf="hoverTracker.isHovered && !!(sampleData$ | async)" btnColor="primary" btnStyle="basic" type="button"
+    btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
     (click)="mentionClicked.emit(_stepMention)">Select
   </ap-button>
 

@@ -1,5 +1,4 @@
 import { AppConnectionId } from "../app-connection/app-connection";
-import { CollectionId } from "../collections/collection";
 import { FileId } from "../file/file";
 import { FlowRunId } from "../flow-run/flow-run";
 import { FlowId } from "../flows/flow";
@@ -14,7 +13,6 @@ export class ActivepiecesError extends Error {
 }
 
 type ErrorParams =
-  | CollectionNotFoundErrorParams
   | ConfigNotFoundErrorParams
   | ExistingUserErrorParams
   | FileNotFoundErrorParams
@@ -22,7 +20,7 @@ type ErrorParams =
   | FlowRunNotFoundErrorParams
   | ProjectNotFoundErrorParams
   | FlowVersionNotFoundErrorParams
-  | InstanceNotFoundErrorParams
+  | FlowInstanceNotFoundErrorParams
   | InvalidBearerTokenParams
   | InvalidCredentialsErrorParams
   | JobRemovalFailureErrorParams
@@ -77,18 +75,10 @@ export type FlowNotFoundErrorParams = BaseErrorParams<
   }
 >
 
-export type CollectionNotFoundErrorParams = BaseErrorParams<
-  ErrorCode.COLLECTION_NOT_FOUND,
+export type FlowInstanceNotFoundErrorParams = BaseErrorParams<
+  ErrorCode.FLOW_INSTANCE_NOT_FOUND,
   {
-    id: CollectionId;
-  }
->
-
-export type InstanceNotFoundErrorParams = BaseErrorParams<
-  ErrorCode.INSTANCE_NOT_FOUND,
-  {
-    id?: InstanceId;
-    collectionId?: CollectionId;
+    id?: InstanceId
   }
 >
 
@@ -234,8 +224,6 @@ export type ValidationErrorParams = BaseErrorParams<
 >
 
 export enum ErrorCode {
-  COLLECTION_NOT_FOUND = "COLLECTION_NOT_FOUND",
-  COLLECTION_VERSION_NOT_FOUND = "COLLECTION_VERSION_NOT_FOUND",
   CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
   EXISTING_USER = "EXISTING_USER",
   APP_CONNECTION_NOT_FOUND = "APP_CONNECTION_NOT_FOUND",
@@ -243,7 +231,7 @@ export enum ErrorCode {
   FLOW_NOT_FOUND = "FLOW_NOT_FOUND",
   FLOW_RUN_NOT_FOUND = "INSTANCE_NOT_FOUND",
   FLOW_VERSION_NOT_FOUND = "FLOW_VERSION_NOT_FOUND",
-  INSTANCE_NOT_FOUND = "INSTANCE_NOT_FOUND",
+  FLOW_INSTANCE_NOT_FOUND = "INSTANCE_NOT_FOUND",
   INVALID_BEARER_TOKEN = "INVALID_BEARER_TOKEN",
   INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
   JOB_REMOVAL_FAILURE = "JOB_REMOVAL_FAILURE",

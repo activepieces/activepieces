@@ -54,9 +54,6 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
     if (!this.loading) {
       this.loading = true;
       const observables = {
-        collectionId: this.store
-          .select(BuilderSelectors.selectCurrentCollectionId)
-          .pipe(take(1)),
         flowVersionId: this.store
           .select(BuilderSelectors.selectCurrentFlowVersionId)
           .pipe(take(1)),
@@ -66,10 +63,13 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
       };
       this.testStep$ = forkJoin(observables).pipe(
         switchMap((res) => {
-          if (!res.collectionId || !res.flowVersionId || !res.stepName) {
+          if (!res.flowVersionId || !res.stepName) {
             throw new Error('some test piece step params are missing');
           }
-          return this.testStepService.testPieceStep(res);
+          return this.testStepService.testPieceStep({
+            flowVersionId: res.flowVersionId,
+            stepName: res.stepName,
+          });
         }),
         tap((res) => {
           this.loading = false;

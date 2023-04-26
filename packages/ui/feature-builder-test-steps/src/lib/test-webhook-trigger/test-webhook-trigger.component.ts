@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   BehaviorSubject,
-  EMPTY,
   forkJoin,
   interval,
   map,
@@ -53,11 +52,11 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
   private initialObservables() {
     this.setSelectedDataControlListener();
     this.initialHistoricalData$ = this.store
-      .select(BuilderSelectors.selectCurrentFlowId)
+      .select(BuilderSelectors.selectCurrentFlow)
       .pipe(
-        switchMap((res) => {
+        switchMap((flow) => {
           return this.testStepService.getTriggerEventsResults(
-            res?.toString() || ''
+            flow.id?.toString() || ''
           );
         }),
         map((res) => {
@@ -92,26 +91,18 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
 
   testStep() {
     this.loading = true;
-    this.testStep$ = this.store
-      .select(BuilderSelectors.selectCurrentFlowId)
-      .pipe(
-        take(1),
-        switchMap((id) => {
-          if (id) {
-            const stopListening$ = merge(
-              this.cancelTesting$,
-              this.foundNewResult$
-            );
-            return interval(this.POLLING_TEST_INTERVAL_MS).pipe(
-              takeUntil(stopListening$),
-              switchMap(() => {
-                return this.createResultsChecker(id.toString());
-              })
-            );
-          }
-          return EMPTY;
-        })
-      );
+    this.testStep$ = this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
+      take(1),
+      switchMap((flow) => {
+        const stopListening$ = merge(this.cancelTesting$, this.foundNewResult$);
+        return interval(500).pipe(
+          takeUntil(stopListening$),
+          switchMap(() => {
+            return this.createResultsChecker(flow.id.toString());
+          })
+        );
+      })
+    );
   }
 
   createResultsChecker(flowId: string) {
