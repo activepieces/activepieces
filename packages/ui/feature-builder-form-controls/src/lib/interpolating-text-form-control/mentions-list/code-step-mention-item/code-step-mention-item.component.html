@@ -6,8 +6,8 @@
     </mat-icon>
     <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="stepMention"></app-generic-step-mention-item>
     <div class="ap-flex-grow"></div>
-    <ap-button *ngIf="parentNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
-      btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
+    <ap-button *ngIf="parentNodeHoverTracker.isHovered && !!(codeStepTest$ | async)" btnColor="primary" btnStyle="basic"
+      type="button" btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
       [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
       (buttonClicked)="mentionClicked.emit(stepMention)">Select
     </ap-button>

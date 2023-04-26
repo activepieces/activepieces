@@ -5,9 +5,9 @@ import { notionCommon } from '../common';
 import { Client } from "@notionhq/client";
 
 export const newDatabaseItem = createTrigger({
-    name: 'new_response',
-    displayName: 'New Response',
-    description: 'Triggers when there is new response',
+    name: 'new_database_item',
+    displayName: 'New Database Item',
+    description: 'Triggers when a new item is added to a database',
     props: {
         authentication: notionCommon.authentication,
         database_id: notionCommon.database_id

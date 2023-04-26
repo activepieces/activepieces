@@ -8,10 +8,7 @@ import {
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { combineLatest, map, Observable, of, Subject } from 'rxjs';
-import {
-  PieceTrigger,
-  TriggerType,
-} from '@activepieces/shared';
+import { PieceTrigger, TriggerType } from '@activepieces/shared';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   MentionListItem,
@@ -66,6 +63,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
       BuilderSelectors.selectIsSchduleTrigger
     );
     this.isPollingTrigger$ = this.checkIfItIsPollingTrigger();
+
     if (cachedResult) {
       this.sampleData$ = combineLatest({
         stepTree: of({ children: cachedResult, error: '' }),
@@ -90,7 +88,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
   }
   getChachedData() {
     const step = this._stepMention.step;
-    let cachedResult: undefined | MentionTreeNode[] = [];
+    let cachedResult: undefined | MentionTreeNode[] = undefined;
     if (
       step.type === TriggerType.PIECE &&
       step.settings.inputUiInfo.currentSelectedData
@@ -105,13 +103,6 @@ export class PieceTriggerMentionItemComponent implements OnInit {
     return cachedResult;
   }
 
-  getErrorMessage() {
-    const noSampleData = `No sample available`;
-    const error = !this._stepMention.step.settings.triggerName
-      ? `Please select a trigger`
-      : noSampleData;
-    return error;
-  }
   checkIfItIsPollingTrigger() {
     return this.actionMetaDataService
       .getPieceMetadata(

@@ -23,11 +23,14 @@ import {
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
 import { fileService } from '../../file/file.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { flowVersionRepo } from './flow-version-repo'
 import { getPiece } from '@activepieces/pieces-apps'
+import { databaseConnection } from '../../database/database-connection'
+import { FlowVersionEntity } from './flow-version-entity'
+import { flowVersionSideEffects } from './flow-version-side-effects'
 
 const branchSetttingsValidaotr = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
+const flowVersionRepo = databaseConnection.getRepository(FlowVersionEntity)
 
 export const flowVersionService = {
     async overwriteVersion(flowVersionId: FlowVersionId, mutatedFlowVersion: FlowVersion) {
@@ -37,8 +40,15 @@ export const flowVersionService = {
         })
     },
     async applyOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion | null> {
+        await flowVersionSideEffects.preApplyOperation({
+            projectId,
+            flowVersion,
+            operation,
+        })
+
         const mutatedFlowVersion = await applySingleOperation(projectId, flowVersion, operation)
         await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>)
+
         return await flowVersionRepo.findOneBy({
             id: flowVersion.id,
         })

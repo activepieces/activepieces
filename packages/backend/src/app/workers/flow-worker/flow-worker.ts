@@ -20,7 +20,6 @@ import { fileService } from '../../file/file.service'
 import { codeBuilder } from '../code-worker/code-builder'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { OneTimeJobData } from './job-data'
-import { collectionService } from '../../collections/collection.service'
 import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
@@ -68,7 +67,6 @@ const installPieces = async (params: InstallPiecesParams): Promise<void> => {
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId)
-    const collection = await collectionService.getOneOrThrow({ projectId: jobData.projectId, id: jobData.collectionId })
 
     // Don't use sandbox for draft versions, since they are mutable and we don't want to cache them.
     const key = flowVersion.id + (FlowVersionState.DRAFT === flowVersion.state ? '-draft' + apId() : '')
@@ -95,8 +93,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         }
         const executionOutput = await engineHelper.executeFlow(sandbox, {
             flowVersionId: flowVersion.id,
-            collectionId: collection.id,
-            projectId: collection.projectId,
+            projectId: jobData.projectId,
             triggerPayload: {
                 duration: 0,
                 input: {},
@@ -105,16 +102,17 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             },
         })
         const logsFile = await fileService.save(jobData.projectId, Buffer.from(JSON.stringify(executionOutput)))
-        await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id)
+        await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id, executionOutput.tasks)
     }
     catch (e: unknown) {
         log.error(e, `[${jobData.runId}] Error executing flow`)
         if (await sandbox.timedOut()) {
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null)
+            // TODO Flow timed out, consume one task
+            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null, 1)
         }
         else {
             captureException(e as Error)
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null)
+            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null, 0)
         }
     }
     finally {

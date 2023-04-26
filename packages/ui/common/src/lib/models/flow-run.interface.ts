@@ -7,7 +7,6 @@ import {
 export const initializedRun: FlowRun = {
   id: '',
   projectId: '',
-  collectionId: '',
   flowVersionId: '',
   flowId: '',
   status: ExecutionOutputStatus.RUNNING,
@@ -17,6 +16,5 @@ export const initializedRun: FlowRun = {
   created: '',
   updated: '',
   environment: RunEnvironment.TESTING,
-  collectionDisplayName: '',
   flowDisplayName: '',
 };

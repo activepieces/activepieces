@@ -11,22 +11,20 @@ const getFlowOrThrow = async (webhookSimulation: WebhookSimulation): Promise<Flo
 
 export const webhookSideEffects = {
     async onCreate(webhookSimulation: WebhookSimulation): Promise<void> {
-        const { projectId, collectionId, version: flowVersion } = await getFlowOrThrow(webhookSimulation)
+        const { projectId, version: flowVersion } = await getFlowOrThrow(webhookSimulation)
 
         await triggerUtils.enable({
             projectId,
-            collectionId,
             flowVersion,
             simulate: true,
         })
     },
 
     async onDelete(webhookSimulation: WebhookSimulation): Promise<void> {
-        const { projectId, collectionId, version: flowVersion } = await getFlowOrThrow(webhookSimulation)
+        const { projectId, version: flowVersion } = await getFlowOrThrow(webhookSimulation)
 
         await triggerUtils.disable({
             projectId,
-            collectionId,
             flowVersion,
             simulate: true,
         })

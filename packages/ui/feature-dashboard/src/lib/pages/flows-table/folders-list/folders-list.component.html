@@ -1,0 +1,69 @@
+<div class="ap-flex ap-items-center ap-mb-[30px]">
+    <div class="ap-flex-grow">Folders </div><ap-icon-button iconFilename="add.svg" [width]="14" tooltipText="New Folder"
+        (buttonClicked)="createFolder()" [height]="14"></ap-icon-button>
+</div>
+<div class="ap-max-h-[90%] ap-overflow-scroll folders-list">
+    <div class="ap-flex ap-items-center ap-gap-4 ap-p-4 ap-cursor-pointer hover:ap-bg-graySelect "
+        [class.selected-folder-item]="(showAllFlows$|async) === true" (click)="showAllFlows()">
+        <svg-icon src="assets/img/custom/all-flows.svg"
+            class="ap-h-[15px] ap-w-[15px] ap-fill-bleachedGray  folder-icon" [applyClass]="true"></svg-icon>
+        <div class="ap-body-1 ap-flex-grow">
+            All flows
+        </div>
+        <div class="ap-typography-body-1 ap-text-description">
+            {{allFlowsNumber$ | async}}
+        </div>
+    </div>
+    <div class="ap-flex ap-items-center ap-gap-4 ap-p-4 ap-cursor-pointer hover:ap-bg-graySelect "
+        [class.selected-folder-item]="(selectedFolder$| async) === undefined && (showAllFlows$|async) === false"
+        (click)="setSelectedFolder('NULL')">
+        <svg-icon src="assets/img/custom/uncategorized-folder.svg"
+            class="ap-h-[15px] ap-w-[15px] ap-fill-bleachedGray hover:ap-fill-title  folder-icon"
+            [applyClass]="true"></svg-icon>
+        <div class="ap-body-1 ap-flex-grow">
+            Uncategorized
+        </div>
+        <div class="ap-typography-body-1 ap-text-description">
+            {{uncategorizedFlowsNumber$ | async}}
+        </div>
+    </div>
+    <mat-divider *ngIf="(folders$|async)?.length"></mat-divider>
+    <div *ngFor="let folder of folders$|async" (click)="setSelectedFolder(folder.id)"
+        class="ap-flex ap-items-center ap-gap-4 ap-p-4 ap-cursor-pointer hover:ap-bg-graySelect ap-group folder-list-item"
+        [class.selected-folder-item]="folder.id === (selectedFolder$| async)?.id">
+        <svg-icon src="assets/img/custom/folder.svg"
+            class="ap-h-[15px] ap-w-[15px] ap-fill-bleachedGray hover:ap-fill-title  folder-icon"
+            [applyClass]="true"></svg-icon>
+        <div class="ap-body-1 ap-flex-grow">
+            {{folder.displayName}}
+        </div>
+        <div class="ap-typography-body-1 ap-text-description ap-block group-hover:ap-hidden"
+            [class.ap-hidden]="folderIdOfMenuOpened === folder.id">
+            {{folder.numberOfFlows}}
+        </div>
+        <div class="group-hover:ap-block ap-hidden" [class.!ap-block]="folderIdOfMenuOpened === folder.id">
+            <mat-icon [matMenuTriggerFor]="menu" (menuClosed)="folderIdOfMenuOpened=undefined"
+                (menuOpened)="folderIdOfMenuOpened=folder.id">more_vert</mat-icon>
+        </div>
+
+        <mat-menu [hasBackdrop]="true" #menu="matMenu" xPosition="before">
+            <button mat-menu-item (click)="renameFolder(folder)">
+                <div class="ap-flex ap-gap-3 ap-items-center">
+                    <svg-icon [applyClass]="true" src="assets/img/custom/pencil-underline.svg"
+                        class="ap-fill-body ap-w-[20px] ap-h-[20px]">
+                    </svg-icon>
+                    <span class="ap-text-body">Rename</span>
+                </div>
+            </button>
+            <button mat-menu-item (click)="deleteFolder(folder)">
+                <div class="ap-flex ap-gap-3 ap-items-center">
+                    <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
+                        [applyClass]="true"></svg-icon>
+                    <span class="ap-text-danger">Delete</span>
+                </div>
+            </button>
+        </mat-menu>
+    </div>
+</div>
+
+<ng-container *ngIf="createFolderDialogClosed$ | async"></ng-container>

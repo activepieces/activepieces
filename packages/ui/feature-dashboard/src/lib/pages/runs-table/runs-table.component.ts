@@ -24,13 +24,7 @@ export class RunsTableComponent implements OnInit {
   paginator!: ApPaginatorComponent;
   runsPage$: Observable<SeekPage<FlowRun>>;
   dataSource!: RunsTableDataSource;
-  displayedColumns = [
-    'collectionName',
-    'flowName',
-    'status',
-    'started',
-    'finished',
-  ];
+  displayedColumns = ['flowName', 'status', 'started', 'finished'];
   readonly ExecutionOutputStatus = ExecutionOutputStatus;
 
   constructor(

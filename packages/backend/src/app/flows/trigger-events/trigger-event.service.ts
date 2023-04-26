@@ -48,7 +48,6 @@ export const triggerEventService = {
                 const testResult =( await engineHelper.executeTrigger({
                     hookType: TriggerHookType.TEST,
                     flowVersion: flow.version,
-                    collectionId: flow.collectionId,
                     webhookUrl: await webhookService.getWebhookUrl({
                         flowId: flow.id,
                         simulate: true,

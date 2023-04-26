@@ -9,6 +9,7 @@ import {
   StepOutputStatus
 } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
+import { globals } from '../globals';
 
 export class CodeActionHandler extends BaseActionHandler<CodeAction> {
   variableService: VariableService;
@@ -24,6 +25,8 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
   async execute(
     executionState: ExecutionState
   ): Promise<StepOutput> {
+
+    globals.addOneTask();
     const stepOutput = new StepOutput();
     const params = await this.variableService.resolve(
       this.action.settings.input,

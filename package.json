@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.3.10",
+  "version": "0.3.11",
   "scripts": {
     "prepare": "husky install",
     "start:frontend": "nx serve ui-core",
@@ -40,6 +40,7 @@
     "@ngrx/effects": "^15.1.0",
     "@ngrx/store": "^15.1.0",
     "@ngrx/store-devtools": "^15.1.0",
+    "@nrwl/nx-cloud": "^15.3.4",
     "@notionhq/client": "^2.2.3",
     "@sentry/node": "^7.38.0",
     "@sinclair/typebox": "^0.26.3",
@@ -145,6 +146,7 @@
     "@types/node": "16.11.7",
     "@types/nodemailer": "^6.4.7",
     "@types/papaparse": "^5.3.7",
+    "@types/pg": "^8.6.6",
     "@types/prismjs": "^1.26.0",
     "@types/qs": "^6.9.7",
     "@typescript-eslint/eslint-plugin": "^5.36.1",

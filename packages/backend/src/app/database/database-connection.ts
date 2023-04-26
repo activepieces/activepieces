@@ -2,12 +2,10 @@ import { TlsOptions } from 'node:tls'
 import { DataSource } from 'typeorm'
 import { UserEntity } from '../user/user-entity'
 import { ProjectEntity } from '../project/project.entity'
-import { CollectionEntity } from '../collections/collection.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FileEntity } from '../file/file.entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
-import { InstanceEntity } from '../instance/instance.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { system } from '../helper/system/system'
@@ -34,6 +32,10 @@ import { migrateSchedule1679014156667 } from './migration/1679014156667-migrate-
 import { AddInputUiInfo1681107443963 } from './migration/1681107443963-AddInputUiInfo'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { CreateWebhookSimulationSchema1680698259291 } from './migration/1680698259291-create-webhook-simulation-schema'
+import { FlowInstanceEntity } from '../flows/flow-instance/flow-instance.entity'
+import { FolderEntity } from '../flows/folder/folder.entity'
+import { RemoveCollections1680986182074 } from './migration/1680986182074-RemoveCollections'
+import { StoreAllPeriods1681019096716 } from './migration/1681019096716-StoreAllPeriods'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -70,6 +72,8 @@ const getMigrations = () => {
         migrateSchedule1679014156667,
         AddInputUiInfo1681107443963,
         CreateWebhookSimulationSchema1680698259291,
+        RemoveCollections1680986182074,
+        StoreAllPeriods1681019096716,
     ]
 }
 
@@ -88,15 +92,14 @@ export const databaseConnection = new DataSource({
     migrations: getMigrations(),
     entities: [
         TriggerEventEntity,
+        FlowInstanceEntity,
         AppEventRoutingEntity,
         AppCredentialEntity,
         ConnectionKeyEntity,
-        CollectionEntity,
         FileEntity,
         FlagEntity,
         FlowEntity,
         FlowVersionEntity,
-        InstanceEntity,
         FlowRunEntity,
         ProjectEntity,
         StoreEntryEntity,
@@ -105,5 +108,6 @@ export const databaseConnection = new DataSource({
         ProjectPlanEntity,
         ProjectUsageEntity,
         WebhookSimulationEntity,
+        FolderEntity,
     ],
 })

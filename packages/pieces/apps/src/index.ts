@@ -24,6 +24,7 @@ import { hackernews } from '@activepieces/piece-hackernews';
 import { http } from '@activepieces/piece-http';
 import { hubspot } from '@activepieces/piece-hubspot';
 import { mailchimp } from '@activepieces/piece-mailchimp';
+import { monday } from '@activepieces/piece-monday';
 import { mindee } from '@activepieces/piece-mindee';
 import { openai } from '@activepieces/piece-openai';
 import { pipedrive } from '@activepieces/piece-pipedrive';
@@ -64,7 +65,7 @@ import { mailerLite } from '@activepieces/piece-mailer-lite';
 import { googleForms }  from '@activepieces/piece-google-forms';
 import { xml }  from '@activepieces/piece-xml';
 import { vtex }  from '@activepieces/piece-vtex';
-
+import { postgres }  from '@activepieces/piece-postgres';
 
 /**
  * @deprecated this will be removed, don't use it
@@ -98,6 +99,7 @@ export const pieces: Piece[] = [
     http,
     hubspot,
     mailchimp,
+    monday,
     mailerLite,
     mindee,
     openai,
@@ -134,7 +136,8 @@ export const pieces: Piece[] = [
     salesforce,
     matrix,
     smtp,
-    googleForms
+    googleForms,
+    postgres
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 /**

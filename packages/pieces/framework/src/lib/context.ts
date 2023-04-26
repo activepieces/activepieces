@@ -43,6 +43,7 @@ export interface ConnectionsManager {
 export interface Store {
     put<T>(key: string, value: T, scope?: StoreScope): Promise<T>;
     get<T>(key: string, scope?: StoreScope): Promise<T | null>;
+    delete(key: string, scope?: StoreScope): Promise<void>;
 }
 
 export enum StoreScope {

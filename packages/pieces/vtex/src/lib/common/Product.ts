@@ -1,12 +1,6 @@
 import axios, { Axios } from "axios";
 import { CreateProductParams, UpdateProductParams, GetProductByIdResponse } from "./types";
 
-const baseUrl = "vindi.myvtex.com";
-
-const apiKey = "vtexappkey-vindi-CWSWOB"
-const apiToken = "KFLHJYTGTKABUBUCIKYNBCUCOCWEYSKCNYUUPCRLVGXQICDDJALRZQJQCHVUQGVHLDNFMSCDXFEHYYKCHULEJZTYVPREOGEZHWVHIYTXVUTHPMCIJCWDPWYGKZEXYVKX"
-
-
 export class Product {
   api: Axios;
 

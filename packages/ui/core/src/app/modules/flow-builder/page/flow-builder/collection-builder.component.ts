@@ -22,12 +22,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
-import {
-  Collection,
-  ExecutionOutputStatus,
-  Instance,
-  TriggerType,
-} from '@activepieces/shared';
+import { ExecutionOutputStatus, TriggerType } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import {
   LeftSideBarType,
@@ -35,6 +30,8 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { TestStepService } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
+import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/feature-builder-form-controls';
+import { UUID } from 'angular2-uuid';
 @Component({
   selector: 'app-collection-builder',
   templateUrl: './collection-builder.component.html',
@@ -65,7 +62,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     private runDetailsService: RunDetailsService,
     private titleService: Title,
     private pannerService: PannerService,
-    private testStepService: TestStepService
+    private testStepService: TestStepService,
+    private autoCompleteDropdownService: BuilderAutocompleteMentionsDropdownService
   ) {
     this.testingStepSectionIsRendered$ =
       this.testStepService.testingStepSectionIsRendered$.asObservable();
@@ -81,41 +79,43 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
       tap((value) => {
         const runInformation: InstanceRunInfo = value['runInformation'];
         if (runInformation !== undefined) {
-          const collection = runInformation.collection;
           const flow = runInformation.flow;
           const run = runInformation.run;
+          const folder = runInformation.folder;
+          const appConnections = value['connections'];
           this.store.dispatch(
             BuilderActions.loadInitial({
-              collection: collection,
-              flows: [flow],
+              flow,
               viewMode: ViewModeEnum.VIEW_INSTANCE_RUN,
-              run: run,
-              appConnections: value['connections'],
+              run,
+              appConnections,
+              folder,
             })
           );
 
-          this.titleService.setTitle(`AP-${collection.displayName}`);
+          this.titleService.setTitle(`AP-${flow.version.displayName}`);
           this.snackbar.openFromComponent(TestRunBarComponent, {
             duration: undefined,
           });
         } else {
-          const collection: Collection = value['collection'];
-          const flows = value['flows'];
-          const instance: Instance | undefined = value['instance'];
-          this.titleService.setTitle(`AP-${collection.displayName}`);
+          const flow = value['flowAndFolder'].flow;
+          const folder = value['flowAndFolder'].folder;
+          const instance = value['instance'];
+          const appConnections = value['connections'];
+          this.titleService.setTitle(`AP-${flow.version.displayName}`);
+
           this.store.dispatch(
             BuilderActions.loadInitial({
-              collection: collection,
-              flows: flows.data,
+              flow,
+              instance,
               viewMode: ViewModeEnum.BUILDING,
-              run: undefined,
-              instance: instance,
-              appConnections: value['connections'],
+              appConnections,
+              folder,
             })
           );
         }
       }),
-      map((value) => void 0)
+      map(() => void 0)
     );
 
     this.leftSidebar$ = this.store.select(
@@ -132,16 +132,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    document.addEventListener(
-      'mousemove',
-      () => {
-        //ignore
-      },
-      {
-        passive: false,
-        capture: true,
-      }
-    );
     this.store.dispatch(FlowItemDetailsActions.loadFlowItemsDetails());
   }
 
@@ -201,5 +191,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 
   leftDrawerHandleDragEnded() {
     this.leftSidebarDragging = false;
+  }
+  closeAutoComplete() {
+    this.autoCompleteDropdownService.lastOpenDropdownId$.next(new UUID());
   }
 }

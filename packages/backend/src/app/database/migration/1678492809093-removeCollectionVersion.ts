@@ -12,23 +12,34 @@ export class removeCollectionVersion1678492809093 implements MigrationInterface 
         await queryRunner.query('ALTER TABLE "instance" DROP COLUMN "collectionVersionId"')
         await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN "collectionVersionId"')
         await queryRunner.query('ALTER TABLE "collection" ADD "displayName" character varying')
-
-        await queryRunner.commitTransaction()
-        await queryRunner.startTransaction()
-        const collectionRepo = queryRunner.connection.getRepository('collection')
-        const collections = await collectionRepo.find({})
+        const collections = await queryRunner.query('SELECT * FROM public.collection')
+    
         for (let i = 0; i < collections.length; ++i) {
             let currentCollection = collections[i]
-            const [latestCollectionVersion] = await queryRunner.query(`SELECT * FROM public.collection_version WHERE "collectionId"='${currentCollection.id}' ORDER BY created DESC LIMIT 1`)
+            const latestCollectionVersionQuery = `
+                SELECT * FROM public.collection_version
+                WHERE "collectionId" = '${currentCollection.id}'
+                ORDER BY created DESC
+                LIMIT 1
+            ` 
+            const [latestCollectionVersion] = await queryRunner.query(latestCollectionVersionQuery)
+    
             let displayName = 'Untitled'
             if (latestCollectionVersion) {
                 displayName = latestCollectionVersion['displayName']
             }
+    
             currentCollection = {
                 ...currentCollection,
                 displayName: displayName,
             }
-            await collectionRepo.update(currentCollection.id, currentCollection)
+    
+            const updateCollectionQuery = `
+                UPDATE public.collection
+                SET displayName = '${displayName}'
+                WHERE id = '${currentCollection.id}'
+            `
+            await queryRunner.query(updateCollectionQuery)
         }
         logger.info('Finished migration removeCollectionVersion1678492809093')
     }
