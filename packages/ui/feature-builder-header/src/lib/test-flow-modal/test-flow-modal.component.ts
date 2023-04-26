@@ -8,13 +8,11 @@ import {
 import {
   catchError,
   combineLatest,
-  EMPTY,
   interval,
   map,
   Observable,
   of,
   switchMap,
-  take,
   takeUntil,
   takeWhile,
   tap,
@@ -134,37 +132,31 @@ export class TestFlowModalComponent implements OnInit {
 
   testFlowButtonClicked(flow: Flow, testFlowTemplate: TemplateRef<any>) {
     this.submitted = true;
-    this.executeTest$ = combineLatest([this.selectedFlow$]).pipe(
-      take(1),
-      switchMap(([nullableFlow]) => {
-        const flow = nullableFlow!;
-        if (flow.version!.trigger?.type === TriggerType.WEBHOOK) {
-          this.dialogRef = this.dialogService.open(testFlowTemplate);
-          return EMPTY;
-        } else if (flow.version!.trigger!.type === TriggerType.PIECE) {
-          const { pieceName, pieceVersion } = flow.version!.trigger.settings;
-          return this.actionMetaDataService
-            .getPieceMetadata(pieceName, pieceVersion)
-            .pipe(
-              map((pieceMetadata) => {
-                return (
-                  pieceMetadata.triggers[
-                    (flow.version?.trigger!.settings as PieceTriggerSettings)
-                      .triggerName
-                  ].sampleData || {}
-                );
-              }),
-              switchMap((sampleData) => this.executeTest(flow, sampleData))
-            )
-            .pipe(
-              switchMap((sampleData) => this.executeTest(flow, sampleData))
-            );
-        } else {
-          this.executeTest$ = this.executeTest(flow, {});
-          return EMPTY;
-        }
-      })
-    );
+    if (flow.version!.trigger?.type === TriggerType.WEBHOOK) {
+      this.dialogRef = this.dialogService.open(testFlowTemplate);
+    } else if (flow.version!.trigger!.type === TriggerType.PIECE) {
+      const { pieceName, pieceVersion } = flow.version!.trigger.settings;
+      const realSampleData =
+        flow.version.trigger.settings.inputUiInfo.currentSelectedData;
+      this.executeTest$ = (
+        realSampleData
+          ? of(realSampleData)
+          : this.actionMetaDataService
+              .getPieceMetadata(pieceName, pieceVersion)
+              .pipe(
+                map((pieceMetadata) => {
+                  return (
+                    pieceMetadata.triggers[
+                      (flow.version?.trigger!.settings as PieceTriggerSettings)
+                        .triggerName
+                    ].sampleData || {}
+                  );
+                })
+              )
+      ).pipe(switchMap((sampleData) => this.executeTest(flow, sampleData)));
+    } else {
+      this.executeTest$ = this.executeTest(flow, {});
+    }
   }
   testFlowWithPayload(flow: Flow) {
     if (this.payloadControl.valid) {
