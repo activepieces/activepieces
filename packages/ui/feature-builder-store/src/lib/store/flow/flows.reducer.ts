@@ -85,6 +85,10 @@ const _flowsReducer = createReducer(
       type: FlowOperationType.UPDATE_TRIGGER,
       request: operation,
     });
+    if(operation.name === state.builderState.focusedStep?.name)
+    {
+      clonedState.builderState.focusedStep = operation;
+    }
     clonedState.builderState = {
       ...clonedState.builderState,
       focusedStep: clonedState.flow.version?.trigger as FlowItem,
@@ -108,6 +112,10 @@ const _flowsReducer = createReducer(
       type: FlowOperationType.UPDATE_ACTION,
       request: operation,
     });
+    if(operation.name === state.builderState.focusedStep?.name)
+    {
+      clonedState.builderState.focusedStep = operation;
+    }
     clonedState.builderState = {
       ...clonedState.builderState,
     };
