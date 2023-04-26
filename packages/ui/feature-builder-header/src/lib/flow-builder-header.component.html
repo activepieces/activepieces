@@ -1,0 +1,65 @@
+<nav class="navbar-container navbar-expand ap-relative">
+  <svg-icon [svgStyle]="{ width: '125px', height: '20px' }" src="assets/img/custom/logo/full-logo.svg" class="ap-logo">
+  </svg-icon>
+  <div class="ap-text-center ap-flex ap-items-center ap-justify-center">
+  </div>
+
+  <div class="ap-flex ap-items-center">
+    <div class="ap-flex ap-items-center ap-gap-2">
+      <ap-icon-button [width]="7" [height]="14" iconFilename="back.svg" [tooltipText]="'Home'"
+        (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
+      <div class="ap-flex-grow ap-flex ap-items-center ap-gap-2" #spacer>
+        <div class="ap-typography-body-1 ap-truncate ap-max-w-[150px]" #folderName
+          [matTooltip]="folderName.scrollWidth > folderName.clientWidth? (folderDisplayName$|async) || '' : ''">
+          {{folderDisplayName$ | async}}
+        </div>
+        <div class="ap-typography-body-1 ap-text-description">
+          /
+        </div>
+        <ap-editable-text [editing]="editingFlowName" (editingChanges)="changeEditValue($event)"
+          [value]="(flow$ |async)?.version?.displayName || ''" (valueChanges)="saveFlowName($event)"
+          [disableEditing]="viewMode$ | async | defaultTrue" [allowClick]="true"
+          [cssClasses]="'ap-typography-body-1 !ap-font-semibold'" class="ap-text-title"></ap-editable-text>
+      </div>
+      <div class="ap-p-1 ap-cursor-pointer" [matMenuTriggerFor]="menu" xPosition="after">
+        <svg-icon [svgStyle]="{ width: '12px', height: '7px' }" src="assets/img/custom/chevron.svg">
+        </svg-icon>
+      </div>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item (click)="editingFlowName = true">Rename</button>
+        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="copyId(flow.id)"> Copy flow ID</button>
+        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
+          <div class="ap-text-danger">
+            Delete
+          </div>
+        </button>
+      </mat-menu>
+
+    </div>
+    <div class="ap-flex-grow">
+
+    </div>
+    <div class="ap-flex ap-items-center ap-gap-2">
+      <ap-button btnStyle="basic" btnColor="basic" btnSize="medium" (click)="guessAi()"
+        *ngIf="magicWandEnabled$ | async">
+        <div class="ap-flex ap-items-center ap-font-semibold">
+          🪄 Magic Wand
+        </div>
+      </ap-button>
+      <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
+
+      <ng-container *ngIf=" (viewMode$ | async)===false">
+        <div class="ap-flex ap-items-center ap-gap-1">
+          <app-test-flow-modal></app-test-flow-modal>
+          <div class="ap-border-solid ap-border-r ap-border-dividers ap-min-w-[1px] ap-h-[18px]">
+          </div>
+          <ng-container *ngIf="(instance$ | async) as instance">
+            <app-toggle-instance-state [instance]="instance"></app-toggle-instance-state>
+          </ng-container>
+        </div>
+        <app-publish-button></app-publish-button>
+      </ng-container>
+    </div>
+  </div>
+</nav>
+<ng-container *ngIf="deleteFlowDialogClosed$|async"></ng-container>

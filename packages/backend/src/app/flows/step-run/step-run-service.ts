@@ -1,7 +1,6 @@
 import {
     ActionType,
     ActivepiecesError,
-    CollectionId,
     ErrorCode,
     ExecuteActionOperation,
     flowHelper,
@@ -21,7 +20,6 @@ type CreateReturn = {
 
 type CreateParams = {
     projectId: ProjectId
-    collectionId: CollectionId
     flowVersionId: FlowVersionId
     stepName: string
 }
@@ -41,7 +39,7 @@ const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, 
 }
 
 export const stepRunService = {
-    async create({ projectId, collectionId, flowVersionId, stepName }: CreateParams): Promise<CreateReturn> {
+    async create({ projectId, flowVersionId, stepName }: CreateParams): Promise<CreateReturn> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowHelper.getStep(flowVersion, stepName)
 
@@ -73,7 +71,6 @@ export const stepRunService = {
             input,
             testExecutionContext,
             projectId,
-            collectionId,
         }
 
         const result = await engineHelper.executeAction(operation)

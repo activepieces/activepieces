@@ -56,6 +56,16 @@ export function containsLowercaseCharacter(): ValidatorFn {
     return null;
   };
 }
+
+export function matchesString(val: string): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!val || val.toLowerCase() !== control.value?.toLowerCase()) {
+      return { invalid: true };
+    }
+    return null;
+  };
+}
+
 export function containsUppercaseCharacter(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     const uppsercaseCharacterRegex = /[A-Z]/;

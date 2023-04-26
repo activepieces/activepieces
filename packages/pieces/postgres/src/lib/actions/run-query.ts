@@ -35,15 +35,21 @@ export const runQuery = createAction({
                     description: "A string indicating the name of the database to connect to.",
                     required: true,
                 }),
+                enable_ssl: Property.Checkbox({
+                    displayName: "Enable SSL",
+                    description: "Connect to the postgres database over SSL",
+                    required: true,
+                    defaultValue: true,
+                }),
                 reject_unauthorized: Property.Checkbox({
-                    displayName: 'Enforce Encryption',
-                    description: 'Enforce using SSL/TLS for the connection.',
+                    displayName: 'Verify server certificate',
+                    description: 'Verify the server certificate against trusted CAs or a CA provided in the certificate field below. This will fail if the database server is using a self signed certificate.',
                     required: true,
                     defaultValue: true
                 }),
                 certificate: Property.LongText({
                     displayName: 'Certificate',
-                    description: 'The certificate to use for the connection.',
+                    description: 'The CA certificate to use for verification of server certificate.',
                     defaultValue: '',
                     required: false,
                 }),
@@ -73,15 +79,19 @@ export const runQuery = createAction({
         }),
     },
     async run(context) {
-        const { host, user, database, password, port, reject_unauthorized: rejectUnauthorized, certificate } = context.propsValue.authentication;
+        const { host, user, database, password, port, enable_ssl, reject_unauthorized: rejectUnauthorized, certificate } = context.propsValue.authentication;
         const { query, query_timeout, application_name, connection_timeout_millis: connectionTimeoutMillis } = context.propsValue;
+        const sslConf = {
+            rejectUnauthorized: rejectUnauthorized,
+            ca: certificate && certificate.length > 0 ? certificate : undefined
+        }
         const client = new pg.Client({
             host,
             port: Number(port),
             user,
             password,
             database,
-            ssl: { rejectUnauthorized, ca: (certificate && certificate.length > 0) ? certificate : undefined },
+            ssl: enable_ssl ? sslConf : undefined,
             query_timeout: Number(query_timeout),
             statement_timeout: Number(query_timeout),
             application_name,

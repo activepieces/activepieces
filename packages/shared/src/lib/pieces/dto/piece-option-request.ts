@@ -5,8 +5,7 @@ export const PieceOptionRequest = Type.Object({
     pieceVersion: SemVerType,
     stepName: Type.String({}),
     propertyName: Type.String({}),
-    input: Type.Any({}),
-    collectionId: Type.String({}),
+    input: Type.Any({})
 });
 
 export type PieceOptionRequest = Static<typeof PieceOptionRequest>;

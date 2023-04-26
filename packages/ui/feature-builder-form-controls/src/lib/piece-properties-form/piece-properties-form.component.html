@@ -385,7 +385,7 @@
 <ng-container *ngIf="configDropdownChanged$  | keyvalue"></ng-container>
 
 <ng-template #textInputTemplate let-property let-formGroup="formGroup">
-  <div [formGroup]="formGroup" #interpolatingTextComponentContainer>
+  <div [formGroup]="formGroup" #interpolatingTextComponentContainer (click)="$event.stopImmediatePropagation()">
     <mat-form-field class="ap-w-full" appearance="outline"
       (click)="isTriggerPieceForm?null: mentionsDropdown.showMenuSubject$.next(true)">
       <mat-label>{{property.value.displayName}}</mat-label>

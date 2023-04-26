@@ -15,7 +15,6 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { HttpInterceptorService } from './service/interceptor.service';
 import { MatTabsModule } from '@angular/material/tabs';
 import { UiCommonModule } from '@activepieces/ui/common';
-import { UiFeatureBuilderTabsModule } from '@activepieces/ui/feature-builder-tabs';
 import { UiFeatureBuilderHeaderModule } from '@activepieces/ui/feature-builder-header';
 import { UiFeatureBuilderLeftSidebarModule } from '@activepieces/ui/feature-builder-left-sidebar';
 import { UiFeatureBuilderStoreModule } from '@activepieces/ui/feature-builder-store';
@@ -38,7 +37,6 @@ import { UiFeatureBuilderRightSidebarModule } from '@activepieces/ui/feature-bui
     MatExpansionModule,
     MonacoEditorModule,
     MatTabsModule,
-    UiFeatureBuilderTabsModule,
     UiFeatureBuilderLeftSidebarModule,
     UiFeatureBuilderHeaderModule,
     UiFeatureBuilderStoreModule,

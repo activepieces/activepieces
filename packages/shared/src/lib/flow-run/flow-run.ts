@@ -2,7 +2,6 @@ import { BaseModel } from '../common/base-model';
 import { ProjectId } from '../project/project';
 import { FlowVersionId } from '../flows/flow-version';
 import { FileId } from '../file/file';
-import { CollectionId } from '../collections/collection';
 import { ApId } from '../common/id-generator';
 import {
   ExecutionOutput,
@@ -16,10 +15,8 @@ export interface FlowRun extends BaseModel<FlowRunId> {
   id: FlowRunId;
   projectId: ProjectId;
   flowId: FlowId;
-  collectionId: CollectionId;
   flowVersionId: FlowVersionId;
   flowDisplayName: string;
-  collectionDisplayName: string;
   logsFileId: FileId | null;
   status: ExecutionOutputStatus;
   startTime: string;

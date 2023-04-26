@@ -6,7 +6,6 @@ import {Trigger} from "./triggers/trigger";
 export type FlowVersionId = ApId;
 
 export interface FlowVersion extends BaseModel<FlowVersionId> {
-
   flowId: FlowId;
   displayName: string;
   trigger: Trigger;

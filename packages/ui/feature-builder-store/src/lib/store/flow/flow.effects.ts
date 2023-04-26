@@ -4,15 +4,11 @@ import {
   catchError,
   concatMap,
   EMPTY,
-  groupBy,
-  mergeMap,
   Observable,
   of,
   switchMap,
   tap,
-  throwError,
 } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import {
   FlowsActions,
@@ -25,42 +21,31 @@ import { UUID } from 'angular2-uuid';
 import { BuilderActions } from '../builder/builder.action';
 import {
   Flow,
-  FlowId,
   FlowOperationRequest,
   FlowOperationType,
   TriggerType,
 } from '@activepieces/shared';
-import { TestRunBarComponent } from '../../test-run-bar/test-run-bar.component';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
-import { NO_PROPS, TabState } from '../../model/tab-state';
+import { NO_PROPS } from '../../model/builder-state';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
-import { RunDetailsService } from '../../service/run-details.service';
 import { FlowService } from '@activepieces/ui/common';
 @Injectable()
 export class FlowsEffects {
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(BuilderActions.loadInitial),
-      map(({ flows, run }) => {
-        return FlowsActions.setInitial({
-          flows: flows,
-          run: run,
-        });
+      switchMap(({ flow, run, folder }) => {
+        return of(FlowsActions.setInitial({ flow, run, folder }));
+      }),
+      catchError((err) => {
+        console.error(err);
+        throw err;
       })
     );
   });
 
-  addFlow$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(FlowsActions.addFlow),
-      switchMap((action) => {
-        return of(FlowsActions.selectFlow({ flowId: action.flow.id }));
-      })
-    );
-  });
-
-  removePieceSelection = createEffect(() => {
+  removeStepSelection$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.setRightSidebar),
       concatLatestFrom(() =>
@@ -87,14 +72,11 @@ export class FlowsEffects {
         this.store.select(BuilderSelectors.selectCurrentFlow)
       ),
       switchMap(([action, flow]) => {
-        if (flow) {
-          return of(
-            FlowsActions.selectStepByName({
-              stepName: flow.version.trigger.name,
-            })
-          );
-        }
-        return EMPTY;
+        return of(
+          FlowsActions.selectStepByName({
+            stepName: flow.version.trigger.name,
+          })
+        );
       })
     );
   });
@@ -103,15 +85,10 @@ export class FlowsEffects {
     return this.actions$.pipe(
       ofType(FlowsActions.deleteAction),
       concatLatestFrom(() => [
-        this.store.select(BuilderSelectors.selectCurrentTabState),
-        this.store.select(BuilderSelectors.selectCurrentStepName),
+        this.store.select(BuilderSelectors.selectCurrentRightSideBarType),
       ]),
-      switchMap(([{ operation }, state, currentStepName]) => {
-        if (
-          state &&
-          currentStepName === operation.name &&
-          state.rightSidebar.type === RightSideBarType.EDIT_STEP
-        ) {
+      switchMap(([{ operation }, rightSidebar]) => {
+        if (rightSidebar === RightSideBarType.EDIT_STEP) {
           return of(
             FlowsActions.setRightSidebar({
               sidebarType: RightSideBarType.NONE,
@@ -128,7 +105,7 @@ export class FlowsEffects {
     return this.actions$.pipe(
       ofType(FlowsActions.addAction),
       concatLatestFrom(() =>
-        this.store.select(BuilderSelectors.selectCurrentFlowId)
+        this.store.select(BuilderSelectors.selectCurrentFlow)
       ),
       switchMap(([{ operation }]) => {
         return of(
@@ -138,41 +115,14 @@ export class FlowsEffects {
     );
   });
 
-  handleRunSnackbar$ = createEffect(
-    () => {
-      return this.actions$.pipe(
-        ofType(FlowsActions.selectFlow),
-        concatLatestFrom(() =>
-          this.store.select(BuilderSelectors.selectCurrentFlowRun)
-        ),
-        tap(([{ flowId }, run]) => {
-          if (run === undefined) {
-            this.snackBar.dismiss();
-          } else {
-            this.snackBar.openFromComponent(TestRunBarComponent, {
-              duration: undefined,
-              data: { flowId: flowId },
-            });
-          }
-        })
-      );
-    },
-    {
-      dispatch: false,
-    }
-  );
-
   exitRun$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.exitRun),
       concatLatestFrom(() =>
-        this.store.select(BuilderSelectors.selectCurrentLeftSidebar)
+        this.store.select(BuilderSelectors.selectCurrentLeftSidebarType)
       ),
-      switchMap(([{ flowId }, leftSideBar]) => {
-        if (
-          leftSideBar != null &&
-          leftSideBar.type === LeftSideBarType.SHOW_RUN
-        ) {
+      switchMap(([action, leftSideBar]) => {
+        if (leftSideBar === LeftSideBarType.SHOW_RUN) {
           return of(
             FlowsActions.setLeftSidebar({
               sidebarType: LeftSideBarType.NONE,
@@ -190,16 +140,12 @@ export class FlowsEffects {
       concatLatestFrom(() => [
         this.store.select(BuilderSelectors.selectCurrentFlow),
       ]),
-      concatMap(([run, flow]) => {
-        if (run?.flowId === flow?.id) {
-          return of(
-            FlowsActions.setLeftSidebar({
-              sidebarType: LeftSideBarType.SHOW_RUN,
-            })
-          );
-        }
-        this.runDetailsService.currentStepResult$.next(undefined);
-        return EMPTY;
+      concatMap(([run]) => {
+        return of(
+          FlowsActions.setLeftSidebar({
+            sidebarType: LeftSideBarType.SHOW_RUN,
+          })
+        );
       })
     );
   });
@@ -235,40 +181,6 @@ export class FlowsEffects {
         }
         return of(...actionsToDispatch);
       })
-    );
-  });
-
-  // We cannot merge deleteFlow with SingleFlowModifyingState,
-  // as usage of current flow selector to fetch flow id
-  // but after deletion instantly this will be another flow after deleted flow.
-  startDeleteFlow$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(FlowsActions.deleteFlow),
-      concatMap((action) => {
-        const genSavedId = UUID.UUID();
-        return of(
-          FlowsActions.deleteFlowStarted({
-            flowId: action.flowId,
-            saveRequestId: genSavedId,
-          })
-        );
-      })
-    );
-  });
-
-  deleteFlowStarted$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(FlowsActions.deleteFlowStarted),
-      concatMap((action: { flowId: FlowId; saveRequestId: UUID }) => {
-        return this.flowService.delete(action.flowId).pipe(
-          map(() => {
-            return FlowsActions.deleteSuccess({
-              saveRequestId: action.saveRequestId,
-            });
-          })
-        );
-      }),
-      catchError((error) => of(FlowsActions.savedFailed(error)))
     );
   });
 
@@ -333,38 +245,22 @@ export class FlowsEffects {
     () => {
       return this.actions$.pipe(
         ofType(FlowsActions.applyUpdateOperation),
-        groupBy((action) => action.flow.id),
-        mergeMap((changeFlowPendingAction$) => {
-          return changeFlowPendingAction$.pipe(
-            concatLatestFrom((action) => [
-              this.store.select(BuilderSelectors.selectFlow(action.flow.id)),
-              this.store.select(
-                BuilderSelectors.selectTabState(action.flow.id)
-              ),
-            ]),
-            concatMap(([action, flow, tabState]) => {
-              if (flow === undefined || tabState === undefined) {
-                return throwError(() => new Error('Flow is not selected'));
-              }
-
-              return this.processFlowUpdate({
-                operation: action.operation,
-                flow: flow,
-                tabState: tabState,
-                saveRequestId: action.saveRequestId,
-              });
-            }),
-            catchError((e) => {
-              console.error(e);
-              const shownBar = this.snackBar.open(
-                'You have unsaved changes on this page due to network disconnection.',
-                'Refresh',
-                { duration: undefined, panelClass: 'error' }
-              );
-              shownBar.afterDismissed().subscribe(() => location.reload());
-              return of(FlowsActions.savedFailed(e));
-            })
+        concatMap((action) => {
+          return this.processFlowUpdate({
+            operation: action.operation,
+            flow: action.flow,
+            saveRequestId: action.saveRequestId,
+          });
+        }),
+        catchError((e) => {
+          console.error(e);
+          const shownBar = this.snackBar.open(
+            'You have unsaved changes on this page due to network disconnection.',
+            'Refresh',
+            { duration: undefined, panelClass: 'error' }
           );
+          shownBar.afterDismissed().subscribe(() => location.reload());
+          return of(FlowsActions.savedFailed(e));
         })
       );
     },
@@ -374,7 +270,6 @@ export class FlowsEffects {
   private processFlowUpdate(request: {
     operation: FlowOperationRequest;
     flow: Flow;
-    tabState: TabState;
     saveRequestId: UUID;
   }): Observable<Flow> {
     return this.flowService.update(request.flow.id, request.operation).pipe(
@@ -405,7 +300,6 @@ export class FlowsEffects {
     private flowService: FlowService,
     private store: Store,
     private actions$: Actions,
-    private snackBar: MatSnackBar,
-    private runDetailsService: RunDetailsService
+    private snackBar: MatSnackBar
   ) {}
 }

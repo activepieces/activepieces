@@ -15,7 +15,7 @@ div {
 
 .viewed-text-container {
   overflow: hidden;
-  cursor: default;
+
   text-overflow: ellipsis;
   white-space: nowrap;
 }

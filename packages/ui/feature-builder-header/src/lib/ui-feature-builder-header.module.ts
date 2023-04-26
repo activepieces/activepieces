@@ -2,11 +2,13 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { UiFeatureBuilderStoreModule } from '@activepieces/ui/feature-builder-store';
-import { FlowBuilderHeaderComponent } from './flow-builder-header/flow-builder-header.component';
-import { FeedbackComponent } from './flow-builder-header/feedback/feedback.component';
-import { MagicWandDialogComponent } from './flow-builder-header/magic-wand-dialog/magic-flow-dialog.component';
-import { ToggleInstanceStateComponent } from './flow-builder-header/toggle-instance-state/toggle-instance-state.component';
-import { PublishButtonComponent } from './flow-builder-header/publish-button/publish-button.component';
+import { FeedbackComponent } from './feedback/feedback.component';
+import { MagicWandDialogComponent } from './magic-wand-dialog/magic-flow-dialog.component';
+import { FlowBuilderHeaderComponent } from './flow-builder-header.component';
+import { ToggleInstanceStateComponent } from './toggle-instance-state/toggle-instance-state.component';
+import { PublishButtonComponent } from './publish-button/publish-button.component';
+import { TestFlowModalComponent } from './test-flow-modal/test-flow-modal.component';
+import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 
 const exportedDeclarations = [
   FlowBuilderHeaderComponent,
@@ -14,9 +16,16 @@ const exportedDeclarations = [
   MagicWandDialogComponent,
   ToggleInstanceStateComponent,
   PublishButtonComponent,
+  TestFlowModalComponent,
 ];
 @NgModule({
-  imports: [CommonModule, UiCommonModule, UiFeatureBuilderStoreModule],
+  imports: [
+    CommonModule,
+    UiCommonModule,
+    UiFeatureBuilderStoreModule,
+    CodemirrorModule,
+    UiCommonModule,
+  ],
   declarations: [...exportedDeclarations],
   exports: [...exportedDeclarations],
 })
