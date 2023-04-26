@@ -20,7 +20,6 @@ import { fileService } from '../../file/file.service'
 import { codeBuilder } from '../code-worker/code-builder'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { OneTimeJobData } from './job-data'
-import { collectionService } from '../../collections/collection.service'
 import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
@@ -68,7 +67,6 @@ const installPieces = async (params: InstallPiecesParams): Promise<void> => {
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId)
-    const collection = await collectionService.getOneOrThrow({ projectId: jobData.projectId, id: jobData.collectionId })
 
     // Don't use sandbox for draft versions, since they are mutable and we don't want to cache them.
     const key = flowVersion.id + (FlowVersionState.DRAFT === flowVersion.state ? '-draft' + apId() : '')
@@ -95,8 +93,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         }
         const executionOutput = await engineHelper.executeFlow(sandbox, {
             flowVersionId: flowVersion.id,
-            collectionId: collection.id,
-            projectId: collection.projectId,
+            projectId: jobData.projectId,
             triggerPayload: {
                 duration: 0,
                 input: {},

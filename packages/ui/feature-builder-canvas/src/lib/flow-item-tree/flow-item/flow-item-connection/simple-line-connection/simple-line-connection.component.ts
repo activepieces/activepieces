@@ -21,12 +21,12 @@ import {
 import { Observable } from 'rxjs';
 import {
   AddButtonAndFlowItemNameContainer,
-  AddButtonType,
   FlowItem,
   FlowRendererService,
   FlowsActions,
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
+import { StepLocationRelativeToParent } from '@activepieces/shared';
 
 @Component({
   selector: 'app-simple-line-connection',
@@ -111,7 +111,7 @@ export class SimpleLineConnectionComponent
       FlowsActions.setRightSidebar({
         sidebarType: RightSideBarType.STEP_TYPE,
         props: {
-          buttonType: AddButtonType.NEXT_ACTION,
+          stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
           stepName: this.flowItem.name,
         },
       })

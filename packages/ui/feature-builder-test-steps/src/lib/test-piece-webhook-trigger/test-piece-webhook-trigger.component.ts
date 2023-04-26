@@ -72,11 +72,13 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
         })
       );
     this.initialHistoricalData$ = this.store
-      .select(BuilderSelectors.selectCurrentFlowId)
+      .select(BuilderSelectors.selectCurrentFlow)
       .pipe(
-        switchMap((res) => {
-          if (res) {
-            return this.testStepService.getTriggerEventsResults(res.toString());
+        switchMap((flow) => {
+          if (flow && flow.id) {
+            return this.testStepService.getTriggerEventsResults(
+              flow.id.toString()
+            );
           }
           throw new Error('No flow is selected');
         }),
@@ -113,33 +115,31 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
 
   testStep() {
     this.loading = true;
-    this.testStep$ = this.store
-      .select(BuilderSelectors.selectCurrentFlowId)
-      .pipe(
-        take(1),
-        tap((id) => {
-          if (id) {
-            this.startSimulating$ = this.testStepService
-              .startPieceWebhookSimulation(id.toString())
-              .pipe(map(() => void 0));
-          }
-        }),
-        switchMap((id) => {
-          if (id) {
-            const stopListening$ = merge(
-              this.cancelTesting$,
-              this.foundNewResult$
-            );
-            return interval(this.POLLING_TEST_INTERVAL_MS).pipe(
-              takeUntil(stopListening$),
-              switchMap(() => {
-                return this.createResultsChecker(id.toString());
-              })
-            );
-          }
-          return EMPTY;
-        })
-      );
+    this.testStep$ = this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
+      take(1),
+      tap((flow) => {
+        if (flow && flow.id) {
+          this.startSimulating$ = this.testStepService
+            .startPieceWebhookSimulation(flow.id.toString())
+            .pipe(map(() => void 0));
+        }
+      }),
+      switchMap((id) => {
+        if (id) {
+          const stopListening$ = merge(
+            this.cancelTesting$,
+            this.foundNewResult$
+          );
+          return interval(this.POLLING_TEST_INTERVAL_MS).pipe(
+            takeUntil(stopListening$),
+            switchMap(() => {
+              return this.createResultsChecker(id.toString());
+            })
+          );
+        }
+        return EMPTY;
+      })
+    );
   }
 
   createResultsChecker(flowId: string) {
@@ -205,12 +205,12 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
     this.loading = false;
     this.cancelTesting$.next(true);
     this.deleteWebhookSimulation$ = this.store
-      .select(BuilderSelectors.selectCurrentFlowId)
+      .select(BuilderSelectors.selectCurrentFlow)
       .pipe(
-        switchMap((flowId) => {
-          if (flowId) {
+        switchMap((flow) => {
+          if (flow.id) {
             return this.testStepService.deletePieceWebhookSimulation(
-              flowId.toString()
+              flow.id.toString()
             );
           }
           throw new Error('flow Id is null');
