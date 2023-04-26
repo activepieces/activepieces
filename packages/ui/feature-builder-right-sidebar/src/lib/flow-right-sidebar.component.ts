@@ -15,6 +15,7 @@ import {
   BuilderSelectors,
   FlowItem,
   RightSideBarType,
+  ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import {
   TestStepService,
@@ -48,6 +49,8 @@ export class FlowRightSidebarComponent implements OnInit {
   isCurrentStepPollingTrigger$: Observable<boolean>;
   isResizerGrabbed = false;
   isCurrentStepPieceWebhookTrigger$: Observable<boolean>;
+  viewMode$: Observable<ViewModeEnum>;
+  ViewModeEnum = ViewModeEnum;
   currentStepPieceVersion$: Observable<
     | {
         version: string;
@@ -73,6 +76,11 @@ export class FlowRightSidebarComponent implements OnInit {
     this.listenToStepChangeAndAnimateResizer();
     this.checkIfCurrentStepIsPollingTrigger();
     this.checkIfCurrentStepIsPieceWebhookTrigger();
+    this.checkForViewMode();
+  }
+
+  private checkForViewMode() {
+    this.viewMode$ = this.store.select(BuilderSelectors.selectViewMode);
   }
 
   private checkIfCurrentStepIsPollingTrigger() {
