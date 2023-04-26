@@ -30,6 +30,12 @@ export const webhookService = {
             flowId: flow.id,
             projectId: flow.projectId,
         })
+        triggerEventService.saveEvent({
+            flowId,
+            payload,
+            projectId,
+        })
+
         if (isNil(flowInstance) || flowInstance.status !== FlowInstanceStatus.ENABLED) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_INSTANCE_NOT_FOUND,
@@ -38,13 +44,7 @@ export const webhookService = {
                 },
             })
         }
-        const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId);
-
-        triggerEventService.saveEvent({
-            flowId,
-            payload,
-            projectId,
-        })
+        const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
 
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId,
