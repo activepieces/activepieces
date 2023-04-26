@@ -1,7 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { map, Observable, of, Subject, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
+import {
+  NavigationCancel,
+  NavigationEnd,
+  NavigationError,
+  NavigationStart,
+  Router,
+} from '@angular/router';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 
@@ -30,7 +36,7 @@ export class AppComponent implements OnInit {
   warningMessage$: Observable<{ title?: string; body?: string } | undefined>;
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;
-  loading$:Subject<boolean>= new Subject();
+  loading$: Subject<boolean> = new Subject();
   constructor(
     private store: Store,
     private authenticationService: AuthenticationService,
@@ -54,7 +60,7 @@ export class AppComponent implements OnInit {
         if (event instanceof NavigationEnd) {
           this.loading$.next(false);
         }
-    
+
         if (event instanceof NavigationCancel) {
           this.loading$.next(false);
         }
