@@ -83,7 +83,7 @@ export const flowService = {
             entity: FlowEntity,
             query: {
                 limit,
-                order: 'ASC',
+                order: 'DESC',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },

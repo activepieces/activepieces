@@ -33,13 +33,13 @@ export class PublishButtonComponent implements OnInit {
     this.disablePublishButton$ = combineLatest({
       publishingSavingStates: this.flowState$,
       flowHasSteps: this.store.select(BuilderSelectors.selectFlowHasAnySteps),
-      flowValid: this.store.select(BuilderSelectors.selectCurrentFlowValidity)
+      flowValid: this.store.select(BuilderSelectors.selectCurrentFlowValidity),
     }).pipe(
       map((res) => {
         return (
           res.publishingSavingStates.isPublishing ||
           res.publishingSavingStates.isSaving ||
-          !res.flowHasSteps||
+          !res.flowHasSteps ||
           !res.flowValid
         );
       })
