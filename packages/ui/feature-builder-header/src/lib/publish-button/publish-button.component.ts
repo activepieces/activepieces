@@ -16,7 +16,7 @@ export class PublishButtonComponent implements OnInit {
   flowState$: Observable<{ isSaving: boolean; isPublishing: boolean }>;
   isDeployingOrIsSaving$: Observable<boolean>;
   deploying$: Observable<boolean> = of(false);
-  disableDeployButton$: Observable<boolean>;
+  disablePublishButton$: Observable<boolean>;
   buttonTooltipText$: Observable<string>;
   buttonText$: Observable<string>;
   constructor(private store: Store) {}
@@ -30,20 +30,22 @@ export class PublishButtonComponent implements OnInit {
       isSaving: this.store.select(BuilderSelectors.selectIsSaving),
       isPublishing: this.store.select(BuilderSelectors.selectIsPublishing),
     });
-    this.disableDeployButton$ = combineLatest({
+    this.disablePublishButton$ = combineLatest({
       publishingSavingStates: this.flowState$,
       flowHasSteps: this.store.select(BuilderSelectors.selectFlowHasAnySteps),
+      flowValid: this.store.select(BuilderSelectors.selectCurrentFlowValidity)
     }).pipe(
       map((res) => {
         return (
           res.publishingSavingStates.isPublishing ||
           res.publishingSavingStates.isSaving ||
-          !res.flowHasSteps
+          !res.flowHasSteps||
+          !res.flowValid
         );
       })
     );
     this.buttonTooltipText$ = combineLatest({
-      buttonIsDisabled: this.disableDeployButton$,
+      buttonIsDisabled: this.disablePublishButton$,
       flowHasSteps: this.store.select(BuilderSelectors.selectFlowHasAnySteps),
     }).pipe(
       delay(100),
