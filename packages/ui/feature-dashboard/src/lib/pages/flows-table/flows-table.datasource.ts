@@ -8,6 +8,7 @@ import {
   map,
   catchError,
   BehaviorSubject,
+  forkJoin,
 } from 'rxjs';
 import {
   ApPaginatorComponent,
@@ -58,7 +59,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
       }),
       switchMap((res) => {
         const { queryParams } = res;
-        return combineLatest([
+        return forkJoin([
           this.flowService.list({
             limit: queryParams['limit'] || DEFAULT_PAGE_SIZE,
             cursor: queryParams['cursor'],
