@@ -42,12 +42,14 @@ const _foldersReducer = createReducer(
       const folder = folders[idx];
       const uncategorizedFlowsNumber =
         state.uncategorizedFlowsNumber + folder.numberOfFlows;
+      const showAllFolders =
+        folder.id === state.selectedFolder?.id || state.displayAllFlows;
       folders.splice(idx, 1);
       return {
         ...state,
         folders: folders,
-        displayAllFlows: true,
-        selectedFolder: undefined,
+        displayAllFlows: showAllFolders,
+        selectedFolder: showAllFolders ? undefined : state.selectedFolder,
         uncategorizedFlowsNumber: uncategorizedFlowsNumber,
       };
     }
@@ -63,8 +65,6 @@ const _foldersReducer = createReducer(
         return {
           ...state,
           folders: folders,
-          displayAllFlows: false,
-          selectedFolder: folders[idx],
         };
       }
       return state;
