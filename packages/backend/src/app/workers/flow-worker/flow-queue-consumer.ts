@@ -3,7 +3,7 @@ import { ActivepiecesError, ApId, ErrorCode, RunEnvironment, TriggerType } from 
 import { createRedisClient } from '../../database/redis-connection'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { triggerUtils } from '../../helper/trigger-utils'
-import { flowQueue, ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from './flow-queue'
+import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from './flow-queue'
 import { flowWorker } from './flow-worker'
 import { OneTimeJobData, RepeatableJobData } from './job-data'
 import { logger } from '../../helper/logger'
