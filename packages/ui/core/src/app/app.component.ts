@@ -54,7 +54,10 @@ export class AppComponent implements OnInit {
     );
     this.routeLoader$ = this.router.events.pipe(
       tap((event) => {
-        if (event instanceof NavigationStart) {
+        if (
+          event instanceof NavigationStart &&
+          event.url.startsWith('/flows/')
+        ) {
           this.loading$.next(true);
         }
         if (event instanceof NavigationEnd) {
