@@ -10,7 +10,7 @@ import {
     TriggerType,
 } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { flowQueue } from '../workers/flow-worker/flow-queue'
+import { JobType, flowQueue } from '../workers/flow-worker/flow-queue'
 import { engineHelper } from './engine-helper'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
@@ -168,6 +168,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
             const scheduleOptions = (response as ExecuteTriggerResponse).scheduleOptions
             await flowQueue.add({
                 id: flowVersion.id,
+                type: JobType.REPEATABLE,
                 data: {
                     projectId,
                     environment: RunEnvironment.PRODUCTION,

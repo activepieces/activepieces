@@ -1,5 +1,5 @@
 import { FlowRun } from '@activepieces/shared'
-import { flowQueue } from '../../workers/flow-worker/flow-queue'
+import { JobType, flowQueue } from '../../workers/flow-worker/flow-queue'
 
 type StartParams = {
     flowRun: FlowRun
@@ -10,6 +10,7 @@ export const flowRunSideEffects = {
     async start({ flowRun, payload }: StartParams): Promise<void> {
         await flowQueue.add({
             id: flowRun.id,
+            type: JobType.ONE_TIME,
             data: {
                 projectId: flowRun.projectId,
                 environment: flowRun.environment,
