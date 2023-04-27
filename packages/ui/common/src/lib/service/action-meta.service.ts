@@ -34,6 +34,7 @@ export const CORE_PIECES_ACTIONS_NAMES = [
   'connections',
   'delay',
   'http',
+  'smtp',
 ];
 export const corePieceIconUrl = (pieceName: string) =>
   `assets/img/custom/piece/${pieceName}_mention.png`;
