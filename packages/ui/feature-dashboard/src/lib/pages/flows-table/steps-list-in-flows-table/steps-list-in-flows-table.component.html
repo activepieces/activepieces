@@ -1,0 +1,11 @@
+<div class="ap-flex ap-gap-[5px] ap-items-center">
+    <div *ngFor="let url$ of urlsToLoad$"
+        class="ap-rounded-full ap-border ap-border-solid ap-border-dividers ap-h-[35px] ap-w-[35px]  ap-flex ap-items-center ap-justify-center">
+        <img [src]="url$|async" class="ap-w-[20px] ap-h-[20px] ">
+
+    </div>
+    <div *ngIf="numberOfStepsLeft > 0"
+        class="ap-rounded-full ap-border ap-border-solid ap-border-dividers ap-h-[35px] ap-w-[35px] ap-flex ap-items-center ap-justify-center">
+        +{{numberOfStepsLeft}}
+    </div>
+</div>
