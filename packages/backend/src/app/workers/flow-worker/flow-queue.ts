@@ -15,12 +15,19 @@ type BaseAddParams = {
     id: ApId
 }
 
+export enum JobType {
+    ONE_TIME = 'ONE_TIME',
+    REPEATABLE = 'REPEATABLE',
+}
+
 type RepeatableJobAddParams = {
+    type: JobType.REPEATABLE
     data: RepeatableJobData
     scheduleOptions: ScheduleOptions
 } & BaseAddParams
 
 type OneTimeJobAddParams = {
+    type: JobType.ONE_TIME
     data: OneTimeJobData
 } & BaseAddParams
 
@@ -158,5 +165,5 @@ export const flowQueue = {
 }
 
 const isRepeatable = (params: AddParams): params is RepeatableJobAddParams => {
-    return (params as RepeatableJobAddParams).scheduleOptions?.cronExpression !== undefined
+    return params.type === JobType.REPEATABLE
 }
