@@ -41,10 +41,6 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
                 if (e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
                     logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
                     await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowVersion.flowId })
-
-                    if (job.id) {
-                        await flowQueue.removeRepeatableJob({ id: job.id })
-                    }
                 }
             }
             else {
