@@ -51,8 +51,8 @@ const resolveLoopFirstItem = (flowVersion: FlowVersion, loopItemExpression: stri
     if (isNil(step)) {
         return ''
     }
-
-    const firstItemPath = `settings.inputUiInfo.currentSelectedData.${loopStepPath.join('.')}[0]`
+    //In case the loopStepPath is empty it means direct access to the step and not to a nested property
+    const firstItemPath = 'settings.inputUiInfo.currentSelectedData' + loopStepPath.map((path) => `.${path}`).join('') + '[0]'
 
     logger.debug(`[StepRunService#resolveLoopFirstItem] firstItemPath=${firstItemPath}`)
 
