@@ -43,6 +43,7 @@
         </div>
         <div class="group-hover:ap-block ap-hidden" [class.!ap-block]="folderIdOfMenuOpened === folder.id">
             <mat-icon [matMenuTriggerFor]="menu" (menuClosed)="folderIdOfMenuOpened=undefined"
+                (click)="$event.stopImmediatePropagation()"
                 (menuOpened)="folderIdOfMenuOpened=folder.id">more_vert</mat-icon>
         </div>
 
