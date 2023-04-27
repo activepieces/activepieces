@@ -1,7 +1,6 @@
 import {
     ActionType,
     ActivepiecesError,
-    CollectionId,
     ErrorCode,
     ExecuteActionOperation,
     flowHelper,
@@ -10,7 +9,8 @@ import {
     ProjectId,
     TriggerType,
 } from '@activepieces/shared'
-import { isEmpty, isNil } from 'lodash'
+import { logger } from '../../helper/logger'
+import { get, isEmpty, isNil } from 'lodash'
 import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
 
@@ -21,9 +21,46 @@ type CreateReturn = {
 
 type CreateParams = {
     projectId: ProjectId
-    collectionId: CollectionId
     flowVersionId: FlowVersionId
     stepName: string
+}
+
+const resolveLoopFirstItem = (flowVersion: FlowVersion, loopItemExpression: string): string => {
+    logger.debug(`[StepRunService#resolveLoopFirstItem] loopItemExpression=${loopItemExpression}`)
+
+    const loopItemRegex = /^\$\{(?<loopStepPathString>.+)\}$/
+    const loopStepPathString = loopItemExpression.match(loopItemRegex)?.groups?.loopStepPathString
+
+    logger.debug(`[StepRunService#resolveLoopFirstItem] loopStepPathString=${loopStepPathString}`)
+
+    if (isNil(loopStepPathString)) {
+        return ''
+    }
+
+    const loopStepPath = loopStepPathString.split('.')
+    const stepName = loopStepPath.shift()
+
+    logger.debug(`[StepRunService#resolveLoopFirstItem] stepName=${stepName}`)
+
+    if (isNil(stepName)) {
+        return ''
+    }
+
+    const step = flowHelper.getStep(flowVersion, stepName)
+
+    if (isNil(step)) {
+        return ''
+    }
+    //In case the loopStepPath is empty it means direct access to the step and not to a nested property
+    const firstItemPath = 'settings.inputUiInfo.currentSelectedData' + loopStepPath.map((path) => `.${path}`).join('') + '[0]'
+
+    logger.debug(`[StepRunService#resolveLoopFirstItem] firstItemPath=${firstItemPath}`)
+
+    const result = get(step, firstItemPath, '')
+
+    logger.debug(`[StepRunService#resolveLoopFirstItem] result=${result}`)
+
+    return result
 }
 
 const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, unknown> => {
@@ -31,9 +68,17 @@ const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, 
     const testContext: Record<string, unknown> = {}
 
     for (const step of flowSteps) {
-        if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE || step.type === ActionType.CODE || step.type === TriggerType.WEBHOOK) {
+        const stepsWithSampleData = [ActionType.CODE, ActionType.PIECE, TriggerType.PIECE, TriggerType.WEBHOOK]
+        if (stepsWithSampleData.includes(step.type)) {
             const { name, settings: { inputUiInfo } } = step
             testContext[name] = inputUiInfo?.currentSelectedData
+        }
+
+        if (step.type === ActionType.LOOP_ON_ITEMS) {
+            testContext[step.name] = {
+                index: 1,
+                item: resolveLoopFirstItem(flowVersion, step.settings.items),
+            }
         }
     }
 
@@ -41,7 +86,7 @@ const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, 
 }
 
 export const stepRunService = {
-    async create({ projectId, collectionId, flowVersionId, stepName }: CreateParams): Promise<CreateReturn> {
+    async create({ projectId, flowVersionId, stepName }: CreateParams): Promise<CreateReturn> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowHelper.getStep(flowVersion, stepName)
 
@@ -73,7 +118,6 @@ export const stepRunService = {
             input,
             testExecutionContext,
             projectId,
-            collectionId,
         }
 
         const result = await engineHelper.executeAction(operation)

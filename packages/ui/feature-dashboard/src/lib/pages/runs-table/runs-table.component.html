@@ -1,47 +1,45 @@
-<div class="ap-h-full">
-  <app-page-title title="Runs"></app-page-title>
-  <div class="ap-min-h-[70%]">
-    <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Runs">
-      <ng-container matColumnDef="collectionName">
-        <th mat-header-cell *matHeaderCellDef>Collection</th>
-        <td mat-cell *matCellDef="let run">{{ run.collectionDisplayName }}</td>
-      </ng-container>
+<div class="ap-w-full ap-h-full ap-px-[30px] ap-pt-[50px]">
+  <div class="ap-h-full">
+    <app-page-title title="Runs"></app-page-title>
+    <div class="ap-min-h-[70%]">
+      <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Runs">
+        <ng-container matColumnDef="flowName">
+          <th mat-header-cell *matHeaderCellDef>Flow</th>
+          <td mat-cell *matCellDef="let run">{{ run.flowDisplayName }}</td>
+        </ng-container>
 
-      <ng-container matColumnDef="flowName">
-        <th mat-header-cell *matHeaderCellDef>Flow</th>
-        <td mat-cell *matCellDef="let run">{{ run.flowDisplayName }}</td>
-      </ng-container>
+        <ng-container matColumnDef="started">
+          <th mat-header-cell *matHeaderCellDef>Started</th>
+          <td mat-cell *matCellDef="let run">{{ run.startTime | date: 'short' }}</td>
+        </ng-container>
 
-      <ng-container matColumnDef="started">
-        <th mat-header-cell *matHeaderCellDef>Started</th>
-        <td mat-cell *matCellDef="let run">{{ run.startTime | date: 'short' }}</td>
+        <ng-container matColumnDef="finished">
+          <th mat-header-cell *matHeaderCellDef>Finished</th>
+          <td mat-cell *matCellDef="let run">{{ run.finishTime | date: 'short' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let run"><ap-state-icon
+              *ngIf="run.status === ExecutionOutputStatus.SUCCEEDED || run.status === ExecutionOutputStatus.FAILED || run.status === ExecutionOutputStatus.INTERNAL_ERROR || run.status === ExecutionOutputStatus.TIMEOUT"
+              [succeeded]="run.status === ExecutionOutputStatus.SUCCEEDED"
+              [textAfter]="getStatusText(run.status)"></ap-state-icon>
+            <ng-container *ngIf="run.status === ExecutionOutputStatus.RUNNING">
+              Running</ng-container>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openInstanceRun(row)" mat-row
+          *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+      <ng-container *ngIf="dataSource.data.length===0">
+        <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px]">
+          No Runs Instantiated Yet
+        </div>
       </ng-container>
+    </div>
 
-      <ng-container matColumnDef="finished">
-        <th mat-header-cell *matHeaderCellDef>Finished</th>
-        <td mat-cell *matCellDef="let run">{{ run.finishTime | date: 'short' }}</td>
-      </ng-container>
-      <ng-container matColumnDef="status">
-        <th mat-header-cell *matHeaderCellDef>Status</th>
-        <td mat-cell *matCellDef="let run"><ap-state-icon
-            *ngIf="run.status === ExecutionOutputStatus.SUCCEEDED || run.status === ExecutionOutputStatus.FAILED || run.status === ExecutionOutputStatus.INTERNAL_ERROR || run.status === ExecutionOutputStatus.TIMEOUT"
-            [succeeded]="run.status === ExecutionOutputStatus.SUCCEEDED" [textAfter]="getStatusText(run.status)"></ap-state-icon>
-          <ng-container *ngIf="run.status === ExecutionOutputStatus.RUNNING">
-            Running</ng-container>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openInstanceRun(row)" mat-row
-        *matRowDef="let row; columns: displayedColumns"></tr>
-    </table>
-    <ng-container *ngIf="dataSource.data.length===0">
-      <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px]">
-        No Runs Instantiated Yet
-      </div>
-    </ng-container>
-  </div>
-
-  <div class="ap-flex ap-justify-end">
-    <ap-paginator> </ap-paginator>
+    <div class="ap-flex ap-justify-end">
+      <ap-paginator> </ap-paginator>
+    </div>
   </div>
 </div>

@@ -30,6 +30,7 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
   lastTestResult$: Observable<unknown | undefined>;
   saveStepAfterTesting$: Observable<void>;
   lastTestDate$: Observable<string | undefined>;
+  errorResponse: null | unknown = null;
   constructor(testStepService: TestStepService, private store: Store) {
     super(testStepService);
     this.currentStepValidity$ = this.store.select(
@@ -53,10 +54,8 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
   testStep() {
     if (!this.loading) {
       this.loading = true;
+      this.errorResponse = null;
       const observables = {
-        collectionId: this.store
-          .select(BuilderSelectors.selectCurrentCollectionId)
-          .pipe(take(1)),
         flowVersionId: this.store
           .select(BuilderSelectors.selectCurrentFlowVersionId)
           .pipe(take(1)),
@@ -66,15 +65,22 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
       };
       this.testStep$ = forkJoin(observables).pipe(
         switchMap((res) => {
-          if (!res.collectionId || !res.flowVersionId || !res.stepName) {
+          if (!res.flowVersionId || !res.stepName) {
             throw new Error('some test piece step params are missing');
           }
-          return this.testStepService.testPieceStep(res);
+          return this.testStepService.testPieceStep({
+            flowVersionId: res.flowVersionId,
+            stepName: res.stepName,
+          });
         }),
         tap((res) => {
           this.loading = false;
           this.testStepService.elevateResizer$.next(true);
-          this.saveStepTestResult(res.output);
+          if (res.success) {
+            this.saveStepTestResult(res.output);
+          } else {
+            this.errorResponse = res.output;
+          }
         })
       );
     }

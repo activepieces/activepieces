@@ -1,7 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { map, Observable, of, tap } from 'rxjs';
+import { map, Observable, of, Subject, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { NavigationStart, Router } from '@angular/router';
+import {
+  NavigationCancel,
+  NavigationEnd,
+  NavigationError,
+  NavigationStart,
+  Router,
+} from '@angular/router';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 
@@ -25,11 +31,12 @@ const upgradeNotificationMetadataKeyInLocalStorage =
   animations: [fadeInUp400ms],
 })
 export class AppComponent implements OnInit {
-  routeLoader$: Observable<boolean>;
+  routeLoader$: Observable<unknown>;
   loggedInUser$: Observable<void>;
   warningMessage$: Observable<{ title?: string; body?: string } | undefined>;
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;
+  loading$: Subject<boolean> = new Subject();
   constructor(
     private store: Store,
     private authenticationService: AuthenticationService,
@@ -46,11 +53,23 @@ export class AppComponent implements OnInit {
       )
     );
     this.routeLoader$ = this.router.events.pipe(
-      map((event) => {
-        if (event instanceof NavigationStart) {
-          return true;
+      tap((event) => {
+        if (
+          event instanceof NavigationStart &&
+          event.url.startsWith('/flows/')
+        ) {
+          this.loading$.next(true);
         }
-        return false;
+        if (event instanceof NavigationEnd) {
+          this.loading$.next(false);
+        }
+
+        if (event instanceof NavigationCancel) {
+          this.loading$.next(false);
+        }
+        if (event instanceof NavigationError) {
+          this.loading$.next(false);
+        }
       })
     );
     this.showUpgradeNotification$ = this.flagService.getAllFlags().pipe(

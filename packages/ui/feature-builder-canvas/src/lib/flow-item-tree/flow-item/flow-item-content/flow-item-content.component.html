@@ -9,8 +9,8 @@
       [class.ap-opacity-100]="hover" [class.ap-opacity-0]="!hover">
       <ap-icon-button *ngIf="trigger" iconFilename="replace.svg" tooltipText="Change Trigger" [width]="17" [height]="17"
         (buttonClicked)="changeTrigger()"></ap-icon-button>
-      <ap-icon-button *ngIf="!trigger" iconFilename="trash.svg" color="warn" tooltipText="Delete Step"
-        (buttonClicked)="deleteStep()"></ap-icon-button>
+      <ap-icon-button *ngIf="!trigger" iconFilename="trash.svg" color="warn" tooltipText="Delete Step" [width]="20"
+        [height]="20" (buttonClicked)="deleteStep()"></ap-icon-button>
     </div>
   </div>
 

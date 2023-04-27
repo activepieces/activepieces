@@ -22,7 +22,10 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
                 return
             }
             else {
-                return await storeEntryService.upsert(request.principal.collectionId, request.body)
+                return await storeEntryService.upsert({
+                    projectId: request.principal.projectId,
+                    request: request.body,
+                })
             }
         },
     )
@@ -45,7 +48,9 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
                 return
             }
             else {
-                return await storeEntryService.getOne(request.principal.collectionId, request.query.key)
+                return await storeEntryService.getOne({
+                    projectId: request.principal.projectId, key: request.query.key,
+                })
             }
         },
     )
@@ -69,7 +74,9 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
                 return
             }
             else {
-                return await storeEntryService.delete(request.principal.collectionId, request.query.key)
+                return await storeEntryService.delete({
+                    projectId: request.principal.projectId, key: request.query.key,
+                })
             }
         },
     )

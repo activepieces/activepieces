@@ -23,7 +23,6 @@ export const piecesController: FastifyPluginAsync = async (app) => {
                 propertyName: request.body.propertyName,
                 stepName: request.body.stepName,
                 input: request.body.input,
-                collectionId: request.body.collectionId,
                 projectId: request.principal.projectId,
             })
         },

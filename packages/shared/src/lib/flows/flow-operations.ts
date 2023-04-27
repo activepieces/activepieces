@@ -6,6 +6,7 @@ import { Static, Type } from "@sinclair/typebox";
 
 
 export enum FlowOperationType {
+    CHANGE_FOLDER = "CHANGE_FOLDER",
     CHANGE_NAME = "CHANGE_NAME",
     IMPORT_FLOW = "IMPORT_FLOW",
     UPDATE_TRIGGER = "UPDATE_TRIGGER",
@@ -20,6 +21,13 @@ export enum StepLocationRelativeToParent {
     AFTER = "AFTER",
     INSIDE_LOOP = "INSIDE_LOOP"
 }
+
+export const ChangeFolderRequest = Type.Object({
+    folderId: Type.Optional(Type.String({})),
+});
+
+export type ChangeFolderRequest = Static<typeof ChangeFolderRequest>;
+
 
 export const ChangeNameRequest = Type.Object({
     displayName: Type.String({}),
@@ -66,6 +74,10 @@ export const FlowOperationRequest = Type.Union([
     Type.Object({
         type: Type.Literal(FlowOperationType.UPDATE_TRIGGER),
         request: UpdateTriggerRequest
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.CHANGE_FOLDER),
+        request: ChangeFolderRequest
     })
 ]);
 

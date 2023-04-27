@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { Observable, of, switchMap } from 'rxjs';
+import { Observable, map, of, switchMap } from 'rxjs';
 
-import { FlowService } from '@activepieces/ui/common';
-import { InstanceRunService, CollectionService } from '@activepieces/ui/common';
-import { Collection, Flow, FlowRun } from '@activepieces/shared';
+import { FlowService, FoldersService } from '@activepieces/ui/common';
+import { InstanceRunService } from '@activepieces/ui/common';
+import { Flow, FlowRun, Folder } from '@activepieces/shared';
 
 export type InstanceRunInfo = {
-  collection: Collection;
   flow: Flow;
   run: FlowRun;
+  folder?: Folder;
 };
 
 @Injectable({
@@ -21,7 +21,7 @@ export class GetInstanceRunResolver
   constructor(
     private instanceRunService: InstanceRunService,
     private flowService: FlowService,
-    private collectionService: CollectionService
+    private folderService: FoldersService
   ) {}
 
   resolve(snapshot: ActivatedRouteSnapshot): Observable<InstanceRunInfo> {
@@ -30,9 +30,12 @@ export class GetInstanceRunResolver
       switchMap((run) => {
         return this.flowService.get(run.flowId, run.flowVersionId).pipe(
           switchMap((flow) => {
-            return this.collectionService.get(flow.collectionId).pipe(
-              switchMap((collection) => {
-                return of({ collection: collection, flow: flow, run: run });
+            if (!flow.folderId) {
+              return of({ flow: flow, run: run });
+            }
+            return this.folderService.get(flow.folderId).pipe(
+              map((folder) => {
+                return { flow: flow, run: run, folder };
               })
             );
           })

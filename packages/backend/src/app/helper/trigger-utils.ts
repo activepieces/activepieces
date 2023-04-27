@@ -1,6 +1,5 @@
 import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework'
 import {
-    CollectionId,
     ExecuteTriggerResponse,
     FlowVersion,
     PieceTrigger,
@@ -16,12 +15,11 @@ import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { captureException } from '@sentry/node'
 import { isNil } from 'lodash'
-import { logger } from './logger'
 import { pieceMetadataLoader } from '../pieces/piece-metadata-loader'
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
-        const { payload, flowVersion, projectId, collectionId, simulate } = params
+        const { payload, flowVersion, projectId, simulate } = params
         const flowTrigger = flowVersion.trigger
         let payloads: unknown[] = []
         switch (flowTrigger.type) {
@@ -32,7 +30,6 @@ export const triggerUtils = {
                         hookType: TriggerHookType.RUN,
                         flowVersion: flowVersion,
                         triggerPayload: payload,
-                        collectionId,
                         webhookUrl: await webhookService.getWebhookUrl({
                             flowId: flowVersion.flowId,
                             simulate,
@@ -62,11 +59,10 @@ export const triggerUtils = {
         return payloads as unknown[]
     },
 
-    async enable({ collectionId, flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
+    async enable({ flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
         switch (flowVersion.trigger.type) {
             case TriggerType.PIECE:
                 await enablePieceTrigger({
-                    collectionId,
                     projectId,
                     flowVersion,
                     simulate,
@@ -77,15 +73,10 @@ export const triggerUtils = {
         }
     },
 
-    async disable(params: EnableOrDisableParams): Promise<void> {
-        logger.debug(params, '[TriggerUtils#disable] params')
-
-        const { collectionId, flowVersion, projectId, simulate } = params
-
+    async disable({ flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
         switch (flowVersion.trigger.type) {
             case TriggerType.PIECE:
                 await disablePieceTrigger({
-                    collectionId,
                     projectId,
                     flowVersion,
                     simulate,
@@ -98,16 +89,13 @@ export const triggerUtils = {
 }
 
 const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
-    logger.debug(params, '[TriggerUtils#disablePieceTrigger] params')
-
-    const { flowVersion, projectId, collectionId, simulate } = params
+    const { flowVersion, projectId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
     const pieceTrigger = await getPieceTrigger(flowTrigger)
 
     await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_DISABLE,
         flowVersion: flowVersion,
-        collectionId,
         webhookUrl: await webhookService.getWebhookUrl({
             flowId: flowVersion.flowId,
             simulate,
@@ -130,7 +118,7 @@ const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void>
 }
 
 const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
-    const { flowVersion, projectId, collectionId, simulate } = params
+    const { flowVersion, projectId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
     const pieceTrigger = await getPieceTrigger(flowTrigger)
 
@@ -142,7 +130,6 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
     const response = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion: flowVersion,
-        collectionId,
         webhookUrl,
         projectId: projectId,
     })
@@ -172,7 +159,6 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
                 data: {
                     projectId,
                     environment: RunEnvironment.PRODUCTION,
-                    collectionId,
                     flowVersion,
                     triggerType: TriggerType.PIECE,
                 },
@@ -210,7 +196,6 @@ export async function getPieceTrigger(trigger: PieceTrigger): Promise<TriggerBas
 }
 
 type BaseParams = {
-    collectionId: CollectionId
     projectId: ProjectId
     flowVersion: FlowVersion
     simulate: boolean

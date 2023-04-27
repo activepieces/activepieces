@@ -23,12 +23,14 @@ import {
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
 import { fileService } from '../../file/file.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { flowVersionRepo } from './flow-version-repo'
+import { databaseConnection } from '../../database/database-connection'
+import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { pieceMetadataLoader } from '../../pieces/piece-metadata-loader'
 
 const branchSetttingsValidaotr = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
+const flowVersionRepo = databaseConnection.getRepository(FlowVersionEntity)
 
 export const flowVersionService = {
     async overwriteVersion(flowVersionId: FlowVersionId, mutatedFlowVersion: FlowVersion) {
