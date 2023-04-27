@@ -25,38 +25,34 @@ export const usageService = {
             await quotaLock.release();
         }
     },
-    async limit(request: { projectId: ProjectId; flowVersion: FlowVersion; }): Promise<{ perform: true }> {
+    async limit(request: { projectId: ProjectId; flowVersion: FlowVersion; }): Promise<void> {
         const edition = await getEdition()
-
-        if (edition === ApEdition.ENTERPRISE) {
-            const quotaLock = await acquireLock({
-                key: `usage_${request.projectId}`,
-                timeout: 30000,
-            })
-
-            try {
-                const projectUsage = await usageService.getUsage({ projectId: request.projectId });
-                const projectPlan = await billingService.getPlan({ projectId: request.projectId });
-                if (projectUsage.consumedTasks > projectPlan.tasks) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.TASK_QUOTA_EXCEEDED,
-                        params: { projectId: request.projectId },
-                    });
-                }
-            } catch (e) {
-                if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
-                    throw e;
-                } else {
-                    // Ignore quota errors for sake of user experience and log them instead
-                    captureException(e);
-                }
-            } finally {
-                await quotaLock.release();
-            }
+        if (edition !== ApEdition.ENTERPRISE) {
+            return;
         }
+        const quotaLock = await acquireLock({
+            key: `usage_${request.projectId}`,
+            timeout: 30000,
+        })
 
-        return {
-            perform: true,
+        try {
+            const projectUsage = await usageService.getUsage({ projectId: request.projectId });
+            const projectPlan = await billingService.getPlan({ projectId: request.projectId });
+            if (projectUsage.consumedTasks > projectPlan.tasks) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.TASK_QUOTA_EXCEEDED,
+                    params: { projectId: request.projectId },
+                });
+            }
+        } catch (e) {
+            if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
+                throw e;
+            } else {
+                // Ignore quota errors for sake of user experience and log them instead
+                captureException(e);
+            }
+        } finally {
+            await quotaLock.release();
         }
     },
     async getUsage({ projectId }: { projectId: ProjectId }): Promise<ProjectUsage> {
