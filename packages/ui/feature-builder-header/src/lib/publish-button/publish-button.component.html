@@ -1,6 +1,6 @@
 <div [matTooltip]="(buttonTooltipText$ | async)!">
-  <ap-button btnSize="medium" placement="bottom" [disabled]="disableDeployButton$ |async"
-    [class.invalid-deploy]="disableDeployButton$| async" (buttonClicked)="publish()">
+  <ap-button btnSize="medium" placement="bottom" [disabled]="disablePublishButton$ |async"
+    [class.invalid-deploy]="disablePublishButton$| async" (buttonClicked)="publish()">
     <ng-container *ngIf="flowState$ | async as flowState">
       <div class="ap-flex ap-items-center loading-template">
         <svg-icon *ngIf="flowState.isPublishing || flowState.isSaving;" src="assets/img/custom/loading.svg"
