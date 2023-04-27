@@ -1,6 +1,7 @@
 import {
   Component,
   ElementRef,
+  HostListener,
   NgZone,
   OnInit,
   Renderer2,
@@ -199,7 +200,7 @@ export class FlowRightSidebarComponent implements OnInit {
     this.editStepSectionRect =
       this.editStepSection.nativeElement.getBoundingClientRect();
   }
-  resizerDragged(dragMoveEvent: CdkDragMove) {
+  resizerDragged(dragMoveEvent: Pick<CdkDragMove, 'distance'>) {
     const height = this.editStepSectionRect.height + dragMoveEvent.distance.y;
     this.ngZone.runOutsideAngular(() => {
       this.renderer2.setStyle(
@@ -238,5 +239,11 @@ export class FlowRightSidebarComponent implements OnInit {
       'https://www.activepieces.com/docs/pieces/versioning',
       '_blank'
     );
+  }
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.editStepSectionRect =
+      this.editStepSection.nativeElement.getBoundingClientRect();
+    this.resizerDragged({ distance: { y: 99999999999, x: 0 } });
   }
 }
