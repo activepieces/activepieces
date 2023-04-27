@@ -10,12 +10,12 @@ import {
 } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowQueue } from '../workers/flow-worker/flow-queue'
-import { engineHelper } from './engine-helper'
+import { engineHelper, ExecuteReturn } from './engine-helper'
 import { getPiece } from '@activepieces/pieces-apps'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { captureException } from '@sentry/node'
-import { isNil } from 'lodash'
+import { isEmpty, isNil } from 'lodash'
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
@@ -26,7 +26,7 @@ export const triggerUtils = {
             case TriggerType.PIECE: {
                 const pieceTrigger = getPieceTrigger(flowTrigger)
                 try {
-                    payloads = await engineHelper.executeTrigger({
+                    const result = await engineHelper.executeTrigger({
                         hookType: TriggerHookType.RUN,
                         flowVersion: flowVersion,
                         triggerPayload: payload,
@@ -35,7 +35,13 @@ export const triggerUtils = {
                             simulate,
                         }),
                         projectId: projectId,
-                    }) as unknown[]
+                    }) as ExecuteReturn<unknown[]>
+
+                    const success = isEmpty(result.standardError)
+
+                    if (success && Array.isArray(result.output)) {
+                        payloads = result.output
+                    }
                 }
                 catch (e) {
                     const error = new ActivepiecesError({

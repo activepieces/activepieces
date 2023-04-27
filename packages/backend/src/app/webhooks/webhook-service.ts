@@ -21,6 +21,7 @@ import { isEmpty, isNil } from 'lodash'
 import { logger } from '../helper/logger'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { flowInstanceService } from '../flows/flow-instance/flow-instance.service'
+import { usageService } from '@ee/billing/backend/usage.service'
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
@@ -45,6 +46,11 @@ export const webhookService = {
             })
         }
         const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
+
+        await usageService.limit({
+            projectId: flow.projectId,
+            flowVersion,
+        })
 
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId,
