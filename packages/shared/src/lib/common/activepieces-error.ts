@@ -141,7 +141,7 @@ export type TriggerFailedErrorParams = BaseErrorParams<
     pieceName: string;
     pieceVersion: string;
     triggerName: string;
-    error: Error;
+    error: string | undefined;
   }
 >
 

@@ -10,7 +10,7 @@ import {
     TriggerType,
 } from '@activepieces/shared'
 import { logger } from '../../helper/logger'
-import { get, isEmpty, isNil } from 'lodash'
+import { get, isNil } from 'lodash'
 import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
 
@@ -121,15 +121,15 @@ export const stepRunService = {
         }
 
         const result = await engineHelper.executeAction(operation)
-        const success = isEmpty(result.standardError)
 
-        if (success) {
+        if (result.success) {
             step.settings.inputUiInfo.currentSelectedData = result.output
             await flowVersionService.overwriteVersion(flowVersionId, flowVersion)
         }
 
+        // TODO SWITCH TO ENUM FROM BOOLEAN (SUCCESS, ERROR)
         return {
-            success,
+            success: result.success,
             output: result.output,
         }
     },

@@ -1,8 +1,0 @@
-export enum CodeRunStatus {
-    OK = "OK",
-    RUNTIME_ERROR = "RUNTIME_ERROR",
-    CRASHED = "CRASHED",
-    TIMEOUT = "TIMEOUT",
-    INTERNAL_ERROR = "INTERNAL_ERROR",
-    UNKNOWN_ERROR = "UNKNOWN_ERROR"
-}

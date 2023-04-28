@@ -3,17 +3,18 @@ import {
     apId,
     EngineOperation,
     EngineOperationType,
+    EngineResponse,
     ExecuteActionOperation,
     ExecuteFlowOperation,
     ExecutePropsOptions,
-    ExecuteTestOrRunTriggerResponse,
     ExecuteTriggerOperation,
-    ExecuteTriggerResponse,
     ExecutionOutput,
     PieceTrigger,
     PrincipalType,
     ProjectId,
     TriggerHookType,
+    ExecuteTriggerResponse,
+    ExecuteActionResponse,
 } from '@activepieces/shared'
 import { Sandbox, sandboxManager } from '../workers/sandbox'
 import { system } from './system/system'
@@ -30,11 +31,6 @@ type InstallPieceParams = {
     path: string
     pieceName: string
     pieceVersion: string
-}
-
-export type ExecuteReturn<T> = {
-    output: T
-    standardError: string
 }
 
 const log = logger.child({ file: 'EngineHelper' })
@@ -60,14 +56,13 @@ const installPiece = async (params: InstallPieceParams) => {
 
 export const engineHelper = {
     async executeFlow(sandbox: Sandbox, operation: ExecuteFlowOperation): Promise<ExecutionOutput> {
-        const result = await execute(EngineOperationType.EXECUTE_FLOW, sandbox, {
+        const result = await execute<ExecutionOutput>(EngineOperationType.EXECUTE_FLOW, sandbox, {
             ...operation,
             workerToken: await workerToken({ projectId: operation.projectId }),
         })
-
-        return result.output as ExecutionOutput
+        return result.response
     },
-    async executeTrigger(operation: ExecuteTriggerOperation): Promise<ExecuteReturn<unknown[]> | ExecuteTestOrRunTriggerResponse | ExecuteTriggerResponse> {
+    async executeTrigger<T extends TriggerHookType>(operation: ExecuteTriggerOperation<T>): Promise<ExecuteTriggerResponse<T>> {
         const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
         const sandbox = await getSandbox({
             pieceName,
@@ -84,14 +79,7 @@ export const engineHelper = {
                     projectId: operation.projectId,
                 }),
             })
-
-            if (operation.hookType === TriggerHookType.TEST) {
-                return result.output as ExecuteTestOrRunTriggerResponse
-            }
-            if (operation.hookType === TriggerHookType.RUN) {
-                return result as ExecuteReturn<unknown[]>
-            }
-            return result.output as ExecuteTriggerResponse
+            return result.response as ExecuteTriggerResponse<T>
         }
         finally {
             await sandboxManager.returnSandbox(sandbox.boxId)
@@ -120,14 +108,14 @@ export const engineHelper = {
                 },
             )
 
-            return result.output
+            return result.response
         }
         finally {
             await sandboxManager.returnSandbox(sandbox.boxId)
         }
     },
 
-    async executeAction(operation: ExecuteActionOperation): Promise<ExecuteReturn<unknown>> {
+    async executeAction(operation: ExecuteActionOperation): Promise<ExecuteActionResponse> {
         logger.debug(operation, '[EngineHelper#executeAction] operation')
 
         const { pieceName, pieceVersion } = operation
@@ -138,14 +126,14 @@ export const engineHelper = {
         })
 
         try {
-            const result = await execute(EngineOperationType.EXECUTE_ACTION, sandbox, {
+            const result = await execute<ExecuteActionResponse>(EngineOperationType.EXECUTE_ACTION, sandbox, {
                 ...operation,
                 workerToken: await workerToken({
                     projectId: operation.projectId,
                 }),
             })
 
-            return result
+            return result.response
         }
         finally {
             await sandboxManager.returnSandbox(sandbox.boxId)
@@ -184,7 +172,7 @@ async function getSandbox({ pieceName, pieceVersion }: {
     return sandbox
 }
 
-async function execute<T>(operation: EngineOperationType, sandbox: Sandbox, input: EngineOperation): Promise<ExecuteReturn<T>> {
+async function execute<T>(operation: EngineOperationType, sandbox: Sandbox, input: EngineOperation): Promise<EngineResponse<T>> {
     log.info(`Executing ${operation} inside sandbox number ${sandbox.boxId}`)
 
     const sandboxPath = sandbox.getSandboxFolderPath()
@@ -196,26 +184,15 @@ async function execute<T>(operation: EngineOperationType, sandbox: Sandbox, inpu
         apiUrl: 'http://127.0.0.1:3000',
     }))
 
-    await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ${operation}`)
+    const result = await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ${operation}`)
 
-    const standardOutput = await sandbox.parseStandardOutput()
-    const standardError = await sandbox.parseStandardError()
-
-    standardOutput.split('\n').forEach(f => {
+    result.standardOutput.split('\n').forEach(f => {
         if (f.trim().length > 0) log.info({}, chalk.yellow(f))
     })
 
-    standardError.split('\n').forEach(f => {
+    result.standardError.split('\n').forEach(f => {
         if (f.trim().length > 0) log.error({}, chalk.red(f))
     })
 
-    const outputFilePath = sandbox.getSandboxFilePath('output.json')
-    const outputFile = await fs.readFile(outputFilePath, { encoding: 'utf-8' })
-
-    const output = JSON.parse(outputFile) as T
-
-    return {
-        output,
-        standardError,
-    }
+    return result.output as EngineResponse<T>
 }

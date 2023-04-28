@@ -1,4 +1,4 @@
-import { ApEdition, EventPayload, ExecuteTestOrRunTriggerResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, ParseEventResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
+import { ApEdition, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./piece-helper";
@@ -12,7 +12,7 @@ type Listener = {
 }
 
 export const triggerHelper = {
-  async executeTrigger(params: ExecuteTriggerOperation): Promise<ExecuteTriggerResponse | ExecuteTestOrRunTriggerResponse | unknown[]> {
+  async executeTrigger(params: ExecuteTriggerOperation<TriggerHookType>): Promise<ExecuteTriggerResponse<TriggerHookType>> {
     const { pieceName, pieceVersion, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
 
     const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
@@ -68,8 +68,8 @@ export const triggerHelper = {
           scheduleOptions: scheduleOptions
         }
       case TriggerHookType.TEST:
-        // TODO: fix types to remove use of any
         try {
+          // TODO REMOVE ANY
           return {
             success: true,
             output: await trigger.test(context as any)
@@ -85,7 +85,11 @@ export const triggerHelper = {
       case TriggerHookType.RUN: {
         if (trigger.type === TriggerStrategy.APP_WEBHOOK) {
           if (params.edition === ApEdition.COMMUNITY) {
-            return [];
+            return {
+              success: false,
+              message: "App webhooks are not supported in community edition",
+              output: []
+            };
           }
 
           if (!params.appWebhookUrl) {
@@ -104,18 +108,30 @@ export const triggerHelper = {
 
             if (verified === false) {
               console.log("Webhook is not verified");
-              return [];
+              return {
+                success: false,
+                message: "Webhook is not verified",
+                output: []
+              }
             }
           } catch (e) {
             console.error("Error while verifying webhook", e);
-            return [];
+            return {
+              success: false,
+              message: "Error while verifying webhook",
+              output: []
+            }
           }
         }
+        // TODO REMOVE ANY
         const items = await trigger.run(context as any);
         if (!Array.isArray(items)) {
           throw new Error(`Trigger run should return an array of items, but returned ${typeof items}`)
         }
-        return items;
+        return {
+          success: true,
+          output: items
+        };
       }
     }
   },

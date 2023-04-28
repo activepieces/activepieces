@@ -112,14 +112,15 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     }
     catch (e: unknown) {
         log.error(e, `[${jobData.runId}] Error executing flow`)
-        if (await sandbox.timedOut()) {
+        /*if (await sandbox.timedOut()) {
             // TODO Flow timed out, consume one task
             await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null, 1)
         }
-        else {
-            captureException(e as Error)
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null, 0)
-        }
+        else {*/
+        captureException(e as Error)
+        await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null, 0)
+        // }
+    
     }
     finally {
         await sandboxManager.returnSandbox(sandbox.boxId)
