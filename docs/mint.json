@@ -151,7 +151,6 @@
         "install/overview",
         "install/docker",
         "install/digitalocean",
-        "install/easypanel",
         "install/configurations",
         "install/breaking-changes"
       ]
