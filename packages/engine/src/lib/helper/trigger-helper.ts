@@ -49,7 +49,7 @@ export const triggerHelper = {
       },
       webhookUrl: params.webhookUrl,
       propsValue: resolvedInput,
-      payload: params.triggerPayload,
+      payload: params.triggerPayload ?? {},
     };
 
     switch (params.hookType) {
@@ -69,10 +69,9 @@ export const triggerHelper = {
         }
       case TriggerHookType.TEST:
         try {
-          // TODO REMOVE ANY
           return {
             success: true,
-            output: await trigger.test(context as any)
+            output: await trigger.test(context)
           }
         } catch (e: any) {
           console.error(e);
@@ -123,8 +122,7 @@ export const triggerHelper = {
             }
           }
         }
-        // TODO REMOVE ANY
-        const items = await trigger.run(context as any);
+        const items = await trigger.run(context);
         if (!Array.isArray(items)) {
           throw new Error(`Trigger run should return an array of items, but returned ${typeof items}`)
         }

@@ -55,7 +55,11 @@ export interface ExecuteTriggerOperation<HT extends TriggerHookType> {
     hookType: HT,
     flowVersion: FlowVersion,
     webhookUrl: string,
-    triggerPayload?: unknown,
+    triggerPayload?: Record<string, never> | {
+        body: any,
+        headers: Record<string, string>,
+        queryParams: Record<string, string>,
+    },
     projectId: ProjectId,
     workerToken?: string;
     apiUrl?: string;
