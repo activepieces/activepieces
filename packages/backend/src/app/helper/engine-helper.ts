@@ -3,7 +3,6 @@ import {
     apId,
     EngineOperation,
     EngineOperationType,
-    EngineResponse,
     ExecuteActionOperation,
     ExecuteFlowOperation,
     ExecutePropsOptions,
@@ -15,6 +14,9 @@ import {
     TriggerHookType,
     ExecuteTriggerResponse,
     ExecuteActionResponse,
+    EngineResponseStatus,
+    ActivepiecesError,
+    ErrorCode,
 } from '@activepieces/shared'
 import { Sandbox, sandboxManager } from '../workers/sandbox'
 import { system } from './system/system'
@@ -60,7 +62,7 @@ export const engineHelper = {
             ...operation,
             workerToken: await workerToken({ projectId: operation.projectId }),
         })
-        return result.response
+        return result
     },
     async executeTrigger<T extends TriggerHookType>(operation: ExecuteTriggerOperation<T>): Promise<ExecuteTriggerResponse<T>> {
         const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
@@ -79,7 +81,7 @@ export const engineHelper = {
                     projectId: operation.projectId,
                 }),
             })
-            return result.response as ExecuteTriggerResponse<T>
+            return result as ExecuteTriggerResponse<T>
         }
         finally {
             await sandboxManager.returnSandbox(sandbox.boxId)
@@ -108,7 +110,7 @@ export const engineHelper = {
                 },
             )
 
-            return result.response
+            return result
         }
         finally {
             await sandboxManager.returnSandbox(sandbox.boxId)
@@ -133,7 +135,7 @@ export const engineHelper = {
                 }),
             })
 
-            return result.response
+            return result
         }
         finally {
             await sandboxManager.returnSandbox(sandbox.boxId)
@@ -172,7 +174,7 @@ async function getSandbox({ pieceName, pieceVersion }: {
     return sandbox
 }
 
-async function execute<T>(operation: EngineOperationType, sandbox: Sandbox, input: EngineOperation): Promise<EngineResponse<T>> {
+async function execute<T>(operation: EngineOperationType, sandbox: Sandbox, input: EngineOperation): Promise<T> {
     log.info(`Executing ${operation} inside sandbox number ${sandbox.boxId}`)
 
     const sandboxPath = sandbox.getSandboxFolderPath()
@@ -193,6 +195,12 @@ async function execute<T>(operation: EngineOperationType, sandbox: Sandbox, inpu
     result.standardError.split('\n').forEach(f => {
         if (f.trim().length > 0) log.error({}, chalk.red(f))
     })
+    if(result.verdict === EngineResponseStatus.TIMEOUT){
+        throw new ActivepiecesError({
+            code: ErrorCode.EXECUTION_TIMEOUT,
+            params: {},
+        })
+    }
 
-    return result.output as EngineResponse<T>
+    return result.output as T
 }

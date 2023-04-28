@@ -39,6 +39,7 @@ type ErrorParams =
   | FlowOperationErrorParams
   | EntityNotFoundErrorParams
   | ValidationErrorParams
+  | ExecutionTimeoutErrorParams
 
 
 export interface BaseErrorParams<T, V> {
@@ -208,6 +209,11 @@ export type EntityNotFoundErrorParams = BaseErrorParams<
   }
 >
 
+export type ExecutionTimeoutErrorParams = BaseErrorParams<
+  ErrorCode.EXECUTION_TIMEOUT,
+  Record<string, never>
+>
+
 export type ValidationErrorParams = BaseErrorParams<
   ErrorCode.VALIDATION,
   {
@@ -242,4 +248,5 @@ export enum ErrorCode {
   TEST_TRIGGER_FAILED = "TEST_TRIGGER_FAILED",
   ENTITY_NOT_FOUND = "ENTITY_NOT_FOUND",
   VALIDATION = "VALIDATION",
+  EXECUTION_TIMEOUT = "EXECUTION_TIMEOUT"
 }

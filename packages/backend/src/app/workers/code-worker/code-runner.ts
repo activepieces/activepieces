@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises'
-import { CodeExecutionResult, CodeRunStatus, apId } from '@activepieces/shared'
+import { CodeExecutionResult, CodeRunStatus, EngineResponseStatus, apId } from '@activepieces/shared'
 import { sandboxManager } from '../sandbox'
 import { codeBuilder } from './code-builder'
 import { system } from '../../helper/system/system'
@@ -28,12 +28,11 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
         const result = await sandbox.runCommandLine(`${nodeExecutablePath} code-executor.js`)
 
         executionResult = {
-            // TODO FIX
-            verdict: CodeRunStatus.OK,
-            timeInSeconds: result?.timeInSeconds ?? 0,
-            output: result?.output ?? '',
-            standardOutput: result?.standardOutput ?? '',
-            standardError: result?.standardError ?? '',
+            verdict: statusToCodeStatus(result.verdict),
+            timeInSeconds: result.timeInSeconds ?? 0,
+            output: result.output ?? '',
+            standardOutput: result.standardOutput ?? '',
+            standardError: result.standardError ?? '',
         }
 
         logger.info(`Finished Executing in sandbox: ${buildPath}, duration: ${Date.now() - startTime}ms`)
@@ -43,6 +42,17 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
     }
 
     return executionResult
+}
+
+function statusToCodeStatus(status: EngineResponseStatus) {
+    switch (status) {
+        case EngineResponseStatus.ERROR:
+            return CodeRunStatus.RUNTIME_ERROR
+        case EngineResponseStatus.OK:
+            return CodeRunStatus.OK
+        case EngineResponseStatus.TIMEOUT:
+            return CodeRunStatus.TIMEOUT
+    }
 }
 
 export const codeRunner = {
