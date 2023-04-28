@@ -11,6 +11,7 @@ When you execute the deploy.sh script in the Docker installation tutorial, it wi
 
 | Variable                     | Description                                                                                                 | Default Value          | Example
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------  | --------
+| `AP_EXECUTION_MODE`          | If you choose to disable the sandboxing in the docker image (to avoid privielged docker), the code will be executed directly on the machine without any restrictions | `SANDBOXED`                |
 | `AP_JWT_SECRET`              | ❗️ Encryption key used for generating JWT tokens                                                            | `None`                 | https://demo.activepieces.com
 | `AP_FRONTEND_URL`            | ❗️ Url that will be used to specify redirect url and webhook url.                                           | `None`                 | https://demo.activepieces.com/api
 | `AP_POSTGRES_DATABASE`       | ❗️ The name of the PostgreSQL database                                                                      | `None`                 |
