@@ -1,6 +1,7 @@
 import {
   Component,
   ElementRef,
+  HostListener,
   NgZone,
   OnInit,
   Renderer2,
@@ -15,6 +16,7 @@ import {
   BuilderSelectors,
   FlowItem,
   RightSideBarType,
+  ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import {
   TestStepService,
@@ -48,6 +50,8 @@ export class FlowRightSidebarComponent implements OnInit {
   isCurrentStepPollingTrigger$: Observable<boolean>;
   isResizerGrabbed = false;
   isCurrentStepPieceWebhookTrigger$: Observable<boolean>;
+  viewMode$: Observable<ViewModeEnum>;
+  ViewModeEnum = ViewModeEnum;
   currentStepPieceVersion$: Observable<
     | {
         version: string;
@@ -73,6 +77,11 @@ export class FlowRightSidebarComponent implements OnInit {
     this.listenToStepChangeAndAnimateResizer();
     this.checkIfCurrentStepIsPollingTrigger();
     this.checkIfCurrentStepIsPieceWebhookTrigger();
+    this.checkForViewMode();
+  }
+
+  private checkForViewMode() {
+    this.viewMode$ = this.store.select(BuilderSelectors.selectViewMode);
   }
 
   private checkIfCurrentStepIsPollingTrigger() {
@@ -191,7 +200,7 @@ export class FlowRightSidebarComponent implements OnInit {
     this.editStepSectionRect =
       this.editStepSection.nativeElement.getBoundingClientRect();
   }
-  resizerDragged(dragMoveEvent: CdkDragMove) {
+  resizerDragged(dragMoveEvent: Pick<CdkDragMove, 'distance'>) {
     const height = this.editStepSectionRect.height + dragMoveEvent.distance.y;
     this.ngZone.runOutsideAngular(() => {
       this.renderer2.setStyle(
@@ -230,5 +239,11 @@ export class FlowRightSidebarComponent implements OnInit {
       'https://www.activepieces.com/docs/pieces/versioning',
       '_blank'
     );
+  }
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.editStepSectionRect =
+      this.editStepSection.nativeElement.getBoundingClientRect();
+    this.resizerDragged({ distance: { y: 99999999999, x: 0 } });
   }
 }

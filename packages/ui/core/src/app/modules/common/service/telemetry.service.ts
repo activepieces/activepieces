@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import posthog from 'posthog-js';
-import { ApFlagId, User } from '@activepieces/shared';
+import { ApEnvironment, ApFlagId, User } from '@activepieces/shared';
 import { FlagService } from '@activepieces/ui/common';
+import { Observable, map } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -27,5 +28,19 @@ export class TelemetryService {
         }
       });
     }
+  }
+
+  isFeatureEnabled(feature: string): Observable<boolean> {
+    return this.flagService.getAllFlags().pipe(
+      map((flags) => {
+        if (flags[ApFlagId.ENVIRONMENT] === ApEnvironment.DEVELOPMENT) {
+          return true;
+        }
+        if (!flags[ApFlagId.TELEMETRY_ENABLED]) {
+          return false;
+        }
+        return posthog.isFeatureEnabled(feature);
+      })
+    );
   }
 }

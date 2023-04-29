@@ -32,7 +32,7 @@ type InstallPieceParams = {
     pieceVersion: string
 }
 
-type ExecuteReturn<T> = {
+export type ExecuteReturn<T> = {
     output: T
     standardError: string
 }
@@ -67,7 +67,7 @@ export const engineHelper = {
 
         return result.output as ExecutionOutput
     },
-    async executeTrigger(operation: ExecuteTriggerOperation): Promise<void | unknown[] | ExecuteTestOrRunTriggerResponse | ExecuteTriggerResponse> {
+    async executeTrigger(operation: ExecuteTriggerOperation): Promise<ExecuteReturn<unknown[]> | ExecuteTestOrRunTriggerResponse | ExecuteTriggerResponse> {
         const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
         const sandbox = await getSandbox({
             pieceName,
@@ -89,9 +89,9 @@ export const engineHelper = {
                 return result.output as ExecuteTestOrRunTriggerResponse
             }
             if (operation.hookType === TriggerHookType.RUN) {
-                return result.output as unknown[]
+                return result as ExecuteReturn<unknown[]>
             }
-            return result.output as void
+            return result.output as ExecuteTriggerResponse
         }
         finally {
             await sandboxManager.returnSandbox(sandbox.boxId)

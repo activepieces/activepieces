@@ -79,13 +79,11 @@ export const flowRunService = {
 
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const flow = (await flowRepo.findOneBy({ id: flowVersion.flowId }))!
-        const edition = await getEdition()
-        if (edition === ApEdition.ENTERPRISE) {
-            await usageService.limit({
-                projectId: flow.projectId,
-                flowVersion: flowVersion,
-            })
-        }
+
+        await usageService.limit({
+            projectId: flow.projectId,
+            flowVersion,
+        })
 
         const flowRun: Partial<FlowRun> = {
             id: apId(),

@@ -88,7 +88,9 @@ export class StepTypeSidebarComponent implements OnInit {
       core: coreItemsDetails$.pipe(take(1)),
     }).pipe(
       map((res) => {
-        return [...res.core, ...res.apps];
+        return [...res.core, ...res.apps].sort((a, b) =>
+          a.name > b.name ? 1 : -1
+        );
       })
     );
     this.tabsAndTheirLists.push({

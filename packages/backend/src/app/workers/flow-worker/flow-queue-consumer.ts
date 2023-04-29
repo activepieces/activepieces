@@ -28,21 +28,17 @@ const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
 const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     REPEATABLE_JOB_QUEUE,
     async (job) => {
-
         logger.info(`[repeatableJobConsumer] job.id=${job.name} job.type=${job.data.triggerType}`)
         const { data } = job
 
         try {
-            switch (data.triggerType) {
-                case TriggerType.PIECE:
-                    await consumePieceTrigger(data)
-                    break
+            if (data.triggerType === TriggerType.PIECE) {
+                await consumePieceTrigger(data)
             }
         }
         catch (e) {
             if (e instanceof ActivepiecesError) {
-                const apError: ActivepiecesError = e as ActivepiecesError
-                if (apError.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
+                if (e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
                     logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
                     await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowVersion.flowId })
                 }
@@ -51,6 +47,7 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
                 throw e
             }
         }
+
         logger.info(`[repeatableJobConsumer] done job.id=${job.name} job.type=${job.data.triggerType}`)
     },
     {
@@ -58,7 +55,6 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
         concurrency: system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10,
     },
 )
-
 
 const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
     const flowVersion = await flowVersionService.getOneOrThrow(data.flowVersion.id)

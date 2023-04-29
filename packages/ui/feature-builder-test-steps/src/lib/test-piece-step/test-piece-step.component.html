@@ -3,27 +3,27 @@
         Generate Sample Data
     </div>
     <ng-container *ngIf="!loading else loadingSpinner">
-        <ng-container *ngIf="(lastTestDate$| async); else firstTimeTest">
-            <div class="ap-flex ap-items-center">
-                <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
-                    <svg-icon src="assets/img/custom/success-step-result.svg"
-                        [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon>
-                    Tested
-                    Successfully
-                </div>
-                <div class="ap-flex-grow">
-                </div>
-                <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                    [tooltipText]=" (currentStepValidity$ | async) === false ? 'Please fix the step inputs first' : 'Test step to generate sample data to use in the next steps'"
-                    [disabled]="(currentStepValidity$ | async) === false"
-                    (buttonClicked)="testStep()">Retest</ap-button>
-            </div>
-            <div class="ap-typography-body-2 ap-text-body ap--mt-2 ap-mb-4 ap-pl-0.5">
-                {{ (lastTestDate$ | async) | timeago:true}}
-            </div>
-            <ap-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
-                [content]="(lastTestResult$ |async)"></ap-json-viewer>
+        <ng-container *ngIf="errorResponse !== null">
+            <ng-container [ngTemplateOutlet]="resultTemplate" [ngTemplateOutletContext]="{res:{
+                output:errorResponse,
+                success:false
+            }}"></ng-container>
         </ng-container>
+        <ng-container *ngIf="errorResponse === null">
+            <ng-container *ngIf="(lastTestDate$| async) as lastDate; else firstTimeTest">
+
+                <ng-container *ngIf="lastTestResult$ | async as testResult">
+
+                    <ng-container [ngTemplateOutlet]="resultTemplate" [ngTemplateOutletContext]="{
+                        res:{
+                        output:testResult,
+                        success:true,
+                        date:lastDate
+                        }}"></ng-container>
+                </ng-container>
+            </ng-container>
+        </ng-container>
+
     </ng-container>
 </div>
 
@@ -40,10 +40,34 @@
         </div>
     </div>
 </ng-template>
+
 <ng-template #loadingSpinner>
     <div class="ap-flex ap-flex-grow ap-justify-center ap-items-center ap-h-[136px]">
         <ap-loading-icon class="ap-mr-[-10px]"></ap-loading-icon>
     </div>
 </ng-template>
+
+
+<ng-template #resultTemplate let-res="res">
+    <div class="ap-flex ap-items-center">
+        <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
+            <svg-icon
+                [src]="res.success?'assets/img/custom/success-step-result.svg':'assets/img/custom/failure-step-result.svg'"
+                [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon>
+            {{res.success?'Tested Successfully':'Testing Failed'}}
+        </div>
+        <div class="ap-flex-grow">
+        </div>
+        <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
+            [tooltipText]=" (currentStepValidity$ | async) === false ? 'Please fix the step inputs first' : 'Test step to generate sample data to use in the next steps'"
+            [disabled]="(currentStepValidity$ | async) === false" (buttonClicked)="testStep()">Retest</ap-button>
+    </div>
+    <div *ngIf="res.date" class="ap-typography-body-2 ap-text-body ap--mt-2 ap-mb-4 ap-pl-0.5">
+        {{ res.date | timeago:true}}
+    </div>
+    <ap-json-viewer class="json-viewer" title="Output" [maxHeight]="400" [content]="res.output"></ap-json-viewer>
+
+</ng-template>
+
 <ng-container *ngIf="testStep$ | async"></ng-container>
 <ng-container *ngIf="saveStepAfterTesting$ | async"></ng-container>
