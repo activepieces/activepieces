@@ -22,7 +22,7 @@ export class VariableService {
     return paths.join('.');
   }
 
-  private async resolveInput(input: string, valuesMap: any): Promise<any> {
+  private async resolveInput(input: string, valuesMap: any, censorConnections: boolean): Promise<any> {
 
     // If input contains only a variable token, return the value of the variable while maintaining the variable type.
     const matchedTokens = input.match(this.VARIABLE_TOKEN);
@@ -33,7 +33,8 @@ export class VariableService {
     ) {
       const resolvedInput = await this.handleTypeAndResolving(
         valuesMap,
-        this.findPath(input.substring(2, input.length - 1))
+        this.findPath(input.substring(2, input.length - 1)),
+        censorConnections
       )
       return resolvedInput;
     }
@@ -41,7 +42,8 @@ export class VariableService {
     return await replaceAsync(input, this.VARIABLE_TOKEN, async (_, matchedKey) => {
       const resolvedInput = await this.handleTypeAndResolving(
         valuesMap,
-        this.findPath(matchedKey)
+        this.findPath(matchedKey),
+        censorConnections
       );
       if (resolvedInput === undefined) {
         return '';
@@ -53,12 +55,15 @@ export class VariableService {
     });
   }
 
-  private async handleTypeAndResolving(valuesMap: any, path: string): Promise<any> {
+  private async handleTypeAndResolving(valuesMap: any, path: string, censorConnections: boolean): Promise<any> {
     const paths = path.split(".");
     if (paths[0] === VariableService.CONNECTIONS) {
       // Invalid naming return nothing
       if (paths.length < 2) {
         return '';
+      }
+      if (censorConnections) {
+        return "**CENSORED**";
       }
       // Need to be resolved dynamically
       const connectioName = paths[1];
@@ -81,20 +86,20 @@ export class VariableService {
     return value;
   }
 
-  private async resolveInternally(unresolvedInput: any, valuesMap: any): Promise<any> {
+  private async resolveInternally(unresolvedInput: any, valuesMap: any, censorConnections: boolean): Promise<any> {
     if (unresolvedInput === undefined || unresolvedInput === null) {
       return unresolvedInput;
     } else if (isString(unresolvedInput)) {
-      return this.resolveInput(unresolvedInput, valuesMap);
+      return this.resolveInput(unresolvedInput, valuesMap,censorConnections);
     } else if (Array.isArray(unresolvedInput)) {
       for (let i = 0; i < unresolvedInput.length; ++i) {
-        unresolvedInput[i] = await this.resolveInternally(unresolvedInput[i], valuesMap);
+        unresolvedInput[i] = await this.resolveInternally(unresolvedInput[i], valuesMap, censorConnections);
       }
     } else if (typeof unresolvedInput === 'object') {
       const entries = Object.entries(unresolvedInput);
       for (let i = 0; i < entries.length; ++i) {
         const [key, value] = entries[i];
-        unresolvedInput[key] = await this.resolveInternally(value, valuesMap);
+        unresolvedInput[key] = await this.resolveInternally(value, valuesMap, censorConnections);
       }
     }
     return unresolvedInput;
@@ -113,10 +118,11 @@ export class VariableService {
     return valuesMap;
   }
 
-  resolve(unresolvedInput: any, executionState: ExecutionState): Promise<any> {
+  resolve(unresolvedInput: any, executionState: ExecutionState, censorConnections = false): Promise<any> {
     return this.resolveInternally(
       JSON.parse(JSON.stringify(unresolvedInput)),
-      this.getExecutionStateObject(executionState)
+      this.getExecutionStateObject(executionState),
+      censorConnections
     );
   }
 }

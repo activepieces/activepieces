@@ -45,7 +45,11 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     );
 
     const stepOutput = new LoopOnItemsStepOutput();
-    stepOutput.input = resolvedInput;
+    stepOutput.input = await this.variableService.resolve(
+      this.action.settings,
+      executionState,
+      true 
+    );
 
     stepOutput.output = {
       index: 1,

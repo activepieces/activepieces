@@ -33,7 +33,11 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction> {
     );
 
     const stepOutput = new BranchStepOutput();
-    stepOutput.input = resolvedInput;
+    stepOutput.input = await this.variableService.resolve(
+      this.action.settings,
+      executionState,
+      true
+    );
 
     try {
       const condition = evaluateConditions(resolvedInput.conditions);
