@@ -22,7 +22,7 @@ import { ApFlagId } from '@activepieces/shared';
 import { TelemetryService } from './modules/common/service/telemetry.service';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
-import { SwitchFlowDialogComponent } from '@activepieces/feature-command-bar';
+import { SwitchFlowDialogComponent } from '@activepieces/ui/feature-command-bar';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;

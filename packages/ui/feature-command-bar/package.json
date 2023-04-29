@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/feature-command-bar",
+  "name": "@activepieces/ui/feature-command-bar",
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/common": "^15.1.0",

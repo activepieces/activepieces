@@ -77,18 +77,6 @@ export const selectCurrentFlowFolderName = createSelector(
   }
 );
 
-export const selectSearchItems = (command: string) =>
-  createSelector(selectBuilderState, (state: GlobalBuilderState) => {
-    return [
-      {
-        label: 'View Runs',
-        value: 'runs',
-        icon: '/assets/img/custom/dashboard/runs.svg',
-        type: 'RUNS',
-      },
-    ];
-  });
-
 export const selectTabState = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => state.state
@@ -450,7 +438,6 @@ export const BuilderSelectors = {
   selectTabState,
   selectAllFlowItemsDetails,
   selectFlowItemDetails,
-  selectSearchItems,
   selectAllFlowItemsDetailsLoadedState,
   selectCoreFlowItemsDetails,
   selectFlowItemDetailsForCoreTriggers,

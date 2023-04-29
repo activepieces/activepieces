@@ -20,9 +20,6 @@
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/ee/shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
-      "@activepieces/feature-command-bar": [
-        "packages/feature-command-bar/src/index.ts"
-      ],
       "@activepieces/framework": ["packages/pieces/framework/src/index.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-asana": ["packages/pieces/asana/src/index.ts"],
@@ -165,6 +162,9 @@
       ],
       "@activepieces/ui/feature-builder-test-steps": [
         "packages/ui/feature-builder-test-steps/src/index.ts"
+      ],
+      "@activepieces/ui/feature-command-bar": [
+        "packages/ui/feature-command-bar/src/index.ts"
       ],
       "@activepieces/ui/feature-connections": [
         "packages/ui/feature-connections/src/index.ts"
