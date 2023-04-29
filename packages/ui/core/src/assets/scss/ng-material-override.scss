@@ -666,3 +666,7 @@ app-mentions-list .mat-mdc-menu-item
 {
   overflow:initial !important;
 }
+
+app-dashboard-container .mat-drawer {
+  background-color: $hover;
+}

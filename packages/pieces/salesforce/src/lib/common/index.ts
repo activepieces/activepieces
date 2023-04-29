@@ -11,7 +11,7 @@ export const salesforcesCommon = {
         scope: ["refresh_token+full"],
     }),
     object: Property.Dropdown<string>({
-        displayName: "Objects",
+        displayName: "Object",
         required: true,
         description: "Select the Object",
         refreshers: ['authentication'],
@@ -63,6 +63,21 @@ export const salesforcesCommon = {
     })
 }
 
+
+export async function callSalesforceApi<T extends HttpMessageBody>(method: HttpMethod,
+    authentication: OAuth2PropertyValue, 
+    url: string,
+    body: Record<string,unknown> | undefined): Promise<HttpResponse<T>> {
+    return await httpClient.sendRequest<T>({
+        method: method,
+        url: `${authentication.data['instance_url']}${url}`,
+        body,
+        authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: authentication['access_token']
+        }
+    });
+}
 
 export async function querySalesforceApi<T extends HttpMessageBody>(method: HttpMethod,
     authentication: OAuth2PropertyValue, 

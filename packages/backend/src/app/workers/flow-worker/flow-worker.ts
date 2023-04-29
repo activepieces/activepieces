@@ -25,6 +25,7 @@ import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
 import { pieceManager } from '../../flows/common/piece-installer'
 import { isNil } from 'lodash'
+import { usageService } from '@ee/billing/backend/usage.service'
 
 type FlowPiece = {
     name: string
@@ -67,6 +68,11 @@ const installPieces = async (params: InstallPiecesParams): Promise<void> => {
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId)
+
+    await usageService.limit({
+        projectId: jobData.projectId,
+        flowVersion,
+    })
 
     // Don't use sandbox for draft versions, since they are mutable and we don't want to cache them.
     const key = flowVersion.id + (FlowVersionState.DRAFT === flowVersion.state ? '-draft' + apId() : '')
