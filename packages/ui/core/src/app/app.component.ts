@@ -43,6 +43,7 @@ export class AppComponent implements OnInit {
   warningMessage$: Observable<{ title?: string; body?: string } | undefined>;
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;
+  openCommandBar$: Observable<void>;
   loading$: Subject<boolean> = new Subject();
   constructor(
     public dialog: MatDialog,
@@ -126,12 +127,21 @@ export class AppComponent implements OnInit {
       ($event.ctrlKey || $event.metaKey) &&
       ($event.key == 'k' || $event.key == 'K')
     ) {
-      this.dialog.open(SwitchFlowDialogComponent, {
-        position: {
-          top: '5%',
-        },
-      });
-      $event.preventDefault();
+      this.openCommandBar$ = this.telemetryService
+        .isFeatureEnabled('command-bar')
+        .pipe(
+          tap((enabled) => {
+            if (enabled) {
+              this.dialog.open(SwitchFlowDialogComponent, {
+                position: {
+                  top: '5%',
+                },
+              });
+              $event.preventDefault();
+            }
+          }),
+          map(() => void 0)
+        );
     }
   }
 

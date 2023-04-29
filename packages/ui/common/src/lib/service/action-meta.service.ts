@@ -15,10 +15,10 @@ import { FlagService } from './flag.service';
 import {
   DropdownState,
   PiecePropertyMap,
-  TriggerStrategy,
   TriggerBase,
   PieceMetadata,
   PieceMetadataSummary,
+  TriggerStrategy,
 } from '@activepieces/pieces-framework';
 
 type TriggersMetadata = Record<string, TriggerBase>;

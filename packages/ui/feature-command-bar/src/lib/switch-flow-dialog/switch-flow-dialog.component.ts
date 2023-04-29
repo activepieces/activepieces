@@ -107,7 +107,6 @@ export class SwitchFlowDialogComponent {
   }
 
   onKeyDown(event: KeyboardEvent, options: SearchItem[]): void {
-    console.log("Pressed " + event.key);
     if (event.key === 'Enter') {
       this.doAction(
         options[this.selectedIndex].type,
