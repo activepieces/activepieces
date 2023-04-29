@@ -11,6 +11,7 @@ on:
 
 jobs:
   Release-Pieces:
+    if: github.repository == 'activepieces/activepieces'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code

@@ -28,37 +28,31 @@ const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
 const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     REPEATABLE_JOB_QUEUE,
     async (job) => {
-
-        logger.info(`[repeatableJobConsumer] flow.id=${job.data.flowVersion.flowId} ${job.data.flowVersion.id} job.type=${job.data.triggerType}`)
+        logger.info(`[repeatableJobConsumer] job.id=${job.name} job.type=${job.data.triggerType}`)
         const { data } = job
 
         try {
-            switch (data.triggerType) {
-                case TriggerType.PIECE:
-                    await consumePieceTrigger(data)
-                    break
+            if (data.triggerType === TriggerType.PIECE) {
+                await consumePieceTrigger(data)
             }
         }
         catch (e) {
             if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
-                const apError: ActivepiecesError = e as ActivepiecesError
-                if (apError.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
-                    logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
-                    await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowVersion.flowId })
-                }
+                logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
+                await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowVersion.flowId })
             }
             else {
                 captureException(e)
             }
         }
-        logger.info(`[repeatableJobConsumer] done flow.id=${job.data.flowVersion.flowId} ${job.data.flowVersion.id} job.type=${job.data.triggerType}`)
+
+        logger.info(`[repeatableJobConsumer] done job.id=${job.name} job.type=${job.data.triggerType}`)
     },
     {
         connection: createRedisClient(),
         concurrency: system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10,
     },
 )
-
 
 const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
     const flowVersion = await flowVersionService.getOneOrThrow(data.flowVersion.id)

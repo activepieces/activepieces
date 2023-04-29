@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { NewFolderDialogComponent } from '../new-folder-dialog/new-folder-dialog.component';
-import { Observable, tap, map } from 'rxjs';
+import { Observable, tap, map, switchMap, take } from 'rxjs';
 import { FolderDto } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { FoldersSelectors } from '../../../store/folders/folders.selector';
@@ -83,14 +83,23 @@ export class FoldersListComponent {
   }
   deleteFolder(folder: FolderDto) {
     const dialogData: DeleteEntityDialogData = {
-      deleteEntity$: this.folderService.delete(folder.id).pipe(
-        tap(() => {
-          this.store.dispatch(
-            FolderActions.deleteFolder({ folderId: folder.id })
-          );
-          this.clearCursorParam();
-        })
-      ),
+      deleteEntity$: this.store
+        .select(FoldersSelectors.selectCurrentFolder)
+        .pipe(
+          take(1),
+          switchMap((res) => {
+            return this.folderService.delete(folder.id).pipe(
+              tap(() => {
+                this.store.dispatch(
+                  FolderActions.deleteFolder({ folderId: folder.id })
+                );
+                if (res?.id === folder.id) {
+                  this.clearCursorParam();
+                }
+              })
+            );
+          })
+        ),
       entityName: folder.displayName,
       note: 'If you delete this folder, we will keep its flows and move them to Uncategorized.',
     };

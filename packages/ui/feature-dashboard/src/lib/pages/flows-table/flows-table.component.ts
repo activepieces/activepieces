@@ -35,7 +35,14 @@ export class FlowsTableComponent implements OnInit {
   deleteFlowDialogClosed$: Observable<void>;
   moveFlowDialogClosed$: Observable<void>;
   dataSource!: FlowsTableDataSource;
-  displayedColumns = ['name', 'created', 'status', 'folderName', 'action'];
+  displayedColumns = [
+    'name',
+    'created',
+    'steps',
+    'folderName',
+    'status',
+    'action',
+  ];
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
   areThereFlows$: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
