@@ -34,7 +34,11 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     );
 
     globals.addOneTask();
-    stepOutput.input = config;
+    stepOutput.input = await this.variableService.resolve(
+      input,
+      executionState,
+      true 
+    );
 
     if(!actionName){
       throw new Error("Action name is not defined");
