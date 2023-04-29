@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    timeout-minutes: 60
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     env:
       AP_TEST_EMAIL: ${{ secrets.AP_TEST_EMAIL }}
@@ -25,7 +25,7 @@ jobs:
         run: npx playwright install --with-deps
         working-directory: packages/tests-e2e
       - name: Run Playwright tests
-        run: npx playwright test --browsers=chromium
+        run: npx playwright test
         working-directory: packages/tests-e2e
       - uses: actions/upload-artifact@v3
         if: always()
@@ -34,3 +34,9 @@ jobs:
           path: playwright-report/
           retention-days: 30
           working-directory: packages/tests-e2e
+      - name: Notify webhook on failure
+        if: failure()
+        run: |
+          curl -X POST 'https://api.instatus.com/v3/integrations/webhook/clh20dtiy132156wsnc3oshf7tp' \
+          -H 'Content-Type: application/json' \
+          -d '{"trigger": "down"}'
