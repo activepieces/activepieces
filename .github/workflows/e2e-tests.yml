@@ -6,6 +6,7 @@ on:
 
 jobs:
   test:
+    if: github.repository == 'activepieces/activepieces'
     timeout-minutes: 5
     runs-on: ubuntu-latest
     env:
