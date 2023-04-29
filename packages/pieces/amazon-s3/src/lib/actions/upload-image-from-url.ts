@@ -40,7 +40,7 @@ export const uploadImageFromURL = createAction({
         const [_, ext] = contentType.split("/");
         const extension = "." + ext;
 
-        let generatedName = new Date().toISOString() + Date.now() + extension;
+        const generatedName = new Date().toISOString() + Date.now() + extension;
 
         const finalFileName = imageName ? imageName + extension : generatedName;
 
