@@ -36,7 +36,11 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     if(!artifactPackagedId){
       throw new Error("Artifact packaged id is not defined");
     }
-    stepOutput.input = params;
+    stepOutput.input = await this.variableService.resolve(
+      this.action.settings.input,
+      executionState,
+      true
+    );
     try {
       const codeExecutor = new CodeExecutor();
       stepOutput.output = await codeExecutor.executeCode(
