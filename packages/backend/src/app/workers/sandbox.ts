@@ -102,6 +102,7 @@ export class Sandbox {
                     metaFile +
                     ' --stdout=_standardOutput.txt' +
                     ' --stderr=_standardError.txt --run ' +
+                    ' --env=HOME=/tmp/' +
                     ' --env=AP_ENVIRONMENT ' +
                     commandLine,
                 )
