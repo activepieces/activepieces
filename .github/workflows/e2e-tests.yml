@@ -1,11 +1,11 @@
 name: Playwright Tests
 on:
-  pull_request:
-    branches:
-      - main
+  schedule:
+    - cron: '*/10 * * * *'
 
 jobs:
   test:
+    if: github.repository == 'activepieces/activepieces'
     timeout-minutes: 5
     runs-on: ubuntu-latest
     env:

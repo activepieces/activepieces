@@ -1,0 +1,19 @@
+name: Ping Website
+
+on:
+  schedule:
+    - cron: '*/1 * * * *'
+
+jobs:
+  ping-website:
+    if: github.repository == 'activepieces/activepieces'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping website
+        run: curl --head --fail --silent --show-error --max-time 1 https://cloud.activepieces.com/api/v1/flags
+      - name: Send webhook on failure
+        if: ${{ failure() }}
+        run: |
+          curl -X POST 'https://api.instatus.com/v3/integrations/webhook/clh20dtiy132156wsnc3oshf7tp' \
+          -H 'Content-Type: application/json' \
+          -d '{"trigger": "down"}'
