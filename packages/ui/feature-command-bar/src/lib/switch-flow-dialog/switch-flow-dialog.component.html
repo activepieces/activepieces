@@ -1,0 +1,69 @@
+<ng-container *ngIf="options$ | async as options">
+  <mat-dialog-content
+    class="search-dialog ap-min-w-[600px] border-gray-300 border"
+    tabindex="-1"
+  >
+    <div class="ap-flex">
+      <form class="ap-w-full" [formGroup]="searchForm">
+        <div
+          class="ap-relative ap-w-full ap-text-gray-500 ap-focus-within:text-gray-400"
+        >
+          <span
+            class="ap-absolute ap-inset-y-0 ap-left-0 ap-pl-3 ap-flex ap-items-center"
+          >
+            <svg-icon
+              class="mr-2 ap-w-[16px] ap-h-[16px]"
+              [svgStyle]="{ fill: '#000000' }"
+              src="assets/img/custom/search.svg"
+            >
+            </svg-icon>
+          </span>
+          <input
+            matInput
+            (keydown)="onKeyDown($event, options)"
+            [formControl]="searchForm.controls.query"
+            class="ap-text-sm ap-text-gray-900 ap-placeholder-gray-500 ap-border-0 ap-focus:ap-outline-none ap-focus:border-blue-500 ap-w-full ap-p-4 border-b-2 border-gray-300 ap-pl-10 ap-outline-none"
+            type="text"
+            placeholder="Go to"
+          />
+        </div>
+      </form>
+    </div>
+
+    <div class="ap-border-gray-200 ap-border-t ap-w-full"></div>
+    <div class="ap-bg-white">
+      <div class="ap-p-2 ap-text-sm ap-text-gray-700">
+        <ul>
+          <li
+            tabindex="0"
+            [class.ap-bg-primary-dark]="selectedIndex === i"
+            (mouseenter)="selectFlow(i)"
+            [class.ap-text-white]="selectedIndex === i"
+            *ngFor="let option of options; let i = index"
+            (click)="doAction(option.type, option.value)"
+            tabindex="0"
+            class="ap-py-2 ap-px-4 ap-cursor-pointer ap-transition-colors ap-rounded-lg ap-flex ap-duration-200"
+          >
+            <div
+              class="ap-bg-white ap-w-[24px] ap-h-[24px] ap-border ap-border-gray-100 ap-rounded ap-flex ap-justify-center ap-items-center"
+            >
+              <img [src]="option.icon" alt="Icon" class="mr-2 ap-w-[16px]" />
+            </div>
+            <span class="ap-ml-2" style="align-self: center">
+              {{ option.label }}
+            </span>
+            <img
+              *ngIf="selectedIndex === i"
+              src="/assets/img/custom/chevron-right.svg"
+              alt="Icon"
+              class="mr-2 ap-h-[12px] ap-ml-auto ap-text-white"
+              style="align-self: center"
+            />
+          </li>
+        </ul>
+      </div>
+    </div>
+  </mat-dialog-content>
+</ng-container>
+
+<ng-container *ngIf="allOptions$ | async"></ng-container>

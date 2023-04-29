@@ -27,6 +27,7 @@ import { ApEdition } from '@activepieces/shared';
 import { FirebaseAuthContainerComponent } from '@ee/firebase-auth/frontend/auth-container/firebase-auth-container.component';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { DashboardContainerComponent } from '@activepieces/ui/feature-dashboard';
+import { FeatureCommandBarModule } from '@activepieces/ui/feature-command-bar';
 import { AuthLayoutComponent } from '@activepieces/ui/feature-authentication';
 
 export function tokenGetter() {
@@ -43,6 +44,7 @@ export function tokenGetter() {
     FlowBuilderModule,
     AppRoutingModule,
     BrowserAnimationsModule,
+    FeatureCommandBarModule,
     StoreModule.forRoot({}),
     StoreDevtoolsModule.instrument({
       maxAge: 25, // Retains last 25 states

@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/matrix",
         "tsConfig": "packages/pieces/matrix/tsconfig.lib.json",
         "packageJson": "packages/pieces/matrix/package.json",
         "main": "packages/pieces/matrix/src/index.ts",
-        "assets": [
-          "packages/pieces/matrix/*.md"
-        ],
+        "assets": ["packages/pieces/matrix/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/matrix/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/matrix/**/*.ts"]
       }
     }
   },

@@ -76,6 +76,7 @@ export const selectCurrentFlowFolderName = createSelector(
     return state.flowState.folder.displayName;
   }
 );
+
 export const selectTabState = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => state.state

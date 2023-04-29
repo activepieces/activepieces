@@ -15,10 +15,10 @@ import { FlagService } from './flag.service';
 import {
   DropdownState,
   PiecePropertyMap,
-  TriggerStrategy,
   TriggerBase,
   PieceMetadata,
   PieceMetadataSummary,
+  TriggerStrategy,
 } from '@activepieces/pieces-framework';
 
 type TriggersMetadata = Record<string, TriggerBase>;
@@ -157,7 +157,6 @@ export class ActionMetaService {
     if (this.piecesCache.has(cacheKey)) {
       return this.piecesCache.get(cacheKey)!;
     }
-
     const pieceMetadata$ = forkJoin({
       pieceMetadata: this.fetchPieceMetadata(pieceName, pieceVersion),
       edition: this.edition$,

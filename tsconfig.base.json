@@ -162,6 +162,9 @@
       "@activepieces/ui/feature-builder-test-steps": [
         "packages/ui/feature-builder-test-steps/src/index.ts"
       ],
+      "@activepieces/ui/feature-command-bar": [
+        "packages/ui/feature-command-bar/src/index.ts"
+      ],
       "@activepieces/ui/feature-connections": [
         "packages/ui/feature-connections/src/index.ts"
       ],
