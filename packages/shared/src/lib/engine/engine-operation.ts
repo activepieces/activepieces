@@ -55,17 +55,19 @@ export interface ExecuteTriggerOperation<HT extends TriggerHookType> {
     hookType: HT,
     flowVersion: FlowVersion,
     webhookUrl: string,
-    triggerPayload?: Record<string, never> | {
-        body: any,
-        headers: Record<string, string>,
-        queryParams: Record<string, string>,
-    },
+    triggerPayload?: TriggerPayload,
     projectId: ProjectId,
     workerToken?: string;
     apiUrl?: string;
     edition?: string;
     appWebhookUrl?: string;
     webhookSecret?: string;
+}
+
+export type TriggerPayload = Record<string, never> | {
+    body: any,
+    headers: Record<string, string>,
+    queryParams: Record<string, string>,
 }
 
 export interface EventPayload {

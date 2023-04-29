@@ -5,6 +5,7 @@ import {
     ProjectId,
     RunEnvironment,
     TriggerHookType,
+    TriggerPayload,
     TriggerType,
 } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
@@ -208,5 +209,5 @@ type BaseParams = {
 type EnableOrDisableParams = BaseParams
 
 type ExecuteTrigger = BaseParams & {
-    payload: unknown
+    payload: TriggerPayload
 }

@@ -62,7 +62,7 @@ const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
     const payloads: unknown[] = await triggerUtils.executeTrigger({
         projectId: data.projectId,
         flowVersion: flowVersion,
-        payload: null,
+        payload: {},
         simulate: false,
     })
 
