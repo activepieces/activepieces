@@ -2,7 +2,7 @@ import { arch, cwd } from 'node:process'
 import { exec } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { system } from '../helper/system/system'
+import { ExecutionMode, system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { logger } from '../helper/logger'
 import { packageManager } from '../helper/package-manager'
@@ -18,12 +18,7 @@ const getIsolateExecutableName = () => {
     return executableNameMap[arch] ?? defaultName
 }
 
-enum ExecutionMode {
-    SANDBOX = 'SANDBOX',
-    UNSANDBOXED = 'UNSANDBOXED',
-}
-
-const executionMode: ExecutionMode = system.get(SystemProp.EXECUTION_MODE) as ExecutionMode ?? ExecutionMode.SANDBOX
+const executionMode: ExecutionMode = system.get(SystemProp.EXECUTION_MODE) as ExecutionMode ?? ExecutionMode.SANDBOXED
 
 export type ExecuteIsolateResult = {
     output: unknown
