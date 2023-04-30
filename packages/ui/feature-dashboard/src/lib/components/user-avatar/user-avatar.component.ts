@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthenticationService } from '@activepieces/ui/common';
+import { AuthenticationService, showBeamer } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-user-avatar',
@@ -38,5 +38,11 @@ export class UserAvatarComponent {
       return '';
     }
     return this.authenticationService.currentUser.firstName[0];
+  }
+  goToCommunity() {
+    window.open('https://discord.gg/GHgqTAJy', '_blank');
+  }
+  showWhatIsNew() {
+    showBeamer();
   }
 }
