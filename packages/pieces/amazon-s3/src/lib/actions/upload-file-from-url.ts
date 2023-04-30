@@ -3,10 +3,10 @@ import { auth } from "../common/auth";
 import { S3 } from "@aws-sdk/client-s3";
 import axios from "axios";
 
-export const uploadImageFromURL = createAction({
-    name: 'upload-image-from-url',
-    displayName: "Upload Image from URL",
-    description: "Upload an image to S3 by using it's url",
+export const uploadFileFromUrl = createAction({
+    name: 'upload-file-from-url',
+    displayName: "Upload File from URL",
+    description: "Upload an file to S3 by using it's url",
     props: {
         authentication: auth,
         url: Property.LongText({
@@ -14,14 +14,13 @@ export const uploadImageFromURL = createAction({
             required: true,
         }),
         imageName: Property.ShortText({
-            displayName: 'Image Name',
+            displayName: 'File Name',
             required: false,
-            description: "my-image-name (no extension)"
+            description: "my-file-name (no extension)"
         }),
         acl: Property.ShortText({
             displayName: 'ACL',
-            required: true,
-            defaultValue: "public-read"
+            required: false
         })
     },
     async run(context) {
@@ -47,7 +46,7 @@ export const uploadImageFromURL = createAction({
         const uploadResponse = await s3.putObject({
             Bucket: bucket,
             Key: finalFileName,
-            ACL: acl,
+            ACL: (!acl || acl.length === 0) ? undefined: acl,
             ContentType: contentType,
             Body: response.data,
         })

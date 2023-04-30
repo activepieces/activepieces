@@ -1,15 +1,16 @@
 
 import { createPiece } from "@activepieces/pieces-framework";
 import packageJson from "../package.json";
-import { uploadBase64Image } from "./lib/actions/upload-image-from-base64";
-import { uploadImageFromURL } from "./lib/actions/upload-image-from-url";
+import { uploadFileFromUrl } from "./lib/actions/upload-file-from-url";
+import { uploadBase64File } from "./lib/actions/upload-file-from-base64";
 
 export const amazonS3 = createPiece({
   name: "amazon-s3",
-  displayName: "S3",
+  displayName: "Amazon S3",
   logoUrl: "https://cdn.activepieces.com/pieces/amazon-s3.png",
   version: packageJson.version,
+  minimumSupportedRelease: "0.3.12",
   authors: ["Willianwg"],
-  actions: [uploadBase64Image, uploadImageFromURL],
+  actions: [uploadBase64File, uploadFileFromUrl],
   triggers: [],
 });
