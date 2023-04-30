@@ -108,6 +108,7 @@ export class FoldersListComponent {
   renameFolder(folder: FolderDto) {
     const dialogData: RenameFolderDialogData = {
       folderId: folder.id,
+      folderDisplayName: folder.displayName,
     };
     this.dialogService.open(RenameFolderDialogComponent, { data: dialogData });
   }

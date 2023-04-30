@@ -16,6 +16,7 @@ import { FoldersService } from '@activepieces/ui/common';
 
 export interface RenameFolderDialogData {
   folderId: string;
+  folderDisplayName: string;
 }
 
 @Component({
