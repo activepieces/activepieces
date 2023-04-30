@@ -2,11 +2,12 @@ import { arch, cwd } from 'node:process'
 import { exec } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { system } from '../helper/system/system'
+import { ExecutionMode, system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { logger } from '../helper/logger'
 import { packageManager } from '../helper/package-manager'
 import { Mutex } from 'async-mutex'
+import { EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 
 const getIsolateExecutableName = () => {
     const defaultName = 'isolate'
@@ -17,11 +18,19 @@ const getIsolateExecutableName = () => {
     return executableNameMap[arch] ?? defaultName
 }
 
-const TWO_MINUTES = 120
+const executionMode: ExecutionMode = system.get(SystemProp.EXECUTION_MODE) as ExecutionMode ?? ExecutionMode.SANDBOXED
+
+export type ExecuteIsolateResult = {
+    output: unknown
+    timeInSeconds: number
+    verdict: EngineResponseStatus
+    standardOutput: string
+    standardError: string
+}
 
 export class Sandbox {
     private static readonly isolateExecutableName = getIsolateExecutableName()
-    private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? TWO_MINUTES
+    private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 120
 
     public readonly boxId: number
     public used: boolean
@@ -46,7 +55,6 @@ export class Sandbox {
 
     async clean(): Promise<void> {
         const filesToDelete = [
-            '_functionOutput.txt',
             '_standardOutput.txt',
             '_standardError.txt',
             'output.json',
@@ -63,52 +71,62 @@ export class Sandbox {
         await Promise.all(promises)
     }
 
-    async runCommandLine(commandLine: string): Promise<string> {
-        const metaFile = this.getSandboxFilePath('meta.txt')
-        const etcDir = path.resolve('./packages/backend/src/assets/etc/')
-
-        return await Sandbox.runIsolate(
-            `--dir=/usr/bin/ --dir=/etc/=${etcDir} --dir=/workspace=/workspace:maybe --share-net --box-id=` +
-            this.boxId +
-            ` --processes --wall-time=${Sandbox.sandboxRunTimeSeconds} --meta=` +
-            metaFile +
-            ' --stdout=_standardOutput.txt' +
-            ' --stderr=_standardError.txt --run ' +
-            ' --env=HOME=/tmp/' +
-            ' --env=AP_ENVIRONMENT ' +
-            commandLine,
-        )
-    }
-
-    async parseFunctionOutput(): Promise<string | undefined> {
-        const outputFile = this.getSandboxFilePath('_functionOutput.txt')
-        if (!(await this.fileExists(outputFile))) {
-            return undefined
+    async runCommandLine(commandLine: string): Promise<ExecuteIsolateResult> {
+        if (executionMode === ExecutionMode.UNSANDBOXED) {
+            const startTime = Date.now()
+            const result = await this.runUnsafeCommand(`cd ${this.getSandboxFolderPath()} && env -i AP_ENVIRONMENT=$AP_ENVIRONMENT ${commandLine}`)
+            let engineResponse
+            if (result.verdict === EngineResponseStatus.OK) {
+                engineResponse = await this.parseFunctionOutput()
+            }
+            return {
+                timeInSeconds: (Date.now() - startTime) / 1000,
+                verdict: result.verdict,
+                output: engineResponse?.response,
+                standardOutput: await fs.readFile(this.getSandboxFilePath('_standardOutput.txt'), { encoding: 'utf-8' }),
+                standardError: await fs.readFile(this.getSandboxFilePath('_standardError.txt'), { encoding: 'utf-8' }),
+            }
         }
-        const str = await fs.readFile(outputFile, { encoding: 'utf-8' })
-        if (this.isJson(str)) {
-            return JSON.parse(str)
+        else {
+            const metaFile = this.getSandboxFilePath('meta.txt')
+            const etcDir = path.resolve('./packages/backend/src/assets/etc/')
+
+            let timeInSeconds
+            let output
+            let verdict
+            try {
+                await Sandbox.runIsolate(
+                    `--dir=/usr/bin/ --dir=/etc/=${etcDir} --dir=/workspace=/workspace:maybe --share-net --box-id=` +
+                    this.boxId +
+                    ` --processes --wall-time=${Sandbox.sandboxRunTimeSeconds} --meta=` +
+                    metaFile +
+                    ' --stdout=_standardOutput.txt' +
+                    ' --stderr=_standardError.txt --run ' +
+                    ' --env=HOME=/tmp/' +
+                    ' --env=AP_ENVIRONMENT ' +
+                    commandLine,
+                )
+                const engineResponse = (await this.parseFunctionOutput())
+                output = engineResponse.response
+                verdict = engineResponse.status
+                const metaResult = await this.parseMetaFile()
+                timeInSeconds = Number.parseFloat(metaResult.time as string)
+            }
+            catch (e) {
+
+                const metaResult = await this.parseMetaFile()
+                timeInSeconds = Number.parseFloat(metaResult.time as string)
+                verdict = metaResult.status == 'TO' ? EngineResponseStatus.TIMEOUT : EngineResponseStatus.ERROR
+            }
+
+            return {
+                timeInSeconds,
+                verdict: verdict,
+                output: output,
+                standardOutput: await fs.readFile(this.getSandboxFilePath('_standardOutput.txt'), { encoding: 'utf-8' }),
+                standardError: await fs.readFile(this.getSandboxFilePath('_standardError.txt'), { encoding: 'utf-8' }),
+            }
         }
-        return str
-    }
-
-    async fileExists(filePath: string): Promise<boolean> {
-        try {
-            await fs.access(filePath)
-            return true
-        }
-        catch (e) {
-            return false
-        }
-    }
-
-
-    parseStandardOutput(): Promise<string> {
-        return fs.readFile(this.getSandboxFilePath('_standardOutput.txt'), { encoding: 'utf-8' })
-    }
-
-    parseStandardError(): Promise<string> {
-        return fs.readFile(this.getSandboxFilePath('_standardError.txt'), { encoding: 'utf-8' })
     }
 
     async parseMetaFile(): Promise<Record<string, unknown>> {
@@ -123,17 +141,68 @@ export class Sandbox {
         return result
     }
 
-    async timedOut(): Promise<boolean> {
-        const meta = await this.parseMetaFile()
-        return meta['status'] === 'TO'
+    getSandboxFolderPath(): string {
+        return '/var/local/lib/isolate/' + this.boxId + '/box'
+    }
+    private async parseFunctionOutput(): Promise<EngineResponse<unknown>> {
+        const outputFile = this.getSandboxFilePath('output.json')
+        if (!(await this.fileExists(outputFile))) {
+            throw new Error('Output file not found in ' + outputFile)
+        }
+        return JSON.parse(await fs.readFile(outputFile, { encoding: 'utf-8' }))
     }
 
-    getSandboxFilePath(subFile: string) {
+    private async fileExists(filePath: string): Promise<boolean> {
+        try {
+            await fs.access(filePath)
+            return true
+        }
+        catch (e) {
+            return false
+        }
+    }
+
+
+    private getSandboxFilePath(subFile: string) {
         return this.getSandboxFolderPath() + '/' + subFile
     }
 
-    getSandboxFolderPath(): string {
-        return '/var/local/lib/isolate/' + this.boxId + '/box'
+    private async runUnsafeCommand(cmd: string): Promise<{
+        verdict: EngineResponseStatus
+    }> {
+        logger.info(`sandbox, command: ${cmd}`)
+
+        const standardOutputPath = this.getSandboxFilePath('_standardOutput.txt')
+        const standardErrorPath = this.getSandboxFilePath('_standardError.txt')
+
+        await fs.writeFile(standardOutputPath, '')
+        await fs.writeFile(standardErrorPath, '')
+
+        return new Promise((resolve, reject) => {
+            const process = exec(cmd, async (error, stdout: string | PromiseLike<string>, stderr) => {
+                if (error) {
+                    reject(error)
+                    return
+                }
+
+                if (stdout) {
+                    await fs.writeFile(standardOutputPath, await stdout)
+                }
+
+                if (stderr) {
+                    await fs.writeFile(standardErrorPath, stderr)
+                    resolve({ verdict: EngineResponseStatus.ERROR })
+                    return
+                }
+
+                resolve({ verdict: EngineResponseStatus.OK })
+            })
+
+            setTimeout(() => {
+                process.kill()
+                resolve({ verdict: EngineResponseStatus.TIMEOUT })
+            }, Sandbox.sandboxRunTimeSeconds * 1000)
+        })
     }
 
     private static runIsolate(cmd: string): Promise<string> {
@@ -157,18 +226,7 @@ export class Sandbox {
         })
     }
 
-    private isJson(str: string) {
-        try {
-            JSON.parse(str)
-        }
-        catch (e) {
-            return false
-        }
-        return true
-    }
-
 }
-
 
 export default class SandboxManager {
     private static _instance?: SandboxManager

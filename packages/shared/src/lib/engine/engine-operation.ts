@@ -19,7 +19,7 @@ export type EngineOperation =
     | ExecuteActionOperation
     | ExecuteFlowOperation
     | ExecutePropsOptions
-    | ExecuteTriggerOperation
+    | ExecuteTriggerOperation<TriggerHookType>
 
 export type ExecuteActionOperation = {
     actionName: string
@@ -51,17 +51,23 @@ export interface ExecuteFlowOperation {
     apiUrl?: string;
 }
 
-export interface ExecuteTriggerOperation {
-    hookType: TriggerHookType,
+export interface ExecuteTriggerOperation<HT extends TriggerHookType> {
+    hookType: HT,
     flowVersion: FlowVersion,
     webhookUrl: string,
-    triggerPayload?: unknown,
+    triggerPayload?: TriggerPayload,
     projectId: ProjectId,
     workerToken?: string;
     apiUrl?: string;
     edition?: string;
     appWebhookUrl?: string;
     webhookSecret?: string;
+}
+
+export type TriggerPayload = Record<string, never> | {
+    body: any,
+    headers: Record<string, string>,
+    queryParams: Record<string, string>,
 }
 
 export interface EventPayload {
@@ -86,18 +92,41 @@ export interface AppEventListener {
     identifierValue: string,
 };
 
-export interface ExecuteTestOrRunTriggerResponse {
+
+interface ExecuteTestOrRunTriggerResponse {
     success: boolean;
     message?: string;
     output: unknown[];
 }
 
-export interface ExecuteTriggerResponse {
+interface ExecuteOnEnableTriggerResponse {
     listeners: AppEventListener[];
     scheduleOptions: ScheduleOptions;
+}
+
+export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
+    H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
+    H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
+    ExecuteOnEnableTriggerResponse;
+
+export type ExecuteActionResponse = {
+    success: boolean;
+    output: unknown;
+    message?: string;
 }
 
 export interface ScheduleOptions {
     cronExpression: string;
     timezone?: string;
+}
+
+export type EngineResponse<T> = {
+    status: EngineResponseStatus
+    response: T
+}
+
+export enum EngineResponseStatus {
+    OK = "OK",
+    ERROR = "ERROR",
+    TIMEOUT = "TIMEOUT"
 }

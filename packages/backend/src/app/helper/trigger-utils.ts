@@ -1,21 +1,21 @@
 import { Trigger, TriggerStrategy } from '@activepieces/pieces-framework'
 import {
-    ExecuteTriggerResponse,
     FlowVersion,
     PieceTrigger,
     ProjectId,
     RunEnvironment,
     TriggerHookType,
+    TriggerPayload,
     TriggerType,
 } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowQueue } from '../workers/flow-worker/flow-queue'
-import { engineHelper, ExecuteReturn } from './engine-helper'
+import { engineHelper } from './engine-helper'
 import { getPiece } from '@activepieces/pieces-apps'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { captureException } from '@sentry/node'
-import { isEmpty, isNil } from 'lodash'
+import {  isNil } from 'lodash'
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
@@ -25,37 +25,35 @@ export const triggerUtils = {
         switch (flowTrigger.type) {
             case TriggerType.PIECE: {
                 const pieceTrigger = getPieceTrigger(flowTrigger)
-                try {
-                    const result = await engineHelper.executeTrigger({
-                        hookType: TriggerHookType.RUN,
-                        flowVersion: flowVersion,
-                        triggerPayload: payload,
-                        webhookUrl: await webhookService.getWebhookUrl({
-                            flowId: flowVersion.flowId,
-                            simulate,
-                        }),
-                        projectId: projectId,
-                    }) as ExecuteReturn<unknown[]>
+                const result = await engineHelper.executeTrigger({
+                    hookType: TriggerHookType.RUN,
+                    flowVersion: flowVersion,
+                    triggerPayload: payload,
+                    webhookUrl: await webhookService.getWebhookUrl({
+                        flowId: flowVersion.flowId,
+                        simulate,
+                    }),
+                    projectId: projectId,
+                })
 
-                    const success = isEmpty(result.standardError)
 
-                    if (success && Array.isArray(result.output)) {
-                        payloads = result.output
-                    }
-                }
-                catch (e) {
+                if (result.success && Array.isArray(result.output)) {
+                    payloads = result.output
+                } 
+                else {
                     const error = new ActivepiecesError({
                         code: ErrorCode.TRIGGER_FAILED,
                         params: {
                             triggerName: pieceTrigger.name,
                             pieceName: flowTrigger.settings.pieceName,
                             pieceVersion: flowTrigger.settings.pieceVersion,
-                            error: e as Error,
+                            error: result.message,
                         },
                     }, `Flow ${flowTrigger.name} with ${pieceTrigger.name} trigger throws and error, returning as zero payload `)
                     captureException(error)
                     payloads = []
                 }
+
                 break
             }
             default:
@@ -143,7 +141,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
     switch (pieceTrigger.type) {
         case TriggerStrategy.APP_WEBHOOK: {
             const appName = flowTrigger.settings.pieceName
-            const listeners = (response as ExecuteTriggerResponse).listeners
+            const listeners = response.listeners
             for (const listener of listeners) {
                 await appEventRoutingService.createListeners({
                     projectId,
@@ -158,7 +156,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
         case TriggerStrategy.WEBHOOK:
             break
         case TriggerStrategy.POLLING: {
-            const scheduleOptions = (response as ExecuteTriggerResponse).scheduleOptions
+            const scheduleOptions = response.scheduleOptions
             await flowQueue.add({
                 id: flowVersion.id,
                 data: {
@@ -211,5 +209,5 @@ type BaseParams = {
 type EnableOrDisableParams = BaseParams
 
 type ExecuteTrigger = BaseParams & {
-    payload: unknown
+    payload: TriggerPayload
 }
