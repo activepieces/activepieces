@@ -21,6 +21,9 @@
       "@activepieces/ee/shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
+      "@activepieces/piece-amazon-s3": [
+        "packages/pieces/amazon-s3/src/index.ts"
+      ],
       "@activepieces/piece-asana": ["packages/pieces/asana/src/index.ts"],
       "@activepieces/piece-bannerbear": [
         "packages/pieces/bannerbear/src/index.ts"
