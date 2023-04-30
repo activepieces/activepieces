@@ -18,10 +18,42 @@ export const uploadFileFromUrl = createAction({
             required: false,
             description: "my-file-name (no extension)"
         }),
-        acl: Property.ShortText({
+        acl: Property.StaticDropdown({
             displayName: 'ACL',
-            required: false
-        })
+            required: false,
+            options: {
+                options: [
+                    {
+                        label: "private",
+                        value: "private"
+                    },
+                    {
+                        label: "public-read",
+                        value: "public-read"
+                    },
+                    {
+                        label: "public-read-write",
+                        value: "public-read-write"
+                    },
+                    {
+                        label: "authenticated-read",
+                        value: "authenticated-read"
+                    },
+                    {
+                        label: "aws-exec-read",
+                        value: "aws-exec-read"
+                    },
+                    {
+                        label: "bucket-owner-read",
+                        value: "bucket-owner-read"
+                    },
+                    {
+                        label: "bucket-owner-full-control",
+                        value: "bucket-owner-full-control"
+                    }
+                ]
+            }
+        }),
     },
     async run(context) {
         const { accessKeyId, secretAccessKey, region, bucket } = context.propsValue.authentication;
@@ -46,7 +78,7 @@ export const uploadFileFromUrl = createAction({
         const uploadResponse = await s3.putObject({
             Bucket: bucket,
             Key: finalFileName,
-            ACL: (!acl || acl.length === 0) ? undefined: acl,
+            ACL: (!acl || acl.length === 0) ? undefined : acl,
             ContentType: contentType,
             Body: response.data,
         })

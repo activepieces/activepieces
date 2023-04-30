@@ -17,11 +17,42 @@ export const uploadBase64File = createAction({
             required: false,
             description: "my-file-name (no extension)"
         }),
-        acl: Property.ShortText({
+        acl: Property.StaticDropdown({
             displayName: 'ACL',
             required: false,
-            defaultValue: "public-read"
-        }),
+            options: {
+                options: [
+                    {
+                        label: "private",
+                        value: "private"
+                    },
+                    {
+                        label: "public-read",
+                        value: "public-read"
+                    },
+                    {
+                        label: "public-read-write",
+                        value: "public-read-write"
+                    },
+                    {
+                        label: "authenticated-read",
+                        value: "authenticated-read"
+                    },
+                    {
+                        label: "aws-exec-read",
+                        value: "aws-exec-read"
+                    },
+                    {
+                        label: "bucket-owner-read",
+                        value: "bucket-owner-read"
+                    },
+                    {
+                        label: "bucket-owner-full-control",
+                        value: "bucket-owner-full-control"
+                    }
+                ]
+            }
+        }),        
         type: Property.StaticDropdown({
             displayName: 'Type',
             required: true,
