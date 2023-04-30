@@ -20,7 +20,7 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
 
         let countFolders = 0
         const collections = await queryRunner.query('SELECT * FROM "collection"')
-        for(const collection of collections) {
+        for (const collection of collections) {
             const randomId = apId()
             await queryRunner.query(
                 'INSERT INTO "folder" ("id", "created", "updated", "displayName", "projectId") VALUES ($1, NOW(), NOW(), $2, $3)',
@@ -48,21 +48,31 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         await queryRunner.query('ALTER TABLE "flow" ADD CONSTRAINT "fk_flow_folder_id" FOREIGN KEY ("folderId") REFERENCES "folder"("id") ON DELETE SET NULL ON UPDATE NO ACTION')
         await queryRunner.query('ALTER TABLE "flow" ADD CONSTRAINT "fk_flow_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION')
         await queryRunner.query('ALTER TABLE "folder" ADD CONSTRAINT "fk_folder_project" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION')
-  
+
         // Migrate Flow Instances
         const instances = await queryRunner.query('SELECT * FROM "instance"')
         let count = 0
+        let failed = 0
         for (const instance of instances) {
             const flowIdToVersionId = instance['flowIdToVersionId']
             for (const flowId of Object.keys(flowIdToVersionId)) {
                 const flowVersionId = flowIdToVersionId[flowId]
                 const randomId = apId()
-                await queryRunner.query(`INSERT INTO "flow_instance" ("id", "created", "updated", "projectId", "flowId", "flowVersionId", "status") VALUES ('${randomId}', 'NOW()', 'NOW()', '${instance.projectId}', '${flowId}', '${flowVersionId}', '${instance.status}')`)
-                count++
+
+                const flowExists = await queryRunner.query(`SELECT EXISTS(SELECT 1 FROM "flow" WHERE "id" = '${flowId}')`)
+                const flowVersionExists = await queryRunner.query(`SELECT EXISTS(SELECT 1 FROM "flow_version" WHERE "id" = '${flowVersionId}')`)
+                if (!flowExists[0].exists || !flowVersionExists[0].exists) {
+                    failed++
+                    logger.info(`Skipping flow instance ${instance.id} because flow ${flowId} or flow version ${flowVersionId} does not exist`)
+                } 
+                else {
+                    await queryRunner.query(`INSERT INTO "flow_instance" ("id", "created", "updated", "projectId", "flowId", "flowVersionId", "status") VALUES ('${randomId}', 'NOW()', 'NOW()', '${instance.projectId}', '${flowId}', '${flowVersionId}', '${instance.status}')`)
+                    count++
+                }
             }
         }
-        
-        logger.info(`Finished Running RemoveCollections1680986182074 migration with ${count} flow instances`)
+
+        logger.info(`Finished Running RemoveCollections1680986182074 migration with ${count} flow instances migrated and ${failed} failed`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
