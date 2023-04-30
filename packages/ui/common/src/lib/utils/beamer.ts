@@ -1,4 +1,4 @@
-declare const Beamer: { init: () => {}; show: () => {} };
+declare const Beamer: { init: () => unknown; show: () => unknown };
 export const initialiseBeamer = () => {
   if (Beamer) {
     Beamer?.init();
