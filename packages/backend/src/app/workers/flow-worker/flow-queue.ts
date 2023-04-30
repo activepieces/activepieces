@@ -76,7 +76,7 @@ export const flowQueue = {
             }
 
             const client = await repeatableJobQueue.client
-            logger.debug('[flowQueue#add] repeatJobKey=' + job.repeatJobKey);
+            logger.debug('[flowQueue#add] repeatJobKey=' + job.repeatJobKey)
             await client.set(repeatableJobKey(id), job.repeatJobKey)
         }
         else {
