@@ -22,9 +22,10 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         const collections = await queryRunner.query('SELECT * FROM "collection"')
         for(const collection of collections) {
             const randomId = apId()
-            const escapedDisplayName = escapeAllQuotes(collection.displayName)
-            await queryRunner.query(`INSERT INTO "folder" ("id", "created", "updated", "displayName", "projectId") VALUES ('${randomId}', 'NOW()', 'NOW()', '${escapedDisplayName}', '${collection.projectId}')`)
-            await queryRunner.query(`UPDATE "flow" SET "folderId" = '${randomId}' WHERE "collectionId" = '${collection.id}'`)
+            await queryRunner.query(
+                'INSERT INTO "folder" ("id", "created", "updated", "displayName", "projectId") VALUES ($1, NOW(), NOW(), $2, $3)',
+                [randomId, collection.displayName, collection.projectId],
+            ); await queryRunner.query(`UPDATE "flow" SET "folderId" = '${randomId}' WHERE "collectionId" = '${collection.id}'`)
             countFolders++
         }
         logger.info(`RemoveCollections1680986182074 Migrated ${countFolders} folders`)
@@ -97,10 +98,4 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         WHERE "store-entry"."collectionId" = "collection"."projectId";`)
     }
 
-}
-
-function escapeAllQuotes(inputString: string) {
-    const stringWithEscapedSingleQuotes = inputString.replace(/'/g, '\\\'')
-    const stringWithEscapedAllQuotes = stringWithEscapedSingleQuotes.replace(/"/g, '\\"')
-    return stringWithEscapedAllQuotes
 }
