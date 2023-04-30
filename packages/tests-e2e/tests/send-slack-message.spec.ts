@@ -16,6 +16,8 @@ test('Test Send Slack message', async ({ page }) => {
   await testSignIn(page, config);
 
   await page.getByRole('button', { name: 'Start building' }).click();
+  await page.getByRole('navigation').locator('svg').nth(2).click();
+  await page.getByRole('menuitem', { name: 'Rename' }).click();
   await page.getByText('Untitled').fill('Slack');
   await page.getByText('Select Trigger').click();
   await page.getByText('Webhook').click();
@@ -59,9 +61,8 @@ test('Test Send Slack message', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Exit Run' }).click();
   await page.getByRole('button', { name: 'Home' }).click();
-  await page.getByRole('button', { name: 'Delete Collection' }).click();
-  await page.locator('form > .mat-mdc-form-field > .mat-mdc-text-field-wrapper > .mat-mdc-form-field-flex > .mat-mdc-form-field-infix').click();
-  await page.getByPlaceholder('DELETE').click();
+  await page.getByRole('table', { name: 'Flows' }).getByRole('button').click();
+  await page.getByRole('menuitem', { name: 'Delete' }).click();
   await page.getByPlaceholder('DELETE').fill('DELETE');
   await page.getByRole('button', { name: 'Confirm' }).click();
 });
