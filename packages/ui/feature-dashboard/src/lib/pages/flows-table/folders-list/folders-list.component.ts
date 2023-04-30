@@ -66,7 +66,6 @@ export class FoldersListComponent {
     );
   }
   setSelectedFolder(folderId: string) {
-    this.store.dispatch(FolderActions.selectFolder({ folderId }));
     this.clearCursorParam(folderId);
   }
   showAllFlows() {

@@ -80,7 +80,8 @@ export class FlowsTableComponent implements OnInit {
       this.foldersService,
       this.paginator,
       this.flowService,
-      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true))
+      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true)),
+      this.store
     );
     this.areThereFlows$ = this.activatedRoute.data.pipe(
       map((res) => {

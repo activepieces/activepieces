@@ -67,7 +67,10 @@ export class FlowBuilderHeaderComponent implements OnInit {
       const url = this.router.serializeUrl(this.router.createUrlTree([``]));
       window.open(url, '_blank');
     } else {
-      history.back();
+      const urlArrays = this.router.url.split('/');
+      urlArrays.splice(urlArrays.length - 1, 1);
+      const fixedUrl = urlArrays.join('/');
+      this.router.navigate([fixedUrl]);
     }
   }
   saveFlowName(flowName: string) {
