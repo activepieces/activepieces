@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthenticationService, showBeamer } from '@activepieces/ui/common';
+import { AuthenticationService } from '../../service/authentication.service';
+import { showBeamer } from '../../utils/beamer';
 
 @Component({
   selector: 'ap-user-avatar',
