@@ -6,7 +6,7 @@ import { triggerUtils } from '../../helper/trigger-utils'
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from './flow-queue'
 import { flowWorker } from './flow-worker'
 import { OneTimeJobData, RepeatableJobData } from './job-data'
-import { logger } from '../../helper/logger'
+import { captureException, logger } from '../../helper/logger'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -37,14 +37,12 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
             }
         }
         catch (e) {
-            if (e instanceof ActivepiecesError) {
-                if (e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
-                    logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
-                    await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowVersion.flowId })
-                }
+            if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
+                logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
+                await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowVersion.flowId })
             }
             else {
-                throw e
+                captureException(e)
             }
         }
 

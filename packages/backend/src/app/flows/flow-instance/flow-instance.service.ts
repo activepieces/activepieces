@@ -35,7 +35,7 @@ export const flowInstanceService = {
         const oldInstance: FlowInstance | null = await flowInstanceRepo.findOneBy({ projectId, flowId: request.flowId })
         if (oldInstance && oldInstance.status === FlowInstanceStatus.ENABLED) {
             triggerUtils.disable({
-                flowVersion: flow.version,
+                flowVersion: await flowVersionService.getOneOrThrow(oldInstance.flowVersionId),
                 projectId: oldInstance.projectId,
                 simulate: false,
             })

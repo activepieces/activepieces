@@ -1,6 +1,6 @@
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
-import { PieceProperty, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
+import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import {
     ActionType,
     apId,
@@ -23,10 +23,10 @@ import {
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
 import { fileService } from '../../file/file.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { getPiece } from '@activepieces/pieces-apps'
 import { databaseConnection } from '../../database/database-connection'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
+import { pieceMetadataLoader } from '../../pieces/piece-metadata-loader'
 
 const branchSetttingsValidaotr = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -147,7 +147,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                 clonedRequest.request.action.valid = branchSetttingsValidaotr.Check(clonedRequest.request.action.settings)
             }
             else if (clonedRequest.request.action.type === ActionType.PIECE) {
-                clonedRequest.request.action.valid = validateAction(clonedRequest.request.action.settings)
+                clonedRequest.request.action.valid = await validateAction(clonedRequest.request.action.settings)
             }
             else if (clonedRequest.request.action.type === ActionType.CODE) {
                 const codeSettings: CodeActionSettings = clonedRequest.request.action.settings
@@ -163,7 +163,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                 clonedRequest.request.valid = branchSetttingsValidaotr.Check(clonedRequest.request.settings)
             }
             else if (clonedRequest.request.type === ActionType.PIECE) {
-                clonedRequest.request.valid = validateAction(clonedRequest.request.settings)
+                clonedRequest.request.valid = await validateAction(clonedRequest.request.settings)
             }
             else if (clonedRequest.request.type === ActionType.CODE) {
                 const codeSettings: CodeActionSettings = clonedRequest.request.settings
@@ -189,7 +189,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
         case FlowOperationType.UPDATE_TRIGGER:
             clonedRequest.request.valid = true
             if (clonedRequest.request.type === TriggerType.PIECE) {
-                clonedRequest.request.valid = validateTrigger(clonedRequest.request.settings)
+                clonedRequest.request.valid = await validateTrigger(clonedRequest.request.settings)
             }
             break
         default:
@@ -199,7 +199,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
 }
 
 
-function validateAction(settings: PieceActionSettings) {
+async function validateAction(settings: PieceActionSettings) {
     if (
         settings.pieceName === undefined ||
         settings.pieceVersion === undefined ||
@@ -208,18 +208,18 @@ function validateAction(settings: PieceActionSettings) {
     ) {
         return false
     }
-    const piece = getPiece(settings.pieceName)
+    const piece = await pieceMetadataLoader.pieceMetadata(settings.pieceName, settings.pieceVersion)
     if (piece === undefined) {
         return false
     }
-    const action = piece.getAction(settings.actionName)
+    const action = piece.actions[settings.actionName]
     if (action === undefined) {
         return false
     }
     return validateProps(action.props, settings.input)
 }
 
-function validateTrigger(settings: PieceTriggerSettings) {
+async function validateTrigger(settings: PieceTriggerSettings) {
     if (
         settings.pieceName === undefined ||
         settings.pieceVersion === undefined ||
@@ -228,11 +228,11 @@ function validateTrigger(settings: PieceTriggerSettings) {
     ) {
         return false
     }
-    const piece = getPiece(settings.pieceName)
+    const piece = await pieceMetadataLoader.pieceMetadata(settings.pieceName, settings.pieceVersion)
     if (piece === undefined) {
         return false
     }
-    const trigger = piece.getTrigger(settings.triggerName)
+    const trigger = piece.triggers[settings.triggerName]
     if (trigger === undefined) {
         return false
     }
@@ -250,7 +250,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
     const nonNullableUnknownPropType = Type.Not(Type.Null(), Type.Unknown())
     const propsSchema: Record<string, TSchema> = {}
     for (let i = 0; i < entries.length; ++i) {
-        const property = entries[i][1] as PieceProperty
+        const property = entries[i][1]
         const name: string = entries[i][0]
         switch (property.type) {
             case PropertyType.SHORT_TEXT:
