@@ -4,7 +4,7 @@ import { FlagService } from '@activepieces/ui/common';
 import { map, Observable, tap } from 'rxjs';
 import { ApEdition } from '@activepieces/shared';
 import { RunsLeftSnackbarComponent } from '@activepieces/ee/billing/ui';
-
+declare const Beamer: { init: () => {} };
 @Component({
   templateUrl: './dashboard-container.component.html',
   styleUrls: ['./dashboard-container.component.scss'],
@@ -20,6 +20,12 @@ export class DashboardContainerComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    if (Beamer) {
+      Beamer?.init();
+    } else {
+      console.error('Failed to initialise Beamer');
+    }
+
     this.showSnackbar$ = this.flagService.getEdition().pipe(
       tap((edition) => {
         if (edition === ApEdition.ENTERPRISE) {
