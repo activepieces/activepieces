@@ -66,7 +66,6 @@ export class FoldersListComponent {
     );
   }
   setSelectedFolder(folderId: string) {
-    this.store.dispatch(FolderActions.selectFolder({ folderId }));
     this.clearCursorParam(folderId);
   }
   showAllFlows() {
@@ -108,6 +107,7 @@ export class FoldersListComponent {
   renameFolder(folder: FolderDto) {
     const dialogData: RenameFolderDialogData = {
       folderId: folder.id,
+      folderDisplayName: folder.displayName,
     };
     this.dialogService.open(RenameFolderDialogComponent, { data: dialogData });
   }

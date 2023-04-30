@@ -51,9 +51,9 @@ export class PublishButtonComponent implements OnInit {
       delay(100),
       map((res) => {
         if (!res.flowHasSteps) {
-          return 'Flow has to have atleast one step after its trigger';
+          return 'Add 1 more step to publish';
         } else if (res.buttonIsDisabled) {
-          return 'Please fix the flow';
+          return 'Your flow has invalid steps';
         }
         return 'Publish Flow';
       })

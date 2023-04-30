@@ -16,6 +16,7 @@ import { FoldersService } from '@activepieces/ui/common';
 
 export interface RenameFolderDialogData {
   folderId: string;
+  folderDisplayName: string;
 }
 
 @Component({
@@ -56,7 +57,7 @@ export class RenameFolderDialogComponent {
     if (this.folderForm.valid) {
       this.renamingFolder$ = this.foldersService
         .renameFolder({
-          displayName: this.folderForm.controls.displayName.value,
+          displayName: this.folderForm.getRawValue().displayName.trim(),
           folderId: this.data.folderId,
         })
         .pipe(
