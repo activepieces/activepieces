@@ -1,7 +1,7 @@
 <ap-button [matMenuTriggerFor]="menu" #menuTrigger="matMenuTrigger" btnStyle="basic" btnColor="basic" btnSize="medium"
     (menuOpened)="menuOpened()">
-    <div class="ap-flex ap-items-center ap-font-semibold">
-        📣 Feedback
+    <div class="ap-flex ap-items-center ap-font-semibold ap-gap-2">
+        <svg-icon src="assets/img/custom/feedback.svg" [svgStyle]="{height:'25px',width:'20px'}"></svg-icon>Feedback
     </div>
 </ap-button>
 <mat-menu #menu="matMenu" xPosition="before">
@@ -17,8 +17,7 @@
                 Close
             </ap-button>
             <div class="ap-flex-grow"></div>
-            <ap-button btnSize="medium" placement="bottom" [loading]="sendingFeedback"
-                (buttonClicked)="sendFeedback()">
+            <ap-button btnSize="medium" placement="bottom" [loading]="sendingFeedback" (buttonClicked)="sendFeedback()">
                 Send Feedback
             </ap-button>
         </div>
