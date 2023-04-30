@@ -5,6 +5,7 @@ import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { OneTimeJobData, RepeatableJobData } from './job-data'
 import { logger } from '../../helper/logger'
 import { isNil } from 'lodash'
+
 type BaseAddParams = {
     id: ApId
 }
@@ -58,10 +59,9 @@ const repeatableJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
 export const flowQueue = {
     async add(params: AddParams): Promise<void> {
-        logger.info('[flowQueue#add] params=', params)
+        logger.info('[flowQueue#add] params=' + JSON.stringify(params))
         if (isRepeatable(params)) {
             const { id, data, scheduleOptions } = params
-
             const job = await repeatableJobQueue.add(id, data, {
                 jobId: id,
                 removeOnComplete: true,
@@ -76,6 +76,7 @@ export const flowQueue = {
             }
 
             const client = await repeatableJobQueue.client
+            logger.debug('[flowQueue#add] repeatJobKey=' + job.repeatJobKey);
             await client.set(repeatableJobKey(id), job.repeatJobKey)
         }
         else {
