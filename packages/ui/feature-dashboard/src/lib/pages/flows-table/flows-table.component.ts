@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { map, Observable, startWith, Subject, tap } from 'rxjs';
+import { map, Observable, shareReplay, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
 import { Flow, FlowInstanceStatus } from '@activepieces/shared';
@@ -69,7 +69,8 @@ export class FlowsTableComponent implements OnInit {
           } else if (!displayAllFlows && folderColumnIndex !== -1) {
             this.displayedColumns.splice(folderColumnIndex, 1);
           }
-        })
+        }),
+        shareReplay(1)
       );
   }
 

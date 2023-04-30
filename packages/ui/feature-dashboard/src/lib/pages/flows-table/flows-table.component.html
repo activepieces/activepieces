@@ -76,7 +76,13 @@
         </table>
         <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
           <div class="ap-flex ap-items-center ap-justify-center  ap-flex-grow">
-            You don't have any flows yet.
+            <ng-container *ngIf="showAllFlows$ | async; else folderEmptyMessage">
+              You don't have any flows yet
+            </ng-container>
+            <ng-template #folderEmptyMessage>
+              This folder doesn't have any flows yet
+            </ng-template>
+
           </div>
         </ng-container>
         <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
