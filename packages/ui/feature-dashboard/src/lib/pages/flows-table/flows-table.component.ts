@@ -37,9 +37,9 @@ export class FlowsTableComponent implements OnInit {
   dataSource!: FlowsTableDataSource;
   displayedColumns = [
     'name',
-    'created',
     'steps',
     'folderName',
+    'created',
     'status',
     'action',
   ];
@@ -65,7 +65,7 @@ export class FlowsTableComponent implements OnInit {
             (c) => c === 'folderName'
           );
           if (displayAllFlows && folderColumnIndex == -1) {
-            this.displayedColumns.splice(3, 0, 'folderName');
+            this.displayedColumns.splice(2, 0, 'folderName');
           } else if (!displayAllFlows && folderColumnIndex !== -1) {
             this.displayedColumns.splice(folderColumnIndex, 1);
           }
