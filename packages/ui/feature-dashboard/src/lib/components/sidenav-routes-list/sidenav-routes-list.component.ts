@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { FolderActions } from '../../store/folders/folders.actions';
 
 type SideNavRoute = {
   icon: string;
   borderColorInTailwind: string;
   caption: string;
   route: string;
+  effect?: () => void;
 };
 
 @Component({
@@ -15,7 +18,7 @@ type SideNavRoute = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidenavRoutesListComponent {
-  constructor(public router: Router) {}
+  constructor(public router: Router, private store: Store) {}
 
   sideNavRoutes: SideNavRoute[] = [
     {
@@ -23,6 +26,9 @@ export class SidenavRoutesListComponent {
       borderColorInTailwind: '!ap-border-purpleBorder',
       caption: 'Flows',
       route: 'flows',
+      effect: () => {
+        this.store.dispatch(FolderActions.showAllFlows());
+      },
     },
     {
       icon: 'assets/img/custom/dashboard/runs.svg',

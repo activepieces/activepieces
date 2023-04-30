@@ -46,6 +46,7 @@ import { DeleteEntityDialogComponent } from './components/delete-enity-dialog/de
 import { MatDividerModule } from '@angular/material/divider';
 import { GenericSnackbarTemplateComponent } from './components/generic-snackbar-template/generic-snackbar-template.component';
 import { MatIconModule } from '@angular/material/icon';
+import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 
 const exportedImports = [
   CommonModule,
@@ -93,6 +94,7 @@ const exportedDeclarations = [
   ObjectToArrayPipe,
   DeleteEntityDialogComponent,
   GenericSnackbarTemplateComponent,
+  UserAvatarComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

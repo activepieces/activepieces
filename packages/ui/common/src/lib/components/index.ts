@@ -13,3 +13,4 @@ export * from './json-view/json-view.component';
 export * from './horizontal-sidebar-separator/horizontal-sidebar-separator.component';
 export * from './json-view/json-view-dialog/json-view-dialog.component';
 export * from './generic-snackbar-template/generic-snackbar-template.component';
+export * from './user-avatar/user-avatar.component';

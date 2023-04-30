@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthenticationService } from '@activepieces/ui/common';
+import { AuthenticationService } from '../../service/authentication.service';
+import { showBeamer } from '../../utils/beamer';
 
 @Component({
-  selector: 'app-user-avatar',
+  selector: 'ap-user-avatar',
   templateUrl: './user-avatar.component.html',
   styleUrls: ['./user-avatar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,5 +39,11 @@ export class UserAvatarComponent {
       return '';
     }
     return this.authenticationService.currentUser.firstName[0];
+  }
+  goToCommunity() {
+    window.open('https://discord.gg/GHgqTAJy', '_blank');
+  }
+  showWhatIsNew() {
+    showBeamer();
   }
 }

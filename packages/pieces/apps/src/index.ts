@@ -66,11 +66,13 @@ import { googleForms }  from '@activepieces/piece-google-forms';
 import { xml }  from '@activepieces/piece-xml';
 import { vtex }  from '@activepieces/piece-vtex';
 import { postgres }  from '@activepieces/piece-postgres';
+import { amazonS3 }  from '@activepieces/piece-amazon-s3';
 
 /**
  * @deprecated this will be removed, don't use it
  */
 export const pieces: Piece[] = [
+    amazonS3,
     xml,
     vtex,
     airtable,
