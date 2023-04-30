@@ -26,7 +26,7 @@ export class CodeService {
   artifactsCacheForSteps: ArtifactsCache = new Map();
   cachedFile: Map<string, any> = new Map<string, Observable<ArrayBuffer>>();
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   static constructFileUrl(artifactSourceId: string): string {
     return environment.apiUrl + `/files/${artifactSourceId}`;
