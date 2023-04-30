@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { AuthenticationService, showBeamer } from '@activepieces/ui/common';
 
 @Component({
-  selector: 'app-user-avatar',
+  selector: 'ap-user-avatar',
   templateUrl: './user-avatar.component.html',
   styleUrls: ['./user-avatar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -7,6 +7,7 @@ import {
   DeleteEntityDialogData,
   FlowService,
   fadeIn400ms,
+  initialiseBeamer,
 } from '@activepieces/ui/common';
 import { MagicWandDialogComponent } from './magic-wand-dialog/magic-flow-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
@@ -43,6 +44,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    initialiseBeamer();
     this.instance$ = this.store.select(BuilderSelectors.selectCurrentInstance);
     this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
     this.flow$ = this.store.select(BuilderSelectors.selectCurrentFlow);
