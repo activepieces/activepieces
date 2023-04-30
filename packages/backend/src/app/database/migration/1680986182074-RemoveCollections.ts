@@ -48,7 +48,6 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         await queryRunner.query('ALTER TABLE "flow" ADD CONSTRAINT "fk_flow_folder_id" FOREIGN KEY ("folderId") REFERENCES "folder"("id") ON DELETE SET NULL ON UPDATE NO ACTION')
         await queryRunner.query('ALTER TABLE "flow" ADD CONSTRAINT "fk_flow_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION')
         await queryRunner.query('ALTER TABLE "folder" ADD CONSTRAINT "fk_folder_project" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION')
-        await queryRunner.query('CREATE UNIQUE INDEX "idx_folder_project_id_display_name" ON "folder" ("projectId", "displayName") ')
   
         // Migrate Flow Instances
         const instances = await queryRunner.query('SELECT * FROM "instance"')
@@ -68,7 +67,6 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         // Schema Queries
-        await queryRunner.query('DROP INDEX "public"."idx_folder_project_id_display_name"')
         await queryRunner.query('ALTER TABLE "folder" DROP CONSTRAINT "fk_folder_project"')
         await queryRunner.query('ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_project_id"')
         await queryRunner.query('ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_folder_id"')
