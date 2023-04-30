@@ -35,6 +35,36 @@ jobs:
           path: playwright-report/
           retention-days: 30
           working-directory: packages/tests-e2e
+      - name: Send Discord message on failure
+        if: ${{ failure() }}
+        uses: "8398a7/action-dc@v1.1.2"
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          message: |
+            {
+              "username": "GitHub Action",
+              "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+              "embeds": [
+                {
+                  "title": "ActivePieces Test Failed",
+                  "description": "This message was triggered by a GitHub action.",
+                  "color": 13632027,
+                  "fields": [
+                    {
+                      "name": "Status",
+                      "value": "Failed"
+                    },
+                    {
+                      "name": "Test",
+                      "value": "ActivePieces"
+                    }
+                  ],
+                  "footer": {
+                    "text": "Triggered by GitHub Action"
+                  }
+                }
+              ]
+            }
       - name: Notify webhook on failure
         if: failure()
         run: |
