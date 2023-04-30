@@ -7,7 +7,7 @@ on:
 jobs:
   test:
     if: github.repository == 'activepieces/activepieces'
-    timeout-minutes: 5
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     env:
       AP_TEST_EMAIL: ${{ secrets.AP_TEST_EMAIL }}
