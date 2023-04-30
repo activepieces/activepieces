@@ -26,7 +26,7 @@ export class CodeService {
   artifactsCacheForSteps: ArtifactsCache = new Map();
   cachedFile: Map<string, any> = new Map<string, Observable<ArrayBuffer>>();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   static constructFileUrl(artifactSourceId: string): string {
     return environment.apiUrl + `/files/${artifactSourceId}`;
@@ -150,9 +150,10 @@ export class CodeService {
   ): Observable<{ [key: PackageName]: PackageVersion } | null> {
     return this.getNpmPackage(npmName).pipe(
       map((pkg) => {
-        const pkgJson: { npmName: string } = {
-          npmName: pkg['dist-tags'].latest,
-        };
+        const pkgJson: Record<string, string> = {};
+        if (pkg) {
+          pkgJson[npmName] = pkg['dist-tags'].latest;
+        }
         return pkgJson;
       }),
       catchError(() => {
