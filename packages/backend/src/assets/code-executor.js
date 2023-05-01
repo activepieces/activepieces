@@ -1,23 +1,38 @@
-const handler = require("./index");
-const fs = require('fs');
+const handler = require('./index');
+const { readFile, writeFile } = require('node:fs/promises');
 
-async function main() {
-   let rawdata = fs.readFileSync('_input.txt');
-   let input = JSON.parse(rawdata);
-   try {
+const readInput = async () => {
+    const serializedInput = await readFile('_input.txt', { encoding: 'utf8' })
+    return JSON.parse(serializedInput);
+}
 
-      let output = await handler.code(input);
-      fs.writeFileSync('output.json', JSON.stringify({
-         status: "OK",
-         response: output == undefined ? "" : JSON.stringify(output)
-      }));
-   } catch (exception) {
-      // The frontend read standard error
-      console.error(exception);
-      fs.writeFileSync('output.json', JSON.stringify({
-         status: "ERROR"
-      }));
-   }
+const writeOutput = async (output) => {
+    const serializedOutput = JSON.stringify(output)
+    await writeFile('output.json', serializedOutput)
+}
+
+const main = async () => {
+    try {
+        const input = await readInput()
+        const response = await handler.code(input);
+
+        const output = {
+            status: 'OK',
+            response: response ? response : ''
+        }
+
+        await writeOutput(output)
+    }
+    catch (e) {
+        // fill _standardError.txt
+        console.error(e)
+
+        const output = {
+            status: 'ERROR'
+        }
+
+        await writeOutput(output)
+    }
 }
 
 main();
