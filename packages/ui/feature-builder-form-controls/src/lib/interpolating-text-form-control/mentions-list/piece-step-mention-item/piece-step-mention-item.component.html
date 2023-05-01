@@ -1,11 +1,12 @@
 <button mat-menu-item appTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-[9px]">
   <div class="ap-flex" (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true">
     <ng-container *ngIf="sampleData$ | async as result; else noSampleDataNote">
-      <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]" *ngIf="result.children && result.children.length>0">
+      <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]"
+        *ngIf="(result.children && result.children.length>0) || result.value">
         {{expandSample ? 'expand_less' : 'expand_more'}}
       </mat-icon>
       <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"
-        [indentation]="!result.children || result.children.length===0"></app-generic-step-mention-item>
+        [indentation]="(!result.children || result.children.length===0) && !result.value"></app-generic-step-mention-item>
     </ng-container>
     <ng-template #noSampleDataNote>
       <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
@@ -23,14 +24,32 @@
 </button>
 <ng-container *ngIf="expandSample">
   <ng-container *ngIf="sampleData$ | async as result; else testStepTemplate">
+
     <app-step-mentions-tree *ngIf="result.children" [stepOutputObjectChildNodes]="result.children"
       [markedNodesToShow]="result.markedNodesToShow" [stepDisplayName]="_stepMention.step.displayName"
       (mentionClicked)="mentionClicked.emit($event)"></app-step-mentions-tree>
+
     <ng-container *ngIf="result.error">
       <div class="ap-pl-6 ap-py-2">
         {{result.error}}
       </div>
     </ng-container>
+
+    <ng-container *ngIf="result.value !==undefined && expandSample">
+      <button appTrackHover #resultNodeHoverTracker="hoverTrackerDirective" class="!ap-pl-0" mat-menu-item
+        (click)="mentionClicked.emit(_stepMention)">
+        <span class=" ap-flex-grow ap-transition-all"
+          [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'">result:
+          <span class="ap-transition-all ap-text-primary" [matTooltip]="'' + result.value || ''">{{result.value}}
+          </span></span>
+        <ap-button *ngIf="resultNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
+          btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
+          [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
+          (buttonClicked)="mentionClicked.emit(_stepMention)">Select
+        </ap-button>
+      </button>
+    </ng-container>
+
   </ng-container>
   <ng-template #testStepTemplate>
     <div class="ap-my-3 ap-px-2">
