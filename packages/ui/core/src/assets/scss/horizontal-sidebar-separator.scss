@@ -4,7 +4,7 @@ $sideBarTitleSize: 72px;
 $minHeightOfSections: 55px;
 .top-resizer-section {
   min-height: $minHeightOfSections;
-  height: calc(50% - 10px);
+  height: calc(50% - 29px);
   max-height: calc(100% - $minHeightOfSections);
   overflow-y: scroll;
   scrollbar-width: thin;
@@ -16,7 +16,7 @@ $minHeightOfSections: 55px;
 .bottom-resizer-section {
   margin-top: 10px;
   min-height: $minHeightOfSections;
-  max-height: calc(50% - 10px);
+  max-height: calc(50% + 11px);
   overflow-y: scroll;
   scrollbar-width: thin;
 

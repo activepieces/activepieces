@@ -1,4 +1,12 @@
-import { Component, NgZone, OnInit } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  NgZone,
+  OnInit,
+  Renderer2,
+  ViewChild,
+} from '@angular/core';
 import { distinctUntilChanged, map, Observable } from 'rxjs';
 import { UUID } from 'angular2-uuid';
 import { Store } from '@ngrx/store';
@@ -41,10 +49,15 @@ export class RunDetailsComponent implements OnInit {
     | null
   >;
   selectedStepName$: Observable<string | null>;
+  @ViewChild('stepsResultsAccordion', { read: ElementRef })
+  stepsResultsAccordion: ElementRef;
+  @ViewChild('selectedStepResultContainer', { read: ElementRef })
+  selectedStepResultContainer: ElementRef;
   constructor(
     private store: Store,
     public runDetailsService: RunDetailsService,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private renderer2: Renderer2
   ) {}
 
   ngOnInit(): void {
@@ -123,18 +136,38 @@ export class RunDetailsComponent implements OnInit {
     this.resizerKnobIsBeingDragged = true;
     this.accordionRect = stepsResultsAccordion.getBoundingClientRect();
   }
-  resizerDragged(
-    dragMoveEvent: CdkDragMove,
-    stepsResultsAccordion: HTMLElement,
-    selectedStepResultContainer: HTMLElement
-  ) {
+  resizerDragged(dragMoveEvent: Pick<CdkDragMove, 'distance'>) {
     const height = this.accordionRect.height + dragMoveEvent.distance.y;
     this.ngZone.runOutsideAngular(() => {
-      stepsResultsAccordion.style.height = `${height}px`;
-      selectedStepResultContainer.style.maxHeight = `calc(100% - ${height}px - 20px)`;
+      this.renderer2.setStyle(
+        this.stepsResultsAccordion.nativeElement,
+        'height',
+        `${height}px`
+      );
+      this.renderer2.setStyle(
+        this.selectedStepResultContainer.nativeElement,
+        'max-height',
+        `calc(100% - ${height}px - 5px)`
+      );
     });
   }
   resizerDragStopped() {
     this.resizerKnobIsBeingDragged = false;
+  }
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    //resets to initial state
+    this.ngZone.runOutsideAngular(() => {
+      this.renderer2.setStyle(
+        this.stepsResultsAccordion.nativeElement,
+        'height',
+        `calc(50% - 29px)`
+      );
+      this.renderer2.setStyle(
+        this.selectedStepResultContainer.nativeElement,
+        'max-height',
+        `calc(50% - 29px)`
+      );
+    });
   }
 }
