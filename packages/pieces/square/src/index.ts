@@ -1,5 +1,5 @@
 
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceType } from '@activepieces/pieces-framework';
 import packageJson from '../package.json';
 import { squareTriggers } from './lib/triggers';
 import crypto from 'crypto'
@@ -9,6 +9,7 @@ export const square = createPiece({
   displayName: 'square',
   logoUrl: 'https://cdn.activepieces.com/pieces/square.png',
   version: packageJson.version,
+  type: PieceType.PUBLIC,
   authors: [
     "abuaboud"
   ],

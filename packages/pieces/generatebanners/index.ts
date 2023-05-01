@@ -1,4 +1,4 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceType } from '@activepieces/pieces-framework';
 import { renderTemplate } from './actions/renderTemplate.action';
 
 export const generatebanners = createPiece({

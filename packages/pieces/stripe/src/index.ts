@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceType } from '@activepieces/pieces-framework';
 import {stripeNewPayment} from "./lib/trigger/new-payment";
 import {stripeNewCustomer} from "./lib/trigger/new-customer";
 import {stripePaymentFailed} from "./lib/trigger/payment-failed";
@@ -10,6 +10,7 @@ export const stripe = createPiece({
 	displayName: "Stripe",
 	logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
   version: packageJson.version,
+	type: PieceType.PUBLIC,
 	authors: ['ashrafsamhouri'],
 	actions: [],
 	triggers: [stripeNewPayment, stripeNewCustomer, stripePaymentFailed, stripeNewSubscription],

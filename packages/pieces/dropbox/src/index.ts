@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceType } from '@activepieces/pieces-framework';
 import { dropboxCreateNewFolder } from './lib/actions/create-new-folder';
 import { dropboxCreateNewTextFile } from './lib/actions/create-new-text-file';
 
@@ -10,5 +10,6 @@ export const dropbox = createPiece({
   displayName: "DropBox",
   authors: ['kanarelo'],
   triggers: [],
-  version: packageJson.version,
+    version: packageJson.version,
+    type: PieceType.PUBLIC,
 });

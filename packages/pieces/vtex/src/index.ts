@@ -1,5 +1,5 @@
 
-import { createPiece } from "@activepieces/pieces-framework";
+import { createPiece, PieceType } from "@activepieces/pieces-framework";
 import packageJson from "../package.json";
 import { getProductById } from "./lib/actions/Product/get-product-by-id";
 import { createProduct } from "./lib/actions/Product/create-product";
@@ -23,6 +23,7 @@ export const vtex = createPiece({
   displayName: "VTEX",
   logoUrl: "https://cdn.activepieces.com/pieces/vtex.png",
   version: packageJson.version,
+  type: PieceType.PUBLIC,
   authors: ["Willianwg"],
   actions: [
     getProductById, createProduct, updateProduct, getBrandList, getBrandById, createBrand, updateBrand, deleteBrand,

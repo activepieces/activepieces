@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { createPiece } from '@activepieces/pieces-framework'
+import { createPiece, PieceType } from '@activepieces/pieces-framework'
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action'
 import { slackSendMessageAction } from './lib/actions/send-message-action'
 import { version } from '../package.json'
@@ -11,6 +11,7 @@ export const slack = createPiece({
   displayName: 'Slack',
   logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
   version,
+  type: PieceType.PUBLIC,
   actions: [
     slackSendDirectMessageAction,
     slackSendMessageAction,

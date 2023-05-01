@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceType } from '@activepieces/pieces-framework';
 import { googleDriveCreateNewFolder } from './lib/action/create-new-folder';
 import { googleDriveCreateNewTextFile } from './lib/action/create-new-text-file';
 
@@ -10,5 +10,6 @@ export const googleDrive = createPiece({
 	displayName: "Google Drive",
 	authors: ['kanarelo'],
 	triggers: [],
-  version: packageJson.version,
+    version: packageJson.version,
+    type: PieceType.PUBLIC,
 });

@@ -20,7 +20,7 @@ const validatePieceName = async (pieceName: string) => {
 const nxGenerateNodeLibrary = async (pieceName: string) => {
   const nxGenerateCommand = `
     npx nx generate @nrwl/node:library ${pieceName} \
-      --directory=pieces \
+      --directory=pieces/private \
       --importPath=@activepieces/piece-${pieceName} \
       --publishable \
       --buildable \
@@ -33,8 +33,8 @@ const nxGenerateNodeLibrary = async (pieceName: string) => {
 }
 
 const removeUnusedFiles = async (pieceName: string) => {
-  await rm(`packages/pieces/${pieceName}/.babelrc`)
-  await rm(`packages/pieces/${pieceName}/src/lib/pieces-${pieceName}.ts`)
+  await rm(`packages/pieces/private/${pieceName}/.babelrc`)
+  await rm(`packages/pieces/private/${pieceName}/src/lib/pieces-private-${pieceName}.ts`)
 }
 
 const generateIndexTsFile = async (pieceName: string) => {
@@ -64,7 +64,7 @@ export const ${pieceNameCamelCase} = createPiece({
 });
 `
 
-  await writeFile(`packages/pieces/${pieceName}/src/index.ts`, indexTemplate)
+  await writeFile(`packages/pieces/private/${pieceName}/src/index.ts`, indexTemplate)
 }
 
 function capitalizeFirstLetter(str: string): string {
@@ -73,12 +73,12 @@ function capitalizeFirstLetter(str: string): string {
 
 
 const updateProjectJsonConfig = async (pieceName: string) => {
-  const projectJson = await readProjectJson(`packages/pieces/${pieceName}`)
+  const projectJson = await readProjectJson(`packages/pieces/private/${pieceName}`)
 
   assert(projectJson.targets?.build?.options, '[updateProjectJsonConfig] targets.build.options is required');
 
   projectJson.targets.build.options.buildableProjectDepsInPackageJsonType = 'dependencies'
-  await writeProjectJson(`packages/pieces/${pieceName}`, projectJson)
+  await writeProjectJson(`packages/pieces/private/${pieceName}`, projectJson)
 }
 
 const setupGeneratedLibrary = async (pieceName: string) => {
@@ -94,8 +94,8 @@ const main = async () => {
   await nxGenerateNodeLibrary(pieceName)
   await setupGeneratedLibrary(pieceName)
   console.log(chalk.green('✨  Done!'));
-  console.log(chalk.yellow(`The piece has been generated at: packages/pieces/${pieceName}`));
-  console.log(chalk.blue("Don't forget to add the piece to the list of pieces in packages/pieces/apps/src/index.ts"));
+  console.log(chalk.yellow(`The piece has been generated at: packages/pieces/private/${pieceName}`));
+  console.log(chalk.blue("Don't forget to add the piece to the list of pieces in packages/pieces/private/apps/src/index.ts"));
 }
 
 main()

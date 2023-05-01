@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceType } from '@activepieces/pieces-framework';
 import { googleContactsAddContactAction } from './lib/action/create-contact';
 import { googleContactNewOrUpdatedContact } from './lib/trigger/new-contact';
 
@@ -10,5 +10,6 @@ export const googleContacts = createPiece({
 	displayName: "Google Contacts",
 	authors: ['abuaboud'],
 	triggers: [googleContactNewOrUpdatedContact],
-  version: packageJson.version,
+    version: packageJson.version,
+    type: PieceType.PUBLIC,
 });

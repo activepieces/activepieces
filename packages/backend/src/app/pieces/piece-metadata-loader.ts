@@ -91,6 +91,7 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
                 description: p.description,
                 logoUrl: p.logoUrl,
                 version: p.version,
+                type: p.type,
                 minimumSupportedRelease: p.minimumSupportedRelease,
                 maximumSupportedRelease: p.maximumSupportedRelease,
                 actions: Object.keys(p.actions).length,

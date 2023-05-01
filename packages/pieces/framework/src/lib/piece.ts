@@ -1,7 +1,7 @@
 import type { Trigger } from './trigger/trigger';
 import { Action } from './action/action';
 import { EventPayload, ParseEventResponse } from '@activepieces/shared';
-import { PieceBase, PieceMetadata } from './piece-metadata';
+import { PieceBase, PieceMetadata, PieceType } from './piece-metadata';
 
 export class Piece implements PieceBase {
   private readonly _actions: Record<string, Action>;
@@ -13,6 +13,7 @@ export class Piece implements PieceBase {
     public readonly logoUrl: string,
     public readonly authors: string[],
     public readonly version: string,
+    public readonly type: PieceType,
     public readonly events: {
       parseAndReply: (ctx: {payload: EventPayload}) => ParseEventResponse;
       verify: (ctx: { webhookSecret: string, payload: EventPayload, appWebhookUrl: string }) => boolean;
@@ -55,6 +56,7 @@ export class Piece implements PieceBase {
       triggers: this._triggers,
       description: this.description,
       version: this.version,
+      type: this.type,
       minimumSupportedRelease: this.minimumSupportedRelease,
       maximumSupportedRelease: this.maximumSupportedRelease,
     };
@@ -74,6 +76,7 @@ export const createPiece = (request: {
     verify: (ctx: { webhookSecret: string, payload: EventPayload, appWebhookUrl: string }) => boolean;
   }
   version: string;
+  type: PieceType;
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
 }): Piece =>
@@ -83,6 +86,7 @@ export const createPiece = (request: {
     request.logoUrl,
     request.authors ?? [],
     request.version,
+    request.type,
     request.events,
     request.actions,
     request.triggers,

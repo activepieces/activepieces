@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceType } from '@activepieces/pieces-framework';
 import { createImageFromTemplate } from './lib/actions/create-image';
 
 export const bannerbear = createPiece({
@@ -9,6 +9,6 @@ export const bannerbear = createPiece({
   actions: [createImageFromTemplate],
   authors: ["kanarelo"],
   triggers: [],
-  version: packageJson.version
+  version: packageJson.version,
+  type: PieceType.PUBLIC,
 });
-

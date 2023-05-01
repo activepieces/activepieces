@@ -1,5 +1,5 @@
 
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceType } from '@activepieces/pieces-framework';
 import packageJson from '../package.json';
 import { newCancelledOrder } from './lib/triggers/new-cancelled-order';
 import { newCustomer } from './lib/triggers/new-customer';
@@ -11,6 +11,7 @@ export const shopify = createPiece({
   displayName: 'Shopify',
   logoUrl: 'https://cdn.activepieces.com/pieces/shopify.png',
   version: packageJson.version,
+  type: PieceType.PUBLIC,
   authors: [
     "abuaboud"
   ],

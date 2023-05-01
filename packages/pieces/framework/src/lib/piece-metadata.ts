@@ -1,12 +1,18 @@
 import { PiecePropertyMap } from "./property";
 import { TriggerStrategy } from "./trigger/trigger";
 
+export enum PieceType {
+  PUBLIC = "PUBLIC",
+  PRIVATE = "PRIVATE",
+}
+
 export type PieceBase = {
   name: string;
   displayName: string;
   logoUrl: string;
   description: string;
   version: string;
+  type: PieceType;
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
 }

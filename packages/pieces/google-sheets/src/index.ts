@@ -1,5 +1,5 @@
 import packageJson from '../package.json';
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceType } from '@activepieces/pieces-framework';
 import { insertRowAction } from './lib/actions/insert-row.action';
 import { newRowAdded } from './lib/triggers/new-row-added';
 import { deleteRowAction } from './lib/actions/delete-row.action';
@@ -12,4 +12,5 @@ export const googleSheets = createPiece({
 	displayName: "Google Sheets",
 	triggers: [newRowAdded],
 	version: packageJson.version,
+	type: PieceType.PUBLIC,
 });

@@ -1,5 +1,5 @@
 
-import { createPiece } from "@activepieces/pieces-framework";
+import { createPiece, PieceType } from "@activepieces/pieces-framework";
 import { createOrUpdateSubscriber } from "./lib/actions/create-or-update-subscription";
 import packageJson from "../package.json";
 
@@ -8,6 +8,7 @@ export const mailerLite = createPiece({
   displayName: "MailerLite",
   logoUrl: "https://cdn.activepieces.com/pieces/mailer-lite.png",
   version: packageJson.version,
+  type: PieceType.PUBLIC,
   authors: ["Willianwg"],
   actions: [createOrUpdateSubscriber],
   triggers: [],

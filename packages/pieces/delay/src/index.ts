@@ -1,5 +1,5 @@
 
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceType } from '@activepieces/pieces-framework';
 import packageJson from '../package.json';
 import { delayAction } from './lib/actions/delay-action';
 
@@ -8,6 +8,7 @@ export const delay = createPiece({
   displayName: 'Delay',
   logoUrl: 'https://cdn.activepieces.com/pieces/delay.png',
   version: packageJson.version,
+  type: PieceType.PUBLIC,
   authors: [
     "abuaboud"
   ],

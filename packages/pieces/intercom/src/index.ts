@@ -1,4 +1,4 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceType } from '@activepieces/pieces-framework';
 import packageJson from '../package.json';
 import { createContact } from './lib/actions/create-contact.action';
 import { getOrCreateContact } from './lib/actions/create-or-get-contact.action';
@@ -9,6 +9,7 @@ export const intercom = createPiece({
     logoUrl: "https://cdn.activepieces.com/pieces/intercom.png",
     name: "intercom",
     version: packageJson.version,
+  type: PieceType.PUBLIC,
     triggers: [],
     actions: [getOrCreateContact, createContact, sendMessage],
 })

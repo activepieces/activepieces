@@ -1,5 +1,5 @@
 
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceType } from '@activepieces/pieces-framework';
 import packageJson from '../package.json';
 import { readConnection } from './lib/actions/read-connection';
 
@@ -8,6 +8,7 @@ export const connections = createPiece({
   displayName: 'Connections',
   logoUrl: 'https://cdn.activepieces.com/pieces/connections.png',
   version: packageJson.version,
+  type: PieceType.PUBLIC,
   authors: [
     "abuaboud"
   ],
