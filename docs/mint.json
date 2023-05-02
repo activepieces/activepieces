@@ -66,6 +66,7 @@
       "group": "Apps",
       "pages": [
         "pieces/apps/airtable",
+        "pieces/apps/amazon-s3",
         "pieces/apps/asana",
         "pieces/apps/bannerbear",
         "pieces/apps/binance",
