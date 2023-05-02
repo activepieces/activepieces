@@ -3,7 +3,6 @@ import { Store } from '@ngrx/store';
 import {
   BehaviorSubject,
   distinctUntilChanged,
-  EMPTY,
   forkJoin,
   interval,
   map,
@@ -118,26 +117,18 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
     this.testStep$ = this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
       take(1),
       tap((flow) => {
-        if (flow && flow.id) {
-          this.startSimulating$ = this.testStepService
-            .startPieceWebhookSimulation(flow.id.toString())
-            .pipe(map(() => void 0));
-        }
+        this.startSimulating$ = this.testStepService
+          .startPieceWebhookSimulation(flow.id.toString())
+          .pipe(map(() => void 0));
       }),
-      switchMap((id) => {
-        if (id) {
-          const stopListening$ = merge(
-            this.cancelTesting$,
-            this.foundNewResult$
-          );
-          return interval(this.POLLING_TEST_INTERVAL_MS).pipe(
-            takeUntil(stopListening$),
-            switchMap(() => {
-              return this.createResultsChecker(id.toString());
-            })
-          );
-        }
-        return EMPTY;
+      switchMap((flow) => {
+        const stopListening$ = merge(this.cancelTesting$, this.foundNewResult$);
+        return interval(this.POLLING_TEST_INTERVAL_MS).pipe(
+          takeUntil(stopListening$),
+          switchMap(() => {
+            return this.createResultsChecker(flow.id.toString());
+          })
+        );
       })
     );
   }

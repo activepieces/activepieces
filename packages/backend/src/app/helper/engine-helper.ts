@@ -72,7 +72,7 @@ export const engineHelper = {
         })
 
         try {
-            const result = await execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
+            const result = await execute<ExecuteTriggerResponse<T>>(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
                 ...operation,
                 edition: await getEdition(),
                 appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({ appName: pieceName }),
@@ -81,7 +81,7 @@ export const engineHelper = {
                     projectId: operation.projectId,
                 }),
             })
-            return result as ExecuteTriggerResponse<T>
+            return result
         }
         finally {
             await sandboxManager.returnSandbox(sandbox.boxId)

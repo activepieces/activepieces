@@ -65,7 +65,9 @@ export const triggerEventService = {
                         },
                     })
                 }
+               
                 for (let i = 0; i < testResult.output.length; i++) {
+
                     await triggerEventService.saveEvent({
                         projectId,
                         flowId: flow.id,
