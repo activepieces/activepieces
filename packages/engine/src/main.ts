@@ -96,7 +96,7 @@ const executeAction = async (): Promise<void> => {
     globals.projectId = operationInput.projectId;
     globals.apiUrl = operationInput.apiUrl!;
 
-    const output = await pieceHelper.executeAction(operationInput);
+  const output = await pieceHelper.executeAction(operationInput);
     writeOutput({
       status: EngineResponseStatus.OK,
       response: output
