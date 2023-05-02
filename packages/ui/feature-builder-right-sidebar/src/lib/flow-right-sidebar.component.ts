@@ -242,8 +242,10 @@ export class FlowRightSidebarComponent implements OnInit {
   }
   @HostListener('window:resize', ['$event'])
   onResize() {
-    this.editStepSectionRect =
-      this.editStepSection.nativeElement.getBoundingClientRect();
-    this.resizerDragged({ distance: { y: 99999999999, x: 0 } });
+    if (this.editStepSection && this.selectedStepResultContainer) {
+      this.editStepSectionRect =
+        this.editStepSection.nativeElement.getBoundingClientRect();
+      this.resizerDragged({ distance: { y: 99999999999, x: 0 } });
+    }
   }
 }

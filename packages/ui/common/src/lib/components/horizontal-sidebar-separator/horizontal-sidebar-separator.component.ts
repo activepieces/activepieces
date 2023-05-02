@@ -19,7 +19,7 @@ export class HorizontalSidebarSeparatorComponent implements OnDestroy {
   animate = false;
   resizerKnobIsBeingDragged = false;
   @Input() resizerArea: HTMLElement;
-  @Input() topStyle = 'calc(50% - 5px)';
+  @Input() topStyle = 'calc(50% - 29px)';
   @Output() resizerDragged: EventEmitter<CdkDragMove> = new EventEmitter();
   @Output() resizerDragStarted = new EventEmitter();
   @Output() resizerDragStopped = new EventEmitter();
