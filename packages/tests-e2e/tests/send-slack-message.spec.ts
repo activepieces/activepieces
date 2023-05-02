@@ -16,9 +16,6 @@ test('Test Send Slack message', async ({ page }) => {
   await testSignIn(page, config);
 
   await page.getByRole('button', { name: 'Start building' }).click();
-  await page.getByRole('navigation').locator('svg').nth(2).click();
-  await page.getByRole('menuitem', { name: 'Rename' }).click();
-  await page.getByText('Untitled').fill('Slack');
   await page.getByText('Select Trigger').click();
   await page.getByText('Webhook').click();
 
