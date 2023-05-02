@@ -1,6 +1,6 @@
-<button mat-menu-item appTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-[9px]">
-  <div class="ap-flex"
-    (click)="$event.stopPropagation();_stepMention.step.settings.pieceName !=='schedule'? expandSample? expandSample=false : expandSample=true :mentionClicked.emit(_stepMention) ">
+<button mat-menu-item appTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-[9px]"
+  (click)="_stepMention.step.settings.pieceName !=='schedule'? expandSample? expandSample=false : expandSample=true :mentionClicked.emit(_stepMention) ">
+  <div class="ap-flex">
 
     <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]"
       *ngIf="(isScheduleTrigger$ | async) === false || (isScheduleTrigger$ | async) === undefined">
