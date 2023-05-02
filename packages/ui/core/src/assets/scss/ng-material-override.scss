@@ -670,3 +670,8 @@ app-mentions-list .mat-mdc-menu-item
 app-dashboard-container .mat-drawer {
   background-color: $hover;
 }
+
+.mat-placeholder-icon
+{
+  fill:$placeholder !important;
+}

@@ -1,5 +1,6 @@
-<button mat-menu-item appTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-[9px]">
-  <div class="ap-flex" (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true">
+<button mat-menu-item appTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-[9px]"
+  (click)="expandSample? expandSample=false : expandSample=true">
+  <div class="ap-flex">
     <ng-container *ngIf="sampleData$ | async as result; else noSampleDataNote">
       <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]"
         *ngIf="(result.children && result.children.length>0) || result.value">

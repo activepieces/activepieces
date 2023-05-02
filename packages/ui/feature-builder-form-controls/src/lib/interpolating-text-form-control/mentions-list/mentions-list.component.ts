@@ -1,8 +1,13 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   EventEmitter,
+  Input,
+  OnInit,
   Output,
+  ViewChild,
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -14,6 +19,7 @@ import {
   shareReplay,
   startWith,
   take,
+  tap,
 } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { InsertMentionOperation, MentionListItem } from '../utils';
@@ -28,7 +34,7 @@ import {
   templateUrl: './mentions-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MentionsListComponent {
+export class MentionsListComponent implements OnInit, AfterViewInit {
   searchFormControl: FormControl<string> = new FormControl('', {
     nonNullable: true,
   });
@@ -36,14 +42,16 @@ export class MentionsListComponent {
   connectionsMentions$: Observable<MentionListItem[]>;
   expandConfigs = false;
   expandConnections = false;
-  @Output()
-  searchInputFocused: EventEmitter<boolean> = new EventEmitter();
   readonly ActionType = ActionType;
   readonly TriggerType = TriggerType;
+  @ViewChild('searchInput', { read: ElementRef })
+  searchInput: ElementRef;
   @Output()
   addMention: EventEmitter<InsertMentionOperation> = new EventEmitter();
   @Output()
   closeMenu: EventEmitter<void> = new EventEmitter();
+  @Input()
+  focusSearchInput$?: Observable<boolean>;
   constructor(
     private store: Store,
     private mentionsTreeCache: MentionsTreeCacheService
@@ -84,6 +92,24 @@ export class MentionsListComponent {
       }),
       shareReplay(1)
     );
+  }
+  ngAfterViewInit(): void {
+    if (this.focusSearchInput$) {
+      setTimeout(() => {
+        this.searchInput.nativeElement.focus();
+      }, 1);
+    }
+  }
+  ngOnInit(): void {
+    if (this.focusSearchInput$) {
+      this.focusSearchInput$ = this.focusSearchInput$.pipe(
+        tap((val) => {
+          if (val && this.searchInput) {
+            this.searchInput.nativeElement.focus();
+          }
+        })
+      );
+    }
   }
   mentionClicked(mention: MentionListItem) {
     this.addMention.emit({
