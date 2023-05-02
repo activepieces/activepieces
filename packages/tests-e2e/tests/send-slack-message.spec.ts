@@ -60,6 +60,8 @@ test('Test Send Slack message', async ({ page }) => {
   expect(runSuccessText).toContain('Run succeeded');
 
   await page.getByRole('button', { name: 'Exit Run' }).click();
+
+  await page.goto(`${config.url}flows`);
   await page.getByRole('button', { name: 'Home' }).click();
   await page.getByRole('table', { name: 'Flows' }).getByRole('button').click();
   await page.getByRole('menuitem', { name: 'Delete' }).click();
