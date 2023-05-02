@@ -20,6 +20,7 @@ export class IconButtonComponent {
   @Input() tooltipText = '';
   @Input() buttonDisabled = false;
   @Input() ariaLabel = '';
+  @Input() tabIndex = 0;
   @Output() buttonClicked: EventEmitter<boolean> = new EventEmitter();
   emit() {
     this.buttonClicked.emit(true);

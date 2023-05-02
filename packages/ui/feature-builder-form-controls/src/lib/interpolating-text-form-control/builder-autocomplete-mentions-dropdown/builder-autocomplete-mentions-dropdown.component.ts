@@ -18,6 +18,7 @@ import {
   BuilderSelectors,
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-builder-autocomplete-mentions-dropdown',
@@ -30,21 +31,21 @@ export class BuilderAutocompleteMentionsDropdownComponent {
   @ViewChild('mentionsList', { read: ElementRef }) mentionsList: ElementRef;
   @Output() addMention: EventEmitter<InsertMentionOperation> =
     new EventEmitter();
-  @Output() menuClosed: EventEmitter<void> = new EventEmitter();
   showMenuSubject$: BehaviorSubject<boolean> = new BehaviorSubject(false);
   showMenuObs$: Observable<boolean>;
   @Input() width = 'calc( 100% - 2.4rem )';
   @Input() left = 'unset';
   @Input() marginTop = '0px';
+  @Input() focusSearch = false;
   calculatedMarginTop = '0px';
   id = new UUID();
   @Input() container: HTMLElement;
-
-  closePressed = false;
+  focusChecker: NodeJS.Timer;
   constructor(
-    public interpolatingTextFormControlService: BuilderAutocompleteMentionsDropdownService,
+    private interpolatingTextFormControlService: BuilderAutocompleteMentionsDropdownService,
     private store: Store,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private matDialog: MatDialog
   ) {
     this.showMenuObs$ = this.store.select(BuilderSelectors.selectViewMode).pipe(
       take(1),
@@ -53,29 +54,39 @@ export class BuilderAutocompleteMentionsDropdownComponent {
           return of(false);
         }
         return this.showMenuSubject$.asObservable().pipe(
-          tap(() => {
-            this.closePressed = false;
-            this.interpolatingTextFormControlService.lastOpenDropdownId$.next(
-              this.id
-            );
-            this.calculateDropdownOffset();
+          tap((val) => {
+            if (val) {
+              this.calculateDropdownOffset();
+              this.setFocusChecker();
+            }
           })
         );
       })
     );
   }
 
-  close() {
-    this.menuClosed.emit();
-    this.closePressed = true;
+  private setFocusChecker() {
+    if (this.focusChecker) {
+      clearInterval(this.focusChecker);
+    }
+    this.focusChecker = setInterval(() => {
+      if (
+        !this.container.matches(':focus-within') &&
+        this.matDialog.openDialogs.length === 0
+      ) {
+        clearInterval(this.focusChecker);
+        this.close();
+      }
+    }, 100);
   }
+
+  close() {
+    this.showMenuSubject$.next(false);
+  }
+
   calculateDropdownOffset() {
     setTimeout(() => {
-      if (
-        this.mentionsList &&
-        this.interpolatingTextFormControlService.lastOpenDropdownId$.value ===
-          this.id
-      ) {
+      if (this.mentionsList && this.showMenuSubject$.value) {
         const containerRect = this.container.getBoundingClientRect();
         const MENTIONS_DROPDOWN_HEIGHT =
           this.mentionsList.nativeElement.getBoundingClientRect().height;
