@@ -439,12 +439,23 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   }
 
   addOptionalProperty(propertyKey: string, property: PieceProperty) {
-    this.form.addControl(
-      propertyKey,
-      new UntypedFormControl(
-        property.defaultValue ? property.defaultValue : undefined
-      )
-    );
+    if (property.type !== PropertyType.JSON) {
+      this.form.addControl(
+        propertyKey,
+        new UntypedFormControl(
+          property.defaultValue ? property.defaultValue : undefined
+        )
+      );
+    } else {
+      this.form.addControl(
+        propertyKey,
+        new UntypedFormControl(
+          property.defaultValue
+            ? JSON.stringify(property.defaultValue, null, 2)
+            : undefined
+        )
+      );
+    }
     this.selectedOptionalProperties = {
       ...this.selectedOptionalProperties,
       [propertyKey]: property,
