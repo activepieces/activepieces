@@ -4,8 +4,8 @@
 </div>
 <mat-form-field (click)="$event.stopPropagation();" appearance="outline" class="ap-w-full">
   <mat-icon matPrefix svgIcon="search"></mat-icon>
-  <input [formControl]="searchFormControl" matInput placeholder="Search" autocomplete="off"
-    (focus)="searchInputFocused.emit(true)">
+  <input id="searchInput" #searchInput [formControl]="searchFormControl" matInput placeholder="Search"
+    autocomplete="off">
 </mat-form-field>
 <div class="ap-max-h-[240px] ap-overflow-scroll ">
 
@@ -42,3 +42,5 @@
 
 
 </div>
+
+<ng-container *ngIf="focusSearchInput$ | async"></ng-container>

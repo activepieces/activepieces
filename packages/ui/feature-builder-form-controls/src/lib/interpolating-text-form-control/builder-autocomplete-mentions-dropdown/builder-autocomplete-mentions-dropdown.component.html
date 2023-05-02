@@ -1,8 +1,7 @@
 <div @fadeIn
     class="ap-px-2 dropdown-shadow ap-absolute ap-z-50 ap-bg-white ap-border ap-border-divider ap-border-solid ap-rounded ap-border-dividers"
-    *ngIf="!closePressed  && (interpolatingTextFormControlService.lastOpenDropdownId$ | async) === id"
-    [style.width]="width" [style.left]="left" [style.margin-top]="calculatedMarginTop">
+    *ngIf="(showMenuObs$| async)" [style.width]="width" [style.left]="left" [style.margin-top]="calculatedMarginTop">
     <app-mentions-list #mentionsList (click)=" $event.stopPropagation()" (addMention)="addMention.emit($event)"
-        id="mentionsList" (closeMenu)="close()"></app-mentions-list>
+        [focusSearchInput$]="focusSearch? showMenuObs$: undefined" id="mentionsList"
+        (closeMenu)="close()"></app-mentions-list>
 </div>
-<ng-container *ngIf="(showMenuObs$| async)"></ng-container>

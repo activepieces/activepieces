@@ -41,7 +41,7 @@
     </div>
 
     <ng-container *ngIf="showSecondValue()">
-        <div>
+        <div #container>
             <mat-form-field class="ap-w-full" appearance="outline"
                 (click)="secondMentionsDropdown.showMenuSubject$.next(true)">
                 <mat-label>Second Value</mat-label>
@@ -53,7 +53,7 @@
                 </mat-error>
             </mat-form-field>
             <app-builder-autocomplete-mentions-dropdown #secondMentionsDropdown width="calc(100% - 2.4rem)"
-                (menuClosed)="secondValueTextControl.focusEditor()" marginTop="-20px"
+                (menuClosed)="secondValueTextControl.focusEditor()" marginTop="-20px" [container]="container"
                 (addMention)="addMention(secondValueTextControl,$event)"></app-builder-autocomplete-mentions-dropdown>
         </div>
 
