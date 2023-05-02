@@ -126,10 +126,12 @@ export class DictionaryFormControlComponent
     await textControl.addMention(mention);
   }
   showMenu(
-    $event: MouseEvent,
+    $event: MouseEvent | boolean,
     mentionsDropdown: BuilderAutocompleteMentionsDropdownComponent
   ) {
-    $event.stopImmediatePropagation();
+    if (typeof $event !== 'boolean') {
+      $event.stopImmediatePropagation();
+    }
     mentionsDropdown.showMenuSubject$.next(true);
   }
 }

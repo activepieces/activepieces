@@ -4,11 +4,13 @@ import {
   ChangeDetectorRef,
   Component,
   DoCheck,
+  EventEmitter,
   HostBinding,
   Input,
   OnDestroy,
   OnInit,
   Optional,
+  Output,
   SecurityContext,
   Self,
   ViewChild,
@@ -73,6 +75,7 @@ export class InterpolatingTextFormControlComponent
   static nextId = 0;
   @Input() insideMatField = true;
   @Input() onlyAllowOneMentionToBeAdded = false;
+  @Output() editorFocused: EventEmitter<boolean> = new EventEmitter();
   private _readOnly = false;
   private _placeholder = '';
   focused = false;
@@ -326,12 +329,14 @@ export class InterpolatingTextFormControlComponent
     this.stateChanges.complete();
   }
   onBlur() {
+    this.onTouched();
     this.focused = false;
     this.stateChanges.next();
   }
   onFocus() {
-    this.onTouched();
+    debugger;
     this.focused = true;
+    this.editorFocused.emit(true);
     this.stateChanges.next();
   }
 

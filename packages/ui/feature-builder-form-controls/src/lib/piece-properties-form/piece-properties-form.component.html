@@ -391,7 +391,8 @@
       <mat-label>{{property.value.displayName}}</mat-label>
       <app-interpolating-text-form-control #textControl [matTooltip]="property.value.description"
         [formControlName]="property.key" [attr.name]="property.key"
-        (keyup)="$event.key ==='Escape'? mentionsDropdown.close() : null"></app-interpolating-text-form-control>
+        (editorFocused)="mentionsDropdown.showMenuSubject$.next(true)"
+        (keyup.escape)="mentionsDropdown.close()"></app-interpolating-text-form-control>
       <mat-error *ngIf="formGroup.get(property.key)?.invalid">
         {{property.value.displayName}} is required
       </mat-error>

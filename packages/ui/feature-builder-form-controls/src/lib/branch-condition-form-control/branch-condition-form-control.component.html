@@ -5,7 +5,7 @@
             (click)="firstValueMentionsDropdown.showMenuSubject$.next(true)">
             <mat-label>{{(showSecondValue())? 'First':''}} Value</mat-label>
             <app-interpolating-text-form-control #firstValueTextControl [formControl]="form.controls.firstValue"
-                [attr.name]="'firstValue'"
+                (editorFocused)="firstValueMentionsDropdown.showMenuSubject$.next(true)" [attr.name]="'firstValue'"
                 (keyup)="$event.key ==='Escape'? firstValueMentionsDropdown.close(): null"></app-interpolating-text-form-control>
             <mat-error *ngIf="form.controls.firstValue.invalid">
                 First value is required
@@ -46,7 +46,7 @@
                 (click)="secondMentionsDropdown.showMenuSubject$.next(true)">
                 <mat-label>Second Value</mat-label>
                 <app-interpolating-text-form-control #secondValueTextControl [formControl]="form.controls.secondValue"
-                    [attr.name]="'secondValue'"
+                    [attr.name]="'secondValue'" (editorFocused)="secondMentionsDropdown.showMenuSubject$.next(true)"
                     (keyup)="$event.key ==='Escape'? secondMentionsDropdown.close() : null"></app-interpolating-text-form-control>
                 <mat-error *ngIf="form.controls.secondValue.invalid">
                     Second value is required
