@@ -334,7 +334,6 @@ export class InterpolatingTextFormControlComponent
     this.stateChanges.next();
   }
   onFocus() {
-    debugger;
     this.focused = true;
     this.editorFocused.emit(true);
     this.stateChanges.next();

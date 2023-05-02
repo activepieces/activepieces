@@ -3,7 +3,7 @@
   <ap-icon-button [iconFilename]="'close.svg'" (click)="closeMenu.emit()" [tabIndex]="-1"></ap-icon-button>
 </div>
 <mat-form-field (click)="$event.stopPropagation();" appearance="outline" class="ap-w-full">
-  <mat-icon matPrefix svgIcon="search"></mat-icon>
+  <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
   <input id="searchInput" #searchInput [formControl]="searchFormControl" matInput placeholder="Search"
     autocomplete="off">
 </mat-form-field>
