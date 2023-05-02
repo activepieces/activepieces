@@ -199,6 +199,7 @@ export class InterpolatingTextFormControlComponent
     );
   }
   editorCreated(): void {
+    this.removeDefaultTabKeyBinding();
     this.editor.quillEditor.clipboard.addMatcher(
       Node.ELEMENT_NODE,
       (_node: unknown, delta: { ops: TextInsertOperation[] }) => {
@@ -215,6 +216,9 @@ export class InterpolatingTextFormControlComponent
         return delta;
       }
     );
+  }
+  private removeDefaultTabKeyBinding() {
+    delete this.editor.quillEditor.getModule('keyboard').bindings['9'];
   }
   get placeholder() {
     return this._placeholder;
