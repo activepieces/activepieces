@@ -12,10 +12,11 @@ export const storeEntryService = {
             return await this.getOne({ projectId, key: request.key })
         }
         else {
-            const entryRequest: Partial<StoreEntry> = {
+            const entryRequest: Omit<StoreEntry, 'created' | 'updated'> = {
                 id: apId(),
                 key: request.key,
                 value: request.value,
+                projectId:projectId,
             }
             return await storeEntryRepo.save(entryRequest)
         }
