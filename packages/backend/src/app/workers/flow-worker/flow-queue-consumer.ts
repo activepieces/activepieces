@@ -33,6 +33,7 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
         const { data } = job
 
         try {
+            // TODO REMOVE AND FIND PERMANENT SOLUTION
             const instance = await flowInstanceService.get({
                 projectId: data.projectId,
                 flowId: data.flowVersion.flowId,
