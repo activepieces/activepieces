@@ -11,6 +11,7 @@ import { combineLatest, map, Observable, of, Subject } from 'rxjs';
 import { PieceTrigger, TriggerType } from '@activepieces/shared';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
+  FIRST_LEVEL_PADDING_IN_MENTIONS_LIST,
   MentionListItem,
   MentionTreeNode,
   traverseStepOutputAndReturnMentionTree,
@@ -29,6 +30,7 @@ import { ActionMetaService, FlowItemDetails } from '@activepieces/ui/common';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PieceTriggerMentionItemComponent implements OnInit {
+  FIRST_LEVEL_PADDING_IN_MENTIONS_LIST = FIRST_LEVEL_PADDING_IN_MENTIONS_LIST;
   TriggerType = TriggerType;
   expandSample = false;
   @Input()
@@ -48,6 +50,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
     children: MentionTreeNode[] | undefined;
     error: string;
     markedNodesToShow: Map<string, boolean>;
+    value?: unknown;
   }>;
   fetching$: Subject<boolean> = new Subject();
   isPollingTrigger$: Observable<boolean>;
@@ -58,7 +61,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
     private mentionsTreeCache: MentionsTreeCacheService
   ) {}
   ngOnInit(): void {
-    const cachedResult: undefined | MentionTreeNode[] = this.getChachedData();
+    const cachedResult: undefined | MentionTreeNode = this.getChachedData();
     this.isScheduleTrigger$ = this.store.select(
       BuilderSelectors.selectIsSchduleTrigger
     );
@@ -66,7 +69,11 @@ export class PieceTriggerMentionItemComponent implements OnInit {
 
     if (cachedResult) {
       this.sampleData$ = combineLatest({
-        stepTree: of({ children: cachedResult, error: '' }),
+        stepTree: of({
+          children: cachedResult.children,
+          error: '',
+          value: cachedResult.value,
+        }),
         search: this.mentionsTreeCache.listSearchBarObs$,
       }).pipe(
         map((res) => {
@@ -78,6 +85,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
             children: res.stepTree.children,
             error: '',
             markedNodesToShow: markedNodesToShow,
+            value: res.stepTree.value,
           };
         })
       );
@@ -88,17 +96,16 @@ export class PieceTriggerMentionItemComponent implements OnInit {
   }
   getChachedData() {
     const step = this._stepMention.step;
-    let cachedResult: undefined | MentionTreeNode[] = undefined;
+    let cachedResult: undefined | MentionTreeNode = undefined;
     if (
       step.type === TriggerType.PIECE &&
       step.settings.inputUiInfo.currentSelectedData
     ) {
-      cachedResult =
-        traverseStepOutputAndReturnMentionTree(
-          step.settings.inputUiInfo.currentSelectedData,
-          step.name,
-          step.displayName
-        )?.children || [];
+      cachedResult = traverseStepOutputAndReturnMentionTree(
+        step.settings.inputUiInfo.currentSelectedData,
+        step.name,
+        step.displayName
+      );
     }
     return cachedResult;
   }
