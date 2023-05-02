@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Configuration, OpenAIApi } from 'openai';
+import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai';
 
 export const askOpenAI = createAction({
   name: 'ask_chatgpt',
@@ -57,6 +57,16 @@ export const askOpenAI = createAction({
       required: false,
       description: 'How much to penalize new tokens based on whether they appear in the text so far. Increases the model\'s likelihood to talk about new topics.',
     }),
+    roles: Property.Json({
+      displayName: 'Roles',
+      required: false,
+      description: 'Array of roles to specify more accurate response',
+      defaultValue: [
+        { "role": "system", "content": "You are a helpful assistant." },
+        { "role": "user", "content": "Who won the world series in 2020?" },
+        { "role": "assistant", "content": "The Los Angeles Dodgers won the World Series in 2020." }
+      ]
+    }),
   },
   sampleData: {},
   async run({ propsValue }) {
@@ -90,12 +100,28 @@ export const askOpenAI = createAction({
       presencePenalty = propsValue.presencePenalty;
     }
 
+    const rolesArray = propsValue.roles ? propsValue.roles as unknown as ChatCompletionRequestMessage[] : [];
+    const roles = rolesArray.map(item => {
+
+      const rolesEnum = ["system", "user", "assistant"];
+      if (!rolesEnum.includes(item.role)) {
+        throw new Error("The only available roles are: [system, user, assistant]")
+      }
+
+      return {
+        role: item.role,
+        content: item.content
+      }
+    })
+
     const response = await openai.createChatCompletion({
       model: model,
-      messages: [{
-        role: "user",
-        content: propsValue['prompt']!
-      }],
+      messages: [
+        ...roles,
+        {
+          role: "user",
+          content: propsValue['prompt']!,
+        }],
       temperature: temperature,
       max_tokens: maxTokens,
       top_p: topP,
