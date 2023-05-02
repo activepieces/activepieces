@@ -1,6 +1,7 @@
 
 import { createPiece } from "@activepieces/pieces-framework";
 import packageJson from "../package.json";
+import { textToImage } from "./lib/actions/text-to-image";
 
 export const stabilityAi = createPiece({
   name: "stability-ai",
@@ -8,6 +9,6 @@ export const stabilityAi = createPiece({
   logoUrl: "https://cdn.activepieces.com/pieces/stability-ai.png",
   version: packageJson.version,
   authors: ["Willianwg"],
-  actions: [],
+  actions: [textToImage],
   triggers: [],
 });

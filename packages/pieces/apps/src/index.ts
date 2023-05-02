@@ -67,11 +67,13 @@ import { xml }  from '@activepieces/piece-xml';
 import { vtex }  from '@activepieces/piece-vtex';
 import { postgres }  from '@activepieces/piece-postgres';
 import { amazonS3 }  from '@activepieces/piece-amazon-s3';
+import { stabilityAi }  from '@activepieces/piece-stability-ai';
 
 /**
  * @deprecated this will be removed, don't use it
  */
 export const pieces: Piece[] = [
+    stabilityAi,
     amazonS3,
     xml,
     vtex,
