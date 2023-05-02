@@ -10,6 +10,7 @@ import { Store } from '@ngrx/store';
 import { combineLatest, map, Observable, of, Subject } from 'rxjs';
 import { ActionType, PieceAction, PieceTrigger } from '@activepieces/shared';
 import {
+  FIRST_LEVEL_PADDING_IN_MENTIONS_LIST,
   MentionListItem,
   MentionTreeNode,
   traverseStepOutputAndReturnMentionTree,
@@ -29,6 +30,8 @@ import { FlowItemDetails } from '@activepieces/ui/common';
 })
 export class PieceStepMentionItemComponent implements OnInit {
   expandSample = false;
+  readonly FIRST_LEVEL_PADDING_IN_MENTIONS_LIST =
+    FIRST_LEVEL_PADDING_IN_MENTIONS_LIST;
   @Input()
   set stepMention(val: MentionListItem & { step: FlowItem }) {
     if (val.step.type !== ActionType.PIECE) {
@@ -46,6 +49,7 @@ export class PieceStepMentionItemComponent implements OnInit {
     children: MentionTreeNode[] | undefined;
     error: string;
     markedNodesToShow: Map<string, boolean>;
+    value?: unknown;
   }>;
   fetching$: Subject<boolean> = new Subject();
   noSampleDataNote$: Observable<string>;
@@ -55,14 +59,19 @@ export class PieceStepMentionItemComponent implements OnInit {
     private mentionsTreeCache: MentionsTreeCacheService
   ) {}
   ngOnInit(): void {
-    const cachedResult: undefined | MentionTreeNode[] = this.getChachedData();
+    const cachedResult: undefined | MentionTreeNode = this.getChachedData();
     if (cachedResult) {
       this.mentionsTreeCache.setStepMentionsTree(this._stepMention.step.name, {
-        children: cachedResult,
+        children: cachedResult?.children || [],
+        value: cachedResult?.value,
       });
 
       this.sampleData$ = combineLatest({
-        stepTree: of({ children: cachedResult, error: '' }),
+        stepTree: of({
+          children: cachedResult.children,
+          error: '',
+          value: cachedResult.value,
+        }),
         search: this.mentionsTreeCache.listSearchBarObs$,
       }).pipe(
         map((res) => {
@@ -74,6 +83,7 @@ export class PieceStepMentionItemComponent implements OnInit {
             children: res.stepTree.children,
             error: '',
             markedNodesToShow: markedNodesToShow,
+            value: res.stepTree.value,
           };
         })
       );
@@ -84,8 +94,7 @@ export class PieceStepMentionItemComponent implements OnInit {
   }
   getChachedData() {
     const step = this._stepMention.step;
-
-    let cachedResult: undefined | MentionTreeNode[] = undefined;
+    let cachedResult: undefined | MentionTreeNode = undefined;
     if (
       step.type === ActionType.PIECE &&
       step.settings.inputUiInfo.currentSelectedData !== undefined
@@ -94,7 +103,7 @@ export class PieceStepMentionItemComponent implements OnInit {
         step.settings.inputUiInfo.currentSelectedData,
         step.name,
         step.displayName
-      )?.children;
+      );
     }
     return cachedResult;
   }

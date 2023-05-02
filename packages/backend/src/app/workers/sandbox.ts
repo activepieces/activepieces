@@ -119,13 +119,17 @@ export class Sandbox {
                 verdict = metaResult.status == 'TO' ? EngineResponseStatus.TIMEOUT : EngineResponseStatus.ERROR
             }
 
-            return {
+            const result = {
                 timeInSeconds,
                 verdict: verdict,
                 output: output,
                 standardOutput: await fs.readFile(this.getSandboxFilePath('_standardOutput.txt'), { encoding: 'utf-8' }),
                 standardError: await fs.readFile(this.getSandboxFilePath('_standardError.txt'), { encoding: 'utf-8' }),
             }
+
+            logger.debug(result, '[Sandbox#runCommandLine] result')
+
+            return result
         }
     }
 
@@ -149,7 +153,11 @@ export class Sandbox {
         if (!(await this.fileExists(outputFile))) {
             throw new Error('Output file not found in ' + outputFile)
         }
-        return JSON.parse(await fs.readFile(outputFile, { encoding: 'utf-8' }))
+        const output = JSON.parse(await fs.readFile(outputFile, { encoding: 'utf-8' }))
+
+        logger.debug(output, '[Sandbox#parseFunctionOutput] output')
+
+        return output
     }
 
     private async fileExists(filePath: string): Promise<boolean> {

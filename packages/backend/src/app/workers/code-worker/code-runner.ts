@@ -35,6 +35,8 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
             standardError: result.standardError ?? '',
         }
 
+        logger.debug(executionResult, '[CodeRunner#run] executionResult')
+
         logger.info(`Finished Executing in sandbox: ${buildPath}, duration: ${Date.now() - startTime}ms`)
     }
     finally {
