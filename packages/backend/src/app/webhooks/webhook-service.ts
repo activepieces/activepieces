@@ -38,12 +38,8 @@ export const webhookService = {
         })
 
         if (isNil(flowInstance) || flowInstance.status !== FlowInstanceStatus.ENABLED) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FLOW_INSTANCE_NOT_FOUND,
-                params: {
-                    id: flow.id,
-                },
-            })
+            logger.info(`[WebhookService#callback] flowInstance not found or not enabled ignoring the webhhook, flowId=${flowId}`)
+            return
         }
         const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
 
