@@ -16,9 +16,6 @@ test('Test Send Slack message', async ({ page }) => {
   await testSignIn(page, config);
 
   await page.getByRole('button', { name: 'Start building' }).click();
-  await page.getByRole('navigation').locator('svg').nth(2).click();
-  await page.getByRole('menuitem', { name: 'Rename' }).click();
-  await page.getByText('Untitled').fill('Slack');
   await page.getByText('Select Trigger').click();
   await page.getByText('Webhook').click();
 
@@ -60,6 +57,8 @@ test('Test Send Slack message', async ({ page }) => {
   expect(runSuccessText).toContain('Run succeeded');
 
   await page.getByRole('button', { name: 'Exit Run' }).click();
+
+  await page.goto(`${config.url}flows`);
   await page.getByRole('button', { name: 'Home' }).click();
   await page.getByRole('table', { name: 'Flows' }).getByRole('button').click();
   await page.getByRole('menuitem', { name: 'Delete' }).click();
