@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { FirebaseAuthService } from '../firebase-auth.service';
 import { fadeInUp400ms } from '@activepieces/ui/common';
@@ -28,7 +28,7 @@ export class FirebaseSignInComponent {
 	showInvalidEmailOrPasswordMessage = false;
 	showEmailNotVerifiedMessage = false;
 	loginForm!: FormGroup<LoginForm>;
-	constructor(private router: Router, private firebaseAuthService: FirebaseAuthService, private authService: AuthenticationService) {
+	constructor(private router: Router, private route: ActivatedRoute, private firebaseAuthService: FirebaseAuthService, private authService: AuthenticationService) {
 		this.loginForm = new FormGroup<LoginForm>({
 			email: new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
 			password: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
@@ -53,7 +53,7 @@ export class FirebaseSignInComponent {
 								token: idToken,
 							}).pipe(tap(response => {
 								this.authService.saveUser(response);
-								this.router.navigate(['/']);
+								this.redirectToBack();
 							}))
 						}));
 					}
@@ -78,7 +78,7 @@ export class FirebaseSignInComponent {
 				console.log(response);
 				if (response) {
 					this.authService.saveUser(response);
-					this.router.navigate(['/']);
+					this.redirectToBack();
 				} else {
 					this.alreadyRegisteredWithAnotherProvider = true;
 				}
@@ -92,12 +92,21 @@ export class FirebaseSignInComponent {
 			tap(response => {
 				if (response) {
 					this.authService.saveUser(response);
-					this.router.navigate(['/']);
+					this.redirectToBack();
 				} else {
 					this.alreadyRegisteredWithAnotherProvider = true;
 				}
 			}),
 			map(() => void 0)
 		);
+	}
+
+	redirectToBack() {
+		const redirectUrl = this.route.snapshot.queryParamMap.get('redirect_url');
+		if (redirectUrl) {
+			window.location.href = redirectUrl;
+		} else {
+			this.router.navigate(['/']);
+		}
 	}
 }

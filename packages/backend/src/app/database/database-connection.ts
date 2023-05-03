@@ -29,6 +29,7 @@ import { removeCollectionVersion1678492809093 } from './migration/1678492809093-
 import { addEventRouting1678382946390 } from './migration/1678382946390-add-event-routing'
 import { bumpFixPieceVersions1678928503715 } from './migration/1678928503715-bump-fix-piece-versions'
 import { migrateSchedule1679014156667 } from './migration/1679014156667-migrate-schedule'
+import { addNotificationsStatus1680563747425 } from './migration/1680563747425-add-notifications-status'
 import { AddInputUiInfo1681107443963 } from './migration/1681107443963-AddInputUiInfo'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { CreateWebhookSimulationSchema1680698259291 } from './migration/1680698259291-create-webhook-simulation-schema'
@@ -71,6 +72,7 @@ const getMigrations = () => {
         addEventRouting1678382946390,
         bumpFixPieceVersions1678928503715,
         migrateSchedule1679014156667,
+        addNotificationsStatus1680563747425,
         AddInputUiInfo1681107443963,
         CreateWebhookSimulationSchema1680698259291,
         RemoveCollections1680986182074,

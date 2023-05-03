@@ -1,6 +1,10 @@
 <div class="ap-w-full ap-h-full ap-px-[30px] ap-pt-[50px]">
   <div class="ap-h-full">
     <app-page-title title="Runs"></app-page-title>
+    <mat-slide-toggle *ngIf="enterpriseEdition$ | async" [formControl]="toggleNotificationFormControl"
+      class="ap-mt-[-62px] ap-mb-2 ap-float-right" color="primary" [labelPosition]="'before'">Send email notifications
+      about failed
+      runs</mat-slide-toggle>
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Runs">
         <ng-container matColumnDef="flowName">
@@ -43,3 +47,4 @@
     </div>
   </div>
 </div>
+<ng-container *ngIf="updateNotificationsValue$ | async"></ng-container>
