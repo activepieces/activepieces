@@ -33,11 +33,16 @@ export enum FlowsActionType {
   SET_RUN = '[FLOWS] SET_RUN',
   EXIT_RUN = '[FLOWS] EXIT_RUN',
   SELECT_STEP_BY_NAME = '[FLOWS] SELECT_STEP_BY_NAME',
+  SELECT_FIRST_INVALID_STEP = '[FLOWS] SELECT_FIRST_INVALID_STEP',
 }
 
 const updateTrigger = createAction(
   FlowsActionType.UPDATE_TRIGGER,
   props<{ operation: UpdateTriggerRequest }>()
+);
+
+const selectFirstInvalidStep = createAction(
+  FlowsActionType.SELECT_FIRST_INVALID_STEP
 );
 
 const addAction = createAction(
@@ -125,6 +130,7 @@ export const FlowsActions = {
   deselectStep,
   exitRun,
   selectStepByName,
+  selectFirstInvalidStep,
 };
 
 export const SingleFlowModifyingState = [

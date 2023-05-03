@@ -41,7 +41,7 @@
             <div class="ap-justify-self-end" @fadeIn *ngIf="!_flowItem.valid || (selectedRun$ | async)">
               <ng-container *ngIf="!_flowItem.valid">
                 <svg-icon src="assets/img/custom/incomplete-settings.svg" class="ap-w-[16px] ap-h-[16px]"
-                  [applyClass]="true"></svg-icon>
+                  matTooltip="Incomplete settings" [applyClass]="true"></svg-icon>
               </ng-container>
               <ng-container *ngIf="(selectedRun$ | async) && _flowItem.valid">
                 <div class="ap-flex-grow" *ngIf="selectedRun$ | async"></div>

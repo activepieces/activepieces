@@ -1,4 +1,6 @@
-<div
-    class="ap-typography-body-2 ap-bg-warn-light ap-rounded-full ap-border ap-border-solid ap-border-warn-medium ap-py-1.5 ap-px-2.5 ap-text-warn-dark">
-    Complete X Steps
-</div>
+<ng-container *ngIf="numberOfInvalidSteps$ | async as numOfInvalidSteps">
+    <div *ngIf="numOfInvalidSteps > 0" (click)="selectFirstInvalidStep()" @fadeIn
+        class="ap-typography-body-2 ap-bg-warn-light ap-rounded-full ap-border ap-border-solid ap-border-warn-medium ap-transition-colors ap-py-1.5 ap-px-2.5 ap-text-warn-dark ap-cursor-pointer hover:ap-border-warn-dark">
+        Complete {{numOfInvalidSteps}} step{{numOfInvalidSteps > 1 ? 's' : ''}}
+    </div>
+</ng-container>
