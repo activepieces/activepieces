@@ -14,9 +14,12 @@ import { userService } from "@backend/user/user-service";
 import { isNil } from "lodash";
 import { getEdition } from "@backend/helper/secret-helper";
 
-sendgrid.setApiKey(system.get(SystemProp.SENDGRID_KEY));
 
+const sendgridKey = system.get(SystemProp.SENDGRID_KEY);
 const projectUsageRepo = databaseConnection.getRepository<ProjectUsage>(ProjectUsageEntity);
+if (sendgridKey) {
+    sendgrid.setApiKey(sendgridKey);
+}
 
 export const usageService = {
     async addTasksConsumed(request: { projectId: ProjectId, tasks: number }): Promise<void> {
@@ -26,8 +29,8 @@ export const usageService = {
         })
         try {
             const projectUsage = await usageService.getUsage({ projectId: request.projectId });
-
-            // handleAlerts({ projectUsage: projectUsage!, projectPlan, numberOfSteps });
+            const projectPlan = await billingService.getPlan({ projectId: request.projectId });
+            handleAlerts({ projectUsage: projectUsage!, projectPlan, numberOfSteps: request.tasks });
 
             projectUsage.consumedTasks += request.tasks;
             await projectUsageRepo.save(projectUsage);
@@ -89,7 +92,7 @@ async function handleAlerts({ projectUsage, projectPlan, numberOfSteps }: { proj
             threshold: 0.5,
         },
         {
-            threshold: 0.8,
+            threshold: 0.9,
             templateId: 'd-2159eff164df4f7fac246f04420858a2'
         },
         {
@@ -102,8 +105,8 @@ async function handleAlerts({ projectUsage, projectPlan, numberOfSteps }: { proj
         const threshold = Math.floor(projectUsage.consumedTasks / projectPlan.tasks);
         const newThreshold = Math.floor((projectUsage.consumedTasks + numberOfSteps) / projectPlan.tasks);
         if (threshold < thresholdEmail.threshold && newThreshold >= thresholdEmail.threshold) {
-            const project = await projectService.getOne(projectUsage.projectId);
-            const user = await userService.getMetaInfo({ id: project.ownerId });
+            const project = (await projectService.getOne(projectUsage.projectId))!;
+            const user = (await userService.getMetaInfo({ id: project.ownerId }))!;
             sendgrid.send({
                 to: user.email,
                 from: 'notifications@activepieces.com',
