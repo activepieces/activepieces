@@ -39,7 +39,7 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
                 flowId: data.flowVersion.flowId,
             })
             if (isNil(instance) || instance.status !== FlowInstanceStatus.ENABLED || instance.flowVersionId !== data.flowVersion.id) {
-                captureException(new Error(`[repeatableJobConsumer] removing job.id=${job.name} instance.flowVersionId=${instance?.flowVersionId} data.flowVersion.id=${data.flowVersion.id}`));
+                captureException(new Error(`[repeatableJobConsumer] removing job.id=${job.name} instance.flowVersionId=${instance?.flowVersionId} data.flowVersion.id=${data.flowVersion.id}`))
                 await triggerUtils.disable({
                     projectId: data.projectId,
                     flowVersion: data.flowVersion,

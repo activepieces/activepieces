@@ -7,13 +7,15 @@ import {
   map,
   catchError,
   of,
+  take,
 } from 'rxjs';
 import { FlowRun } from '@activepieces/shared';
 import {
-  ProjectService,
   InstanceRunService,
   ApPaginatorComponent,
+  ProjectSelectors,
 } from '@activepieces/ui/common';
+import { Store } from '@ngrx/store';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -26,7 +28,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
     private pageSize$: Observable<number>,
     private pageCursor$: Observable<string>,
     private paginator: ApPaginatorComponent,
-    private projectService: ProjectService,
+    private store: Store,
     private instanceRunService: InstanceRunService
   ) {
     super();
@@ -41,7 +43,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
     return combineLatest({
       pageCursor: this.pageCursor$,
       pageSize: this.pageSize$,
-      project: this.projectService.getSelectedProject(),
+      project: this.store.select(ProjectSelectors.selectProject).pipe(take(1)),
     }).pipe(
       switchMap((res) => {
         return this.instanceRunService.list(res.project.id, {

@@ -1,6 +1,7 @@
 import { createSelector } from '@ngrx/store';
 import { CommonStateModel, ProjectsState } from '../common-state.model';
 import { selectCommonState } from '../common.selector';
+import { NotificationStatus } from '@activepieces/shared';
 
 export const selectProjectState = createSelector(
   selectCommonState,
@@ -14,6 +15,14 @@ export const selectProject = createSelector(
   }
 );
 
+export const selectIsNotificationsEnabled = createSelector(
+  selectProject,
+  (project) => {
+    return project.notifications === NotificationStatus.ALWAYS;
+  }
+);
+
 export const ProjectSelectors = {
   selectProject,
+  selectIsNotificationsEnabled,
 };
