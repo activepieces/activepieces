@@ -2,6 +2,7 @@ import { CdkDragMove } from '@angular/cdk/drag-drop';
 import {
   Component,
   EventEmitter,
+  HostListener,
   Input,
   OnDestroy,
   Output,
@@ -18,7 +19,7 @@ export class HorizontalSidebarSeparatorComponent implements OnDestroy {
   animate = false;
   resizerKnobIsBeingDragged = false;
   @Input() resizerArea: HTMLElement;
-  @Input() topStyle = 'calc(50% - 5px)';
+  @Input() topStyle = 'calc(50% - 29px)';
   @Output() resizerDragged: EventEmitter<CdkDragMove> = new EventEmitter();
   @Output() resizerDragStarted = new EventEmitter();
   @Output() resizerDragStopped = new EventEmitter();
@@ -46,5 +47,9 @@ export class HorizontalSidebarSeparatorComponent implements OnDestroy {
   }
   ngOnDestroy(): void {
     this.resetTopResizerSectionHeight.emit();
+  }
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.dragPosition = { x: 0, y: 0 };
   }
 }

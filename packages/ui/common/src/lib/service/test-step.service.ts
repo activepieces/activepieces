@@ -34,7 +34,7 @@ export class TestStepService {
     );
   }
   testPieceStep(req: { stepName: string; flowVersionId: string }) {
-    return this.http.post<{ output: unknown }>(
+    return this.http.post<{ output: unknown; success: boolean }>(
       environment.apiUrl + '/step-run',
       req
     );

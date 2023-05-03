@@ -1,4 +1,4 @@
-import { AppConnectionValue, ScheduleOptions } from "@activepieces/shared";
+import { AppConnectionValue, ScheduleOptions, TriggerPayload } from "@activepieces/shared";
 import { TriggerStrategy } from "./trigger/trigger";
 
 export type TriggerHookContext<T, S extends TriggerStrategy> =
@@ -21,11 +21,7 @@ export type TriggerHookContext<T, S extends TriggerStrategy> =
 
 
 export interface TriggerContext<T> {
-    payload: Record<string, never> | {
-        body: any,
-        headers: Record<string, string>,
-        queryParams: Record<string, string>,
-    };
+    payload: TriggerPayload;
     propsValue: T,
     store: Store,
 }

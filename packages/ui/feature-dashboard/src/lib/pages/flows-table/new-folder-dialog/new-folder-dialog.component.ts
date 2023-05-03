@@ -42,7 +42,9 @@ export class NewFolderDialogComponent {
     if (this.folderForm.valid) {
       this.loading = true;
       this.creatingFolder$ = this.foldersService
-        .create(this.folderForm.getRawValue())
+        .create({
+          displayName: this.folderForm.getRawValue().displayName.trim(),
+        })
         .pipe(
           catchError((err) => {
             if (err.error.code === ErrorCode.VALIDATION) {

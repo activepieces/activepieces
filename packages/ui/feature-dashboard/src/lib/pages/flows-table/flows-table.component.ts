@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { map, Observable, startWith, Subject, tap } from 'rxjs';
+import { map, Observable, shareReplay, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
 import { Flow, FlowInstanceStatus } from '@activepieces/shared';
@@ -35,7 +35,14 @@ export class FlowsTableComponent implements OnInit {
   deleteFlowDialogClosed$: Observable<void>;
   moveFlowDialogClosed$: Observable<void>;
   dataSource!: FlowsTableDataSource;
-  displayedColumns = ['name', 'created', 'status', 'folderName', 'action'];
+  displayedColumns = [
+    'name',
+    'steps',
+    'folderName',
+    'created',
+    'status',
+    'action',
+  ];
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
   areThereFlows$: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
@@ -58,11 +65,12 @@ export class FlowsTableComponent implements OnInit {
             (c) => c === 'folderName'
           );
           if (displayAllFlows && folderColumnIndex == -1) {
-            this.displayedColumns.splice(3, 0, 'folderName');
+            this.displayedColumns.splice(2, 0, 'folderName');
           } else if (!displayAllFlows && folderColumnIndex !== -1) {
             this.displayedColumns.splice(folderColumnIndex, 1);
           }
-        })
+        }),
+        shareReplay(1)
       );
   }
 
@@ -72,7 +80,8 @@ export class FlowsTableComponent implements OnInit {
       this.foldersService,
       this.paginator,
       this.flowService,
-      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true))
+      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true)),
+      this.store
     );
     this.areThereFlows$ = this.activatedRoute.data.pipe(
       map((res) => {

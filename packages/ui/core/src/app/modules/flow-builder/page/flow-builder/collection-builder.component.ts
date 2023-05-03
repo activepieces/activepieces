@@ -30,8 +30,6 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { TestStepService } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
-import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/feature-builder-form-controls';
-import { UUID } from 'angular2-uuid';
 @Component({
   selector: 'app-collection-builder',
   templateUrl: './collection-builder.component.html',
@@ -62,8 +60,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     private runDetailsService: RunDetailsService,
     private titleService: Title,
     private pannerService: PannerService,
-    private testStepService: TestStepService,
-    private autoCompleteDropdownService: BuilderAutocompleteMentionsDropdownService
+    private testStepService: TestStepService
   ) {
     this.testingStepSectionIsRendered$ =
       this.testStepService.testingStepSectionIsRendered$.asObservable();
@@ -191,8 +188,5 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 
   leftDrawerHandleDragEnded() {
     this.leftSidebarDragging = false;
-  }
-  closeAutoComplete() {
-    this.autoCompleteDropdownService.lastOpenDropdownId$.next(new UUID());
   }
 }

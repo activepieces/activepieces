@@ -6,16 +6,16 @@ import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 
 import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
 import { ActionType, TriggerType } from '@activepieces/shared';
-
-import {
-  CORE_PIECES_ACTIONS_NAMES,
-  CORE_PIECES_TRIGGERS,
-} from './flow-item-details/flow-items-details.effects';
 import { FlowItem } from '../../model/flow-item';
 import { MentionListItem } from '../../model/mention-list-item';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../model/connections-dropdown-item';
 import { BuilderStateEnum } from '../../model';
+import {
+  CORE_PIECES_ACTIONS_NAMES,
+  CORE_PIECES_TRIGGERS,
+  corePieceIconUrl,
+} from '@activepieces/ui/common';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -76,6 +76,7 @@ export const selectCurrentFlowFolderName = createSelector(
     return state.flowState.folder.displayName;
   }
 );
+
 export const selectTabState = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => state.state
@@ -359,14 +360,14 @@ function findStepLogoUrlForMentions(
 ) {
   if (step.type === ActionType.PIECE) {
     if (CORE_PIECES_ACTIONS_NAMES.find((n) => n === step.settings.pieceName)) {
-      return `assets/img/custom/piece/${step.settings.pieceName}_mention.png`;
+      return corePieceIconUrl(step.settings.pieceName);
     }
     return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(
       (i) => i.extra?.appName === step.settings.pieceName
     )?.logoUrl;
   } else if (step.type === TriggerType.PIECE) {
     if (CORE_PIECES_TRIGGERS.find((n) => n === step.settings.pieceName)) {
-      return `assets/img/custom/piece/${step.settings.pieceName}_mention.png`;
+      return corePieceIconUrl(step.settings.pieceName);
     }
     return flowItemsDetailsState.customPiecesTriggersFlowItemDetails.find(
       (i) => i.extra?.appName === step.settings.pieceName

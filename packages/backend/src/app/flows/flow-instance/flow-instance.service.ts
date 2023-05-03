@@ -35,7 +35,7 @@ export const flowInstanceService = {
         const oldInstance: FlowInstance | null = await flowInstanceRepo.findOneBy({ projectId, flowId: request.flowId })
         if (oldInstance && oldInstance.status === FlowInstanceStatus.ENABLED) {
             triggerUtils.disable({
-                flowVersion: flow.version,
+                flowVersion: await flowVersionService.getOneOrThrow(oldInstance.flowVersionId),
                 projectId: oldInstance.projectId,
                 simulate: false,
             })
@@ -118,7 +118,7 @@ export const flowInstanceService = {
         await flowInstanceRepo.delete({ projectId, flowId })
     },
     async onFlowDelete({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<void> {
-        const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })  
+        const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })
         if (flowInstance) {
             const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
             await triggerUtils.disable({
@@ -127,6 +127,6 @@ export const flowInstanceService = {
                 simulate: false,
             })
             await flowInstanceRepo.delete({ projectId, flowId })
-        }   
+        }
     },
 }

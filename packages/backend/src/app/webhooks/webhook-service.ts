@@ -21,6 +21,7 @@ import { isEmpty, isNil } from 'lodash'
 import { logger } from '../helper/logger'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { flowInstanceService } from '../flows/flow-instance/flow-instance.service'
+import { usageService } from '@ee/billing/backend/usage.service'
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
@@ -30,20 +31,21 @@ export const webhookService = {
             flowId: flow.id,
             projectId: flow.projectId,
         })
-        if (isNil(flowInstance) || flowInstance.status !== FlowInstanceStatus.ENABLED) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FLOW_INSTANCE_NOT_FOUND,
-                params: {
-                    id: flow.id,
-                },
-            })
-        }
-        const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
-
         triggerEventService.saveEvent({
             flowId,
             payload,
             projectId,
+        })
+
+        if (isNil(flowInstance) || flowInstance.status !== FlowInstanceStatus.ENABLED) {
+            logger.info(`[WebhookService#callback] flowInstance not found or not enabled ignoring the webhhook, flowId=${flowId}`)
+            return
+        }
+        const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
+
+        await usageService.limit({
+            projectId: flow.projectId,
+            flowVersion,
         })
 
         const payloads: unknown[] = await triggerUtils.executeTrigger({

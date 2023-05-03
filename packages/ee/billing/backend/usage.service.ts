@@ -1,5 +1,5 @@
 import { billingService } from "./billing.service";
-import { ActivepiecesError, ErrorCode, FlowVersion, ProjectId, Trigger, Action, apId, Project } from "@activepieces/shared";
+import { ActivepiecesError, ErrorCode, FlowVersion, ProjectId, Trigger, Action, apId, Project, ApEdition } from "@activepieces/shared";
 import { databaseConnection } from "@backend/database/database-connection";
 import { ProjectPlan, ProjectUsage } from "@activepieces/ee/shared";
 import { acquireLock } from "@backend/database/redis-connection";
@@ -7,6 +7,7 @@ import { ProjectUsageEntity } from "./usage.entity";
 import { captureException } from "@backend/helper/logger";
 import dayjs from "dayjs";
 import { isNil } from "lodash";
+import { getEdition } from "@backend/helper/secret-helper";
 
 const projectUsageRepo = databaseConnection.getRepository<ProjectUsage>(ProjectUsageEntity);
 
@@ -24,11 +25,16 @@ export const usageService = {
             await quotaLock.release();
         }
     },
-    async limit(request: { projectId: ProjectId; flowVersion: FlowVersion; }): Promise<{ perform: true }> {
+    async limit(request: { projectId: ProjectId; flowVersion: FlowVersion; }): Promise<void> {
+        const edition = await getEdition()
+        if (edition !== ApEdition.ENTERPRISE) {
+            return;
+        }
         const quotaLock = await acquireLock({
             key: `usage_${request.projectId}`,
             timeout: 30000,
         })
+
         try {
             const projectUsage = await usageService.getUsage({ projectId: request.projectId });
             const projectPlan = await billingService.getPlan({ projectId: request.projectId });
@@ -47,9 +53,6 @@ export const usageService = {
             }
         } finally {
             await quotaLock.release();
-        }
-        return {
-            perform: true,
         }
     },
     async getUsage({ projectId }: { projectId: ProjectId }): Promise<ProjectUsage> {

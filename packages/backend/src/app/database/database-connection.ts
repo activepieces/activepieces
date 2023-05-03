@@ -37,6 +37,7 @@ import { FlowInstanceEntity } from '../flows/flow-instance/flow-instance.entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { RemoveCollections1680986182074 } from './migration/1680986182074-RemoveCollections'
 import { StoreAllPeriods1681019096716 } from './migration/1681019096716-StoreAllPeriods'
+import { AllowNullableStoreEntryAndTrigger1683040965874 } from './migration/1683040965874-allow-nullable-store-entry'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -76,6 +77,7 @@ const getMigrations = () => {
         CreateWebhookSimulationSchema1680698259291,
         RemoveCollections1680986182074,
         StoreAllPeriods1681019096716,
+        AllowNullableStoreEntryAndTrigger1683040965874,
     ]
 }
 

@@ -1,4 +1,5 @@
-<form [formGroup]="loopStepForm" class="ap-flex ap-flex-col ap-gap-2" (click)="$event.stopImmediatePropagation()">
+<form #inputContainer [formGroup]="loopStepForm" class="ap-flex ap-flex-col ap-gap-2"
+  (click)="$event.stopImmediatePropagation()">
   <div>
     <mat-form-field class="ap-w-full" appearance="outline" (click)="itemsMentionsDropdown.showMenuSubject$.next(true)">
       <mat-label>Items</mat-label>
@@ -9,8 +10,8 @@
         Items are required.
       </mat-error>
     </mat-form-field>
-    <app-builder-autocomplete-mentions-dropdown #itemsMentionsDropdown width="calc(100% - 2rem)"
-      (menuClosed)="ItemsTextControl.focusEditor()" marginTop="-20px"
+    <app-builder-autocomplete-mentions-dropdown #itemsMentionsDropdown width="calc(100% - 2rem)" marginTop="-20px"
+      [container]="inputContainer" [focusSearch]="true" [focusSearch]="true"
       (addMention)="addMention(ItemsTextControl,$event)"></app-builder-autocomplete-mentions-dropdown>
   </div>
 </form>

@@ -108,8 +108,7 @@ export class TestFlowModalComponent implements OnInit {
           this.testFlowButtonDisabledTooltip =
             'Please wait until saving is complete';
         } else if (!res.valid) {
-          this.testFlowButtonDisabledTooltip =
-            'Please make sure all flows are valid';
+          this.testFlowButtonDisabledTooltip = 'Your flow has invalid steps';
         } else {
           this.testFlowButtonDisabledTooltip = '';
         }

@@ -1,7 +1,18 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { map, Observable, of, tap } from 'rxjs';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  OnInit,
+} from '@angular/core';
+import { map, Observable, of, Subject, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { NavigationStart, Router } from '@angular/router';
+import {
+  NavigationCancel,
+  NavigationEnd,
+  NavigationError,
+  NavigationStart,
+  Router,
+} from '@angular/router';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 
@@ -10,6 +21,8 @@ import { compareVersions } from 'compare-versions';
 import { ApFlagId } from '@activepieces/shared';
 import { TelemetryService } from './modules/common/service/telemetry.service';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
+import { MatDialog } from '@angular/material/dialog';
+import { SwitchFlowDialogComponent } from '@activepieces/ui/feature-command-bar';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
@@ -25,12 +38,15 @@ const upgradeNotificationMetadataKeyInLocalStorage =
   animations: [fadeInUp400ms],
 })
 export class AppComponent implements OnInit {
-  routeLoader$: Observable<boolean>;
+  routeLoader$: Observable<unknown>;
   loggedInUser$: Observable<void>;
   warningMessage$: Observable<{ title?: string; body?: string } | undefined>;
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;
+  openCommandBar$: Observable<void>;
+  loading$: Subject<boolean> = new Subject();
   constructor(
+    public dialog: MatDialog,
     private store: Store,
     private authenticationService: AuthenticationService,
     private flagService: FlagService,
@@ -46,11 +62,23 @@ export class AppComponent implements OnInit {
       )
     );
     this.routeLoader$ = this.router.events.pipe(
-      map((event) => {
-        if (event instanceof NavigationStart) {
-          return true;
+      tap((event) => {
+        if (
+          event instanceof NavigationStart &&
+          event.url.startsWith('/flows/')
+        ) {
+          this.loading$.next(true);
         }
-        return false;
+        if (event instanceof NavigationEnd) {
+          this.loading$.next(false);
+        }
+
+        if (event instanceof NavigationCancel) {
+          this.loading$.next(false);
+        }
+        if (event instanceof NavigationError) {
+          this.loading$.next(false);
+        }
       })
     );
     this.showUpgradeNotification$ = this.flagService.getAllFlags().pipe(
@@ -91,6 +119,30 @@ export class AppComponent implements OnInit {
         }
       })
     );
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onKeyPress($event: KeyboardEvent) {
+    if (
+      ($event.ctrlKey || $event.metaKey) &&
+      ($event.key == 'k' || $event.key == 'K')
+    ) {
+      this.openCommandBar$ = this.telemetryService
+        .isFeatureEnabled('command-bar')
+        .pipe(
+          tap((enabled) => {
+            if (enabled) {
+              this.dialog.open(SwitchFlowDialogComponent, {
+                position: {
+                  top: '5%',
+                },
+              });
+              $event.preventDefault();
+            }
+          }),
+          map(() => void 0)
+        );
+    }
   }
 
   ngOnInit(): void {

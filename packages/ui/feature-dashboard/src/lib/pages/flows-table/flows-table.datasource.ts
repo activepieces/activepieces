@@ -8,6 +8,7 @@ import {
   map,
   catchError,
   BehaviorSubject,
+  forkJoin,
 } from 'rxjs';
 import {
   ApPaginatorComponent,
@@ -19,6 +20,8 @@ import { FormControl } from '@angular/forms';
 import { Flow, FlowInstanceStatus } from '@activepieces/shared';
 import { Params } from '@angular/router';
 import { FoldersService } from '@activepieces/ui/common';
+import { FolderActions } from '../../store/folders/folders.actions';
+import { Store } from '@ngrx/store';
 
 type FlowListDtoWithInstanceStatusToggleControl = Flow & {
   instanceToggleControl: FormControl<boolean>;
@@ -38,7 +41,8 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
     private folderService: FoldersService,
     private paginator: ApPaginatorComponent,
     private flowService: FlowService,
-    private refresh$: Observable<boolean>
+    private refresh$: Observable<boolean>,
+    private store: Store
   ) {
     super();
   }
@@ -53,12 +57,21 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
       queryParams: this.queryParams$,
       refresh: this.refresh$,
     }).pipe(
-      tap(() => {
+      tap((res) => {
+        if (res.queryParams['folderId']) {
+          this.store.dispatch(
+            FolderActions.selectFolder({
+              folderId: res.queryParams['folderId'],
+            })
+          );
+        } else {
+          this.store.dispatch(FolderActions.showAllFlows());
+        }
         this.isLoading$.next(true);
       }),
       switchMap((res) => {
         const { queryParams } = res;
-        return combineLatest([
+        return forkJoin([
           this.flowService.list({
             limit: queryParams['limit'] || DEFAULT_PAGE_SIZE,
             cursor: queryParams['cursor'],

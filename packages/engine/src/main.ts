@@ -9,6 +9,9 @@ import {
   ExecuteTriggerOperation,
   ExecutionState,
   ExecuteActionOperation,
+  EngineResponse,
+  EngineResponseStatus,
+  TriggerHookType,
 } from '@activepieces/shared';
 import { pieceHelper } from './lib/helper/piece-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
@@ -25,11 +28,17 @@ const executeFlow = async (): Promise<void> => {
     executionState.insertStep(input.triggerPayload!, 'trigger', []);
     const executor = new FlowExecutor(executionState);
     const output = await executor.executeFlow(input.flowVersionId);
-    
-    Utils.writeToJsonFile(globals.outputFile, output);
+
+    writeOutput({
+      status: EngineResponseStatus.OK,
+      response: output
+    })
   } catch (e) {
     console.error(e);
-    Utils.writeToJsonFile(globals.outputFile, (e as Error).message);
+    writeOutput({
+      status: EngineResponseStatus.ERROR,
+      response: (e as Error).message
+    })
   }
 }
 
@@ -42,28 +51,40 @@ const executeProps = async (): Promise<void> => {
     globals.apiUrl = input.apiUrl!;
 
     const output = await pieceHelper.executeProps(input);
-    Utils.writeToJsonFile(globals.outputFile, output);
+    writeOutput({
+      status: EngineResponseStatus.OK,
+      response: output
+    })
   }
   catch (e) {
     console.error(e);
-    Utils.writeToJsonFile(globals.outputFile, (e as Error).message);
+    writeOutput({
+      status: EngineResponseStatus.ERROR,
+      response: (e as Error).message
+    })
   }
 }
 
 const executeTrigger = async (): Promise<void> => {
   try {
-    const input: ExecuteTriggerOperation = Utils.parseJsonFile(globals.inputFile);
+    const input: ExecuteTriggerOperation<TriggerHookType> = Utils.parseJsonFile(globals.inputFile);
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
 
     const output = await triggerHelper.executeTrigger(input);
-    Utils.writeToJsonFile(globals.outputFile, output ?? "");
+    writeOutput({
+      status: EngineResponseStatus.OK,
+      response: output
+    })
   }
   catch (e) {
     console.error(e);
-    Utils.writeToJsonFile(globals.outputFile, (e as Error).message);
+    writeOutput({
+      status: EngineResponseStatus.ERROR,
+      response: (e as Error).message
+    })
   }
 }
 
@@ -75,13 +96,23 @@ const executeAction = async (): Promise<void> => {
     globals.projectId = operationInput.projectId;
     globals.apiUrl = operationInput.apiUrl!;
 
-    const output = await pieceHelper.executeAction(operationInput);
-    Utils.writeToJsonFile(globals.outputFile, output ?? "");
+  const output = await pieceHelper.executeAction(operationInput);
+    writeOutput({
+      status: EngineResponseStatus.OK,
+      response: output
+    })
   }
   catch (e) {
     console.error(e);
-    Utils.writeToJsonFile(globals.outputFile, (e as Error).message);
+    writeOutput({
+      status: EngineResponseStatus.ERROR,
+      response: (e as Error).message
+    })
   }
+}
+
+async function writeOutput(result: EngineResponse<unknown>) {
+  Utils.writeToJsonFile(globals.outputFile, result);
 }
 
 async function execute() {

@@ -21,7 +21,7 @@ import { FlowItem } from '@activepieces/ui/feature-builder-store';
 export class LoopStepMentionItemComponent implements OnInit {
   readonly FIRST_LEVEL_PADDING_IN_MENTIONS_LIST =
     FIRST_LEVEL_PADDING_IN_MENTIONS_LIST;
-  expandCodeCollapse = false;
+  expandLoopCollapse = false;
   childrenNodes: MentionTreeNode[] = [];
   @Input() stepMention: MentionListItem & { step: FlowItem };
   @Input() stepIndex: number;

@@ -32,27 +32,11 @@ export class ApPaginatorComponent implements OnInit {
       })
     );
 
-    if (
-      !this.route.snapshot.queryParamMap.get('limit') &&
-      !this.route.snapshot.queryParamMap.get('cursor')
-    ) {
-      this.setQueryParams('');
-    } else {
-      const pageSize = Number.parseInt(
-        this.route.snapshot.queryParamMap.get('limit')!
-      );
-      if (!pageSize) {
-        this.router.navigate(['.'], {
-          relativeTo: this.route,
-          queryParams: { pageSize: DEFAULT_PAGE_SIZE },
-          queryParamsHandling: 'merge',
-        });
-      } else {
-        this.pageSizeControl.setValue(pageSize);
-      }
-    }
+    const pageSize = Number.parseInt(
+      this.route.snapshot.queryParamMap.get('limit') || '0'
+    );
+    this.pageSizeControl.setValue(pageSize || DEFAULT_PAGE_SIZE);
   }
-
   setQueryParams(cursor: string) {
     const params: { [key: string]: string | number } = {
       limit: this.pageSizeControl.value,

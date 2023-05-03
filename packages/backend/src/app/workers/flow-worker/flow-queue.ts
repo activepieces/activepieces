@@ -10,12 +10,19 @@ type BaseAddParams = {
     id: ApId
 }
 
+export enum JobType {
+    ONE_TIME = 'ONE_TIME',
+    REPEATABLE = 'REPEATABLE',
+}
+
 type RepeatableJobAddParams = {
+    type: JobType.REPEATABLE
     data: RepeatableJobData
     scheduleOptions: ScheduleOptions
 } & BaseAddParams
 
 type OneTimeJobAddParams = {
+    type: JobType.ONE_TIME
     data: OneTimeJobData
 } & BaseAddParams
 
@@ -52,10 +59,9 @@ const repeatableJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
 export const flowQueue = {
     async add(params: AddParams): Promise<void> {
-        logger.info('[flowQueue#add] params=', params)
+        logger.info('[flowQueue#add] params=' + JSON.stringify(params))
         if (isRepeatable(params)) {
             const { id, data, scheduleOptions } = params
-
             const job = await repeatableJobQueue.add(id, data, {
                 jobId: id,
                 removeOnComplete: true,
@@ -70,6 +76,7 @@ export const flowQueue = {
             }
 
             const client = await repeatableJobQueue.client
+            logger.debug('[flowQueue#add] repeatJobKey=' + job.repeatJobKey)
             await client.set(repeatableJobKey(id), job.repeatJobKey)
         }
         else {
@@ -109,5 +116,5 @@ export const flowQueue = {
 }
 
 const isRepeatable = (params: AddParams): params is RepeatableJobAddParams => {
-    return (params as RepeatableJobAddParams).scheduleOptions?.cronExpression !== undefined
+    return params.type === JobType.REPEATABLE
 }

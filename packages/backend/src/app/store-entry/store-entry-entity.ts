@@ -14,6 +14,7 @@ export const StoreEntryEntity = new EntitySchema<StoreEntrySchema>({
         projectId: ApIdSchema,
         value: {
             type: 'jsonb',
+            nullable:true,
         },
     },
 })

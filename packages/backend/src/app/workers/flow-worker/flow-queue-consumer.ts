@@ -1,16 +1,17 @@
 import { Worker } from 'bullmq'
-import { ActivepiecesError, ApId, ErrorCode, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { ActivepiecesError, ApId, ErrorCode, FlowInstanceStatus, RunEnvironment, TriggerType } from '@activepieces/shared'
 import { createRedisClient } from '../../database/redis-connection'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { triggerUtils } from '../../helper/trigger-utils'
 import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from './flow-queue'
 import { flowWorker } from './flow-worker'
 import { OneTimeJobData, RepeatableJobData } from './job-data'
-import { logger } from '../../helper/logger'
+import { captureException, logger } from '../../helper/logger'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { flowInstanceService } from '../../flows/flow-instance/flow-instance.service'
+import { isNil } from 'lodash'
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
     ONE_TIME_JOB_QUEUE,
@@ -28,29 +29,38 @@ const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
 const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     REPEATABLE_JOB_QUEUE,
     async (job) => {
-
         logger.info(`[repeatableJobConsumer] job.id=${job.name} job.type=${job.data.triggerType}`)
         const { data } = job
 
         try {
-            switch (data.triggerType) {
-                case TriggerType.PIECE:
-                    await consumePieceTrigger(data)
-                    break
+            // TODO REMOVE AND FIND PERMANENT SOLUTION
+            const instance = await flowInstanceService.get({
+                projectId: data.projectId,
+                flowId: data.flowVersion.flowId,
+            })
+            if (isNil(instance) || instance.status !== FlowInstanceStatus.ENABLED || instance.flowVersionId !== data.flowVersion.id) {
+                captureException(new Error(`[repeatableJobConsumer] removing job.id=${job.name} instance.flowVersionId=${instance?.flowVersionId} data.flowVersion.id=${data.flowVersion.id}`));
+                await triggerUtils.disable({
+                    projectId: data.projectId,
+                    flowVersion: data.flowVersion,
+                    simulate: false,
+                })
+                return
+            }
+            if (data.triggerType === TriggerType.PIECE) {
+                await consumePieceTrigger(data)
             }
         }
         catch (e) {
-            if (e instanceof ActivepiecesError) {
-                const apError: ActivepiecesError = e as ActivepiecesError
-                if (apError.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
-                    logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
-                    await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowVersion.flowId })
-                }
+            if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
+                logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
+                await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowVersion.flowId })
             }
             else {
-                throw e
+                captureException(e)
             }
         }
+
         logger.info(`[repeatableJobConsumer] done job.id=${job.name} job.type=${job.data.triggerType}`)
     },
     {
@@ -59,14 +69,13 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     },
 )
 
-
 const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
     const flowVersion = await flowVersionService.getOneOrThrow(data.flowVersion.id)
 
     const payloads: unknown[] = await triggerUtils.executeTrigger({
         projectId: data.projectId,
         flowVersion: flowVersion,
-        payload: null,
+        payload: {},
         simulate: false,
     })
 

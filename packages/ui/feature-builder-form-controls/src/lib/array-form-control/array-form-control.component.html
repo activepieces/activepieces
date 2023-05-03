@@ -15,6 +15,7 @@
                 <app-interpolating-text-form-control #textControl [insideMatField]="false"
                     [formControl]="formArray.controls[idx]" placeholder="Value"
                     (click)="formArray.enabled? mentionsDropdown.showMenuSubject$.next(true):null"
+                    (editorFocused)="mentionsDropdown.showMenuSubject$.next(true)"
                     (keyup)="$event.key ==='Escape'? mentionsDropdown.close() : null"></app-interpolating-text-form-control>
                 <app-builder-autocomplete-mentions-dropdown #mentionsDropdown width="calc(100% - 0.5rem)"
                     (addMention)="addMention(textControl,$event)" [container]="interpolatingTextControlContainer"

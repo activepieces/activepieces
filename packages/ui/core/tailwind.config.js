@@ -31,7 +31,7 @@ module.exports = {
           DEFAULT: '#dc3545',
           light: '#efa2a980',
         },
-        primary: { DEFAULT: '#6e41e2', light: '#EEE8FC' },
+        primary: { DEFAULT: '#6e41e2', light: '#EEE8FC', dark: '#472c8a' },
         warn: '#f78a3b',
         blueLink: '#1890ff',
         sidebar: '#FAFBFC',

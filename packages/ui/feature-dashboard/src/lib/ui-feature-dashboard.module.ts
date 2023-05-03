@@ -6,7 +6,6 @@ import { SidenavRoutesListComponent } from './components/sidenav-routes-list/sid
 import { RunsTableComponent } from './pages/runs-table/runs-table.component';
 import { FlowsTableComponent } from './pages/flows-table/flows-table.component';
 import { EmptyFlowsTableComponent } from './pages/flows-table/empty-flows-table/empty-flows-table.component';
-import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 import { PageTitleComponent } from './components/page-title/page-title.component';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { RouterModule } from '@angular/router';
@@ -22,6 +21,7 @@ import { EffectsModule } from '@ngrx/effects';
 import { FoldersEffects } from './store/folders/folders.effects';
 import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-dialog/rename-folder-dialog.component';
 import { EeBillingUiModule } from '@activepieces/ee/billing/ui';
+import { StepsListInFlowsTableComponent } from './pages/flows-table/steps-list-in-flows-table/steps-list-in-flows-table.component';
 
 @NgModule({
   imports: [
@@ -38,7 +38,6 @@ import { EeBillingUiModule } from '@activepieces/ee/billing/ui';
     RunsTableComponent,
     FlowsTableComponent,
     EmptyFlowsTableComponent,
-    UserAvatarComponent,
     PageTitleComponent,
     ConnectionsTableComponent,
     FlowsTableTitleComponent,
@@ -46,6 +45,7 @@ import { EeBillingUiModule } from '@activepieces/ee/billing/ui';
     NewFolderDialogComponent,
     MoveFlowToFolderDialogComponent,
     RenameFolderDialogComponent,
+    StepsListInFlowsTableComponent,
   ],
 })
 export class UiFeatureDashboardModule {}
