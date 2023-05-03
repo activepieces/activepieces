@@ -38,27 +38,33 @@
           <div class="ap-typography-caption ap-flex ap-text-description ap-items-center">
             <div>{{ _flowItem.name }}</div>
             <div #spacer class="ap-flex-grow"></div>
-            <div class="ap-text-danger ap-bg-danger-light ap-rounded ap-p-1 ap-justify-self-end" *ngIf="
-          !_flowItem.valid" @fadeIn>Invalid Settings</div>
+            <div class="ap-justify-self-end" @fadeIn *ngIf="!_flowItem.valid || (selectedRun$ | async)">
+              <ng-container *ngIf="!_flowItem.valid">
+                <svg-icon src="assets/img/custom/incomplete-settings.svg" class="ap-w-[16px] ap-h-[16px]"
+                  [applyClass]="true"></svg-icon>
+              </ng-container>
+              <ng-container *ngIf="(selectedRun$ | async) && _flowItem.valid">
+                <div class="ap-flex-grow" *ngIf="selectedRun$ | async"></div>
+                <div>
+                  <ng-container *ngIf="stepStatus$|async as actionStatus; else stepInsideLoopStatusTemplate">
+                    <ng-container *ngIf="actionStatus === actionStatusEnum.RUNNING">
+                      <div class="spinner-border !ap-border-primary !ap-border-r-transparent " role="status"></div>
+                    </ng-container>
+                    <ap-state-icon [showStatusText]="false" *ngIf="actionStatus !== actionStatusEnum.RUNNING"
+                      [succeeded]="actionStatus === actionStatusEnum.SUCCEEDED"></ap-state-icon>
+                  </ng-container>
+                  <ng-template #stepInsideLoopStatusTemplate>
+                    <ap-state-icon *ngIf="stepInsideLoopStatus$ | async as stepInsideLoopStatus"
+                      [showStatusText]="false"
+                      [succeeded]="stepInsideLoopStatus === actionStatusEnum.SUCCEEDED"></ap-state-icon>
+                  </ng-template>
+                </div>
+              </ng-container>
+            </div>
           </div>
         </div>
 
-        <ng-container *ngIf="selectedRun$ | async">
-          <div class="ap-flex-grow" *ngIf="selectedRun$ | async"></div>
-          <div>
-            <ng-container *ngIf="stepStatus$|async as actionStatus; else stepInsideLoopStatusTemplate">
-              <ng-container *ngIf="actionStatus === actionStatusEnum.RUNNING">
-                <div class="spinner-border !ap-border-primary !ap-border-r-transparent " role="status"></div>
-              </ng-container>
-              <ap-state-icon [showStatusText]="false" *ngIf="actionStatus !== actionStatusEnum.RUNNING"
-                [succeeded]="actionStatus === actionStatusEnum.SUCCEEDED"></ap-state-icon>
-            </ng-container>
-            <ng-template #stepInsideLoopStatusTemplate>
-              <ap-state-icon *ngIf="stepInsideLoopStatus$ | async as stepInsideLoopStatus" [showStatusText]="false"
-                [succeeded]="stepInsideLoopStatus === actionStatusEnum.SUCCEEDED"></ap-state-icon>
-            </ng-template>
-          </div>
-        </ng-container>
+
       </div>
     </div>
   </div>
