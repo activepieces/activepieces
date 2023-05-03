@@ -47,10 +47,10 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
   constructor(
     private codeService: CodeService,
     private dialogService: MatDialog,
-    private store: Store,
+    store: Store,
     testStepService: TestStepService
   ) {
-    super(testStepService);
+    super(testStepService, store);
     this.lastTestResult$ = this.store
       .select(BuilderSelectors.selectStepTestSampleData)
       .pipe(

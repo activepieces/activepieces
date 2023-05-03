@@ -3,6 +3,7 @@ import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
 import {
   catchError,
   concatMap,
+  delay,
   EMPTY,
   Observable,
   of,
@@ -29,7 +30,7 @@ import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
 import { NO_PROPS } from '../../model/builder-state';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
-import { FlowService } from '@activepieces/ui/common';
+import { FlowService, environment } from '@activepieces/ui/common';
 @Injectable()
 export class FlowsEffects {
   loadInitial$ = createEffect(() => {
@@ -272,27 +273,31 @@ export class FlowsEffects {
     flow: Flow;
     saveRequestId: UUID;
   }): Observable<Flow> {
-    return this.flowService.update(request.flow.id, request.operation).pipe(
-      tap((updatedFlow) => {
-        this.store.dispatch(
-          FlowsActions.savedSuccess({
-            saveRequestId: request.saveRequestId,
-            flow: updatedFlow,
-          })
-        );
-        const now = new Date();
-        const nowDate = now.toLocaleDateString('en-us', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        });
-        const nowTime = `${now.getHours().toString().padEnd(2, '0')}:${now
-          .getMinutes()
-          .toString()
-          .padStart(2, '0')}`;
-        this.pieceBuilderService.lastSuccessfulSaveDate = `Last saved on ${nowDate} at ${nowTime}.`;
-      })
-    );
+    const update$ = this.flowService.update(request.flow.id, request.operation);
+    const updateTap = tap((updatedFlow: Flow) => {
+      this.store.dispatch(
+        FlowsActions.savedSuccess({
+          saveRequestId: request.saveRequestId,
+          flow: updatedFlow,
+        })
+      );
+      const now = new Date();
+      const nowDate = now.toLocaleDateString('en-us', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+      const nowTime = `${now.getHours().toString().padEnd(2, '0')}:${now
+        .getMinutes()
+        .toString()
+        .padStart(2, '0')}`;
+      this.pieceBuilderService.lastSuccessfulSaveDate = `Last saved on ${nowDate} at ${nowTime}.`;
+    });
+    if (environment.production) {
+      return update$.pipe(updateTap);
+    }
+    //so in development mode the publish button doesn't flicker constantly and cause us to have epilieptic episodes
+    return update$.pipe(delay(150), updateTap);
   }
 
   constructor(
