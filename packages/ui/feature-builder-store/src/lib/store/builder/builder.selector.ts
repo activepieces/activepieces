@@ -1,7 +1,7 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../../model/global-builder-state.model';
 
-import { AppConnection, Flow, FlowRun } from '@activepieces/shared';
+import { AppConnection, Flow, FlowRun, flowHelper } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 
 import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
@@ -161,7 +161,13 @@ export const selectCurrentFlowVersionId = createSelector(
     return flow.version?.id;
   }
 );
-
+export const selectNumberOfInvalidSteps = createSelector(
+  selectCurrentFlow,
+  (flow) => {
+    const steps = flowHelper.getAllSteps(flow.version);
+    return steps.reduce((prev, curr) => prev + (curr.valid ? 0 : 1), 0);
+  }
+);
 export const selectCurrentFlowRun = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => {
@@ -458,4 +464,5 @@ export const BuilderSelectors = {
   selectCurrentFlowFolderName,
   selectStepTestSampleData,
   selectLastTestDate,
+  selectNumberOfInvalidSteps,
 };

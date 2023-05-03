@@ -25,6 +25,7 @@ import {
   FlowOperationRequest,
   FlowOperationType,
   TriggerType,
+  flowHelper,
 } from '@activepieces/shared';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
@@ -73,6 +74,31 @@ export class FlowsEffects {
         this.store.select(BuilderSelectors.selectCurrentFlow)
       ),
       switchMap(([action, flow]) => {
+        return of(
+          FlowsActions.selectStepByName({
+            stepName: flow.version.trigger.name,
+          })
+        );
+      })
+    );
+  });
+  selectFirstInvalidStep$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FlowsActions.selectFirstInvalidStep),
+      concatLatestFrom(() =>
+        this.store.select(BuilderSelectors.selectCurrentFlow)
+      ),
+      switchMap(([action, flow]) => {
+        const invalidSteps = flowHelper
+          .getAllSteps(flow.version)
+          .filter((s) => !s.valid);
+        if (invalidSteps.length > 0) {
+          return of(
+            FlowsActions.selectStepByName({
+              stepName: invalidSteps[0].name,
+            })
+          );
+        }
         return of(
           FlowsActions.selectStepByName({
             stepName: flow.version.trigger.name,
