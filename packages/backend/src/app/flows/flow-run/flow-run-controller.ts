@@ -1,4 +1,5 @@
-import { FastifyPluginCallback, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
 import { CreateFlowRunRequest, FlowRunId, ListFlowRunsRequest, RunEnvironment } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRunService } from './flow-run-service'
@@ -10,7 +11,7 @@ type GetOnePathParams = {
     id: FlowRunId
 }
 
-export const flowRunController: FastifyPluginCallback = (app, _options, done): void => {
+export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, done): void => {
 
     app.post(
         '/',
@@ -33,10 +34,13 @@ export const flowRunController: FastifyPluginCallback = (app, _options, done): v
 
     // list
     app.get('/', {
-        schema: ListFlowRunsRequest,
-    }, async (request: FastifyRequest<{ Querystring: ListFlowRunsRequest }>, reply: FastifyReply) => {
+        schema: {
+            querystring: ListFlowRunsRequest,
+        },
+    }, async (request, reply) => {
         const flowRunPage = await flowRunService.list({
             projectId: request.principal.projectId,
+            flowId: request.query.flowId,
             cursor: request.query.cursor ?? null,
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
         })
