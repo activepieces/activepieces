@@ -14,7 +14,7 @@ export const setProjects = createAction(
 
 export const updateProject = createAction(
   ProjectActionType.UPDATE_PROJECT,
-  props<{ notifications: NotificationStatus }>()
+  props<{ notifyStatus: NotificationStatus }>()
 );
 
 export const clearProjects = createAction(ProjectActionType.CLEAR_PROJECTS);

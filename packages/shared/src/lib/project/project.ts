@@ -9,5 +9,5 @@ export type ProjectId = ApId;
 export interface Project extends BaseModel<ProjectId> {
   ownerId: UserId;
   displayName: string;
-  notifications: NotificationStatus;
+  notifyStatus: NotificationStatus;
 }

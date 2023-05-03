@@ -12,11 +12,11 @@ const _projectReducer = createReducer(
   initialState,
   on(
     ProjectActions.updateProject,
-    (state, { notifications }): ProjectsState => {
+    (state, { notifyStatus }): ProjectsState => {
       const updatedProjects = [...state.projects];
       updatedProjects[state.selectedIndex] = {
         ...state.projects[state.selectedIndex],
-        notifications: notifications,
+        notifyStatus: notifyStatus,
       };
       return {
         loaded: true,
