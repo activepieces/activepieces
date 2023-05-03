@@ -1,4 +1,4 @@
-export enum BuilderStateEnum {
+export enum BuilderSavingStatusEnum {
   NONE = 0,
   SAVING_FLOW = 1 << 0,
   FAILED_SAVING_OR_PUBLISHING = 1 << 3,

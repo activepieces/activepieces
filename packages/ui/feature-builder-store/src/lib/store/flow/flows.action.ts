@@ -22,7 +22,6 @@ export enum FlowsActionType {
   ADD_ACTION = '[FLOWS] ADD_ACTION',
   DELETE_ACTION = '[FLOWS] DELETE_ACTION',
   UPDATE_ACTION = '[FLOWS] UPDATE_ACTION',
-
   SET_INITIAL = '[FLOWS] SET_INITIAL',
   SAVED_FAILED = '[FLOWS] SAVED_FAILED',
   SAVED_SUCCESS = '[FLOWS] SAVED_SUCCESS',
@@ -62,7 +61,7 @@ const savedSuccess = createAction(
 
 const savedFailed = createAction(
   FlowsActionType.SAVED_FAILED,
-  props<{ error: any }>()
+  props<{ error: unknown }>()
 );
 
 const changeName = createAction(
