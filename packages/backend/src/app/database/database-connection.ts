@@ -2,12 +2,10 @@ import { TlsOptions } from 'node:tls'
 import { DataSource } from 'typeorm'
 import { UserEntity } from '../user/user-entity'
 import { ProjectEntity } from '../project/project.entity'
-import { CollectionEntity } from '../collections/collection.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FileEntity } from '../file/file.entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
-import { InstanceEntity } from '../instance/instance.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { system } from '../helper/system/system'
@@ -35,6 +33,11 @@ import { addNotificationsStatus1680563747425 } from './migration/1680563747425-a
 import { AddInputUiInfo1681107443963 } from './migration/1681107443963-AddInputUiInfo'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { CreateWebhookSimulationSchema1680698259291 } from './migration/1680698259291-create-webhook-simulation-schema'
+import { FlowInstanceEntity } from '../flows/flow-instance/flow-instance.entity'
+import { FolderEntity } from '../flows/folder/folder.entity'
+import { RemoveCollections1680986182074 } from './migration/1680986182074-RemoveCollections'
+import { StoreAllPeriods1681019096716 } from './migration/1681019096716-StoreAllPeriods'
+import { AllowNullableStoreEntryAndTrigger1683040965874 } from './migration/1683040965874-allow-nullable-store-entry'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -72,6 +75,9 @@ const getMigrations = () => {
         addNotificationsStatus1680563747425,
         AddInputUiInfo1681107443963,
         CreateWebhookSimulationSchema1680698259291,
+        RemoveCollections1680986182074,
+        StoreAllPeriods1681019096716,
+        AllowNullableStoreEntryAndTrigger1683040965874,
     ]
 }
 
@@ -90,15 +96,14 @@ export const databaseConnection = new DataSource({
     migrations: getMigrations(),
     entities: [
         TriggerEventEntity,
+        FlowInstanceEntity,
         AppEventRoutingEntity,
         AppCredentialEntity,
         ConnectionKeyEntity,
-        CollectionEntity,
         FileEntity,
         FlagEntity,
         FlowEntity,
         FlowVersionEntity,
-        InstanceEntity,
         FlowRunEntity,
         ProjectEntity,
         StoreEntryEntity,
@@ -107,5 +112,6 @@ export const databaseConnection = new DataSource({
         ProjectPlanEntity,
         ProjectUsageEntity,
         WebhookSimulationEntity,
+        FolderEntity,
     ],
 })

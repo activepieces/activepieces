@@ -33,12 +33,8 @@ export class TestStepService {
       }
     );
   }
-  testPieceStep(req: {
-    stepName: string;
-    collectionId: string;
-    flowVersionId: string;
-  }) {
-    return this.http.post<{ output: unknown }>(
+  testPieceStep(req: { stepName: string; flowVersionId: string }) {
+    return this.http.post<{ output: unknown; success: boolean }>(
       environment.apiUrl + '/step-run',
       req
     );

@@ -1,4 +1,3 @@
-import {CodeRunStatus} from "./code-run-status";
 
 export interface CodeExecutionResult {
     verdict: CodeRunStatus,
@@ -6,4 +5,10 @@ export interface CodeExecutionResult {
     standardOutput: string
     standardError: string,
     output: unknown,
+}
+
+export enum CodeRunStatus {
+    OK = "OK",
+    RUNTIME_ERROR = "RUNTIME_ERROR",
+    TIMEOUT = "TIMEOUT",
 }

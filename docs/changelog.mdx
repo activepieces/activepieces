@@ -11,7 +11,45 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
-## 04/20/2023
+### 05/02/2023
+
+**Bug Fixes:**
+- Remove some flow stale jobs that were caused by bug in previous versions (< 0.3.11).
+- Fixed selecting primitive (step sample data) in the auto complete dropdown (such as OpenAI and Store pieces)
+- Fixed adding an npm package.
+- Tab key in the step properties text field will not cause indentation anymore.
+- Correct testing action with unsandboxed mode.
+- Show default values for optional properties.
+
+### 05/01/2023
+
+**Pieces:**
+- Added Amazon S3 "Upload from File from URL" and "Upload File from Base64" actions.
+- Created a new Postgres action called "Run Query."
+- Created new actions for a project management tool called Monday: "New Item in Board," "New Update," and "Create Item."
+
+**Bug Fixes:**
+- Fixed a bug in which Gmail couldn't send emails with new lines.
+- Fixed a bug where a step could be selected even if it hadn't been tested.
+- Fixed a bug where webhook triggers would stay enabled when the instance was disabled.
+- Test steps should now show errors properly.
+- Added a Home Path Variable to the sandbox so that libraries that require it, like AWS S3, now work.
+
+**Features:**
+- Removed collections and replaced them with folders.
+- Cloud tasks are now only counted if they are actually executed.
+- Credentials are now censored in the logs. 
+- **This feature is still under experimental mode** You can specify an execution mode to be unsandboxed, which will no longer require docker to be privileged. However, it can only be used if there is a single user using Activepieces, as this will give the user full access to the machine from the code piece.
+
+**Contributors:**
+- @Willianwg created the Amazon S3 and Postgres actions.
+- @kanarelo created the Monday actions.
+- @dentych made their first contribution by improving the documentation in https://github.com/activepieces/activepieces/pull/1138.
+- @nileshtrivedi made their first contribution by improving the documentation in https://github.com/activepieces/activepieces/pull/1157.
+
+**Full Changelog**: https://github.com/activepieces/activepieces/compare/0.3.11...0.3.12
+
+### 04/20/2023
 
 **Pieces:**
 - VTEX Piece: Create Brand / Update Brand / Delete Brand / Create Product / Update Product / Get Products by Ids / Get Category by Ids

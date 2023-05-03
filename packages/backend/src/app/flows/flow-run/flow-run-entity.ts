@@ -1,10 +1,9 @@
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity'
-import { Collection, Flow, FlowRun, Project } from '@activepieces/shared'
+import { Flow, FlowRun, Project } from '@activepieces/shared'
 
 type FlowRunSchema = FlowRun & {
     project: Project
-    collection: Collection
     flow: Flow
 }
 
@@ -14,16 +13,12 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         ...BaseColumnSchemaPart,
         projectId: ApIdSchema,
         flowId: ApIdSchema,
-        collectionId: ApIdSchema,
         flowVersionId: ApIdSchema,
         environment: {
             type: String,
             nullable: true,
         },
         flowDisplayName: {
-            type: String,
-        },
-        collectionDisplayName: {
             type: String,
         },
         logsFileId: { ...ApIdSchema, nullable: true },
@@ -64,16 +59,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             joinColumn: {
                 name: 'flowId',
                 foreignKeyConstraintName: 'fk_flow_run_flow_id',
-            },
-        },
-        collection: {
-            type: 'many-to-one',
-            target: 'collection',
-            cascade: true,
-            onDelete: 'CASCADE',
-            joinColumn: {
-                name: 'collectionId',
-                foreignKeyConstraintName: 'fk_flow_run_collection_id',
             },
         },
     },

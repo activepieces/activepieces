@@ -3,7 +3,6 @@ import {
     apId,
     Cursor,
     ErrorCode,
-    ExecuteTestOrRunTriggerResponse,
     Flow,
     FlowId,
     PieceTrigger,
@@ -26,8 +25,8 @@ import { TriggerEventEntity } from './trigger-event.entity'
 const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
 
 export const triggerEventService = {
-    async saveEvent({projectId, flowId, payload}:{projectId: ProjectId, flowId: FlowId, payload: unknown}): Promise<TriggerEvent> {
-        const flow = await flowService.getOneOrThrow({projectId: projectId, id: flowId })
+    async saveEvent({ projectId, flowId, payload }: { projectId: ProjectId, flowId: FlowId, payload: unknown }): Promise<TriggerEvent> {
+        const flow = await flowService.getOneOrThrow({ projectId: projectId, id: flowId })
         const sourceName = getSourceName(flow.version.trigger)
         return triggerEventRepo.save({
             id: apId(),
@@ -38,28 +37,27 @@ export const triggerEventService = {
         })
     },
 
-    async test({projectId, flow}: {projectId: ProjectId, flow: Flow}): Promise<SeekPage<unknown>> {
+    async test({ projectId, flow }: { projectId: ProjectId, flow: Flow }): Promise<SeekPage<unknown>> {
         const trigger = flow.version.trigger
         const emptyPage = paginationHelper.createPage<TriggerEvent>([], null)
         switch (trigger.type) {
             case TriggerType.WEBHOOK:
                 throw new Error('Cannot be tested')
             case TriggerType.PIECE: {
-                const testResult =( await engineHelper.executeTrigger({
+                const testResult = (await engineHelper.executeTrigger({
                     hookType: TriggerHookType.TEST,
                     flowVersion: flow.version,
-                    collectionId: flow.collectionId,
                     webhookUrl: await webhookService.getWebhookUrl({
                         flowId: flow.id,
                         simulate: true,
                     }),
                     projectId: projectId,
-                }) )as ExecuteTestOrRunTriggerResponse
+                }))
                 await triggerEventRepo.delete({
                     projectId,
                     flowId: flow.id,
                 })
-                if(!testResult.success) {
+                if (!testResult.success) {
                     throw new ActivepiecesError({
                         code: ErrorCode.TEST_TRIGGER_FAILED,
                         params: {
@@ -67,7 +65,9 @@ export const triggerEventService = {
                         },
                     })
                 }
-                for(let i = 0; i < testResult.output.length; i++) {
+               
+                for (let i = 0; i < testResult.output.length; i++) {
+
                     await triggerEventService.saveEvent({
                         projectId,
                         flowId: flow.id,
@@ -86,7 +86,7 @@ export const triggerEventService = {
         }
     },
 
-    async list({projectId, flow, cursor, limit}: ListParams): Promise<SeekPage<TriggerEvent>> {
+    async list({ projectId, flow, cursor, limit }: ListParams): Promise<SeekPage<TriggerEvent>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const sourceName = getSourceName(flow.version.trigger)
         const flowId = flow.id
@@ -113,9 +113,9 @@ function getSourceName(trigger: Trigger): string {
     switch (trigger.type) {
         case TriggerType.WEBHOOK:
             return TriggerType.WEBHOOK
-        case TriggerType.PIECE:{
+        case TriggerType.PIECE: {
             const pieceTrigger = trigger as PieceTrigger
-            return pieceTrigger.settings.pieceName +'@' + pieceTrigger.settings.pieceVersion + ':' + pieceTrigger.settings.triggerName
+            return pieceTrigger.settings.pieceName + '@' + pieceTrigger.settings.pieceVersion + ':' + pieceTrigger.settings.triggerName
         }
         case TriggerType.EMPTY:
             return TriggerType.EMPTY

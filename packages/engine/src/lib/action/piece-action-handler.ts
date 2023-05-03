@@ -8,6 +8,7 @@ import {
 } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { PieceExecutor } from '../executors/piece-executor';
+import { globals } from '../globals';
 
 export class PieceActionHandler extends BaseActionHandler<PieceAction> {
   variableService: VariableService;
@@ -32,7 +33,12 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       executionState
     );
 
-    stepOutput.input = config;
+    globals.addOneTask();
+    stepOutput.input = await this.variableService.resolve(
+      input,
+      executionState,
+      true 
+    );
 
     if(!actionName){
       throw new Error("Action name is not defined");

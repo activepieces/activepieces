@@ -16,6 +16,7 @@ import {
     ApEnvironment,
     ErrorCode,
     ExecuteActionOperation,
+    ExecuteActionResponse,
     ExecutePropsOptions,
     ExecutionState,
     getPackageAliasForPiece,
@@ -152,7 +153,7 @@ const resolveInput = async ({ input, executionContext = {} }: ResolveInputParams
 }
 
 export const pieceHelper = {
-    async executeAction(params: ExecuteActionOperation): Promise<unknown> {
+    async executeAction(params: ExecuteActionOperation): Promise<ExecuteActionResponse> {
         const { actionName, pieceName, pieceVersion, input, testExecutionContext } = params;
 
         const action = await getActionOrThrow({
@@ -184,7 +185,18 @@ export const pieceHelper = {
             }
         }
 
-        return await action.run(context)
+        try {
+            return {
+                output: await action.run(context),
+                success: true,
+            }
+        } catch (e: any) {
+            return {
+                output: e.message,
+                success: false,
+                
+            }
+        }
     },
 
     async executeProps(params: ExecutePropsOptions) {

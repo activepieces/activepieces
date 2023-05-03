@@ -4,11 +4,14 @@
     </mat-sidenav>
     <mat-sidenav-content>
         <div class="ap-absolute  ap-w-full">
-            <app-user-avatar></app-user-avatar>
+            <div class="ap-flex ap-items-center ap-justify-end ap-m-[20px]">
+                <ap-button btnColor="white" btnStyle="basic" btnSize="medium" id="beamerButton">
+                    What's new</ap-button>
+                <ap-user-avatar class="ap-ml-[20px]"></ap-user-avatar>
+            </div>
+
         </div>
-        <div class="ap-container  ap-h-full ap-mx-auto ap-pt-[50px]">
-            <router-outlet></router-outlet>
-        </div>
+        <router-outlet></router-outlet>
     </mat-sidenav-content>
 </mat-sidenav-container>
 

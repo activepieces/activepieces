@@ -10,20 +10,20 @@ export type CreateSkuParams = {
     PackagedLength: number;
     PackagedWidth: number;
     PackagedWeightKg: number;
-    Height?: null;
-    Length?: null;
-    Width?: null;
-    WeightKg?: null;
+    Height?: number;
+    Length?: number;
+    Width?: number;
+    WeightKg?: number;
     CubicWeight?: number;
     IsKit?: boolean;
-    CreationDate?: null;
-    RewardValue?: null;
-    EstimatedDateArrival?: null;
+    CreationDate?: string;
+    RewardValue?: number;
+    EstimatedDateArrival?: string;
     ManufacturerCode?: string;
     CommercialConditionId?: number;
     MeasurementUnit?: string;
     UnitMultiplier?: number;
-    ModalType?: null;
+    ModalType?: string;
     KitItensSellApart?: boolean;
     Videos?: string[];
 }

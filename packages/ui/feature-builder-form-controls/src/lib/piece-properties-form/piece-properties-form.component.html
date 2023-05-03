@@ -320,7 +320,8 @@
       </ng-container>
 
       <ng-template #jsonInputTemplate>
-        <div class="code-font-sm code-size-200 code-block" #interpolatingTextControlContainer>
+        <div class="code-font-sm code-size-200 code-block" #interpolatingTextControlContainer
+          (click)="$event.stopImmediatePropagation()">
           <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
             <div class="ap-flex-grow">
               <span class="ap-text-white">{{property.value.displayName}}</span>
@@ -385,13 +386,14 @@
 <ng-container *ngIf="configDropdownChanged$  | keyvalue"></ng-container>
 
 <ng-template #textInputTemplate let-property let-formGroup="formGroup">
-  <div [formGroup]="formGroup" #interpolatingTextComponentContainer>
+  <div [formGroup]="formGroup" #interpolatingTextComponentContainer (click)="$event.stopImmediatePropagation()">
     <mat-form-field class="ap-w-full" appearance="outline"
       (click)="isTriggerPieceForm?null: mentionsDropdown.showMenuSubject$.next(true)">
       <mat-label>{{property.value.displayName}}</mat-label>
       <app-interpolating-text-form-control #textControl [matTooltip]="property.value.description"
         [formControlName]="property.key" [attr.name]="property.key"
-        (keyup)="$event.key ==='Escape'? mentionsDropdown.close() : null"></app-interpolating-text-form-control>
+        (editorFocused)="mentionsDropdown.showMenuSubject$.next(true)"
+        (keyup.escape)="mentionsDropdown.close()"></app-interpolating-text-form-control>
       <mat-error *ngIf="formGroup.get(property.key)?.invalid">
         {{property.value.displayName}} is required
       </mat-error>

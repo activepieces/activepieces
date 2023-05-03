@@ -150,9 +150,10 @@ export class CodeService {
   ): Observable<{ [key: PackageName]: PackageVersion } | null> {
     return this.getNpmPackage(npmName).pipe(
       map((pkg) => {
-        const pkgJson: { npmName: string } = {
-          npmName: pkg['dist-tags'].latest,
-        };
+        const pkgJson: Record<string, string> = {};
+        if (pkg) {
+          pkgJson[npmName] = pkg['dist-tags'].latest;
+        }
         return pkgJson;
       }),
       catchError(() => {

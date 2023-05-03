@@ -4,16 +4,26 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
-import { ExecutionOutputStatus, FlowRun, SeekPage } from '@activepieces/shared';
+import {
+  ApEdition,
+  ExecutionOutputStatus,
+  FlowRun,
+  NotificationStatus,
+  SeekPage,
+} from '@activepieces/shared';
 import { ActivatedRoute, Router } from '@angular/router';
-import { map, Observable } from 'rxjs';
+import { distinctUntilChanged, map, Observable, switchMap, tap } from 'rxjs';
 import { RunsTableDataSource } from './runs-table.datasource';
 import {
   InstanceRunService,
   DEFAULT_PAGE_SIZE,
   ApPaginatorComponent,
-  ProjectService,
+  FlagService,
+  ProjectSelectors,
+  ProjectActions,
 } from '@activepieces/ui/common';
+import { FormControl } from '@angular/forms';
+import { Store } from '@ngrx/store';
 
 @Component({
   templateUrl: './runs-table.component.html',
@@ -23,31 +33,53 @@ export class RunsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
   runsPage$: Observable<SeekPage<FlowRun>>;
+  enterpriseEdition$: Observable<boolean>;
+  toggleNotificationFormControl: FormControl<boolean> = new FormControl();
   dataSource!: RunsTableDataSource;
-  displayedColumns = [
-    'collectionName',
-    'flowName',
-    'status',
-    'started',
-    'finished',
-  ];
+  displayedColumns = ['flowName', 'status', 'started', 'finished'];
+  updateNotificationsValue$: Observable<boolean>;
   readonly ExecutionOutputStatus = ExecutionOutputStatus;
 
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
-    private projectService: ProjectService,
+    private flagsService: FlagService,
+    private store: Store,
     private instanceRunService: InstanceRunService
   ) {}
 
   ngOnInit(): void {
+    this.enterpriseEdition$ = this.flagsService
+      .getEdition()
+      .pipe(map((res) => res === ApEdition.ENTERPRISE));
+    this.updateNotificationsValue$ = this.store
+      .select(ProjectSelectors.selectIsNotificationsEnabled)
+      .pipe(
+        tap((enabled) => {
+          this.toggleNotificationFormControl.setValue(enabled);
+        }),
+        switchMap(() =>
+          this.toggleNotificationFormControl.valueChanges.pipe(
+            distinctUntilChanged(),
+            tap((value) => {
+              this.store.dispatch(
+                ProjectActions.updateProject({
+                  notifications: value
+                    ? NotificationStatus.ALWAYS
+                    : NotificationStatus.NEVER,
+                })
+              );
+            })
+          )
+        )
+      );
     this.dataSource = new RunsTableDataSource(
       this.activatedRoute.queryParams.pipe(
         map((res) => res['limit'] || DEFAULT_PAGE_SIZE)
       ),
       this.activatedRoute.queryParams.pipe(map((res) => res['cursor'])),
       this.paginator,
-      this.projectService,
+      this.store,
       this.instanceRunService
     );
   }

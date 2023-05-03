@@ -26,40 +26,23 @@ export class ApPaginatorComponent implements OnInit {
         this.pageSizeChanged.emit(val);
         this.router.navigate(['.'], {
           relativeTo: this.route,
-          queryParams: { limit: val },
+          queryParams: { limit: val, cursor: undefined },
           queryParamsHandling: 'merge',
         });
       })
     );
 
-    if (
-      !this.route.snapshot.queryParamMap.get('limit') &&
-      !this.route.snapshot.queryParamMap.get('cursor')
-    ) {
-      this.setQueryParams('');
-    } else {
-      const pageSize = Number.parseInt(
-        this.route.snapshot.queryParamMap.get('limit')!
-      );
-      if (!pageSize) {
-        this.router.navigate(['.'], {
-          relativeTo: this.route,
-          queryParams: { pageSize: DEFAULT_PAGE_SIZE },
-          queryParamsHandling: 'merge',
-        });
-      } else {
-        this.pageSizeControl.setValue(pageSize);
-      }
-    }
+    const pageSize = Number.parseInt(
+      this.route.snapshot.queryParamMap.get('limit') || '0'
+    );
+    this.pageSizeControl.setValue(pageSize || DEFAULT_PAGE_SIZE);
   }
-
   setQueryParams(cursor: string) {
     const params: { [key: string]: string | number } = {
       limit: this.pageSizeControl.value,
+      cursor: cursor,
     };
-    if (cursor) {
-      params['cursor'] = cursor;
-    }
+
     this.router.navigate(['.'], {
       relativeTo: this.route,
       queryParams: params,

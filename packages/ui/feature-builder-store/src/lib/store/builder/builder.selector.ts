@@ -2,64 +2,42 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../../model/builder-state.model';
 
 import { AppConnection, Flow, FlowRun } from '@activepieces/shared';
-import { NO_PROPS, TabState } from '../../model/tab-state';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 
 import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
-import { FlowsState } from '../../model/flows-state.model';
-import { CollectionStateEnum } from '../../model/enums/collection-state.enum';
-import { ActionType, Collection, TriggerType } from '@activepieces/shared';
-
-import {
-  CORE_PIECES_ACTIONS_NAMES,
-  CORE_PIECES_TRIGGERS,
-} from './flow-item-details/flow-items-details.effects';
-import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
-import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
+import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItem } from '../../model/flow-item';
 import { MentionListItem } from '../../model/mention-list-item';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../model/connections-dropdown-item';
+import { BuilderStateEnum } from '../../model';
+import {
+  CORE_PIECES_ACTIONS_NAMES,
+  CORE_PIECES_TRIGGERS,
+  corePieceIconUrl,
+} from '@activepieces/ui/common';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
 export const selectBuilderState =
   createFeatureSelector<GlobalBuilderState>(BUILDER_STATE_NAME);
 
-export const selectCurrentCollection = createSelector(
-  selectBuilderState,
-  (state: GlobalBuilderState) => state.collectionState.collection
-);
-
-export const selectCurrentCollectionId = createSelector(
-  selectCurrentCollection,
-  (collection: Collection) => collection.id
-);
-export const selectCurrentCollectionInstance = createSelector(
-  selectBuilderState,
-  (state: GlobalBuilderState) => {
-    return state.collectionState.instance;
-  }
-);
-
-export const selectCollectionState = createSelector(
-  selectBuilderState,
-  (state: GlobalBuilderState) => state.collectionState.state
-);
 export const selectIsPublishing = createSelector(
   selectBuilderState,
-  (state: GlobalBuilderState) =>
-    (state.collectionState.state & CollectionStateEnum.PUBLISHING) ===
-    CollectionStateEnum.PUBLISHING
+  (state: GlobalBuilderState) => state.state === BuilderStateEnum.PUBLISHING
 );
+
 export const selectIsSaving = createSelector(
   selectBuilderState,
-  (state: GlobalBuilderState) =>
-    (state.collectionState.state & CollectionStateEnum.SAVING_COLLECTION) ===
-      CollectionStateEnum.SAVING_COLLECTION ||
-    (state.collectionState.state & CollectionStateEnum.SAVING_FLOW) ===
-      CollectionStateEnum.SAVING_FLOW
+  (state: GlobalBuilderState) => state.state === BuilderStateEnum.SAVING_FLOW
 );
+
+export const selectFlowHasAnySteps = createSelector(
+  selectBuilderState,
+  (state: GlobalBuilderState) =>
+    !!state.flowState.flow.version.trigger?.nextAction
+);
+
 export const selectViewMode = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => state.viewMode
@@ -76,103 +54,48 @@ export const selectReadOnly = createSelector(
   (state: GlobalBuilderState) => state.viewMode !== ViewModeEnum.BUILDING
 );
 
-export const selectFlows = createSelector(
-  selectBuilderState,
-  (state: GlobalBuilderState) => state.flowsState.flows
-);
-export const selectFlowsValidity = createSelector(
+export const selectCurrentInstance = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => {
-    const allFlowsValidity = state.flowsState.flows.map(
-      (f) => f.version?.valid || false
-    );
-    return allFlowsValidity.reduce(
-      (current, previous) => current && previous,
-      true
-    );
-  }
-);
-
-export const selectFlowsCount = createSelector(
-  selectFlows,
-  (flows: Flow[]) => flows.length
-);
-
-export const selectCanPublish = createSelector(selectFlows, (flows: Flow[]) => {
-  let canPublish = true;
-  for (let i = 0; i < flows.length; ++i) {
-    if (!flows[i].version?.valid) {
-      canPublish = false;
-    }
-  }
-  return flows.length > 0 && canPublish;
-});
-
-export const selectCurrentFlowId = createSelector(
-  selectBuilderState,
-  (state: GlobalBuilderState) => state.flowsState.selectedFlowId
-);
-
-export const selectFlowsState = createSelector(
-  selectBuilderState,
-  (state: GlobalBuilderState) => {
-    return state.flowsState;
+    return state.instance;
   }
 );
 
 export const selectCurrentFlow = createSelector(
-  selectFlowsState,
-  (flowsState: FlowsState) => {
-    return flowsState.flows.find((f) => f.id === flowsState.selectedFlowId);
+  selectBuilderState,
+  (state: GlobalBuilderState) => {
+    return state.flowState.flow;
   }
 );
-export const selectCurrentFlowVersionId = createSelector(
-  selectFlowsState,
-  (flowsState: FlowsState) => {
-    return flowsState.flows.find((f) => f.id === flowsState.selectedFlowId)!
-      .version.id;
+export const selectCurrentFlowFolderName = createSelector(
+  selectBuilderState,
+  (state: GlobalBuilderState) => {
+    if (!state.flowState.folder) {
+      return 'Uncategorized';
+    }
+    return state.flowState.folder.displayName;
   }
 );
 
-export const selectTabState = (flowId: string) =>
-  createSelector(selectFlowsState, (state: FlowsState): TabState => {
-    return state.tabsState[flowId.toString()];
-  });
-
-export const selectFlow = (flowId: string) =>
-  createSelector(selectFlowsState, (state: FlowsState): Flow | undefined => {
-    return state.flows.find((f) => f.id === flowId);
-  });
+export const selectTabState = createSelector(
+  selectBuilderState,
+  (state: GlobalBuilderState) => state.state
+);
 export const selectCurrentFlowValidity = createSelector(
   selectCurrentFlow,
   (flow: Flow | undefined) => {
     if (!flow) return false;
-
     return flow.version?.valid || false;
   }
 );
 
-export const selectFlowSelectedId = createSelector(
+export const selectCurrentStep = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => {
-    return state.flowsState.selectedFlowId !== undefined;
+    return state.flowState.builderState.focusedStep;
   }
 );
 
-export const selectCurrentStep = createSelector(
-  selectFlowsState,
-  (flowsState: FlowsState) => {
-    if (!flowsState.selectedFlowId) {
-      return undefined;
-    }
-    const selectedFlowTabsState =
-      flowsState.tabsState[flowsState.selectedFlowId.toString()];
-    if (!selectedFlowTabsState) {
-      return undefined;
-    }
-    return selectedFlowTabsState.focusedStep;
-  }
-);
 const selectCurrentStepSettings = createSelector(
   selectCurrentStep,
   (selectedStep) => {
@@ -230,30 +153,19 @@ export const selectCurrentStepDisplayName = createSelector(
     return step?.displayName || '';
   }
 );
-export const selectCurrentTabState = createSelector(
-  selectBuilderState,
-  (state: GlobalBuilderState) => {
-    if (state.flowsState.selectedFlowId == undefined) {
-      return undefined;
-    }
-    return state.flowsState.tabsState[
-      state.flowsState.selectedFlowId.toString()
-    ];
+
+export const selectCurrentFlowVersionId = createSelector(
+  selectCurrentFlow,
+  (flow: Flow | undefined) => {
+    if (!flow) return undefined;
+    return flow.version?.id;
   }
 );
 
 export const selectCurrentFlowRun = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => {
-    if (state.flowsState.selectedFlowId == undefined) {
-      return undefined;
-    }
-    const tabState =
-      state.flowsState.tabsState[state.flowsState.selectedFlowId.toString()];
-    if (tabState == null) {
-      return tabState;
-    }
-    return tabState.selectedRun;
+    return state.flowState.builderState.selectedRun;
   }
 );
 
@@ -267,59 +179,24 @@ export const selectCurrentFlowRunStatus = createSelector(
   }
 );
 
-export const selectCurrentLeftSidebar = createSelector(
+export const selectCurrentLeftSidebarType = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => {
-    if (state.flowsState.selectedFlowId == undefined) {
-      return {
-        type: LeftSideBarType.NONE,
-        props: {},
-      };
-    }
-    const tabState: TabState =
-      state.flowsState.tabsState[state.flowsState.selectedFlowId.toString()];
-    if (tabState == undefined) {
-      return {
-        type: LeftSideBarType.NONE,
-        props: {},
-      };
-    }
-    return tabState.leftSidebar;
-  }
-);
-
-export const selectCurrentLeftSidebarType = createSelector(
-  selectCurrentLeftSidebar,
-  (state: { type: LeftSideBarType }) => {
-    return state.type;
+    return state.flowState.builderState.leftSidebar.type;
   }
 );
 
 export const selectCurrentRightSideBar = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => {
-    if (state.flowsState.selectedFlowId == undefined) {
-      return {
-        type: RightSideBarType.NONE,
-        props: NO_PROPS,
-      };
-    }
-    const tabState: TabState =
-      state.flowsState.tabsState[state.flowsState.selectedFlowId.toString()];
-    if (tabState == undefined) {
-      return {
-        type: RightSideBarType.NONE,
-        props: NO_PROPS,
-      };
-    }
-    return tabState.rightSidebar;
+    return state.flowState.builderState.rightSidebar;
   }
 );
 
 export const selectCurrentRightSideBarType = createSelector(
-  selectCurrentRightSideBar,
-  (state: { type: RightSideBarType }) => {
-    return state.type;
+  selectBuilderState,
+  (state: GlobalBuilderState) => {
+    return state.flowState.builderState.rightSidebar.type;
   }
 );
 
@@ -448,14 +325,6 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
   }
 );
 
-const selectAnyFlowHasSteps = createSelector(selectFlows, (flows: Flow[]) => {
-  let aFlowHasSteps = false;
-  flows.forEach((f) => {
-    aFlowHasSteps = aFlowHasSteps || !!f.version?.trigger?.nextAction;
-  });
-  return aFlowHasSteps;
-});
-
 const selectAllStepsForMentionsDropdown = createSelector(
   selectCurrentStep,
   selectCurrentFlow,
@@ -491,14 +360,14 @@ function findStepLogoUrlForMentions(
 ) {
   if (step.type === ActionType.PIECE) {
     if (CORE_PIECES_ACTIONS_NAMES.find((n) => n === step.settings.pieceName)) {
-      return `assets/img/custom/piece/${step.settings.pieceName}_mention.png`;
+      return corePieceIconUrl(step.settings.pieceName);
     }
     return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(
       (i) => i.extra?.appName === step.settings.pieceName
     )?.logoUrl;
   } else if (step.type === TriggerType.PIECE) {
     if (CORE_PIECES_TRIGGERS.find((n) => n === step.settings.pieceName)) {
-      return `assets/img/custom/piece/${step.settings.pieceName}_mention.png`;
+      return corePieceIconUrl(step.settings.pieceName);
     }
     return flowItemsDetailsState.customPiecesTriggersFlowItemDetails.find(
       (i) => i.extra?.appName === step.settings.pieceName
@@ -550,30 +419,22 @@ const selectStepLogoUrl = (stepName: string) => {
   );
 };
 export const BuilderSelectors = {
-  selectCurrentCollection,
-  selectCurrentCollectionId,
   selectReadOnly,
   selectViewMode,
-  selectCurrentFlowId,
   selectCurrentFlowRun,
-  selectFlows,
-  selectCurrentTabState,
-  selectFlowSelectedId,
   selectCurrentFlow,
+  selectCurrentInstance,
   selectCurrentRightSideBar,
   selectCurrentStep,
-  selectCanPublish,
-  selectCurrentLeftSidebar,
+  selectIsPublishing,
+  selectIsSaving,
+  selectFlowHasAnySteps,
   selectCurrentLeftSidebarType,
-  selectFlowsCount,
   selectCurrentStepName,
   selectCurrentRightSideBarType,
   selectCurrentFlowRunStatus,
   selectCurrentStepDisplayName,
   selectIsInDebugMode,
-  selectCollectionState,
-  selectIsSaving,
-  selectFlow,
   selectTabState,
   selectAllFlowItemsDetails,
   selectFlowItemDetails,
@@ -581,24 +442,21 @@ export const BuilderSelectors = {
   selectCoreFlowItemsDetails,
   selectFlowItemDetailsForCoreTriggers,
   selectCurrentFlowValidity,
-  selectFlowsValidity,
   selectFlowItemDetailsForCustomPiecesActions,
   selectAppConnectionsDropdownOptions,
-  selectCurrentCollectionInstance,
-  selectIsPublishing,
   selectFlowItemDetailsForCustomPiecesTriggers,
   selectAllAppConnections,
   selectAllFlowSteps,
   selectAllStepsForMentionsDropdown,
   selectAppConnectionsForMentionsDropdown,
-  selectAnyFlowHasSteps,
   selectStepLogoUrl,
   selectCurrentStepSettings,
   selectTriggerSelectedSampleData,
   selectStepValidity,
+  selectCurrentFlowVersionId,
   selectIsSchduleTrigger,
   selectCurrentStepPieceVersionAndName,
-  selectCurrentFlowVersionId,
+  selectCurrentFlowFolderName,
   selectStepTestSampleData,
   selectLastTestDate,
 };

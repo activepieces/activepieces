@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
-import { FlagService } from '@activepieces/ui/common';
+import { FlagService, initialiseBeamer } from '@activepieces/ui/common';
 import { map, Observable, tap } from 'rxjs';
 import { ApEdition } from '@activepieces/shared';
 import { RunsLeftSnackbarComponent } from '@activepieces/ee/billing/ui';
@@ -20,6 +20,7 @@ export class DashboardContainerComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    initialiseBeamer();
     this.showSnackbar$ = this.flagService.getEdition().pipe(
       tap((edition) => {
         if (edition === ApEdition.ENTERPRISE) {

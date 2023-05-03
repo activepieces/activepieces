@@ -30,7 +30,6 @@ import { DialogTitleTemplateComponent } from './components/dialog-title-template
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { ChevronDropdownMenuComponent } from './components/chevron-dropdown-menu/chevron-dropdown-menu.component';
 import { OutputLogPipe } from './pipe/output-log.pipe';
 import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
@@ -43,7 +42,12 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TrackFocusDirective } from './directives/track-focus.directive';
 import { ObjectToArrayPipe } from './pipe/object-to-array.pipe';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { DeleteEntityDialogComponent } from './components/delete-enity-dialog/delete-entity-dialog.component';
+import { MatDividerModule } from '@angular/material/divider';
+import { GenericSnackbarTemplateComponent } from './components/generic-snackbar-template/generic-snackbar-template.component';
 import { MatIconModule } from '@angular/material/icon';
+import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
+
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -63,6 +67,7 @@ const exportedImports = [
   MatSlideToggleModule,
   DragDropModule,
   MatCheckboxModule,
+  MatDividerModule,
   MatIconModule,
 ];
 const exportedDeclarations = [
@@ -76,7 +81,6 @@ const exportedDeclarations = [
   HotspotComponent,
   IconButtonComponent,
   ApButtonComponent,
-  ChevronDropdownMenuComponent,
   DialogTitleTemplateComponent,
   OutputLogPipe,
   DefaultFalsePipe,
@@ -88,6 +92,9 @@ const exportedDeclarations = [
   HorizontalSidebarSeparatorComponent,
   TrackFocusDirective,
   ObjectToArrayPipe,
+  DeleteEntityDialogComponent,
+  GenericSnackbarTemplateComponent,
+  UserAvatarComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

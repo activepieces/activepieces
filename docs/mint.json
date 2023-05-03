@@ -66,6 +66,7 @@
       "group": "Apps",
       "pages": [
         "pieces/apps/airtable",
+        "pieces/apps/amazon-s3",
         "pieces/apps/asana",
         "pieces/apps/bannerbear",
         "pieces/apps/binance",
@@ -102,9 +103,11 @@
         "pieces/apps/matrix",
         "pieces/apps/mattermost",
         "pieces/apps/mindee",
+        "pieces/apps/monday",
         "pieces/apps/notion",
         "pieces/apps/openai",
         "pieces/apps/pipedrive",
+        "pieces/apps/postgres",
         "pieces/apps/posthog",
         "pieces/apps/rss",
         "pieces/apps/salesforce",
@@ -151,7 +154,6 @@
         "install/overview",
         "install/docker",
         "install/digitalocean",
-        "install/easypanel",
         "install/configurations",
         "install/breaking-changes"
       ]

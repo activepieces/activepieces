@@ -1,11 +1,21 @@
 import { DataSource } from '@angular/cdk/collections';
-import { Observable, combineLatest, switchMap, tap, map } from 'rxjs';
+import {
+  Observable,
+  combineLatest,
+  switchMap,
+  tap,
+  map,
+  catchError,
+  of,
+  take,
+} from 'rxjs';
 import { AppConnection, FlowRun } from '@activepieces/shared';
 import {
-  ProjectService,
   AppConnectionsService,
   ApPaginatorComponent,
+  ProjectSelectors,
 } from '@activepieces/ui/common';
+import { Store } from '@ngrx/store';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -18,7 +28,7 @@ export class ConnectionsTableDataSource extends DataSource<FlowRun> {
     private pageSize$: Observable<number>,
     private pageCursor$: Observable<string>,
     private paginator: ApPaginatorComponent,
-    private projectService: ProjectService,
+    private store: Store,
     private connectionsService: AppConnectionsService,
     private refresh$: Observable<boolean>
   ) {
@@ -34,13 +44,21 @@ export class ConnectionsTableDataSource extends DataSource<FlowRun> {
     return combineLatest({
       pageCursor: this.pageCursor$,
       pageSize: this.pageSize$,
-      project: this.projectService.getSelectedProject(),
+      project: this.store.select(ProjectSelectors.selectProject).pipe(take(1)),
       refresh: this.refresh$,
     }).pipe(
       switchMap((res) => {
         return this.connectionsService.list({
           limit: res.pageSize,
           cursor: res.pageCursor,
+        });
+      }),
+      catchError((err) => {
+        console.error(err);
+        return of({
+          next: '',
+          previous: '',
+          data: [],
         });
       }),
       tap((res) => {

@@ -1,5 +1,5 @@
 import { billingService } from "./billing.service";
-import { ActivepiecesError, ErrorCode, FlowVersion, ProjectId, Trigger, Action, apId } from "@activepieces/shared";
+import { ActivepiecesError, ErrorCode, FlowVersion, ProjectId, Trigger, Action, apId, Project, ApEdition } from "@activepieces/shared";
 import { databaseConnection } from "@backend/database/database-connection";
 import { ProjectPlan, ProjectUsage } from "@activepieces/ee/shared";
 import { acquireLock } from "@backend/database/redis-connection";
@@ -11,30 +11,49 @@ import { SystemProp } from "@backend/helper/system/system-prop";
 import { system } from "@backend/helper/system/system";
 import { projectService } from "@backend/project/project.service";
 import { userService } from "@backend/user/user-service";
+import { isNil } from "lodash";
+import { getEdition } from "@backend/helper/secret-helper";
 
 sendgrid.setApiKey(system.get(SystemProp.SENDGRID_KEY));
 
 const projectUsageRepo = databaseConnection.getRepository<ProjectUsage>(ProjectUsageEntity);
 
 export const usageService = {
-    async limit(request: { projectId: ProjectId; flowVersion: FlowVersion; }): Promise<{ perform: true }> {
+    async addTasksConsumed(request: { projectId: ProjectId, tasks: number }): Promise<void> {
         const quotaLock = await acquireLock({
             key: `usage_${request.projectId}`,
             timeout: 30000,
         })
         try {
             const projectUsage = await usageService.getUsage({ projectId: request.projectId });
-            const numberOfSteps = countSteps(request.flowVersion);
+
+            // handleAlerts({ projectUsage: projectUsage!, projectPlan, numberOfSteps });
+
+            projectUsage.consumedTasks += request.tasks;
+            await projectUsageRepo.save(projectUsage);
+        } finally {
+            await quotaLock.release();
+        }
+    },
+    async limit(request: { projectId: ProjectId; flowVersion: FlowVersion; }): Promise<void> {
+        const edition = await getEdition()
+        if (edition !== ApEdition.ENTERPRISE) {
+            return;
+        }
+        const quotaLock = await acquireLock({
+            key: `usage_${request.projectId}`,
+            timeout: 30000,
+        })
+
+        try {
+            const projectUsage = await usageService.getUsage({ projectId: request.projectId });
             const projectPlan = await billingService.getPlan({ projectId: request.projectId });
-            handleAlerts({ projectUsage: projectUsage!, projectPlan, numberOfSteps });
-            if (projectUsage!.consumedTasks + numberOfSteps > projectPlan.tasks) {
+            if (projectUsage.consumedTasks > projectPlan.tasks) {
                 throw new ActivepiecesError({
                     code: ErrorCode.TASK_QUOTA_EXCEEDED,
                     params: { projectId: request.projectId },
                 });
             }
-            projectUsage!.consumedTasks += numberOfSteps;
-            await projectUsageRepo.save(projectUsage!);
         } catch (e) {
             if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
                 throw e;
@@ -44,23 +63,20 @@ export const usageService = {
             }
         } finally {
             await quotaLock.release();
-        };
-        return {
-            perform: true,
         }
     },
-    async getUsage({ projectId }: { projectId: ProjectId }): Promise<ProjectUsage | null> {
-        let projectUsage = await projectUsageRepo.findOneBy({ projectId });
+    async getUsage({ projectId }: { projectId: ProjectId }): Promise<ProjectUsage> {
+        let projectUsage = await findLatestProjectUsage(projectId);
         const plan = await billingService.getPlan({ projectId });
         const nextReset = nextResetDatetime(plan.subscriptionStartDatetime);
-        if (projectUsage === undefined || projectUsage === null || isNotSame(nextReset, projectUsage.nextResetDatetime)) {
-            await projectUsageRepo.upsert({
+        if (isNil(projectUsage) || isNotSame(nextReset, projectUsage.nextResetDatetime)) {
+            const projectUsage = await projectUsageRepo.save({
                 id: apId(),
                 projectId,
                 consumedTasks: 0,
                 nextResetDatetime: nextReset,
-            }, ['projectId']);
-            return await projectUsageRepo.findOneBy({ projectId });
+            });
+            return projectUsage;
         }
         return projectUsage;
     },
@@ -68,18 +84,18 @@ export const usageService = {
 
 async function handleAlerts({ projectUsage, projectPlan, numberOfSteps }: { projectUsage: ProjectUsage; projectPlan: ProjectPlan; numberOfSteps: number; }) {
     const alertingEmails = [
-    {
-        templateId: 'd-ff370bf352d940308714afdb37ea4b38',
-        threshold: 0.5,
-    },
-    {
-        threshold: 0.8,
-        templateId: 'd-2159eff164df4f7fac246f04420858a2'
-    },
-    {
-        threshold: 1.0,
-        templateId: 'd-17ad40ee5ae34fc0914b8ce2648a393e '
-    }];
+        {
+            templateId: 'd-ff370bf352d940308714afdb37ea4b38',
+            threshold: 0.5,
+        },
+        {
+            threshold: 0.8,
+            templateId: 'd-2159eff164df4f7fac246f04420858a2'
+        },
+        {
+            threshold: 1.0,
+            templateId: 'd-17ad40ee5ae34fc0914b8ce2648a393e '
+        }];
 
     for (let i = 0; i < alertingEmails.length; ++i) {
         const thresholdEmail = alertingEmails[i];
@@ -97,14 +113,15 @@ async function handleAlerts({ projectUsage, projectPlan, numberOfSteps }: { proj
     }
 }
 
-function countSteps(flowVersion: FlowVersion): number {
-    let steps = 0;
-    let currentStep: Trigger | Action | undefined = flowVersion.trigger;
-    while (currentStep !== undefined) {
-        currentStep = currentStep.nextAction;
-        steps++;
-    }
-    return steps;
+async function findLatestProjectUsage(projectId: ProjectId) {
+    return projectUsageRepo.findOne({
+        where: {
+            projectId
+        },
+        order: {
+            nextResetDatetime: "DESC",
+        }
+    });
 }
 
 function isNotSame(firstDate: string, secondDate: string) {

@@ -9,7 +9,7 @@
     <svg-icon
       class="ap-py-[10px] ap-px-[8px] ap-border-[1px] ap-border-transparent ap-transition ap-ease-out  ap-rounded-[4px] "
       [svgStyle]="{ width: '25px', height: '25px' }" [src]="r.icon" [routerLink]="['/' + r.route]"
-      [routerLinkActive]="r.borderColorInTailwind">
+      (click)="r.effect? r.effect() : null" [routerLinkActive]="r.borderColorInTailwind">
     </svg-icon>
     <div>{{ r.caption }}</div>
   </div>

@@ -54,7 +54,7 @@ const getEnvVar = (prop: SystemProp): string | undefined => {
 export const validateEnvPropsOnStartup = () => {
     const encryptionKey = system.getOrThrow(SystemProp.ENCRYPTION_KEY)
     const encryptionKeyLength = Buffer.from(encryptionKey, 'binary')
-    if(encryptionKeyLength.length !== 32) {
+    if (encryptionKeyLength.length !== 32) {
         throw new ActivepiecesError({
             code: ErrorCode.SYSTEM_PROP_INVALID,
             params: {
@@ -62,4 +62,20 @@ export const validateEnvPropsOnStartup = () => {
             },
         }, `System property AP_${SystemProp.ENCRYPTION_KEY} must be 256 bit (32 hex charaters)`)
     }
+
+    const executionMode = system.get(SystemProp.EXECUTION_MODE)
+    const signedUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
+    if(executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled){
+        throw new ActivepiecesError({
+            code: ErrorCode.SYSTEM_PROP_INVALID,
+            params: {
+                prop: SystemProp.EXECUTION_MODE,
+            },
+        }, `Allowing users to sign up is not allowed in unsandboxed mode, please change the value of AP_${SystemProp.EXECUTION_MODE}, please check the documentation`)
+    }
+}
+
+export enum ExecutionMode {
+    SANDBOXED = 'SANDBOXED',
+    UNSANDBOXED = 'UNSANDBOXED',
 }

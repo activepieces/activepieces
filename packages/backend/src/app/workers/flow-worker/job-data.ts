@@ -1,14 +1,11 @@
-import { CollectionId, FlowRunId, FlowVersion, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { FlowRunId, FlowVersion, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from '@activepieces/shared'
 
 type BaseJobData = {
     environment: RunEnvironment
-    collectionId: CollectionId
     projectId: ProjectId
-
 }
 
 export type RepeatableJobData = {
-    collectionId: CollectionId
     flowVersion: FlowVersion
     triggerType: TriggerType
 } & BaseJobData

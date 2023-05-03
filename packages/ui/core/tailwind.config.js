@@ -31,7 +31,7 @@ module.exports = {
           DEFAULT: '#dc3545',
           light: '#efa2a980',
         },
-        primary: { DEFAULT: '#6e41e2', light: '#EEE8FC' },
+        primary: { DEFAULT: '#6e41e2', light: '#EEE8FC', dark: '#472c8a' },
         warn: '#f78a3b',
         blueLink: '#1890ff',
         sidebar: '#FAFBFC',
@@ -42,6 +42,9 @@ module.exports = {
         hover: '#fafafa',
         success: '#209e34',
         dividers: '#e0e4e8',
+        graySelect: '#F5F5F5',
+        title:'#262626',
+        bleachedGray:'#A6B1BF'
       },
     },
     container: {
@@ -53,5 +56,10 @@ module.exports = {
       },
     },
   },
+  variants: {
+    extend: {
+        display: ["group-hover"],
+    },
+},
   plugins: [],
 };

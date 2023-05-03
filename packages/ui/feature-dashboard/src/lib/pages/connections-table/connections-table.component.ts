@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { map, Observable, startWith, Subject, tap } from 'rxjs';
@@ -10,20 +15,20 @@ import {
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-} from '../../components/delete-enity-dialog/delete-entity-dialog.component';
+} from '@activepieces/ui/common';
 import { ConnectionsTableDataSource } from './connections-table.datasource';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
 import {
-  ProjectService,
   DEFAULT_PAGE_SIZE,
   AppConnectionsService,
 } from '@activepieces/ui/common';
+import { Store } from '@ngrx/store';
 
 @Component({
   templateUrl: './connections-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConnectionsTableComponent {
+export class ConnectionsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
   connectionPage$: Observable<SeekPage<AppConnection>>;
@@ -31,9 +36,10 @@ export class ConnectionsTableComponent {
   displayedColumns = ['app', 'name', 'status', 'created', 'updated', 'action'];
   connectionDeleted$: Subject<boolean> = new Subject();
   deleteConnectionDialogClosed$: Observable<void>;
+  readonly AppConnectionStatus = AppConnectionStatus;
   constructor(
     private activatedRoute: ActivatedRoute,
-    private projectService: ProjectService,
+    private store: Store,
     private connectionService: AppConnectionsService,
     private dialogService: MatDialog
   ) {}
@@ -45,14 +51,10 @@ export class ConnectionsTableComponent {
       ),
       this.activatedRoute.queryParams.pipe(map((res) => res['cursor'])),
       this.paginator,
-      this.projectService,
+      this.store,
       this.connectionService,
       this.connectionDeleted$.asObservable().pipe(startWith(true))
     );
-  }
-
-  get connectionStatus() {
-    return AppConnectionStatus;
   }
 
   deleteConnection(connection: AppConnection) {
@@ -60,10 +62,8 @@ export class ConnectionsTableComponent {
       data: {
         deleteEntity$: this.connectionService.delete(connection.id),
         entityName: connection.name,
-        note: {
-          text: 'When this connection is deleted, all steps using it will fail',
-          danger: true,
-        },
+        note: `This will permanently delete the connection, all steps using it will fail.
+         You can't undo this action.`,
       } as DeleteEntityDialogData,
     });
     this.deleteConnectionDialogClosed$ = dialogRef.beforeClosed().pipe(

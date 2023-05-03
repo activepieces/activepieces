@@ -1,13 +1,15 @@
 import { FlowEntity } from './flow.entity'
 import {
     apId,
-    CollectionId,
     CreateFlowRequest,
     Cursor,
     EmptyTrigger,
     Flow,
     FlowId,
+    FlowInstance,
+    FlowInstanceStatus,
     FlowOperationRequest,
+    FlowOperationType,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -22,15 +24,17 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { acquireLock } from '../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRepo } from './flow.repo'
-import { instanceSideEffects } from '../../instance/instance-side-effects'
 import { telemetry } from '../../helper/telemetry.utils'
+import { flowInstanceService } from '../flow-instance/flow-instance.service'
+import { IsNull } from 'typeorm'
+import { isNil } from 'lodash'
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
         const flow: Partial<Flow> = {
             id: apId(),
             projectId: projectId,
-            collectionId: request.collectionId,
+            folderId: request.folderId,
         }
         const savedFlow = await flowRepo.save(flow)
         await flowVersionService.createVersion(savedFlow.id, {
@@ -50,7 +54,6 @@ export const flowService = {
             {
                 name: TelemetryEventName.FLOW_CREATED,
                 payload: {
-                    collectionId: flow.collectionId!,
                     flowId: flow.id!,
                 },
             },
@@ -74,28 +77,45 @@ export const flowService = {
 
         return flow
     },
-    async list({ projectId, collectionId, cursorRequest, limit }: { projectId: ProjectId, collectionId: CollectionId, cursorRequest: Cursor | null, limit: number }): Promise<SeekPage<Flow>> {
+    async list({ projectId, cursorRequest, limit, folderId }: { projectId: ProjectId, cursorRequest: Cursor | null, limit: number, folderId: string | undefined }): Promise<SeekPage<Flow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: FlowEntity,
             query: {
                 limit,
-                order: 'ASC',
+                order: 'DESC',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = flowRepo.createQueryBuilder('flow').where({ collectionId, projectId })
-        const { data, cursor } = await paginator.paginate(queryBuilder.where({ collectionId }))
+        const queryWhere: Record<string, unknown> = { projectId }
+        if (folderId !== undefined) {
+            queryWhere['folderId'] = (folderId === 'NULL' ? IsNull() : folderId)
+        }
+
+        const paginationResult = await paginator.paginate(flowRepo.createQueryBuilder('flow').where(queryWhere))
         const flowVersionsPromises: Array<Promise<FlowVersion | null>> = []
-        data.forEach((collection) => {
-            flowVersionsPromises.push(flowVersionService.getFlowVersion(projectId, collection.id, undefined, false))
+        const flowInstancesPromises: Array<Promise<FlowInstance | null>> = []
+        paginationResult.data.forEach((flow) => {
+            flowVersionsPromises.push(flowVersionService.getFlowVersion(projectId, flow.id, undefined, false))
+            flowInstancesPromises.push(flowInstanceService.get({ projectId: projectId, flowId: flow.id }))
         })
         const versions: Array<FlowVersion | null> = await Promise.all(flowVersionsPromises)
-        for (let i = 0; i < data.length; ++i) {
-            data[i] = { ...data[i], version: versions[i]! }
-        }
-        return paginationHelper.createPage<Flow>(data, cursor)
+        const instances: Array<FlowInstance | null> = await Promise.all(flowInstancesPromises)
+        const formattedFlows = paginationResult.data.map((flow, idx) => {
+            let status = FlowInstanceStatus.UNPUBLISHED
+            const instance = instances[idx]
+            if (instance) {
+                status = instance.status
+            }
+            const formattedFlow: Flow = {
+                ...flow,
+                version: versions[idx]!,
+                status: status,
+            }
+            return formattedFlow
+        })
+        return paginationHelper.createPage<Flow>(formattedFlows, paginationResult.cursor)
     },
     async getOne({ projectId, id, versionId, includeArtifacts = true }: { projectId: ProjectId, id: FlowId, versionId: FlowVersionId | undefined, includeArtifacts: boolean }): Promise<Flow | null> {
         const flow: Flow | null = await flowRepo.findOneBy({
@@ -105,23 +125,43 @@ export const flowService = {
         if (flow === null) {
             return null
         }
-        const flowVersion = await flowVersionService.getFlowVersion(projectId, id, versionId, includeArtifacts)
+        const flowVersion = (await flowVersionService.getFlowVersion(projectId, id, versionId, includeArtifacts))!
+        const instance = await flowInstanceService.get({ projectId: projectId, flowId: flow.id })
         return {
             ...flow,
-            version: flowVersion!,
+            version: flowVersion,
+            status: instance ? instance.status : FlowInstanceStatus.UNPUBLISHED,
         }
     },
+
     async update({ flowId, projectId, request }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
         const flowLock = await acquireLock({
             key: flowId,
             timeout: 5000,
         })
+        const flow: Omit<Flow, 'version'> | null = (await flowRepo.findOneBy({ projectId: projectId, id: flowId }))
+        if (isNil(flow)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_NOT_FOUND,
+                params: {
+                    id: flowId,
+                },
+            })
+        }
         try {
-            let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, false))
-            if (lastVersion!.state === FlowVersionState.LOCKED) {
-                lastVersion = await flowVersionService.createVersion(flowId, lastVersion!)
+            if (request.type === FlowOperationType.CHANGE_FOLDER) {
+                await flowRepo.update(flow.id, {
+                    ...flow,
+                    folderId: request.request.folderId ?? null,
+                })
             }
-            await flowVersionService.applyOperation(projectId, lastVersion!, request)
+            else {
+                let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, false))!
+                if (lastVersion.state === FlowVersionState.LOCKED) {
+                    lastVersion = await flowVersionService.createVersion(flowId, lastVersion)
+                }
+                await flowVersionService.applyOperation(projectId, lastVersion, request)
+            }
         }
         finally {
             await flowLock.release()
@@ -129,8 +169,25 @@ export const flowService = {
         return await flowService.getOne({ id: flowId, versionId: undefined, projectId: projectId, includeArtifacts: false })
     },
     async delete({ projectId, flowId }: { projectId: ProjectId, flowId: FlowId }): Promise<void> {
-        await instanceSideEffects.onFlowDelete({ projectId, flowId })
-
+        await flowInstanceService.onFlowDelete({ projectId, flowId })
         await flowRepo.delete({ projectId: projectId, id: flowId })
     },
+    async count(req: {
+        projectId: string
+        folderId?: string
+    }): Promise<number> {
+        if (req.folderId === undefined) {
+            return flowRepo.count({ where: { projectId: req.projectId } })
+        }
+        if (req.folderId !== 'NULL') {
+            return flowRepo.count({
+                where: [{ folderId: req.folderId, projectId: req.projectId }],
+            })
+        }
+        return flowRepo.count({
+            where: [{ folderId: IsNull(), projectId: req.projectId }],
+        })
+    },
+
 }
+

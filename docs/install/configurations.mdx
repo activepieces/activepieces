@@ -13,6 +13,7 @@ When you execute the deploy.sh script in the Docker installation tutorial, it wi
 
 | Variable                     | Description                                                                                                 | Default Value          | Example
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------  | --------
+| `AP_EXECUTION_MODE`          |  You can choose between 'SANDBOXED' or 'UNSANDBOXED' as possible values. If you decide to change this, make sure to carefully read the next below. | `SANDBOXED`                |
 | `AP_JWT_SECRET`              | ❗️ Encryption key used for generating JWT tokens                                                            | `None`                 | https://demo.activepieces.com
 | `AP_FRONTEND_URL`            | ❗️ Url that will be used to specify redirect url and webhook url.                                           | `None`                 | https://demo.activepieces.com/api
 | `AP_POSTGRES_DATABASE`       | ❗️ The name of the PostgreSQL database                                                                      | `None`                 |
@@ -29,7 +30,6 @@ When you execute the deploy.sh script in the Docker installation tutorial, it wi
 | `AP_REDIS_PORT`              | ❗️ The port number for the Redis server                                                                     | `None`                 |
 | `AP_REDIS_USE_SSL`           | Connect to Redis with SSL                                                                                   | `false`                |
 | `AP_NOTIFICATION_URL`        | The notification URL is triggered whenever a run fails.                                                     | `false`                |
-| `AP_NOTIFICATION_SETTING_TEXT`| The text to show in the notification settings of the runs tab when a notification is triggered due to a failed run.	        | `Send notification on failed runs`|
 | `AP_TELEMETRY_ENABLED`       | Collect telemetry information                                                                               | `false`                |
 | `AP_SIGN_UP_ENABLED`         | Enable Signed Up                                                                                            | `false`                |
 
@@ -43,6 +43,15 @@ It must be accessible to third parties to send data.
 The default URL is set to the machine's IP address. To ensure proper operation, ensure that this address is accessible or specify an `AP_FRONTEND_URL` environment variable.
 
 One possible solution for this is using a service like ngrok (https://ngrok.com/), which can be used to expose the frontend port (4200) to the internet.
+
+
+### Setting Sandbox mode:
+
+There are two modes of execution for the activepieces: the default sandboxed mode and the non-sandboxed mode.
+
+The sandboxed mode runs the code inside an isolated sandbox, and requires privileged access to Docker.
+
+The non-sandboxed mode runs the code directly on the host machine without any restrictions. This mode doesn't require privileged access to Docker, but it should only be used with single trusted user in activepieces.
 
 
 ### Setting Notification for Failed Runs:
@@ -84,4 +93,3 @@ Here's an example payload send by activepieces:
   "queryParams": {}
 }
 ```
-
