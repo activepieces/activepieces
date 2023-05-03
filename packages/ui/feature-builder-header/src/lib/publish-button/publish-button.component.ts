@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { combineLatest, delay, map, Observable, of } from 'rxjs';
+import { combineLatest, map, Observable, of } from 'rxjs';
 import {
   BuilderSelectors,
   FlowInstanceActions,
@@ -48,7 +48,6 @@ export class PublishButtonComponent implements OnInit {
       buttonIsDisabled: this.disablePublishButton$,
       flowHasSteps: this.store.select(BuilderSelectors.selectFlowHasAnySteps),
     }).pipe(
-      delay(100),
       map((res) => {
         if (!res.flowHasSteps) {
           return 'Add 1 more step to publish';
@@ -59,7 +58,6 @@ export class PublishButtonComponent implements OnInit {
       })
     );
     this.buttonText$ = this.flowState$.pipe(
-      delay(100),
       map((res) => {
         if (res.isSaving) {
           return 'Saving';

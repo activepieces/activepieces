@@ -1,4 +1,4 @@
-import { ExecutionOutputStatus, FlowRun, RunEnvironment, UserMeta } from '@activepieces/shared'
+import { ExecutionOutputStatus, FlowRun, NotificationStatus, RunEnvironment, UserMeta } from '@activepieces/shared'
 import { logger } from './logger'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
@@ -21,11 +21,14 @@ export const notifications = {
             return
         }
         const project = await projectService.getOne(flowRun.projectId)
-        const user = await userService.getMetaInfo({ id: project!.ownerId })
+        if (!project || project.notifications === NotificationStatus.NEVER) {
+            return
+        }
+        const user = await userService.getMetaInfo({ id: project.ownerId })
         await sendWebhook({
             type: NotificationEventEnum.RUN_FAILED,
             payload: {
-                user: user!,
+                owner: user!,
                 run: flowRun,
             },
         })
@@ -39,7 +42,7 @@ type NotifyFailureRunParams = {
 type RunFailedWebhookPayload = {
     type: NotificationEventEnum
     payload: {
-        user: UserMeta
+        owner: UserMeta
         run: FlowRun
     }
 }

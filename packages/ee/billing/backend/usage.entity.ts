@@ -28,7 +28,7 @@ export const ProjectUsageEntity = new EntitySchema<ProjectUsageSchema>({
     ],
     relations: {
         project: {
-            type: "one-to-one",
+            type: "many-to-one",
             target: "project",
             cascade: true,
             onDelete: "CASCADE",

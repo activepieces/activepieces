@@ -19,10 +19,10 @@ import {
 import { ConnectionsTableDataSource } from './connections-table.datasource';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
 import {
-  ProjectService,
   DEFAULT_PAGE_SIZE,
   AppConnectionsService,
 } from '@activepieces/ui/common';
+import { Store } from '@ngrx/store';
 
 @Component({
   templateUrl: './connections-table.component.html',
@@ -39,7 +39,7 @@ export class ConnectionsTableComponent implements OnInit {
   readonly AppConnectionStatus = AppConnectionStatus;
   constructor(
     private activatedRoute: ActivatedRoute,
-    private projectService: ProjectService,
+    private store: Store,
     private connectionService: AppConnectionsService,
     private dialogService: MatDialog
   ) {}
@@ -51,7 +51,7 @@ export class ConnectionsTableComponent implements OnInit {
       ),
       this.activatedRoute.queryParams.pipe(map((res) => res['cursor'])),
       this.paginator,
-      this.projectService,
+      this.store,
       this.connectionService,
       this.connectionDeleted$.asObservable().pipe(startWith(true))
     );

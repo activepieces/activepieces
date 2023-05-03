@@ -10,6 +10,21 @@ const initialState: ProjectsState = {
 
 const _projectReducer = createReducer(
   initialState,
+  on(
+    ProjectActions.updateProject,
+    (state, { notifications }): ProjectsState => {
+      const updatedProjects = [...state.projects];
+      updatedProjects[state.selectedIndex] = {
+        ...state.projects[state.selectedIndex],
+        notifications: notifications,
+      };
+      return {
+        loaded: true,
+        projects: updatedProjects,
+        selectedIndex: state.selectedIndex,
+      };
+    }
+  ),
   on(ProjectActions.setProjects, (_state, { projects }): ProjectsState => {
     return { projects: projects, loaded: true, selectedIndex: 0 };
   }),

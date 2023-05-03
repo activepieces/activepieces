@@ -31,8 +31,10 @@
 
                     </div>
                     <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                        [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 'Load sample data from your account to be used in the next steps'"
-                        [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Load data</ap-button>
+                        [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 
+                        (isSaving$ | async) === false? 'Load sample data from your account to be used in the next steps' : savingMessage"
+                        [disabled]="(isValid$ | async) === false || (isSaving$ | async) === true"
+                        (buttonClicked)="testStep()">Load data</ap-button>
                 </div>
 
                 <mat-form-field class="ap-w-full ap-mt-2" appearance="outline" subscriptSizing="dynamic">
@@ -61,8 +63,10 @@
 
                     </div>
                     <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                        [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 'Load sample data from your account to be used in the next steps'"
-                        [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Load data</ap-button>
+                        [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 
+                        (isSaving$ | async) === false? 'Load sample data from your account to be used in the next steps' : savingMessage"
+                        [disabled]="(isValid$ | async) === false || (isSaving$ | async) === true"
+                        (buttonClicked)="testStep()">Load data</ap-button>
                 </div>
 
                 <p class="ap-mt-2" *ngIf="!failed">Please add some data then press "Load Data"</p>
