@@ -40,11 +40,16 @@ export class PromptInputComponent implements AfterViewInit{
   }
   paste($event:ClipboardEvent)
   {
+ 
     //Disallow HTML pasting
     $event.preventDefault();
     const clipboard = $event.clipboardData?.getData("text");
-    this.guess = clipboard ?{value:clipboard} : {value:''};
-    this.inputDiv.nativeElement.textContent=clipboard || null;
+    const selection = window.getSelection()!;
+    if (!selection.rangeCount) return;
+    selection.deleteFromDocument();
+    selection.getRangeAt(0).insertNode(document.createTextNode(clipboard || ''));
+    selection.collapseToEnd();
+    this.guess = this.inputDiv.nativeElement.textContent ?{value:this.inputDiv.nativeElement.textContent} : {value:''};
     this.calculateInputStyle();
   }
 
