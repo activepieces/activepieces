@@ -6,7 +6,7 @@ export enum NotificationStatus {
 }
 
 export const UpdateProjectRequest = Type.Object({
-    notifications: Type.Enum(NotificationStatus),
+    notifyStatus: Type.Enum(NotificationStatus),
 })
 
 export type UpdateProjectRequest = Static<typeof UpdateProjectRequest>;
