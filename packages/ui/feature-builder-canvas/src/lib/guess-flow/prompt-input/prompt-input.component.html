@@ -7,7 +7,7 @@
 
         <div>
             <div contenteditable
-                class="ap-font-semibold ap-outline-[1px] ap-outline-solid ap-outline-transparent  ap-break-all ap-block pl-[1px]"
+                class="ap-font-semibold ap-outline-[1px] ap-outline-solid ap-outline-transparent  ap-break-all ap-block ap-text-center"
                 (keydown.enter)="$event.preventDefault()" [style]="guessStyling" #inputDiv id="inputDiv"
                 (paste)="paste($event)" (input)="changeGuessValue()">
             </div>
