@@ -31,8 +31,8 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
   saveStepAfterTesting$: Observable<void>;
   lastTestDate$: Observable<string | undefined>;
   errorResponse: null | unknown = null;
-  constructor(testStepService: TestStepService, private store: Store) {
-    super(testStepService);
+  constructor(testStepService: TestStepService, store: Store) {
+    super(testStepService, store);
     this.currentStepValidity$ = this.store.select(
       BuilderSelectors.selectStepValidity
     );

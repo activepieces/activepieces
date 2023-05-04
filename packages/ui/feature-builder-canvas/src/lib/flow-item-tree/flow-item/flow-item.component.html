@@ -1,4 +1,10 @@
 <div [ngStyle]="flowGraphContainer" [style.transform]="transformObs$|async">
+
+  <div *ngIf="trigger" class="ap-flex ap-justify-center ap-mb-9 ap-w-full ap-items-center ">
+    <app-incomplete-steps-widget></app-incomplete-steps-widget>
+  </div>
+
+
   <div [ngStyle]="flowContentContainer()" #flowItem>
     <app-flow-item-content [trigger]="trigger" [flowItem]="_flowItemData" [viewMode]="viewMode$ | async | defaultTrue"
       [selected]="selected$ | async | defaultFalse" [style.opacity]="1"></app-flow-item-content>

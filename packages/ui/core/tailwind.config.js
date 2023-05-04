@@ -32,7 +32,11 @@ module.exports = {
           light: '#efa2a980',
         },
         primary: { DEFAULT: '#6e41e2', light: '#EEE8FC', dark: '#472c8a' },
-        warn: '#f78a3b',
+        warn: {
+         DEFAULT:'#f78a3b',
+         light:"#FFF6E4",
+         dark:"#CC8805",
+         medium:"#F0D6A1"},
         blueLink: '#1890ff',
         sidebar: '#FAFBFC',
         blueBorder: '#6385dc',
