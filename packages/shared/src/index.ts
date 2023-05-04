@@ -21,7 +21,7 @@ export * from "./lib/instance";
 export * from "./lib/pieces";
 export * from "./lib/store-entry/dto/store-entry-request";
 export * from "./lib/webhook";
-
+export * from './lib/flows/dto/count-flows-request'
 export * from "./lib/workers/code-worker/code-execution-result";
 export { ExecuteCodeRequest } from './lib/code/dto/code-request';
 export { AuthenticationResponse } from './lib/authentication/dto/authentication-response';
@@ -52,7 +52,7 @@ export { apId, ApId } from './lib/common/id-generator'
 export * from "./lib/flows/trigger-events/trigger-events-dto";
 export * from "./lib/flows/trigger-events/trigger-event";
 export {SampleDataSettings} from './lib/flows/sample-data'
-export * from './lib/flows/dto/count-flows-request'
+export * from "./lib/project/update-project-request";
 export * from './lib/common/base-model';
 export * from './lib/flows/flow-instances';
 export * from "./lib/flows/folders/folder";
@@ -60,3 +60,4 @@ export * from "./lib/flows/folders/folder-requests";
 import { TypeSystem } from '@sinclair/typebox/system'
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 TypeSystem.ExactOptionalPropertyTypes = false;
+

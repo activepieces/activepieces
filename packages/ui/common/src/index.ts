@@ -1,3 +1,4 @@
+export * from './lib/store/project/project.effects';
 export * from './lib/service/folders.service';
 export * from './lib/ui-common.module';
 export * from './lib/service/authentication.service';

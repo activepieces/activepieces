@@ -1,7 +1,7 @@
 import { billingService } from "./billing.service";
 import { ActivepiecesError, ErrorCode, FlowVersion, ProjectId, Trigger, Action, apId, Project, ApEdition } from "@activepieces/shared";
 import { databaseConnection } from "@backend/database/database-connection";
-import { ProjectUsage } from "@activepieces/ee/shared";
+import { ProjectPlan, ProjectUsage } from "@activepieces/ee/shared";
 import { acquireLock } from "@backend/database/redis-connection";
 import { ProjectUsageEntity } from "./usage.entity";
 import { captureException } from "@backend/helper/logger";
