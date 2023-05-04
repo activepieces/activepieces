@@ -30,7 +30,7 @@ export class GuessFlowComponent {
   changeGuessValue(htmlDiv:HTMLElement)
   {
     this.guess = {value:htmlDiv.textContent || ''};
-    // this.calculateInputStyle(htmlDiv);
+    this.calculateInputStyle();
   }
   paste($event:ClipboardEvent,target:HTMLElement)
   {
@@ -39,26 +39,22 @@ export class GuessFlowComponent {
     const clipboard = $event.clipboardData?.getData("text");
     this.guess = clipboard ?{value:clipboard} : {value:''};
     target.textContent=clipboard || null;
-    // this.calculateInputStyle(target);
+    this.calculateInputStyle();
   }
 
-  calculateInputStyle(htmlDiv:HTMLElement)
+  calculateInputStyle()
   {
-    var divHeight = htmlDiv.offsetHeight
-    var lineHeight = parseInt(htmlDiv.style.lineHeight);
-    var lines = divHeight / lineHeight;
-    switch(lines)
+    if(this.guess.value.length <=38)
     {
-      case 1:
-       { this.guessStyling = this.stylingLimits.oneLine;
-        break;
-       }
-       case 1:
-        { this.guessStyling = this.stylingLimits.twoLines;
-         break;
-        }
-        default:
-          this.guessStyling = this.stylingLimits.moreThanTwoLines
+      this.guessStyling = this.stylingLimits.oneLine;
+    }
+    else if(this.guess.value.length > 38 && this.guess.value.length < 76 )
+    {
+      this.guessStyling = this.stylingLimits.twoLines;
+    }
+    else
+    {
+      this.guessStyling = this.stylingLimits.moreThanTwoLines
     }
   }
 
