@@ -1,4 +1,4 @@
-<div class="ap-flex ap-items-center ap-justify-center ap-flex-col ap-gap-2.5">
+<div class="ap-flex ap-items-center ap-justify-center ap-flex-col ap-gap-2.5 ap-mt-[100px]">
     <div class="ap-typography-subtitle-2 ap-text-disable !ap-font-semibold">
         Let our AI build your automation
     </div>
@@ -8,7 +8,8 @@
         <div>
             <div contenteditable
                 class="ap-font-semibold ap-outline-[1px] ap-outline-solid ap-outline-transparent  ap-break-all ap-block pl-[1px]"
-                [style]="guessStyling" #inputDiv id="inputDiv" (paste)="paste($event)" (input)="changeGuessValue()">
+                (keydown.enter)="$event.preventDefault()" [style]="guessStyling" #inputDiv id="inputDiv"
+                (paste)="paste($event)" (input)="changeGuessValue()">
             </div>
         </div>
 
