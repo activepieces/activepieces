@@ -13,6 +13,7 @@ import { CanvasPannerDirective } from './canvas-utils/panning/panner.directive';
 import { DeleteStepDialogComponent } from './flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
 import { IncompleteStepsWidgetComponent } from './incomplete-steps-widget/incomplete-steps-widget.component';
 import { GuessFlowComponent } from './guess-flow/guess-flow.component';
+import { PromptInputComponent } from './guess-flow/prompt-input/prompt-input.component';
 
 @NgModule({
   imports: [CommonModule, UiCommonModule],
@@ -29,6 +30,7 @@ import { GuessFlowComponent } from './guess-flow/guess-flow.component';
     CanvasPannerDirective,
     IncompleteStepsWidgetComponent,
     GuessFlowComponent,
+    PromptInputComponent,
   ],
   exports: [
     FlowItemTreeComponent,

@@ -1,22 +1,3 @@
 <div class="ap-flex ap-items-center ap-justify-center ap-px-[145px] ap-bg-white ap-w-full ap-h-full">
-    <div class="ap-flex ap-items-center ap-justify-center ap-flex-col ap-gap-2.5">
-        <div class="ap-typography-subtitle-2 ap-text-disable !ap-font-semibold">
-            Let our AI build your automation
-        </div>
-
-        <div class="ap-flex ap-min-w-[450px]">
-            <div>
-                <div contenteditable class="ap-font-semibold ap-outline-0 ap-break-all" [style]="guessStyling" #input
-                    (paste)="paste($event,input)" (input)="changeGuessValue(input)">
-                </div>
-            </div>
-
-            <div class="ap-text-placeholder ap-text-[50px] ap-font-semibold ap-cursor-text" (click)="input.focus()"
-                *ngIf="guess.value===''">
-                Describe
-                your flow
-            </div>
-        </div>
-    </div>
-
+    <app-prompt-input></app-prompt-input>
 </div>
