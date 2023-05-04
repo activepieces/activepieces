@@ -34,6 +34,7 @@ export class RunDetailsComponent implements OnInit {
     result: StepOutput;
     stepName: string;
   }[] = [];
+  selectedRun$: Observable<FlowRun | undefined>;
   accordionRect: DOMRect;
   resizerKnobIsBeingDragged = false;
   flowId: UUID;
@@ -64,8 +65,10 @@ export class RunDetailsComponent implements OnInit {
     this.selectedStepName$ = this.store.select(
       BuilderSelectors.selectCurrentStepName
     );
-    const run$ = this.store.select(BuilderSelectors.selectCurrentFlowRun);
-    this.logs$ = run$.pipe(
+    this.selectedRun$ = this.store.select(
+      BuilderSelectors.selectCurrentFlowRun
+    );
+    this.logs$ = this.selectedRun$.pipe(
       distinctUntilChanged((prev, curr) => {
         return (
           prev?.id === curr?.id &&
