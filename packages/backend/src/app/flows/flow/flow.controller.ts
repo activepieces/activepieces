@@ -28,7 +28,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 Body: GuessFlowRequest
             }>,
         ) => {
-            return findFlow(request.body.prompt);
+            return findFlow(request.body.prompt)
         },
     )
 
@@ -87,7 +87,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 projectId: request.principal.projectId,
                 folderId: request.query.folderId,
                 cursorRequest: request.query.cursor ?? null,
-                limit: request.query.limit ?? DEFUALT_PAGE_SIZE
+                limit: request.query.limit ?? DEFUALT_PAGE_SIZE,
             })
             return flows
         },

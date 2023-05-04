@@ -47,10 +47,10 @@ export class ProjectEffects {
         concatLatestFrom(() =>
           this.store.select(ProjectSelectors.selectProject)
         ),
-        switchMap(([{ notifications }, project]) => {
+        switchMap(([{ notifyStatus }, project]) => {
           return this.projectService
             .update(project.id, {
-              notifications: notifications,
+              notifyStatus: notifyStatus,
             })
             .pipe(
               catchError((error) => {

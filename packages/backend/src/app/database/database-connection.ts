@@ -38,6 +38,7 @@ import { FolderEntity } from '../flows/folder/folder.entity'
 import { RemoveCollections1680986182074 } from './migration/1680986182074-RemoveCollections'
 import { StoreAllPeriods1681019096716 } from './migration/1681019096716-StoreAllPeriods'
 import { AllowNullableStoreEntryAndTrigger1683040965874 } from './migration/1683040965874-allow-nullable-store-entry'
+import { RenameNotifications1683195711242 } from './migration/1683195711242-rename-notifications'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -78,6 +79,7 @@ const getMigrations = () => {
         RemoveCollections1680986182074,
         StoreAllPeriods1681019096716,
         AllowNullableStoreEntryAndTrigger1683040965874,
+        RenameNotifications1683195711242,
     ]
 }
 
