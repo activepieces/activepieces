@@ -10,9 +10,7 @@ import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowService } from './flow.service'
 import { GuessFlowRequest, CountFlowsRequest } from '@activepieces/shared'
-import { flowGuessService } from '@ee/magic-wand/openai'
-import { flowVersionService } from '../flow-version/flow-version.service'
-import { logger } from '../../helper/logger'
+import { findFlow } from '../agent/flow-agent'
 
 
 const DEFUALT_PAGE_SIZE = 10
@@ -30,19 +28,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 Body: GuessFlowRequest
             }>,
         ) => {
-            const trigger = await flowGuessService.guessFlow(request.body.prompt)
-            logger.info('Cleaned Actions ' + JSON.stringify(trigger))
-            const flow = await flowService.create({
-                projectId: request.principal.projectId, request: {
-                    displayName: request.body.displayName,
-                },
-            })
-            const flowVersion = {
-                ...flow.version,
-                trigger: trigger,
-            }
-            await flowVersionService.overwriteVersion(flowVersion.id, flowVersion)
-            return flowService.getOne({ id: flow.id, versionId: undefined, projectId: request.principal.projectId, includeArtifacts: false })
+            return findFlow(request.body.prompt);
         },
     )
 
@@ -97,10 +83,12 @@ export const flowController = async (fastify: FastifyInstance) => {
                 Querystring: ListFlowsRequest
             }>,
         ) => {
-            const flows = await flowService.list({ projectId: request.principal.projectId, 
+            const flows = await flowService.list({
+                projectId: request.principal.projectId,
                 folderId: request.query.folderId,
-                cursorRequest: request.query.cursor ?? null, 
-                limit: request.query.limit ?? DEFUALT_PAGE_SIZE })
+                cursorRequest: request.query.cursor ?? null,
+                limit: request.query.limit ?? DEFUALT_PAGE_SIZE
+            })
             return flows
         },
     )
@@ -112,10 +100,10 @@ export const flowController = async (fastify: FastifyInstance) => {
                 Querystring: CountFlowsRequest
             }>,
         ) => {
-            return flowService.count({...request.query, projectId:request.principal.projectId})
+            return flowService.count({ ...request.query, projectId: request.principal.projectId })
         },
     )
-    
+
 
     fastify.get(
         '/:flowId',
@@ -154,5 +142,5 @@ export const flowController = async (fastify: FastifyInstance) => {
             _reply.status(StatusCodes.OK).send()
         },
     )
-    
+
 }
