@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
-import { CreateFlowRunRequest, FlowRunId, ListFlowRunsRequest, RunEnvironment } from '@activepieces/shared'
+import { CreateFlowRunRequest, FlowRunId, ListFlowRunsRequestQuery, RunEnvironment } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRunService } from './flow-run-service'
 
@@ -35,12 +35,13 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
     // list
     app.get('/', {
         schema: {
-            querystring: ListFlowRunsRequest,
+            querystring: ListFlowRunsRequestQuery,
         },
     }, async (request, reply) => {
         const flowRunPage = await flowRunService.list({
             projectId: request.principal.projectId,
             flowId: request.query.flowId,
+            status: request.query.status,
             cursor: request.query.cursor ?? null,
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
         })

@@ -31,7 +31,7 @@ import { flowRepo } from '../flow/flow.repo'
 export const repo = databaseConnection.getRepository(FlowRunEntity)
 
 export const flowRunService = {
-    async list({ projectId, flowId, cursor, limit }: ListParams): Promise<SeekPage<FlowRun>> {
+    async list({ projectId, flowId, status, cursor, limit }: ListParams): Promise<SeekPage<FlowRun>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: FlowRunEntity,
@@ -46,6 +46,7 @@ export const flowRunService = {
         const query = repo.createQueryBuilder('flow_run').where({
             projectId,
             ...spreadIfDefined('flowId', flowId),
+            ...spreadIfDefined('status', status),
             environment: RunEnvironment.PRODUCTION,
         })
 
@@ -130,6 +131,7 @@ export const flowRunService = {
 type ListParams = {
     projectId: ProjectId
     flowId: FlowId | undefined
+    status: ExecutionOutputStatus | undefined
     cursor: Cursor | null
     limit: number
 }
