@@ -8,6 +8,7 @@ import {
 import { ExecutionOutputStatus, FlowId, FlowRun } from '@activepieces/shared';
 import { BuilderSelectors } from '../store/builder/builder.selector';
 import { FlowsActions } from '../store/flow/flows.action';
+import { FlagService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-test-run-bar',
@@ -17,11 +18,13 @@ import { FlowsActions } from '../store/flow/flows.action';
 export class TestRunBarComponent implements OnInit {
   constructor(
     private snackbarRef: MatSnackBarRef<TestRunBarComponent>,
+    private flagsService: FlagService,
     private store: Store,
     @Inject(MAT_SNACK_BAR_DATA) public data: { flowId: FlowId }
   ) {}
   hideExit$: Observable<boolean> = of(false);
   selectedRun$: Observable<FlowRun | undefined | null>;
+  sandboxTimeoutSeconds$: Observable<number>;
   exitRun$: Observable<void> = new Observable<void>();
   @Output()
   exitButtonClicked: EventEmitter<void> = new EventEmitter();
@@ -31,6 +34,7 @@ export class TestRunBarComponent implements OnInit {
     this.selectedRun$ = this.store.select(
       BuilderSelectors.selectCurrentFlowRun
     );
+    this.sandboxTimeoutSeconds$ = this.flagsService.getSandboxTimeout();
     this.exitRun$ = this.exitButtonClicked.pipe(
       tap(() => {
         this.snackbarRef.dismiss();

@@ -2,42 +2,54 @@
   <ap-sidebar-header (closeClicked)="closeLeftSideBar()" [title]="'Run Details'"></ap-sidebar-header>
 </div>
 
-<ng-container *ngIf="logs$ | async as logs; else loading">
-  <ng-container *ngIf="logs; else loading">
-    <div class="run-details-body">
-      <div class="resizer-area" #resizerArea>
-        <ap-horizontal-sidebar-separator [resizerArea]="resizerArea" (resizerDragged)="
-            resizerDragged(
-              $event
-            )
-          " (resizerDragStopped)="resizerDragStopped()"
-          (resizerDragStarted)="resizerDragStarted(stepsResultsAccordion)">
-        </ap-horizontal-sidebar-separator>
-      </div>
-      <div class="top-resizer-section" #stepsResultsAccordion>
-        <ng-container *ngFor="let stepResult of logs.runResults; let stepIndex = index">
-          <app-step-result [isTrigger]="stepIndex === 0" [stepNameAndResult]="stepResult"
-            [selectedStepName]="selectedStepName$ | async">
-          </app-step-result>
-        </ng-container>
-      </div>
-
-      <div class="bottom-resizer-section" #selectedStepResultContainer>
-        <ng-container *ngIf="
-            runDetailsService.currentStepResult$ | async as currentStepResult
-          ">
-          <div class="px-3">
-            <app-selected-step-result *ngIf="currentStepResult.result" [selectedStepResult]="currentStepResult.result"
-              [selectedStepName]="currentStepResult.stepName"></app-selected-step-result>
+<ng-container *ngIf="(selectedRun$ | async) as flowRun">
+  <ng-container
+    *ngIf="flowRun.status === InstanceRunStatus.RUNNING || flowRun.status === InstanceRunStatus.FAILED || flowRun.status === InstanceRunStatus.SUCCEEDED; else noDetails">
+    <ng-container *ngIf="logs$ | async as logs; else loading">
+      <ng-container *ngIf="logs; else loading">
+        <div class="run-details-body">
+          <div class="resizer-area" #resizerArea>
+            <ap-horizontal-sidebar-separator [resizerArea]="resizerArea" (resizerDragged)="
+                resizerDragged(
+                  $event
+                )
+              " (resizerDragStopped)="resizerDragStopped()"
+              (resizerDragStarted)="resizerDragStarted(stepsResultsAccordion)">
+            </ap-horizontal-sidebar-separator>
           </div>
-        </ng-container>
-      </div>
-    </div>
-  </ng-container>
-</ng-container>
+          <div class="top-resizer-section" #stepsResultsAccordion>
+            <ng-container *ngFor="let stepResult of logs.runResults; let stepIndex = index">
+              <app-step-result [isTrigger]="stepIndex === 0" [stepNameAndResult]="stepResult"
+                [selectedStepName]="selectedStepName$ | async">
+              </app-step-result>
+            </ng-container>
+          </div>
 
-<ng-template #loading>
-  <div class="loading-icon">
-    <ap-loading-icon></ap-loading-icon>
-  </div>
-</ng-template>
+          <div class="bottom-resizer-section" #selectedStepResultContainer>
+            <ng-container *ngIf="
+                runDetailsService.currentStepResult$ | async as currentStepResult
+              ">
+              <div class="px-3">
+                <app-selected-step-result *ngIf="currentStepResult.result"
+                  [selectedStepResult]="currentStepResult.result"
+                  [selectedStepName]="currentStepResult.stepName"></app-selected-step-result>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+      </ng-container>
+    </ng-container>
+
+
+    <ng-template #loading>
+      <div class="loading-icon">
+        <ap-loading-icon></ap-loading-icon>
+      </div>
+    </ng-template>
+  </ng-container>
+  <ng-template #noDetails>
+    <div class="no-details-message">
+      <p>No details available for this run.</p>
+    </div>
+  </ng-template>
+</ng-container>
