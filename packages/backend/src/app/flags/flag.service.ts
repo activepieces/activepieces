@@ -79,6 +79,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SANDBOX_RUN_TIME_SECONDS,
+                value: system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CURRENT_VERSION,
                 value: currentVersion,
                 created,

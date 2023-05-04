@@ -15,7 +15,7 @@
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.TIMEOUT">
         <ap-state-icon [succeeded]="false" [showStatusText]="false"></ap-state-icon>
-        <span class="ap-text-white">Run took too long to run, try to optimize your steps.</span>
+        <span class="ap-text-white">Run exceeded {{sandboxTimeoutSeconds$ | async}} seconds, try to optimize your steps.</span>
         <div class="ap-flex-grow"></div>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.INTERNAL_ERROR">
