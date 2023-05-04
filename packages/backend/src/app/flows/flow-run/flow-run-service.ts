@@ -12,6 +12,7 @@ import {
     TelemetryEventName,
     ApEdition,
     FlowId,
+    spreadIfDefined,
 } from '@activepieces/shared'
 import { getEdition } from '../../helper/secret-helper'
 import { databaseConnection } from '../../database/database-connection'
@@ -26,7 +27,6 @@ import { usageService } from '@ee/billing/backend/usage.service'
 import { logger } from '../../helper/logger'
 import { notifications } from '../../helper/notifications'
 import { flowRepo } from '../flow/flow.repo'
-import { isUndefined } from 'lodash'
 
 export const repo = databaseConnection.getRepository(FlowRunEntity)
 
@@ -43,21 +43,12 @@ export const flowRunService = {
             },
         })
 
-        const spreadIfDefined = (flowId: FlowId | undefined) => {
-            const result: { flowId?: FlowId } = {}
-
-            if (!isUndefined(flowId)) {
-                result.flowId = flowId
-            }
-
-            return result
-        }
-
         const query = repo.createQueryBuilder('flow_run').where({
             projectId,
-            ...spreadIfDefined(flowId),
+            ...spreadIfDefined('flowId', flowId),
             environment: RunEnvironment.PRODUCTION,
         })
+
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
