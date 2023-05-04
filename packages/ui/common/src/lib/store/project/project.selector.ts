@@ -18,7 +18,7 @@ export const selectProject = createSelector(
 export const selectIsNotificationsEnabled = createSelector(
   selectProject,
   (project) => {
-    return project.notifications === NotificationStatus.ALWAYS;
+    return project.notifyStatus === NotificationStatus.ALWAYS;
   }
 );
 

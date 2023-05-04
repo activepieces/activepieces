@@ -22,7 +22,7 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         displayName: {
             type: String,
         },
-        notifications: {
+        notifyStatus: {
             type: String,
         },
     },
