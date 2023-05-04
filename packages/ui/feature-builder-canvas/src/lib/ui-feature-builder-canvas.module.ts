@@ -12,6 +12,7 @@ import { CanvasUtilsComponent } from './canvas-utils/canvas-utils.component';
 import { CanvasPannerDirective } from './canvas-utils/panning/panner.directive';
 import { DeleteStepDialogComponent } from './flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
 import { IncompleteStepsWidgetComponent } from './incomplete-steps-widget/incomplete-steps-widget.component';
+import { GuessFlowComponent } from './guess-flow/guess-flow.component';
 
 @NgModule({
   imports: [CommonModule, UiCommonModule],
@@ -27,7 +28,13 @@ import { IncompleteStepsWidgetComponent } from './incomplete-steps-widget/incomp
     DeleteStepDialogComponent,
     CanvasPannerDirective,
     IncompleteStepsWidgetComponent,
+    GuessFlowComponent,
   ],
-  exports: [FlowItemTreeComponent, CanvasUtilsComponent, CanvasPannerDirective],
+  exports: [
+    FlowItemTreeComponent,
+    CanvasUtilsComponent,
+    CanvasPannerDirective,
+    GuessFlowComponent,
+  ],
 })
 export class UiFeatureBuilderCanvasModule {}

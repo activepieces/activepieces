@@ -48,7 +48,8 @@ module.exports = {
         dividers: '#e0e4e8',
         graySelect: '#F5F5F5',
         title:'#262626',
-        bleachedGray:'#A6B1BF'
+        bleachedGray:'#A6B1BF',
+        disable:'#AAAAAA'
       },
     },
     container: {
