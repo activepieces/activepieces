@@ -239,10 +239,7 @@ export class TestFlowModalComponent implements OnInit {
         return of(instanceRun);
       }),
       tap((instanceRun) => {
-        if (
-          instanceRun.status !== ExecutionOutputStatus.RUNNING &&
-          instanceRun.logsFileId !== null
-        ) {
+        if (instanceRun.status !== ExecutionOutputStatus.RUNNING) {
           this.store.dispatch(
             FlowsActions.setRun({
               run: instanceRun,
