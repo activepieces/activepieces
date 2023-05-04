@@ -9,29 +9,12 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowService } from './flow.service'
-import { GuessFlowRequest, CountFlowsRequest } from '@activepieces/shared'
-import { findFlow } from '../agent/flow-agent'
+import { CountFlowsRequest } from '@activepieces/shared'
 
 
 const DEFUALT_PAGE_SIZE = 10
 
 export const flowController = async (fastify: FastifyInstance) => {
-    fastify.post(
-        '/guess',
-        {
-            schema: {
-                body: GuessFlowRequest,
-            },
-        },
-        async (
-            request: FastifyRequest<{
-                Body: GuessFlowRequest
-            }>,
-        ) => {
-            return findFlow(request.body.prompt)
-        },
-    )
-
     fastify.post(
         '/',
         {
