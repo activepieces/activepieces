@@ -35,8 +35,10 @@
                 matTooltip="Test step to generate sample data to use in the next steps" matTooltipPosition="above">
             </ap-hotspot>
             <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()"
-                [tooltipText]=" (currentStepValidity$ | async) === false ? 'Please fix the step inputs first' : ''"
-                [disabled]="(currentStepValidity$ | async) === false">Test step</ap-button>
+                [tooltipText]=" (currentStepValidity$ | async) === false ? 'Please fix the step inputs first' :
+                (isSaving$|async) === false? 'After the step is tested, you will be able to use its sample data in the next steps' : savingMessage"
+                [disabled]="(currentStepValidity$ | async) === false || (isSaving$ | async) === true">Test
+                step</ap-button>
         </div>
     </div>
 </ng-template>
@@ -59,8 +61,10 @@
         <div class="ap-flex-grow">
         </div>
         <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-            [tooltipText]=" (currentStepValidity$ | async) === false ? 'Please fix the step inputs first' : 'Test step to generate sample data to use in the next steps'"
-            [disabled]="(currentStepValidity$ | async) === false" (buttonClicked)="testStep()">Retest</ap-button>
+            [tooltipText]="(currentStepValidity$ | async) === false ? 'Please fix the step inputs first' :
+             (isSaving$ | async) === false? 'Test step to generate sample data to use in the next steps' : savingMessage"
+            [disabled]="(currentStepValidity$ | async) === false || (isSaving$ | async) === true"
+            (buttonClicked)="testStep()">Retest</ap-button>
     </div>
     <div *ngIf="res.date" class="ap-typography-body-2 ap-text-body ap--mt-2 ap-mb-4 ap-pl-0.5">
         {{ res.date | timeago:true}}

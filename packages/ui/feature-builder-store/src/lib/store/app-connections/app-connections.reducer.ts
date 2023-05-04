@@ -1,6 +1,6 @@
 import { Action, createReducer, on } from '@ngrx/store';
 import { BuilderActions } from '../builder/builder.action';
-import { AppConnectionsState } from '../../model/app-connections-state.model';
+import { AppConnectionsState } from '../../model/app-connections-state';
 import { appConnectionsActions } from './app-connections.action';
 
 const initialState: AppConnectionsState = {

@@ -1,7 +1,7 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
-import { GlobalBuilderState } from '../../model/builder-state.model';
+import { GlobalBuilderState } from '../../model/global-builder-state.model';
 
-import { AppConnection, Flow, FlowRun } from '@activepieces/shared';
+import { AppConnection, Flow, FlowRun, flowHelper } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 
 import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
@@ -10,7 +10,7 @@ import { FlowItem } from '../../model/flow-item';
 import { MentionListItem } from '../../model/mention-list-item';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../model/connections-dropdown-item';
-import { BuilderStateEnum } from '../../model';
+import { BuilderSavingStatusEnum } from '../../model';
 import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
@@ -24,12 +24,16 @@ export const selectBuilderState =
 
 export const selectIsPublishing = createSelector(
   selectBuilderState,
-  (state: GlobalBuilderState) => state.state === BuilderStateEnum.PUBLISHING
+  (state: GlobalBuilderState) =>
+    (state.flowState.savingStatus & BuilderSavingStatusEnum.PUBLISHING) ===
+    BuilderSavingStatusEnum.PUBLISHING
 );
 
 export const selectIsSaving = createSelector(
   selectBuilderState,
-  (state: GlobalBuilderState) => state.state === BuilderStateEnum.SAVING_FLOW
+  (state: GlobalBuilderState) =>
+    (state.flowState.savingStatus & BuilderSavingStatusEnum.SAVING_FLOW) ===
+    BuilderSavingStatusEnum.SAVING_FLOW
 );
 
 export const selectFlowHasAnySteps = createSelector(
@@ -77,10 +81,6 @@ export const selectCurrentFlowFolderName = createSelector(
   }
 );
 
-export const selectTabState = createSelector(
-  selectBuilderState,
-  (state: GlobalBuilderState) => state.state
-);
 export const selectCurrentFlowValidity = createSelector(
   selectCurrentFlow,
   (flow: Flow | undefined) => {
@@ -161,7 +161,13 @@ export const selectCurrentFlowVersionId = createSelector(
     return flow.version?.id;
   }
 );
-
+export const selectNumberOfInvalidSteps = createSelector(
+  selectCurrentFlow,
+  (flow) => {
+    const steps = flowHelper.getAllSteps(flow.version);
+    return steps.reduce((prev, curr) => prev + (curr.valid ? 0 : 1), 0);
+  }
+);
 export const selectCurrentFlowRun = createSelector(
   selectBuilderState,
   (state: GlobalBuilderState) => {
@@ -435,7 +441,6 @@ export const BuilderSelectors = {
   selectCurrentFlowRunStatus,
   selectCurrentStepDisplayName,
   selectIsInDebugMode,
-  selectTabState,
   selectAllFlowItemsDetails,
   selectFlowItemDetails,
   selectAllFlowItemsDetailsLoadedState,
@@ -459,4 +464,5 @@ export const BuilderSelectors = {
   selectCurrentFlowFolderName,
   selectStepTestSampleData,
   selectLastTestDate,
+  selectNumberOfInvalidSteps,
 };

@@ -39,8 +39,8 @@ export class TestPollingTriggerComponent extends TestStepCoreComponent {
   failed = false;
   hasBeenTested = false;
   isValid$: Observable<boolean>;
-  constructor(testStepService: TestStepService, private store: Store) {
-    super(testStepService);
+  constructor(testStepService: TestStepService, store: Store) {
+    super(testStepService, store);
     this.isValid$ = this.store.select(BuilderSelectors.selectStepValidity);
     this.initialObservables();
   }

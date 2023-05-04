@@ -10,8 +10,10 @@
                     matTooltip="Test this trigger to generate sample data that can be used in the next steps"
                     matTooltipPosition="above"> </ap-hotspot>
                 <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()"
-                    [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 'After the trigger is tested, you will be able to use its sample data in the next steps'"
-                    [disabled]="(isValid$ | async) === false">Test Trigger </ap-button>
+                    [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' :
+                    (isSaving$| async) === false? 'After the trigger is tested, you will be able to use its sample data in the next steps': savingMessage"
+                    [disabled]="(isValid$ | async) === false || (isSaving$ | async) === true">Test
+                    Trigger </ap-button>
             </div>
         </div>
 
@@ -26,8 +28,10 @@
 
                 </div>
                 <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                    [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 'After the trigger is tested, you will be able to use its sample data in the next steps'"
-                    [disabled]="(isValid$ | async) === false" (buttonClicked)="testStep()">Retest</ap-button>
+                    [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 
+                    (isSaving$ | async) === false?  'After the trigger is tested, you will be able to use its sample data in the next steps' : savingMessage"
+                    [disabled]="(isValid$ | async) === false || (isSaving$ | async) === true"
+                    (buttonClicked)="testStep()">Retest</ap-button>
             </div>
 
             <mat-form-field class="ap-w-full ap-my-2" appearance="outline" subscriptSizing="dynamic">
