@@ -2,6 +2,7 @@ import { Type, Static, } from '@sinclair/typebox';
 
 import { SemVerType } from '../../pieces';
 import { SampleDataSettingsObject } from '../sample-data';
+import { PieceTriggerSettings } from '../triggers/trigger';
 
 export enum ActionType {
   CODE = 'CODE',
@@ -171,3 +172,10 @@ export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema> & { nextA
 export type PieceAction = Static<typeof PieceActionSchema> & { nextAction?: Action };
 
 export type CodeAction = Static<typeof CodeActionSchema> & { nextAction?: Action };
+
+export  type StepSettings =
+  | CodeActionSettings
+  | PieceActionSettings
+  | PieceTriggerSettings
+  | BranchActionSettings
+  | LoopOnItemsActionSettings;
