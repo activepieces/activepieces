@@ -2,6 +2,7 @@ import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import {
+    Action,
     ActionType,
     apId,
     BranchActionSettingsWithValidation,
@@ -18,6 +19,8 @@ import {
     PieceActionSettings,
     PieceTriggerSettings,
     ProjectId,
+    StepLocationRelativeToParent,
+    Trigger,
     TriggerType,
 } from '@activepieces/shared'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
@@ -27,6 +30,7 @@ import { databaseConnection } from '../../database/database-connection'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { pieceMetadataLoader } from '../../pieces/piece-metadata-loader'
+import { FlowViewMode, DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
 
 const branchSetttingsValidaotr = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -39,23 +43,39 @@ export const flowVersionService = {
             id: flowVersionId,
         })
     },
-    async applyOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion | null> {
-        await flowVersionSideEffects.preApplyOperation({
-            projectId,
-            flowVersion,
-            operation,
-        })
-
-        const mutatedFlowVersion = await applySingleOperation(projectId, flowVersion, operation)
+    async applyOperation(projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion | null> {
+        let operations = [userOperation]
+        if (userOperation.type === FlowOperationType.IMPORT_FLOW) {
+            operations = []
+            const actionsToRemove = flowHelper.getAllSteps(flowVersion).filter(step => flowHelper.isAction(step.type))
+            for (const step of actionsToRemove) {
+                operations.push({
+                    type: FlowOperationType.DELETE_ACTION,
+                    request: {
+                        name: step.name,
+                    },
+                })
+            }
+            if (userOperation.request.trigger) {
+                operations.push({
+                    type: FlowOperationType.UPDATE_TRIGGER,
+                    request: userOperation.request.trigger,
+                })
+                operations.push(...getImportOperations(userOperation.request.trigger))
+            }
+        }
+        let mutatedFlowVersion = flowVersion
+        for (const operation of operations) {
+            mutatedFlowVersion = await applySingleOperation(projectId, mutatedFlowVersion, operation)
+        }
         await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>)
-
         return await flowVersionRepo.findOneBy({
             id: flowVersion.id,
         })
     },
 
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {
-        if(id === null || id === undefined){
+        if (id === null || id === undefined) {
             return null
         }
         return await flowVersionRepo.findOneBy({
@@ -75,7 +95,7 @@ export const flowVersionService = {
 
         return flowVersion
     },
-    async getFlowVersion(projectId: ProjectId, flowId: FlowId, versionId: FlowVersionId | undefined, includeArtifacts: boolean): Promise<FlowVersion | null> {
+    async getFlowVersion(projectId: ProjectId, flowId: FlowId, versionId: FlowVersionId | undefined, viewMode: FlowViewMode): Promise<FlowVersion | null> {
         const flowVersion = await flowVersionRepo.findOne({
             where: {
                 flowId,
@@ -85,8 +105,11 @@ export const flowVersionService = {
                 created: 'DESC',
             },
         })
-        if (includeArtifacts) {
-            return await addArtifactsAsBase64(projectId, flowVersion)
+        if (viewMode === FlowViewMode.WITH_ARTIFACTS) {
+            return addArtifactsAsBase64(projectId, flowVersion)
+        }
+        if (viewMode === FlowViewMode.TEMPLATE) {
+            return addArtifactsAsBase64(projectId, await removeSecrets(flowVersion))
         }
         return flowVersion
     },
@@ -103,10 +126,104 @@ export const flowVersionService = {
     },
 }
 
-async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowVersion> {
-    request = await prepareRequest(projectId, flowVersion, request)
-    return flowHelper.apply(flowVersion, request)
+function getImportOperations(step: Action | Trigger | undefined): (FlowOperationRequest)[] {
+    const steps: FlowOperationRequest[] = []
+    while (step) {
+        if (step.nextAction) {
+            steps.push({
+                type: FlowOperationType.ADD_ACTION,
+                request: {
+                    parentStep: step.name,
+                    action: step.nextAction,
+                },
+            })
+        }
+        if (step.type === ActionType.BRANCH) {
+            if (step.onFailureAction) {
+                steps.push({
+                    type: FlowOperationType.ADD_ACTION,
+                    request: {
+                        parentStep: step.name,
+                        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
+                        action: step.onFailureAction,
+                    },
+                })
+                steps.push(...getImportOperations(step.onFailureAction))
+            }
+            if (step.onSuccessAction) {
+                steps.push({
+                    type: FlowOperationType.ADD_ACTION,
+                    request: {
+                        parentStep: step.name,
+                        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
+                        action: step.onSuccessAction,
+                    },
+                })
+                steps.push(...getImportOperations(step.onSuccessAction))
+            }
+        }
+        if (step.type === ActionType.LOOP_ON_ITEMS && step.firstLoopAction) {
+            steps.push({
+                type: FlowOperationType.ADD_ACTION,
+                request: {
+                    parentStep: step.name,
+                    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
+                    action: step.firstLoopAction,
+                },
+
+            })
+            steps.push(...getImportOperations(step.firstLoopAction))
+        }
+        step = step.nextAction
+    }
+    return steps
 }
+
+async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion> {
+    await flowVersionSideEffects.preApplyOperation({
+        projectId,
+        flowVersion,
+        operation: operation,
+    })
+    operation = await prepareRequest(projectId, flowVersion, operation)
+    return flowHelper.apply(flowVersion, operation)
+}
+
+async function removeSecrets(flowVersion: FlowVersion | null) {
+    if (flowVersion === null) {
+        return null
+    }
+    const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
+
+    const steps = flowHelper.getAllSteps(flowVersionWithArtifacts)
+    for (const step of steps) {
+        /*
+        Remove Sample Data & connections
+        */
+        step.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
+        step.settings.input = replaceConnections(step.settings.input)
+    }
+    return flowVersionWithArtifacts
+}
+
+function replaceConnections(obj: Record<string, unknown>): Record<string, unknown> {
+    const replacedObj: Record<string, unknown> = {}
+
+    for (const [key, value] of Object.entries(obj)) {
+        if (typeof value === 'object' && value !== null) {
+            replacedObj[key] = replaceConnections(value as Record<string, unknown>)
+        }
+        else if (typeof value === 'string') {
+            const replacedValue = value.replace(/\${connections\.[^}]*}/g, '')
+            replacedObj[key] = replacedValue === '' ? undefined : replacedValue
+        }
+        else {
+            replacedObj[key] = value
+        }
+    }
+    return replacedObj
+}
+
 
 async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersion | null) {
     if (flowVersion === null) {
@@ -140,10 +257,10 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
     switch (clonedRequest.type) {
         case FlowOperationType.ADD_ACTION:
             clonedRequest.request.action.valid = true
-            if(clonedRequest.request.action.type === ActionType.LOOP_ON_ITEMS) {
+            if (clonedRequest.request.action.type === ActionType.LOOP_ON_ITEMS) {
                 clonedRequest.request.action.valid = loopSettingsValidator.Check(clonedRequest.request.action.settings)
             }
-            else if(clonedRequest.request.action.type === ActionType.BRANCH) {
+            else if (clonedRequest.request.action.type === ActionType.BRANCH) {
                 clonedRequest.request.action.valid = branchSetttingsValidaotr.Check(clonedRequest.request.action.settings)
             }
             else if (clonedRequest.request.action.type === ActionType.PIECE) {
@@ -156,10 +273,10 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
             break
         case FlowOperationType.UPDATE_ACTION:
             clonedRequest.request.valid = true
-            if(clonedRequest.request.type === ActionType.LOOP_ON_ITEMS) {
+            if (clonedRequest.request.type === ActionType.LOOP_ON_ITEMS) {
                 clonedRequest.request.valid = loopSettingsValidator.Check(clonedRequest.request.settings)
             }
-            else if(clonedRequest.request.type === ActionType.BRANCH) {
+            else if (clonedRequest.request.type === ActionType.BRANCH) {
                 clonedRequest.request.valid = branchSetttingsValidaotr.Check(clonedRequest.request.settings)
             }
             else if (clonedRequest.request.type === ActionType.PIECE) {
@@ -263,21 +380,21 @@ function buildSchema(props: PiecePropertyMap): TSchema {
                 propsSchema[name] = Type.Union([Type.Boolean(), Type.String({})])
                 break
             case PropertyType.NUMBER:
-            // Because it could be a variable
+                // Because it could be a variable
                 propsSchema[name] = Type.String({})
                 break
             case PropertyType.STATIC_DROPDOWN:
-                propsSchema[name] =  nonNullableUnknownPropType
+                propsSchema[name] = nonNullableUnknownPropType
                 break
             case PropertyType.DROPDOWN:
                 propsSchema[name] = nonNullableUnknownPropType
                 break
             case PropertyType.OAUTH2:
-            // Only accepts connections variable.
+                // Only accepts connections variable.
                 propsSchema[name] = Type.Union([Type.RegEx(RegExp('[$]{1}{connections.(.*?)}')), Type.String()])
                 break
             case PropertyType.ARRAY:
-            // Only accepts connections variable.
+                // Only accepts connections variable.
                 propsSchema[name] = Type.Union([Type.Array(Type.String({})), Type.String()])
                 break
             case PropertyType.OBJECT:

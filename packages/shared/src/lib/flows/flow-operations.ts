@@ -1,3 +1,4 @@
+import { Action } from "./actions/action";
 import {
     CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema,
 } from "./actions/action";
@@ -21,6 +22,13 @@ export enum StepLocationRelativeToParent {
     AFTER = "AFTER",
     INSIDE_LOOP = "INSIDE_LOOP"
 }
+
+export const ImportFlowRequest = Type.Object({
+    displayName: Type.String({}),
+    trigger: Type.Union([Type.Composite([WebhookTrigger, Type.Object({ nextAction: Action })]), Type.Composite([PieceTrigger, Type.Object({ nextAction: Action })])]),
+})
+
+export type ImportFlowRequest = Static<typeof ImportFlowRequest>;
 
 export const ChangeFolderRequest = Type.Object({
     folderId: Type.Optional(Type.String({})),
@@ -55,6 +63,10 @@ export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger, Webh
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>;
 
 export const FlowOperationRequest = Type.Union([
+    Type.Object({
+        type: Type.Literal(FlowOperationType.IMPORT_FLOW),
+        request: ImportFlowRequest
+    }),
     Type.Object({
         type: Type.Literal(FlowOperationType.CHANGE_NAME),
         request: ChangeNameRequest
