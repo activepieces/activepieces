@@ -31,6 +31,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   instance$: Observable<FlowInstance | undefined>;
   flow$: Observable<Flow>;
   editingFlowName = false;
+  downloadFile$: Observable<void>;
   deleteFlowDialogClosed$: Observable<void>;
   folderDisplayName$: Observable<string>;
   constructor(
@@ -82,6 +83,27 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.snackbar.open(`ID copied`);
     navigator.clipboard.writeText(id);
   }
+  download(id: string) {
+    this.downloadFile$ = this.flowService.exportTemplate(id, undefined).pipe(
+      tap((json) => {
+        const blob = new Blob([JSON.stringify(json, null, 2)], {
+          type: 'application/json',
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'template.json';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }),
+      map(() => {
+        return void 0;
+      })
+    );
+  }
+
   deleteFlow(flow: Flow) {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
