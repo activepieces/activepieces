@@ -74,6 +74,13 @@ function deleteAction(
   }
 }
 
+function getUsedPieces(trigger: Trigger): string[] {
+  return traverseInternal(trigger)
+  .filter((step) => step.type === ActionType.PIECE || step.type === TriggerType.PIECE)
+  .map((step) => step.settings.pieceName)
+  .filter((value, index, self) => self.indexOf(value) === index);
+}
+
 function traverseInternal(step: Trigger | Action | undefined): (Action | Trigger)[] {
   const steps: (Action | Trigger)[] = [];
   while (step !== undefined && step !== null) {
@@ -328,6 +335,7 @@ export const flowHelper = {
   getStep: getStep,
   isAction: isAction,
   getAllSteps: getAllSteps,
+  getUsedPieces: getUsedPieces,
   clone: (flowVersion: FlowVersion): FlowVersion => {
     return JSON.parse(JSON.stringify(flowVersion));
   },

@@ -17,7 +17,7 @@ export type ListFlowsRequest = Omit<Static<typeof ListFlowsRequest>, "cursor"> &
 
 export const GetFlowRequest = Type.Object({
     versionId: Type.Optional(Type.String({})),
-    viewMode: Type.Optional(Type.Enum(FlowViewMode))
+    viewMode: Type.Optional(Type.Union([Type.Literal(FlowViewMode.NO_ARTIFACTS), Type.Literal(FlowViewMode.WITH_ARTIFACTS)]))
 })
 
 export type GetFlowRequest = Static<typeof GetFlowRequest>

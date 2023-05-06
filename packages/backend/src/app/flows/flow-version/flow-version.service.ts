@@ -31,6 +31,7 @@ import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { pieceMetadataLoader } from '../../pieces/piece-metadata-loader'
 import { FlowViewMode, DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
+import { isNil } from 'lodash'
 
 const branchSetttingsValidaotr = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -207,6 +208,9 @@ async function removeSecrets(flowVersion: FlowVersion | null) {
 }
 
 function replaceConnections(obj: Record<string, unknown>): Record<string, unknown> {
+    if(isNil(obj)){
+        return obj
+    }
     const replacedObj: Record<string, unknown> = {}
 
     for (const [key, value] of Object.entries(obj)) {
