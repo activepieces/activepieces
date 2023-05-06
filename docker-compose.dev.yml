@@ -55,6 +55,7 @@ services:
       - postgres_data_dev:/var/lib/postgresql/data
     networks:
       - activepieces_dev
+#    command: -c log_statement=all -c shared_preload_libraries=auto_explain -c auto_explain.log_min_duration=0
 
   redis:
     image: redis:7.0.7

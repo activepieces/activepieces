@@ -24,15 +24,7 @@ export const CodeActionSettings = Type.Object({
   artifactPackagedId: Type.Optional(Type.String({})),
   artifact: Type.Optional(Type.String({})),
   input: Type.Record(Type.String({}), Type.Any()),
-  inputUiInfo:Type.Optional(Type.Object(
-    {
-      currentSelectedData: Type.Optional(Type.Unknown()),
-      lastTestDate: Type.Optional(Type.String()),
-    },
-    {
-      additionalProperties: true
-    }
-  ))
+  inputUiInfo:Type.Optional(SampleDataSettingsObject)
 });
 
 

@@ -63,6 +63,12 @@
       "options": {
         "command": "ts-node -r tsconfig-paths/register -P packages/backend/tsconfig.app.json ./node_modules/typeorm/cli.js"
       }
+    },
+    "db-migration": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx db backend -- migration:generate -d packages/backend/src/app/database/database-connection.ts packages/backend/src/app/database/migration/{args.name}"
+      }
     }
   },
   "tags": []

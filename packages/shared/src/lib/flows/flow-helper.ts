@@ -29,6 +29,10 @@ function isValid(flowVersion: FlowVersion) {
   return valid;
 }
 
+function isAction(type: ActionType | TriggerType): boolean {
+  return Object.entries(ActionType).some(([, value]) => value === type);
+}
+
 function deleteAction(
   flowVersion: FlowVersion,
   request: DeleteActionRequest
@@ -70,16 +74,23 @@ function deleteAction(
   }
 }
 
-function traverseFlowInternal(step: Trigger | Action | undefined): (Action | Trigger)[] {
+function getUsedPieces(trigger: Trigger): string[] {
+  return traverseInternal(trigger)
+  .filter((step) => step.type === ActionType.PIECE || step.type === TriggerType.PIECE)
+  .map((step) => step.settings.pieceName)
+  .filter((value, index, self) => self.indexOf(value) === index);
+}
+
+function traverseInternal(step: Trigger | Action | undefined): (Action | Trigger)[] {
   const steps: (Action | Trigger)[] = [];
   while (step !== undefined && step !== null) {
     steps.push(step);
     if (step.type === ActionType.BRANCH) {
-      steps.push(...traverseFlowInternal(step.onFailureAction));
-      steps.push(...traverseFlowInternal(step.onSuccessAction));
+      steps.push(...traverseInternal(step.onFailureAction));
+      steps.push(...traverseInternal(step.onSuccessAction));
     }
     if (step.type === ActionType.LOOP_ON_ITEMS) {
-      steps.push(...traverseFlowInternal(step.firstLoopAction));
+      steps.push(...traverseInternal(step.firstLoopAction));
     }
     step = step.nextAction;
   }
@@ -88,7 +99,7 @@ function traverseFlowInternal(step: Trigger | Action | undefined): (Action | Tri
 
 
 function getAllSteps(flowVersion: FlowVersion): (Action | Trigger)[] {
-  return traverseFlowInternal(flowVersion.trigger);
+  return traverseInternal(flowVersion.trigger);
 }
 
 function getStep(
@@ -322,7 +333,9 @@ export const flowHelper = {
     return clonedVersion;
   },
   getStep: getStep,
+  isAction: isAction,
   getAllSteps: getAllSteps,
+  getUsedPieces: getUsedPieces,
   clone: (flowVersion: FlowVersion): FlowVersion => {
     return JSON.parse(JSON.stringify(flowVersion));
   },

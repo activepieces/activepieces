@@ -3,8 +3,12 @@ import {
     CreateFlowRequest,
     FlowId,
     FlowOperationRequest,
+    FlowVersion,
     FlowVersionId,
+    FlowViewMode,
+    GetFlowRequest,
     ListFlowsRequest,
+    flowHelper,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
@@ -13,7 +17,6 @@ import { GuessFlowRequest, CountFlowsRequest } from '@activepieces/shared'
 import { flowGuessService } from '@ee/magic-wand/openai'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { logger } from '../../helper/logger'
-
 
 const DEFUALT_PAGE_SIZE = 10
 
@@ -42,7 +45,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 trigger: trigger,
             }
             await flowVersionService.overwriteVersion(flowVersion.id, flowVersion)
-            return flowService.getOne({ id: flow.id, versionId: undefined, projectId: request.principal.projectId, includeArtifacts: false })
+            return flowService.getOne({ id: flow.id, versionId: undefined, projectId: request.principal.projectId, viewMode: FlowViewMode.NO_ARTIFACTS })
         },
     )
 
@@ -77,7 +80,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 Body: FlowOperationRequest
             }>,
         ) => {
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, includeArtifacts: false })
+            const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, viewMode: FlowViewMode.NO_ARTIFACTS })
             if (flow === null) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
@@ -97,10 +100,12 @@ export const flowController = async (fastify: FastifyInstance) => {
                 Querystring: ListFlowsRequest
             }>,
         ) => {
-            const flows = await flowService.list({ projectId: request.principal.projectId, 
+            const flows = await flowService.list({
+                projectId: request.principal.projectId,
                 folderId: request.query.folderId,
-                cursorRequest: request.query.cursor ?? null, 
-                limit: request.query.limit ?? DEFUALT_PAGE_SIZE })
+                cursorRequest: request.query.cursor ?? null,
+                limit: request.query.limit ?? DEFUALT_PAGE_SIZE,
+            })
             return flows
         },
     )
@@ -112,28 +117,57 @@ export const flowController = async (fastify: FastifyInstance) => {
                 Querystring: CountFlowsRequest
             }>,
         ) => {
-            return flowService.count({...request.query, projectId:request.principal.projectId})
+            return flowService.count({ ...request.query, projectId: request.principal.projectId })
         },
     )
-    
+
 
     fastify.get(
-        '/:flowId',
+        '/:flowId/template',
+        {
+            schema: {
+                querystring: GetFlowRequest,
+            },
+        },
         async (
             request: FastifyRequest<{
                 Params: {
                     flowId: FlowId
                 }
-                Querystring: {
-                    versionId: FlowVersionId | undefined
-                    includeArtifacts: boolean | undefined
-                }
+                Querystring: GetFlowRequest
             }>,
         ) => {
             const versionId: FlowVersionId | undefined = request.query.versionId
-            const includeArtifacts = request.query.includeArtifacts ?? false
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId: versionId, projectId: request.principal.projectId, includeArtifacts })
-            if (flow === null) {
+            const flow = await flowService.getOne({ id: request.params.flowId, versionId: versionId, projectId: request.principal.projectId, viewMode: FlowViewMode.TEMPLATE })
+            if (!flow) {
+                throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
+            }
+            return {
+                tags: flowHelper.getUsedPieces(flow.version.trigger),
+                template: removeMetaInformation(flow.version),
+            }
+        },
+    )
+
+    fastify.get(
+        '/:flowId',
+        {
+            schema: {
+                querystring: GetFlowRequest,
+            },
+        },
+        async (
+            request: FastifyRequest<{
+                Params: {
+                    flowId: FlowId
+                }
+                Querystring: GetFlowRequest
+            }>,
+        ) => {
+            const versionId: FlowVersionId | undefined = request.query.versionId
+            const viewMode = request.query.viewMode ?? FlowViewMode.NO_ARTIFACTS
+            const flow = await flowService.getOne({ id: request.params.flowId, versionId: versionId, projectId: request.principal.projectId, viewMode })
+            if (!flow) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
             return flow
@@ -154,5 +188,14 @@ export const flowController = async (fastify: FastifyInstance) => {
             _reply.status(StatusCodes.OK).send()
         },
     )
-    
+
+}
+
+function removeMetaInformation(flowVersion: FlowVersion) {
+    const sensitiveDataKeys = ['created', 'updated', 'projectId', 'folderId', 'flowId']
+
+    const filteredEntries = Object.entries(flowVersion)
+        .filter(([key]) => !sensitiveDataKeys.includes(key))
+
+    return Object.fromEntries(filteredEntries)
 }
