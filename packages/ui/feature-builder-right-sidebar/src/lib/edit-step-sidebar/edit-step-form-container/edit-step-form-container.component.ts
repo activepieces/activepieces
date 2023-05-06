@@ -123,9 +123,7 @@ export class EditStepFormContainerComponent {
           if (this._selectedStep.type === TriggerType.WEBHOOK) {
             this.updateNonAppWebhookTrigger(res.step!);
           } else {
-            const newTriggerSettings = this.createNewStepSettings(
-              res.step!
-            ) as PieceTriggerSettings;
+            const newTriggerSettings = this.createPieceSettings(res.step!);
             const trigger =
               res.metadata?.triggers[newTriggerSettings.triggerName];
             if (trigger?.type === TriggerStrategy.APP_WEBHOOK) {
@@ -213,13 +211,19 @@ export class EditStepFormContainerComponent {
     }
 
     if (currentStep.type === TriggerType.PIECE) {
-      const stepSettings: PieceTriggerSettings = {
-        ...currentStep.settings,
-        ...inputControlValue,
-      };
-      return stepSettings;
+      return this.createPieceSettings(currentStep);
     }
     return inputControlValue;
+  }
+
+  createPieceSettings(step: FlowItem) {
+    const inputControlValue: StepSettings =
+      this.stepForm.get('settings')?.value;
+    const stepSettings: PieceTriggerSettings = {
+      ...step.settings,
+      ...inputControlValue,
+    };
+    return stepSettings;
   }
   copyUrl(url: string) {
     navigator.clipboard.writeText(url);
