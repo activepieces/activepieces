@@ -1,5 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { getRoomId, sendMessage as sendMatrixMessage } from '../common/common';
 
 export const sendMessage = createAction({
     name: "send_message",
@@ -27,11 +27,11 @@ export const sendMessage = createAction({
                     required: true,
                 })
             },
-            required: true
+            required: true,
         }),
-        room_id: Property.ShortText({
-            displayName: "Internal Room ID",
-            description: "Copy it from room settings -> advanced -> internal room Id",
+        room_alias: Property.ShortText({
+            displayName: "Room Alias",
+            description: "Copy it from room settings -> advanced -> room addresses -> main address",
             required: true,
         }),
         message: Property.LongText({
@@ -42,17 +42,9 @@ export const sendMessage = createAction({
     },
     async run({ propsValue }) {
         const baseUrl = propsValue.authentication.base_url.replace(/\/$/, "");
-        return await httpClient.sendRequest({
-            method: HttpMethod.POST,
-            url: `${baseUrl}/_matrix/client/r0/rooms/` + propsValue.room_id + "/send/m.room.message",
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: propsValue.authentication.access_token,
-            },
-            body: {
-                msgtype: "m.text",
-                body: propsValue.message,
-            }
-        })
+        const accessToken = propsValue.authentication.access_token;
+        const roomId = (await getRoomId(baseUrl, propsValue.room_alias, accessToken)).body.room_id;
+
+        return await sendMatrixMessage(baseUrl, roomId, accessToken, propsValue.message);
     }
 })
