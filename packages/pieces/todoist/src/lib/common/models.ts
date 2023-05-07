@@ -6,6 +6,10 @@ export type TodoistProject = {
 export type TodoistCreateTaskRequest = {
   content: string;
   project_id?: string | undefined;
+  description?: string | undefined;
+  labels?: Array<string> | undefined;
+  priority?: number | undefined;
+  due_date?: string | undefined;
 }
 
 type TodoistTaskDue = {
