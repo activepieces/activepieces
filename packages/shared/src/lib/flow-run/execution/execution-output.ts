@@ -1,11 +1,12 @@
 import {ExecutionState} from './execution-state';
 
 export enum ExecutionOutputStatus {
-  SUCCEEDED = 'SUCCEEDED',
   FAILED = 'FAILED',
+  INTERNAL_ERROR = 'INTERNAL_ERROR',
   RUNNING = "RUNNING",
+  SUCCEEDED = 'SUCCEEDED',
+  SUSPENDED = 'SUSPENDED',
   TIMEOUT = "TIMEOUT",
-  INTERNAL_ERROR = "INTERNAL_ERROR",
 }
 
 export interface ExecutionOutput {
