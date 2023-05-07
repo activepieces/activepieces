@@ -1,13 +1,13 @@
 name: Playwright Tests
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 
 jobs:
   test:
     if: github.repository == 'activepieces/activepieces'
-    timeout-minutes: 15
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     env:
       AP_TEST_EMAIL: ${{ secrets.AP_TEST_EMAIL }}
