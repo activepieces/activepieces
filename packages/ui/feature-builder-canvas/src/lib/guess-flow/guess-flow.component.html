@@ -1,20 +1,25 @@
 <div
-    class="ap-flex ap-items-center ap-px-[145px] ap-bg-white ap-w-full ap-h-full ap-flex ap-flex-col ap-overflow-y-scroll ap-gap-[70px] ap-relative">
-    <app-prompt-input></app-prompt-input>
+    class="ap-flex ap-items-center ap-px-[145px] ap-pb-[100px] ap-bg-white ap-w-full ap-h-full ap-flex ap-flex-col ap-overflow-y-scroll ap-gap-[70px] ap-relative custom-scroll-bars">
+    <div class="ap-absolute ap-right-[30px] ap-top-[20px]">
+        <ap-icon-button [iconFilename]="'close.svg'" (click)="hideGuessFlowComponent.emit()"></ap-icon-button>
+    </div>
+    <app-prompt-input #promptInput></app-prompt-input>
     <div class="ap-flex ap-justify-center">
-        <app-prompts-table></app-prompts-table>
+        <app-prompts-table (promptClicked)="promptInput.changeGuessValue($event)"></app-prompts-table>
     </div>
-    <div
-        class="ap-absolute ap-left-0 ap-bottom-0 ap-w-full ap-h-[100px] ap-bg-white ap-flex ap-items-center ap-justify-center ap-gap-[20px]">
-        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnStyle="stroked">
-            Build from scratch
-        </ap-button>
-        <ap-button btnColor="primary" mat-dialog-close btnSize="default">
-            <div class="ap-flex ap-items-center ap-gap-2.5">
-                Guess flow <svg-icon src="assets/img/custom/arrow.svg" class="ap-fill-white ap-w-[14px] ap-h-[12px]"
-                    [applyClass]="true"></svg-icon>
-            </div>
 
-        </ap-button>
-    </div>
+</div>
+<div
+    class="ap-relative ap-w-full ap-h-[100px] -ap-mt-[100px] ap-flex ap-items-center ap-justify-center ap-gap-[20px] white-gradient">
+    <ap-button btnColor="primary" mat-dialog-close btnSize="default" btnStyle="stroked"
+        (buttonClicked)="hideGuessFlowComponent.emit()">
+        Build from scratch
+    </ap-button>
+    <ap-button btnColor="primary" mat-dialog-close btnSize="default">
+        <div class="ap-flex ap-items-center ap-gap-2.5">
+            Guess flow <svg-icon src="assets/img/custom/arrow.svg"
+                class="ap-fill-white ap-w-[14px] ap-h-[26px] ap-flex ap-items-center" [applyClass]="true"></svg-icon>
+        </div>
+
+    </ap-button>
 </div>
