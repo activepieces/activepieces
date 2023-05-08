@@ -3,7 +3,7 @@
         Let our AI build your automation
     </div>
 
-    <div class="ap-flex ap-min-w-[450px]">
+    <div class="ap-flex ap-w-full ap-justify-center ap-cursor-text ap-max-w-[1050px]" (click)="inputDiv.focus()">
 
         <div>
             <div contenteditable
@@ -13,7 +13,7 @@
             </div>
         </div>
 
-        <div class="ap-text-placeholder ap-text-[50px] ap-font-semibold ap-cursor-text" (click)="inputDiv.focus()"
+        <div class="ap-text-placeholder ap-text-[50px] ap-font-semibold " (click)="inputDiv.focus()"
             *ngIf="guess.value===''">Describe your flow
         </div>
     </div>

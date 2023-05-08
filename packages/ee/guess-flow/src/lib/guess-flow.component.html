@@ -5,7 +5,10 @@
             <ap-icon-button [iconFilename]="'close.svg'" [buttonDisabled]="!!guessFlow$"
                 (click)="!!guessFlow$? null : closeContainer.next(true)"></ap-icon-button>
         </div>
-        <app-prompt-input #promptInput></app-prompt-input>
+        <div class="ap-w-full">
+            <app-prompt-input #promptInput></app-prompt-input>
+        </div>
+
         <div class="ap-flex ap-justify-center">
             <app-prompts-table (promptClicked)="promptInput.changeGuessValue($event)"></app-prompts-table>
         </div>

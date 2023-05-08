@@ -58,6 +58,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 
     this.showGuessFlowBtn$ = this.flagService.getEdition().pipe(
       map((res) => {
+        return true;
         return res === ApEdition.ENTERPRISE;
       })
     );

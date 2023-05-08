@@ -74,10 +74,8 @@ export class PromptInputComponent implements AfterViewInit {
   calculateInputStyle() {
     if (this.guess.value.length <= 38) {
       this.guessStyling = this.stylingLimits.oneLine;
-    } else if (this.guess.value.length > 38 && this.guess.value.length < 76) {
-      this.guessStyling = this.stylingLimits.twoLines;
     } else {
-      this.guessStyling = this.stylingLimits.moreThanTwoLines;
+      this.guessStyling = this.stylingLimits.twoLines;
     }
   }
 }
