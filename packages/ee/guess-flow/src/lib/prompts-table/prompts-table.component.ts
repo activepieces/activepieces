@@ -46,9 +46,8 @@ export class PromptsTableComponent implements AfterViewInit {
       more: 3,
     },
   ];
-  constructor(private cd:ChangeDetectorRef){}
+  constructor(private cd: ChangeDetectorRef) {}
   ngAfterViewInit(): void {
-      this.cd.markForCheck();
+    this.cd.markForCheck();
   }
-
 }

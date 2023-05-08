@@ -18,13 +18,13 @@ export class GuessFlowContainerComponent {
   componentRef: ComponentRef<{ closeContainer: Subject<boolean> }> | null =
     null;
   constructor(private injector: Injector, private viewRef: ViewContainerRef) {
-    this.showComponent();
+    // this.showComponent();
   }
 
   async showComponent() {
     if (this.componentRef === null) {
       const GuessFlowModule = await import(
-        '../../../../../../../../../ee/guess-flow/guess-flow.module'
+        '../../../../../../../../../ee/guess-flow/src/lib/guess-flow.module'
       );
       const moduleRef = createNgModule(
         GuessFlowModule.GuessFlowModule,

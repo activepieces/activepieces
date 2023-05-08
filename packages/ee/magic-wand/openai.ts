@@ -9,7 +9,8 @@ import { Action, ActionType, BranchAction, CodeAction, PieceAction, Trigger, Tri
 import { logger } from '@backend/helper/logger'
 import { isNil } from 'lodash'
 
-const llm = new OpenAI({ openAIApiKey: system.get(SystemProp.OPENAI_KEY), temperature: 0.2, modelName: 'gpt-3.5-turbo' })
+
+const llm =  !system.get(SystemProp.OPENAI_KEY)? undefined :  new OpenAI({ openAIApiKey: system.get(SystemProp.OPENAI_KEY), temperature: 0.2, modelName: 'gpt-3.5-turbo' })
 
 type TriggerDetails = {
     pieceName: string

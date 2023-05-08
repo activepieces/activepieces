@@ -18,4 +18,4 @@ import { GuessFlowComponent } from './guess-flow.component';
   exports: [GuessFlowComponent],
 })
 export class GuessFlowModule {}
-export class GuessFlowComponentRef extends GuessFlowComponent{};
+export class GuessFlowComponentRef extends GuessFlowComponent {}
