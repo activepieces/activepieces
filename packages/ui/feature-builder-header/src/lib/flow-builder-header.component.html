@@ -36,16 +36,12 @@
       </mat-menu>
 
     </div>
+    <ap-icon-button [width]="25" [height]="25" iconFilename="AI.svg" tooltipText="Guess Flow"
+      (buttonClicked)="showAiHelper.emit(true)" *ngIf="showGuessFlowBtn$ | async"></ap-icon-button>
     <div class="ap-flex-grow">
 
     </div>
     <div class="ap-flex ap-items-center ap-gap-2">
-      <ap-button btnStyle="basic" btnColor="basic" btnSize="medium" (click)="guessAi()"
-        *ngIf="magicWandEnabled$ | async">
-        <div class="ap-flex ap-items-center ap-font-semibold">
-          🪄 Magic Wand
-        </div>
-      </ap-button>
       <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
 
       <ng-container *ngIf=" (viewMode$ | async)===false">

@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { map, Observable, tap } from 'rxjs';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
+  FlagService,
   FlowService,
   fadeIn400ms,
   initialiseBeamer,
@@ -16,7 +17,7 @@ import {
   CollectionBuilderService,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { Flow, FlowInstance } from '@activepieces/shared';
+import { ApEdition, Flow, FlowInstance } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
@@ -27,20 +28,23 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class FlowBuilderHeaderComponent implements OnInit {
   viewMode$: Observable<boolean>;
-  magicWandEnabled$: Observable<boolean>;
+
   instance$: Observable<FlowInstance | undefined>;
   flow$: Observable<Flow>;
   editingFlowName = false;
   deleteFlowDialogClosed$: Observable<void>;
   folderDisplayName$: Observable<string>;
+  showGuessFlowBtn$: Observable<boolean>;
+  @Output()
+  showAiHelper = new EventEmitter<boolean>();
   constructor(
     public dialogService: MatDialog,
     private store: Store,
     private router: Router,
     public collectionBuilderService: CollectionBuilderService,
-    private route: ActivatedRoute,
     private snackbar: MatSnackBar,
-    private flowService: FlowService
+    private flowService: FlowService,
+    private flagService: FlagService
   ) {}
 
   ngOnInit(): void {
@@ -51,9 +55,10 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.folderDisplayName$ = this.store.select(
       BuilderSelectors.selectCurrentFlowFolderName
     );
-    this.magicWandEnabled$ = this.route.queryParams.pipe(
-      map((params) => {
-        return !!params['magicWand'];
+
+    this.showGuessFlowBtn$ = this.flagService.getEdition().pipe(
+      map((res) => {
+        return res === ApEdition.ENTERPRISE;
       })
     );
   }

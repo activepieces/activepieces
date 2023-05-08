@@ -1,6 +1,6 @@
 <div class="box">
-  <div class="header" (click)="guessFlow.showComponent()">
-    <app-flow-builder-header></app-flow-builder-header>
+  <div class="header">
+    <app-flow-builder-header (showAiHelper)="guessFlow.showComponent()"></app-flow-builder-header>
   </div>
   <div class="content">
     <div class="drawer-container">
