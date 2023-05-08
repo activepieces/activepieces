@@ -19,11 +19,9 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { CommonModule } from '@angular/common';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { CommonLayoutModule } from './modules/common/common-layout.module';
-import { FirebaseAuthLayoutModule } from '../../../../ee/firebase-auth/frontend/firebase-auth.module';
 import { Route, Router } from '@angular/router';
 import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
-import { FirebaseAuthContainerComponent } from '@ee/firebase-auth/frontend/auth-container/firebase-auth-container.component';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { FeatureCommandBarModule } from '@activepieces/ui/feature-command-bar';
 
@@ -57,7 +55,6 @@ export function tokenGetter() {
     AngularSvgIconModule.forRoot(),
     CommonLayoutModule,
     UiCommonModule,
-    ...dynamicModules(),
   ],
   providers: [
     {
@@ -132,7 +129,6 @@ function dynamicRoutes(edition: string) {
       editionRoutes = [
         {
           path: '',
-          component: FirebaseAuthContainerComponent,
           children: [
             {
               path: '',
@@ -163,10 +159,6 @@ function dynamicRoutes(edition: string) {
       break;
   }
   return [...coreRoutes, ...editionRoutes, ...suffixRoutes];
-}
-
-function dynamicModules() {
-  return [FirebaseAuthLayoutModule];
 }
 
 function extractHostname(url: string): string {
