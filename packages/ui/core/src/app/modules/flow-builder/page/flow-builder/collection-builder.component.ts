@@ -51,6 +51,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   cursorStyle$: Observable<string>;
   TriggerType = TriggerType;
   testingStepSectionIsRendered$: Observable<boolean>;
+  showGuessFlowComponent = true;
   constructor(
     private store: Store,
     public pieceBuilderService: CollectionBuilderService,

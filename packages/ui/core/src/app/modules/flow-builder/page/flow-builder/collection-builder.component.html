@@ -23,8 +23,8 @@
         </mat-drawer>
         <mat-drawer-content [class.no-transition]="rightSidebarDragging || leftSidebarDragging">
           <div class="box ap-relative">
-            <div class="ap-absolute ap-left-0 ap-z-50 ap-h-full ap-w-full">
-              <app-guess-flow></app-guess-flow>
+            <div class="ap-absolute ap-left-0 ap-z-50 ap-h-full ap-w-full" *ngIf="showGuessFlowComponent">
+              <app-guess-flow (hideGuessFlowComponent)="showGuessFlowComponent=false"></app-guess-flow>
             </div>
             <div class="content canvas" #canvasWrapper appCanvasPanner [style.cursor]="cursorStyle$ | async">
               <app-canvas-utils class="ap-absolute ap-right-[15px] ap-bottom-[15px] ap-z-40"></app-canvas-utils>
