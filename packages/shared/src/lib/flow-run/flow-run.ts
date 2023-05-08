@@ -8,10 +8,27 @@ import {
   ExecutionOutputStatus,
 } from './execution/execution-output';
 import { FlowId } from '../flows/flow';
+import { ExecutionState } from './execution/execution-state';
 
 export type FlowRunId = ApId;
 
-export interface FlowRun extends BaseModel<FlowRunId> {
+export enum FlowRunPauseType {
+  DELAY = 'DELAY',
+}
+
+type BaseFlowRunPauseMetadata<T extends FlowRunPauseType> = {
+  type: T;
+  step: string;
+  executionState: ExecutionState;
+}
+
+export type DelayFlowRunPauseMetadata = BaseFlowRunPauseMetadata<FlowRunPauseType.DELAY> & {
+  resumeDataTime: string;
+}
+
+export type FlowRunPauseMetadata = DelayFlowRunPauseMetadata
+
+export type FlowRun = BaseModel<FlowRunId> & {
   id: FlowRunId;
   projectId: ProjectId;
   flowId: FlowId;
@@ -22,6 +39,7 @@ export interface FlowRun extends BaseModel<FlowRunId> {
   startTime: string;
   finishTime: string;
   environment: RunEnvironment;
+  pauseMetadata: FlowRunPauseMetadata;
 
   // Frontend loads the state
   executionOutput?: ExecutionOutput;
