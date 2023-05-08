@@ -27,6 +27,7 @@ import { flowRepo } from './flow.repo'
 import { telemetry } from '../../helper/telemetry.utils'
 import { flowInstanceService } from '../flow-instance/flow-instance.service'
 import { IsNull } from 'typeorm'
+import { generateFlow } from '@ee/magic-wand/openai'
 import { isNil } from 'lodash'
 
 export const flowService = {
@@ -134,10 +135,10 @@ export const flowService = {
         }
     },
 
-    async update({ flowId, projectId, request }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
+    async update({ flowId, projectId, request: operation }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
         const flowLock = await acquireLock({
             key: flowId,
-            timeout: 5000,
+            timeout: 60000,
         })
         const flow: Omit<Flow, 'version'> | null = (await flowRepo.findOneBy({ projectId: projectId, id: flowId }))
         if (isNil(flow)) {
@@ -149,10 +150,10 @@ export const flowService = {
             })
         }
         try {
-            if (request.type === FlowOperationType.CHANGE_FOLDER) {
+            if (operation.type === FlowOperationType.CHANGE_FOLDER) {
                 await flowRepo.update(flow.id, {
                     ...flow,
-                    folderId: request.request.folderId ?? null,
+                    folderId: operation.request.folderId ?? null,
                 })
             }
             else {
@@ -160,7 +161,17 @@ export const flowService = {
                 if (lastVersion.state === FlowVersionState.LOCKED) {
                     lastVersion = await flowVersionService.createVersion(flowId, lastVersion)
                 }
-                await flowVersionService.applyOperation(projectId, lastVersion, request)
+                // Enterprise only
+                if (operation.type === FlowOperationType.GENERATE_FLOW) {
+                    const trigger = await generateFlow(operation.request.prompt)
+                    await flowVersionService.overwriteVersion(lastVersion.id, {
+                        ...lastVersion,
+                        trigger: trigger,
+                    })
+                }
+                else {
+                    await flowVersionService.applyOperation(projectId, lastVersion, operation)
+                }
             }
         }
         finally {
