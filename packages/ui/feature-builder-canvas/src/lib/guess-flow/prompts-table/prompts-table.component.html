@@ -4,7 +4,7 @@
     </div>
     <mat-divider></mat-divider>
     <ng-container *ngFor="let prompt of prompts; let isLast=last">
-        <div
+        <div (click)="promptClicked.emit(prompt.content)"
             class="ap-typography-body-2 ap-py-6 ap-px-8  ap-flex ap-items-center ap-gap-[70px] hover:ap-bg-hover ap-cursor-pointer">
             {{prompt.content}} <app-prompt-icons [prompt]="prompt"></app-prompt-icons>
 

@@ -6,11 +6,10 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PromptIconsComponent {
-
   @Input()
-  prompt : {
-    content:string,
-    urls:string[];
-    more:number
+  prompt: {
+    content: string;
+    urls: string[];
+    more: number;
   };
 }
