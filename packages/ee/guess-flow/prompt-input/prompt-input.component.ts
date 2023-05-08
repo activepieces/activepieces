@@ -40,7 +40,9 @@ export class PromptInputComponent implements AfterViewInit {
       'font-weight': '400',
     },
   };
-  constructor(private cd: ChangeDetectorRef) {}
+  constructor(private cd: ChangeDetectorRef) {
+    
+  }
   @Output()
   guessValueChanged = new EventEmitter<string>();
   changeGuessValue(newValue?: string) {
@@ -55,7 +57,9 @@ export class PromptInputComponent implements AfterViewInit {
     this.calculateInputStyle();
   }
   ngAfterViewInit(): void {
+    
     this.inputDiv.nativeElement.focus();
+    this.cd.markForCheck();
   }
   paste($event: ClipboardEvent) {
     //Disallow HTML pasting
@@ -83,4 +87,5 @@ export class PromptInputComponent implements AfterViewInit {
       this.guessStyling = this.stylingLimits.moreThanTwoLines;
     }
   }
+
 }

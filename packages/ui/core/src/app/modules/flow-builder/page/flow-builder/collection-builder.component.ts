@@ -18,10 +18,7 @@ import { map, Observable, tap } from 'rxjs';
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import {
-  TestRunBarComponent,
-  CollectionBuilderService,
-} from '@activepieces/ui/feature-builder-store';
+import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
 import { ExecutionOutputStatus, TriggerType } from '@activepieces/shared';
@@ -32,12 +29,12 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { TestStepService } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
+import { CollectionBuilderService } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-collection-builder',
   templateUrl: './collection-builder.component.html',
   styleUrls: ['./collection-builder.component.scss'],
-  providers: [CollectionBuilderService],
 })
 export class CollectionBuilderComponent implements OnInit, OnDestroy {
   @ViewChild('canvasWrapper') canvasWrapper: ElementRef;

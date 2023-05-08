@@ -21,6 +21,7 @@ import { UiFeatureBuilderStoreModule } from '@activepieces/ui/feature-builder-st
 import { UiFeatureBuilderCanvasModule } from '@activepieces/ui/feature-builder-canvas';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { UiFeatureBuilderRightSidebarModule } from '@activepieces/ui/feature-builder-right-sidebar';
+import { GuessFlowContainerComponent } from './page/flow-builder/guess-flow-container/guess-flow-container.component';
 
 @NgModule({
   imports: [
@@ -51,7 +52,7 @@ import { UiFeatureBuilderRightSidebarModule } from '@activepieces/ui/feature-bui
       multi: true,
     },
   ],
-  declarations: [CollectionBuilderComponent],
+  declarations: [CollectionBuilderComponent, GuessFlowContainerComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [],
 })

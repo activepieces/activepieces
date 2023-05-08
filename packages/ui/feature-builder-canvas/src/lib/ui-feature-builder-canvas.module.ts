@@ -12,11 +12,6 @@ import { CanvasUtilsComponent } from './canvas-utils/canvas-utils.component';
 import { CanvasPannerDirective } from './canvas-utils/panning/panner.directive';
 import { DeleteStepDialogComponent } from './flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
 import { IncompleteStepsWidgetComponent } from './incomplete-steps-widget/incomplete-steps-widget.component';
-import { GuessFlowComponent } from './guess-flow/guess-flow.component';
-import { PromptInputComponent } from './guess-flow/prompt-input/prompt-input.component';
-import { PromptsTableComponent } from './guess-flow/prompts-table/prompts-table.component';
-import { PromptIconsComponent } from './guess-flow/prompts-table/prompt-icons/prompt-icons.component';
-
 @NgModule({
   imports: [CommonModule, UiCommonModule],
   declarations: [
@@ -31,16 +26,7 @@ import { PromptIconsComponent } from './guess-flow/prompts-table/prompt-icons/pr
     DeleteStepDialogComponent,
     CanvasPannerDirective,
     IncompleteStepsWidgetComponent,
-    GuessFlowComponent,
-    PromptInputComponent,
-    PromptsTableComponent,
-    PromptIconsComponent,
   ],
-  exports: [
-    FlowItemTreeComponent,
-    CanvasUtilsComponent,
-    CanvasPannerDirective,
-    GuessFlowComponent,
-  ],
+  exports: [FlowItemTreeComponent, CanvasUtilsComponent, CanvasPannerDirective],
 })
 export class UiFeatureBuilderCanvasModule {}

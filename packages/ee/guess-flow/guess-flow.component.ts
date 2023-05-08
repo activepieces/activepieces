@@ -1,9 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
-  Output,
+
 } from '@angular/core';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-guess-flow',
@@ -12,6 +12,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GuessFlowComponent {
-  @Output()
-  hideGuessFlowComponent = new EventEmitter<boolean>();
+
+  closeContainer= new Subject<boolean>();
+
 }

@@ -1,5 +1,7 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   Output,
@@ -10,7 +12,7 @@ import {
   templateUrl: './prompts-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PromptsTableComponent {
+export class PromptsTableComponent implements AfterViewInit {
   @Output()
   promptClicked = new EventEmitter<string>();
   prompts: {
@@ -44,4 +46,9 @@ export class PromptsTableComponent {
       more: 3,
     },
   ];
+  constructor(private cd:ChangeDetectorRef){}
+  ngAfterViewInit(): void {
+      this.cd.markForCheck();
+  }
+
 }
