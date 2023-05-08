@@ -5,16 +5,15 @@ import { FlowFactoryUtil } from '../utils/flowFactoryUtil';
 import { FlowRendererService } from './flow-renderer.service';
 import { BuilderSelectors } from '../store/builder';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class CollectionBuilderService {
   lastSuccessfulSaveDate = '';
-
   constructor(
     private flowRendererService: FlowRendererService,
     private store: Store
-  ) {
+  ) {}
+
+  listenToGraphChanges() {
     this.store
       .select(BuilderSelectors.selectCurrentFlow)
       .pipe(distinctUntilChanged())

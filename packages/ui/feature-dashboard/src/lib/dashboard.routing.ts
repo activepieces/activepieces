@@ -7,10 +7,12 @@ import {
 } from './resolvers/are-there-flows.resolver';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { FoldersResolver } from './resolvers/folders.resolver';
+import { DashboardContainerComponent } from './dashboard-container.component';
 export const DashboardLayoutRouting: Routes = [
   {
     path: '',
     canActivate: [],
+    component: DashboardContainerComponent,
     children: [
       { path: '', pathMatch: 'full', redirectTo: '/flows' },
       {

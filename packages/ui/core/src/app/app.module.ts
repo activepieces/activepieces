@@ -7,7 +7,6 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FlowBuilderModule } from './modules/flow-builder/flow-builder.module';
 import { HttpClientModule } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { UiCommonModule, environment } from '@activepieces/ui/common';
@@ -26,13 +25,10 @@ import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { FirebaseAuthContainerComponent } from '@ee/firebase-auth/frontend/auth-container/firebase-auth-container.component';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
-import { DashboardContainerComponent } from '@activepieces/ui/feature-dashboard';
 import { FeatureCommandBarModule } from '@activepieces/ui/feature-command-bar';
-import { AuthLayoutComponent } from '@activepieces/ui/feature-authentication';
 
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
-
   return jwtToken;
 }
 
@@ -41,7 +37,6 @@ export function tokenGetter() {
   imports: [
     CommonModule,
     BrowserModule,
-    FlowBuilderModule,
     AppRoutingModule,
     BrowserAnimationsModule,
     FeatureCommandBarModule,
@@ -59,10 +54,10 @@ export function tokenGetter() {
         allowedDomains: [extractHostname(environment.apiUrl)],
       },
     }),
-    ...dynamicModules(),
-    AngularSvgIconModule,
+    AngularSvgIconModule.forRoot(),
     CommonLayoutModule,
     UiCommonModule,
+    ...dynamicModules(),
   ],
   providers: [
     {
@@ -96,7 +91,6 @@ function dynamicRoutes(edition: string) {
   const coreRoutes: Route[] = [
     {
       path: '',
-      component: DashboardContainerComponent,
       canActivate: [UserLoggedIn],
       children: [
         {
@@ -155,7 +149,6 @@ function dynamicRoutes(edition: string) {
       editionRoutes = [
         {
           path: '',
-          component: AuthLayoutComponent,
           children: [
             {
               path: '',
