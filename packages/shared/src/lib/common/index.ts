@@ -1,2 +1,2 @@
-export * from './utils/semVer';
+export * from './utils';
 export * from './base-model'

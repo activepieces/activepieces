@@ -42,6 +42,7 @@
     "@ngrx/store-devtools": "^15.1.0",
     "@notionhq/client": "^2.2.3",
     "@nrwl/nx-cloud": "^15.3.4",
+    "@sendgrid/mail": "^7.7.0",
     "@sentry/node": "^7.38.0",
     "@sinclair/typebox": "^0.26.3",
     "airtable": "^0.11.6",

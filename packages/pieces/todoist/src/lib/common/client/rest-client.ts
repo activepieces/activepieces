@@ -22,7 +22,7 @@ export const todoistRestClient = {
   },
 
   tasks: {
-    async create({ token, project_id, content }: TasksCreateParams): Promise<TodoistTask> {
+    async create({ token, project_id, content, description, labels, priority, due_date }: TasksCreateParams): Promise<TodoistTask> {
       const request: HttpRequest<TodoistCreateTaskRequest> = {
         method: HttpMethod.POST,
         url: `${API}/tasks`,
@@ -33,6 +33,10 @@ export const todoistRestClient = {
         body: {
           content,
           project_id,
+          description,
+          labels,
+          priority,
+          due_date
         },
       };
 
@@ -68,9 +72,7 @@ type ProjectsListParams = {
 
 type TasksCreateParams = {
   token: string;
-  content: string;
-  project_id?: string | undefined;
-}
+} & TodoistCreateTaskRequest;
 
 type TasksListParams = {
   token: string;

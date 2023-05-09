@@ -3,14 +3,17 @@ import {
     CreateFlowRequest,
     FlowId,
     FlowOperationRequest,
+    FlowVersion,
     FlowVersionId,
+    FlowViewMode,
+    GetFlowRequest,
     ListFlowsRequest,
+    flowHelper,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowService } from './flow.service'
 import { CountFlowsRequest } from '@activepieces/shared'
-
 
 const DEFUALT_PAGE_SIZE = 10
 
@@ -46,7 +49,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 Body: FlowOperationRequest
             }>,
         ) => {
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, includeArtifacts: false })
+            const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, viewMode: FlowViewMode.NO_ARTIFACTS })
             if (flow === null) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
@@ -89,22 +92,51 @@ export const flowController = async (fastify: FastifyInstance) => {
 
 
     fastify.get(
-        '/:flowId',
+        '/:flowId/template',
+        {
+            schema: {
+                querystring: GetFlowRequest,
+            },
+        },
         async (
             request: FastifyRequest<{
                 Params: {
                     flowId: FlowId
                 }
-                Querystring: {
-                    versionId: FlowVersionId | undefined
-                    includeArtifacts: boolean | undefined
-                }
+                Querystring: GetFlowRequest
             }>,
         ) => {
             const versionId: FlowVersionId | undefined = request.query.versionId
-            const includeArtifacts = request.query.includeArtifacts ?? false
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId: versionId, projectId: request.principal.projectId, includeArtifacts })
-            if (flow === null) {
+            const flow = await flowService.getOne({ id: request.params.flowId, versionId: versionId, projectId: request.principal.projectId, viewMode: FlowViewMode.TEMPLATE })
+            if (!flow) {
+                throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
+            }
+            return {
+                tags: flowHelper.getUsedPieces(flow.version.trigger),
+                template: removeMetaInformation(flow.version),
+            }
+        },
+    )
+
+    fastify.get(
+        '/:flowId',
+        {
+            schema: {
+                querystring: GetFlowRequest,
+            },
+        },
+        async (
+            request: FastifyRequest<{
+                Params: {
+                    flowId: FlowId
+                }
+                Querystring: GetFlowRequest
+            }>,
+        ) => {
+            const versionId: FlowVersionId | undefined = request.query.versionId
+            const viewMode = request.query.viewMode ?? FlowViewMode.NO_ARTIFACTS
+            const flow = await flowService.getOne({ id: request.params.flowId, versionId: versionId, projectId: request.principal.projectId, viewMode })
+            if (!flow) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
             return flow
@@ -126,4 +158,13 @@ export const flowController = async (fastify: FastifyInstance) => {
         },
     )
 
+}
+
+function removeMetaInformation(flowVersion: FlowVersion) {
+    const sensitiveDataKeys = ['created', 'updated', 'projectId', 'folderId', 'flowId']
+
+    const filteredEntries = Object.entries(flowVersion)
+        .filter(([key]) => !sensitiveDataKeys.includes(key))
+
+    return Object.fromEntries(filteredEntries)
 }

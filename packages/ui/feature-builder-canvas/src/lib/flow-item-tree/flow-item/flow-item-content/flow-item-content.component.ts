@@ -166,6 +166,10 @@ export class FlowItemContentComponent implements OnInit {
     return StepOutputStatus;
   }
 
+  get executionOutputstatus() {
+    return ExecutionOutputStatus;
+  }
+
   get triggerType() {
     return TriggerType;
   }

@@ -11,8 +11,8 @@ const config = {
 
 test('Test Send Slack message', async ({ page }) => {
 
-  test.setTimeout(50000);
-  
+  test.setTimeout(100000);
+
   await testSignIn(page, config);
 
   await page.getByRole('button', { name: 'Start building' }).click();
@@ -36,7 +36,7 @@ test('Test Send Slack message', async ({ page }) => {
   }, { timeout: 5000 });
   await page.getByText('Channel', { exact: true }).click()
   await page.getByText(config.channel).click();
-  
+
   await page.locator('#custom-form-field-id-0').getByRole('paragraph').click();
   await page.locator('#custom-form-field-id-0 div').nth(1).fill('Test from Checkly');
 

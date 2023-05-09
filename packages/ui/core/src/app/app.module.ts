@@ -24,6 +24,7 @@ import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { FeatureCommandBarModule } from '@activepieces/ui/feature-command-bar';
+import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
 
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
@@ -31,7 +32,12 @@ export function tokenGetter() {
 }
 
 @NgModule({
-  declarations: [AppComponent, NotFoundComponent, RedirectUrlComponent],
+  declarations: [
+    AppComponent,
+    NotFoundComponent,
+    RedirectUrlComponent,
+    ImportFlowComponent,
+  ],
   imports: [
     CommonModule,
     BrowserModule,
@@ -113,6 +119,11 @@ function dynamicRoutes(edition: string) {
     },
   ];
   const suffixRoutes: Route[] = [
+    {
+      canActivate: [UserLoggedIn],
+      path: 'templates/:templateId',
+      component: ImportFlowComponent,
+    },
     {
       path: 'redirect',
       component: RedirectUrlComponent,

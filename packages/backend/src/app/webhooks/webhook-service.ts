@@ -5,6 +5,7 @@ import {
     FlowId,
     FlowInstanceStatus,
     FlowVersion,
+    FlowViewMode,
     ProjectId,
     RunEnvironment,
 } from '@activepieces/shared'
@@ -132,13 +133,12 @@ function extractHostname(url: string): string | null {
 
 const getLatestFlowVersionOrThrow = async (flowId: FlowId, projectId: ProjectId): Promise<FlowVersion> => {
     const flowVersionId = undefined
-    const includeArtifacts = false
 
     const flowVersion = await flowVersionService.getFlowVersion(
         projectId,
         flowId,
         flowVersionId,
-        includeArtifacts,
+        FlowViewMode.NO_ARTIFACTS,
     )
 
     if (isNil(flowVersion)) {

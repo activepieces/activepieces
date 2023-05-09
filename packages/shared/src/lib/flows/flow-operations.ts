@@ -1,3 +1,4 @@
+import { Action } from "./actions/action";
 import {
     CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema,
 } from "./actions/action";
@@ -7,6 +8,7 @@ import { Static, Type } from "@sinclair/typebox";
 
 export enum FlowOperationType {
     CHANGE_FOLDER = "CHANGE_FOLDER",
+    IMPORT_FLOW = 'IMPORT_FLOW',
     CHANGE_NAME = "CHANGE_NAME",
     GENERATE_FLOW = "GENERATE_FLOW",
     UPDATE_TRIGGER = "UPDATE_TRIGGER",
@@ -21,6 +23,13 @@ export enum StepLocationRelativeToParent {
     AFTER = "AFTER",
     INSIDE_LOOP = "INSIDE_LOOP"
 }
+
+export const ImportFlowRequest = Type.Object({
+    displayName: Type.String({}),
+    trigger: Type.Union([Type.Composite([WebhookTrigger, Type.Object({ nextAction: Action })]), Type.Composite([PieceTrigger, Type.Object({ nextAction: Action })])]),
+})
+
+export type ImportFlowRequest = Static<typeof ImportFlowRequest>;
 
 export const ChangeFolderRequest = Type.Object({
     folderId: Type.Optional(Type.String({})),
@@ -65,6 +74,10 @@ export const FlowOperationRequest = Type.Union([
     Type.Object({
         type: Type.Literal(FlowOperationType.GENERATE_FLOW),
         request: GenerateFlowRequest
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.IMPORT_FLOW),
+        request: ImportFlowRequest
     }),
     Type.Object({
         type: Type.Literal(FlowOperationType.CHANGE_NAME),
