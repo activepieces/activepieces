@@ -21,7 +21,7 @@ export class TelemetryService {
             (flags[ApFlagId.CURRENT_VERSION] as string) || '0.0.0';
           const environment =
             (flags[ApFlagId.ENVIRONMENT] as string) || '0.0.0';
-          debugger;
+
           posthog.identify(user.id, {
             activepiecesVersion: currentVersion,
             activepiecesEnvironment: environment,
