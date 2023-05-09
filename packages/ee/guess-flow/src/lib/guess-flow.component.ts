@@ -7,6 +7,7 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Flow, FlowOperationType } from '@activepieces/shared';
+import { AnimationOptions } from 'ngx-lottie';
 @Component({
   selector: 'app-guess-flow',
   templateUrl: './guess-flow.component.html',
@@ -16,6 +17,9 @@ import { Flow, FlowOperationType } from '@activepieces/shared';
 export class GuessFlowComponent {
   closeContainer = new Subject<boolean>();
   guessFlow$: Observable<Flow>;
+  options: AnimationOptions = {
+    path: '/assets/lottie/flow.json',
+  };
   constructor(private flowService: FlowService, private store: Store) {}
   guessFlow(prompt: string) {
     this.guessFlow$ = this.store

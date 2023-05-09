@@ -24,10 +24,16 @@ import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { FeatureCommandBarModule } from '@activepieces/ui/feature-command-bar';
-
+import { LottieCacheModule, LottieModule } from 'ngx-lottie';
+import player from 'lottie-web';
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
   return jwtToken;
+}
+// Note we need a separate function as it's required
+// by the AOT compiler.
+export function playerFactory() {
+  return player;
 }
 
 @NgModule({
@@ -55,6 +61,8 @@ export function tokenGetter() {
     AngularSvgIconModule.forRoot(),
     CommonLayoutModule,
     UiCommonModule,
+    LottieModule.forRoot({ player: playerFactory }),
+    LottieCacheModule.forRoot(),
   ],
   providers: [
     {

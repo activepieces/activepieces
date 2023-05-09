@@ -1,5 +1,6 @@
-<div class="ap-absolute ap-left-0 ap-z-50 ap-h-full ap-w-full">
-    <div
+<div class="ap-absolute ap-left-0 ap-z-50 ap-h-full ap-w-full builder-bg">
+
+    <div [class.ap-hidden]="!!guessFlow$"
         class="ap-flex ap-items-center ap-px-[145px] ap-pb-[100px] ap-bg-white ap-w-full ap-h-full ap-flex ap-flex-col ap-overflow-y-scroll ap-gap-[70px] ap-relative custom-scroll-bars">
         <div class="ap-absolute ap-right-[30px] ap-top-[20px]">
             <ap-icon-button [iconFilename]="'close.svg'" [buttonDisabled]="!!guessFlow$"
@@ -29,5 +30,10 @@
             </div>
         </ap-button>
     </div>
+
+    <div *ngIf="guessFlow$" class="ap-flex ap-items-center ap-justify-center ap-mt-[121px]">
+        <ng-lottie [options]="options" width="732px"></ng-lottie>
+    </div>
+
 </div>
 <ng-container *ngIf="guessFlow$ | async"></ng-container>
