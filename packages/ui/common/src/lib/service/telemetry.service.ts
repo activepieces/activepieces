@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import posthog from 'posthog-js';
 import { ApEnvironment, ApFlagId, User } from '@activepieces/shared';
-import { FlagService } from '@activepieces/ui/common';
+import { FlagService } from '../service/flag.service';
 import { Observable, map } from 'rxjs';
 
 @Injectable({
@@ -21,7 +21,7 @@ export class TelemetryService {
             (flags[ApFlagId.CURRENT_VERSION] as string) || '0.0.0';
           const environment =
             (flags[ApFlagId.ENVIRONMENT] as string) || '0.0.0';
-          debugger;
+
           posthog.identify(user.id, {
             activepiecesVersion: currentVersion,
             activepiecesEnvironment: environment,

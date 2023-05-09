@@ -164,32 +164,38 @@ Actions Array:
 Prompt: {prompt}
 Answer: 
     `
-    const chain = new LLMChain({
-        llm,
-        prompt: new PromptTemplate({
-            template,
-            inputVariables: ['allActions', 'prompt', 'actionExamples'],
-        }),
-        outputKey: 'actions',
-    })
-    const result = await chain.call({
-        allActions: JSON.stringify(getActionDetails()),
-        actionExamples: `
-        Prompt: On new slack message, send me message on discord
-        Answer: [{"pieceName": "slack", "actionName": "send_message_webhook"}]
-        
-        Prompt: read rows from a sheet and only send email and disord message if the name is ahmad
-        Answer: [{"pieceName": "gmail", "actionName": "send_email"}, {"pieceName": "slack", "actionName": "send_message_webhook"}]
-        `,
-        prompt,
-    })
-    try {
-        return extractJson(result.actions)
+    if(llm)
+    {
+        const chain = new LLMChain({
+            llm,
+            prompt: new PromptTemplate({
+                template,
+                inputVariables: ['allActions', 'prompt', 'actionExamples'],
+            }),
+            outputKey: 'actions',
+        })
+        const result = await chain.call({
+            allActions: JSON.stringify(getActionDetails()),
+            actionExamples: `
+            Prompt: On new slack message, send me message on discord
+            Answer: [{"pieceName": "slack", "actionName": "send_message_webhook"}]
+            
+            Prompt: read rows from a sheet and only send email and disord message if the name is ahmad
+            Answer: [{"pieceName": "gmail", "actionName": "send_email"}, {"pieceName": "slack", "actionName": "send_message_webhook"}]
+            `,
+            prompt,
+        })
+        try {
+            return extractJson(result.actions)
+        }
+        catch (e) {
+            logger.warn('Failed to extract actions', e)
+            return []
+        }
     }
-    catch (e) {
-        logger.warn('Failed to extract actions', e)
-        return []
-    }
+    logger.error('llm is uninitailized');
+    return [];
+   
 }
 
 

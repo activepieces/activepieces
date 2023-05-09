@@ -25,7 +25,7 @@
         <ap-button btnColor="primary" btnSize="default" [loading]="!!guessFlow$"
             (buttonClicked)="promptInput.guess.value? guessFlow(promptInput.guess.value) : promptInput.inputDiv.nativeElement.focus(); promptContainer.scrollIntoView({ behavior:'smooth'});">
             <div class="ap-flex ap-items-center ap-gap-2.5">
-                Guess flow <svg-icon src="assets/img/custom/arrow.svg"
+                Build flow <svg-icon src="assets/img/custom/arrow.svg"
                     class="ap-fill-white ap-w-[14px] ap-h-[26px] ap-flex ap-items-center"
                     [applyClass]="true"></svg-icon>
             </div>
@@ -38,3 +38,4 @@
 
 </div>
 <ng-container *ngIf="guessFlow$ | async"></ng-container>
+<ng-container *ngIf="savePrompt$ | async"></ng-container>

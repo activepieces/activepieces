@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Observable, Subject, tap } from 'rxjs';
+import { Observable, Subject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
   FlowsActionType,
@@ -8,6 +8,8 @@ import {
 import { Flow } from '@activepieces/shared';
 import { AnimationOptions } from 'ngx-lottie';
 import { Actions, ofType } from '@ngrx/effects';
+import { AuthenticationService } from '@activepieces/ui/common';
+import { PromptsService } from './services/prompts.service';
 @Component({
   selector: 'app-guess-flow',
   templateUrl: './guess-flow.component.html',
@@ -20,11 +22,33 @@ export class GuessFlowComponent {
   options: AnimationOptions = {
     path: '/assets/lottie/flow.json',
   };
-  constructor(private store: Store, private actions: Actions) {}
+  savePrompt$: Observable<unknown>;
+  constructor(
+    private store: Store,
+    private actions: Actions,
+    private authenticationService: AuthenticationService,
+    private promptsService: PromptsService
+  ) {}
   guessFlow(prompt: string) {
+    this.savePrompt$ = this.promptsService.savePrompt({
+      prompt: prompt,
+      userId: this.authenticationService.currentUser.id,
+    });
     this.store.dispatch(FlowsActions.generateFlow({ prompt: prompt }));
     this.guessFlow$ = this.actions.pipe(
       ofType(FlowsActionType.GENERATE_FLOW_SUCCESSFUL),
+      switchMap((res: Flow) => {
+        return this.promptsService
+          .savePromptAndResult({
+            prompt,
+            result: JSON.stringify(res),
+            userId: this.authenticationService.currentUser.id,
+          })
+          .pipe(
+            catchError(() => of(res)),
+            map(() => res)
+          );
+      }),
       tap(() => {
         this.closeContainer.next(true);
       })

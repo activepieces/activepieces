@@ -59,14 +59,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.folderDisplayName$ = this.store.select(
       BuilderSelectors.selectCurrentFlowFolderName
     );
-
-    this.showGuessFlowBtn$ = this.telementeryService
-      .isFeatureEnabled('AI')
-      .pipe(
-        tap((res) => {
-          console.log(res);
-        })
-      );
+    this.showGuessFlowBtn$ = this.telementeryService.isFeatureEnabled('AI');
   }
   changeEditValue(event: boolean) {
     this.editingFlowName = event;

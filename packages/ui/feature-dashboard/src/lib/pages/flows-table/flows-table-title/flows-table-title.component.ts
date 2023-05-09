@@ -52,7 +52,6 @@ export class FlowsTableTitleComponent {
                 ),
               isAiEnabled: this.telemetryService.isFeatureEnabled('AI').pipe(
                 tap((res) => {
-                  debugger;
                   if (res) {
                     localStorage.setItem('SHOW_AI_AFTER_CREATING_FLOW', 'true');
                   }
