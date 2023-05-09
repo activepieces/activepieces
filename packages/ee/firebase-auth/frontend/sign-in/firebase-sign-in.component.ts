@@ -15,7 +15,6 @@ interface LoginForm {
 
 @Component({
 	templateUrl: './firebase-sign-in.component.html',
-	styleUrls: [],
 	animations: [fadeInUp400ms],
 })
 export class FirebaseSignInComponent {
