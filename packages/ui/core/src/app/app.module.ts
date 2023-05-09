@@ -26,9 +26,17 @@ import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { FeatureCommandBarModule } from '@activepieces/ui/feature-command-bar';
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
 
+import { LottieCacheModule, LottieModule } from 'ngx-lottie';
+import player from 'lottie-web';
+import { FirebaseAuthLayoutModule } from '../../../../ee/firebase-auth/frontend/firebase-auth.module';
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
   return jwtToken;
+}
+// Note we need a separate function as it's required
+// by the AOT compiler.
+export function playerFactory() {
+  return player;
 }
 
 @NgModule({
@@ -61,6 +69,9 @@ export function tokenGetter() {
     AngularSvgIconModule.forRoot(),
     CommonLayoutModule,
     UiCommonModule,
+    LottieModule.forRoot({ player: playerFactory }),
+    LottieCacheModule.forRoot(),
+    FirebaseAuthLayoutModule,
   ],
   providers: [
     {

@@ -22,7 +22,6 @@ import { MentionListItemTemplateComponent } from './interpolating-text-form-cont
 import { PieceStepMentionItemComponent } from './interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component';
 import { PieceTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component';
 import { StepMentionsTreeComponent } from './interpolating-text-form-control/mentions-list/step-mentions-tree/step-mentions-tree.component';
-import { TrackHoverDirective } from './dictionary-form-control/track-hover.directive';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -39,7 +38,6 @@ const exportedDeclarations = [
   CodeArtifactFormControlComponent,
   DictionaryFormControlComponent,
   InterpolatingTextFormControlComponent,
-  TrackHoverDirective,
   PiecePropertiesFormComponent,
   BuilderAutocompleteMentionsDropdownComponent,
   TestCodeFormModalComponent,

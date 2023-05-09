@@ -1,28 +1,29 @@
-<div class="ap-absolute ap-left-0 ap-z-50 ap-h-full ap-w-full">
-    <div
+<div class="ap-absolute ap-left-0 ap-z-50 ap-h-full ap-w-full builder-bg">
+
+    <div [class.ap-hidden]="!!guessFlow$"
         class="ap-flex ap-items-center ap-px-[145px] ap-pb-[100px] ap-bg-white ap-w-full ap-h-full ap-flex ap-flex-col ap-overflow-y-scroll ap-gap-[70px] ap-relative custom-scroll-bars">
         <div class="ap-absolute ap-right-[30px] ap-top-[20px]">
             <ap-icon-button [iconFilename]="'close.svg'" [buttonDisabled]="!!guessFlow$"
                 (click)="!!guessFlow$? null : closeContainer.next(true)"></ap-icon-button>
         </div>
-        <div class="ap-w-full">
+        <div class="ap-w-full" #promptContainer>
             <app-prompt-input #promptInput></app-prompt-input>
         </div>
 
         <div class="ap-flex ap-justify-center">
-            <app-prompts-table (promptClicked)="promptInput.changeGuessValue($event)"></app-prompts-table>
+            <app-prompts-table
+                (promptClicked)="promptInput.changeGuessValue($event); promptContainer.scrollIntoView({ behavior:'smooth'})"></app-prompts-table>
         </div>
 
     </div>
     <div
         class="ap-relative ap-w-full ap-h-[100px] -ap-mt-[100px] ap-flex ap-items-center ap-justify-center ap-gap-[20px] white-gradient">
         <ap-button btnColor="primary" btnSize="default" btnStyle="stroked"
-            (buttonClicked)="!!guessFlow$? null : closeContainer.next(true)" [disabled]="!!guessFlow$"
-            [loading]="!!guessFlow$">
+            (buttonClicked)="!!guessFlow$? null : closeContainer.next(true)" [disabled]="!!guessFlow$">
             Build from scratch
         </ap-button>
         <ap-button btnColor="primary" btnSize="default" [loading]="!!guessFlow$"
-            (buttonClicked)="guessFlow(promptInput.guess.value)">
+            (buttonClicked)="promptInput.guess.value? guessFlow(promptInput.guess.value) : promptInput.inputDiv.nativeElement.focus(); promptContainer.scrollIntoView({ behavior:'smooth'});">
             <div class="ap-flex ap-items-center ap-gap-2.5">
                 Guess flow <svg-icon src="assets/img/custom/arrow.svg"
                     class="ap-fill-white ap-w-[14px] ap-h-[26px] ap-flex ap-items-center"
@@ -30,4 +31,10 @@
             </div>
         </ap-button>
     </div>
+
+    <div *ngIf="guessFlow$" class="ap-flex ap-items-center ap-justify-center ap-mt-[121px]">
+        <ng-lottie [options]="options" width="732px"></ng-lottie>
+    </div>
+
 </div>
+<ng-container *ngIf="guessFlow$ | async"></ng-container>

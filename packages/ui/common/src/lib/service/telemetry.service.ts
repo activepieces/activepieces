@@ -21,6 +21,7 @@ export class TelemetryService {
             (flags[ApFlagId.CURRENT_VERSION] as string) || '0.0.0';
           const environment =
             (flags[ApFlagId.ENVIRONMENT] as string) || '0.0.0';
+          debugger;
           posthog.identify(user.id, {
             activepiecesVersion: currentVersion,
             activepiecesEnvironment: environment,
@@ -34,7 +35,7 @@ export class TelemetryService {
     return this.flagService.getAllFlags().pipe(
       map((flags) => {
         if (flags[ApFlagId.ENVIRONMENT] === ApEnvironment.DEVELOPMENT) {
-          return true;
+          return false;
         }
         if (!flags[ApFlagId.TELEMETRY_ENABLED]) {
           return false;

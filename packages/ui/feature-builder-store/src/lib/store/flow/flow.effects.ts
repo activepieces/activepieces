@@ -5,6 +5,7 @@ import {
   concatMap,
   delay,
   EMPTY,
+  map,
   Observable,
   of,
   switchMap,
@@ -141,6 +142,35 @@ export class FlowsEffects {
       })
     );
   });
+  generateFlow$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FlowsActions.generateFlow),
+      concatLatestFrom(() =>
+        this.store.select(BuilderSelectors.selectCurrentFlow)
+      ),
+      switchMap(([action, flow]) => {
+        return this.flowService.update(flow.id, {
+          type: FlowOperationType.GENERATE_FLOW,
+          request: { prompt: action.prompt },
+        });
+      }),
+      map((res) => {
+        return FlowsActions.generateFlowSuccessful({ flow: res });
+      })
+    );
+  });
+
+  openGenerateFlowComponent$ = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(FlowsActions.openGenerateFlowComponent),
+        tap(() => {
+          this.snackBar.dismiss();
+        })
+      );
+    },
+    { dispatch: false }
+  );
 
   exitRun$ = createEffect(() => {
     return this.actions$.pipe(

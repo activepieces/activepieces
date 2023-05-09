@@ -9,6 +9,7 @@ export * from './lib/components/index';
 export * from './lib/service/authentication.service';
 export * from './lib/service/flow.service';
 export * from './lib/service/flag.service';
+export * from './lib/service/telemetry.service';
 export * from './lib/service/action-meta.service';
 export * from './lib/service/instance-run.service';
 export * from './lib/service/project.service';

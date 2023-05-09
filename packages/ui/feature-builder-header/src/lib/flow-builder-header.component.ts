@@ -5,8 +5,8 @@ import { map, Observable, tap } from 'rxjs';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-  FlagService,
   FlowService,
+  TelemetryService,
   fadeIn400ms,
   initialiseBeamer,
 } from '@activepieces/ui/common';
@@ -17,7 +17,7 @@ import {
   CollectionBuilderService,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { ApEdition, Flow, FlowInstance } from '@activepieces/shared';
+import { Flow, FlowInstance } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
@@ -28,7 +28,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class FlowBuilderHeaderComponent implements OnInit {
   viewMode$: Observable<boolean>;
-
+  isGeneratingFlowComponentOpen$: Observable<boolean>;
   instance$: Observable<FlowInstance | undefined>;
   flow$: Observable<Flow>;
   editingFlowName = false;
@@ -44,8 +44,12 @@ export class FlowBuilderHeaderComponent implements OnInit {
     public collectionBuilderService: CollectionBuilderService,
     private snackbar: MatSnackBar,
     private flowService: FlowService,
-    private flagService: FlagService
-  ) {}
+    private telementeryService: TelemetryService
+  ) {
+    this.isGeneratingFlowComponentOpen$ = this.store.select(
+      BuilderSelectors.selectIsGeneratingFlowComponentOpen
+    );
+  }
 
   ngOnInit(): void {
     initialiseBeamer();
@@ -56,12 +60,13 @@ export class FlowBuilderHeaderComponent implements OnInit {
       BuilderSelectors.selectCurrentFlowFolderName
     );
 
-    this.showGuessFlowBtn$ = this.flagService.getEdition().pipe(
-      map((res) => {
-        return true;
-        return res === ApEdition.ENTERPRISE;
-      })
-    );
+    this.showGuessFlowBtn$ = this.telementeryService
+      .isFeatureEnabled('AI')
+      .pipe(
+        tap((res) => {
+          console.log(res);
+        })
+      );
   }
   changeEditValue(event: boolean) {
     this.editingFlowName = event;
@@ -108,5 +113,9 @@ export class FlowBuilderHeaderComponent implements OnInit {
         return void 0;
       })
     );
+  }
+  guessFlowButtonClicked() {
+    this.store.dispatch(FlowsActions.openGenerateFlowComponent());
+    this.showAiHelper.emit(true);
   }
 }
