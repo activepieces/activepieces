@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { fadeInUp400ms } from '@activepieces/ui/common';
+import { PromptTemplate } from '../../prompt-templates';
 
 @Component({
   selector: 'app-prompt-icons',
@@ -11,9 +12,5 @@ export class PromptIconsComponent {
   @Input()
   isHovered = false;
   @Input()
-  prompt: {
-    content: string;
-    urls: string[];
-    more: number;
-  };
+  prompt: PromptTemplate;
 }
