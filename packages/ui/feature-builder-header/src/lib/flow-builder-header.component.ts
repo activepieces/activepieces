@@ -28,7 +28,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class FlowBuilderHeaderComponent implements OnInit {
   viewMode$: Observable<boolean>;
-
+  isGeneratingFlowComponentOpen$: Observable<boolean>;
   instance$: Observable<FlowInstance | undefined>;
   flow$: Observable<Flow>;
   editingFlowName = false;
@@ -45,7 +45,11 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private snackbar: MatSnackBar,
     private flowService: FlowService,
     private flagService: FlagService
-  ) {}
+  ) {
+    this.isGeneratingFlowComponentOpen$ = this.store.select(
+      BuilderSelectors.selectIsGeneratingFlowComponentOpen
+    );
+  }
 
   ngOnInit(): void {
     initialiseBeamer();
@@ -108,5 +112,9 @@ export class FlowBuilderHeaderComponent implements OnInit {
         return void 0;
       })
     );
+  }
+  guessFlowButtonClicked() {
+    this.store.dispatch(FlowsActions.openGenerateFlowComponent());
+    this.showAiHelper.emit(true);
   }
 }

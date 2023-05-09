@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Observable, Subject, switchMap, take, tap } from 'rxjs';
-import { FlowService } from '@activepieces/ui/common';
+import { Observable, Subject, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
-  BuilderSelectors,
+  FlowsActionType,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { Flow, FlowOperationType } from '@activepieces/shared';
+import { Flow } from '@activepieces/shared';
 import { AnimationOptions } from 'ngx-lottie';
+import { Actions, ofType } from '@ngrx/effects';
 @Component({
   selector: 'app-guess-flow',
   templateUrl: './guess-flow.component.html',
@@ -20,24 +20,14 @@ export class GuessFlowComponent {
   options: AnimationOptions = {
     path: '/assets/lottie/flow.json',
   };
-  constructor(private flowService: FlowService, private store: Store) {}
+  constructor(private store: Store, private actions: Actions) {}
   guessFlow(prompt: string) {
-    this.guessFlow$ = this.store
-      .select(BuilderSelectors.selectCurrentFlow)
-      .pipe(
-        take(1),
-        switchMap((flow) => {
-          return this.flowService.update(flow.id, {
-            type: FlowOperationType.GENERATE_FLOW,
-            request: { prompt: prompt },
-          });
-        }),
-        tap((res) => {
-          this.store.dispatch(
-            FlowsActions.setFlowAFterGenerating({ flow: res })
-          );
-          this.closeContainer.next(true);
-        })
-      );
+    this.store.dispatch(FlowsActions.generateFlow({ prompt: prompt }));
+    this.guessFlow$ = this.actions.pipe(
+      ofType(FlowsActionType.GENERATE_FLOW_SUCCESSFUL),
+      tap(() => {
+        this.closeContainer.next(true);
+      })
+    );
   }
 }

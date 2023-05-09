@@ -37,14 +37,14 @@
 
     </div>
     <ap-icon-button [width]="25" [height]="25" iconFilename="AI.svg" tooltipText="Guess Flow"
-      (buttonClicked)="showAiHelper.emit(true)" *ngIf="showGuessFlowBtn$ | async"></ap-icon-button>
+      (buttonClicked)="guessFlowButtonClicked()" *ngIf="showGuessFlowBtn$ | async"></ap-icon-button>
     <div class="ap-flex-grow">
 
     </div>
     <div class="ap-flex ap-items-center ap-gap-2">
       <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
 
-      <ng-container *ngIf=" (viewMode$ | async)===false">
+      <ng-container *ngIf=" (viewMode$ | async)===false && (isGeneratingFlowComponentOpen$|async) === false ">
         <div class="ap-flex ap-items-center ap-gap-1">
           <app-test-flow-modal></app-test-flow-modal>
 

@@ -10,7 +10,7 @@ import { FlowItem } from '../../model/flow-item';
 import { MentionListItem } from '../../model/mention-list-item';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../model/connections-dropdown-item';
-import { BuilderSavingStatusEnum } from '../../model';
+import { BuilderSavingStatusEnum, BuilderState } from '../../model';
 import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
@@ -19,60 +19,60 @@ import {
 
 export const BUILDER_STATE_NAME = 'builderState';
 
-export const selectBuilderState =
+export const selectGlobalBuilderState =
   createFeatureSelector<GlobalBuilderState>(BUILDER_STATE_NAME);
 
 export const selectIsPublishing = createSelector(
-  selectBuilderState,
+  selectGlobalBuilderState,
   (state: GlobalBuilderState) =>
     (state.flowState.savingStatus & BuilderSavingStatusEnum.PUBLISHING) ===
     BuilderSavingStatusEnum.PUBLISHING
 );
 
 export const selectIsSaving = createSelector(
-  selectBuilderState,
+  selectGlobalBuilderState,
   (state: GlobalBuilderState) =>
     (state.flowState.savingStatus & BuilderSavingStatusEnum.SAVING_FLOW) ===
     BuilderSavingStatusEnum.SAVING_FLOW
 );
 
 export const selectFlowHasAnySteps = createSelector(
-  selectBuilderState,
+  selectGlobalBuilderState,
   (state: GlobalBuilderState) =>
     !!state.flowState.flow.version.trigger?.nextAction
 );
 
 export const selectViewMode = createSelector(
-  selectBuilderState,
+  selectGlobalBuilderState,
   (state: GlobalBuilderState) => state.viewMode
 );
 
 export const selectIsInDebugMode = createSelector(
-  selectBuilderState,
+  selectGlobalBuilderState,
   (state: GlobalBuilderState) =>
     state.viewMode === ViewModeEnum.VIEW_INSTANCE_RUN
 );
 
 export const selectReadOnly = createSelector(
-  selectBuilderState,
+  selectGlobalBuilderState,
   (state: GlobalBuilderState) => state.viewMode !== ViewModeEnum.BUILDING
 );
 
 export const selectCurrentInstance = createSelector(
-  selectBuilderState,
+  selectGlobalBuilderState,
   (state: GlobalBuilderState) => {
     return state.instance;
   }
 );
 
 export const selectCurrentFlow = createSelector(
-  selectBuilderState,
+  selectGlobalBuilderState,
   (state: GlobalBuilderState) => {
     return state.flowState.flow;
   }
 );
 export const selectCurrentFlowFolderName = createSelector(
-  selectBuilderState,
+  selectGlobalBuilderState,
   (state: GlobalBuilderState) => {
     if (!state.flowState.folder) {
       return 'Uncategorized';
@@ -90,7 +90,7 @@ export const selectCurrentFlowValidity = createSelector(
 );
 
 export const selectCurrentStep = createSelector(
-  selectBuilderState,
+  selectGlobalBuilderState,
   (state: GlobalBuilderState) => {
     return state.flowState.builderState.focusedStep;
   }
@@ -169,7 +169,7 @@ export const selectNumberOfInvalidSteps = createSelector(
   }
 );
 export const selectCurrentFlowRun = createSelector(
-  selectBuilderState,
+  selectGlobalBuilderState,
   (state: GlobalBuilderState) => {
     return state.flowState.builderState.selectedRun;
   }
@@ -184,30 +184,41 @@ export const selectCurrentFlowRunStatus = createSelector(
     return run.status;
   }
 );
-
-export const selectCurrentLeftSidebarType = createSelector(
-  selectBuilderState,
+const selectBuidlerState = createSelector(
+  selectGlobalBuilderState,
   (state: GlobalBuilderState) => {
-    return state.flowState.builderState.leftSidebar.type;
+    return state.flowState.builderState;
+  }
+);
+export const selectCurrentLeftSidebarType = createSelector(
+  selectBuidlerState,
+  (state: BuilderState) => {
+    return state.leftSidebar.type;
+  }
+);
+export const selectIsGeneratingFlowComponentOpen = createSelector(
+  selectBuidlerState,
+  (state: BuilderState) => {
+    return state.isGeneratingFlowComponentOpen;
   }
 );
 
 export const selectCurrentRightSideBar = createSelector(
-  selectBuilderState,
-  (state: GlobalBuilderState) => {
-    return state.flowState.builderState.rightSidebar;
+  selectBuidlerState,
+  (state: BuilderState) => {
+    return state.rightSidebar;
   }
 );
 
 export const selectCurrentRightSideBarType = createSelector(
-  selectBuilderState,
-  (state: GlobalBuilderState) => {
-    return state.flowState.builderState.rightSidebar.type;
+  selectBuidlerState,
+  (state: BuilderState) => {
+    return state.rightSidebar.type;
   }
 );
 
 export const selectAllFlowItemsDetails = createSelector(
-  selectBuilderState,
+  selectGlobalBuilderState,
   (state: GlobalBuilderState) => {
     return state.flowItemsDetailsState;
   }
@@ -286,7 +297,7 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
   });
 
 const selectAllAppConnections = createSelector(
-  selectBuilderState,
+  selectGlobalBuilderState,
   (globalState) => globalState.appConnectionsState.connections
 );
 
@@ -465,4 +476,5 @@ export const BuilderSelectors = {
   selectStepTestSampleData,
   selectLastTestDate,
   selectNumberOfInvalidSteps,
+  selectIsGeneratingFlowComponentOpen,
 };
