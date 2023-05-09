@@ -6,12 +6,13 @@
             <ap-icon-button [iconFilename]="'close.svg'" [buttonDisabled]="!!guessFlow$"
                 (click)="!!guessFlow$? null : closeContainer.next(true)"></ap-icon-button>
         </div>
-        <div class="ap-w-full">
+        <div class="ap-w-full" #promptContainer>
             <app-prompt-input #promptInput></app-prompt-input>
         </div>
 
         <div class="ap-flex ap-justify-center">
-            <app-prompts-table (promptClicked)="promptInput.changeGuessValue($event)"></app-prompts-table>
+            <app-prompts-table
+                (promptClicked)="promptInput.changeGuessValue($event); promptContainer.scrollIntoView({ behavior:'smooth'})"></app-prompts-table>
         </div>
 
     </div>
@@ -22,7 +23,7 @@
             Build from scratch
         </ap-button>
         <ap-button btnColor="primary" btnSize="default" [loading]="!!guessFlow$"
-            (buttonClicked)="promptInput.guess.value? guessFlow(promptInput.guess.value) : null">
+            (buttonClicked)="promptInput.guess.value? guessFlow(promptInput.guess.value) : promptInput.inputDiv.nativeElement.focus(); promptContainer.scrollIntoView({ behavior:'smooth'});">
             <div class="ap-flex ap-items-center ap-gap-2.5">
                 Guess flow <svg-icon src="assets/img/custom/arrow.svg"
                     class="ap-fill-white ap-w-[14px] ap-h-[26px] ap-flex ap-items-center"
