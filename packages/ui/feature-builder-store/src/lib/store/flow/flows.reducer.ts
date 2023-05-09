@@ -232,6 +232,13 @@ const _flowsReducer = createReducer(
     clonedState.savingStatus =
       BuilderSavingStatusEnum.FAILED_SAVING_OR_PUBLISHING;
     return clonedState;
+  }),
+  on(FlowsActions.setFlowAFterGenerating, (state, action) => {
+    const clonedState: FlowState = JSON.parse(JSON.stringify(state));
+    return {
+      ...clonedState,
+      flow: action.flow,
+    };
   })
 );
 export function flowsReducer(state: FlowState | undefined, action: Action) {
