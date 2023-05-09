@@ -15,7 +15,6 @@ import { LottieModule } from 'ngx-lottie';
     PromptIconsComponent,
   ],
   imports: [CommonModule, UiCommonModule, LottieModule],
-  exports: [GuessFlowComponent],
 })
 export class GuessFlowModule {}
 export class GuessFlowComponentRef extends GuessFlowComponent {}

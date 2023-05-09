@@ -70,42 +70,54 @@ async function findTrigger(prompt: string): Promise<TriggerDetails> {
     ---
     Prompt: {prompt}
     `
-    const chain = new LLMChain({
-        llm,
-        prompt: new PromptTemplate({
-            template,
-            inputVariables: ['allTriggers', 'prompt', 'triggerExamples'],
-        }),
-        outputKey: 'trigger',
-    })
-    const result = await chain.call({
-        triggerExamples: `
-        Prompt: On new slack message, send me message on discord
-        Answer: {"pieceName": "slack", "triggerName": "new_message"}
-        
-        Prompt: read rows from a sheet and only send email if the name is ahmad
-        Answer: {"pieceName": "google-sheets", "triggerName": "new_row_added"}
-        
-        Prompt: read from discsord message and send email
-        Answer: {}
-        `,
-        prompt,
-        allTriggers: JSON.stringify(getTriggerDetails()),
-
-    })
-    try {
-        return extractJson(result.trigger)
-    }
-    catch (e) {
-        logger.warn('Failed to extract trigger', e)
-        // TODO change to default trigger
-        return {
-            pieceName: 'schedule',
-            triggerName: 'cron_expression',
-            displayName: 'Every 5 Min',
-            description: 'Runs every 5 minutes',
+    if(llm){
+        const chain = new LLMChain({
+            llm,
+            prompt: new PromptTemplate({
+                template,
+                inputVariables: ['allTriggers', 'prompt', 'triggerExamples'],
+            }),
+            outputKey: 'trigger',
+        })
+        const result = await chain.call({
+            triggerExamples: `
+            Prompt: On new slack message, send me message on discord
+            Answer: {"pieceName": "slack", "triggerName": "new_message"}
+            
+            Prompt: read rows from a sheet and only send email if the name is ahmad
+            Answer: {"pieceName": "google-sheets", "triggerName": "new_row_added"}
+            
+            Prompt: read from discsord message and send email
+            Answer: {}
+            `,
+            prompt,
+            allTriggers: JSON.stringify(getTriggerDetails()),
+    
+        })
+        try {
+            return extractJson(result.trigger)
         }
+        catch (e) {
+            logger.warn('Failed to extract trigger', e)
+            // TODO change to default trigger
+            return {
+                pieceName: 'schedule',
+                triggerName: 'cron_expression',
+                displayName: 'Failed to extract trigger',
+                description: 'Runs every 5 minutes',
+            }
+        }
+      
     }
+    logger.error('llm is uninitailized');
+    // TODO change to default trigger
+    return {
+        pieceName: 'schedule',
+        triggerName: 'cron_expression',
+        displayName: 'llm is uninitailized',
+        description: 'Runs every 5 minutes',
+    }
+  
 }
 
 
@@ -120,32 +132,38 @@ Actions Array:
 Prompt: {prompt}
 Answer: 
     `
-    const chain = new LLMChain({
-        llm,
-        prompt: new PromptTemplate({
-            template,
-            inputVariables: ['allActions', 'prompt', 'actionExamples'],
-        }),
-        outputKey: 'actions',
-    })
-    const result = await chain.call({
-        allActions: JSON.stringify(getActionDetails()),
-        actionExamples: `
-        Prompt: On new slack message, send me message on discord
-        Answer: [{"pieceName": "slack", "actionName": "send_message_webhook"}]
-        
-        Prompt: read rows from a sheet and only send email and disord message if the name is ahmad
-        Answer: [{"pieceName": "gmail", "actionName": "send_email"}, {"pieceName": "slack", "actionName": "send_message_webhook"}]
-        `,
-        prompt,
-    })
-    try {
-        return extractJson(result.actions)
+    if(llm)
+    {
+        const chain = new LLMChain({
+            llm,
+            prompt: new PromptTemplate({
+                template,
+                inputVariables: ['allActions', 'prompt', 'actionExamples'],
+            }),
+            outputKey: 'actions',
+        })
+        const result = await chain.call({
+            allActions: JSON.stringify(getActionDetails()),
+            actionExamples: `
+            Prompt: On new slack message, send me message on discord
+            Answer: [{"pieceName": "slack", "actionName": "send_message_webhook"}]
+            
+            Prompt: read rows from a sheet and only send email and disord message if the name is ahmad
+            Answer: [{"pieceName": "gmail", "actionName": "send_email"}, {"pieceName": "slack", "actionName": "send_message_webhook"}]
+            `,
+            prompt,
+        })
+        try {
+            return extractJson(result.actions)
+        }
+        catch (e) {
+            logger.warn('Failed to extract actions', e)
+            return []
+        }
     }
-    catch (e) {
-        logger.warn('Failed to extract actions', e)
-        return []
-    }
+    logger.error('llm is uninitailized');
+    return [];
+   
 }
 
 
@@ -188,27 +206,31 @@ Prompt: {prompt}
 Answer: 
 `
     const examples = buildExamples(trigger, actions)
-    const chain = new LLMChain({
-        llm,
-        prompt: new PromptTemplate({
-            template,
-            inputVariables: ['prompt', 'examples'],
-        }),
-        outputKey: 'flow',
-    })
-    const results = await chain.call({
-        examples,
-        prompt,
-    })
-    logger.info(results.flow)
-    const flow = extractJson(results.flow)
-    // Override the settings, since we already have them
-    if (flow.type === TriggerType.PIECE) {
-        flow.settings = trigger
+    if(llm)
+    {
+        const chain = new LLMChain({
+            llm,
+            prompt: new PromptTemplate({
+                template,
+                inputVariables: ['prompt', 'examples'],
+            }),
+            outputKey: 'flow',
+        })
+        const results = await chain.call({
+            examples,
+            prompt,
+        })
+        logger.info(results.flow)
+        const flow = extractJson(results.flow)
+        // Override the settings, since we already have them
+        if (flow.type === TriggerType.PIECE) {
+            flow.settings = trigger
+        }
+        logger.info('Prompt ' + prompt)
+        logger.info('GENERATED RESPONSE ' + JSON.stringify(flow))
+        return flow  
     }
-    logger.info('Prompt ' + prompt)
-    logger.info('GENERATED RESPONSE ' + JSON.stringify(flow))
-    return flow
+
 }
 
 export async function generateFlow(prompt: string): Promise<Trigger> {
