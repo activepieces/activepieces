@@ -26,6 +26,7 @@ import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { FeatureCommandBarModule } from '@activepieces/ui/feature-command-bar';
 import { LottieCacheModule, LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
+import { FirebaseAuthLayoutModule } from '../../../../ee/firebase-auth/frontend/firebase-auth.module';
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
   return jwtToken;
@@ -63,6 +64,7 @@ export function playerFactory() {
     UiCommonModule,
     LottieModule.forRoot({ player: playerFactory }),
     LottieCacheModule.forRoot(),
+    FirebaseAuthLayoutModule,
   ],
   providers: [
     {
