@@ -33,7 +33,7 @@ export class GuessFlowContainerComponent {
   async showComponent() {
     if (this.componentRef === null) {
       const GuessFlowModule = await import(
-        '../../../../../../../../../ee/guess-flow/src/lib/guess-flow.module'
+        '@ee/guess-flow/src/lib/guess-flow.module'
       );
       const moduleRef = createNgModule(
         GuessFlowModule.GuessFlowModule,
