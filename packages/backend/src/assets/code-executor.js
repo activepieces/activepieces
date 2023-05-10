@@ -7,7 +7,7 @@ const readInput = async () => {
 }
 
 const writeOutput = async (output) => {
-    const serializedOutput = JSON.stringify(output)
+    const serializedOutput = output === undefined ? 'undefined': JSON.stringify(output)
     await writeFile('output.json', serializedOutput)
 }
 
@@ -18,7 +18,7 @@ const main = async () => {
 
         const output = {
             status: 'OK',
-            response: response ? response : ''
+            response: response
         }
 
         await writeOutput(output)

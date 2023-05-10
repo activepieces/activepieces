@@ -76,6 +76,7 @@
       "@activepieces/piece-google-tasks": [
         "packages/pieces/google-tasks/src/index.ts"
       ],
+      "@activepieces/piece-gotify": ["packages/pieces/gotify/src/index.ts"],
       "@activepieces/piece-hackernews": [
         "packages/pieces/hackernews/src/index.ts"
       ],
@@ -96,6 +97,7 @@
       "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-monday": ["packages/pieces/monday/src/index.ts"],
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
+      "@activepieces/piece-ntfy": ["packages/pieces/ntfy/src/index.ts"],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/pipedrive/src/index.ts"

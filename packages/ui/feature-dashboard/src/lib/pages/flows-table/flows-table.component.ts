@@ -57,21 +57,29 @@ export class FlowsTableComponent implements OnInit {
     private instanceService: FlowInstanceService,
     private store: Store
   ) {
+    this.listenToShowAllFolders();
+  }
+
+  private listenToShowAllFolders() {
     this.showAllFlows$ = this.store
       .select(FoldersSelectors.selectDisplayAllFlows)
       .pipe(
         tap((displayAllFlows) => {
-          const folderColumnIndex = this.displayedColumns.findIndex(
-            (c) => c === 'folderName'
-          );
-          if (displayAllFlows && folderColumnIndex == -1) {
-            this.displayedColumns.splice(2, 0, 'folderName');
-          } else if (!displayAllFlows && folderColumnIndex !== -1) {
-            this.displayedColumns.splice(folderColumnIndex, 1);
-          }
+          this.hideOrShowFolderColumn(displayAllFlows);
         }),
         shareReplay(1)
       );
+  }
+
+  private hideOrShowFolderColumn(displayAllFlows: boolean) {
+    const folderColumnIndex = this.displayedColumns.findIndex(
+      (c) => c === 'folderName'
+    );
+    if (displayAllFlows && folderColumnIndex == -1) {
+      this.displayedColumns.splice(2, 0, 'folderName');
+    } else if (!displayAllFlows && folderColumnIndex !== -1) {
+      this.displayedColumns.splice(folderColumnIndex, 1);
+    }
   }
 
   ngOnInit(): void {
