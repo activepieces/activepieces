@@ -1,0 +1,36 @@
+{
+  "name": "pieces-gotify",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/gotify/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/gotify",
+        "tsConfig": "packages/pieces/gotify/tsconfig.lib.json",
+        "packageJson": "packages/pieces/gotify/package.json",
+        "main": "packages/pieces/gotify/src/index.ts",
+        "assets": [
+          "packages/pieces/gotify/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/gotify/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
