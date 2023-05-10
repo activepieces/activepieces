@@ -198,6 +198,8 @@ export class FlowItemContentComponent implements OnInit {
     switch (this._flowItem.type) {
       case ActionType.BRANCH:
         return 'Branch';
+      case ActionType.MISSING:
+        return 'Missing';
       case ActionType.CODE:
         return 'Code';
       case ActionType.LOOP_ON_ITEMS:

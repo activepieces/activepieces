@@ -47,8 +47,8 @@ export const flowVersionService = {
     },
     async applyOperation(projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion | null> {
         let operations: FlowOperationRequest[] = []
-        switch(userOperation.type){
-            case FlowOperationType.GENERATE_FLOW: 
+        switch (userOperation.type) {
+            case FlowOperationType.GENERATE_FLOW:
             case FlowOperationType.IMPORT_FLOW:
             {
                 const actionsToRemove = flowHelper.getAllSteps(flowVersion).filter(step => flowHelper.isAction(step.type))
@@ -61,7 +61,7 @@ export const flowVersionService = {
                     })
                 }
                 const trigger = (userOperation.type === FlowOperationType.GENERATE_FLOW) ? await generateFlow(userOperation.request.prompt) : userOperation.request.trigger
-                if(trigger){
+                if (trigger) {
                     operations.push({
                         type: FlowOperationType.UPDATE_TRIGGER,
                         request: trigger,
@@ -70,7 +70,7 @@ export const flowVersionService = {
                 }
                 break
             }
-            default: 
+            default:
                 operations = [userOperation]
                 break
 
@@ -218,7 +218,7 @@ async function removeSecrets(flowVersion: FlowVersion | null) {
 }
 
 function replaceConnections(obj: Record<string, unknown>): Record<string, unknown> {
-    if(isNil(obj)){
+    if (isNil(obj)) {
         return obj
     }
     const replacedObj: Record<string, unknown> = {}
@@ -271,7 +271,10 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
     switch (clonedRequest.type) {
         case FlowOperationType.ADD_ACTION:
             clonedRequest.request.action.valid = true
-            if (clonedRequest.request.action.type === ActionType.LOOP_ON_ITEMS) {
+            if (clonedRequest.request.action.type === ActionType.MISSING) {
+                clonedRequest.request.action.valid = false
+            } 
+            else  if (clonedRequest.request.action.type === ActionType.LOOP_ON_ITEMS) {
                 clonedRequest.request.action.valid = loopSettingsValidator.Check(clonedRequest.request.action.settings)
             }
             else if (clonedRequest.request.action.type === ActionType.BRANCH) {
@@ -287,7 +290,10 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
             break
         case FlowOperationType.UPDATE_ACTION:
             clonedRequest.request.valid = true
-            if (clonedRequest.request.type === ActionType.LOOP_ON_ITEMS) {
+            if (clonedRequest.request.type === ActionType.MISSING) {
+                clonedRequest.request.valid = false
+            }
+            else if (clonedRequest.request.type === ActionType.LOOP_ON_ITEMS) {
                 clonedRequest.request.valid = loopSettingsValidator.Check(clonedRequest.request.settings)
             }
             else if (clonedRequest.request.type === ActionType.BRANCH) {

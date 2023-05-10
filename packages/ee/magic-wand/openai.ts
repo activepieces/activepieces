@@ -164,8 +164,7 @@ Actions Array:
 Prompt: {prompt}
 Answer: 
     `
-    if(llm)
-    {
+    if (llm) {
         const chain = new LLMChain({
             llm,
             prompt: new PromptTemplate({
@@ -195,7 +194,7 @@ Answer:
     }
     logger.error('llm is uninitailized');
     return [];
-   
+
 }
 
 
@@ -309,15 +308,12 @@ function cleanAction(step: Action | undefined, count: number): Action | undefine
             const piece = pieceAction?.settings.pieceName ? getPiece(pieceAction?.settings?.pieceName) : undefined
             const actionStep = pieceAction?.settings.actionName ? piece?.getAction(pieceAction?.settings?.actionName) : undefined
             if (!piece || !actionStep) {
-                const action: CodeAction = {
+                return {
                     ...basicStep,
-                    type: ActionType.CODE,
-                    settings: {
-                        input: {},
-                        artifact: HELLO_WORLD_CODE_ARTIFACT_BASE64,
-                    },
+                    displayName: step.displayName,
+                    type: ActionType.MISSING,
+                    settings: {},
                 }
-                return action
             }
             let input: any = {}
             for (const inputName of Object.keys(actionStep.props)) {
@@ -340,7 +336,12 @@ function cleanAction(step: Action | undefined, count: number): Action | undefine
             return action
         }
         default:
-            throw new Error(`Unknown Action type ${step.type}`)
+            return {
+                ...basicStep,
+                displayName: step.displayName,
+                type: ActionType.MISSING,
+                settings: {},
+            }
     }
 }
 
@@ -356,7 +357,6 @@ function validateTrigger(step: Trigger): Trigger {
         case TriggerType.PIECE: {
             const piece = step?.settings?.pieceName ? getPiece(step.settings.pieceName) : undefined
             const triggerStep = step?.settings?.triggerName ? piece?.getTrigger(step.settings.triggerName) : undefined
-            // TODO return default action
             if (!piece || !triggerStep) {
                 return {
                     ...basicStep,
@@ -380,12 +380,12 @@ function validateTrigger(step: Trigger): Trigger {
                 },
             } as Trigger
         }
-        case TriggerType.WEBHOOK:
-        default:
-            return {
-                ...basicStep,
-                type: TriggerType.WEBHOOK,
-                settings: {},
-            } as Trigger
+    case TriggerType.WEBHOOK:
+    default:
+         return {
+             ...basicStep,
+            type: TriggerType.WEBHOOK,
+            settings: {},
+        } as Trigger
     }
 }

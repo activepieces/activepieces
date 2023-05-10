@@ -278,6 +278,9 @@ export class StepTypeSidebarComponent implements OnInit {
           },
         };
       }
+      case ActionType.MISSING: {
+        throw new Error('Select missing action type should not be possible.');
+      }
       case ActionType.BRANCH: {
         return {
           parentStep: parentStep,
