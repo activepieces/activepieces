@@ -30,9 +30,9 @@ async function run(artifact: Buffer, input: unknown): Promise<CodeExecutionResul
         executionResult = {
             verdict: statusToCodeStatus(result.verdict),
             timeInSeconds: result.timeInSeconds ?? 0,
-            output: result.output ?? '',
-            standardOutput: result.standardOutput ?? '',
-            standardError: result.standardError ?? '',
+            output: result.output,
+            standardOutput: result.standardOutput,
+            standardError: result.standardError,
         }
 
         logger.debug(executionResult, '[CodeRunner#run] executionResult')
