@@ -3,42 +3,70 @@ import axios from "axios";
 import { Piece, PieceMetadataSummary, PieceType } from '@activepieces/pieces-framework';
 import { execSync } from "child_process";
 import chalk from "chalk";
-import pino from "pino";
 import FormData from 'form-data';
 import Table from 'cli-table3';
 import { ErrorCode } from "@activepieces/shared";
-import inquirer from 'inquirer';
+import os from 'os';
+import prompts from 'prompts';
 
-const logger = pino({
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true
-    }
+const logger = console;
+
+const apiUrl = 'http://localhost:3000';
+
+async function getToken() {
+  let token;
+  const homeDir = os.homedir();
+  const activePiecesDir = `${homeDir}/.activepieces`;
+  const configFilePath = `${activePiecesDir}/config.json`;
+
+  // Create the ActivePieces hidden directory if it doesn't exist
+  if (!fs.existsSync(activePiecesDir)) {
+    fs.mkdirSync(activePiecesDir);
   }
-})
 
-const bearerToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjEifQ.eyJpZCI6IncxUzVGZVZVdlJhaUVwOUJTY3VpcyIsInR5cGUiOiJVU0VSIiwicHJvamVjdElkIjoiTzhMMzNrcEJxTnhNa2dNTWhwWVB1IiwiaWF0IjoxNjgzNTY0ODQxLCJleHAiOjE2ODQxNjk2NDEsImlzcyI6ImFjdGl2ZXBpZWNlcyJ9.daNP8wvbxR8acNlAAJiOBTOxtpj6WnMoYJd5ePyJID4';
+  // Check if the config file exists
+  if (fs.existsSync(configFilePath)) {
+    const config = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
+    token = config.token;
+  }
 
-interface IPublishOptions {
-  pieceName: string;
+  // If token doesn't exist, ask the user to input it
+  if (!token) {
+    const answer = await prompts({
+      type: 'text',
+      name: 'token',
+      message: 'Please enter your bearer token:'
+    });
+    token = answer.token;
+
+    logger.info(chalk.green("Token saved successfully."));
+    // Save the token to the config file for future use
+    fs.writeFileSync(configFilePath, JSON.stringify({ token }), 'utf8');
+  }
+
+  return token;
 }
 
-async function publish({ pieceName }: IPublishOptions) {
-  const piecePath = getPiecePath(pieceName);
-  const importedPiece = Object.values<Piece>(await import(`../../pieces/${pieceName}/src/index.ts`))[0];
-  const pieceMetadata = importedPiece.metadata();
 
-  process.chdir(piecePath);
+async function publish({ pieceName }: { pieceName: string }) {
+  const workdir = process.cwd();
+  const pieceDirectory = `${workdir}/packages/pieces/${pieceName}`;
+  if (!fs.existsSync(`${pieceDirectory}/package.json`)) {
+    logger.error(chalk.red("The package.json file is missing in the current directory. Please run this command in the piece directory."));
+    return;
+  }
+  const bearerToken = await getToken();
+  const importedPiece = Object.values<Piece>(await import(`${pieceDirectory}/src/index.ts`))[0];
+  const pieceMetadata = importedPiece.metadata();
   logger.info(chalk.blue("Packaging the piece into a tar file..."));
 
-  const npmPackOutput = JSON.parse(execSync(`npm pack --json`, { encoding: 'utf-8' }));
+  const npmPackOutput = JSON.parse(execSync(`npm pack --json`, { encoding: 'utf-8', cwd: pieceDirectory }));
   const tarFileName = npmPackOutput[0].filename;
 
   logger.info(chalk.green(`Package ${tarFileName} created.`));
 
   const formData = new FormData();
-  formData.append('tarFile', fs.createReadStream(`./${tarFileName}`));
+  formData.append('tarFile', fs.createReadStream(`${pieceDirectory}/${tarFileName}`));
   formData.append('metadata', JSON.stringify(pieceMetadata));
 
   const config = {
@@ -49,7 +77,7 @@ async function publish({ pieceName }: IPublishOptions) {
   };
 
   try {
-    const result = await axios.post('http://localhost:3000/v1/pieces', formData, config);
+    await axios.post(`${apiUrl}/v1/pieces`, formData, config);
     logger.info(chalk.green("Publish successful."));
   } catch (e: any) {
     if (e.response.data.code === ErrorCode.PIECE_ALREADY_EXISTS) {
@@ -59,6 +87,7 @@ async function publish({ pieceName }: IPublishOptions) {
 }
 
 async function list() {
+  const bearerToken = await getToken();
   logger.info(chalk.blue("Fetching pieces..."));
   const config = {
     headers: {
@@ -66,7 +95,7 @@ async function list() {
     },
   };
 
-  const result = await axios.get('http://localhost:3000/v1/pieces', config);
+  const result = await axios.get(`${apiUrl}/v1/pieces`, config);
   const simplifiedResult = result.data.filter((f: PieceMetadataSummary) => f.type === PieceType.PRIVATE).map((piece: PieceMetadataSummary) => ({
     name: piece.name,
     displayName: piece.displayName,
@@ -90,8 +119,8 @@ async function list() {
 }
 
 async function deletePiece({ pieceName }: { pieceName: string }) {
-
-  const answer = await inquirer.prompt({
+  const bearerToken = await getToken();
+  const answer = await prompts({
     type: 'confirm',
     name: 'confirmDelete',
     message: `Are you sure you want to delete all versions of the '${pieceName}' piece?`
@@ -105,28 +134,52 @@ async function deletePiece({ pieceName }: { pieceName: string }) {
       },
     };
 
-    axios.delete(`http://localhost:3000/v1/pieces/${pieceName}`, config);
+    try {
+      await axios.delete(`${apiUrl}/v1/pieces/${pieceName}`, config);
+      logger.info(chalk.green(`Piece '${pieceName}' deleted.`));
+    } catch (e: any) {
+      if (e.response?.status === 404) {
+        logger.info(chalk.yellow(`Piece '${pieceName}' not found.`));
+      } else {
+        throw e;
+      }
+    }
   } else {
     logger.info(chalk.yellow("Delete canceled."));
   }
 }
 
-function getPiecePath(pieceName: string) {
-  return `dist/packages/pieces/${pieceName}`;
+
+async function auth() {
+  const response = await prompts({
+    type: 'text',
+    name: 'token',
+    message: 'Please enter your bearer token:'
+  });
+
+  const homeDir = os.homedir();
+  const activePiecesDir = `${homeDir}/.activepieces`;
+  const configFilePath = `${activePiecesDir}/config.json`;
+
+  // Save the token to the config file for future use
+  fs.writeFileSync(configFilePath, JSON.stringify({ token: response.token }), 'utf8');
+
+  logger.info(chalk.green("Token updated successfully."));
 }
 
 const args = process.argv.slice(2);
 const command = args[0];
 
 switch (command) {
+  case 'auth':
+    auth();
+    break;
   case 'publish': {
     const pieceName = args[1];
     if (!pieceName) {
       logger.error(chalk.red("Piece name argument is missing"))
     } else {
-      publish({
-        pieceName,
-      });
+      publish({ pieceName });
     }
     break;
   }
@@ -148,4 +201,3 @@ switch (command) {
     logger.warn(chalk.red("Unknown command."));
     break;
 }
-

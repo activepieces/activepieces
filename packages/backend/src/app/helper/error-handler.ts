@@ -13,6 +13,9 @@ export const errorHandler = async (
     if (error instanceof ActivepiecesError) {
         let statusCode = StatusCodes.BAD_REQUEST
         switch (error.error.code) {
+            case ErrorCode.ENTITY_NOT_FOUND:
+                statusCode = StatusCodes.NOT_FOUND
+                break
             case ErrorCode.TASK_QUOTA_EXCEEDED:
                 statusCode = StatusCodes.PAYMENT_REQUIRED
                 break
