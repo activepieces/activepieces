@@ -29,7 +29,7 @@ import { Params } from '@angular/router';
  */
 export class ConnectionsTableDataSource extends DataSource<FlowRun> {
   data: AppConnection[] = [];
-  isLoading$:BehaviorSubject<boolean> = new BehaviorSubject(true);
+  isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
     private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
@@ -51,7 +51,9 @@ export class ConnectionsTableDataSource extends DataSource<FlowRun> {
       project: this.store.select(ProjectSelectors.selectProject).pipe(take(1)),
       refresh: this.refresh$,
     }).pipe(
-      tap(()=>{this.isLoading$.next(true)}),
+      tap(() => {
+        this.isLoading$.next(true);
+      }),
       switchMap((res) => {
         return this.connectionsService.list({
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,

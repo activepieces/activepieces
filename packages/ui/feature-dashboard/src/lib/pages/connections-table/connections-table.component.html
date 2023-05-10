@@ -62,7 +62,7 @@
           <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false"> </ap-loading-icon>
         </div>
       </ng-container>
-      <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async)==false">
+      <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
         <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px]">
           No connnections created yet
         </div>

@@ -18,9 +18,7 @@ import {
 } from '@activepieces/ui/common';
 import { ConnectionsTableDataSource } from './connections-table.datasource';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
-import {
-  AppConnectionsService,
-} from '@activepieces/ui/common';
+import { AppConnectionsService } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 
 @Component({
