@@ -35,9 +35,20 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
     },
     indices: [
         {
-            name: 'idx_run_project_id',
-            columns: ['projectId'],
-            unique: false,
+            name: 'idx_run_project_id_environment_created_desc',
+            columns: ['projectId', 'environment', 'created'],
+        },
+        {
+            name: 'idx_run_project_id_environment_status_created_desc',
+            columns: ['projectId', 'environment', 'status', 'created'],
+        },
+        {
+            name: 'idx_run_project_id_flow_id_environment_created_desc',
+            columns: ['projectId', 'flowId', 'environment', 'created'],
+        },
+        {
+            name: 'idx_run_project_id_flow_id_environment_status_created_desc',
+            columns: ['projectId', 'flowId', 'environment', 'status', 'created'],
         },
     ],
     relations: {

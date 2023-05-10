@@ -11,6 +11,8 @@ import {
     RunEnvironment,
     TelemetryEventName,
     ApEdition,
+    FlowId,
+    spreadIfDefined,
 } from '@activepieces/shared'
 import { getEdition } from '../../helper/secret-helper'
 import { databaseConnection } from '../../database/database-connection'
@@ -29,7 +31,7 @@ import { flowRepo } from '../flow/flow.repo'
 export const repo = databaseConnection.getRepository(FlowRunEntity)
 
 export const flowRunService = {
-    async list({ projectId, cursor, limit }: ListParams): Promise<SeekPage<FlowRun>> {
+    async list({ projectId, flowId, status, cursor, limit }: ListParams): Promise<SeekPage<FlowRun>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: FlowRunEntity,
@@ -43,8 +45,11 @@ export const flowRunService = {
 
         const query = repo.createQueryBuilder('flow_run').where({
             projectId,
+            ...spreadIfDefined('flowId', flowId),
+            ...spreadIfDefined('status', status),
             environment: RunEnvironment.PRODUCTION,
         })
+
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
@@ -125,6 +130,8 @@ export const flowRunService = {
 
 type ListParams = {
     projectId: ProjectId
+    flowId: FlowId | undefined
+    status: ExecutionOutputStatus | undefined
     cursor: Cursor | null
     limit: number
 }

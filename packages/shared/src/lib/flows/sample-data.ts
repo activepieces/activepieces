@@ -12,3 +12,9 @@ export const SampleDataSettingsObject = Type.Object(
 )
 
 export type SampleDataSettings = Static<typeof SampleDataSettingsObject>;
+
+export const DEFAULT_SAMPLE_DATA_SETTINGS: SampleDataSettings = {
+  currentSelectedData: undefined,
+  customizedInputs: undefined,
+  lastTestDate: undefined,
+}

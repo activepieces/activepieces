@@ -52,10 +52,10 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   lastTestDate$: Observable<string | undefined>;
   constructor(
     testStepService: TestStepService,
-    private store: Store,
+    store: Store,
     private actionMetaService: ActionMetaService
   ) {
-    super(testStepService);
+    super(testStepService, store);
     this.initialObservables();
     this.setSimultionMessage();
   }

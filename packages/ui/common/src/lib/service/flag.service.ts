@@ -97,6 +97,14 @@ export class FlagService {
     );
   }
 
+  getSandboxTimeout(): Observable<number> {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return Number(flags[ApFlagId.SANDBOX_RUN_TIME_SECONDS]);
+      })
+    );
+  }
+
   getEnvironment(): Observable<string> {
     return this.getAllFlags().pipe(
       map((flags) => {

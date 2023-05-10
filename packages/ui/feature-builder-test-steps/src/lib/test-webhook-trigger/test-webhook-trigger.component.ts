@@ -44,8 +44,8 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
   stopSelectedDataControlListener$ = new Subject<boolean>();
   cancelTesting$ = new Subject<boolean>();
   saveAfterNewDataIsLoaded$: Observable<void>;
-  constructor(testStepService: TestStepService, private store: Store) {
-    super(testStepService);
+  constructor(testStepService: TestStepService, store: Store) {
+    super(testStepService, store);
     this.initialObservables();
   }
 

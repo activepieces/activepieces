@@ -11,6 +11,7 @@ import { FlowItemTreeComponent } from './flow-item-tree/flow-item-tree.component
 import { CanvasUtilsComponent } from './canvas-utils/canvas-utils.component';
 import { CanvasPannerDirective } from './canvas-utils/panning/panner.directive';
 import { DeleteStepDialogComponent } from './flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
+import { IncompleteStepsWidgetComponent } from './incomplete-steps-widget/incomplete-steps-widget.component';
 
 @NgModule({
   imports: [CommonModule, UiCommonModule],
@@ -25,6 +26,7 @@ import { DeleteStepDialogComponent } from './flow-item-tree/flow-item/flow-item-
     CanvasUtilsComponent,
     DeleteStepDialogComponent,
     CanvasPannerDirective,
+    IncompleteStepsWidgetComponent,
   ],
   exports: [FlowItemTreeComponent, CanvasUtilsComponent, CanvasPannerDirective],
 })

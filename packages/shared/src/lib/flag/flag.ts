@@ -18,6 +18,7 @@ export const enum ApEdition {
 }
 
 export enum ApFlagId {
+    SANDBOX_RUN_TIME_SECONDS = 'SANDBOX_RUN_TIME_SECONDS',
     FRONTEND_URL = "FRONTEND_URL",
     EDITION = "EDITION",
     ENVIRONMENT = "ENVIRONMENT",

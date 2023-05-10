@@ -18,7 +18,6 @@ import {
   MatSnackBarModule,
   MAT_SNACK_BAR_DEFAULT_OPTIONS,
 } from '@angular/material/snack-bar';
-import { projectReducer } from '@activepieces/ui/common';
 import { MatCardModule } from '@angular/material/card';
 import {
   MatFormFieldModule,
@@ -41,7 +40,12 @@ import { MatTreeModule } from '@angular/material/tree';
 import { ImgFallbackDirective } from './helper/image-fallback.directive';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { UiCommonModule } from '@activepieces/ui/common';
+import {
+  ProjectEffects,
+  UiCommonModule,
+  projectReducer,
+} from '@activepieces/ui/common';
+import { EffectsModule } from '@ngrx/effects';
 
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -63,6 +67,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     MatMenuModule,
     UiCommonModule,
     QuillModule.forRoot({}),
+    EffectsModule.forFeature([ProjectEffects]),
     StoreModule.forFeature('commonState', {
       projectsState: projectReducer,
     }),
