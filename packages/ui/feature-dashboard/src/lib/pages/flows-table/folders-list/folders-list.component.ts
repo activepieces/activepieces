@@ -60,6 +60,7 @@ export class FoldersListComponent {
       tap((folderId: string) => {
         if (folderId) {
           this.clearCursorParam(folderId);
+          this.scrollToFolder(folderId);
         }
       }),
       map(() => void 0)
@@ -110,5 +111,9 @@ export class FoldersListComponent {
       folderDisplayName: folder.displayName,
     };
     this.dialogService.open(RenameFolderDialogComponent, { data: dialogData });
+  }
+  scrollToFolder(folderId: string) {
+    const folderDiv = document.getElementById(folderId);
+    folderDiv?.scrollIntoView({ behavior: 'smooth' });
   }
 }
