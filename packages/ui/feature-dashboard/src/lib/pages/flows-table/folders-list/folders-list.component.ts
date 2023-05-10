@@ -112,9 +112,8 @@ export class FoldersListComponent {
     };
     this.dialogService.open(RenameFolderDialogComponent, { data: dialogData });
   }
-  scrollToFolder(folderId:string)
-  {
+  scrollToFolder(folderId: string) {
     const folderDiv = document.getElementById(folderId);
-    folderDiv?.scrollIntoView({behavior:'smooth'});
+    folderDiv?.scrollIntoView({ behavior: 'smooth' });
   }
 }
