@@ -128,6 +128,12 @@ const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
   }
   return undefined;
 });
+const selectStepTestSampleDataStringified = createSelector(
+  selectStepTestSampleData,
+  (res) => {
+    return res ? res : res === undefined ? 'undefined' : JSON.stringify(res);
+  }
+);
 const selectLastTestDate = createSelector(selectCurrentStep, (step) => {
   if (
     step &&
@@ -465,4 +471,5 @@ export const BuilderSelectors = {
   selectStepTestSampleData,
   selectLastTestDate,
   selectNumberOfInvalidSteps,
+  selectStepTestSampleDataStringified,
 };

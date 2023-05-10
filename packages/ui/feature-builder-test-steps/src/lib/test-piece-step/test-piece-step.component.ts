@@ -37,12 +37,11 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
       BuilderSelectors.selectStepValidity
     );
     this.lastTestResult$ = this.store
-      .select(BuilderSelectors.selectStepTestSampleData)
+      .select(BuilderSelectors.selectStepTestSampleDataStringified)
       .pipe(
         distinctUntilChanged((prev, current) => {
           return deepEqual(prev, current);
-        }),
-        map((res)=>res? res : res === undefined? 'undefined':JSON.stringify(res))
+        })
       );
     this.lastTestDate$ = this.store
       .select(BuilderSelectors.selectLastTestDate)
