@@ -117,6 +117,9 @@
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/piece-smtp": ["packages/pieces/smtp/src/index.ts"],
       "@activepieces/piece-square": ["packages/pieces/square/src/index.ts"],
+      "@activepieces/piece-stability-ai": [
+        "packages/pieces/stability-ai/src/index.ts"
+      ],
       "@activepieces/piece-store": ["packages/pieces/store/src/index.ts"],
       "@activepieces/piece-stripe": ["packages/pieces/stripe/src/index.ts"],
       "@activepieces/piece-telegram-bot": [
