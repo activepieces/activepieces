@@ -19,6 +19,10 @@ async function verifyLicense(licenseKey: string): Promise<boolean> {
     }
 }
 
+export function isCloud() {
+    return system.get(SystemProp.LICENSE_KEY) !== undefined
+}
+
 export async function getEdition(): Promise<string> {
     if (edition === undefined) {
         const licenseKey = system.get(SystemProp.LICENSE_KEY)

@@ -33,6 +33,7 @@ type FlowPiece = {
 }
 
 type InstallPiecesParams = {
+    projectId: ProjectId
     path: string
     flowVersion: FlowVersion
 }
@@ -61,6 +62,7 @@ const installPieces = async (params: InstallPiecesParams): Promise<void> => {
     const pieces = extractFlowPieces(flowVersion)
 
     await pieceManager.install({
+        projectId: params.projectId,
         projectPath: path,
         pieces,
     })
@@ -87,6 +89,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             const path = sandbox.getSandboxFolderPath()
 
             await installPieces({
+                projectId: jobData.projectId,
                 path,
                 flowVersion,
             })

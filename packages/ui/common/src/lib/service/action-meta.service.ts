@@ -114,6 +114,7 @@ export class ActionMetaService {
     return `${pieceName}-${pieceVersion}`;
   }
 
+  // TODO move this logic to the backend
   private filterAppWebhooks(
     triggersMap: TriggersMetadata,
     edition: ApEdition

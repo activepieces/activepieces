@@ -6,8 +6,9 @@ import { authenticationModule } from './app/authentication/authentication.module
 import { projectModule } from './app/project/project.module'
 import { openapiModule } from './app/helper/openapi/openapi.module'
 import { flowModule } from './app/flows/flow.module'
+import multipart from '@fastify/multipart'
 import { fileModule } from './app/file/file.module'
-import { piecesController } from './app/pieces/pieces.controller'
+import { piecesController } from './app/pieces/piece-metadata.controller'
 import { tokenVerifyMiddleware } from './app/authentication/token-verify-middleware'
 import { storeEntryModule } from './app/store-entry/store-entry.module'
 import { flowRunModule } from './app/flows/flow-run/flow-run-module'
@@ -46,6 +47,8 @@ const app = fastify({
         },
     },
 })
+
+app.register(multipart, { addToBody: true })
 
 app.register(swagger, {
     openapi: {

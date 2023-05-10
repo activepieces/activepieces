@@ -20,7 +20,7 @@ import {
     ExecutePropsOptions,
     ExecutionState,
     getPackageAliasForPiece,
-    getPackageNameForPiece,
+    getPackageNameForPiece
 } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
 import { isNil } from 'lodash';

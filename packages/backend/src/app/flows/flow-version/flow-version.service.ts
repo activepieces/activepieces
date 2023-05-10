@@ -268,7 +268,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                 clonedRequest.request.action.valid = branchSetttingsValidaotr.Check(clonedRequest.request.action.settings)
             }
             else if (clonedRequest.request.action.type === ActionType.PIECE) {
-                clonedRequest.request.action.valid = await validateAction(clonedRequest.request.action.settings)
+                clonedRequest.request.action.valid = await validateAction(projectId, clonedRequest.request.action.settings)
             }
             else if (clonedRequest.request.action.type === ActionType.CODE) {
                 const codeSettings: CodeActionSettings = clonedRequest.request.action.settings
@@ -284,7 +284,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                 clonedRequest.request.valid = branchSetttingsValidaotr.Check(clonedRequest.request.settings)
             }
             else if (clonedRequest.request.type === ActionType.PIECE) {
-                clonedRequest.request.valid = await validateAction(clonedRequest.request.settings)
+                clonedRequest.request.valid = await validateAction(projectId, clonedRequest.request.settings)
             }
             else if (clonedRequest.request.type === ActionType.CODE) {
                 const codeSettings: CodeActionSettings = clonedRequest.request.settings
@@ -310,7 +310,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
         case FlowOperationType.UPDATE_TRIGGER:
             clonedRequest.request.valid = true
             if (clonedRequest.request.type === TriggerType.PIECE) {
-                clonedRequest.request.valid = await validateTrigger(clonedRequest.request.settings)
+                clonedRequest.request.valid = await validateTrigger(projectId, clonedRequest.request.settings)
             }
             break
         default:
@@ -320,7 +320,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
 }
 
 
-async function validateAction(settings: PieceActionSettings) {
+async function validateAction(projectId: ProjectId, settings: PieceActionSettings) {
     if (
         settings.pieceName === undefined ||
         settings.pieceVersion === undefined ||
@@ -329,7 +329,7 @@ async function validateAction(settings: PieceActionSettings) {
     ) {
         return false
     }
-    const piece = await pieceMetadataLoader.pieceMetadata(settings.pieceName, settings.pieceVersion)
+    const piece = await pieceMetadataLoader.pieceMetadata(projectId, settings.pieceName, settings.pieceVersion)
     if (piece === undefined) {
         return false
     }
@@ -340,7 +340,7 @@ async function validateAction(settings: PieceActionSettings) {
     return validateProps(action.props, settings.input)
 }
 
-async function validateTrigger(settings: PieceTriggerSettings) {
+async function validateTrigger(projectId: ProjectId, settings: PieceTriggerSettings) {
     if (
         settings.pieceName === undefined ||
         settings.pieceVersion === undefined ||
@@ -349,7 +349,7 @@ async function validateTrigger(settings: PieceTriggerSettings) {
     ) {
         return false
     }
-    const piece = await pieceMetadataLoader.pieceMetadata(settings.pieceName, settings.pieceVersion)
+    const piece = await pieceMetadataLoader.pieceMetadata(projectId, settings.pieceName, settings.pieceVersion)
     if (piece === undefined) {
         return false
     }

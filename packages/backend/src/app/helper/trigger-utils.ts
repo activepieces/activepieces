@@ -24,7 +24,10 @@ export const triggerUtils = {
         let payloads: unknown[] = []
         switch (flowTrigger.type) {
             case TriggerType.PIECE: {
-                const pieceTrigger = await getPieceTrigger(flowTrigger)
+                const pieceTrigger = await getPieceTrigger({
+                    trigger: flowTrigger,
+                    projectId,
+                })
                 const result = await engineHelper.executeTrigger({
                     hookType: TriggerHookType.RUN,
                     flowVersion: flowVersion,
@@ -95,7 +98,10 @@ export const triggerUtils = {
 const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
     const { flowVersion, projectId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = await getPieceTrigger(flowTrigger)
+    const pieceTrigger = await getPieceTrigger({
+        trigger: flowTrigger,
+        projectId,
+    })
 
     await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_DISABLE,
@@ -124,7 +130,10 @@ const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void>
 const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
     const { flowVersion, projectId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = await getPieceTrigger(flowTrigger)
+    const pieceTrigger = await getPieceTrigger({
+        trigger: flowTrigger,
+        projectId: projectId,
+    })
 
     const webhookUrl = await webhookService.getWebhookUrl({
         flowId: flowVersion.flowId,
@@ -174,8 +183,8 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
     }
 }
 
-export async function getPieceTrigger(trigger: PieceTrigger): Promise<TriggerBase> {
-    const piece = await pieceMetadataLoader.pieceMetadata(trigger.settings.pieceName, trigger.settings.pieceVersion)
+async function getPieceTrigger({projectId, trigger}: {projectId: ProjectId, trigger: PieceTrigger}): Promise<TriggerBase> {
+    const piece = await pieceMetadataLoader.pieceMetadata(projectId, trigger.settings.pieceName, trigger.settings.pieceVersion)
     if (isNil(piece)) {
         throw new ActivepiecesError({
             code: ErrorCode.PIECE_NOT_FOUND,

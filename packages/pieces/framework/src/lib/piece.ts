@@ -1,7 +1,7 @@
 import type { Trigger } from './trigger/trigger';
 import { Action } from './action/action';
 import { EventPayload, ParseEventResponse } from '@activepieces/shared';
-import { PieceBase, PieceMetadata } from './piece-metadata';
+import { PieceBase, PieceMetadata, PieceType } from './piece-metadata';
 
 export class Piece implements PieceBase {
   private readonly _actions: Record<string, Action>;
@@ -46,11 +46,12 @@ export class Piece implements PieceBase {
     return this._triggers[triggerName];
   }
 
-  metadata(): PieceMetadata {
+  metadata(type = PieceType.PUBLIC): PieceMetadata {
     return {
       name: this.name,
       displayName: this.displayName,
       logoUrl: this.logoUrl,
+      type,
       actions: this._actions,
       triggers: this._triggers,
       description: this.description,

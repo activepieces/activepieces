@@ -3,22 +3,23 @@ import { resolve } from 'node:path'
 import { cwd } from 'node:process'
 import axios from 'axios'
 import sortBy from 'lodash/sortBy'
-import { Piece, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
-import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
+import { Piece, PieceMetadata, PieceMetadataSummary, PieceType } from '@activepieces/pieces-framework'
+import { ActivepiecesError, ApEnvironment, ErrorCode, ProjectId } from '@activepieces/shared'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { captureException, logger } from '../helper/logger'
+import { pieceMetadataService } from '@ee/private-pieces/piece-metadata.service'
 
 type PieceMetadataLoader = {
     /**
      * returns a list of all available pieces and their metadata without actions and triggers.
      */
-    manifest(): Promise<PieceMetadataSummary[]>
+    manifest({ projectId }: { projectId: ProjectId }): Promise<PieceMetadataSummary[]>
 
     /**
-     * returns metadata for a specific piece version including actions and triggers.
-     */
-    pieceMetadata(name: string, version: string): Promise<PieceMetadata>
+    * returns metadata for a specific piece version including actions and triggers.
+    */
+    pieceMetadata(projectId: ProjectId, name: string, version: string): Promise<PieceMetadata>
 }
 
 /**
@@ -29,12 +30,17 @@ const cdnPieceMetadataLoader = (): PieceMetadataLoader => {
     const CDN = 'https://activepieces-cdn.fra1.digitaloceanspaces.com/pieces/metadata'
 
     return {
-        async manifest() {
+        async manifest({ projectId }: { projectId: ProjectId }) {
             const response = await axios<PieceMetadataSummary[]>(`${CDN}/latest.json`)
-            return response.data
+            const privatePieces = await pieceMetadataService.list({ projectId })
+            return [...response.data, ...privatePieces]
         },
 
-        async pieceMetadata(pieceName: string, version: string) {
+        async pieceMetadata(projectId: ProjectId, pieceName: string, version: string): Promise<PieceMetadata> {
+            const privatePiece = await pieceMetadataService.getMetadata({projectId, name: pieceName, version: version})
+            if(privatePiece){
+                return privatePiece
+            }
             try {
                 const response = await axios<PieceMetadata>(`${CDN}/${pieceName}/${version}.json`)
                 return response.data
@@ -72,7 +78,7 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
                 const piece = Object.values<Piece>(module)[0]
                 piecesMetadata.push(piece.metadata())
             }
-            catch(ex) {
+            catch (ex) {
                 captureException(ex)
                 logger.error(ex)
             }
@@ -91,6 +97,7 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
                 description: p.description,
                 logoUrl: p.logoUrl,
                 version: p.version,
+                type: PieceType.PUBLIC,
                 minimumSupportedRelease: p.minimumSupportedRelease,
                 maximumSupportedRelease: p.maximumSupportedRelease,
                 actions: Object.keys(p.actions).length,
@@ -117,7 +124,7 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
     }
 }
 
-const getPieceMetadataLoader = (): PieceMetadataLoader => {
+export const getPieceMetadataLoader = (): PieceMetadataLoader => {
     const env = system.getOrThrow(SystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.PRODUCTION) {

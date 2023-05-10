@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { cwd } from "node:process";
 import sortBy from "lodash/sortBy";
-import { Piece, ActionBase, PieceMetadata} from '@activepieces/pieces-framework';
+import { Piece, ActionBase, PieceMetadata, TriggerBase} from '@activepieces/pieces-framework';
 
 type PieceInfo = PieceMetadata & {
   directory: string;
@@ -39,7 +39,7 @@ const getCardTemplate = (title: string, description: string) => {
   `;
 }
 
-const getPieceCards = (items: Record<string, ActionBase>) => {
+const getPieceCards = (items: Record<string, ActionBase> | Record<string, TriggerBase>) => {
   const itemsCards: string[] = [];
 
   Object.values(items).forEach(item => {

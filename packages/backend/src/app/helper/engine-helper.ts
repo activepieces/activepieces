@@ -30,6 +30,7 @@ import { appEventRoutingService } from '../app-event-routing/app-event-routing.s
 import { pieceManager } from '../flows/common/piece-installer'
 
 type InstallPieceParams = {
+    projectId: ProjectId
     path: string
     pieceName: string
     pieceVersion: string
@@ -46,6 +47,7 @@ const installPiece = async (params: InstallPieceParams) => {
     const { path, pieceName, pieceVersion } = params
 
     await pieceManager.install({
+        projectId: params.projectId,
         projectPath: path,
         pieces: [
             {
@@ -66,7 +68,9 @@ export const engineHelper = {
     },
     async executeTrigger<T extends TriggerHookType>(operation: ExecuteTriggerOperation<T>): Promise<ExecuteTriggerResponse<T>> {
         const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
+
         const sandbox = await getSandbox({
+            projectId: operation.projectId,
             pieceName,
             pieceVersion,
         })
@@ -94,6 +98,7 @@ export const engineHelper = {
         const { pieceName, pieceVersion } = operation
 
         const sandbox = await getSandbox({
+            projectId: operation.projectId,
             pieceName,
             pieceVersion,
         })
@@ -123,6 +128,7 @@ export const engineHelper = {
         const { pieceName, pieceVersion } = operation
 
         const sandbox = await getSandbox({
+            projectId: operation.projectId,
             pieceName,
             pieceVersion,
         })
@@ -151,8 +157,9 @@ function workerToken(request: { projectId: ProjectId }): Promise<string> {
     })
 }
 
-async function getSandbox({ pieceName, pieceVersion }: {
+async function getSandbox({ pieceName, pieceVersion, projectId }: {
     pieceName: string
+    projectId: ProjectId
     pieceVersion: string
 }): Promise<Sandbox> {
     const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
@@ -166,6 +173,7 @@ async function getSandbox({ pieceName, pieceVersion }: {
         const path = sandbox.getSandboxFolderPath()
 
         await installPiece({
+            projectId,
             path,
             pieceName,
             pieceVersion,

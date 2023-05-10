@@ -41,6 +41,8 @@ import { AllowNullableStoreEntryAndTrigger1683040965874 } from './migration/1683
 import { RenameNotifications1683195711242 } from './migration/1683195711242-rename-notifications'
 import { ListFlowRunsIndices1683199709317 } from './migration/1683199709317-list-flow-runs-indices'
 import { ProjectNotifyStatusNotNull1683458275525 } from './migration/1683458275525-project-notify-status-not-null'
+import { AddPieceMetadata1683573113419 } from './migration/1683573113419-AddPieceMetadata'
+import { PieceMetadataEntity } from '@ee/private-pieces/piece-metadata.entity'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -84,6 +86,7 @@ const getMigrations = () => {
         RenameNotifications1683195711242,
         ListFlowRunsIndices1683199709317,
         ProjectNotifyStatusNotNull1683458275525,
+        AddPieceMetadata1683573113419,
     ]
 }
 
@@ -117,6 +120,7 @@ export const databaseConnection = new DataSource({
         AppConnectionEntity,
         ProjectPlanEntity,
         ProjectUsageEntity,
+        PieceMetadataEntity,
         WebhookSimulationEntity,
         FolderEntity,
     ],

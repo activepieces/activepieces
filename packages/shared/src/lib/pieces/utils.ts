@@ -14,9 +14,3 @@ export const getPackageAliasForPiece = (params: PackageInfoParams): string => {
 
   return `@activepieces/piece-${pieceName}-${pieceVersion}`
 }
-
-export const getPackageVersionForPiece = (params: PackageInfoParams): string => {
-  const { pieceName, pieceVersion } = params;
-
-  return `npm:@activepieces/piece-${pieceName}@${pieceVersion}`
-}

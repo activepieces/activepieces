@@ -57,6 +57,8 @@ export * from './lib/flows/flow-instances';
 export * from "./lib/flows/folders/folder";
 export * from "./lib/flows/folders/folder-requests";
 import { TypeSystem } from '@sinclair/typebox/system'
+export  * from "./lib/common/utils/multipart-file";
 export * from "./lib/flows/dto/list-flows-request";
+
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 TypeSystem.ExactOptionalPropertyTypes = false;

@@ -41,6 +41,7 @@ type ErrorParams =
   | EntityNotFoundErrorParams
   | ValidationErrorParams
   | ExecutionTimeoutErrorParams
+  | PieceAlreadyExistsErrorParams
 
 
 export interface BaseErrorParams<T, V> {
@@ -222,6 +223,14 @@ export type ExecutionTimeoutErrorParams = BaseErrorParams<
   Record<string, never>
 >
 
+export type PieceAlreadyExistsErrorParams = BaseErrorParams<
+  ErrorCode.PIECE_ALREADY_EXISTS,
+  {
+    name: string;
+    version: string;
+  }
+>
+
 export type ValidationErrorParams = BaseErrorParams<
   ErrorCode.VALIDATION,
   {
@@ -257,5 +266,6 @@ export enum ErrorCode {
   TEST_TRIGGER_FAILED = "TEST_TRIGGER_FAILED",
   ENTITY_NOT_FOUND = "ENTITY_NOT_FOUND",
   VALIDATION = "VALIDATION",
+  PIECE_ALREADY_EXISTS = 'PIECE_ALREADY_EXISTS',
   EXECUTION_TIMEOUT = "EXECUTION_TIMEOUT"
 }
