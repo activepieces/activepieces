@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { map, Observable, of, switchMap } from 'rxjs';
 import { ExecutionOutput, FlowRun, SeekPage } from '@activepieces/shared';
+import { CURSOR_QUERY_PARAM } from '../utils/tables.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -34,7 +35,7 @@ export class InstanceRunService {
       projectId: projectId,
     };
     if (params.cursor) {
-      queryParams['cursor'] = params.cursor;
+      queryParams[CURSOR_QUERY_PARAM] = params.cursor;
     }
     return this.http.get<SeekPage<FlowRun>>(environment.apiUrl + `/flow-runs`, {
       params: queryParams,
