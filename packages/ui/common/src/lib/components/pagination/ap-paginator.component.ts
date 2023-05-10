@@ -2,7 +2,11 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
-import { DEFAULT_PAGE_SIZE, LIMIT_QUERY_PARAM, PAGE_SIZES } from '../../utils/tables.utils';
+import {
+  DEFAULT_PAGE_SIZE,
+  LIMIT_QUERY_PARAM,
+  PAGE_SIZES,
+} from '../../utils/tables.utils';
 
 @Component({
   selector: 'ap-paginator',
