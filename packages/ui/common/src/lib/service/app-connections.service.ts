@@ -9,6 +9,7 @@ import {
   UpsertConnectionRequest,
   ListAppConnectionRequest,
 } from '@activepieces/shared';
+import { CURSOR_QUERY_PARAM, LIMIT_QUERY_PARAM } from '../utils/tables.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -26,10 +27,10 @@ export class AppConnectionsService {
   list(params: ListAppConnectionRequest): Observable<SeekPage<AppConnection>> {
     const queryParams: { [key: string]: string | number } = {};
     if (params.cursor) {
-      queryParams['cursor'] = params.cursor;
+      queryParams[CURSOR_QUERY_PARAM] = params.cursor;
     }
     if (params.limit) {
-      queryParams['limit'] = params.limit;
+      queryParams[LIMIT_QUERY_PARAM] = params.limit;
     }
     return this.http.get<SeekPage<AppConnection>>(
       environment.apiUrl + '/app-connections',

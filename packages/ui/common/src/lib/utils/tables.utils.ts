@@ -7,3 +7,7 @@ export interface PaginationParams {
   cursor?: string;
   pageSize: number;
 }
+
+export const LIMIT_QUERY_PARAM = 'limit';
+export const CURSOR_QUERY_PARAM = 'cursor';
+export const FOLDER_QUERY_PARAM = 'folderId';

@@ -16,6 +16,8 @@ import {
   ApPaginatorComponent,
   ProjectSelectors,
   DEFAULT_PAGE_SIZE,
+  LIMIT_QUERY_PARAM,
+  CURSOR_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
@@ -52,8 +54,8 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
       }),
       switchMap((res) => {
         return this.instanceRunService.list(res.project.id, {
-          limit: res.queryParams['limit'] || DEFAULT_PAGE_SIZE,
-          cursor: res.queryParams['cursor'],
+          limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
+          cursor: res.queryParams[CURSOR_QUERY_PARAM],
         });
       }),
       catchError((err) => {
