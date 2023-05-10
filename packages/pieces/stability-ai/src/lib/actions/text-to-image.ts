@@ -1,5 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import axios, { AxiosError } from 'axios';
+import {
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
 
 export const textToImage = createAction({
   name: 'text-to-image',
@@ -259,22 +263,18 @@ export const textToImage = createAction({
       style_preset,
     };
 
-    try {
-      const response = await axios.post(
-        `${apiHost}/v1/generation/${engineId}/text-to-image`,
-        requestBody,
-        {
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            Accept: accept_format,
-          },
-        }
-      );
+    const request: HttpRequest<Record<string, unknown>> = {
+      method: HttpMethod.POST,
+      url: `${apiHost}/v1/generation/${engineId}/text-to-image`,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        Accept: accept_format,
+      },
+      body: requestBody,
+    };
 
-      return response.data;
-    } catch (err) {
-      const error = err as AxiosError;
-      throw new Error(JSON.stringify(error.response?.data));
-    }
+    const { body } = await httpClient.sendRequest(request);
+
+    return body;
   },
 });
