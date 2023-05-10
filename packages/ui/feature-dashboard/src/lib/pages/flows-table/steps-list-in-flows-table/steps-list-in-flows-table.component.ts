@@ -103,7 +103,9 @@ export class StepsListInFlowsTableComponent implements OnInit {
     this.piecesMetadata$ = urls$;
   }
   extractTooltipText() {
-    const stepsAppsNames =  Array.from(new Set(Object.values(this.stepNamesMap).filter((v) => v !== '')));
+    const stepsAppsNames = Array.from(
+      new Set(Object.values(this.stepNamesMap).filter((v) => v !== ''))
+    );
     if (stepsAppsNames.length === 1) {
       this.tooltipText = stepsAppsNames[0];
     } else if (stepsAppsNames.length < 7) {
