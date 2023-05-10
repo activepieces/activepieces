@@ -149,6 +149,16 @@ async function deletePiece({ pieceName }: { pieceName: string }) {
   }
 }
 
+function displayHelp() {
+  console.log('Usage: npm run cli <command>');
+  console.log('');
+  console.log('Commands:');
+  console.log('  auth                      Prompt for and save the bearer token');
+  console.log('  publish <pieceName>       Package and publish a piece');
+  console.log('  list                      List all published private pieces');
+  console.log('  delete <pieceName>        Delete all versions of a published private piece');
+  console.log('  help                      Display this help message');
+}
 
 async function auth() {
   const response = await prompts({
@@ -171,6 +181,9 @@ const args = process.argv.slice(2);
 const command = args[0];
 
 switch (command) {
+  case 'help':
+    displayHelp();
+    break;
   case 'auth':
     auth();
     break;
