@@ -103,15 +103,15 @@ export class StepsListInFlowsTableComponent implements OnInit {
     this.piecesMetadata$ = urls$;
   }
   extractTooltipText() {
-    const stepNames = Object.values(this.stepNamesMap).filter((v) => v !== '');
-    if (stepNames.length === 1) {
-      this.tooltipText = stepNames[0];
-    } else if (stepNames.length < 7) {
+    const stepsAppsNames =  Array.from(new Set(Object.values(this.stepNamesMap).filter((v) => v !== '')));
+    if (stepsAppsNames.length === 1) {
+      this.tooltipText = stepsAppsNames[0];
+    } else if (stepsAppsNames.length < 7) {
       this.tooltipText =
-        stepNames.slice(0, stepNames.length - 1).join(', ') +
-        ` and ${stepNames[stepNames.length - 1]}`;
+        stepsAppsNames.slice(0, stepsAppsNames.length - 1).join(', ') +
+        ` and ${stepsAppsNames[stepsAppsNames.length - 1]}`;
     } else {
-      this.tooltipText = stepNames.join(', ') + ' and others';
+      this.tooltipText = stepsAppsNames.join(', ') + ' and others';
     }
   }
 }
