@@ -8,7 +8,11 @@ import {
   UpsertConnectionRequest,
   ListAppConnectionRequest,
 } from '@activepieces/shared';
-import { CURSOR_QUERY_PARAM, LIMIT_QUERY_PARAM, environment } from '@activepieces/ui/common';
+import {
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+  environment,
+} from '@activepieces/ui/common';
 
 @Injectable({
   providedIn: 'root',
