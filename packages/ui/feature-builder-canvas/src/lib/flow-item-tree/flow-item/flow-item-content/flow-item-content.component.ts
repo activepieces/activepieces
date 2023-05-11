@@ -59,6 +59,10 @@ export class FlowItemContentComponent implements OnInit {
   readonly$: Observable<boolean>;
   logoTooltipText = '';
   isOverflown = isOverflown;
+  StepOutputStatus = StepOutputStatus;
+  ExecutionOutputStatus = ExecutionOutputStatus;
+  TriggerType = TriggerType;
+  ActionType = ActionType;
   @Input() selected: boolean;
   @Input() trigger = false;
   @Input() viewMode: boolean;
@@ -160,18 +164,6 @@ export class FlowItemContentComponent implements OnInit {
       return;
     }
     this.dialogService.open(DeleteStepDialogComponent, { data: stepName });
-  }
-
-  get actionStatusEnum() {
-    return StepOutputStatus;
-  }
-
-  get executionOutputstatus() {
-    return ExecutionOutputStatus;
-  }
-
-  get triggerType() {
-    return TriggerType;
   }
 
   changeTrigger() {
