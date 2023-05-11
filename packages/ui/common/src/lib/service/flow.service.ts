@@ -23,7 +23,7 @@ import {
   providedIn: 'root',
 })
 export class FlowService {
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
   create(request: CreateFlowRequest): Observable<Flow> {
     return this.http.post<Flow>(environment.apiUrl + '/flows', {
       displayName: request.displayName,
@@ -39,11 +39,13 @@ export class FlowService {
     if (flowVersionId) {
       params['versionId'] = flowVersionId;
     }
-    return this.http.get<Flow>(environment.apiUrl + '/flows/' + flowId + '/template', {
-      params: params,
-    });
+    return this.http.get<Flow>(
+      environment.apiUrl + '/flows/' + flowId + '/template',
+      {
+        params: params,
+      }
+    );
   }
-
 
   get(
     flowId: FlowId,
