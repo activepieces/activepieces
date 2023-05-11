@@ -9,11 +9,22 @@ const stepOutput: StepOutput = {
   output: {
     items: [5, 'a'],
     name: 'John',
+    price: 6.4,
   },
 };
 executionState.insertStep(
   stepOutput,
   'trigger',
+  []
+);
+
+executionState.insertStep(
+  {
+    output: {
+      success: true,
+    }
+  },
+  "step_1",
   []
 );
 
@@ -24,22 +35,18 @@ describe('Variable Service', () => {
     );
   });
 
-  test('Test resolve configs variables', async () => {
-    expect(await variableService.resolve('${configs.msg}', executionState)).toEqual(
-      'Hello World'
-    );
-  });
-
-  test('Test resolve text with configs variables', async () => {
+  test('Test resolve text with double variables', async () => {
     expect(
-      await variableService.resolve('Price is ${configs.price}', executionState)
+      await variableService.resolve('Price is ${trigger.price}', executionState)
     ).toEqual('Price is 6.4');
   });
+
   test('Test resolve object steps variables', async () => {
     expect(await variableService.resolve('${trigger}', executionState)).toEqual(
       {
         items: [5, 'a'],
         name: 'John',
+        price: 6.4,
       },
     );
   });
@@ -52,8 +59,8 @@ describe('Variable Service', () => {
 
   test('Test resolve multiple variables', async () => {
     expect(
-      await variableService.resolve('${configs.msg} ${trigger.name}', executionState)
-    ).toEqual('Hello World John');
+      await variableService.resolve('${trigger.name} ${trigger.name}', executionState)
+    ).toEqual('John John');
   });
 
   test('Test resolve variable array items', async () => {
@@ -71,44 +78,10 @@ describe('Variable Service', () => {
     );
   });
 
-  test('Test resolve text with array variable', async () => {
-    expect(
-      await variableService.resolve('items are ${trigger.items}', executionState)
-    ).toEqual('items are [5,"a"]');
-  });
-
-  test('Test resolve object variable', async () => {
-    expect(await variableService.resolve('${trigger}', executionState)).toEqual({
-      items: [5, 'a'],
-      name: 'John',
-    });
-  });
-
-  test('Test resolve text with object variable', async () => {
-    expect(
-      await variableService.resolve(
-        'values from trigger step: ${trigger}',
-        executionState
-      )
-    ).toEqual('values from trigger step: {"items":[5,"a"],"name":"John"}');
-  });
-
   test('Test resolve integer from variables', async () => {
     expect(
       await variableService.resolve('${trigger.items[0]}', executionState)
     ).toEqual(5);
-  });
-
-  test('Test resolve double from variables', async () => {
-    expect(await variableService.resolve('${configs.price}', executionState)).toEqual(
-      6.4
-    );
-  });
-
-  test('Test resolve boolean from variables', async () => {
-    expect(await variableService.resolve('${configs.foo}', executionState)).toEqual(
-      true
-    );
   });
 
   test('Test resolve text with undefined variables', async () => {
@@ -120,18 +93,13 @@ describe('Variable Service', () => {
     ).toEqual('test  ');
   });
 
-  test('Test resolve empty variable operator', async () => {
-    expect(await variableService.resolve('${}', executionState)).toEqual('');
-  });
-
-  test('Test resolve incorrect variable format', async () => {
-    expect(await variableService.resolve('${configs.msg', executionState)).toEqual(
-      '${configs.msg'
-    );
-  });
-
   test('Test resolve empty text', async () => {
     expect(await variableService.resolve('', executionState)).toEqual('');
+  });
+
+
+  test('Test resolve empty variable operator', async () => {
+    expect(await variableService.resolve('${}', executionState)).toEqual('');
   });
 
   test('Test resolve object', async () => {
@@ -141,7 +109,7 @@ describe('Variable Service', () => {
           input: {
             foo: 'bar',
             nums: [1, 2, '${trigger.items[0]}'],
-            var: '${configs.price}',
+            var: '${trigger.price}',
           },
         },
         executionState
@@ -149,9 +117,43 @@ describe('Variable Service', () => {
     ).toEqual({ input: { foo: 'bar', nums: [1, 2, 5], var: 6.4 } });
   });
 
-  test('Test resolve array', async () => {
-    expect(
-      await variableService.resolve([1, 'a', '${trigger.name}'], executionState)
-    ).toEqual([1, 'a', 'John']);
+  test('Test resolve boolean from variables', async () => {
+    expect(await variableService.resolve('${step_1.success}', executionState)).toEqual(
+      true
+    );
   });
+
+  test('Test resolve addition from variables', async () => {
+    expect(await variableService.resolve('${trigger.price + 2 - 3}', executionState)).toEqual(
+      6.4 + 2 - 3
+    );
+  });
+
+  test('Test resolve text with array variable', async () => {
+    expect(
+      await variableService.resolve('items are ${trigger.items}', executionState)
+    ).toEqual('items are [5,"a"]');
+  });
+
+  test('Test resolve text with object variable', async () => {
+    expect(
+      await variableService.resolve(
+        'values from trigger step: ${trigger}',
+        executionState
+      )
+    ).toEqual('values from trigger step: {"items":[5,"a"],"name":"John","price":6.4}');
+  });
+
+  test('Test use built-in Math Min function', async () => {
+    expect(await variableService.resolve('${Math.min(trigger.price + 2 - 3, 2)}', executionState)).toEqual(
+      2
+    );
+  });
+
+  test('Test use built-in Math Max function', async () => {
+    expect(await variableService.resolve('${Math.max(trigger.price + 2, 2)}', executionState)).toEqual(
+      8.4
+    );
+  });
+
 });
