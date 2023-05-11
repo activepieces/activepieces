@@ -103,7 +103,8 @@ async function stats(): Promise<Record<string, PieceStats>> {
     }
     for (const flowWithoutVersion of flows) {
         const flow = await flowService.getOneOrThrow({ id: flowWithoutVersion.id, projectId: flowWithoutVersion.projectId })
-        if (isNil(flow.version.trigger)) {
+        const trigger = flow?.version?.trigger
+        if (isNil(trigger)) {
             continue
         }
         const isEnabled = !isNil(await flowInstanceService.get({ projectId: flow.projectId, flowId: flow.id }))
