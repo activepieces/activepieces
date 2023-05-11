@@ -15,7 +15,8 @@ module.exports = {
         sans: ['Open Sans,sans-serif', ...defaultTheme.fontFamily.sans],
       },
       boxShadow:{
-        'step-container-ds':'0px 0px 22px rgba(186, 186, 191, 0.3)'
+        'step-container-ds':'0px 0px 22px rgba(186, 186, 191, 0.3)',
+        'portal-ds' : '0px 0px 90px rgba(0, 0, 0, 0.14)'
       },
       backgroundImage: {
         authBg: "url('/assets/img/custom/auth/auth-bg.png')",
@@ -31,7 +32,7 @@ module.exports = {
           DEFAULT: '#dc3545',
           light: '#efa2a980',
         },
-        primary: { DEFAULT: '#6e41e2', light: '#EEE8FC', dark: '#472c8a' },
+        primary: { DEFAULT: '#6e41e2', light: '#EEE8FC', dark: '#472c8a','10':'rgba(110, 65, 226, 0.1)' },
         warn: {
          DEFAULT:'#f78a3b',
          light:"#FFF6E4",
