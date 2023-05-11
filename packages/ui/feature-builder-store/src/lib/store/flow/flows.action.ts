@@ -68,7 +68,7 @@ const addAction = createAction(
 
 const updateAction = createAction(
   FlowsActionType.UPDATE_ACTION,
-  props<{ operation: UpdateActionRequest }>()
+  props<{ operation: UpdateActionRequest; updatingMissingStep?: boolean }>()
 );
 
 const deleteAction = createAction(
@@ -127,6 +127,7 @@ const setRightSidebar = createAction(
           stepName: string;
         }
       | typeof NO_PROPS;
+    deselectCurrentStep: boolean;
   }>()
 );
 

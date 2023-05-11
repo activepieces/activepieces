@@ -33,6 +33,7 @@ import {
   getDefaultDisplayNameForPiece,
   getDisplayNameForTrigger,
 } from '@activepieces/ui/common';
+import { constructUpdateOperation } from './step-type-list/utils';
 
 @Component({
   selector: 'app-step-type-sidebar',
@@ -117,6 +118,7 @@ export class StepTypeSidebarComponent implements OnInit {
       FlowsActions.setRightSidebar({
         sidebarType: RightSideBarType.NONE,
         props: NO_PROPS,
+        deselectCurrentStep: true,
       })
     );
   }
@@ -129,6 +131,9 @@ export class StepTypeSidebarComponent implements OnInit {
       rightSideBar: this.store
         .select(BuilderSelectors.selectCurrentRightSideBar)
         .pipe(take(1)),
+      currentStep: this.store
+        .select(BuilderSelectors.selectCurrentStep)
+        .pipe(take(1)),
     }).pipe(
       take(1),
       tap((results) => {
@@ -137,8 +142,8 @@ export class StepTypeSidebarComponent implements OnInit {
         }
         if (this._showTriggers) {
           this.replaceTrigger(flowItemDetails);
-        } else {
-          const operation = this.constructOperation(
+        } else if (results.currentStep?.type !== ActionType.MISSING) {
+          const operation = this.constructAddOperation(
             (results.rightSideBar.props as StepTypeSideBarProps).stepName,
             results.currentFlow.version,
             flowItemDetails.type as ActionType,
@@ -146,10 +151,22 @@ export class StepTypeSidebarComponent implements OnInit {
             (results.rightSideBar.props as StepTypeSideBarProps)
               .stepLocationRelativeToParent
           );
-
           this.store.dispatch(
             FlowsActions.addAction({
               operation: operation,
+            })
+          );
+        } else {
+          const operation = constructUpdateOperation(
+            flowItemDetails,
+            results.currentStep.name,
+            results.currentStep.displayName,
+            this.codeService.helloWorldBase64()
+          );
+          this.store.dispatch(
+            FlowsActions.updateAction({
+              operation: operation,
+              updatingMissingStep: true,
             })
           );
         }
@@ -210,7 +227,7 @@ export class StepTypeSidebarComponent implements OnInit {
     );
   }
 
-  constructOperation(
+  constructAddOperation(
     parentStep: string,
     flowVersion: FlowVersion,
     actionType: ActionType,

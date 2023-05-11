@@ -22,6 +22,7 @@ import { BuilderSelectors } from '../builder/builder.selector';
 import { UUID } from 'angular2-uuid';
 import { BuilderActions } from '../builder/builder.action';
 import {
+  ActionType,
   Flow,
   FlowOperationRequest,
   FlowOperationType,
@@ -51,23 +52,33 @@ export class FlowsEffects {
   removeStepSelection$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.setRightSidebar),
-      concatLatestFrom(() =>
-        this.store.select(BuilderSelectors.selectCurrentStepName)
-      ),
-      switchMap(
-        ([{ sidebarType }, stepName]: [
-          request: { sidebarType: RightSideBarType },
-          stepName: string | null
-        ]) => {
-          if (sidebarType !== RightSideBarType.EDIT_STEP && stepName) {
-            return of(FlowsActions.deselectStep());
-          }
-          return EMPTY;
+      switchMap((action) => {
+        if (action.deselectCurrentStep) {
+          return of(FlowsActions.deselectStep());
         }
-      )
+        return EMPTY;
+      })
     );
   });
 
+  replaceEmptyStep = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FlowsActions.updateAction),
+      concatLatestFrom(() =>
+        this.store.select(BuilderSelectors.selectCurrentStepName)
+      ),
+      switchMap(([action, stepName]) => {
+        if (action.updatingMissingStep) {
+          return of(
+            FlowsActions.selectStepByName({
+              stepName: stepName,
+            })
+          );
+        }
+        return EMPTY;
+      })
+    );
+  });
   replaceTrigger = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.updateTrigger),
@@ -121,6 +132,7 @@ export class FlowsEffects {
             FlowsActions.setRightSidebar({
               sidebarType: RightSideBarType.NONE,
               props: NO_PROPS,
+              deselectCurrentStep: true,
             })
           );
         }
@@ -215,18 +227,30 @@ export class FlowsEffects {
         this.store.select(BuilderSelectors.selectCurrentFlowRun),
       ]),
       switchMap(([{ stepName }, step, run]) => {
-        if (step && step.type === TriggerType.EMPTY) {
-          return of(
-            FlowsActions.setRightSidebar({
-              sidebarType: RightSideBarType.TRIGGER_TYPE,
-              props: NO_PROPS,
-            })
-          );
+        if (step) {
+          if (step.type === TriggerType.EMPTY) {
+            return of(
+              FlowsActions.setRightSidebar({
+                sidebarType: RightSideBarType.TRIGGER_TYPE,
+                props: NO_PROPS,
+                deselectCurrentStep: false,
+              })
+            );
+          } else if (step.type === ActionType.MISSING) {
+            return of(
+              FlowsActions.setRightSidebar({
+                sidebarType: RightSideBarType.REPLACE_MISSING_STEP,
+                props: NO_PROPS,
+                deselectCurrentStep: false,
+              })
+            );
+          }
         }
         const actionsToDispatch: Array<any> = [
           FlowsActions.setRightSidebar({
             sidebarType: RightSideBarType.EDIT_STEP,
             props: NO_PROPS,
+            deselectCurrentStep: false,
           }),
         ];
         if (run) {

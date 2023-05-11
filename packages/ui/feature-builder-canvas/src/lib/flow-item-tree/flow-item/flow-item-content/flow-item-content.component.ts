@@ -171,6 +171,7 @@ export class FlowItemContentComponent implements OnInit {
       FlowsActions.setRightSidebar({
         sidebarType: RightSideBarType.TRIGGER_TYPE,
         props: NO_PROPS,
+        deselectCurrentStep: false,
       })
     );
   }
