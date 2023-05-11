@@ -9,7 +9,6 @@ import { flowRepo } from '../flows/flow/flow.repo'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 
-
 type PieceStats = {
     activeSteps: number
     allSteps: number
@@ -81,7 +80,14 @@ export const piecesController: FastifyPluginAsync = async (app) => {
     )
 }
 
+let cachedStats: Record<string, PieceStats>
+let cacheTime: number
+const FIVE_MINUTES_IN_MILLISECONDS = 5 * 60 * 1000
+
 async function stats(): Promise<Record<string, PieceStats>> {
+    if (cachedStats && (Date.now() - cacheTime) < FIVE_MINUTES_IN_MILLISECONDS) {
+        return cachedStats
+    }
     const flows = await flowRepo.find()
     const stats: Record<string, PieceStats> = {}
     const uniqueStatsPerPiece: Record<string, {
@@ -138,5 +144,10 @@ async function stats(): Promise<Record<string, PieceStats>> {
         stats[pieceName].allFlows = uniqueStatsPerPiece[pieceName].flows.size
         stats[pieceName].activeFlows = uniqueStatsPerPiece[pieceName].activeFlows.size
     }
+    cachedStats = Object.entries(stats)
+        .sort(([, valueA], [, valueB]) => valueB.activeProjects - valueA.activeProjects)
+        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {})
+
+    cacheTime = Date.now()
     return stats
 }
