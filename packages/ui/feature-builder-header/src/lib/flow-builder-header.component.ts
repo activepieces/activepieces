@@ -1,4 +1,10 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  EventEmitter,
+  OnInit,
+  Output,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { map, Observable, tap } from 'rxjs';
@@ -10,7 +16,6 @@ import {
   fadeIn400ms,
   initialiseBeamer,
 } from '@activepieces/ui/common';
-import { MagicWandDialogComponent } from './magic-wand-dialog/magic-flow-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import {
   BuilderSelectors,
@@ -26,7 +31,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   styleUrls: ['./flow-builder-header.component.scss'],
   animations: [fadeIn400ms],
 })
-export class FlowBuilderHeaderComponent implements OnInit {
+export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
   viewMode$: Observable<boolean>;
   isGeneratingFlowComponentOpen$: Observable<boolean>;
   instance$: Observable<FlowInstance | undefined>;
@@ -64,10 +69,12 @@ export class FlowBuilderHeaderComponent implements OnInit {
   changeEditValue(event: boolean) {
     this.editingFlowName = event;
   }
-  guessAi() {
-    this.dialogService.open(MagicWandDialogComponent);
+  ngAfterViewInit(): void {
+    if (localStorage.getItem('SHOW_AI_AFTER_CREATING_FLOW')) {
+      this.guessFlowButtonClicked();
+      localStorage.removeItem('SHOW_AI_AFTER_CREATING_FLOW');
+    }
   }
-
   redirectHome(newWindow: boolean) {
     if (newWindow) {
       const url = this.router.serializeUrl(this.router.createUrlTree([``]));

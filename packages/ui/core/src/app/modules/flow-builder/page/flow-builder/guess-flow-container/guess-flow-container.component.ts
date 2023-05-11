@@ -23,12 +23,7 @@ export class GuessFlowContainerComponent {
     private injector: Injector,
     private viewRef: ViewContainerRef,
     private store: Store
-  ) {
-    if (localStorage.getItem('SHOW_AI_AFTER_CREATING_FLOW')) {
-      this.showComponent();
-      localStorage.removeItem('SHOW_AI_AFTER_CREATING_FLOW');
-    }
-  }
+  ) {}
 
   async showComponent() {
     if (this.componentRef === null) {
