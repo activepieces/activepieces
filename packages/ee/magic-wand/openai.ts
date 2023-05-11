@@ -283,6 +283,12 @@ function cleanAction(step: Action | undefined, count: number): Action | undefine
         valid: false,
         nextAction: cleanAction(step.nextAction, 3 * count),
     }
+    const defaultAction: Action = {
+        ...basicStep,
+        displayName: step.displayName,
+        type: ActionType.MISSING,
+        settings: {},
+    }
     switch (basicStep.type) {
         case ActionType.BRANCH: {
             const branch: BranchAction = step as BranchAction
@@ -308,12 +314,7 @@ function cleanAction(step: Action | undefined, count: number): Action | undefine
             const piece = pieceAction?.settings.pieceName ? getPiece(pieceAction?.settings?.pieceName) : undefined
             const actionStep = pieceAction?.settings.actionName ? piece?.getAction(pieceAction?.settings?.actionName) : undefined
             if (!piece || !actionStep) {
-                return {
-                    ...basicStep,
-                    displayName: step.displayName,
-                    type: ActionType.MISSING,
-                    settings: {},
-                }
+                return defaultAction
             }
             let input: any = {}
             for (const inputName of Object.keys(actionStep.props)) {
@@ -336,12 +337,7 @@ function cleanAction(step: Action | undefined, count: number): Action | undefine
             return action
         }
         default:
-            return {
-                ...basicStep,
-                displayName: step.displayName,
-                type: ActionType.MISSING,
-                settings: {},
-            }
+            return defaultAction
     }
 }
 
@@ -353,16 +349,22 @@ function validateTrigger(step: Trigger): Trigger {
         nextAction: cleanAction(step.nextAction, 1),
         valid: false,
     }
+    const defaultTrigger: Trigger = {
+        ...basicStep,
+        type: TriggerType.WEBHOOK,
+        valid: true,
+        settings: {
+            inputUiInfo: {
+                currentSelectedData: undefined,
+            }
+        },
+    }
     switch (step.type) {
         case TriggerType.PIECE: {
             const piece = step?.settings?.pieceName ? getPiece(step.settings.pieceName) : undefined
             const triggerStep = step?.settings?.triggerName ? piece?.getTrigger(step.settings.triggerName) : undefined
             if (!piece || !triggerStep) {
-                return {
-                    ...basicStep,
-                    type: TriggerType.WEBHOOK,
-                    settings: {},
-                } as Trigger
+                return defaultTrigger
             }
             let input: any = {}
             for (const inputName of Object.keys(triggerStep.props)) {
@@ -380,12 +382,8 @@ function validateTrigger(step: Trigger): Trigger {
                 },
             } as Trigger
         }
-    case TriggerType.WEBHOOK:
-    default:
-         return {
-             ...basicStep,
-            type: TriggerType.WEBHOOK,
-            settings: {},
-        } as Trigger
+        case TriggerType.WEBHOOK:
+        default:
+            return defaultTrigger
     }
 }
