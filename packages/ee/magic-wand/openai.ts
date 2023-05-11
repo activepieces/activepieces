@@ -14,9 +14,10 @@ import { PropertyType } from '@activepieces/pieces-framework'
 let llm: OpenAI;
 let creativeLLM: OpenAI;
 const openAiKey = system.get(SystemProp.OPENAI_KEY);
+const openAiModel = system.get(SystemProp.OPENAI_MODEL);
 if (openAiKey) {
-    llm = new OpenAI({ openAIApiKey: openAiKey, temperature: 0.2, modelName: 'gpt-3.5-turbo' })
-    creativeLLM = new OpenAI({ openAIApiKey: openAiKey, temperature: 1.0, modelName: 'gpt-3.5-turbo' })
+    llm = new OpenAI({ openAIApiKey: openAiKey, temperature: 0.2, modelName: openAiModel ?? 'gpt-3.5-turbo' })
+    creativeLLM = new OpenAI({ openAIApiKey: openAiKey, temperature: 1.0, modelName: openAiModel ?? 'gpt-3.5-turbo' })
 }
 
 type TriggerDetails = {
@@ -162,7 +163,7 @@ async function findTrigger(prompt: string): Promise<TriggerDetails> {
 
 
 async function findActions(prompt: string): Promise<ActionDetails[]> {
-    const template = `Provide actions for the activepieces flow using only the actions array provided. Your response should be subset of the array provided, Do not invent any new values. Do not include any explanations in your reply, You may disregard triggers that are included in the question and should not include them in your answer.
+    const template = `You must provide the activepieces flow actions exclusively from the provided actions array. Your response should solely consist of elements from the array, excluding any items not included. Do not include any explanations in your reply. Disregard the triggers mentioned in the question and ensure they are not included in your answer.
 ---
 Actions Array:
 {allActions}

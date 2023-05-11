@@ -139,7 +139,7 @@ export const flowService = {
     async update({ flowId, projectId, request: operation }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
         const flowLock = await acquireLock({
             key: flowId,
-            timeout: 60000,
+            timeout: operation.type === FlowOperationType.GENERATE_FLOW ? 2 * 60000 : 10000,
         })
         const flow: Omit<Flow, 'version'> | null = (await flowRepo.findOneBy({ projectId: projectId, id: flowId }))
         if (isNil(flow)) {
