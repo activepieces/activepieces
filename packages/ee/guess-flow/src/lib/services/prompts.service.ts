@@ -10,7 +10,7 @@ export class PromptsService {
 
   getPrompts() {
     return this.http.get<PromptTemplate[]>(
-      'https://cdn.activepieces.com/templates/ai-content-gen.jsonhttps://cdn.activepieces.com/templates/prompts.json'
+      'https://cdn.activepieces.com/AI_Templates/prompts.json'
     );
   }
   savePromptAndResult(request: {
@@ -26,6 +26,18 @@ export class PromptsService {
   savePrompt(request: { prompt: string; userId: string }) {
     return this.http.post(
       'https://cloud.activepieces.com/api/v1/webhooks/liggKrTlbyYNQ4ciJsy6b',
+      request
+    );
+  }
+  saveFeedback(request: {
+    prompt: string;
+    email: string;
+    feedback: string;
+    flow: string;
+    like: boolean;
+  }) {
+    return this.http.post(
+      'https://cloud.activepieces.com/api/v1/webhooks/23FP6jEYyO78tZkSba8lv',
       request
     );
   }

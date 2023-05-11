@@ -1,8 +1,4 @@
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  Component,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Observable, Subject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
@@ -23,7 +19,7 @@ import { ComponentPortal } from '@angular/cdk/portal';
   styleUrls: ['./guess-flow.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GuessFlowComponent implements AfterViewInit {
+export class GuessFlowComponent {
   closeContainer = new Subject<boolean>();
   guessFlow$: Observable<Flow>;
   options: AnimationOptions = {
@@ -38,11 +34,7 @@ export class GuessFlowComponent implements AfterViewInit {
     private promptsService: PromptsService,
     private builderService: CollectionBuilderService
   ) {}
-  ngAfterViewInit(): void {
-    this.builderService.componentToShowInsidePortal$.next(
-      new ComponentPortal(AiGeneratedFlowFeedbackComponent)
-    );
-  }
+
   guessFlow(prompt: string) {
     this.savePrompt$ = this.promptsService.savePrompt({
       prompt: prompt,
@@ -63,7 +55,12 @@ export class GuessFlowComponent implements AfterViewInit {
             map(() => res)
           );
       }),
-      tap(() => {
+      tap((res) => {
+        localStorage.setItem('LAST_PROMPT', prompt);
+        localStorage.setItem('LAST_FLOW_GENERATED', JSON.stringify(res));
+        this.builderService.componentToShowInsidePortal$.next(
+          new ComponentPortal(AiGeneratedFlowFeedbackComponent)
+        );
         this.closeContainer.next(true);
       })
     );

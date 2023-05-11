@@ -2,10 +2,10 @@
     class="ap-h-[205px] ap-flex-col ap-flex ap-gap-5 ap-w-[162px] !ap-font-semibold ap-p-5 ap-rounded-full ap-rounded-lg ap-bg-white">
     Rate the AI generated flow
     <div class="ap-flex ap-gap-2.5">
-        <div>
+        <div (click)="react(true)">
             <ng-container *ngTemplateOutlet="likeIcon"></ng-container>
         </div>
-        <div class="ap-rotate-180">
+        <div class="ap-rotate-180" (click)="react(false)">
             <ng-container *ngTemplateOutlet="likeIcon"></ng-container>
         </div>
     </div>
@@ -22,3 +22,4 @@
             [applyClass]="true"></svg-icon>
     </div>
 </ng-template>
+<ng-container *ngIf="feedbackDialogClosed$ | async"></ng-container>
