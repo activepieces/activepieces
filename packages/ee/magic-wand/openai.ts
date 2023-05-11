@@ -5,7 +5,7 @@ import { PromptTemplate } from 'langchain/prompts'
 import { system } from '@backend/helper/system/system'
 import { SystemProp } from '@backend/helper/system/system-prop'
 import { jsonrepair } from 'jsonrepair'
-import { Action, ActionType, BranchAction, CodeAction, PieceAction, Trigger, TriggerType } from '@activepieces/shared'
+import { Action, ActionType, BranchAction, CodeAction, DEFAULT_SAMPLE_DATA_SETTINGS, PieceAction, Trigger, TriggerType } from '@activepieces/shared'
 import { logger } from '@backend/helper/logger'
 import { isNil } from 'lodash'
 import { PropertyType } from '@activepieces/pieces-framework'
@@ -270,8 +270,6 @@ function extractJson(text: string) {
     return jsonArray
 }
 
-const HELLO_WORLD_CODE_ARTIFACT_BASE64 = 'UEsDBAoAAAAAAIGZWlYSIpQ2PAAAADwAAAAIAAAAaW5kZXgudHNleHBvcnQgY29uc3QgY29kZSA9IGFzeW5jIChwYXJhbXMpID0+IHsKICAgIHJldHVybiB0cnVlOwp9OwpQSwMECgAAAAAAgZlaVhpS0QgcAAAAHAAAAAwAAABwYWNrYWdlLmpzb257CiAgImRlcGVuZGVuY2llcyI6IHsKICB9Cn0KUEsBAhQACgAAAAAAgZlaVhIilDY8AAAAPAAAAAgAAAAAAAAAAAAAAAAAAAAAAGluZGV4LnRzUEsBAhQACgAAAAAAgZlaVhpS0QgcAAAAHAAAAAwAAAAAAAAAAAAAAAAAYgAAAHBhY2thZ2UuanNvblBLBQYAAAAAAgACAHAAAACoAAAAAAA='
-
 function cleanAction(step: Action | undefined, count: number): Action | undefined {
     if (isNil(step)) {
         return undefined
@@ -285,9 +283,12 @@ function cleanAction(step: Action | undefined, count: number): Action | undefine
     }
     const defaultAction: Action = {
         ...basicStep,
+        valid: true,
         displayName: step.displayName,
         type: ActionType.MISSING,
-        settings: {},
+        settings: {
+            inputUiInfo: DEFAULT_SAMPLE_DATA_SETTINGS
+        },
     }
     switch (basicStep.type) {
         case ActionType.BRANCH: {
@@ -330,7 +331,7 @@ function cleanAction(step: Action | undefined, count: number): Action | undefine
                     pieceName: piece.name,
                     pieceVersion: piece.version,
                     input,
-                    inputUiInfo: {},
+                    inputUiInfo: DEFAULT_SAMPLE_DATA_SETTINGS,
                     actionName: actionStep.name,
                 },
             }
@@ -347,16 +348,13 @@ function validateTrigger(step: Trigger): Trigger {
         displayName: step.displayName ?? 'Untitled Trigger',
         type: step.type,
         nextAction: cleanAction(step.nextAction, 1),
-        valid: false,
+        valid: true,
     }
     const defaultTrigger: Trigger = {
         ...basicStep,
         type: TriggerType.WEBHOOK,
-        valid: true,
         settings: {
-            inputUiInfo: {
-                currentSelectedData: undefined,
-            }
+            inputUiInfo: DEFAULT_SAMPLE_DATA_SETTINGS
         },
     }
     switch (step.type) {
@@ -378,6 +376,7 @@ function validateTrigger(step: Trigger): Trigger {
                     pieceName: step.settings.pieceName,
                     triggerName: step.settings.triggerName,
                     pieceVersion: piece.version,
+                    inputUiInfo: DEFAULT_SAMPLE_DATA_SETTINGS,
                     input: input,
                 },
             } as Trigger
