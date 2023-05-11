@@ -13,7 +13,8 @@ import { SystemProp } from '../helper/system/system-prop'
 type PieceStats = {
     activeSteps: number
     allSteps: number
-    uniqueProjects: number
+    allProjects: number
+    activeProjects: number
     allFlows: number
     activeFlows: number
 }
@@ -86,14 +87,16 @@ async function stats(): Promise<Record<string, PieceStats>> {
     const uniqueStatsPerPiece: Record<string, {
         flows: Set<FlowId>
         projects: Set<ProjectId>
+        activeprojects: Set<ProjectId>
         activeFlows: Set<FlowId>
     }> = {}
-    const defaultStats = { activeSteps: 0, allSteps: 0, uniqueProjects: 0, activeFlows: 0, allFlows: 0 }
+    const defaultStats = { activeSteps: 0, allSteps: 0, allProjects: 0, activeFlows: 0, allFlows: 0, activeProjects: 0 }
     const pieces = await pieceMetadataLoader.manifest()
     for (const piece of pieces) {
         uniqueStatsPerPiece[piece.name] = {
             flows: new Set(),
             projects: new Set(),
+            activeprojects: new Set(),
             activeFlows: new Set(),
         }
         stats[piece.name] = { ...defaultStats }
@@ -111,6 +114,7 @@ async function stats(): Promise<Record<string, PieceStats>> {
                     uniqueStatsPerPiece[step.settings.pieceName] = {
                         flows: new Set(),
                         projects: new Set(),
+                        activeprojects: new Set(),
                         activeFlows: new Set(),
                     }
                     stats[step.settings.pieceName] = { ...defaultStats }
@@ -120,6 +124,7 @@ async function stats(): Promise<Record<string, PieceStats>> {
                 stats[step.settings.pieceName].allSteps++
                 if (isEnabled) {
                     uniqueStatsPerPiece[step.settings.pieceName].activeFlows.add(flow.id)
+                    uniqueStatsPerPiece[step.settings.pieceName].activeprojects.add(flow.projectId)
                     stats[step.settings.pieceName].activeSteps++
                 }
             }
@@ -127,7 +132,8 @@ async function stats(): Promise<Record<string, PieceStats>> {
         }
     }
     for (const pieceName in uniqueStatsPerPiece) {
-        stats[pieceName].uniqueProjects = uniqueStatsPerPiece[pieceName].projects.size
+        stats[pieceName].allProjects = uniqueStatsPerPiece[pieceName].projects.size
+        stats[pieceName].activeProjects = uniqueStatsPerPiece[pieceName].activeprojects.size
         stats[pieceName].allFlows = uniqueStatsPerPiece[pieceName].flows.size
         stats[pieceName].activeFlows = uniqueStatsPerPiece[pieceName].activeFlows.size
     }
