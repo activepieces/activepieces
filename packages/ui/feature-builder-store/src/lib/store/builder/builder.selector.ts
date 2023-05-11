@@ -14,6 +14,7 @@ import { BuilderSavingStatusEnum, BuilderState } from '../../model';
 import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
+  FlowItemDetails,
   corePieceIconUrl,
 } from '@activepieces/ui/common';
 
@@ -234,6 +235,17 @@ export const selectCoreFlowItemsDetails = createSelector(
   selectAllFlowItemsDetails,
   (state: FlowItemsDetailsState) => {
     return state.coreFlowItemsDetails;
+  }
+);
+const selectMissingStepRecommendedFlowItemsDetails = createSelector(
+  selectCoreFlowItemsDetails,
+  (core: FlowItemDetails[]) => {
+    const recommendations = core.filter(
+      (f) =>
+        (f.type === ActionType.PIECE && f.extra?.appName === 'http') ||
+        f.type === ActionType.CODE
+    );
+    return recommendations;
   }
 );
 
@@ -482,4 +494,5 @@ export const BuilderSelectors = {
   selectLastTestDate,
   selectNumberOfInvalidSteps,
   selectIsGeneratingFlowComponentOpen,
+  selectMissingStepRecommendedFlowItemsDetails,
 };

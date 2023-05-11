@@ -94,6 +94,10 @@
 
   </ng-container>
 
+  <ng-container *ngIf="rightSidebarType === sidebarType.REPLACE_MISSING_STEP">
+    <app-replace-missing-step-sidebar></app-replace-missing-step-sidebar>
+  </ng-container>
+
 </ng-container>
 <ng-container *ngIf="elevateResizer$ | async">
 
