@@ -163,7 +163,7 @@ async function findTrigger(prompt: string): Promise<TriggerDetails> {
 
 
 async function findActions(prompt: string): Promise<ActionDetails[]> {
-    const template = `You must provide the activepieces flow actions exclusively from the provided actions array. Your response should solely consist of elements from the array, excluding any items not included. Do not include any explanations in your reply. Disregard the triggers mentioned in the question and ensure they are not included in your answer.
+    const template = `You must pick the activepieces flow actions exclusively from the provided actions array. Your response should solely consist of elements from the array. Do not include any explanations in your reply. 
 ---
 Actions Array:
 {allActions}
@@ -186,10 +186,10 @@ Answer:
             allActions: JSON.stringify(getActionDetails()),
             actionExamples: `
             Prompt: On new slack message, send me message on discord
-            Answer: [{"pieceName": "slack", "actionName": "send_message_webhook"}]
+            Answer: [{"pieceName": "discord", "actionName": "send_message_webhook"}]
             
             Prompt: read rows from a sheet and only send email and disord message if the name is ahmad
-            Answer: [{"pieceName": "gmail", "actionName": "send_email"}, {"pieceName": "slack", "actionName": "send_message_webhook"}]
+            Answer: [{"pieceName": "gmail", "actionName": "send_email"}, {"pieceName": "discord", "actionName": "send_message_webhook"}]
             `,
             prompt,
         })
