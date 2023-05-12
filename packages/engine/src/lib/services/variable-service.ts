@@ -3,7 +3,7 @@ import { ExecutionState } from '@activepieces/shared';
 import { connectionService } from './connections.service';
 
 export class VariableService {
-  private VARIABLE_TOKEN = RegExp('\\$\\{(.*?)\\}', 'g');
+  private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
   private static CONNECTIONS = 'connections';
   private async resolveInput(input: string, valuesMap: Record<string, unknown>, censorConnections: boolean): Promise<any> {
     // If input contains only a variable token, return the value of the variable while maintaining the variable type.
@@ -13,7 +13,7 @@ export class VariableService {
       matchedTokens.length === 1 &&
       matchedTokens[0] === input
     ) {
-      const variableName = input.substring(2, input.length - 1);
+      const variableName = input.substring(2, input.length - 2);
       if (variableName.startsWith(VariableService.CONNECTIONS)) {
         return this.handleTypeAndResolving(variableName, censorConnections);
       }
