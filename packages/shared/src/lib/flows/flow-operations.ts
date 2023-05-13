@@ -9,6 +9,7 @@ import { Static, Type } from "@sinclair/typebox";
 export enum FlowOperationType {
     CHANGE_FOLDER = "CHANGE_FOLDER",
     CHANGE_NAME = "CHANGE_NAME",
+    MOVE_ACTION = "MOVE_ACTION",
     IMPORT_FLOW = "IMPORT_FLOW",
     UPDATE_TRIGGER = "UPDATE_TRIGGER",
     ADD_ACTION = "ADD_ACTION",
@@ -36,7 +37,6 @@ export const ChangeFolderRequest = Type.Object({
 
 export type ChangeFolderRequest = Static<typeof ChangeFolderRequest>;
 
-
 export const ChangeNameRequest = Type.Object({
     displayName: Type.String({}),
 });
@@ -52,6 +52,13 @@ export type DeleteActionRequest = Static<typeof DeleteActionRequest>;
 export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema]);
 export type UpdateActionRequest = Static<typeof UpdateActionRequest>;
 
+export const MoveActionRequest = Type.Object({
+    name: Type.String(),
+    newParentStep: Type.String(),
+    stepLocationRelativeToNewParent: Type.Optional(Type.Enum(StepLocationRelativeToParent))
+})
+export type MoveActionRequest = Static<typeof MoveActionRequest>;
+
 export const AddActionRequest = Type.Object({
     parentStep: Type.String(),
     stepLocationRelativeToParent: Type.Optional(Type.Enum(StepLocationRelativeToParent)),
@@ -63,6 +70,10 @@ export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger, Webh
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>;
 
 export const FlowOperationRequest = Type.Union([
+    Type.Object({
+        type: Type.Literal(FlowOperationType.MOVE_ACTION),
+        request: MoveActionRequest
+    }),
     Type.Object({
         type: Type.Literal(FlowOperationType.IMPORT_FLOW),
         request: ImportFlowRequest

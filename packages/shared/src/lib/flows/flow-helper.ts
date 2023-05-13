@@ -6,6 +6,7 @@ import {
   UpdateActionRequest,
   UpdateTriggerRequest,
   StepLocationRelativeToParent,
+  MoveActionRequest,
 } from './flow-operations';
 import {
   Action,
@@ -159,6 +160,29 @@ function extractActions(step: Trigger | Action): { nextAction?: Action, onSucces
   return { nextAction, onSuccessAction, onFailureAction ,firstLoopAction};
 }
 
+function moveAction(flowVersion: FlowVersion, request: MoveActionRequest): void {
+  const steps = getAllSteps(flowVersion);
+  const sourceStep = steps.find(step => step.name === request.name);
+  if (!sourceStep || !isAction(sourceStep?.type)) {
+    throw new ActivepiecesError({
+      code: ErrorCode.FLOW_OPERATION_INVALID,
+      params: {}
+    }, `Source step ${request.name} not found`);
+  }
+  const destinationStep = steps.find(step => step.name === request.newParentStep);
+  if (!destinationStep) {
+    throw new ActivepiecesError({
+      code: ErrorCode.FLOW_OPERATION_INVALID,
+      params: {}
+    }, `Destination step ${request.newParentStep} not found`);
+  }
+  deleteAction(flowVersion, { name: request.name });
+  addAction(flowVersion, {
+    action: sourceStep as Action,
+    parentStep: request.newParentStep,
+    stepLocationRelativeToParent: request.stepLocationRelativeToNewParent
+  });
+}
 
 function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
   const parentStep = getAllSteps(flowVersion).find(step => step.name === request.parentStep);
@@ -307,6 +331,9 @@ export const flowHelper = {
   ): FlowVersion {
     const clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion));
     switch (operation.type) {
+      case FlowOperationType.MOVE_ACTION:
+        moveAction(clonedVersion, operation.request);
+        break;
       case FlowOperationType.CHANGE_NAME:
         clonedVersion.displayName = operation.request.displayName;
         break;
@@ -326,8 +353,6 @@ export const flowHelper = {
           clonedVersion.trigger.nextAction
         );
         break;
-      default:
-        throw new Error('Unknown operation type');
     }
     clonedVersion.valid = isValid(clonedVersion);
     return clonedVersion;
