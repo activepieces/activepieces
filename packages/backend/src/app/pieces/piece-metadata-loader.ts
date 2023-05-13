@@ -76,7 +76,10 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
             try {
                 const module = await import(`../../../../pieces/${piecePackage}/src/index.ts`)
                 const piece = Object.values<Piece>(module)[0]
-                piecesMetadata.push(piece.metadata())
+                piecesMetadata.push({
+                    ...piece.metadata(),
+                    type: PieceType.PUBLIC,
+                })
             }
             catch (ex) {
                 captureException(ex)
@@ -124,7 +127,7 @@ const filePieceMetadataLoader = (): PieceMetadataLoader => {
     }
 }
 
-export const getPieceMetadataLoader = (): PieceMetadataLoader => {
+const getPieceMetadataLoader = (): PieceMetadataLoader => {
     const env = system.getOrThrow(SystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.PRODUCTION) {

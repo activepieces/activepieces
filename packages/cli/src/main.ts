@@ -1,6 +1,6 @@
 import fs from "fs";
 import axios from "axios";
-import { Piece, PieceMetadataSummary, PieceType } from '@activepieces/pieces-framework';
+import { Piece, PieceType } from '@activepieces/pieces-framework';
 import { execSync } from "child_process";
 import chalk from "chalk";
 import FormData from 'form-data';
@@ -8,6 +8,7 @@ import Table from 'cli-table3';
 import { ErrorCode } from "@activepieces/shared";
 import os from 'os';
 import prompts from 'prompts';
+import yargs from 'yargs';
 
 const logger = console;
 
@@ -48,7 +49,8 @@ async function getToken() {
 }
 
 
-async function publish({ pieceName }: { pieceName: string }) {
+async function publish(argv) {
+  const { pieceName } = argv;
   const workdir = process.cwd();
   const pieceDirectory = `${workdir}/packages/pieces/${pieceName}`;
   if (!fs.existsSync(`${pieceDirectory}/package.json`)) {
@@ -79,7 +81,7 @@ async function publish({ pieceName }: { pieceName: string }) {
   try {
     await axios.post(`${apiUrl}/v1/pieces`, formData, config);
     logger.info(chalk.green("Publish successful."));
-  } catch (e: any) {
+  } catch (e) {
     if (e.response.data.code === ErrorCode.PIECE_ALREADY_EXISTS) {
       logger.info(chalk.red("Piece with name and version already exists. Please increment the version in the package.json file."))
     }
@@ -96,7 +98,7 @@ async function list() {
   };
 
   const result = await axios.get(`${apiUrl}/v1/pieces`, config);
-  const simplifiedResult = result.data.filter((f: PieceMetadataSummary) => f.type === PieceType.PRIVATE).map((piece: PieceMetadataSummary) => ({
+  const simplifiedResult = result.data.filter((f) => f.type === PieceType.PRIVATE).map((piece) => ({
     name: piece.name,
     displayName: piece.displayName,
     version: piece.version
@@ -110,7 +112,7 @@ async function list() {
       colWidths: [30, 30]
     });
 
-    simplifiedResult.forEach((piece: { displayName: string, version: string, name: string }) => {
+    simplifiedResult.forEach((piece) => {
       table.push([piece.name, piece.displayName, piece.version]);
     });
 
@@ -118,7 +120,8 @@ async function list() {
   }
 }
 
-async function deletePiece({ pieceName }: { pieceName: string }) {
+async function deletePiece(argv) {
+  const { pieceName } = argv;
   const bearerToken = await getToken();
   const answer = await prompts({
     type: 'confirm',
@@ -137,7 +140,7 @@ async function deletePiece({ pieceName }: { pieceName: string }) {
     try {
       await axios.delete(`${apiUrl}/v1/pieces/${pieceName}`, config);
       logger.info(chalk.green(`Piece '${pieceName}' deleted.`));
-    } catch (e: any) {
+    } catch (e) {
       if (e.response?.status === 404) {
         logger.info(chalk.yellow(`Piece '${pieceName}' not found.`));
       } else {
@@ -147,17 +150,6 @@ async function deletePiece({ pieceName }: { pieceName: string }) {
   } else {
     logger.info(chalk.yellow("Delete canceled."));
   }
-}
-
-function displayHelp() {
-  console.log('Usage: npm run cli <command>');
-  console.log('');
-  console.log('Commands:');
-  console.log('  auth                      Prompt for and save the bearer token');
-  console.log('  publish <pieceName>       Package and publish a piece');
-  console.log('  list                      List all published private pieces');
-  console.log('  delete <pieceName>        Delete all versions of a published private piece');
-  console.log('  help                      Display this help message');
 }
 
 async function auth() {
@@ -177,40 +169,21 @@ async function auth() {
   logger.info(chalk.green("Token updated successfully."));
 }
 
-const args = process.argv.slice(2);
-const command = args[0];
-
-switch (command) {
-  case 'help':
-    displayHelp();
-    break;
-  case 'auth':
-    auth();
-    break;
-  case 'publish': {
-    const pieceName = args[1];
-    if (!pieceName) {
-      logger.error(chalk.red("Piece name argument is missing"))
-    } else {
-      publish({ pieceName });
-    }
-    break;
-  }
-  case 'list':
-    list();
-    break;
-  case 'delete': {
-    const pieceName = args[1];
-    if (!pieceName) {
-      logger.error(chalk.red("Piece name argument is missing"))
-    } else {
-      deletePiece({
-        pieceName,
-      });
-    }
-    break;
-  }
-  default:
-    logger.warn(chalk.red("Unknown command."));
-    break;
-}
+yargs
+  .command('auth', 'Prompt for and save the bearer token', auth)
+  .command('publish <pieceName>', 'Package and publish a piece', (yargs) => {
+    yargs.positional('pieceName', {
+      describe: 'Name of the piece to publish',
+      type: 'string'
+    })
+  }, publish)
+  .command('list', 'List all published private pieces', list)
+  .command('delete <pieceName>', 'Delete all versions of a published private piece', (yargs) => {
+    yargs.positional('pieceName', {
+      describe: 'Name of the piece to delete',
+      type: 'string'
+    })
+  }, deletePiece)
+  .demandCommand(1, 'You need to specify a command.')
+  .help()
+  .argv;

@@ -48,7 +48,7 @@ export type TriggerBase = Static<typeof TriggerBase> & { props: PiecePropertyMap
 
 export const PieceMetadata = Type.Object({
   ...PieceBaseProps,
-  type: Type.Optional(Type.Enum(PieceType)),
+  type: Type.Enum(PieceType),
   actions: Type.Record(Type.String(), ActionBase),
   triggers: Type.Record(Type.String(), TriggerBase),
 });
@@ -57,7 +57,7 @@ export type PieceMetadata = Static<typeof PieceMetadata>;
 
 export const PieceMetadataSummary = Type.Object({
   ...PieceBaseProps,
-  type: Type.Optional(Type.Enum(PieceType)),
+  type: Type.Enum(PieceType),
   actions: Type.Number(),
   triggers:  Type.Number(),
 });

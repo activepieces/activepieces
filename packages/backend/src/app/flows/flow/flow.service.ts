@@ -32,8 +32,9 @@ import { isNil } from 'lodash'
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
+        const flowId = apId()
         const flow: Partial<Flow> = {
-            id: apId(),
+            id: flowId,
             projectId: projectId,
             folderId: request.folderId,
         }
@@ -47,7 +48,7 @@ export const flowService = {
                 type: TriggerType.EMPTY,
                 settings: {},
                 valid: false,
-            } as EmptyTrigger,
+            },
         })
         const latestFlowVersion = await flowVersionService.getFlowVersion(projectId, savedFlow.id, undefined, FlowViewMode.NO_ARTIFACTS)
         telemetry.trackProject(
@@ -55,7 +56,7 @@ export const flowService = {
             {
                 name: TelemetryEventName.FLOW_CREATED,
                 payload: {
-                    flowId: flow.id!,
+                    flowId: flowId,
                 },
             },
         )

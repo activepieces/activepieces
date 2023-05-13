@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { cwd } from "node:process";
 import sortBy from "lodash/sortBy";
-import { Piece, ActionBase, PieceMetadata, TriggerBase} from '@activepieces/pieces-framework';
+import { Piece, ActionBase, PieceMetadata, TriggerBase, PieceType} from '@activepieces/pieces-framework';
 
 type PieceInfo = PieceMetadata & {
   directory: string;
@@ -22,6 +22,7 @@ const loadPiecesMetadata = async (): Promise<PieceInfo[]> => {
     const piece = Object.values<Piece>(module)[0]
     piecesMetadata.push({
       ...piece.metadata(),
+      type: PieceType.PUBLIC,
       directory: piecePackage,
     })
   }

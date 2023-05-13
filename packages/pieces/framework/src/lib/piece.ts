@@ -46,12 +46,11 @@ export class Piece implements PieceBase {
     return this._triggers[triggerName];
   }
 
-  metadata(type = PieceType.PUBLIC): PieceMetadata {
+  metadata(): Omit<PieceMetadata, 'type'> {
     return {
       name: this.name,
       displayName: this.displayName,
       logoUrl: this.logoUrl,
-      type,
       actions: this._actions,
       triggers: this._triggers,
       description: this.description,
