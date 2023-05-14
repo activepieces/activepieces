@@ -38,6 +38,16 @@ module.exports = {
          light:"#FFF6E4",
          dark:"#CC8805",
          medium:"#F0D6A1"},
+         blue:{
+          DEFAULT:'#189EFF',
+          light: '#EDF8FF',
+          dark: '#006DF0'
+         },
+         green: {
+          DEFAULT: '#35b45f4d',
+          light: '#E1F4E7',
+          dark: '#35B45F'
+         },
         blueLink: '#1890ff',
         sidebar: '#FAFBFC',
         blueBorder: '#6385dc',

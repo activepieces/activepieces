@@ -32,7 +32,15 @@
         </ap-button>
     </div>
 
-    <div *ngIf="guessFlow$" class="ap-flex ap-items-center ap-justify-center ap-mt-[121px]">
+    <div *ngIf="guessFlow$" class="ap-flex ap-items-center ap-justify-center ap-mt-[121px] ap-flex-col">
+        <div class="ap-min-h-[35px] ">
+
+            <div
+                class="ap-typography-body-2 ap-mb-9 ap-bg-blue-light ap-text-[#189EFF] ap-rounded-full ap-border ap-border-solid ap-border-blue-dark ap-transition-colors ap-py-1.5 ap-px-2.5 ">
+                This could take up to a minute
+            </div>
+
+        </div>
         <ng-lottie [options]="options" width="732px"></ng-lottie>
     </div>
 
