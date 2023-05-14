@@ -72,7 +72,7 @@
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openBuilder(row)" mat-row
+          <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openBuilder(row, $event)" mat-row
             [class.ap-hidden]="dataSource.isLoading$ | async" *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
         <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">

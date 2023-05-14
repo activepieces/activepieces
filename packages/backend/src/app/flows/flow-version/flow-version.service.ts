@@ -309,7 +309,10 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
 
         case FlowOperationType.UPDATE_TRIGGER:
             clonedRequest.request.valid = true
-            if (clonedRequest.request.type === TriggerType.PIECE) {
+            if(clonedRequest.request.type === TriggerType.EMPTY){
+                clonedRequest.request.valid = false
+            } 
+            else if (clonedRequest.request.type === TriggerType.PIECE) {
                 clonedRequest.request.valid = await validateTrigger(clonedRequest.request.settings)
             }
             break
