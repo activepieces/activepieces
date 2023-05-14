@@ -23,7 +23,7 @@ type AcquireLockParams = {
 
 const createLock = async ({ flowId, op }: AcquireLockParams): Promise<Lock> => {
     const key = `${flowId}-${op}-webhook-simulation`
-    return await acquireLock({ key, timeout: 1000 })
+    return await acquireLock({ key, timeout: 5000 })
 }
 
 const webhookSimulationRepo = databaseConnection.getRepository(WebhookSimulationEntity)
