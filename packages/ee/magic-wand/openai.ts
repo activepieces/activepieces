@@ -26,7 +26,7 @@ export const flowGuessService = {
         catch (e) {
             logger.error(e);
             throw new ActivepiecesError({
-                code: ErrorCode.OPENAI_FAILED,
+                code: ErrorCode.OPEN_AI_FAILED,
                 params: {}
             }, e instanceof Error ? e.message : '');
         }

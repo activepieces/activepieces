@@ -31,7 +31,7 @@ type ErrorParams =
   | InvalidClaimParams
   | InvalidCloudClaimParams
   | InvalidJwtTokenErrorParams
-  | TaskQuotaExeceededErrorParams
+  | TaskQuotaExceededErrorParams
   | TriggerFailedErrorParams
   | SystemInvalidErrorParams
   | SystemPropNotDefinedErrorParams
@@ -41,6 +41,8 @@ type ErrorParams =
   | EntityNotFoundErrorParams
   | ValidationErrorParams
   | ExecutionTimeoutErrorParams
+  | TriggerEnableErrorParams
+  | TriggerDisableErrorParams
 
 
 export interface BaseErrorParams<T, V> {
@@ -180,7 +182,7 @@ export type SystemPropNotDefinedErrorParams = BaseErrorParams<
 >;
 
 export type OpenAiFailedErrorParams = BaseErrorParams<
-  ErrorCode.OPENAI_FAILED,
+  ErrorCode.OPEN_AI_FAILED,
   Record<string, never>
 >;
 
@@ -196,7 +198,7 @@ export type InvalidJwtTokenErrorParams = BaseErrorParams<
   }
 >
 
-export type TaskQuotaExeceededErrorParams = BaseErrorParams<
+export type TaskQuotaExceededErrorParams = BaseErrorParams<
   ErrorCode.TASK_QUOTA_EXCEEDED,
   {
     projectId: string;
@@ -229,6 +231,20 @@ export type ValidationErrorParams = BaseErrorParams<
   }
 >
 
+export type TriggerEnableErrorParams = BaseErrorParams<
+  ErrorCode.TRIGGER_ENABLE,
+  {
+    flowVersionId?: FlowVersionId
+  }
+>
+
+export type TriggerDisableErrorParams = BaseErrorParams<
+  ErrorCode.TRIGGER_DISABLE,
+  {
+    flowVersionId?: FlowVersionId
+  }
+>
+
 export enum ErrorCode {
   CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
   EXISTING_USER = "EXISTING_USER",
@@ -253,9 +269,11 @@ export enum ErrorCode {
   SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
   TRIGGER_FAILED = "TRIGGER_FAILED",
   FLOW_OPERATION_INVALID = "FLOW_OPERATION_INVALID",
-  OPENAI_FAILED = "OPENAI_FAILED",
+  OPEN_AI_FAILED = "OPEN_AI_FAILED",
   TEST_TRIGGER_FAILED = "TEST_TRIGGER_FAILED",
   ENTITY_NOT_FOUND = "ENTITY_NOT_FOUND",
   VALIDATION = "VALIDATION",
-  EXECUTION_TIMEOUT = "EXECUTION_TIMEOUT"
+  EXECUTION_TIMEOUT = "EXECUTION_TIMEOUT",
+  TRIGGER_ENABLE = "TRIGGER_ENABLE",
+  TRIGGER_DISABLE = "TRIGGER_DISABLE",
 }

@@ -23,7 +23,7 @@ type AcquireLockParams = {
 
 const createLock = async ({ flowId, op }: AcquireLockParams): Promise<Lock> => {
     const key = `${flowId}-${op}-webhook-simulation`
-    return await acquireLock({ key })
+    return await acquireLock({ key, timeout: 1000 })
 }
 
 const webhookSimulationRepo = databaseConnection.getRepository(WebhookSimulationEntity)
@@ -54,10 +54,12 @@ export const webhookSimulationService = {
                 ...params,
             }
 
-            const savedWebhookSimulation = await webhookSimulationRepo.save(webhookSimulation)
-            await webhookSideEffects.onCreate(savedWebhookSimulation)
-            return savedWebhookSimulation
+            await webhookSideEffects.preCreate({
+                flowId,
+                projectId,
+            })
 
+            return await webhookSimulationRepo.save(webhookSimulation)
         }
         finally {
             await lock.release()
@@ -102,8 +104,13 @@ export const webhookSimulationService = {
                 flowId,
                 projectId,
             })
-            const deletedWebhookSimulation = await webhookSimulationRepo.remove(webhookSimulation)
-            await webhookSideEffects.onDelete(deletedWebhookSimulation)
+
+            await webhookSideEffects.preDelete({
+                flowId,
+                projectId,
+            })
+
+            await webhookSimulationRepo.remove(webhookSimulation)
         }
         finally {
             await lock.release()
