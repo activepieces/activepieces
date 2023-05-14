@@ -15,7 +15,6 @@ import {
   FlowOperationType,
   FlowRun,
   FlowVersionId,
-  GuessFlowRequest,
   ListFlowsRequest,
   SeekPage,
 } from '@activepieces/shared';
@@ -114,14 +113,6 @@ export class FlowService {
     return this.http.get<ExecutionState>(
       environment.apiUrl + `/files/${fileId}`
     );
-  }
-
-  guessFlow(prompt: string, newFlowName: string) {
-    const request: GuessFlowRequest = {
-      displayName: newFlowName,
-      prompt: prompt,
-    };
-    return this.http.post<Flow>(environment.apiUrl + '/flows/guess', request);
   }
 
   count(req: CountFlowsRequest) {

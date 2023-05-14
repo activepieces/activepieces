@@ -1,5 +1,5 @@
 <button mat-menu-item (click)="expandCodeCollapse = !expandCodeCollapse" class="!ap-px-[9px]">
-  <div appTrackHover #parentNodeHoverTracker="hoverTrackerDirective"
+  <div apTrackHover #parentNodeHoverTracker="hoverTrackerDirective"
     class="ap-flex ap-flex-grow ap-min-h-[27px] ap-items-center">
     <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
       {{expandCodeCollapse ? 'expand_less' : 'expand_more'}}
@@ -20,7 +20,7 @@
     (mentionClicked)="emitMention($event)"></app-step-mentions-tree>
 </ng-container>
 <ng-container *ngIf="codeStepTest$ | async as result">
-  <button appTrackHover #resultNodeHoverTracker="hoverTrackerDirective" class="!ap-pl-0"
+  <button apTrackHover #resultNodeHoverTracker="hoverTrackerDirective" class="!ap-pl-0"
     *ngIf="result.value !==undefined && expandCodeCollapse" mat-menu-item (click)="mentionClicked.emit(stepMention)">
     <span class=" ap-flex-grow ap-transition-all"
       [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'">result:

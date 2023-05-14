@@ -1,3 +1,4 @@
+import { Action, MissingActionSchema } from "./actions/action";
 import {
     CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, Action,
 } from "./actions/action";
@@ -7,8 +8,9 @@ import { Static, Type } from "@sinclair/typebox";
 
 export enum FlowOperationType {
     CHANGE_FOLDER = "CHANGE_FOLDER",
+    IMPORT_FLOW = 'IMPORT_FLOW',
     CHANGE_NAME = "CHANGE_NAME",
-    IMPORT_FLOW = "IMPORT_FLOW",
+    GENERATE_FLOW = "GENERATE_FLOW",
     UPDATE_TRIGGER = "UPDATE_TRIGGER",
     ADD_ACTION = "ADD_ACTION",
     UPDATE_ACTION = "UPDATE_ACTION",
@@ -38,6 +40,13 @@ export const ChangeFolderRequest = Type.Object({
 export type ChangeFolderRequest = Static<typeof ChangeFolderRequest>;
 
 
+export const GenerateFlowRequest = Type.Object({
+    prompt: Type.String({}),
+});
+
+export type GenerateFlowRequest = Static<typeof GenerateFlowRequest>;
+
+
 export const ChangeNameRequest = Type.Object({
     displayName: Type.String({}),
 });
@@ -50,7 +59,7 @@ export const DeleteActionRequest = Type.Object({
 
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>;
 
-export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema]);
+export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema, MissingActionSchema]);
 export type UpdateActionRequest = Static<typeof UpdateActionRequest>;
 
 export const AddActionRequest = Type.Object({
@@ -64,6 +73,10 @@ export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger, Webh
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>;
 
 export const FlowOperationRequest = Type.Union([
+    Type.Object({
+        type: Type.Literal(FlowOperationType.GENERATE_FLOW),
+        request: GenerateFlowRequest
+    }),
     Type.Object({
         type: Type.Literal(FlowOperationType.IMPORT_FLOW),
         request: ImportFlowRequest

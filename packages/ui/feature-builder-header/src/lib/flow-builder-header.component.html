@@ -36,19 +36,19 @@
       </mat-menu>
 
     </div>
-    <div class="ap-flex-grow">
+    <ap-button class="ap-ml-2" btnStyle="basic" btnColor="basic" btnSize="medium"
+      (buttonClicked)="guessFlowButtonClicked()" *ngIf="showGuessFlowBtn$ | async">
+      <div class="ap-flex ap-items-center ap-font-semibold ap-gap-2">
+        <svg-icon src="assets/img/custom/AI.svg" [svgStyle]="{height:'25px',width:'20px'}"></svg-icon>AI Builder
+      </div>
+    </ap-button>
 
+    <div class="ap-flex-grow">
     </div>
     <div class="ap-flex ap-items-center ap-gap-2">
-      <ap-button btnStyle="basic" btnColor="basic" btnSize="medium" (click)="guessAi()"
-        *ngIf="magicWandEnabled$ | async">
-        <div class="ap-flex ap-items-center ap-font-semibold">
-          🪄 Magic Wand
-        </div>
-      </ap-button>
       <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
 
-      <ng-container *ngIf=" (viewMode$ | async)===false">
+      <ng-container *ngIf=" (viewMode$ | async)===false && (isGeneratingFlowComponentOpen$|async) === false ">
         <div class="ap-flex ap-items-center ap-gap-1">
           <app-test-flow-modal></app-test-flow-modal>
 
