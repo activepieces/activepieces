@@ -77,6 +77,9 @@ function updateStep(step: Step | undefined, forward: boolean): boolean {
     return update
 }
 function traverse(input: unknown, forward: boolean): unknown {
+    if (input === undefined || input === null) {
+        return input
+    }
     if (typeof input === 'string') {
         if(forward){
         // Replace anything ${var.asd } to {{ var.asd }}
