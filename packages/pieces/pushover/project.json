@@ -1,0 +1,36 @@
+{
+  "name": "pieces-pushover",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/pushover/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/pushover",
+        "tsConfig": "packages/pieces/pushover/tsconfig.lib.json",
+        "packageJson": "packages/pieces/pushover/package.json",
+        "main": "packages/pieces/pushover/src/index.ts",
+        "assets": [
+          "packages/pieces/pushover/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/pushover/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
