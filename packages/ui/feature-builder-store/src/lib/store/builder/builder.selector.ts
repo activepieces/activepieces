@@ -14,6 +14,7 @@ import { BuilderSavingStatusEnum, BuilderState } from '../../model';
 import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
+  FlowItemDetails,
   corePieceIconUrl,
 } from '@activepieces/ui/common';
 
@@ -236,6 +237,17 @@ export const selectCoreFlowItemsDetails = createSelector(
     return state.coreFlowItemsDetails;
   }
 );
+const selectMissingStepRecommendedFlowItemsDetails = createSelector(
+  selectCoreFlowItemsDetails,
+  (core: FlowItemDetails[]) => {
+    const recommendations = core.filter(
+      (f) =>
+        (f.type === ActionType.PIECE && f.extra?.appName === 'http') ||
+        f.type === ActionType.CODE
+    );
+    return recommendations;
+  }
+);
 
 export const selectFlowItemDetailsForCoreTriggers = createSelector(
   selectAllFlowItemsDetails,
@@ -375,34 +387,39 @@ function findStepLogoUrlForMentions(
   step: FlowItem,
   flowItemsDetailsState: FlowItemsDetailsState
 ) {
-  if (step.type === ActionType.PIECE) {
-    if (CORE_PIECES_ACTIONS_NAMES.find((n) => n === step.settings.pieceName)) {
-      return corePieceIconUrl(step.settings.pieceName);
-    }
-    return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(
-      (i) => i.extra?.appName === step.settings.pieceName
-    )?.logoUrl;
-  } else if (step.type === TriggerType.PIECE) {
-    if (CORE_PIECES_TRIGGERS.find((n) => n === step.settings.pieceName)) {
-      return corePieceIconUrl(step.settings.pieceName);
-    }
-    return flowItemsDetailsState.customPiecesTriggersFlowItemDetails.find(
-      (i) => i.extra?.appName === step.settings.pieceName
-    )?.logoUrl;
-  } else {
-    if (step.type === TriggerType.EMPTY || step.type === TriggerType.WEBHOOK) {
-      const fileName =
-        step.type === TriggerType.EMPTY
-          ? 'emptyTrigger.png'
-          : 'webhook_mention.png';
-      return 'assets/img/custom/piece/' + fileName;
-    }
-    if (step.type === ActionType.LOOP_ON_ITEMS) {
+  switch (step.type) {
+    case ActionType.PIECE:
+      if (
+        CORE_PIECES_ACTIONS_NAMES.find((n) => n === step.settings.pieceName)
+      ) {
+        return corePieceIconUrl(step.settings.pieceName);
+      }
+      return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(
+        (i) => i.extra?.appName === step.settings.pieceName
+      )?.logoUrl;
+    case TriggerType.PIECE:
+      if (CORE_PIECES_TRIGGERS.find((n) => n === step.settings.pieceName)) {
+        return corePieceIconUrl(step.settings.pieceName);
+      }
+      return flowItemsDetailsState.customPiecesTriggersFlowItemDetails.find(
+        (i) => i.extra?.appName === step.settings.pieceName
+      )?.logoUrl;
+    case TriggerType.EMPTY:
+      return 'assets/img/custom/piece/emptyTrigger.png';
+    case ActionType.BRANCH:
+      return 'assets/img/custom/piece/branch_mention.png';
+    case TriggerType.WEBHOOK:
+      return 'assets/img/custom/piece/wehook_mention.png';
+    case ActionType.LOOP_ON_ITEMS:
       return 'assets/img/custom/piece/loop_mention.png';
-    }
-    return 'assets/img/custom/piece/code_mention.png';
+    case ActionType.CODE:
+      return 'assets/img/custom/piece/code_mention.png';
+    case ActionType.MISSING:
+      // TODO EDIT
+      return 'assets/img/custom/piece/emptyTrigger.png';
   }
 }
+
 const selectIsSchduleTrigger = createSelector(selectCurrentFlow, (flow) => {
   if (flow?.version?.trigger.type === TriggerType.PIECE) {
     return flow.version.trigger.settings.pieceName === 'schedule';
@@ -477,4 +494,5 @@ export const BuilderSelectors = {
   selectLastTestDate,
   selectNumberOfInvalidSteps,
   selectIsGeneratingFlowComponentOpen,
+  selectMissingStepRecommendedFlowItemsDetails,
 };

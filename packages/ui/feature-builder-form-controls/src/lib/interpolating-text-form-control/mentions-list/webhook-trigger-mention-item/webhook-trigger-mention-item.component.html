@@ -1,5 +1,5 @@
 <button (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true" mat-menu-item
-  class="!ap-px-[9px]" appTrackHover #hoverTracker="hoverTrackerDirective">
+  class="!ap-px-[9px]" apTrackHover #hoverTracker="hoverTrackerDirective">
   <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
     {{expandSample ? 'expand_less' : 'expand_more'}}
   </mat-icon>

@@ -21,7 +21,8 @@ export class EditableTextComponent {
   @Input() viewedTextMaxWidth = '200px';
   @Output() valueChanges: EventEmitter<string> = new EventEmitter<string>();
   @Output() editingChanges: EventEmitter<boolean> = new EventEmitter<boolean>();
-  @ViewChild('editableText') editableText: ElementRef = new ElementRef(null);
+  @ViewChild('editableText', { read: ElementRef })
+  editableText: ElementRef<HTMLElement>;
   @Input() hideOverflowWhileEditing = true;
   @Input() hideOverflownTextTooltip = false;
   valueOnEditingStarted = '';
@@ -81,15 +82,14 @@ export class EditableTextComponent {
   }
 
   private emitChangedValue() {
+    const nodeValue =
+      this.editableText.nativeElement.childNodes[0].nodeValue || '';
     const isValueEmptyOrSameAsBeforeEditingBegun =
       this.editableText.nativeElement.childNodes.length === 0 ||
-      this.editableText.nativeElement.childNodes[0].nodeValue.trim().length ===
-        0 ||
-      this.editableText.nativeElement.childNodes[0].nodeValue.trim() ===
-        this.valueOnEditingStarted;
+      nodeValue.trim().length === 0 ||
+      nodeValue === this.valueOnEditingStarted;
     if (!isValueEmptyOrSameAsBeforeEditingBegun) {
-      this.value =
-        this.editableText.nativeElement.childNodes[0].nodeValue.trim();
+      this.value = nodeValue.trim();
       this.valueChanges.emit(this.value);
     } else {
       this.value = this.valueOnEditingStarted;
@@ -118,12 +118,10 @@ export class EditableTextComponent {
   }
   setSelectionToValue() {
     setTimeout(() => {
-      if (
-        this.editableText &&
-        this.value &&
-        window.getSelection &&
-        document.createRange
-      ) {
+      if (!this.value) {
+        this.editableText.nativeElement.focus();
+      }
+      if (this.editableText && window.getSelection && document.createRange) {
         const range = document.createRange();
         const sel = window.getSelection();
         range.selectNodeContents(this.editableText.nativeElement);

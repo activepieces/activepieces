@@ -1,0 +1,25 @@
+<div
+    class="ap-h-[205px] ap-flex-col ap-flex ap-gap-5 ap-w-[162px] !ap-font-semibold ap-p-5 ap-rounded-full ap-rounded-lg ap-bg-white">
+    Rate the AI generated flow
+    <div class="ap-flex ap-gap-2.5">
+        <div (click)="react(true)">
+            <ng-container *ngTemplateOutlet="likeIcon"></ng-container>
+        </div>
+        <div class="ap-rotate-180" (click)="react(false)">
+            <ng-container *ngTemplateOutlet="likeIcon"></ng-container>
+        </div>
+    </div>
+    <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" [fullWidthOfContainer]="true"
+        (buttonClicked)="close()">
+        Ignore
+    </ap-button>
+</div>
+
+<ng-template #likeIcon>
+    <div
+        class="ap-bg-primary-10 ap-rounded ap-flex ap-items-center ap-justify-center ap-cursor-pointer ap-h-[45px] ap-w-[56px]">
+        <svg-icon src="assets/img/custom/like.svg" class="ap-w-[24px] ap-h-[21px] ap-fill-primary"
+            [applyClass]="true"></svg-icon>
+    </div>
+</ng-template>
+<ng-container *ngIf="feedbackDialogClosed$ | async"></ng-container>

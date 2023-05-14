@@ -6,7 +6,7 @@ import {
   ViewContainerRef,
   createNgModule,
 } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { FlowsActions } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 
@@ -16,22 +16,18 @@ import { Store } from '@ngrx/store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GuessFlowContainerComponent {
-  close$: Observable<boolean>;
+  loadingComponent$: Subject<boolean> = new Subject();
   componentRef: ComponentRef<{ closeContainer: Subject<boolean> }> | null =
     null;
   constructor(
     private injector: Injector,
     private viewRef: ViewContainerRef,
     private store: Store
-  ) {
-    if (localStorage.getItem('SHOW_AI_AFTER_CREATING_FLOW')) {
-      this.showComponent();
-      localStorage.removeItem('SHOW_AI_AFTER_CREATING_FLOW');
-    }
-  }
+  ) {}
 
   async showComponent() {
     if (this.componentRef === null) {
+      this.loadingComponent$.next(true);
       const GuessFlowModule = await import(
         '@ee/guess-flow/src/lib/guess-flow.module'
       );
@@ -47,9 +43,11 @@ export class GuessFlowContainerComponent {
         }
       );
       this.listenToCloseEvents();
+      this.loadingComponent$.next(false);
     }
   }
   listenToCloseEvents(): void {
+    // for some reason having an observable then listening to it in template doesn't work here
     // eslint-disable-next-line rxjs-angular/prefer-async-pipe
     const subscription = this.componentRef?.instance.closeContainer.subscribe(
       () => {

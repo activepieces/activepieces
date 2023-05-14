@@ -1,4 +1,4 @@
-<button mat-menu-item appTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-[9px]"
+<button mat-menu-item apTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-[9px]"
   (click)="expandSample? expandSample=false : expandSample=true">
   <div class="ap-flex">
     <ng-container *ngIf="sampleData$ | async as result; else noSampleDataNote">
@@ -37,7 +37,7 @@
     </ng-container>
 
     <ng-container *ngIf="result.value !==undefined && expandSample">
-      <button appTrackHover #resultNodeHoverTracker="hoverTrackerDirective" class="!ap-pl-0" mat-menu-item
+      <button apTrackHover #resultNodeHoverTracker="hoverTrackerDirective" class="!ap-pl-0" mat-menu-item
         (click)="mentionClicked.emit(_stepMention)">
         <span class=" ap-flex-grow ap-transition-all"
           [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'">result:

@@ -7,12 +7,16 @@ import { PromptsTableComponent } from './prompts-table/prompts-table.component';
 import { PromptIconsComponent } from './prompts-table/prompt-icons/prompt-icons.component';
 import { GuessFlowComponent } from './guess-flow.component';
 import { LottieModule } from 'ngx-lottie';
+import { AiGeneratedFlowFeedbackComponent } from './ai-generated-flow-feedback/ai-generated-flow-feedback.component';
+import { AiFeedbackDialogComponent } from './ai-generated-flow-feedback/ai-feedback-dialog/ai-feedback-dialog.component';
 @NgModule({
   declarations: [
     GuessFlowComponent,
     PromptInputComponent,
     PromptsTableComponent,
     PromptIconsComponent,
+    AiGeneratedFlowFeedbackComponent,
+    AiFeedbackDialogComponent,
   ],
   imports: [CommonModule, UiCommonModule, LottieModule],
 })

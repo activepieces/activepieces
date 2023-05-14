@@ -10,6 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 import {
   BuilderActions,
   BuilderSelectors,
+  CollectionBuilderService,
   FlowFactoryUtil,
   FlowItemDetailsActions,
   FlowRendererService,
@@ -64,7 +65,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     private titleService: Title,
     private pannerService: PannerService,
     private testStepService: TestStepService,
-    private flowRendererService: FlowRendererService
+    private flowRendererService: FlowRendererService,
+    public builderService: CollectionBuilderService
   ) {
     this.listenToGraphChanges();
     this.testingStepSectionIsRendered$ =

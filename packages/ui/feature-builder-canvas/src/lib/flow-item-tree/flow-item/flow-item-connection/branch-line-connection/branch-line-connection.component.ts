@@ -283,6 +283,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
           stepLocationRelativeToParent:
             StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
         },
+        deselectCurrentStep: true,
       })
     );
   }
@@ -296,6 +297,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
           stepLocationRelativeToParent:
             StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
         },
+        deselectCurrentStep: true,
       })
     );
   }
@@ -308,6 +310,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
           stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
           stepName: this.flowItem.name,
         },
+        deselectCurrentStep: true,
       })
     );
   }
