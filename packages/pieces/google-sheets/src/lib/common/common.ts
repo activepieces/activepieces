@@ -73,11 +73,21 @@ export const googleSheetsCommon = {
     }),
     getValues: getValues,
     appendGoogleSheetValues: appendGoogleSheetValues,
+    updateGoogleSheetRow: updateGoogleSheetRow,
     findSheetName: findSheetName,
     deleteRow: deleteRow,
 }
 
 
+
+type UpdateGoogleSheetRowParams = {
+    values: string[];
+    spreadSheetId: string;
+    valueInputOption: ValueInputOption;
+    rowIndex: number;
+    accessToken: string;
+    sheetName: string;
+};
 
 type AppendGoogleSheetValuesParams = {
     values: string[];
@@ -102,8 +112,29 @@ async function listSheetsName(access_token: string, spreadsheet_id: string) {
             token: access_token,
         }
     })).body.sheets;
-
 }
+
+async function updateGoogleSheetRow(params: UpdateGoogleSheetRowParams) {
+    const requestBody = {
+        majorDimension: Dimension.ROWS,
+        range: `${params.sheetName}!A${params.rowIndex}:Z${params.rowIndex}`,
+        values: [params.values],
+    };
+    const request: HttpRequest<typeof requestBody> = {
+        method: HttpMethod.PUT,
+        url: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadSheetId}/values/${params.sheetName}!A${params.rowIndex}:Z${params.rowIndex}`,
+        body: requestBody,
+        authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: params.accessToken,
+        },
+        queryParams: {
+            valueInputOption: params.valueInputOption,
+        },
+    };
+    return httpClient.sendRequest(request);
+}
+
 async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
     const requestBody = {
         majorDimension: params.majorDimension,
