@@ -60,6 +60,13 @@
                     <span>Move to...</span>
                   </div>
                 </button>
+                <button mat-menu-item (click)="duplicate(flow)">
+                  <div class="ap-flex ap-gap-3 ap-items-center">
+                    <svg-icon src="assets/img/custom/duplicate.svg" class="ap-w-[20px] ap-h-[20px]"
+                      [applyClass]="true"></svg-icon>
+                    <span>Duplicate</span>
+                  </div>
+                </button>
                 <button (click)="deleteFlow(flow)" mat-menu-item>
                   <div class="ap-flex ap-gap-3 ap-items-center">
                     <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
@@ -108,3 +115,4 @@
 </ng-container>
 
 <ng-container *ngIf="showAllFlows$ | async"></ng-container>
+<ng-container *ngIf="duplicateFlow$ | async"></ng-container>

@@ -47,6 +47,7 @@ export class FlowsTableComponent implements OnInit {
   areThereFlows$: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   showAllFlows$: Observable<boolean>;
+  duplicateFlow$: Observable<void>;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -156,6 +157,10 @@ export class FlowsTableComponent implements OnInit {
         );
     }
   }
+  duplicate(flow: Flow) {
+    this.duplicateFlow$ = this.flowService.duplicate(flow);
+  }
+
   moveFlow(flow: Flow) {
     const dialogData: MoveFlowToFolderDialogData = {
       flowId: flow.id,

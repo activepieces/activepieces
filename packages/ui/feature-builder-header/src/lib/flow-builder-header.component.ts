@@ -16,7 +16,7 @@ import {
   CollectionBuilderService,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { Flow, FlowInstance, FlowOperationType } from '@activepieces/shared';
+import { Flow, FlowInstance } from '@activepieces/shared';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -84,27 +84,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
       .pipe(
         take(1),
         switchMap((currentFlow) => {
-          return this.flowService
-            .create({
-              displayName: currentFlow.version.displayName,
-            })
-            .pipe(
-              switchMap((clonedFlow) => {
-                return this.flowService
-                  .update(clonedFlow.id, {
-                    type: FlowOperationType.IMPORT_FLOW,
-                    request: {
-                      displayName: currentFlow.version.displayName,
-                      trigger: currentFlow.version.trigger,
-                    },
-                  })
-                  .pipe(
-                    tap((clonedFlow) => {
-                      window.open(`/flows/${clonedFlow.id}`, '_blank');
-                    })
-                  );
-              })
-            );
+          return this.flowService.duplicate(currentFlow);
         }),
         map(() => void 0)
       );
