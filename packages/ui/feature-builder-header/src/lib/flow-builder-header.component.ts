@@ -23,7 +23,6 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { ApEdition, Flow, FlowInstance } from '@activepieces/shared';
-import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -49,7 +48,6 @@ export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
     private store: Store,
     private router: Router,
     public collectionBuilderService: CollectionBuilderService,
-    private snackbar: MatSnackBar,
     private flowService: FlowService,
     private flagsService: FlagService
   ) {
