@@ -18,10 +18,7 @@ import {
 } from '@activepieces/ui/common';
 import { ConnectionsTableDataSource } from './connections-table.datasource';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
-import {
-  DEFAULT_PAGE_SIZE,
-  AppConnectionsService,
-} from '@activepieces/ui/common';
+import { AppConnectionsService } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 
 @Component({
@@ -46,10 +43,7 @@ export class ConnectionsTableComponent implements OnInit {
 
   ngOnInit(): void {
     this.dataSource = new ConnectionsTableDataSource(
-      this.activatedRoute.queryParams.pipe(
-        map((res) => res['limit'] || DEFAULT_PAGE_SIZE)
-      ),
-      this.activatedRoute.queryParams.pipe(map((res) => res['cursor'])),
+      this.activatedRoute.queryParams,
       this.paginator,
       this.store,
       this.connectionService,

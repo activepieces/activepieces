@@ -12,8 +12,11 @@ import {
 } from 'rxjs';
 import {
   ApPaginatorComponent,
+  CURSOR_QUERY_PARAM,
   DEFAULT_PAGE_SIZE,
+  FOLDER_QUERY_PARAM,
   FlowService,
+  LIMIT_QUERY_PARAM,
 } from '@activepieces/ui/common';
 
 import { FormControl } from '@angular/forms';
@@ -73,9 +76,9 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
         const { queryParams } = res;
         return forkJoin([
           this.flowService.list({
-            limit: queryParams['limit'] || DEFAULT_PAGE_SIZE,
-            cursor: queryParams['cursor'],
-            folderId: queryParams['folderId'] || undefined,
+            limit: queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
+            cursor: queryParams[CURSOR_QUERY_PARAM],
+            folderId: queryParams[FOLDER_QUERY_PARAM] || undefined,
           }),
           this.folderService.list(),
         ]);
