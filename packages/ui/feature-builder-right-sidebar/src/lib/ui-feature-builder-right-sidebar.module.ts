@@ -16,7 +16,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { FlowRightSidebarComponent } from './flow-right-sidebar.component';
 import { NewEditPieceSidebarComponent } from './edit-step-sidebar/edit-step-sidebar.component';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
-import { ReplaceMissingStepSidebarComponent } from './replace-missing-step-sidebar/replace-missing-step-sidebar.component';
 
 @NgModule({
   imports: [
@@ -39,7 +38,6 @@ import { ReplaceMissingStepSidebarComponent } from './replace-missing-step-sideb
     StepTypeItemComponent,
     FlowRightSidebarComponent,
     NewEditPieceSidebarComponent,
-    ReplaceMissingStepSidebarComponent,
   ],
   exports: [FlowRightSidebarComponent],
 })

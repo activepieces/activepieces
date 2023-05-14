@@ -3,5 +3,4 @@ export enum RightSideBarType {
   TRIGGER_TYPE = 'TRIGGER_TYPE',
   EDIT_STEP = 'EDIT_STEP',
   NONE = 'NONE',
-  REPLACE_MISSING_STEP = 'REPLACE_MISSING_STEP',
 }

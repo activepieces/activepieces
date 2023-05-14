@@ -239,7 +239,7 @@ export class FlowsEffects {
           } else if (step.type === ActionType.MISSING) {
             return of(
               FlowsActions.setRightSidebar({
-                sidebarType: RightSideBarType.REPLACE_MISSING_STEP,
+                sidebarType: RightSideBarType.STEP_TYPE,
                 props: NO_PROPS,
                 deselectCurrentStep: false,
               })
