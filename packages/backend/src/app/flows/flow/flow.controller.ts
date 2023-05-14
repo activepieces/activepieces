@@ -13,42 +13,11 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowService } from './flow.service'
-import { GuessFlowRequest, CountFlowsRequest } from '@activepieces/shared'
-import { flowGuessService } from '@ee/magic-wand/openai'
-import { flowVersionService } from '../flow-version/flow-version.service'
-import { logger } from '../../helper/logger'
+import { CountFlowsRequest } from '@activepieces/shared'
 
 const DEFUALT_PAGE_SIZE = 10
 
 export const flowController = async (fastify: FastifyInstance) => {
-    fastify.post(
-        '/guess',
-        {
-            schema: {
-                body: GuessFlowRequest,
-            },
-        },
-        async (
-            request: FastifyRequest<{
-                Body: GuessFlowRequest
-            }>,
-        ) => {
-            const trigger = await flowGuessService.guessFlow(request.body.prompt)
-            logger.info('Cleaned Actions ' + JSON.stringify(trigger))
-            const flow = await flowService.create({
-                projectId: request.principal.projectId, request: {
-                    displayName: request.body.displayName,
-                },
-            })
-            const flowVersion = {
-                ...flow.version,
-                trigger: trigger,
-            }
-            await flowVersionService.overwriteVersion(flowVersion.id, flowVersion)
-            return flowService.getOne({ id: flow.id, versionId: undefined, projectId: request.principal.projectId, viewMode: FlowViewMode.NO_ARTIFACTS })
-        },
-    )
-
     fastify.post(
         '/',
         {

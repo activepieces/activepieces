@@ -12,7 +12,6 @@ import { CanvasUtilsComponent } from './canvas-utils/canvas-utils.component';
 import { CanvasPannerDirective } from './canvas-utils/panning/panner.directive';
 import { DeleteStepDialogComponent } from './flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
 import { IncompleteStepsWidgetComponent } from './incomplete-steps-widget/incomplete-steps-widget.component';
-
 @NgModule({
   imports: [CommonModule, UiCommonModule],
   declarations: [

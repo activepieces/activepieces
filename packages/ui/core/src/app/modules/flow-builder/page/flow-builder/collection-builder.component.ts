@@ -11,18 +11,20 @@ import {
   BuilderActions,
   BuilderSelectors,
   CollectionBuilderService,
+  FlowFactoryUtil,
   FlowItemDetailsActions,
+  FlowRendererService,
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
-import { map, Observable, tap } from 'rxjs';
+import { distinctUntilChanged, map, Observable, tap } from 'rxjs';
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
-import { ExecutionOutputStatus, TriggerType } from '@activepieces/shared';
+import { ExecutionOutputStatus, Flow, TriggerType } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import {
   LeftSideBarType,
@@ -30,6 +32,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { TestStepService } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
+
 @Component({
   selector: 'app-collection-builder',
   templateUrl: './collection-builder.component.html',
@@ -51,17 +54,21 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   cursorStyle$: Observable<string>;
   TriggerType = TriggerType;
   testingStepSectionIsRendered$: Observable<boolean>;
+  graphChanged$: Observable<Flow>;
+  showGuessFlowComponent = true;
   constructor(
     private store: Store,
-    public pieceBuilderService: CollectionBuilderService,
     private actRoute: ActivatedRoute,
     private ngZone: NgZone,
     private snackbar: MatSnackBar,
     private runDetailsService: RunDetailsService,
     private titleService: Title,
     private pannerService: PannerService,
-    private testStepService: TestStepService
+    private testStepService: TestStepService,
+    private flowRendererService: FlowRendererService,
+    public builderService: CollectionBuilderService
   ) {
+    this.listenToGraphChanges();
     this.testingStepSectionIsRendered$ =
       this.testStepService.testingStepSectionIsRendered$.asObservable();
     this.cursorStyle$ = this.pannerService.isGrabbing$.asObservable().pipe(
@@ -188,5 +195,24 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 
   leftDrawerHandleDragEnded() {
     this.leftSidebarDragging = false;
+  }
+  listenToGraphChanges() {
+    this.graphChanged$ = this.store
+      .select(BuilderSelectors.selectCurrentFlow)
+      .pipe(
+        distinctUntilChanged(),
+        tap((flow) => {
+          if (flow) {
+            const rootStep = FlowFactoryUtil.createRootStep(flow);
+            this.flowRendererService.refreshCoordinatesAndSetActivePiece(
+              rootStep
+            );
+          } else {
+            this.flowRendererService.refreshCoordinatesAndSetActivePiece(
+              undefined
+            );
+          }
+        })
+      );
   }
 }

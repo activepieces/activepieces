@@ -14,6 +14,7 @@ import { environment, UiCommonModule} from '@activepieces/ui/common';
 
 @NgModule({
 	imports: [
+		//this module has to be imported instantly and not lazily
 		AngularFireModule.initializeApp(environment.firebase),
 		AngularFireAuthModule,
 		CommonModule,

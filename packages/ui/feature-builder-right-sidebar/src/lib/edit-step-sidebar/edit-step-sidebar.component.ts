@@ -62,6 +62,7 @@ export class NewEditPieceSidebarComponent implements OnInit {
       FlowsActions.setRightSidebar({
         sidebarType: RightSideBarType.NONE,
         props: NO_PROPS,
+        deselectCurrentStep: true,
       })
     );
   }
