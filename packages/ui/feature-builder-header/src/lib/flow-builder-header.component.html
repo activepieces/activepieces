@@ -36,10 +36,14 @@
       </mat-menu>
 
     </div>
-    <ap-icon-button [width]="25" [height]="25" iconFilename="AI.svg" tooltipText="AI builder"
-      (buttonClicked)="guessFlowButtonClicked()" *ngIf="showGuessFlowBtn$ | async"></ap-icon-button>
-    <div class="ap-flex-grow">
+    <ap-button class="ap-ml-2" btnStyle="basic" btnColor="basic" btnSize="medium"
+      (buttonClicked)="guessFlowButtonClicked()" *ngIf="showGuessFlowBtn$ | async">
+      <div class="ap-flex ap-items-center ap-font-semibold ap-gap-2">
+        <svg-icon src="assets/img/custom/AI.svg" [svgStyle]="{height:'25px',width:'20px'}"></svg-icon>AI Builder
+      </div>
+    </ap-button>
 
+    <div class="ap-flex-grow">
     </div>
     <div class="ap-flex ap-items-center ap-gap-2">
       <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
