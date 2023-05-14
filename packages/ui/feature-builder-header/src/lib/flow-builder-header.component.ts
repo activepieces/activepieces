@@ -11,8 +11,8 @@ import { map, Observable, tap } from 'rxjs';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
+  FlagService,
   FlowService,
-  TelemetryService,
   fadeIn400ms,
   initialiseBeamer,
 } from '@activepieces/ui/common';
@@ -22,7 +22,7 @@ import {
   CollectionBuilderService,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { Flow, FlowInstance } from '@activepieces/shared';
+import { ApEdition, Flow, FlowInstance } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
@@ -49,7 +49,7 @@ export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
     public collectionBuilderService: CollectionBuilderService,
     private snackbar: MatSnackBar,
     private flowService: FlowService,
-    private telementeryService: TelemetryService
+    private flagsService: FlagService
   ) {
     this.isGeneratingFlowComponentOpen$ = this.store.select(
       BuilderSelectors.selectIsGeneratingFlowComponentOpen
@@ -64,7 +64,9 @@ export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
     this.folderDisplayName$ = this.store.select(
       BuilderSelectors.selectCurrentFlowFolderName
     );
-    this.showGuessFlowBtn$ = this.telementeryService.isFeatureEnabled('AI');
+    this.showGuessFlowBtn$ = this.flagsService
+      .getEdition()
+      .pipe(map((ed) => ed === ApEdition.ENTERPRISE));
   }
   changeEditValue(event: boolean) {
     this.editingFlowName = event;
