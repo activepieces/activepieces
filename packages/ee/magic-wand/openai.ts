@@ -5,7 +5,7 @@ import { PromptTemplate } from 'langchain/prompts'
 import { system } from '@backend/helper/system/system'
 import { SystemProp } from '@backend/helper/system/system-prop'
 import { jsonrepair } from 'jsonrepair'
-import { Action, ActionType, BranchAction, CodeAction, PieceAction, Trigger, TriggerType } from '@activepieces/shared'
+import { Action, ActionType, BranchAction, CodeAction, DEFAULT_SAMPLE_DATA_SETTINGS, PieceAction, Trigger, TriggerType } from '@activepieces/shared'
 import { logger } from '@backend/helper/logger'
 import { isNil } from 'lodash'
 import { PropertyType } from '@activepieces/pieces-framework'
@@ -14,9 +14,10 @@ import { PropertyType } from '@activepieces/pieces-framework'
 let llm: OpenAI;
 let creativeLLM: OpenAI;
 const openAiKey = system.get(SystemProp.OPENAI_KEY);
+const openAiModel = system.get(SystemProp.OPENAI_MODEL);
 if (openAiKey) {
-    llm = new OpenAI({ openAIApiKey: openAiKey, temperature: 0.2, modelName: 'gpt-3.5-turbo' })
-    creativeLLM = new OpenAI({ openAIApiKey: openAiKey, temperature: 1.0, modelName: 'gpt-3.5-turbo' })
+    llm = new OpenAI({ openAIApiKey: openAiKey, temperature: 0.2, modelName: openAiModel ?? 'gpt-3.5-turbo' })
+    creativeLLM = new OpenAI({ openAIApiKey: openAiKey, temperature: 1.0, modelName: openAiModel ?? 'gpt-3.5-turbo' })
 }
 
 type TriggerDetails = {
@@ -68,10 +69,17 @@ function getTriggerDetails() {
 }
 
 
-async function fillProperties(prompt: string, trigger: Trigger): Promise<Trigger> {
+async function fillProperties(prompt: string, trigger: Trigger, sugegstedTrigger: TriggerDetails, suggestAction: ActionDetails[]): Promise<Trigger> {
     const template = `Fill the null values in input properties for the activepieces flow with best prediction. Your response must be a JSON object and should not include any additional information or explanations.
+---- 
+Steps:
+
+{steps}
 -----
+Examples:
+
 {example}
+
 -----
 Usecase: {prompt}
 Flow: {flow}
@@ -81,12 +89,13 @@ Answer:
         llm: creativeLLM,
         prompt: new PromptTemplate({
             template,
-            inputVariables: ['prompt', 'flow', 'example'],
+            inputVariables: ['prompt', 'flow', 'example', 'steps'],
         }),
         outputKey: 'trigger',
     })
     const result = await chain.call({
         prompt,
+        steps: buildStepsInformation(sugegstedTrigger, suggestAction),
         example: `
         Usecase: Create a blog post using chatgpt from a google sheet row and then post these ideas to wordpress
         Flow: {"id":"mjTPcRA5uKPQKerEM8T1C","displayName":"AI Blog Writer","trigger":{"name":"trigger","type":"PIECE_TRIGGER","valid":true,"settings":{"input":{},"pieceName":"google-sheets","inputUiInfo":{},"triggerName":"new_row_added","pieceVersion":"0.1.3"},"nextAction":{"name":"step_1","type":"PIECE","valid":true,"settings":{"input":{"prompt":null},"pieceName":"openai","actionName":"ask_chatgpt","inputUiInfo":{},"pieceVersion":"0.1.3"},"nextAction":{"name":"step_2","type":"PIECE","valid":true,"settings":{"input":{"prompt":null},"pieceName":"openai","actionName":"ask_chatgpt","inputUiInfo":{},"pieceVersion":"0.1.3"},"nextAction":{"name":"step_4","type":"PIECE","valid":true,"settings":{"input":{"title":null,"status":null,"content":null,"website_url":null},"pieceName":"wordpress","actionName":"create_post","inputUiInfo":{},"pieceVersion":"0.1.3"},"nextAction":{"name":"step_3","type":"PIECE","valid":true,"settings":{"input":{"subject":null,"receiver":null,"body_text":null},"pieceName":"gmail","actionName":"send_email","inputUiInfo":{},"pieceVersion":"0.1.3"},"displayName":"Gmail"},"displayName":"Wordpress"},"displayName":"Open AI"},"displayName":"Open AI"},"displayName":"Trigger"},"valid":true,"state":"DRAFT"}
@@ -154,7 +163,7 @@ async function findTrigger(prompt: string): Promise<TriggerDetails> {
 
 
 async function findActions(prompt: string): Promise<ActionDetails[]> {
-    const template = `Provide actions for the activepieces flow using only the actions array provided. Your response should be a JSON array consisting of the action name and corresponding piece name. Do not include any explanations in your reply, You may disregard triggers that are included in the question and should not include them in your answer.
+    const template = `You must pick the activepieces flow actions exclusively from the provided actions array. Your response should solely consist of elements from the array. Do not include any explanations in your reply. 
 ---
 Actions Array:
 {allActions}
@@ -177,10 +186,10 @@ Answer:
             allActions: JSON.stringify(getActionDetails()),
             actionExamples: `
             Prompt: On new slack message, send me message on discord
-            Answer: [{"pieceName": "slack", "actionName": "send_message_webhook"}]
+            Answer: [{"pieceName": "discord", "actionName": "send_message_webhook"}]
             
             Prompt: read rows from a sheet and only send email and disord message if the name is ahmad
-            Answer: [{"pieceName": "gmail", "actionName": "send_email"}, {"pieceName": "slack", "actionName": "send_message_webhook"}]
+            Answer: [{"pieceName": "gmail", "actionName": "send_email"}, {"pieceName": "discord", "actionName": "send_message_webhook"}]
             `,
             prompt,
         })
@@ -195,6 +204,17 @@ Answer:
     logger.error('llm is uninitailized');
     return [];
 
+}
+
+function buildStepsInformation(trigger: TriggerDetails, actions: ActionDetails[]): string {
+    const context: string[] = [
+        `
+        Here is helpful information about the flow you are building:
+        `,
+    ]
+    context.push('Trigger: ' + JSON.stringify(trigger))
+    context.push('Actions: ' + JSON.stringify(actions))
+    return context.join('\n')
 }
 
 
@@ -216,12 +236,15 @@ Answer: {"type":"PIECE_TRIGGER","settings":{"pieceName":"slack","triggerName":"n
 
 async function generateFlowInternal(trigger: TriggerDetails, actions: ActionDetails[], prompt: string) {
     const template = `
-Your responsibility is to serve as a JSON generator for the activepieces flow by implementing the given flow description. You are to respond with the corresponding flow JSON enclosed within a single code block, without any additional information or explanation. and are only authorized to use "PIECE" as action types. failure to comply with these guidelines will result in failure.
+Your responsibility is to serve as a JSON generator for the activepieces flow by implementing the given flow description. You are to respond with the corresponding flow JSON enclosed within a single code block, without any additional information or explanation. and are only authorized to use "PIECE" as action types and information from steps. failure to comply with these guidelines will result in failure.
+--- 
+Steps:
+
+{steps}
 ---
 Examples:
 
 {examples}
-
 ---
 Prompt: {prompt}
 Answer: 
@@ -231,11 +254,12 @@ Answer:
         llm,
         prompt: new PromptTemplate({
             template,
-            inputVariables: ['prompt', 'examples'],
+            inputVariables: ['prompt', 'examples', 'steps'],
         }),
         outputKey: 'flow',
     })
     const results = await chain.call({
+        steps: buildStepsInformation(trigger, actions),
         examples,
         prompt,
     })
@@ -257,7 +281,7 @@ export async function generateFlow(prompt: string): Promise<Trigger> {
     logger.info('Found actions ' + JSON.stringify(actions))
     const rawResult = validateTrigger(await generateFlowInternal(trigger, actions, prompt));
     console.log("RAW PROMPT " + JSON.stringify(rawResult));
-    const result = validateTrigger(await fillProperties(prompt, rawResult))
+    const result = validateTrigger(await fillProperties(prompt, rawResult, trigger, actions))
     console.log("FILLED PROMPT " + JSON.stringify(result));
     return result
 }
@@ -269,8 +293,6 @@ function extractJson(text: string) {
     const jsonArray = JSON.parse(jsonrepair(jsonStr))
     return jsonArray
 }
-
-const HELLO_WORLD_CODE_ARTIFACT_BASE64 = 'UEsDBAoAAAAAAIGZWlYSIpQ2PAAAADwAAAAIAAAAaW5kZXgudHNleHBvcnQgY29uc3QgY29kZSA9IGFzeW5jIChwYXJhbXMpID0+IHsKICAgIHJldHVybiB0cnVlOwp9OwpQSwMECgAAAAAAgZlaVhpS0QgcAAAAHAAAAAwAAABwYWNrYWdlLmpzb257CiAgImRlcGVuZGVuY2llcyI6IHsKICB9Cn0KUEsBAhQACgAAAAAAgZlaVhIilDY8AAAAPAAAAAgAAAAAAAAAAAAAAAAAAAAAAGluZGV4LnRzUEsBAhQACgAAAAAAgZlaVhpS0QgcAAAAHAAAAAwAAAAAAAAAAAAAAAAAYgAAAHBhY2thZ2UuanNvblBLBQYAAAAAAgACAHAAAACoAAAAAAA='
 
 function cleanAction(step: Action | undefined, count: number): Action | undefined {
     if (isNil(step)) {
@@ -285,9 +307,12 @@ function cleanAction(step: Action | undefined, count: number): Action | undefine
     }
     const defaultAction: Action = {
         ...basicStep,
+        valid: true,
         displayName: step.displayName,
         type: ActionType.MISSING,
-        settings: {},
+        settings: {
+            inputUiInfo: DEFAULT_SAMPLE_DATA_SETTINGS
+        },
     }
     switch (basicStep.type) {
         case ActionType.BRANCH: {
@@ -330,7 +355,7 @@ function cleanAction(step: Action | undefined, count: number): Action | undefine
                     pieceName: piece.name,
                     pieceVersion: piece.version,
                     input,
-                    inputUiInfo: {},
+                    inputUiInfo: DEFAULT_SAMPLE_DATA_SETTINGS,
                     actionName: actionStep.name,
                 },
             }
@@ -347,16 +372,13 @@ function validateTrigger(step: Trigger): Trigger {
         displayName: step.displayName ?? 'Untitled Trigger',
         type: step.type,
         nextAction: cleanAction(step.nextAction, 1),
-        valid: false,
+        valid: true,
     }
     const defaultTrigger: Trigger = {
         ...basicStep,
         type: TriggerType.WEBHOOK,
-        valid: true,
         settings: {
-            inputUiInfo: {
-                currentSelectedData: undefined,
-            }
+            inputUiInfo: DEFAULT_SAMPLE_DATA_SETTINGS
         },
     }
     switch (step.type) {
@@ -378,6 +400,7 @@ function validateTrigger(step: Trigger): Trigger {
                     pieceName: step.settings.pieceName,
                     triggerName: step.settings.triggerName,
                     pieceVersion: piece.version,
+                    inputUiInfo: DEFAULT_SAMPLE_DATA_SETTINGS,
                     input: input,
                 },
             } as Trigger
