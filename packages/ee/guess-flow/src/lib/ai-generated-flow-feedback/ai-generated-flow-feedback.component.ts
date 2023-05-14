@@ -5,6 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { AiFeedbackDialogComponent } from './ai-feedback-dialog/ai-feedback-dialog.component';
 import { Observable, switchMap, tap } from 'rxjs';
 import { PromptsService } from '../services/prompts.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-ai-generated-flow-feedback',
@@ -18,7 +19,8 @@ export class AiGeneratedFlowFeedbackComponent {
     private builderService: CollectionBuilderService,
     private matDialog: MatDialog,
     private authenticationService: AuthenticationService,
-    private promptsService: PromptsService
+    private promptsService: PromptsService,
+    private matSnackbar: MatSnackBar
   ) {}
   close() {
     this.builderService.componentToShowInsidePortal$.next(undefined);
@@ -41,6 +43,7 @@ export class AiGeneratedFlowFeedbackComponent {
           });
         }),
         tap(() => {
+          this.matSnackbar.open('Feedback submitted, Thanks', '');
           this.close();
         })
       );
